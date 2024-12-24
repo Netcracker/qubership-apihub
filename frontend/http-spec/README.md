@@ -1,0 +1,1 @@
+# qubership-apihub-http-spec
