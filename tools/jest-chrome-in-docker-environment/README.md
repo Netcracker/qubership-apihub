@@ -1,0 +1,1 @@
+# qubership-apihub-jest-chrome-in-docker-environment
