@@ -1,0 +1,946 @@
+{
+    "info": {
+        "name": "Syntetic_test_data",
+        "_postman_id": "d5e11e29-ad99-451f-b477-18e837af7f34",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Create Test Data",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ],
+            "item": [
+                {
+                    "name": "0. Init",
+                    "item": [
+                        {
+                            "name": "0.2.5 Set env",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.test(\"Production mode is false\", function () {\r",
+                                            "    if (data.productionMode === true){\r",
+                                            "        pm.environment.unset(\"token\")\r",
+                                            "        throw new Error('You are trying to run tests on production!')\r",
+                                            "    }\r",
+                                            "});\r",
+                                            "if (data.productionMode === true){\r",
+                                            "    return\r",
+                                            "}\r",
+                                            "\r",
+                                            "pm.environment.set(\"test_id\", pm.variables.replaceIn('{{$timestamp}}'))\r",
+                                            "\r",
+                                            "pm.environment.set(\"Pack_version1_data\", \"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\");\r",
+                                            "pm.environment.set(\"Pack_version1_fileId\", \"atui_petstore30 - 0000.yaml\");\r",
+                                            "pm.environment.set(\"Pack_version2_data\", \"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\");\r",
+                                            "pm.environment.set(\"Pack_version2_fileId\", \"atui_petstore30 - 0000_SemiBreaking_in_all_operations.yaml\");"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v1/system/info",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v1",
+                                        "system",
+                                        "info"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        }
+                    ]
+                },
+                {
+                    "name": "1. Packages",
+                    "item": [
+                        {
+                            "name": "1.1 Create workspace",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Workspace exists\", function () {\r",
+                                            "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.environment.set(\"static_root_group_2\", \"QS-TEMP-TEST-1\")"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v1/groups",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v1",
+                                        "groups"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"name\": \"001 Test Workspace\",\r\n    \"Alias\" :\"QS-TEMP-TEST-1\",\r\n    \"parentId\": \"\",\r\n    \"description\": \"Temporary workspace for testing\",\r\n    \"imageUrl\": \"\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "1.2 Create package",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 201\", function () {\r",
+                                            "    pm.response.to.have.status(201);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.environment.set(\"package_1\", data.packageId)\r",
+                                            "\r",
+                                            "setTimeout(() => { }, 300);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"id\": \"QS-TEMP-TEST-1.PKG-{{test_id}}\",\r\n    \"Alias\" :\"PKG-{{test_id}}\",\r\n    \"name\": \"Test package # {{test_id}}\",\r\n    \"parentId\": \"QS-TEMP-TEST-1\",\r\n    \"kind\":\"package\",\r\n    \"description\": \"\",\r\n    \"serviceName\": \"service{{test_id}}\",\r\n    \"imageUrl\": \"\",\r\n    \"releaseVersionPattern\": \"^[0-9]{1}[.]{1}[0-9]{1}$\",\r\n    \"excludeFromSearch\": true\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "1.3 Publish first version for package",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 202\", function () {\r",
+                                            "    pm.response.to.have.status(202);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.environment.set(\"publish_id\", data.publishId)\r",
+                                            "setTimeout(function(){}, 20000)"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"1.0\",\r\n    \"status\": \"release\",\r\n    \"files\": [{\r\n            \"fileId\": \"{{Pack_version1_fileId}}\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"petstore_yml.zip\"\r\nContent-Type: application/zip;base64\r\n\r\n{{Pack_version1_data}}\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "1.4 Set labels",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.test(\"Expected label is present\", () => {\r",
+                                            "    pm.expect(data.versionLabels).to.include(\"Version_#1\")\r",
+                                            "});\r",
+                                            "\r",
+                                            "setTimeout(() => { },1000);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/1.0",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions",
+                                        "1.0"
+                                    ]
+                                },
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": " {\r\n     \"previousVersion\": \"1.0\",\r\n     \"status\": \"release\",\r\n     \"versionLabels\": [\r\n         \"Version_#1\"\r\n        ]\r\n }",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "1.5 Publish second version for package",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 202\", function () {\r",
+                                            "    pm.response.to.have.status(202);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.environment.set(\"publish_id\", data.publishId)\r",
+                                            "setTimeout(function(){}, 10000)"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"2.0\",\r\n    \"previousVersion\": \"1.0\",\r\n    \"status\": \"release\",\r\n    \"files\": [{\r\n            \"fileId\": \"{{Pack_version2_fileId}}\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"petstore_yml.zip\"\r\nContent-Type: application/zip;base64\r\n\r\n{{Pack_version2_data}}\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "1.6 Set labels",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.test(\"Expected label is present\", () => {\r",
+                                            "    pm.expect(data.versionLabels).to.include(\"Version_#2\")\r",
+                                            "});\r",
+                                            "\r",
+                                            "setTimeout(() => { },1000);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/2.0",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions",
+                                        "2.0"
+                                    ]
+                                },
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": " {\r\n     \"previousVersion\": \"2.0\",\r\n     \"status\": \"release\",\r\n     \"versionLabels\": [\r\n         \"Version_#2\"\r\n        ]\r\n }",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        }
+                    ]
+                },
+                {
+                    "name": "2. Dashboards",
+                    "item": [
+                        {
+                            "name": "2.1 Create dashboard",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 201\", function () {\r",
+                                            "    pm.response.to.have.status(201);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.environment.set(\"dashboard_1\", data.packageId);\r",
+                                            "\r",
+                                            "setTimeout(() => { }, 300);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"id\": \"QS-TEMP-TEST-1.DSHB--{{test_id}}\",\r\n    \"Alias\" :\"DSHB--{{test_id}}\",\r\n    \"name\": \"Test dashboard # {{test_id}}\",\r\n    \"parentId\": \"QS-TEMP-TEST-1\",\r\n    \"kind\":\"dashboard\",\r\n    \"description\": \"Test dashboard\",\r\n    \"releaseVersionPattern\": \"^[0-9]{1}[.]{1}[0-9]{1}$\",\r\n    \"serviceName\": \"\",\r\n    \"imageUrl\": \"\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "2.2 Publish first version for dashboard 1",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 202\", function () {\r",
+                                            "    pm.response.to.have.status(202);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.environment.set(\"dash_publish_id\", data.publishId)\r",
+                                            "setTimeout(function(){}, 10000)"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{dashboard_1}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"1.0\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [{\r\n            \"refId\":\"{{package_1}}\",\r\n            \"version\":\"1.0\"}],\r\n    \"files\": []\r\n}\r\n\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "2.3 Set labels",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.test(\"Expected label is present\", () => {\r",
+                                            "    pm.expect(data.versionLabels).to.include(\"Version_#1\")\r",
+                                            "});\r",
+                                            "\r",
+                                            "setTimeout(() => { },1000);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/versions/1.0",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{dashboard_1}}",
+                                        "versions",
+                                        "1.0"
+                                    ]
+                                },
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": " {\r\n     \"previousVersion\": \"1.0\",\r\n     \"status\": \"release\",\r\n     \"versionLabels\": [\r\n         \"Version_#1\"\r\n        ]\r\n }",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "2.4 Publish second version for dashboard",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 202\", function () {\r",
+                                            "    pm.response.to.have.status(202);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.environment.set(\"dash_publish_id\", data.publishId)\r",
+                                            "setTimeout(function(){}, 10000)"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{dashboard_1}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"2.0\",\r\n    \"previousVersion\": \"1.0\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [{\r\n            \"refId\":\"{{package_1}}\",\r\n            \"version\":\"2.0\"}],\r\n    \"files\": []\r\n}\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "2.5 Set labels",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.test(\"Expected label is present\", () => {\r",
+                                            "    pm.expect(data.versionLabels).to.include(\"Version_#2\")\r",
+                                            "});\r",
+                                            "\r",
+                                            "setTimeout(() => { },1000);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/2.0",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions",
+                                        "2.0"
+                                    ]
+                                },
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": " {\r\n     \"previousVersion\": \"2.0\",\r\n     \"status\": \"release\",\r\n     \"versionLabels\": [\r\n         \"Version_#2\"\r\n        ]\r\n }",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Cleanup Test Data",
+            "auth": {
+                "type": "bearer",
+                "bearer": [
+                    {
+                        "key": "token",
+                        "value": "",
+                        "type": "string"
+                    }
+                ]
+            },
+            "item": [
+                {
+                    "name": "Delete static_test_1 data from DB",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 204\", function () {\r",
+                                    "    pm.response.to.have.status(204);\r",
+                                    "});\r",
+                                    ""
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/internal/clear/TEMP-TEST-1",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "clear",
+                                "TEMP-TEST-1"
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        }
+    ],
+    "variable": []
+}
