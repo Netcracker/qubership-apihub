@@ -1,0 +1,1 @@
+alter table operation drop column if exists custom_tags;

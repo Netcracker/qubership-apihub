@@ -1,0 +1,1 @@
+alter table build drop column metadata;

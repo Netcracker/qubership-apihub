@@ -1,0 +1,1 @@
+alter table user_data drop column private_package_id;

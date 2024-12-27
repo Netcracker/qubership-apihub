@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS shared_url_info CASCADE
+;

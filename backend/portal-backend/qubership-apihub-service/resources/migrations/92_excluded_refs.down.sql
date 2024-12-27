@@ -1,0 +1,1 @@
+alter table published_version_reference drop column excluded;

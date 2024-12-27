@@ -1,0 +1,1 @@
+alter table operation_comparison drop constraint if exists operation_comparison_package_group_id_fk;

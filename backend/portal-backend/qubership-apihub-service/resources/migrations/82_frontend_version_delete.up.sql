@@ -1,0 +1,1 @@
+alter table agent drop column if exists frontend_version;

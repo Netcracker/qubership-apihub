@@ -1,0 +1,3 @@
+drop table published_version_open_count;
+drop table published_document_open_count;
+drop table operation_open_count;

@@ -1,0 +1,2 @@
+DROP INDEX IF EXISTS ts_published_data_path_split_idx;
+DROP INDEX IF EXISTS ts_published_data_custom_split_idx;

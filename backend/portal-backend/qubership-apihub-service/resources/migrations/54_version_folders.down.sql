@@ -1,0 +1,1 @@
+alter table published_version add column folder varchar;

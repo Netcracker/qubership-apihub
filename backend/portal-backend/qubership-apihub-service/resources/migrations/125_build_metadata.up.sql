@@ -1,0 +1,1 @@
+alter table build add column metadata jsonb;

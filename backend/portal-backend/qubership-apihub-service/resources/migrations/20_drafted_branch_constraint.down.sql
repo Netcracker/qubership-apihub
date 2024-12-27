@@ -1,0 +1,1 @@
+ALTER TABLE drafted_branches DROP CONSTRAINT "FK_project";

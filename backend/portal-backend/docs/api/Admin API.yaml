@@ -1,0 +1,374 @@
+openapi: 3.0.3
+info:
+  title: APIHUB system administrators API
+  description: |
+    The API is for system administrators only. 
+  license:
+    name: qubership
+    url: https://qubership.org
+  version: "2024.2"
+  x-nc-api-audience: BWC
+externalDocs:
+  description: Find out more about package
+  url: https://qubership.org/APIHUB
+servers:
+  - url: https://{apihub}.qubership.org
+    description: APIHUB server
+    variables:
+      apihub:
+        description: Name of the APIHUB server.
+        enum:
+          - apihub
+          - dev.apihub
+          - staging.apihub
+        default: apihub
+security:
+  - BearerAuth: []
+tags:
+  - name: Transition
+    description: Operations to move packages
+
+paths:
+  "/api/v2/admin/transition/move":
+    post:
+      tags:
+        - Transition
+      summary: Move package
+      description: Change package id, i.e. rename it or change parent. Async operation, result is returned by id.
+      operationId: movePackage
+      security:
+        - BearerAuth: []
+        - api-key: []
+      requestBody:
+        description: Package coordinates
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from: 
+                  type: string
+                  description: package id that needs to be moved
+                to: 
+                  type: string
+                  description: destination package id
+                overwriteHistory:
+                  type: boolean
+                  description: Enable force move for already used 'old' package id(which now redirects to some new one). In this case existing transition record will be lost and there would be no more redirect.
+            examples: {}
+        required: true
+
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                description: Move package response
+                type: object
+                properties:
+                  id:
+                    description: Move process id
+                    type: string
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "404":
+          description: Not found or incorrect 'from' ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+
+  /api/v2/admin/transition/move/{id}:
+    get:
+      tags:
+        - Transition
+      summary: Get move status
+      description: |
+        Get status of the move operation by id.
+      operationId: getMoveStatus
+      security:
+        - BearerAuth: []
+        - api-key: []
+      parameters:
+        - name: id
+          description: Move operation id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransitionStatus"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "404":
+          description: Not found or incorrect ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+
+  /api/v2/admin/transition/activity:
+    get:
+      tags:
+        - Transition
+      summary: List completed transition activities
+      description: |
+        List completed transition activities
+      operationId: listActivities
+      security:
+        - BearerAuth: []
+        - api-key: []
+      parameters:
+        - name: offset
+          in: query
+          description: Transition activities offset
+          schema:
+            type: number
+            default: 0
+        - name: limit
+          in: query
+          description: Maximun items in response
+          schema:
+            type: number
+            default: 100
+            maximum: 100
+            minimum: 1
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                description: Transition activities list
+                type: object
+                properties:
+                  changes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TransitionStatus"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  /api/v2/admin/transition:
+    get:
+      tags:
+        - Transition
+      summary: List transitions
+      description: |
+        List full transition mapping
+      operationId: listPackageTransitions
+      security:
+        - BearerAuth: []
+        - api-key: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                description: Transition activities list
+                type: object
+                properties:
+                  changes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        oldPackageId:
+                          description: Package id that was before transition
+                          type: string
+                        newPackageId:
+                          description: New package id after transition
+                          type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+components:
+  schemas:
+    ErrorResponse:
+      description: An error description
+      type: object
+      properties:
+        status:
+          description: HTTP Status Code
+          type: number
+        code:
+          description: Internal string error code. Mandatory in response.
+          type: string
+        message:
+          description: The attribute contains an error message.
+          type: string
+        params:
+          type: object
+          description: Message parameters
+          example:
+            id: 12345
+            type: string
+        debug:
+          description: The attribute contains debug details (e.g. stack-trace). Presented in the error response only on Dev/Test environments if corresponding logging level is enabled.
+          type: string
+      required:
+        - status
+        - code
+        - message
+    TransitionStatus:
+      type: object
+      properties:
+        id: 
+          type: string
+          description: Move operation id
+        trType: 
+          type: string
+          description: Transition type
+        fromId: 
+          type: string
+          description: Source package id
+        toId: 
+          type: string
+          description: Destination package id
+        status: 
+          type: string
+          description: Operation status
+        startedBy: 
+          type: string
+          description: User who started the operation
+        startedAt: 
+          type: string
+          description: Time when the operation was started
+        finishedAt: 
+          type: string
+          description: Time when the operation was finished
+        progressPercent: 
+          type: integer
+          format: int32
+          description: Percent of complete. Values 0-100
+        affectedObjects: 
+          type: integer
+          format: int32
+          description: Number of affected rows in DB
+        completedSerialNumber: 
+          type: integer
+          format: int32
+          description: Serial number of completed transition
+  examples:
+    IncorrectInputParameters:
+      description: Incorrect input parameters
+      value:
+        status: 400
+        code: "APIHUB-COMMON-4001"
+        message: "Incorrect input parameters"
+    InternalServerError:
+      description: Default internal server error
+      value:
+        status: 500
+        code: "APIHUB-8000"
+        reason: "InternalServerError"
+        message: "InternalServerError"
+  securitySchemes:
+    BearerAuth:
+      type: http
+      description: Bearer token authentication. Default secutity scheme for API usage.
+      scheme: bearer
+      bearerFormat: JWT
+    api-key:
+      type: apiKey
+      description: Api-key authentication.
+      name: api-key
+      in: header

@@ -1,0 +1,1 @@
+alter table published_version drop column deleted_by;

@@ -1,0 +1,1 @@
+drop table if exists versions_cleanup_run;

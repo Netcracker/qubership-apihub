@@ -1,0 +1,1 @@
+alter table version_comparison add column builder_version varchar;

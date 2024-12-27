@@ -1,0 +1,1 @@
+drop function if exists get_latest_revision

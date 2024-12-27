@@ -1,0 +1,1 @@
+alter table package_group drop column service_name;

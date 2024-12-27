@@ -1,0 +1,1 @@
+update package_group set kind = 'group' where parent_id is null;

@@ -1,0 +1,1 @@
+alter table operation add column if not exists custom_tags jsonb;

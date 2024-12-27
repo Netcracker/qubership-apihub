@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <meta charset="utf-8">
+   <title>%s</title>
+   <link rel="stylesheet" type="text/css" href="resources/styles.css">
+</head>
+<body>
+   <script>%s</script>
+
+   <div class="header">
+     <img class="header__logo" src="resources/corporatelogo.png"/>
+     <div class="header__info">
+       <h3>%s</h3>
+       <h4>Version: %s</h4>
+     </div>
+   </div>
+
+   <div class="page">
+     <div class="breadcrumbs"><a href="index.html">Table of contents</a> > <span>%s</span></div>
+     <div class="card content">
+       <apispec-view
+         apiDescriptionDocument='%s'
+         router="hash"
+         layout="sidebar"
+         hideExport
+       />
+     </div>
+     <div class="footer">
+      <span class="footer__statement">
+        <a href="ls.html">Legal statement</a>
+      </span>
+       <span class="footer__legal">
+        %s<br><br>
+        qubership-apihub
+      </span>
+     </div>
+   </div>
+  </body>
+</html>

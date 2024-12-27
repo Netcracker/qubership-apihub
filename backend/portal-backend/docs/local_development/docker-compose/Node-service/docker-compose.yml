@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  apihub-node-service:
+    image: ghcr.io/qubership/apihub-node-service-assembly-develop:build861
+    environment:
+      APIHUB_BACKEND_ADDRESS: "host.docker.internal:8090"
+      APIHUB_API_KEY: "123123"
+    ports:
+      - "8092:8080"
+    restart: unless-stopped 

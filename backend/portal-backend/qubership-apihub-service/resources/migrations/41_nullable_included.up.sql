@@ -1,0 +1,1 @@
+alter table branch_draft_content alter column included drop not null;

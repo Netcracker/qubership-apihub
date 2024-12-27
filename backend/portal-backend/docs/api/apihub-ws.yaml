@@ -1,0 +1,289 @@
+asyncapi: 2.4.0
+info:
+  title: APIHUB WS specification
+  version: 0.1.0
+  description: APIHUB websocket API specification. Is used for the Editor UI connection.
+  license:
+    name: NC
+    url: https://www.qubership.org
+externalDocs:
+  url: >-
+    url: https://qubership.org/APIHUB
+servers:
+  prod:
+    url: wss://apihub.qubership.org/ws/v1
+    protocol: wss
+    description: Main server
+    security:
+      - token: []
+defaultContentType: application/json
+channels:
+  /projects/{projectId}/branches/{branchId}:
+    parameters:
+      projectId:
+        description: Project id to connect
+        schema:
+          type: string
+      branchId:
+        description: Branch identifier
+        schema:
+          type: string
+    bindings:
+      ws:
+        bindingVersion: 0.1.0
+        method: GET
+        query:
+          type: object
+          description: Query parameters for WS connection
+          properties:
+            token:
+              type: string
+              description: Security token
+    subscribe:
+      operationId: BranchEditingSendMessage
+      description: Messages, sended by server for the branch editing
+      message:
+        oneOf:
+          - $ref: "#/components/messages/OnConnected"
+          - $ref: "#/components/messages/OnDisconnected"
+          - $ref: "#/components/messages/OnFilesUpdated"
+          - $ref: "#/components/messages/OnRefsUpdated"
+          - $ref: "#/components/messages/OnBranchSaved"
+          - $ref: "#/components/messages/OnVersionPublished"
+  /projects/{projectId}/branches/{branchId}/files/{fileId}:
+    parameters:
+      projectId:
+        description: Project id to connect
+        schema:
+          type: string
+      branchId:
+        description: Branch identifier
+        schema:
+          type: string
+      fileId:
+        description: File identifier
+        schema:
+          type: string
+    bindings:
+      ws:
+        bindingVersion: 0.1.0
+        method: GET
+        query:
+          type: object
+          description: Query parameters for WS connection
+          properties:
+            token:
+              type: string
+              description: Security token
+    subscribe:
+      operationId: FileEditingSendMessages
+      description: Messages, sended by server for the file editing
+components:
+  messages:
+    OnConnected:
+      messageId: OnConnected
+      name: OnConnected message
+      payload:
+        $ref: "#/components/schemas/onConnectedPayload"
+    OnDisconnected:
+      messageId: OnDisconnected
+      name: OnDisconnected message
+      payload:
+        $ref: "#/components/schemas/OnDisconnectedPayload"
+    OnFilesUpdated:
+      messageId: OnFilesUpdated
+      name: OnFilesUpdated message.
+      payload:
+        $ref: "#/components/schemas/OnFilesUpdatedPayload"
+    OnRefsUpdated:
+      messageId: OnRefsUpdated
+      name: OnRefsUpdated message.
+      payload:
+        $ref: "#/components/schemas/OnRefsUpdatedPayload"
+    OnBranchSaved:
+      messageId: OnBranchSaved
+      name: OnBranchSaved message
+      payload:
+        $ref: "#/components/schemas/OnBranchSavedPayload"
+    OnVersionPublished:
+      messageId: OnVersionPublished
+      name: OnVersionPublished message
+      payload:
+        $ref: "#/components/schemas/OnVersionPublishedPayload"
+  schemas:
+    onConnectedPayload:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Type of the connection
+        sessionId:
+          type: string
+        connectedAt:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+    OnDisconnectedPayload:
+      type: object
+      properties:
+        type:
+          type: string
+        sessionId:
+          type: string
+        userId:
+          type: string
+    User:
+      type: object
+      description: Base user info
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        avatarUrl:
+          type: string
+    OnUpdatedPayload_base:
+      description: Base params for files and refs update.
+      type: object
+      required:
+        - action
+      properties:
+        type:
+          type: string
+        userId:
+          type: string
+        action:
+          type: string
+          enum:
+            - add
+            - remove
+            - modify
+            - replace
+    OnFilesUpdatedPayload:
+      description: Polymorphic message for files update
+      type: object
+      oneOf:
+        - $ref: "#/components/schemas/OnFilesUpdatedPayload_add"
+        - $ref: "#/components/schemas/OnFilesUpdatedPayload_remove"
+        - $ref: "#/components/schemas/OnFilesUpdatedPayload_modify"
+        - $ref: "#/components/schemas/OnFilesUpdatedPayload_replace"
+      discriminator: action
+    OnFilesUpdatedPayload_add:
+      description: OnFilesUpdated message. Action:add
+      allOf:
+        - $ref: "#/components/schemas/OnUpdatedPayload_base"
+        - properties:
+            data:
+              $ref: "#/components/schemas/FileData"
+    OnFilesUpdatedPayload_remove:
+      description: OnFilesUpdated message. Action:remove
+      allOf:
+        - $ref: "#/components/schemas/OnUpdatedPayload_base"
+        - properties:
+            fileId:
+              type: string
+    OnFilesUpdatedPayload_modify:
+      description: OnFilesUpdated message. Action:modify
+      allOf:
+        - $ref: "#/components/schemas/OnUpdatedPayload_base"
+        - properties:
+            fileId:
+              type: string
+    OnFilesUpdatedPayload_replace:
+      description: OnFilesUpdated message. Action:replace
+      allOf:
+        - $ref: "#/components/schemas/OnUpdatedPayload_base"
+        - properties:
+            fileId:
+              type: string
+            data:
+              $ref: "#/components/schemas/FileData"
+    FileData:
+      type: object
+      description: File parameters for add/update.
+      properties:
+        fileId:
+          type: string
+    OnRefsUpdatedPayload:
+      description: Polymorphic message for refs update
+      type: object
+      oneOf:
+        - $ref: "#/components/schemas/OnRefsUpdatedPayload_add"
+        - $ref: "#/components/schemas/OnRefsUpdatedPayload_remove"
+        - $ref: "#/components/schemas/OnRefsUpdatedPayload_replace"
+      discriminator: action
+    OnRefsUpdatedPayload_add:
+      description: OnRefsUpdated message. Action:add
+      allOf:
+        - $ref: "#/components/schemas/OnUpdatedPayload_base"
+        - properties:
+            data:
+              $ref: "#/components/schemas/RefData_add"
+    OnRefsUpdatedPayload_remove:
+      description: OnRefsUpdated message. Action:remove
+      allOf:
+        - $ref: "#/components/schemas/OnUpdatedPayload_base"
+        - properties:
+            refId:
+              type: string
+            version:
+              type: string
+    OnRefsUpdatedPayload_replace:
+      description: OnRefsUpdated message. Action:replace
+      allOf:
+        - $ref: "#/components/schemas/OnUpdatedPayload_base"
+        - properties:
+            refId:
+              type: string
+            version:
+              type: string
+            data:
+              $ref: "#/components/schemas/RefData_replace"
+    RefData_add:
+      type: object
+      description: Data for ref updates. Action:add
+      properties:
+        refId:
+          type: string
+        version:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+    RefData_replace:
+      type: object
+      description: Data for ref updates. Action:replace
+      properties:
+        version:
+          type: string
+        status:
+          type: string
+    OnBranchSavedPayload:
+      description: All connected users should get "branch:saved" message on branch save.
+      type: object
+      properties:
+        type:
+          type: string
+        userId:
+          type: string
+        comment:
+          type: string
+    OnVersionPublishedPayload:
+      description: All connected users should get "branch:saved" message on branch publish.
+      type: object
+      properties:
+        type:
+          type: string
+        userId:
+          type: string
+        version:
+          type: string
+        status:
+          type: string
+  securitySchemes:
+    token:
+      type: httpApiKey
+      name: token
+      description: Provide the authentication token
+      in: query

@@ -1,0 +1,1 @@
+ALTER TABLE published_version DROP COLUMN created_by;

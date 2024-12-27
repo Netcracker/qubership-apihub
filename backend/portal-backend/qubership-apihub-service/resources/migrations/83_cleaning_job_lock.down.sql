@@ -1,0 +1,1 @@
+drop table build_cleanup_run;

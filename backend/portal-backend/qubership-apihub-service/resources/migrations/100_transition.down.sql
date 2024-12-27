@@ -1,0 +1,1 @@
+drop table activity_tracking_transition;

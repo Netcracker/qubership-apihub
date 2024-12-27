@@ -1,0 +1,1 @@
+drop table operation_group_publication;
