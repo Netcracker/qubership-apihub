@@ -1,0 +1,21 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /users:
+    get:
+      summary: Gets a list of users.
+      parameters:
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          examples:
+            one:
+              value: 0
+              summary: Offset value
+              externalValue: 'https://example.org/examples/address-example.xml'
+      responses:
+        '200':
+          description: OK

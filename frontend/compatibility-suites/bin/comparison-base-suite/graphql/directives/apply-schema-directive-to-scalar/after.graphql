@@ -1,0 +1,7 @@
+directive @multipleOf on SCALAR
+
+type Query {
+  fruitsNumber: Count
+}
+
+scalar Count @multipleOf

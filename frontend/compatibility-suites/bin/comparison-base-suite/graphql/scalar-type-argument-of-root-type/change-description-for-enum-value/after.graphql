@@ -1,0 +1,11 @@
+type Query {
+  fruits(seasonWhenRipe: Season): String
+}
+enum Season {
+  """
+  Fall season.
+  """
+  FALL
+  WINTER
+  SPRING
+}

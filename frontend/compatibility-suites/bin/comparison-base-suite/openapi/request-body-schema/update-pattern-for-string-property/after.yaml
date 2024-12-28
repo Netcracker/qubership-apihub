@@ -1,0 +1,17 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    post:
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              type: string
+              pattern: '^\d{3}-\d{2}-\d{4}$'
+      responses:
+        '200':
+          description: OK
+          content: { }

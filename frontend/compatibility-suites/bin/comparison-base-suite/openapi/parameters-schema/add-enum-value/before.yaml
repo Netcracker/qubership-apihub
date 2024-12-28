@@ -1,0 +1,19 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    post:
+      parameters:
+        - name: p1
+          in: query
+          schema:
+            type: string
+            enum:
+              - val1
+              - val2
+      responses:
+        '200':
+          description: OK
+          content: { }

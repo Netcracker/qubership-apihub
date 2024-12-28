@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    post:
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              properties:
+                option1:
+                  type: number
+                  minimum: 1
+                option2:
+                  type: number
+                  minimum: 1
+                  exclusiveMinimum: false
+      responses:
+        '200':
+          description: OK
+          content: { }

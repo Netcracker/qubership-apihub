@@ -1,0 +1,22 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    post:
+      parameters:
+        - name: p1
+          in: query
+          schema:
+            properties:
+              option1:
+                type: string
+                readOnly: true
+              option2:
+                type: string
+                readOnly: true
+      responses:
+        '200':
+          description: OK
+          content: { }

@@ -1,0 +1,14 @@
+interface Fruit {
+  id: Int
+  name: String
+  color: String
+}
+type Apple implements Fruit {
+  id: Int
+  name: String
+  color: String
+  variety: String
+}
+type Query {
+  fruits: [Apple]
+}

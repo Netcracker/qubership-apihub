@@ -1,0 +1,8 @@
+type Query {
+  fruits: Fruit
+}
+  """Fruit object details"""
+interface Fruit {
+  id: ID
+  name: String
+}

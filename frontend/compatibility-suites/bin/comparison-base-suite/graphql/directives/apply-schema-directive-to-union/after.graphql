@@ -1,0 +1,17 @@
+directive @sort on UNION 
+
+type Apple {
+  name: String
+  variety: String
+}
+
+type Banana {
+  name: String
+  length: Int
+}
+
+union Fruit @sort = Apple | Banana
+
+type Query {
+  fruits: [Fruit]
+}

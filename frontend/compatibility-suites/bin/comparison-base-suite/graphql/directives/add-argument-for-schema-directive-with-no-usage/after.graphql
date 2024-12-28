@@ -1,0 +1,7 @@
+directive @mock(value: JSON) on FIELD_DEFINITION
+
+scalar JSON
+
+type Query {
+  fruits: [String]
+}

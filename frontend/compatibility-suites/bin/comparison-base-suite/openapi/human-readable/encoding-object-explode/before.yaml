@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /pet:
+    post:
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                historyMetadata:
+                  type: object
+                  properties: {}
+            encoding:
+              historyMetadata:
+                contentType: application/xml; charset=utf-8
+                explode: true
+      responses:
+        '200':
+          description: OK

@@ -1,0 +1,19 @@
+type Apple {
+"""
+The Apple ID.
+"""
+  id: ID
+  name: String
+  color: String
+  variety: String
+}
+type Banana {
+  id: ID
+  name: String
+  color: String
+  length: Int
+}
+union Fruit = Apple | Banana
+type Query {
+  fruits: [Fruit]
+}

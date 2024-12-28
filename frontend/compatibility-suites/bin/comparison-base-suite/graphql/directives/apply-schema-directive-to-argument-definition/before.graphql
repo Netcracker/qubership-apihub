@@ -1,0 +1,5 @@
+directive @sort on ARGUMENT_DEFINITION
+
+type Query {
+  fruits(id: ID): [String]
+}

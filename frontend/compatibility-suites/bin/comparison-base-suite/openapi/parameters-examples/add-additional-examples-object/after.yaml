@@ -1,0 +1,21 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    post:
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: string
+          examples:
+            example1:
+              value: name
+            example2:
+              value: name2
+      responses:
+        '200':
+          description: OK
+          content: { }

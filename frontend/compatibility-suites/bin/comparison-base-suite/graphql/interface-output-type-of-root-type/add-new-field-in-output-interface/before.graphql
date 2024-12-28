@@ -1,0 +1,6 @@
+type Query {
+  fruits: Fruit
+}
+interface Fruit {
+  id: ID
+}

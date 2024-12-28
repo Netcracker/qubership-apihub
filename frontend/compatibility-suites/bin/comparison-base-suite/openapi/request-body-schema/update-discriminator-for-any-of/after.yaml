@@ -1,0 +1,38 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    post:
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              anyOf:
+                - type: object
+                  title: simpleObject
+                  required:
+                    - objectType
+                    - attribute
+                  properties:
+                    objectType:
+                      type: string
+                    attribute:
+                      type: string
+                - type: object
+                  title: complexObject
+                  required:
+                    - objectType
+                    - attribute
+                  properties:
+                    objectType:
+                      type: string
+                    attribute:
+                      type: string
+              discriminator:
+                propertyName: attribute
+      responses:
+        '200':
+          description: OK
+          content: { }

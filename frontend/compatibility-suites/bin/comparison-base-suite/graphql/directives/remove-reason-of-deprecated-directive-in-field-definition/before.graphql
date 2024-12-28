@@ -1,0 +1,7 @@
+type Query {
+  fruits: Fruit
+}
+type Fruit {
+  id: ID @deprecated (reason: "No longer supported")
+  name: String @deprecated (reason: "Do not use")
+}

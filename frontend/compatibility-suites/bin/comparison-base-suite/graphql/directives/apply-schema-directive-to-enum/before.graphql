@@ -1,0 +1,10 @@
+directive @sort on ENUM
+
+type Query {
+  fruits(seasonWhenRipe: Season): String
+}
+enum Season {
+  FALL
+  WINTER
+  SPRING
+}

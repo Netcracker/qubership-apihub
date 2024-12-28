@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /pet:
+    post:
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              title: Pet Schema
+              description: A schema representing a pet in the pet store
+              type: object
+              properties:
+                prop1:
+                  type: string
+              externalDocs:
+                description: Find more info about the Pet schema
+                url: https://example.com/docs/schema
+      responses:
+        '200':
+          description: OK
