@@ -1,0 +1,18 @@
+{
+  "openapi": "3.0.1",
+  "paths": {
+    "/test/api/v2/event-headers": {
+      "post": {
+        "tags": [
+          "Test Requests V2"
+        ],
+        "summary": "Receive event headers",
+        "responses": {
+          "200": {
+            "description": "No content"
+          }
+        }
+      }
+    }
+  }
+}

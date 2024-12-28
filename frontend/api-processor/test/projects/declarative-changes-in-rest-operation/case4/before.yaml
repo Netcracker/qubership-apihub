@@ -1,0 +1,45 @@
+openapi: 3.0.0
+info:
+  title: Sample API
+  description: API specification example
+  version: 1.0.0
+paths:
+  /package/{packageId}:
+    post:
+      operationId: createPackage
+      summary: create package
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/packageId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                packageId:
+                  $ref: '#/components/schemas/packageId'
+                name:
+                  type: string
+                parentPackageId:
+                  $ref: '#/components/schemas/packageId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  packageId:
+                    $ref: '#/components/schemas/packageId'
+                  name:
+                    type: string
+components:
+  schemas:
+    packageId:
+      type: string #!
+      description: Id of the package

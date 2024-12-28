@@ -1,0 +1,10 @@
+input MessageInput {
+    """
+    The content of the message.
+    """
+    content: String
+    author: String
+}
+type Mutation {
+    createMessage(input: MessageInput): String
+}

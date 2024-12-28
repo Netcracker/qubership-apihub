@@ -1,0 +1,20 @@
+type Query {
+    getSalesOrder: SalesOrder
+}
+
+type SalesOrder {
+    id: String
+    price: Price
+}
+
+type Price {
+    priceValue: String
+    oneTimeDiscount: MonetaryValue
+    oneTimeTotalWithTax: MonetaryValue
+    oneTimeTotalWithTaxDiscounted: MonetaryValue
+}
+
+type MonetaryValue {
+    value: Float
+    currency: String
+}

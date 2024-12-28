@@ -1,0 +1,63 @@
+openapi: "3.0.0"
+paths:
+  /path1:
+    parameters:
+      - $ref: "#/components/parameters/usedParameter1"
+    get:
+      summary: version 1
+      parameters:
+        - $ref: '#/components/parameters/usedParameter2'
+      requestBody:
+        $ref: '#/components/requestBodies/usedRequest'
+      responses:
+        '200':
+          description: response description
+          headers:
+            header:
+              $ref: '#/components/headers/usedHeader'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/usedSchema'
+              examples:
+                example:
+                  $ref: "#/components/examples/usedExample"
+        '201':
+          $ref: '#/components/responses/usedResponse'
+components:
+  schemas:
+    usedSchema:
+      description: usedSchema
+    unusedSchema:
+      description: unusedSchema
+  responses:
+    usedResponse:
+      description: usedResponse
+    unusedResponse:
+      description: unusedResponse
+  parameters:
+    usedParameter1:
+      name: usedParameter1
+      in: query
+    usedParameter2:
+      name: usedParameter2
+      in: query
+    unusedParameter:
+      name: unusedParameter
+      in: query
+  examples:
+    usedExample:
+      description: usedExample
+    unusedExample:
+      description: unusedExample
+  requestBodies:
+    usedRequest:
+      description: usedRequest
+    unusedRequest:
+      description: unusedRequest
+  headers:
+    usedHeader:
+      description: usedHeader
+    unusedHeader:
+      description: unusedHeader
+    

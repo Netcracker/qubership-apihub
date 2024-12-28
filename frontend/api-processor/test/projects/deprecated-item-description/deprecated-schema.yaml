@@ -1,0 +1,110 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    get:
+      parameters:
+        - name: param1
+          in: query
+          schema:
+            type: string
+            deprecated: true
+        # [Deprecated] schema in query parameter 'param1'
+        - $ref: "#/components/parameters/Parameter"
+        - name: petId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/CommonDeprecatedSchema'
+
+      responses:
+        '200':
+          $ref: "#/components/responses/ResponseRef"
+        '403':
+          description: Forbidden
+          headers:
+            InlineHeader:
+              schema:
+                description: inline header schema
+                deprecated: true
+              # [Deprecated] schema in header 'InlineHeader' in response '200'
+            RefHeader:
+              $ref: '#/components/headers/HeaderRef'
+
+          content:
+            application/json:
+              schema:
+                type: string
+                deprecated: true
+              # [Deprecated] schema in response '200' (application/json)
+              examples: { }
+
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              deprecated: true
+              description: schema in request body
+    post:
+      requestBody:
+        $ref: '#/components/requestBodies/RequestBody'
+      responses: { }
+
+components:
+  schemas:
+    CommonDeprecatedSchema:
+      properties:
+        petId:
+          description: 'CommonDeprecatedSchema description'
+          type: string
+          deprecated: true
+          # [Deprecated] schema in 'components.schemas.CommonDeprecatedSchema.properties.petId'
+    MyDeprecate:
+      deprecated: true
+      #  [Deprecated] schema in 'components.schemas.MyDeprecate'
+
+  parameters:
+    Parameter:
+      name: ref param
+      in: query
+      schema:
+        type: string
+        deprecated: true
+        # [Deprecated] schema in 'components.parameters.Parameter.schema'
+
+  responses:
+    ResponseRef:
+      description: response ref description
+      content:
+        application/json:
+          schema:
+            description: schema in response ref
+            deprecated: true
+            # [Deprecated] schema in 'components.responses.ResponseRef.schema'
+
+  requestBodies:
+    RequestBody:
+      content:
+        application/urlencoded:
+          schema:
+            type: object
+            properties:
+              prop1:
+                allOf:
+                  - $ref: '#/components/schemas/MyDeprecate'
+                  - type: string
+        text/plain:
+          schema:
+            type: string
+            deprecated: true
+            #  [Deprecated] schema in 'components.requestBodies.RequestBody.content.text/plain.schema'
+
+  headers:
+    HeaderRef:
+      schema:
+        description: Ref deprecated header
+        deprecated: true
+        #  [Deprecated] schema in 'components.headers.HeaderRef.schema'
+

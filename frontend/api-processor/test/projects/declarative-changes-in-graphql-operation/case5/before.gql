@@ -1,0 +1,9 @@
+type Query {
+    getPackage: Package
+}
+
+type Package {
+    id: String
+    name: Float #!
+    parentPackage: Package
+}

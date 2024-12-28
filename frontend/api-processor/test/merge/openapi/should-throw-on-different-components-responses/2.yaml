@@ -1,0 +1,40 @@
+openapi: 3.0.1
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /pet:
+    put:
+      tags:
+        - pet
+      summary: Update an existing pet
+      description: Update an **existing** pet
+      operationId: updatePet
+      deprecated: true
+      parameters:
+        - $ref: '#/components/parameters/x-request-id'
+        - name: updateDate
+          in: query
+          description: Date of the modification
+          required: false
+          schema:
+            type: string
+            format: date
+      requestBody:
+        description: Pet object that needs to be added to the store
+        content:
+          application/json:
+            schema: { }
+        required: true
+      responses:
+        '200':
+          description: Pet was updated
+          content:
+            application/json:
+              schema: { }
+          headers:
+            x-request-id:
+              schema:
+                type: string
+                format: uuid
+                example: '325d31a4-700c-11ea-bc55-0242ac130003'

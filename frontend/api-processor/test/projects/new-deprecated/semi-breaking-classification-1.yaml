@@ -1,0 +1,31 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    get:
+      parameters:
+        - name: param1
+          in: query
+          schema:
+            type: string
+          deprecated: true
+        - name: param3
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: OK
+          content: { }
+    post:
+      parameters:
+        - name: param1
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content: { }

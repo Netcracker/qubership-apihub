@@ -1,0 +1,15 @@
+openapi: 3.0.1
+info:
+  title: test
+  version: 0.1.0
+components:
+  parameters:
+    x-request-id:
+      description: Another request identifier
+      name: x-request-id
+      in: header
+      schema:
+        type: string
+        format: uuid
+        example: '325d31a4-700c-11ea-bc55-0242ac130003'
+      required: true

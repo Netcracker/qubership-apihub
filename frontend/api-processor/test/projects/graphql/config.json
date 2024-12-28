@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "fileId": "spec.gql",
+      "publish": true,
+      "labels": [
+        "1223"
+      ],
+      "commitId": "k123jkqlwew"
+    },
+    {
+      "fileId": "spec1.graphql",
+      "publish": true,
+      "labels": [
+        "12233"
+      ],
+      "commitId": "k123jkqlwe2w"
+    }
+  ]
+}

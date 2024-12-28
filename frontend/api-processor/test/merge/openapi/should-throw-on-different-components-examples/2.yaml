@@ -1,0 +1,9 @@
+openapi: 3.0.1
+info:
+  title: test
+  version: 0.1.0
+components:
+  examples:
+    example:
+      summary: another short description
+      value: name

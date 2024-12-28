@@ -1,0 +1,158 @@
+openapi: 3.0.1
+info: ''
+servers:
+  - url: /
+security:
+  - OAuth2 Access Token: [ ]
+paths:
+  /api/v2/test/animals/{id}:
+    get:
+      tags:
+        - test animals
+      summary: Deprecated. Use /test/api/v3/animals instead. Get animal
+      operationId: getanimalById_1
+      parameters:
+        - name: id
+          in: path
+          description: animal ID
+          required: true
+          schema:
+            type: string
+          example: animal1
+      responses:
+        '200':
+          description: animal entity
+          content:
+            application/json:
+              schema:
+                items: [ { } ]
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: animal was not found
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+      deprecated: true
+    put:
+      tags:
+        - Test animals
+      summary: Deprecated. Use /test/api/v3/animals instead. Create/update animal
+      operationId: putanimal_1
+      parameters:
+        - name: id
+          in: path
+          description: Should be the same as in body
+          required: true
+          schema:
+            type: string
+          example: animal1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items: [ { } ]
+        required: true
+      responses:
+        '200':
+          description: No Data
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+      deprecated: true
+    delete:
+      tags:
+        - test animals
+      summary: Deprecated. Use /test/api/v3/animals instead. Delete animal
+      operationId: deleteanimal_1
+      parameters:
+        - name: id
+          in: path
+          description: animal ID
+          required: true
+          schema:
+            type: string
+          example: animal1
+      responses:
+        '200':
+          description: No Data
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: animal was not found
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+      deprecated: true
+  /api/v2/test/insects/search:
+    post:
+      tags:
+        - test insects V2
+      summary: >-
+        Deprecated. Use /test/api/v3/insects/search instead.Search
+        insects
+      operationId: getinsectsIds_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items: [ { } ]
+        required: true
+      responses:
+        '200':
+          description: List of insects
+          content:
+            application/json:
+              schema:
+                type: array
+                items: [ { } ]
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: insect was not found
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+      deprecated: true

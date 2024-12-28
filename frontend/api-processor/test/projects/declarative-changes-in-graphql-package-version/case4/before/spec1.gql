@@ -1,0 +1,9 @@
+type Query {
+    getPackage(id: ID!): Package
+}
+
+type Package {
+    packageId: ID!
+    name: String!
+    parentPackageId: String
+}

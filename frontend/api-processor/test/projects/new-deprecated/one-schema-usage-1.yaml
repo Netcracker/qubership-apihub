@@ -1,0 +1,34 @@
+openapi: 3.0.0
+info:
+  title: Simple API
+  description: API specification example
+  version: 1.0.0
+paths:
+  "/sample/1":
+    get:
+      parameters:
+        - $ref: "#/components/parameters/CommonDeprecatedParameter"
+        - name: param3
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: OK
+          content: { }
+    post:
+      parameters:
+        - $ref: "#/components/parameters/CommonDeprecatedParameter"
+      responses:
+        '200':
+          description: OK
+          content: { }
+
+components:
+  parameters:
+    CommonDeprecatedParameter:
+      name: param1
+      in: query
+      schema:
+        type: string
+      deprecated: true

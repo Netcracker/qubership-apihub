@@ -1,0 +1,19 @@
+openapi: "3.0.0"
+paths:
+  /path1:
+    get:
+      responses:
+        "200":
+          description: response description
+          content:
+            application/json:
+              schema:
+                type: string
+                description: invalidSchema
+                properties:
+                  mySchema:
+                    $ref: "#/components/schemas/nestedSchema"
+components:
+  schemas:
+    nestedSchema:
+      description: nestedSchema

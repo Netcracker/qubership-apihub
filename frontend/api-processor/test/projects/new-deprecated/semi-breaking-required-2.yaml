@@ -1,0 +1,36 @@
+openapi: 3.0.3
+info:
+  title: Simple API
+  description: API specification example
+  version: 1.0.0
+paths:
+  "/sample/1":
+    get:
+      requestBody:
+        description: Request body description
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: response 200
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        firstName:
+          type: string
+          example: John

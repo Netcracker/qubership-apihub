@@ -1,0 +1,6 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+security:
+  - oAuthSample: [ ]

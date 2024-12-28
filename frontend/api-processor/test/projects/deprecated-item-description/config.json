@@ -1,0 +1,17 @@
+{
+  "packageId": "deprecated-item-description",
+  "version": "v1",
+  "files": [
+    {
+      "fileId": "deprecated-parameters.yaml",
+      "publish": true,
+      "commitId": "q1"
+    },
+    {
+      "fileId": "deprecated-header.json",
+      "publish": true,
+      "commitId": "rqwqw2121"
+    }
+  ],
+  "refs": []
+}

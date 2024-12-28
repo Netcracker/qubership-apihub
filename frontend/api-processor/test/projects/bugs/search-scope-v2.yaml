@@ -1,0 +1,24 @@
+openapi: "3.0.0"
+paths:
+  /path1:
+    get:
+      summary: version 2
+      responses:
+        '200':
+          description: response description
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  prop1:
+                    type: object
+                    description: prop1 description
+                  prop2: 
+                    $ref: '#/components/schemas/componentProp2'
+components:
+  schemas:
+    componentProp2:
+      type: object
+      description: prop2 description
+

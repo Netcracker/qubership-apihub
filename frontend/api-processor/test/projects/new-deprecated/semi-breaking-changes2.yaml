@@ -1,0 +1,22 @@
+openapi: 3.0.0
+info:
+  title: Simple API
+  description: API specification example
+  version: 1.0.0
+paths:
+  "/sample/1":
+    get:
+      requestBody:
+        description: Request body description
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prop1:
+                  type: string
+                  deprecated: true
+              required:
+                - prop1
+        required: true
+      responses: { }

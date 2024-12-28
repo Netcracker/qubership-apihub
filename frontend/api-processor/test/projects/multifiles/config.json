@@ -1,0 +1,9 @@
+{
+  "packageId": "multifiles",
+  "files": [
+    { "fileId": "openapi.json", "publish": true, "labels": ["123"] },
+    { "fileId": "readme.md", "publish": true, "labels": ["234"] },
+    { "fileId": "тест.md", "publish": true, "labels": ["4568"] },
+    { "fileId": "instagram.yaml", "publish": true, "labels": ["456"] }
+  ]
+}

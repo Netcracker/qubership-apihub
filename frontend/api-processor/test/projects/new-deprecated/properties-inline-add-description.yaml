@@ -1,0 +1,29 @@
+openapi: 3.0.0
+info:
+  title: Simple API
+  description: API specification example
+  version: 1.0.0
+paths:
+  "/sample/1":
+    get:
+      requestBody:
+        description: Request body description
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/schema"
+        required: true
+      responses: { }
+
+components:
+  schemas:
+    commonPropSchema:
+      type: string
+      deprecated: true
+    schema:
+      type: object
+      properties:
+        prop1:
+          $ref: '#/components/schemas/commonPropSchema'
+
+

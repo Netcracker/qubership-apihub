@@ -1,0 +1,1519 @@
+openapi: 3.1.0
+info:
+  title: APIHUB BE API contract
+  description: >
+    The API contract for APIHUB UI and APIDOC UI. 
+
+    You can find more information about the project at [DOC
+    page](url: https://qubership.org/APIHUB).
+  license:
+    name: NA
+    url: https://qubership.org
+  version: 0.7.18
+  x-api-audience: noBWC
+externalDocs:
+  description: Find out more about project
+  url: https://qubership.org/APIHUB
+servers:
+  - url: https://apihub.qubership.org/api/v1
+    description: Direct API call host
+  - url: http://localhost:3000
+    description: Local server
+tags:
+  - name: Export
+    description: Export API documentation.
+  - name: "[Draft]"
+    description: API HUB draft endpoints.
+  - name: Auth
+    description: APIs for auth integrations
+  - name: Branch
+    description: Branch management
+  - name: BranchFiles
+    description: Branch files management
+    description: CLI API
+  - name: CLI
+    description: CLI API
+  - name: Compare
+    description: Published project comparison API
+  - name: Custom
+    description: APIs for custom integrations
+  - name: Groups
+    description: APIs for the group management
+  - name: Packages
+    description: APIs for the package management
+  - name: History
+    description: Change history methods
+  - name: Integrations
+    description: APIs for git integrations
+  - name: Projects
+    description: APIs for the project management
+  - name: Users
+    description: APIs for the user operations
+  - name: Versions
+    description: Published project versions API
+  - name: Agent
+    description: APIHUB Agent API documentation.
+  - name: Publish
+    description: APIs for publication
+paths:
+  /integrations/gitlab/apikey:
+    get:
+      x-operation-meta: 'Custom tag exists'
+      tags:
+        - Integrations
+      summary: Get Gitlab-apikey integration status
+      description: Get integration status
+      operationId: getIntegrationsGitlabApiKey
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitlabApiKeyIntegrationStatus"
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+    put:
+      x-operation-meta: { message: 'Custom tag can contain objects too' }
+      tags:
+        - Integrations
+      summary: Update Gitlab-apikey integration
+      description: Update integration data
+      operationId: putIntegrationsGitlabApikey
+      requestBody:
+        description: User ApiKey
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GitlabApiKeyIntegrationData"
+        required: true
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitlabApiKeyIntegrationStatus"
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+  /projects/{projectId}/branches/{branch}/save:
+    parameters:
+      - $ref: "#/components/parameters/projectId"
+      - $ref: "#/components/parameters/branch"
+    post:
+      tags:
+        - Branch
+      summary: Save project branch (commit)
+      description: Commit project branch to Git
+      operationId: postProjectsIdBranchesIdSave
+      requestBody:
+        description: Publish params
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectSaveParams"
+        required: true
+      responses:
+        "200":
+          description: Successful execution
+          content: {}
+        "400":
+          $ref: "#/components/responses/badRequest400"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/notFound404"
+              examples:
+                ProjectNotFound:
+                  $ref: "#/components/examples/ProjectNotFound"
+                BranchNotFound:
+                  $ref: "#/components/examples/BranchNotFound"
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+  /projects/{projectId}/branches/{branch}/zip:
+    parameters:
+      - $ref: "#/components/parameters/projectId"
+      - $ref: "#/components/parameters/branch"
+    get:
+      tags:
+        - "[Draft]"
+        - Branch
+      summary: "[Draft] Download project branch (zip)"
+      description: Get the whole project branch as a zip file
+      operationId: getProjectsIdBranchesIdZip
+      responses:
+        "200":
+          description: Successful execution
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+                description: file to download
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/notFound404"
+              examples:
+                ProjectNotFound:
+                  $ref: "#/components/examples/ProjectNotFound"
+                BranchNotFound:
+                  $ref: "#/components/examples/BranchNotFound"
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+components:
+  parameters:
+    integrationType:
+      name: integrationType
+      schema:
+        type: string
+      description: Integration type
+      in: path
+      required: true
+    groupId:
+      name: groupId
+      in: path
+      description: Group unique identifier (full alias)
+      required: true
+      schema:
+        type: string
+      example: QS.CQSS
+    projectId:
+      name: projectId
+      in: path
+      description: Project unique identifier (full alias)
+      required: true
+      schema:
+        type: string
+      example: QS.CQSS.CPQ.TMF
+    branch:
+      name: branch
+      in: path
+      description: Git branch name (URL encoded)
+      required: true
+      schema:
+        type: string
+        format: URLencoded
+    fileId:
+      name: fileId
+      in: path
+      description: File unique string identifier (GIT file path)
+      required: true
+      schema:
+        type: string
+    commitId:
+      name: commitId
+      in: path
+      description: Commit unique string identifier (GIT commit)
+      required: true
+      schema:
+        type: string
+    blobId:
+      name: blobId
+      in: path
+      description: Git blob ID of the file
+      required: true
+      schema:
+        type: string
+    version:
+      name: version
+      in: path
+      description: Project version
+      required: true
+      schema:
+        type: string
+        example: v1.2
+    slug:
+      name: slug
+      in: path
+      description: File unique string identifier
+      required: true
+      schema:
+        type: string
+    limit:
+      name: limit
+      in: query
+      description: items per page
+      schema:
+        type: number
+        default: 100
+        maximum: 100
+        minimum: 1
+    page:
+      name: page
+      in: query
+      description: page number
+      schema:
+        type: number
+        default: 0
+    filter:
+      name: filter
+      in: query
+      description: filter by name
+      schema:
+        type: string
+    sharedId:
+      name: sharedId
+      in: path
+      description: Shared object id
+      required: true
+      schema:
+        type: string
+        example: ebbcce45
+  schemas:
+    AuthResponse:
+      description: Auth response
+      type: object
+      properties:
+        token:
+          description: Bearer token
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - token
+    GitlabApiKeyIntegrationStatus:
+      description: Gitlab ApiKey integration status
+      type: object
+      properties:
+        status:
+          description: Integration status
+          type: string
+      required:
+        - status
+    GitlabApiKeyIntegrationData:
+      description: Gitlab ApiKey integration params
+      type: object
+      properties:
+        apikey:
+          description: Gitlab user apikey
+          type: string
+      required:
+        - apikey
+    GroupCreate:
+      description: Project group/organization creation params
+      type: object
+      properties:
+        alias:
+          description: Group alias (abbreviation
+          type: string
+        name:
+          description: Group full name
+          type: string
+        parentId:
+          description: Parent group Id
+          type: string
+        imageUrl:
+          type: string
+          format: URL
+        description:
+          type: string
+          description: Group description
+      required:
+        - alias
+        - name
+    Group:
+      description: Project group/organization
+      type: object
+      title: ""
+      required:
+        - groupId
+        - alias
+        - name
+      properties:
+        groupId:
+          description: Internal unique group ID (full alias)
+          type: string
+        alias:
+          description: Group short alias
+          type: string
+        name:
+          description: Group display name
+          type: string
+        parentId:
+          description: Parent groupId (full alias)
+          type: string
+          example: QS.CQSS
+        description:
+          type: string
+        imageUrl:
+          type: string
+          format: URL
+        isFavorite:
+          description: Sign of the favorite project for the caller user
+          type: boolean
+        lastVersion:
+          type: string
+    GroupInfo:
+      description: Project group/organization info
+      type: object
+      title: ""
+      properties:
+        parents:
+          description: Parent groups list
+          type: array
+          items:
+            $ref: "#/components/schemas/Group"
+        alias:
+          description: Group short alias (abbreviation)
+          type: string
+          deprecated: true
+        name:
+          description: Group full name
+          type: string
+        imageUrl:
+          type: string
+          format: URL
+        description:
+          type: string
+        groupId:
+          type: string
+        parentId:
+          type: string
+        isFavorite:
+          type: boolean
+        lastVersion:
+          type: string
+    Repository:
+      description: Linked GIT repository params
+      type: object
+      properties:
+        repositoryId:
+          description: External GIT repository id
+          type: string
+        name:
+          description: External GIT repository full name
+          type: string
+        defaultBranch:
+          description: Name of the default branch of the linked repository
+          type: string
+    ProjectStatus:
+      description: Published project version content
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - exists
+            - deleted
+    ProjectCreate:
+      description: Parameters for the artifact creation
+      required:
+        - groupId
+        - alias
+        - name
+        - repositoryId
+        - defaultBranch
+        - defaultFolder
+      type: object
+      properties:
+        groupId:
+          description: Internal unique group ID
+          type: string
+        name:
+          description: Name of the new project
+          type: string
+        alias:
+          description: Project short alias (abbreviation)
+          type: string
+        description:
+          description: Common description of the project
+          type: string
+        integration:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - gitlab
+              default: gitlab
+            repositoryId:
+              description: External Git repository id
+              type: string
+            defaultBranch:
+              description: Name of the default branch of the linked repository
+              type: string
+            defaultFolder:
+              description: Name of the default folder of the linked branch
+              type: string
+    Project:
+      description: Simple project object, without content and dependencies
+      type: object
+      properties:
+        projectId:
+          description: Project unique string identifier (full alias)
+          type: string
+        alias:
+          type: string
+          description: Project short alias
+        groupId:
+          description: Parent GroupId
+          type: string
+        groups:
+          description: Project groups list
+          type: array
+          items:
+            $ref: "#/components/schemas/Group"
+        name:
+          description: Name of the new project
+          type: string
+        description:
+          description: Common description of the project
+          type: string
+        integration:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - gitlab
+              default: gitlab
+            repositoryId:
+              description: External Git repository id
+              type: string
+            defaultBranch:
+              description: Name of the default branch of the linked repository
+              type: string
+            defaultFolder:
+              description: Name of the default folder of the linked branch
+              type: string
+        isFavorite:
+          description: Sign of the favorite project for the caller user
+          type: boolean
+        lastVersion:
+          description: Last published version
+          type: string
+    ProjectUpdate:
+      description: >-
+        Parameters for the project update. Not changed parameters must not be
+        transmitted. Parameters, required in creation, must not be empty if
+        transmitted.
+      type: object
+      properties:
+        groupId:
+          description: Internal unique group ID
+          type: string
+        name:
+          description: Name of the new project
+          type: string
+        alias:
+          description: Project alias
+          type: string
+        description:
+          description: Common description of the project
+          type: string
+        repositoryId:
+          description: External repository project ID
+          type: string
+        defaultbranch:
+          description: Name of the default branch of the linked repository
+          type: string
+    GitBranch:
+      description: External Git branch params
+      type: object
+      properties:
+        name:
+          description: Branch name
+          type: string
+    GitBranchFile:
+      description: Git branch file
+      type: object
+      properties:
+        name:
+          description: item name
+          type: string
+        isFolder:
+          description: Is item is folder
+          type: boolean
+          default: false
+    ProjectBranch:
+      description: External Git branch params
+      type: object
+      properties:
+        name:
+          description: Branch name
+          type: string
+        version:
+          type: string
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        publishedAt:
+          type: string
+          format: date-time
+        permissions:
+          type: array
+          description: |
+            "all" value will be returned if user has permission to push to the current branch.
+          items:
+            type: string
+            enum:
+              - all
+          default: []
+      required:
+        - name
+        - permissions
+    ChangeAction:
+      description: File/ref change action
+      type: string
+      deprecated: true
+      enum:
+        - add
+        - remove
+        - modify
+        - rename
+    ProjectContent:
+      title: ProjectContent
+      description: Schema for project content
+      type: object
+      properties:
+        readonly:
+          description: Is project branch readonly for user
+          type: boolean
+          default: false
+        isDraft:
+          type: boolean
+          description: >-
+            The flag indicates that the project is in draft and cannot be
+            published
+        isPublished:
+          type: boolean
+          description: The flag indicates that the project has any published version or not
+        editors:
+          description: "[Draft] List of users who editing branch as draft"
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        configFileId:
+          type: string
+        changeType:
+          type: string
+          default: none
+          enum:
+            - added
+            - updated
+            - none
+        files:
+          description: "[before Contents]"
+          type: array
+          items:
+            type: object
+            properties:
+              fileId:
+                description: File Id (GIT file path)
+                type: string
+              blobId:
+                type: string
+                description: Git blob ID of the file
+              action:
+                $ref: "#/components/schemas/ChangeAction"
+              isDraft:
+                description: File updated and not saved (committed)
+                type: boolean
+                deprecated: true
+              type:
+                $ref: "#/components/schemas/ShortcutTypeEnum"
+              name:
+                description: File name
+                type: string
+              path:
+                description: GIT path to file
+                type: string
+              publish:
+                description: Is file for publishing
+                type: boolean
+              labels:
+                description: List of file labels
+                type: array
+                items:
+                  type: string
+              status:
+                description: File status
+                type: string
+                default: unmodified
+                enum:
+                  - moved
+                  - modified
+                  - excluded
+                  - deleted
+                  - added
+                  - included
+                  - unmodified
+              changeType:
+                description: Git
+                type: string
+                default: none
+                enum:
+                  - none
+                  - added
+                  - removed
+                  - updated
+              movedFrom:
+                description: Original file Id
+                type: string
+              conflictedBlobId:
+                type: string
+              conflictedFileId:
+                type: string
+            required:
+              - name
+              - path
+              - fileId
+              - status
+        refs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ref"
+    Ref:
+      type: object
+      properties:
+        refId:
+          description: project id (full alias)
+          type: string
+        status:
+          description: File status
+          type: string
+          default: unmodified
+          enum:
+            - modified
+            - deleted
+            - added
+            - unmodified
+        action:
+          $ref: "#/components/schemas/ChangeAction"
+        kind:
+          description: reference kind (group or project)
+          enum:
+            - group
+            - project
+          type: string
+        name:
+          description: Project name
+          type: string
+        version:
+          description: Published version name
+          type: string
+        type:
+          type: string
+          description: Relation type
+          enum:
+            - depend
+            - import
+        versionStatus:
+          $ref: "#/components/schemas/VersionStatusEnum"
+    BranchConfig:
+      title: BranchConfig
+      description: Schema for config file stored in git
+      type: object
+      properties:
+        projectId:
+          type: string
+        files:
+          description: ""
+          type: array
+          items:
+            type: object
+            properties:
+              fileId:
+                description: File Id (GIT file path)
+                type: string
+              publish:
+                type: boolean
+              blobId:
+                type: string
+              labels:
+                type: array
+                items:
+                  type: string
+              status:
+                type: string
+                enum:
+                  - added
+                  - removed
+                  - modified
+                  - replaced
+                  - none
+            required:
+              - fileId
+        refs:
+          type: array
+          items:
+            type: object
+            properties:
+              refId:
+                description: project id (full alias)
+                type: string
+              version:
+                description: Published version name
+                type: string
+              type:
+                type: string
+                description: Relation type
+                enum:
+                  - depend
+                  - import
+    ProjectBranchConfigParams:
+      title: ProjectBranchConfigParams
+      description: Schema for project branch update body (config file stored in git)
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                description: Shortcut name
+                type: string
+              path:
+                description: Virtual path to folder/shortcut
+                type: string
+              fileId:
+                description: File if (Git file path)
+                type: string
+                format: URL
+            required:
+              - name
+              - path
+              - fileId
+        refs:
+          type: array
+          items:
+            $ref: "#/components/schemas/RefParam"
+    RefParam:
+      type: object
+      required:
+        - refId
+        - version
+      properties:
+        refId:
+          description: project full alias
+          type: string
+        type:
+          type: string
+          description: Relation type
+          enum:
+            - depend
+            - import
+          default: depend
+        version:
+          description: Published version name
+          type: string
+    ShortcutTypeEnum:
+      description: Enum list of project content types
+      type: string
+      enum:
+        - API/OPENAPI-3
+        - API/OPENAPI-3-1
+        - API/ASYNCAPI
+        - API/gRPC
+        - API/GQL
+        - API/AVRO
+        - SECURITY_MATRIX
+        - ERR_CODES
+        - DEFINITIONS
+        - MD
+        - PICTURE
+    VersionStatusEnum:
+      description: Enum list of project status
+      type: string
+      enum:
+        - draft
+        - release
+        - deprecated
+        - archived
+    ProjectSaveParams:
+      description: Project save params
+      type: object
+      properties:
+        comment:
+          description: Git commit comment
+          type: string
+        branch:
+          description: "[Draft] New branch name"
+          type: string
+        createMergeRequest:
+          description: "[Draft] Create Merge request for new branch"
+          type: boolean
+          default: false
+      required:
+        - comment
+    ProjectPublishParams:
+      description: Project publish params
+      type: object
+      properties:
+        version:
+          description: Version name
+          type: string
+        previousVersion:
+          description: Previous release version
+          type: string
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        serviceName:
+          deprecated: true
+          type: string
+          description: Runtime serviceName
+        saveSources:
+          type: boolean
+          default: false
+    PackagePublishParams:
+      description: Package publish params
+      type: object
+      properties:
+        version:
+          description: Version name
+          type: string
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        refs:
+          type: array
+          items:
+            type: string
+    GroupPublishParams:
+      description: Package publish params
+      type: object
+      properties:
+        version:
+          description: Version name
+          type: string
+        previousVersion:
+          deprecated: true
+          type: string
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        refs:
+          type: array
+          items:
+            $ref: "#/components/schemas/RefParam"
+    ChangeHistory:
+      description: History item of the content changes or publications
+      type: object
+      properties:
+        commitId:
+          type: string
+          description: |
+            <span style="color:red">**[Draft]**</span> Integration commit id
+        modifiedBy:
+          $ref: "#/components/schemas/User"
+        modifiedAt:
+          description: Date of modification
+          type: string
+          format: date-time
+        comment:
+          description: Commit comment
+          type: string
+    User:
+      description: User dictionary
+      type: object
+      properties:
+        id:
+          description: Login of the user
+          type: string
+        name:
+          description: Name of the user
+          type: string
+        avatarUrl:
+          description: Avatar of the user
+          type: string
+          format: URL
+    ProjectApiKey:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+        name:
+          type: string
+        createdBy:
+          type: string
+          format: datetime
+        createdAt:
+          type: string
+          format: datetime
+    ProjectVersion:
+      description: Item of the project versions list
+      type: object
+      properties:
+        version:
+          description: Project version number
+          type: string
+        previousVersion:
+          type: string
+        previousVersionPackageId:
+          type: string
+        serviceName:
+          type: string
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        publishedAt:
+          description: Date of the project version publication
+          type: string
+          format: date-time
+        revision:
+          type: number
+          description: Publish revision counter
+    ProjectVersionContent:
+      description: Published project version content
+      type: object
+      required:
+        - status
+        - status
+        - refs
+        - files
+      properties:
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        previousVersion:
+          type: string
+        previousVersionPackageId:
+          type: string
+        serviceName:
+          type: string
+        publishedAt:
+          description: Date of the project version publication
+          type: string
+          format: date-time
+        refs:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/ProjectVersionRef"
+              - type: object
+                properties:
+                  refId:
+                    description: "[Draft] Regs from Import References with Id"
+                    type: string
+        files:
+          description: List of the project content objects
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/ProjectVersionFile"
+              - type: object
+                properties:
+                  refId:
+                    description: "[Draft] File from Reference with Id"
+                    type: string
+        changes:
+          type: object
+          properties:
+            summary:
+              type: object
+              description: Numbers of all types of changes
+            data:
+              type: array
+              items:
+                type: object
+                description: Here will be paths, endpoints, severity and other params.
+        validations:
+          description: Map of validation results
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              summary:
+                type: object
+                description: Numbers of all types of changes
+              data:
+                type: array
+                items:
+                  type: object
+                  description: Here will be paths, endpoints, severity and other params.
+    ProjectVersionFile:
+      description: API content object parameters for the list function
+      type: object
+      properties:
+        slug:
+          description: published file slug
+          type: string
+        fileId:
+          type: string
+        title:
+          type: string
+        type:
+          $ref: "#/components/schemas/ShortcutTypeEnum"
+        description:
+          description: Content item description
+          type: string
+    ProjectVersionRef:
+      description: Project version reference
+      type: object
+      properties:
+        name:
+          description: Name of the new project
+          type: string
+        refId:
+          description: Project/group Id
+          type: string
+        kind:
+          description: reference kind (group or project)
+          enum:
+            - group
+            - project
+          type: string
+        type:
+          type: string
+          description: Relation type
+          enum:
+            - depend
+            - import
+        version:
+          description: Project version number
+          type: string
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+    DependentProject:
+      description: Parameters of the dependent project
+      type: object
+      properties:
+        projectId:
+          description: ID of the dependent project
+          type: string
+        name:
+          type: string
+          description: Project name
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/Group"
+        alias:
+          description: Project alias
+          type: string
+        version:
+          description: Version of the dependent project
+          type: string
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+    FilterParams:
+      description: Common filter params object
+      type: object
+      properties:
+        searchString:
+          description: Search by common text fields (summary, description, title, etc.)
+          type: string
+        organizationCode:
+          description: Code of the organization from the dictionary
+          type: string
+        projectId:
+          description: Project unique string identifier
+          type: string
+        projectStateCode:
+          description: Code of project state from the dictionary
+          type: string
+        projectVersion:
+          description: Number of the project version. Wildcard is acceptable
+          type: string
+        artifactVersion:
+          description: Number of the Content object version. Wildcard is acceptable
+          type: string
+        publicationDateStart:
+          description: Publication date range start
+          type: string
+          format: date-time
+        publicationDateEnd:
+          description: Publication date range end
+          type: string
+          format: date-time
+        openAPIParams:
+          $ref: "#/components/schemas/OpenAPIParamsFilter"
+    VersionsDiff:
+      description: Two versions diff
+      type: object
+      properties: {}
+    SharedIdResponse:
+      description: Shared link id
+      type: object
+      properties:
+        sharedId:
+          type: string
+    CompareAction:
+      type: string
+      enum:
+        - add
+        - delete
+        - change
+        - none
+      default: none
+    ChangesDetails:
+      type: object
+      properties:
+        breaking:
+          type: number
+        nonBreaking:
+          type: number
+        annotation:
+          type: number
+        unclassified:
+          type: number
+    VersionCompareData:
+      description: Two versions diff
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            description: Project version file diff
+            type: object
+            properties:
+              before:
+                $ref: "#/components/schemas/ProjectVersionFile"
+              after:
+                $ref: "#/components/schemas/ProjectVersionFile"
+              action:
+                $ref: "#/components/schemas/CompareAction"
+              changes:
+                $ref: "#/components/schemas/ChangesDetails"
+        refs:
+          type: array
+          items:
+            description: Project version reference diff
+            type: object
+            properties:
+              before:
+                $ref: "#/components/schemas/ProjectVersionRef"
+              after:
+                $ref: "#/components/schemas/ProjectVersionRef"
+              action:
+                $ref: "#/components/schemas/CompareAction"
+    OpenAPIParamsFilter:
+      description: Filter object for OpenAPI object type search
+      type: object
+      properties:
+        operationId:
+          description: Search by operationId. Wildcard is acceptable
+          type: string
+        methods:
+          description: List of available methods for search
+          type: array
+          items:
+            type: string
+        resourcePath:
+          description: Part of the resource path of the API. Wildcard is acceptable
+          type: string
+        tags:
+          description: List of tags, used in specification (field -Tag)
+          type: array
+          items:
+            type: string
+        definition:
+          description: Search by API definitions. Wildcard is acceptable
+          type: string
+        APItype:
+          $ref: "#/components/schemas/ShortcutTypeEnum"
+    ErrorResponse:
+      description: An error description
+      type: object
+      properties:
+        status:
+          description: HTTP Status Code
+          type: number
+        code:
+          description: Internal string error code. Mandatory in response.
+          type: string
+          x-error-codes: {}
+        message:
+          description: The attribute contains an error message.
+          type: string
+        params:
+          type: object
+          description: Message parameters
+          example:
+            id: 12345
+            type: string
+        debug:
+          description: >-
+            The attribute contains debug details (e.g. stack-trace). Presented
+            in the error response only on Dev/Test environments if corresponding
+            logging level is enabled.
+          type: string
+      required:
+        - status
+        - code
+        - message
+    SystemInfo:
+      description: Information about the API HUB product
+      type: object
+      properties:
+        backendVersion:
+          description: Current backend version
+          type: string
+          example: main-20220727.092034-53
+        frontendVersion:
+          description: Current frontend version
+          type: string
+          example: 0.2.2-20220725071210
+        productionMode:
+          description: Production environment flag
+          type: boolean
+        externalLinks:
+          description: List of links to the external resource, for example URL to the documentation or URL pointing to the contact information of support group.
+          type: array
+          items:
+            description: |
+              Title for the link and corresponding URL. Value must written in the following format <linkTitle>|<URL>. If array item does not contain vertical bar (|), then this item will be skipped.
+            type: string
+          example: [User guide|https://www.example.com/guide, Support team|https://www.example.com/support]
+    ValidationParams:
+      description: qubership product release custom API validation parameters
+      properties:
+        groupName:
+          description: >-
+            Name of the group for validation. The release NC product name may be
+            used.
+          type: string
+          example: Quotation Management
+        version:
+          description: >-
+            The group release number. Must be equal to the published project
+            version in APIHUB.
+          type: string
+          example: "22.1"
+      required:
+        - groupName
+        - version
+    ValidationReport:
+      description: |
+        qubership product release custom API validation report.
+      properties:
+        validationId:
+          description: Validation unique string identifier
+          type: string
+          format: uuid
+          example: 31adff72-3a66-4c7c-8997-aeca45e0bcbe
+        groupName:
+          description: >-
+            Name of the group for validation. The release NC product name may be
+            used.
+          type: string
+          example: Quotation Management
+        status:
+          description: The whole validation status
+          type: string
+          enum:
+            - "NO"
+            - "YES"
+            - SEMI
+            - IN_PROGRESS
+        projects:
+          description: >-
+            Collection of all nested projects in Group with their validation
+            results.
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationProject"
+    ValidationProject:
+      description: Details of project validation
+      properties:
+        projectId:
+          description: Project unique identifier (full alias)
+          type: string
+          example: QS.CloudQSS.CPQ.Q-TMF
+        projectName:
+          description: Project name
+          type: string
+          example: Quote TMF
+        status:
+          description: The project validation status
+          type: string
+          enum:
+            - "NO"
+            - "YES"
+            - SEMI
+        files:
+          description: >-
+            Collection of all nested files in Project with their validation
+            results.
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationFile"
+    ValidationFile:
+      description: Details of particular file validation
+      properties:
+        slug:
+          description: File public slug
+          type: string
+          example: qitmf-v5.9.json
+        status:
+          description: The file validation status
+          type: string
+          enum:
+            - "NO"
+            - "YES"
+            - SEMI
+        messages:
+          description: Collection of all messages in file validation.
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationFileMessage"
+    ValidationFileMessage:
+      description: Validation message details
+      properties:
+        type:
+          description: The message type
+          type: string
+          enum:
+            - ERROR
+            - WARNING
+            - INFORMATION
+        path:
+          description: Relative path to the error/warning point in file
+          type: string
+          nullable: true
+          default: ""
+        text:
+          description: Validation error/warning message
+          type: string
+          example: Failed to get validation messages
+  examples:
+    FilterParams:
+      description: Example of the filter params
+      value:
+        searchString: "*any description*"
+        organizationCode: qubership
+        projectId: f81d4fae-7dec-11d0-a765-00a0c91e6bf6
+        projectStateCode: Develop
+        projectVersion: v1-2
+        artifactVersion: v2.1
+        publicationDateStart: "2021-11-21T23:59:59.000Z"
+        publicationDateEnd: "2021-12-31T23:59:59.000Z"
+        openAPIParams:
+          operationId: "*offering*"
+          methods:
+            - GET
+            - POST
+          resourcePath: /catalogManagement/v2/productOffering
+          tags:
+            - ProductOffering
+          definition: "*offering*"
+          APItype: API/OPENAPI-3
+    Project:
+      description: Example of the project params
+      value:
+        groupId: 957c5116-aeaa-400b-962e-37a7616c3099
+        projectId: f81d4fae-7dec-11d0-a765-00a0c91e6bf6
+        name: Test project
+        alias: Test project alias
+        description: Project for the test purpose
+        defaultBranch: develop
+        isFavorite: false
+    ProjectCreate:
+      description: Example of the project creation params
+      value:
+        groupId: QS.QSS.PRG
+        name: Test project
+        alias: PRG
+        description: Project for the test purpose
+        repositoryId: "112233"
+        defaultBranch: develop
+        defaultFolder: /apihub
+    SystemInfo:
+      description: Example of the system description
+      value:
+        version: 0.1.0
+        DOC: https://doc.qubership.org/pages/viewpage.action?pageId=1114318293
+        API: https://doc.qubership.org/display/SAAS/Admin+API+List
+        contacts:
+          - name: Admin
+            contact: admin@qubership.org
+    BranchNotFound:
+      description: Branch not found by ID. Response for the 404 error
+      value:
+        status: 404
+        code: "0001"
+        source:
+          pointer: $.path.branch
+          parameter: branch
+        reason: Branch not found
+        message: Incorrect ID or branch not found
+    ProjectNotFound:
+      description: Project not found by ID. Response for the 404 error
+      value:
+        status: 404
+        code: "0005"
+        source:
+          pointer: $.path.projectId
+          parameter: projectId
+        reason: Project not found
+        message: Incorrect ID or project not found
+    VersionNotFound:
+      description: Version not found by number. Response for the 404 error
+      value:
+        status: 404
+        code: "0002"
+        source:
+          pointer: $.path.version
+          parameter: version
+        reason: Version not found
+        message: Incorrect number or version not found
+    FileNotFound:
+      description: File not found by slug. Response for the 404 error
+      value:
+        status: 404
+        code: "0003"
+        source:
+          pointer: $.path.file
+          parameter: slug
+        reason: File not found
+        message: Incorrect slug or file not found
+  securitySchemes:
+    BearerAuth:
+      type: http
+      description: Common security scheme for API usage
+      scheme: bearer
+      bearerFormat: JWT
+    api-key:
+      type: apiKey
+      description: Api-key authentication
+      name: api-key
+      in: header
+    BasicAuth:
+      type: http
+      description: Login/password authentication
+      scheme: basic
+  responses:
+    badRequest400:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    notFound404:
+      description: Not found or incorrect ID
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    gone410:
+      description: >-
+        Gone. Indicates that the resource requested was previously in use but is
+        no longer available and will not be available again. This should be used
+        when a resource has been intentionally removed and the resource should
+        be purged. Upon receiving a 410 status code, the client should not
+        request the resource in the future. Clients such as search engines
+        should remove the resource from their indices.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    internalServerError500:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+security:
+  - BearerAuth: []
+  - api-key: []

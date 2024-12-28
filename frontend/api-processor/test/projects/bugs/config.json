@@ -1,0 +1,55 @@
+{
+  "packageId": "bugs",
+  "version": "v1",
+  "files": [
+    {
+      "fileId": "unknown-type-bug.json",
+      "publish": true,
+      "labels": [
+        "2145"
+      ],
+      "commitId": "rqwqw2121"
+    },
+    {
+      "fileId": "OpenApi 3.1.yaml",
+      "publish": true,
+      "labels": [
+        "222"
+      ],
+      "commitId": "q2"
+    },
+    {
+      "fileId": "docs/API-HUB_09.03.22.yaml",
+      "publish": true,
+      "labels": [
+        "444"
+      ],
+      "commitId": "q4"
+    },
+    {
+      "fileId": "docs/Markdown_example.md",
+      "publish": true,
+      "labels": [
+        "666"
+      ],
+      "commitId": "q6"
+    },
+    {
+      "fileId": "test1.json",
+      "publish": true,
+      "labels": [
+        "888"
+      ],
+      "commitId": "q8"
+    },
+    {
+      "fileId": "petstore(publish_1).yaml",
+      "publish": true
+    },
+    {
+      "fileId": "petstore(publish_2).yaml",
+      "publish": true
+    }
+  ],
+  "refs": []
+}

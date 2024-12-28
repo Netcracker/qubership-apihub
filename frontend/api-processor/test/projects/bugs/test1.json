@@ -1,0 +1,966 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Geographic Site Management",
+    "description": "This is Swagger UI environment generated for the TMF Geographic Site Management specification",
+    "version": "V1.1"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8074",
+      "description": "Generated server url"
+    },
+    {
+      "url": "/"
+    }
+  ],
+  "security": [
+    {
+      "OAuth2 Access Token": []
+    }
+  ],
+  "paths": {
+    "/geographicSiteManagement/v1/geographicSite": {
+      "get": {
+        "tags": [
+          "GeographicSite"
+        ],
+        "summary": "List Geographic Sites",
+        "description": "This operation is used to retrieve a List of GeographicSite",
+        "operationId": "searchGeographicSites",
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "uniqueItems": true,
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GeographicSite"
+                  }
+                }
+              }
+            }
+          },
+          "206": {
+            "description": "Partial Content",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GeographicSite"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "default response",
+            "content": {
+              "application/json;charset=UTF-8;model=errorResponse;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "default response",
+            "content": {
+              "application/json;charset=UTF-8;model=errorResponse;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "GeographicSite"
+        ],
+        "summary": "Create Geographic Site",
+        "description": "This operation is used to create a Geographic Site",
+        "operationId": "registerSite",
+        "requestBody": {
+          "content": {
+            "application/json;charset=UTF-8": {
+              "schema": {
+                "$ref": "#/components/schemas/GeographicSite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeographicSite"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "default response",
+            "content": {
+              "application/json;charset=UTF-8;model=errorResponse;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "default response",
+            "content": {
+              "application/json;charset=UTF-8;model=errorResponse;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/geographicSiteManagement/v1/geographicSite/{id}": {
+      "get": {
+        "tags": [
+          "GeographicSite"
+        ],
+        "summary": "Retrieve Geographic Site",
+        "description": "This operation is used to retrieve a Geographic Site",
+        "operationId": "getGeographicSiteById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "uniqueItems": true,
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeographicSite"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "default response",
+            "content": {
+              "application/json;charset=UTF-8;model=errorResponse;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "default response",
+            "content": {
+              "application/json;charset=UTF-8;model=errorResponse;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "GeographicSite"
+        ],
+        "summary": "Patch Geographic Site",
+        "description": "This operation is used to patch a Geographic Site",
+        "operationId": "patchGeographicSite",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json;charset=UTF-8": {
+              "schema": {
+                "$ref": "#/components/schemas/GeographicSite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeographicSite"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json;charset=UTF-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json;charset=UTF-8;model=geographic_site;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "default response",
+            "content": {
+              "application/json;charset=UTF-8;model=errorResponse;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "default response",
+            "content": {
+              "application/json;charset=UTF-8;model=errorResponse;version=1": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorEntry": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ErrorSource"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "debugDetail": {
+            "type": "string"
+          },
+          "extra": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorEntry"
+            }
+          }
+        }
+      },
+      "ErrorSource": {
+        "type": "object",
+        "properties": {
+          "pointer": {
+            "type": "string"
+          },
+          "parameter": {
+            "type": "string"
+          },
+          "value": {
+            "type": "object"
+          },
+          "description": {
+            "type": "string"
+          },
+          "example": {
+            "type": "string"
+          }
+        }
+      },
+      "CalendarPeriod": {
+        "required": [
+          "day",
+          "hourPeriod",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Indication of the availability of the site (e.g.: open)"
+          },
+          "day": {
+            "type": "string",
+            "description": "Day where the calendar status applies (e.g.: monday, mon-to-fri, weekdays, weekend, all week, ...)"
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "Indication of the timezone applicable to the calendar information (e.g.: Paris, GMT+1)"
+          },
+          "hourPeriod": {
+            "type": "array",
+            "description": "A list of periods of hours. Defines the time period when the status for the place is applicable",
+            "items": {
+              "$ref": "#/components/schemas/HourPeriod"
+            }
+          }
+        },
+        "description": "Indicating the time availability of the site for different periods"
+      },
+      "GeographicAddress": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the address"
+          },
+          "href": {
+            "type": "string",
+            "description": "Href to the address"
+          },
+          "streetNr": {
+            "type": "string",
+            "description": "Number identifying a specific property on a public street. It may be combined with streetNrLast for ranged addresses"
+          },
+          "streetNrSuffix": {
+            "type": "string",
+            "description": "The first street number suffix"
+          },
+          "streetNrLast": {
+            "type": "string",
+            "description": "Last number in a range of street numbers allocated to a property"
+          },
+          "streetNrLastSuffix": {
+            "type": "string",
+            "description": "Last street number suffix for a ranged address"
+          },
+          "streetName": {
+            "type": "string",
+            "description": "Name of the street"
+          },
+          "streetType": {
+            "type": "string",
+            "description": "Type of the street, e.g., Alley, avenue, boulevard, brae, crescent, drive, highway, lane, terrace, parade, place, tarn, way, wharf"
+          },
+          "streetSuffix": {
+            "type": "string",
+            "description": "A modifier denoting a relative direction"
+          },
+          "postCode": {
+            "type": "string",
+            "description": "Descriptor for a postal delivery area, used to speed and simplify the delivery of mail (also known as zipcode)"
+          },
+          "locality": {
+            "type": "string",
+            "description": "Locality for the address"
+          },
+          "city": {
+            "type": "string",
+            "description": "City where the address is located"
+          },
+          "stateOrProvince": {
+            "type": "string",
+            "description": "State or province where the address is located"
+          },
+          "country": {
+            "type": "string",
+            "description": "Country where the address is located"
+          },
+          "addressLine1": {
+            "type": "string",
+            "description": "Address line 1"
+          },
+          "addressLine2": {
+            "type": "string",
+            "description": "Address line 2"
+          },
+          "addressLine3": {
+            "type": "string",
+            "description": "Address line 3"
+          },
+          "extendedAttributes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "description": "Attribute used to capture additional parameters for a Geographic Address"
+            },
+            "description": "Attribute used to capture additional parameters for a Geographic Address"
+          },
+          "@type": {
+            "type": "string",
+            "description": "Indicates the type of the resource. Here can be 'UrbanPropertyAddress', ‘FormattedAddress’, ‘JapanesePropertyAddress’ , ‘AustralianPropertyAddress’, etc… "
+          },
+          "@schemaLocation": {
+            "type": "string",
+            "description": "A Link to the schema describing this REST Resource"
+          }
+        },
+        "description": "A geographic address is a structured textual way of describing how to find a Property in an urban area (country properties are often defined differently)"
+      },
+      "GeographicSite": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the site"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the site"
+          },
+          "description": {
+            "type": "string",
+            "description": "Text describing additional information regarding the site"
+          },
+          "code": {
+            "type": "string",
+            "description": "A code that may be used for some addressing schemes"
+          },
+          "status": {
+            "type": "string",
+            "description": "The condition of the GeographicSite, such as active, inactive, planned"
+          },
+          "href": {
+            "type": "string",
+            "description": "Href to the site"
+          },
+          "extendedAttributes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "description": "Attribute used to capture additional parameters for a Geographic Site"
+            },
+            "description": "Attribute used to capture additional parameters for a Geographic Site"
+          },
+          "relatedParty": {
+            "type": "array",
+            "description": "A list of related party references. A related party defines party or party role linked to a specific entity",
+            "items": {
+              "$ref": "#/components/schemas/RelatedPartyRef"
+            }
+          },
+          "calendar": {
+            "type": "array",
+            "description": "A list of calendar period entries indicating the time availability of the site for different periods",
+            "items": {
+              "$ref": "#/components/schemas/CalendarPeriod"
+            }
+          },
+          "siteRelationship": {
+            "type": "array",
+            "description": "A list of linked sites",
+            "items": {
+              "$ref": "#/components/schemas/SiteRelationship"
+            }
+          },
+          "address": {
+            "$ref": "#/components/schemas/GeographicAddress"
+          },
+          "initialMarket": {
+            "$ref": "#/components/schemas/MarketSegmentRef"
+          },
+          "@baseType": {
+            "type": "string",
+            "description": "Generic attribute indicating the base class type of the extension class of the object.Useful only when the class type of the current object is unknown to the implementation"
+          },
+          "@type": {
+            "type": "string",
+            "description": "Indicates the base (class) type of the GeographicSite"
+          },
+          "@schemaLocation": {
+            "type": "string",
+            "description": "Generic attribute containing the link to the schema that defines the structure of the class type of the object"
+          }
+        },
+        "description": "The entity that represents common information about a customer's site"
+      },
+      "HourPeriod": {
+        "required": [
+          "endHour",
+          "startHour"
+        ],
+        "type": "object",
+        "properties": {
+          "startHour": {
+            "type": "string",
+            "description": "The time when the status starts applying"
+          },
+          "endHour": {
+            "type": "string",
+            "description": "The time when the status ends applying"
+          }
+        },
+        "description": "Defines the time period when the status for the place is applicable"
+      },
+      "MarketSegmentRef": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the market segment"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the market segment"
+          },
+          "href": {
+            "type": "string",
+            "description": "Href to the market segment"
+          },
+          "@referredType": {
+            "type": "string",
+            "description": "Generic attribute indicating the name of the class type of the referred resource/entity"
+          }
+        },
+        "description": "The entity represents reference to the Market"
+      },
+      "RelatedPartyRef": {
+        "required": [
+          "@referredType",
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of Related Party"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the Related Party"
+          },
+          "role": {
+            "type": "string",
+            "description": "Role of the related party"
+          },
+          "validFor": {
+            "$ref": "#/components/schemas/TimePeriod"
+          },
+          "href": {
+            "type": "string",
+            "description": "Href to the Related Party"
+          },
+          "@referredType": {
+            "type": "string",
+            "description": "Generic attribute indicating the name of the class type of the referred resource/entity"
+          }
+        },
+        "description": "The Party/PartyRole which the Geographical Site is related with"
+      },
+      "SiteRelationship": {
+        "required": [
+          "id",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the related site"
+          },
+          "href": {
+            "type": "string",
+            "description": "Href to the site"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of relationship"
+          },
+          "role": {
+            "type": "string",
+            "description": "Role of the related site in the relationship"
+          },
+          "validFor": {
+            "$ref": "#/components/schemas/TimePeriod"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the related site"
+          },
+          "@referredType": {
+            "type": "string",
+            "description": "Generic attribute indicating the name of the class type of the referred resource/entity"
+          }
+        },
+        "description": "Defines  linked sites"
+      },
+      "TimePeriod": {
+        "type": "object",
+        "properties": {
+          "startDateTime": {
+            "type": "string",
+            "description": "The left boundary of the time interval",
+            "format": "date-time"
+          },
+          "endDateTime": {
+            "type": "string",
+            "description": "The right boundary of the time interval",
+            "format": "date-time"
+          }
+        },
+        "description": "An entity representing a time interval"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2 Access Token": {
+        "type": "apiKey",
+        "name": "Authorization",
+        "in": "header"
+      }
+    }
+  }
+}

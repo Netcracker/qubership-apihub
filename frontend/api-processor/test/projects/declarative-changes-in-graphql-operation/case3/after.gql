@@ -1,0 +1,13 @@
+type Mutation {
+    createPackage(packageId: MyId!): PackageResponse
+}
+
+type PackageResponse {
+    packageId: MyId
+    name: String
+}
+
+enum MyId {
+    one,
+    two # new
+}

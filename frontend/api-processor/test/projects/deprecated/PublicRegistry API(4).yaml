@@ -1,0 +1,3400 @@
+openapi: 3.0.3
+info:
+  title: APIHUB registry public API
+  description: |
+    The API contract for APIHUB direct call
+  license:
+    name: qubership
+    url: https://qubership.org
+  version: "2024.2"
+  x-api-audience: BWC
+externalDocs:
+  description: Find out more about package
+  url: https://qubership.org/APIHUB
+servers:
+  - url: https://{apihub}.qubership.org
+    description: APIHUB server
+    variables:
+      apihub:
+        description: Name of the APIHUB server.
+        enum:
+          - apihub
+          - dev.apihub
+          - staging.apihub
+        default: apihub
+security:
+  - BearerAuth: []
+tags:
+  - name: Auth
+    description: APIs for auth integrations.
+  - name: Packages
+    description: APIs for the package management.
+  - name: Publish
+    description: Publish version API
+  - name: Versions
+    description: Published package versions API.
+  - name: Export
+    description: Export API documentation.
+  - name: Users
+    description: APIs for the user operations.
+  - name: Search
+    description: Search functions.
+  - name: Admin
+    description: APIs for technical administration.
+  - name: Agent
+    description: APIHUB Agent API documentation.
+  - name: Integrations
+    description: APIs for git integrations.
+  - name: Roles
+    description: APIs for role management.
+  - name: Operations
+    description: Operations APIs.
+  - name: Documents
+    description: Documents APIs.
+  - name: Changes
+    description: Changes APIs.
+  - name: TryIt
+    description: API for 'try it' functionality
+  - name: Operation groups
+    description: Operation groups
+paths:
+  "/auth/saml":
+    post:
+      x-api-audience: noBWC
+      tags:
+        - Auth
+      summary: SAML authentication
+      deprecated: true
+      description: |
+        Starts the SAML authentication process in APIHUB.
+        
+        In case of successful authentication, the request will be redirected to the **redirectUri** and 
+        the response will contain cookie with access token for future API calls.
+        All subsequent APIHUB calls must use this token in a **BearerAuth** authentication.
+      operationId: postAuthSAML
+      security: [ { } ]
+      parameters:
+        - name: redirectUri
+          in: query
+          description: URI, where user must be redirected in case of successful APIHUB authentication.
+          required: true
+          schema:
+            type: string
+            format: uri
+            example: "https://apihub.qubership.org/portal"
+      responses:
+        "302":
+          description: Moved Temporarily
+          headers:
+            Set-Cookie:
+              description: A base64 encoded userView cookie, containing the user data and access token.
+              schema:
+                type: string
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/packages":
+    post:
+      tags:
+        - Packages
+        - Admin
+      summary: Create a new package
+      description: Create a new package in APIHUB registry.
+      operationId: postPackages
+      requestBody:
+        description: Package for creation
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PackageCreate"
+            examples: { }
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Package"
+                  - type: object
+                    properties:
+                      parents:
+                        description: List of all parent packages
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/PackageList"
+              examples: { }
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: { }
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: { }
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+    get:
+      tags:
+        - Packages
+      summary: Get packages list
+      description: Retrieve the packages list.
+      operationId: getPackages
+      parameters:
+        - name: parentId
+          in: query
+          description: Filter by the parent package Id.
+          schema:
+            type: string
+            example: QS.CQSS.CPQ
+        - name: kind
+          in: query
+          description: |
+            Filter the packages by kind.
+            
+            The list of values is acceptable. In this case, the following pattern will be used: ```?kind=group,package,dashboard```.
+            
+            If not transmitted, the default value will be used.
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - workspace
+                - group
+                - package
+                - dashboard
+            default: [ workspace ]
+            example: [ group, package, dashboard ]
+        - name: showAllDescendants
+          in: query
+          description: |
+            Show all the descendants to the parent workspace or group.
+            
+            * If ```true```, return the list of all child groups/packages/dashboards to the parentId (take into account all other filter parameters).
+            * If the parentId is not transmitted???
+            * If the parent is transmitted, but kind not - and parentId = package???
+          schema:
+            type: boolean
+            default: false
+        - name: textFilter
+          in: query
+          description: filter by name/alias/label.
+          schema:
+            type: string
+        - name: onlyFavorite
+          in: query
+          description: filter only favorite packages
+          schema:
+            type: boolean
+            default: false
+        - name: onlyShared
+          in: query
+          description: filter only shared packages
+          schema:
+            type: boolean
+            default: false
+        - name: lastReleaseVersionDetails
+          in: query
+          description: |
+            Show/hide the detailed info about the last release version and it's changes, comparing with the previous one.
+          schema:
+            type: boolean
+            default: false
+        - name: serviceName
+          description: Service name that package belongs to. Should be equal to service deployment name in kubernetes.
+          in: query
+          schema:
+            type: string
+            example: "quote-tmf-service"
+        - $ref: "#/components/parameters/showParents"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                description: Whole packages list with paging.
+                type: object
+                properties:
+                  packages:
+                    type: array
+                    title: Detailed package
+                    items:
+                      required:
+                        - packageId
+                        - alias
+                        - name
+                      allOf:
+                        - $ref: "#/components/schemas/Package"
+                        - type: object
+                          properties:
+                            parents:
+                              description: List of all parent packages
+                              type: array
+                              deprecated: true
+                              items:
+                                $ref: "#/components/schemas/PackageList"
+                            defaultVersionDetails:
+                              type: object
+                              description: |
+                                Details about the last release version and it's changes with previous version.
+                                * Returns only if the lastReleaseVersionDetails:true and the lastReleaseVersion is explicitly filled in on a package.
+                                * Otherwise - will be omitted in the answer.
+                              properties:
+                                version:
+                                  description: |
+                                    Last release version specified on the package.The <version>@<revision> mask is used to return the revision number.
+                                  type: string
+                                  example: "2022.4@2"
+                                notLatestRevision:
+                                  type: boolean
+                                  default: false
+                                summary:
+                                  $ref: "#/components/schemas/ChangeSummary"
+              examples: { }
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: { }
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+
+components:
+  parameters:
+    apiAudience:
+      name: apiAudience
+      in: query
+      description: |
+        Filter operations by apiAudience.
+        * internal - APIs are available for integration within product application.
+        * external - APIs exposed outside the boundary of the product application: solution delivery integrations, 3rd party integrations, customer integrations.
+        * unknown - If any value other than internal or external is used, the API is considered as unknown.
+      schema:
+        type: string
+        enum:
+          - all
+          - internal
+          - external
+          - unknown
+        default: all
+    AgentId:
+      name: agentId
+      in: path
+      description: Id of Agent instance
+      required: true
+      schema:
+        type: string
+      example: K8S-SERVER_api-hub-dev
+    Namespace:
+      name: name
+      description: Cloud Namespace name
+      in: path
+      required: true
+      schema:
+        type: string
+    severity:
+      name: severity
+      in: query
+      description: Filter API changes by severity.
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - breaking
+            - non-breaking
+            - deprecated
+            - semi-breaking
+            - annotation
+            - unclassified
+    ServiceId:
+      name: serviceId
+      description: Cloud service identifier
+      in: path
+      required: true
+      schema:
+        type: string
+    apiType:
+      name: apiType
+      description: Type of the API.
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+          - rest
+          - graphql
+          - protobuf
+    apiTypeQueryParam:
+      name: apiType
+      in: query
+      description: |
+        Filter documents by type of the API.
+      schema:
+        type: string
+        enum:
+          - rest
+          - graphql
+          - protobuf
+    gitType:
+      name: gitType
+      description: Integration type
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+          - gitLab
+        default: gitLab
+    repositoryId:
+      name: repositoryId
+      schema:
+        type: string
+      description: Repository Id
+      in: path
+      required: true
+    groupName:
+      name: groupName
+      in: path
+      description: Version Group
+      required: true
+      schema:
+        type: string
+    builderId:
+      name: builderId
+      in: path
+      description: Builder unique identifier (UUID)
+      required: true
+      schema:
+        type: string
+        format: UUID
+        example: QS.CloudQSS.CPQ.Q-TMF
+    packageId:
+      name: packageId
+      in: path
+      description: Package unique identifier (full alias)
+      required: true
+      schema:
+        type: string
+        example: QS.CloudQSS.CPQ.Q-TMF
+    version:
+      name: version
+      in: path
+      description: Package version
+      required: true
+      schema:
+        type: string
+        example: "2022.3"
+    slug:
+      name: slug
+      in: path
+      description: File unique string identifier
+      required: true
+      schema:
+        type: string
+        pattern: "^[a-z0-9-]"
+        example: "qitmf-v5-11-json"
+    limit:
+      name: limit
+      in: query
+      description: Requested number of resources to be provided in response.
+      schema:
+        type: number
+        default: 100
+        maximum: 100
+        minimum: 1
+    page:
+      name: page
+      in: query
+      description: Page number
+      schema:
+        type: number
+        default: 0
+    showParents:
+      name: showParents
+      in: query
+      description: Show/hide the list of parent packages.
+      schema:
+        type: boolean
+        default: false
+    operationId:
+      name: operationId
+      in: path
+      description: Operation unique identifier (slug). Not the same as operationId tag from the OpenAPI file.
+      required: true
+      schema:
+        type: string
+        example: "get-quoteManagement-v5-quote"
+    modelName:
+      name: modelName
+      in: path
+      description: Unique model identifier for operation
+      required: true
+      schema:
+        type: string
+        example: "CreateItemDto"
+  schemas:
+    AuthResponse:
+      description: Auth response
+      type: object
+      properties:
+        token:
+          description: Bearer token
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - token
+    ApiKey:
+      title: ApiKey
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          description: ApiKey unique identifier
+          type: string
+        name:
+          description: ApiKey name
+          type: string
+    DeprecatedItems:
+      description: List of deprecated items in the operation.
+      type: array
+      items:
+        type: object
+        properties:
+          deprecatedInPreviousVersions:
+            description: List of previous release versions where item was also deprecated
+            type: array
+            items:
+              type: string
+            example: [ "2022.2", "2022,1", "2021.4" ]
+          declarationJsonPaths:
+            description: Declarative path to deprecated item.
+            type: array
+            items:
+              type: array
+              items:
+                anyOf:
+                - type: string
+                - type: integer
+            example: [["paths", "/post/saml/", "test", 1], ["paths", "/post/saml/", "test", 22]]
+          description:
+            description: Human-readable description of deprecated item.
+            type: string
+            example: "[Deprecated] query parameter 'petId'"
+          deprecatedInfo:
+            description: |
+              Additional information about single deprecated item:
+              * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated item. 
+              * for GraphQL API it is value of 'reason' argument of @deprecated directive.
+            type: string
+          tolerantHash:
+            description: Tolerant hash for Schema object or Parameter object that has been deprecated. It is needed to identify that the same schema/parameter was deprecated in previous version.
+            type: string
+          hash:
+            description: Hash (full) for Schema object or Parameter object that has been deprecated, it is needed to detect semi-breaking changes in UI.
+            type: string
+    ApiType:
+      title: apiType
+      type: string
+      enum:
+        - rest
+        - graphql
+        - protobuf
+    PackageCreate:
+      description: Parameters for the package creation
+      required:
+        - alias
+        - name
+        - kind
+      type: object
+      properties:
+        parentId:
+          description: Parent package ID
+          type: string
+        kind:
+          description: |
+            Package kind.
+            * If kind = workspace, the parentId will be ignored.
+            * If kind = group or package or dashboard, the parentId is required.
+          type: string
+          enum:
+            - workspace
+            - group
+            - package
+            - dashboard
+        name:
+          description: Name of the new package
+          type: string
+        alias:
+          description: Package short alias (abbreviation)
+          type: string
+          maxLength: 10
+          pattern: "^[a-zA-Z0-9-_]"
+        description:
+          description: Common description of the package
+          type: string
+        serviceName:
+          description: |
+            Service name that package belongs to. Should be equal to service deployment name in kubernetes.
+            Ignored for Workspace and Group kind.
+          type: string
+        imageUrl:
+          deprecated: true
+          x-deprecation-reason: UI for logo is deprecated. imageUrl parameter will be deleted in 2025.1
+          type: string
+          description: Path to the package icon
+          format: URL
+        defaultRole:
+          description: Default role of the package.
+          type: string
+        releaseVersionPattern:
+          description: Release version mask. Value shall be inherited from parent group with the ability to override it.
+          type: string
+        excludeFromSearch:
+          description: |
+            If true, the package (including child packages) will be ignored by global search.
+            Changing the value of the parent package will change the value of all child packages.
+            A child package cannot have a negative value if the parent package has a positive value. The default value for a newly created package is equal to the value from the parent package.
+          type: boolean
+    Package:
+      description: Simple package object, without content and dependencies
+      type: object
+      title: Package
+      required:
+        - packageId
+        - alias
+        - kind
+        - name
+        - isFavorite
+        - defaultRole
+      properties:
+        packageId:
+          description: Package unique string identifier (full alias)
+          type: string
+        alias:
+          type: string
+          description: Package short alias (abbreviation)
+          maxLength: 10
+          pattern: "^[a-zA-Z0-9-_]"
+        parentId:
+          description: Parent package ID
+          type: string
+        kind:
+          description: Package kind
+          type: string
+          enum:
+            - workspace
+            - group
+            - package
+            - dashboard
+        name:
+          description: Name of the package
+          type: string
+        description:
+          description: Common description of the package
+          type: string
+        isFavorite:
+          description: Sign of the favorite package for the caller user
+          type: boolean
+          default: false
+        serviceName:
+          description: Service name that package belongs to. Should be equal to service deployment name in kubernetes.
+          type: string
+        imageUrl:
+          deprecated: true
+          x-deprecation-reason: UI for logo is deprecated. imageUrl parameter will be deleted in 2025.1
+          type: string
+          description: Path to the package icon
+          format: URL
+        permissions:
+          type: array
+          description: List of user permissions applicable to the package.
+          items:
+            $ref: "#/components/schemas/Permission"
+          example: ["read", "create_and_update_package", "delete_package"]
+        defaultRole:
+          description: Default role of the package.
+          type: string
+        releaseVersionPattern:
+          description: Release version mask. Value shall be inherited from parent group with the ability to override it.
+          type: string
+        excludeFromSearch:
+          description: |
+            If true, the package (including child packages) will be ignored by global search.
+            Changing the value of the parent package will change the value of all child packages.
+            A child package cannot have a negative value if the parent package has a positive value. The default value for a newly created package is equal to the value from the parent package.
+          type: boolean
+        restGroupingPrefix:
+          description: |
+            Regular expression used as criteria for grouping operations. 
+            Groups for the package version are calculated during publication of this version.
+          type: string
+          example: "/api/v1/{group}/"
+    PackageList:
+      description: Base package object for parents list.
+      type: object
+      title: PackageList
+      properties:
+        packageId:
+          description: Package unique string identifier (full alias)
+          type: string
+        alias:
+          type: string
+          description: Package short alias (abbreviation)
+          maxLength: 10
+          pattern: "^[a-zA-Z0-9-_]"
+        parentId:
+          description: Parent package ID
+          type: string
+        kind:
+          description: Package kind
+          type: string
+          enum:
+            - workspace
+            - group
+            - package
+            - dashboard
+        name:
+          description: Name of the package
+          type: string
+        imageUrl:
+          deprecated: true
+          x-deprecation-reason: UI for logo is deprecated. imageUrl parameter will be deleted in 2025.1
+          type: string
+          description: Path to the package icon
+          format: URL
+    PackageUpdate:
+      description: Parameters for the package update.
+        Not changed parameters must not be transmitted.
+        Parameters, required in creation, must not be empty if transmitted.
+      type: object
+      properties:
+        name:
+          description: Name of the package
+          type: string
+        description:
+          description: Common description of the package
+          type: string
+        serviceName:
+          description: |
+            Service name that package belongs to. Should be equal to service deployment name in kubernetes.
+            Parameter may be changed (filled in) only it was empty in creation. Otherwise, the 400 error will be returned.
+          type: string
+        imageUrl:
+          deprecated: true
+          x-deprecation-reason: UI for logo is deprecated. imageUrl parameter will be deleted in 2025.1
+          type: string
+          description: Path to the package icon
+          format: URL
+        defaultRole:
+          description: Default role of the package.
+          type: string
+        defaultReleaseVersion:
+          description: |
+            Default release version for the package.
+            Only `release` version may be placed as default. Return the error otherwise.
+          type: string
+          example: "2023.1"
+        releaseVersionPattern:
+          description: Release version mask. Value shall be inherited from parent group with the ability to override it.
+          type: string
+        excludeFromSearch:
+          description: |
+            If true, the package (including child packages) will be ignored by global search.
+            Changing the value of the parent package will change the value of all child packages.
+            A child package cannot have a negative value if the parent package has a positive value. The default value for a newly created package is equal to the value from the parent package.
+          type: boolean
+        restGroupingPrefix:
+          description: Regular expression used as criteria for grouping operations.
+          type: string
+    GitBranch:
+      description: External Git branch params
+      type: object
+      properties:
+        name:
+          description: Branch name
+          type: string
+    GitBranchFile:
+      description: Git branch file
+      type: object
+      properties:
+        name:
+          description: item name
+          type: string
+        isFolder:
+          description: Is item is folder
+          type: boolean
+          default: false
+    Repository:
+      description: Linked GIT repository params
+      type: object
+      properties:
+        repositoryId:
+          description: External GIT repository id
+          type: string
+        name:
+          description: External GIT repository full name
+          type: string
+        defaultBranch:
+          description: Name of the default branch of the linked repository
+          type: string
+    PackageStatus:
+      description: Published package version content
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - exist
+            - deleted
+    VersionStatusEnum:
+      description: Package version status
+      type: string
+      enum:
+        - draft
+        - release
+        - archived
+    User:
+      description: APIHUB user
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: Login of the user
+          type: string
+          example: user1221
+        name:
+          description: Name of the user
+          type: string
+          example: "Name Surname"
+        email:
+          description: Email address of the user
+          type: string
+          format: email
+          example: "name.surname@qubership.org"
+        avatarUrl:
+          description: Avatar of the user
+          type: string
+          format: URL
+    RoleCreate:
+      description: Role with set of permissions for creation.
+      type: object
+      title: Role
+      required:
+        - role
+        - permissions
+      properties:
+        role:
+          type: string
+          pattern: "^[a-zA-Z0-9- ]"
+          description: Role name.
+          example: Editor
+        permissions:
+          type: array
+          description: List of permissions applicable to the role.
+          items:
+            $ref: "#/components/schemas/Permission"
+          example: ["read", "create_and_update_package", "delete_package"]
+    Role:
+      description: Role details.
+      type: object
+      title: Role
+      required:
+        - roleId
+        - role
+        - permissions
+      properties:
+        roleId:
+          type: string
+          description: Unique role identifier. The value is the slug of role name.
+          example: editor
+        role:
+          type: string
+          description: Role name.
+          example: Editor
+    Permission:
+      description: Permission
+      type: string
+      enum:
+        - read
+        - create_and_update_package
+        - delete_package
+        - manage_draft_version
+        - manage_release_version
+        - manage_archived_version
+        - user_access_management
+        - access_token_management
+      example: read
+    Member:
+      description: User and assigned role
+      type: object
+      title: Member
+      required:
+        - user
+        - roles
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        roles:
+          type: array
+          description: List of user roles in the package.
+          items:
+            allOf:
+              - $ref: "#/components/schemas/Role"
+              - type: object
+                properties:
+                  inheritance:
+                    type: object
+                    description: Role was inherited from this package
+                    properties:
+                      packageId:
+                        description: Package unique string identifier (full alias)
+                        type: string
+                      kind:
+                        description: Package kind
+                        type: string
+                        enum:
+                          - workspace
+                          - group
+                      name:
+                        description: Name of the package
+                        type: string
+                        example: qubership
+    MemberCreate:
+      description: Assign users and role to the package
+      type: object
+      title: MemberCreate
+      required:
+        - emails
+        - roleIds
+      properties:
+        emails:
+          description: List of email addresses of the users to create.
+          type: array
+          items:
+            type: string
+            format: email
+          example: ["name.surname@qubership.org"]
+        roleIds:
+          type: array
+          description: List of role IDs, added to the user.
+          items:
+            type: string
+          example: [owner, editor, viewer, none]
+    PackageVersion:
+      description: Base parameters of published version (without content)
+      type: object
+      title: PackageVersion
+      required:
+        - version
+        - status
+        - createdAt
+        - createdBy
+      properties:
+        version:
+          description: Package version name.The <version>@<revision> mask is used to return the revision number.
+          type: string
+          example: "2022.3@5"
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        createdBy:
+          $ref: "#/components/schemas/Principal"
+        createdAt:
+          type: string
+          description: Date of package creation.
+          format: datetime
+        versionLabels:
+          description: List of version labels.
+          type: array
+          items:
+            type: string
+          example: ["part-of:CloudQSS-CPQBE"]
+        previousVersion:
+          description: previous package version name.The <version>@<revision> mask is used to return the revision number.
+          type: string
+          example: "2022.2@5"
+        previousVersionPackageId:
+          description: Package id of the previous version. Can be empty if the value is equal to the package id.
+          type: string
+          example: "QS.GRP.SOMEPKG"
+        notLatestRevision:
+          type: boolean
+          default: false
+    PackageVersionContentV2:
+      deprecated: true
+      description: Published package version content
+      type: object
+      required:
+        - packageId
+        - version
+        - createdAt
+        - createdBy
+        - summary
+        - revision
+        - revisionsCount
+        - status
+      properties:
+        packageId:
+          description: Package unique string identifier (full alias)
+          type: string
+          example: "QS.CloudQSS.CPQ.Q-TMF"
+        version:
+          description: Package version name.The <version>@<revision> mask is used to return the revision number.
+          type: string
+          example: "2022.2@5"
+        createdAt:
+          description: Date of the package version publication.
+          type: string
+          format: date-time
+        createdBy:
+          description: User, published the package version.
+          type: string
+        previousVersion:
+          description: Name of the previous published version.The <version>@<revision> mask is used to return the revision number.
+          type: string
+          example: "2022.2@5"
+        previousVersionPackageId:
+          description: Package id of the previous version to compare with. Required for agent snapshots.
+          type: string
+          example: "QS.GRP.SOMEPKG"
+        versionLabels:
+          description: List of version labels.
+          type: array
+          items:
+            type: string
+          example: ["part-of:CloudQSS-CPQBE"]
+        notLatestRevision:
+          type: boolean
+          default: false
+        revisionsCount:
+          description: Total number of revisions in the version.
+          type: integer
+          format: int32
+          example: 3
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+    PackageVersionContent:
+      description: Published package version content
+      type: object
+      required:
+        - packageId
+        - version
+        - createdAt
+        - createdBy
+        - summary
+        - revision
+        - revisionsCount
+        - status
+      properties:
+        packageId:
+          description: Package unique string identifier (full alias)
+          type: string
+          example: "QS.CloudQSS.CPQ.Q-TMF"
+        version:
+          description: Package version name.The <version>@<revision> mask is used to return the revision number.
+          type: string
+          example: "2022.2@5"
+        createdAt:
+          description: Date of the package version publication.
+          type: string
+          format: date-time
+        createdBy:
+          $ref: "#/components/schemas/Principal"
+        previousVersion:
+          description: Name of the previous published version.The <version>@<revision> mask is used to return the revision number.
+          type: string
+          example: "2022.2@5"
+        previousVersionPackageId:
+          description: Package id of the previous version to compare with. Required for agent snapshots.
+          type: string
+          example: "QS.GRP.SOMEPKG"
+        versionLabels:
+          description: List of version labels.
+          type: array
+          items:
+            type: string
+          example: ["part-of:CloudQSS-CPQBE"]
+        notLatestRevision:
+          type: boolean
+          default: false
+        revisionsCount:
+          description: Total number of revisions in the version.
+          type: integer
+          format: int32
+          example: 3
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+    PackageVersionFile:
+      description: Parameters of published file in package version
+      type: object
+      title: Package version file
+      required:
+        - fileId
+        - filename
+        - slug
+        - type
+        - format
+        - title
+      properties:
+        fileId:
+          type: string
+          description: File name.
+          example: "qitmf-v5.11.json"
+        filename:
+          type: string
+          description: File name (slug+extension).
+          example: "qitmf-v5.11.json"
+        slug:
+          description: Published file slug
+          type: string
+          pattern: "^[a-z0-9-]"
+          example: "qitmf-v5-11-json"
+        type:
+          $ref: "#/components/schemas/SpecificationType"
+        format:
+          $ref: "#/components/schemas/DocumentFormat"
+        title:
+          description: Name/title of the document.
+          type: string
+          example: "Quote Integration TMForum Service"
+        version:
+          description: Document version
+          type: string
+          example: "1.0.1"
+        labels:
+          description: List of file labels.
+          type: array
+          items:
+            type: string
+          example: ["TMF"]
+    PackageTransformationFile:
+      description: Parameters of published file in package version
+      type: object
+      title: Package version file
+      required:
+        - fileId
+        - filename
+        - slug
+        - type
+        - format
+        - title
+      properties:
+        fileId:
+          type: string
+          description: File name.
+          example: "qitmf-v5.11.json"
+        filename:
+          type: string
+          description: File name (slug+extension).
+          example: "qitmf-v5.11.json"
+        slug:
+          description: Published file slug
+          type: string
+          pattern: "^[a-z0-9-]"
+          example: "qitmf-v5-11-json"
+        type:
+          $ref: "#/components/schemas/SpecificationType"
+        format:
+          $ref: "#/components/schemas/DocumentFormat"
+        title:
+          description: Name/title of the document.
+          type: string
+          example: "Quote Integration TMForum Service"
+        version:
+          description: Document version
+          type: string
+          example: "1.0.1"
+        labels:
+          description: List of file labels.
+          type: array
+          items:
+            type: string
+          example: ["TMF"]
+        description:
+          description: Document description
+          type: string
+        includedOperationIds:
+          description: List of operation IDs included to specified operation group
+          type: array
+          items:
+            type: string
+          example: [
+              "get-quoteManagement-v5-quote",
+              "post-quoteManagement-v5-quote"
+            ]
+        data:
+          description: Content of the operation as a JSON object
+          type: object
+    PackageVersionRef:
+      description: Package version reference
+      type: object
+      title: Referenced package version
+      required:
+        - refId
+        - name
+        - version
+        - status
+      properties:
+        refId:
+          description: Referenced package Id
+          type: string
+          example: "QS.CloudQSS.CPQ.Q-TMF"
+        kind:
+          description: Package kind
+          type: string
+          enum:
+            - package
+            - dashboard
+        name:
+          description: Name of the referenced package
+          type: string
+          example: "Quote Management TMF648"
+        version:
+          description: Referenced package version number. The <version>@<revision> mask is used to return the revision number.
+          type: string
+          example: "2022.2@5"
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        deletedAt:
+          description: date when package version was deleted package version
+          type: string
+          format: date-type
+          example: "2023-05-30T17:17:11.755146Z"
+        deletedBy:
+          description: user who deleted package version
+          type: string
+          example: "user1221"
+    Principal:
+      description: User or API key
+      allOf:
+        - oneOf:
+          - $ref: "#/components/schemas/User"
+          - $ref: "#/components/schemas/ApiKey"
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              description: Identifies whether principal is user or API key
+              type: string
+              enum:
+                - user
+                - apiKey
+    ReferencedPackage:
+      description: Package reference
+      type: object
+      title: Referenced package
+      required:
+        - refId
+        - kind
+        - name
+        - version
+        - status
+      properties:
+        refId:
+          description: Referenced package Id.
+          type: string
+          example: "QS.CloudQSS.CPQ.CORE"
+        kind:
+          description: Package kind
+          type: string
+          enum:
+            - package
+            - dashboard
+        name:
+          description: Name of the referenced package
+          type: string
+          example: "Quote Management TMF648"
+        version:
+          description: Referenced package version number. The <version>@<revision> mask is used to return the revision number.
+          type: string
+          example: "2022.2@5"
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        parentPackages:
+          description: Array of parent package names
+          type: array
+          items:
+            type: string
+        deletedAt:
+          description: date when package version was deleted package version
+          type: string
+          format: date-type
+          example: "2023-05-30T17:17:11.755146Z"
+        deletedBy:
+          description: user who deleted package version
+          type: string
+          example: "user1221"
+        notLatestRevision:
+          type: boolean
+          default: false
+    SearchResultOperation:
+      description: |
+        Global search result for API operations; must be returned when searchLevel = operation
+      title: SearchResultOperation
+      allOf:
+        - oneOf:
+          - $ref: "#/components/schemas/RestOperation"
+          - $ref: "#/components/schemas/GraphQLOperation"
+        - type: object
+          required:
+            - packageId
+            - name
+            - parentPackages
+            - version
+            - status
+          properties:
+            packageId:
+              description: Package unique string identifier (full alias)
+              type: string
+              example: "QS.CloudQSS.CPQ.Q-TMF"
+            name:
+              description: Package name
+              type: string
+              example: "Quote TMF Service"
+            parentPackages:
+              description: Array of parent package names
+              type: array
+              items:
+                type: string
+            version:
+              description: Package version name
+              type: string
+              example: "2022.2@5"
+            status:
+              $ref: "#/components/schemas/VersionStatusEnum"
+    SearchResultOperationV2:
+      description: |
+        Global search result for API operations; must be returned when searchLevel = operation
+      title: SearchResultOperationV2
+      type: object
+      deprecated: true
+      required:
+        - packageId
+        - name
+        - parentPackages
+        - version
+        - status
+        - operationId
+        - title
+        - metadata
+        - apiType
+      properties:
+        packageId:
+          description: Package unique string identifier (full alias)
+          type: string
+          example: "QS.CloudQSS.CPQ.Q-TMF"
+        name:
+          description: Package name
+          type: string
+          example: "Quote TMF Service"
+        parentPackages:
+          description: Array of parent package names
+          type: array
+          items:
+            type: string
+        version:
+          description: Package version name
+          type: string
+          example: "2022.2@5"
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        operationId:
+          description: Operation unique identifier (slug). Not the same as operationId tag from the OpenAPI file.
+          type: string
+          example: get-quoteManagement-v5-quote
+        title:
+          description: Operation summary/title.
+          type: string
+        deprecated:
+          description: Operation deprecate flag.
+          type: boolean
+          default: false
+        apiType:
+          type: string
+          enum:
+            - rest
+            - graphql
+        metadata:
+          description: Parameters for specific API type
+          oneOf:
+            - type: object
+              title: RestParams
+              description: Rest API specific parameters
+              required:
+                - path
+                - method
+              properties:
+                path:
+                  description: Operation endpoint path.
+                  type: string
+                  example: "/quoteManagement/v5/quote"
+                method:
+                  description: Operation method.
+                  type: string
+                  enum:
+                    - post
+                    - get
+                    - put
+                    - patch
+                    - delete
+                    - head
+                    - options
+                    - connect
+                    - trace
+            - type: object
+              title: GraphQLParams
+              description: GrapQL specific parameters
+              required:
+                - type
+                - method
+              properties:
+                type:
+                  description: Operation type
+                  type: string
+                  enum:
+                    - query
+                    - mutation
+                method:
+                  description: GraphQL operation method.
+                  type: string
+                  example: getPaymentMethodSpecificationCore
+    SearchResultPackage:
+      title: SearchResultPackage
+      description: |
+        Global search result for packages with kind = package; must be returned when searchLevel = package
+        * If search term matches the package id/name/description/service name, return the latest published version only. 
+        * If search term matches the version name/label, return that version.
+      type: object
+      required:
+        - packageId
+        - name
+        - parentPackages
+        - createdAt
+        - version
+        - revision
+        - status
+      properties:
+        packageId:
+          description: Package unique string identifier (full alias)
+          type: string
+          example: "QS.CloudQSS.CPQ.Q-TMF"
+        name:
+          description: Package name
+          type: string
+          example: "Quote TMF Service"
+        description:
+          description: Package description
+          type: string
+        serviceName:
+          description: Service name that package belongs to. Should be equal to service deployment name in kubernetes.
+          type: string
+        parentPackages:
+          description: Array of parent package names
+          type: array
+          items:
+            type: string
+        version:
+          description: Package version name.
+          type: string
+          example: "2022.2@5"
+        latestRevision:
+          description: |
+            true if revision is the latest one.
+          type: boolean
+          default: false
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        createdAt:
+          description: Date of the package version publication
+          type: string
+          format: date-time
+        labels:
+          description: List of package version labels
+          type: array
+          items:
+            type: string
+    SearchResultDocument:
+      description: Global search result for documents; must be returned when searchLevel = document
+      title: SearchResultDocument
+      type: object
+      required:
+        - packageId
+        - name
+        - parentPackages
+        - version
+        - status
+        - files
+        - slug
+        - type
+        - title
+      properties:
+        packageId:
+          description: Package unique string identifier (full alias)
+          type: string
+          example: "QS.CloudQSS.CPQ.Q-TMF"
+        name:
+          description: Package name
+          type: string
+          example: "Quote TMF Service"
+        parentPackages:
+          description: Array of parent package names
+          type: array
+          items:
+            type: string
+        version:
+          description: Package version name.
+          type: string
+          example: "2022.2@5"
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        slug:
+          description: Published document slug
+          type: string
+          pattern: "^[a-z0-9-]"
+          example: "qitmf-v5-11-json"
+        type:
+          description: Type of the specification notation.
+          type: string
+          enum:
+            - openapi-3-1
+            - openapi-3-0
+            - openapi-2-0
+            - json-schema
+            - markdown
+            - unknown
+        title:
+          description: Name/title of the document.
+          type: string
+          example: "Quote Integration TMForum Service"
+        labels:
+          description: List of documents labels.
+          type: array
+          items:
+            type: string
+          example: ["TMF"]
+        createdAt:
+          description: Date of the package version publication
+          type: string
+          format: date-time
+        content:
+          type: string
+          description: |
+            String with search term occurrences in the document.
+            If document content does not contain search term, then return N first characters.
+            If document is empty, then this property will be empty.
+    ErrorResponse:
+      description: An error description
+      type: object
+      properties:
+        status:
+          description: HTTP Status Code
+          type: number
+        code:
+          description: Internal string error code. Mandatory in response.
+          type: string
+        message:
+          description: The attribute contains an error message.
+          type: string
+        params:
+          type: object
+          description: Message parameters
+          example:
+            id: 12345
+            type: string
+        debug:
+          description: The attribute contains debug details (e.g. stack-trace). Presented in the error response only on Dev/Test environments if corresponding logging level is enabled.
+          type: string
+      required:
+        - status
+        - code
+        - message
+    PackageApiKey:
+      type: object
+      description: ApiKey details for the package
+      title: PackageApiKey
+      required:
+        - id
+        - name
+        - createdBy
+        - createdAt
+        - roles
+      properties:
+        id:
+          description: ApiKey unique identifier
+          type: string
+        packageId:
+          description: Internal unique package ID (full alias)
+          type: string
+        name:
+          description: ApiKey name
+          type: string
+        createdBy:
+          $ref: "#/components/schemas/User"
+        createdFor:
+          $ref: "#/components/schemas/User"
+        createdAt:
+          description: Date and time of ApiKey creation
+          type: string
+          format: datetime
+        roles:
+          description: List of roles.
+          type: array
+          items:
+            type: string
+    SpecificationType:
+      title: type
+      description: Type of the specification notation.
+      type: string
+      enum:
+        - openapi-3-1
+        - openapi-3-0
+        - openapi-2-0
+        - json-schema
+        - markdown
+        - graphql-schema
+        - graphapi
+        - introspection
+        - protobuf-3
+        - unknown
+    DocumentFormat:
+      title: format
+      description: Format of the specification document.
+      type: string
+      enum:
+        - json
+        - yaml
+        - md
+        - graphql
+        - gql
+        - proto
+        - unknown
+    Operation:
+      description: Operation object
+      title: Operation
+      type: object
+      required:
+        - operationId
+        - title
+        - apiType
+        - dataHash
+        - apiAudience
+        - apiKind
+      properties:
+        operationId:
+          description: Operation unique identifier (slug). Not the same as operationId tag from the OpenAPI file.
+          type: string
+          example: get-quoteManagement-v5-quote
+        title:
+          description: Operation summary/title.
+          type: string
+        apiType:
+        #  description: Type of the API.
+        #  type: string
+        #  enum:
+        #    - rest
+        #    - kafka
+        #    - grpc
+        #    - graphql
+        #    - protobuf
+          $ref: "#/components/schemas/ApiType"
+        dataHash:
+          description: Operation hash.
+          type: string
+          example: sdfsdfsf242
+        externalMetadata:
+          description: External operation metadata.
+          type: object
+        deprecated:
+          description: Operation deprecate flag.
+          type: boolean
+          default: false
+        apiAudience:
+          description: |
+            Operation's target audience.
+            * internal - APIs are available for integration within product application.
+            * external - APIs exposed outside the boundary of product application: solution delivery integrations, 3rd party integrations, customer integrations.
+            * unknown - If any value other than internal or external is used, the API is considered as unknown.
+          type: string
+          enum:
+            - internal
+            - external
+            - unknown
+        apiKind:
+          description: |
+            Operation API kind.
+            * bwc - API with backward compatibility support (a.k.a. public).
+            * no-bwc - API without backward compatibility support (a.k.a. internal).
+            * experimental - APIs for feature testing. Usage is not recommended.
+          type: string
+          enum:
+            - bwc
+            - no-bwc
+            - experimental
+          default: bwc
+        tags:
+          description: |
+            List of operation tags.
+            * in rest, tag is OpenAPI tag.
+            * in graphql, tag is root schema type - query, mutation, subscription.
+            * in protobuf, tag is service of method.
+          type: array
+          items:
+            type: string
+          example: ["RestControllerV5"]
+    OperationGroup:
+      description: Operation object
+      title: Operation
+      type: object
+      required:
+        - operationId
+        - title
+        - path
+        - method
+        - tags
+        - packageRef
+        - apiKind
+      properties:
+        operationId:
+          description: Operation unique identifier (slug). Not the same as operationId tag from the OpenAPI file.
+          type: string
+          example: get-quoteManagement-v5-quote
+        title:
+          description: Operation summary/title.
+          type: string
+        path:
+          description: Operation endpoint path.
+          type: string
+          example: "/quoteManagement/v5/quote"
+        method:
+          description: Operation method.
+          type: string
+          enum:
+            - post
+            - get
+            - put
+            - patch
+            - delete
+            - head
+            - options
+            - connect
+            - trace
+        tags:
+          description: List of operation tags.
+          type: array
+          items:
+            type: string
+          example: ["RestControllerV5"]
+        packageRef:
+          description: Parent package and version link.
+          type: string
+          example: "QS.CloudQSS.CPQ.Q-TMF@2023.2"
+        apiKind:
+          description: |
+            Operation API kind.
+            * bwc - API with backward compatibility support (a.k.a. public).
+            * no-bwc - API without backward compatibility support (a.k.a. internal).
+            * experimental - APIs for feature testing. Usage is not recommended.
+          type: string
+          enum:
+            - bwc
+            - no-bwc
+            - experimental
+          default: bwc
+    RestOperation:
+      description: REST operation object.
+      title: RestOperation
+      allOf:
+        - $ref: "#/components/schemas/Operation"
+        - $ref: "#/components/schemas/RestOperationMeta"
+    ProtobufOperation:
+      description: Protobuf operation object.
+      title: ProtobufOperation
+      allOf:
+        - $ref: "#/components/schemas/Operation"
+        - $ref: "#/components/schemas/ProtobufOperationMeta"
+    GraphQLOperation:
+      description: GraphQL operation object.
+      title: GraphQLOperation
+      allOf:
+        - $ref: "#/components/schemas/Operation"
+        - $ref: "#/components/schemas/GraphQLOperationMeta"
+    RestOperationMeta:
+      description: Specific parameters for REST operation.
+      title: RestOperationMeta
+      required:
+        - path
+        - method
+      type: object
+      properties:
+        path:
+          description: Operation endpoint path.
+          type: string
+          example: "/quoteManagement/v5/quote"
+        method:
+          description: Operation method.
+          type: string
+          enum:
+            - post
+            - get
+            - put
+            - patch
+            - delete
+            - head
+            - options
+            - connect
+            - trace
+        title:
+          description: Operation summary/title.
+          type: string
+        customTags:
+          description: Custom tags.
+          type: object
+    GraphQLOperationMeta:
+      description: Specific parameters for GraphQL operation.
+      title: GraphQLOperationMeta
+      required:
+        - type
+        - method
+      type: object
+      properties:
+        type:
+          description: Operation type
+          type: string
+          enum:
+            - query
+            - mutation
+            - subscription
+        method:
+          description: GraphQL operation method.
+          type: string
+          example: getPaymentMethodSpecificationCore
+        title:
+          description: Operation summary/title.
+          type: string
+        customTags:
+          description: Custom tags.
+          type: object
+    ProtobufOperationMeta:
+      description: Specific parameters for Protobuf operation.
+      title: GraphQLOperationMeta
+      required:
+        - type
+        - method
+      type: object
+      properties:
+        type:
+          description: Operation type
+          type: string
+          enum: #open questions what types shall be supported?
+            - unary
+            - serverStreaming
+            - clientStreaming
+            - bidirectionalStreaming
+        method:
+          description: Protobuf method name.
+          type: string
+          example: ListActionLogItems
+        title:
+          description: Operation title (same as method name but with adding spaces between capital letters)
+          type: string
+          example: List Action Log Items
+    OperationInfoFromDifferentVersions:
+      description: Operation info from previous/current version.
+      type: object
+      required:
+        - title
+        - apiKind
+        - dataHash
+        - apiAudience
+      properties:
+        title:
+          description: Operation summary/title.
+          type: string
+        apiKind:
+          type: string
+          enum:
+            - bwc
+            - no-bwc
+            - experimental
+        apiAudience:
+          description: |
+            Operation's target audience:
+            * internal - APIs are available for integration within product application.
+            * external - APIs exposed outside the boundary of product application: solution delivery integrations, 3rd party integrations, customer integrations.
+            * unknown - If any value other than internal or external is used, the API is considered as unknown.
+          type: string
+          enum:
+            - internal
+            - external
+            - unknown
+        dataHash:
+          description: Operation hash.
+          type: string
+          example: sdfsdfsf242
+        packageRef:
+          description: >
+            Parent package and version link. Created by
+            the concatenation of the packageId and
+            version name with At sign.
+          type: string
+          example: QS.CloudQSS.CPQ.Q-TMF@2023.2
+    BusinessMetric:
+      description: Business metric
+      title: BusinessMetric
+      required:
+        - packageId
+        - date
+        - metric
+        - value
+      type: object
+      properties:
+        packageId:
+          description: Package unique string identifier
+          type: string
+        date:
+          description: Date on which business metric was collected.
+          type: string
+          format: date
+          example: '2023-12-31'
+        username:
+          description: Name of the user that has been counted for a specific metric.
+          type: string
+        metric:
+          description: Name of business metric.
+          type: string
+          example: comparisons_called
+        value:
+          description: Value associated with business metric.
+          type: integer
+    BuildResultV2:
+      description: |
+        Result of build operation in ZIP archive.
+        * The archive contains folders with sources, builded JSON documents and JSON operation files. 
+        * In addition, several config files are provided. he structure of these files is described below.
+      title: BuildResult
+      type: object
+      required:
+        - info.json
+        - documents.json
+      properties:
+        info.json:
+          description: |
+            Build configuration, published version details.
+          type: object
+          required:
+            - packageId
+            - version
+          properties:
+            packageId:
+              description: Package unique string identifier (full alias).
+              type: string
+              example: "QS.CloudQSS.CPQ.Q-TMF"
+            version:
+              description: Version name for publication.
+              type: string
+              example: "2022.3"
+            previousVersion:
+              description: |
+                Name of the previous published version.
+                The mask <version>@<revision> may be used to return the revision number.
+              type: string
+              example: "2022.2@4"
+              default: ""
+            previousVersionPackageId:
+              description: Previous release version package id.
+              type: string
+              example: "QS.CloudQSS.CPQ.Q-TMF"
+            buildType:
+              description: |
+                Type of the build process. Available options are:
+
+                **build** - Standard build process. 
+                Consist of contract and operations build and validation, calculation of the changelog, creation of the final version of the published contracts.
+
+                **changelog** - Only the changelog calculation, no API contracts version will be created.
+                both version and previousVersion fields *must* contain @<revision> suffix when using changelog buildType
+
+                **documentGroup** - Process to transform documents so that they will contain operations only from specific operations group.
+                Consists of info.json and documents.json
+              type: string
+              enum:
+                - build
+                - changelog
+                - documentGroup
+            metadata:
+              description: Common publish metadata.
+              type: object
+              properties:
+                commitId:
+                  description: Last Git commit ID of the version.
+                  type: string
+                  example: a5d45af7
+                repositoryUrl:
+                  description: Url of the Git repository.
+                  type: string
+                  format: URI
+                  example: 'https://<git_group_link>/apihub-registry'
+                labels:
+                  description: List of version labels.
+                  type: array
+                  items:
+                    type: string
+                  example: ["TMF"]
+                cloudName:
+                  description: Name of the cloud for publication from Agent.
+                  type: string
+                  example: 'k8s-apps2'
+                cloudUrl:
+                  description: Full address of the cloud from Agent.
+                  type: string
+                  format: URI
+                  example: 'https://k8s-apps2.k8s.sdntest.qubership.org'
+                namespace:
+                  description: Namespace of Agent's publication.
+                  type: string
+                  example: 'cloudQSS-release2'
+            refs:
+              description:  |
+                Detailed data about referenced versions for current package version.
+              type: array
+              items:
+                type: object
+                required:
+                  - refId
+                  - version
+                  - type
+                properties:
+                  refId:
+                    description: Referenced package Id.
+                    type: string
+                    example: "QS.CloudQSS.CPQ.CORE"
+                  version:
+                    description: Referenced package version number.
+                    type: string
+                    example: "2022.3@5"
+                  parentRefId:
+                    description: Referenced parent package Id.
+                    type: string
+                    example: "QS.CloudQSS.CPQ.CORE"
+                  parentVersion:
+                    description:  |
+                      Referenced parent version.
+                      The mask <version>@<revision> may be used to link with a specific revision.
+                      If the @revision is not provided, the latest version's revision will be used.
+                    type: string
+                    example: "2022.2@4"
+                  excluded:
+                    description: All excluded refs will be ignored (but will still be visible for package version).
+                    type: boolean
+            externalMetadata:
+              description: External build result metadata
+              type: object
+              properties:
+                operations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      apiType:
+                        type: string
+                        enum:
+                          - rest
+                      method:
+                        type: string
+                        description: HTTP method
+                      path:
+                        type: string
+                        description: HTTP path
+                      externalMetadata:
+                        description: External operation metadata
+                        type: object
+        documents.json:
+          type: object
+          description: List of documents data.
+          properties:
+            documents:
+              type: array
+              items:
+                description: List of builded files.
+                type: object
+                required:
+                  - fileId
+                  - slug
+                  - title
+                  - format
+                  - type
+                  - operations
+                properties:
+                  fileId:
+                    type: string
+                    description: File name with folders.
+                    example: "docs/qitmf-v5.11.json"
+                  fileName:
+                    type: string
+                    description: File name (slug+extension).
+                    example: "qitmf-v5.11.json"
+                  slug:
+                    description: Published file slug.
+                    type: string
+                    pattern: "^[a-z0-9-]"
+                    example: "qitmf-v5-11-json"
+                  type:
+                    description: Type of the specification notation.
+                    type: string
+                    enum:
+                      - openapi-3-1
+                      - openapi-3-0
+                      - openapi-2-0
+                      - asyncapi-2
+                      - json-schema
+                      - markdown
+                      - graphql-schema
+                      - graphapi
+                      - introspection
+                      - unknown
+                  format:
+                    description: Format of the specification document.
+                    type: string
+                    enum:
+                      - json
+                      - yaml
+                      - md
+                      - graphql
+                      - gql
+                      - unknown
+                  title:
+                    description: Document title and summary.
+                    type: string
+                  description:
+                    description: Document description.
+                    type: string
+                  version:
+                    description: Document version. For openapi document, version is taken from info object.
+                    type: string
+                    example: "1.0.1"
+                  operationIds:
+                    description: List of operation IDs.
+                    type: array
+                    items:
+                      type: string
+                    example: ["get-quoteManagement-v5-quote"]
+                  metadata:
+                    description: Meta parameters from config file.
+                    type: object
+                    properties:
+                      info:
+                        description: Info object from openapi document
+                        type: object
+                      externalDocs:
+                        description: External documentation object from openapi document
+                        type: object
+                      labels:
+                        description: List of file labels.
+                        type: array
+                        items:
+                          type: string
+                        example: ["TMF"]
+                      blobId:
+                        description: Git blob ID of the file.
+                        type: string
+                        example: a5d84af7
+                      tags:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          description:
+                            type: string
+                          externalDocs:
+                            type: object
+                            properties:
+                              description:
+                                type: string
+                              url:
+                                type: string
+        comparisons.json:
+          type: object
+          properties:
+            comparisons:
+              type: array
+              items:
+                type: object
+                required:
+                  - operationTypes
+                properties:
+                  comparisonFileId:
+                    type: string
+                    description: Pointer to the file with changes. Optional, required only if package contains documents. Not required in case of refs only (dashboard).
+                    example: "comparisonFile1.json"
+                  packageId:
+                    description: Package unique string identifier (full alias).
+                    type: string
+                    example: "QS.CloudQSS.CPQ.Q-TMF"
+                  version:
+                    description: Version name for publication.
+                    type: string
+                    example: "2022.3"
+                  revision:
+                    type: number
+                  previousVersion:
+                    description: |
+                      Name of the previous published version.
+                    type: string
+                    example: "2022.2"
+                    default: ""
+                  previousVersionPackageId:
+                    description: Previous release version package id.
+                    type: string
+                    example: "QS.CloudQSS.CPQ.Q-TMF"
+                  previousVersionRevision:
+                    type: number
+                  operationTypes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        apiType:
+                          type: string
+                        changesSummary:
+                          $ref: "#/components/schemas/ChangeSummary"
+                        tags:
+                          type: array
+                          items:
+                            type: string
+                          example:
+                            ["a", "b"]
+                  fromCache:
+                    description: True if the changes were retrieved from BE (not calculated)
+                    type: boolean
+        comparisons/{comparisonFileId}:
+          type: object
+          description: List of changes data.
+          properties:
+            operations:
+              description: Collection of changes depend on apiType.
+              type: array
+              items:
+                type: object
+                required:
+                  - operationId
+                  - changes
+                  - changesSummary
+                properties:
+                  operationId:
+                    description: >-
+                      Operation unique identifier (slug). Not the same as
+                      operationId tag from the OpenAPI file.
+                    type: string
+                    example: get-quoteManagement-v5-quote
+                  dataHash:
+                    description: Operation hash.
+                    type: string
+                    example: sdfsdfsf242
+                  previousDataHash:
+                    description: Hash of the previous published version operation.
+                    type: string
+                    example: sdfsdfsf24dds2
+                  changeSummary:
+                    $ref: "#/components/schemas/ChangeSummary"
+                  changes:
+                    description: Collection of changes for each operation.
+                    type: array
+                    items:
+                      type: object
+                      description: Discrepancy data in a single operation.
+                      properties:
+                        jsonPath:
+                          description: |
+                            (below, a document is not considered to be an original document, but a document with one specific operation)\
+                            When comparing two documents (origin and changed; difference from changed document apended to the original document), a jsonPath is calculated for each change. jsonPath is the location of a specific change in the changed document.
+                          type: array
+                          items:
+                            type: string
+                          example: ["paths", "/quoteManagement/v5/quote", "get", "parameters", "0", "description"]
+                        description:
+                          description: >-
+                            Human-readable description of point of change.
+                          type: string
+                          example: "[ Added ] Property: summary."
+                        action:
+                          description: Action, what was done with the endpoint.
+                          type: string
+                          enum:
+                            - add
+                            - remove
+                            - change
+                        severity:
+                          $ref: "#/components/schemas/ChangeSeverity"
+        operations.json:
+          description: List of operations for publish.
+          type: object
+          properties:
+            operations:
+              type: array
+              items:
+                allOf:
+                  - description: Operation object
+                    title: Operation
+                    type: object
+                    required:
+                      - operationId
+                      - title
+                      - apiType
+                      - dataHash
+                      - apiKind
+                    properties:
+                      operationId:
+                        description: Operation unique identifier (slug). Not the same as operationId tag from the OpenAPI file.
+                        type: string
+                        example: get-quoteManagement-v5-quote
+                      title:
+                        description: Operation summary/title.
+                        type: string
+                      apiType:
+                        description: Type of the API.
+                        type: string
+                        enum:
+                          - rest
+                          - kafka
+                          - grpc
+                          - graphql
+                      dataHash:
+                        description: Operation hash.
+                        type: string
+                        example: sdfsdfsf242
+                      deprecated:
+                        description: Operation deprecate flag.
+                        type: boolean
+                        default: false
+                      apiKind:
+                        description: |
+                          Operation API kind.
+                          * bwc - API with backward compatibility support (a.k.a. public).
+                          * no-bwc - API without backward compatibility support (a.k.a. internal).
+                          * experimental - APIs for feature testing. Usage is not recommended.
+                        type: string
+                        enum:
+                          - bwc
+                          - no-bwc
+                          - experimental
+                        default: bwc
+                      tags:
+                        description: List of operation tags.
+                        type: array
+                        items:
+                          type: string
+                        example: ["RestControllerV5"]
+                  - type: object
+                    required:
+                      - data
+                      - metadata
+                      - searchScopes
+                    properties:
+                      models:
+                        description: Map<name:string, hash:string> of operation models
+                        type: object
+                        additionalProperties:
+                          type: string
+                          example:
+                            Template: a6b1596abe745a4a0cd3de25a411dbe671a3ba7c
+                            ErrorResponse: cf1d87cf3895af106a3ad29f2098dcc2cc477e71
+                            CreateItemDto: 72bfdc14758213e5c09620b29054da86b75d4868
+                      deprecatedInfo:
+                        description: Additional information about deprecated operation
+                        type: object
+                      deprecatedInPreviousVersions:
+                        description: List of previous release versions where operation was also deprecated
+                        type: array
+                        items:
+                          type: string
+                        example: ["2022.2", "2022,1", "2021.4"]
+                      deprecatedItems:
+                        description: List of deprecated items inside operation.
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            jsonPath:
+                              description: jsonPath to point of deprecation.
+                              type: array
+                              items:
+                                type: string
+                              example: ["paths", "/quoteManagement/v5/quote", "get", "parameters", "0", "description"]
+                            description:
+                              description: Human-readable description of deprecated item.
+                              type: string
+                              example: "parameter Type in response 200"
+                            deprecatedInfo:
+                              description: Additional information about single deprecated item
+                              type: object
+                            deprecatedInPreviousVersions:
+                              description: List of previous release versions where item was also deprecated
+                              type: array
+                              items:
+                                type: string
+                              example: ["2022.2", "2022,1", "2021.4"]
+                      metadata:
+                        description: Metadata content depend on apiType.
+                        oneOf:
+                          - allOf:
+                            - $ref: "#/components/schemas/RestOperationMeta"
+                            - type: object
+                              properties:
+                                originalPath:
+                                  description: "Operation path as it presented in initial documentation file"
+                                  type: string
+                          - $ref: "#/components/schemas/GraphQLOperationMeta"
+                      searchScopes:
+                        description: Scopes for search indexes.
+                        type: object
+                        additionalProperties:
+                          type: string
+                        example:
+                          all: "Quote Snapshot V6 Performs full text search ofQuotes Statistics By Phrase fullTextSearchStatistics searchPhrase offset int32 limit int32 fields 200 OK application/json quote anonymousCustomerData assignTo The name of the user/team to whom the Quote is assigned cancellationReason The entity that represents common information about a customer's request cancellationReasonDescription The reason (from the free text field) why the Quote has been cancelled contactMedium A list of contact mediums (ContactMedium [*]). Indicates the contact medium that could be used to contact the party deliveryMethod Id of the Delivery Method (from the Delivery Method list) for Quote description Description of the Quote extendedParameters additionalProperties The attribute contains additional parameters of the Quote The attribute contains additional parameters of the Quote Map<String,List<String>> The attribute contains additional parameters of the Quote externalRefs Represents a reference to an external object id Unique identifier of the Quote name Quote name quoteDate Date and time when the Quote was created date-time quoteTotalPrice Represents Quote total price relatedParty A list of related party references (RelatedPartyRef [*]).A related party defines party or party role linked to a specific entity relatedQuote A list of related quotes (RelatedQuote [*]). It represents another revision of the in-flight Quote from the same chain, i.e. in-flight Quote with the same initialBaselineQuoteId value. This class is returned in the API response only in case of enhancedListQuotes API operation is called. It can be empty if there are no other in-flight Quotes in this chain revision Attribute is used to mark in-flight Quote. Increased in case changes are done to the Quote after submission int32 state State of the Quote updatedWhen Date and time when the Quote was updated date-time validFor Quote with reduced scope of attributes quoteItemStatistic Shows the number of Quote's root Quote Items grouped by some criteria(e.g. by Product Offering, Action) action Numbers of root Quote Items grouped by Action count Number of Quote Items for the specific value int32 name Action name Shows the number of Customer's Product Instances for specified criteria (e.g. Product Family, Billing Account and so on) productFamilyId Unique identifier of Product Family productFamilyName Product family name. Name is returned in the default locale. If alternative locale is passed in Accept-language header in the API request the system returns corresponding localized name in the response. productOfferingId Unique identifier of Product Offering productOfferingName Product offering name. Attribute is returned in the response for catalog entities only (product offering). Name is returned in the default locale. If alternative locale is passed in Accept-language header in the API request the system returns corresponding localized name in the response Shows the number of Quote's root Quote Items grouped by some criteria(e.g. by Product Offering, Action) Shows the Quote with a number of root Quote Items 4XX default response application/json;charset=UTF-8;model=errorResponse;version=1 5XX default response application/json;charset=UTF-8;model=errorResponse;version=1 "
+    BuildResult:
+      description: |
+        Result of build operation in ZIP archive.
+        * The archive contains folders with sources, builded JSON documents and JSON operation files. 
+        * In addition, several config files are provided. he structure of these files is described below.
+      title: BuildResult
+      type: object
+      required:
+        - info.json
+        - documents.json
+      properties:
+        info.json:
+          description: |
+            Build configuration, published version details.
+          type: object
+          required:
+            - packageId
+            - version
+            - buildType
+          properties:
+            packageId:
+              description: Package unique string identifier (full alias).
+              type: string
+              example: "QS.CloudQSS.CPQ.Q-TMF"
+            version:
+              description: Version name for publication.
+              type: string
+              example: "2022.3"
+            previousVersion:
+              description: |
+                Name of the previous published version.
+                The mask <version>@<revision> may be used to return the revision number.
+              type: string
+              example: "2022.2@4"
+              default: ""
+            previousVersionPackageId:
+              description: Previous release version package id.
+              type: string
+              example: "QS.CloudQSS.CPQ.Q-TMF"
+            buildType:
+              description: |
+                Type of the build process. Available options are:
+                - **build** - Standard build process.Consist of contract and operations build and validation, calculation of the changelog, creation of the final version of the published contracts.
+                - **changelog** - Only the changelog calculation, no API contracts version will be created. Both version and previousVersion fields *must* contain @<revision> suffix when using changelog buildType
+                - **reducedSourceSpecifications** - proccess that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
+                - **mergedSpecification** - process the merges all operations from an operation group into one specification.
+              type: string
+              enum:
+                - build
+                - changelog
+                - mergedSpecification
+                - reducedSourceSpecifications
+            format:
+              description: Should be specified if buildType equal to mergedSpecification or reducedSourceSpecifications
+              type: string
+              enum:
+                - yaml
+                - json
+                - html
+              default: json
+            metadata:
+              description: Common publish metadata.
+              type: object
+              properties:
+                commitId:
+                  description: Last Git commit ID of the version.
+                  type: string
+                  example: a5d45af7
+                repositoryUrl:
+                  description: Url of the Git repository.
+                  type: string
+                  format: URI
+                  example: 'https://<git_group_link>/apihub-registry'
+                labels:
+                  description: List of version labels.
+                  type: array
+                  items:
+                    type: string
+                  example: ["TMF"]
+                cloudName:
+                  description: Name of the cloud for publication from Agent.
+                  type: string
+                  example: 'k8s-apps2'
+                cloudUrl:
+                  description: Full address of the cloud from Agent.
+                  type: string
+                  format: URI
+                  example: "https://k8s-apps2.k8s.sdntest.qubership.org"
+                namespace:
+                  description: Namespace of Agent's publication.
+                  type: string
+                  example: "cloudQSS-release2"
+            refs:
+              description:  |
+                Detailed data about referenced versions for current package version.
+              type: array
+              items:
+                type: object
+                required:
+                  - refId
+                  - version
+                  - type
+                properties:
+                  refId:
+                    description: Referenced package Id.
+                    type: string
+                    example: "QS.CloudQSS.CPQ.CORE"
+                  version:
+                    description: Referenced package version number.
+                    type: string
+                    example: "2022.3@5"
+                  parentRefId:
+                    description: Referenced parent package Id.
+                    type: string
+                    example: "QS.CloudQSS.CPQ.CORE"
+                  parentVersion:
+                    description:  |
+                      Referenced parent version.
+                      The mask <version>@<revision> may be used to link with a specific revision.
+                      If the @revision is not provided, the latest version's revision will be used.
+                    type: string
+                    example: "2022.2@4"
+                  excluded:
+                    description: All excluded refs will be ignored (but will still be visible for package version).
+                    type: boolean
+        documents.json:
+          type: object
+          description: List of documents data.
+          properties:
+            documents:
+              type: array
+              items:
+                description: List of builded files.
+                type: object
+                required:
+                  - fileId
+                  - slug
+                  - title
+                  - format
+                  - type
+                  - operations
+                properties:
+                  fileId:
+                    type: string
+                    description: File name with folders.
+                    example: "docs/qitmf-v5.11.json"
+                  fileName:
+                    type: string
+                    description: File name (slug+extension).
+                    example: "qitmf-v5.11.json"
+                  slug:
+                    description: Published file slug.
+                    type: string
+                    pattern: "^[a-z0-9-]"
+                    example: "qitmf-v5-11-json"
+                  type:
+                    $ref: "#/components/schemas/SpecificationType"
+                  format:
+                    $ref: "#/components/schemas/DocumentFormat"
+                  title:
+                    description: Document title and summary.
+                    type: string
+                  description:
+                    description: Document description.
+                    type: string
+                  version:
+                    description: Document version. For openapi document, version is taken from info object.
+                    type: string
+                    example: "1.0.1"
+                  operationIds:
+                    description: List of operation IDs.
+                    type: array
+                    items:
+                      type: string
+                    example: ["get-quoteManagement-v5-quote"]
+                  metadata:
+                    description: Meta parameters from config file.
+                    type: object
+                    properties:
+                      info:
+                        description: Info object from openapi document
+                        type: object
+                      externalDocs:
+                        description: External documentation object from openapi document
+                        type: object
+                      labels:
+                        description: List of file labels.
+                        type: array
+                        items:
+                          type: string
+                        example: ["TMF"]
+                      blobId:
+                        description: Git blob ID of the file.
+                        type: string
+                        example: a5d84af7
+                      tags:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          description:
+                            type: string
+                          externalDocs:
+                            type: object
+                            properties:
+                              description:
+                                type: string
+                              url:
+                                type: string
+        comparisons.json:
+          type: object
+          properties:
+            comparisons:
+              type: array
+              items:
+                type: object
+                required:
+                  - operationTypes
+                properties:
+                  comparisonFileId:
+                    type: string
+                    description: Pointer to the file with changes. Optional, required only if package contains documents. Not required in case of refs only (dashboard).
+                    example: "comparisonFile1.json"
+                  packageId:
+                    description: Package unique string identifier (full alias).
+                    type: string
+                    example: "QS.CloudQSS.CPQ.Q-TMF"
+                  version:
+                    description: Version name for publication.
+                    type: string
+                    example: "2022.3"
+                  revision:
+                    type: number
+                  previousVersion:
+                    description: |
+                      Name of the previous published version.
+                    type: string
+                    example: "2022.2"
+                    default: ""
+                  previousVersionPackageId:
+                    description: Previous release version package id.
+                    type: string
+                    example: "QS.CloudQSS.CPQ.Q-TMF"
+                  previousVersionRevision:
+                    type: number
+                  operationTypes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        apiType:
+                          type: string
+                        changesSummary:
+                          $ref: "#/components/schemas/ChangeSummary"
+                        numberOfImpactedOperations:
+                          allOf:
+                            - $ref: '#/components/schemas/ChangeSummary'
+                            - type: object
+                              description: Number of operations impacted by each severety type.
+                        apiAudienceTransitions:
+                              type: array
+                              description: Shows transitions of operations' apiAudience value (compared to the previous release version) and number of operations in which this transition occurred. The array contains only records of transitions that actually occurred in operations.
+                              items:
+                                type: object
+                                properties:
+                                  currentAudience:
+                                    type: string
+                                    description: Current apiAudience value (currentAudience must not be equal to previousAudience)
+                                    enum:
+                                      - internal
+                                      - external
+                                      - unknown
+                                  previousAudience:
+                                    type: string
+                                    description: Previous apiAudience value
+                                    enum:
+                                      - internal
+                                      - external
+                                      - unknown
+                                  operationsCount:
+                                    type: number
+                                    description: Number of operations in which the apiAudience was changed from previousAudience to currentAudience
+                        tags:
+                          type: array
+                          items:
+                            type: string
+                          example:
+                            ["a", "b"]
+                  fromCache:
+                    description: True if the changes were retrieved from BE (not calculated)
+                    type: boolean
+        comparisons/{comparisonFileId}:
+          type: object
+          description: List of changes data.
+          properties:
+            operations:
+              description: Collection of changes depend on apiType.
+              type: array
+              items:
+                type: object
+                required:
+                  - operationId
+                  - changes
+                  - changesSummary
+                properties:
+                  operationId:
+                    description: >-
+                      Operation unique identifier (slug). Not the same as
+                      operationId tag from the OpenAPI file.
+                    type: string
+                    example: get-quoteManagement-v5-quote
+                  dataHash:
+                    description: Operation hash.
+                    type: string
+                    example: sdfsdfsf242
+                  previousDataHash:
+                    description: Hash of the previous published version operation.
+                    type: string
+                    example: sdfsdfsf24dds2
+                  changeSummary:
+                    $ref: "#/components/schemas/ChangeSummary"
+                  changes:
+                    description: Collection of changes for each operation.
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SingleOperationChange"
+        operations.json:
+          description: List of operations for publish.
+          type: object
+          properties:
+            operations:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/Operation"
+                  - type: object
+                    required:
+                      - data
+                      - metadata
+                      - searchScopes
+                    properties:
+                      models:
+                        description: Map<name:string, hash:string> of operation models
+                        type: object
+                        additionalProperties:
+                          type: string
+                          example:
+                            Template: a6b1596abe745a4a0cd3de25a411dbe671a3ba7c
+                            ErrorResponse: cf1d87cf3895af106a3ad29f2098dcc2cc477e71
+                            CreateItemDto: 72bfdc14758213e5c09620b29054da86b75d4868
+                      deprecatedInfo:
+                        description: |
+                          Additional information about deprecated operation:
+                          * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated operation. 
+                          * for GraphQL API it is value of 'reason' argument of @deprecated directive, which is defined for deprecated operation.
+                        type: string
+                      deprecatedInPreviousVersions:
+                        description: List of previous release versions where operation was also deprecated
+                        type: array
+                        items:
+                          type: string
+                        example: ["2022.2", "2022,1", "2021.4"]
+                      deprecatedItems:
+                        $ref: "#/components/schemas/DeprecatedItems"
+                      metadata:
+                        description: Metadata content depend on apiType.
+                        oneOf:
+                          - $ref: "#/components/schemas/RestOperationMeta"
+                          - $ref: "#/components/schemas/GraphQLOperationMeta"
+                          - $ref: "#/components/schemas/ProtobufOperationMeta"
+                      searchScopes:
+                        description: Scopes for search indexes.
+                        type: object
+                        additionalProperties:
+                          type: string
+                        example:
+                          all: "Quote Snapshot V6 Performs full text search ofQuotes Statistics By Phrase fullTextSearchStatistics searchPhrase offset int32 limit int32 fields 200 OK application/json quote anonymousCustomerData assignTo The name of the user/team to whom the Quote is assigned cancellationReason The entity that represents common information about a customer's request cancellationReasonDescription The reason (from the free text field) why the Quote has been cancelled contactMedium A list of contact mediums (ContactMedium [*]). Indicates the contact medium that could be used to contact the party deliveryMethod Id of the Delivery Method (from the Delivery Method list) for Quote description Description of the Quote extendedParameters additionalProperties The attribute contains additional parameters of the Quote The attribute contains additional parameters of the Quote Map<String,List<String>> The attribute contains additional parameters of the Quote externalRefs Represents a reference to an external object id Unique identifier of the Quote name Quote name quoteDate Date and time when the Quote was created date-time quoteTotalPrice Represents Quote total price relatedParty A list of related party references (RelatedPartyRef [*]).A related party defines party or party role linked to a specific entity relatedQuote A list of related quotes (RelatedQuote [*]). It represents another revision of the in-flight Quote from the same chain, i.e. in-flight Quote with the same initialBaselineQuoteId value. This class is returned in the API response only in case of enhancedListQuotes API operation is called. It can be empty if there are no other in-flight Quotes in this chain revision Attribute is used to mark in-flight Quote. Increased in case changes are done to the Quote after submission int32 state State of the Quote updatedWhen Date and time when the Quote was updated date-time validFor Quote with reduced scope of attributes quoteItemStatistic Shows the number of Quote's root Quote Items grouped by some criteria(e.g. by Product Offering, Action) action Numbers of root Quote Items grouped by Action count Number of Quote Items for the specific value int32 name Action name Shows the number of Customer's Product Instances for specified criteria (e.g. Product Family, Billing Account and so on) productFamilyId Unique identifier of Product Family productFamilyName Product family name. Name is returned in the default locale. If alternative locale is passed in Accept-language header in the API request the system returns corresponding localized name in the response. productOfferingId Unique identifier of Product Offering productOfferingName Product offering name. Attribute is returned in the response for catalog entities only (product offering). Name is returned in the default locale. If alternative locale is passed in Accept-language header in the API request the system returns corresponding localized name in the response Shows the number of Quote's root Quote Items grouped by some criteria(e.g. by Product Offering, Action) Shows the Quote with a number of root Quote Items 4XX default response application/json;charset=UTF-8;model=errorResponse;version=1 5XX default response application/json;charset=UTF-8;model=errorResponse;version=1 "
+    SingleOperationChange:
+      allOf:
+        - type: object
+          description: Discrepancy data in a single operation.
+          properties:
+            description:
+              description: >-
+                Human-readable description of point of change.
+              type: string
+              example: "[Added] Property: summary."
+            severity:
+              $ref: "#/components/schemas/ChangeSeverity"
+            scope:
+              type: string
+              description: |
+                Part of operation (like request/response) where change was made. Scope differs for apiTypes.\
+                Scope is needed to correctly identify severity of change, because the same change can have different severity in request/response.
+            action:
+              description: Action, what was done with the endpoint.
+              type: string
+              enum:
+                - add
+                - remove
+                - replace
+                - rename
+        - oneOf:
+          - $ref: "#/components/schemas/ChangeAdd"
+          - $ref: "#/components/schemas/ChangeRemove"
+          - $ref: "#/components/schemas/ChangeReplace"
+          - $ref: "#/components/schemas/ChangeRename"
+    ChangeAdd:
+      type: object
+      description: Data of single operation change when change action = add
+      properties:
+        currentDeclarationJsonPaths:
+          description: |
+            (below, a document is not considered to be an original document, but a document with one specific operation)\
+            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+          type: array
+          items:
+            type: array
+            items:
+              anyOf:
+               - type: string
+               - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+        currentValueHash:
+          type: string
+          description: |
+            Hash of the added entity.\
+            Hash is needed to identify that the same enitity was changed in other operations, that allows calculating declarative number of changes in package version.
+    ChangeRemove:
+      type: object
+      description: Data of single operation change when change action = remove.
+      properties:
+        previousDeclarationJsonPaths:
+          description: |
+            (below, a document is not considered to be an original document, but a document with one specific operation)\
+            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+          type: array
+          items:
+            type: array
+            items:
+              anyOf:
+               - type: string
+               - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+        previousValueHash:
+          type: string
+          description: |
+            Hash of the removed entity.\
+            Hash is needed to identify that the same enitity was changed in other operations, that allows calculating declarative number of changes in package version.
+    ChangeReplace:
+      type: object
+      description: Data of single operation change when change action = replace
+      properties:
+        currentDeclarationJsonPaths:
+          description: |
+            (below, a document is not considered to be an original document, but a document with one specific operation)\
+            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+          type: array
+          items:
+            type: array
+            items:
+              anyOf:
+               - type: string
+               - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+        previousDeclarationJsonPaths:
+          description: |
+            (below, a document is not considered to be an original document, but a document with one specific operation)\
+            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+          type: array
+          items:
+            type: array
+            items:
+              anyOf:
+               - type: string
+               - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+        previousValueHash:
+          type: string
+          description: |
+            Previous hash of the changed entity.\
+            Hash is needed to identify that the same enitity was changed in other operations, that allows calculating declarative number of changes in package version.
+        currentValueHash:
+          type: string
+          description: |
+            Current hash of the changed entity.\
+            Hash is needed to identify that the same enitity was changed in other operations, that allows calculating declarative number of changes in package version.
+    ChangeRename:
+      type: object
+      description: Data of single operation change when change action = rename.
+      properties:
+        currentDeclarationJsonPaths:
+          description: |
+            (below, a document is not considered to be an original document, but a document with one specific operation)\
+            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+          type: array
+          items:
+            type: array
+            items:
+              anyOf:
+               - type: string
+               - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+        previousDeclarationJsonPaths:
+          description: |
+            (below, a document is not considered to be an original document, but a document with one specific operation)\
+            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+          type: array
+          items:
+            type: array
+            items:
+              anyOf:
+               - type: string
+               - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+        previousKey:
+          type: string
+          description: Previous key (name) of the renamed entity.
+        currentKey:
+          type: string
+          description: Current key (name) of the renamed entity.
+    BuildConfig:
+      type: object
+      description: |
+        Configuration of the source files. 
+        Content can not be empty, files or refs are **required**.
+      required:
+        - version
+        - status
+      properties:
+        version:
+          description: Version name for publication.
+          type: string
+          example: "2022.3"
+        previousVersion:
+          description: |
+            Name of the previous published version.
+            The mask <version>@<revision> is required for 'changelog' buildType.
+          type: string
+          example: "2022.2"
+          default: ""
+        previousVersionPackageId:
+          description: | 
+            Required in case of snapshot when publishing version should be compared to different package. 
+            Do not set anything if the package sould be compared to itself. Value equals to packageId is forbidden.
+          type: string
+          example: "QS.CloudOSS.PL.MC"
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        groupName:
+          description: |
+            Operation group name. groupName is required if buildType = documentGroup.
+          type: string
+          example: v1
+        apiType:
+          $ref: "#/components/schemas/ApiType"
+        buildType:
+          description: |
+            Type of the build process. Available options are:
+
+            **build** - Standard build process to publish new version.
+            Consist of contract and operations build and validation, calculation of the changelog, creation of the final version of the published contracts.
+
+            **changelog** - Only the changelog calculation, no API contracts version will be created.
+            The ```files``` and ```refs``` objects are not required in this case.
+
+            **documentGroup** - Process to transform documents so that they will contain operations only from specific operations group.
+          type: string
+          enum:
+            - build
+            - changelog
+            - documentGroup
+          default: build
+        metadata:
+          description: Common publish metadata.
+          type: object
+          properties:
+            commitId:
+              description: Last Git commit ID of the version.
+              type: string
+              example: a5d45af7
+            repositoryUrl:
+              description: Url of the Git repository.
+              type: string
+              format: URI
+              example: "https://<git_group_link>/apihub-registry"
+            versionLabels:
+              description: List of version labels. Label is a string.
+              type: array
+              items:
+                type: string
+              example: ["part-of:CloudQSS-CPQBE"]
+            cloudName:
+              description: Name of the cloud for publication from Agent.
+              type: string
+              example: "k8s-apps2"
+            cloudUrl:
+              description: Full address of the cloud from Agent.
+              type: string
+              format: URI
+              example: "https://k8s-apps2.k8s.sdntest.qubership.org"
+            namespace:
+              description: Namespace of Agent's publication.
+              type: string
+              example: "cloudQSS-release2"
+        externalMetadata:
+          description: External build metadata
+          type: object
+          properties:
+            operations:
+              type: array
+              items:
+                type: object
+                properties:
+                  apiType:
+                    type: string
+                    enum:
+                      - rest
+                  method:
+                    type: string
+                    description: HTTP method
+                  path:
+                    type: string
+                    description: HTTP path
+                  externalMetadata:
+                    description: External operation metadata
+                    type: object
+        files:
+          description: |
+            Detailed data about files in sources archive.
+            Required if no Refs are provided.
+          type: array
+          items:
+            type: object
+            required:
+              - fileId
+            properties:
+              fileId:
+                type: string
+                description: File name.
+                example: "qitmf-v5.11.json"
+              publish:
+                description: | 
+                  Flag, publish the source file or not. 
+                  Required for case with external refs when specification is separated into multiple files. 
+                  After dereference in scope of build process the source files(parts) are no longer required. So it's possible to skip publish of such files.
+                type: boolean
+                default: true
+              labels:
+                description: List of file labels. Label is a string.
+                type: array
+                items:
+                  type: string
+                example: ["TMF"]
+              blobId:
+                description: Git blob ID of the file.
+                type: string
+                example: a5d45af7
+              xApiKind:
+                description: Custom x-api-kind parameter for the file. Specify if this API is backward compatible.
+                type: string
+                example: "no-BWC"
+        refs:
+          description: |
+            Detailed data about referenced versions for current package version.
+            Required if no Files provided.
+          type: array
+          items:
+            type: object
+            required:
+              - refId
+              - version
+              - type
+            properties:
+              refId:
+                description: Referenced package Id. I.e. link to another package.
+                type: string
+                example: "QS.CloudQSS.CPQ.CORE"
+              version:
+                description: Referenced package version. I.e. link to another package's version.
+                  The mask <version>@<revision> may be used to link with a specific revision.
+                  If the @revision is not provided, the latest version's revision will be used.
+                type: string
+                example: "2022.3@5"
+              parentRefId:
+                description: Required to build reference(dependencies) graph. Allows to specify the parent node package id in the graph.
+                type: string
+                example: "QS.CloudQSS.CPQ.CORE"
+              parentVersion:
+                description:  |
+                  Required to build reference(dependencies) graph. Allows to specify the parent node version in the graph.
+                  The mask <version>@<revision> may be used to link with a specific revision.
+                  If the @revision is not provided, the latest version's revision will be used.
+                type: string
+                example: "2022.2@4"
+              excluded:
+                description: |
+                  Required for conflict resolution case when different versions of the same package appear in the publication config.
+                  All excluded refs will be ignored (but will still be visible for package version).
+                type: boolean
+    ChangeSummary:
+      description: |
+        Numbers of changes between the current and previous published version.
+      type: object
+      properties:
+        breaking:
+          description: Number of changes, breaking the backward compatibility.
+          type: integer
+          default: 0
+        semi-breaking:
+          description: Number of changes, breaking the backward compatibility in a legal way. For example, deleting correctly deprecated endpoint.
+          type: integer
+          default: 0
+        deprecated:
+          description: Number of deprecated endpoints.
+          type: integer
+          default: 0
+        non-breaking:
+          description: Number of non-breaking changes.
+          type: integer
+          default: 0
+        annotation:
+          description: Number of annotation changes.
+          type: integer
+          default: 0
+        unclassified:
+          description: Number of unclassified changes.
+          type: integer
+          default: 0
+    ChangeSummaryByApiType:
+      description: |
+        Numbers of changes between the current and previous published version by api type.
+      type: object
+      additionalProperties:
+        type: object
+        properties:
+          breaking:
+            description: Number changes, breaking the backward compatibility.
+            type: integer
+            default: 0
+          semi-breaking:
+            description: Number of changes, breaking the backward compatibility in a legal way.
+            type: integer
+            default: 0
+          deprecated:
+            description: Number of deprecated endpoints.
+            type: integer
+            default: 0
+          non-breaking:
+            description: Number of non-breaking changes.
+            type: integer
+            default: 0
+          annotation:
+            description: Number of annotation changes.
+            type: integer
+            default: 0
+          unclassified:
+            description: Number of unclassified changes.
+            type: integer
+            default: 0
+      example:
+        rest:
+          breaking: 15
+          semi-breaking: 3
+          deprecated: 2
+          non-breaking: 45
+          annotation: 233
+          unclassified: 0
+        graphql:
+          breaking: 0
+          semi-breaking: 0
+          deprecated: 0
+          non-breaking: 5
+          annotation: 20
+          unclassified: 0
+    OperationSummary:
+      description: Numbers of operations of each type.
+      type: object
+      properties:
+        endpoints:
+          description: Overall number of operations.
+          type: integer
+          default: 0
+        deprecated:
+          description: Number of newly deprecated operations (comparing with the previous version).
+          type: integer
+          default: 0
+        created:
+          description: Number of newly created operations (comparing with the previous version).
+          type: integer
+          default: 0
+        deleted:
+          description: Number of deleted operations (comparing with the previous version).
+          type: integer
+          default: 0
+    CreateOperationGroup:
+      description: Version group.
+      type: object
+      required:
+        - groupName
+        - apiType
+        - isPrefixGroup
+      properties:
+        groupName:
+          type: string
+          description: Unique group name.
+          example: New_operation_group
+        apiType:
+          $ref: "#/components/schemas/ApiType"
+        description:
+          type: string
+          description: Description of group.
+        isPrefixGroup:
+          type: boolean
+          description: true - if the group created automatically via restGroupingPrefix.
+          example: false
+        exportTemplateFileName:
+          type: string
+          description: The name of the export template file, if there is one.
+          example: template123.json
+    BuildTypes:
+      type: string
+      description: | 
+        Type of the build process. Available options are:\
+        **build** - Standard build process to publish new version. Consist of contract and operations build and validation, calculation of the changelog, creation of the final version of the published contracts.\
+        **changelog** - Only the changelog calculation, no API contracts version will be created. The ```files``` and ```refs``` objects are not required in this case.\
+        **documentGroup** - Process to transform documents so that they will contain operations only from specific operations group.
+        **reducedSourceSpecifications** - Process to take operations from the operation group and ex
+        **mergedSpecification**
+      enum:
+        - build
+        - changelog
+        - reducedSourceSpecifications
+        - mergedSpecification
+    BuildErrors:
+      type: object
+      properties:
+        errors:
+          type: string
+          description: Build error message.
+    ChangeSeverity:
+      description: Severity of the particular change.
+      type: string
+      enum:
+        - breaking
+        - semi-breaking
+        - deprecated
+        - non-breaking
+        - annotation
+        - unclassified
+    PackageVersionRevision:
+      description: Version revision parameters.
+      type: object
+      title: PackageVersionRevision
+      required:
+        - version
+        - revision
+        - status
+        - createdAt
+        - createdBy
+      properties:
+        version:
+          description: Package version name. The <version>@<revision> mask is used to return the revision number.
+          type: string
+          example: "2023.1@5"
+        revision:
+          description: Number of the revision.
+          type: integer
+          format: int32
+          example: 3
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        createdBy:
+          $ref: "#/components/schemas/Principal"
+        createdAt:
+          type: string
+          description: Date of revision creation.
+          format: datetime
+        notLatestRevision:
+          type: boolean
+          default: false
+        revisionLabels:
+          description: List of revision labels.
+          type: array
+          items:
+            type: string
+          example: [ "part-of:CloudQSS-CPQBE" ]
+        publishMeta:
+          additionalProperties: true
+          description: Publish metadata.
+          type: object
+          properties:
+            commitId:
+              description: Last Git commit ID of the version.
+              type: string
+              example: a5d45af7
+            repositoryUrl:
+              description: Url of the Git repository.
+              type: string
+              format: URI
+              example: https://<git_group_link>/apihub-registry
+            cloudName:
+              description: Name of the cloud for publication from Agent.
+              type: string
+              example: k8s-apps2
+            cloudUrl:
+              description: Full address of the cloud from Agent.
+              type: string
+              format: URI
+              example: https://k8s-apps2.k8s.sdntest.qubership.org
+            namespace:
+              description: Namespace of Agent's publication.
+              type: string
+              example: cloudQSS-release2
+  examples:
+    Package:
+      description: Example of the package params
+      value:
+        packageId: "QS.QSS.PRG.APIHUB"
+        parentId: "QS.QSS.PRG"
+        kind: "package"
+        name: "Test package"
+        alias: "APIHUB"
+        description: "Package for the test purpose"
+        isFavorite: false
+        serviceName: "apihub-be"
+        defaultRole: Viewer
+    PackageCreate:
+      description: Example of the package creation params
+      value:
+        parentId: "QS.QSS.PRG"
+        kind: "package"
+        name: "Test package"
+        alias: "APIHUB"
+        description: "Package for the test purpose"
+        serviceName: "apihub-be"
+    PackageNotFound:
+      description: Package not found by ID. Response for the 404 error
+      value:
+        status: 404
+        code: "APIHUB-3020"
+        message: "package with packageId = $packageId not found"
+    VersionNotFound:
+      description: Version not found by number. Response for the 404 error
+      value:
+        status: 404
+        code: "APIHUB-3050"
+        message: "Published version $version not found"
+    FileNotFound:
+      description: File not found by slug. Response for the 404 error
+      value:
+        status: 404
+        code: "APIHUB-3043"
+        message: "File for path $fileId not found"
+    IncorrectInputParameters:
+      description: Incorrect input parameters
+      value:
+        status: 400
+        code: "APIHUB-COMMON-4001"
+        message: "Incorrect input parameters"
+    InternalServerError:
+      description: Default internal server error
+      value:
+        status: 500
+        code: "APIHUB-8000"
+        reason: "InternalServerError"
+        message: "InternalServerError"
+  securitySchemes:
+    BearerAuth:
+      type: http
+      description: Bearer token authentication. Default security scheme for API usage.
+      scheme: bearer
+      bearerFormat: JWT
+    api-key:
+      type: apiKey
+      description: Api-key authentication.
+      name: api-key
+      in: header
+    BasicAuth:
+      type: http
+      description: Login/password authentication.
+      scheme: basic

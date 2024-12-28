@@ -1,0 +1,441 @@
+openapi: 3.0.1
+info:
+  title: My Test API
+  description: My Test API description
+  version: "1.1"
+  contact: { }
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0
+servers:
+  - url: http://{server}
+    variables:
+      server:
+        default: server:port
+tags:
+  - name: My Test API. Bulk Operation
+paths:
+  /api/testService/{id}/bulkOperation1:
+    post:
+      tags:
+        - My Test API. Bulk Operation
+      operationId: bulkOperation1
+      summary: Bulk Operation 1
+      description: >
+        Bulk Operation is aimed to PROVIDE ability CHECKCHECKCHECK to send requests
+        in a bulk manner.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: MYID
+          example: "1111222233334444999"
+          description: Specifies the existing Entity id
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - addFirstTypeItems
+              - addSecondTypeItems
+          example: addFirstTypeItems
+          description: |
+            Specifies the name of action which should be executed.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkOperationRequest"
+            examples:
+              Case_1:
+                summary: Add several copies of First Type to Service
+                value:
+                  itemsCommonPart:
+                    locationId: "00001111222299"
+                    billingAccountId: "0000111122223333997"
+                    chars:
+                      - originalName: Original Name 1
+                        values:
+                          - originalValue: "6"
+                  items:
+                    - offeringId: "12345678"
+                      itemsCount: 5
+                      sourceItemId: "0000111122223333998"
+                      chars:
+                        - originalName: Original Name 2
+                          values:
+                            - originalValue: "100"
+                    - offeringId: "87654321"
+                      orderItemsCount: 10
+                      sourceOrderItemId: "0000111122223333999"
+                      chars:
+                        - originalName: Original Name 2
+                          values:
+                            - originalValue: "150"
+        required: true
+      responses:
+        "200":
+          description: >
+            OK
+
+
+            Example of 200 OK decription
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ExampleEntity"
+                  - type: string
+        "400":
+          $ref: "#/components/responses/error_400"
+        "500":
+          $ref: "#/components/responses/error_500"
+  /api/testService/{id}/bulkOperation3:
+    post:
+      tags:
+        - My Test API. Bulk Operation
+      operationId: bulkOperation3
+      summary: Bulk Operation 3 [updated]
+      description: >
+        Bulk Operation is aimed to PROVIDE ability CHECKCHECKCHECK to send requests
+        in a bulk manner.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: MYID
+          example: "1111222233334444999"
+          description: Specifies the existing Entity id
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - addFirstTypeItems
+              - addSecondTypeItems
+          example: addFirstTypeItems
+          description: |
+            Specifies the name of action which should be executed.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkOperationRequest"
+            examples:
+              Case_1:
+                summary: Add several copies of First Type to Service
+                value:
+                  itemsCommonPart:
+                    locationId: "00001111222299"
+                    billingAccountId: "0000111122223333997"
+                    chars:
+                      - originalName: Original Name 1
+                        values:
+                          - originalValue: "6"
+                  items:
+                    - offeringId: "12345678"
+                      itemsCount: 5
+                      sourceItemId: "0000111122223333998"
+                      chars:
+                        - originalName: Original Name 2
+                          values:
+                            - originalValue: "100"
+                    - offeringId: "87654321"
+                      orderItemsCount: 10
+                      sourceOrderItemId: "0000111122223333999"
+                      chars:
+                        - originalName: Original Name 2
+                          values:
+                            - originalValue: "150"
+        required: true
+      responses:
+        "200":
+          description: >
+            OK
+
+
+            Example of 200 OK decription
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ExampleEntity"
+                  - type: string
+        "400":
+          $ref: "#/components/responses/error_400"
+        "500":
+          $ref: "#/components/responses/error_500"
+components:
+  schemas:
+    ErrorResponse:
+      title: ErrorResponse
+      type: object
+      properties:
+        errors:
+          type: array
+          description: JSON array with API error details.
+          items:
+            type: object
+            required:
+              - status
+              - code
+              - reason
+            properties:
+              status:
+                type: string
+                description: >-
+                  HTML (System) error code. Codes described in the tables below.
+                  Mandatory field.
+              code:
+                type: string
+                description: >-
+                  API error code which is described in later table. Mandatory
+                  field.
+              sourceErrCode:
+                type: string
+                description: Source system Error Code. Optional field.
+              reason:
+                type: string
+                description: >-
+                  Human readable description of error, corresponds to code.
+                  Mandatory field.
+              message:
+                type: string
+                description: Source System error message. Optional.
+              source:
+                type: object
+                required:
+                  - pointer
+                  - parameter
+                description: Details of error source.
+                properties:
+                  pointer:
+                    type: string
+                    description: >-
+                      An optional attribute that contains stacktrace or similar
+                      technical information. Is used mostly for testing and
+                      troubleshooting purposes. 'debugDetail' is presented in
+                      the error response only when logging.dev.mode=true.
+                  parameter:
+                    type: string
+                    description: Error parameter in the request.
+              debugDetail:
+                type: string
+                description: >-
+                  An optional attribute that contains stack trace or similar
+                  technical information. Is used mostly for testing and troubleshooting purposes.
+    ExampleEntity:
+      title: ExampleEntity
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        name:
+          type: string
+          description: The name of the entity.
+          example: Entity '#3281'
+        id:
+          type: string
+          format: MYID
+          description: The unique ID of the entity.
+          example: "1234123412341234000"
+        description:
+          type: string
+          description: The description of the entity.
+          example: My entity '#3281' description
+        href:
+          type: string
+          description: The URI reference to the resource.
+          example: /api/testComponent/myEntity/1234123412341234000
+        version:
+          type: string
+          description: Version of Entity.
+    BulkOperationRequest:
+      title: BulkOperationRequest
+      type: object
+      oneOf:
+        - $ref: "#/components/schemas/AddFirstTypeItemsRequest"
+        - $ref: "#/components/schemas/AddSecondTypeItemsRequest"
+    AddFirstTypeItemsRequest:
+      title: AddFirstTypeItemsRequest
+      type: object
+      description: >
+        ### Add several copies of First Type to Service
+
+        #### Header 1:
+
+        Text 1Text 1Text 1Text 1Text 1Text 1Text 1Text 1Text 1Text 1Text 1
+
+        #### Header 2
+
+        Text 2Text 2Text 2Text 2Text 2Text 2Text 2Text 2Text 2Text 2Text 2Text 2Text 2Text 2Text 2
+
+        Text 2Text 2Text 2Text 2Text 2Text 2Text 2Text 2
+
+        #### Header 3:
+
+        Text 3Text 3Text 3Text 3Text 3
+      required:
+        - items
+      properties:
+        itemsCommonPart:
+          type: object
+          properties:
+            firstProperty:
+              type: string
+              description: FIRST TYPE. 1st property description
+              example: "123411112222000"
+            secondProperty:
+              type: string
+              description: >-
+                Multiline description.
+
+                This property is very important.
+              example: "123411112222001"
+            itemsCount:
+              type: integer
+              description: >-
+                Specifies count of similar things
+              example: 10
+        items:
+          type: object
+          required:
+            - secondProperty
+          properties:
+            firstProperty:
+              type: string
+              description: 1st property description
+              example: "123411112222000"
+            secondProperty:
+              type: string
+              description: >-
+                Multiline description.
+
+                This property is very important.
+              example: "123411112222001"
+            itemsCount:
+              type: integer
+              description: >-
+                Description for itemsCount
+              example: 10
+    AddSecondTypeItemsRequest:
+      title: AddSecondTypeItemsRequest
+      type: object
+      description: |
+        ### Add several copies of Second Type to First Types
+          #### Header 1
+          Text 1
+          #### Header 2
+          Text 2
+          #### Header 3
+          Text 3
+      required:
+        - items
+      properties:
+        itemsCommonPart:
+          type: object
+          properties:
+            firstProperty:
+              type: string
+              description: SECOND TYPE. 1st property description
+              example: "123411112222000"
+            secondProperty:
+              type: string
+              description: >-
+                Multiline description.
+
+                This property is very important.
+              example: "123411112222001"
+            itemsCount:
+              type: integer
+              description: >-
+                Specifies count of similar things
+              example: 10
+        items:
+          type: object
+          required:
+            - secondProperty
+          properties:
+            firstProperty:
+              type: string
+              description: 1st property description
+              example: "123411112222000"
+            secondProperty:
+              type: string
+              description: >-
+                Multiline description.
+
+                This property is very important.
+              example: "123411112222001"
+            itemsCount:
+              type: integer
+              description: >-
+                Description for itemsCount
+              example: 10
+  parameters:
+    x-request-id:
+      in: header
+      name: X-Request-ID
+      description: >-
+        Request identifier to be transferred in HTTP header for any API
+        operations
+      schema:
+        type: string
+        format: uuid
+      required: false
+    cookie:
+      name: Cookie
+      in: header
+      description: >
+        There are following cookies used in API:
+
+        <Text has been stolen>
+      schema:
+        type: string
+    accept-language:
+      name: Accept-Language
+      in: header
+      description: >-
+        Multilanguage Support. REST services determine the current user agent
+        locale using the Accept-Language header according to RFC3282. For more
+        information, refer to RFC3282.The localized properties of the resulting
+        JSON resources are provided. JSON resources contain the original object
+        names in a separate property for internal use. It is necessary as the
+        object IDs are transient and can change during the product catalog
+        re-mappings. The subset of fields is further referred as a localized
+        preamble.
+      schema:
+        type: string
+      example: en
+  securitySchemes:
+    openId:
+      type: openIdConnect
+      description: Use OpenId to authorize requests.
+      openIdConnectUrl: https://example.com/.well-known/openid-configuration
+  responses:
+    error_400:
+      description: |-
+        The server cannot or will not process the request due to an
+        apparent client error (e.g., malformed request syntax, size too large,
+        invalid request message framing, or deceptive request routing)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    error_500:
+      description: >-
+        A generic error message, given when an unexpected condition was
+        encountered and no more specific message is suitable.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/responses/error_400/content/application~1json/schema"
+security:
+  - openId: [ ]

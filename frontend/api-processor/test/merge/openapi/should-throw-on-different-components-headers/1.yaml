@@ -1,0 +1,8 @@
+openapi: 3.0.1
+info:
+  title: test
+  version: 0.1.0
+components:
+  headers:
+    content-range:
+      description: description 1

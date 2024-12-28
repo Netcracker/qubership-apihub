@@ -1,0 +1,24 @@
+openapi: "3.0.0"
+paths:
+  /path1:
+    get:
+      summary: version 1
+      requestBody:
+        $ref: '#/components/requestBodies/ServicesVersionPayload'
+      responses:
+        '200':
+          description: description
+components:
+  requestBodies:
+    ServicesVersionPayload:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ServicesVersionPayload'
+      description: ServicesVersionPayload
+  schemas:
+    ServicesVersionPayload:
+      type: object
+      properties:
+        namespace:
+          type: string

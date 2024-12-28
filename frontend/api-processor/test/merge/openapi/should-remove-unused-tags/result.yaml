@@ -1,0 +1,46 @@
+openapi: 3.0.0
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /api/v1/users/test:
+    get:
+      tags:
+        - Test Tag 1
+      operationId: operationId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { }
+  /api/v1/pets/test/{id}:
+    get:
+      tags:
+        - Test Tag 2
+      operationId: operationId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { }
+  /api/v1/cars/test/test/{id}:
+    get:
+      tags:
+        - Test Tag 3
+      operationId: operationId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { }
+tags:
+  - name: Test Tag 1
+    description: desc1
+    externalDocs:
+      description: Find more info here
+      url: https://example.com
+  - name: Test Tag 2
+  - name: Test Tag 3
