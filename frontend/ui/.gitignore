@@ -1,0 +1,22 @@
+# IDEs
+/.idea
+!/.idea/icon.png
+/.vscode
+*.iml
+
+# dependencies
+node_modules/
+packages/*/node_modules/
+
+# build
+dist/
+**/storybook-static/
+__diff_output__/
+dist-showcase/
+
+# logs
+*.log*
+
+# bundle analyzer
+stats.html
+/http-client.private.env.json

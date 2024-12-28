@@ -1,0 +1,50 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@netcracker/qubership-apihub-ui-shared": [
+        "./packages/shared/src"
+      ],
+      "@netcracker/qubership-apihub-ui-shared/*": [
+        "./packages/shared/src/*"
+      ],
+      "@netcracker/qubership-apihub-ui-portal": [
+        "./packages/portal/src"
+      ],
+      "@netcracker/qubership-apihub-ui-portal/*": [
+        "./packages/portal/src/*"
+      ],
+      "@netcracker/qubership-apihub-ui-editor": [
+        "./packages/editor/src"
+      ],
+      "@netcracker/qubership-apihub-ui-editor/*": [
+        "./packages/editor/src/*"
+      ],
+      "@netcracker/qubership-apihub-ui-agents": [
+        "./packages/agents/src"
+      ],
+      "@netcracker/qubership-apihub-ui-agents/*": [
+        "./packages/agents/src/*"
+      ]
+    }
+  }
+}

@@ -1,0 +1,537 @@
+openapi: 3.0.3
+info:
+  title: APIHUB agent API
+  description: |
+    The API contract for APIHUB agent UI.
+  contact:
+    url: https://apihub.example.com
+    email: john.williams@example.com
+    name: John Williams
+  license:
+    name: Apache-2.0
+    url: https://example.com
+  version: 0.1.0
+  x-qs-api-audience: noBWC
+servers:
+  - url: https://{agentUrl}/api/v1
+    description: Agent backend address
+    variables:
+      agentUrl:
+        default: localhost
+        description: Local server
+tags:
+  - name: Package Versions
+    description: Published package versions API
+  - name: Cloud Services
+    description: Cloud Services API
+paths:
+  /namespaces:
+    get:
+      summary: Get Namespace list
+      description: Get Namespace list from current Cloud.
+      operationId: getNamespaces
+      tags:
+        - Cloud Services
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  namespaces:
+                    description: List of cloud Namespaces
+                    type: array
+                    items:
+                      type: string
+                      description: Namespace name
+                  cloudName:
+                    type: string
+                    description: Cloud name
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+  /namespaces/{name}/snapshots:
+    parameters:
+      - $ref: "#/components/parameters/Namespace"
+    get:
+      summary: Get snapshot (version) list
+      description: |
+        Get published snapshot list from APIHUB.
+      operationId: getNamespaceSnapshot
+      tags:
+        - Package Versions
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Page"
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  snapshots:
+                    description: List of all published versions
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Snapshot"
+                  packageId:
+                    description: Package unique string identifier (full alias)
+                    type: string
+                    example: QS.CLOUD.SERVICE
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+    post:
+      tags:
+        - Package Versions
+      summary: Publish a new version
+      description: |
+        Publish a new specifications version to the package in APIHUB.
+        If package was not created before, it will be added by this API.
+        Parameters fo package creation will be provided by Agent's  backend.
+      operationId: postNamespceSnapshot
+      requestBody:
+        description: Version data for publish
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PackageVersionData"
+        required: true
+      responses:
+        "202":
+          description: Publish process started
+        "400":
+          $ref: "#/components/responses/badRequest400"
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+  /namespaces/{name}/snapshots/{version}:
+    parameters:
+      - $ref: "#/components/parameters/Namespace"
+      - $ref: "#/components/parameters/SnapshotVersion"
+    get:
+      summary: Get snapshot publish details
+      description: Get snapshot version publish details
+      operationId: getNamespaceSnapshotVersion
+      tags:
+        - Package Versions
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SnapshotPublishStatus"
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+  /namespaces/{name}/services:
+    parameters:
+      - $ref: "#/components/parameters/Namespace"
+    get:
+      summary: Get list of services
+      description: |
+        Get list of discovered services.
+        In addition to the service list, API checks the status of the discovery process.
+        If the process has "running" or "error" status, the API will return only part of the services list
+      operationId: getNamespaceServices
+      tags:
+        - Cloud Services
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - services
+                  - status
+                properties:
+                  services:
+                    description: The list of the services found
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Service"
+                  status:
+                    description: Overall status of the discovery process
+                    type: string
+                    enum:
+                      - none
+                      - running
+                      - complete
+                      - error
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+  /namespaces/{name}/discover:
+    parameters:
+      - $ref: "#/components/parameters/Namespace"
+    post:
+      tags:
+        - Cloud Services
+      operationId: postNamespaceDiscover
+      summary: Start discovery process
+      description: |
+        Starts the asyncronous service discovery process.
+        The process status may be get by the getServices operation.
+        API doesn't return the process ID, because Agent may have only one discovery process in one moment of time.
+      responses:
+        "202":
+          description: Success
+          content: { }
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+  /namespaces/{name}/services/{serviceId}/specs/{specId}:
+    parameters:
+      - $ref: "#/components/parameters/Namespace"
+      - $ref: "#/components/parameters/ServiceId"
+      - $ref: "#/components/parameters/SpecificationId"
+    get:
+      summary: Get service specification
+      description: Get one service specification
+      operationId: getNamespaceServicesIdSpecsId
+      tags:
+        - Cloud Services
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            text/plain; charset=utf-8:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
+            application/x-yaml:
+              schema:
+                type: string
+        "404":
+          $ref: "#/components/responses/notFound404"
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+  /namespaces/{name}/settings:
+    parameters:
+      - $ref: "#/components/parameters/Namespace"
+    get:
+      summary: Get namespace settings
+      description: |
+        Get namespace settings.
+      operationId: getNamespaceSettings
+      tags:
+        - Cloud Services
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NamespaceSettings"
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+    post:
+      summary: Set namespace settings
+      description: |
+        Set namespace settings.
+      operationId: postNamespaceSettings
+      tags:
+        - Cloud Services
+      requestBody:
+        description: Details of namespace to store
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NamespaceSettings"
+        required: true
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NamespaceSettings"
+        "400":
+          $ref: "#/components/responses/badRequest400"
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+components:
+  parameters:
+    Namespace:
+      name: name
+      description: Cloud Namespace name
+      in: path
+      required: true
+      schema:
+        type: string
+    SnapshotVersion:
+      name: version
+      description: Snapshot version name
+      in: path
+      required: true
+      schema:
+        type: string
+    ServiceId:
+      name: serviceId
+      description: Cloud service identifier
+      in: path
+      required: true
+      schema:
+        type: string
+    SpecificationId:
+      name: specId
+      description: Specification Id
+      in: path
+      required: true
+      schema:
+        type: string
+    Limit:
+      name: limit
+      in: query
+      description: items per page
+      schema:
+        type: number
+        default: 100
+    Page:
+      name: page
+      in: query
+      description: page number
+      schema:
+        type: number
+        default: 0
+  schemas:
+    Snapshot:
+      description: Base parameters of published version (without content)
+      type: object
+      properties:
+        version:
+          description: Package version
+          type: string
+          example: v1.2
+        previousVersion:
+          description: Package version
+          type: string
+          example: v1.1
+        publishedAt:
+          type: string
+          format: date-time
+        services:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                description: Cloud service identifier
+                type: string
+                example: apihub-be
+              changes:
+                type: object
+                properties:
+                  breaking:
+                    description: Number of breaking changes found
+                    type: integer
+                    format: int32
+                  nonBreaking:
+                    description: Number of non-breaking changes found
+                    type: integer
+                    format: int32
+                  annotation:
+                    description: Number of annotation changes
+                    type: integer
+                    format: int32
+                  unclassified:
+                    description: Number of unclassified changes
+                    type: integer
+                    format: int32
+              packageId:
+                description: Package unique string identifier (full alias)
+                type: string
+                example: QS.Namespace1.ServiceExample-IntanceExample
+              previousVersionPackageId:
+                description: Package unique string identifier (full alias)
+                type: string
+                example: QS.CLOUD.SERVICE
+    SnapshotPublishStatus:
+      description: Snapshot publish status
+      type: object
+      properties:
+        publishDetails:
+          $ref: "#/components/schemas/PublishDetails"
+        services:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                description: Cloud service identifier
+                type: string
+                example: apihub-be
+              changes:
+                type: object
+                properties:
+                  breaking:
+                    description: Number of breaking changes found
+                    type: integer
+                    format: int32
+                  nonBreaking:
+                    description: Number of non-breaking changes found
+                    type: integer
+                    format: int32
+                  annotation:
+                    description: Number of annotation changes
+                    type: integer
+                    format: int32
+                  unclassified:
+                    description: Number of unclassified changes
+                    type: integer
+                    format: int32
+              packageId:
+                description: Package unique string identifier (full alias)
+                type: string
+                example: QS.Namespace1.Service1
+              previousVersionPackageId:
+                description: Package unique string identifier (full alias)
+                type: string
+                example: QS.CLOUD.SERVICE
+              publishDetails:
+                $ref: "#/components/schemas/PublishDetails"
+    PublishDetails:
+      description: Information about the publication process
+      type: object
+      properties:
+        status:
+          description: |
+            Status of the publication (overall and by service)
+          type: string
+          enum:
+            - running
+            - complete
+            - error
+        message:
+          description: Detailed info about status
+          type: string
+    PackageVersionData:
+      description: Parameters for creation a new version of package
+      type: object
+      properties:
+        version:
+          description: Version name
+          type: string
+        previousVersion:
+          type: string
+          default: ""
+          description: Previous version
+      required:
+        - version
+        - previousVersion
+    Service:
+      description: Discovered service
+      type: object
+      required:
+        - id
+        - specs
+      properties:
+        id:
+          description: Cloud service identifier
+          type: string
+          example: apihub-be
+        specs:
+          description: List of the service's API specification, found on environment.
+          type: array
+          items:
+            description: Service API specification
+            type: object
+            required:
+              - id
+              - name
+              - icon
+            properties:
+              id:
+                type: string
+                description: Specification id
+              name:
+                type: string
+                description: Specification display name
+                example: openapi
+              icon:
+                type: string
+                description: Specification icon type. Used to define the icon in specifications list.
+                example: openapi
+                enum:
+                  - openapi
+                  - swagger
+    NamespaceSettings:
+      description: Namespace settings
+      type: object
+      properties:
+        name:
+          description: CI user-friendly name
+          type: string
+        version:
+          description: Version for package publication
+          type: string
+          example: "1.2"
+        previousVersion:
+          description: Previous published package version
+          type: string
+          default: <empty string>
+          example: "1.1"
+        autodiscovery:
+          description: |
+            Type of the discovery process start.
+            - none - no autodiscovery. Manual start from Agent's UI.
+            - schedule - autodiscovery in a server time interval: random(0:00:00 - 04:00:00)
+          type: string
+          enum:
+            - none
+            - schedule
+          default: schedule
+      required:
+        - status
+        - version
+        - previousVersion
+    ErrorResponse:
+      description: An error description
+      type: object
+      properties:
+        status:
+          description: HTTP Status Code
+          type: number
+        code:
+          description: Internal string error code. Mandatory in response.
+          type: string
+        message:
+          description: The attribute contains an error message.
+          type: string
+        params:
+          description: Message parameters
+          type: object
+          example:
+            id: "12345"
+            type: string
+        debug:
+          description: |
+            The attribute contains debug details (e.g. stack-trace).
+            Presented in the error response only on Dev/Test environments if corresponding logging level is enabled.
+          type: string
+      required:
+        - status
+        - code
+        - message
+  responses:
+    badRequest400:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    notFound404:
+      description: Not found or incorrect ID
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    internalServerError500:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"

@@ -1,0 +1,140 @@
+{
+  "projectId": "NC-1654702602.CH",
+  "files": [
+    {
+      "fileId": "CompareHistory.yaml",
+      "publish": true
+    },
+    {
+      "fileId": "examples/API3.md",
+      "publish": true
+    },
+    {
+      "fileId": "src/dima.yaml",
+      "publish": true
+    },
+    {
+      "fileId": "API.yaml",
+      "publish": true
+    },
+    {
+      "fileId": "examples/New File.yaml",
+      "publish": true
+    },
+    {
+      "fileId": "examples/openapi/payment.json",
+      "publish": true
+    },
+    {
+      "fileId": "examples/openapi/petstore.yaml",
+      "publish": true
+    },
+    {
+      "fileId": "examples/markdown/process-visualization.md",
+      "publish": true
+    },
+    {
+      "fileId": "test/New File2.yaml",
+      "publish": false
+    },
+    {
+      "fileId": "README.md",
+      "publish": true
+    },
+    {
+      "fileId": "after.yaml",
+      "publish": true
+    },
+    {
+      "fileId": "apihub-api-3.yaml",
+      "publish": false
+    },
+    {
+      "fileId": "src/swagger.json",
+      "publish": true
+    },
+    {
+      "fileId": "src/package.json",
+      "publish": true
+    },
+    {
+      "fileId": "src/package-lock.json",
+      "publish": true
+    },
+    {
+      "fileId": "Test.yaml",
+      "publish": true
+    },
+    {
+      "fileId": "src/simple.md",
+      "publish": true
+    },
+    {
+      "fileId": "src/simple-1.md",
+      "publish": true
+    },
+    {
+      "fileId": "src/simple-2.md",
+      "publish": true
+    },
+    {
+      "fileId": "EOL.yaml",
+      "publish": true
+    },
+    {
+      "fileId": "src/simple-3.md",
+      "publish": true
+    },
+    {
+      "fileId": "yamlopenapi31.yaml",
+      "publish": true
+    },
+    {
+      "fileId": "jsonopenapi30.json",
+      "publish": true
+    },
+    {
+      "fileId": "mdtest.md",
+      "publish": true
+    },
+    {
+      "fileId": "markdown.md",
+      "publish": true
+    },
+    {
+      "fileId": "examples/jsonschema/default.schema.json",
+      "publish": true
+    },
+    {
+      "fileId": "testmd.md",
+      "publish": true
+    },
+    {
+      "fileId": "src/New File.md",
+      "publish": false
+    },
+    {
+      "fileId": "src/New File-1.md",
+      "publish": false
+    },
+    {
+      "fileId": "src/text.md",
+      "publish": false
+    },
+    {
+      "fileId": "testmd-1.md",
+      "publish": false
+    },
+    {
+      "fileId": "API.md",
+      "publish": false
+    }
+  ],
+  "refs": [
+    {
+      "refId": "NC-1654157235.APIHUB",
+      "version": "0.6.13",
+      "type": "depend"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "name": "@netcracker/qubership-apihub-ui-editor",
+  "version": "2.9.4",
+  "private": false,
+  "license": "Apache-2.0",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "build": "tsc && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
+    "dev": "concurrently -n server,client \"nodemon server/index.ts\" \"vite --host\"",
+    "proxy": "vite --host --mode=proxy --force",
+    "preview": "yarn run build && vite preview --host --mode=proxy",
+    "lint": "eslint . --ext .ts,.tsx,.json --ignore-path ../../.gitignore --max-warnings 0 --report-unused-disable-directives",
+    "format": "yarn run lint --fix"
+  },
+  "dependencies": {
+    "@otjs/monaco": "0.2.1",
+    "@otjs/plaintext": "0.2.1",
+    "@otjs/plaintext-editor": "0.2.1",
+    "@stoplight/json-ref-resolver": "3.1.4",
+    "@stoplight/spectral-functions": "1.7.1",
+    "@stoplight/spectral-rulesets": "1.14.1",
+    "api-ref-bundler": "0.1.2",
+    "github-markdown-css": "5.1.0",
+    "js-file-download": "0.4.12",
+    "jszip": "3.10.1",
+    "jwt-decode": "3.1.2",
+    "mark.js": "8.11.1",
+    "monaco-yaml": "4.0.2",
+    "p-limit": "4.0.0",
+    "react-hook-form": "7.39.7",
+    "react-mark.js": "9.0.7",
+    "react-markdown": "8.0.3",
+    "react-table": "7.8.0",
+    "rehype-raw": "6.1.1",
+    "remark-gfm": "3.0.1"
+  },
+  "devDependencies": {
+    "@types/react-table": "7.7.12",
+    "@types/ws": "8.5.3",
+    "rollup-plugin-copy": "3.4.0",
+    "ws": "8.11.0"
+  }
+}

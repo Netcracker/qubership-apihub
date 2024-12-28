@@ -1,0 +1,25 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@apihub/components/*": [
+        "./src/components/"
+      ],
+      "@apihub/entities/*": [
+        "./src/entities/*"
+      ],
+      "@netcracker/qubership-apihub-ui-shared": [
+        "./../shared/src"
+      ],
+      "@netcracker/qubership-apihub-ui-shared/*": [
+        "./../shared/src/*"
+      ],
+      "@apihub/utils/*": [
+        "./src/utils/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}

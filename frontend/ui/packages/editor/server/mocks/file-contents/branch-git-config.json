@@ -1,0 +1,24 @@
+{
+  "projectId": "NC-1654702602.CH",
+  "files": [
+    {
+      "fileId": "readme.md",
+      "publish": true
+    },
+    {
+      "fileId": "api.json",
+      "publish": true
+    },
+    {
+      "fileId": "full-openapi.example.yaml",
+      "publish": true
+    }
+  ],
+  "refs": [
+    {
+      "refId": "APIHUB",
+      "version": "0.6.13",
+      "type": "depend"
+    }
+  ]
+}

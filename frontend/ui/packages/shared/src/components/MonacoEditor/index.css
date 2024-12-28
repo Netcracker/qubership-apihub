@@ -1,0 +1,23 @@
+.MonacoErrorDecorator {
+  background-color: #FF5260;
+  width: 5px !important;
+  left: 0 !important;
+}
+
+.MonacoWarnDecorator {
+  background-color: #FFB02E;
+  width: 5px !important;
+  left: 0 !important;
+}
+
+.MonacoInfoDecorator {
+  background-color: #4FC0F8;
+  width: 5px !important;
+  left: 0 !important;
+}
+
+.MonacoSelectedDecorator {
+  background-color: #058EFF;
+  width: 5px !important;
+  left: 75px !important;
+}

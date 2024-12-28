@@ -1,0 +1,167 @@
+{
+  "root": true,
+  "extends": [
+    "eslint:recommended",
+    "plugin:json/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:storybook/recommended"
+  ],
+  "env": {
+    "es6": true,
+    "browser": true
+  },
+  "rules": {
+    "filenames/no-index": 2,
+    "camelcase": "error",
+    "comma-dangle": [
+      "error",
+      {
+        "arrays": "always-multiline",
+        "objects": "always-multiline",
+        "imports": "always-multiline",
+        "exports": "always-multiline",
+        "functions": "always-multiline"
+      }
+    ],
+    "eol-last": [
+      "error",
+      "always"
+    ],
+    "eqeqeq": [
+      "error",
+      "always"
+    ],
+    "no-confusing-arrow": "error",
+    "no-useless-rename": "error",
+    "no-unexpected-multiline": "error",
+    "no-case-declarations": "off",
+    "object-shorthand": [
+      "error",
+      "consistent"
+    ],
+    "operator-linebreak": "error",
+    "prefer-arrow-callback": "error",
+    "prefer-const": "error",
+    "prefer-numeric-literals": "error",
+    "prefer-rest-params": "error",
+    "prefer-spread": "error",
+    "prefer-template": "error",
+    "prefer-destructuring": "error",
+    "quotes": [
+      "error",
+      "single"
+    ],
+    "semi": [
+      "error",
+      "never"
+    ],
+    "@typescript-eslint/consistent-type-imports": "error",
+    "@typescript-eslint/member-delimiter-style": [
+      "error",
+      {
+        "multiline": {
+          "delimiter": "none"
+        }
+      }
+    ],
+    "@typescript-eslint/semi": [
+      "error",
+      "never"
+    ],
+    "@typescript-eslint/explicit-member-accessibility": [
+      "error",
+      {
+        "accessibility": "no-public",
+        "overrides": {
+          "parameterProperties": "off"
+        }
+      }
+    ],
+    "@typescript-eslint/explicit-function-return-type": [
+      "error",
+      {
+        "allowExpressions": true,
+        "allowTypedFunctionExpressions": true
+      }
+    ],
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/no-inferrable-types": "off",
+    "yoda": "error"
+  },
+  "parserOptions": {
+    "jsx": true,
+    "ecmaVersion": 6,
+    "sourceType": "module"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/src/**/*.ts(x)"
+      ],
+      "parserOptions": {
+        "parser": "@typescript-eslint/parser",
+        "project": "./tsconfig.json"
+      },
+      "plugins": [
+        "@typescript-eslint",
+        "filenames"
+      ],
+      "globals": {
+        "browser": true
+      },
+      "env": {
+        "browser": true
+      },
+      "rules": {
+        "indent": "off",
+        "@typescript-eslint/indent": [
+          "error",
+          2,
+          {
+            "FunctionExpression": {
+              "parameters": "first"
+            },
+            "SwitchCase": 1,
+            "ignoredNodes": [
+              "Decorator"
+            ]
+          }
+        ],
+        "@typescript-eslint/array-type": "error"
+      }
+    },
+    {
+      "files": [
+        "*.json"
+      ],
+      "plugins": [
+        "json"
+      ],
+      "rules": {
+        "indent": [
+          "error",
+          2
+        ],
+        "@typescript-eslint/indent": "off"
+      }
+    },
+    {
+      "files": [
+        "index.ts"
+      ],
+      "plugins": [
+        "sort-exports"
+      ],
+      "rules": {
+        "sort-exports/sort-exports": [
+          "error"
+        ]
+      }
+    }
+  ],
+  "ignorePatterns": [
+    "*.d.ts",
+    "vite.config.ts"
+  ]
+}

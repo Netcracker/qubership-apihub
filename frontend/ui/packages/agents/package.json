@@ -1,0 +1,21 @@
+{
+  "name": "@netcracker/qubership-apihub-ui-agents",
+  "version": "2.9.4",
+  "private": false,
+  "license": "Apache-2.0",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "build": "tsc && vite build",
+    "dev": "concurrently -n server,client \"nodemon server/index.ts\" \"vite --host\"",
+    "proxy": "vite --host --mode=proxy",
+    "preview": "vite preview --host --mode=proxy",
+    "lint": "eslint . --ext .ts,.tsx,.json --ignore-path ../../.gitignore --max-warnings 0 --report-unused-disable-directives",
+    "format": "yarn run lint --fix"
+  },
+  "dependencies": {
+    "@mui/x-date-pickers": "5.0.9",
+    "react-hook-form": "7.39.7"
+  }
+}
