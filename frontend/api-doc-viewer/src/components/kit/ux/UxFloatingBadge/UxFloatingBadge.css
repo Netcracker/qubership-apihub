@@ -1,0 +1,7 @@
+.UxFloatingBadge:hover .UxFloatingBadge-content {
+    display: inline;
+}
+
+.UxFloatingBadge-content {
+    display: none;
+}

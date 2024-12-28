@@ -1,0 +1,77 @@
+.markdown > * {
+    all: revert;
+}
+
+.markdown > p:first-of-type {
+    margin-top: 0;
+}
+
+.markdown > p:last-of-type {
+    margin-bottom: 0;
+}
+
+.markdown > h1,
+.markdown > h2,
+.markdown > h3,
+.markdown > h4,
+.markdown > h5,
+.markdown > h6 {
+    font-family: "Inter Semi Bold", sans-serif;
+    font-weight: normal;
+}
+
+/* Markdown Tables */
+
+.markdown table {
+    border-spacing: 0;
+}
+
+.markdown td {
+    font-family: Inter, sans-serif;
+    padding: 10px;
+    border: 1px solid rgb(218, 224, 236);
+    color: rgb(125, 125, 131);
+}
+
+.markdown td:not(:first-child) {
+    border-left: none;
+}
+
+.markdown td:not(:last-child) {
+    border-right: none;
+}
+
+.markdown tr:not(:last-child) td {
+    border-bottom: none;
+}
+
+.markdown th {
+    font-family: Inter, sans-serif;
+    font-weight: normal;
+    text-transform: uppercase;
+    color: rgb(103, 103, 123);
+    padding: 10px 10px 5px 10px;
+    text-align: left;
+}
+
+.markdown tr:nth-child(2n) td {
+    background-color: rgb(249, 250, 252);
+}
+
+.markdown tr:first-child td:first-child {
+    border-top-left-radius: 5px;
+}
+
+.markdown tr:last-child td:first-child {
+    border-bottom-left-radius: 5px;
+}
+
+.markdown tr:first-child td:last-child {
+    border-top-right-radius: 5px;
+}
+
+.markdown tr:last-child td:last-child {
+    border-bottom-right-radius: 5px;
+}
+
+/* End */
