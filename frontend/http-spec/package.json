@@ -1,0 +1,148 @@
+{
+  "name": "@netcracker/qubership-apihub-http-spec",
+  "version": "5.5.6",
+  "description": "",
+  "keywords": [],
+  "sideEffects": false,  
+  "license": "Apache-2.0",
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=14.13"
+  },
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./generators": {
+      "types": "./dist/generators.d.ts",
+      "default": "./dist/generators.js"
+    },
+    "./hash": {
+      "types": "./dist/hash.d.ts",
+      "default": "./dist/hash.js"
+    },
+    "./oas": {
+      "types": "./dist/oas/index.d.ts",
+      "default": "./dist/oas/index.js"
+    },
+    "./oas2": {
+      "types": "./dist/oas2/index.d.ts",
+      "default": "./dist/oas2/index.js"
+    },
+    "./oas2/operation": {
+      "types": "./dist/oas2/operation.d.ts",
+      "default": "./dist/oas2/operation.js"
+    },
+    "./oas3": {
+      "types": "./dist/oas3/index.d.ts",
+      "default": "./dist/oas3/index.js"
+    },
+    "./oas3/operation": {
+      "types": "./dist/oas3/operation.d.ts",
+      "default": "./dist/oas3/operation.js"
+    },
+    "./postman": {
+      "types": "./dist/postman/index.d.ts",
+      "default": "./dist/postman/index.js"
+    },
+    "./postman/operation": {
+      "types": "./dist/postman/operation.d.ts",
+      "default": "./dist/postman/operation.js"
+    },
+    "./asyncapi": {
+      "types": "./dist/asyncapi/index.d.ts",
+      "default": "./dist/asyncapi/index.js"
+    },
+    "./asyncapi/operation": {
+      "types": "./dist/asyncapi/operation.d.ts",
+      "default": "./dist/asyncapi/operation.js"
+    },
+    "./oas3WithMeta": {
+      "types": "./dist/oas3WithMeta/index.d.ts",
+      "default": "./dist/oas3WithMeta/index.js"
+    },
+    "./oas3WithMeta/operation": {
+      "types": "./dist/oas3WithMeta/operation.d.ts",
+      "default": "./dist/oas3WithMeta/operation.js"
+    }
+  },
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "sl-scripts build",
+    "lint": "eslint 'src/**/*.ts'",
+    "lint.fix": "yarn lint --fix",
+    "release": "sl-scripts release",
+    "release.dryRun": "sl-scripts release --dry-run --debug",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@stoplight/json": "^3.18.1",
+    "@stoplight/json-schema-generator": "1.0.1",
+    "@stoplight/types": "^13.6.0",
+    "@types/json-schema": "7.0.11",
+    "@types/swagger-schema-official": "~2.0.22",
+    "@types/type-is": "^1.6.3",
+    "fnv-plus": "^1.3.1",
+    "lodash.isequalwith": "^4.4.0",
+    "lodash.pick": "^4.4.0",
+    "lodash.pickby": "^4.6.0",
+    "openapi3-ts": "^2.0.2",
+    "postman-collection": "^4.1.2",
+    "tslib": "^2.3.1",
+    "type-is": "^1.6.18"
+  },
+  "devDependencies": {
+    "@stoplight/eslint-config": "^3.0.0",
+    "@stoplight/scripts": "^9.2.0",
+    "@types/jest": "27.4.1",
+    "@types/lodash.isequalwith": "^4.4.6",
+    "@types/lodash.pick": "^4.4.6",
+    "@types/lodash.pickby": "^4.6.6",
+    "@types/postman-collection": "^3.5.7",
+    "@typescript-eslint/eslint-plugin": "^5.19.0",
+    "@typescript-eslint/parser": "^5.19.0",
+    "eslint": "^8.13.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jest": "^26.1.4",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-react": "^7.29.4",
+    "eslint-plugin-react-hooks": "^4.4.0",
+    "eslint-plugin-simple-import-sort": "^7.0.0",
+    "jest": "27.5.1",
+    "prettier": "^2.6.2",
+    "rimraf": "^3.0.2",
+    "ts-jest": "27.1.4",
+    "typescript": "4.6.3",
+    "utility-types": "^3.10.0"
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "yarn eslint --fix"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "config": {
+    "commitizen": {
+      "path": "node_modules/cz-conventional-changelog"
+    }
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "release": {
+    "extends": "@stoplight/scripts/release"
+  }
+}
