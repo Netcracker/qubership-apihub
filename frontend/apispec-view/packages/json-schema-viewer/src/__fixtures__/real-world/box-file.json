@@ -1,0 +1,26 @@
+{
+  "title": "File",
+  "type": "object",
+  "properties": {
+    "skip": {
+      "title": "skip",
+      "description": "Directs the executor to skip this field or fragment when the `if` argument is true.",
+      "locations": [
+        "FIELD",
+        "FRAGMENT_SPREAD",
+        "INLINE_FRAGMENT"
+      ],
+      "args": {
+        "if": {
+          "title": "if",
+          "description": "Skipped when true.",
+          "required": true,
+          "schema": {
+            "$ref": "#/components/scalars/Boolean"
+          }
+        }
+      },
+      "repeatable": false
+    }
+  }
+}

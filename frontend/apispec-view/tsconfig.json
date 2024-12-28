@@ -1,0 +1,21 @@
+{
+  "extends": "@stoplight/scripts/tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react",
+    "esModuleInterop": true,
+    "baseUrl": "./packages",
+    "paths": {
+      "@stoplight/elements": ["./elements/src"],
+      "@stoplight/elements/*": ["./elements/src/*"],
+      "@stoplight/elements-core": ["./elements-core/src"],
+      "@stoplight/elements-core/*": ["./elements-core/src/*"],
+      "@stoplight/diff-elements-core": ["./diff-elements-core/src"],
+      "@stoplight/diff-elements-core/*": ["./diff-elements-core/src/*"],
+      "diff-block": ["./diff-block/src"],
+      "json-schema-viewer": ["./json-schema-viewer/src"],
+      "json-schema-diff-viewer": ["./json-schema-diff-viewer/src"],
+      "@netcracker/qubership-apihub-apispec-view-samples": ["./samples/src"],
+      "@netcracker/qubership-apihub-apispec-view-samples/*": ["./samples/src/*"]
+    }
+  }
+}

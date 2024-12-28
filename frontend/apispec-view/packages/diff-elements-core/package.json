@@ -1,0 +1,18 @@
+{
+  "name": "@stoplight/diff-diff-elements-core",
+  "private": "true",
+  "version": "0.0.0",
+  "sideEffects": [
+    "web-components.min.js",
+    "src/web-components/**",
+    "**/*.css"
+  ],
+  "license": "Apache-2.0",
+  "type": "commonjs",
+  "files": [
+    "**/*"
+  ],
+  "engines": {
+    "node": ">=14.13"
+  }
+}

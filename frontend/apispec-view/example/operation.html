@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Elements in HTML</title>
+    <!-- Embed elements Elements via Web Component -->
+    <script src="../packages/elements/dist/index.js"></script>
+    <link rel="stylesheet" href="../packages/elements/dist/index.css">
+</head>
+
+<body>
+    <operation-view id="foo" router="hash" layout="partial" hideTryIt="true" hideExport="true" noHeading="false"
+        schemaViewMode="detailed" defaultSchemaDepth="3" />
+</body>
+<script type="module">
+    document.getElementById('foo').mergedDocument = {
+        "openapi": "3.0.2",
+        "paths": {
+            "/pets": {
+                "patch": {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "hunts": {
+                                            "type": "boolean"
+                                        },
+                                        "age": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Updated",
+                        }
+                    }
+                }
+            }
+        },
+    }
+</script>
+
+</html>

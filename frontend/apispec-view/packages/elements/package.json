@@ -1,0 +1,45 @@
+{
+  "name": "@netcracker/qubership-apihub-apispec-view",
+  "version": "1.0.20",
+  "description": "Web Component to represent various API-specifications as a human-readable document",
+  "license": "Apache-2.0",
+  "sideEffects": [
+    "./dist/index.js",
+    "src/web-components/**",
+    "**/*.css"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./typings/index.d.ts",
+  "exports": {
+    "./styles.min.css": "./dist/index.css",
+    ".": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=14.13"
+  },
+  "scripts": {
+    "postinstall": "yarn run generate-stories & yarn run generate-tests",
+    "generate-stories": "node bin/generate-openapi-compatibility-suite-stories.mjs",
+    "generate-tests": "node bin/generate-openapi-compatibility-suite-tests.mjs",
+    "build": "yarn build.webcomponents",
+    "postbuild": "yarn build.styles",
+    "build.styles": "postcss src/styles.css -o dist/index.css",
+    "build.webcomponents": "webpack -c ./web-components.config.js",
+    "build:showcase": "storybook build -o ../../dist-showcase --disable-telemetry",
+    "development:storybook": "storybook dev -p 9009",
+    "development:local-server:static": "yarn run build:showcase && ws -p 9009 -d ../../dist-showcase --spa index.html --static.maxage 3600",
+    "test:integration:ci": "start-server-and-test development:local-server:static http://localhost:9009 test:integration:run-test:ci",
+    "test:integration:docker": "start-server-and-test development:local-server:static http://localhost:9009 test:integration:run-test:docker",
+    "test:integration:run-test:ci": "jest --maxWorkers 4 -c .config/it/it-test.jest.config.js",
+    "test:integration:run-test:docker": "jest --maxWorkers 4 -c .config/it/it-test-docker.jest.config.js",
+    "test:integration:regenerate-snapshots": "start-server-and-test development:local-server:static http://localhost:9009 test:integration:regenerate-snapshots:run",
+    "test:integration:regenerate-snapshots:run": "jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test-docker.jest.config.js",
+    "type-check": "tsc --noEmit"
+  },
+  "rollup": {
+    "bundleDeps": [
+      "@fortawesome/free-solid-svg-icons"
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+export const NOT_DISPLAYED_ON_SCREENSHOTS_OVERLAY_ID = 'not_displayed_on_screenshots_overlay_id'
+export const SVG_EXPORT_ID = 'svg-export'
+export const SVG_EXPORT_STATE_ATTR = 'export-state'
+export const SVG_EXPORT_STATE_DONE = 'done'
+export const SVG_EXPORT_BUTTON_NAME = 'Export'
