@@ -1,0 +1,70 @@
+{
+  "openapi": "3.0.1",
+  "paths": {
+    "/path": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Quote was cloned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "one": {
+                      "type": "object",
+                      "properties": {
+                        "empty": {
+                          "$ref": "#/components/schemas/SharedSchema"
+                        }
+                      }
+                    },
+                    "another": {
+                      "type": "object",
+                      "properties": {
+                        "empty": {
+                          "$ref": "#/components/schemas/SharedSchema"
+                        }
+                      }
+                    },
+                    "oneArray": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/SharedSchema"
+                        },
+                        {
+                          "$ref": "#/components/schemas/SharedSchema"
+                        }
+                      ]
+                    },
+                    "anotherArray": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/SharedSchema"
+                        },
+                        {
+                          "$ref": "#/components/schemas/SharedSchema"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SharedSchema": {
+        "type": "object",
+        "properties": {
+          "empty": {
+            "$ref": "#/components/schemas/SharedSchema"
+          }
+        }
+      }
+    }
+  }
+}

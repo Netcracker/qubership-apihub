@@ -1,0 +1,44 @@
+{
+  "openapi": "3.0.1",
+  "paths": {
+    "/api/v1/dictionaries/dictionary/item": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DictionaryItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DictionaryItem": {
+        "title": "DictionaryItem",
+        "x-entity": "DictionaryItem",
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DictionaryItem"
+            }
+          }
+        }
+      }
+    }
+  }
+}

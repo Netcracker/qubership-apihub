@@ -1,0 +1,50 @@
+{
+  "openapi": "3.0.1",
+  "paths": {
+    "/api/v2/offeringQualification/qualification": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductOfferingQualified"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ProductOfferingQualified": {
+        "allOf": [
+          {
+            "properties": {
+              "offeringCategories": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/OfferingCategory"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "OfferingCategory": {
+        "properties": {
+          "parent": {
+            "$ref": "#/components/schemas/OfferingCategory",
+            "description": "Some description"
+          }
+        }
+      }
+    }
+  }
+}

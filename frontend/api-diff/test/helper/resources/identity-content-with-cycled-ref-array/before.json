@@ -1,0 +1,44 @@
+{
+  "openapi": "3.0.3",
+  "paths": {
+    "/marketingCatalogManagement/v1/association": {
+      "get": {
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResponseAssociationsList"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "ResponseAssociationsList": {
+        "description": "List of associations",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "properties": {
+                  "associationType": {
+                    "$ref": "#/components/schemas/AssociationType"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "AssociationType": {
+        "properties": {
+          "entity": {
+            "$ref": "#/components/schemas/AssociationType"
+          }
+        }
+      }
+    }
+  }
+}

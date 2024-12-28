@@ -1,0 +1,41 @@
+{
+  "openapi": "3.0.1",
+  "paths": {
+    "/path": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Quote was cloned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "one": {
+                      "type": "object"
+                    },
+                    "another": {
+                      "type": "object"
+                    },
+                    "oneArray": {
+                      "oneOf": []
+                    },
+                    "anotherArray": {
+                      "oneOf": []
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SharedSchema": {
+        "type": "object"
+      }
+    }
+  }
+}

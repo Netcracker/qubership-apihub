@@ -1,0 +1,143 @@
+import {
+  annotation,
+  booleanClassifier,
+  breaking,
+  breakingIfAfterTrue,
+  nonBreaking,
+  PARENT_JUMP,
+  strictResolveValueFromContext,
+  reverseClassifyRule,
+  transformClassifyRule,
+  unclassified,
+} from '../core'
+import { getKeyValue, isExist, isNotEmptyArray } from '../utils'
+import { emptySecurity, getDefaultStyle, includeSecurity } from './openapi3.utils'
+import type { ClassifyRule, CompareContext } from '../types'
+import { DiffType } from '../types'
+
+export const paramClassifyRule: ClassifyRule = [
+  ({ after }) => {
+    if (isIgnoredHeaderParam(after.value)) {
+      return unclassified
+    }
+
+    return getKeyValue(after.value, 'required') && !isExist(getKeyValue(after.value, 'schema', 'default')) ? breaking : nonBreaking
+  },
+  ({ before }) => {
+    return isIgnoredHeaderParam(before.value) ? unclassified : breaking
+  },
+  unclassified,
+]
+
+const NON_BREAKING_HEADERS = ['Accept', 'Content-Type', 'Authorization', 'authorization']
+
+const isIgnoredHeaderParam = (param: any): boolean => {
+  return param.in === 'header' && NON_BREAKING_HEADERS.includes(param.name)
+}
+
+export const apihubParametersRemovalClassifyRule = (ctx: CompareContext): DiffType => {
+  const { before: { value } } = ctx
+  if (!Array.isArray(value)) {
+    return breaking
+  }
+
+  return value.every(isIgnoredHeaderParam)
+    ? nonBreaking
+    : breaking
+}
+
+export const parameterStyleClassifyRule: ClassifyRule = [
+  ({ after }) => (after.value === getDefaultStyle(getKeyValue(after.parent, 'in')) ? nonBreaking : breaking),
+  ({ before }) => (before.value === getDefaultStyle(getKeyValue(before.parent, 'in')) ? nonBreaking : breaking),
+  breaking,
+]
+
+export const parameterExplodeClassifyRule: ClassifyRule = [
+  ({ after }) => ((after.value && getKeyValue(after.parent, 'style') === 'form') || (!after.value && getKeyValue(after.parent, 'style') !== 'form') ? annotation : breaking),
+  ({ before }) => ((before.value && getKeyValue(before.parent, 'style') === 'form') || (!before.value && getKeyValue(before.parent, 'style') !== 'form') ? annotation : breaking),
+  breaking,
+]
+
+export const parameterAllowReservedClassifyRule: ClassifyRule = [
+  ({ after }) => (['path', 'cookie', 'header'].includes(getKeyValue(after.parent, 'in') as string) ? unclassified : nonBreaking),
+  ({ after }) => (['path', 'cookie', 'header'].includes(getKeyValue(after.parent, 'in') as string) ? unclassified : breaking),
+  ({ after }) => {
+    if (['path', 'cookie', 'header'].includes(getKeyValue(after.parent, 'in') as string)) {
+      return unclassified
+    }
+    return after.value ? nonBreaking : breaking
+  },
+]
+
+export const parameterNameClassifyRule: ClassifyRule = [
+  nonBreaking,
+  breaking,
+  ({ before }) => (getKeyValue(before.parent, 'in') === 'path' ? nonBreaking : breaking),
+]
+
+export const parameterRequiredClassifyRule: ClassifyRule = [
+  breaking,
+  nonBreaking,
+  (ctx) => (getKeyValue(ctx.after.parent, 'schema', 'default') ? nonBreaking : breakingIfAfterTrue(ctx)),
+]
+
+export const apihubAllowEmptyValueParameterClassifyRule: ClassifyRule = transformClassifyRule(
+  reverseClassifyRule(booleanClassifier),
+  (type, { after }, action) => (
+    getKeyValue(after.parent, 'in') === 'query'
+      ? type
+      : unclassified
+  ),
+)
+
+export const paramSchemaTypeClassifyRule: ClassifyRule = [
+  breaking,
+  nonBreaking,
+  ({ before, after }) => {
+    const paramValue = strictResolveValueFromContext(before, PARENT_JUMP, PARENT_JUMP)
+    const paramStyle = getKeyValue(paramValue, 'style') ?? 'form'
+    if (getKeyValue(paramValue, 'in') === 'query' && paramStyle === 'form') {
+      return before.value === 'object' || before.value === 'array' || after.value === 'object' ? breaking : nonBreaking
+    }
+    return breaking
+  },
+]
+
+export const globalSecurityClassifyRule: ClassifyRule = [
+  ({ after }) => (!emptySecurity(after.value) ? breaking : nonBreaking),
+  nonBreaking,
+  ({
+    after,
+    before,
+  }) => (includeSecurity(after.value, before.value) || emptySecurity(after.value) ? nonBreaking : breaking),
+]
+
+export const globalSecurityItemClassifyRule: ClassifyRule = [
+  ({ before }) => (isNotEmptyArray(before.parent) ? nonBreaking : breaking),
+  ({ after }) => (isNotEmptyArray(after.parent) ? nonBreaking : breaking),
+  ({
+    after,
+    before,
+  }) => (includeSecurity(after.parent, before.parent) || emptySecurity(after.value) ? nonBreaking : breaking),
+]
+
+export const operationSecurityClassifyRule: ClassifyRule = [
+  ({
+    before,
+    after,
+  }) => (emptySecurity(after.value) || includeSecurity(after.value, getKeyValue(before.root, 'security')) ? nonBreaking : breaking),
+  ({ before, after }) => (includeSecurity(getKeyValue(after.root, 'security'), before.value) ? nonBreaking : breaking),
+  ({
+    before,
+    after,
+  }) => (includeSecurity(after.value, before.value) || emptySecurity(after.value) ? nonBreaking : breaking),
+]
+
+export const operationSecurityItemClassifyRule: ClassifyRule = [
+  ({ before }) => (isNotEmptyArray(before.parent) ? nonBreaking : breaking),
+  ({ after }) => (isNotEmptyArray(after.parent) ? breaking : nonBreaking),
+  ({
+    before,
+    after,
+  }) => (includeSecurity(after.parent, before.parent) || emptySecurity(after.value) ? nonBreaking : breaking),
+]

@@ -1,0 +1,44 @@
+{
+  "openapi": "3.0.1",
+  "paths": {
+    "/api/v1/catalogManagement/productOffering": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "ProductOffering",
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "offeringGroup": {
+                      "title": "OfferingGroup",
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
