@@ -1,0 +1,107 @@
+{
+  "name": "@netcracker/qubership-apihub-graphapi",
+  "version": "1.0.3",
+  "description": "The GraphAPI Specification Repository",
+  "module": "./dist/index.es.js",
+  "main": "./dist/index.cjs.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.cjs.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "lint:check": "eslint -c .eslintrc.json . --ext .js,.cjs,.ts,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
+    "postinstall": "node ./bin/monky-patchng-storybook.mjs",
+    "storybook": "storybook dev -p 6006",
+    "build:showcase": "storybook build -o dist-showcase",
+    "lint:fix": "npm run lint:check -- --fix",
+    "prebuild": "rimraf ./dist",
+    "build": "vite build",
+    "development:link": "yarn link",
+    "development:unlink": "yarn unlink",
+    "test": "jest --maxWorkers 3 --verbose",
+    "test:coverage": "jest --verbose --coverage",
+    "build:web": "webpack",
+    "feature-start": "feature-start --featureName",
+    "feature-finish": "feature-finish",
+    "release-start": "release-start",
+    "release-finish": "release-finish",
+    "build-storybook": "storybook build"
+  },
+  "keywords": [
+    "jsonschema",
+    "introspection",
+    "graphql",
+    "schema",
+    "api"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@netcracker/qubership-apihub-npm-gitflow": "1.0.13",
+    "@storybook/addon-essentials": "7.5.1",
+    "@storybook/addon-interactions": "7.5.1",
+    "@storybook/addon-links": "7.5.1",
+    "@storybook/addon-onboarding": "1.0.8",
+    "@storybook/blocks": "7.5.1",
+    "@storybook/react": "7.5.1",
+    "@storybook/react-vite": "7.5.1",
+    "@types/jest": "^26.0.0",
+    "@types/js-yaml": "^4.0.5",
+    "@types/json-schema": "^7.0.11",
+    "@typescript-eslint/eslint-plugin": "6.0.0",
+    "@typescript-eslint/parser": "6.0.0",
+    "eslint": "8.48.0",
+    "eslint-plugin-storybook": "^0.8.0",
+    "fast-json-patch": "^3.1.1",
+    "graphql": "16.9.0",
+    "jest": "^26.0.1",
+    "js-yaml": "^4.1.0",
+    "json-schema": "^0.4.0",
+    "storybook": "7.5.1",
+    "ts-jest": "^26.1.0",
+    "ts-loader": "^8.0.8",
+    "ts-node": "^10.7.0",
+    "tslint": "^6.1.2",
+    "typescript": "^4.6.2",
+    "vite": "5.2.6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "vite-plugin-dts": "3.6.4"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/test/.*|(\\.)(test|spec))\\.(ts?|tsx?|js?|jsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ],
+    "modulePathIgnorePatterns": [
+      "<rootDir>/dist/",
+      "<rootDir>/test/helpers/",
+      "<rootDir>/test/resources/"
+    ],
+    "collectCoverage": true,
+    "resolutions": {
+      "strip-ansi": "6.0.1",
+      "string-width": "4.2.2",
+      "wrap-ansi": "7.0.0"
+    }
+  },
+  "eslintConfig": {
+    "extends": ".eslintrc.json"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}
