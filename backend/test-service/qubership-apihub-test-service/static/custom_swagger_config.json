@@ -1,0 +1,47 @@
+{
+    "configUrl": "/v3/api-docs/apihub-swagger-config",
+    "urls": [
+        {
+            "url":"/v3/api-docs",
+            "name":"Config /v3/api-docs name",
+            "x-api-kind":"no-BWC",
+            "type":"openapi-3-0"
+        },
+        {
+            "url":"/v3/api-docs/yaml",
+            "name":"Yaml specification",
+            "x-api-kind":"no-BWC",
+            "type":"openapi-3-0"
+        },
+        {
+            "url":"/v3/api-docs/md",
+            "name":"markdown-sample",
+            "x-api-kind":"no-BWC",
+            "type": "markdown"
+        },
+        {
+            "url":"/v3/api-docs/json",
+            "name":"json-sample",
+            "x-api-kind":"no-BWC",
+            "type":"json-schema"
+        },
+        {
+            "url":"/graphql",
+            "name":"graphql",
+            "x-api-kind":"no-BWC",
+            "type":"graphql"
+        },
+        {
+            "url":"/api/graphql-server/schema",
+            "name":"introspection",
+            "x-api-kind":"no-BWC",
+            "type":"introspection"
+        },
+        {
+            "url":"/v3/api-docs/async",
+            "name":"asyncapi",
+            "x-api-kind":"no-BWC",
+            "type":"asyncapi-2"
+        }
+    ]
+}
