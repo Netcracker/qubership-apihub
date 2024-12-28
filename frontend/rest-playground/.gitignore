@@ -1,0 +1,52 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+
+# dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# testing
+coverage/
+packages/*/coverage
+test-results
+
+# production
+build/
+dist/
+docs-auto/
+dist-storybook/
+
+# misc
+.DS_Store/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.vscode
+.idea
+.nyc_output
+.awcache
+.cache-loader
+.cache
+.rpt2_cache
+.eslintcache
+examples-dev/
+
+# logs
+*.log*
+*-debug.log*
+*-error.log*
+/examples/react-gatsby/yarn.lock
+/examples/react-cra/yarn.lock
+/examples/angular/yarn.lock
+
+# Vim buffer files
+*.swp
+
+# Stoplight style guides
+.stoplight/styleguide.json
+.stoplight/custom-functions
+.spectral.json
+
+*.iml

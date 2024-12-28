@@ -1,0 +1,16 @@
+{
+  "extends": "@stoplight/scripts/tsconfig.json",
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "**/__*__/**"
+  ],
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "dist",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowJs": true
+  }
+}
