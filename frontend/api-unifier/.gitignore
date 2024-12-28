@@ -1,0 +1,14 @@
+node_modules/
+.env
+.vscode
+dist/
+.vuepress
+temp/
+browser
+coverage/
+.DS_store
+package-lock.json
+.yarnrc.yml
+.yarn
+*.iml
+/.idea/
