@@ -1,0 +1,95 @@
+{
+  "name": "qubership-apihub-build-task-consumer",
+  "version": "2.0.2",
+  "license": "Apache-2.0",
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "nest build",
+    "development:link": "yarn link && yarn link @netcracker/qubership-apihub-api-processor",
+    "development:unlink": "yarn unlink && yarn unlink @netcracker/qubership-apihub-api-processor",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node --max-old-space-size=3800 --max-semi-space-size=32 dist/main",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config jest-e2e.json"
+  },
+  "dependencies": {
+    "@nestjs/axios": "^2.0.0",
+    "@nestjs/common": "8.4.7",
+    "@nestjs/config": "^2.3.1",
+    "@nestjs/core": "8.4.7",
+    "@nestjs/platform-express": "8.4.7",
+    "@nestjs/swagger": "^6.3.0",
+    "@netcracker/qubership-apihub-api-processor": "3.0.3",
+    "@sinclair/typebox": "^0.28.9",
+    "adm-zip": "^0.5.10",
+    "dotenv": "^16.0.3",
+    "form-data": "^4.0.0",
+    "js-yaml": "4.1.0",
+    "jszip": "^3.10.1",
+    "reflect-metadata": "^0.1.13",
+    "rxjs": "7.8.1",
+    "swagger-ui-express": "^4.3.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^8.2.8",
+    "@nestjs/schematics": "8.0.8",
+    "@nestjs/testing": "8.4.1",
+    "@types/adm-zip": "^0.5.0",
+    "@types/express": "4.17.17",
+    "@types/jest": "29.5.1",
+    "@types/js-yaml": "4.0.5",
+    "@types/multer": "^1.4.7",
+    "@types/node": "17.0.21",
+    "@types/supertest": "2.0.11",
+    "@typescript-eslint/eslint-plugin": "5.15.0",
+    "@typescript-eslint/parser": "5.15.0",
+    "axios": "^1.4.0",
+    "eslint": "8.11.0",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-plugin-prettier": "4.0.0",
+    "jest": "29.5.0",
+    "openapi-types": "^12.1.0",
+    "parse-multipart-data": "^1.5.0",
+    "prettier": "2.6.0",
+    "rimraf": "3.0.2",
+    "source-map-support": "0.5.21",
+    "supertest": "6.2.2",
+    "ts-jest": "29.1.0",
+    "ts-loader": "9.4.2",
+    "ts-node": "10.9.1",
+    "tsconfig-paths": "3.14.0",
+    "typescript": "4.6.2"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^nimma/legacy$": "<rootDir>/../node_modules/nimma/dist/legacy/cjs/index.js",
+      "^nimma/(.*)": "<rootDir>/../node_modules/nimma/dist/cjs/$1"
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "packageManager": "yarn@1.22.22"
+}
