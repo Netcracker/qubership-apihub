@@ -57,7 +57,3 @@ console.log(schema)
 When contributing, keep in mind that it is an objective of `graphapi` to have no package dependencies. This may change in the future, but for now, no-dependencies.
 
 Please run the unit tests before submitting your PR: `npm test`. Hopefully your PR includes additional unit tests to illustrate your change/modification!
-
-## License
-
-MIT
