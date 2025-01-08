@@ -27,7 +27,7 @@ Currently, Portal allows working with OpenAPI specification with versions 2.0 an
 
 ![](./docs/img/compare_operations.png)
 
-For more information about Portal, please see the [user guide](./docs/Portal User Guide.md).
+For more information about Portal, please see the [user guide](./docs/Portal%20User%20Guide.md).
 
 **Editor** is a web-based IDE specifically designed for designing API documents. It offers a comprehensive set of features and tools to streamline the API design process and enhance collaboration among API designers, developers and stakeholders. Editor provides the following functionality:
  - Integration with GitLab.
@@ -40,4 +40,4 @@ For more information about Portal, please see the [user guide](./docs/Portal Use
 
  ![](./docs/img/discover_services.png)
 
-For more information about Agent, please see the [user guide](./docs/Agent User Guide.md).
+For more information about Agent, please see the [user guide](./docs/Agent%20User%20Guide.md).
