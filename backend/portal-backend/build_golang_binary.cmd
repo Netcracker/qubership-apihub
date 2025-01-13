@@ -6,4 +6,3 @@ go mod tidy
 go mod download
 go build .
 cd ..
-podman build ./ -t netcracker/qubership-apihub-backend

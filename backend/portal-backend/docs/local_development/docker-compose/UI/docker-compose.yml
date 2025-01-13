@@ -1,10 +1,10 @@
 version: "3.9"
 services:
-  apihub-ui:
-    image: ghcr.io/qubersip/apihub-ui-assembly-release-2.2.18:build8
+  qubership-apihub-ui:
+    image: ghcr.io/netcracker/qubership-apihub-ui:main
     environment:
       APIHUB_BACKEND_ADDRESS: "host.docker.internal:8090"
       APIHUB_NC_SERVICE_ADDRESS: "host.docker.internal:8091"
     ports:
-      - "8080:8080"
+      - "8081:8080"
     restart: unless-stopped 
