@@ -1,7 +1,7 @@
 version: '3.9'
 services:
     qubership-apihub-backend:
-        image: ghcr.io/netcarcker/qubership-apihub-backend:latest
+        image: ghcr.io/netcracker/qubership-apihub-backend:main
         #image: localhost/netcracker/qubership-apihub-backend:latest
         container_name: qubership-apihub-backend
         ports:
@@ -28,7 +28,7 @@ services:
                 condition: service_healthy
 
     qubership-apihub-build-task-consumer:
-        image: ghcr.io/netcarcker/qubership-apihub-build-task-consumer:latest
+        image: ghcr.io/netcracker/qubership-apihub-build-task-consumer:main
         container_name: qubership-apihub-build-task-consumer
         ports:
         - "3000:3000"
@@ -54,7 +54,7 @@ services:
                 condition: service_healthy
 
     qubership-apihub-ui:
-        image: ghcr.io/netcarcker/qubership-apihub-ui:latest
+        image: ghcr.io/netcracker/qubership-apihub-ui:main
         container_name: qubership-apihub-ui
         ports:
         - "8081:8080"
