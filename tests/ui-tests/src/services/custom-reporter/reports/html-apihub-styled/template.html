@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Playwright Summary Report</title>
+  {{style}}
+</head>
+
+<body>
+  <div>
+    <table class="info-table">
+      <tr>
+        <td style="padding: 0;">
+          <table>
+            <tr>
+              <th>Status</th>
+              <td style="width: 120px">{{status}}</td>
+            </tr>
+          </table>
+        </td>
+
+        <td style="padding: 0;">
+          <table>
+            <tr>
+              <th>Affect ratio</th>
+              <td>{{ratio}}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <table class="info-table">
+      <tr>
+        <td class="title" colspan="3">
+          Test Run Information
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 0;">
+          <table>
+            <tr>
+              <th>All</th>
+              <td style="width: 120px"><span class="type-grey">● </span>{{allTests}}</td>
+            </tr>
+            <tr>
+              <th>Executed</th>
+              <td><span class="type-grey">● </span>{{executedTests}}</td>
+            </tr>
+            <tr>
+              <th>Passed</th>
+              <td><span class="type-green">● </span>{{passedTests}}</td>
+            </tr>
+            <tr>
+              <th>Failed</th>
+              <td><span class="type-red">● </span>{{failedTests}}</td>
+            </tr>
+            <tr>
+              <th>Flaky</th>
+              <td><span class="type-orange">● </span>{{flakyTests}}</td>
+            </tr>
+            <tr>
+              <th>Affected</th>
+              <td><span class="type-purple">● </span>{{affectedTests}}</td>
+            </tr>
+            <tr>
+              <th>Skipped</th>
+              <td><span class="type-blue">● </span>{{skippedTests}}</td>
+            </tr>
+            <tr>
+              <th>Workers</th>
+              <td><span class="type-grey">● </span>{{workers}}</td>
+            </tr>
+          </table>
+        </td>
+
+        <td style="padding: 0;">
+          <table>
+            <tr>
+              <th>Date</th>
+              <td>{{startTime}}</td>
+            </tr>
+            <tr>
+              <th>Test run duration</th>
+              <td>{{duration}}</td>
+            </tr>
+            <tr>
+              <th>Environment</th>
+              <td><a class="link" href="{{envName}}">{{envName}}</a></td>
+            </tr>
+            <tr>
+              <th>Backend</th>
+              <td>{{backendVersion}}</td>
+            </tr>
+            <tr>
+              <th>Frontend</th>
+              <td>{{frontendVersion}}</td>
+            </tr>
+            <tr>
+              <th>Playwright branch</th>
+              <td>{{pwBranch}}</td>
+            </tr>
+            <tr>
+              <th>CI Job</th>
+              <td>{{ciJobLink}}</td>
+            </tr>
+            <tr>
+              <th>Started by</th>
+              <td>{{ciUser}}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <table class="result-table">
+      <tr>
+        <td class="title" colspan="2" style="padding-left: 0;">
+          Test Run Issues
+        </td>
+      </tr>
+      <tr>
+        <th>Test</th>
+        <th>Issues</th>
+      </tr>
+      {{failedTable}}
+      {{flakyTable}}
+      {{affectedTable}}
+      {{skippedTable}}
+    </table>
+  </div>
+</body>
+
+</html>

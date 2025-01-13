@@ -1,0 +1,85 @@
+#All Directives
+
+directive @deprecated( reason: String = "No longer supported" ) on OBJECT | INPUT_OBJECT | FIELD_DEFINITION | INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION | UNION | ENUM_VALUE
+
+type Query
+{
+  """Get list of Pets"""
+  listPets(listId: String):[Pet!]
+
+  """Get Pet by ID"""
+  getPet(id: String!): Pet
+
+  """Get list of Users"""
+  listUsers(listId: String):[User!]
+
+   """Get User by ID"""
+   getUser(id: String!): User @deprecated (reason: "New query is developed")
+}
+
+type Mutation {
+  """Pet availability check"""
+  petAvailabilityCheck(input: AvailabilityCheckRequest): [AvailabilityCheckResult!]
+}
+
+"""Availability Check Request"""
+input AvailabilityCheckRequest {
+
+  """Pet Unique identifiers"""
+  petId: [String!]
+}
+
+"""Availability Check Result"""
+type AvailabilityCheckResult {
+  """Pet Unique identifier"""
+  petId: String
+
+  """Result of the availability check"""
+  availabilityCheckResult: String
+
+  """Availability check message"""
+  availabilityCheckResultMessage: String
+}
+
+"""The entity represents a Pet"""
+type Pet {
+  """Unique identifier"""
+  id: String
+
+  """Name"""
+  name: String
+
+  """Category"""
+  category: Category
+
+  """ Status """
+  status: String
+
+  """Age"""
+  age: String  @deprecated (reason: "To be deleted")
+}
+
+"""The entity represents a Category"""
+type Category {
+  """Unique identifier"""
+  id: String
+
+  """Name"""
+  name: String
+}
+
+"""The entity represents a User"""
+type User {
+
+  """Unique identifier"""
+  id: String
+
+  """Name"""
+  username: String
+
+  """First name"""
+  firstName: String
+
+  """Last name"""
+  lastName: String
+}

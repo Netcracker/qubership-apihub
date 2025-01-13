@@ -1,0 +1,19 @@
+# IDEs
+/.vscode/
+/.idea/
+!/.idea/icon.png
+*.iml
+/.run
+
+# dependencies
+/node_modules/
+
+# logs
+*.log*
+
+# playwright
+/reports/
+/playwright/.cache/
+/temp/
+/.env
+debug.spec.ts

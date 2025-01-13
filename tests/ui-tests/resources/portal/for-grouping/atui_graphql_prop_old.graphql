@@ -1,0 +1,210 @@
+#All Directives
+
+directive @deprecated( reason: String = "No longer supported" ) on OBJECT | INPUT_OBJECT | FIELD_DEFINITION | INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION | UNION | ENUM_VALUE
+
+#POC Queries
+
+type Query
+{
+
+  #Get Catalog
+  """The operation allows getting details of a catalog from Product Catalog Management"""
+  getCatalog(id: String!, locale:String): Catalog
+
+  #List Marketing Bundles
+  """The operations allows getting list of Marketing Bundles. Note! In order to request list of Marketing Bundles it is required to pass at least one filtering parameter."""
+  listMarketingBundles(
+    locale:String,
+    exposeActiveComponents: Boolean,
+    """Date and time in which Marketing Bundle is saleable."""
+    effectiveDate: DateTime
+  ): [MarketingBundle!]
+
+  #Get Marketing Bundle
+  """The operations allows getting details of a Marketing Bundle."""
+  getMarketingBundle(
+
+    """Unique identifier if queried Marketing Bundle"""
+    id: ID!,
+
+    locale:String,
+
+    exposeActiveComponents: Boolean
+
+  ): MarketingBundle @deprecated (reason: "New query is developed")
+}
+
+#Mutations
+type Mutation {
+  #Availability Check Mutation
+  """The operation allows performing availability check operation in Product Catalog Management"""
+  availabilityCheck(input: AvailabilityCheckRequestInput): [AvailabilityCheckResult!]
+}
+
+#AvailabilityCheckRequestInput
+
+"""Availability Check Request"""
+
+input AvailabilityCheckRequestInput {
+
+  """Product Offering Unique identifiers"""
+  productOfferingId: [String!]
+
+  """Availability parameters in <String, List<String>> format"""
+  availabilityParameters: JSON
+
+}
+
+#AvailabilityCheckResponse
+
+"""Availability Check Result"""
+type AvailabilityCheckResult {
+  """Product Offering Unique identifier"""
+  productOfferingId: String
+
+  """Result of the availability check"""
+  availabilityCheckResult: String
+
+  """Availability check message"""
+  availabilityCheckResultMessage: String
+}
+
+
+
+
+#Scalar Types
+scalar JSON
+scalar DateTime
+
+type Catalog {
+  """Unique identifier of the entity."""
+  id: String
+
+  """Name of the entity."""
+  name: String
+
+  """Used to indicate the current lifecycle status"""
+  lifecycleStatus: String
+
+  """ Catalog version """
+  version: String
+
+  """The parameter is used to filter arrays of LocalizedData"""
+  locale: String  @deprecated (reason: "To be passed in API query parameters.")
+
+}
+
+#MarketingBundle
+"""The entity represents a Marketing Bundle"""
+type MarketingBundle {
+
+  """Unique identifier of the marketing bundle."""
+  id: String
+
+  """Name of Marketing Bundle."""
+  name: String
+
+  """Billing name of Marketing Bundle."""
+  billingName: String
+
+  """Date and Time Marketing Bundle is available from."""
+  availableFrom: DateTime
+
+  """Date and Time Marketing Bundle is available to."""
+  availableTo: DateTime
+
+  """Status of Marketing Bundle"""
+  status: String
+
+  priceAlterationAction: PromotionPriceAlterationAction
+}
+
+#PromotionAction
+"""Action of the promotion. When the customer meets the conditions in the “promotion pattern”, the customer can be given the benefits in the “action”."""
+interface PromotionAction {
+
+  """Unique identifier of Promotion Action."""
+  id: String
+
+  """It refers to the object (entity) ID which is impacted by the promotion action. Not Supported."""
+  actionObjectId: String
+
+  """ """
+  actionType: String
+
+  """Value of price alteration."""
+  actionValue: Float
+}
+
+
+#PromotionPriceAlterationAction Type
+
+"""The entity represents extended information about price alteration."""
+type PromotionPriceAlterationAction implements PromotionAction  {
+
+  """Unique identifier of Promotion Action."""
+  id: String
+
+  """It refers to the object (entity) ID which is impacted by the promotion action. Not Supported."""
+  actionObjectId: String
+
+  """ """
+  actionType: String
+
+  """Value of price alteration."""
+  actionValue: Float
+
+  """A list of promotion target reference."""
+  target: PromotionTargetEntity
+}
+
+#POC Management Unions
+#PromotionTargetEntity Union
+union PromotionTargetEntity = ProductOffering | Category
+
+#ProductOffering
+"""Product Offering represents entity that are orderable from the provider of the catalog, this resource includes pricing information."""
+type ProductOffering {
+  """Unique identifier of the entity."""
+  id: String
+
+  """Name of the entity."""
+  name: String
+
+  """It is true if the Product Offering is Top Product Offering."""
+  isTopOffer: Boolean
+
+  """Date and time of the last update"""
+  lastUpdate: DateTime
+
+  """Used to indicate the current lifecycle status"""
+  lifecycleStatus: String
+
+  """If tax inclusive."""
+  taxInclusive: Boolean
+
+  """ProductOffering version"""
+  version: String
+}
+
+#Category
+"""The entity is used to group Product Offerings and resource candidates in logical containers. Each category can contain other (sub-)categories and/or product offerings, resource candidates."""
+type Category {
+  """Unique identifier of the entity."""
+  id: String
+
+  """Name of the entity."""
+  name: String
+
+  """Description of the category"""
+  description: String
+
+  """Used to indicate the current lifecycle status"""
+  lifecycleStatus: String
+
+  """Maximum number of offerings that can be involved in Quote under this category."""
+  offeringCountMax: Int
+
+  """Minimum number of offerings that should be added to Quote under this category."""
+  offeringCountMin: Int
+}

@@ -1,0 +1,51 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "commonjs",
+    "moduleResolution": "Node",
+    "sourceMap": true,
+    "outDir": "dist/esm",
+    "resolveJsonModule": true,
+    "strict": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@factories": [
+        "src/factories"
+      ],
+      "@helpers": [
+        "src/helpers"
+      ],
+      "@fixtures": [
+        "src/fixtures"
+      ],
+      "@agent/*": [
+        "src/packages/agent/*"
+      ],
+      "@portal/*": [
+        "src/packages/portal/*"
+      ],
+      "@shared/*": [
+        "src/packages/shared/*"
+      ],
+      "@services/*": [
+        "src/services/*"
+      ],
+      "@test-setup": [
+        "src/test-setup"
+      ],
+      "@test-data": [
+        "src/test-data"
+      ],
+      "@test-data/*": [
+        "src/test-data/*"
+      ]
+    }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "temp",
+    "debug"
+  ]
+}
