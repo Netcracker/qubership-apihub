@@ -9,7 +9,7 @@ env:
   TAG_NAME: ${{ github.event.release.tag_name || github.ref }}
 
 jobs:
-  multiplatform_build:
+  build_and_push_image:
     strategy:
       fail-fast: false
       matrix:
@@ -46,7 +46,7 @@ jobs:
           no-cache: true
           context: ${{ matrix.component.context }}
           file: ${{ matrix.component.file }}
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ghcr.io/netcracker/${{ matrix.component.name }}:${{ env.TAG_NAME }}
           provenance: false
