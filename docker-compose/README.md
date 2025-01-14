@@ -1,5 +1,7 @@
 # APIHUB docker-compose local deployment
 
+Follow this guide in order to run APIHUB on a local machine/bare-metal server using Docker (or compatible) runtime
+
 ## Prerequisites
 
 Install **podman** with **compose** plugin.

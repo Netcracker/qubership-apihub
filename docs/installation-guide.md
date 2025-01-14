@@ -19,13 +19,23 @@
 
 ## docker-compose
 
-todo
+Please refer to [`docker-compose/README.md`](/docker-compose/README.md)
 
 ## Helm
 
 todo
 
-### Deploy parameters list
+## Minimal deploy parameters set
+
+```INI
+APIHUB_POSTGRESQL_DB_NAME=apihub;
+APIHUB_POSTGRESQL_USERNAME=apihub;
+APIHUB_POSTGRESQL_PASSWORD=apihub;
+APIHUB_POSTGRESQL_PORT=5432;
+JWT_PRIVATE_KEY={use generated key here};
+```
+
+### Full deploy parameters list
 
 | Deploy Parameter name | Default Value | Description |
 | --- | --- | --- |
@@ -51,7 +61,6 @@ todo
 | APIHUB_POSTGRESQL_PORT | 5432 | PG port |
 | APIHUB_POSTGRESQL_ADMIN_USERNAME |  | Admin user for APIHUB_POSTGRESQL_HOST cluster. Required for apihub database creation  |
 | APIHUB_POSTGRESQL_ADMIN_PASSWORD |  | Password for APIHUB_POSTGRESQL_ADMIN_USERNAME for APIHUB_POSTGRESQL_HOST cluster. Required for apihub database creation |
-| APIHUB_SKIP_DB_CREATION | false | Flag for skipping auto database creation. Is true - manual database precreation required |
 | APIHUB_POSTGRESQL_DB_NAME | apihub_backend_{NAMESPACE}_db | Logical database in PG cluster for APIHUB. If APIHUB_SKIP_DB_CREATION=false - the database will be created automatically. Otherwise manual pre-creation required |
 | APIHUB_POSTGRESQL_USERNAME | apihub_backend_{NAMESPACE}_admin | User for APIHUB_POSTGRESQL_DB_NAME database. If APIHUB_SKIP_DB_CREATION=false - the user will be created automatically. Otherwise manual pre-creation required |
 | APIHUB_POSTGRESQL_PASSWORD | apihub_backend_{NAMESPACE}_password | Password for APIHUB_POSTGRESQL_USERNAME user. |
@@ -66,6 +75,9 @@ todo
 | MINIO_STORE_ONLY_BUILD_RESULT | true | Set to true to store only build results in S3 storage |
 | MINIO_STORAGE_ACTIVE | true | Set to true to enable S3 integration. Used for store cold data |
 | PRODUCTION_MODE | false | Enables production mode - login under local apihub users is prohibited in this mode |
+| APIHUB_ADMIN_EMAIL |  | Default admin user login (example: apihub). If set - this user will be created automatically. |
+| APIHUB_ADMIN_PASSWORD |  | Default admin user password (example: password) |
+| APIHUB_ACCESS_TOKEN |  | Default access system access token (any string). If set - will be created automatically |
 
 | Deploy Parameter name | Default Value | Description |
 | --- | --- | --- |
@@ -75,7 +87,7 @@ todo
 | DNS_ROUTE_ENABLE |     | Set to true to enable Ingress bounded to external DNS name. |
 | DNS_ROUTE |     | DNS name for Ingress. Required if DNS_ROUTE_ENABLE=true. |
 | APIHUB_BACKEND_ADDRESS | apihub-backend:8080 | apihub-backend address. |
-| APIHUB_NC_SERVICE_ADDRESS | apihub-nc-service:8080 | apihub-nc-service address. |
+| APIHUB_NC_SERVICE_ADDRESS | apihub-nc-service:8080 | Custom add-on service address. |
 | TLS_CRT |     | TLS certificate to be set on DNS Ingress. Required if DNS_ROUTE_ENABLE=true |
 | TLS_KEY |     | TLS certificate puplic key to be set on DNS Ingress. Required if DNS_ROUTE_ENABLE=true" |
 
