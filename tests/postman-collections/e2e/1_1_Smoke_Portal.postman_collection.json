@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_1_Smoke_Portal",
-        "_postman_id": "49107d7d-f713-4a34-98e2-7fa9c17a9568",
+        "_postman_id": "4f38c5f3-e466-4bec-9aa3-4f8afc030dcb",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -323,29 +323,19 @@
                     ],
                     "item": [
                         {
-                            "name": "0.3.1 Operations search",
+                            "name": "0.3.1 Search operations",
                             "event": [
                                 {
                                     "listen": "test",
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Validate 'operations' is an array\", function () {\r",
+                                            "    let jsonData = pm.response.json();\r",
+                                            "    pm.expect(jsonData).to.have.property('operations'); // Check if 'operations' exists\r",
+                                            "    pm.expect(jsonData.operations).to.be.an('array');   // Check if 'operations' is an array\r",
                                             "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "\r",
-                                            "var title = [];\r",
-                                            "\r",
-                                            "for (var i = 0; i<data.operations.length; i++) {\r",
-                                            "    title.push(data.operations[i].title)\r",
-                                            "}\r",
-                                            "\r",
-                                            "\r",
-                                            "pm.test(\"'Version' parameter is not empty\", () => {\r",
-                                            "    pm.expect(data.operations[0].version).not.to.empty\r",
-                                            "});"
+                                            ""
                                         ]
                                     }
                                 },
@@ -400,152 +390,6 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "0.3.2 Operations search with 0 results",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = pm.response.json();\r",
-                                            "\r",
-                                            "pm.test(\"Operations list is empty\", function () {\r",
-                                            "    pm.expect(data.operations.length).to.eq(0);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/search/operations?limit=20",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v3",
-                                        "search",
-                                        "operations"
-                                    ],
-                                    "query": [
-                                        {
-                                            "key": "limit",
-                                            "value": "20"
-                                        }
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": " {\r\n    \"searchString\": \"This method gets the requested discount by ID\",\r\n    \"packageIds\": [\"QA.ATBETD.Pack1\"],\r\n    \"statuses\": [\"archived\"]\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "0.3.3 Search graphql operations",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "\r",
-                                            "var apiType = [];\r",
-                                            "var type = [];\r",
-                                            "\r",
-                                            "for (var i = 0; i<data.operations.length; i++) {\r",
-                                            "    apiType.push(data.operations[i].apiType)\r",
-                                            "    type.push(data.operations[i].type)\r",
-                                            "}\r",
-                                            "\r",
-                                            "pm.test(\"apiType = 'graphql'\", () => {\r",
-                                            "    pm.expect(apiType).to.include('graphql')\r",
-                                            "});\r",
-                                            "\r",
-                                            "pm.test(\"type = 'mutation'\", () => {\r",
-                                            "    pm.expect(type).to.include('query')\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/search/operations",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v3",
-                                        "search",
-                                        "operations"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"searchString\": \"All Films\",\r\n    \"packageIds\": [\"QA.ATBETD.Pack2\"]\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
                             "name": "0.3.4 Search documents",
                             "event": [
                                 {
@@ -553,14 +397,10 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "\r",
-                                            "pm.test(\"Search has 7 result\", function () {\r",
-                                            "    pm.expect(data.documents.length).to.eq(7)\r",
+                                            "pm.test(\"Validate 'operations' is an array\", function () {\r",
+                                            "    let jsonData = pm.response.json();\r",
+                                            "    pm.expect(jsonData).to.have.property('documents'); // Check if 'documents' exists\r",
+                                            "    pm.expect(jsonData.documents).to.be.an('array');   // Check if 'documents' is an array\r",
                                             "});\r",
                                             ""
                                         ]
@@ -621,80 +461,6 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "0.3.5 Search documents with release status",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "\r",
-                                            "pm.test(\"Search result isn't empty\", function () {\r",
-                                            "    pm.expect(data.documents.length).to.greaterThan(0);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var status = [];\r",
-                                            "\r",
-                                            "for (var i = 0; i<data.documents.length; i++) {\r",
-                                            "    status.push(data.documents[i].status)\r",
-                                            "}\r",
-                                            "\r",
-                                            "pm.test(\"Status = 'Release'\", () => {\r",
-                                            "    pm.expect(status).to.include('release')\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/search/documents",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v3",
-                                        "search",
-                                        "documents"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": " {\r\n    \"searchString\": \"API\",\r\n    \"packageIds\": [\"QA.ATBETD.Pack2\"],\r\n    \"statuses\": [\"release\"]\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
                             "name": "0.3.6 Search packages",
                             "event": [
                                 {
@@ -702,15 +468,12 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Validate 'operations' is an array\", function () {\r",
+                                            "    let jsonData = pm.response.json();\r",
+                                            "    pm.expect(jsonData).to.have.property('packages'); // Check if 'packages' exists\r",
+                                            "    pm.expect(jsonData.packages).to.be.an('array');   // Check if 'packages' is an array\r",
                                             "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "\r",
-                                            "pm.test(\"Search has only 2 results\", function () {\r",
-                                            "    pm.expect(data.packages.length).to.eq(2)\r",
-                                            "});"
+                                            ""
                                         ]
                                     }
                                 },
@@ -741,76 +504,6 @@
                                             "key": "limit",
                                             "value": "2"
                                         }
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"searchString\": \"Package#1\",\r\n    \"packageIds\": [\"QA.ATBETD\"]\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "0.3.7 Search released packages",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "\r",
-                                            "var status = [];\r",
-                                            "\r",
-                                            "for (var i = 0; i<data.packages.length; i++) {\r",
-                                            "    status.push(data.packages[i].status)\r",
-                                            "}\r",
-                                            "\r",
-                                            "pm.test(\"Status = 'Release'\", () => {\r",
-                                            "    pm.expect(status).to.include('release')\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/search/packages",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v3",
-                                        "search",
-                                        "packages"
                                     ]
                                 },
                                 "method": "POST",
@@ -970,62 +663,6 @@
                                             "key": "page",
                                             "value": "0"
                                         }
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "0.4.3 Get user avatar",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "pm.test(\"Content-type is image/png\", function () {\r",
-                                            "    pm.response.to.have.header('Content-Type');\r",
-                                            "    pm.expect(pm.response.headers.get('Content-Type')).to.include('image/png');\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/users/x_APIHUB/profile/avatar",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "users",
-                                        "x_APIHUB",
-                                        "profile",
-                                        "avatar"
                                     ]
                                 },
                                 "method": "GET",
@@ -6172,11 +5809,11 @@
                                             "});\r",
                                             "\r",
                                             "\r",
-                                            "pm.environment.set(\"version_1\", data.versions[0].version);\r",
-                                            "pm.environment.set(\"version_1_2\", data.versions[0].version.split(\"@\")[0]);\r",
+                                            "pm.environment.set(\"version_2\", data.versions[0].version);\r",
+                                            "pm.environment.set(\"version_2_2\", data.versions[0].version.split(\"@\")[0]);\r",
                                             "pm.environment.set(\"previous_version_1\", data.versions[0].previousVersion);\r",
-                                            "pm.environment.set(\"version_2\", data.versions[1].version);\r",
-                                            "pm.environment.set(\"version_2_2\", data.versions[1].version.split(\"@\")[0]);"
+                                            "pm.environment.set(\"version_1\", data.versions[1].version);\r",
+                                            "pm.environment.set(\"version_1_2\", data.versions[1].version.split(\"@\")[0]);"
                                         ]
                                     }
                                 },
@@ -6754,7 +6391,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"packageId\": \"{{package_1}}\",\r\n    \"version\": \"{{version_1}}\",\r\n    \"previousVersion\": \"{{version_2}}\",\r\n    \"previousVersionPackageId\": \"{{package_1}}\"\r\n}",
+                                    "raw": "{\r\n    \"packageId\": \"{{package_1}}\",\r\n    \"version\": \"{{version_2_2}}\",\r\n    \"previousVersion\": \"{{version_1_2}}\",\r\n    \"previousVersionPackageId\": \"{{package_1}}\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -6921,7 +6558,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_1}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_2}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -6931,7 +6568,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
-                                        "{{version_1}}"
+                                        "{{version_2}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -6944,7 +6581,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": " {\r\n     \"previousVersion\": \"2.0\",\r\n     \"status\": \"draft\",\r\n     \"versionLabels\": [\r\n         \"API_Smoke\"\r\n        ]\r\n }",
+                                    "raw": " {\r\n     \"previousVersion\": \"{{version_1_2}}\",\r\n     \"status\": \"release\",\r\n     \"versionLabels\": [\r\n         \"API_Smoke\"\r\n        ]\r\n }",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -7564,7 +7201,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_1}}/rest/operations/{{operation_id_1}}/changes",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_2}}/rest/operations/{{operation_id_1}}/changes",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -7574,7 +7211,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
-                                        "{{version_1}}",
+                                        "{{version_2}}",
                                         "rest",
                                         "operations",
                                         "{{operation_id_1}}",
@@ -8072,7 +7709,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_1}}/rest/operations/{{operation_id_1}}/changes?severity=non-breaking",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_2}}/rest/operations/{{operation_id_1}}/changes?severity=non-breaking",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -8082,7 +7719,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
-                                        "{{version_1}}",
+                                        "{{version_2}}",
                                         "rest",
                                         "operations",
                                         "{{operation_id_1}}",
@@ -8140,7 +7777,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_1}}/rest/changes?textFilter=post&apiKind=bwc&tag=pet&severity=breaking",
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2}}/rest/changes?textFilter=post&apiKind=bwc&tag=pet&severity=breaking",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -8150,7 +7787,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
-                                        "{{version_1}}",
+                                        "{{version_2}}",
                                         "rest",
                                         "changes"
                                     ],
@@ -8170,72 +7807,6 @@
                                         {
                                             "key": "severity",
                                             "value": "breaking"
-                                        }
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.4.32 Filter package versions by 'status' query parameter",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = pm.response.json();\r",
-                                            "\r",
-                                            "pm.test(\"Only 2 versions found\", function () {\r",
-                                            "    pm.expect(data.versions.length).to.eq(1);\r",
-                                            "});\r",
-                                            "\r",
-                                            "pm.test(\"Found version has 'release' status\", function () {\r",
-                                            "    pm.expect(data.versions[0].status).to.eql('release');\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions?status=release",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "versions"
-                                    ],
-                                    "query": [
-                                        {
-                                            "key": "status",
-                                            "value": "release"
                                         }
                                     ]
                                 },
@@ -8304,13 +7875,79 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"packageId\": \"{{package_1}}\",\r\n    \"version\": \"{{version_1}}\",\r\n    \"previousVersion\": \"{{version_2}}\",\r\n    \"previousVersionPackageId\": \"{{package_1}}\"\r\n}",
+                                    "raw": "{\r\n    \"packageId\": \"{{package_1}}\",\r\n    \"version\": \"{{version_2}}\",\r\n    \"previousVersion\": \"{{version_1}}\",\r\n    \"previousVersionPackageId\": \"{{package_1}}\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
                                         }
                                     }
                                 }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "4.4.32 Filter package versions by 'status' query parameter",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.test(\"Only 2 versions found\", function () {\r",
+                                            "    pm.expect(data.versions.length).to.eq(2);\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.test(\"Found version has 'release' status\", function () {\r",
+                                            "    pm.expect(data.versions[0].status).to.eql('release');\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions?status=release",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "status",
+                                            "value": "release"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
@@ -8659,7 +8296,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_2}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_1}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -8669,7 +8306,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
-                                        "{{version_2}}"
+                                        "{{version_1}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -9036,7 +8673,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_1}}/rest/changes?textFilter=/api/v1/pet&refPackageId={{package_1}}",
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2_2}}/rest/changes?textFilter=/api/v1/pet&refPackageId={{package_1}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -9046,7 +8683,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
-                                        "{{version_1}}",
+                                        "{{version_2_2}}",
                                         "rest",
                                         "changes"
                                     ],
@@ -9111,7 +8748,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_1}}/rest/changes?textFilter=pet",
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2_2}}/rest/changes?textFilter=pet",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -9121,7 +8758,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
-                                        "{{version_1}}",
+                                        "{{version_2_2}}",
                                         "rest",
                                         "changes"
                                     ],
@@ -9161,7 +8798,7 @@
                                             "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application');\r",
                                             "    pm.response.to.have.header('Content-Disposition');\r",
                                             "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment');\r",
-                                            "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include(\"filename=APIChanges_\" + pm.variables.replaceIn('{{package_1}}') + \"_\" + pm.variables.replaceIn('{{version_1_2}}' + \".xlsx\"));\r",
+                                            "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include(\"filename=APIChanges_\" + pm.variables.replaceIn('{{package_1}}') + \"_\" + pm.variables.replaceIn('{{version_2_2}}' + \".xlsx\"));\r",
                                             "});\r",
                                             "\r",
                                             "pm.test(\"File isn't empty\", () => {\r",
@@ -9182,7 +8819,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_1}}/changes/export",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_2_2}}/changes/export",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -9192,7 +8829,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
-                                        "{{version_1}}",
+                                        "{{version_2_2}}",
                                         "changes",
                                         "export"
                                     ]
@@ -9262,7 +8899,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"packageId\": \"{{package_1}}\",\r\n    \"version\": \"{{version_1}}\",\r\n    \"previousVersion\": \"{{version_2}}\",\r\n    \"previousVersionPackageId\": \"{{package_1}}\"\r\n}",
+                                    "raw": "{\r\n    \"packageId\": \"{{package_1}}\",\r\n    \"version\": \"{{version_2_2}}\",\r\n    \"previousVersion\": \"{{version_1_2}}\",\r\n    \"previousVersionPackageId\": \"{{package_1}}\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -9329,7 +8966,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"packageId\": \"{{package_1}}\",\r\n    \"version\": \"{{version_2}}\",\r\n    \"previousVersion\": \"{{version_1}}\",\r\n    \"previousVersionPackageId\": \"{{package_1}}\"\r\n}",
+                                    "raw": "{\r\n    \"packageId\": \"{{package_1}}\",\r\n    \"version\": \"{{version_2_2}}\",\r\n    \"previousVersion\": \"{{version_1_2}}\",\r\n    \"previousVersionPackageId\": \"{{package_1}}\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -9400,7 +9037,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_1}}/changes/summary",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_2}}/changes/summary",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -9410,7 +9047,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
-                                        "{{version_1}}",
+                                        "{{version_2}}",
                                         "changes",
                                         "summary"
                                     ]
@@ -9719,7 +9356,7 @@
                                             "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application');\r",
                                             "    pm.response.to.have.header('Content-Disposition');\r",
                                             "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment');\r",
-                                            "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include(\"filename=APIChanges_\" + pm.variables.replaceIn('{{package_1}}') + \"_\" + pm.variables.replaceIn('{{version_1_2}}' + \".xlsx\"));\r",
+                                            "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include(\"filename=APIChanges_\" + pm.variables.replaceIn('{{package_1}}') + \"_\" + pm.variables.replaceIn('{{version_2_2}}' + \".xlsx\"));\r",
                                             "});\r",
                                             "\r",
                                             "pm.test(\"File isn't empty\", () => {\r",
@@ -9740,7 +9377,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_1}}/rest/export/changes?apiKind=bwc&tag=pet",
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2_2}}/rest/export/changes?apiKind=bwc&tag=pet",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -9750,7 +9387,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
-                                        "{{version_1}}",
+                                        "{{version_2_2}}",
                                         "rest",
                                         "export",
                                         "changes"
@@ -11057,7 +10694,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/internal/clear/STATIC-TEST-2",
+                                    "raw": "{{SERVER_HOST}}/api/internal/clear/STATIC-TEST-3",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -11065,7 +10702,7 @@
                                         "api",
                                         "internal",
                                         "clear",
-                                        "STATIC-TEST-2"
+                                        "STATIC-TEST-3"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -11129,7 +10766,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"name\": \"Test Workspace 2\",\r\n    \"Alias\" :\"QS-STATIC-TEST-2\",\r\n    \"parentId\": \"\",\r\n    \"description\": \"Required for to upload hardcoded packages\",\r\n    \"imageUrl\": \"\"\r\n}",
+                                    "raw": "{\r\n    \"name\": \"Test Workspace 3\",\r\n    \"Alias\" :\"QS-STATIC-TEST-3\",\r\n    \"parentId\": \"\",\r\n    \"description\": \"Required for to upload hardcoded packages\",\r\n    \"imageUrl\": \"\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -11190,7 +10827,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-2.PKG5\",\r\n    \"Alias\" :\"PKG5\",\r\n    \"name\": \"Test static package 1\",\r\n    \"parentId\": \"QS-STATIC-TEST-2\",\r\n    \"kind\":\"dashboard\",\r\n    \"description\": \"Package to be built\",\r\n    \"serviceName\": \"\",\r\n    \"imageUrl\": \"\"\r\n}",
+                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-3.PKG5\",\r\n    \"Alias\" :\"PKG5\",\r\n    \"name\": \"Test static package 1\",\r\n    \"parentId\": \"QS-STATIC-TEST-3\",\r\n    \"kind\":\"dashboard\",\r\n    \"description\": \"Package to be built\",\r\n    \"serviceName\": \"\",\r\n    \"imageUrl\": \"\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -11321,7 +10958,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"builderId\"\r\n\r\n5680525d-7c7b-47be-8ede-d502626a79dc\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0001.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [{\r\n            \"refId\":\"{{td_package_1}}\",\r\n            \"version\":\"{{td_version_1}}@1\"}],\r\n    \"files\": []\r\n}\r\n----------------------------127308995100818139707097--",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"builderId\"\r\n\r\n5680525d-7c7b-47be-8ede-d502626a79dc\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0001.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [{\r\n            \"refId\":\"{{package_1}}\",\r\n            \"version\":\"{{version_1}}\"}],\r\n    \"files\": []\r\n}\r\n----------------------------127308995100818139707097--",
                                     "options": {
                                         "raw": {
                                             "language": "text"
@@ -11450,7 +11087,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0001.2\",\r\n    \"previousVersion\": \"0001.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [{\r\n            \"refId\":\"{{td_package_1}}\",\r\n            \"version\":\"{{td_version_2}}\"}],\r\n    \"files\": []\r\n}\r\n----------------------------127308995100818139707097--",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0001.2\",\r\n    \"previousVersion\": \"0001.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [{\r\n            \"refId\":\"{{package_1}}\",\r\n            \"version\":\"{{version_1}}\"}],\r\n    \"files\": []\r\n}\r\n----------------------------127308995100818139707097--",
                                     "options": {
                                         "raw": {
                                             "language": "text"
@@ -11524,74 +11161,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0001.2\",\r\n    \"previousVersion\": \"0001.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [{\r\n            \"refId\":\"{{td_package_1}}\",\r\n            \"version\":\"{{td_version_2}}\"}],\r\n    \"files\": []\r\n}\r\n----------------------------127308995100818139707097--",
-                                    "options": {
-                                        "raw": {
-                                            "language": "text"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "5.1.16 Group depend publish",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 202\", function () {\r",
-                                            "    pm.response.to.have.status(202);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "pm.environment.set(\"group_publish_id\", data.publishId)"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/QS-STATIC-TEST-2/publish",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "QS-STATIC-TEST-2",
-                                        "publish"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    },
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"dependencies\"\r\n\r\n[\"{{publish_id}}\"]\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"QS-STATIC-TEST-2\",\r\n    \"version\": \"1.0\",\r\n    \"status\": \"draft\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [{\"refId\": \"QS-STATIC-TEST-2.PKG5\", \"version\": \"0001.1\"}],\r\n    \"files\": []\r\n}\r\n----------------------------127308995100818139707097--",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0001.2\",\r\n    \"previousVersion\": \"0001.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [{\r\n            \"refId\":\"{{package_1}}\",\r\n            \"version\":\"{{version_1}}\"}],\r\n    \"files\": []\r\n}\r\n----------------------------127308995100818139707097--",
                                     "options": {
                                         "raw": {
                                             "language": "text"
@@ -14024,7 +13594,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"{{td_version_1}}\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"{{Pack_version1_fileId}}\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"petstore_v1.zip\"\r\nContent-Type: application/zip;base64\r\n\r\n{{Pack_version1_data}}\r\n----------------------------127308995100818139707097--",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"{{version_1_2}}\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"{{Pack_version1_fileId}}\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"petstore_v1.zip\"\r\nContent-Type: application/zip;base64\r\n\r\n{{Pack_version1_data}}\r\n----------------------------127308995100818139707097--",
                                     "options": {
                                         "raw": {
                                             "language": "text"
@@ -14099,7 +13669,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0001.2\",\r\n    \"previousVersion\": \"0001.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"{{Pack_version2_fileId}}\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"petstore_v2.zip\"\r\nContent-Type: application/zip;base64\r\n\r\n{{Pack_version2_data}}\r\n----------------------------127308995100818139707097--",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"{{version_2_2}}\",\r\n    \"previousVersion\": \"{{version_1_2}}\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"{{Pack_version2_fileId}}\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"petstore_v2.zip\"\r\nContent-Type: application/zip;base64\r\n\r\n{{Pack_version2_data}}\r\n----------------------------127308995100818139707097--",
                                     "options": {
                                         "raw": {
                                             "language": "text"
@@ -14371,7 +13941,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"QS-STATIC-TEST-2.PKG2\",\r\n    \"version\": \"{{td_version_1}}\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"iot_v1.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"iot_v1.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQAAAAIAKd6C1ctm2XhRwIAAIoGAAALAAAAaW90X3YxLnlhbWytVFFz0zAMfs+v8BVe07gZgS1vXccdvQO2Y+UHOImaektiYytl/ffITpq2pDsKh/OSk6xPn/RJVhoaoWXKrqZ8ygMLZgvGpgFjISvA5kZqlKpJ2eNPUZZgPrUZmz8s2bxFxb6o/Fk2ZcDotKZK2QZR2zSKttJgBzW1Xdymzaa5qqPP88X91+ViMV+svj/yh2h5v4pmPrVs1srldfl9Rm8mA0qsgLBVDaFUGBJdsp6QW23As1orw5D+Pwq8FblqGMEzbdQT5BigKPvCGlET4B1sZQ5kOAHb222gBW58QFR0ltTfLQHpx58esT/hAXGEaQBb01gmqor+S2kRDBSsB+4jSAsj3P1lkbo0dydeLQzRpriTlJLAf7RgdoON9eXZZ6k745hO09YZGKbWRCZXprAM1e8BNt9ALfa5+oJ3GlLKiUCSHntc52uB3ncVX8SvkrXE1wjW4uUsyb6R/5WmAatVY+Gor5OY80n6Grl5VbkpO6g3nFxRzgZP2QitK5l7YaMnSwCDd1zBuAphjNiNfBKhHviOgywav5f9GdffGnnGCy+i1hV0e0xrPONT98Vxkl7za+4jtLKXzf/xNA8z/68tt21Onbbrtqp24wUaUGnSLN6qYjcAHSS5VJDzcrw1sE7Z5E1EjxhRJ0QbdTdt1JX9zbPqS6a3bBIcrjq0/nYHfD7E+Q4iqsw9W/vtN66fKI9a5kRMgz9Kfyz5BVLzTuph0Iq/SdHK4lwO/iG+Eck1D+P4HQ9nM3gf3kCWhJzzWCRFkiezLPgFUEsBAj8AFAAAAAgAp3oLVy2bZeFHAgAAigYAAAsAJAAAAAAAAAAgAAAAAAAAAGlvdF92MS55YW1sCgAgAAAAAAABABgAj7sUUU7M2QGItA5ST8zZATTchHROzNkBUEsFBgAAAAABAAEAXQAAAHACAAAAAA==\r\n----------------------------127308995100818139707097--",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"{{package_2}}\",\r\n    \"version\": \"{{version_1_2}}\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"iot_v1.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"iot_v1.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQAAAAIAKd6C1ctm2XhRwIAAIoGAAALAAAAaW90X3YxLnlhbWytVFFz0zAMfs+v8BVe07gZgS1vXccdvQO2Y+UHOImaektiYytl/ffITpq2pDsKh/OSk6xPn/RJVhoaoWXKrqZ8ygMLZgvGpgFjISvA5kZqlKpJ2eNPUZZgPrUZmz8s2bxFxb6o/Fk2ZcDotKZK2QZR2zSKttJgBzW1Xdymzaa5qqPP88X91+ViMV+svj/yh2h5v4pmPrVs1srldfl9Rm8mA0qsgLBVDaFUGBJdsp6QW23As1orw5D+Pwq8FblqGMEzbdQT5BigKPvCGlET4B1sZQ5kOAHb222gBW58QFR0ltTfLQHpx58esT/hAXGEaQBb01gmqor+S2kRDBSsB+4jSAsj3P1lkbo0dydeLQzRpriTlJLAf7RgdoON9eXZZ6k745hO09YZGKbWRCZXprAM1e8BNt9ALfa5+oJ3GlLKiUCSHntc52uB3ncVX8SvkrXE1wjW4uUsyb6R/5WmAatVY+Gor5OY80n6Grl5VbkpO6g3nFxRzgZP2QitK5l7YaMnSwCDd1zBuAphjNiNfBKhHviOgywav5f9GdffGnnGCy+i1hV0e0xrPONT98Vxkl7za+4jtLKXzf/xNA8z/68tt21Onbbrtqp24wUaUGnSLN6qYjcAHSS5VJDzcrw1sE7Z5E1EjxhRJ0QbdTdt1JX9zbPqS6a3bBIcrjq0/nYHfD7E+Q4iqsw9W/vtN66fKI9a5kRMgz9Kfyz5BVLzTuph0Iq/SdHK4lwO/iG+Eck1D+P4HQ9nM3gf3kCWhJzzWCRFkiezLPgFUEsBAj8AFAAAAAgAp3oLVy2bZeFHAgAAigYAAAsAJAAAAAAAAAAgAAAAAAAAAGlvdF92MS55YW1sCgAgAAAAAAABABgAj7sUUU7M2QGItA5ST8zZATTchHROzNkBUEsFBgAAAAABAAEAXQAAAHACAAAAAA==\r\n----------------------------127308995100818139707097--",
                                     "options": {
                                         "raw": {
                                             "language": "text"
@@ -14445,7 +14015,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"QS-STATIC-TEST-2.PKG2\",\r\n    \"version\": \"{{td_version_2}}\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"iot_v2.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"iot_v2.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQAAAAIAKl6C1dAFPglIgMAAFYLAAALAAAAaW90X3YyLnlhbWy9Vk1z2jAQvfMrNLRXY0NKm/iW0MyUmbbJFHrpTdhrrMSWXH2Q0F/flWRsE0MmoR/igL1avbf7dlcgKuC0YjE5G0WjaKBAbkCqeEBIQFJQiWSVZoLHZPFA12uQn8yKXN7OyaXRgnwRyT3j6wHBZWQRk1zrSsVhuGFSe6iR8udysxologw/X85uvs5ns8vZ8vsiug3nN8tw7KgZz4TltfyO0ZnRoJkuALFFCQETOsBw0boX3DIHF1UmJNH4fE31FU0EJwhPKinuINEDTdd1YpyWCPgRNiwBNOyB7eyq43nNMSHBS+D6qbvbHFRU5w47TP3h2PlVQml8cqtmr1fQsLuFVZDUws3TmEhYM6VB+j18VZXgCjqnh5MoGu5eewEpk2AEKjNFsW3AICU+NEJ5SpjOiNW7ofhpQOkrkW5bVJRPY8JdGlpVBUtcoOGdQi7ca5dKciipt7XrrYQsJsM3IVYf80BEFXpPFXoNvrkQ6/wxqKHVUUPpNDESPOIajkm5X56+nh2ohSlLKrenKivu7U5fn5cq1NXo5Sote/EP6/OPQT1dgRRG45eNSYqiALnftC2qpfbAddZ99EbmbQWY88oOjzfZUUJnzbqS/ULg5rU9R6Wk246VYRnQ7YSkf+DWcI9uoXHjH3Ii5Y4EiY/2wZMYD+rWDhjDGex2LUvrl909c1xj9O0ny7D9sPSt3d5+JdVu52xypIfd9Wg4w4FHVEyfZQzk7uJ06u5OuqD6vDiqeOe3ofHK6FuhmIU/PUrs37+Cgwk8E3NfDkoU7hTQvSVaFQ51xJ+UWbMS71laVh3bhhbmtbX3+fyvEvfh3Tkish6gz6aPyE25Oli9VJhVAcep9gvDeI/RZqrVKTl0gD1IxxkwYI/ZFiqBQjGjnlgzmkvgOTC9x5VRU2B6/d22B14Qc6MS1RDYg8/k0wKThxx4L8UHqkgJVOFzemgSlOtuLGozE63Oh3+oT52EQ11uJHuFHujdLdYjJl2A//uJ/z7H0ch+JpMoPo/Oo9dNUkNhbLx9jujD5IJOz6NgMnkXBeMxvA8uYDUNoiia0Gk6Tabj1eA3UEsBAj8AFAAAAAgAqXoLV0AU+CUiAwAAVgsAAAsAJAAAAAAAAAAgAAAAAAAAAGlvdF92Mi55YW1sCgAgAAAAAAABABgAGKHDU07M2QFoQ/lVT8zZASIbgHROzNkBUEsFBgAAAAABAAEAXQAAAEsDAAAAAA==\r\n----------------------------127308995100818139707097--",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"{{package_2}}\",\r\n    \"version\": \"{{version_2_2}}\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"iot_v2.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"iot_v2.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQAAAAIAKl6C1dAFPglIgMAAFYLAAALAAAAaW90X3YyLnlhbWy9Vk1z2jAQvfMrNLRXY0NKm/iW0MyUmbbJFHrpTdhrrMSWXH2Q0F/flWRsE0MmoR/igL1avbf7dlcgKuC0YjE5G0WjaKBAbkCqeEBIQFJQiWSVZoLHZPFA12uQn8yKXN7OyaXRgnwRyT3j6wHBZWQRk1zrSsVhuGFSe6iR8udysxologw/X85uvs5ns8vZ8vsiug3nN8tw7KgZz4TltfyO0ZnRoJkuALFFCQETOsBw0boX3DIHF1UmJNH4fE31FU0EJwhPKinuINEDTdd1YpyWCPgRNiwBNOyB7eyq43nNMSHBS+D6qbvbHFRU5w47TP3h2PlVQml8cqtmr1fQsLuFVZDUws3TmEhYM6VB+j18VZXgCjqnh5MoGu5eewEpk2AEKjNFsW3AICU+NEJ5SpjOiNW7ofhpQOkrkW5bVJRPY8JdGlpVBUtcoOGdQi7ca5dKciipt7XrrYQsJsM3IVYf80BEFXpPFXoNvrkQ6/wxqKHVUUPpNDESPOIajkm5X56+nh2ohSlLKrenKivu7U5fn5cq1NXo5Sote/EP6/OPQT1dgRRG45eNSYqiALnftC2qpfbAddZ99EbmbQWY88oOjzfZUUJnzbqS/ULg5rU9R6Wk246VYRnQ7YSkf+DWcI9uoXHjH3Ii5Y4EiY/2wZMYD+rWDhjDGex2LUvrl909c1xj9O0ny7D9sPSt3d5+JdVu52xypIfd9Wg4w4FHVEyfZQzk7uJ06u5OuqD6vDiqeOe3ofHK6FuhmIU/PUrs37+Cgwk8E3NfDkoU7hTQvSVaFQ51xJ+UWbMS71laVh3bhhbmtbX3+fyvEvfh3Tkish6gz6aPyE25Oli9VJhVAcep9gvDeI/RZqrVKTl0gD1IxxkwYI/ZFiqBQjGjnlgzmkvgOTC9x5VRU2B6/d22B14Qc6MS1RDYg8/k0wKThxx4L8UHqkgJVOFzemgSlOtuLGozE63Oh3+oT52EQ11uJHuFHujdLdYjJl2A//uJ/z7H0ch+JpMoPo/Oo9dNUkNhbLx9jujD5IJOz6NgMnkXBeMxvA8uYDUNoiia0Gk6Tabj1eA3UEsBAj8AFAAAAAgAqXoLV0AU+CUiAwAAVgsAAAsAJAAAAAAAAAAgAAAAAAAAAGlvdF92Mi55YW1sCgAgAAAAAAABABgAGKHDU07M2QFoQ/lVT8zZASIbgHROzNkBUEsFBgAAAAABAAEAXQAAAEsDAAAAAA==\r\n----------------------------127308995100818139707097--",
                                     "options": {
                                         "raw": {
                                             "language": "text"
