@@ -1,6 +1,6 @@
 # Applications to install fo newcomer GO developer 
 
-## 1) Install Git (Git Bash) from software center.
+## 1) Install Git.
 Then ask access to GIT repositories listed in Backend sources section of the [Onboarding](onboarding.md) document.
 
 ## 2) Install and setup Podman Desktop or Rancher Desktop (your choice).

@@ -69,7 +69,7 @@ APIHUB_POSTGRESQL_USERNAME=apihub;
 APIHUB_POSTGRESQL_PASSWORD=apihub;
 APIHUB_POSTGRESQL_PORT=5432;
 PRODUCTION_MODE=false;
-JWT_PRIVATE_KEY={use generated key here}
+JWT_PRIVATE_KEY={use generated key here};
 ```
 
 JSON format
@@ -83,8 +83,23 @@ JSON format
 "JWT_PRIVATE_KEY": "USE GENERATED KEY HERE"
 ```
 
-
 Set these variables to build configuration.
+
+Add the following ENVs in order to have pre-created local admin user and access token.
+
+ENV format
+```INI
+APIHUB_ADMIN_EMAIL=<admin_login, example: apihub>;
+APIHUB_ADMIN_PASSWORD=<admin_password, example: password>;
+APIHUB_ACCESS_TOKEN=<put_your_key_here - any random string>;
+```
+
+JSON format
+```JSON
+"APIHUB_ADMIN_EMAIL": "admin_login, example: apihub"
+"APIHUB_ADMIN_PASSWORD": "admin_password, example: password"
+"APIHUB_ACCESS_TOKEN": "put_your_key_here - any random string"
+```
 
 #### Run API hub
 
