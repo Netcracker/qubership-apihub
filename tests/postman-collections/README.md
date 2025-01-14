@@ -4,6 +4,8 @@ To start using you need to:
 - Create test internal user on server and replace credentials in  in "Env1.postman_environment.json";
 - Create api-key with sysadmin grants and put api-key value to "at-api-key" env variable.
 
+NOTE: internal user and admin access key can be automatically created during APIHUB deployment, see `APIHUB_ADMIN_EMAIL` `APIHUB_ADMIN_PASSWORD` `APIHUB_ACCESS_TOKEN` deploy parameters in [Installation Notes](https://github.com/Netcracker/qubership-apihub/blob/main/docs/installation-guide.md).
+
 ## Root folder 
 ### "Syntetic_test_data" collection
 
