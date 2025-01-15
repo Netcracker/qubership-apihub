@@ -1788,10 +1788,10 @@
     pump "^3.0.0"
     tar-fs "^2.1.1"
 
-"@netcracker/qubership-apihub-npm-gitflow@1.0.13":
-  version "1.0.13"
-  resolved "http://localhost:4873/@netcracker/qubership-apihub-npm-gitflow/-/qubership-apihub-npm-gitflow-1.0.13.tgz#e347b0c79dfc8aff185c3c8659d67cec7d139345"
-  integrity sha512-QeWTYVHMpHD0Ztjig1guffeDlJ/9hwg0mEkSTTFC6HdwqEAhBL628WAXuryC4khjsb787BKqgOfsMSIHJ/Ausw==
+"@netcracker/qubership-apihub-npm-gitflow@1.0.14-dev.1":
+  version "1.0.14-dev.1"
+  resolved "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-npm-gitflow/1.0.14-dev.1/628fbc9e37606b854ae09534bc575d3e0f8baf0d#628fbc9e37606b854ae09534bc575d3e0f8baf0d"
+  integrity sha512-i+13sQroMm02EYedPIMHr6yBiShmFTGqecf00S6BbfTlgyZzME3CasEnusq91TleMeNQDcSjAMBnhjTQeLEUTw==
   dependencies:
     command-line-args "^5.0.2"
     edit-json-file "^1.0.8"
