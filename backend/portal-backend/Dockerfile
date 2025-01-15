@@ -10,7 +10,7 @@ COPY qubership-apihub-service qubership-apihub-service
 
 WORKDIR /workspace/qubership-apihub-service 
 
-RUN set GOSUMDB=off && set CGO_ENABLED=0 && go mod tidy && go mod download && go GOOS=${TARGETOS} GOARCH=${TARGETARCH} build .
+RUN set GOSUMDB=off && set CGO_ENABLED=0 && go mod tidy && go mod download && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build .
 
 FROM docker.io/golang:1.23.4-alpine3.21
 
