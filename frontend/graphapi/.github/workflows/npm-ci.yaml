@@ -1,0 +1,17 @@
+name: NPM CI/CD Workflow
+
+on:
+  push:
+    branches:
+      - main
+      - release
+      - develop
+      - feature/*
+  delete:
+    branches:
+      - release
+      - feature/*
+
+jobs:
+  call-npm-ci-cd-workflow:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/npm-ci.yaml@develop
