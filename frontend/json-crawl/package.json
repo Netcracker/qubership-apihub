@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-json-crawl",
-  "version": "1.0.3-dev.1",
+  "version": "1.0.3-dev.2",
   "description": "Async and sync crawler for json object",
   "module": "./dist/index.es.js",
   "main": "./dist/index.cjs.js",
