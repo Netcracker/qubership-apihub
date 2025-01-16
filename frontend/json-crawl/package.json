@@ -35,7 +35,7 @@
     "clone",
     "hooks"
   ],
-  "license": "MIT",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@netcracker/qubership-apihub-npm-gitflow": "1.0.14-dev.1",
     "@types/jest": "^29.5.2",
