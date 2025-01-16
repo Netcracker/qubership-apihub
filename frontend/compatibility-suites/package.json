@@ -21,8 +21,8 @@
   "scripts": {
     "postinstall": "node bin/generate-suite-service.js",
     "build": "vite build",
-    "development:link": "yarn link",
-    "development:unlink": "yarn unlink",
+    "development:link": "npm link",
+    "development:unlink": "npm unlink",
     "feature-start": "feature-start --featureName",
     "feature-finish": "feature-finish",
     "release-start": "release-start",
@@ -30,11 +30,10 @@
   },
   "devDependencies": {
     "tslib": "2.6.3",
-    "@netcracker/qubership-apihub-npm-gitflow": "1.0.14-dev.1",
+    "@netcracker/qubership-apihub-npm-gitflow": "2.0.0",
     "@types/node": "^18.0.0",
     "vite": "4.5.0",
     "vite-plugin-dts": "3.6.4",
     "typescript": "5.3.3"
-  },
-  "packageManager": "yarn@1.22.22"
+  }
 }
