@@ -1,4 +1,4 @@
-name: NPM CI/CD Workflow
+name: Frontend CI Workflow
 
 on:
   push:
@@ -13,5 +13,5 @@ on:
       - feature/*
 
 jobs:
-  call-npm-ci-cd-workflow:
-    uses: netcracker/qubership-apihub-ci/.github/workflows/npm-ci.yaml@develop
+  call-frontend-ci-workflow:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@main
