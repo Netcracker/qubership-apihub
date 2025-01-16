@@ -21,8 +21,8 @@
     "prebuild": "rimraf ./dist",
     "build": "vite build",
     "performance:run-inspect": "vite build --sourcemap=inline -c=vite.performance.config.ts && node --inspect dist/index.es.mjs",
-    "development:link": "yarn link && yarn link @netcracker/qubership-apihub-json-crawl && yarn link @netcracker/qubership-apihub-graphapi",
-    "development:unlink": "yarn unlink && yarn unlink @netcracker/qubership-apihub-json-crawl && yarn unlink @netcracker/qubership-apihub-graphapi",
+    "development:link": "npm link && npm link @netcracker/qubership-apihub-json-crawl && npm link @netcracker/qubership-apihub-graphapi",
+    "development:unlink": "npm unlink && npm unlink @netcracker/qubership-apihub-json-crawl && npm unlink @netcracker/qubership-apihub-graphapi",
     "test": "jest --verbose --maxWorkers 3",
     "test:coverage": "jest --verbose --coverage",
     "feature-start": "feature-start --featureName",
@@ -43,13 +43,13 @@
     "simplify"
   ],
   "dependencies": {
-    "@netcracker/qubership-apihub-json-crawl": "1.0.2",
+    "@netcracker/qubership-apihub-json-crawl": "dev",
     "object-hash": "3.0.0",
     "fast-equals": "4.0.3"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-graphapi": "1.0.3",
-    "@netcracker/qubership-apihub-npm-gitflow": "1.0.13",
+    "@netcracker/qubership-apihub-graphapi": "dev",
+    "@netcracker/qubership-apihub-npm-gitflow": "2.0.0",
     "@types/object-hash": "3.0.6",
     "@types/jest": "29.5.2",
     "@types/js-yaml": "4.0.5",
@@ -72,6 +72,5 @@
     "vite-plugin-dts": "3.6.4",
     "vite-plugin-singlefile": "2.0.1",
     "vite-plugin-target": "0.1.1"
-  },
-  "packageManager": "yarn@1.22.22"
+  }
 }
