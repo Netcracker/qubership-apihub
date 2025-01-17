@@ -16,14 +16,14 @@
     }
   },
   "scripts": {
-    "build:dist": "tsc --module commonjs --outDir dist/cjs && vite build",
+    "build": "tsc --module commonjs --outDir dist/cjs && vite build",
     "build:web": "vite build",
     "performance:build": "vite build --sourcemap=inline -c=vite.performance.config.ts",
     "performance:run-inspect": "node --inspect dist/index.es.js",
     "development:link": "yarn link && yarn link @netcracker/qubership-apihub-json-crawl && yarn link @netcracker/qubership-apihub-api-unifier && yarn link @netcracker/qubership-apihub-api-diff && yarn link @netcracker/qubership-apihub-graphapi",
     "development:unlink": "yarn unlink && yarn unlink @netcracker/qubership-apihub-json-crawl && yarn unlink @netcracker/qubership-apihub-api-unifier && yarn unlink @netcracker/qubership-apihub-api-diff && yarn unlink @netcracker/qubership-apihub-graphapi",
     "unit-test:local": "jest -c jest.config.ts --verbose",
-    "unit-test:ci": "jest -c jest.config.ts --verbose --maxWorkers 3",
+    "test": "jest -c jest.config.ts --verbose --maxWorkers 3",
     "profile:test": "node ./test/profile.js",
     "operation:test": "node ./test/operation.js",
     "profile": "node --inspect-brk ./test/profile.js",
