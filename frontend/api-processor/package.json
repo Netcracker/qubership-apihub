@@ -20,8 +20,8 @@
     "build:web": "vite build",
     "performance:build": "vite build --sourcemap=inline -c=vite.performance.config.ts",
     "performance:run-inspect": "node --inspect dist/index.es.js",
-    "development:link": "yarn link && yarn link @netcracker/qubership-apihub-json-crawl && yarn link @netcracker/qubership-apihub-api-unifier && yarn link @netcracker/qubership-apihub-api-diff && yarn link @netcracker/qubership-apihub-graphapi",
-    "development:unlink": "yarn unlink && yarn unlink @netcracker/qubership-apihub-json-crawl && yarn unlink @netcracker/qubership-apihub-api-unifier && yarn unlink @netcracker/qubership-apihub-api-diff && yarn unlink @netcracker/qubership-apihub-graphapi",
+    "development:link": "npm link && npm link @netcracker/qubership-apihub-json-crawl && npm link @netcracker/qubership-apihub-api-unifier && npm link @netcracker/qubership-apihub-api-diff && npm link @netcracker/qubership-apihub-graphapi",
+    "development:unlink": "npm unlink && npm unlink @netcracker/qubership-apihub-json-crawl && npm unlink @netcracker/qubership-apihub-api-unifier && npm unlink @netcracker/qubership-apihub-api-diff && npm unlink @netcracker/qubership-apihub-graphapi",
     "unit-test:local": "jest -c jest.config.ts --verbose",
     "test": "jest -c jest.config.ts --verbose --maxWorkers 3",
     "profile:test": "node ./test/profile.js",
@@ -34,10 +34,10 @@
     "release-finish": "release-finish"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-diff": "1.0.3",
-    "@netcracker/qubership-apihub-api-unifier": "1.0.3",
-    "@netcracker/qubership-apihub-json-crawl": "1.0.2",
-    "@netcracker/qubership-apihub-graphapi": "1.0.3",
+    "@netcracker/qubership-apihub-api-diff": "dev",
+    "@netcracker/qubership-apihub-api-unifier": "dev",
+    "@netcracker/qubership-apihub-json-crawl": "dev",
+    "@netcracker/qubership-apihub-graphapi": "dev",
     "adm-zip": "^0.5.10",
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
@@ -52,7 +52,7 @@
     "swagger2openapi": "^7.0.8"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-npm-gitflow": "1.0.13",
+    "@netcracker/qubership-apihub-npm-gitflow": "2.0.0",
     "@types/adm-zip": "^0.5.0",
     "@types/jest": "^29.5.12",
     "@types/js-yaml": "^4.0.5",
@@ -73,16 +73,15 @@
     "ts-node": "^10.9.1",
     "tslint": "^6.1.3",
     "typescript": "^4.6.2",
-    "vite": "4.5.0",
-    "vite-plugin-dts": "^2.1.0",
-    "vite-plugin-singlefile": "^2.0.1",
-    "vite-plugin-target": "^0.1.1"
+    "vite": "5.2.6",
+    "vite-plugin-dts": "3.6.4",
+    "vite-plugin-singlefile": "2.0.1",
+    "vite-plugin-target": "0.1.1"
   },
   "eslintConfig": {
     "extends": ".eslintrc.json"
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "packageManager": "yarn@1.22.22"
+  }
 }
