@@ -6,7 +6,7 @@ GraphAPI specifications in human-readable way.
 ### Installation
 
 ``
-yarn add @netcracker/qubership-apihub-api-doc-viewer
+npm add @netcracker/qubership-apihub-api-doc-viewer
 ``
 
 ### Components
