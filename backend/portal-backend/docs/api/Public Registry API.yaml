@@ -3499,6 +3499,273 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+  "/api/v1/packages/{packageId}/publish/withOperationsGroup":
+    parameters:
+        - $ref: '#/components/parameters/packageId'
+    post:
+      tags:
+        - Publish
+      summary: Start dashboard version publication from CSV file
+      description: |
+        Start dashboard version publication from CSV file (value of 'packageId'
+        path parameter must be an Id of dashboard).\
+
+        In this process the system reads information from the input CSV file
+        which contains list of services and their versions. Based on this info,
+        the system searches for package release versions (in Netcracker workspace) and publish dashboard
+        version with references to the found package versions.\
+
+        Additionlly, if input CSV file contains info about REST API operations
+        (method, path) of listed services, the system searches for operations
+        from the included pacakge versions and automatically creates operations
+        group (manual group with rest api type) in published dashboard version
+        with all found operations.
+      operationId: DashboardPublishWithOperationsGroup
+      security:
+        - BearerAuth: []
+        - api-key: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - csvFile
+                - version
+                - status
+                - servicesWorkspaceId
+              properties:
+                csvFile:
+                  description: |
+                    CSV file with information about
+                    services and their operations:
+                      * serviceName
+                      * serviceVersion
+                      * method
+                      * path
+                  type: string
+                  format: binary
+                servicesWorkspaceId:
+                  type: string
+                  description: Id of the workspace in which the system will search for packages for the services specified in the CSV file.
+                version:
+                  description: Version name for publication in the dashboard.
+                  type: string
+                  example: '2022.3'
+                previousVersion:
+                  description: Name of the previous published version in the dashboard.
+                  type: string
+                  example: '2022.2'
+                previousVersionPackageId:
+                  description: >-
+                    packageId of the previous version. The parameter may be
+                    empty if the value is equal to the packageId.
+                  type: string
+                  example: NC.CloudBSS.CPQ.Q-TMF
+                status:
+                  $ref: '#/components/schemas/VersionStatusEnum'
+                versionLabels:
+                  description: List of version labels in dashboard version.
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - part-of:CloudBSS-CPQBE
+      responses:
+        '202':
+          description: Publish process started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  publishId:
+                    type: string
+                    description: Publish process Id
+                    format: uuid
+                    example: 9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                IncorrectInputParams:
+                  $ref: '#/components/examples/IncorrectInputParameters'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                PackageNotFound:
+                  $ref: '#/components/examples/PackageNotFound'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                InternalServerError:
+                  $ref: '#/components/examples/InternalServerError'
+  "/api/v1/packages/{packageId}/publish/{publishId}/withOperationsGroup/status":
+    parameters:
+      - $ref: '#/components/parameters/packageId'
+      - name: publishId
+        description: Publish Id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc
+    get:
+      tags:
+        - Publish
+      summary: Get dashboard version publication from CSV file status
+      description: |
+        Get dashboard version publication from CSV file status. 
+      operationId: getDashboardPublishWithOperationsGroupStatus
+      security:
+        - BearerAuth: []
+        - api-key: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    description: Publish process status.
+                    type: string
+                    enum:
+                      - running
+                      - error
+                      - complete
+                      - none
+                  message:
+                    description: |
+                      * The message for **error** status.
+                      * The message for **complete** status with the following
+                      information (if applicalbe):
+                        * N services were not included into dashboard version.
+                        * N operations were not included into \<operation group name\> operation group.
+                        If all services and operations were included into dashboard and group, then message shall be empty.
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                PackageNotFound:
+                  $ref: '#/components/examples/PackageNotFound'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                InternalServerError:
+                  $ref: '#/components/examples/InternalServerError'
+  "/api/v1/packages/{packageId}/publish/{publishId}/withOperationsGroup/status/report":
+    parameters:
+      - $ref: '#/components/parameters/packageId'
+      - name: publishId
+        description: Publish Id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc
+    get:
+      tags:
+        - Publish
+      summary: Get CSV report of dashboard version publication from CSV file
+      description: |
+        CSV file with initial input information which is added with status and
+        error messages for each row.
+      operationId: getDashboardPublishWithOperationsGroupStatusReport
+      security:
+        - BearerAuth: []
+        - api-key: []
+      responses:
+        '200':
+          description: Success
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+                description: CSV file which contains initial (input) content and supplemented with information about status and details info if any problems occured (package version was not found, operation was not found, insufficient information provided).
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                PackageNotFound:
+                  $ref: '#/components/examples/PackageNotFound'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                InternalServerError:
+                  $ref: '#/components/examples/InternalServerError'
   "/api/v2/packages/{packageId}/versions":
     parameters:
       - $ref: "#/components/parameters/packageId"
