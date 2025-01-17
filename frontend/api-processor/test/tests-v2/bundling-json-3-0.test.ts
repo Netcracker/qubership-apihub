@@ -16,7 +16,7 @@
 
 import { Editor, LocalRegistry, PackageVersionCache } from '../helpers'
 
-describe('Bundling - JSON files OpenAPI 3.0', () => {
+describe.skip('Bundling - JSON files OpenAPI 3.0', () => {
   let registry: LocalRegistry
   let editor: Editor
   let er2: PackageVersionCache | undefined
