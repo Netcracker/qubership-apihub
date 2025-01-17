@@ -19,7 +19,7 @@
     "bin"
   ],
   "scripts": {
-    "build": "build:dist",
+    "build": "npm run build:dist",
     "build:dist": "tsc && vite build",
     "build:showcase": "storybook build -o dist-showcase --disable-telemetry",
     "dev": "vite",
