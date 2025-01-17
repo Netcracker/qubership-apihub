@@ -2,11 +2,9 @@ FROM node:20
 
 WORKDIR /usr/src/app
 
-ADD .yarnrc .yarnrc
+ADD .npmrc .npmrc
 COPY package*.json ./
-RUN yarn config set strict-ssl false
-RUN yarn config set unsafe-perm true
-RUN yarn install --frozen-lockfile
+RUN npm ci
 
 ADD dist dist
 

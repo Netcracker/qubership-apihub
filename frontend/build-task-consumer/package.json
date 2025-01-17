@@ -5,15 +5,15 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "development:link": "yarn link && yarn link @netcracker/qubership-apihub-api-processor",
-    "development:unlink": "yarn unlink && yarn unlink @netcracker/qubership-apihub-api-processor",
+    "development:link": "npm link && npm link @netcracker/qubership-apihub-api-processor",
+    "development:unlink": "npm unlink && npm unlink @netcracker/qubership-apihub-api-processor",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node --max-old-space-size=3800 --max-semi-space-size=32 dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
+    "test:fixme": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
@@ -25,8 +25,8 @@
     "@nestjs/config": "^2.3.1",
     "@nestjs/core": "8.4.7",
     "@nestjs/platform-express": "8.4.7",
-    "@nestjs/swagger": "^6.3.0",
-    "@netcracker/qubership-apihub-api-processor": "3.0.3",
+    "@nestjs/swagger": "5.2.1",
+    "@netcracker/qubership-apihub-api-processor": "dev",
     "@sinclair/typebox": "^0.28.9",
     "adm-zip": "^0.5.10",
     "dotenv": "^16.0.3",
@@ -90,6 +90,5 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "packageManager": "yarn@1.22.22"
+  }
 }
