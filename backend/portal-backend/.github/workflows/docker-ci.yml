@@ -8,8 +8,9 @@ on:
 
 jobs:
   call-docker-ci-workflow:
-    uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@v1
+    uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@v2
     with:
       name: qubership-apihub-backend
       file: Dockerfile
       context: ""
+      platforms: linux/amd64,linux/arm64
