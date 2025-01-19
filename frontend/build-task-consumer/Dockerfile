@@ -18,7 +18,6 @@ FROM docker.io/node:20
 WORKDIR /usr/src/app
 
 COPY package*.json ./
-COPY tsconfig*.json ./
 
 # for local machine build
 #COPY .npmrc .npmrc
