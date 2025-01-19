@@ -17,6 +17,17 @@ FROM docker.io/node:20
 
 WORKDIR /usr/src/app
 
+COPY package*.json ./
+COPY tsconfig*.json ./
+
+# for local machine build
+#COPY .npmrc .npmrc
+#RUN npm ci
+#RUN rm .npmrc
+
+# for build via GitHub actions
+RUN --mount=type=secret,id=npmrc,target=.npmrc npm ci
+
 COPY --from=builder /workspace/dist dist
 
 USER 10001
