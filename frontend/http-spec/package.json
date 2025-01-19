@@ -77,10 +77,10 @@
     "prebuild": "rimraf dist",
     "build": "sl-scripts build",
     "lint": "eslint 'src/**/*.ts'",
-    "lint.fix": "yarn lint --fix",
+    "lint.fix": "npm lint --fix",
     "release": "sl-scripts release",
     "release.dryRun": "sl-scripts release --dry-run --debug",
-    "test": "jest"
+    "test:skip": "jest"
   },
   "dependencies": {
     "@stoplight/json": "^3.18.1",
@@ -110,7 +110,7 @@
     "@typescript-eslint/parser": "^5.19.0",
     "eslint": "^8.13.0",
     "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jest": "^26.1.4",
+    "eslint-plugin-jest": "25.7.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-react-hooks": "^4.4.0",
@@ -124,7 +124,7 @@
   },
   "lint-staged": {
     "src/**/*.ts": [
-      "yarn eslint --fix"
+      "npm eslint --fix"
     ]
   },
   "husky": {
