@@ -17,7 +17,7 @@
     "bin",
     "dist",
     "LICENSE"
-  ],
+  ], 
   "scripts": {
     "postinstall": "node bin/generate-suite-service.js",
     "build": "vite build",
