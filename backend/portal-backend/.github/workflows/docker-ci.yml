@@ -8,7 +8,7 @@ on:
 
 jobs:
   call-docker-ci-workflow:
-    uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@v2
+    uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@v4
     with:
       name: qubership-apihub-backend
       file: Dockerfile
