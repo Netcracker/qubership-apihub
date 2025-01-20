@@ -9,7 +9,6 @@ on:
       - release
       - develop
       - feature/*
-      - docker-build-wth-npm
   delete:
     branches:
       - release
