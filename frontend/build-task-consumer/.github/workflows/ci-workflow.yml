@@ -1,4 +1,4 @@
-name: Frontend & Docker CI Workflow
+name: Frontend & Docker CI Workflow 
 
 on:
   release:
