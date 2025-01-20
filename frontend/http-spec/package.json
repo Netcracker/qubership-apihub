@@ -1,11 +1,11 @@
 {
   "name": "@netcracker/qubership-apihub-http-spec",
-  "version": "5.5.7-dev.0",
+  "version": "5.5.7-dev.1",
   "description": "",
   "keywords": [],
-  "sideEffects": false,  
+  "sideEffects": false,
   "license": "Apache-2.0",
-  "files": [ 
+  "files": [
     "dist",
     "LICENSE"
   ],
