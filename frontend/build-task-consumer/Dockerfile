@@ -1,33 +1,10 @@
-FROM docker.io/node:20 as builder
-
-WORKDIR /workspace
-
-COPY src src
-COPY package*.json ./
-COPY tsconfig*.json ./
-
-# for local machine build
-#COPY .npmrc .npmrc
-#RUN npm ci && npm run build --if-present
-
-# for build via GitHub actions
-RUN --mount=type=secret,id=npmrc,target=.npmrc npm ci && npm run build --if-present
-
 FROM docker.io/node:20
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
-
-# for local machine build
-#COPY .npmrc .npmrc
-#RUN npm ci
-#RUN rm .npmrc
-
-# for build via GitHub actions
-RUN --mount=type=secret,id=npmrc,target=.npmrc npm ci
-
-COPY --from=builder /workspace/dist dist
+ARG TAG=dev
+RUN --mount=type=secret,id=npmrc,target=.npmrc mv $(npm pack @netcracker/qubership-apihub-build-task-consumer@"$(npm view @netcracker/qubership-apihub-build-task-consumer --json | jq -r '."dist-tags".'$TAG)") qubership-apihub-build-task-consumer.tgz
+RUN tar zxvf ./qubership-apihub-build-task-consumer.tgz && mv ./package/dist dist
 
 USER 10001
 

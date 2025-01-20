@@ -1,0 +1,28 @@
+name: Frontend & Docker CI Workflow
+
+on:
+  release:
+    types: [created]
+  push:
+    branches:
+      - main
+      - release
+      - develop
+      - feature/*
+  delete:
+    branches:
+      - release
+      - feature/*
+
+jobs:
+  call-frontend-ci-workflow:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@main
+  call-docker-ci-workflow:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@tag-naming
+    with:
+      name: qubership-apihub-build-task-consumer
+      file: Dockerfile
+      context: ""
+      platforms: linux/amd64,linux/arm64
+    secrets:
+      NPMRC: ${{ secrets.NPMRC }}
