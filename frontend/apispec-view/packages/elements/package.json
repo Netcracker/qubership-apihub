@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-apispec-view",
-  "version": "1.0.21-dev.2",
+  "version": "1.0.21-feature-test-lerna-workflow.0",
   "description": "Web Component to represent various API-specifications as a human-readable document",
   "license": "Apache-2.0",
   "sideEffects": [
