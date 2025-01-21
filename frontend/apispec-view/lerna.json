@@ -2,6 +2,5 @@
   "packages": [
     "packages/elements"
   ],
-  "version": "independent",  
-  "useWorkspaces": true
+  "version": "independent"
 }
