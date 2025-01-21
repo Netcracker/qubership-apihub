@@ -135,12 +135,17 @@
     "webpack-cli": "4.7.2",
     "webpack-dev-server": "3.11.2",
     "xml-formatter": "^2.4.0",
-    "raw-loader": "^4.0.2"
+    "raw-loader": "^4.0.2",
+    "@netcracker/qubership-apihub-npm-gitflow": "dev"
   },
   "scripts": {
     "build": "npm run build:dist",
     "build:dist": "npm run --workspace=@netcracker/qubership-apihub-apispec-view build",
     "build:showcase": "npm run --workspace=@netcracker/qubership-apihub-apispec-view build:showcase",
-    "integration-test:ci": "npm run --workspace=@netcracker/qubership-apihub-apispec-view test:integration:ci"    
+    "integration-test:ci": "npm run --workspace=@netcracker/qubership-apihub-apispec-view test:integration:ci",
+    "feature-start": "feature-start --featureName",
+    "feature-finish": "feature-finish",
+    "release-start": "release-start",
+    "release-finish": "release-finish"
   }
 }
