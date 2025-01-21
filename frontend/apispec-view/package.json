@@ -141,7 +141,6 @@
     "build": "npm run build:dist",
     "build:dist": "npm run --workspace=@netcracker/qubership-apihub-apispec-view build",
     "build:showcase": "npm run --workspace=@netcracker/qubership-apihub-apispec-view build:showcase",
-    "integration-test:ci": "npm run --workspace=@netcracker/qubership-apihub-apispec-view test:integration:ci",
-    "publish": "lerna publish from-package --loglevel silly --no-push --yes --exact"
+    "integration-test:ci": "npm run --workspace=@netcracker/qubership-apihub-apispec-view test:integration:ci"    
   }
 }
