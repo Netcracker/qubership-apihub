@@ -137,7 +137,7 @@
     "xml-formatter": "^2.4.0",
     "raw-loader": "^4.0.2"
   },
-  "scripts": { 
+  "scripts": {
     "build": "npm run build:dist",
     "build:dist": "npm run --workspace=@netcracker/qubership-apihub-apispec-view build",
     "build:showcase": "npm run --workspace=@netcracker/qubership-apihub-apispec-view build:showcase",
