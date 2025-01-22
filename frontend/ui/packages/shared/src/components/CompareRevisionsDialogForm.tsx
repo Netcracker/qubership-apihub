@@ -34,9 +34,9 @@ import { LoadingButton } from '@mui/lab'
 import { DialogForm } from './DialogForm'
 import { CustomChip } from './CustomChip'
 import { Swapper } from './Swapper'
-import { REVISION_DELIMITER } from '@netcracker/qubership-apihub-ui-portal/src/entities/versions'
 import { LatestRevisionMark } from './LatestRevisionMark'
 import type { Revision, Revisions } from '../entities/revisions'
+import { REVISION_DELIMITER } from '../entities/versions'
 
 export type CompareRevisionsDialogFormData = {
   originalRevision: Revision | null
