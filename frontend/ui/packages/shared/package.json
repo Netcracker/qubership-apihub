@@ -1,7 +1,7 @@
 {
   "name": "@netcracker/qubership-apihub-ui-shared",
   "version": "2.9.5-feature-lerna.0",
-  "private": false,
+  "private": true,
   "license": "SEE LICENSE IN 'LICENSE' FILE",
   "files": [
     "**/*"
@@ -9,7 +9,6 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "build": "tsc && vite build",
     "lint": "eslint . --ext .ts,.tsx,.json --ignore-path ../../.gitignore --max-warnings 0 --report-unused-disable-directives",
     "format": "npm run lint --fix",
     "storybook": "storybook dev -p 6006",
