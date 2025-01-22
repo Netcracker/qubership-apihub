@@ -1,8 +1,7 @@
 {
   "name": "@netcracker/qubership-apihub-ui-agents",
-  "version": "2.9.5-feature-lerna.0",
-  "private": false,
-  "license": "Apache-2.0",
+  "version": "2.9.5-feature-introduce-lerna.0",
+   "license": "Apache-2.0",
   "files": [
     "/dist"
   ],
