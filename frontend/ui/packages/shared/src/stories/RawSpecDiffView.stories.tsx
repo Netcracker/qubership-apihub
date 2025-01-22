@@ -35,11 +35,13 @@ const meta: Meta<typeof RawSpecDiffView> = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+const YAML_DIFFS_BEFORE = toYaml(openapiSample)
+const YAML_DIFFS_AFTER = toYaml(openapiChangedSample)
 export const YamlDiffsStory: Story = {
   name: 'YAML',
   args: {
-    beforeValue: toYaml(openapiSample),
-    afterValue: toYaml(openapiChangedSample),
+    beforeValue: YAML_DIFFS_BEFORE ?? undefined,
+    afterValue: YAML_DIFFS_AFTER ?? undefined,
     type: OPENAPI_3_0_SPEC_TYPE,
     extension: YAML_FILE_EXTENSION,
   },
@@ -55,20 +57,22 @@ export const GraphqlDiffsStory: Story = {
   },
 }
 
+const FULLY_ADDED_AFTER = toYaml(openapiSample)
 export const FullyAddedStory: Story = {
   name: 'Fully Added',
   args: {
     beforeValue: '',
-    afterValue: toYaml(openapiSample),
+    afterValue: FULLY_ADDED_AFTER ?? undefined,
     type: OPENAPI_3_0_SPEC_TYPE,
     extension: YAML_FILE_EXTENSION,
   },
 }
 
+const FULLY_REMOVED_BEFORE = toYaml(openapiSample)
 export const FullyRemovedStory: Story = {
   name: 'Fully Removed',
   args: {
-    beforeValue: toYaml(openapiSample),
+    beforeValue: FULLY_REMOVED_BEFORE ?? undefined,
     afterValue: '',
     type: OPENAPI_3_0_SPEC_TYPE,
     extension: YAML_FILE_EXTENSION,
