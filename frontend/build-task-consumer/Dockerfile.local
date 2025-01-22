@@ -1,0 +1,12 @@
+FROM docker.io/node:20
+
+WORKDIR /usr/src/app
+
+ADD .npmrc .npmrc
+COPY package*.json ./
+RUN npm ci
+ADD dist dist
+
+USER 10001
+
+CMD [ "node", "--max-old-space-size=3100", "--max-semi-space-size=32", "dist/main" ]

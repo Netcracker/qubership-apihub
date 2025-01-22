@@ -8,6 +8,20 @@ NodeJS microservice for APIHUB Package versions builds.
 $ npm
 ```
 
+## Building the app locally
+
+```bash
+npm install
+npm run build
+```
+
+For build docker image rename file `Dockerfile.local` -> `Dockerfile` and execute
+
+```bash
+podman build .
+```
+
+
 ## Running the app
 
 ```bash
