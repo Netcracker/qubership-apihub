@@ -1,0 +1,17 @@
+name: Frontend CI Workflow
+
+on:
+  push:
+    branches:
+      - main
+      - release
+      - develop
+      - feature/*
+  delete:
+    branches:
+      - release
+      - feature/*
+
+jobs:
+  call-frontend-ci-workflow:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@main
