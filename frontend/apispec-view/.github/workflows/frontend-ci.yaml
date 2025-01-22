@@ -14,4 +14,4 @@ on:
 
 jobs:
   call-frontend-ci-workflow:
-    uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@lerna-support
+    uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@main
