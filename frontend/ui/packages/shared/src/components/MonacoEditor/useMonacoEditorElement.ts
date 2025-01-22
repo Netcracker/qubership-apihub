@@ -25,7 +25,7 @@ import { useInitializeEditor } from './useInitializeEditor'
 import { preconfigureMonaco } from './configurator'
 import type { SpecType } from '../../utils/specs'
 import type { SpecItemUri } from '../../utils/specifications'
-import type { LanguageType } from '@netcracker/qubership-apihub-ui-shared/types/languages'
+import type { LanguageType } from '../../types/languages'
 
 preconfigureMonaco()
 
