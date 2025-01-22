@@ -17,11 +17,7 @@
     "integration-test:ci": "npm run build:showcase && start-server-and-test integration-test:server http://localhost:6006 integration-test:run-ci",
     "integration-test:server": "ws -p 6006 -d dist-showcase --spa index.html --static.maxage 3600",
     "integration-test:run-local": "jest -w 3 -c .jest/integration/it-test-docker.jest.config.js",
-    "integration-test:run-ci": "jest -w 8 -c .jest/integration/it-test.jest.config.js",
-    "feature-start": "feature-start --featureName",
-    "feature-finish": "feature-finish",
-    "release-start": "release-start",
-    "release-finish": "release-finish"
+    "integration-test:run-ci": "jest -w 8 -c .jest/integration/it-test.jest.config.js"    
   },
   "peerDependencies": {
     "@emotion/react": "11.10.6",
