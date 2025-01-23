@@ -40,7 +40,7 @@
     "lint:fix": "npm run lint:check -- --fix",
     "preview": "vite preview",
     "release-finish": "release-finish",
-    "release-start": "release-start"
+    "release-start": "release-start" 
   },
   "eslintConfig": {
     "extends": ".eslintrc.json"
