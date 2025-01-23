@@ -1,12 +1,12 @@
 {
   "name": "@netcracker/qubership-apihub-build-task-consumer",
-  "version": "2.0.3-dev.10",
+  "version": "2.0.3-dev.11",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@netcracker/qubership-apihub-build-task-consumer",
-      "version": "2.0.3-dev.10",
+      "version": "2.0.3-dev.11",
       "license": "Apache-2.0",
       "dependencies": {
         "@nestjs/axios": "^2.0.0",
@@ -2157,16 +2157,16 @@
       "license": "MIT"
     },
     "node_modules/@netcracker/qubership-apihub-api-processor": {
-      "version": "3.0.4-dev.1",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/3.0.4-dev.1/498309df57243af7cfa70e2451ee39d93428985e",
-      "integrity": "sha512-18pxyC28fSmLpqr+lVTixkDMmyW42mgQTojnTTu+ETroVOIAuuNXk0dI5vMndzNpT3dilysLm6JjbI6yIkES3w==",
+      "version": "3.0.4-dev.3",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/3.0.4-dev.3/6c52fbfcdc92b000b6c0865c49e24fadb5784ea9",
+      "integrity": "sha512-2zTE2qbRS16/fMualtOxk69imKtDqa6MMRu4C+03+ob1iawVuhHuKAsCq+URPWToPvlyhB83mNLUNG3ROMWemg==",
       "license": "Apache-2.0",
       "dependencies": {
         "@netcracker/qubership-apihub-api-diff": "dev",
         "@netcracker/qubership-apihub-api-unifier": "dev",
         "@netcracker/qubership-apihub-graphapi": "dev",
         "@netcracker/qubership-apihub-json-crawl": "dev",
-        "adm-zip": "^0.5.10",
+        "adm-zip": "0.5.10",
         "ajv": "^8.12.0",
         "ajv-formats": "^2.1.1",
         "allof-merge": "0.5.1",
@@ -2181,6 +2181,15 @@
       },
       "engines": {
         "node": ">=18.0.0"
+      }
+    },
+    "node_modules/@netcracker/qubership-apihub-api-processor/node_modules/adm-zip": {
+      "version": "0.5.10",
+      "resolved": "https://registry.npmjs.org/adm-zip/-/adm-zip-0.5.10.tgz",
+      "integrity": "sha512-x0HvcHqVJNTPk/Bw8JbLWlWoo6Wwnsug0fnYYro1HBrjxZ3G7/AZk7Ahv8JwDe1uIcz8eBqvu86FuF1POiG7vQ==",
+      "license": "MIT",
+      "engines": {
+        "node": ">=6.0"
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-processor/node_modules/ajv": {
