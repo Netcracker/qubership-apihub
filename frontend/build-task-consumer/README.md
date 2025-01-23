@@ -10,15 +10,20 @@ $ npm
 
 ## Building the app locally
 
+Modify `.npmrc` file by adding GitHub PAT (personal access token) with access to `read packages`.
+
+The file content sample:
+
+```
+@netcracker:registry=https://npm.pkg.github.com/
+//npm.pkg.github.com/:_authToken=ghp_XYZ
+always-auth=true
+```
+
 ```bash
 npm install
 npm run build
-```
-
-For build docker image rename file `Dockerfile.local` -> `Dockerfile` and execute
-
-```bash
-podman build .
+podman build -f Dockerfile.local .
 ```
 
 
