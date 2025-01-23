@@ -52,8 +52,8 @@
   "dependencies": {
     "@netcracker/qubership-apihub-api-data-model": "dev",
     "@netcracker/qubership-apihub-api-diff": "dev",
-    "@uidotdev/usehooks": "2.3.1",
     "react-markdown": "8.0.7",
+    "react-use": "^17.6.0",
     "remark-gfm": "3.0.1"
   },
   "devDependencies": {
