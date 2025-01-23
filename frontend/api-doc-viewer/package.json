@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-doc-viewer",
-  "version": "2.0.3-dev.2",
+  "version": "2.0.3-dev.3",
   "type": "module",
   "exports": {
     ".": {
@@ -40,7 +40,7 @@
     "lint:fix": "npm run lint:check -- --fix",
     "preview": "vite preview",
     "release-finish": "release-finish",
-    "release-start": "release-start" 
+    "release-start": "release-start"
   },
   "eslintConfig": {
     "extends": ".eslintrc.json"
