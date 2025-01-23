@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
+import { useRef, type FC } from 'react'
 import { UxContextMenuItem } from './UxContextMenuItem/UxContextMenuItem'
-import { useClickAway } from '@uidotdev/usehooks'
+import { useClickAway } from 'react-use'
 import './UxContextMenu.css'
 import { MenuItem } from './types/MenuItem'
 
@@ -29,7 +29,8 @@ export type UxContextMenuProps = {
 export const UxContextMenu: FC<UxContextMenuProps> = (props) => {
   const { visible, onClickAway, menuItems } = props
 
-  const ref = useClickAway<HTMLUListElement>(onClickAway)
+  const ref = useRef(null)
+  useClickAway(ref, onClickAway)
 
   if (!visible) {
     return null
