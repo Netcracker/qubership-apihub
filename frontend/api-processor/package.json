@@ -62,7 +62,6 @@
     "@types/swagger2openapi": "^7.0.0",
     "@typescript-eslint/eslint-plugin": "^5.47.1",
     "@typescript-eslint/parser": "^5.47.1",
-    "adm-zip": "^0.5.10",
     "axios": "^1.4.0",
     "eslint": "^8.22.0",
     "eslint-plugin-sort-exports": "^0.8.0",
