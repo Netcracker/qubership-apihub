@@ -497,8 +497,8 @@ func main() {
 	r.HandleFunc("/api/v2/space", security.SecureJWT(userController.CreatePrivateUserPackage)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/space", security.SecureJWT(userController.GetPrivateUserPackage)).Methods(http.MethodGet)
 
-	r.HandleFunc("/login/ncgitlab/callback", security.NoSecure(oauthController.GitlabOauthCallback)).Methods(http.MethodGet)
-	r.HandleFunc("/login/ncgitlab", security.NoSecure(oauthController.StartOauthProcessWithGitlab)).Methods(http.MethodGet)
+	r.HandleFunc("/login/gitlab/callback", security.NoSecure(oauthController.GitlabOauthCallback)).Methods(http.MethodGet)
+	r.HandleFunc("/login/gitlab", security.NoSecure(oauthController.StartOauthProcessWithGitlab)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/changes/summary", security.Secure(comparisonController.GetComparisonChangesSummary)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations", security.Secure(operationController.GetOperationList)).Methods(http.MethodGet)
