@@ -40,9 +40,6 @@ export const UxContextMenu: FC<UxContextMenuProps> = (props) => {
     <ul
       ref={ref}
       className="absolute bg-white w-max rounded-md z-10 UxContextMenu"
-      style={{
-        top: 'calc(100% + 10px)'
-      }}
     >
       {menuItems.map(menuItem => {
         const { label, onClick } = menuItem
