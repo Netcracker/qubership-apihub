@@ -25,7 +25,7 @@ export function redirectToSaml(): void {
 }
 
 export function redirectToGitlab(): void {
-  redirectTo('/login/ncgitlab')
+  redirectTo('/login/gitlab')
 }
 
 function redirectTo(path: string, redirectUri?: string): void {
