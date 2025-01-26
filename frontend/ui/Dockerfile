@@ -17,7 +17,7 @@ COPY nginx/entrypoint.sh                 /tmp
 RUN mkdir /usr/share/nginx/html/editor && mkdir /usr/share/nginx/html/agents && mkdir /usr/share/nginx/html/portal
 
 COPY --from=builder /workspace/qubership-apihub-ui-agents.tgz qubership-apihub-ui-agents.tgz
-COPY --from=builder /workspace/qubership-apihub-ui-agents.tgz qubership-apihub-ui-agents.tgz
+COPY --from=builder /workspace/qubership-apihub-ui-editor.tgz qubership-apihub-ui-editor.tgz
 COPY --from=builder /workspace/qubership-apihub-ui-portal.tgz qubership-apihub-ui-portal.tgz
 
 RUN tar zxvf ./qubership-apihub-ui-agents.tgz && mv ./package/dist/* /usr/share/nginx/html/agents && rm -rf ./package
