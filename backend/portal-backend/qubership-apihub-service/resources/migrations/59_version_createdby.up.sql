@@ -1,1 +1,0 @@
-ALTER TABLE published_version ADD COLUMN created_by varchar;

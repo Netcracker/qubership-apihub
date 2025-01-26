@@ -1,1 +1,0 @@
-alter table operation add column api_audience varchar default 'external';

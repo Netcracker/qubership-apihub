@@ -1,1 +1,0 @@
-alter table published_sources_data alter column data drop not null;

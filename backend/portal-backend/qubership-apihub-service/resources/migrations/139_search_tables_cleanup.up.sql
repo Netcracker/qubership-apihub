@@ -1,5 +1,0 @@
-drop table ts_published_data_path_split;
-drop table ts_published_data_custom_split;
-drop table ts_published_data_errors;
-DROP INDEX IF EXISTS ts_published_data_path_split_idx;
-DROP INDEX IF EXISTS ts_published_data_custom_split_idx;

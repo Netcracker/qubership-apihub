@@ -1,2 +1,0 @@
-create unique index published_sources_package_id_version_revision_uindex
-    on published_sources (package_id, version, revision);

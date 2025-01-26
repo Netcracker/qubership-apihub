@@ -1,1 +1,0 @@
-alter table package_group drop column if exists exclude_from_search;

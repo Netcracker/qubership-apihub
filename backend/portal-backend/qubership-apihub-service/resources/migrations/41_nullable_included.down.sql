@@ -1,1 +1,0 @@
-alter table branch_draft_content alter column included set not null;

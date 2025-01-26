@@ -156,6 +156,7 @@ func main() {
 			time.Sleep(time.Second * 10) // Give a chance to read the unrecoverable error
 			panic("Failed perform DB migration: " + err.Error())
 		}
+		// to perform migrations, which could not be implemented with "pure" SQL
 		err = dbMigrationService.SoftMigrateDb(currentVersion, newVersion, migrationRequired)
 		if err != nil {
 			log.Errorf("Failed to perform db migrations: %v", err.Error())

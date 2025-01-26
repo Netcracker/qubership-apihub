@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS apihub_api_keys CASCADE;

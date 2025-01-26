@@ -1,2 +1,0 @@
-alter table published_version_revision_content
-    drop constraint published_version_revision_content_pk;

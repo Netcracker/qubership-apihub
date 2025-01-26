@@ -1,1 +1,0 @@
-create table build_cleanup_run(run_id integer primary key, scheduled_at timestamp, deleted_rows integer);

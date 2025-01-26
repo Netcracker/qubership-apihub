@@ -1,1 +1,0 @@
-alter table version_comparison drop column builder_version;

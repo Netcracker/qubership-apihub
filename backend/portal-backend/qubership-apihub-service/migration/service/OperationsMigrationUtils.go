@@ -625,7 +625,7 @@ func (d *dbMigrationServiceImpl) getMigrationFilenamesMap() (map[int]string, map
 			if _, exists := upMigrations[num]; exists {
 				return nil, nil, fmt.Errorf("found duplicate migration number, migration is not possible: %v", file)
 			}
-			upMigrations[num] = d.migrationsFolder + "/" + file
+			upMigrations[num] = filepath.Join(d.migrationsFolder, file)
 			if maxUpMigrationNumber < num {
 				maxUpMigrationNumber = num
 			}
@@ -635,7 +635,7 @@ func (d *dbMigrationServiceImpl) getMigrationFilenamesMap() (map[int]string, map
 			if _, exists := downMigrations[num]; exists {
 				return nil, nil, fmt.Errorf("found duplicate migration number, migration is not possible: %v", file)
 			}
-			downMigrations[num] = d.migrationsFolder + "/" + file
+			downMigrations[num] = filepath.Join(d.migrationsFolder, file)
 		}
 	}
 	if maxUpMigrationNumber != len(upMigrations) {

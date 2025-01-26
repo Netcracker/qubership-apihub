@@ -1,1 +1,0 @@
-alter table operation add column models jsonb;

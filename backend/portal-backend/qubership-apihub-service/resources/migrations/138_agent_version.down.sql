@@ -1,1 +1,0 @@
-alter table agent drop column if exists agent_version;
