@@ -1,1 +1,0 @@
-ALTER TABLE package_group DROP COLUMN release_version_pattern;

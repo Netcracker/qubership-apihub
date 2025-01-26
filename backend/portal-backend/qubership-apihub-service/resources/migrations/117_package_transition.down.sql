@@ -1,1 +1,0 @@
-drop table package_transition;

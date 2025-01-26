@@ -1,1 +1,0 @@
-update package_group set kind = 'workspace' where parent_id is null;

@@ -1,1 +1,0 @@
-ALTER TABLE package_group ADD COLUMN release_version_pattern varchar;

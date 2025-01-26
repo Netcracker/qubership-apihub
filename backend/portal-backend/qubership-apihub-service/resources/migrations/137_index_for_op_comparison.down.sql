@@ -1,1 +1,0 @@
-drop index operation_comparison_comparison_id_index;

@@ -1,1 +1,0 @@
-drop table csv_dashboard_publication;

@@ -1,1 +1,0 @@
-drop table operation_group_history;

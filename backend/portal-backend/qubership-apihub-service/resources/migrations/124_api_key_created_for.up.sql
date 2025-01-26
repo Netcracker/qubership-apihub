@@ -1,1 +1,0 @@
-ALTER TABLE apihub_api_keys ADD COLUMN created_for VARCHAR;

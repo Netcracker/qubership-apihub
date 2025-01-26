@@ -1,1 +1,0 @@
-alter table agent add column if not exists agent_version varchar;

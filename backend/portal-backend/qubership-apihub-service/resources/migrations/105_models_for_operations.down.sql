@@ -1,1 +1,0 @@
-alter table operation drop column models;

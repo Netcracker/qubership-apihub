@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -53,7 +54,7 @@ func NewDBMigrationService(cp db.ConnectionProvider, mRRepo mRepository.Migratio
 		repo:                   mRRepo,
 		buildCleanupRepository: bCRepo,
 		transitionRepository:   transitionRepository,
-		migrationsFolder:       systemInfoService.GetBasePath() + "/resources/migrations",
+		migrationsFolder:       filepath.Join(systemInfoService.GetBasePath(), "resources", "migrations"),
 		minioStorageService:    minioStorageService,
 	}
 	upMigrations, downMigrations, err := service.getMigrationFilenamesMap()
@@ -77,29 +78,27 @@ type dbMigrationServiceImpl struct {
 	minioStorageService    service.MinioStorageService
 }
 
-const storedMigrationsTableMigrationVersion = 84
+const storedMigrationsTableMigrationVersion = 1 // migration table will be created at first migration
 
 func (d *dbMigrationServiceImpl) createSchemaMigrationsTable() error {
 	_, err := d.cp.GetConnection().Exec(`
-		create table if not exists schema_migrations
-		(
-			version integer not null,
-			dirty boolean not null,
-			PRIMARY KEY(version)
+		CREATE TABLE IF NOT EXISTS public.schema_migrations (
+			"version" int4 NOT NULL,
+			dirty bool NOT NULL,
+			CONSTRAINT schema_migrations_pkey PRIMARY KEY (version)
 		)`)
 	return err
 }
 
 func (d *dbMigrationServiceImpl) createStoredMigrationsTable() error {
 	_, err := d.cp.GetConnection().Exec(`
-		create table if not exists stored_schema_migration
-		(
-			num integer not null,
-			up_hash varchar not null,
-			sql_up varchar not null,
-			down_hash varchar null,
-			sql_down varchar null,
-			PRIMARY KEY(num)
+		CREATE TABLE IF NOT EXISTS public.stored_schema_migration (
+			num int4 NOT NULL,
+			up_hash varchar NOT NULL,
+			sql_up varchar NOT NULL,
+			down_hash varchar NULL,
+			sql_down varchar NULL,
+			CONSTRAINT stored_schema_migration_pkey PRIMARY KEY (num)
 		)`)
 	return err
 }
@@ -107,7 +106,7 @@ func (d *dbMigrationServiceImpl) createStoredMigrationsTable() error {
 func (d *dbMigrationServiceImpl) Migrate(basePath string) (currentMigrationNum int, newMigrationNum int, migrationRequired bool, err error) {
 	log.Infof("Schema Migration: start")
 
-	var currentMigrationNumber int
+	currentMigrationNumber := 0
 	_, err = d.cp.GetConnection().QueryOne(pg.Scan(&currentMigrationNumber), `SELECT version FROM schema_migrations`)
 	if err != nil {
 		if strings.Contains(err.Error(), "does not exist") {
@@ -225,12 +224,12 @@ func (d *dbMigrationServiceImpl) applyRequiredMigrations(upMigrations []mEntity.
 			Where("version is not null").
 			Delete()
 		if err != nil {
-			return fmt.Errorf("failed to update schema_migrations table with latest migration version %v", latestMigrationNum)
+			return fmt.Errorf("failed to delete schema_migrations table with latest migration version %v", latestMigrationNum)
 		}
 		_, err = tx.Model(&migrationEntity).
 			Insert()
 		if err != nil {
-			return fmt.Errorf("failed to update schema_migrations table with latest migration version %v", latestMigrationNum)
+			return fmt.Errorf("failed to insert schema_migrations table with latest migration version %v", latestMigrationNum)
 		}
 		return nil
 	})

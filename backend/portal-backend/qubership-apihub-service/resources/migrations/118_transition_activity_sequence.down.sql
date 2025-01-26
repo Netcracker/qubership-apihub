@@ -1,2 +1,0 @@
-drop sequence activity_tracking_transition_completed_seq;
-alter table activity_tracking_transition drop column completed_serial_number;
