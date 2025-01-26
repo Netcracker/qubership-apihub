@@ -102,7 +102,7 @@ func (o oauth20ControllerImpl) GitlabOauthCallback(w http.ResponseWriter, r *htt
 	}
 
 	req := makeRequest()
-	authRedirectUri := fmt.Sprintf("%s%s", o.systemInfoService.GetAPIHubUrl(), "/login/ncgitlab/callback?redirectUri="+redirectUri)
+	authRedirectUri := fmt.Sprintf("%s%s", o.systemInfoService.GetAPIHubUrl(), "/login/gitlab/callback?redirectUri="+redirectUri)
 	//todo move query parameters to body with Content-Type: application/x-www-form-urlencoded https://www.rfc-editor.org/rfc/rfc6749#section-4.1.3
 	url := fmt.Sprintf("%s%s?client_id=%s&client_secret=%s&code=%s&grant_type=authorization_code&redirect_uri=%s",
 		o.gitlabUrl, gitlabOauthTokenUri, o.clientId, o.clientSecret, code, authRedirectUri)
@@ -211,7 +211,7 @@ func (o oauth20ControllerImpl) StartOauthProcessWithGitlab(w http.ResponseWriter
 		}
 	}
 
-	fullRedirectUrl := fmt.Sprintf("%s%s?redirectUri=%s", o.systemInfoService.GetAPIHubUrl(), "/login/ncgitlab/callback", redirectUri)
+	fullRedirectUrl := fmt.Sprintf("%s%s?redirectUri=%s", o.systemInfoService.GetAPIHubUrl(), "/login/gitlab/callback", redirectUri)
 	http.Redirect(w, r, fmt.Sprintf("%s%s?client_id=%s&response_type=code&redirect_uri=%s", o.gitlabUrl, gitlabOauthAuthorize, o.clientId, fullRedirectUrl), http.StatusFound)
 }
 
