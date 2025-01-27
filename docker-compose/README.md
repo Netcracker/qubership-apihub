@@ -16,10 +16,12 @@ Review *.env files in this folder and fill values for the following ones:
 JWT_PRIVATE_KEY=<put_your_key_here - ssh private key base64 encoded>
 APIHUB_ADMIN_EMAIL=<admin_login, example: apihub>
 APIHUB_ADMIN_PASSWORD=<admin_password, example: password>
-APIHUB_ACCESS_TOKEN=<put_your_key_here - any random string>
+APIHUB_ACCESS_TOKEN=<put_your_key_here - any random string, example: xyzxyz>
 ```
 
-For database access install PGAdmin and connect to localhost:5432 postgres/postgres
+For database access connect to localhost:5432 postgres/postgres
+
+NOTE: you can use `generate_jwt_pkey.sh` script for generation a value for JWT_PRIVATE_KEY
 
 ## Start
 
