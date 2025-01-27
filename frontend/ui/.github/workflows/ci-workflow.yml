@@ -1,0 +1,32 @@
+name: Frontend & Docker CI Workflow 
+
+on:
+  release:
+    types: [created]
+  push:
+    branches:
+      - main
+      - release
+      - develop
+      - feature/*
+  delete:
+    branches:
+      - release
+      - feature/*
+
+jobs:
+  call-frontend-ci-workflow:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@main
+  call-docker-ci-workflow:
+    needs: call-frontend-ci-workflow
+    uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@main
+    with:
+      name: qubership-apihub-ui
+      file: Dockerfile
+      context: ""
+      platforms: linux/amd64,linux/arm64
+      labels: |
+        maintainer=qubership
+        npm-package-version=${{ needs.jobs.call-frontend-ci-workflow.outputs.package_version }}
+    secrets:
+      NPMRC: ${{ secrets.NPMRC }}
