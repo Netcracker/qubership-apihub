@@ -108,6 +108,9 @@ const IncorrectFileNameMsg = "File name is incorrect: '$name'"
 const FileByRefNotFound = "47"
 const FileByRefNotFoundMsg = "File for path $fileId not found by reference $ref in project $projectGitId"
 
+const PreviousPackageVersionNotRelease = "48"
+const PreviousPackageVersionNotReleaseMsg = "Previous version $version for package $packageId is not in the 'release' status"
+
 const PublishedPackageVersionNotFound = "49"
 const PublishedPackageVersionNotFoundMsg = "Published version $version not found for package $packageId"
 
