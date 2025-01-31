@@ -16,14 +16,18 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { generatePath } from 'react-router-dom'
-import { API_V2, API_V3, requestJson, STATUS_REFETCH_INTERVAL } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import { API_V1, API_V2, API_V3, requestJson, STATUS_REFETCH_INTERVAL } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/utils/types'
-import { useShowErrorNotification, useShowInfoNotification } from '@apihub/routes/root/BasePage/Notification'
+import { useShowErrorNotification, useShowInfoNotification, useShowWarningNotification } from '@apihub/routes/root/BasePage/Notification'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
-import { getVersionPath } from '@apihub/routes/NavigationProvider'
-import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import { getVersionPath, useNavigation } from '@apihub/routes/NavigationProvider'
+import type { IsError, IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { useMemo } from 'react'
 import { REST_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
+import { useDownloadPublicationReport } from './useDownloadPublicationReport'
+import { useAsyncInvalidateVersionContent } from '../usePackageVersionContent'
+import { useAsyncInvalidatePackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
+import { useAsyncInvalidatePackage } from '../usePackage'
 
 const PUBLISH_STATUS_QUERY_KEY = 'publish-status-query-key'
 const OPERATION_GROUP_PUBLISH_STATUS_QUERY_KEY = 'operation-group-publish-status-query-key'
@@ -64,7 +68,7 @@ export function usePublicationStatuses(
   })
 
   const isPublishing = useMemo(() =>
-    data?.status === RUNNING_PUBLISH_STATUS || data?.status === NONE_PUBLISH_STATUS,
+      data?.status === RUNNING_PUBLISH_STATUS || data?.status === NONE_PUBLISH_STATUS,
     [data?.status],
   )
 
@@ -126,7 +130,7 @@ export function useOperationGroupPublicationStatuses(
   })
 
   const isPublishing = useMemo(() =>
-    data?.status === RUNNING_PUBLISH_STATUS || data?.status === NONE_PUBLISH_STATUS,
+      data?.status === RUNNING_PUBLISH_STATUS || data?.status === NONE_PUBLISH_STATUS,
     [data?.status],
   )
 
@@ -152,6 +156,85 @@ export async function getOperationGroupPublishStatus(
     generatePath(pathPattern, { packageId, versionId, groupName, apiType, publishId }),
     { method: 'GET' },
     { basePath: API_V3 },
+  )
+}
+
+export function useDashboardVersionFromCSVPublicationStatuses(
+  packageId: Key,
+  publishId: Key | undefined,
+  versionId: Key,
+): [IsLoading, IsSuccess, IsError] {
+  const { navigateToVersion } = useNavigation()
+  const showInfoNotification = useShowInfoNotification()
+  const showWarningNotification = useShowWarningNotification()
+  const showErrorNotification = useShowErrorNotification()
+  const [downloadPublicationReport] = useDownloadPublicationReport()
+  const invalidateVersionContent = useAsyncInvalidateVersionContent()
+  const invalidatePackageVersions = useAsyncInvalidatePackageVersions()
+  const invalidatePackage = useAsyncInvalidatePackage()
+
+  const { data: { status } = {} } = useQuery<PublishStatusDto, Error, PublishStatusDto>({
+    queryKey: [PUBLISH_STATUS_QUERY_KEY, packageId, publishId],
+    queryFn: () => getDashboardVersionFromCSVPublicationStatuses(packageId, publishId!),
+    refetchInterval: data => (data?.status === RUNNING_PUBLISH_STATUS || data?.status === NONE_PUBLISH_STATUS ? STATUS_REFETCH_INTERVAL : false),
+    onSuccess: async ({ status, message }) => {
+      if (status === ERROR_PUBLISH_STATUS) {
+        return showErrorNotification({ message: message })
+      }
+      if (status !== COMPLETE_PUBLISH_STATUS) {
+        return
+      }
+      await invalidatePackageVersions()
+      await invalidateVersionContent({
+        packageKey: packageId,
+        versionKey: versionId,
+      })
+      await invalidatePackage(packageId)
+      navigateToVersion({ packageKey: packageId!, versionKey: versionId })
+
+      if (message) {
+        return showWarningNotification({
+          message: `The dashboard version was published.\n${message}`,
+          button: {
+            title: 'Download report result',
+            onClick: () => downloadPublicationReport({
+              packageKey: packageId,
+              versionKey: versionId,
+              publishKey: publishId!,
+            }),
+          },
+        })
+      }
+
+      return showInfoNotification({ message: 'The dashboard version was published' })
+    },
+    onError: (error) => {
+      showErrorNotification({ message: error?.message })
+    },
+    enabled: !!publishId,
+  })
+
+  const isPublishing = status === RUNNING_PUBLISH_STATUS || status === NONE_PUBLISH_STATUS
+
+  return [
+    isPublishing,
+    status === COMPLETE_PUBLISH_STATUS,
+    status === ERROR_PUBLISH_STATUS,
+  ]
+}
+
+export async function getDashboardVersionFromCSVPublicationStatuses(
+  packageKey: Key,
+  publishKey: Key,
+): Promise<PublishStatusDto> {
+  const packageId = encodeURIComponent(packageKey)
+  const publishId = encodeURIComponent(publishKey)
+
+  const pathPattern = '/packages/:packageId/publish/:publishId/withOperationsGroup/status'
+  return await requestJson<PublishStatusDto>(
+    generatePath(pathPattern, { packageId, publishId }),
+    { method: 'GET' },
+    { basePath: API_V1 },
   )
 }
 

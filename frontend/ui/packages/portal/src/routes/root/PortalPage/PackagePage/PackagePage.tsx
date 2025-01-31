@@ -20,10 +20,13 @@ import { usePackage } from '../../usePackage'
 import { PackagePagePlaceholder } from './PackagePagePlaceholder'
 import { PackagePageToolbar } from './PackagePageToolbar'
 import { useNavigation } from '../../../NavigationProvider'
-import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
+import {
+  PublishDashboardVersionFromCSVDialog
+} from '@apihub/routes/root/PortalPage/DashboardPage/PublishDashboardVersionFromCSVDialog'
 
 export const PackagePage: FC = memo(() => {
   const [packageObject, isPackageLoading] = usePackage({ showParents: true })
@@ -45,6 +48,7 @@ export const PackagePage: FC = memo(() => {
           toolbar={<PackagePageToolbar packageObject={packageObject}/>}
           body={<PackagePagePlaceholder kind={kind}/>}
         />}
+      {kind === DASHBOARD_KIND && <PublishDashboardVersionFromCSVDialog/>}
     </>
   )
 })

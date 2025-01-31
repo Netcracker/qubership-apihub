@@ -113,3 +113,10 @@ export const namedFormat = (template: string, substitutions: Substitution = {}):
 
   return template.replace(/{([\s\S]+?)}/, '')
 }
+
+/**
+ * @returns e.g. one, two or three
+ */
+export function toFormattedEnumeration(list: string[]): string {
+  return new Intl.ListFormat('en', { type: 'disjunction' }).format(list)
+}

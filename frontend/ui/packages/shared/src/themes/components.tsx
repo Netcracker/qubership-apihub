@@ -722,6 +722,17 @@ export function createComponents(): Components {
     MuiTooltip: {
       defaultProps: {
         arrow: true,
+        slotProps: {
+          popper: {
+            modifiers: [{
+              name: 'preventOverflow',
+              options: {
+                padding: 16,
+                altAxis: true, // allows overlapping with the reference (origin) element in case when flipping is not enough
+              },
+            }],
+          },
+        },
       },
       styleOverrides: {
         tooltip: {

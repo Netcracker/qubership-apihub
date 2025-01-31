@@ -235,7 +235,7 @@ export const OperationGroupParametersPopup: FC<OperationGroupParametersPopupProp
               setUploadedFile={handleSetUploadedFile}
               groupName={watch().groupName!}
               apiType={watch().apiType!}
-              downloadAvailable={!uploadedFile?.type}
+              downloadAvailable={!isFileUpdated}
             />
           </AccordionDetails>
         </Accordion>

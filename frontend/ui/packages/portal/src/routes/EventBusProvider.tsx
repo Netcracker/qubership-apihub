@@ -53,6 +53,7 @@ import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/ap
 export const SHOW_SUCCESS_NOTIFICATION = 'show-success-notification'
 export const SHOW_ERROR_NOTIFICATION = 'show-error-notification'
 export const SHOW_INFO_NOTIFICATION = 'show-info-notification'
+export const SHOW_WARNING_NOTIFICATION = 'show-warning-notification'
 export const SHOW_CREATE_PACKAGE_DIALOG = 'show-create-package-dialog'
 
 // portal
@@ -167,6 +168,7 @@ type EventBus = {
   showSuccessNotification: (detail: NotificationDetail) => void
   showErrorNotification: (detail: NotificationDetail) => void
   showInfoNotification: (detail: NotificationDetail) => void
+  showWarningNotification: (detail: NotificationDetail) => void
   showCreatePackageDialog: (detail: ShowCreatePackageDetail) => void
   showGlobalSearchPanel: () => void
   hideGlobalSearchPanel: () => void
@@ -218,6 +220,7 @@ function eventBusProvider(): EventBus {
       showSuccessNotification: slot<NotificationDetail>(),
       showErrorNotification: slot<NotificationDetail>(),
       showInfoNotification: slot<NotificationDetail>(),
+      showWarningNotification: slot<NotificationDetail>(),
       showCreatePackageDialog: slot<ShowCreatePackageDetail>(),
       showGlobalSearchPanel: slot(),
       hideGlobalSearchPanel: slot(),
@@ -272,6 +275,9 @@ function eventBusProvider(): EventBus {
   })
   eventBus.showInfoNotification.on((detail: NotificationDetail) => {
     dispatchEvent(new CustomEvent(SHOW_INFO_NOTIFICATION, { detail }))
+  })
+  eventBus.showWarningNotification.on((detail: NotificationDetail) => {
+    dispatchEvent(new CustomEvent(SHOW_WARNING_NOTIFICATION, { detail }))
   })
   eventBus.showCreatePackageDialog.on((detail: ShowCreatePackageDetail) => {
     dispatchEvent(new CustomEvent(SHOW_CREATE_PACKAGE_DIALOG, { detail }))
