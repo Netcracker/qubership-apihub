@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { GroupsDto } from '../../../src/entities/groups'
 import type { Writeable } from '../../types'
+import type { GroupsDto } from './types'
 
 export const GROUPS: Writeable<GroupsDto> = {
   groups: [

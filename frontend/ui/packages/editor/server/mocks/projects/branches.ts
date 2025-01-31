@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { BranchConfigDto, BranchConflictsDto, BranchesDto } from '../../../src/entities'
 import type { Writeable } from '../../types'
+import type { BranchConfigDto, BranchConflictsDto, BranchesDto } from '../branches/types'
 import type { ChangeStatus } from './types'
 
 export const BRANCH_CONFIG: Writeable<BranchConfigDto> = {
@@ -65,7 +65,7 @@ export const BRANCH_CONFIG: Writeable<BranchConfigDto> = {
     {
       refId: 'project-3',
       version: '1.4',
-      versionStatus: 'deprecated',
+      versionStatus: 'draft',
       name: 'Service 3',
       refUrl: '',
       status: 'included',
@@ -108,7 +108,7 @@ export const BRANCHES: Writeable<BranchesDto> = {
     },
     {
       name: 'develop',
-      status: 'deprecated',
+      status: 'draft',
       publishedAt: '2021-03-15T14:48:20.199829914+03:00',
       version: 'v2',
       permissions: ['all'],
@@ -122,7 +122,7 @@ export const BRANCHES: Writeable<BranchesDto> = {
     },
     {
       name: 'bugfix/hard-fix-by-production-version-37745454',
-      status: 'deprecated',
+      status: 'draft',
       publishedAt: '2022-04-15T14:48:20.199829914+03:00',
       version: 'refs-v.080d04f9-2a59-4972-9d64-c43c1f78dca3',
       permissions: [],

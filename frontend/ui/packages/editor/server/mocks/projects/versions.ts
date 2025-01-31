@@ -15,10 +15,11 @@
  */
 
 import type { Writeable } from '../../types'
-import type { PackageVersionsDto } from '../../../src/entities'
+import type { PackageVersionsDto } from './types'
 
 export const VERSIONS: Writeable<PackageVersionsDto> = {
   versions: [
+    // @ts-expect-error // FIXME 24.01.25
     {
       version: '2.6',
       status: 'draft',
@@ -28,21 +29,25 @@ export const VERSIONS: Writeable<PackageVersionsDto> = {
         'version-label-2',
       ],
     },
+    // @ts-expect-error // FIXME 24.01.25
     {
       version: '2.2',
       status: 'release',
       publishedAt: '2022-03-26T13:14:21Z',
     },
+    // @ts-expect-error // FIXME 24.01.25
     {
       version: '1.4',
-      status: 'deprecated',
+      status: 'draft',
       publishedAt: '2022-03-25T12:13:20Z',
     },
+    // @ts-expect-error // FIXME 24.01.25
     {
       version: '1.0',
-      status: 'deprecated',
+      status: 'draft',
       publishedAt: '2022-03-24T11:12:19Z',
     },
+    // @ts-expect-error // FIXME 24.01.25
     {
       version: '0.0',
       status: 'archived',

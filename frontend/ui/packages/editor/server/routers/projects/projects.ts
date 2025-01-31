@@ -15,39 +15,36 @@
  */
 
 import type { Router } from 'express'
-import { PROJECTS, PUBLISHED_PROJECT_IDS } from '../../mocks/projects/projects'
+import type { WithWebsocketMethod } from 'express-ws'
+import fs from 'fs'
+import path from 'path'
+import type { Server } from 'ws'
+import { SUPERUSER } from '../../mocks/auth/users'
 import { BRANCH_CONFIG, BRANCH_CONFLICTS, BRANCHES, LAST_FILE_CHANGE_STATUSES } from '../../mocks/projects/branches'
 import { GIT_FILES } from '../../mocks/projects/git-files'
-import { PUBLISHED_VERSION_CONTENTS } from '../../mocks/projects/version-contents'
+import { FILE_HISTORY } from '../../mocks/projects/history'
+import { ADD_OPERATION, PATCH_OPERATION } from '../../mocks/projects/operations'
+import { PROJECTS, PUBLISHED_PROJECT_IDS } from '../../mocks/projects/projects'
 import {
   MARKDOWN_SPEC,
   MARKDOWN_SPEC_RAW,
   OPENAPI_3_0_SPEC_RAW,
   OPENAPI_SPEC,
 } from '../../mocks/projects/published-specs'
-import { FILE_HISTORY } from '../../mocks/projects/history'
-import fs from 'fs'
-import path from 'path'
-import {
-  ADD_OPERATION,
-  ADDED_CHANGE_TYPE,
-  NONE_CHANGE_TYPE,
-  PATCH_OPERATION,
-  UPDATED_CHANGE_TYPE,
-} from '../../../src/entities'
-import type { Server } from 'ws'
-import type { Socket } from '../../types'
-import type { WithWebsocketMethod } from 'express-ws'
-import { SUPERUSER } from '../../mocks/auth/users'
-import { VERSIONS } from '../../mocks/projects/versions'
 import {
   ADDED_CHANGE_STATUS,
+  ADDED_CHANGE_TYPE,
   DELETED_CHANGE_STATUS,
   EXCLUDED_CHANGE_STATUS,
   MODIFIED_CHANGE_STATUS,
   MOVED_CHANGE_STATUS,
+  NONE_CHANGE_TYPE,
   UNMODIFIED_CHANGE_STATUS,
+  UPDATED_CHANGE_TYPE,
 } from '../../mocks/projects/types'
+import { PUBLISHED_VERSION_CONTENTS } from '../../mocks/projects/version-contents'
+import { VERSIONS } from '../../mocks/projects/versions'
+import type { Socket } from '../../types'
 
 export function getProjects(router: Router): void {
   router.get('/', (req, res) => {

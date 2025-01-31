@@ -14,6 +14,15 @@
  * limitations under the License.
  */
 
+import type { Key, Url, VersionKey } from '../../types'
+import type { ChangesSummaryDto } from '../changes/types'
+import type { GroupDto } from '../groups/types'
+import type { IntegrationDto } from '../integrations/types'
+import type { Principal } from '../principals/types'
+import type { PublishedSpecDto } from '../published-specs/types'
+import type { UserDto } from '../users/users'
+import type { VersionStatus } from '../version-status/types'
+
 export const MOVED_CHANGE_STATUS = 'moved'
 export const MODIFIED_CHANGE_STATUS = 'modified'
 export const EXCLUDED_CHANGE_STATUS = 'excluded'
@@ -31,6 +40,17 @@ export type ChangeStatus =
   | typeof INCLUDED_CHANGE_STATUS
   | typeof UNMODIFIED_CHANGE_STATUS
 
+export const NONE_CHANGE_TYPE = 'none'
+export const ADDED_CHANGE_TYPE = 'added'
+export const DELETED_CHANGE_TYPE = 'deleted'
+export const UPDATED_CHANGE_TYPE = 'updated'
+
+export type ChangeType =
+  | typeof NONE_CHANGE_TYPE
+  | typeof ADDED_CHANGE_TYPE
+  | typeof UPDATED_CHANGE_TYPE
+  | typeof DELETED_CHANGE_TYPE
+
 export const GET_METHOD_TYPE = 'get'
 export const POST_METHOD_TYPE = 'post'
 export const PUT_METHOD_TYPE = 'put'
@@ -43,3 +63,83 @@ export type MethodType =
   | typeof PUT_METHOD_TYPE
   | typeof PATCH_METHOD_TYPE
   | typeof DELETE_METHOD_TYPE
+
+export type ProjectFileHistoryDto = Readonly<{
+  changes: ReadonlyArray<ProjectFileChangeHistoryDto>
+}>
+
+export type ProjectFileChangeHistoryDto = Readonly<{
+  commitId: Key
+  comment: string
+  modifiedBy: UserDto
+  modifiedAt: string
+}>
+
+export type ProjectDto = Readonly<{
+  projectId: Key
+  groupId: Key
+  groups: ReadonlyArray<GroupDto>
+  name: string
+  alias: string
+  isFavorite: boolean
+  packageId?: Key
+  lastVersion?: string
+  integration?: IntegrationDto
+  description?: string
+}>
+
+export type ProjectsDto = Readonly<{
+  projects: ReadonlyArray<ProjectDto>
+}>
+
+export type ProjectFileDto = Readonly<{
+  fileId: Key
+  name: string
+  blobId?: Key
+  publish?: boolean
+  labels?: string[]
+  status: ChangeStatus
+  changeType?: ChangeType
+  movedFrom?: string
+  conflictedBlobId?: Key
+  conflictedFileId?: Key
+}>
+
+export type RefType = 'depend' | 'import'
+export type RefKind = 'group' | 'project'
+
+export type RefDto = Partial<Readonly<{
+  refId: Key
+  name: string
+  type: RefType
+  kind: RefKind | 'package'
+  version: string
+  versionStatus: VersionStatus
+  refUrl: Url
+  status: ChangeStatus
+}>>
+
+export type ProjectVersionContentDto = Readonly<{
+  status: VersionStatus
+  publishedAt: string
+  publishedBy: string
+  previousVersion?: VersionKey
+  previousVersionPackageId?: VersionKey
+  versionLabels?: string[]
+  summary?: ChangesSummaryDto
+  files: ReadonlyArray<PublishedSpecDto>
+  refs: ReadonlyArray<RefDto>
+}>
+
+export type PackageVersionDto = Readonly<{
+  version: VersionKey
+  status: VersionStatus
+  publishedAt: string
+  versionLabels?: string[]
+  notLatestRevision?: boolean
+  createdBy: Principal
+}>
+
+export type PackageVersionsDto = Readonly<{
+  versions: ReadonlyArray<PackageVersionDto>
+}>

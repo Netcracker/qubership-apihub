@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { SearchResultsDto } from '../../../src/entities'
+import type { SearchResultsDto } from './types'
 
 export const RECENTLY_VISITED_PACKAGES: SearchResultsDto = {
   packages: [

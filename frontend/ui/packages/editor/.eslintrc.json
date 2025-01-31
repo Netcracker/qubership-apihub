@@ -1,0 +1,49 @@
+{
+  "extends": [
+    "../../.eslintrc.json"
+  ],
+  "settings": {
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true
+      }
+    },
+    "boundaries/elements": [
+      {
+        "type": "editor-local-dev-server",
+        "pattern": "./server/*"
+      },
+      {
+        "type": "editor-source-code",
+        "pattern": "./src/*"
+      }
+    ]
+  },
+  "rules": {
+    "boundaries/element-types": [
+      2,
+      {
+        "default": "disallow",
+        "message": "${file.type} MUST NOT import from ${dependency.type}",
+        "rules": [
+          {
+            "from": [
+              "editor-local-dev-server"
+            ],
+            "allow": [
+              "editor-local-dev-server"
+            ]
+          },
+          {
+            "from": [
+              "editor-source-code"
+            ],
+            "allow": [
+              "editor-source-code"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

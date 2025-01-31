@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { GitFilesDto } from '../../../src/entities'
+import type { GitFilesDto } from '../git-files/types'
 
 export const GIT_FILES: Record<string, GitFilesDto> = {
   '/': {
