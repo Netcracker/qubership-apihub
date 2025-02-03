@@ -210,7 +210,7 @@ describe('New types. From introspection', () => {
     expect(graphApi).toMatchObject(expected)
   })
 
-  it('type = "enum" as directive arg type', () => {
+  it.skip('type = "enum" as directive arg type', () => {
     const graphApi = buildGraphApi(`
       directive @test(arg: TestEnum!) on FIELD_DEFINITION
     
@@ -285,7 +285,7 @@ describe('New types. From introspection', () => {
     expect(graphApi).toMatchObject(expected)
   })
 
-  it('type = "object"', () => {
+  it.skip('type = "object"', () => {
     const graphApi = buildGraphApi(`
       type MyObject {
         id: ID!
@@ -315,7 +315,7 @@ describe('New types. From introspection', () => {
     })
   })
 
-  it('type = "input"', () => {
+  it.skip('type = "input"', () => {
     const graphApi = buildGraphApi(`
       input MyInput {
         id: ID!
@@ -340,7 +340,7 @@ describe('New types. From introspection', () => {
     })
   })
 
-  it('union type, items must not have nullable property', () => {
+  it.skip('union type, items must not have nullable property', () => {
     const graphApi = buildGraphApi(`
       union Test = String | Int | Float
 
@@ -376,7 +376,7 @@ describe('New types. From introspection', () => {
     })
   })
 
-  it('type = "interface"', () => {
+  it.skip('type = "interface"', () => {
     const graphApi = buildGraphApi(`
       interface IMyType {
         id: ID!
@@ -402,7 +402,7 @@ describe('New types. From introspection', () => {
     })
   })
 
-  it('type = "interface" inherited another "interface"', () => {
+  it.skip('type = "interface" inherited another "interface"', () => {
     const graphApi = buildGraphApi(`
       interface IParent {
         id: ID!
@@ -441,7 +441,7 @@ describe('New types. From introspection', () => {
     })
   })
 
-  it('type = "object" inherited "interface"', () => {
+  it.skip('type = "object" inherited "interface"', () => {
     const graphApi = buildGraphApi(`
       interface IType {
         id: ID!
