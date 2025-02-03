@@ -1626,7 +1626,7 @@ paths:
                   $ref: "#/components/examples/FileNotFound"
         "500":
           $ref: "#/components/responses/internalServerError500"
-  /api/v1/projects/{projectId}/integration/hooks:
+  /projects/{projectId}/integration/hooks:
     put:
       tags:
         - Integrations
@@ -1650,7 +1650,7 @@ paths:
           content: {}
         "500":
           $ref: "#/components/responses/internalServerError500"
-  /api/v1/git/webhook:
+  /git/webhook:
     post:
       tags:
         - Integrations
