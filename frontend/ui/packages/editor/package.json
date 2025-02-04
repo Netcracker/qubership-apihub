@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-ui-editor",
-  "version": "2.9.5-feature-publish-dshbrd-from-csv.4",
+  "version": "2.9.5-feature-publish-dshbrd-from-csv.5",
   "license": "Apache-2.0",
   "files": [
     "/dist"
