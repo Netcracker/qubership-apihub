@@ -3,10 +3,11 @@ name: Frontend & Docker CI Workflow
 on:
   push:
     branches:
-      - main
       - release
       - develop
       - feature/*
+    tags:
+      - '**'
   delete:
     branches:
       - release
@@ -14,7 +15,7 @@ on:
 
 jobs:
   call-frontend-ci-workflow:
-    uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@main
+    uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@tag-build
   call-docker-ci-workflow:
     needs: call-frontend-ci-workflow
     if: github.event_name == 'push'
