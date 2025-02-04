@@ -93,7 +93,7 @@ export class RegistryService implements OnModuleInit {
     }
 
     const encodedPackageKey = encodeURIComponent(packageId)
-    const publishStatusUrl = `${this.baseUrl}/api/v2/packages/${encodedPackageKey}/publish/${publishId}/status`
+    const publishStatusUrl = `${this.baseUrl}/api/v3/packages/${encodedPackageKey}/publish/${publishId}/status`
     // const publishStatusUrl = `${this.baseUrl}/api/v3/packages/${encodedPackageKey}/publish/${publishId}/status/async`
     return lastValueFrom(this.httpService
       .post(publishStatusUrl, formData, { headers: { ...formData.getHeaders(), ...this.headers } })
