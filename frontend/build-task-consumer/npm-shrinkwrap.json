@@ -1,12 +1,12 @@
 {
   "name": "@netcracker/qubership-apihub-build-task-consumer",
-  "version": "2.0.3-dev.16",
+  "version": "2.0.3-dev.17",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@netcracker/qubership-apihub-build-task-consumer",
-      "version": "2.0.3-dev.16",
+      "version": "2.0.3-dev.17",
       "license": "Apache-2.0",
       "dependencies": {
         "@nestjs/axios": "^2.0.0",
@@ -2259,9 +2259,9 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-npm-gitflow": {
-      "version": "2.0.1-dev.4",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-npm-gitflow/2.0.1-dev.4/601d073f330a5492f3ef4a7de5d2bd78a991243a",
-      "integrity": "sha512-GOLgARa+ymBZx84djwiCzfHf3xhAHg9SGjOv0ouGckIMzIfa+E5MynPGSXx2VYrMMxwjdRkKSiLIg1TPhMPwRA==",
+      "version": "2.1.1-dev.1",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-npm-gitflow/2.1.1-dev.1/93bbb8ae2a2ebccdd24abcf43766b5da0286d9ce",
+      "integrity": "sha512-a3WRk1VzCu+/jqzxbSbTjUiTOs+DbNYcES88PeoWNcZzcwN6opmnCJOb5str298evKmfIDAY2+esQHjT2/cD9w==",
       "dev": true,
       "license": "Apache-2.0",
       "dependencies": {
