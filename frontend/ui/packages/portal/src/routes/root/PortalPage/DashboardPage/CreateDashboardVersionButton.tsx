@@ -86,7 +86,7 @@ export const CreateDashboardVersionButton: FC<CreateVersionButtonProps> = memo((
             <Typography component="span" variant="body2" color="#626D82">(default)</Typography>
           </MenuItem>
           <MenuItem onClick={showPublishPackageVersionDialog}>
-            Import via CSV
+            Import from CSV
           </MenuItem>
         </Box>
       }
