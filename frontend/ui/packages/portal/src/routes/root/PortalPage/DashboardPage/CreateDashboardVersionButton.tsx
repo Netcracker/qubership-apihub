@@ -32,7 +32,6 @@ export type CreateVersionButtonProps = {
   disabled: boolean
   variant?: ButtonGroupProps['variant']
   primaryButtonProps?: ButtonProps
-  arrowButtonProps?: ButtonProps
   sx?: SxProps
 }
 
@@ -40,7 +39,6 @@ export const CreateDashboardVersionButton: FC<CreateVersionButtonProps> = memo((
   disabled,
   variant = 'contained',
   primaryButtonProps,
-  arrowButtonProps,
   sx,
 }) => {
   const location = useBackwardLocation()

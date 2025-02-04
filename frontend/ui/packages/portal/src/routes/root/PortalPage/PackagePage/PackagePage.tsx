@@ -25,7 +25,7 @@ import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/ut
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
 import {
-  PublishDashboardVersionFromCSVDialog
+  PublishDashboardVersionFromCSVDialog,
 } from '@apihub/routes/root/PortalPage/DashboardPage/PublishDashboardVersionFromCSVDialog'
 
 export const PackagePage: FC = memo(() => {
