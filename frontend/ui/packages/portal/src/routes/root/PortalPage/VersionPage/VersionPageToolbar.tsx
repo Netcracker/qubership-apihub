@@ -128,10 +128,6 @@ export const VersionPageToolbar: FC = memo(() => {
               variant="text"
               disabled={!hasCreateVersionPermissions}
               primaryButtonProps={{ sx: { borderRight: 'none !important', px: 0 } }}
-              arrowButtonProps={{
-                // todo move to MultiButton and check other usages
-                sx: { p: 0, width: '32px', '&.MuiButtonGroup-grouped': { minWidth: '32px' } },
-              }}
             />}
             {isPackage && <ButtonWithHint
               disabled={!hasCreateVersionPermissions}

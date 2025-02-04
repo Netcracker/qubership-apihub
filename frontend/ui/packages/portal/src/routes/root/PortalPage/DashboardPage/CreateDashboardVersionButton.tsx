@@ -66,7 +66,9 @@ export const CreateDashboardVersionButton: FC<CreateVersionButtonProps> = memo((
         variant: variant,
         disabled: disabled,
       }}
-      arrowButtonProps={arrowButtonProps}
+      arrowButtonProps={{
+        sx: { p: 0, width: '32px', '&.MuiButtonGroup-grouped': { minWidth: '32px' } },
+      }}
       disableHint={!disabled}
       hint="You do not have permission to create the version"
       primary={

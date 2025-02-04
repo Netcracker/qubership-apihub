@@ -54,10 +54,6 @@ export const CreateVersionButton: FC<CreateVersionButtonProps> = memo(({
       <CreateDashboardVersionButton
         disabled={disabled}
         sx={{ ml: 'auto' }}
-        arrowButtonProps={{
-          // todo move to MultiButton and check other usages
-          sx: { p: 0, width: '32px', '&.MuiButtonGroup-grouped': { minWidth: '32px' } },
-        }}
       />
     )
   }
