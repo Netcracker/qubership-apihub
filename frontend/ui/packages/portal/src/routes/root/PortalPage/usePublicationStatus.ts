@@ -16,9 +16,19 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { generatePath } from 'react-router-dom'
-import { API_V1, API_V2, API_V3, requestJson, STATUS_REFETCH_INTERVAL } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import {
+  API_V1,
+  API_V2,
+  API_V3,
+  requestJson,
+  STATUS_REFETCH_INTERVAL,
+} from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/utils/types'
-import { useShowErrorNotification, useShowInfoNotification, useShowWarningNotification } from '@apihub/routes/root/BasePage/Notification'
+import {
+  useShowErrorNotification,
+  useShowInfoNotification,
+  useShowWarningNotification,
+} from '@apihub/routes/root/BasePage/Notification'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import { getVersionPath, useNavigation } from '@apihub/routes/NavigationProvider'
 import type { IsError, IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
@@ -26,7 +36,9 @@ import { useMemo } from 'react'
 import { REST_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
 import { useDownloadPublicationReport } from './useDownloadPublicationReport'
 import { useAsyncInvalidateVersionContent } from '../usePackageVersionContent'
-import { useAsyncInvalidatePackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
+import {
+  useAsyncInvalidatePackageVersions,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
 import { useAsyncInvalidatePackage } from '../usePackage'
 
 const PUBLISH_STATUS_QUERY_KEY = 'publish-status-query-key'
@@ -67,8 +79,8 @@ export function usePublicationStatuses(
     enabled: !!publishId,
   })
 
-  const isPublishing = useMemo(() =>
-      data?.status === RUNNING_PUBLISH_STATUS || data?.status === NONE_PUBLISH_STATUS,
+  const isPublishing = useMemo(
+    () => data?.status === RUNNING_PUBLISH_STATUS || data?.status === NONE_PUBLISH_STATUS,
     [data?.status],
   )
 
@@ -129,8 +141,8 @@ export function useOperationGroupPublicationStatuses(
     enabled: !!publishId,
   })
 
-  const isPublishing = useMemo(() =>
-      data?.status === RUNNING_PUBLISH_STATUS || data?.status === NONE_PUBLISH_STATUS,
+  const isPublishing = useMemo(
+    () => data?.status === RUNNING_PUBLISH_STATUS || data?.status === NONE_PUBLISH_STATUS,
     [data?.status],
   )
 

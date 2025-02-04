@@ -80,12 +80,12 @@ const PublishDashboardVersionFromCSVPopup: FC<PopupProps> = memo<PopupProps>(({ 
   const onWorkspacesFilter = useCallback((value: Key) => setWorkspacesFilter(value), [setWorkspacesFilter])
 
   const defaultValues = useMemo(() => {
-    const { status, versionLabels, previousVersion } = currentVersion || {}
+    const { status, versionLabels, previousVersion } = currentVersion ?? {}
     return {
       version: isEditingVersion ? getSplittedVersionKey(versionId).versionKey : '',
-      status: status || DRAFT_VERSION_STATUS,
-      labels: versionLabels || [],
-      previousVersion: previousVersion || NO_PREVIOUS_RELEASE_VERSION_OPTION,
+      status: status ?? DRAFT_VERSION_STATUS,
+      labels: versionLabels ?? [],
+      previousVersion: previousVersion ?? NO_PREVIOUS_RELEASE_VERSION_OPTION,
     }
   }, [currentVersion, isEditingVersion, versionId])
 
