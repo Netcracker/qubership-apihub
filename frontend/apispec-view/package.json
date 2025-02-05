@@ -13,11 +13,11 @@
     "@babel/preset-typescript": "^7.16.7",
     "@chromatic-com/storybook": "1",
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
-    "@netcracker/qubership-apihub-api-unifier": "dev",
-    "@netcracker/qubership-apihub-compatibility-suites": "dev",
-    "@netcracker/qubership-apihub-api-diff": "dev",
-    "@netcracker/qubership-apihub-api-doc-viewer": "dev",
-    "@netcracker/qubership-apihub-http-spec": "dev",    
+    "@netcracker/qubership-apihub-api-unifier": "next",
+    "@netcracker/qubership-apihub-compatibility-suites": "next",
+    "@netcracker/qubership-apihub-api-diff": "next",
+    "@netcracker/qubership-apihub-api-doc-viewer": "next",
+    "@netcracker/qubership-apihub-http-spec": "next",
     "@schemastore/package": "0.0.4",
     "@stoplight/eslint-config": "2.1.0",
     "@stoplight/json": "^3.18.1",
@@ -138,7 +138,7 @@
     "raw-loader": "^4.0.2",
     "@netcracker/qubership-apihub-npm-gitflow": "2.2.0"
   },
-  "scripts": { 
+  "scripts": {
     "build": "npm run build:dist",
     "build:dist": "npm run --workspace=@netcracker/qubership-apihub-apispec-view build",
     "build:showcase": "npm run --workspace=@netcracker/qubership-apihub-apispec-view build:showcase",
