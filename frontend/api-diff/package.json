@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-diff",
-  "version": "1.0.4-dev.2",
+  "version": "1.0.4-next.0",
   "module": "./dist/index.es.js",
   "main": "./dist/index.cjs.js",
   "types": "./dist/index.d.ts",
@@ -30,12 +30,12 @@
     "release-finish": "release-finish"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-unifier": "dev",
-    "@netcracker/qubership-apihub-json-crawl": "dev",
+    "@netcracker/qubership-apihub-api-unifier": "next",
+    "@netcracker/qubership-apihub-json-crawl": "next",
     "fast-equals": "4.0.3"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-compatibility-suites": "dev",
+    "@netcracker/qubership-apihub-compatibility-suites": "next",
     "@netcracker/qubership-apihub-graphapi": "1.0.7",
     "@netcracker/qubership-apihub-npm-gitflow": "2.2.0",
     "@types/jest": "29.5.11",
