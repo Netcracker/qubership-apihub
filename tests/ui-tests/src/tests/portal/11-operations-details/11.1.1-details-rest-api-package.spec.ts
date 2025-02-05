@@ -277,7 +277,8 @@ test.describe('11.1.1 Operations details REST API (Package)', () => {
 
       await test.step('Add Custom servers', async () => {
 
-        await test.step('Add server with wrong namespace (negative)', async () => {
+        //Skipped because Agent is needed
+        await test.step.skip('Add server with wrong namespace (negative)', async () => {
           await operationPage.playgroundPanel.serverSlt.addCustomServerBtn.click()
           await operationPage.playgroundPanel.addServerDialog.cloudAc.click()
           await operationPage.playgroundPanel.addServerDialog.cloudAc.getListItem('k8s-apps3').click()
@@ -288,6 +289,7 @@ test.describe('11.1.1 Operations details REST API (Package)', () => {
         })
 
         await test.step('Add server 1', async () => {
+          await operationPage.playgroundPanel.serverSlt.addCustomServerBtn.click() //WA: remove after fix previous step
           await operationPage.playgroundPanel.addServerDialog.cloudAc.clear()
           await operationPage.playgroundPanel.addServerDialog.urlTxtFld.fill('https://api')
           await operationPage.playgroundPanel.addServerDialog.addBtn.click()
@@ -309,19 +311,22 @@ test.describe('11.1.1 Operations details REST API (Package)', () => {
         })
       })
 
-      await test.step('Send request without token (negative)', async () => {
-        await operationPage.playgroundPanel.sendBtn.click()
+      //Playground doesn't work on localhost
+      if (!portalPage.url().includes('localhost')) {
+        await test.step('Send request without token (negative)', async () => {
+          await operationPage.playgroundPanel.sendBtn.click()
 
-        await expect(operationPage.playgroundPanel).toContainText('"message": "Unauthorized",')
-      })
+          await expect(operationPage.playgroundPanel).toContainText('"message": "Unauthorized",')
+        })
 
-      await test.step('Send request with token and filters', async () => {
-        await operationPage.playgroundPanel.tokenTxtFld.fill(accessToken)
+        await test.step('Send request with token and filters', async () => {
+          await operationPage.playgroundPanel.tokenTxtFld.fill(accessToken)
 
-        await operationPage.playgroundPanel.sendBtn.click()
+          await operationPage.playgroundPanel.sendBtn.click()
 
-        await expect(operationPage.playgroundPanel).toContainText('"backendVersion"')
-      })
+          await expect(operationPage.playgroundPanel).toContainText('"backendVersion"')
+        })
+      }
 
       await test.step('Close Playground', async () => {
         await operationPage.toolbar.playgroundBtn.click()
