@@ -37,7 +37,7 @@
     "@netcracker/qubership-apihub-api-visitor": "dev",
     "@netcracker/qubership-apihub-apispec-view": "dev",
     "@netcracker/qubership-apihub-class-view": "dev",
-    "@netcracker/qubership-apihub-npm-gitflow": "dev",
+    "@netcracker/qubership-apihub-npm-gitflow": "2.2.0",
     "@netcracker/qubership-apihub-rest-playground": "dev",
     "@otjs/monaco": "0.2.2",
     "@otjs/plaintext": "0.2.2",
