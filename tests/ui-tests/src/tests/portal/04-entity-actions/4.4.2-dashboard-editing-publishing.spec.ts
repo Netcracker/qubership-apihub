@@ -118,7 +118,7 @@ test.describe('4.4.2 Dashboard editing/publishing', () => {
       const { confPackagesTab, publishVersionDialog } = configureVersionTab
 
       await portalPage.gotoDashboard(D123)
-      await versionPage.toolbar.addNewVersionBtn.click()
+      await versionPage.toolbar.createVersionBtn.click()
 
       await expect.soft(configureVersionTab.publishBtn).toBeDisabled()
 
