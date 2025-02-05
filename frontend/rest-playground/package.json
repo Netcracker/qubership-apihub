@@ -44,7 +44,7 @@
     "@mui/material": "5.11.10",
     "@mui/private-theming": "5.11.9",
     "@netcracker/qubership-apihub-http-spec": "dev",
-    "@netcracker/qubership-apihub-npm-gitflow": "2.0.0",
+    "@netcracker/qubership-apihub-npm-gitflow": "2.2.0",
     "@stoplight/eslint-config": "2.1.0",
     "@stoplight/json": "^3.18.1",
     "@stoplight/json-schema-ref-parser": "^9.0.5",
