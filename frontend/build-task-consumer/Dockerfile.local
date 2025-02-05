@@ -3,7 +3,8 @@ FROM docker.io/node:20
 WORKDIR /usr/src/app
 
 ADD .npmrc .npmrc
-COPY package*.json ./
+COPY package.json ./
+COPY npm-shrinkwrap.json ./
 RUN npm ci
 ADD dist dist
 
