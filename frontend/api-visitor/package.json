@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-visitor",
-  "version": "1.0.5-dev.2",
+  "version": "1.0.5-next.0",
   "description": "Takes OpenAPI documents apart",
   "license": "Apache-2.0",
   "main": "./dist/index.cjs.js",
@@ -28,8 +28,8 @@
     "release-finish": "release-finish"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-json-crawl": "dev",
-    "@netcracker/qubership-apihub-api-unifier": "dev"
+    "@netcracker/qubership-apihub-json-crawl": "next",
+    "@netcracker/qubership-apihub-api-unifier": "next"
   },
   "devDependencies": {
     "@netcracker/qubership-apihub-npm-gitflow": "2.2.0",
