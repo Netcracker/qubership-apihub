@@ -27,6 +27,6 @@ jobs:
       platforms: linux/amd64,linux/arm64
       labels: |
         maintainer=qubership
-        npm-package-version=${{ needs.jobs.call-frontend-ci-workflow.outputs.package_version }}
+        npm-package-version=${{ needs.call-frontend-ci-workflow.outputs.package_version }}
     secrets:
       NPMRC: ${{ secrets.NPMRC }}
