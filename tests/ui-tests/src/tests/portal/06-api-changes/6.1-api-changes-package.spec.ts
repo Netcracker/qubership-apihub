@@ -74,7 +74,10 @@ test.describe('6.1 API Changes (Package)', () => {
   test('[P-CHPOP-1.2] Opening the API Changes tab when the latest revision of previous version is published after current version',
     {
       tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-5321` },
+      annotation: [
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-5321` },
+        { type: 'Flaky', description: 'Sometimes, the API Changes tab displays a placeholder "No changes" instead of a list of operations with changes.' },
+      ],
     },
     async ({ sysadminPage: page }) => {
 

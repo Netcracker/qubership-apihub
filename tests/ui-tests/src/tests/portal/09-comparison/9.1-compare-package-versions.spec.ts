@@ -156,7 +156,10 @@ test.describe('09.1 Compare Package versions', () => {
 
   test('[P-COPVOP-4] Opening a Compare Packages page for different packages after swapping',
     {
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-1730` },
+      annotation: [
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-1730` },
+        { type: 'Flaky', description: 'Sometimes, the "Previous Version" field suddenly clears itself.' },
+      ],
     },
     async ({ sysadminPage: page }) => {
 
@@ -267,7 +270,10 @@ test.describe('09.1 Compare Package versions', () => {
 
   test('[P-COPVOP-8] Opening a Compare Packages page from the Operation details page',
     {
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-4561` },
+      annotation: [
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-4561` },
+        { type: 'Flaky', description: 'Sometimes, the "Previous Version" field suddenly clears itself.' },
+      ],
     },
     async ({ sysadminPage: page }) => {
 
