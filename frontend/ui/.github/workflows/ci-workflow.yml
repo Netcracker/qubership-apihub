@@ -15,7 +15,7 @@ on:
 
 jobs:
   call-frontend-ci-workflow:
-    uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@tag-build
+    uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@main
   call-docker-ci-workflow:
     needs: call-frontend-ci-workflow
     if: github.event_name == 'push'
