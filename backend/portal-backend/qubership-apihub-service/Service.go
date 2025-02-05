@@ -278,7 +278,7 @@ func main() {
 	internalWebsocketService := service.NewInternalWebsocketService(wsLoadBalancer, olricProvider)
 	commitService := service.NewCommitService(draftRepository, contentService, branchService, projectService, gitClientProvider, wsBranchService, wsFileEditService, branchEditorsService)
 	searchService := service.NewSearchService(projectService, publishedService, branchService, gitClientProvider, contentService)
-	apihubApiKeyService := service.NewApihubApiKeyService(apihubApiKeyRepository, publishedRepository, activityTrackingService, userService, roleRepository, roleService.IsSysadm)
+	apihubApiKeyService := service.NewApihubApiKeyService(apihubApiKeyRepository, publishedRepository, activityTrackingService, userService, roleRepository, roleService.IsSysadm, systemInfoService)
 
 	refResolverService := service.NewRefResolverService(publishedRepository)
 	buildProcessorService := service.NewBuildProcessorService(buildRepository, refResolverService)
@@ -302,7 +302,7 @@ func main() {
 
 	gitHookService := service.NewGitHookService(projectRepository, branchService, buildService, userService)
 
-	zeroDayAdminService := service.NewZeroDayAdminService(userService, roleService, usersRepository)
+	zeroDayAdminService := service.NewZeroDayAdminService(userService, roleService, usersRepository, systemInfoService)
 
 	integrationsController := controller.NewIntegrationsController(integrationsService)
 	projectController := controller.NewProjectController(projectService, groupService, searchService)
@@ -688,12 +688,11 @@ func main() {
 
 	utils.SafeAsync(func() {
 		if err := zeroDayAdminService.CreateZeroDayAdmin(); err != nil {
-			log.Error("Failed to create zero day admin user: " + err.Error())
+			log.Errorf("Failed to create zero day admin user: %s", err)
 		}
 
-		systemApiKey := os.Getenv("APIHUB_ACCESS_TOKEN")
-		if err := apihubApiKeyService.CreateSystemApiKey(systemApiKey); err != nil {
-			log.Errorf("failed to create system api key: %+v", err)
+		if err := apihubApiKeyService.CreateSystemApiKey(); err != nil {
+			log.Errorf("Failed to create system api key: %s", err)
 		}
 	})
 
