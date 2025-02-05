@@ -15,8 +15,9 @@
  */
 
 import type { FC } from 'react'
+import * as React from 'react'
 import { memo, useCallback, useEffect, useMemo } from 'react'
-import { Box, Button, Typography } from '@mui/material'
+import { Box, Button, Divider, Typography } from '@mui/material'
 import { useParams } from 'react-router-dom'
 import { PackageBreadcrumbs } from '../../PackageBreadcrumbs'
 import { useDownloadVersionDocumentation } from './useDownloadVersionDocumentation'
@@ -44,6 +45,7 @@ import { usePackageVersionConfig } from '@apihub/routes/root/PortalPage/usePacka
 import { CopyPackageVersionButton } from '@apihub/routes/root/PortalPage/VersionPage/CopyPackageVersionButton'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { CreateDashboardVersionButton } from '@apihub/routes/root/PortalPage/DashboardPage/CreateDashboardVersionButton'
 
 export const VersionPageToolbar: FC = memo(() => {
   const { packageId, versionId } = useParams()
@@ -119,8 +121,15 @@ export const VersionPageToolbar: FC = memo(() => {
               Version
             </Typography>
             <VersionSelector/>
-            {versionContent && <CustomChip value={versionContent!.status} data-testid="VersionStatusChip"/>}
-            <ButtonWithHint
+            {versionContent &&
+              <CustomChip value={versionContent!.status} sx={{ height: 20 }} data-testid="VersionStatusChip"/>}
+            <Divider orientation="vertical" sx={{ height: '20px', mt: '6px' }}/>
+            {isDashboard && <CreateDashboardVersionButton
+              variant="text"
+              disabled={!hasCreateVersionPermissions}
+              primaryButtonProps={{ sx: { borderRight: 'none !important', px: 0 } }}
+            />}
+            {isPackage && <ButtonWithHint
               disabled={!hasCreateVersionPermissions}
               disableHint={hasCreateVersionPermissions}
               hint="You do not have permission to edit the version"
@@ -128,7 +137,7 @@ export const VersionPageToolbar: FC = memo(() => {
               tooltipMaxWidth="unset"
               onClick={handleCreateVersionClick}
               testId="AddNewVersionButton"
-            />
+            />}
           </>
         }
         action={

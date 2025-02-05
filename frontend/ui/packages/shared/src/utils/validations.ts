@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { type FileExtension, getFileExtension, createFileFormatEnumeration } from './files'
+
 const RESTRICTED_ALIAS_SYMBOLS = ['.', ' ', '/', '#', '&']
 
 export const ALIAS_VALIDATION_RULES: Record<string, (alias: string) => boolean | string> = {
@@ -44,3 +46,7 @@ export function checkVersionNotEqualToPrevious(version: string, previousVersion:
   return version !== previousVersion || 'The version must not be the same as the previous one'
 }
 
+export function checkFileType(file: File, acceptableExtensions: FileExtension[]): boolean | string {
+  const isWrongFileType = !acceptableExtensions?.includes(getFileExtension(file.name))
+  return !isWrongFileType || `File format must be ${createFileFormatEnumeration(acceptableExtensions)}`
+}

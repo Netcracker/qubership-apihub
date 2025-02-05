@@ -30,6 +30,7 @@ import {
   Divider,
   ListItem,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded'
@@ -46,6 +47,7 @@ import {
   VERSION_STATUSES,
 } from '../entities/version-status'
 import {
+  checkFileType,
   checkReleaseVersionFormat,
   checkVersionNotEqualToPrevious,
   checkVersionRestrictedSymbols,
@@ -60,6 +62,9 @@ import type { Package, Packages } from '../entities/packages'
 import { OptionItem } from './OptionItem'
 import { disableAutocompleteSearch } from '../utils/mui'
 import { DEFAULT_DEBOUNCE } from '../utils/constants'
+import { InfoIcon } from '../icons/InfoIcon'
+import { CSV_FILE_EXTENSION } from '../utils/files'
+import { FileUploadField } from './FileUploadField'
 
 export type VersionFormData = {
   message?: string
@@ -71,15 +76,16 @@ export type VersionFormData = {
   status: VersionStatus
   labels: string[]
   previousVersion: Key
+  file?: File
 }
 
-export type VersionDialogFormProps = {
+export type VersionDialogFormProps<T extends VersionFormData = VersionFormData> = {
   open: boolean
   setOpen: (value: boolean) => void
   onSubmit: () => void
-  control: Control<VersionFormData>
-  setValue: UseFormSetValue<VersionFormData>
-  formState: FormState<VersionFormData>
+  control: Control<T>
+  setValue: UseFormSetValue<T>
+  formState: FormState<T>
   packagePermissions: PackagePermissions
   releaseVersionPattern: string | undefined
   selectedWorkspace?: Package | null
@@ -106,6 +112,7 @@ export type VersionDialogFormProps = {
   submitButtonTittle?: string
   descriptorVersionFieldTitle?: string
   descriptorFileFieldTitle?: string
+  hideCSVRelatedFields?: boolean
   hideDescriptorField?: boolean
   hideDescriptorVersionField?: boolean
   hideSaveMessageField?: boolean
@@ -146,6 +153,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     submitButtonTittle,
     descriptorVersionFieldTitle,
     descriptorFileFieldTitle,
+    hideCSVRelatedFields = true,
     hideDescriptorField,
     hideDescriptorVersionField,
     hideSaveMessageField,
@@ -297,8 +305,8 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                   InputProps={{
                     endAdornment: (
                       <Box display="flex" flexDirection="row" sx={{ cursor: 'pointer' }}>
-                        {field.value ? <EditIcon /> : <CloudUploadIcon fontSize="small" sx={{ color: '#353C4E' }} />}
-                        {!!errors.descriptorFile && <ErrorRoundedIcon color="error" />}
+                        {field.value ? <EditIcon/> : <CloudUploadIcon fontSize="small" sx={{ color: '#353C4E' }}/>}
+                        {!!errors.descriptorFile && <ErrorRoundedIcon color="error"/>}
                       </Box>
                     ),
                     inputProps: {
@@ -313,7 +321,99 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
         )}
 
         {showTopDivider && (
-          <Divider sx={{ mx: 0, mt: 1, mb: 0.5 }} orientation="horizontal" />
+          <Divider sx={{ mx: 0, mt: 1, mb: 0.5 }} orientation="horizontal"/>
+        )}
+
+        {!hideCSVRelatedFields && (
+          <>
+            <Box display="flex" gap={0.5} alignItems="center" pb={1}>
+              <Box sx={{ lineHeight: 1 }}>
+                <Typography variant="button" component="span">Dashboard Version Config</Typography>
+                <Typography variant="button" component="span" color="#FF5260">*</Typography>
+              </Box>
+              <Tooltip
+                disableHoverListener={false}
+                placement="right"
+                title={DASHBOARD_VERSION_CONFIG_TITLE}
+                PopperProps={{
+                  sx: { '.MuiTooltip-tooltip': { maxWidth: '600px' } },
+                }}
+              >
+                <Box sx={{ cursor: 'pointer' }}>
+                  <InfoIcon/>
+                </Box>
+              </Tooltip>
+            </Box>
+
+            <Controller
+              name="file"
+              rules={{
+                required: 'Please upload a file',
+                validate: {
+                  checkFileType: (file) => checkFileType(file!, [CSV_FILE_EXTENSION]),
+                },
+              }}
+              control={control}
+              render={({ field: { value, onChange } }) => <FileUploadField
+                errorMessage={errors.file?.message}
+                uploadedFile={value}
+                setUploadedFile={value => onChange(value)}
+                downloadAvailable={false}
+                acceptableExtensions={[CSV_FILE_EXTENSION]}
+              />}
+            />
+
+            <Box display="flex" gap={0.5} alignItems="center" pt={2}>
+              <Typography variant="button">Package Search Scope for Dashboard Version</Typography>
+              <Tooltip
+                disableHoverListener={false}
+                placement="right"
+                title={PACKAGE_SEARCH_SCOPE_TITLE}
+                PopperProps={{
+                  sx: { '.MuiTooltip-tooltip': { maxWidth: '600px' } },
+                }}
+              >
+                <Box sx={{ cursor: 'pointer' }}>
+                  <InfoIcon/>
+                </Box>
+              </Tooltip>
+            </Box>
+
+            <Controller
+              name="workspace"
+              control={control}
+              render={({ field: { value } }) => <Autocomplete
+                value={value}
+                options={workspaces ?? []}
+                loading={areWorkspacesLoading}
+                isOptionEqualToValue={(option, value) => option.key === value.key}
+                getOptionLabel={(option) => option?.name ?? ''}
+                renderOption={(props, { key, name }) => <OptionItem
+                  key={key}
+                  props={props}
+                  title={name}
+                  subtitle={key}
+                />}
+                onChange={(_, value) => {
+                  setValue('workspace', value ?? null)
+                  setValue('package', null)
+                  onSetWorkspace?.(value)
+                }}
+                onInputChange={debouncedOnWorkspacesChange}
+                renderInput={(params) =>
+                  <TextField
+                    required
+                    {...params}
+                    label="Workspace"
+                  />
+                }
+                data-testid="WorkspaceAutocomplete"
+              />}
+            />
+            <Box sx={{ lineHeight: 1 }} pt={2}>
+              <Typography variant="button">Publish Info</Typography>
+            </Box>
+          </>
         )}
 
         {!hideCopyPackageFields && (
@@ -447,7 +547,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                   key={option}
                   data-testid={`Option-${option}`}
                 >
-                  <CustomChip value={option} />
+                  <CustomChip value={option}/>
                 </ListItem>
               }
               onChange={(_, value) => {
@@ -471,7 +571,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                         },
                       },
                     },
-                    startAdornment: status ? <CustomChip sx={{ height: 16, mb: 1 }} value={status} /> : null,
+                    startAdornment: status ? <CustomChip sx={{ height: 16, mb: 1 }} value={status}/> : null,
                   }}
                 />
               )}
@@ -493,7 +593,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
 
         {!hidePreviousVersionField && (
           <>
-            <Divider sx={{ mx: 0, mt: 1, mb: 0.5 }} orientation="horizontal" />
+            <Divider sx={{ mx: 0, mt: 1, mb: 0.5 }} orientation="horizontal"/>
             <Controller
               name="previousVersion"
               control={control}
@@ -575,3 +675,6 @@ export const EMPTY_VERSION_KEY: Key = ''
 function checkFileUpload(descriptorContent: string | null): boolean {
   return !!descriptorContent
 }
+
+const DASHBOARD_VERSION_CONFIG_TITLE = 'CSV file must have the following information: "serviceName" and "serviceVersion". Published dashboard version will include package release versions (from selected workspace) for specified services. Additionally, "method" and "path" of REST API operations for services can be defined in the file. In this case, the system will create operations group with the operations for specified method and path.'
+const PACKAGE_SEARCH_SCOPE_TITLE = 'The workspace in which package versions for services from the CSV configuration will be searched. The package versions found in this workspace will be included into the dashboard version.'
