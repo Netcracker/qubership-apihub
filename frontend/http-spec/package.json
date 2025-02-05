@@ -99,6 +99,7 @@
     "type-is": "^1.6.18"
   },
   "devDependencies": {
+    "@netcracker/qubership-apihub-npm-gitflow": "2.2.0",
     "@stoplight/eslint-config": "^3.0.0",
     "@stoplight/scripts": "^9.2.0",
     "@types/jest": "27.4.1",
