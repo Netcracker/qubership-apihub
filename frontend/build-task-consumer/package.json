@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-build-task-consumer",
-  "version": "2.0.3-dev.17",
+  "version": "2.0.3-dev.18",
   "license": "Apache-2.0",
   "files": [
     "dist",
