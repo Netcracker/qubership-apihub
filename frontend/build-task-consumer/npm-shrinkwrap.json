@@ -1,12 +1,12 @@
 {
   "name": "@netcracker/qubership-apihub-build-task-consumer",
-  "version": "2.0.3-next.0",
+  "version": "2.0.3-next.1",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@netcracker/qubership-apihub-build-task-consumer",
-      "version": "2.0.3-next.0",
+      "version": "2.0.3-next.1",
       "license": "Apache-2.0",
       "dependencies": {
         "@nestjs/axios": "^2.0.0",
