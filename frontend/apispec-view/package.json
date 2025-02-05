@@ -136,7 +136,7 @@
     "webpack-dev-server": "3.11.2",
     "xml-formatter": "^2.4.0",
     "raw-loader": "^4.0.2",
-    "@netcracker/qubership-apihub-npm-gitflow": "dev"
+    "@netcracker/qubership-apihub-npm-gitflow": "2.2.0"
   },
   "scripts": { 
     "build": "npm run build:dist",
