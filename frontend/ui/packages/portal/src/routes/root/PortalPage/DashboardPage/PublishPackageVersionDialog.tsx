@@ -108,7 +108,7 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
       labels: data.labels,
       previousVersion: previousVersion,
       ...takeIf({
-        files: filesWithLabels && Object.entries(filesWithLabels)?.map(([key, { labels }]) => ({
+        files: Object.entries(filesWithLabels)?.map(([key, { labels }]) => ({
           fileId: key,
           labels: labels,
           publish: true,
