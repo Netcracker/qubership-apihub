@@ -596,6 +596,10 @@ test.describe('09.4 Compare different Dashboards', () => {
       annotation: [
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10152` },
         { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-1437` },
+        {
+          type: 'Flaky',
+          description: 'Sometimes, when clicking the "Edit" button, a dialog with only versions is displayed instead of the full dialog with Workspaces and Dashboards.',
+        },
       ],
     },
     async ({ sysadminPage: page }) => {

@@ -23,6 +23,6 @@ export class RawView extends BaseComponent {
   readonly yamlBtn = new Button(this.page.getByTestId('ModeButton-YAML'), 'YAML')
 
   constructor(private readonly page: Page) {
-    super(page.locator('.monaco-editor'), 'Raw view')
+    super(page.locator('.monaco-editor').and(page.getByRole('code')), 'Raw view')
   }
 }

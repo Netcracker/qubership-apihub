@@ -48,6 +48,10 @@ export class PortalPage extends MainPage {
     super(page)
   }
 
+  url(): string {
+    return this.page.url()
+  }
+
   async goto(url?: string, options?: GotoOptions): Promise<void> {
     if (url) {
       await super.goto(url, options)

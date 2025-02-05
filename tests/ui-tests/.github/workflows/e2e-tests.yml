@@ -1,0 +1,47 @@
+name: E2E Tests
+on:
+  workflow_dispatch:
+    inputs:
+      base-url:
+        description: 'Base URL'
+        required: true
+      cleanup:
+        description: 'Cleaning up test data'
+        required: false
+        default: false
+        type: boolean
+      portal-e2e:
+        description: 'Portal e2e'
+        required: false
+        default: true
+        type: boolean
+      env-vars:
+        description: 'Environment variables (format: VAR1=1 VAR2=2)'
+env:
+  BASE_URL: ${{ inputs.base-url }}
+  TEST_USER_PASSWORD: 12345
+jobs:
+  tests:
+    timeout-minutes: 80
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - name: Install dependencies
+      run: npm ci
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps chromium
+    - name: Run Cleaning up test data
+      run: ${{ inputs.env-vars }} npx playwright test --project=Cleanup
+      if: ${{ inputs.cleanup }}
+    - name: Run Portal e2e tests
+      run: ${{ inputs.env-vars }} npx playwright test --project=Portal
+      if: ${{ inputs.portal-e2e && success() }}
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: reports
+        path: reports/
+        retention-days: 21

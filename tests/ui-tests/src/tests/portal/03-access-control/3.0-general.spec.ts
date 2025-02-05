@@ -119,7 +119,7 @@ test.describe('03.0 Access Control. General.', () => {
         await addUserDialog.fillForm(testUserName, 'Viewer')
         await addUserDialog.addBtn.click()
 
-        await expect(accessControlTab.getUserRow(testUserName)).toBeVisible()
+        await expect(accessControlTab.getUserRow(testUserName).viewerChx).toBeChecked()
       })
 
       await test.step(`Set "Editor" role for "${GRP_P_UAC_G1_N.name}" group`, async () => {
@@ -128,7 +128,7 @@ test.describe('03.0 Access Control. General.', () => {
         await addUserDialog.fillForm(testUserName, 'Editor')
         await addUserDialog.addBtn.click()
 
-        await expect(accessControlTab.getUserRow(testUserName)).toBeVisible()
+        await expect(accessControlTab.getUserRow(testUserName).editorChx).toBeChecked()
       })
 
       await test.step(`Set "Owner" role for "${GRP_P_UAC_G2_N.name}" group`, async () => {
@@ -137,7 +137,7 @@ test.describe('03.0 Access Control. General.', () => {
         await addUserDialog.fillForm(testUserName, 'Owner')
         await addUserDialog.addBtn.click()
 
-        await expect(accessControlTab.getUserRow(testUserName)).toBeVisible()
+        await expect(accessControlTab.getUserRow(testUserName).ownerChx).toBeChecked()
       })
 
       await test.step(`Set "Admin" role for "${PKG_P_UAC_G_INHER_N.name}" package`, async () => {
@@ -145,8 +145,6 @@ test.describe('03.0 Access Control. General.', () => {
         await accessControlTab.addUserBtn.click()
         await addUserDialog.fillForm(testUserName, 'Admin')
         await addUserDialog.addBtn.click()
-
-        await expect(accessControlTab.getUserRow(testUserName)).toBeVisible()
       })
 
       await test.step('Check checkboxes', async () => {

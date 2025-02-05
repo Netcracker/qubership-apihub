@@ -81,9 +81,8 @@ export default defineConfig<Fixtures>({
       testDir: './src/tests/portal',
       use: {
         ...devices['Desktop Chrome'],
-        channel: process.env.CI ? 'chrome' : undefined,
+        channel: 'chromium',
         launchOptions: {
-          executablePath: process.env.CI ? './chrome-linux/chrome' : undefined,
           // slowMo: 150,
         },
         viewport: { width: 1320, height: 768 },
@@ -122,10 +121,7 @@ export default defineConfig<Fixtures>({
       timeout: 130_000,
       use: {
         ...devices['Desktop Chrome'],
-        channel: process.env.CI ? 'chrome' : undefined,
-        launchOptions: {
-          executablePath: process.env.CI ? './chrome-linux/chrome' : undefined,
-        },
+        channel: 'chromium',
         actionTimeout: 120_000,
         trace: 'off',
         screenshot: 'off',
@@ -138,10 +134,7 @@ export default defineConfig<Fixtures>({
       timeout: 190_000,
       use: {
         ...devices['Desktop Chrome'],
-        channel: process.env.CI ? 'chrome' : undefined,
-        launchOptions: {
-          executablePath: process.env.CI ? './chrome-linux/chrome' : undefined,
-        },
+        channel: 'chromium',
         actionTimeout: 180_000,
         trace: 'off',
         screenshot: 'off',
