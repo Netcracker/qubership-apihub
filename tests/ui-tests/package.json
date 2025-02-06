@@ -3,8 +3,11 @@
   "version": "2.36.1-dev.0",
   "license": "Apache-2.0",
   "scripts": {
-    "pw-report": "playwright show-report reports/playwright",
-    "debug": "playwright test --headed --project=Portal --debug",
+    "html-report": "playwright show-report reports/playwright",
+    "debug": "playwright test --project=Portal --debug",
+    "test-e2e-portal": "playwright test --project=Portal",
+    "test-e2e-portal-last-failed": "playwright test --project=Portal --last-failed",
+    "cleanup": "playwright test --project=Cleanup",
     "lint": "eslint . --ext .ts,.tsx,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
     "format": "npm run lint --fix",
     "feature-start": "feature-start --featureName",
