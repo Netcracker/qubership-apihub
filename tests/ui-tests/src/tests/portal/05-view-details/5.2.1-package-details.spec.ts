@@ -33,7 +33,6 @@ import {
   V_P_PKG_WITHOUT_LABELS_R,
 } from '@test-data/portal'
 import { SYSADMIN } from '@test-data'
-import { isLocalHost } from '@services/utils'
 
 test.describe('5.2.1 Package details', () => {
 
