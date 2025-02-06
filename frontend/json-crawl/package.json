@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-json-crawl",
-  "version": "1.0.2",
+  "version": "1.0.3-next.2",
   "description": "Async and sync crawler for json object",
   "module": "./dist/index.es.js",
   "main": "./dist/index.cjs.js",
@@ -18,8 +18,8 @@
   "scripts": {
     "prebuild": "rimraf ./dist",
     "build": "vite build",
-    "development:link": "yarn link",
-    "development:unlink": "yarn unlink",
+    "development:link": "npm link",
+    "development:unlink": "npm unlink",
     "test": "jest --verbose",
     "test:coverage": "jest --verbose --coverage",
     "feature-start": "feature-start --featureName",
@@ -35,9 +35,9 @@
     "clone",
     "hooks"
   ],
-  "license": "MIT",
+  "license": "Apache-2.0",
   "devDependencies": {
-    "@netcracker/qubership-apihub-npm-gitflow": "1.0.13",
+    "@netcracker/qubership-apihub-npm-gitflow": "2.2.2",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.8.10",
     "jest": "^29.5.2",
@@ -72,6 +72,5 @@
       "<rootDir>/dist/"
     ],
     "collectCoverage": true
-  },
-  "packageManager": "yarn@1.22.22"
+  }
 }
