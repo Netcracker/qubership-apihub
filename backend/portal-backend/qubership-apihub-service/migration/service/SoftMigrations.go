@@ -14,12 +14,7 @@
 
 package service
 
-const typeAndTitleMigrationVersion = 28
-const searchTablesMigrationVersion = 35
-const filesOperationsMigrationVersion = 57
-const groupToDashboardVersion = 100
-const personalWorkspaces = 102
-const draftBlobIds = 133
+//const typeAndTitleMigrationVersion = 28
 
 // SoftMigrateDb The function implements migrations that can't be made via SQL query.
 // Executes only required migrations based on current vs new versions.

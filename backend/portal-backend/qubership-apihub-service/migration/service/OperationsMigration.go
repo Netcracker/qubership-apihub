@@ -32,11 +32,11 @@ import (
 
 func (d dbMigrationServiceImpl) MigrateOperations(migrationId string, req mView.MigrationRequest) error {
 	log.Infof("Migration started with request: %+v", req)
-
-	err := d.validateMinRequiredVersion(filesOperationsMigrationVersion)
-	if err != nil {
-		return err
-	}
+	var err error
+	//err := d.validateMinRequiredVersion(filesOperationsMigrationVersion)
+	//if err != nil {
+	//	return err
+	//}
 
 	mrEnt := mEntity.MigrationRunEntity{
 		Id:                     migrationId,

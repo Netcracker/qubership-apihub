@@ -2078,6 +2078,14 @@ func (v versionServiceImpl) StartPublishFromCSV(ctx context.SecurityContext, req
 				Params:  map[string]interface{}{"packageId": previousVersionPackageId, "version": req.PreviousVersion},
 			}
 		}
+		if prevVersion.Status != string(view.Release) {
+			return "", &exception.CustomError{
+				Status:  http.StatusNotFound,
+				Code:    exception.PreviousPackageVersionNotRelease,
+				Message: exception.PreviousPackageVersionNotReleaseMsg,
+				Params:  map[string]interface{}{"packageId": previousVersionPackageId, "version": req.PreviousVersion},
+			}
+		}
 	}
 
 	publishEntity := &entity.CSVDashboardPublishEntity{
