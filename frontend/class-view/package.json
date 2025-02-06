@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-class-view",
-  "version": "1.0.3-dev.2",
+  "version": "1.0.3",
   "license": "Apache-2.0",
   "type": "module",
   "module": "./dist/index.es.js",
@@ -48,7 +48,7 @@
     "@storybook/blocks": "^7.5.2",
     "@storybook/html": "^7.5.2",
     "@storybook/html-vite": "^7.5.2",
-    "@netcracker/qubership-apihub-npm-gitflow": "2.2.0",
+    "@netcracker/qubership-apihub-npm-gitflow": "2.2.2",
     "@types/d3": "^7.4.3",
     "@types/fontfaceobserver": "^2.1.2",
     "@types/jest": "29.5.1",
