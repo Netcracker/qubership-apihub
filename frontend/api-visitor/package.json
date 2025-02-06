@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-visitor",
-  "version": "1.0.4",
+  "version": "1.0.5-next.2",
   "description": "Takes OpenAPI documents apart",
   "license": "Apache-2.0",
   "main": "./dist/index.cjs.js",
@@ -16,23 +16,23 @@
     "LICENSE"
   ],
   "scripts": {
-    "build:dist": "vite build",
+    "build": "vite build",
     "test": "jest --verbose",
     "lint:check": "eslint -c .eslintrc.json . --ext .js,.cjs,.ts,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
     "lint:fix": "npm run lint:check -- --fix",
-    "development:link": "yarn link && yarn link @netcracker/qubership-apihub-json-crawl && yarn link @netcracker/qubership-apihub-api-unifier",
-    "development:unlink": "yarn unlink && yarn unlink @netcracker/qubership-apihub-json-crawl && yarn unlink @netcracker/qubership-apihub-api-unifier",
+    "development:link": "npm link && npm link @netcracker/qubership-apihub-json-crawl && npm link @netcracker/qubership-apihub-api-unifier",
+    "development:unlink": "npm unlink && npm unlink @netcracker/qubership-apihub-json-crawl && npm unlink @netcracker/qubership-apihub-api-unifier",
     "feature-start": "feature-start --featureName",
     "feature-finish": "feature-finish",
     "release-start": "release-start",
     "release-finish": "release-finish"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-json-crawl": "1.0.2",
-    "@netcracker/qubership-apihub-api-unifier": "1.0.3"
+    "@netcracker/qubership-apihub-json-crawl": "1.0.4",
+    "@netcracker/qubership-apihub-api-unifier": "1.0.4"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-npm-gitflow": "1.0.13",
+    "@netcracker/qubership-apihub-npm-gitflow": "2.2.2",
     "@types/jest": "29.5.11",
     "@typescript-eslint/eslint-plugin": "6.13.2",
     "@typescript-eslint/parser": "6.13.2",
@@ -50,6 +50,5 @@
   },
   "eslintConfig": {
     "extends": ".eslintrc.json"
-  },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  }
 }
