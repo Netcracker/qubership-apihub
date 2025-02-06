@@ -215,7 +215,6 @@ test.describe('5.2.1 Package details', () => {
       annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-4655` },
     },
     async ({ sysadminPage: page }) => {
-      test.skip(isLocalHost(), 'Does not support localhost execution')
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
