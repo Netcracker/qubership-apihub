@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-class-view",
-  "version": "1.0.3-next.1",
+  "version": "1.0.3-next.2",
   "license": "Apache-2.0",
   "type": "module",
   "module": "./dist/index.es.js",
