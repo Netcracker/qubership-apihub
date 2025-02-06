@@ -1,3 +1,6 @@
 .UxContextMenu {
     box-shadow: 1px 1px 2px 2px rgb(230, 230, 230);
+    top: calc(100% + 10px);
+    list-style: none;
+    padding-left: 0;
 }
