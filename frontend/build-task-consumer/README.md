@@ -5,33 +5,52 @@ NodeJS microservice for APIHUB Package versions builds.
 ## Installation
 
 ```bash
-$ yarn
+$ npm
 ```
+
+## Building the app locally
+
+Modify `.npmrc` file by adding GitHub PAT (personal access token) with access to `read packages`.
+
+The file content sample:
+
+```
+@netcracker:registry=https://npm.pkg.github.com/
+//npm.pkg.github.com/:_authToken=ghp_XYZ
+always-auth=true
+```
+
+```bash
+npm install
+npm run build
+podman build -f Dockerfile.local .
+```
+
 
 ## Running the app
 
 ```bash
 # development
-$ yarn start
+$ npm start
 
 # watch mode
-$ yarn start:dev
+$ npm start:dev
 
 # production mode
-$ yarn start:prod
+$ npm start:prod
 ```
 
 ## Test
 
 ```bash
 # unit tests
-$ yarn test
+$ npm test
 
 # e2e tests
-$ yarn test:e2e
+$ npm test:e2e
 
 # test coverage
-$ yarn test:cov
+$ npm test:cov
 ```
 
 # Documentation
