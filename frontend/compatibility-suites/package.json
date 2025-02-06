@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-compatibility-suites",
-  "version": "2.0.3-next.2",
+  "version": "2.0.3",
   "license": "Apache-2.0",
   "type": "module",
   "module": "./dist/index.es.js",
