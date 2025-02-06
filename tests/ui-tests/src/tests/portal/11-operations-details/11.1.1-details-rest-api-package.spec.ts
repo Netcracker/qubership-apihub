@@ -33,6 +33,7 @@ import {
   V_P_PKG_PLAYGROUND_R,
 } from '@test-data/portal'
 import { BASE_ORIGIN, SEARCH_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
+import { isLocalHost } from '@services/utils'
 
 test.describe('11.1.1 Operations details REST API (Package)', () => {
 
@@ -261,6 +262,7 @@ test.describe('11.1.1 Operations details REST API (Package)', () => {
       const { operationPage } = portalPage
       const accessToken = (await getAuthDataFromPage(page)).token
       const testPackage = P_PK_PGND
+      const testCustomServerHost = isLocalHost() ? 'http://host.docker.internal:8081/api/v1' : `${BASE_ORIGIN}/api/v1`
 
       await portalPage.gotoOperation(versionPlayground, GET_SYSTEM_INFO)
       await operationPage.toolbar.playgroundBtn.click()
@@ -300,7 +302,7 @@ test.describe('11.1.1 Operations details REST API (Package)', () => {
 
         await test.step('Add server 2 and select it', async () => {
           await operationPage.playgroundPanel.serverSlt.addCustomServerBtn.click()
-          await operationPage.playgroundPanel.addServerDialog.urlTxtFld.fill(`${BASE_ORIGIN}/api/v1`)
+          await operationPage.playgroundPanel.addServerDialog.urlTxtFld.fill(testCustomServerHost)
           await operationPage.playgroundPanel.addServerDialog.addBtn.click()
           await operationPage.playgroundPanel.serverSlt.click()
 
@@ -311,22 +313,19 @@ test.describe('11.1.1 Operations details REST API (Package)', () => {
         })
       })
 
-      //Playground doesn't work on localhost
-      if (!portalPage.url().includes('localhost')) {
-        await test.step('Send request without token (negative)', async () => {
-          await operationPage.playgroundPanel.sendBtn.click()
+      await test.step('Send request without token (negative)', async () => {
+        await operationPage.playgroundPanel.sendBtn.click()
 
-          await expect(operationPage.playgroundPanel).toContainText('"message": "Unauthorized",')
-        })
+        await expect(operationPage.playgroundPanel).toContainText('"message": "Unauthorized",')
+      })
 
-        await test.step('Send request with token and filters', async () => {
-          await operationPage.playgroundPanel.tokenTxtFld.fill(accessToken)
+      await test.step('Send request with token', async () => {
+        await operationPage.playgroundPanel.tokenTxtFld.fill(accessToken)
 
-          await operationPage.playgroundPanel.sendBtn.click()
+        await operationPage.playgroundPanel.sendBtn.click()
 
-          await expect(operationPage.playgroundPanel).toContainText('"backendVersion"')
-        })
-      }
+        await expect(operationPage.playgroundPanel).toContainText('"backendVersion"')
+      })
 
       await test.step('Close Playground', async () => {
         await operationPage.toolbar.playgroundBtn.click()
