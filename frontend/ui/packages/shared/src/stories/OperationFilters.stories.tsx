@@ -28,7 +28,7 @@ const meta: Meta<OperationFiltersProps> = {
   title: 'Operation Filters',
   args: {
     tags: operationTags,
-    isTagsLoading: false,
+    areTagsLoading: false,
     isPackageVersionContentLoading: false,
     isReferencesLoading: false,
     references: references,

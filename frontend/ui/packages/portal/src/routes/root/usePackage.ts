@@ -223,6 +223,11 @@ export async function deletePackage(
   })
 }
 
+export function useAsyncInvalidatePackage(): (packageKey: Key) => Promise<void> {
+  const client = useQueryClient()
+  return (packageKey: Key) => client.invalidateQueries([PACKAGE_QUERY_KEY, packageKey])
+}
+
 export function useInvalidatePackage(): OptionInvalidateQuery<Key | undefined> {
   const { packageId } = useParams()
 

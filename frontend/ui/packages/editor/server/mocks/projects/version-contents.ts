@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-import type { ProjectVersionContentDto } from '../../../src/entities'
 import { generateRandomDigit } from '../../utils'
+import type { ChangesSummaryDto } from '../changes/types'
+import type { ProjectVersionContentDto } from './types'
 
-const SUMMARY = {
+const SUMMARY: ChangesSummaryDto = {
   breaking: generateRandomDigit(),
-  semiBreaking: generateRandomDigit(),
-  deprecate: generateRandomDigit(),
-  nonBreaking: generateRandomDigit(),
+  'semi-breaking': generateRandomDigit(),
+  deprecated: generateRandomDigit(),
+  'non-breaking': generateRandomDigit(),
   annotation: generateRandomDigit(),
   unclassified: generateRandomDigit(),
 }
@@ -173,7 +174,7 @@ export const PUBLISHED_VERSION_CONTENT_2_2: ProjectVersionContentDto = {
 }
 
 export const PUBLISHED_VERSION_CONTENT_1_4: ProjectVersionContentDto = {
-  status: 'deprecated',
+  status: 'draft',
   publishedAt: '2022-03-25T07:02:00.943324181+03:00',
   publishedBy: 'User',
   versionLabels: ['MyOrganization'],
@@ -237,7 +238,7 @@ export const PUBLISHED_VERSION_CONTENT_1_4: ProjectVersionContentDto = {
 }
 
 export const PUBLISHED_VERSION_CONTENT_1_0: ProjectVersionContentDto = {
-  status: 'deprecated',
+  status: 'draft',
   publishedAt: '2022-03-25T07:02:00.943324181+03:00',
   publishedBy: 'User',
   versionLabels: ['MyOrganization'],

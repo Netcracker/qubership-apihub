@@ -5,7 +5,8 @@
     "plugin:json/recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:react-hooks/recommended",
-    "plugin:storybook/recommended"
+    "plugin:storybook/recommended",
+    "plugin:boundaries/recommended"
   ],
   "env": {
     "es6": true,

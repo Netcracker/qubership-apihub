@@ -23,13 +23,18 @@ import { useBackwardLocation } from '../../useBackwardLocation'
 import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
+import type { PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { CreateDashboardVersionButton } from '@apihub/routes/root/PortalPage/DashboardPage/CreateDashboardVersionButton'
 
 export type CreateVersionButtonProps = {
   disabled: boolean
+  kind?: PackageKind
 }
 
 export const CreateVersionButton: FC<CreateVersionButtonProps> = memo(({
   disabled,
+  kind,
 }) => {
   const location = useBackwardLocation()
   const backwardLocation = useBackwardLocationContext()
@@ -44,6 +49,15 @@ export const CreateVersionButton: FC<CreateVersionButtonProps> = memo(({
     [backwardLocation, location, navigateToVersion, packageId, setBackwardLocation],
   )
 
+  if (kind === DASHBOARD_KIND) {
+    return (
+      <CreateDashboardVersionButton
+        disabled={disabled}
+        sx={{ ml: 'auto' }}
+      />
+    )
+  }
+
   return (
     <ButtonWithHint
       variant="contained"
@@ -51,7 +65,7 @@ export const CreateVersionButton: FC<CreateVersionButtonProps> = memo(({
       disableHint={!disabled}
       hint="You do not have permission to create the version"
       onClick={handleClick}
-      title="Create version"
+      title="Create Version"
       testId="CreateVersionButton"
       tooltipMaxWidth="unset"
     />

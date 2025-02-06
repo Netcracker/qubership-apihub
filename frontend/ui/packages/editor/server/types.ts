@@ -29,3 +29,9 @@ export type Socket = {
   id?: string
   state?: IClientState
 } & WebSocket
+
+export type Key = Readonly<string>
+export type FileKey = Key
+export type VersionKey = Key
+
+export type Url = Readonly<string>

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { PublishedSpecDto } from '../../../src/entities'
+import type { PublishedSpecDto } from '../published-specs/types'
 import { DELETE_METHOD_TYPE, GET_METHOD_TYPE, PATCH_METHOD_TYPE } from './types'
 
 export const OPENAPI_SPEC: PublishedSpecDto = {

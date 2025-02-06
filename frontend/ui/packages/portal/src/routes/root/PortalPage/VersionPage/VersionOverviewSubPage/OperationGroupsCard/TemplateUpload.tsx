@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import type { ChangeEvent, DragEvent, FC } from 'react'
+import type { FC } from 'react'
 import { memo, useCallback } from 'react'
-import { Box, Typography } from '@mui/material'
-import { FileUpload } from '@netcracker/qubership-apihub-ui-shared/components/FileUpload'
-import { UploadButton } from '@netcracker/qubership-apihub-ui-shared/components/UploadButton'
-import { UploadedFilePreview } from '@netcracker/qubership-apihub-ui-shared/components/UploadedFilePreview'
-import { transformFileListToFileArray } from '@netcracker/qubership-apihub-ui-shared/utils/files'
+import {
+  JSON_FILE_EXTENSION,
+  YAML_FILE_EXTENSION,
+  YML_FILE_EXTENSION,
+} from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import { useDownloadExportTemplate } from './useDownloadExportTemplate'
 import { useParams } from 'react-router-dom'
-import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { FileUploadField } from '@netcracker/qubership-apihub-ui-shared/components/FileUploadField'
 
 export type TemplateUploadProps = {
   uploadedFile: File | undefined
@@ -43,18 +43,6 @@ export const TemplateUpload: FC<TemplateUploadProps> = memo<TemplateUploadProps>
   const { packageId, versionId } = useParams()
   const [downloadExportTemplate] = useDownloadExportTemplate()
 
-  const onUpload = useCallback(
-    ({ target: { files } }: ChangeEvent<HTMLInputElement>) =>
-      setUploadedFile(files ? transformFileListToFileArray(files)[0] : undefined),
-    [setUploadedFile])
-
-  const onDrop = useCallback(
-    ({ dataTransfer: { files } }: DragEvent<HTMLElement>) =>
-      setUploadedFile(transformFileListToFileArray(files)[0]),
-    [setUploadedFile])
-
-  const onDelete = useCallback(() => setUploadedFile(undefined), [setUploadedFile])
-
   const onDownload = useCallback(
     () => downloadExportTemplate({
       packageKey: packageId!,
@@ -65,45 +53,13 @@ export const TemplateUpload: FC<TemplateUploadProps> = memo<TemplateUploadProps>
     [apiType, downloadExportTemplate, groupName, packageId, versionId],
   )
 
-  if (uploadedFile) {
-    return (
-      <UploadedFilePreview
-        file={uploadedFile}
-        onDelete={onDelete}
-        onDownload={downloadAvailable ? onDownload : undefined}
-        testId={downloadAvailable ? 'DownloadableFilePreview' : 'NotDownloadableFilePreview'}
-      />
-    )
-  }
-
   return (
-    <Box>
-      <FileUpload onDrop={onDrop}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgb(242, 243, 245)',
-            boxSizing: 'border-box',
-            borderRadius: '10px',
-            width: 1,
-            height: '44px',
-          }}
-        >
-          <CloudUploadOutlinedIcon sx={{ mr: 1, color: 'grey' }}/>
-          <Typography variant="subtitle2" fontSize={13}>
-            Drop YAML or JSON file here to attach or
-          </Typography>
-
-          <UploadButton
-            title="browse"
-            onUpload={onUpload}
-            buttonSxProp={{ p: 0, ml: 0.5, minWidth: 'auto', height: 1, display: 'flex' }}
-            data-testid="BrowseButton"
-          />
-        </Box>
-      </FileUpload>
-    </Box>
+    <FileUploadField
+      uploadedFile={uploadedFile}
+      setUploadedFile={setUploadedFile}
+      downloadAvailable={downloadAvailable}
+      onDownload={onDownload}
+      acceptableExtensions={[YAML_FILE_EXTENSION, YML_FILE_EXTENSION, JSON_FILE_EXTENSION]}
+    />
   )
 })

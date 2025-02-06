@@ -79,7 +79,7 @@ http {
             proxy_redirect off;
         }
 
-        location ~ ^/login/ncgitlab {
+        location ~ ^/login/gitlab {
             proxy_http_version 1.1;
             proxy_pass http://${APIHUB_BACKEND_ADDRESS};
             proxy_set_header Upgrade $http_upgrade;

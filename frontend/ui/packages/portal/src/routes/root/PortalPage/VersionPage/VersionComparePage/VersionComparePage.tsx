@@ -31,10 +31,10 @@ import { useRefSearchParam } from '../../useRefSearchParam'
 import { BreadcrumbsDataContext } from '../ComparedPackagesBreadcrumbsProvider'
 import { useComparisonParams } from '../useComparisonParams'
 import { VersionsComparisonGlobalParamsContext } from '../VersionsComparisonGlobalParams'
-import { DASHBOARD_KIND } from '../../../../../../server/mocks/packages/types'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
 import { useCompareBreadcrumbs } from '@apihub/routes/root/PortalPage/VersionPage/useCompareBreadcrumbs'
 import { useComparisonObjects } from '@apihub/routes/root/PortalPage/VersionPage/useComparisonObjects'
+import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 
 export const VersionComparePage: FC = memo(() => {
   const [mainPackageKind] = usePackageKind()

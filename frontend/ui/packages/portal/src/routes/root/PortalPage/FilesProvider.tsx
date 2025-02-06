@@ -243,7 +243,7 @@ async function getFileTypesAndLabels(files: File[], config?: PackageVersionConfi
   ]
 }
 
-const FilesContext = createContext<State>()
+const FilesContext = createContext<State>(INITIAL_STATE)
 const FileActionsContext = createContext<Actions>()
 const FilesLoadingContext = createContext<IsLoading>()
 

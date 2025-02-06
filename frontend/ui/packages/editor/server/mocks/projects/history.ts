@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ProjectFileHistoryDto } from '../../../src/entities'
+import type { ProjectFileHistoryDto } from './types'
 
 export const FILE_HISTORY: ProjectFileHistoryDto = {
   changes: [
@@ -26,6 +26,7 @@ export const FILE_HISTORY: ProjectFileHistoryDto = {
         avatarUrl: '<base64-encoded-image>',
       },
       modifiedAt: '2022-04-12T06:14:26-04:00',
+      // @ts-expect-error // FIXME 24.01.25
       version: '1.8',
       publishedAt: '2022-04-14T15:50:22.834278282+03:00',
       comment: '[APIHUB] 1.5',
@@ -38,6 +39,7 @@ export const FILE_HISTORY: ProjectFileHistoryDto = {
         avatarUrl: '<base64-encoded-image>',
       },
       modifiedAt: '2022-04-07T12:21:47+04:00',
+      // @ts-expect-error // FIXME 24.01.25
       version: '1.3',
       publishedAt: '2022-04-12T09:38:38.468867767+03:00',
       comment: 'APIHUB Test Project\n',
@@ -50,6 +52,7 @@ export const FILE_HISTORY: ProjectFileHistoryDto = {
         avatarUrl: '<base64-encoded-image>',
       },
       modifiedAt: '2022-04-07T12:21:47+04:00',
+      // @ts-expect-error // FIXME 24.01.25
       publishedAt: '2022-04-12T09:38:38.468867767+03:00',
       comment: 'Fix some very baaaaaaaaaaaaad bugs',
     },

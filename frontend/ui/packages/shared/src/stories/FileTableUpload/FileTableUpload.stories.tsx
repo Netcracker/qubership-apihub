@@ -48,6 +48,7 @@ export const WithFilesStory: Story = {
         labels: ['personal', 'holiday'],
       },
     },
+    showPlaceholder: true,
     onAddFiles: () => null,
     getFileClickHandler: () => null,
     getFileLeftIcon: () => <SpecLogo value={''}/>,

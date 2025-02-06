@@ -62,7 +62,7 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
 
   const [versionsFilter, setVersionsFilter] = useState('')
   const [versions, areVersionsLoading] = usePackageVersions({ textFilter: versionsFilter })
-  const { filesWithLabels } = useFiles() || {}
+  const { filesWithLabels } = useFiles()
   const isEditingVersion = !!versionId && versionId !== SPECIAL_VERSION_KEY
 
   const packageKind = packageObj?.kind
@@ -79,12 +79,12 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
   const getVersionLabels = useCallback((version: Key) => versionLabelsMap[version] ?? [], [versionLabelsMap])
 
   const defaultValues = useMemo(() => {
-    const { status, versionLabels, previousVersion } = currentVersion || {}
+    const { status, versionLabels, previousVersion } = currentVersion ?? {}
     return {
       version: isEditingVersion ? getSplittedVersionKey(versionId).versionKey : '',
-      status: status || DRAFT_VERSION_STATUS,
-      labels: versionLabels || [],
-      previousVersion: previousVersion || NO_PREVIOUS_RELEASE_VERSION_OPTION,
+      status: status ?? DRAFT_VERSION_STATUS,
+      labels: versionLabels ?? [],
+      previousVersion: previousVersion ?? NO_PREVIOUS_RELEASE_VERSION_OPTION,
     }
   }, [currentVersion, isEditingVersion, versionId])
 
@@ -108,7 +108,7 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
       labels: data.labels,
       previousVersion: previousVersion,
       ...takeIf({
-        files: filesWithLabels && Object.entries(filesWithLabels)?.map(([key, { labels }]) => ({
+        files: Object.entries(filesWithLabels)?.map(([key, { labels }]) => ({
           fileId: key,
           labels: labels,
           publish: true,

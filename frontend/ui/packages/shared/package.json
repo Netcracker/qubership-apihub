@@ -1,28 +1,23 @@
 {
   "name": "@netcracker/qubership-apihub-ui-shared",
-  "version": "2.9.4-develop.0",
-  "private": false,
-  "license": "SEE LICENSE IN 'LICENSE' FILE",
+  "version": "0.0.0",
+  "private": true,
+  "license": "Apache-2.0",
   "files": [
     "**/*"
   ],
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "build": "tsc && vite build",
     "lint": "eslint . --ext .ts,.tsx,.json --ignore-path ../../.gitignore --max-warnings 0 --report-unused-disable-directives",
-    "format": "yarn run lint --fix",
+    "format": "npm run lint --fix",
     "storybook": "storybook dev -p 6006",
     "build:showcase": "storybook build -o dist-showcase --disable-telemetry",
-    "integration-test:develop": "yarn run build:showcase && start-server-and-test integration-test:server http://localhost:6006 integration-test:run-local",
-    "integration-test:ci": "yarn run build:showcase && start-server-and-test integration-test:server http://localhost:6006 integration-test:run-ci",
+    "integration-test:develop": "npm run build:showcase && start-server-and-test integration-test:server http://localhost:6006 integration-test:run-local",
+    "integration-test:ci": "npm run build:showcase && start-server-and-test integration-test:server http://localhost:6006 integration-test:run-ci",
     "integration-test:server": "ws -p 6006 -d dist-showcase --spa index.html --static.maxage 3600",
     "integration-test:run-local": "jest -w 3 -c .jest/integration/it-test-docker.jest.config.js",
-    "integration-test:run-ci": "jest -w 8 -c .jest/integration/it-test.jest.config.js",
-    "feature-start": "feature-start --featureName",
-    "feature-finish": "feature-finish",
-    "release-start": "release-start",
-    "release-finish": "release-finish"
+    "integration-test:run-ci": "jest -w 8 -c .jest/integration/it-test.jest.config.js"
   },
   "peerDependencies": {
     "@emotion/react": "11.10.6",
@@ -30,10 +25,6 @@
     "@mui/icons-material": "5.11.9",
     "@mui/material": "5.11.10",
     "@mui/private-theming": "5.11.9",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "react-hook-form": "7.39.7",
-    "react-router-dom": "6.8.1",
     "js-file-download": "0.4.12",
     "jszip": "3.10.1"
   },

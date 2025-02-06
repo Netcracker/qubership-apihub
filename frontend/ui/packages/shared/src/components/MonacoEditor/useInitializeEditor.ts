@@ -17,7 +17,7 @@
 import { editor as Editor } from 'monaco-editor'
 import type { MutableRefObject, RefObject } from 'react'
 import { useEffectOnce } from 'react-use'
-import type { LanguageType } from '@netcracker/qubership-apihub-ui-shared/types/languages'
+import type { LanguageType } from '../../types/languages'
 
 export function useInitializeEditor(
   ref: RefObject<HTMLDivElement>,

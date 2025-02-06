@@ -18,7 +18,7 @@ import { editor as Editor, Uri } from 'monaco-editor'
 import type { MutableRefObject } from 'react'
 import { useEffect } from 'react'
 import type { SpecType } from '../../utils/specs'
-import type { LanguageType } from '@netcracker/qubership-apihub-ui-shared/types/languages'
+import type { LanguageType } from '../../types/languages'
 
 export function useSetEditorModel(
   editor: MutableRefObject<Editor.IStandaloneCodeEditor | undefined>,

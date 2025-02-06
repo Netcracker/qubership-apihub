@@ -48,7 +48,7 @@ export const DefaultStory: Story = {
   name: 'Default',
   args: {
     tags: operationTags,
-    isLoading: false,
+    areTagsLoading: false,
   },
   render: StoryComponent,
 }

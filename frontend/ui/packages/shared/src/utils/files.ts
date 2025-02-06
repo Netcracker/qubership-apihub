@@ -31,6 +31,8 @@ import {
   UNKNOWN_SPEC_TYPE,
 } from './specs'
 import { isFastJsonSchema, toJsonSchema } from './specifications'
+import { uniq } from 'lodash-es'
+import { toFormattedEnumeration } from './strings'
 
 export const YAML_FILE_EXTENSION = '.yaml'
 export const YML_FILE_EXTENSION = '.yml'
@@ -40,6 +42,7 @@ export const HTML_FILE_EXTENSION = '.html'
 export const GRAPHQL_FILE_EXTENSION = '.graphql'
 export const GQL_FILE_EXTENSION = '.gql'
 export const PROTO_FILE_EXTENSION = '.proto'
+export const CSV_FILE_EXTENSION = '.csv'
 
 export type FileExtension =
   | typeof YAML_FILE_EXTENSION
@@ -50,6 +53,7 @@ export type FileExtension =
   | typeof GRAPHQL_FILE_EXTENSION
   | typeof GQL_FILE_EXTENSION
   | typeof PROTO_FILE_EXTENSION
+  | typeof CSV_FILE_EXTENSION
 
 export function calculateSpecType(extension: Exclude<FileExtension, typeof YML_FILE_EXTENSION>, content: string): SpecType {
   if (extension === JSON_FILE_EXTENSION) {
@@ -152,6 +156,7 @@ export const JSON_FILE_FORMAT = 'json'
 export const YAML_FILE_FORMAT = 'yaml'
 export const PROTOBUF_FILE_FORMAT = 'proto'
 export const MD_FILE_FORMAT = 'md'
+export const CSV_FILE_FORMAT = 'csv'
 export const UNKNOWN_FILE_FORMAT = 'unknown'
 
 export type FileFormat =
@@ -160,6 +165,7 @@ export type FileFormat =
   | typeof PROTOBUF_FILE_FORMAT
   | typeof MD_FILE_FORMAT
   | typeof GRAPHQL_FILE_FORMAT
+  | typeof CSV_FILE_FORMAT
   | typeof UNKNOWN_FILE_FORMAT
 
 export function getFileFormat(fileName: string): FileFormat {
@@ -180,8 +186,20 @@ export function getFileFormat(fileName: string): FileFormat {
   if ([GRAPHQL_FILE_EXTENSION, GQL_FILE_EXTENSION].includes(extension)) {
     return GRAPHQL_FILE_FORMAT
   }
+  if (extension === CSV_FILE_EXTENSION) {
+    return CSV_FILE_FORMAT
+  }
 
   return UNKNOWN_FILE_FORMAT
+}
+
+export function toFileFormats(fileExtensions: FileExtension[]): FileFormat[] {
+  // Both .yaml and .yml extensions are getting transformed to the same yaml format in getFileFormat, so have to use uniq to filter out duplicates
+  return uniq(fileExtensions.map(type => getFileFormat(type)))
+}
+
+export function createFileFormatEnumeration(acceptableExtensions: FileExtension[]): string {
+  return toFormattedEnumeration(toFileFormats(acceptableExtensions).map(ext => ext.toString().toUpperCase()))
 }
 
 // Copy-pasted from `apihub-builder`

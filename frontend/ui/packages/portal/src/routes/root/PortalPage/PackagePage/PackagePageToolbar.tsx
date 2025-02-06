@@ -28,7 +28,7 @@ export type PackagePageToolbarProps = {
   packageObject: Package | null
 }
 export const PackagePageToolbar: FC<PackagePageToolbarProps> = memo<PackagePageToolbarProps>(({ packageObject }) => {
-  const { name = '', permissions } = packageObject ?? {}
+  const { name = '', permissions, kind } = packageObject ?? {}
 
   const hasCreateVersionPermissions = useMemo(
     () => CREATE_VERSION_PERMISSIONS.some(managePermission =>
@@ -41,7 +41,7 @@ export const PackagePageToolbar: FC<PackagePageToolbarProps> = memo<PackagePageT
     <Toolbar
       breadcrumbs={<PackageBreadcrumbs packageObject={packageObject}/>}
       header={<ToolbarTitle value={name}/>}
-      action={<CreateVersionButton disabled={!hasCreateVersionPermissions}/>}
+      action={<CreateVersionButton disabled={!hasCreateVersionPermissions} kind={kind}/>}
     />
   )
 })

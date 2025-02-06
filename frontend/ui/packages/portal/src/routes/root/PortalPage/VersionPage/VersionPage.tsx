@@ -40,6 +40,10 @@ import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/compon
 import { PreviousReleaseOptionsProvider } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget'
 import { TOGGLE_SIDEBAR_BUTTON } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
 import { LayoutWithTabs } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithTabs'
+import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import {
+  PublishDashboardVersionFromCSVDialog,
+} from '@apihub/routes/root/PortalPage/DashboardPage/PublishDashboardVersionFromCSVDialog'
 
 export const VersionPage: FC = memo(() => {
   const [menuItem] = useActiveTabs()
@@ -58,6 +62,7 @@ export const VersionPage: FC = memo(() => {
               <OutdatedRevisionNotification/>
             </NoPackageVersionPlaceholder>
           </NoPackagePlaceholder>
+          {packageObject?.kind === DASHBOARD_KIND && <PublishDashboardVersionFromCSVDialog/>}
         </ActivityHistoryFiltersProvider>
       </FullMainVersionProvider>
     </CurrentPackageProvider>
