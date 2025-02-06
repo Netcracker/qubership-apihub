@@ -69,7 +69,11 @@ Before starting test execution, you need to set environment variables in any con
 ### Local test running
 Example of running tests for the Portal with three workers:
 ```Shell
- npx playwright test --project=Portal --j=3
+ npx playwright test --project=Portal --workers=3
+```
+Example of running only the tests that failed in the previous run:
+```Shell
+ npx playwright test --project=Portal --last-failed
 ```
 You can open the HTML report with the following command:
 ```Shell
