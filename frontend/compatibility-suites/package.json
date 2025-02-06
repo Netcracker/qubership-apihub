@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-compatibility-suites",
-  "version": "2.0.3-dev.5",
+  "version": "2.0.3",
   "license": "Apache-2.0",
   "type": "module",
   "module": "./dist/index.es.js",
@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "tslib": "2.6.3",
-    "@netcracker/qubership-apihub-npm-gitflow": "2.2.0",
+    "@netcracker/qubership-apihub-npm-gitflow": "2.2.2",
     "@types/node": "^18.0.0",
     "vite": "4.5.0",
     "vite-plugin-dts": "3.6.4",
