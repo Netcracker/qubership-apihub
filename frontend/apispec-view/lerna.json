@@ -2,7 +2,5 @@
   "packages": [
     "packages/elements"
   ],
-  "version": "independent",
-  "npmClient": "yarn",
-  "useWorkspaces": true
+  "version": "1.0.21-next.2"
 }
