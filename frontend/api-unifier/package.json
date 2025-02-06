@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-unifier",
-  "version": "1.0.4-next.2",
+  "version": "1.0.4",
   "description": "Tools for JsonSchema/Openapi/GraphQL spec for unified processing",
   "module": "./dist/index.es.js",
   "main": "./dist/index.cjs.js",
