@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-rest-playground",
-  "version": "1.0.6",
+  "version": "1.0.7-next.2",
   "description": "Web Component for Try It",
   "sideEffects": [
     "./dist/index.js"
@@ -16,7 +16,7 @@
     "node": ">=14.13"
   },
   "scripts": {
-    "build": "yarn build.webcomponents && yarn build.styles",
+    "build": "npm run build.webcomponents && npm run build.styles",
     "build.styles": "postcss src/styles.css -o dist/styles.min.css",
     "build.webcomponents": "webpack -c ./web-components.webpack.config.js",
     "storybook": "start-storybook -p 9001",
@@ -43,8 +43,8 @@
     "@mui/lab": "5.0.0-alpha.120",
     "@mui/material": "5.11.10",
     "@mui/private-theming": "5.11.9",
-    "@netcracker/qubership-apihub-http-spec": "5.5.6",
-    "@netcracker/qubership-apihub-npm-gitflow": "1.0.13",
+    "@netcracker/qubership-apihub-http-spec": "5.5.7",
+    "@netcracker/qubership-apihub-npm-gitflow": "2.2.2",
     "@stoplight/eslint-config": "2.1.0",
     "@stoplight/json": "^3.18.1",
     "@stoplight/json-schema-ref-parser": "^9.0.5",
@@ -69,7 +69,6 @@
     "@storybook/theming": "6.5.12",
     "@types/classnames": "^2.2.10",
     "@types/enzyme": "3.x.x",
-    "@types/enzyme-adapter-react-16": "1.x.x",
     "@types/har-format": "^1.2.5",
     "@types/httpsnippet": "^1.23.0",
     "@types/json-schema": "^7.0.11",
@@ -89,7 +88,6 @@
     "css-loader": "6.7.1",
     "cssnano": "5.0.6",
     "enzyme": "3.x.x",
-    "enzyme-adapter-react-16": "1.x.x",
     "enzyme-to-json": "3.x.x",
     "eslint": "7.31.0",
     "eslint-plugin-import": "2.23.4",
@@ -116,7 +114,7 @@
     "react-query": "^3.34.19",
     "react-router-dom": "^5.2.0",
     "react-router-hash-link": "^2.1.0",
-    "react-test-renderer": "^16.8.0",
+    "react-test-renderer": "^17.0.2",
     "style-loader": "^2.0.0",
     "ts-loader": "^9.2.8",
     "tsconfig-paths-webpack-plugin": "^3.2.0",
@@ -128,6 +126,5 @@
     "webpack-cli": "4.7.2",
     "webpack-dev-server": "3.11.2",
     "xml-formatter": "^2.6.1"
-  },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  }
 }
