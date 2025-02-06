@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-unifier",
-  "version": "1.0.4-dev.2",
+  "version": "1.0.4",
   "description": "Tools for JsonSchema/Openapi/GraphQL spec for unified processing",
   "module": "./dist/index.es.js",
   "main": "./dist/index.cjs.js",
@@ -43,13 +43,13 @@
     "simplify"
   ],
   "dependencies": {
-    "@netcracker/qubership-apihub-json-crawl": "dev",
+    "@netcracker/qubership-apihub-json-crawl": "1.0.4",
     "object-hash": "3.0.0",
     "fast-equals": "4.0.3"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-graphapi": "1.0.7",
-    "@netcracker/qubership-apihub-npm-gitflow": "2.2.0",
+    "@netcracker/qubership-apihub-graphapi": "1.0.8",
+    "@netcracker/qubership-apihub-npm-gitflow": "2.2.2",
     "@types/object-hash": "3.0.6",
     "@types/jest": "29.5.2",
     "@types/js-yaml": "4.0.5",
