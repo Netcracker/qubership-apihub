@@ -37,9 +37,10 @@ export const BasePage: FC = memo(() => {
   const { notification: systemNotification } = useSystemInfo()
   const showErrorNotification = useShowErrorNotification()
 
+  const EDITOR_DEPRECATED = 40
   const viewPortStyleCalculator = useCallback(
     (theme: Theme): SystemStyleObject<Theme> => {
-      return cutViewPortStyleCalculator(theme, systemNotification ? NOTIFICATION_HEIGHT : 0)
+      return cutViewPortStyleCalculator(theme, systemNotification ? NOTIFICATION_HEIGHT + EDITOR_DEPRECATED : EDITOR_DEPRECATED)
     },
     [systemNotification],
   )
@@ -76,6 +77,8 @@ export const BasePage: FC = memo(() => {
         {systemNotification && (
           <MaintenanceNotification value={systemNotification} />
         )}
+        <MaintenanceNotification
+          value={'API Editor will be deprecated in upcoming releases. A VS Code plugin will replace it, enabling you to publish your API documents directly to Portal.'}/>
       </Box>
     </MainPageProvider>
   )
