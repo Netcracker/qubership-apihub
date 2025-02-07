@@ -32,8 +32,8 @@ import {
   V_P_PKG_OPERATIONS_REST_R,
   V_P_PKG_PLAYGROUND_R,
 } from '@test-data/portal'
-import { BASE_ORIGIN, SEARCH_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
-import { isLocalHost } from '@services/utils'
+import { SEARCH_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
+import { getPlaygroundCustomServer } from '@services/utils'
 
 test.describe('11.1.1 Operations details REST API (Package)', () => {
 
@@ -262,7 +262,6 @@ test.describe('11.1.1 Operations details REST API (Package)', () => {
       const { operationPage } = portalPage
       const accessToken = (await getAuthDataFromPage(page)).token
       const testPackage = P_PK_PGND
-      const testCustomServerHost = isLocalHost() ? 'http://host.docker.internal:8081/api/v1' : `${BASE_ORIGIN}/api/v1`
 
       await portalPage.gotoOperation(versionPlayground, GET_SYSTEM_INFO)
       await operationPage.toolbar.playgroundBtn.click()
@@ -302,7 +301,7 @@ test.describe('11.1.1 Operations details REST API (Package)', () => {
 
         await test.step('Add server 2 and select it', async () => {
           await operationPage.playgroundPanel.serverSlt.addCustomServerBtn.click()
-          await operationPage.playgroundPanel.addServerDialog.urlTxtFld.fill(testCustomServerHost)
+          await operationPage.playgroundPanel.addServerDialog.urlTxtFld.fill(getPlaygroundCustomServer())
           await operationPage.playgroundPanel.addServerDialog.addBtn.click()
           await operationPage.playgroundPanel.serverSlt.click()
 

@@ -26,6 +26,12 @@ Before starting test execution, you need to set environment variables in any con
 
 **TEST_USER_PASSWORD** - The password that will be used by test users.
 
+**PLAYGROUND_BACKEND_HOST** - Only Required for testing on **localhost**. The host that will be used in the test to create a custom server for sending requests. More information can be found at the [link](https://github.com/Netcracker/qubership-apihub/issues/18).
+
+**DEV_PROXY_MODE** - Only Required for testing on **localhost** in dev proxy mode.
+
+`true` - skip tests that cannot be executed in this mode.
+
 ### Optional environment variables:
 **TICKET_SYSTEM_URL** - Base address of the ticket management system. Adds interactivity to links to test cases and issues.
 

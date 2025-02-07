@@ -28,6 +28,8 @@ async function globalSetup(): Promise<void> {
   // Print environment variables
   logEnvVars([
     'BASE_URL',
+    'PLAYGROUND_BACKEND_HOST',
+    'DEV_PROXY_MODE',
     'TICKET_SYSTEM_URL',
     'AUTH',
     'CREATE_TD',
