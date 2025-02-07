@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-ui-agents",
-  "version": "2.9.6-dev.2",
+  "version": "2.9.6-feature-specific-pkg-version.0",
   "license": "Apache-2.0",
   "files": [
     "/dist"
