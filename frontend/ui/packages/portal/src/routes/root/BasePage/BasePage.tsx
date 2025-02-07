@@ -42,6 +42,7 @@ import { useEventBus } from '@apihub/routes/EventBusProvider'
 import { matchPathname } from '@netcracker/qubership-apihub-ui-shared/utils/urls'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { SystemInfoPopup, useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
+import * as packageJson from '../../../../package.json'
 
 export const BasePage: FC = memo(() => {
   const [authorization] = useAuthorization()
@@ -74,7 +75,7 @@ export const BasePage: FC = memo(() => {
           action={<>
             <SearchButton />
             {isSuperAdmin && <PortalSettingsButton />}
-            <SystemInfoPopup/>
+            <SystemInfoPopup frontendVersionKey={packageJson.version} />
             <UserPanel />
           </>}
         />

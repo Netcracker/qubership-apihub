@@ -20,14 +20,15 @@ import { Box, DialogContent, DialogTitle, Divider, IconButton, Link, Popover, Ty
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import { useSystemInfo } from '../api/useSystemInfo'
-import { useLocalFrontendVersion } from '../../../hooks/common/useLocalFrontendVersion'
 import { isNotEmpty } from '../../../utils/arrays'
-import * as packageJson from '../../../../package.json'
 
-export const SystemInfoPopup: FC = memo(() => {
+type SystemInfoPopupProps = {
+  frontendVersionKey: string
+}
+
+export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({ frontendVersionKey }) => {
   const [anchor, setAnchor] = useState<HTMLElement>()
   const { backendVersionKey, externalLinks } = useSystemInfo()
-  const frontendVersionKey = useLocalFrontendVersion(packageJson)
 
   return (
     <>
