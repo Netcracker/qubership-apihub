@@ -65,6 +65,9 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     optimizeDeps: {
+      // npm link creates a symlink that points outside node_modules and by default such packages are not optimized.
+      // Using include here forces packages to be optimized.
+      include: ['@netcracker/qubership-apihub-api-processor'],
       esbuildOptions: {
         plugins: [
           NodeModulesPolyfill(),

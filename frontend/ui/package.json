@@ -10,6 +10,8 @@
     "build": "npx lerna run build",
     "lint": "eslint . --ext .ts,.tsx,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
     "format": "npm run lint --fix",
+    "development:link": "npm link @netcracker/qubership-apihub-api-processor",
+    "development:unlink": "npm unlink @netcracker/qubership-apihub-api-processor",
     "dev:agents": "npx lerna run dev:backend,dev:frontend --stream --scope=@netcracker/qubership-apihub-ui-agents",
     "dev:editor": "npx lerna run dev:backend,dev:frontend --stream --scope=@netcracker/qubership-apihub-ui-editor",
     "dev:portal": "npx lerna run dev:backend,dev:frontend --stream --scope=@netcracker/qubership-apihub-ui-portal",
