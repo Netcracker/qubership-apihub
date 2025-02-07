@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-ui-portal",
-  "version": "2.9.6-feature-linked-api-processor-breaks-ui.0",
+  "version": "2.9.6-feature-linked-api-processor-breaks-ui.1",
   "license": "Apache-2.0",
   "files": [
     "/dist"
