@@ -33,7 +33,7 @@ import {
   V_P_PKG_WITHOUT_LABELS_R,
 } from '@test-data/portal'
 import { SYSADMIN } from '@test-data'
-import { isLocalHost } from '@services/utils'
+import { isDevProxyMode } from '@services/utils'
 
 test.describe('5.2.1 Package details', () => {
 
@@ -215,7 +215,7 @@ test.describe('5.2.1 Package details', () => {
       annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-4655` },
     },
     async ({ sysadminPage: page }) => {
-      test.skip(isLocalHost(), 'Does not support localhost execution')
+      test.skip(isDevProxyMode(), 'Does not support dev proxy')
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage

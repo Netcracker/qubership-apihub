@@ -66,6 +66,7 @@ test.describe('4.3.2 Package publishing via Portal', () => {
         await expect(configureVersionTab.filesUploader).toBeVisible()
       })
 
+      //Does not support localhost execution
       if (!isLocalHost()) {
         await test.step('Agent option', async () => {
           await portalPage.gotoPackage(testPackage)
