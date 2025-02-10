@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-ui-editor",
-  "version": "2.9.6-feature-specific-pack-version.0",
+  "version": "2.9.6-feature-specific-pack-version.1",
   "license": "Apache-2.0",
   "files": [
     "/dist"
