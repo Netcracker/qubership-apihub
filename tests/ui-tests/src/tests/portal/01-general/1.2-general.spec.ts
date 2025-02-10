@@ -20,7 +20,7 @@ import { getSysInfo } from '@test-data/props'
 import { AgentPage } from '@agent/pages'
 import { PortalPage } from '@portal/pages'
 import { MIDDLE_EXPECT, TICKET_BASE_URL } from '@test-setup'
-import { isLocalHost } from '@services/utils'
+import { isDevProxyMode } from '@services/utils'
 
 test.describe('General', () => {
 
@@ -53,7 +53,7 @@ test.describe('General', () => {
       annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-4279` },
     },
     async ({ sysadminPage: page }) => {
-      test.skip(isLocalHost(), 'Does not support localhost execution')
+      test.skip(isDevProxyMode(), 'Does not support dev proxy mode')
 
       const portalPage = new PortalPage(page)
       const agentPage = new AgentPage(page)

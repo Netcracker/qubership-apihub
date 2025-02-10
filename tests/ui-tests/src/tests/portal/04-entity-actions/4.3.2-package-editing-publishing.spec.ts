@@ -41,7 +41,7 @@ import {
   V_P_PKG_EDITING_SEARCH_R,
 } from '@test-data/portal'
 import { PUBLISH_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
-import { isLocalHost } from '@services/utils'
+import { isDevProxyMode } from '@services/utils'
 
 test.describe('4.3.2 Package publishing via Portal', () => {
 
@@ -66,8 +66,8 @@ test.describe('4.3.2 Package publishing via Portal', () => {
         await expect(configureVersionTab.filesUploader).toBeVisible()
       })
 
-      //Does not support localhost execution
-      if (!isLocalHost()) {
+      //Does not support dev proxy mode
+      if (!isDevProxyMode()) {
         await test.step('Agent option', async () => {
           await portalPage.gotoPackage(testPackage)
           await versionPage.howToUploadBtn.click()

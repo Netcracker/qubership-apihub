@@ -1,6 +1,8 @@
 # APIHUB UI auto-tests
 This project is used to create and run auto-tests, primarily for UI E2E. The framework used is [Playwright](https://playwright.dev/).
 
+[Features of running on a **localhost**](docs/localhost-run.md)
+
 ## Contents
 - [Installation](#installation)
 - [Environment variables](#environment-variables)
@@ -26,7 +28,7 @@ Before starting test execution, you need to set environment variables in any con
 
 **TEST_USER_PASSWORD** - The password that will be used by test users.
 
-**PLAYGROUND_BACKEND_HOST** - Only Required for testing on **localhost**. The host that will be used in the test to create a custom server for sending requests. More information can be found at the [link](https://github.com/Netcracker/qubership-apihub/issues/18).
+**PLAYGROUND_BACKEND_HOST** - Only Required for testing on **localhost**. The host that will be used in the test to create a custom server for sending requests. More information can be found at the [link](docs/localhost-run.md).
 
 **DEV_PROXY_MODE** - Only Required for testing on **localhost** in dev proxy mode.
 
