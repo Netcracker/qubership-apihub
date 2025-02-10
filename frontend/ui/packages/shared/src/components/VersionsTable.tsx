@@ -82,7 +82,10 @@ export const VersionsTable: FC<VersionsTableProps> = memo<VersionsTableProps>(({
       cell: ({ row: { original: { version } } }) => {
         const { versionKey } = getSplittedVersionKey(version?.key)
         return (
-          <TextWithOverflowTooltip tooltipText={versionKey}>
+          <TextWithOverflowTooltip
+            tooltipText={versionKey}
+            sx={{ color: '#0068FF' }}
+          >
             {versionKey}
           </TextWithOverflowTooltip>
         )
@@ -179,7 +182,14 @@ export const VersionsTable: FC<VersionsTableProps> = memo<VersionsTableProps>(({
         </TableHead>
         <TableBody>
           {getRowModel().rows.map(row => (
-            <TableRow key={row.id}>
+            <TableRow
+              key={row.id}
+              sx={{
+                '&:hover': {
+                  cursor: 'pointer'
+                }
+              }}
+            >
               {row.getVisibleCells().map((cell) => (
                 <TableCell
                   key={cell.column.id}
@@ -220,13 +230,13 @@ const RowSkeleton: FC = memo(() => {
   return (
     <TableRow>
       <TableCell>
-        <Skeleton variant="rectangular" width={'80%'}/>
+        <Skeleton variant="rectangular" width='80%' />
       </TableCell>
       <TableCell>
-        <Skeleton variant="rectangular" width={'80%'}/>
+        <Skeleton variant="rectangular" width='80%' />
       </TableCell>
       <TableCell>
-        <Skeleton variant="rectangular" width={'80%'}/>
+        <Skeleton variant="rectangular" width='80%' />
       </TableCell>
     </TableRow>
   )
