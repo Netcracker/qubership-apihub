@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-ui-tests",
-  "version": "2.36.1-dev.0",
+  "version": "2.36.1-feature-improve-localhost-run-test.0",
   "license": "Apache-2.0",
   "scripts": {
     "html-report": "playwright show-report reports/playwright",
