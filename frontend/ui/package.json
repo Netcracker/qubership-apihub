@@ -18,7 +18,7 @@
     "feature-start": "feature-start --featureName",
     "feature-finish": "feature-finish",
     "release-start": "release-start",
-    "release-finish": "release-finish"
+    "release-finish": "release-finish" 
   },
   "dependencies": {
     "@emotion/react": "11.10.6",
