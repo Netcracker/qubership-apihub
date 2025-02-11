@@ -62,6 +62,11 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     optimizeDeps: {
+      // npm link creates a symlink that points outside node_modules and by default such packages are not optimized.
+      // Using "include" here forces listed packages to be optimized.
+      // For example, without this setting, esbuildOptions are not being applied to the npm-linked
+      // @netcracker/qubership-apihub-api-processor during "npm run proxy", which leads to reference errors
+      // like "process is not defined" and "Buffer is not defined".
       include: [
         '@netcracker/qubership-apihub-api-processor',
       ],
