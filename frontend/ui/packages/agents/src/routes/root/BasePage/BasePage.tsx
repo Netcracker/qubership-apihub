@@ -29,6 +29,7 @@ import { LogoIcon } from '@netcracker/qubership-apihub-ui-shared/icons/LogoIcon'
 import { AppHeader } from '@netcracker/qubership-apihub-ui-shared/components/AppHeader'
 import { MaintenanceNotification } from '@netcracker/qubership-apihub-ui-shared/components/MaintenanceNotification'
 import { SystemInfoPopup } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
+import * as packageJson from '../../../../package.json'
 
 export const BasePage: FC = memo(() => {
   useAuthorization()
@@ -57,7 +58,7 @@ export const BasePage: FC = memo(() => {
         ]}
         action={
           <>
-            <SystemInfoPopup />
+            <SystemInfoPopup frontendVersionKey={packageJson.version} />
             <UserPanel />
           </>
         } />

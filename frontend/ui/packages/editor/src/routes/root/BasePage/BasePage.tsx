@@ -32,6 +32,7 @@ import {
 import { AppHeader } from '@netcracker/qubership-apihub-ui-shared/components/AppHeader'
 import { LogoIcon } from '@netcracker/qubership-apihub-ui-shared/icons/LogoIcon'
 import { ExceptionSituationHandler } from '@netcracker/qubership-apihub-ui-shared/components/ExceptionSituationHandler'
+import * as packageJson from '../../../../package.json'
 
 export const BasePage: FC = memo(() => {
   const { notification: systemNotification } = useSystemInfo()
@@ -61,7 +62,7 @@ export const BasePage: FC = memo(() => {
             { name: 'Agent', pathname: '/agents', testId: 'AgentHeaderButton' },
           ]}
           action={<>
-            <SystemInfoPopup />
+            <SystemInfoPopup frontendVersionKey={packageJson.version} />
             <UserPanel />
           </>}
         />
@@ -78,7 +79,7 @@ export const BasePage: FC = memo(() => {
           <MaintenanceNotification value={systemNotification} />
         )}
         <MaintenanceNotification
-          value={'API Editor will be deprecated in upcoming releases. A VS Code plugin will replace it, enabling you to publish your API documents directly to Portal.'}/>
+          value={'API Editor will be deprecated in upcoming releases. A VS Code plugin will replace it, enabling you to publish your API documents directly to Portal.'} />
       </Box>
     </MainPageProvider>
   )
