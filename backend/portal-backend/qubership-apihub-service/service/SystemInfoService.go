@@ -73,6 +73,9 @@ const (
 	DEFAULT_WORKSPACE_ID                   = "DEFAULT_WORKSPACE_ID"
 	CUSTOM_PATH_PREFIXES                   = "CUSTOM_PATH_PREFIXES"
 	ALLOWED_HOSTS                          = "ALLOWED_HOSTS"
+	APIHUB_ADMIN_EMAIL                     = "APIHUB_ADMIN_EMAIL"
+	APIHUB_ADMIN_PASSWORD                  = "APIHUB_ADMIN_PASSWORD"
+	APIHUB_SYSTEM_API_KEY                  = "APIHUB_ACCESS_TOKEN"
 )
 
 type SystemInfoService interface {
@@ -126,6 +129,8 @@ type SystemInfoService interface {
 	GetDefaultWorkspaceId() string
 	GetCustomPathPrefixes() []string
 	GetAllowedHosts() []string
+	GetZeroDayAdminCreds() (string, string, error)
+	GetSystemApiKey() (string, error)
 }
 
 func (g systemInfoServiceImpl) GetCredsFromEnv() *view.DbCredentials {
@@ -388,7 +393,7 @@ func (g systemInfoServiceImpl) GetPGDB() string {
 func (g systemInfoServiceImpl) setPGUser() {
 	user := os.Getenv(APIHUB_POSTGRESQL_USERNAME)
 	if user == "" {
-		user = "postgres"
+		user = "apihub"
 	}
 	g.systemInfoMap[APIHUB_POSTGRESQL_USERNAME] = user
 }
@@ -398,7 +403,11 @@ func (g systemInfoServiceImpl) GetPGUser() string {
 }
 
 func (g systemInfoServiceImpl) setPGPassword() {
-	g.systemInfoMap[APIHUB_POSTGRESQL_PASSWORD] = os.Getenv(APIHUB_POSTGRESQL_PASSWORD)
+	password := os.Getenv(APIHUB_POSTGRESQL_PASSWORD)
+	if password == "" {
+		password = "apihub"
+	}
+	g.systemInfoMap[APIHUB_POSTGRESQL_PASSWORD] = password
 }
 
 func (g systemInfoServiceImpl) GetPGPassword() string {
@@ -767,4 +776,21 @@ func (g systemInfoServiceImpl) setAllowedHosts() {
 
 func (g systemInfoServiceImpl) GetAllowedHosts() []string {
 	return g.systemInfoMap[ALLOWED_HOSTS].([]string)
+}
+
+func (g systemInfoServiceImpl) GetZeroDayAdminCreds() (string, string, error) {
+	email := os.Getenv(APIHUB_ADMIN_EMAIL)
+	password := os.Getenv(APIHUB_ADMIN_PASSWORD)
+	if email == "" || password == "" {
+		return "", "", fmt.Errorf("some zero day admin envs('%s' or '%s') are empty or not set", APIHUB_ADMIN_EMAIL, APIHUB_ADMIN_PASSWORD)
+	}
+	return email, password, nil
+}
+
+func (g systemInfoServiceImpl) GetSystemApiKey() (string, error) {
+	apiKey := os.Getenv(APIHUB_SYSTEM_API_KEY)
+	if apiKey == "" {
+		return "", fmt.Errorf("system api key env '%s' is empty or not set", APIHUB_SYSTEM_API_KEY)
+	}
+	return apiKey, nil
 }
