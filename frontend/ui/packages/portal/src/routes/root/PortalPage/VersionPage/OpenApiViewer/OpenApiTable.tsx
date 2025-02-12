@@ -62,10 +62,10 @@ export type SubTableProps = {
 }
 
 const DASHBOARD_COLUMNS_MODELS: ColumnModel[] = [
-  { name: ENDPOINT_COLUMN_ID, width: 328 },
-  { name: TAGS_COLUMN_ID, width: 155 },
-  { name: PACKAGE_COLUMN_ID, width: 226 },
-  { name: API_AUDIENCE_COLUMN_ID, fixedWidth: 104 },
+  { name: ENDPOINT_COLUMN_ID, width: 328, loadable: true },
+  { name: TAGS_COLUMN_ID, width: 155, loadable: true },
+  { name: PACKAGE_COLUMN_ID, width: 226, loadable: true },
+  { name: API_AUDIENCE_COLUMN_ID, fixedWidth: 104, loadable: true },
   { name: API_KIND_COLUMN_ID, fixedWidth: 104 },
   { name: CUSTOM_METADATA_COLUMN_ID, width: 233 },
 ]
@@ -75,9 +75,9 @@ const minDashboardTableWidth = DASHBOARD_COLUMNS_MODELS.reduce(
 )
 
 const PACKAGE_COLUMNS_MODELS: ColumnModel[] = [
-  { name: ENDPOINT_COLUMN_ID, width: 454 },
-  { name: TAGS_COLUMN_ID, width: 238 },
-  { name: API_AUDIENCE_COLUMN_ID, fixedWidth: 80 },
+  { name: ENDPOINT_COLUMN_ID, width: 454, loadable: true },
+  { name: TAGS_COLUMN_ID, width: 238, loadable: true },
+  { name: API_AUDIENCE_COLUMN_ID, fixedWidth: 80, loadable: true },
   { name: API_KIND_COLUMN_ID, width: 89 },
   { name: CUSTOM_METADATA_COLUMN_ID, width: 265 },
 ]
@@ -247,9 +247,11 @@ export const OpenApiTable: FC<OpenApiTableProps> = memo<OpenApiTableProps>((
   useIntersectionObserver(ref, isNextPageFetching, hasNextPage, fetchNextPage)
 
   const rowSkeleton = useMemo(() => (
-    isDashboard
-      ? <DashboardRowSkeleton key="row-skeleton" refObject={ref} />
-      : <PackageRowSkeleton key="row-skeleton" refObject={ref} />
+    <RowSkeleton
+      key="row-skeleton"
+      refObject={ref}
+      columnModels={isDashboard ? DASHBOARD_COLUMNS_MODELS : PACKAGE_COLUMNS_MODELS}
+    />
   ), [isDashboard])
 
   return (
@@ -312,57 +314,29 @@ type TableSkeletonProps = {
 }
 
 const TableSkeleton: FC<TableSkeletonProps> = memo<TableSkeletonProps>(({ isDashboard }) => {
-  if (isDashboard) {
-    return createComponents(<DashboardRowSkeleton />, DEFAULT_NUMBER_SKELETON_ROWS)
-  }
-  return createComponents(<PackageRowSkeleton />, DEFAULT_NUMBER_SKELETON_ROWS)
+  const columnModels = isDashboard ? DASHBOARD_COLUMNS_MODELS : PACKAGE_COLUMNS_MODELS
+  return createComponents(<RowSkeleton columnModels={columnModels} />, DEFAULT_NUMBER_SKELETON_ROWS)
 })
 
 type RowSkeletonProps = {
   refObject?: RefObject<HTMLDivElement>
+  columnModels: ColumnModel[]
 }
 
-const DashboardRowSkeleton: FC<RowSkeletonProps> = memo<RowSkeletonProps>(({ refObject }) => {
+const RowSkeleton: FC<RowSkeletonProps> = memo<RowSkeletonProps>(({ refObject, columnModels }) => {
   return (
     <TableRow>
-      <TableCell ref={refObject}>
-        <Skeleton variant="rectangular" width={'80%'} />
-      </TableCell>
-      <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
-      </TableCell>
-      <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
-      </TableCell>
-      <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
-      </TableCell>
-      <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
-      </TableCell>
-      <TableCell />
-      <TableCell />
-    </TableRow>
-  )
-})
-
-const PackageRowSkeleton: FC<RowSkeletonProps> = memo<RowSkeletonProps>(({ refObject }) => {
-  return (
-    <TableRow>
-      <TableCell ref={refObject}>
-        <Skeleton variant="rectangular" width={'80%'} />
-      </TableCell>
-      <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
-      </TableCell>
-      <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
-      </TableCell>
-      <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
-      </TableCell>
-      <TableCell />
-      <TableCell />
+      {columnModels.map((column: ColumnModel, index: number) => {
+        const refAttr = index === 0 ? refObject : undefined
+        if (column.loadable) {
+          return (
+            <TableCell ref={refAttr}>
+              <Skeleton variant="rectangular" width="80%" />
+            </TableCell>
+          )
+        }
+        return <TableCell ref={refAttr} />
+      })}
     </TableRow>
   )
 })

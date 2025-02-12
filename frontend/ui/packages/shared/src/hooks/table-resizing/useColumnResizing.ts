@@ -21,6 +21,7 @@ export type ColumnModel = {
   name: string
   fixedWidth?: number
   width?: number
+  loadable?: boolean
 }
 
 export const DEFAULT_CONTAINER_WIDTH = 800
