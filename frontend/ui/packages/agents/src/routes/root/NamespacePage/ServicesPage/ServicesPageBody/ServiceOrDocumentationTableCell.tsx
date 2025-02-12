@@ -97,7 +97,6 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
         <OverflowTooltip title={spec.name}>
           <Link
             noWrap
-            sx={{ '&:hover': { cursor: 'pointer' } }}
             onClick={() => showSpecificationDialog({
               spec: spec,
               agentId: agentId,

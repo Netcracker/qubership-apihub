@@ -77,11 +77,6 @@ export const EndpointViewer: FC<EndpointViewerProps> = (props) => {
           <Box sx={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
             <Link
               component={NavLink}
-              sx={{
-                '&:hover': {
-                  cursor: 'pointer',
-                },
-              }}
               to={link}
               onClick={onClickLink}
             >
