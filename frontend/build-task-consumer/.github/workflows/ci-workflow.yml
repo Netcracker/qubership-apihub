@@ -4,14 +4,13 @@ on:
   push:
     branches:
       - release
+      - hotfix
       - develop
       - feature/*
+      - bugfix/*      
     tags:
       - '**'
   delete:
-    branches:
-      - release
-      - feature/*
 
 jobs:
   call-frontend-ci-workflow:
