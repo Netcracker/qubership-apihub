@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { getOverviewPath } from '@apihub/routes/NavigationProvider'
 import { Box, Link, Typography } from '@mui/material'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import { FormattedDate } from '@netcracker/qubership-apihub-ui-shared/components/FormattedDate'
@@ -25,8 +26,8 @@ import { PackageKey, VersionKey } from '@netcracker/qubership-apihub-ui-shared/e
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import type { FC, ReactNode } from 'react'
 import { memo, useMemo } from 'react'
-import { generatePath, NavLink, useParams } from 'react-router-dom'
-import { OVERVIEW_PAGE, OVERVIEW_PATH_PATTERN, REVISION_HISTORY_PAGE, SUMMARY_PAGE } from '../../../../../../routes'
+import { NavLink, useParams } from 'react-router-dom'
+import { OVERVIEW_PAGE, REVISION_HISTORY_PAGE } from '../../../../../../routes'
 import { usePackageVersionContent } from '../../../../usePackageVersionContent'
 import { OperationTypeChanges } from './OperationTypeChanges'
 
@@ -40,12 +41,10 @@ const PreviousVersion: FC<Partial<{
 }>> = ({ packageKey, versionKey }) => {
   let link: ReactNode | undefined
   if (packageKey && versionKey) {
-    const packageId = encodeURIComponent(packageKey)
-    const versionId = encodeURIComponent(versionKey)
     link = (
       <Link
         component={NavLink}
-        to={{ pathname: generatePath(`${OVERVIEW_PATH_PATTERN}${SUMMARY_PAGE}`, { packageId, versionId }) }}
+        to={getOverviewPath({ packageKey, versionKey })}
       >
         {versionKey}
       </Link>
