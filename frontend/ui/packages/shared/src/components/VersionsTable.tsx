@@ -34,7 +34,7 @@ import { getSplittedVersionKey } from '../utils/versions'
 import { TextWithOverflowTooltip } from './TextWithOverflowTooltip'
 import { FormattedDate } from './FormattedDate'
 import { OverflowTooltip } from './OverflowTooltip'
-import { Box, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
+import { Box, Link, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
 import { CustomChip } from './CustomChip'
 import { ColumnDelimiter } from './ColumnDelimiter'
 import { createComponents } from '../utils/components'
@@ -75,15 +75,15 @@ export const VersionsTable: FC<VersionsTableProps> = memo<VersionsTableProps>(({
     {
       id: VERSION_COLUMN_ID,
       header: () => <Box display="flex" gap="4px">
-        <CustomTableHeadCell title="Version"/>
-        {versionStatus === RELEASE_VERSION_STATUS && <ArrowDown/>}
-        {versionStatus === ARCHIVED_VERSION_STATUS && <ArrowUp/>}
+        <CustomTableHeadCell title="Version" />
+        {versionStatus === RELEASE_VERSION_STATUS && <ArrowDown />}
+        {versionStatus === ARCHIVED_VERSION_STATUS && <ArrowUp />}
       </Box>,
       cell: ({ row: { original: { version } } }) => {
         const { versionKey } = getSplittedVersionKey(version?.key)
         return (
-          <TextWithOverflowTooltip tooltipText={versionKey}>
-            {versionKey}
+          <TextWithOverflowTooltip tooltipText={versionKey}          >
+            <Link>{versionKey}</Link>
           </TextWithOverflowTooltip>
         )
       },
@@ -91,16 +91,16 @@ export const VersionsTable: FC<VersionsTableProps> = memo<VersionsTableProps>(({
     {
       id: PUBLICATION_DATE_COLUMN_ID,
       header: () => <Box display="flex" gap="4px">
-        <CustomTableHeadCell title="Publication Date"/>
-        {versionStatus === DRAFT_VERSION_STATUS && <ArrowDown/>}
+        <CustomTableHeadCell title="Publication Date" />
+        {versionStatus === DRAFT_VERSION_STATUS && <ArrowDown />}
       </Box>,
       cell: ({ row: { original: { version } } }) => (
-        <FormattedDate value={version?.createdAt}/>
+        <FormattedDate value={version?.createdAt} />
       ),
     },
     {
       id: LABELS_COLUMN_ID,
-      header: () => <CustomTableHeadCell title="Labels"/>,
+      header: () => <CustomTableHeadCell title="Labels" />,
       cell: ({ row: { original: { version } } }) => {
         const versionLabels = version?.versionLabels
         return (
@@ -171,7 +171,7 @@ export const VersionsTable: FC<VersionsTableProps> = memo<VersionsTableProps>(({
                 >
                   {flexRender(headerColumn.column.columnDef.header, headerColumn.getContext())}
                   {index !== headerGroup.headers.length - 1 &&
-                    <ColumnDelimiter header={headerColumn} resizable={true}/>}
+                    <ColumnDelimiter header={headerColumn} resizable={true} />}
                 </TableCell>
               ))}
             </TableRow>
@@ -191,7 +191,7 @@ export const VersionsTable: FC<VersionsTableProps> = memo<VersionsTableProps>(({
               ))}
             </TableRow>
           ))}
-          {isLoading && <TableSkeleton/>}
+          {isLoading && <TableSkeleton />}
         </TableBody>
       </Table>
     </TableContainer>
@@ -213,20 +213,20 @@ type TableData = Partial<{
 }>
 
 const TableSkeleton: FC = memo(() => {
-  return createComponents(<RowSkeleton/>, DEFAULT_NUMBER_SKELETON_ROWS)
+  return createComponents(<RowSkeleton />, DEFAULT_NUMBER_SKELETON_ROWS)
 })
 
 const RowSkeleton: FC = memo(() => {
   return (
     <TableRow>
       <TableCell>
-        <Skeleton variant="rectangular" width={'80%'}/>
+        <Skeleton variant="rectangular" width='80%' />
       </TableCell>
       <TableCell>
-        <Skeleton variant="rectangular" width={'80%'}/>
+        <Skeleton variant="rectangular" width='80%' />
       </TableCell>
       <TableCell>
-        <Skeleton variant="rectangular" width={'80%'}/>
+        <Skeleton variant="rectangular" width='80%' />
       </TableCell>
     </TableRow>
   )

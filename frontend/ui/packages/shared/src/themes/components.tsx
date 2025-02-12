@@ -399,6 +399,13 @@ export function createComponents(): Components {
       defaultProps: {
         underline: 'hover',
       },
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            cursor: 'pointer',
+          },
+        },
+      },
     },
     MuiList: {
       defaultProps: {
