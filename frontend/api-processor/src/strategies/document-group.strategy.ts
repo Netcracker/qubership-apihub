@@ -28,6 +28,8 @@ import { REST_API_TYPE } from '../apitypes'
 import {
   EXPORT_FORMAT_TO_FILE_FORMAT,
   fromBase64,
+  getDocumentTitle,
+  getFileExtension,
   removeFirstSlash,
   slugify,
   takeIfDefined,
@@ -39,6 +41,7 @@ import { VersionRestDocument } from '../apitypes/rest/rest.types'
 import { INLINE_REFS_FLAG, NORMALIZE_OPTIONS } from '../consts'
 import { normalize } from '@netcracker/qubership-apihub-api-unifier'
 import { calculateSpecRefs, extractCommonPathItemProperties } from '../apitypes/rest/rest.operation'
+import { groupBy } from 'graphql/jsutils/groupBy'
 
 async function getTransformedDocument(document: ResolvedDocument, format: FileFormat): Promise<VersionRestDocument> {
   const versionDocument = toVersionDocument(document, format)
@@ -94,13 +97,34 @@ export class DocumentGroupStrategy implements BuilderStrategy {
     }
 
     const transformedDocuments = await Promise.all(transformTasks)
+    const transformedDocumentsWithoutCollisions = (['fileId', 'filename'] as const).reduce(resolveCollisionsByField, transformedDocuments)
 
-    for (const transformedDocument of transformedDocuments) {
-      buildResult.documents.set(transformedDocument.fileId, transformedDocument)
+    for (const document of transformedDocumentsWithoutCollisions) {
+      buildResult.documents.set(document.fileId, document)
     }
 
     return buildResult
   }
+}
+
+// there is a chance that the renamed document will be the same as another document (this case has not been fixed yet)
+function resolveCollisionsByField(docs: VersionRestDocument[], field: 'fileId' | 'filename'): VersionRestDocument[] {
+  const fileIdMap = groupBy(docs, (document) => document[field])
+  return ([...fileIdMap.values()] as VersionRestDocument[][]).reduce((acc, docs) => {
+    const [_, ...duplicates] = docs
+    duplicates.forEach((document, index) => {document[field] = renameDuplicate(document[field], index)})
+    return [...acc, ...docs]
+  }, [] as VersionRestDocument[])
+}
+
+function renameDuplicate(fileName: string, index: number): string {
+  const extension = getFileExtension(fileName)
+  const nameWithPostfix = `${getDocumentTitle(fileName)}-${index + 1}`
+
+  if (extension) {
+    return `${nameWithPostfix}.${extension}`
+  }
+  return nameWithPostfix
 }
 
 function parseBase64String(value: string): object {
