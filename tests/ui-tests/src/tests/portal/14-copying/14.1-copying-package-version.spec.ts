@@ -113,7 +113,7 @@ test.describe('14.1 Copying Package Version', () => {
         await expect(overviewTab.summaryTab.body.labels).toContainText('label-2')
         await expect(overviewTab.summaryTab.body.summary.currentVersion).toHaveText('2000.2')
         await expect(overviewTab.summaryTab.body.summary.revision).not.toBeEmpty() //not a specific number because it changes every retry
-        await expect(overviewTab.summaryTab.body.summary.previousVersion).toBeEmpty()
+        await expect(overviewTab.summaryTab.body.summary.previousVersion).toHaveText('-')
         await expect(overviewTab.summaryTab.body.summary.publishedBy).toHaveText(SYSADMIN.name)
         await expect(overviewTab.summaryTab.body.summary.publicationDate).not.toBeEmpty()
         await expect(overviewTab.summaryTab.body.restApi.operations).toHaveText('19')
