@@ -25,6 +25,13 @@ const groupToOperationIdsMap = {
     'path2-post',
   ],
 }
+const groupToOperationIdsMap2 = {
+  [GROUP_NAME]: [
+    'some-path1-get',
+    'another-path1-put',
+    'some-path2-post',
+  ],
+}
 const EXPECTED_RESULT_FILE = 'result.yaml'
 
 describe('Document Group test', () => {
@@ -49,5 +56,38 @@ describe('Document Group test', () => {
     })
     const expectedResult = load((await loadFileAsString(pkg.projectsDir, pkg.packageId, EXPECTED_RESULT_FILE))!)
     expect(result.merged?.data).toEqual(expectedResult)
+  })
+
+  test('should rename documents with matching names', async () => {
+    const dashboard = LocalRegistry.openPackage('documents-collision', groupToOperationIdsMap2)
+    const package1 = LocalRegistry.openPackage('documents-collision/package1')
+    const package2 = LocalRegistry.openPackage('documents-collision/package2')
+    const package3 = LocalRegistry.openPackage('documents-collision/package3')
+
+    await dashboard.publish(dashboard.packageId, { packageId: dashboard.packageId })
+    await package1.publish(package1.packageId, { packageId: package1.packageId })
+    await package2.publish(package2.packageId, { packageId: package2.packageId })
+    await package3.publish(package3.packageId, { packageId: package3.packageId })
+
+    const editor = await Editor.openProject(dashboard.packageId, dashboard)
+    const result = await editor.run({
+      packageId: dashboard.packageId,
+      buildType: BUILD_TYPE.REDUCED_SOURCE_SPECIFICATIONS,
+      groupName: GROUP_NAME,
+      apiType: REST_API_TYPE,
+    })
+
+    expect(Array.from(result.documents.values())).toEqual(
+      expect.toIncludeSameMembers([
+        expect.objectContaining({ fileId: '1.yaml', filename: '1.json' }),
+        expect.objectContaining({ fileId: '2.yaml', filename: '2.json' }),
+        expect.objectContaining({ fileId: '1-1.yaml', filename: '1-1.json' }),
+        expect.objectContaining({ fileId: '1-2.yaml', filename: '1-2.json' }),
+      ]),
+    )
+
+    for (const document of Array.from(result.documents.values())) {
+      expect(Object.keys(document.data.paths).length).toEqual(document.operationIds.length)
+    }
   })
 })

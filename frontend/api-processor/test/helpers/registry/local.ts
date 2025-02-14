@@ -193,27 +193,45 @@ export class LocalRegistry implements IRegistry {
     packageId: string,
     filterByOperationGroup: string,
   ): Promise<ResolvedDocuments | null> {
-    const { documents } = await this.getVersion(packageId || this.packageId, version) ?? {}
+    const { config: { refs = [] } = {}, documents } = await this.getVersion(packageId || this.packageId, version) ?? {}
 
-    const filterOperationIdsByGroup = (id: string): boolean => this.groupToOperationIdsMap[filterByOperationGroup]?.includes(id)
-    const versionDocuments: ResolvedDocument[] = [...documents?.values() ?? []]
+    const documentsFromVersion = Array.from(documents?.values() ?? [])
+
+    if (isNotEmpty(documentsFromVersion)) {
+      return { documents: this.resolveDocuments(documentsFromVersion, this.filterOperationIdsByGroup(filterByOperationGroup)) }
+    }
+
+    const documentsFromRefs = (
+      await Promise.all(refs.map(async ({ refId, version }) => {
+        const versionCache = await this.getVersion(refId, version)
+        if (!versionCache) return []
+        const { documents } = versionCache
+        return Array.from(documents.values())
+      }))
+    ).flat()
+
+    return { documents: this.resolveDocuments(documentsFromRefs, this.filterOperationIdsByGroup(filterByOperationGroup)) }
+  }
+
+  private filterOperationIdsByGroup(filterByOperationGroup: string): (id: string) => boolean {
+    return (id: string): boolean => this.groupToOperationIdsMap[filterByOperationGroup]?.includes(id)
+  }
+
+  private resolveDocuments(documents: VersionDocument[], filterOperationIdsByGroup: (id: string) => boolean): ResolvedDocument[] {
+    return documents
       .filter(versionDocument => versionDocument.operationIds.some(filterOperationIdsByGroup))
-      .map(versionDocument => {
-        return {
-          version: versionDocument.version,
-          fileId: versionDocument.fileId,
-          slug: versionDocument.slug,
-          type: versionDocument.type,
-          format: versionDocument.format,
-          filename: versionDocument.filename,
-          labels: [],
-          title: versionDocument.title,
-          includedOperationIds: versionDocument.operationIds.filter(filterOperationIdsByGroup),
-          data: toBase64(JSON.stringify(versionDocument.data)),
-        }
-      })
-
-    return { documents: versionDocuments }
+      .map(document => ({
+        version: document.version,
+        fileId: document.fileId,
+        slug: document.slug,
+        type: document.type,
+        format: document.format,
+        filename: document.filename,
+        labels: [],
+        title: document.title,
+        includedOperationIds: document.operationIds.filter(filterOperationIdsByGroup),
+        data: toBase64(JSON.stringify(document.data)),
+      }))
   }
 
   async versionDeprecatedResolver(
