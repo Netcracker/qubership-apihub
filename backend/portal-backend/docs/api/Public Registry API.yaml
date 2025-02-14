@@ -57,6 +57,8 @@ tags:
     description: API for 'try it' functionality
   - name: Operation groups
     description: Operation groups
+  - name: User Profile
+    description: APIs for user's personal settings
 paths:
   "/api/v1/system/configuration":
     get:
@@ -2985,6 +2987,192 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+  "/api/v1/personalAccessToken":
+    post:
+      tags:
+        - User profile
+      summary: Create a personal access token
+      description: >
+        Generates a new personal access token for the current user. User cannot have more than 100 tokens.
+      operationId: postPersonalAccessToken
+      security:
+        - BearerAuth: []
+      requestBody:
+        description: Create personal access token parameters
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the personal access token. The name must be unique per user.
+                  example: token1
+                daysUntilExpiry:
+                  type: integer
+                  description: |
+                    The number of days after which the token will expire. "-1" means that token does not have an expiration date.
+                  enum:
+                    - 7
+                    - 30
+                    - 60
+                    - 90
+                    - 180
+                    - 365
+                    - -1
+              required:
+                - name
+                - daysUntilExpiry
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PersonalAccessToken'
+                  - type: object
+                    required: 
+                      - token
+                    properties:
+                      token:
+                        description: >
+                          Generated personall acess token.
+                        type: string
+              examples: {}
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                IncorrectInputParams:
+                  $ref: '#/components/examples/IncorrectInputParameters'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
+        '404':
+              description: Not found
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/ErrorResponse'
+                  examples: {}
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                InternalServerError:
+                  $ref: '#/components/examples/InternalServerError'
+    get:
+      tags:
+        - User profile
+      summary: Personal access token list retrieve
+      description: >
+        Retrieve all personal access token that have been generated for the current user. User cannot have more than 100 tokens.
+      operationId: getPersonalAccessToken
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/PersonalAccessToken'
+              examples: {}
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                InternalServerError:
+                  $ref: '#/components/examples/InternalServerError'
+  "/api/v1/personalAccessToken/{id}":
+    parameters:
+      - name: id
+        description: Personal access token Id
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      tags:
+        - User profile
+      summary: Delete personal access token
+      description: >
+        Revoke personal access token.  
+      operationId: deletePersonalAccessToken
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: No content
+          content: {}
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                InternalServerError:
+                  $ref: '#/components/examples/InternalServerError'
   "/api/v2/packages/{packageId}/favor":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -14553,6 +14741,42 @@ components:
           type: array
           items:
             type: string
+    PersonalAccessToken:
+      type: object
+      description: Personal access token details
+      title: Personal access token
+      required:
+        - id
+        - name
+        - expiresAt
+        - status
+        - createdAt
+      properties:
+        id:
+          description: Personal access token identifier
+          type: string
+        name:
+          description: Personal access token name
+          type: string
+          example: token1
+        expiresAt:
+          description: Date and time of personal access token expiration. If token does not have expiration date, then "noExpiration" will be returned
+          oneOf:
+            - type: string
+              format: date-time
+            - type: string
+              enum:
+                - noExpiration
+        createdAt:
+          description: Date and time of personal access token creation
+          type: string
+          format: datetime
+        status:
+          description: The status of the personal access token, calculated based on the expiry date.
+          type: string
+          enum:
+            - active
+            - expired
     SpecificationType:  
       title: type
       description: Type of the specification notation.
@@ -16345,3 +16569,8 @@ components:
       type: http
       description: Login/password authentication.
       scheme: basic
+    PersonalAccessToken:
+      type: apiKey
+      description: Authentication by personal access token.
+      name: X-Personal-Access-Token
+      in: header
