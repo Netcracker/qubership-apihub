@@ -34,7 +34,7 @@
     "@nestjs/core": "8.4.7",
     "@nestjs/platform-express": "8.4.7",
     "@nestjs/swagger": "5.2.1",
-    "@netcracker/qubership-apihub-api-processor": "3.0.5",
+    "@netcracker/qubership-apihub-api-processor": "dev",
     "@sinclair/typebox": "^0.28.9",
     "adm-zip": "^0.5.10",
     "dotenv": "^16.0.3",
