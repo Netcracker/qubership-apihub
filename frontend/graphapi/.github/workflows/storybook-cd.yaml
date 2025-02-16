@@ -8,4 +8,4 @@ on:
 
 jobs: 
   call-storybook-cd-workflow:
-    uses: netcracker/qubership-apihub-ci/.github/workflows/storybook-cd.yaml@main
+    uses: netcracker/qubership-apihub-ci/.github/workflows/storybook-cd.yaml@main 
