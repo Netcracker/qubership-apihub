@@ -14760,13 +14760,10 @@ components:
           type: string
           example: token1
         expiresAt:
-          description: Date and time of personal access token expiration. If token does not have expiration date, then "noExpiration" will be returned
-          oneOf:
-            - type: string
-              format: date-time
-            - type: string
-              enum:
-                - noExpiration
+          description: Date and time of personal access token expiration. Null if token does not have an expiration date.
+          type: string
+          format: date-time
+          nullable: true
         createdAt:
           description: Date and time of personal access token creation
           type: string
