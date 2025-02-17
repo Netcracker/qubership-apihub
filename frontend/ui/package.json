@@ -8,6 +8,7 @@
   "scripts": {
     "update-dev-deps": "npm ls --json | jq -r \".dependencies | keys[]\" | grep '@netcracker' | xargs --no-run-if-empty npm update",
     "build": "npx lerna run build",
+    "build:showcase": "npm run --workspace=@netcracker/qubership-apihub-ui-shared build:showcase",
     "lint": "eslint . --ext .ts,.tsx,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
     "format": "npm run lint --fix",
     "development:link": "npm link @netcracker/qubership-apihub-api-processor",
