@@ -2992,8 +2992,9 @@ paths:
       tags:
         - User profile
       summary: Create a personal access token
-      description: >
-        Generates a new personal access token for the current user. User cannot have more than 100 tokens.
+      description: |
+        Generates a new personal access token for the current user.\
+        User cannot have more than 100 tokens. The limitation is applicable to active and expired tokens which are not deleted. 
       operationId: postPersonalAccessToken
       security:
         - BearerAuth: []
@@ -3011,15 +3012,10 @@ paths:
                 daysUntilExpiry:
                   type: integer
                   description: |
-                    The number of days after which the token will expire. "-1" means that token does not have an expiration date.
-                  enum:
-                    - 7
-                    - 30
-                    - 60
-                    - 90
-                    - 180
-                    - 365
-                    - -1
+                    The number of days after which the token will expire.\ 
+                      * "-1" means that token does not have an expiration date.
+                      * "0" is prohibited.
+                  minimum: -1
               required:
                 - name
                 - daysUntilExpiry
@@ -3056,20 +3052,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples: {}
-        '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples: {}
-        '404':
-              description: Not found
-              content:
-                application/json:
-                  schema:
-                    $ref: '#/components/schemas/ErrorResponse'
-                  examples: {}
         '500':
           description: Internal Server Error
           content:
@@ -3084,7 +3066,8 @@ paths:
         - User profile
       summary: Personal access token list retrieve
       description: >
-        Retrieve all personal access token that have been generated for the current user. User cannot have more than 100 tokens.
+        Retrieve all personal access token that have been generated for the current user.\ 
+        User cannot have more than 100 tokens. The limitation is applicable to active and expired tokens which are not deleted. 
       operationId: getPersonalAccessToken
       security:
         - BearerAuth: []
@@ -3096,8 +3079,7 @@ paths:
               schema:
                 type: array
                 items:
-                  allOf:
-                    - $ref: '#/components/schemas/PersonalAccessToken'
+                  $ref: '#/components/schemas/PersonalAccessToken'
               examples: {}
         '401':
           description: Unauthorized
@@ -3135,7 +3117,7 @@ paths:
         - User profile
       summary: Delete personal access token
       description: >
-        Revoke personal access token.  
+        Delete personal access token. Deleted token cannot be used to authenticate APIHUB.
       operationId: deletePersonalAccessToken
       security:
         - BearerAuth: []
@@ -14767,9 +14749,13 @@ components:
         createdAt:
           description: Date and time of personal access token creation
           type: string
-          format: datetime
+          format: date-time
         status:
-          description: The status of the personal access token, calculated based on the expiry date.
+          description: |
+            The status of the personal access token, calculated based on the expiry date:
+              * active - token is active if current date > expiresAt. Only active token, which was not deleted, can be used to authenticate APIHUB.
+              * expired - token is expired if current date <= expiresAt. Expired token can no longer be used to authenticate APIHUB.\
+              (Deleted token cannot be used to authenticate APIHUB, even if it has not expired).
           type: string
           enum:
             - active
