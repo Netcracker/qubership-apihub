@@ -14752,10 +14752,7 @@ components:
           format: date-time
         status:
           description: |
-            The status of the personal access token, calculated based on the expiry date:
-              * active - token is active if current date > expiresAt. Only active token, which was not deleted, can be used to authenticate APIHUB.
-              * expired - token is expired if current date <= expiresAt. Expired token can no longer be used to authenticate APIHUB.\
-              (Deleted token cannot be used to authenticate APIHUB, even if it has not expired).
+            The status of the personal access token, calculated based on the expiry date.
           type: string
           enum:
             - active
