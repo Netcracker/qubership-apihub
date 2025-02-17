@@ -1,0 +1,11 @@
+name: Storybook CD Workflow
+
+on:
+  push: 
+    branches:
+  delete:
+    branches:
+
+jobs: 
+  call-storybook-cd-workflow:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/storybook-cd.yaml@main 
