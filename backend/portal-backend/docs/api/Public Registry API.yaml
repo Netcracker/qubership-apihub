@@ -3052,6 +3052,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples: {}
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
         '500':
           description: Internal Server Error
           content:
@@ -3117,7 +3124,7 @@ paths:
         - User profile
       summary: Delete personal access token
       description: >
-        Delete personal access token. Deleted token cannot be used to authenticate APIHUB.
+        Delete personal access token. Deleted token cannot be used to authenticate to APIHUB.
       operationId: deletePersonalAccessToken
       security:
         - BearerAuth: []
@@ -14752,7 +14759,8 @@ components:
           format: date-time
         status:
           description: |
-            The status of the personal access token, calculated based on the expiry date.
+            The status of the personal access token, calculated based on the expiry date.\
+            Expired token cannot be used to authenticate to APIHUB.
           type: string
           enum:
             - active
