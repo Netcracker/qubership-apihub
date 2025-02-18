@@ -728,3 +728,12 @@ const InvalidPackageKindMsg = `Action is not allowed for package with kind="$kin
 
 const HostNotAllowed = "6900"
 const HostNotAllowedMsg = "Host not allowed: $host"
+
+const PersonalAccessTokenLimitExceeded = "7000"
+const PersonalAccessTokenLimitExceededMsg = "Unable to create personal access token since the limit $limit is exceeded"
+
+const PersonalAccessTokenNameIsUsed = "7001"
+const PersonalAccessTokenNameIsUsedMsg = "Personal access token name '$name' is already used"
+
+const PersonalAccessTokenIncorrectExpiry = "7002"
+const PersonalAccessTokenIncorrectExpiryMsg = "Allowed values for '$param' are -1, 1+"

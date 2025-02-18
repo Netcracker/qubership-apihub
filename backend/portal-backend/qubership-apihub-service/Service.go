@@ -225,6 +225,8 @@ func main() {
 
 	versionCleanupRepository := repository.NewVersionCleanupRepository(cp)
 
+	personalAccessTokenRepository := repository.NewPersonalAccessTokenRepository(cp)
+
 	olricProvider, err := cache.NewOlricProvider()
 	if err != nil {
 		log.Error("Failed to create olricProvider: " + err.Error())
@@ -304,6 +306,8 @@ func main() {
 
 	zeroDayAdminService := service.NewZeroDayAdminService(userService, roleService, usersRepository, systemInfoService)
 
+	personalAccessTokenService := service.NewPersonalAccessTokenService(personalAccessTokenRepository, userService)
+
 	integrationsController := controller.NewIntegrationsController(integrationsService)
 	projectController := controller.NewProjectController(projectService, groupService, searchService)
 	branchController := controller.NewBranchController(branchService, commitService, projectFilesService, searchService, publishedService, branchEditorsService, wsBranchService)
@@ -351,6 +355,8 @@ func main() {
 	minioStorageController := controller.NewMinioStorageController(minioStorageCreds, minioStorageService)
 
 	gitHookController := controller.NewGitHookController(gitHookService)
+
+	personalAccessTokenController := controller.NewPersonalAccessTokenController(personalAccessTokenService)
 
 	r.HandleFunc("/api/v1/integrations/{integrationId}/apikey", security.Secure(integrationsController.GetUserApiKeyStatus)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/integrations/{integrationId}/apikey", security.Secure(integrationsController.SetUserApiKey)).Methods(http.MethodPut)
@@ -606,6 +612,10 @@ func main() {
 
 	r.HandleFunc("/api/v1/publishHistory", security.Secure(versionController.GetPublishedVersionsHistory)).Methods(http.MethodGet)
 
+	r.HandleFunc("/api/v1/personalAccessToken", security.Secure(personalAccessTokenController.CreatePAT)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/personalAccessToken", security.Secure(personalAccessTokenController.ListPATs)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/personalAccessToken/{id}", security.Secure(personalAccessTokenController.DeletePAT)).Methods(http.MethodDelete)
+
 	//debug + cleanup
 	if !systemInfoService.GetSystemInfo().ProductionMode {
 		r.HandleFunc("/api/internal/websocket/branches/log", security.Secure(branchWSController.TestLogWebsocketClient)).Methods(http.MethodPost)
@@ -678,7 +688,7 @@ func main() {
 		}
 	})
 
-	err = security.SetupGoGuardian(integrationsService, userService, roleService, apihubApiKeyService, systemInfoService)
+	err = security.SetupGoGuardian(integrationsService, userService, roleService, apihubApiKeyService, personalAccessTokenService, systemInfoService)
 	if err != nil {
 		log.Fatalf("Can't setup go_guardian. Error - %s", err.Error())
 	}
