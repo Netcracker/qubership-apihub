@@ -16,14 +16,14 @@
 
 import type { FC, SyntheticEvent } from 'react'
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { Box, Tooltip, Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import TreeView from '@mui/lab/TreeView'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { OperationModelListSkeleton } from './OperationModelListSkeleton'
 import type { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 import { ModelLabel } from './ModelLabel'
-import { ModelItem, SectionItem } from './ModelListItem'
+import { ErrorModelItem, ModelItem, SectionItem } from './ModelListItem'
 import type {
   MediaType,
   OpenApiCustomSchemaObject,
@@ -45,8 +45,6 @@ import { isEmpty, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/util
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { useShowInfoNotification } from '@apihub/routes/root/BasePage/Notification'
 import { NavigationFailReason } from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/SchemaGraphView'
-import { YellowWarningIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIcon'
-import TreeItem from '@mui/lab/TreeItem'
 
 // First Order Component //
 export type OperationSidebarProps = {
@@ -188,32 +186,11 @@ export const OperationModelList: FC<OperationSidebarProps> = memo<OperationSideb
             }
 
             if (error) {
-              return (
-                <TreeItem
-                  key={`${sectionKey}-${index}`}
-                  nodeId={`${sectionKey}-${index}-error`}
-                  sx={{
-                    '.MuiTreeItem-content': {
-                      cursor: 'auto',
-                      '.MuiTreeItem-label': {
-                        display: 'flex',
-                      },
-                    },
-                  }}
-                  label={
-                    <Box sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}>
-                      <Typography noWrap variant="body2">{title}</Typography>
-                      <Tooltip title={error}>
-                        <Box><YellowWarningIcon/></Box>
-                      </Tooltip>
-                    </Box>
-                  }
-                />
-              )
+              return <ErrorModelItem
+                key={`${sectionKey}-${index}`}
+                title={title}
+                error={error}
+              />
             }
 
             return (

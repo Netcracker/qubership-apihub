@@ -22,6 +22,8 @@ import { joinedJsonPath } from '@netcracker/qubership-apihub-ui-shared/utils/ope
 import type { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 import type { OpenApiCustomSchemaObject } from '@apihub/entities/operation-structure'
 import type { HashWithTitle } from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/oasToClassDiagramService'
+import { Box, Tooltip, Typography } from '@mui/material'
+import { YellowWarningIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIcon'
 
 type ItemProps = PropsWithChildren & {
   label: ReactNode
@@ -38,6 +40,11 @@ type SectionItemProps = PropsWithChildren & ItemProps & {
 type ModelItemProps = ItemProps & {
   schemaTolerantHashWithTitle?: HashWithTitle
   schemaObject?: OpenApiCustomSchemaObject
+}
+
+type ErrorModelItemProps = {
+  title: string
+  error?: string
 }
 
 export const SectionItem: FC<SectionItemProps> = memo<SectionItemProps>(({
@@ -80,6 +87,39 @@ export const ModelItem: FC<ModelItemProps> = memo<ModelItemProps>(({
       label={label}
       onClick={(event) => onClick?.(event, nodeId, scopeDeclarationPath, declarationPath, schemaTolerantHashWithTitle, schemaObject)}
       sx={TREE_ITEM_CHILD_LABEL_STYLES}
+    />
+  )
+})
+
+export const ErrorModelItem: FC<ErrorModelItemProps> = memo<ErrorModelItemProps>(({
+  title,
+  error,
+}) => {
+  return (
+    <TreeItem
+      nodeId={`${title}-error-item`}
+      sx={{
+        '.MuiTreeItem-content': {
+          cursor: 'default',
+          '.MuiTreeItem-label': {
+            display: 'flex',
+          },
+        },
+      }}
+      label={
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+        }}>
+          <Typography noWrap variant="body2">{title}</Typography>
+          <Tooltip title={error}>
+            <Box sx={{ cursor: 'pointer' }}>
+              <YellowWarningIcon/>
+            </Box>
+          </Tooltip>
+        </Box>
+      }
     />
   )
 })
