@@ -42,7 +42,7 @@ To see the results go to Validation Results step. For each service for which a s
 ">
   <div>
      <li>Breaking change is a change that breaks backward compatibility with the previous version of API. For example, deleting an operation, adding a required parameter or changing the type of a parameter are breaking changes.</li>
-     <li>Semi-breaking change is a change that breaks backward compatibility according to the rules:</li>
+     <li>Risky change is a change that breaks backward compatibility according to the rules:</li>
          <ul>
             <li>operation or entity in the operation was annotated as deprecated in at least two previous consecutive releases and then it was deleted
             <li>operation is marked as no-BWC.</li>
