@@ -22,7 +22,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { OperationModelListSkeleton } from './OperationModelListSkeleton'
 import type { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
-import { ModelLabel } from './ModelLabel'
+import { ErrorModelLabel, ModelLabel } from './ModelLabel'
 import { ErrorModelItem, ModelItem, SectionItem } from './ModelListItem'
 import type {
   MediaType,
@@ -189,7 +189,7 @@ export const OperationModelList: FC<OperationSidebarProps> = memo<OperationSideb
               return <ErrorModelItem
                 key={`${sectionKey}-${index}`}
                 title={title}
-                error={error}
+                label={<ErrorModelLabel title={title} error={error}/>}
               />
             }
 

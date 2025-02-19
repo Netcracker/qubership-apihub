@@ -21,9 +21,9 @@ import type { SectionKey } from './OperationModelList'
 import { joinedJsonPath } from '@netcracker/qubership-apihub-ui-shared/utils/operations'
 import type { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 import type { OpenApiCustomSchemaObject } from '@apihub/entities/operation-structure'
-import type { HashWithTitle } from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/oasToClassDiagramService'
-import { Box, Tooltip, Typography } from '@mui/material'
-import { YellowWarningIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIcon'
+import type {
+  HashWithTitle,
+} from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/oasToClassDiagramService'
 
 type ItemProps = PropsWithChildren & {
   label: ReactNode
@@ -43,8 +43,8 @@ type ModelItemProps = ItemProps & {
 }
 
 type ErrorModelItemProps = {
-  title: string
-  error?: string
+  title: ReactNode
+  label: ReactNode
 }
 
 export const SectionItem: FC<SectionItemProps> = memo<SectionItemProps>(({
@@ -93,33 +93,13 @@ export const ModelItem: FC<ModelItemProps> = memo<ModelItemProps>(({
 
 export const ErrorModelItem: FC<ErrorModelItemProps> = memo<ErrorModelItemProps>(({
   title,
-  error,
+  label,
 }) => {
   return (
     <TreeItem
       nodeId={`${title}-error-item`}
-      sx={{
-        '.MuiTreeItem-content': {
-          cursor: 'default',
-          '.MuiTreeItem-label': {
-            display: 'flex',
-          },
-        },
-      }}
-      label={
-        <Box sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-        }}>
-          <Typography noWrap variant="body2">{title}</Typography>
-          <Tooltip title={error}>
-            <Box sx={{ cursor: 'pointer' }}>
-              <YellowWarningIcon/>
-            </Box>
-          </Tooltip>
-        </Box>
-      }
+      label={label}
+      sx={ERROR_TREE_ITEM_CHILD_LABEL_STYLES}
     />
   )
 })
@@ -153,7 +133,8 @@ const TREE_ITEM_ROOT_LABEL_STYLES = {
       overflow: 'hidden',
       whiteSpace: 'noWrap',
       height: '28px',
-      paddingTop: '2px',
+      display: 'flex',
+      alignItems: 'center',
     },
   },
 }
@@ -163,5 +144,11 @@ const TREE_ITEM_CHILD_LABEL_STYLES = Object.assign({}, TREE_ITEM_ROOT_LABEL_STYL
     '.MuiTreeItem-label': {
       fontWeight: 400,
     },
+  },
+})
+
+const ERROR_TREE_ITEM_CHILD_LABEL_STYLES = Object.assign({}, TREE_ITEM_ROOT_LABEL_STYLES, {
+  '.MuiTreeItem-content': {
+    cursor: 'default',
   },
 })
