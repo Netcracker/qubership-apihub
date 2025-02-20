@@ -16,9 +16,10 @@
 
 import type { FC } from 'react'
 import React, { memo } from 'react'
-import { Box, MenuItem, Typography } from '@mui/material'
+import { Box, MenuItem, Tooltip, Typography } from '@mui/material'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import { MenuButton } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
+import { YellowWarningIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIcon'
 
 export type ModelLabelProps = {
   title: string
@@ -36,6 +37,7 @@ export const ModelLabel: FC<ModelLabelProps> = memo<ModelLabelProps>(({
       alignItems: 'center',
       gap: 1,
       justifyContent: 'space-between',
+      width: '100%',
       '&:hover': {
         '& .hoverable': {
           visibility: 'visible',
@@ -64,6 +66,33 @@ export const ModelLabel: FC<ModelLabelProps> = memo<ModelLabelProps>(({
           Dependant operations
         </MenuItem>
       </MenuButton>
+    </Box>
+  )
+})
+
+export type ErrorModelLabelProps = {
+  title: string
+  error: string
+}
+
+// First Order Component //
+export const ErrorModelLabel: FC<ErrorModelLabelProps> = memo<ErrorModelLabelProps>(({
+  title,
+  error,
+}) => {
+  return (
+    <Box sx={{
+      cursor: 'default',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '4px',
+    }}>
+      <Typography noWrap variant="body2">{title}</Typography>
+      <Tooltip title={error}>
+        <Box sx={{ cursor: 'pointer' }}>
+          <YellowWarningIcon/>
+        </Box>
+      </Tooltip>
     </Box>
   )
 })

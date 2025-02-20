@@ -21,7 +21,9 @@ import type { SectionKey } from './OperationModelList'
 import { joinedJsonPath } from '@netcracker/qubership-apihub-ui-shared/utils/operations'
 import type { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 import type { OpenApiCustomSchemaObject } from '@apihub/entities/operation-structure'
-import type { HashWithTitle } from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/oasToClassDiagramService'
+import type {
+  HashWithTitle,
+} from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/oasToClassDiagramService'
 
 type ItemProps = PropsWithChildren & {
   label: ReactNode
@@ -38,6 +40,11 @@ type SectionItemProps = PropsWithChildren & ItemProps & {
 type ModelItemProps = ItemProps & {
   schemaTolerantHashWithTitle?: HashWithTitle
   schemaObject?: OpenApiCustomSchemaObject
+}
+
+type ErrorModelItemProps = {
+  title: ReactNode
+  label: ReactNode
 }
 
 export const SectionItem: FC<SectionItemProps> = memo<SectionItemProps>(({
@@ -84,6 +91,19 @@ export const ModelItem: FC<ModelItemProps> = memo<ModelItemProps>(({
   )
 })
 
+export const ErrorModelItem: FC<ErrorModelItemProps> = memo<ErrorModelItemProps>(({
+  title,
+  label,
+}) => {
+  return (
+    <TreeItem
+      nodeId={`${title}-error-item`}
+      label={label}
+      sx={ERROR_TREE_ITEM_CHILD_LABEL_STYLES}
+    />
+  )
+})
+
 const SELECTED_COLOR = '#F2F3F5'
 const HOVER_COLOR = '#0000000A'
 
@@ -113,7 +133,8 @@ const TREE_ITEM_ROOT_LABEL_STYLES = {
       overflow: 'hidden',
       whiteSpace: 'noWrap',
       height: '28px',
-      paddingTop: '2px',
+      display: 'flex',
+      alignItems: 'center',
     },
   },
 }
@@ -123,5 +144,11 @@ const TREE_ITEM_CHILD_LABEL_STYLES = Object.assign({}, TREE_ITEM_ROOT_LABEL_STYL
     '.MuiTreeItem-label': {
       fontWeight: 400,
     },
+  },
+})
+
+const ERROR_TREE_ITEM_CHILD_LABEL_STYLES = Object.assign({}, TREE_ITEM_ROOT_LABEL_STYLES, {
+  '.MuiTreeItem-content': {
+    cursor: 'default',
   },
 })
