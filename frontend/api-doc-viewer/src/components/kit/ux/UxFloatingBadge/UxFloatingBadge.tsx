@@ -39,7 +39,7 @@ export const UxFloatingBadge: FC<UxFloatingBadgeProps> = (props) => {
           : backgroundColor
       }}
     >
-      <span className="UxFloatingBadge-content">{variant}{message ? `, ${message}` : ''}</span>
+      <span className="UxFloatingBadge-content">{variant === 'semi-breaking'? 'risky': variant}{message ? `, ${message}` : ''}</span>
     </div>
   )
 }

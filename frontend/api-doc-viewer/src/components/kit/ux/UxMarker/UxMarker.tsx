@@ -51,7 +51,8 @@ export const UxMarker: FC<UxMarkerProps> = (props) => {
   )
 
   const wrappedMarkerElement = tooltip
-    ? <UxTooltip text={tooltip} floatingContainer={!!floating}>{markerElement}</UxTooltip>
+    ? <UxTooltip text={tooltip === 'semi-breaking' ? 'risky' : tooltip}
+                 floatingContainer={!!floating}>{markerElement}</UxTooltip>
     : markerElement
 
   if (!floating) {
