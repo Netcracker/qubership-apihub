@@ -49,6 +49,7 @@ export const UxMarker: FC<UxMarkerProps> = (props) => {
       }}
     ></div>
   )
+  console.log('UxFloatingBadge-->', tooltip, tooltip === 'semi-breaking' ? 'risky' : tooltip, variant, markerElement)
 
   const wrappedMarkerElement = tooltip
     ? <UxTooltip text={tooltip === 'semi-breaking' ? 'risky' : tooltip}
