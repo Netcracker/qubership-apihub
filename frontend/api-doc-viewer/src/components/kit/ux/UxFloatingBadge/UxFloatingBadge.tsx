@@ -29,7 +29,7 @@ export type UxFloatingBadgeProps = {
 
 export const UxFloatingBadge: FC<UxFloatingBadgeProps> = (props) => {
   const { variant, message, backgroundColor } = props
-  console.log('UxFloatingBadge-->', variant, variant === 'semi-breaking'? 'risky': variant, message ? `, ${message}` : '')
+
   return (
     <div
       className="UxFloatingBadge absolute z-10 text-white text-xs w-1 h-full hover:w-max hover:cursor-default hover:px-2"
