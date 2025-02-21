@@ -637,7 +637,7 @@ test.describe('09.1 Compare Package versions', () => {
       await expect.soft(updateUserRow.rightSummary.path).toHaveText(`${UPDATE_USER_V1.method}${UPDATE_USER_V1.path}`)
       await expect.soft(updateUserRow.rightSummary.changes.deprecated).toHaveText('1')
 
-      await expect.soft(delOrderRow.changeSeverityIndicator).toHaveText('semi-breaking')
+      await expect.soft(delOrderRow.changeSeverityIndicator).toHaveText('risky')
       await expect.soft(delOrderRow.leftSummary.title).toHaveText(DEL_ORDER_V1.title)
       await expect.soft(delOrderRow.leftSummary.path).toHaveText(`${DEL_ORDER_V1.method}${DEL_ORDER_V1.path}`)
       await expect.soft(delOrderRow.leftSummary.changes).not.toBeVisible()
