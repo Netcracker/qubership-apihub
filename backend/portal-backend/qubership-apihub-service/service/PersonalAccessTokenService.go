@@ -23,6 +23,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/google/uuid"
+	"net/http"
 	"time"
 )
 
@@ -53,7 +54,7 @@ func (p personalAccessTokenServiceImpl) CreatePAT(ctx context.SecurityContext, r
 	}
 	if count > ActivePatPerUserLimit {
 		return nil, exception.CustomError{
-			Status:  409,
+			Status:  http.StatusConflict,
 			Code:    exception.PersonalAccessTokenLimitExceeded,
 			Message: exception.PersonalAccessTokenLimitExceededMsg,
 			Params:  map[string]interface{}{"limit": ActivePatPerUserLimit},
@@ -66,7 +67,7 @@ func (p personalAccessTokenServiceImpl) CreatePAT(ctx context.SecurityContext, r
 	}
 	if !free {
 		return nil, exception.CustomError{
-			Status:  400,
+			Status:  http.StatusBadRequest,
 			Code:    exception.PersonalAccessTokenNameIsUsed,
 			Message: exception.PersonalAccessTokenNameIsUsedMsg,
 			Params:  map[string]interface{}{"name": req.Name},
@@ -110,7 +111,7 @@ func calculateExpiresAt(daysUntilExpiry int) (time.Time, error) {
 
 	if daysUntilExpiry < -1 || daysUntilExpiry == 0 {
 		return time.Time{}, exception.CustomError{
-			Status:  400,
+			Status:  http.StatusBadRequest,
 			Code:    exception.PersonalAccessTokenIncorrectExpiry,
 			Message: exception.PersonalAccessTokenIncorrectExpiryMsg,
 			Params:  map[string]interface{}{"param": "daysUntilExpiry"},
@@ -127,10 +128,12 @@ func (p personalAccessTokenServiceImpl) DeletePAT(ctx context.SecurityContext, i
 	}
 	// TODO: custom errors?
 	if pat == nil {
-		return fmt.Errorf("no PAT found for id '%s'", id)
-	}
-	if !pat.DeletedAt.IsZero() {
-		return fmt.Errorf("PAT with token with id '%s' is already revoked", id)
+		return exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.PersonalAccessTokenNotFound,
+			Message: exception.PersonalAccessTokenNotFoundMsg,
+			Params:  map[string]interface{}{"id": id},
+		}
 	}
 	return p.repo.DeletePAT(pat.Id, ctx.GetUserId())
 }

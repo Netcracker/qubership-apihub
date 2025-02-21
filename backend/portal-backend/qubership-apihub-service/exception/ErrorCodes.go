@@ -737,3 +737,6 @@ const PersonalAccessTokenNameIsUsedMsg = "Personal access token name '$name' is 
 
 const PersonalAccessTokenIncorrectExpiry = "7002"
 const PersonalAccessTokenIncorrectExpiryMsg = "Allowed values for '$param' are -1, 1+"
+
+const PersonalAccessTokenNotFound = "7003"
+const PersonalAccessTokenNotFoundMsg = "Personal access token with id '$id' not found"

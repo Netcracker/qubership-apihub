@@ -65,6 +65,7 @@ func (p personalAccessTokenRepositoryImpl) GetPAT(id string, userId string) (*en
 	err := p.cp.GetConnection().Model(result).
 		Where("id = ?", id).
 		Where("user_id = ?", userId).
+		Where("deleted_at is null").
 		First()
 	if err != nil {
 		return nil, err

@@ -83,7 +83,7 @@ func (u PersonalAccessTokenControllerImpl) CreatePAT(w http.ResponseWriter, r *h
 	}
 	// TODO: do we need business metric for PATs?
 
-	RespondWithJson(w, http.StatusOK, resp) //TODO: StatusCreated?
+	RespondWithJson(w, http.StatusCreated, resp)
 }
 
 func (u PersonalAccessTokenControllerImpl) ListPATs(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +101,7 @@ func (u PersonalAccessTokenControllerImpl) DeletePAT(w http.ResponseWriter, r *h
 	ctx := context.Create(r)
 	err := u.svc.DeletePAT(ctx, id)
 	if err != nil {
-		RespondWithError(w, "Failed to list personal access tokens", err)
+		RespondWithError(w, "Failed to delete personal access token", err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
