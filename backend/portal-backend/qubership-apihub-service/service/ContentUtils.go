@@ -359,33 +359,6 @@ func convertEol(data []byte) []byte {
 	return []byte(convertedData)
 }
 
-func getOpenapiJsonIdentifiers(data []byte) []string {
-	identifiers := make([]string, 0)
-	var document jsonMap
-	err := json.Unmarshal(data, &document)
-	if err != nil {
-		return identifiers
-	}
-	pathsObject := document.getObject("paths")
-	for path := range pathsObject {
-		identifiers = append(identifiers, getOpenapiEndpointOperations(normalizeEndpointPath(path), pathsObject.getObject(path))...)
-	}
-	return identifiers
-}
-
-var openapiOperationsRegexp = regexp.MustCompile(`(get|put|post|delete|options|head|patch|trace){1}`)
-
-func getOpenapiEndpointOperations(path string, operationsObj jsonMap) []string {
-	operations := make([]string, 0)
-	for operation := range operationsObj {
-		lOperation := strings.ToLower(operation)
-		if openapiOperationsRegexp.MatchString(lOperation) {
-			operations = append(operations, lOperation+" "+path)
-		}
-	}
-	return operations
-}
-
 // replaces any {variable} with {*}
 func normalizeEndpointPath(path string) string {
 	if strings.IndexByte(path, '{') < 0 {

@@ -23,6 +23,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// FIXME: not used!!!
 type MetricsService interface {
 	CreateJob(schedule string) error
 }

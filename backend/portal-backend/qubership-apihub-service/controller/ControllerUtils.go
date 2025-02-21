@@ -114,6 +114,7 @@ func RespondWithCustomError(w http.ResponseWriter, err *exception.CustomError) {
 	log.Debugf("Request failed. Code = %d. Message = %s. Params: %v. Debug: %s", err.Status, err.Message, err.Params, err.Debug)
 	RespondWithJson(w, err.Status, err)
 }
+
 func RespondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 	response, _ := json.Marshal(payload)
 	w.Header().Set("Content-Type", "application/json")

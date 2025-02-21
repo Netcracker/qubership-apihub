@@ -55,11 +55,12 @@ var publicKey []byte
 
 const gitIntegrationExt = "gitIntegration"
 
-func SetupGoGuardian(intService service.IntegrationsService, userServiceLocal service.UserService, roleServiceLocal service.RoleService, apiKeyService service.ApihubApiKeyService, systemService service.SystemInfoService) error {
+func SetupGoGuardian(intService service.IntegrationsService, userServiceLocal service.UserService, roleServiceLocal service.RoleService, apiKeyService service.ApihubApiKeyService, patService service.PersonalAccessTokenService, systemService service.SystemInfoService) error {
 	integrationService = intService
 	userService = userServiceLocal
 	roleService = roleServiceLocal
 	apihubApiKeyStrategy = NewApihubApiKeyStrategy(apiKeyService)
+	personalAccessTokenStrategy := NewApihubPATStrategy(patService)
 	systemInfoService = systemService
 
 	block, _ := pem.Decode(systemInfoService.GetJwtPrivateKey())
@@ -85,7 +86,7 @@ func SetupGoGuardian(intService service.IntegrationsService, userServiceLocal se
 		cache.Delete(key)
 	})
 	jwtStrategy = jwt.New(cache, keeper)
-	strategy = union.New(jwtStrategy, apihubApiKeyStrategy)
+	strategy = union.New(jwtStrategy, apihubApiKeyStrategy, personalAccessTokenStrategy)
 	customJwtStrategy = jwt.New(cache, keeper, token.SetParser(token.XHeaderParser(CustomJwtAuthHeader)))
 	return nil
 }
