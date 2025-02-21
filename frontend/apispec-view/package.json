@@ -16,7 +16,7 @@
     "@netcracker/qubership-apihub-api-unifier": "1.0.4",
     "@netcracker/qubership-apihub-compatibility-suites": "2.0.3",
     "@netcracker/qubership-apihub-api-diff": "1.0.4",
-    "@netcracker/qubership-apihub-api-doc-viewer": "2.0.3",
+    "@netcracker/qubership-apihub-api-doc-viewer": "2.0.4-feature-rename-label-semi-breaking-changes.20250221073511",
     "@netcracker/qubership-apihub-http-spec": "5.5.7",
     "@schemastore/package": "0.0.4",
     "@stoplight/eslint-config": "2.1.0",
