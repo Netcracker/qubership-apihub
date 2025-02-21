@@ -87,7 +87,7 @@ export const DiffBlock: React.FunctionComponent<{
     return (
       <Box
         className="diff-block-type"
-        data-diff-type={`${type}${cause ? ', ' + cause : ''}`}
+        data-diff-type={`${type === 'semi-breaking'? 'risky': type}${cause ? ', ' + cause : ''}`}
         style={{
           minHeight,
           background,
