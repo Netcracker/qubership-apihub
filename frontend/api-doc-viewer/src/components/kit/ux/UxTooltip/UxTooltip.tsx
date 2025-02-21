@@ -36,7 +36,7 @@ const buildTooltipInnerStyles = (floating: boolean) => {
 
 export const UxTooltip: FC<UxTooltipProps> = (props) => {
   const { children, text, floatingContainer = false } = props
-
+  console.log('UxTooltip-->', text, children)
   return (
     <div className="relative inline-flex hover:cursor-pointer">
       <div className="UxTooltip-children inline-flex">
