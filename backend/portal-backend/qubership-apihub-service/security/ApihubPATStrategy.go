@@ -40,9 +40,7 @@ func (a apihubPATStrategyImpl) Authenticate(ctx goctx.Context, r *http.Request) 
 	if pat == "" {
 		return nil, fmt.Errorf("authentication failed: '%v' header is empty", PATHeader)
 	}
-	//TODO: some optimization wanted: this auth method is using 3 DB calls: get pat, get user, get system role
-
-	token, user, err := a.svc.GetPATByToken(pat)
+	token, user, systemRole, err := a.svc.GetPATByToken(pat)
 	if err != nil {
 		return nil, err
 	}
@@ -57,10 +55,6 @@ func (a apihubPATStrategyImpl) Authenticate(ctx goctx.Context, r *http.Request) 
 	}
 
 	userExtensions := auth.Extensions{}
-	systemRole, err := roleService.GetUserSystemRole(user.Id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check user system role: %v", err.Error())
-	}
 	if systemRole != "" {
 		userExtensions.Set(context.SystemRoleExt, systemRole)
 	}

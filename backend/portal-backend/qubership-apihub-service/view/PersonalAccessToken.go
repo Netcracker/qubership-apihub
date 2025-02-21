@@ -26,7 +26,3 @@ type PersonalAccessTokenItem struct {
 	CreatedAt time.Time                `json:"createdAt"`
 	Status    PersonaAccessTokenStatus `json:"status"`
 }
-
-type PersonalAccessTokenListResponse struct {
-	Tokens []PersonalAccessTokenItem `json:"tokens"`
-}

@@ -30,23 +30,24 @@ import (
 type PersonalAccessTokenService interface {
 	CreatePAT(ctx context.SecurityContext, req view.PersonalAccessTokenCreateRequest) (*view.PersonalAccessTokenCreateResponse, error)
 	DeletePAT(ctx context.SecurityContext, id string) error
-	GetPATByToken(pat string) (*view.PersonalAccessTokenItem, *view.User, error)
+	GetPATByToken(pat string) (*view.PersonalAccessTokenItem, *view.User, string, error)
 	ListPATs(userId string) ([]view.PersonalAccessTokenItem, error)
 }
 
-func NewPersonalAccessTokenService(repo repository.PersonalAccessTokenRepository, userService UserService) PersonalAccessTokenService {
-	return personalAccessTokenServiceImpl{repo: repo, userService: userService}
+func NewPersonalAccessTokenService(repo repository.PersonalAccessTokenRepository, userService UserService, roleService RoleService) PersonalAccessTokenService {
+	return personalAccessTokenServiceImpl{repo: repo, userService: userService, roleService: roleService}
 }
 
 type personalAccessTokenServiceImpl struct {
 	repo        repository.PersonalAccessTokenRepository
 	userService UserService
+	roleService RoleService
 }
 
 const ActivePatPerUserLimit = 100
 
 func (p personalAccessTokenServiceImpl) CreatePAT(ctx context.SecurityContext, req view.PersonalAccessTokenCreateRequest) (*view.PersonalAccessTokenCreateResponse, error) {
-	//TODO: The validation are not thread-safe, but probably it's ok for now
+	//TODO: The validations are not thread-safe, but probably it's ok for now
 
 	count, err := p.repo.CountActiveTokens(ctx.GetUserId())
 	if err != nil {
@@ -126,7 +127,6 @@ func (p personalAccessTokenServiceImpl) DeletePAT(ctx context.SecurityContext, i
 	if err != nil {
 		return fmt.Errorf("failed to get PAT: %s", err)
 	}
-	// TODO: custom errors?
 	if pat == nil {
 		return exception.CustomError{
 			Status:  http.StatusNotFound,
@@ -138,23 +138,30 @@ func (p personalAccessTokenServiceImpl) DeletePAT(ctx context.SecurityContext, i
 	return p.repo.DeletePAT(pat.Id, ctx.GetUserId())
 }
 
-func (p personalAccessTokenServiceImpl) GetPATByToken(pat string) (*view.PersonalAccessTokenItem, *view.User, error) {
+func (p personalAccessTokenServiceImpl) GetPATByToken(pat string) (*view.PersonalAccessTokenItem, *view.User, string, error) {
 	tokenHash := crypto.CreateSHA256Hash([]byte(pat))
+
+	//TODO: some optimization wanted: this auth method is using 3 DB calls: get pat, get user, get system role
 
 	ent, err := p.repo.GetPATByHash(tokenHash)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 	if ent == nil {
-		return nil, nil, nil
+		return nil, nil, "", nil
 	}
 	result := entity.MakePersonaAccessTokenView(*ent)
 
 	user, err := p.userService.GetUserFromDB(ent.UserId)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get user for pat: %s", err)
+		return nil, nil, "", fmt.Errorf("failed to get user for pat: %s", err)
 	}
-	return &result, user, nil
+
+	systemRole, err := p.roleService.GetUserSystemRole(user.Id)
+	if err != nil {
+		return nil, nil, "", fmt.Errorf("failed to get user system role for pat: %s", err)
+	}
+	return &result, user, systemRole, nil
 }
 
 func (p personalAccessTokenServiceImpl) ListPATs(userId string) ([]view.PersonalAccessTokenItem, error) {
