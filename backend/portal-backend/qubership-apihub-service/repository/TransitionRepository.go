@@ -147,7 +147,7 @@ func (t transitionRepositoryImpl) MovePackage(fromPkg, toPkg string, overwriteHi
 		}
 		if toPkgCount != 0 {
 			// no updates possible due to currently implemented data retention policy
-			return fmt.Errorf("unable to move: destination package %s already exists (%d)", toPkg, toPkgCount)
+			return fmt.Errorf("unable to move: destination package %s already exists", toPkg)
 		}
 		_, err = tx.Model(fromPkgEnt).Insert()
 		if err != nil {
