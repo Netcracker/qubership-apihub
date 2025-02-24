@@ -70,7 +70,7 @@ func (p transitionServiceImpl) MoveOrRenamePackage(userCtx context2.SecurityCont
 	if toPackage != nil {
 		deletedAtStr := ""
 		if toPackage.DeletedAt != nil {
-			deletedAtStr = toPackage.DeletedAt.String()
+			deletedAtStr = fmt.Sprintf("(deleted at %s)", toPackage.DeletedAt)
 		}
 		return "", &exception.CustomError{
 			Status:  http.StatusNotFound,
