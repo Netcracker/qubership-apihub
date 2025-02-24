@@ -652,7 +652,7 @@ const TransitionActivityNotFound = "6303"
 const TransitionActivityNotFoundMsg = "Transition activity $id not found"
 
 const ToPackageExists = "6304"
-const ToPackageExistsMsg = "Unable to perform package move operation since 'to' package $packageId already exists"
+const ToPackageExistsMsg = "Unable to perform package move operation since 'to' package $packageId already exists $deletedAt"
 
 const ToPackageRedirectExists = "6305"
 const ToPackageRedirectExistsMsg = "Unable to perform package move operation since 'to' package $packageId is already used by 'old' package id which was moved to $newPackageId. " +
