@@ -51,6 +51,8 @@ export function useBranchCache(): [BranchCache, IsLoading, RefetchQuery<BranchCa
       authorization: getAuthorization(),
       branchName: branchName!,
       files: branchConfig?.files ?? [],
+      // branchFiles serialization is an expensive operation, so it is not suitable for use as part of a queryKey, so
+      // get the data from react-query cache directly instead of using a hook to avoid stale closure issue
       sources: client.getQueryData<FileSourceMap>([ALL_BRANCH_FILES_QUERY_KEY, projectId, branchName]),
     }),
     enabled: !!projectId && !!branchName && !isBranchConfigLoading,
