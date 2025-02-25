@@ -16,7 +16,7 @@
 
 import type { CSSProperties, FC } from 'react'
 import './UxMarker.css'
-import { DIFF_TYPE_COLORS } from '../consts'
+import { CHANGE_SEVERITY_NAME_MAP, DIFF_TYPE_COLORS } from '../consts'
 import { UxTooltip } from '../UxTooltip/UxTooltip'
 import { DiffType } from '@netcracker/qubership-apihub-api-diff'
 
@@ -51,7 +51,7 @@ export const UxMarker: FC<UxMarkerProps> = (props) => {
   )
 
   const wrappedMarkerElement = tooltip
-    ? <UxTooltip text={tooltip === 'semi-breaking' ? 'risky' : tooltip}
+    ? <UxTooltip text={CHANGE_SEVERITY_NAME_MAP[variant]}
                  floatingContainer={!!floating}>{markerElement}</UxTooltip>
     : markerElement
 

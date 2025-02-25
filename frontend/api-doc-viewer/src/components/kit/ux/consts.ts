@@ -52,13 +52,13 @@ export const DIFF_TYPE_COLORS: Record<DiffType, string> = {
 }
 
 export const CHANGE_SEVERITY_NAME_MAP: Record<DiffType | 'custom', string> = {
-  [BREAKING_CHANGE_SEVERITY]: 'Breaking',
-  [SEMI_BREAKING_CHANGE_SEVERITY]: 'Risky',
-  [DEPRECATED_CHANGE_SEVERITY]: 'Deprecated',
-  [NON_BREAKING_CHANGE_SEVERITY]: 'Non-breaking',
-  [UNCLASSIFIED_CHANGE_SEVERITY]: 'Unclassified',
-  [ANNOTATION_CHANGE_SEVERITY]: 'Annotation',
-  [CUSTOM_CHANGE_SEVERITY]: 'Custom'
+  [BREAKING_CHANGE_SEVERITY]: 'breaking',
+  [SEMI_BREAKING_CHANGE_SEVERITY]: 'risky',
+  [DEPRECATED_CHANGE_SEVERITY]: 'deprecated',
+  [NON_BREAKING_CHANGE_SEVERITY]: 'non-breaking',
+  [UNCLASSIFIED_CHANGE_SEVERITY]: 'unclassified',
+  [ANNOTATION_CHANGE_SEVERITY]: 'annotation',
+  [CUSTOM_CHANGE_SEVERITY]: 'custom'
 }
 
 export const COMMON_LAYOUT_STYLE_WITHOUT_BORDER = 'rounded-md px-2 pb-px text-xs font-normal'
