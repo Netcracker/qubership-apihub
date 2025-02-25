@@ -35,7 +35,13 @@ export const COLOR_SCHEMAS: Record<BadgeKind, string> = {
   [BADGE_KIND_ERROR]: 'bg-red-50 text-red-700 ring-red-600/10',
   [BADGE_KIND_SUCCESS]: 'bg-green-50 text-green-700 ring-green-600/20',
 }
-
+export const BREAKING_CHANGE_SEVERITY = 'breaking'
+export const NON_BREAKING_CHANGE_SEVERITY = 'non-breaking'
+export const SEMI_BREAKING_CHANGE_SEVERITY = 'semi-breaking'
+export const DEPRECATED_CHANGE_SEVERITY = 'deprecated'
+export const ANNOTATION_CHANGE_SEVERITY = 'annotation'
+export const UNCLASSIFIED_CHANGE_SEVERITY = 'unclassified'
+export const CUSTOM_CHANGE_SEVERITY = 'custom'
 export const DIFF_TYPE_COLORS: Record<DiffType, string> = {
   breaking: '#ED4A54',
   'semi-breaking': '#E98554',
@@ -43,6 +49,16 @@ export const DIFF_TYPE_COLORS: Record<DiffType, string> = {
   'non-breaking': '#84CB7A',
   annotation: '#B866C9',
   unclassified: '#70A9EC',
+}
+
+export const CHANGE_SEVERITY_NAME_MAP: Record<DiffType | 'custom', string> = {
+  [BREAKING_CHANGE_SEVERITY]: 'Breaking',
+  [SEMI_BREAKING_CHANGE_SEVERITY]: 'Risky',
+  [DEPRECATED_CHANGE_SEVERITY]: 'Deprecated',
+  [NON_BREAKING_CHANGE_SEVERITY]: 'Non-breaking',
+  [UNCLASSIFIED_CHANGE_SEVERITY]: 'Unclassified',
+  [ANNOTATION_CHANGE_SEVERITY]: 'Annotation',
+  [CUSTOM_CHANGE_SEVERITY]: 'Custom'
 }
 
 export const COMMON_LAYOUT_STYLE_WITHOUT_BORDER = 'rounded-md px-2 pb-px text-xs font-normal'

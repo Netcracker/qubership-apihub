@@ -16,7 +16,7 @@
 
 import type { FC } from 'react'
 import './UxFloatingBadge.css'
-import { DIFF_TYPE_COLORS } from '../consts'
+import { CHANGE_SEVERITY_NAME_MAP, DIFF_TYPE_COLORS } from '../consts'
 import { DiffType } from '@netcracker/qubership-apihub-api-diff'
 
 type FloatingBadgeVariant = DiffType | 'custom'
@@ -39,7 +39,7 @@ export const UxFloatingBadge: FC<UxFloatingBadgeProps> = (props) => {
           : backgroundColor
       }}
     >
-      <span className="UxFloatingBadge-content">{variant === 'semi-breaking'? 'risky': variant}{message ? `, ${message}` : ''}</span>
+      <span className="UxFloatingBadge-content">{CHANGE_SEVERITY_NAME_MAP[variant]}{message ? `, ${message}` : ''}</span>
     </div>
   )
 }
