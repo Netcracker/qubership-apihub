@@ -48,6 +48,6 @@ export const ChangeSeverityIndicator: FC<ChangeSeverityIndicatorProps> = memo<Ch
       ...sx,
     }}
     data-testid="ChangeSeverityIndicator">
-    {CHANGE_SEVERITY_NAME_MAP[severity]}
+    {CHANGE_SEVERITY_NAME_MAP[severity].toLocaleLowerCase()}
   </Box>
 })
