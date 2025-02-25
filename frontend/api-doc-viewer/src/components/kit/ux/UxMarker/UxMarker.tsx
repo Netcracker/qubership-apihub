@@ -51,7 +51,7 @@ export const UxMarker: FC<UxMarkerProps> = (props) => {
   )
 
   const wrappedMarkerElement = tooltip
-    ? <UxTooltip text={CHANGE_SEVERITY_NAME_MAP[variant]}
+    ? <UxTooltip text={CHANGE_SEVERITY_NAME_MAP[tooltip as DiffType]}
                  floatingContainer={!!floating}>{markerElement}</UxTooltip>
     : markerElement
 
