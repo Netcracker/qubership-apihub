@@ -53,7 +53,7 @@ func (p personalAccessTokenServiceImpl) CreatePAT(ctx context.SecurityContext, r
 	if err != nil {
 		return nil, fmt.Errorf("failed to check token limit: %w", err)
 	}
-	if count > ActivePatPerUserLimit {
+	if count >= ActivePatPerUserLimit {
 		return nil, exception.CustomError{
 			Status:  http.StatusConflict,
 			Code:    exception.PersonalAccessTokenLimitExceeded,
