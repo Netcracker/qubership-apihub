@@ -24,7 +24,7 @@ import { BRANCH_CONFIG_QUERY_KEY, useBranchConfig } from './useBranchConfig'
 import type { BuilderOptions } from './package-version-builder'
 import { PackageVersionBuilder } from './package-version-builder'
 import { VERSION_CANDIDATE } from './consts'
-import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import type { IsLoading, RefetchQuery } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { getAuthorization } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
 import { fetchAllFiles } from '@apihub/entities/publish-details'
 import type { FileData } from '@apihub/entities/project-files'
@@ -35,15 +35,15 @@ import type { FileSourceMap } from '@netcracker/qubership-apihub-api-processor'
 
 export const BRANCH_CACHE_QUERY_KEY = 'branch-cache'
 
-export function useBranchCache(): [BranchCache, IsLoading] {
+export function useBranchCache(): [BranchCache, IsLoading, RefetchQuery<BranchCache, Error>] {
+  const client = useQueryClient()
   const { projectId } = useParams()
   const [branchName] = useBranchSearchParam()
-  const [branchFiles, isBranchFilesLoading] = useAllBranchFiles()
   const [branchConfig, isBranchConfigLoading] = useBranchConfig()
 
-  const { data, isLoading } = useQuery<BranchCache, Error>({
+  const { data, isLoading, refetch } = useQuery<BranchCache, Error, BranchCache>({
     queryKey: [BRANCH_CACHE_QUERY_KEY, projectId, branchName],
-    queryFn: () => getBranchCache({
+    queryFn: async () => getBranchCache({
       packageKey: projectId!,
       versionKey: VERSION_CANDIDATE,
       previousVersionKey: '',
@@ -51,24 +51,26 @@ export function useBranchCache(): [BranchCache, IsLoading] {
       authorization: getAuthorization(),
       branchName: branchName!,
       files: branchConfig?.files ?? [],
-      sources: branchFiles,
+      // branchFiles serialization is an expensive operation, so it is not suitable for use as part of a queryKey, so
+      // get the data from react-query cache directly instead of using a hook to avoid stale closure issue
+      sources: client.getQueryData<FileSourceMap>([ALL_BRANCH_FILES_QUERY_KEY, projectId, branchName]),
     }),
-    enabled: !!projectId && !!branchName && !isBranchConfigLoading && !isBranchFilesLoading,
+    enabled: !!projectId && !!branchName && !isBranchConfigLoading,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
   })
 
-  return [data ?? {}, isLoading]
+  return [data ?? {}, isLoading, refetch]
 }
 
 const ALL_BRANCH_FILES_QUERY_KEY = 'all-branch-files'
 
-export function useAllBranchFiles(): [FileSourceMap, IsLoading] {
+export function useAllBranchFiles(): [FileSourceMap, IsLoading, RefetchQuery<FileSourceMap, Error>] {
   const { projectId } = useParams()
   const [branchName] = useBranchSearchParam()
 
-  const { data, isLoading } = useQuery<FileSourceMap, Error>({
+  const { data, isLoading, refetch } = useQuery<FileSourceMap, Error>({
     queryKey: [ALL_BRANCH_FILES_QUERY_KEY, projectId, branchName],
     queryFn: () => fetchAllFiles(projectId!, branchName!, getAuthorization()),
     enabled: !!projectId && !!branchName,
@@ -77,7 +79,7 @@ export function useAllBranchFiles(): [FileSourceMap, IsLoading] {
     refetchOnReconnect: false,
   })
 
-  return [data ?? {}, isLoading]
+  return [data ?? {}, isLoading, refetch]
 }
 
 export function useBranchCacheDocument(fileKey: string): [FileData | undefined, IsLoading] {

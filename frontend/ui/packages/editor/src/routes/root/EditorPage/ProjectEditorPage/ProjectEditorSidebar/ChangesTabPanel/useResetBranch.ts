@@ -24,17 +24,23 @@ import { useShowSuccessNotification } from '../../../../BasePage/Notification'
 import { FILES_PROJECT_EDITOR_MODE } from '@apihub/entities/editor-modes'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { editorRequestVoid } from '@apihub/utils/requests'
+import { useAllBranchFiles, useBranchCache } from '../../useBranchCache'
 
-export function useResetBranch(): [ResetBranch, IsLoading] {
+export function useResetBranch(onSuccess: () => void): [ResetBranch, IsLoading] {
   const { projectId } = useParams()
   const [selectedBranch] = useBranchSearchParam()
   const setSearchParams = useSetSearchParams()
+  const [, , refetchAllBranchFiles] = useAllBranchFiles()
+  const [, , refetchBranchCache] = useBranchCache()
 
   const showNotification = useShowSuccessNotification()
 
   const { mutate, isLoading } = useMutation<void, Error>({
-    mutationFn: () => resetBranch(projectId!, selectedBranch!),
-    onSuccess: () => {
+    mutationFn: async () => resetBranch(projectId!, selectedBranch!),
+    onSuccess: async () => {
+      await refetchAllBranchFiles()
+      await refetchBranchCache()
+      onSuccess()
       setSearchParams({ mode: FILES_PROJECT_EDITOR_MODE, change: '', file: '' }, { replace: true })
       showNotification({ message: 'Branch has been reset' })
     },

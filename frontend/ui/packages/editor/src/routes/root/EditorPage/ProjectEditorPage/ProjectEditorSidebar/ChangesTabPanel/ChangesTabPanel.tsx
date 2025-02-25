@@ -15,7 +15,7 @@
  */
 
 import type { FC } from 'react'
-import { memo, useState } from 'react'
+import { memo, useCallback, useState } from 'react'
 import { useEventBus } from '../../../../../EventBusProvider'
 import { useSetSelectedConflictedBlobKey } from '../../ConflictedBlobKeyProvider'
 import { LoadingButton } from '@mui/lab'
@@ -78,7 +78,7 @@ export const ChangesTabPanel: FC = memo(() => {
           <Box display="flex" width="100%" alignItems="center" flexGrow={1} gap={1}>
             <Typography variant="h3" noWrap>Changes</Typography>
             {conflicts.length > 0 && <WarningMarker/>}
-            {hasEditPermission && changeCount > 0 && <SaveChangesButton/>}
+            <SaveChangesButton visible={hasEditPermission && changeCount > 0}/>
           </Box>
         }
         body={
@@ -145,14 +145,22 @@ export const ChangesTabPanel: FC = memo(() => {
   )
 })
 
-const SaveChangesButton: FC = memo(() => {
+export type SaveChangesButtonProps = {
+  visible: boolean
+}
+
+const SaveChangesButton: FC<SaveChangesButtonProps> = memo<SaveChangesButtonProps>(({
+  visible,
+}) => {
   const { showSaveChangesDialog, showForceSaveChangesDialog } = useEventBus()
-  const [resetBranch, isLoading] = useResetBranch()
   const [confirmationOpen, setConfirmationOpen] = useState(false)
+  const closeConfirmation = useCallback(() => setConfirmationOpen(false), [setConfirmationOpen])
+
+  const [resetBranch, isLoading] = useResetBranch(closeConfirmation)
   const [, isFetching, getBranchConflicts] = useBranchConflicts()
 
   return (<>
-    <MultiButton
+    {visible && <MultiButton
       sx={{ ml: 'auto' }}
       buttonGroupProps={{ sx: { marginLeft: 'auto', marginRight: 4, minWidth: 'max-content' } }}
       primary={
@@ -190,15 +198,16 @@ const SaveChangesButton: FC = memo(() => {
           </MenuItem>
         </Box>
       }
-    />
+    />}
     <ConfirmationDialog
       open={confirmationOpen}
       title="Reset branch"
       message="Are you sure, you want to reset branch to last saved? All changes will be lost"
       loading={isLoading}
       confirmButtonName="Reset"
-      onConfirm={() => resetBranch()}
-      onCancel={() => setConfirmationOpen(false)}
+      onConfirm={resetBranch}
+      onCancel={closeConfirmation}
+      shouldCloseOnLoadingFinish={false}
     />
   </>)
 })
