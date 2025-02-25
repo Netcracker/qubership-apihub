@@ -4,7 +4,7 @@ import { useAtom } from 'jotai';
 import React, { CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
 
-import { DIFF_TYPE_COLOR_MAP } from './constants';
+import { CHANGE_SEVERITY_NAME_MAP, DIFF_TYPE_COLOR_MAP } from './constants'
 import { useDiffBlockIdPrefixContext } from './DiffBlockIdPrefixContext';
 import { useDiffContext } from './DiffContext';
 import { diffBlockHeight, diffBlockTop } from './state';
@@ -87,7 +87,7 @@ export const DiffBlock: React.FunctionComponent<{
     return (
       <Box
         className="diff-block-type"
-        data-diff-type={`${type === 'semi-breaking'? 'risky': type}${cause ? ', ' + cause : ''}`}
+        data-diff-type={`${CHANGE_SEVERITY_NAME_MAP[type]}${cause ? ', ' + cause : ''}`}
         style={{
           minHeight,
           background,
