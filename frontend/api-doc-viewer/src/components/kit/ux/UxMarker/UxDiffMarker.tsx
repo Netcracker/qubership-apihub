@@ -15,43 +15,35 @@
  */
 
 import type { CSSProperties, FC } from 'react'
-import './UxMarker.css'
-import { CHANGE_SEVERITY_NAME_MAP, DIFF_TYPE_COLORS } from '../consts'
+import './UxDiffMarker.css'
+import { DIFF_TYPE_COLORS, DIFF_TYPE_NAME_MAP } from '../consts'
 import { UxTooltip } from '../UxTooltip/UxTooltip'
 import { DiffType } from '@netcracker/qubership-apihub-api-diff'
 
-type MarkerVariant = DiffType | 'custom'
-
 type FloatingVariant = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
 
-export type UxMarkerProps = {
-  variant: MarkerVariant
-  backgroundColor?: string
-  tooltip?: string
+export type UxDiffMarkerProps = {
+  variant: DiffType
+  tooltip?: DiffType
   floating?: FloatingVariant
 }
 
-export const UxMarker: FC<UxMarkerProps> = (props) => {
+export const UxDiffMarker: FC<UxDiffMarkerProps> = (props) => {
   const {
     variant,
-    backgroundColor,
     tooltip,
     floating,
   } = props
 
   const markerElement = (
     <div
-      className="UxMarker inline-block"
-      style={{
-        backgroundColor: variant !== 'custom'
-          ? DIFF_TYPE_COLORS[variant]
-          : backgroundColor,
-      }}
+      className="UxDiffMarker inline-block"
+      style={{backgroundColor: DIFF_TYPE_COLORS[variant]}}
     ></div>
   )
 
   const wrappedMarkerElement = tooltip
-    ? <UxTooltip text={CHANGE_SEVERITY_NAME_MAP[tooltip as DiffType]}
+    ? <UxTooltip text={DIFF_TYPE_NAME_MAP[tooltip]}
                  floatingContainer={!!floating}>{markerElement}</UxTooltip>
     : markerElement
 

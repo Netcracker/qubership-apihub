@@ -14,7 +14,15 @@
  * limitations under the License.
  */
 
-import { DiffType } from '@netcracker/qubership-apihub-api-diff'
+import {
+  annotation,
+  breaking,
+  deprecated,
+  DiffType,
+  nonBreaking,
+  semiBreaking,
+  unclassified,
+} from '@netcracker/qubership-apihub-api-diff'
 import {
   BADGE_KIND_ALTERNATIVE_INFO,
   BADGE_KIND_DEFAULT,
@@ -23,7 +31,7 @@ import {
   BADGE_KIND_INFO,
   BADGE_KIND_SUCCESS,
   BADGE_KIND_WARNING,
-  BadgeKind
+  BadgeKind,
 } from './types'
 
 export const COLOR_SCHEMAS: Record<BadgeKind, string> = {
@@ -35,30 +43,23 @@ export const COLOR_SCHEMAS: Record<BadgeKind, string> = {
   [BADGE_KIND_ERROR]: 'bg-red-50 text-red-700 ring-red-600/10',
   [BADGE_KIND_SUCCESS]: 'bg-green-50 text-green-700 ring-green-600/20',
 }
-export const BREAKING_CHANGE_SEVERITY = 'breaking'
-export const NON_BREAKING_CHANGE_SEVERITY = 'non-breaking'
-export const SEMI_BREAKING_CHANGE_SEVERITY = 'semi-breaking'
-export const DEPRECATED_CHANGE_SEVERITY = 'deprecated'
-export const ANNOTATION_CHANGE_SEVERITY = 'annotation'
-export const UNCLASSIFIED_CHANGE_SEVERITY = 'unclassified'
-export const CUSTOM_CHANGE_SEVERITY = 'custom'
+
 export const DIFF_TYPE_COLORS: Record<DiffType, string> = {
-  breaking: '#ED4A54',
-  'semi-breaking': '#E98554',
-  deprecated: '#FFB02E',
-  'non-breaking': '#84CB7A',
-  annotation: '#B866C9',
-  unclassified: '#70A9EC',
+  [breaking]: '#ED4A54',
+  [semiBreaking]: '#E98554',
+  [deprecated]: '#FFB02E',
+  [nonBreaking]: '#84CB7A',
+  [annotation]: '#B866C9',
+  [unclassified]: '#70A9EC',
 }
 
-export const CHANGE_SEVERITY_NAME_MAP: Record<DiffType | 'custom', string> = {
-  [BREAKING_CHANGE_SEVERITY]: 'breaking',
-  [SEMI_BREAKING_CHANGE_SEVERITY]: 'risky',
-  [DEPRECATED_CHANGE_SEVERITY]: 'deprecated',
-  [NON_BREAKING_CHANGE_SEVERITY]: 'non-breaking',
-  [UNCLASSIFIED_CHANGE_SEVERITY]: 'unclassified',
-  [ANNOTATION_CHANGE_SEVERITY]: 'annotation',
-  [CUSTOM_CHANGE_SEVERITY]: 'custom'
+export const DIFF_TYPE_NAME_MAP: Record<DiffType, string> = {
+  [breaking]: 'breaking',
+  [semiBreaking]: 'risky',
+  [deprecated]: 'deprecated',
+  [nonBreaking]: 'non-breaking',
+  [unclassified]: 'unclassified',
+  [annotation]: 'annotation',
 }
 
 export const COMMON_LAYOUT_STYLE_WITHOUT_BORDER = 'rounded-md px-2 pb-px text-xs font-normal'

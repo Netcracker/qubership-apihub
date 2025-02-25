@@ -41,11 +41,11 @@ import {
   maxDiffTypeFromNodeSummary
 } from '../../utils/common/changes'
 import { UxFloatingBadge } from '../kit/ux/UxFloatingBadge/UxFloatingBadge'
-import { UxMarker } from '../kit/ux/UxMarker/UxMarker'
 import { EmptyContent } from './diffs/EmptyContent'
 import { UnsupportedContent } from './diffs/UnsupportedContent'
 import { NestingIndicator, NestingIndicatorTitle } from './NestingIndicator'
 import { NodeType } from './NodeType'
+import { UxDiffMarker } from '../kit/ux/UxMarker/UxDiffMarker'
 
 export type SelectNestedNodeRowProps = PropsWithoutChangesSummary<
   {
@@ -284,7 +284,7 @@ const DiffButton: FC<DiffButtonProps> = (props) => {
         />
       </button>
       {diffsByDescendantsEnabled && diffTypeByDescendants && (
-        <UxMarker
+        <UxDiffMarker
           variant={diffTypeByDescendants}
           tooltip={diffTypeByDescendants}
           floating="top-right"
