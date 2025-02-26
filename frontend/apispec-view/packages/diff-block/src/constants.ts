@@ -35,7 +35,7 @@ export const DIFF_BUDGES_COLOR_MAP = {
   [unclassified]: '#70A9EC',
 };
 
-export const CHANGE_SEVERITY_NAME_MAP: Record<DiffType, string> = {
+export const DIFF_TYPE_NAME_MAP: Record<DiffType, string> = {
   [breaking]: 'breaking',
   [semiBreaking]: 'risky',
   [deprecated]: 'deprecated',
