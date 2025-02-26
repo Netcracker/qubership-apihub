@@ -9,7 +9,7 @@ export abstract class BaseCompareToolbar {
   readonly backBtn = new Button(this.locator.getByTestId('BackButton'), 'Back')
   readonly packageSlt = new ComparisonPagePackageSelect(this.page)
   readonly breakingChangesFilterBtn = new Button(this.locator.getByTestId('ChangesFilterButton-breaking'), 'Breaking changes filter')
-  readonly semiBreakingChangesFilterBtn = new Button(this.page.getByTestId('ChangesFilterButton-semi-breaking'), 'Semi-breaking changes filter')
+  readonly semiBreakingChangesFilterBtn = new Button(this.page.getByTestId('ChangesFilterButton-semi-breaking'), 'Risky changes filter')
   readonly deprecatedChangesFilterBtn = new Button(this.locator.getByTestId('ChangesFilterButton-deprecated'), 'Deprecated changes filter')
   readonly nonBreakingChangesFilterBtn = new Button(this.locator.getByTestId('ChangesFilterButton-non-breaking'), 'Non-breaking changes filter')
   readonly annotationChangesFilterBtn = new Button(this.locator.getByTestId('ChangesFilterButton-annotation'), 'Annotation changes filter')

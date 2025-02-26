@@ -2,7 +2,7 @@ export const TOOLTIP_SEVERITY_MSG = {
   breaking: 'Breaking change is a change that breaks backward compatibility with the previous version of API. For example, deleting an operation, adding a required parameter or changing type of a parameter are breaking changes.',
   nonBreaking: 'Non-breaking change is change that does not break backward compatibility with the previous version of API. For example, adding new operation or optional parameter is non-breaking change.',
   semiBreaking: [
-    'Semi-breaking change is a change that breaks backward compatibility according to the rules:',
+    'Risky change is a change that breaks backward compatibility according to the rules:',
     'operation was annotated as deprecated in at least two previous consecutive releases and then it was deleted',
     'operation is marked as no-BWC',
   ],

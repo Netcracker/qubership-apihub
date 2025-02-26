@@ -8,7 +8,7 @@ export class OverviewValidationsContent {
   readonly noBwcOperations = new Content(this.locator.getByTestId('NumberOfNoBwcOperationsTypography'), 'Number of no-BWC operations')
   readonly bwcErrors = new Content(this.locator.getByTestId('NumberOfBwcErrorsTypography'), 'Number of BWC errors')
   readonly breakingChanges = new Content(this.locator.getByTestId('breaking'), 'Breaking changes')
-  readonly semiBreakingChanges = new Content(this.locator.getByTestId('semi-breaking'), 'Semi-breaking changes')
+  readonly semiBreakingChanges = new Content(this.locator.getByTestId('semi-breaking'), 'Risky changes')
   readonly deprecatedChanges = new Content(this.locator.getByTestId('deprecated'), 'Deprecated changes')
   readonly nonBreakingChanges = new Content(this.locator.getByTestId('non-breaking'), 'Non-breaking changes')
   readonly annotationChanges = new Content(this.locator.getByTestId('annotation'), 'Annotation changes')

@@ -8,7 +8,7 @@ export class PackageTabToolbar {
   readonly comparedToLnk = new Link(this.page.getByTestId('ComparedToLink'), 'Compared to')
   readonly sltApiType = new ApiTypeSelect(this.page)
   readonly breakingChangesFilterBtn = new Button(this.page.getByTestId('ChangesFilterButton-breaking'), 'Breaking changes filter')
-  readonly semiBreakingChangesFilterBtn = new Button(this.page.getByTestId('ChangesFilterButton-semi-breaking'), 'Semi-breaking changes filter')
+  readonly semiBreakingChangesFilterBtn = new Button(this.page.getByTestId('ChangesFilterButton-semi-breaking'), 'Risky changes filter')
   readonly deprecatedChangesFilterBtn = new Button(this.page.getByTestId('ChangesFilterButton-deprecated'), 'Deprecated changes filter')
   readonly nonBreakingChangesFilterBtn = new Button(this.page.getByTestId('ChangesFilterButton-non-breaking'), 'Non-breaking changes filter')
   readonly annotationChangesFilterBtn = new Button(this.page.getByTestId('ChangesFilterButton-annotation'), 'Annotation changes filter')

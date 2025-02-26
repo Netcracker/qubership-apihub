@@ -6,7 +6,7 @@ export class ChangesTableCell extends TableCell {
   readonly breakingChanges = new Content(this.mainLocator.getByTestId('breaking'), 'Breaking changes')
   readonly deprecatedChanges = new Content(this.mainLocator.getByTestId('deprecated'), 'Deprecated changes')
   readonly nonBreakingChanges = new Content(this.mainLocator.getByTestId('non-breaking'), 'Non-breaking changes')
-  readonly semiBreakingChanges = new Content(this.mainLocator.getByTestId('semi-breaking'), 'Semi-breaking changes')
+  readonly semiBreakingChanges = new Content(this.mainLocator.getByTestId('semi-breaking'), 'Risky changes')
   readonly annotationChanges = new Content(this.mainLocator.getByTestId('annotation'), 'Annotation changes')
   readonly unclassifiedChanges = new Content(this.mainLocator.getByTestId('unclassified'), 'Unclassified changes')
 
