@@ -71,7 +71,7 @@ import { CircularRefIcon } from '../../../../kit/icons/CircularRefIcon'
 import { UxBadge } from '../../../../kit/ux/UxBadge'
 import { UxContextMenu } from '../../../../kit/ux/UxContextMenu/UxContextMenu'
 import { ToggleContextMenuHandlerOptions } from '../../../../kit/ux/UxContextMenu/types/ToggleContextMenuHandler'
-import { UxFloatingBadge } from '../../../../kit/ux/UxFloatingBadge/UxFloatingBadge'
+import { UxDiffFloatingBadge } from '../../../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 import { UxMarkerPanel } from '../../../../kit/ux/UxMarkerPanel/UxMarkerPanel'
 import { UxTooltip } from '../../../../kit/ux/UxTooltip/UxTooltip'
 import { ArgumentsSubTitle } from './ArgumentsSubtitle'
@@ -373,7 +373,7 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffType && diffTypeIncluded && <UxFloatingBadge variant={diffType} message={diffTypeCause} />}
+        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         <Content {...props} layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
     )
@@ -391,7 +391,7 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffType && diffTypeIncluded && <UxFloatingBadge variant={diffType} message={diffTypeCause} />}
+        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         {!isNodeChanged && isContentChanged || isNodeChanged && (nodeRemoved || nodeReplaced)
           ? <Content {...props} layoutSide={ORIGIN_LAYOUT_SIDE} />
           : <EmptyContent level={$nodeChange?.depth ?? level} />}

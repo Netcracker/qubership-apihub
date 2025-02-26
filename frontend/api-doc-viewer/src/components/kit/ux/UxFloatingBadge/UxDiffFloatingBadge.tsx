@@ -15,31 +15,27 @@
  */
 
 import type { FC } from 'react'
-import './UxFloatingBadge.css'
-import { DIFF_TYPE_COLORS } from '../consts'
+import './UxDiffFloatingBadge.css'
+import { DIFF_TYPE_COLORS, DIFF_TYPE_NAME_MAP } from '../consts'
 import { DiffType } from '@netcracker/qubership-apihub-api-diff'
 
-type FloatingBadgeVariant = DiffType | 'custom'
-
-export type UxFloatingBadgeProps = {
-  variant: FloatingBadgeVariant,
+export type UxDiffFloatingBadgeProps = {
+  variant: DiffType,
   message: string | undefined,
   backgroundColor?: string
 }
 
-export const UxFloatingBadge: FC<UxFloatingBadgeProps> = (props) => {
-  const { variant, message, backgroundColor } = props
+export const UxDiffFloatingBadge: FC<UxDiffFloatingBadgeProps> = (props) => {
+  const { variant, message } = props
 
   return (
     <div
-      className="UxFloatingBadge absolute z-10 text-white text-xs w-1 h-full hover:w-max hover:cursor-default hover:px-2"
+      className="UxDiffFloatingBadge absolute z-10 text-white text-xs w-1 h-full hover:w-max hover:cursor-default hover:px-2"
       style={{
-        backgroundColor: variant !== 'custom'
-          ? DIFF_TYPE_COLORS[variant]
-          : backgroundColor
+        backgroundColor: DIFF_TYPE_COLORS[variant]
       }}
     >
-      <span className="UxFloatingBadge-content">{variant}{message ? `, ${message}` : ''}</span>
+      <span className="UxDiffFloatingBadge-content">{DIFF_TYPE_NAME_MAP[variant]}{message ? `, ${message}` : ''}</span>
     </div>
   )
 }
