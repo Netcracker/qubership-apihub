@@ -96,17 +96,30 @@ export function useOpenApiVisitor(operationData: object | undefined): OpenApiDat
         schemaObjectNames.forEach(schemaObjectName => {
           let existingData: OpenApiVisitorData | undefined = activeDataCollection.find(i => i.schemaObjectName === schemaObjectName)
           if (!existingData) {
+            const commonData = {
+              scopeDeclarationPath: scopeDeclarationPathStack.at(-1)!,
+              declarationPath: [OPEN_API_PROPERTY_COMPONENTS, OPEN_API_PROPERTY_SCHEMAS, schemaObjectName],
+              schemaObjectName: schemaObjectName,
+              derivedSchemas: [],
+            }
+
             const sharedSchema =
               (normalizedSpec[OPEN_API_PROPERTY_COMPONENTS] as OpenAPIV3.ComponentsObject)
                 ?.[OPEN_API_PROPERTY_SCHEMAS]?.[schemaObjectName] as OpenAPIV3.SchemaObject
+
+            if (!sharedSchema) {
+              return activeDataCollection.push({
+                ...commonData,
+                title: schemaObjectName,
+                error: 'Not a components schema',
+              })
+            }
+
             activeDataCollection.push(existingData = {
+              ...commonData,
               title: sharedSchema?.[JSON_SCHEMA_PROPERTY_TITLE] ?? title,
-              scopeDeclarationPath: scopeDeclarationPathStack.at(-1)!,
-              declarationPath: [OPEN_API_PROPERTY_COMPONENTS, OPEN_API_PROPERTY_SCHEMAS, schemaObjectName],
               schemaObject: sharedSchema,
-              schemaObjectName: schemaObjectName,
               schemaTolerantHashWithTitle: schemaHashWithTitle(sharedSchema),
-              derivedSchemas: [],
             })
           }
           if (!existingData.derivedSchemas.includes(value)) {

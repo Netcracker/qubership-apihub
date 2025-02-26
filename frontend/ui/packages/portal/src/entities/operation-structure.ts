@@ -31,10 +31,11 @@ export type OpenApiVisitorData = {
   scopeDeclarationPath: JsonPath
   declarationPath: JsonPath
   schemaObjectName?: string
-  schemaObject: OpenApiCustomSchemaObject
+  schemaObject?: OpenApiCustomSchemaObject
   schemaTolerantHashWithTitle?: HashWithTitle
   // effective schemas that were derived from the declarative one
   derivedSchemas: OpenAPIV3.SchemaObject[]
+  error?: string
 }
 export type OpenApiVisitorDataWithSection = {
   data: OpenApiVisitorData[]

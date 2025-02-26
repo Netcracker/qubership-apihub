@@ -49,7 +49,7 @@ export const MultiButton: FC<MultiButtonProps> = memo<MultiButtonProps>(({
 
   // think about correct button styling by props
   const arrowButton = useMemo(() => {
-    const backgroundColor = variant === 'outlined' ? 'white' : 'inherit'
+    const backgroundColor = variant === 'outlined' ? 'white' : '#0068FF'
     return (
       <Button
         sx={{ width: 48, backgroundColor: backgroundColor }}
