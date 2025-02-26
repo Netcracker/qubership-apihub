@@ -67,7 +67,7 @@ import { handleSeriesItem, isSeriesItemEmpty, stringifyItem } from '../../utils/
 import { COLOR_SCHEMAS } from '../kit/ux/consts'
 import { BADGE_KIND_DEFAULT } from '../kit/ux/types'
 import { UxBadge } from '../kit/ux/UxBadge'
-import { UxFloatingBadge } from '../kit/ux/UxFloatingBadge/UxFloatingBadge'
+import { UxDiffFloatingBadge } from '../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 import { EmptyContent } from './diffs/EmptyContent'
 import { UnsupportedContent } from './diffs/UnsupportedContent'
 import { NestingIndicator } from './NestingIndicator'
@@ -259,7 +259,7 @@ export const AdditionalInfoObjectRow: FC<AdditionalInfoObjectRowProps> = (props)
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffType && diffTypeIncluded && <UxFloatingBadge variant={diffType} message={diffTypeCause}/>}
+        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause}/>}
         <Content layoutSide={ORIGIN_LAYOUT_SIDE}/>
       </div>
     )
@@ -277,7 +277,7 @@ export const AdditionalInfoObjectRow: FC<AdditionalInfoObjectRowProps> = (props)
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffType && diffTypeIncluded && <UxFloatingBadge variant={diffType} message={diffTypeCause}/>}
+        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause}/>}
         {(isNodeChanged || isRowChanged) && (nodeRemoved || nodeReplaced)
           ? <Content layoutSide={ORIGIN_LAYOUT_SIDE}/>
           : <EmptyContent level={$nodeChange?.depth ?? level}/>}

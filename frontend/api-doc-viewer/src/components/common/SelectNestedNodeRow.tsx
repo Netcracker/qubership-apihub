@@ -40,7 +40,7 @@ import {
   maxDiffType,
   maxDiffTypeFromNodeSummary
 } from '../../utils/common/changes'
-import { UxFloatingBadge } from '../kit/ux/UxFloatingBadge/UxFloatingBadge'
+import { UxDiffFloatingBadge } from '../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 import { EmptyContent } from './diffs/EmptyContent'
 import { UnsupportedContent } from './diffs/UnsupportedContent'
 import { NestingIndicator, NestingIndicatorTitle } from './NestingIndicator'
@@ -172,7 +172,7 @@ export const SelectNestedNodeRow: FC<SelectNestedNodeRowProps> = (props) => {
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffTypeIncluded && <UxFloatingBadge variant={diffType!} message={diffTypeCause} />}
+        {diffTypeIncluded && <UxDiffFloatingBadge variant={diffType!} message={diffTypeCause} />}
         <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
     )
@@ -190,7 +190,7 @@ export const SelectNestedNodeRow: FC<SelectNestedNodeRowProps> = (props) => {
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffTypeIncluded && <UxFloatingBadge variant={diffType!} message={diffTypeCause} />}
+        {diffTypeIncluded && <UxDiffFloatingBadge variant={diffType!} message={diffTypeCause} />}
         {isContentChanged || isDescendantsChanged || isNodeChanged && nodeRemoved
           ? <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
           : <EmptyContent level={$nodeChange?.depth ?? level} />}

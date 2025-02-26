@@ -55,7 +55,7 @@ import { NestingIndicator } from '../../../../common/NestingIndicator'
 import { COLOR_SCHEMAS } from '../../../../kit/ux/consts'
 import { BADGE_KIND_DEFAULT } from '../../../../kit/ux/types'
 import { UxBadge } from '../../../../kit/ux/UxBadge'
-import { UxFloatingBadge } from "../../../../kit/ux/UxFloatingBadge/UxFloatingBadge"
+import { UxDiffFloatingBadge } from "../../../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge"
 import { changesToChange, isDefaultDeprecationReason, isObjectWithoutPayload } from '../../../utils'
 import { DefaultWrappers, Wrapper as Deprecation } from '../../../../common/Wrapper'
 
@@ -252,7 +252,7 @@ const AllowedValuesHeaderRow: FC<AllowedValuesHeaderRowProps> = (props) => {
 
     return (
       <div className={`flex flex-row relative ${changeTypeIncluded ? changeBackground : ''}`}>
-        {changeType && changeTypeIncluded && <UxFloatingBadge variant={changeType} message={changeTypeCause} />}
+        {changeType && changeTypeIncluded && <UxDiffFloatingBadge variant={changeType} message={changeTypeCause} />}
         <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
     )
@@ -270,7 +270,7 @@ const AllowedValuesHeaderRow: FC<AllowedValuesHeaderRowProps> = (props) => {
 
     return (
       <div className={`flex flex-row relative ${changeTypeIncluded ? changeBackground : ''}`}>
-        {changeType && changeTypeIncluded && <UxFloatingBadge variant={changeType} message={changeTypeCause} />}
+        {changeType && changeTypeIncluded && <UxDiffFloatingBadge variant={changeType} message={changeTypeCause} />}
         {!change || diffRemove(change)
           ? <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE} />
           : <EmptyContent level={level} />}
@@ -479,7 +479,7 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffType && diffTypeIncluded && <UxFloatingBadge variant={diffType} message={diffTypeCause} />}
+        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
     )
@@ -497,7 +497,7 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffType && diffTypeIncluded && <UxFloatingBadge variant={diffType} message={diffTypeCause} />}
+        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         {isItemSelfChanged || isItemDetailsChanged || (isNodeChanged || isEnumChanged) && (nodeRemoved || nodeReplaced)
           ? <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
           : <EmptyContent level={nodeChange?.depth ?? level} />}
