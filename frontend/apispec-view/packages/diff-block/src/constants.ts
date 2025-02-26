@@ -5,7 +5,8 @@ import {
   deprecated,
   DiffType,
   nonBreaking,
-  semiBreaking, unclassified,
+  semiBreaking,
+  unclassified,
 } from '@netcracker/qubership-apihub-api-diff'
 import { keys } from 'lodash';
 
