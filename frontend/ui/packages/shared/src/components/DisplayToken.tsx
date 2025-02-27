@@ -22,20 +22,32 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { useCopyToClipboard } from 'react-use'
 import type { Key } from '../entities/keys'
 import { InfoIcon } from '../icons/InfoIcon'
+import type { LinkType } from './Notifications/Notification'
+
+export type NotificationDetail = {
+  title?: string
+  message: string
+  link?: LinkType
+}
 
 export type DisplayTokenProps = {
   generatedApiKey: Key
+  showSuccessNotification: (detail: NotificationDetail) => void
 }
 
 //First Order Component
 export const DisplayToken: FC<DisplayTokenProps> = memo(({
   generatedApiKey,
+  showSuccessNotification,
 }) => {
   const [, copyToClipboard] = useCopyToClipboard()
 
-  const handleCopyToClipboard = useCallback(() => {
+  const handleCopyToClipboard = useCallback((event: React.MouseEvent) => {
+    // prevents the Notification from closing by avoiding the Snackbar's "clickaway" event handling
+    event.stopPropagation()
     copyToClipboard(generatedApiKey ?? '')
-  }, [copyToClipboard, generatedApiKey])
+    showSuccessNotification({ message: 'Access token copied' })
+  }, [copyToClipboard, showSuccessNotification, generatedApiKey])
 
   return (
     <Box>
@@ -43,8 +55,18 @@ export const DisplayToken: FC<DisplayTokenProps> = memo(({
         sx={{ width: '681px' }}
         label="Access token"
         value={generatedApiKey}
-        InputProps={{ endAdornment: <ContentCopyIcon style={{ cursor: 'pointer' }} data-testid="CopyIcon"/> }}
-        onClick={handleCopyToClipboard}
+        InputProps={{
+          readOnly: true,
+          endAdornment: <ContentCopyIcon
+            sx={{
+              cursor: 'pointer',
+              '&:hover': { color: '#0068FF' },
+              '&:active': { color: '#003AB8' },
+            }}
+            onClick={handleCopyToClipboard}
+            data-testid="CopyIcon"
+          />,
+        }}
         data-testid="AccessTokenTextField"
       />
       <Box display="flex" alignItems="center" marginTop="4px" data-testid="TokenWarning">

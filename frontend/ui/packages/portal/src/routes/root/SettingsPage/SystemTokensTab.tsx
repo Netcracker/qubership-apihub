@@ -18,7 +18,11 @@ import type { FC } from 'react'
 import * as React from 'react'
 import { memo, useCallback, useMemo, useState } from 'react'
 import { Box } from '@mui/material'
-import { useDeleteApiKey, useGenerateApiKey, useTokens } from '@netcracker/qubership-apihub-ui-shared/hooks/tokens/useTokens'
+import {
+  useDeleteApiKey,
+  useGenerateApiKey,
+  useTokens,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/tokens/useTokens'
 import { useRoles } from '@netcracker/qubership-apihub-ui-shared/hooks/user-roles/useRoles'
 import type { GenerateApiKeyValue } from '@netcracker/qubership-apihub-ui-shared/types/tokens'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
@@ -26,6 +30,7 @@ import { GenerateTokenForm } from '@netcracker/qubership-apihub-ui-shared/compon
 import { TokensTable } from '@netcracker/qubership-apihub-ui-shared/components/TokensTable'
 import { useUsers } from '@apihub/routes/root/useUsers'
 import { useAuthorization } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
+import { useShowSuccessNotification } from '@apihub/routes/root/BasePage/Notification'
 
 export const SystemTokensTab: FC = memo(() => {
   const [systemTokens, isSystemTokensLoading] = useTokens()
@@ -47,6 +52,8 @@ export const SystemTokensTab: FC = memo(() => {
 
   const availableRoles = useMemo(() => roles?.map(role => role.role) ?? [], [roles])
 
+  const showSuccessNotification = useShowSuccessNotification()
+
   return (
     <BodyCard
       header="System Tokens"
@@ -61,6 +68,7 @@ export const SystemTokensTab: FC = memo(() => {
               generatedApiKey={generatedApiKey}
               generateApiKey={handleGenerateToken}
               isLoading={isLoading || isRolesLoading || isUsersDataLoading}
+              showSuccessNotification={showSuccessNotification}
             />
           </Box>
           <TokensTable

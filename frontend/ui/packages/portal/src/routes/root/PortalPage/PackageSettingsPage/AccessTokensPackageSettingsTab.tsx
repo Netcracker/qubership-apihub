@@ -32,6 +32,7 @@ import { TokensTable } from '@netcracker/qubership-apihub-ui-shared/components/T
 import { Box } from '@mui/material'
 import { useUsers } from '@apihub/routes/root/useUsers'
 import type { GenerateApiKeyValue } from '@netcracker/qubership-apihub-ui-shared/types/tokens'
+import { useShowSuccessNotification } from '@apihub/routes/root/BasePage/Notification'
 
 export const AccessTokensPackageSettingsTab: FC<PackageSettingsTabProps> = memo<PackageSettingsTabProps>(({ packageObject }) => {
   const hasTokenManagementPermission = useMemo(
@@ -63,6 +64,8 @@ export const AccessTokensPackageSettingsTab: FC<PackageSettingsTabProps> = memo<
     () => availableRoles?.map(role => role.role) ?? []
     , [availableRoles])
 
+  const showSuccessNotification = useShowSuccessNotification()
+
   // TODO: need for expireTime control in a future
   // const ref = useRef<DatePickerRef>()
 
@@ -81,6 +84,7 @@ export const AccessTokensPackageSettingsTab: FC<PackageSettingsTabProps> = memo<
               disabled={!hasTokenManagementPermission}
               generateApiKey={handleGenerateToken}
               isLoading={isLoading || isLoadingRoles || isUsersDataLoading}
+              showSuccessNotification={showSuccessNotification}
             />
           </Box>
           <TokensTable

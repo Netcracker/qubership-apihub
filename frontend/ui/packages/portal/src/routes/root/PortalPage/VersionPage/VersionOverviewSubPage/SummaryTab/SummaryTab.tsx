@@ -22,7 +22,7 @@ import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/compone
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { PrincipalView } from '@netcracker/qubership-apihub-ui-shared/components/PrincipalView'
 import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { PackageKey, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import type { PackageKey, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import type { FC, ReactNode } from 'react'
 import { memo, useMemo } from 'react'
