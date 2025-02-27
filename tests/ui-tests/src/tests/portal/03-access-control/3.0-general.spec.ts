@@ -510,6 +510,7 @@ test.describe('03.0 Access Control. General.', () => {
       await test.step('Copy token', async () => {
         const token = await accessTokensTab.copyToken()
 
+        await expect(portalPage.snackbar).toContainText('Access token copied')
         await expectText(token).toMatch(/[a-z0-9]+/)
       })
     })
