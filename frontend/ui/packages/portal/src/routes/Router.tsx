@@ -63,6 +63,7 @@ import {
 } from '@apihub/routes/root/PortalPage/VersionPage/OperationsComparisonPage/DifferentOperationGroupsComparisonPage'
 import { ErrorPage, NOT_FOUND_TITLE } from '@netcracker/qubership-apihub-ui-shared/components/ErrorPage'
 import { LoginPage } from '@netcracker/qubership-apihub-ui-shared/pages/login'
+import { ProfilePage } from './root/ProfilePage/ProfilePage'
 
 export const router = createBrowserRouter(
   createRoutes([
@@ -79,6 +80,7 @@ export const router = createBrowserRouter(
           <Route path={`${GROUPS_PAGE}/:groupId`} element={<GroupPage/>}/>
         </Route>
         <Route path="settings/*" element={<SettingsPage/>}/>
+        <Route path="profile/*" element={<ProfilePage/>}/>
         <Route path="packages/:packageId">
           <Route index element={<PackagePage/>}/>
           <Route path={`${SPECIAL_VERSION_KEY}/${PACKAGE_SETTINGS_PAGE}/*`} element={<PackageSettingsPage/>}/>
