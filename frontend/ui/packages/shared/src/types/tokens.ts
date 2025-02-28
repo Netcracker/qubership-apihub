@@ -70,3 +70,10 @@ export type GenerateApiKeyData = {
 export type DeleteApiKey = (data: DeleteApiKeyData) => void
 
 export type GenerateApiKey = (data: GenerateApiKeyData) => void
+
+export type GeneratePersonalAccessTokenDto = Readonly<{
+  name: string
+  daysUntilExpiry: number
+}>
+
+export type GeneratePersonalAccessTokenCallback = (data: GeneratePersonalAccessTokenDto) => void

@@ -66,7 +66,7 @@ export type ProfileNavItemProps = Readonly<{
 const PROFILE_SIDEBAR_ITEMS: ProfileNavItemProps[] = [
   {
     label: 'Personal Access Tokens',
-    description: 'Configure personal access tokens',
+    description: 'Manage access tokens',
     value: PERSONAL_ACCESS_TOKENS_PAGE,
     url: getProfilePath({ tab: PERSONAL_ACCESS_TOKENS_PAGE }),
   },
