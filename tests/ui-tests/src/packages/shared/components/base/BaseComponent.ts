@@ -1,6 +1,6 @@
 import type { Locator } from '@playwright/test'
 import type { ClickOptions, HoverOptions, TimeoutOption } from '@shared/entities'
-import { descriptiveClick, descriptiveFocus, descriptiveHover, descriptiveScroll } from '@shared/components/decorator'
+import { descriptive } from '@shared/components/decorator'
 
 export class BaseComponent {
 
@@ -28,19 +28,23 @@ export class BaseComponent {
     this.componentType = componentType || 'component'
   }
 
+  @descriptive('Click')
   async click(options?: ClickOptions): Promise<void> {
-    await descriptiveClick(this, options)
+    await this.mainLocator.click(options)
   }
 
+  @descriptive('Hover', true)
   async hover(options?: HoverOptions): Promise<void> {
-    await descriptiveHover(this, options)
+    await this.mainLocator.hover(options)
   }
 
+  @descriptive('Scroll to visible')
   async scrollIntoViewIfNeeded(options?: TimeoutOption): Promise<void> {
-    await descriptiveScroll(this, options)
+    await this.mainLocator.scrollIntoViewIfNeeded(options)
   }
 
-  async focus(options?: HoverOptions): Promise<void> {
-    await descriptiveFocus(this, options)
+  @descriptive('Focus')
+  async focus(options?: TimeoutOption): Promise<void> {
+    await this.mainLocator.focus(options)
   }
 }

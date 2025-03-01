@@ -1,7 +1,7 @@
 import type { Locator } from '@playwright/test'
 import { Button } from '@shared/components/base'
 import type { HoverOptions } from '@shared/entities'
-import { descriptiveHover } from '@shared/components/decorator'
+import { descriptive } from '@shared/components/decorator'
 
 export class ExchangeButton extends Button {
 
@@ -9,8 +9,9 @@ export class ExchangeButton extends Button {
     super(rootLocator, componentName, componentType || 'exchange button')
   }
 
+  @descriptive('Hover', true)
   async hover(options?: HoverOptions): Promise<void> {
     const parentBtn = new Button(this.mainLocator.locator('..'), this.componentName, this.componentType)
-    await descriptiveHover(parentBtn, options)
+    await parentBtn.hover(options)
   }
 }

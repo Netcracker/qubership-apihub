@@ -1,6 +1,6 @@
 import type { CheckOptions } from '@shared/entities'
 import { BaseComponent } from './BaseComponent'
-import { descriptiveCheck, descriptiveUncheck } from '@shared/components/decorator'
+import { descriptive } from '@shared/components/decorator'
 import type { Locator } from '@playwright/test'
 
 export class Checkbox extends BaseComponent {
@@ -9,11 +9,13 @@ export class Checkbox extends BaseComponent {
     super(rootLocator, componentName, componentType || 'checkbox')
   }
 
+  @descriptive('Check')
   async check(options?: CheckOptions): Promise<void> {
-    await descriptiveCheck(this, options)
+    await this.mainLocator.check(options)
   }
 
+  @descriptive('Uncheck')
   async uncheck(options?: CheckOptions): Promise<void> {
-    await descriptiveUncheck(this, options)
+    await this.mainLocator.uncheck(options)
   }
 }

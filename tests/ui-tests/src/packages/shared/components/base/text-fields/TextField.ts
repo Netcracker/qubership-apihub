@@ -1,6 +1,6 @@
 import type { Locator } from '@playwright/test'
-import { descriptiveClear, descriptiveFill, descriptiveHover, descriptiveType } from '@shared/components/decorator'
-import type { ClearOptions, FillOptions, HoverOptions, TypeOptions } from '@shared/entities'
+import { descriptive } from '@shared/components/decorator'
+import type { ClearOptions, FillOptions, TypeOptions } from '@shared/entities'
 import { BaseComponent } from '../BaseComponent'
 import { Content } from '../Content'
 import { Button } from '../buttons/Button'
@@ -14,19 +14,18 @@ export class TextField extends BaseComponent {
     super(rootLocator, componentName, componentType || 'text field')
   }
 
-  async hover(options?: HoverOptions): Promise<void> {
-    await descriptiveHover(this, options)
-  }
-
+  @descriptive('Fill')
   async fill(value: string, options?: FillOptions): Promise<void> {
-    await descriptiveFill(this, value, options)
+    await this.mainLocator.fill(value, options)
   }
 
+  @descriptive('Type')
   async type(value: string, options?: TypeOptions): Promise<void> {
-    await descriptiveType(this, value, options)
+    await this.mainLocator.pressSequentially(value, options)
   }
 
+  @descriptive('Clear')
   async clear(options?: ClearOptions): Promise<void> {
-    await descriptiveClear(this, options)
+    await this.mainLocator.clear(options)
   }
 }

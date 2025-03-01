@@ -1,67 +1,57 @@
 import { test as report } from '@playwright/test'
 import type { BaseComponent } from '@shared/components/base'
-import type {
-  CheckOptions,
-  ClearOptions,
-  ClickOptions,
-  FillOptions,
-  HoverOptions,
-  TimeoutOption,
-  TypeOptions,
-} from '@shared/entities'
-import { quoteName } from '@services/utils'
+import { handlePlaywrightError, quoteName } from '@services/utils'
 
-export async function descriptiveClick(component: BaseComponent, options?: ClickOptions): Promise<void> {
-  await report.step(`Click ${quoteName(component.componentName)} ${component.componentType}`, async () => {
-    await component.mainLocator.click(options)
-  }, { box: true })
-}
+const HOVER_TOOLTIP_TIMEOUT = 500
 
-export async function descriptiveHover(component: BaseComponent, options?: HoverOptions): Promise<void> {
-  await report.step(`Hover ${quoteName(component.componentName)} ${component.componentType}`, async () => {
-    await component.mainLocator.hover(options)
-    await component.mainLocator.page().waitForTimeout(500) //WA: wait while extra tooltips disappear
-  }, { box: true })
-}
+/**
+ * A decorator factory that adds descriptive logging to methods in UI component classes.
+ *
+ * This decorator is designed specifically for Playwright test automation. It:
+ * 1. Wraps the target method with Playwright's test.step() for improved test reporting
+ * 2. Automatically generates a descriptive step title based on the action, component name, and component type
+ * 3. Handles errors with descriptive messages that help identify the exact component and action that failed
+ * 4. Optionally adds a wait period after actions to allow tooltips to appear (useful for hover actions)
+ *
+ * The decorator supports two argument patterns:
+ * - Methods with no input value: e.g., click(), hover()
+ * - Methods with a string value: e.g., type('text'), select('option')
+ *
+ * @param action - The action being performed, e.g. "Click", "Type", "Hover", etc.
+ * @param waitForTooltip - When true, waits for HOVER_TOOLTIP_TIMEOUT milliseconds after the action
+ *                        to allow UI elements like tooltips to appear. Defaults to false.
+ * @returns A method decorator that can be applied to component class methods.
+ */
+export function descriptive(action: string, waitForTooltip = false) {
+  return function <This extends BaseComponent, Args extends Array<unknown>>(
+    target: (this: This, ...args: Args) => Promise<void>,
+  ) {
+    return async function (this: This, ...args: Args): Promise<void> {
+      // Check if first argument is a string (used for type/fill operations)
+      const value = typeof args[0] === 'string' ? args[0] : undefined
 
-export async function descriptiveFill(component: BaseComponent, value: string, options?: FillOptions): Promise<void> {
-  await report.step(`Fill ${quoteName(component.componentName)} ${component.componentType} with "${value}"`, async () => {
-    await component.mainLocator.fill(value, options)
-  }, { box: true })
-}
+      // Create descriptive step title
+      const componentDetails = `${quoteName(this.componentName)} ${this.componentType}`
+      const stepTitle = value
+        ? `${action} "${value}" into ${componentDetails}`
+        : `${action} ${componentDetails}`
 
-export async function descriptiveType(component: BaseComponent, value: string, options?: TypeOptions): Promise<void> {
-  await report.step(`Type "${value}" into ${quoteName(component.componentName)} ${component.componentType}`, async () => {
-    await component.mainLocator.type(value, options)
-  }, { box: true })
-}
+      await report.step(stepTitle, async () => {
+        try {
+          // Execute the original method
+          await target.apply(this, args)
 
-export async function descriptiveClear(component: BaseComponent, options?: ClearOptions): Promise<void> {
-  await report.step(`Clear ${quoteName(component.componentName)} ${component.componentType}`, async () => {
-    await component.mainLocator.clear(options)
-  }, { box: true })
-}
-
-export async function descriptiveCheck(component: BaseComponent, options?: CheckOptions): Promise<void> {
-  await report.step(`Check ${quoteName(component.componentName)} ${component.componentType}`, async () => {
-    await component.mainLocator.check(options)
-  }, { box: true })
-}
-
-export async function descriptiveUncheck(component: BaseComponent, options?: CheckOptions): Promise<void> {
-  await report.step(`Uncheck ${quoteName(component.componentName)} ${component.componentType}`, async () => {
-    await component.mainLocator.uncheck(options)
-  }, { box: true })
-}
-
-export async function descriptiveScroll(component: BaseComponent, options?: TimeoutOption): Promise<void> {
-  await report.step(`Scroll until ${quoteName(component.componentName)} ${component.componentType} to be visible`, async () => {
-    await component.mainLocator.scrollIntoViewIfNeeded(options)
-  }, { box: true })
-}
-
-export async function descriptiveFocus(component: BaseComponent, options?: TimeoutOption): Promise<void> {
-  await report.step(`Focus ${quoteName(component.componentName)} ${component.componentType}`, async () => {
-    await component.mainLocator.focus(options)
-  }, { box: true })
+          // Wait for tooltip if needed (e.g. for hover operations)
+          if (waitForTooltip) {
+            await this.mainLocator.page().waitForTimeout(HOVER_TOOLTIP_TIMEOUT)
+          }
+        } catch (error: unknown) {
+          // Enhance error with context information
+          const errorPrefix = `Failed to ${action}`
+          const errorContext = value ? ` "${value}" into ${componentDetails}` : ` ${componentDetails}`
+          handlePlaywrightError(error, `${errorPrefix}${errorContext}`)
+        }
+      }, { box: true })
+    }
+  }
 }
