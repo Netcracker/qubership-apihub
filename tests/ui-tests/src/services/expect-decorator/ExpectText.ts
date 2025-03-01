@@ -1,67 +1,37 @@
-import { expect as expectPw, test } from '@fixtures'
+import { BaseExpect } from './BaseExpect'
 
-class BaseExpectText {
-  protected readonly notStr: string
+export class ExpectText extends BaseExpect<string> {
 
   constructor(
-    protected readonly actual: string,
-    protected readonly isNot: boolean,
-    protected readonly isSoft: boolean,
-    protected readonly message?: string,
+    actual: string,
+    isNot = false,
+    isSoft = false,
+    message?: string,
   ) {
-    if (isNot) {
-      this.notStr = 'not '
-    } else {
-      this.notStr = ''
-    }
+    super(actual, isNot, isSoft, message)
+  }
+
+  get not(): ExpectText {
+    return new ExpectText(this.actual, !this.isNot, this.isSoft, this.message)
+  }
+
+  protected override formatStepMessage(assertionDescription: string): string {
+    return `Expect text ${this.notIndicator}${assertionDescription}`
   }
 
   async toContain(expected: string): Promise<void> {
-    await test.step(`Expect text ${this.notStr}to contain "${expected}"`, async () => {
-      if (!this.isNot) {
-        if (!this.isSoft) {
-          expectPw(this.actual, this.message || undefined).toContain(expected)
-        } else {
-          expectPw.soft(this.actual, this.message || undefined).toContain(expected)
-        }
-      } else {
-        if (!this.isSoft) {
-          expectPw(this.actual, this.message || undefined).not.toContain(expected)
-        } else {
-          expectPw.soft(this.actual, this.message || undefined).not.toContain(expected)
-        }
-      }
-    }, { box: true })
+    await this.executeExpectation(
+      `to contain "${expected}"`,
+      'toContain',
+      [expected],
+    )
   }
 
   async toMatch(expected: RegExp): Promise<void> {
-    await test.step(`Expect text ${this.notStr}to match "${expected}"`, async () => {
-      if (!this.isNot) {
-        if (!this.isSoft) {
-          expectPw(this.actual, this.message || undefined).toMatch(expected)
-        } else {
-          expectPw.soft(this.actual, this.message || undefined).toMatch(expected)
-        }
-      } else {
-        if (!this.isSoft) {
-          expectPw(this.actual, this.message || undefined).not.toMatch(expected)
-        } else {
-          expectPw.soft(this.actual, this.message || undefined).not.toMatch(expected)
-        }
-      }
-    }, { box: true })
-  }
-}
-
-export class ExpectText extends BaseExpectText {
-  readonly not = new BaseExpectText(this.actual, true, this.isSoft, this.message)
-
-  constructor(
-    protected readonly actual: string,
-    protected readonly isNot: boolean,
-    protected readonly isSoft: boolean,
-    protected readonly message?: string,
-  ) {
-    super(actual, isNot, isSoft, message)
+    await this.executeExpectation(
+      `to match "${expected}"`,
+      'toMatch',
+      [expected],
+    )
   }
 }
