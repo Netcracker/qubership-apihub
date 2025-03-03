@@ -31,6 +31,8 @@ const COLUMNS_MODELS: ColumnModel[] = [
   { name: DELETE_COLUMN_ID, width: 45 },
 ]
 
+const DEFAULT_EXPIRATION_DATE = '0001-01-01T00:00:00Z'
+
 export type TokensTableTableProps = {
   data: PersonalAccessTokens
   onDeletePersonalAccessToken: DeletePersonalAccessTokenCallback
@@ -75,7 +77,11 @@ export const PersonalAccessTokensTable: FC<TokensTableTableProps> = memo(props =
         id: EXPIRATION_DATE_COLUMN_ID,
         header: 'Expiration Date',
         cell: ({ row: { original: { expiresAt } } }) => (
-          <FormattedDate value={expiresAt} />
+          <>
+            {expiresAt !== DEFAULT_EXPIRATION_DATE
+              ? <FormattedDate value={expiresAt} />
+              : <>No expiration date</>}
+          </>
         ),
       },
       {

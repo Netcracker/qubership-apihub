@@ -95,7 +95,7 @@ export const CHIP_COLOR_OVERRIDES: Record<keyof ChipPropsColorOverrides, SimpleP
   // Personal Access Token
   active: {
     main: '#C3F29E',
-    contrastText: '#13440A',
+    contrastText: '#073800',
   },
   expired: {
     main: '#FFB9AB',

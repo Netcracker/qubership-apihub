@@ -18,14 +18,9 @@ export function useInvalidatePersonalAccessTokens(): InvalidateQuery<void> {
 }
 
 export function usePersonalAccessTokens(): [PersonalAccessTokens, IsLoading, Error | null] {
-  const invalidateTokens = useInvalidatePersonalAccessTokens()
-
   const { data, isLoading, error } = useQuery<PersonalAccessTokens, Error, void>({
     queryKey: [QUERY_KEY_PERSONAL_ACCESS_TOKENS],
     queryFn: getPersonalAccessTokenList,
-    onSuccess: () => {
-      invalidateTokens()
-    },
   })
 
   return [
