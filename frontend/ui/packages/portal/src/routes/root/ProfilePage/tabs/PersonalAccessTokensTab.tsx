@@ -10,7 +10,7 @@ const EXPIRATION_VARIANTS = [-1, 7, 30, 60, 90, 180, 365]
 export const PersonalAccessTokensTab: FC = () => {
   const showSuccessNotification = useShowSuccessNotification()
   const [personalAccessToken, generatePersonalAccessToken, isTokenGenerating] = useGeneratePersonalAccessToken()
-  const [personalAccessTokens, areTokensLoading, tokensLoadingError] = usePersonalAccessTokens()
+  const [personalAccessTokens, areTokensLoading] = usePersonalAccessTokens()
   const [deletePersonalAccessToken, isTokenBeingDeleted] = useDeletePersonalAccessToken()
 
   const validateTokenName = useCallback((name: string) => {
@@ -25,7 +25,7 @@ export const PersonalAccessTokensTab: FC = () => {
           onValidateTokenName={validateTokenName}
           onGenerateToken={generatePersonalAccessToken}
           generatedToken={personalAccessToken}
-          disabled={personalAccessTokens.length >= 100} // Wrong!
+          disabled={personalAccessTokens.length >= 100}
           loading={isTokenGenerating || areTokensLoading}
           fieldExpirationVariants={EXPIRATION_VARIANTS}
           showSuccessNotification={showSuccessNotification}
