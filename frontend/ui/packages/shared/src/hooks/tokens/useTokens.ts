@@ -18,23 +18,26 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { generatePath } from 'react-router-dom'
 import type { Key } from '../../entities/keys'
+import { SYSTEM_TOKENS_PACKAGE_KEY } from '../../entities/tokens'
+import type { Roles, RolesDto } from '../../types/roles'
 import type {
   DeleteApiKey,
   DeleteApiKeyData,
   GenerateApiKey,
   GenerateApiKeyData,
   GenerateApiKeyValue,
+  GeneratePersonalAccessTokenCallback,
+  GeneratePersonalAccessTokenData,
+  PersonalAccessTokenDto,
   SystemToken,
   SystemTokenDto,
   SystemTokensDto,
   Tokens,
 } from '../../types/tokens'
 import type { InvalidateQuery, IsLoading } from '../../utils/aliases'
-import type { Roles, RolesDto } from '../../types/roles'
-import { toRoles } from '../user-roles/useRoles'
-import { SYSTEM_TOKENS_PACKAGE_KEY } from '../../entities/tokens'
-import { API_V2, API_V4, requestJson, requestVoid } from '../../utils/requests'
+import { API_V1, API_V2, API_V4, requestJson, requestVoid } from '../../utils/requests'
 import { optionalSearchParams } from '../../utils/search-params'
+import { toRoles } from '../user-roles/useRoles'
 
 const ACCESS_TOKENS_QUERY_KEY = 'access-tokens-query-key'
 const AVAILABLE_ROLES_FOR_PACKAGE_QUERY_KEY = 'available-roles-for-package-query-key'
@@ -63,6 +66,18 @@ export function useGenerateApiKey(): [Key, GenerateApiKey, IsLoading] {
     },
   })
   return [data?.apiKey ?? '', mutate, isLoading]
+}
+
+export function useGeneratePersonalAccessToken(): [Key, GeneratePersonalAccessTokenCallback, IsLoading] {
+  const invalidateTokens = useInvalidateTokens()
+
+  const { data, mutate, isLoading } = useMutation<PersonalAccessTokenDto, Error, GeneratePersonalAccessTokenData>({
+    mutationFn: (requestBody: GeneratePersonalAccessTokenData) => generatePersonalAccessToken(requestBody),
+    onSuccess: () => {
+      invalidateTokens()
+    },
+  })
+  return [data?.token ?? '', mutate, isLoading]
 }
 
 export function useDeleteApiKey(): [DeleteApiKey, IsLoading] {
@@ -106,9 +121,9 @@ export async function getTokens(
   const packageId = encodeURIComponent(packageKey ?? SYSTEM_TOKENS_PACKAGE_KEY)
   const pathPattern = '/packages/:packageId/apiKeys'
 
-  return await requestJson<SystemTokensDto>(generatePath(pathPattern, { packageId }), {
-      method: 'GET',
-    },
+  return await requestJson<SystemTokensDto>(
+    generatePath(pathPattern, { packageId }),
+    { method: 'GET' },
     { basePath: API_V4 },
   )
 }
@@ -126,9 +141,9 @@ export async function getAvailableRoles(
 
   const pathPattern = `/packages/:packageId/availableRoles?${queryParams}`
 
-  return await requestJson<RolesDto>(generatePath(pathPattern, { packageId }), {
-      method: 'GET',
-    },
+  return await requestJson<RolesDto>(
+    generatePath(pathPattern, { packageId }),
+    { method: 'GET' },
     { basePath: API_V2 },
   )
 }
@@ -140,7 +155,9 @@ export async function generateApiKey(
   const packageId = encodeURIComponent(packageKey ?? SYSTEM_TOKENS_PACKAGE_KEY)
   const pathPattern = '/packages/:packageId/apiKeys'
 
-  return await requestJson<SystemTokenDto>(generatePath(pathPattern, { packageId }), {
+  return await requestJson<SystemTokenDto>(
+    generatePath(pathPattern, { packageId }),
+    {
       method: 'POST',
       body: JSON.stringify(value),
     },
@@ -156,10 +173,21 @@ export async function deleteApiKey(
   const id = encodeURIComponent(key)
   const pathPattern = '/packages/:packageId/apiKeys/:id'
 
-  return await requestVoid(generatePath(pathPattern, { packageId, id }), {
-      method: 'DELETE',
-    },
+  return await requestVoid(
+    generatePath(pathPattern, { packageId, id }),
+    { method: 'DELETE' },
     { basePath: API_V2 },
+  )
+}
+
+export async function generatePersonalAccessToken(value: GeneratePersonalAccessTokenData): Promise<PersonalAccessTokenDto> {
+  return await requestJson<PersonalAccessTokenDto>(
+    '/personalAccessToken',
+    {
+      method: 'POST',
+      body: JSON.stringify(value),
+    },
+    { basePath: API_V1 },
   )
 }
 

@@ -33,7 +33,7 @@ import { Box } from '@mui/material'
 import { useUsers } from '@apihub/routes/root/useUsers'
 import type { GenerateApiKeyValue } from '@netcracker/qubership-apihub-ui-shared/types/tokens'
 import { useShowSuccessNotification } from '@apihub/routes/root/BasePage/Notification'
-//
+
 export const AccessTokensPackageSettingsTab: FC<PackageSettingsTabProps> = memo<PackageSettingsTabProps>(({ packageObject }) => {
   const hasTokenManagementPermission = useMemo(
     () => !!packageObject.permissions?.includes(ACCESS_TOKEN_MANAGEMENT_PERMISSION),

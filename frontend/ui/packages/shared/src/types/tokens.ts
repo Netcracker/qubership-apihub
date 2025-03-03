@@ -71,9 +71,26 @@ export type DeleteApiKey = (data: DeleteApiKeyData) => void
 
 export type GenerateApiKey = (data: GenerateApiKeyData) => void
 
-export type GeneratePersonalAccessTokenDto = Readonly<{
+// Personal Access Tokens
+
+export type GeneratePersonalAccessTokenData = Readonly<{
   name: string
   daysUntilExpiry: number
 }>
 
-export type GeneratePersonalAccessTokenCallback = (data: GeneratePersonalAccessTokenDto) => void
+export type GeneratePersonalAccessTokenCallback = (data: GeneratePersonalAccessTokenData) => void
+
+export const PERSONAL_ACCESS_TOKEN_STATUS_ACTIVE = 'active'
+export const PERSONAL_ACCESS_TOKEN_STATUS_EXPIRED = 'expired'
+export type PersonalAccessTokenStatus =
+  | typeof PERSONAL_ACCESS_TOKEN_STATUS_ACTIVE
+  | typeof PERSONAL_ACCESS_TOKEN_STATUS_EXPIRED
+
+export type PersonalAccessTokenDto = Readonly<{
+  id: Key
+  name: string
+  expiresAt: string // date-time
+  createdAt: string // date-time
+  status: PersonalAccessTokenStatus
+  token: string
+}>

@@ -1,13 +1,14 @@
 import { GeneratePersonalAccessTokenForm } from '@apihub/components/GeneratePersonalAccessTokenForm'
-import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
-import type { GeneratePersonalAccessTokenDto } from '@netcracker/qubership-apihub-ui-shared/types/tokens'
-import type { FC } from 'react'
 import { useShowSuccessNotification } from '@apihub/routes/root/BasePage/Notification'
+import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
+import { useGeneratePersonalAccessToken } from '@netcracker/qubership-apihub-ui-shared/hooks/tokens/useTokens'
+import type { FC } from 'react'
 
 const EXPIRATION_VARIANTS = [-1, 7, 30, 60, 90, 180, 365]
 
 export const PersonalAccessTokensTab: FC = () => {
   const showSuccessNotification = useShowSuccessNotification()
+  const [personalAccessToken, generatePersonalAccessToken, isLoading] = useGeneratePersonalAccessToken()
 
   return <>
     <BodyCard
@@ -16,9 +17,10 @@ export const PersonalAccessTokensTab: FC = () => {
       body={<>
         <GeneratePersonalAccessTokenForm
           expirationVariants={EXPIRATION_VARIANTS}
-          generateApiKey={(data: GeneratePersonalAccessTokenDto) => { console.log('Form data', data) }}
+          generatePersonalAccessToken={generatePersonalAccessToken}
+          generatedPersonalAccessToken={personalAccessToken}
           showSuccessNotification={showSuccessNotification}
-          isLoading={false}
+          isLoading={isLoading}
         />
       </>}
     />

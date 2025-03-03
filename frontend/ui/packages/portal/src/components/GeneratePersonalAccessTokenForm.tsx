@@ -12,8 +12,8 @@ type GeneratePersonalAccessTokenFormProps = {
   disabled?: boolean
   isLoading: IsLoading
   expirationVariants: number[]
-  generatedApiKey?: Key
-  generateApiKey: GeneratePersonalAccessTokenCallback
+  generatedPersonalAccessToken?: Key
+  generatePersonalAccessToken: GeneratePersonalAccessTokenCallback
   showSuccessNotification: (detail: NotificationDetail) => void
 }
 
@@ -37,8 +37,8 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
     disabled,
     isLoading,
     expirationVariants,
-    generatedApiKey,
-    generateApiKey,
+    generatedPersonalAccessToken: generatedApiKey,
+    generatePersonalAccessToken: generateApiKey,
     showSuccessNotification,
   } = props
 
@@ -99,6 +99,7 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
               sx={{ width: '260px' }}
               value={value}
               options={expirationVariants}
+              getOptionLabel={expirationDaysToLabel}
               onChange={(_, expiration: number | null) => {
                 setValue('expiration', expiration ?? DEFAULT_EXPIRATION)
               }}
@@ -108,7 +109,7 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
                   key={option}
                   data-testid={`ListItem-${option}`}
                 >
-                  {expirationDaysToLabel(option)}
+                  {option}
                 </ListItem>
               )}
               renderInput={(params) =>
