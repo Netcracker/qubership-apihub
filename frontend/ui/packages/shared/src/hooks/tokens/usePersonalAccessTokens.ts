@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Key } from '../../entities/keys'
-import type { GeneratePersonalAccessTokenCallback, PersonalAccessTokenDto, GeneratePersonalAccessTokenData, PersonalAccessToken, PersonalAccessTokens, PersonalAccessTokensDto } from '../../types/tokens'
+import type { GeneratePersonalAccessTokenCallback, PersonalAccessTokenDto, GeneratePersonalAccessTokenData, PersonalAccessToken, PersonalAccessTokens, PersonalAccessTokensDto, DeletePersonalAccessTokenCallback } from '../../types/tokens'
 import type { InvalidateQuery, IsLoading } from '../../utils/aliases'
-import { requestJson, API_V1 } from '../../utils/requests'
+import { requestJson, API_V1, requestVoid } from '../../utils/requests'
 import { useInvalidateTokens } from './useTokens'
 import { useMemo } from 'react'
+import { generatePath } from 'react-router'
 
 const QUERY_KEY_PERSONAL_ACCESS_TOKENS = 'personal-access-tokens-query'
 
@@ -24,8 +25,8 @@ export function usePersonalAccessTokens(): [PersonalAccessTokens, IsLoading, Err
   })
 
   return [
-    useMemo(() => data ?? [], [data]), 
-    isLoading, 
+    useMemo(() => data ?? [], [data]),
+    isLoading,
     error,
   ]
 }
@@ -40,6 +41,19 @@ export function useGeneratePersonalAccessToken(): [Key, GeneratePersonalAccessTo
     },
   })
   return [data?.token ?? '', mutate, isLoading]
+}
+
+export function useDeletePersonalAccessToken(): [DeletePersonalAccessTokenCallback, IsLoading] {
+  const invalidateTokens = useInvalidatePersonalAccessTokens()
+
+  const { mutate, isLoading } = useMutation<void, Error, Key>({
+    mutationFn: (tokenId: Key) => deletePersonalAccessToken(tokenId),
+    onSuccess: () => {
+      invalidateTokens()
+    },
+  })
+
+  return [mutate, isLoading]
 }
 
 export async function generatePersonalAccessToken(value: GeneratePersonalAccessTokenData): Promise<PersonalAccessTokenDto> {
@@ -57,6 +71,15 @@ export async function getPersonalAccessTokenList(): Promise<PersonalAccessTokens
   return await requestJson<PersonalAccessTokensDto>(
     '/personalAccessToken',
     { method: 'GET' },
+    { basePath: API_V1 },
+  )
+}
+
+export async function deletePersonalAccessToken(tokenId: Key): Promise<void> {
+  const pathPattern = '/personalAccessToken/:tokenId'
+  return await requestVoid(
+    generatePath(pathPattern, { tokenId }),
+    { method: 'DELETE' },
     { basePath: API_V1 },
   )
 }

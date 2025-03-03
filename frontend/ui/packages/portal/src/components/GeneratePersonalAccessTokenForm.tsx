@@ -10,10 +10,10 @@ import { Controller, useForm } from 'react-hook-form'
 
 type GeneratePersonalAccessTokenFormProps = {
   disabled?: boolean
-  isLoading: IsLoading
-  expirationVariants: number[]
-  generatedPersonalAccessToken?: Key
-  generatePersonalAccessToken: GeneratePersonalAccessTokenCallback
+  loading: IsLoading
+  fieldExpirationVariants: number[]
+  generatedToken?: Key
+  onGenerateToken: GeneratePersonalAccessTokenCallback
   showSuccessNotification: (detail: NotificationDetail) => void
 }
 
@@ -35,10 +35,10 @@ const expirationDaysToLabel = (days: number): string => {
 export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenFormProps> = memo(props => {
   const {
     disabled,
-    isLoading,
-    expirationVariants,
-    generatedPersonalAccessToken: generatedApiKey,
-    generatePersonalAccessToken: generateApiKey,
+    loading: isLoading,
+    fieldExpirationVariants: expirationVariants,
+    generatedToken: generatedApiKey,
+    onGenerateToken: generateApiKey,
     showSuccessNotification,
   } = props
 

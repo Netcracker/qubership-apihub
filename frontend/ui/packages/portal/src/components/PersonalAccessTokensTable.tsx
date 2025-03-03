@@ -35,7 +35,7 @@ const DEFAULT_EXPIRATION_DATE = '0001-01-01T00:00:00Z'
 
 export type TokensTableTableProps = {
   data: PersonalAccessTokens
-  onDeletePersonalAccessToken: DeletePersonalAccessTokenCallback
+  onDelete: DeletePersonalAccessTokenCallback
   loading: IsLoading
   disableDelete?: boolean
 }
@@ -43,7 +43,7 @@ export type TokensTableTableProps = {
 export const PersonalAccessTokensTable: FC<TokensTableTableProps> = memo(props => {
   const {
     data,
-    onDeletePersonalAccessToken,
+    onDelete: onDeletePersonalAccessToken,
     loading,
     disableDelete,
   } = props
