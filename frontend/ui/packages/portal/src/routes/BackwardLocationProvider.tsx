@@ -48,6 +48,7 @@ type BackwardLocationState = {
   fromPackagesComparison?: BackwardLocation
   fromPackageSettings?: BackwardLocation
   fromPackage?: BackwardLocation
+  fromProfile?: BackwardLocation
 }
 
 const BackwardLocation = createContext<BackwardLocationState>()

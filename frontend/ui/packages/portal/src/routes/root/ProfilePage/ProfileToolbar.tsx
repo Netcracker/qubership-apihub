@@ -11,7 +11,7 @@ export const ProfileToolbar: FC = () => {
   const backwardLocation = useBackwardLocationContext()
 
   const previousPageLocation = useMemo(() => {
-    return backwardLocation.fromPackageSettings ?? { pathname: '/portal' }
+    return backwardLocation.fromProfile ?? { pathname: '/portal' }
   }, [backwardLocation])
 
   const navigateToPrevPage = useCallback(() => {

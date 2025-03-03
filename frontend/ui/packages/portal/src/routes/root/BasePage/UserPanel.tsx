@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
 import { getProfilePath } from '@apihub/routes/NavigationProvider'
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import { Avatar, IconButton, MenuItem } from '@mui/material'
@@ -27,6 +28,7 @@ import { useNavigate } from 'react-router-dom'
 export const UserPanel: FC = memo(() => {
   const [authorization, , removeAuthorization] = useAuthorization()
   const navigate = useNavigate()
+  const setBackwardLocation = useSetBackwardLocationContext()
 
   return (
     <>
@@ -49,6 +51,11 @@ export const UserPanel: FC = memo(() => {
         <MenuItem
           data-testid="ProfileMenuItem"
           onClick={() => {
+            setBackwardLocation({
+              fromProfile: {
+                pathname: location.pathname,
+              },
+            })
             navigate(getProfilePath())
           }}
         >
