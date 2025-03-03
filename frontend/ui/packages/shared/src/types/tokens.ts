@@ -94,3 +94,9 @@ export type PersonalAccessTokenDto = Readonly<{
   status: PersonalAccessTokenStatus
   token: string
 }>
+
+export type PersonalAccessTokensDto = PersonalAccessTokenDto[]
+
+export type PersonalAccessToken = PersonalAccessTokenDto
+
+export type PersonalAccessTokens = PersonalAccessToken[]

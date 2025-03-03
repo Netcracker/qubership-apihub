@@ -26,16 +26,13 @@ import type {
   GenerateApiKey,
   GenerateApiKeyData,
   GenerateApiKeyValue,
-  GeneratePersonalAccessTokenCallback,
-  GeneratePersonalAccessTokenData,
-  PersonalAccessTokenDto,
   SystemToken,
   SystemTokenDto,
   SystemTokensDto,
   Tokens,
 } from '../../types/tokens'
 import type { InvalidateQuery, IsLoading } from '../../utils/aliases'
-import { API_V1, API_V2, API_V4, requestJson, requestVoid } from '../../utils/requests'
+import { API_V2, API_V4, requestJson, requestVoid } from '../../utils/requests'
 import { optionalSearchParams } from '../../utils/search-params'
 import { toRoles } from '../user-roles/useRoles'
 
@@ -66,18 +63,6 @@ export function useGenerateApiKey(): [Key, GenerateApiKey, IsLoading] {
     },
   })
   return [data?.apiKey ?? '', mutate, isLoading]
-}
-
-export function useGeneratePersonalAccessToken(): [Key, GeneratePersonalAccessTokenCallback, IsLoading] {
-  const invalidateTokens = useInvalidateTokens()
-
-  const { data, mutate, isLoading } = useMutation<PersonalAccessTokenDto, Error, GeneratePersonalAccessTokenData>({
-    mutationFn: (requestBody: GeneratePersonalAccessTokenData) => generatePersonalAccessToken(requestBody),
-    onSuccess: () => {
-      invalidateTokens()
-    },
-  })
-  return [data?.token ?? '', mutate, isLoading]
 }
 
 export function useDeleteApiKey(): [DeleteApiKey, IsLoading] {
@@ -177,17 +162,6 @@ export async function deleteApiKey(
     generatePath(pathPattern, { packageId, id }),
     { method: 'DELETE' },
     { basePath: API_V2 },
-  )
-}
-
-export async function generatePersonalAccessToken(value: GeneratePersonalAccessTokenData): Promise<PersonalAccessTokenDto> {
-  return await requestJson<PersonalAccessTokenDto>(
-    '/personalAccessToken',
-    {
-      method: 'POST',
-      body: JSON.stringify(value),
-    },
-    { basePath: API_V1 },
   )
 }
 
