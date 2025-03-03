@@ -103,17 +103,17 @@ export const PersonalAccessTokensTable: FC<TokensTableTableProps> = memo(props =
         ),
       },
       {
-        id: CREATED_AT_COLUMN_ID,
-        header: 'Created At',
-        cell: ({ row: { original: { createdAt } } }) => (
-          <FormattedDate value={createdAt} />
-        ),
-      },
-      {
         id: STATUS_COLUMN_ID,
         header: 'Status',
         cell: ({ row: { original: { status } } }) => (
           <CustomChip value={status} label={status} />
+        ),
+      },
+      {
+        id: CREATED_AT_COLUMN_ID,
+        header: 'Created At',
+        cell: ({ row: { original: { createdAt } } }) => (
+          <FormattedDate value={createdAt} />
         ),
       },
       {
