@@ -6,14 +6,14 @@
   "type": "commonjs",
   "license": "Apache-2.0",
   "scripts": {
-    "build:dist": "tsc --project tsconfig.json",
+    "build": "tsc --project tsconfig.json",
     "feature-start": "feature-start --featureName",
     "feature-finish": "feature-finish",
     "release-start": "release-start",
     "release-finish": "release-finish"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-npm-gitflow": "1.0.13",
+    "@netcracker/qubership-apihub-npm-gitflow": "2.2.2",
     "@types/find-node-modules": "2.1.2",
     "@types/jest-environment-puppeteer": "5.0.6",
     "typescript": "5.3.3"
@@ -25,7 +25,7 @@
   },
   "peerDependencies": {
     "jest-environment-puppeteer": "< 8.0.0",
-    "puppeteer": "*"
+    "puppeteer": "21.11.0"
   },
   "engines": {
     "node": ">=18.0.0"

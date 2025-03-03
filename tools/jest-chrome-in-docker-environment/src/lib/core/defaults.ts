@@ -33,7 +33,7 @@ export function getConnectToChromeRetryIntervals(){
 }
 
 export function getDockerBinary(){
-    return process.env.DOCKER_BINARY ? process.env.DOCKER_BINARY : "docker"
+    return process.env.DOCKER_BINARY ? process.env.DOCKER_BINARY : "podman"
 }
 
 export function getDockerBinaryCLIPath() {
