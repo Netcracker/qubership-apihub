@@ -1,4 +1,5 @@
 import { GeneratePersonalAccessTokenForm } from '@apihub/components/GeneratePersonalAccessTokenForm'
+import { PersonalAccessTokensTable } from '@apihub/components/PersonalAccessTokensTable'
 import { useShowSuccessNotification } from '@apihub/routes/root/BasePage/Notification'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { useGeneratePersonalAccessToken, usePersonalAccessTokens } from '@netcracker/qubership-apihub-ui-shared/hooks/tokens/usePersonalAccessTokens'
@@ -23,6 +24,12 @@ export const PersonalAccessTokensTab: FC = () => {
           generatedPersonalAccessToken={personalAccessToken}
           showSuccessNotification={showSuccessNotification}
           isLoading={isLoading}
+        />
+        <PersonalAccessTokensTable
+          data={personalAccessTokens}
+          onDeletePersonalAccessToken={(id) => { console.log('deleted id', id) }}
+          loading={areTokensLoading}
+          disableDelete={false}
         />
       </>}
     />

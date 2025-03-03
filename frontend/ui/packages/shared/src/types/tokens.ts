@@ -80,6 +80,8 @@ export type GeneratePersonalAccessTokenData = Readonly<{
 
 export type GeneratePersonalAccessTokenCallback = (data: GeneratePersonalAccessTokenData) => void
 
+export type DeletePersonalAccessTokenCallback = (id: Key) => void
+
 export const PERSONAL_ACCESS_TOKEN_STATUS_ACTIVE = 'active'
 export const PERSONAL_ACCESS_TOKEN_STATUS_EXPIRED = 'expired'
 export type PersonalAccessTokenStatus =
