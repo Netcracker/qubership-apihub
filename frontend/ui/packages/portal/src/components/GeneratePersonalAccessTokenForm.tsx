@@ -127,6 +127,7 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
               renderInput={(params) =>
                 <TextField
                   {...params}
+                  required
                   label="Expiration"
                   inputProps={{
                     ...params.inputProps,

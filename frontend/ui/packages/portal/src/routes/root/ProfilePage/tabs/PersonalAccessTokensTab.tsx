@@ -16,7 +16,7 @@ export const PersonalAccessTokensTab: FC = () => {
   const validateTokenName = useCallback((name: string) => {
     return personalAccessTokens.every(token => token.name !== name)
   }, [personalAccessTokens])
-  
+
   return <>
     <BodyCard
       header="Personal Access Tokens"
@@ -34,7 +34,7 @@ export const PersonalAccessTokensTab: FC = () => {
           data={personalAccessTokens}
           loading={areTokensLoading}
           onDelete={deletePersonalAccessToken}
-          disableDelete={isTokenBeingDeleted}
+          isTokenBeingDeleted={isTokenBeingDeleted}
         />
       </>}
     />
