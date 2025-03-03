@@ -3,7 +3,7 @@ import { PersonalAccessTokensTable } from '@apihub/components/PersonalAccessToke
 import { useShowSuccessNotification } from '@apihub/routes/root/BasePage/Notification'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { useDeletePersonalAccessToken, useGeneratePersonalAccessToken, usePersonalAccessTokens } from '@netcracker/qubership-apihub-ui-shared/hooks/tokens/usePersonalAccessTokens'
-import type { FC } from 'react'
+import { useCallback, type FC } from 'react'
 
 const EXPIRATION_VARIANTS = [-1, 7, 30, 60, 90, 180, 365]
 
@@ -12,12 +12,17 @@ export const PersonalAccessTokensTab: FC = () => {
   const [personalAccessToken, generatePersonalAccessToken, isTokenGenerating] = useGeneratePersonalAccessToken()
   const [personalAccessTokens, areTokensLoading, tokensLoadingError] = usePersonalAccessTokens()
   const [deletePersonalAccessToken, isTokenBeingDeleted] = useDeletePersonalAccessToken()
+
+  const validateTokenName = useCallback((name: string) => {
+    return personalAccessTokens.every(token => token.name !== name)
+  }, [personalAccessTokens])
   
   return <>
     <BodyCard
       header="Personal Access Tokens"
       body={<>
         <GeneratePersonalAccessTokenForm
+          onValidateTokenName={validateTokenName}
           onGenerateToken={generatePersonalAccessToken}
           generatedToken={personalAccessToken}
           disabled={personalAccessTokens.length >= 100} // Wrong!

@@ -14,6 +14,7 @@ type GeneratePersonalAccessTokenFormProps = {
   fieldExpirationVariants: number[]
   generatedToken?: Key
   onGenerateToken: GeneratePersonalAccessTokenCallback
+  onValidateTokenName: (name: string) => boolean
   showSuccessNotification: (detail: NotificationDetail) => void
 }
 
@@ -37,12 +38,13 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
     disabled,
     loading: isLoading,
     fieldExpirationVariants: expirationVariants,
-    generatedToken: generatedApiKey,
-    onGenerateToken: generateApiKey,
+    generatedToken,
+    onGenerateToken,
+    onValidateTokenName,
     showSuccessNotification,
   } = props
 
-  const { handleSubmit, setValue, control, reset } = useForm<PersonalAccessTokenForm>({
+  const { handleSubmit, setValue, control, reset, formState: { errors } } = useForm<PersonalAccessTokenForm>({
     defaultValues: {
       name: '',
       expiration: DEFAULT_EXPIRATION,
@@ -51,14 +53,14 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
 
   const onConfirmCallback = useCallback((value: PersonalAccessTokenForm): void => {
     const { name, expiration } = value
-    generateApiKey({ name: name, daysUntilExpiry: expiration })
+    onGenerateToken({ name: name, daysUntilExpiry: expiration })
     reset()
-  }, [generateApiKey, reset])
+  }, [onGenerateToken, reset])
 
-  if (generatedApiKey) {
+  if (generatedToken) {
     return (
       <DisplayToken
-        generatedApiKey={generatedApiKey}
+        generatedApiKey={generatedToken}
         showSuccessNotification={showSuccessNotification}
       />
     )
@@ -75,6 +77,14 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
           name="name"
           rules={{
             required: 'The field must be filled',
+            validate: {
+              alreadyExists: (name) => {
+                if (!onValidateTokenName(name)) {
+                  return `API key with name "${name}" already exists`
+                }
+                return true
+              },
+            },
           }}
           control={control}
           render={({ field }) => (
@@ -86,6 +96,8 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
               value={field.value}
               label="Name"
               onChange={field.onChange}
+              error={!!errors.name}
+              helperText={errors.name?.message}
               data-testid="NameTextField"
             />
           )}

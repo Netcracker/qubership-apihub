@@ -174,7 +174,7 @@ export const PersonalAccessTokensTable: FC<TokensTableTableProps> = memo(props =
         </TableHead>
         <TableBody>
           {getRowModel().rows.map(row => (
-            <TableRow>
+            <TableRow key={row.id}>
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.column.id} data-testid={`Cell-${cell.column.id}`}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -191,7 +191,7 @@ export const PersonalAccessTokensTable: FC<TokensTableTableProps> = memo(props =
             sx={{ width: 'inherit' }}
             invisible={loading}
             area={CONTENT_PLACEHOLDER_AREA}
-            message="No Personal Access Tokens"
+            message="No personal access tokens"
           />
         )
         : null
