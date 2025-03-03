@@ -22,16 +22,12 @@ export class ExpectApiPackage extends BaseExpect<PackageInput> {
     return new ExpectApiPackage(this.actual, !this.isNot, this.isSoft, this.message)
   }
 
-  protected override formatStepMessage(assertionDescription: string): string {
-    return `Expect "${this.actual.name || this.actual.packageId}" package ${this.notIndicator}${assertionDescription}`
-  }
-
   async toBeCreated(): Promise<void> {
     await test.step(this.formatStepMessage('to be created'), async () => {
       const authData = await getAuthDataFromStorageStateFile(SS_SYSADMIN_PATH)
       const rest = await createRest(BASE_ORIGIN, authData.token)
       const response = await rest.send(rGetPackageById, [200, 404], this.actual)
-      const expectedStatus = this.isNot ? 404 : 200
+      const expectedStatus = 200
 
       await this.executeExpectation(
         'to be created',
@@ -40,5 +36,9 @@ export class ExpectApiPackage extends BaseExpect<PackageInput> {
         response.status(),
       )
     }, { box: true })
+  }
+
+  protected override formatStepMessage(assertionDescription: string): string {
+    return `API: Expect "${this.actual.name || this.actual.packageId}" package ${this.notIndicator}${assertionDescription}`
   }
 }

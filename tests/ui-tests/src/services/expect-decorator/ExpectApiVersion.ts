@@ -22,16 +22,12 @@ export class ExpectApiVersion extends BaseExpect<VersionInput> {
     return new ExpectApiVersion(this.actual, !this.isNot, this.isSoft, this.message)
   }
 
-  protected override formatStepMessage(assertionDescription: string): string {
-    return `Expect version "${this.actual.version}" ${this.notIndicator}${assertionDescription}`
-  }
-
   async toBePublished(): Promise<void> {
     await test.step(this.formatStepMessage('to be created'), async () => {
       const authData = await getAuthDataFromStorageStateFile(SS_SYSADMIN_PATH)
       const rest = await createRest(BASE_ORIGIN, authData.token)
       const response = await rest.send(rGetPackageVersion, [200, 404], this.actual)
-      const expectedStatus = this.isNot ? 404 : 200
+      const expectedStatus = 200
 
       await this.executeExpectation(
         'to be created',
@@ -40,5 +36,9 @@ export class ExpectApiVersion extends BaseExpect<VersionInput> {
         response.status(),
       )
     }, { box: true })
+  }
+
+  protected override formatStepMessage(assertionDescription: string): string {
+    return `API: Expect version "${this.actual.version}" ${this.notIndicator}${assertionDescription}`
   }
 }
