@@ -11,17 +11,17 @@ export const PersonalAccessTokensTab: FC = () => {
   const showSuccessNotification = useShowSuccessNotification()
   const [personalAccessToken, generatePersonalAccessToken, isTokenGenerating] = useGeneratePersonalAccessToken()
   const [personalAccessTokens, areTokensLoading, tokensLoadingError] = usePersonalAccessTokens()
-  const [deletePersonalAccessToken, isTokenDeleting] = useDeletePersonalAccessToken()
+  const [deletePersonalAccessToken, isTokenBeingDeleted] = useDeletePersonalAccessToken()
   
   return <>
     <BodyCard
       header="Personal Access Tokens"
-      action={<></>}
       body={<>
         <GeneratePersonalAccessTokenForm
           onGenerateToken={generatePersonalAccessToken}
           generatedToken={personalAccessToken}
-          loading={isTokenGenerating}
+          disabled={personalAccessTokens.length >= 100} // Wrong!
+          loading={isTokenGenerating || areTokensLoading}
           fieldExpirationVariants={EXPIRATION_VARIANTS}
           showSuccessNotification={showSuccessNotification}
         />
@@ -29,7 +29,7 @@ export const PersonalAccessTokensTab: FC = () => {
           data={personalAccessTokens}
           loading={areTokensLoading}
           onDelete={deletePersonalAccessToken}
-          disableDelete={false}
+          disableDelete={isTokenBeingDeleted}
         />
       </>}
     />

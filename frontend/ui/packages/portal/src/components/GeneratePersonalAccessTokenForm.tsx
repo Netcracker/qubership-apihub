@@ -109,7 +109,7 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
                   key={option}
                   data-testid={`ListItem-${option}`}
                 >
-                  {option}
+                  {expirationDaysToLabel(option)}
                 </ListItem>
               )}
               renderInput={(params) =>

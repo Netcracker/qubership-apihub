@@ -1,9 +1,9 @@
-import { TableSkeleton } from '@apihub/routes/root/MainPage/PackagesTable'
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import { FormattedDate } from '@netcracker/qubership-apihub-ui-shared/components/FormattedDate'
 import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+import { TableCellSkeleton } from '@netcracker/qubership-apihub-ui-shared/components/TableCellSkeleton'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import { useResizeObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useResizeObserver'
 import type { ColumnModel } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
@@ -12,6 +12,8 @@ import { DeleteIcon } from '@netcracker/qubership-apihub-ui-shared/icons/DeleteI
 import type { DeletePersonalAccessTokenCallback, PersonalAccessToken, PersonalAccessTokens } from '@netcracker/qubership-apihub-ui-shared/types/tokens'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import { createComponents } from '@netcracker/qubership-apihub-ui-shared/utils/components'
+import { DEFAULT_NUMBER_SKELETON_ROWS } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
 import type { ColumnDef, ColumnSizingInfoState, ColumnSizingState, OnChangeFn } from '@tanstack/react-table'
 import { flexRender, getCoreRowModel, getExpandedRowModel, useReactTable } from '@tanstack/react-table'
 import type { FC } from 'react'
@@ -32,6 +34,22 @@ const COLUMNS_MODELS: ColumnModel[] = [
 ]
 
 const DEFAULT_EXPIRATION_DATE = '0001-01-01T00:00:00Z'
+
+const TableSkeleton: FC = memo(() => {
+  return createComponents(<RowSkeleton />, DEFAULT_NUMBER_SKELETON_ROWS)
+})
+
+const RowSkeleton: FC = memo(() => {
+  return (
+    <TableRow>
+      <TableCellSkeleton />
+      <TableCellSkeleton />
+      <TableCellSkeleton />
+      <TableCellSkeleton />
+      <TableCell />
+    </TableRow>
+  )
+})
 
 export type TokensTableTableProps = {
   data: PersonalAccessTokens
@@ -106,7 +124,7 @@ export const PersonalAccessTokensTable: FC<TokensTableTableProps> = memo(props =
             area-label="delete"
             disabled={disableDelete}
             disableHint={false}
-            hint={disableDelete ? 'You do not have permission to generate token' : 'Delete'}
+            hint={disableDelete ? 'Deleting is going now, please wait' : 'Delete'}
             size="small"
             sx={{ visibility: 'hidden', height: '20px' }}
             className="hoverable"

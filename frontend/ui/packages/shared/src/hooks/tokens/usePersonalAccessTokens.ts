@@ -1,11 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { Key } from '../../entities/keys'
-import type { GeneratePersonalAccessTokenCallback, PersonalAccessTokenDto, GeneratePersonalAccessTokenData, PersonalAccessToken, PersonalAccessTokens, PersonalAccessTokensDto, DeletePersonalAccessTokenCallback } from '../../types/tokens'
-import type { InvalidateQuery, IsLoading } from '../../utils/aliases'
-import { requestJson, API_V1, requestVoid } from '../../utils/requests'
-import { useInvalidateTokens } from './useTokens'
 import { useMemo } from 'react'
 import { generatePath } from 'react-router'
+import type { Key } from '../../entities/keys'
+import type { DeletePersonalAccessTokenCallback, GeneratePersonalAccessTokenCallback, GeneratePersonalAccessTokenData, PersonalAccessTokenDto, PersonalAccessTokens, PersonalAccessTokensDto } from '../../types/tokens'
+import type { InvalidateQuery, IsLoading } from '../../utils/aliases'
+import { API_V1, requestJson, requestVoid } from '../../utils/requests'
 
 const QUERY_KEY_PERSONAL_ACCESS_TOKENS = 'personal-access-tokens-query'
 
@@ -32,7 +31,7 @@ export function usePersonalAccessTokens(): [PersonalAccessTokens, IsLoading, Err
 }
 
 export function useGeneratePersonalAccessToken(): [Key, GeneratePersonalAccessTokenCallback, IsLoading] {
-  const invalidateTokens = useInvalidateTokens()
+  const invalidateTokens = useInvalidatePersonalAccessTokens()
 
   const { data, mutate, isLoading } = useMutation<PersonalAccessTokenDto, Error, GeneratePersonalAccessTokenData>({
     mutationFn: (requestBody: GeneratePersonalAccessTokenData) => generatePersonalAccessToken(requestBody),
