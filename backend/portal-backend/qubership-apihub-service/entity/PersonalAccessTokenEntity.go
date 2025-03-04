@@ -32,10 +32,15 @@ type PersonaAccessTokenEntity struct {
 }
 
 func MakePersonaAccessTokenView(ent PersonaAccessTokenEntity) view.PersonalAccessTokenItem {
+	var expiresAt *time.Time
+	if !ent.ExpiresAt.IsZero() {
+		expiresAt = &ent.ExpiresAt
+	}
+
 	return view.PersonalAccessTokenItem{
 		Id:        ent.Id,
 		Name:      ent.Name,
-		ExpiresAt: ent.ExpiresAt,
+		ExpiresAt: expiresAt,
 		CreatedAt: ent.CreatedAt,
 		Status:    makeStatus(ent),
 	}
