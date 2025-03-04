@@ -22,7 +22,7 @@ const PersonaAccessTokenExpired PersonaAccessTokenStatus = "expired"
 type PersonalAccessTokenItem struct {
 	Id        string                   `json:"id"`
 	Name      string                   `json:"name"`
-	ExpiresAt time.Time                `json:"expiresAt"`
+	ExpiresAt *time.Time               `json:"expiresAt"`
 	CreatedAt time.Time                `json:"createdAt"`
 	Status    PersonaAccessTokenStatus `json:"status"`
 }
