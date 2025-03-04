@@ -24,7 +24,7 @@ import (
 const SystemRoleExt = "systemRole"
 const ApikeyRoleExt = "apikeyRole"
 const ApikeyPackageIdExt = "apikeyPackageId"
-const ApikeyIdExt = "apikeyPackageId"
+const ApikeyIdExt = "apikeyId"
 
 type SecurityContext interface {
 	GetUserId() string

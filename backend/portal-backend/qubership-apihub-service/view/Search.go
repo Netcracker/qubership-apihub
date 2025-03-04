@@ -49,7 +49,7 @@ func ValidGraphqlOperationScope(scope string) bool {
 }
 
 type PublicationDateInterval struct {
-	// TODO: probably user's timezone is required to handle dated properly
+	// TODO: probably user's timezone is required to handle dates properly
 	StartDate time.Time `json:"startDate"`
 	EndDate   time.Time `json:"endDate"`
 }
