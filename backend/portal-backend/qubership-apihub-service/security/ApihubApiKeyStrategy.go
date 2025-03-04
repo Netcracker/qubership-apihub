@@ -53,8 +53,10 @@ func (a apihubApiKeyStrategyImpl) Authenticate(ctx goctx.Context, r *http.Reques
 		return nil, fmt.Errorf("authentication failed: %v has been revoked", ApiKeyHeader)
 	}
 	userExtensions := auth.Extensions{}
+	userExtensions.Set(context.ApikeyIdExt, apiKeyView.Id)
 	userExtensions.Set(context.ApikeyPackageIdExt, apiKeyView.PackageId)
 	userExtensions.Set(context.ApikeyRoleExt, context.MergeApikeyRoles(apiKeyView.Roles))
+
 	return auth.NewDefaultUser(apiKeyView.Name, apiKeyView.Id, []string{}, userExtensions), nil
 }
 

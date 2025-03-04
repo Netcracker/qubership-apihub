@@ -134,5 +134,8 @@ func (c cleanupServiceImpl) ClearTestData(testId string) error {
 	if err != nil {
 		return err
 	}
+
+	// TODO: need to clear business metrics as well
+
 	return nil
 }
