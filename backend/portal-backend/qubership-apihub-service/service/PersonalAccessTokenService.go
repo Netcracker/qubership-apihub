@@ -86,7 +86,7 @@ func (p personalAccessTokenServiceImpl) CreatePAT(ctx context.SecurityContext, r
 	ent := entity.PersonaAccessTokenEntity{
 		Id:        uuid.New().String(),
 		UserId:    ctx.GetUserId(),
-		TokenHash: string(tokenHash),
+		TokenHash: tokenHash,
 		Name:      req.Name,
 		CreatedAt: time.Now(),
 		ExpiresAt: expiresAt,
