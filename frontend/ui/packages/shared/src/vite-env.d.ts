@@ -85,6 +85,9 @@ declare module '@mui/material/Chip' {
     query: true
     mutation: true
     subscription: true
+    // Personal Access Tokens
+    active: true
+    expired: true
   }
 }
 

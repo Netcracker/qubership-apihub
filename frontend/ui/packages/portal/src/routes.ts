@@ -57,6 +57,10 @@ export const SETTINGS_PAGE = 'settings'
 export const PACKAGE_SETTINGS_PAGE_PATH_PATTERN = `/portal/packages/:packageId/${SPECIAL_VERSION_KEY}/${PACKAGE_SETTINGS_PAGE}/`
 export const SETTINGS_PAGE_PATH_PATTERN = `/portal/${SETTINGS_PAGE}/`
 
+// Profile
+export const PROFILE_PAGE = 'profile'
+export const PROFILE_PAGE_PATH_PATTERN = `/portal/${PROFILE_PAGE}/`
+
 // Package settings tabs
 // Package settings tabs have not self path patterns because they have not specific parameters
 export const GENERAL_PAGE = 'general'
@@ -71,6 +75,9 @@ export const USER_ROLES_PAGE = 'roles'
 export const ROLES_HIERARCHY_PAGE = 'hierarchy'
 export const SYSTEM_ADMINISTRATORS_PAGE = 'sysadms'
 export const SYSTEM_TOKENS_PAGE = 'tokens'
+
+// Profile page tabs
+export const PERSONAL_ACCESS_TOKENS_PAGE = 'personal-access-tokens'
 
 // Edit package page
 export const CONFIGURE_DASHBOARD_PAGE = 'edit'
@@ -128,6 +135,9 @@ export type SettingsPageRoute =
   | typeof ROLES_HIERARCHY_PAGE
   | typeof SYSTEM_ADMINISTRATORS_PAGE
   | typeof SYSTEM_TOKENS_PAGE
+
+export type ProfilePageRoute =
+  | typeof PERSONAL_ACCESS_TOKENS_PAGE
 
 export const PORTAL_PATH_PATTERNS: string[] = [
   WORKSPACES_PAGE_PATH_PATTERN,

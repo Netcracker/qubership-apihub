@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo } from 'react'
+import { useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { getProfilePath } from '@apihub/routes/NavigationProvider'
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import { Avatar, IconButton, MenuItem } from '@mui/material'
-import { useAuthorization } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
-import { UserAvatar } from '@netcracker/qubership-apihub-ui-shared/components/Users/UserAvatar'
 import { MenuButton } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
+import { UserAvatar } from '@netcracker/qubership-apihub-ui-shared/components/Users/UserAvatar'
+import { useAuthorization } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
+import type { FC } from 'react'
+import { memo } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export const UserPanel: FC = memo(() => {
   const [authorization, , removeAuthorization] = useAuthorization()
+  const navigate = useNavigate()
+  const setBackwardLocation = useSetBackwardLocationContext()
 
   return (
     <>
@@ -43,6 +48,19 @@ export const UserPanel: FC = memo(() => {
         icon={<KeyboardArrowDownOutlinedIcon/>}
         data-testid="UserMenuButton"
       >
+        <MenuItem
+          data-testid="ProfileMenuItem"
+          onClick={() => {
+            setBackwardLocation({
+              fromProfile: {
+                pathname: location.pathname,
+              },
+            })
+            navigate(getProfilePath())
+          }}
+        >
+          My Profile
+        </MenuItem>
         <MenuItem
           data-testid="LogoutMenuItem"
           onClick={() => {
