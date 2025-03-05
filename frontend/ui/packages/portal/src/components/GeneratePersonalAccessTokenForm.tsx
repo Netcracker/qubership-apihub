@@ -78,7 +78,7 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
           rules={{
             required: 'The field must be filled',
             validate: {
-              doesNotExists: (name) => {
+              doesNotExist: (name) => {
                 if (validateTokenNameNonExistence(name)) {
                   return true
                 }
