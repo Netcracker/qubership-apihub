@@ -14,7 +14,7 @@ type GeneratePersonalAccessTokenFormProps = {
   fieldExpirationVariants: number[]
   generatedToken?: Key
   onGenerateToken: GeneratePersonalAccessTokenCallback
-  onValidateTokenName: (name: string) => boolean
+  onValidateTokenNameNotExists: (name: string) => boolean
   showSuccessNotification: (detail: NotificationDetail) => void
 }
 
@@ -40,7 +40,7 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
     fieldExpirationVariants: expirationVariants,
     generatedToken,
     onGenerateToken,
-    onValidateTokenName,
+    onValidateTokenNameNotExists,
     showSuccessNotification,
   } = props
 
@@ -78,11 +78,11 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
           rules={{
             required: 'The field must be filled',
             validate: {
-              alreadyExists: (name) => {
-                if (!onValidateTokenName(name)) {
-                  return `API key with name "${name}" already exists`
+              notExists: (name) => {
+                if (onValidateTokenNameNotExists(name)) {
+                  return true
                 }
-                return true
+                return `API key with name "${name}" already exists`
               },
             },
           }}

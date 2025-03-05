@@ -13,7 +13,7 @@ export const PersonalAccessTokensTab: FC = () => {
   const [personalAccessTokens, areTokensLoading] = usePersonalAccessTokens()
   const [deletePersonalAccessToken, isTokenBeingDeleted] = useDeletePersonalAccessToken()
 
-  const validateTokenName = useCallback((name: string) => {
+  const validateTokenNameNotExists = useCallback((name: string) => {
     return personalAccessTokens.every(token => token.name !== name)
   }, [personalAccessTokens])
 
@@ -22,7 +22,7 @@ export const PersonalAccessTokensTab: FC = () => {
       header="Personal Access Tokens"
       body={<>
         <GeneratePersonalAccessTokenForm
-          onValidateTokenName={validateTokenName}
+          onValidateTokenNameNotExists={validateTokenNameNotExists}
           onGenerateToken={generatePersonalAccessToken}
           generatedToken={personalAccessToken}
           disabled={personalAccessTokens.length >= 100}
