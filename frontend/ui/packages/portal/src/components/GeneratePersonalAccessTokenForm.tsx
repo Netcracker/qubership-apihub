@@ -90,7 +90,6 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
           render={({ field }) => (
             <TextField
               {...field}
-              required
               disabled={disabled}
               sx={{ width: '260px' }}
               value={field.value}
