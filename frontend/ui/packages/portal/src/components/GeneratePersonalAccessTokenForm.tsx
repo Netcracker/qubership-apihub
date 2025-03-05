@@ -13,8 +13,8 @@ type GeneratePersonalAccessTokenFormProps = {
   loading: IsLoading
   fieldExpirationVariants: number[]
   generatedToken?: Key
-  onGenerateToken: GeneratePersonalAccessTokenCallback
-  onValidateTokenNameNotExists: (name: string) => boolean
+  generateToken: GeneratePersonalAccessTokenCallback
+  validateTokenNameNonExistence: (name: string) => boolean
   showSuccessNotification: (detail: NotificationDetail) => void
 }
 
@@ -37,10 +37,10 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
   const {
     disabled,
     loading: isLoading,
-    fieldExpirationVariants: expirationVariants,
+    fieldExpirationVariants,
     generatedToken,
-    onGenerateToken,
-    onValidateTokenNameNotExists,
+    generateToken,
+    validateTokenNameNonExistence,
     showSuccessNotification,
   } = props
 
@@ -53,9 +53,9 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
 
   const onConfirmCallback = useCallback((value: PersonalAccessTokenForm): void => {
     const { name, expiration } = value
-    onGenerateToken({ name: name, daysUntilExpiry: expiration })
+    generateToken({ name: name, daysUntilExpiry: expiration })
     reset()
-  }, [onGenerateToken, reset])
+  }, [generateToken, reset])
 
   if (generatedToken) {
     return (
@@ -78,8 +78,8 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
           rules={{
             required: 'The field must be filled',
             validate: {
-              notExists: (name) => {
-                if (onValidateTokenNameNotExists(name)) {
+              doesNotExists: (name) => {
+                if (validateTokenNameNonExistence(name)) {
                   return true
                 }
                 return `API key with name "${name}" already exists`
@@ -110,7 +110,7 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
               disabled={disabled}
               sx={{ width: '260px' }}
               value={value}
-              options={expirationVariants}
+              options={fieldExpirationVariants}
               getOptionLabel={expirationDaysToLabel}
               onChange={(_, expiration: number | null) => {
                 setValue('expiration', expiration ?? DEFAULT_EXPIRATION)
