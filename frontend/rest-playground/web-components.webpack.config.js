@@ -15,6 +15,7 @@ module.exports = {
       querystring: require.resolve('querystring-es3'),
     },
   },
+  devtool: 'source-map',
   performance: {
     maxEntrypointSize: 2000000,
     maxAssetSize: 2000000,
