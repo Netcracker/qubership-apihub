@@ -9,12 +9,13 @@ lerna-debug.log*
 
 # Testing
 *.generated.*
+__diff_output__/
+__received_output__/
 
 node_modules/
 dist/
 dist-ssr/
 *.local
-__diff_output__/
 dist-showcase/
 
 # Editor directories and files
