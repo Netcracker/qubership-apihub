@@ -29,18 +29,17 @@ export type PlaygroundProps = PropsWithChildren<{
 const PlaygroundElement: FC<PlaygroundElementProps> = lazy(() => import('./PlaygroundElement'))
 
 export const Playground: FC<PlaygroundProps> = memo<PlaygroundProps>(({ document, customServers }) => {
-    return (
-      <Suspense fallback={<LoadingIndicator/>}>
-        <Box lineHeight={1.5} height="100%" width="100%" data-testid="PlaygroundPanel">
-          <PlaygroundElement
-            key={crypto.randomUUID()}
-            document={document}
-            customServers={customServers}
-            token={getToken()}
-            origin={window.location.origin}
-          />
-        </Box>
-      </Suspense>
-    )
-  },
-)
+  return (
+    <Suspense fallback={<LoadingIndicator />}>
+      <Box lineHeight={1.5} height="100%" width="100%" data-testid="PlaygroundPanel">
+        <PlaygroundElement
+          key={crypto.randomUUID()}
+          document={document}
+          customServers={customServers}
+          token={getToken()}
+          origin={window.location.origin}
+        />
+      </Box>
+    </Suspense>
+  )
+})

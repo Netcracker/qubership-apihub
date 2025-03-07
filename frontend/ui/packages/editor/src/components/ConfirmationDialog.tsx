@@ -56,15 +56,12 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = memo<Confirmation
           sx={{ position: 'absolute', right: 8, top: 8, color: '#353C4E' }}
           onClick={onCancel}
         >
-          <CloseOutlinedIcon fontSize="small"/>
+          <CloseOutlinedIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
 
       <DialogContent>
-        <DialogContentText
-          variant="body2"
-          sx={{ color: 'black' }}
-        >
+        <DialogContentText variant="body2">
           {message}
         </DialogContentText>
       </DialogContent>
@@ -95,5 +92,5 @@ function useCloseOnLoadingFinish(
   enabled?: boolean,
 ): void {
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {enabled && !loading && onClose?.()}, [enabled, loading])
+  useEffect(() => { enabled && !loading && onClose?.() }, [enabled, loading])
 }

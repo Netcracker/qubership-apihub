@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-import type { FC, ReactNode } from 'react'
-import React, { memo } from 'react'
-import { Box } from '@mui/material'
-import { Resizable } from 're-resizable'
+import { Examples } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/Examples/Examples'
+import { Playground } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/Playground'
 import {
   usePlaygroundEvents,
 } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/usePlaygroundEvents'
-import { Playground } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/Playground'
-import { Examples } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/Examples/Examples'
+import { Box } from '@mui/material'
+import { ModuleFetchingErrorBoundary } from '@netcracker/qubership-apihub-ui-shared/components/ModuleFetchingErrorBoundary/ModuleFetchingErrorBoundary'
+import { NAVIGATION_MAX_WIDTH } from '@netcracker/qubership-apihub-ui-shared/utils/page-layouts'
+import { Resizable } from 're-resizable'
+import type { FC, ReactNode } from 'react'
+import { memo } from 'react'
 import { CreateCustomServerDialog } from './Playground/CreateCustomServerDialog'
 import { ExamplesDialog } from './Playground/Examples/ExamplesDialog'
-import { NAVIGATION_MAX_WIDTH } from '@netcracker/qubership-apihub-ui-shared/utils/page-layouts'
 
 export type OperationWithPlaygroundProps = {
   changedOperationContent: string
@@ -61,7 +62,6 @@ export const OperationWithPlayground: FC<OperationWithPlaygroundProps> = memo<Op
             backgroundColor: '#FFFFFF',
             paddingRight: '24px',
           }}
-
           enable={{
             top: false,
             right: false,
@@ -77,13 +77,15 @@ export const OperationWithPlayground: FC<OperationWithPlaygroundProps> = memo<Op
           maxWidth={PLAYGROUND_MAX_WIDTH}
           minWidth="300px"
         >
-          {isPlaygroundMode && <Playground document={changedOperationContent} customServers={customServers}/>}
-          {isExamplesMode && <Examples document={changedOperationContent}/>}
+          <ModuleFetchingErrorBoundary>
+            {isPlaygroundMode && <Playground document={changedOperationContent} customServers={customServers} />}
+            {isExamplesMode && <Examples document={changedOperationContent} />}
+          </ModuleFetchingErrorBoundary>
         </Resizable>
       )}
 
-      <CreateCustomServerDialog/>
-      <ExamplesDialog document={changedOperationContent}/>
+      <CreateCustomServerDialog />
+      <ExamplesDialog document={changedOperationContent} />
     </Box>
   )
 })

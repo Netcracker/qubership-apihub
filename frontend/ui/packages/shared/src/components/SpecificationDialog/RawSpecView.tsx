@@ -22,6 +22,7 @@ import { MonacoEditor } from '../MonacoEditor'
 import type { SpecType } from '../../utils/specs'
 import type { FileExtension } from '../../utils/files'
 import { EXTENSION_TO_TYPE_LANGUAGE_MAP } from '../../types/languages'
+import { ModuleFetchingErrorBoundary } from '../ModuleFetchingErrorBoundary/ModuleFetchingErrorBoundary'
 
 export type RawSpecViewProps = {
   value: SpecContent
@@ -49,15 +50,17 @@ export const RawSpecView: FC<RawSpecViewProps> = /* @__PURE__ */ memo<RawSpecVie
   },
 ) => {
   return (
-    <Box mx={-4} height="100%" minWidth={0} sx={sx} data-testid="RawView">
-      <MonacoEditor
-        value={value}
-        type={type}
-        language={EXTENSION_TO_TYPE_LANGUAGE_MAP[extension]}
-        selectedUri={selectedUri}
-        searchPhrase={searchPhrase}
-        onSearchPhraseChange={onSearchPhraseChange}
-      />
-    </Box>
+    <ModuleFetchingErrorBoundary>
+      <Box mx={-4} height="100%" minWidth={0} sx={sx} data-testid="RawView">
+        <MonacoEditor
+          value={value}
+          type={type}
+          language={EXTENSION_TO_TYPE_LANGUAGE_MAP[extension]}
+          selectedUri={selectedUri}
+          searchPhrase={searchPhrase}
+          onSearchPhraseChange={onSearchPhraseChange}
+        />
+      </Box>
+    </ModuleFetchingErrorBoundary>
   )
 })
