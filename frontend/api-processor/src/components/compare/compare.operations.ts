@@ -38,7 +38,6 @@ import {
   OperationIdentityMap,
   takeSubstringIf,
   totalChanges,
-  getNormalizedOperationId,
 } from './compare.utils'
 import {
   calculateApiAudienceTransitions,
@@ -350,6 +349,7 @@ const HANDLE_TYPE_FULLY_REMOVED = 'removed'
 type HandleType = typeof HANDLE_TYPE_FULLY_ADDED | typeof HANDLE_TYPE_FULLY_REMOVED
 
 const createPairOperationsMap = (currGroupSlug: string, prevGroupSlug: string, currentOperations: ResolvedOperation[], previousOperations: ResolvedOperation[]): Record<string, { previous?: ResolvedOperation; current: ResolvedOperation }> => {
+
   const operationsMap: Record<string, { previous?: ResolvedOperation; current: ResolvedOperation }> = {}
 
   for (const currentOperation of currentOperations) {
