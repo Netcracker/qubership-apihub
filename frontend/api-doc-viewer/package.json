@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-doc-viewer",
-  "version": "2.0.4-dev.1",
+  "version": "2.0.4-next.0",
   "type": "module",
   "exports": {
     ".": {
@@ -63,7 +63,7 @@
     "@netcracker/qubership-apihub-compatibility-suites": "2.0.3",
     "@netcracker/qubership-apihub-graphapi": "1.0.8",
     "@netcracker/qubership-apihub-npm-gitflow": "2.2.2",
-    "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "dev",
+    "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "next",
     "@storybook/addon-essentials": "8.1.11",
     "@storybook/addon-interactions": "8.1.11",
     "@storybook/addon-links": "8.1.11",
