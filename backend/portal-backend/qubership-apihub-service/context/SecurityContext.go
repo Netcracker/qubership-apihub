@@ -24,6 +24,7 @@ import (
 const SystemRoleExt = "systemRole"
 const ApikeyRoleExt = "apikeyRole"
 const ApikeyPackageIdExt = "apikeyPackageId"
+const ApikeyIdExt = "apikeyId"
 
 type SecurityContext interface {
 	GetUserId() string
@@ -32,12 +33,14 @@ type SecurityContext interface {
 	GetApikeyPackageId() string
 	GetUserToken() string
 	GetApiKey() string
+	GetApiKeyId() string
 }
 
 func Create(r *http.Request) SecurityContext {
 	user := auth.User(r)
 	userId := user.GetID()
 	systemRole := user.GetExtensions().Get(SystemRoleExt)
+	apikeyId := user.GetExtensions().Get(ApikeyIdExt)
 	apikeyRole := user.GetExtensions().Get(ApikeyRoleExt)
 	apikeyPackageId := user.GetExtensions().Get(ApikeyPackageIdExt)
 	token := getAuthorizationToken(r)
@@ -49,6 +52,7 @@ func Create(r *http.Request) SecurityContext {
 			apikeyRole:      apikeyRole,
 			token:           token,
 			apiKey:          "",
+			apikeyId:        "",
 		}
 	} else {
 		return &securityContextImpl{
@@ -57,6 +61,7 @@ func Create(r *http.Request) SecurityContext {
 			apikeyPackageId: apikeyPackageId,
 			apikeyRole:      apikeyRole,
 			token:           "",
+			apikeyId:        apikeyId,
 			apiKey:          getApihubApiKey(r),
 		}
 	}
@@ -78,6 +83,7 @@ type securityContextImpl struct {
 	apikeyRole      string
 	apikeyPackageId string
 	token           string
+	apikeyId        string
 	apiKey          string
 }
 
@@ -123,4 +129,8 @@ func (ctx securityContextImpl) GetUserToken() string {
 
 func (ctx securityContextImpl) GetApiKey() string {
 	return ctx.apiKey
+}
+
+func (ctx securityContextImpl) GetApiKeyId() string {
+	return ctx.apikeyId
 }

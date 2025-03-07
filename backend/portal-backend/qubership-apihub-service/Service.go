@@ -225,6 +225,8 @@ func main() {
 
 	versionCleanupRepository := repository.NewVersionCleanupRepository(cp)
 
+	personalAccessTokenRepository := repository.NewPersonalAccessTokenRepository(cp)
+
 	olricProvider, err := cache.NewOlricProvider()
 	if err != nil {
 		log.Error("Failed to create olricProvider: " + err.Error())
@@ -278,7 +280,7 @@ func main() {
 	internalWebsocketService := service.NewInternalWebsocketService(wsLoadBalancer, olricProvider)
 	commitService := service.NewCommitService(draftRepository, contentService, branchService, projectService, gitClientProvider, wsBranchService, wsFileEditService, branchEditorsService)
 	searchService := service.NewSearchService(projectService, publishedService, branchService, gitClientProvider, contentService)
-	apihubApiKeyService := service.NewApihubApiKeyService(apihubApiKeyRepository, publishedRepository, activityTrackingService, userService, roleRepository, roleService.IsSysadm)
+	apihubApiKeyService := service.NewApihubApiKeyService(apihubApiKeyRepository, publishedRepository, activityTrackingService, userService, roleRepository, roleService.IsSysadm, systemInfoService)
 
 	refResolverService := service.NewRefResolverService(publishedRepository)
 	buildProcessorService := service.NewBuildProcessorService(buildRepository, refResolverService)
@@ -302,7 +304,9 @@ func main() {
 
 	gitHookService := service.NewGitHookService(projectRepository, branchService, buildService, userService)
 
-	zeroDayAdminService := service.NewZeroDayAdminService(userService, roleService, usersRepository)
+	zeroDayAdminService := service.NewZeroDayAdminService(userService, roleService, usersRepository, systemInfoService)
+
+	personalAccessTokenService := service.NewPersonalAccessTokenService(personalAccessTokenRepository, userService, roleService)
 
 	integrationsController := controller.NewIntegrationsController(integrationsService)
 	projectController := controller.NewProjectController(projectService, groupService, searchService)
@@ -351,6 +355,8 @@ func main() {
 	minioStorageController := controller.NewMinioStorageController(minioStorageCreds, minioStorageService)
 
 	gitHookController := controller.NewGitHookController(gitHookService)
+
+	personalAccessTokenController := controller.NewPersonalAccessTokenController(personalAccessTokenService)
 
 	r.HandleFunc("/api/v1/integrations/{integrationId}/apikey", security.Secure(integrationsController.GetUserApiKeyStatus)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/integrations/{integrationId}/apikey", security.Secure(integrationsController.SetUserApiKey)).Methods(http.MethodPut)
@@ -606,6 +612,10 @@ func main() {
 
 	r.HandleFunc("/api/v1/publishHistory", security.Secure(versionController.GetPublishedVersionsHistory)).Methods(http.MethodGet)
 
+	r.HandleFunc("/api/v1/personalAccessToken", security.Secure(personalAccessTokenController.CreatePAT)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/personalAccessToken", security.Secure(personalAccessTokenController.ListPATs)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/personalAccessToken/{id}", security.Secure(personalAccessTokenController.DeletePAT)).Methods(http.MethodDelete)
+
 	//debug + cleanup
 	if !systemInfoService.GetSystemInfo().ProductionMode {
 		r.HandleFunc("/api/internal/websocket/branches/log", security.Secure(branchWSController.TestLogWebsocketClient)).Methods(http.MethodPost)
@@ -678,7 +688,7 @@ func main() {
 		}
 	})
 
-	err = security.SetupGoGuardian(integrationsService, userService, roleService, apihubApiKeyService, systemInfoService)
+	err = security.SetupGoGuardian(integrationsService, userService, roleService, apihubApiKeyService, personalAccessTokenService, systemInfoService)
 	if err != nil {
 		log.Fatalf("Can't setup go_guardian. Error - %s", err.Error())
 	}
@@ -688,12 +698,11 @@ func main() {
 
 	utils.SafeAsync(func() {
 		if err := zeroDayAdminService.CreateZeroDayAdmin(); err != nil {
-			log.Error("Failed to create zero day admin user: " + err.Error())
+			log.Errorf("Failed to create zero day admin user: %s", err)
 		}
 
-		systemApiKey := os.Getenv("APIHUB_ACCESS_TOKEN")
-		if err := apihubApiKeyService.CreateSystemApiKey(systemApiKey); err != nil {
-			log.Errorf("failed to create system api key: %+v", err)
+		if err := apihubApiKeyService.CreateSystemApiKey(); err != nil {
+			log.Errorf("Failed to create system api key: %s", err)
 		}
 	})
 

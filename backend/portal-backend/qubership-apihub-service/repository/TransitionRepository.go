@@ -139,7 +139,16 @@ func (t transitionRepositoryImpl) MovePackage(fromPkg, toPkg string, overwriteHi
 		fromPkgEnt.Id = toPkg
 		fromPkgEnt.Alias = newAlias
 		fromPkgEnt.ParentId = newParent
-
+		toPkgCount, errCount := tx.Model(&entity.PackageEntity{}).
+			Where("id = ?", toPkg).
+			Count()
+		if errCount != nil {
+			return fmt.Errorf("unable to move: failed to count destination packages")
+		}
+		if toPkgCount != 0 {
+			// no updates possible due to currently implemented data retention policy
+			return fmt.Errorf("unable to move: destination package %s already exists", toPkg)
+		}
 		_, err = tx.Model(fromPkgEnt).Insert()
 		if err != nil {
 			return fmt.Errorf("failed to create new package %s: %w", toPkg, err)

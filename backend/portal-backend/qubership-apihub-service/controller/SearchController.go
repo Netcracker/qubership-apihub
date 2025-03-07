@@ -16,9 +16,12 @@ package controller
 
 import (
 	"encoding/json"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
@@ -191,7 +194,30 @@ func (s searchControllerImpl) Search(w http.ResponseWriter, r *http.Request) {
 	searchQuery.Limit = limit
 	searchQuery.Page = page
 
+	//// metrics
 	s.monitoringService.AddEndpointCall(getTemplatePath(r), view.MakeSearchEndpointOptions(searchLevel, searchQuery.OperationSearchParams))
+
+	ctx := context.Create(r)
+	user := ctx.GetUserId()
+	if user == "" {
+		user = ctx.GetApiKeyId()
+	}
+	pkgPostfix := ""
+	if len(searchQuery.PackageIds) > 0 {
+		pkgPostfix += "-" + searchQuery.PackageIds[0] // enrich the search level with pkg id (workspace, group, package). Currently only one item supported in the array.
+	}
+	s.monitoringService.IncreaseBusinessMetricCounter(user, metrics.GlobalSearchCalled, searchLevel+pkgPostfix)
+
+	start := searchQuery.PublicationDateInterval.StartDate
+	end := searchQuery.PublicationDateInterval.EndDate
+	now := time.Now()
+	if !((!start.IsZero() && start.Year() == (now.Year()-1) && start.Month() == now.Month() && start.Day() == now.Day()) &&
+		(!end.IsZero() && end.Year() == now.Year() && end.Month() == now.Month() && end.Day() == now.Day())) {
+		// default date interval was modified
+		s.monitoringService.IncreaseBusinessMetricCounter(user, metrics.GlobalSearchDefaultPublicationDateModified, searchLevel)
+	}
+	////
+
 	switch searchLevel {
 	case view.SearchLevelOperations:
 		{

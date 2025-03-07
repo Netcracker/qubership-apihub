@@ -17,7 +17,6 @@ package service
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -44,7 +43,7 @@ type ApihubApiKeyService interface {
 	GetApiKeyStatus(apiKey string, packageId string) (bool, *view.ApihubApiKey, error)
 	GetApiKeyByKey(apiKey string) (*view.ApihubApiKeyExtAuthView, error)
 	GetApiKeyById(apiKeyId string) (*view.ApihubApiKeyExtAuthView, error)
-	CreateSystemApiKey(apiKey string) error
+	CreateSystemApiKey() error
 }
 
 func NewApihubApiKeyService(apihubApiKeyRepository repository.ApihubApiKeyRepository,
@@ -52,25 +51,28 @@ func NewApihubApiKeyService(apihubApiKeyRepository repository.ApihubApiKeyReposi
 	atService ActivityTrackingService,
 	userService UserService,
 	roleRepository repository.RoleRepository,
-	isSysadm func(context.SecurityContext) bool) ApihubApiKeyService {
+	isSysadm func(context.SecurityContext) bool,
+	systemInfoService SystemInfoService) ApihubApiKeyService {
 
 	return &apihubApiKeyServiceImpl{
-		apiKeyRepository: apihubApiKeyRepository,
-		publishedRepo:    publishedRepo,
-		atService:        atService,
-		userService:      userService,
-		roleRepository:   roleRepository,
-		isSysadm:         isSysadm,
+		apiKeyRepository:  apihubApiKeyRepository,
+		publishedRepo:     publishedRepo,
+		atService:         atService,
+		userService:       userService,
+		roleRepository:    roleRepository,
+		isSysadm:          isSysadm,
+		systemInfoService: systemInfoService,
 	}
 }
 
 type apihubApiKeyServiceImpl struct {
-	apiKeyRepository repository.ApihubApiKeyRepository
-	publishedRepo    repository.PublishedRepository
-	atService        ActivityTrackingService
-	userService      UserService
-	roleRepository   repository.RoleRepository
-	isSysadm         func(context.SecurityContext) bool
+	apiKeyRepository  repository.ApihubApiKeyRepository
+	publishedRepo     repository.PublishedRepository
+	atService         ActivityTrackingService
+	userService       UserService
+	roleRepository    repository.RoleRepository
+	isSysadm          func(context.SecurityContext) bool
+	systemInfoService SystemInfoService
 }
 
 const API_KEY_PREFIX = "api-key_"
@@ -772,9 +774,10 @@ func (t apihubApiKeyServiceImpl) GetApiKeyById(apiKeyId string) (*view.ApihubApi
 	}, nil
 }
 
-func (t apihubApiKeyServiceImpl) CreateSystemApiKey(apiKey string) error {
-	if apiKey == "" {
-		return fmt.Errorf("system api key must not be empty")
+func (t apihubApiKeyServiceImpl) CreateSystemApiKey() error {
+	apiKey, err := t.systemInfoService.GetSystemApiKey()
+	if err != nil {
+		return fmt.Errorf("failed to create system api key: %w", err)
 	}
 
 	packageId, apiKeyName := "*", "system_api_key"
@@ -785,18 +788,21 @@ func (t apihubApiKeyServiceImpl) CreateSystemApiKey(apiKey string) error {
 		return err
 	}
 	if existingKey != nil {
-		log.Info("provided system api key already exists")
+		log.Info("System api key already exists")
 		return nil
 	} else {
-		log.Debug("system api key not found, creating new")
+		log.Debug("System api key not found, creating new")
 
-		email := os.Getenv(APIHUB_ADMIN_EMAIL)
+		email, _, err := t.systemInfoService.GetZeroDayAdminCreds()
+		if err != nil {
+			return fmt.Errorf("failed to create system api key: %w", err)
+		}
 		adminUser, err := t.userService.GetUserByEmail(email)
 		if err != nil {
 			return err
 		}
 		if adminUser == nil {
-			return fmt.Errorf("failed to generate system api key: no sysadm user has found")
+			return fmt.Errorf("failed to create system api key: system admin user is not found")
 		}
 
 		keyToCreate := view.ApihubApiKey{
@@ -815,7 +821,7 @@ func (t apihubApiKeyServiceImpl) CreateSystemApiKey(apiKey string) error {
 		if err != nil {
 			return err
 		}
-		log.Info("new system api key has been created")
+		log.Info("New system api key has been created")
 
 		existingApiKeyEntities, err := t.apiKeyRepository.GetPackageApiKeys(packageId)
 		if err != nil {
