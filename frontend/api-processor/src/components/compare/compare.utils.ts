@@ -29,6 +29,7 @@ import {
 } from '../../types'
 import { BUILD_TYPE, EMPTY_CHANGE_SUMMARY, MESSAGE_SEVERITY } from '../../consts'
 import { convertToSlug, takeIfDefined } from '../../utils'
+import { normalizePath } from '../../utils/builder'
 
 export const totalChanges = (changeSummary?: ChangeSummary): number => {
   return changeSummary
@@ -96,31 +97,50 @@ export function getOperationsHashMapByApiType(
   const resolvedHashMap = { ...operationTypes.find(({ apiType: type }) => type === currentApiType)?.operations || {} }
   const { buildType, currentGroup, previousGroup } = ctx.config
 
-  if (buildType !== BUILD_TYPE.PREFIX_GROUPS_CHANGELOG) {
-    return resolvedHashMap
-  }
-
-  if (!currentGroup || !previousGroup) {
-    ctx.notifications.push({
-      severity: MESSAGE_SEVERITY.Warning,
-      message: `Build type is prefix group changelog, but one of the groups is not provided: currentGroup=${currentGroup}, previousGroup=${previousGroup}`,
-    })
-    return resolvedHashMap
-  }
-
-  for (const [operationId, dataHash] of Object.entries(resolvedHashMap)) {
-    Reflect.deleteProperty(resolvedHashMap, operationId)
+  // Handle prefix group changelog case
+  if (buildType === BUILD_TYPE.PREFIX_GROUPS_CHANGELOG) {
+    if (!currentGroup || !previousGroup) {
+      ctx.notifications.push({
+        severity: MESSAGE_SEVERITY.Warning,
+        message: `Build type is prefix group changelog, but one of the groups is not provided: currentGroup=${currentGroup}, previousGroup=${previousGroup}`,
+      })
+      return resolvedHashMap
+    }
 
     const groupSlug = convertToSlug(areOperationsFromCurrentVersion ? currentGroup : previousGroup)
+    const newHashMap: ResolvedVersionOperationsHashMap = {}
 
-    if (operationId.startsWith(groupSlug)) {
-      const changedOperationId = operationId.substring(groupSlug.length)
-      resolvedHashMap[changedOperationId] = dataHash
-      operationIdentityMap[changedOperationId] = operationId
+    // Process each operation
+    for (const [operationId, dataHash] of Object.entries(resolvedHashMap)) {
+      if (operationId.startsWith(groupSlug)) {
+        const changedOperationId = operationId.substring(groupSlug.length)
+        newHashMap[changedOperationId] = dataHash
+        operationIdentityMap[changedOperationId] = operationId
+      }
+    }
+
+    return newHashMap
+  }
+
+  // Handle path parameter normalization case
+  const newHashMap: ResolvedVersionOperationsHashMap = {}
+  for (const [operationId, dataHash] of Object.entries(resolvedHashMap)) {
+    // Get operation metadata to normalize the path
+    const operation = operationTypes.find(({ apiType: type }) => type === currentApiType)
+      ?.operations_metadata?.[operationId]
+    
+    if (operation?.path && operation?.method) {
+      const normalizedPath = normalizePath(operation.path)
+      const normalizedId = `${operation.method.toLowerCase()}-${normalizedPath}`
+      newHashMap[normalizedId] = dataHash
+      operationIdentityMap[normalizedId] = operationId
+    } else {
+      newHashMap[operationId] = dataHash
+      operationIdentityMap[operationId] = operationId
     }
   }
 
-  return resolvedHashMap
+  return newHashMap
 }
 
 export function getOperationMetadata(operation: ResolvedOperation): OperationChangesMetadata {
@@ -141,4 +161,27 @@ export function takeSubstringIf(condition: boolean, value: string, startIndex: n
   }
 
   return value.substring(startIndex)
+}
+
+/**
+ * Normalizes a path by replacing path parameters with a placeholder
+ * regardless of the parameter name
+ * e.g. /users/{userId}/posts/{postId} -> /users/{param}/posts/{param}
+ */
+export function normalizePath(path: string): string {
+  return path.replace(/\{[^}]+\}/g, '{param}')
+}
+
+/**
+ * Gets a normalized operation identifier that is resilient to path parameter renaming
+ */
+export function getNormalizedOperationId(operationId: string, metadata?: { path?: string, method?: string }): string {
+  // If no path/method metadata, return original ID
+  if (!metadata?.path || !metadata?.method) {
+    return operationId
+  }
+
+  // Create normalized ID from method and normalized path using existing normalizePath utility
+  const normalizedPath = normalizePath(metadata.path)
+  return `${metadata.method.toLowerCase()}-${normalizedPath}`
 }
