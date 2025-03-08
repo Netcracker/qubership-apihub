@@ -21,7 +21,7 @@ export class PortalTableRow extends TableRow {
 
   async openSettings(): Promise<void> {
     await report.step(`Open "${this.componentName}" settings`, async () => {
-      await this.hover()
+      await this.hover({ position: { x: 1, y: 1 } }) // to handle interfering tooltips
       await this.packageSettingsButton.click()
     })
   }
