@@ -7,7 +7,6 @@ import process from 'node:process'
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-// require('dotenv').config();
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -45,7 +44,7 @@ export default defineConfig<Fixtures>({
     ['list'],
     ['./src/services/custom-reporter/CustomReporter.ts', { reportType: 'apihub-styled-html' }],
   ],
-  globalSetup: require.resolve('./src/tests/global-setup'),
+  globalSetup: './src/tests/global-setup.ts',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
