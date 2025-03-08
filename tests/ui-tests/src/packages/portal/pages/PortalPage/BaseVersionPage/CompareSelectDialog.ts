@@ -43,9 +43,10 @@ export class CompareSelectDialog extends BaseCancelDialog {
     previousOperation: Operation
     currentOperation: Operation
   }>): Promise<void> {
+    await this.page.waitForTimeout(2000) //to prevent fields' data resetting
     if (params.previousWorkspace || params.currentWorkspace || params.previousPackage || params.currentPackage) {
       await this.changePackagesBtn.click()
-      await expect(this.previousWorkspaceAc).not.toBeEmpty() //to prevent fields data resetting
+      await expect(this.previousWorkspaceAc).not.toBeEmpty() //to prevent fields' data resetting
     }
     if (params.previousWorkspace) {
       await this.previousWorkspaceAc.click()
