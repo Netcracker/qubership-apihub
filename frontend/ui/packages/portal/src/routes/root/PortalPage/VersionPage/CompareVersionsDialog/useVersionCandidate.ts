@@ -28,7 +28,7 @@ export function useVersionCandidate(option: {
   versionContent: PackageVersionContent | null
 }): PackageVersion | undefined {
   const { packageKey, versionKey, versionContent } = option
-  const [versions] = usePackageVersions({ packageKey: packageKey, textFilter: versionKey })
+  const { versions } = usePackageVersions({ packageKey: packageKey, textFilter: versionKey })
   const isLatestRevision = versionContent?.latestRevision
 
   const versionsCandidates = useMemo(() => {

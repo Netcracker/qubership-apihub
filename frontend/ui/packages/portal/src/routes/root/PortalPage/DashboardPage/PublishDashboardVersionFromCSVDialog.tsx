@@ -59,7 +59,7 @@ const PublishDashboardVersionFromCSVPopup: FC<PopupProps> = memo<PopupProps>(({ 
   const releaseVersionPattern = useMemo(() => packageObj?.releaseVersionPattern, [packageObj])
 
   const [versionsFilter, setVersionsFilter] = useState('')
-  const [versions, areVersionsLoading] = usePackageVersions({ textFilter: versionsFilter })
+  const { versions, areVersionsLoading } = usePackageVersions({ textFilter: versionsFilter })
   const [targetVersion, setTargetVersion] = useState<Key>('')
   const isEditingVersion = !!versionId && versionId !== SPECIAL_VERSION_KEY
 
@@ -89,8 +89,8 @@ const PublishDashboardVersionFromCSVPopup: FC<PopupProps> = memo<PopupProps>(({ 
     }
   }, [currentVersion, isEditingVersion, versionId])
 
-  const [previousVersion] = usePackageVersions({ status: RELEASE_VERSION_STATUS })
-  const previousVersionOptions = usePreviousVersionOptions(previousVersion)
+  const { versions: previousVersions } = usePackageVersions({ status: RELEASE_VERSION_STATUS })
+  const previousVersionOptions = usePreviousVersionOptions(previousVersions)
 
   const { handleSubmit, control, setValue, formState } = useForm<VersionFormData>({ defaultValues })
 
