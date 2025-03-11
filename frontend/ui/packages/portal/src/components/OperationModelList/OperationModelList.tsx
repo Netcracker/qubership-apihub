@@ -15,15 +15,15 @@
  */
 
 import type { FC, SyntheticEvent } from 'react'
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, Typography } from '@mui/material'
 import TreeView from '@mui/lab/TreeView'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { OperationModelListSkeleton } from './OperationModelListSkeleton'
 import type { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
-import { ModelLabel } from './ModelLabel'
-import { ModelItem, SectionItem } from './ModelListItem'
+import { ErrorModelLabel, ModelLabel } from './ModelLabel'
+import { ErrorModelItem, ModelItem, SectionItem } from './ModelListItem'
 import type {
   MediaType,
   OpenApiCustomSchemaObject,
@@ -178,11 +178,19 @@ export const OperationModelList: FC<OperationSidebarProps> = memo<OperationSideb
           label={sectionTitle}
           onClick={isAvailableSection ? handleLabelClick : undefined}
         >
-          {models.map(({ title, scopeDeclarationPath, declarationPath, schemaObjectName, schemaTolerantHashWithTitle, schemaObject }, index) => {
+          {models.map(({ title, scopeDeclarationPath, declarationPath, schemaObjectName, schemaTolerantHashWithTitle, schemaObject, error }, index) => {
             const handleOnModelUsagesClick = (): void => {
               if (schemaObjectName) {
                 onModelUsagesClick(schemaObjectName)
               }
+            }
+
+            if (error) {
+              return <ErrorModelItem
+                key={`${sectionKey}-${index}`}
+                title={title}
+                label={<ErrorModelLabel title={title} error={error}/>}
+              />
             }
 
             return (

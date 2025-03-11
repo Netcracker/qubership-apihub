@@ -49,14 +49,13 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = memo<Confirmation
       open={open}
       onClose={onCancel}
     >
-      <DialogTitle sx={{ fontSize: 15, fontWeight: 600, color: 'black' }}>
+      <DialogTitle>
         {title}
       </DialogTitle>
 
       <DialogContent>
         <DialogContentText
           variant="body2"
-          sx={{ color: 'black' }}
           data-testid="ConfirmationDialogContent"
         >
           {message}

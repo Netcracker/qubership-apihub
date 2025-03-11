@@ -26,6 +26,7 @@ import { FilesModeBody } from './FilesModeBody/FilesModeBody'
 import { PublishModeBody } from './PublishModeBody/PublishModeBody'
 import { ChangesModeBody } from './ChangesModeBody/ChangesModeBody'
 import { SettingsModeBody } from './SettingsModeBody/SettingsModeBody'
+import { ModuleFetchingErrorBoundary } from '@netcracker/qubership-apihub-ui-shared/components/ModuleFetchingErrorBoundary/ModuleFetchingErrorBoundary'
 
 export const ProjectEditorBody: FC = memo(() => {
   const isFilesEditorPageMode = useIsFilesProjectEditorMode()
@@ -35,7 +36,9 @@ export const ProjectEditorBody: FC = memo(() => {
 
   if (isFilesEditorPageMode) {
     return (
-      <FilesModeBody/>
+      <ModuleFetchingErrorBoundary>
+        <FilesModeBody/>
+      </ModuleFetchingErrorBoundary>
     )
   }
 

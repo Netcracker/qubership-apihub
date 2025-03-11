@@ -21,7 +21,7 @@ import { useEvent } from 'react-use'
 import { generatePath, useNavigate } from 'react-router-dom'
 
 import type { Path } from '@remix-run/router'
-import type { OverviewPageRoute, PackageSettingsPageRoute, SettingsPageRoute } from '../routes'
+import type { OverviewPageRoute, PackageSettingsPageRoute, ProfilePageRoute, SettingsPageRoute } from '../routes'
 import {
   API_CHANGES_PAGE_PATH_PATTERN,
   CONFIGURATION_PAGE,
@@ -36,7 +36,9 @@ import {
   OVERVIEW_PATH_PATTERN,
   PACKAGE_PAGE_PATH_PATTERN,
   PACKAGE_SETTINGS_PAGE_PATH_PATTERN,
+  PERSONAL_ACCESS_TOKENS_PAGE,
   PREVIEW_PAGE_PATH_PATTERN,
+  PROFILE_PAGE_PATH_PATTERN,
   SETTINGS_PAGE_PATH_PATTERN,
   SUMMARY_PAGE,
   USER_ROLES_PAGE,
@@ -269,6 +271,10 @@ export type PackageSettingsDetail = {
 
 export type SettingsDetail = {
   tab?: SettingsPageRoute
+}
+
+export type ProfileDetail = {
+  tab?: ProfilePageRoute
 }
 
 export type GroupDetail = {
@@ -684,6 +690,16 @@ export function getSettingsPath({
 }): Partial<Path> {
   return {
     pathname: `${SETTINGS_PAGE_PATH_PATTERN}${tab}`,
+  }
+}
+
+export function getProfilePath({
+  tab,
+}: ProfileDetail = {
+  tab: PERSONAL_ACCESS_TOKENS_PAGE,
+}): Partial<Path> {
+  return {
+    pathname: `${PROFILE_PAGE_PATH_PATTERN}${tab}`,
   }
 }
 

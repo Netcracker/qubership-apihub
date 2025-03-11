@@ -14,25 +14,52 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import React, { memo, useMemo } from 'react'
+import { getOverviewPath } from '@apihub/routes/NavigationProvider'
 import { Box, Link, Typography } from '@mui/material'
-import { NavLink, useParams } from 'react-router-dom'
-import { usePackageVersionContent } from '../../../../usePackageVersionContent'
-import { OperationTypeChanges } from './OperationTypeChanges'
-import { OVERVIEW_PAGE, REVISION_HISTORY_PAGE } from '../../../../../../routes'
-import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
-import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
-import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { FormattedDate } from '@netcracker/qubership-apihub-ui-shared/components/FormattedDate'
+import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
+import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { PrincipalView } from '@netcracker/qubership-apihub-ui-shared/components/PrincipalView'
 import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-
+import type { PackageKey, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
+import type { FC, ReactNode } from 'react'
+import { memo, useMemo } from 'react'
+import { NavLink, useParams } from 'react-router-dom'
+import { OVERVIEW_PAGE, REVISION_HISTORY_PAGE } from '../../../../../../routes'
+import { usePackageVersionContent } from '../../../../usePackageVersionContent'
+import { OperationTypeChanges } from './OperationTypeChanges'
 
 const SUMMARY_BOX_MARGIN_TOP = 4
 
 const OPERATION_TYPES_ORDER = [API_TYPE_REST, API_TYPE_GRAPHQL]
+
+const PreviousVersion: FC<Partial<{
+  packageKey: PackageKey
+  versionKey: VersionKey
+}>> = ({ packageKey, versionKey }) => {
+  let link: ReactNode | undefined
+  if (packageKey && versionKey) {
+    link = (
+      <Link
+        component={NavLink}
+        to={getOverviewPath({ packageKey, versionKey })}
+      >
+        {versionKey}
+      </Link>
+    )
+  }
+  return (
+    <Typography
+      sx={{ gridArea: 'previousVersion' }}
+      variant="body2"
+      data-testid="PreviousVersionTypography"
+    >
+      {link ?? '-'}
+    </Typography>
+  )
+}
 
 export const SummaryTab: FC = memo(() => {
   const { packageId, versionId } = useParams()
@@ -45,6 +72,7 @@ export const SummaryTab: FC = memo(() => {
     operationTypes,
     versionLabels,
     previousVersion,
+    previousVersionPackageId,
     createdBy,
     createdAt,
     latestRevision,
@@ -131,9 +159,10 @@ export const SummaryTab: FC = memo(() => {
           <Typography sx={{ gridArea: 'previousVersionTitle' }} variant="subtitle2">
             Previous version
           </Typography>
-          <Typography sx={{ gridArea: 'previousVersion' }} variant="body2" data-testid="PreviousVersionTypography">
-            {previousVersionKey ?? '-'}
-          </Typography>
+          <PreviousVersion
+            packageKey={previousVersionPackageId ?? packageId}
+            versionKey={previousVersionKey}
+          />
 
           <Typography sx={{ gridArea: 'publishedByTitle' }} variant="subtitle2">
             Published by

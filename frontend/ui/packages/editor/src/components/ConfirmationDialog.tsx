@@ -28,6 +28,7 @@ export type ConfirmationDialogProps = {
   confirmButtonName?: string
   onConfirm?: () => void
   onCancel?: () => void
+  shouldCloseOnLoadingFinish?: boolean
 }
 
 export const ConfirmationDialog: FC<ConfirmationDialogProps> = memo<ConfirmationDialogProps>(({
@@ -38,8 +39,9 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = memo<Confirmation
   open,
   title,
   confirmButtonName = 'Delete',
+  shouldCloseOnLoadingFinish = true,
 }) => {
-  useCloseOnSuccess(loading, onCancel)
+  useCloseOnLoadingFinish(loading, onCancel, shouldCloseOnLoadingFinish)
 
   return (
     <Dialog
@@ -54,15 +56,12 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = memo<Confirmation
           sx={{ position: 'absolute', right: 8, top: 8, color: '#353C4E' }}
           onClick={onCancel}
         >
-          <CloseOutlinedIcon fontSize="small"/>
+          <CloseOutlinedIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
 
       <DialogContent>
-        <DialogContentText
-          variant="body2"
-          sx={{ color: 'black' }}
-        >
+        <DialogContentText variant="body2">
           {message}
         </DialogContentText>
       </DialogContent>
@@ -87,10 +86,11 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = memo<Confirmation
   )
 })
 
-function useCloseOnSuccess(
+function useCloseOnLoadingFinish(
   loading?: boolean,
   onClose?: () => void,
+  enabled?: boolean,
 ): void {
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {!loading && onClose?.()}, [loading])
+  useEffect(() => { enabled && !loading && onClose?.() }, [enabled, loading])
 }

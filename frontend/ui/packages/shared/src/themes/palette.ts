@@ -92,6 +92,15 @@ export const CHIP_COLOR_OVERRIDES: Record<keyof ChipPropsColorOverrides, SimpleP
     main: '#FFB02E',
     contrastText: '#FFB02E',
   },
+  // Personal Access Token
+  active: {
+    main: '#C3F29E',
+    contrastText: '#073800',
+  },
+  expired: {
+    main: '#FFB9AB',
+    contrastText: '#520100',
+  },
 }
 export const DEFAULT_PAPER_SHADOW =
   '0px 1px 1px rgba(4, 10, 21, 0.04), 0px 3px 14px rgba(4, 12, 29, 0.09), 0px 0px 1px rgba(7, 13, 26, 0.27)'

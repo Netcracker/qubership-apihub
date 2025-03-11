@@ -19,7 +19,7 @@ import * as React from 'react'
 import { memo, useCallback, useState } from 'react'
 import { Autocomplete, Box, capitalize, CircularProgress, ListItem, TextField, Typography } from '@mui/material'
 import { Controller, useForm } from 'react-hook-form'
-import { DisplayToken } from './DisplayToken'
+import { DisplayToken, type NotificationDetail } from './DisplayToken'
 import { reverseTokenRoleMapping } from '../entities/tokens'
 import type { GenerateApiKeyValue, TokenDataForm } from '../types/tokens'
 import type { Key } from '../entities/keys'
@@ -39,6 +39,7 @@ export type GenerateTokenFormProps = {
   generatedApiKey: Key
   generateApiKey: (data: GenerateApiKeyValue) => void
   setUserSearch: (search: string) => void
+  showSuccessNotification: (detail: NotificationDetail) => void
 }
 
 //First Order Component
@@ -51,6 +52,7 @@ export const GenerateTokenForm: FC<GenerateTokenFormProps> = memo(({
   generateApiKey,
   generatedApiKey,
   setUserSearch,
+  showSuccessNotification,
 }) => {
   const { handleSubmit, setValue, control, reset } = useForm<TokenDataForm>({
     defaultValues: {
@@ -72,7 +74,7 @@ export const GenerateTokenForm: FC<GenerateTokenFormProps> = memo(({
   }, [generateApiKey, reset])
 
   if (generatedApiKey) {
-    return <DisplayToken generatedApiKey={generatedApiKey}/>
+    return <DisplayToken generatedApiKey={generatedApiKey} showSuccessNotification={showSuccessNotification}/>
   }
 
   return (

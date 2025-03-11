@@ -67,7 +67,6 @@ export const OperationTitleWithMeta: FC<OperationTitleWithMetaProps> = memo<Oper
     ? <Typography noWrap variant="subtitle1">
       <Link
         component={NavLink}
-        sx={{ '&:hover': { cursor: 'pointer' } }}
         to={link}
         target={openLinkInNewTab ? '_blank' : '_self'}
         onClick={(event) => {

@@ -315,13 +315,23 @@ export function createComponents(): Components {
           minWidth: 440,
           paddingBottom: 0,
           lineHeight: 2.5,
+          color: 'black',
+        },
+      },
+    },
+    MuiDialogContentText: {
+      styleOverrides: {
+        root: {
+          color: 'black',
         },
       },
     },
     MuiDialogTitle: {
       styleOverrides: {
         root: {
+          fontSize: 15,
           fontWeight: 600,
+          color: 'black',
         },
       },
     },
@@ -398,6 +408,13 @@ export function createComponents(): Components {
     MuiLink: {
       defaultProps: {
         underline: 'hover',
+      },
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            cursor: 'pointer',
+          },
+        },
       },
     },
     MuiList: {

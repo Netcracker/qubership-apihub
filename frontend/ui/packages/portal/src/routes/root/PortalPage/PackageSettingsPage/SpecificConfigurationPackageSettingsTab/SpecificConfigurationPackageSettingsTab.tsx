@@ -85,7 +85,7 @@ export const SpecificConfigurationPackageSettingsTab: FC<PackageSettingsTabProps
               </Box>
               <Tooltip
                 disableHoverListener={false}
-                title="The parameter allows you to define custom regular expression, which will be applied to the paths of REST operations. This expression must begin and end with a / character and contain the {group} keyword. For example: /api/{group}/.  The system will look for the {group} entry in the REST operation paths during the publication of the package version. All found matches will form a list of groups that will include the corresponding operations."
+                title="The parameter allows you to define custom regular expression, which will be applied to the paths of REST operations. This expression must begin and end with a / character and contain the {group} keyword. For example: /api/{group}/. The system will look for the {group} entry in the REST operation paths during the publication of the package version. All found matches will form a list of groups that will include the corresponding operations."
                 placement="right"
               >
                 <Box height={20}>

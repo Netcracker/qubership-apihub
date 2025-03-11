@@ -210,7 +210,6 @@ const BwcStatusBar: FC = memo(() => {
           <Link
             variant="subtitle1"
             underline="none"
-            sx={{ cursor: 'pointer' }}
             onClick={showBwcCheckDialog}
           >
             {!previousVersionKey ? 'No previous release version selected' : `Previous release version: ${previousVersion}`}

@@ -54,7 +54,7 @@ export const CHANGE_SEVERITY_COLOR_MAP: Record<ChangeSeverity, string> = {
 
 export const CHANGE_SEVERITY_NAME_MAP: Record<ChangeSeverity, string> = {
   [BREAKING_CHANGE_SEVERITY]: 'Breaking',
-  [SEMI_BREAKING_CHANGE_SEVERITY]: 'Semi-breaking',
+  [SEMI_BREAKING_CHANGE_SEVERITY]: 'Risky',
   [DEPRECATED_CHANGE_SEVERITY]: 'Deprecated',
   [NON_BREAKING_CHANGE_SEVERITY]: 'Non-breaking',
   [UNCLASSIFIED_CHANGE_SEVERITY]: 'Unclassified',
@@ -64,7 +64,7 @@ export const CHANGE_SEVERITY_NAME_MAP: Record<ChangeSeverity, string> = {
 export const CHANGE_SEVERITY_DESCRIPTION_MAP: Record<ChangeSeverity, { text: string; options?: string[] }> = {
   [BREAKING_CHANGE_SEVERITY]: { text: 'Breaking change is a change that breaks backward compatibility with the previous version of API. For example, deleting an operation, adding a required parameter or changing type of a parameter are breaking changes.' },
   [SEMI_BREAKING_CHANGE_SEVERITY]: {
-    text: 'Semi-breaking change is a change that breaks backward compatibility according to the rules:',
+    text: 'Risky change is a change that breaks backward compatibility according to the rules:',
     options: ['operation was annotated as deprecated in at least two previous consecutive releases and then it was deleted', 'operation is marked as no-BWC'],
   },
   [DEPRECATED_CHANGE_SEVERITY]: { text: 'Deprecating change is a change that annotates an operation, parameter or schema as deprecated. Removing a "deprecated" annotation is also considered a deprecating change.' },

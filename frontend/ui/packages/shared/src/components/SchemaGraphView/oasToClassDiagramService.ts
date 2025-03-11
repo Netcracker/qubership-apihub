@@ -177,7 +177,7 @@ class GraphBuilder {
       const sharedSchema =
         (this.cycledJso[OPEN_API_PROPERTY_COMPONENTS] as OpenAPIV3.ComponentsObject)
           ?.[OPEN_API_PROPERTY_SCHEMAS]?.[sharedSchemaName] as OpenAPIV3.SchemaObject
-      if (!sharedSchemas.includes(sharedSchema)) {
+      if (sharedSchema && !sharedSchemas.includes(sharedSchema)) {
         sharedSchemas.push(sharedSchema)
       }
     })
