@@ -70,7 +70,7 @@ const PublishOperationGroupPackageVersionPopup: FC<PopupProps> = memo<PopupProps
   })
 
   const [versionsFilter, setVersionsFilter] = useState('')
-  const [versionsWithRevisions, areVersionsLoading] = usePackageVersions({
+  const { versions: versionsWithRevisions, areVersionsLoading } = usePackageVersions({
     packageKey: targetPackage?.key,
     enabled: !!targetPackage,
     textFilter: versionsFilter,
@@ -79,7 +79,7 @@ const PublishOperationGroupPackageVersionPopup: FC<PopupProps> = memo<PopupProps
   const versions = useMemo(() => Object.keys(versionLabelsMap), [versionLabelsMap])
   const getVersionLabels = useCallback((version: Key) => versionLabelsMap[version] ?? [], [versionLabelsMap])
 
-  const [targetPackagePreviousVersions] = usePackageVersions({
+  const { versions: targetPackagePreviousVersions } = usePackageVersions({
     packageKey: targetPackage?.key,
     enabled: !!targetPackage,
     status: RELEASE_VERSION_STATUS,

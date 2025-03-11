@@ -299,11 +299,11 @@ function useDialogData(
     textFilter: changedPackageInputValue,
   })
 
-  const [originalVersions, isOriginalPackageVersionsLoading] = usePackageVersions({
+  const { versions: originalVersions, areVersionsLoading: isOriginalPackageVersionsLoading } = usePackageVersions({
     packageKey: originalPackage?.key,
     textFilter: originalPackageVersionInputValue,
   })
-  const [changedVersions, isChangedPackageVersionsLoading] = usePackageVersions({
+  const { versions: changedVersions, areVersionsLoading: isChangedPackageVersionsLoading } = usePackageVersions({
     packageKey: changedPackage?.key,
     textFilter: changedPackageVersionInputValue,
   })

@@ -56,7 +56,7 @@ export const VersionSelector: FC = memo(() => {
   const [anchor, setAnchor] = useState<HTMLElement>()
   const [activeTab, setActiveTab] = useState<VersionTab>(RELEASE_TAB)
 
-  const [versions, isLoading] = usePackageVersions({
+  const { versions, areVersionsLoading } = usePackageVersions({
     status: VERSION_STATUS_MAP[activeTab],
     textFilter: searchValue,
     sortBy: VERSION_SORT_MAP[activeTab].sortBy,
@@ -87,7 +87,7 @@ export const VersionSelector: FC = memo(() => {
   const selectorContent = useMemo(() =>
     <>
       <Placeholder
-        invisible={isNotEmpty(versions) || isLoading}
+        invisible={isNotEmpty(versions) || areVersionsLoading}
         area={NAVIGATION_PLACEHOLDER_AREA}
         message={searchValue ? NO_SEARCH_RESULTS : 'No versions to display'}
       >
@@ -95,9 +95,9 @@ export const VersionSelector: FC = memo(() => {
           value={versions!}
           versionStatus={VERSION_STATUS_MAP[activeTab]}
           onClickVersion={onClickVersion}
-          isLoading={isLoading}/>
+          isLoading={areVersionsLoading}/>
       </Placeholder>
-    </>, [versions, isLoading, searchValue, activeTab, onClickVersion])
+    </>, [versions, areVersionsLoading, searchValue, activeTab, onClickVersion])
 
   return (
     <Box display="flex" alignItems="center" gap={2} overflow="hidden" data-testid="VersionSelector">

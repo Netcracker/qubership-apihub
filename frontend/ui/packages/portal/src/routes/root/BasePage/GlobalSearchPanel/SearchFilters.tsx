@@ -84,7 +84,7 @@ type FiltersData = Partial<{
   workspace: Package | null
   group: Package | null
   pkg: Package | null
-  versions: Key
+  version: Key
   statuses: VersionStatus[]
   publicationDatePeriod: string[]
   apiType: ApiType
@@ -124,7 +124,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
     operationTypes,
     apiType,
     methods,
-    versions,
+    version,
     statuses,
     publicationDatePeriod,
     detailedScope,
@@ -170,8 +170,15 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
   const onPackageInputChange = useMemo(() => debounce((_: SyntheticEvent, value: string) =>
     setPackagesFilter(value), DEFAULT_DEBOUNCE), [])
 
-  const [packageVersions] = usePackageVersions({ packageKey })
+  const [versionsFilter, setVersionsFilter] = useState('')
+  const { versions: packageVersions, areVersionsInitiallyLoading } = usePackageVersions({
+    packageKey: packageKey,
+    enabled: enabledFilters && !!packageKey,
+    textFilter: versionsFilter,
+  })
   const handledVersions = handleVersionsRevision(packageVersions)
+  const onVersionInputChange = useMemo(() => debounce((_: SyntheticEvent, value: string) =>
+    setVersionsFilter(value), DEFAULT_DEBOUNCE), [])
 
   const ref = useRef<DatePickerRef>()
 
@@ -210,7 +217,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
   const onSubmit = useMemo(
     () => handleSubmit((value) => {
       const {
-        versions,
+        version,
         statuses,
         publicationDatePeriod,
         apiType,
@@ -220,7 +227,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
         methods,
       } = value
 
-      const versionData = versions ? [versions] : []
+      const versionData = version ? [version] : []
       const packageIdsData = (): string[] => {
         if (packageKey) {
           return [packageKey]
@@ -283,7 +290,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
       methods,
       scope,
       statuses,
-      versions,
+      version,
       publicationDatePeriod,
     ],
   )
@@ -507,15 +514,18 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
         </Tooltip>
 
         <Controller
-          name="versions"
+          name="version"
           control={control}
           render={({ field }) => <Autocomplete
             forcePopupIcon={false}
             value={field.value ?? null}
             options={handledVersions?.map(version => version.key)}
             isOptionEqualToValue={(option, value) => option === value}
+            filterOptions={disableAutocompleteSearch}
+            loading={areVersionsInitiallyLoading}
             renderInput={(params) => <TextField {...field} {...params} label="Package version"/>}
-            onChange={(_, version) => setValue('versions', version ?? '')}
+            onInputChange={onVersionInputChange}
+            onChange={(_, version) => setValue('version', version ?? '')}
             data-testid="PackageVersionAutocomplete"
           />}
         />
@@ -679,7 +689,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
         </Button>
       </Box>
     </>
-  ), [activeTab, apiSearchMode, apiType, apiTypeFormMap, control, errors.apiType, formatPublicationDate, groups, handledVersions, isWorkspacesLoading, isGroupsLoading, isPackagesLoading, packages, reset, setValue, workspaceKey, workspaces, onGroupInputChange, onPackageInputChange, onWorkspaceInputChange])
+  ), [activeTab, apiSearchMode, apiType, apiTypeFormMap, control, errors.apiType, formatPublicationDate, groups, handledVersions, isWorkspacesLoading, isGroupsLoading, isPackagesLoading, areVersionsInitiallyLoading, packages, reset, setValue, workspaceKey, workspaces, onGroupInputChange, onPackageInputChange, onWorkspaceInputChange, onVersionInputChange])
 })
 
 function ScopesAutocomplete<T extends Key>({

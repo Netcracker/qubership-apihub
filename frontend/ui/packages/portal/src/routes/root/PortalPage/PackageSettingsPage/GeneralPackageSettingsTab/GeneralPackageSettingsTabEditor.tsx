@@ -72,7 +72,7 @@ export const GeneralPackageSettingsTabEditor: FC<PackageSettingsTabProps> = memo
   const editable = useEditableGeneralPackageSettingsTabContent()
   const setEditable = useSetEditableGeneralPackageSettingsTabContent()
   const [updatePackage, isUpdateLoading, isSuccess] = useUpdatePackage()
-  const [previousReleaseVersions] = usePackageVersions({
+  const { versions: previousReleaseVersions } = usePackageVersions({
     packageKey: key,
     status: RELEASE_VERSION_STATUS,
   })
