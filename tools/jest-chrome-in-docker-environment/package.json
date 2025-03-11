@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-jest-chrome-in-docker-environment",
-  "version": "2.0.0-dev.0",
+  "version": "2.0.0",
   "description": "",
   "main": "dist/lib/index.js",
   "type": "commonjs",
