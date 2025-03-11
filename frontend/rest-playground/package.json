@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-rest-playground",
-  "version": "1.0.7",
+  "version": "1.0.8-next.0",
   "description": "Web Component for Try It",
   "sideEffects": [
     "./dist/index.js"
@@ -23,7 +23,9 @@
     "feature-start": "feature-start --featureName",
     "feature-finish": "feature-finish",
     "release-start": "release-start",
-    "release-finish": "release-finish"
+    "release-finish": "release-finish",
+    "development:link": "echo please run \"npm link\" manually in console to avoid using the deprecated node_modules/.bin/npm as it will reinstall all dependencies",
+    "development:unlink": "echo please run \"npm unlink\" manually in console to avoid using the deprecated node_modules/.bin/npm as it will reinstall all dependencies"
   },
   "rollup": {
     "bundleDeps": [
