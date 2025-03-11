@@ -1,12 +1,12 @@
 {
   "name": "@netcracker/qubership-apihub-build-task-consumer",
-  "version": "2.0.4",
+  "version": "2.0.5-next.0",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@netcracker/qubership-apihub-build-task-consumer",
-      "version": "2.0.4",
+      "version": "2.0.5-next.0",
       "license": "Apache-2.0",
       "dependencies": {
         "@nestjs/axios": "^2.0.0",
@@ -15,7 +15,7 @@
         "@nestjs/core": "8.4.7",
         "@nestjs/platform-express": "8.4.7",
         "@nestjs/swagger": "5.2.1",
-        "@netcracker/qubership-apihub-api-processor": "3.0.5",
+        "@netcracker/qubership-apihub-api-processor": "3.0.6",
         "@sinclair/typebox": "^0.28.9",
         "adm-zip": "^0.5.10",
         "dotenv": "^16.0.3",
@@ -2175,9 +2175,9 @@
       "license": "MIT"
     },
     "node_modules/@netcracker/qubership-apihub-api-processor": {
-      "version": "3.0.5",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/3.0.5/274dbbc02b21ba368e4715dcb263d28006e75d76",
-      "integrity": "sha512-fMOWJazCqnBTCYswe4DKqNNmDOzIEpJA1g1r86VlIOzp5xGw3iG+G7kXfNSulUJlll0YND9NxDiZYzNSzmJj0A==",
+      "version": "3.0.6",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/3.0.6/9849c4b85b44b38d768ba668a3e317798982b842",
+      "integrity": "sha512-ChFrrX3nzlF7dSM4HOVm24sUCuErstvMomS/+TgVuy5fqcSbsePJuPd7T+2WTILF5fp5FxJaS7Us98RKCW/P/Q==",
       "license": "Apache-2.0",
       "dependencies": {
         "@netcracker/qubership-apihub-api-diff": "1.0.4",
