@@ -12,6 +12,8 @@ packages/*/coverage
 cypress/results
 test-results
 *.generated.*
+__diff_output__/
+__received_output__/
 
 # production
 build/

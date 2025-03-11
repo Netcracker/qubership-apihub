@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-apispec-view",
-  "version": "1.0.21",
+  "version": "1.0.22-next.0",
   "description": "Web Component to represent various API-specifications as a human-readable document",
   "license": "Apache-2.0",
   "sideEffects": [
@@ -29,12 +29,12 @@
     "build:showcase": "storybook build -o ../../dist-showcase --disable-telemetry",
     "development:storybook": "storybook dev -p 9009",
     "development:local-server:static": "npm run build:showcase && ws -p 9009 -d ../../dist-showcase --spa index.html --static.maxage 3600",
-    "test:integration:ci": "start-server-and-test development:local-server:static http://localhost:9009 test:integration:run-test:ci",
-    "test:integration:docker": "start-server-and-test development:local-server:static http://localhost:9009 test:integration:run-test:docker",
-    "test:integration:run-test:ci": "jest --maxWorkers 4 -c .config/it/it-test.jest.config.js",
-    "test:integration:run-test:docker": "jest --maxWorkers 4 -c .config/it/it-test-docker.jest.config.js",
-    "test:integration:regenerate-snapshots": "start-server-and-test development:local-server:static http://localhost:9009 test:integration:regenerate-snapshots:run",
-    "test:integration:regenerate-snapshots:run": "jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test-docker.jest.config.js",
+    "screenshot-test:ci": "start-server-and-test development:local-server:static http://localhost:9009 screenshot-test:run-test:ci",
+    "screenshot-test:docker": "start-server-and-test development:local-server:static http://localhost:9009 screenshot-test:run-test:docker",
+    "screenshot-test:run-test:ci": "jest --maxWorkers 4 -c .config/it/it-test.jest.config.js",
+    "screenshot-test:run-test:docker": "jest --maxWorkers 4 -c .config/it/it-test-docker.jest.config.js",
+    "screenshot-test:regenerate-snapshots": "start-server-and-test development:local-server:static http://localhost:9009 screenshot-test:regenerate-snapshots:run",
+    "screenshot-test:regenerate-snapshots:run": "jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test-docker.jest.config.js",
     "type-check": "tsc --noEmit"
   },
   "rollup": {
