@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-doc-viewer",
-  "version": "2.0.4",
+  "version": "2.0.5-dev.0",
   "type": "module",
   "exports": {
     ".": {
