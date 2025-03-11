@@ -14,7 +14,15 @@
  * limitations under the License.
  */
 
-import { DiffType } from '@netcracker/qubership-apihub-api-diff'
+import {
+  annotation,
+  breaking,
+  deprecated,
+  DiffType,
+  nonBreaking,
+  semiBreaking,
+  unclassified,
+} from '@netcracker/qubership-apihub-api-diff'
 import {
   BADGE_KIND_ALTERNATIVE_INFO,
   BADGE_KIND_DEFAULT,
@@ -23,7 +31,7 @@ import {
   BADGE_KIND_INFO,
   BADGE_KIND_SUCCESS,
   BADGE_KIND_WARNING,
-  BadgeKind
+  BadgeKind,
 } from './types'
 
 export const COLOR_SCHEMAS: Record<BadgeKind, string> = {
@@ -37,12 +45,21 @@ export const COLOR_SCHEMAS: Record<BadgeKind, string> = {
 }
 
 export const DIFF_TYPE_COLORS: Record<DiffType, string> = {
-  breaking: '#ED4A54',
-  'semi-breaking': '#E98554',
-  deprecated: '#FFB02E',
-  'non-breaking': '#84CB7A',
-  annotation: '#B866C9',
-  unclassified: '#70A9EC',
+  [breaking]: '#ED4A54',
+  [semiBreaking]: '#E98554',
+  [deprecated]: '#FFB02E',
+  [nonBreaking]: '#84CB7A',
+  [annotation]: '#B866C9',
+  [unclassified]: '#70A9EC',
+}
+
+export const DIFF_TYPE_NAME_MAP: Record<DiffType, string> = {
+  [breaking]: 'breaking',
+  [semiBreaking]: 'risky',
+  [deprecated]: 'deprecated',
+  [nonBreaking]: 'non-breaking',
+  [unclassified]: 'unclassified',
+  [annotation]: 'annotation',
 }
 
 export const COMMON_LAYOUT_STYLE_WITHOUT_BORDER = 'rounded-md px-2 pb-px text-xs font-normal'

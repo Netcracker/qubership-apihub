@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-// todo: add to package.json dependency on jest-chrome-in-docker-environment and import the prepareJestConfig from it
 const path = require('path')
+const { prepareJestConfig } = require('@netcracker/qubership-apihub-jest-chrome-in-docker-environment')
 
 module.exports = prepareJestConfig(
   path.resolve(__dirname, './common-it-test.jest.config.cjs'),

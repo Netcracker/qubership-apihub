@@ -38,7 +38,7 @@ import { EmptyContent } from '../../../../common/diffs/EmptyContent'
 import { UnsupportedContent } from '../../../../common/diffs/UnsupportedContent'
 import { NestingIndicator } from '../../../../common/NestingIndicator'
 import { NodeTypeProps } from '../../../../common/NodeType'
-import { UxFloatingBadge } from '../../../../kit/ux/UxFloatingBadge/UxFloatingBadge'
+import { UxDiffFloatingBadge } from '../../../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 
 export type NestingIndicatorTitleRowProps = PropsWithShift & {
   layoutMode: LayoutMode
@@ -122,7 +122,7 @@ export const NestingIndicatorTitleRow: FC<NestingIndicatorTitleRowProps> = (prop
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
         {diffType && diffTypeIncluded && (isNodeChanged || isContentChanged) && (
-          <UxFloatingBadge variant={diffType} message={diffTypeCause}/>
+          <UxDiffFloatingBadge variant={diffType} message={diffTypeCause}/>
         )}
         <Content
           shift={shift}
@@ -178,7 +178,7 @@ export const NestingIndicatorTitleRow: FC<NestingIndicatorTitleRowProps> = (prop
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
         {diffType && diffTypeIncluded && (isNodeChanged || isContentChanged) && (
-          <UxFloatingBadge variant={diffType} message={diffTypeCause}/>
+          <UxDiffFloatingBadge variant={diffType} message={diffTypeCause}/>
         )}
         {isContentChanged && beforeAndAfterTypesComplex || isNodeChanged && nodeRemoved
           ? (

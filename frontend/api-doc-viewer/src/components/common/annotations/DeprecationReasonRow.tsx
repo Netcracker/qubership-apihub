@@ -40,7 +40,7 @@ import {
   getLayoutSideFlags,
   isDiffTypeIncluded
 } from '../../../utils/common/changes'
-import { UxFloatingBadge } from '../../kit/ux/UxFloatingBadge/UxFloatingBadge'
+import { UxDiffFloatingBadge } from '../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 import { EmptyContent } from '../diffs/EmptyContent'
 import { UnsupportedContent } from '../diffs/UnsupportedContent'
 import { NestingIndicator } from '../NestingIndicator'
@@ -129,7 +129,7 @@ export const DeprecationReasonRow: FC<DeprecationReasonRowProps> = (props) => {
   if (isInlineDiffsLayoutMode) {
     return (
       <div className={`flex flex-row ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffTypeIncluded && <UxFloatingBadge variant={diffType} message={diffTypeCause} />}
+        {diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
     )
@@ -147,7 +147,7 @@ export const DeprecationReasonRow: FC<DeprecationReasonRowProps> = (props) => {
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffTypeIncluded && <UxFloatingBadge variant={diffType} message={diffTypeCause} />}
+        {diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         {!isContentChanged || (itemRemoved || itemReplaced)
           ? <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
           : <EmptyContent level={level} />}
