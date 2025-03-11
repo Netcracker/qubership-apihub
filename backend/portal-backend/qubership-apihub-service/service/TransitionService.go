@@ -62,17 +62,21 @@ func (p transitionServiceImpl) MoveOrRenamePackage(userCtx context2.SecurityCont
 			Params:  map[string]interface{}{"packageId": fromId},
 		}
 	}
-
-	toPackage, err := p.pubRepo.GetPackage(toId)
+	// mind existing, but deleted packages
+	toPackage, err := p.pubRepo.GetPackageIncludingDeleted(toId)
 	if err != nil {
 		return "", err
 	}
 	if toPackage != nil {
+		deletedAtStr := ""
+		if toPackage.DeletedAt != nil {
+			deletedAtStr = fmt.Sprintf("(deleted at %s)", toPackage.DeletedAt)
+		}
 		return "", &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.ToPackageExists,
 			Message: exception.ToPackageExistsMsg,
-			Params:  map[string]interface{}{"packageId": fromId},
+			Params:  map[string]interface{}{"packageId": toId, "deletedAt": deletedAtStr},
 		}
 	}
 
