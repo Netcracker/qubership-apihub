@@ -1267,12 +1267,14 @@ On the current page you can also delete version (with all its revisions). To do 
 API key allows you to authenticate to APIHUB when using APIHUB API. Unlike a Bearer token or [personal access token](#personal-access-token), an API key does not identify the principal (user). Instead, it is primarily used to identify the calling project—such as an application or website—making the APIHUB API call.
 API key is associated with a specific workspace, group, package, or dashboard, limiting its scope. API key does not have a period of life and it must be stored on a client side because it shows only once after generation.
 
-To generate an access token, you need to fill the following fields:
+To generate an API key, fill the following fields:
 - Name - unique API key name.
 - Roles - optional field. This field defines the role(s) (i.e. set of permissions) associated with the API key. Multiple values are allowed. If you do not specify a role, the roles of the user who generated the token will be used by default.
-- Created For - owner of the API key. By default, owner of key is current user.
-Once you fill in the required fields, click the Generate button. The system generates the token and displays it. If you leave the page or reload it, the token is not shown again.
-To delete the generated token, hover over the desired token and click **Revoke**.
+- Created For - owner of the API key. By default, owner of key is current user.  
+
+Once you fill in the required fields, click the **Generate** button. The system generates the token and displays it. If you leave the page or reload it, the token is not shown again.
+
+To delete API key, hover over the API key and click **Revoke**.
 
 
 ## User Access Control 
@@ -1280,7 +1282,7 @@ User Access Control tab allows you to manage members of group/package/dashboard 
 
 - User **role** is an entity with a specific set of permissions. You can always see list of available roles and their permissions if you click on question mark on User Access Control page. Roles have hierarchical structure, so even if you have permission to assign roles to the users, you cannot assign the role which is higher than your own role.
 - **Member** is a user which is added to the package/dashboard/group with some role(s). One member can have multiple roles in this case, the list of permissions from each specified role will be combined for the current user.
-Member's roles are inherited from parent groups and workspaces. If some role was assigned to the user, for example, in the group, then it is impossible to remove this role on the child package/package/dashboard. However you can add additional role on the child package/package/dashboard.
+Member's roles are inherited from parent groups and workspaces. If some role was assigned to the user, for example, in the group, then it is impossible to remove this role on the child package/package/dashboard. However, you can add additional role on the child package/package/dashboard.
 
 To add a new member to the package:
 1. Click **Add User**.
@@ -1310,7 +1312,7 @@ Personal access tokens are an alternative to using API key or Bearer token for a
 To generate a personal access token:
 1. Open Personal Access Tokens tab in My Profile page.
 2. Enter a unique token name and select the expiration date.
-3. Click **Generate**. The system generates the token and displays it. Copy and store the token securely, as it will only be displayed once. If you leave the page or reload it, the token will no longer be shown.
+3. Click **Generate** button. The system generates the token and displays it. Copy and store the token securely, as it will only be displayed once. If you leave the page or reload it, the token will no longer be shown.
 
 When a token expires, it becomes inactive and can no longer be used to authenticate to APIHUB.
 
