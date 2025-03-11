@@ -2662,21 +2662,7 @@ func (p publishedRepositoryImpl) GetParentPackageGroups(id string) ([]entity.Pac
 	var parentIds []string
 	var result []entity.PackageEntity
 
-	parts := strings.Split(id, ".")
-	if len(parts) == 0 || len(parts) == 1 {
-		return result, nil
-	}
-
-	for i, part := range parts {
-		if i == 0 {
-			parentIds = append(parentIds, part)
-			continue
-		}
-		if i == (len(parts) - 1) {
-			break
-		}
-		parentIds = append(parentIds, parentIds[i-1]+"."+part)
-	}
+	parentIds = utils.GetParentPackageIds(id)
 
 	err := p.cp.GetConnection().Model(&result).
 		Where("kind in (?)", pg.In([]string{entity.KIND_GROUP, entity.KIND_WORKSPACE})).
@@ -2695,21 +2681,7 @@ func (p publishedRepositoryImpl) GetParentsForPackage(id string) ([]entity.Packa
 	var parentIds []string
 	var result []entity.PackageEntity
 
-	parts := strings.Split(id, ".")
-	if len(parts) == 0 || len(parts) == 1 {
-		return result, nil
-	}
-
-	for i, part := range parts {
-		if i == 0 {
-			parentIds = append(parentIds, part)
-			continue
-		}
-		if i == (len(parts) - 1) {
-			break
-		}
-		parentIds = append(parentIds, parentIds[i-1]+"."+part)
-	}
+	parentIds = utils.GetParentPackageIds(id)
 
 	err := p.cp.GetConnection().Model(&result).
 		Where("deleted_at is ?", nil).

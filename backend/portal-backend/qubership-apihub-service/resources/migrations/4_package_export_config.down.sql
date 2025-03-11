@@ -1,0 +1,1 @@
+drop table package_export_config;
