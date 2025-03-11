@@ -19,7 +19,7 @@
     "feature-start": "feature-start --featureName",
     "feature-finish": "feature-finish",
     "release-start": "release-start",
-    "release-finish": "release-finish" 
+    "release-finish": "release-finish"
   },
   "dependencies": {
     "@emotion/react": "11.10.6",
@@ -34,13 +34,13 @@
     "@mui/material": "5.11.10",
     "@mui/private-theming": "5.11.9",
     "@netcracker/qubership-apihub-api-diff": "1.0.4",
-    "@netcracker/qubership-apihub-api-doc-viewer": "dev",
-    "@netcracker/qubership-apihub-api-processor": "dev",
+    "@netcracker/qubership-apihub-api-doc-viewer": "2.0.4",
+    "@netcracker/qubership-apihub-api-processor": "3.0.6",
     "@netcracker/qubership-apihub-api-unifier": "1.0.4",
     "@netcracker/qubership-apihub-api-visitor": "1.0.5",
-    "@netcracker/qubership-apihub-apispec-view": "dev",
-    "@netcracker/qubership-apihub-class-view": "1.0.3",    
-    "@netcracker/qubership-apihub-rest-playground": "1.0.7",
+    "@netcracker/qubership-apihub-apispec-view": "1.0.22",
+    "@netcracker/qubership-apihub-class-view": "1.0.3",
+    "@netcracker/qubership-apihub-rest-playground": "1.0.8",
     "@otjs/monaco": "0.2.2",
     "@otjs/plaintext": "0.2.2",
     "@otjs/plaintext-editor": "0.2.2",
