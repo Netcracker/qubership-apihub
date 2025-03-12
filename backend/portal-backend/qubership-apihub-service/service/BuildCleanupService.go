@@ -245,7 +245,7 @@ func (c *dbCleanupServiceImpl) GetMigrationBuildDataCleanupResult(id string) (in
 	defer c.rmMigrationBuildDataResMutex.RUnlock()
 	result, exists := c.rmMigrationBuildDataRes[id]
 	if !exists {
-		return 0, exception.CustomError{
+		return 0, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.UnableToGetMigrationDataCleanupResult,
 			Message: exception.UnableToGetMigrationDataCleanupResultMsg,

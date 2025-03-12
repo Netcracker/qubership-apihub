@@ -55,7 +55,7 @@ func (p packageExportConfigServiceImpl) SetConfig(packageId string, AllowedOasEx
 		set[ext] = struct{}{}
 	}
 	if len(duplicates) > 0 {
-		return exception.CustomError{
+		return &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.DuplicateOASExtensionsNotAllowed,
 			Message: exception.DuplicateOASExtensionsNotAllowedMsg,
