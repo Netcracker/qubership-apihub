@@ -7,6 +7,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"net/http"
+	"strings"
 )
 
 type PackageExportConfigService interface {
@@ -45,14 +46,28 @@ func (p packageExportConfigServiceImpl) GetConfig(packageId string) (*view.Packa
 }
 
 func (p packageExportConfigServiceImpl) SetConfig(packageId string, AllowedOasExtensions []string) error {
+	var incorrectExtensions []string
 	var duplicates []string
 	set := map[string]struct{}{}
 	for _, ext := range AllowedOasExtensions {
+		if !strings.HasPrefix(ext, "x-") {
+			incorrectExtensions = append(incorrectExtensions, ext)
+		}
 		_, exists := set[ext]
 		if exists {
 			duplicates = append(duplicates, ext)
 		}
 		set[ext] = struct{}{}
+	}
+	if len(incorrectExtensions) > 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.IncorrectOASExtensions,
+			Message: exception.IncorrectOASExtensionsMsg,
+			Params: map[string]interface{}{
+				"incorrectExt": fmt.Sprintf("%+v", incorrectExtensions),
+			},
+		}
 	}
 	if len(duplicates) > 0 {
 		return &exception.CustomError{

@@ -741,5 +741,8 @@ const PersonalAccessTokenIncorrectExpiryMsg = "Allowed values for '$param' are -
 const PersonalAccessTokenNotFound = "7003"
 const PersonalAccessTokenNotFoundMsg = "Personal access token with id '$id' not found"
 
-const DuplicateOASExtensionsNotAllowed = "7103"
+const IncorrectOASExtensions = "7101"
+const IncorrectOASExtensionsMsg = "OAS extension is required to be have 'x-' prefix. Incorrect extensions: $incorrectExt"
+
+const DuplicateOASExtensionsNotAllowed = "7102"
 const DuplicateOASExtensionsNotAllowedMsg = "Duplicate OAS extension not allowed: $duplicates"
