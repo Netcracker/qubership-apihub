@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "3_1_Stories_Bugs",
-        "_postman_id": "627ecb83-9237-4668-8307-12b5ec2b5abf",
+        "_postman_id": "7da13baa-531c-4f9f-a386-188ea8a8254d",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -7211,525 +7211,6 @@
                     ]
                 },
                 {
-                    "name": "8.14 APIHUB-4697 [BE] Generate openAPI file from API group",
-                    "item": [
-                        {
-                            "name": "8.14.1 Async document transformation",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 201\", function () {\r",
-                                            "    pm.response.to.have.status(201);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "\r",
-                                            "pm.test(\"'buildType' = mergedSpecification\", function () {\r",
-                                            "    pm.expect(data.buildType).to.eql('mergedSpecification');\r",
-                                            "});\r",
-                                            "\r",
-                                            "pm.test(\"'format' = yaml\", function () {\r",
-                                            "    pm.expect(data.format).to.eql('yaml');\r",
-                                            "});\r",
-                                            "\r",
-                                            "setTimeout(() => { },20000);"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2}}/rest/build/groups/{{operation_group_1}}/buildType/mergedSpecification?format=yaml",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v3",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "versions",
-                                        "{{version_2}}",
-                                        "rest",
-                                        "build",
-                                        "groups",
-                                        "{{operation_group_1}}",
-                                        "buildType",
-                                        "mergedSpecification"
-                                    ],
-                                    "query": [
-                                        {
-                                            "key": "format",
-                                            "value": "yaml"
-                                        }
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "8.14.2 Export operations group as OpenaAPI documents",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "const packageId = pm.environment.get(\"package_1\")+'_';\r",
-                                            "const packageVersion = pm.environment.get(\"version_2\");\r",
-                                            "const operationGroup = pm.environment.get(\"operation_group_1\")+'_';\r",
-                                            "\r",
-                                            "pm.test(\"Content-Disposition is correct\", () => {\r",
-                                            "    const contentDisposition = pm.response.headers.get(\"Content-Disposition\");\r",
-                                            "    const expectedValue = `attachment; filename=${operationGroup}${packageId}${packageVersion}.yaml`;\r",
-                                            "    pm.expect(contentDisposition).to.eql(expectedValue);\r",
-                                            "});\r",
-                                            "\r",
-                                            "pm.test(\"Content-Type is 'application/yaml'\", () => {\r",
-                                            "    const contentType = pm.response.headers.get(\"Content-Type\");\r",
-                                            "    pm.expect(contentType).to.eql(\"application/yaml\");\r",
-                                            "});\r",
-                                            "\r",
-                                            "pm.test(\"Content-Encoding is 'gzip'\", () => {\r",
-                                            "    const contentEncoding = pm.response.headers.get(\"Content-Encoding\");\r",
-                                            "    pm.expect(contentEncoding).to.eql(\"gzip\");\r",
-                                            "});\r",
-                                            ""
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2}}/rest/export/groups/{{operation_group_1}}/buildType/mergedSpecification?format=yaml",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v3",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "versions",
-                                        "{{version_2}}",
-                                        "rest",
-                                        "export",
-                                        "groups",
-                                        "{{operation_group_1}}",
-                                        "buildType",
-                                        "mergedSpecification"
-                                    ],
-                                    "query": [
-                                        {
-                                            "key": "format",
-                                            "value": "yaml"
-                                        }
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "8.14.3 Async document transformation fof non-existing group",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 404\", function () {\r",
-                                            "    pm.response.to.have.status(404);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2}}/rest/build/groups/nothing123/buildType/mergedSpecification?format=yaml",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v3",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "versions",
-                                        "{{version_2}}",
-                                        "rest",
-                                        "build",
-                                        "groups",
-                                        "nothing123",
-                                        "buildType",
-                                        "mergedSpecification"
-                                    ],
-                                    "query": [
-                                        {
-                                            "key": "format",
-                                            "value": "yaml"
-                                        }
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "8.14.4 Async document transformation without necessary query parameter",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 400\", function () {\r",
-                                            "    pm.response.to.have.status(400);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2}}/rest/build/groups/{{operation_group_1}}/buildType/mergedSpecification?clientBuild=true",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v3",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "versions",
-                                        "{{version_2}}",
-                                        "rest",
-                                        "build",
-                                        "groups",
-                                        "{{operation_group_1}}",
-                                        "buildType",
-                                        "mergedSpecification"
-                                    ],
-                                    "query": [
-                                        {
-                                            "key": "clientBuild",
-                                            "value": "true"
-                                        }
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "8.14.5 Export non existing operations group as OpenaAPI documents",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 404\", function () {\r",
-                                            "    pm.response.to.have.status(404);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2}}/rest/export/groups/nothing123/buildType/mergedSpecification?format=yaml",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v3",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "versions",
-                                        "{{version_2}}",
-                                        "rest",
-                                        "export",
-                                        "groups",
-                                        "nothing123",
-                                        "buildType",
-                                        "mergedSpecification"
-                                    ],
-                                    "query": [
-                                        {
-                                            "key": "format",
-                                            "value": "yaml"
-                                        }
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "8.14.6 Get documents of operations from operation group",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2}}/rest/groups/{{operation_group_1}}/documents",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v3",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "versions",
-                                        "{{version_2}}",
-                                        "rest",
-                                        "groups",
-                                        "{{operation_group_1}}",
-                                        "documents"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "8.14.7 Get documents of operations from operation group without Auth",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 401\", function () {\r",
-                                            "    pm.response.to.have.status(401);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2}}/rest/groups/{{operation_group_1}}/documents",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v3",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "versions",
-                                        "{{version_2}}",
-                                        "rest",
-                                        "groups",
-                                        "{{operation_group_1}}",
-                                        "documents"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default",
-                                        "disabled": true
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "8.14.8 Get documents of operations from non-existing operation group ",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 404\", function () {\r",
-                                            "    pm.response.to.have.status(404);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2}}/rest/groups/nothing123/documents",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v3",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "versions",
-                                        "{{version_2}}",
-                                        "rest",
-                                        "groups",
-                                        "nothing123",
-                                        "documents"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        }
-                    ]
-                },
-                {
                     "name": "8.15 APIHUB-5051 [BE] Support operation models",
                     "item": [
                         {
@@ -8419,8 +7900,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 200 or 404\", function () {\r",
+                                            "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);\r",
                                             "});"
                                         ]
                                     }
@@ -11414,9 +10895,146 @@
                                             "key": "description",
                                             "type": "default",
                                             "value": "update"
+                                        },
+                                        {
+                                            "key": "template",
+                                            "type": "file"
                                         }
                                     ]
                                 }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.21.9 Run async documents transformation",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 201\", function () {\r",
+                                            "    pm.response.to.have.status(201);\r",
+                                            "});\r",
+                                            "\r",
+                                            "setTimeout(() => { },5000);\r",
+                                            "\r",
+                                            "pm.test(\"Verify buildId exists and is not null\", function () {\r",
+                                            "    let jsonData = pm.response.json();\r",
+                                            "    \r",
+                                            "    pm.expect(jsonData).to.have.property(\"buildId\");\r",
+                                            "    pm.expect(jsonData.buildId).to.not.be.null;\r",
+                                            "    pm.expect(jsonData.buildId).to.be.a(\"string\").and.to.have.length.above(0);\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_2}}/versions/{{version_2}}/rest/build/groups/{{operation_group_1}}/buildType/mergedSpecification",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_2}}",
+                                        "versions",
+                                        "{{version_2}}",
+                                        "rest",
+                                        "build",
+                                        "groups",
+                                        "{{operation_group_1}}",
+                                        "buildType",
+                                        "mergedSpecification"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.21.10 Export merged specification",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "pm.test(\"Content is yaml\", function () {\r",
+                                            "pm.expect(pm.response.headers.get(\"Content-Type\")).to.equal(\"application/yaml\");\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_2}}/versions/{{version_2}}/rest/export/groups/{{operation_group_1}}/buildType/mergedSpecification?format=yaml",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_2}}",
+                                        "versions",
+                                        "{{version_2}}",
+                                        "rest",
+                                        "export",
+                                        "groups",
+                                        "{{operation_group_1}}",
+                                        "buildType",
+                                        "mergedSpecification"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "format",
+                                            "value": "yaml"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
@@ -15631,6 +15249,524 @@
                             "protocolProfileBehavior": {}
                         }
                     ]
+                },
+                {
+                    "name": "8.27 APIHUB-11223 [BE] Publish package version based on operation group",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "item": [
+                        {
+                            "name": "8.27.1 Create operation group ",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 201\", function () {\r",
+                                            "    pm.response.to.have.status(201);\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.environment.set(\"operation_group_1\", \"GroupX\");"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_1}}/rest/groups",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions",
+                                        "{{version_1}}",
+                                        "rest",
+                                        "groups"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "groupName",
+                                            "type": "default",
+                                            "value": "GroupX"
+                                        },
+                                        {
+                                            "key": "description",
+                                            "type": "default",
+                                            "value": "Group that will become a package"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.27.2 Get list of operations",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "// Parse the response body\r",
+                                            "let response = pm.response.json();\r",
+                                            "\r",
+                                            "// Ensure the operations array exists\r",
+                                            "if (response.operations && Array.isArray(response.operations)) {\r",
+                                            "    // Loop through each operation\r",
+                                            "    response.operations.forEach((operation, index) => {\r",
+                                            "        if (operation.operationId) {\r",
+                                            "            // Dynamically set each operationId as an environment variable\r",
+                                            "            pm.environment.set(`operationId_${index + 1}`, operation.operationId);\r",
+                                            "        }\r",
+                                            "    });    \r",
+                                            "} \r",
+                                            ""
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_1}}/rest/operations",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions",
+                                        "{{version_1}}",
+                                        "rest",
+                                        "operations"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.27.3 Put operations in group",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 204\", function () {\r",
+                                            "    pm.response.to.have.status(204);\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_1}}/rest/groups/{{operation_group_1}}",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions",
+                                        "{{version_1}}",
+                                        "rest",
+                                        "groups",
+                                        "{{operation_group_1}}"
+                                    ]
+                                },
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "groupName",
+                                            "type": "default",
+                                            "value": "{{operation_group_1}}"
+                                        },
+                                        {
+                                            "key": "operations",
+                                            "type": "default",
+                                            "value": "[\n\t{\n\t\t\"operationId\": \"{{operationId_1}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_2}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_3}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_4}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_5}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_6}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_7}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_8}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_9}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_10}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_11}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_12}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_13}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_14}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_15}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_16}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_17}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_18}}\"\n\t},\n\t{\n\t\t\"operationId\": \"{{operationId_19}}\"\n\t}\n]"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.27.4 Start operation group publication",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 202\", function () {",
+                                            "    pm.response.to.have.status(202);",
+                                            "});",
+                                            "",
+                                            "var data = pm.response.json();",
+                                            "",
+                                            "pm.environment.set(\"operPublishId\", data.publishId);",
+                                            "",
+                                            "pm.environment.set(\"version_3\", \"2001.4@1\");",
+                                            ""
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_1}}/rest/groups/{{operation_group_1}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions",
+                                        "{{version_1}}",
+                                        "rest",
+                                        "groups",
+                                        "{{operation_group_1}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n  \"packageId\": \"{{package_1}}\",\r\n  \"version\": \"2001.4\",\r\n  \"previousVersion\": \"{{version_1}}\",\r\n  \"status\": \"release\",\r\n  \"versionLabels\": [\r\n    \"versionFromGroup\"\r\n  ]\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.27.5 Get operation group publication status",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "setTimeout(function(){}, 20000)",
+                                            "",
+                                            "pm.test(\"Status is running or complete, but not error\", function () {",
+                                            "    var status = pm.response.json().status;",
+                                            "    pm.expect(status).to.be.oneOf([\"running\", \"complete\"]);",
+                                            "    pm.expect(status).to.not.equal(\"error\");",
+                                            "});",
+                                            ""
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_1}}/rest/groups/{{operation_group_1}}/publish/{{operPublishId}}/status",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions",
+                                        "{{version_1}}",
+                                        "rest",
+                                        "groups",
+                                        "{{operation_group_1}}",
+                                        "publish",
+                                        "{{operPublishId}}",
+                                        "status"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "type": "default"
+                                    }
+                                ],
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.27.6 Get new package versions ",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "const newVersion = pm.environment.get(\"version_3\");\r",
+                                            "\r",
+                                            "pm.test(\"Packages has versions\", function () {\r",
+                                            "    pm.expect(data.versions[0].version).to.eql(newVersion); \r",
+                                            "});\r",
+                                            ""
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.27.7 Get changes summary",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.test(\"Changes summary is correct\", function () {\r",
+                                            "    pm.expect(data.operationTypes[0].changesSummary.breaking).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].changesSummary[\"semi-breaking\"]).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].changesSummary.deprecated).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].changesSummary[\"non-breaking\"]).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].changesSummary.annotation).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].changesSummary.unclassified).to.eql(0);\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.test(\"Summary of impacted operations is correct\", function () {\r",
+                                            "    pm.expect(data.operationTypes[0].numberOfImpactedOperations.breaking).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].numberOfImpactedOperations[\"semi-breaking\"]).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].numberOfImpactedOperations.deprecated).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].numberOfImpactedOperations[\"non-breaking\"]).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].numberOfImpactedOperations.annotation).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].numberOfImpactedOperations.unclassified).to.eql(0);\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_3}}/changes/summary",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions",
+                                        "{{version_3}}",
+                                        "changes",
+                                        "summary"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        }
+                    ]
                 }
             ]
         },
@@ -15813,7 +15949,7 @@
                                             "    pm.expect(data.versions.length).to.greaterThan(0);\r",
                                             "});\r",
                                             "\r",
-                                            "pm.environment.set(\"version_1\", data.versions[0].version.split(\"@\")[0]);"
+                                            "pm.environment.set(\"version_1\", data.versions[1].version.split(\"@\")[0]);"
                                         ]
                                     }
                                 },

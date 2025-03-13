@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_1_Smoke_Portal",
-        "_postman_id": "4f38c5f3-e466-4bec-9aa3-4f8afc030dcb",
+        "_postman_id": "47e65c48-9152-4acd-9ac1-a551fcbf4ba1",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -12,7 +12,61 @@
                     "name": "0.1 Login",
                     "item": [
                         {
-                            "name": "0.1.1 Local Auth",
+                            "name": "0.1.1 Create x_APIHUB user (if no exists)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"User exists\", function () {",
+                                            "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/internal/users",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "internal",
+                                        "users"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n  \"email\": \"x_apihub\",\r\n  \"name\": \"x_APIHUB\",\r\n  \"password\": \"Tmf@c23s\",\r\n  \"privateWorkspaceId\": \"\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "0.1.2 Local Auth",
                             "event": [
                                 {
                                     "listen": "test",
@@ -70,7 +124,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "0.1.2 Add role to user",
+                            "name": "0.1.3 Add role to user",
                             "event": [
                                 {
                                     "listen": "test",
@@ -174,9 +228,9 @@
                                             "\r",
                                             "pm.environment.set(\"test_id\", pm.variables.replaceIn('{{$timestamp}}'))\r",
                                             "\r",
-                                            "pm.environment.set(\"Pack_version1_data\", \"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\");\r",
+                                            "pm.environment.set(\"Pack_version1_data\", \"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\");\r",
                                             "pm.environment.set(\"Pack_version1_fileId\", \"atui_petstore30 - 0000.yaml\");\r",
-                                            "pm.environment.set(\"Pack_version2_data\", \"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\");\r",
+                                            "pm.environment.set(\"Pack_version2_data\", \"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\");\r",
                                             "pm.environment.set(\"Pack_version2_fileId\", \"atui_petstore30 - 0000_SemiBreaking_in_all_operations.yaml\");"
                                         ]
                                     }
@@ -293,236 +347,6 @@
                                         "type": "default"
                                     }
                                 ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        }
-                    ]
-                },
-                {
-                    "name": "0.3 Global Search",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    ""
-                                ]
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    ""
-                                ]
-                            }
-                        }
-                    ],
-                    "item": [
-                        {
-                            "name": "0.3.1 Search operations",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Validate 'operations' is an array\", function () {\r",
-                                            "    let jsonData = pm.response.json();\r",
-                                            "    pm.expect(jsonData).to.have.property('operations'); // Check if 'operations' exists\r",
-                                            "    pm.expect(jsonData.operations).to.be.an('array');   // Check if 'operations' is an array\r",
-                                            "});\r",
-                                            ""
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/search/operations?limit=20",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v3",
-                                        "search",
-                                        "operations"
-                                    ],
-                                    "query": [
-                                        {
-                                            "key": "limit",
-                                            "value": "20"
-                                        }
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"searchString\": \"This method gets the requested discount by ID\",\r\n    \"packageIds\": [\"QA.ATBETD.Pack1\"]\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "0.3.4 Search documents",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Validate 'operations' is an array\", function () {\r",
-                                            "    let jsonData = pm.response.json();\r",
-                                            "    pm.expect(jsonData).to.have.property('documents'); // Check if 'documents' exists\r",
-                                            "    pm.expect(jsonData.documents).to.be.an('array');   // Check if 'documents' is an array\r",
-                                            "});\r",
-                                            ""
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/search/documents?limit=7&page=0",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v3",
-                                        "search",
-                                        "documents"
-                                    ],
-                                    "query": [
-                                        {
-                                            "key": "limit",
-                                            "value": "7"
-                                        },
-                                        {
-                                            "key": "page",
-                                            "value": "0"
-                                        }
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": " {\r\n    \"searchString\": \"123\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "0.3.6 Search packages",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Validate 'operations' is an array\", function () {\r",
-                                            "    let jsonData = pm.response.json();\r",
-                                            "    pm.expect(jsonData).to.have.property('packages'); // Check if 'packages' exists\r",
-                                            "    pm.expect(jsonData.packages).to.be.an('array');   // Check if 'packages' is an array\r",
-                                            "});\r",
-                                            ""
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/search/packages?limit=2",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v3",
-                                        "search",
-                                        "packages"
-                                    ],
-                                    "query": [
-                                        {
-                                            "key": "limit",
-                                            "value": "2"
-                                        }
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"searchString\": \"Package#1\",\r\n    \"packageIds\": [\"QA.ATBETD\"]\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
@@ -663,6 +487,143 @@
                                             "key": "page",
                                             "value": "0"
                                         }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "0.4.2-1 Get users list",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "\r",
+                                            "let response = pm.response.json();\r",
+                                            "\r",
+                                            "let userWithAvatar = response.users.find(user => user.avatarUrl && user.avatarUrl.trim() !== \"\");\r",
+                                            "\r",
+                                            "if (userWithAvatar) {\r",
+                                            "    // Set the `id` as an environment variable\r",
+                                            "    pm.environment.set(\"USER_ID_WITH_AVATAR\", userWithAvatar.id);\r",
+                                            "} else {\r",
+                                            "    pm.environment.unset(\"USER_ID_WITH_AVATAR\");\r",
+                                            "}\r",
+                                            "\r",
+                                            "// Test to ensure the variable is set correctly\r",
+                                            "pm.test(\"User ID with avatarUrl is set\", function () {\r",
+                                            "    if (userWithAvatar) {\r",
+                                            "        pm.expect(pm.environment.get(\"USER_ID_WITH_AVATAR\")).to.eql(userWithAvatar.id);\r",
+                                            "    } else {\r",
+                                            "        pm.expect(pm.environment.get(\"USER_ID_WITH_AVATAR\")).to.be.undefined;\r",
+                                            "    }\r",
+                                            "});\r",
+                                            ""
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/users?page=0",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "users"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "filter",
+                                            "value": "{{Username}}",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "0"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "0.4.3 Get user avatar",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.test(\"Content-type is image/png\", function () {\r",
+                                            "    pm.response.to.have.header('Content-Type');\r",
+                                            "    pm.expect(pm.response.headers.get('Content-Type')).to.include('image/png');\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/users/{{USER_ID_WITH_AVATAR}}/profile/avatar",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "users",
+                                        "{{USER_ID_WITH_AVATAR}}",
+                                        "profile",
+                                        "avatar"
                                     ]
                                 },
                                 "method": "GET",
@@ -1008,6 +969,61 @@
                                         }
                                     }
                                 }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "1.3.4-0 Get package build status ",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.test(\"Status is running\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "    pm.expect(data.status).to.eql(\"complete\");\r",
+                                            "});\r",
+                                            ""
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/publish/{{publish_id}}/status",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "publish",
+                                        "{{publish_id}}",
+                                        "status"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
@@ -1489,12 +1505,6 @@
                                 "method": "POST",
                                 "header": [
                                     {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default",
-                                        "disabled": true
-                                    },
-                                    {
                                         "key": "Authorization",
                                         "value": "Bearer {{token}}",
                                         "type": "default"
@@ -1545,12 +1555,6 @@
                                 "method": "POST",
                                 "header": [
                                     {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default",
-                                        "disabled": true
-                                    },
-                                    {
                                         "key": "Authorization",
                                         "value": "Bearer {{token}}",
                                         "type": "default"
@@ -1600,12 +1604,6 @@
                                 },
                                 "method": "POST",
                                 "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default",
-                                        "disabled": true
-                                    },
                                     {
                                         "key": "Authorization",
                                         "value": "Bearer {{token}}",
@@ -6898,6 +6896,10 @@
                                             "    pm.expect(data.method).to.be.oneOf(['get','post','delete','put','patch'])\r",
                                             "});\r",
                                             "\r",
+                                            "pm.test(\"Custom metadata is present\", () => {\r",
+                                            "    pm.expect(data.customTags).to.eql({\"x-ext-domain\": \"petDomain\"})\r",
+                                            "});\r",
+                                            "\r",
                                             "pm.environment.set(\"hash_1\", data.dataHash)"
                                         ]
                                     }
@@ -9019,6 +9021,18 @@
                                             "    pm.expect(data.operationTypes[0].changesSummary.unclassified).to.eql(0)\r",
                                             "});\r",
                                             "\r",
+                                            "pm.test(\"currentAudience = external\", function () {\r",
+                                            "    pm.expect(data.operationTypes[0].apiAudienceTransitions[0].currentAudience).to.eql('external')\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.test(\"previousAudience = internal\", function () {\r",
+                                            "    pm.expect(data.operationTypes[0].apiAudienceTransitions[0].previousAudience).to.eql('internal')\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.test(\"apiAudienceTransitions for 4 operations\", function () {\r",
+                                            "    pm.expect(data.operationTypes[0].apiAudienceTransitions[0].operationsCount).to.eql(4)\r",
+                                            "});\r",
+                                            "\r",
                                             "pm.test(\"Tag 'pet' is present\", function () {\r",
                                             "    pm.expect(data.operationTypes[0].tags).to.include('pet')\r",
                                             "});"
@@ -9416,7 +9430,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "4.4.59 Delete Version 2",
+                            "name": "4.4.59 Delete Version 1",
                             "event": [
                                 {
                                     "listen": "test",
@@ -9443,7 +9457,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_2_2}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_1_2}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -9453,62 +9467,10 @@
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
-                                        "{{version_2_2}}"
+                                        "{{version_1_2}}"
                                     ]
                                 },
                                 "method": "DELETE",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.4.60 Get deleted package version content",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 404\", function () {\r",
-                                            "    pm.response.to.have.status(404);\r",
-                                            "});\r",
-                                            ""
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_2}}",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "versions",
-                                        "{{version_2}}"
-                                    ]
-                                },
-                                "method": "GET",
                                 "header": [
                                     {
                                         "key": "api-key",
@@ -9562,6 +9524,115 @@
                                         "packages",
                                         "{{package_1}}",
                                         "activity"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "4.4.60 Get deleted package version content",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 404\", function () {\r",
+                                            "    pm.response.to.have.status(404);\r",
+                                            "});\r",
+                                            ""
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_1}}",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions",
+                                        "{{version_1}}"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "4.4.61 Check previous version is null",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.test(\"previousVersion is null\", function () {\r",
+                                            "pm.expect(data).to.not.have.property('previousVersion');\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_2}}",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions",
+                                        "{{version_2}}"
                                     ]
                                 },
                                 "method": "GET",
@@ -10958,7 +11029,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"builderId\"\r\n\r\n5680525d-7c7b-47be-8ede-d502626a79dc\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0001.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [{\r\n            \"refId\":\"{{package_1}}\",\r\n            \"version\":\"{{version_1}}\"}],\r\n    \"files\": []\r\n}\r\n----------------------------127308995100818139707097--",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"builderId\"\r\n\r\n5680525d-7c7b-47be-8ede-d502626a79dc\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0001.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [{\r\n            \"refId\":\"{{package_1}}\",\r\n            \"version\":\"{{version_2}}\"}],\r\n    \"files\": []\r\n}\r\n----------------------------127308995100818139707097--",
                                     "options": {
                                         "raw": {
                                             "language": "text"
@@ -11087,7 +11158,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0001.2\",\r\n    \"previousVersion\": \"0001.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [{\r\n            \"refId\":\"{{package_1}}\",\r\n            \"version\":\"{{version_1}}\"}],\r\n    \"files\": []\r\n}\r\n----------------------------127308995100818139707097--",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0001.2\",\r\n    \"previousVersion\": \"0001.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [{\r\n            \"refId\":\"{{package_1}}\",\r\n            \"version\":\"{{version_2}}\"}],\r\n    \"files\": []\r\n}\r\n----------------------------127308995100818139707097--",
                                     "options": {
                                         "raw": {
                                             "language": "text"
@@ -11161,7 +11232,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0001.2\",\r\n    \"previousVersion\": \"0001.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [{\r\n            \"refId\":\"{{package_1}}\",\r\n            \"version\":\"{{version_1}}\"}],\r\n    \"files\": []\r\n}\r\n----------------------------127308995100818139707097--",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0001.2\",\r\n    \"previousVersion\": \"0001.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [{\r\n            \"refId\":\"{{package_1}}\",\r\n            \"version\":\"{{version_2}}\"}],\r\n    \"files\": []\r\n}\r\n----------------------------127308995100818139707097--",
                                     "options": {
                                         "raw": {
                                             "language": "text"
@@ -14819,10 +14890,25 @@
                                             "    pm.expect(data.refs[0].operationTypes[0].tags.length).to.eql(2);\r",
                                             "});\r",
                                             "\r",
-                                            "pm.test(\"There are necessary tags\", function () {\r",
-                                            "    pm.expect(data.refs[0].operationTypes[0].tags).to.include('store');\r",
-                                            "    pm.expect(data.refs[0].operationTypes[0].tags).to.include('pet');\r",
-                                            "});"
+                                            "pm.test(\"Response contains all required tags\", function () {\r",
+                                            "\r",
+                                            "    let requiredTags = [\"Device\", \"Environment\", \"pet\", \"store\"];\r",
+                                            "    \r",
+                                            "    let allTags = [];\r",
+                                            "\r",
+                                            "    data.refs.forEach(ref => {\r",
+                                            "        ref.operationTypes.forEach(opType => {\r",
+                                            "            if (opType.tags) {\r",
+                                            "                allTags = allTags.concat(opType.tags);\r",
+                                            "            }\r",
+                                            "        });\r",
+                                            "    });\r",
+                                            "\r",
+                                            "    requiredTags.forEach(tag => {\r",
+                                            "        pm.expect(allTags).to.include(tag);\r",
+                                            "    });\r",
+                                            "});\r",
+                                            ""
                                         ]
                                     }
                                 },
@@ -15435,13 +15521,23 @@
                                             "\r",
                                             "var data = pm.response.json();\r",
                                             "\r",
-                                            "pm.test(\"There are 2 tags\", function () {\r",
-                                            "    pm.expect(data.refs[0].operationTypes[0].tags.length).to.eql(2);\r",
-                                            "});\r",
+                                            "pm.test(\"Response contains all required tags\", function () {\r",
                                             "\r",
-                                            "pm.test(\"There are necessary tags\", function () {\r",
-                                            "    pm.expect(data.refs[0].operationTypes[0].tags).to.include('pet');\r",
-                                            "    pm.expect(data.refs[0].operationTypes[0].tags).to.include('store');\r",
+                                            "    let requiredTags = [\"Device\", \"Environment\", \"pet\", \"store\"];\r",
+                                            "    \r",
+                                            "    let allTags = [];\r",
+                                            "\r",
+                                            "    data.refs.forEach(ref => {\r",
+                                            "        ref.operationTypes.forEach(opType => {\r",
+                                            "            if (opType.tags) {\r",
+                                            "                allTags = allTags.concat(opType.tags);\r",
+                                            "            }\r",
+                                            "        });\r",
+                                            "    });\r",
+                                            "\r",
+                                            "    requiredTags.forEach(tag => {\r",
+                                            "        pm.expect(allTags).to.include(tag);\r",
+                                            "    });\r",
                                             "});"
                                         ]
                                     }
@@ -16862,6 +16958,398 @@
                                 "type": "default"
                             }
                         ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                }
+            ]
+        },
+        {
+            "name": "7. Global Search",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ],
+            "item": [
+                {
+                    "name": "7.1 Operations search",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {\r",
+                                    "    pm.response.to.have.status(200);\r",
+                                    "});\r",
+                                    "\r",
+                                    "var data = JSON.parse(responseBody);\r",
+                                    "\r",
+                                    "var title = [];\r",
+                                    "\r",
+                                    "for (var i = 0; i<data.operations.length; i++) {\r",
+                                    "    title.push(data.operations[i].title)\r",
+                                    "}\r",
+                                    "\r",
+                                    "\r",
+                                    "pm.test(\"'Version' parameter is not empty\", () => {\r",
+                                    "    pm.expect(data.operations[0].version).not.to.empty\r",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/v3/search/operations?limit=20",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v3",
+                                "search",
+                                "operations"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n    \"searchString\" : \"pet\",\r\n    \"packageIds\": [\"{{package_1}}\"]\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "7.2 Operations search with 0 results",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {\r",
+                                    "    pm.response.to.have.status(200);\r",
+                                    "});\r",
+                                    "\r",
+                                    "var data = pm.response.json();\r",
+                                    "\r",
+                                    "pm.test(\"Operations list is empty\", function () {\r",
+                                    "    pm.expect(data.operations.length).to.eq(0);\r",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/v3/search/operations?limit=20",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v3",
+                                "search",
+                                "operations"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": " {\r\n    \"searchString\" : \"pet\",\r\n    \"packageIds\": [\"{{package_1}}\"],\r\n    \"statuses\": [\"archived\"]\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "7.4 Search documents",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {\r",
+                                    "    pm.response.to.have.status(200);\r",
+                                    "});\r",
+                                    "\r",
+                                    "var data = JSON.parse(responseBody);\r",
+                                    "\r",
+                                    "pm.test(\"Validate 'documents' is an array\", function () {\r",
+                                    "    let jsonData = pm.response.json();\r",
+                                    "    pm.expect(data).to.have.property('documents'); // Check if 'documents' exists\r",
+                                    "    pm.expect(data.documents).to.be.an('array');   // Check if 'documents' is an array\r",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/v3/search/documents?limit=7&page=0",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v3",
+                                "search",
+                                "documents"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "7"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": " {\r\n    \"searchString\": \"123\"\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "7.5 Search documents with release status",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {\r",
+                                    "    pm.response.to.have.status(200);\r",
+                                    "});\r",
+                                    "\r",
+                                    "var data = JSON.parse(responseBody);\r",
+                                    "\r",
+                                    "pm.test(\"Search result isn't empty\", function () {\r",
+                                    "    pm.expect(data.documents.length).to.greaterThan(0);\r",
+                                    "});\r",
+                                    "\r",
+                                    "var status = [];\r",
+                                    "\r",
+                                    "for (var i = 0; i<data.documents.length; i++) {\r",
+                                    "    status.push(data.documents[i].status)\r",
+                                    "}\r",
+                                    "\r",
+                                    "pm.test(\"Status = 'Release'\", () => {\r",
+                                    "    pm.expect(status).to.include('release')\r",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/v3/search/documents",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v3",
+                                "search",
+                                "documents"
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n    \"searchString\" : \"api\",\r\n    \"statuses\": [\"release\"]\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "7.6 Search packages",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {\r",
+                                    "    pm.response.to.have.status(200);\r",
+                                    "});\r",
+                                    "\r",
+                                    "var data = JSON.parse(responseBody);\r",
+                                    "\r",
+                                    "pm.test(\"Search has only 1 result\", function () {\r",
+                                    "    pm.expect(data.packages.length).to.eq(1)\r",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/v3/search/packages?limit=10",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v3",
+                                "search",
+                                "packages"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n    \"searchString\": \"Test Service\",\r\n    \"packageIds\": [\"NC.CP.AH.TS\"]\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
                     },
                     "response": [],
                     "protocolProfileBehavior": {}

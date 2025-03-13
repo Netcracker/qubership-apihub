@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "2_1_Negative_Portal",
-        "_postman_id": "0274a9dd-ab26-4704-abce-4d6dc1f04756",
+        "_postman_id": "6a4e5d83-c23c-45b9-9687-74d8da3a406f",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -4700,6 +4700,182 @@
                     "name": "1.3 Packages",
                     "item": [
                         {
+                            "name": "1.3.0 Create RUNENV user",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 201 or 400\", function () {",
+                                            "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                                            "});",
+                                            "",
+                                            "var data = JSON.parse(responseBody);",
+                                            "pm.environment.set(\"runenvEmail\", \"runenv.surname@qubership.org\");",
+                                            "pm.environment.set(\"runenvPassword\", \"pa$$word\");",
+                                            "pm.environment.set(\"runenvId\",  \"runenv-surnameatqubership-org\");"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/internal/users",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "internal",
+                                        "users"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n  \"email\": \"runenv.surname@qubership.org\",\r\n  \"name\": \"RUNENV RUNENV\",\r\n  \"password\": \"pa$$word\",\r\n  \"privateWorkspaceId\": \"\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "1.3.0-1 Add role to RUNENV user",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is OK\", function () {\r",
+                                            "    pm.response.to.have.status(204);\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/internal/users/{{runenvId}}/systemRole",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "internal",
+                                        "users",
+                                        "{{runenvId}}",
+                                        "systemRole"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{ \r\n    \"role\": \"Viewer\" \r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "1.3.0-2 Local Auth as Runenv user",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "var data = JSON.parse(responseBody);",
+                                            "",
+                                            "pm.environment.set(\"runenvToken\", data.token)"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/auth/local",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "auth",
+                                        "local"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [],
+                                "auth": {
+                                    "type": "basic",
+                                    "basic": [
+                                        {
+                                            "key": "username",
+                                            "value": "{{runenvEmail}}",
+                                            "type": "string"
+                                        },
+                                        {
+                                            "key": "password",
+                                            "value": "{{runenvPassword}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
                             "name": "1.3.1 Delete static test-1 data from DB",
                             "event": [
                                 {
@@ -4804,6 +4980,115 @@
                                             "language": "json"
                                         }
                                     }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "1.3.2-2 Add RUNENV group to static test-1 workspace",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v1/groups",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v1",
+                                        "groups"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{runenvToken}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"name\": \"RUNENV group\",\r\n    \"Alias\" :\"RUNENV\",\r\n    \"parentId\": \"QS-STATIC-TEST-1\",\r\n    \"description\": \"Required for to upload hardcoded packages\",\r\n    \"imageUrl\": \"\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "1.3.2-3 Delete RUNENV user",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 204\", function () {\r",
+                                            "    pm.response.to.have.status(204);\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/internal/clear/{{runenvId}}",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "internal",
+                                        "clear",
+                                        "{{runenvId}}"
+                                    ]
+                                },
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "auth": {
+                                    "type": "noauth"
                                 }
                             },
                             "response": [],
