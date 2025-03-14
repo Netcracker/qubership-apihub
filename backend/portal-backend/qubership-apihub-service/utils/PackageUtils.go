@@ -22,7 +22,7 @@ func GetPackageWorkspaceId(packageId string) string {
 
 func GetPackageHierarchy(packageId string) []string {
 	packageIds := GetParentPackageIds(packageId)
-	packageIds = append([]string{packageId}, packageIds...)
+	packageIds = append(packageIds, packageId)
 	return packageIds
 }
 

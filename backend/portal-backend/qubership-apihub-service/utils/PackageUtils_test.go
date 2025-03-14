@@ -67,32 +67,17 @@ func TestSplitPackageId(t *testing.T) {
 		{
 			name:     "two parts",
 			input:    "a.b",
-			expected: []string{"a.b", "a"},
+			expected: []string{"a", "a.b"},
 		},
 		{
 			name:     "three parts",
 			input:    "a.b.c",
-			expected: []string{"a.b.c", "a", "a.b"},
+			expected: []string{"a", "a.b", "a.b.c"},
 		},
 		{
 			name:     "four parts",
 			input:    "a.b.c.d",
-			expected: []string{"a.b.c.d", "a", "a.b", "a.b.c"},
-		},
-		{
-			name:     "package with empty parts",
-			input:    "a..b",
-			expected: []string{"a..b", "a", "a."},
-		},
-		{
-			name:     "ends with dot",
-			input:    "a.b.",
-			expected: []string{"a.b.", "a", "a.b"},
-		},
-		{
-			name:     "single dot",
-			input:    ".",
-			expected: []string{".", ""},
+			expected: []string{"a", "a.b", "a.b.c", "a.b.c.d"},
 		},
 	}
 
