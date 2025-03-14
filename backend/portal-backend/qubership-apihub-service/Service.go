@@ -227,6 +227,8 @@ func main() {
 
 	personalAccessTokenRepository := repository.NewPersonalAccessTokenRepository(cp)
 
+	packageExportConfigRepository := repository.NewPackageExportConfigRepository(cp)
+
 	olricProvider, err := cache.NewOlricProvider()
 	if err != nil {
 		log.Error("Failed to create olricProvider: " + err.Error())
@@ -307,6 +309,7 @@ func main() {
 	zeroDayAdminService := service.NewZeroDayAdminService(userService, roleService, usersRepository, systemInfoService)
 
 	personalAccessTokenService := service.NewPersonalAccessTokenService(personalAccessTokenRepository, userService, roleService)
+	packageExportConfigService := service.NewPackageExportConfigService(packageExportConfigRepository)
 
 	integrationsController := controller.NewIntegrationsController(integrationsService)
 	projectController := controller.NewProjectController(projectService, groupService, searchService)
@@ -357,6 +360,8 @@ func main() {
 	gitHookController := controller.NewGitHookController(gitHookService)
 
 	personalAccessTokenController := controller.NewPersonalAccessTokenController(personalAccessTokenService)
+
+	packageExportConfigController := controller.NewPackageExportConfigController(roleService, packageExportConfigService, ptHandler)
 
 	r.HandleFunc("/api/v1/integrations/{integrationId}/apikey", security.Secure(integrationsController.GetUserApiKeyStatus)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/integrations/{integrationId}/apikey", security.Secure(integrationsController.SetUserApiKey)).Methods(http.MethodPut)
@@ -615,6 +620,9 @@ func main() {
 	r.HandleFunc("/api/v1/personalAccessToken", security.Secure(personalAccessTokenController.CreatePAT)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/personalAccessToken", security.Secure(personalAccessTokenController.ListPATs)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/personalAccessToken/{id}", security.Secure(personalAccessTokenController.DeletePAT)).Methods(http.MethodDelete)
+
+	r.HandleFunc("/api/v1/packages/{packageId}/exportConfig", security.Secure(packageExportConfigController.GetConfig)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/exportConfig", security.Secure(packageExportConfigController.SetConfig)).Methods(http.MethodPatch)
 
 	//debug + cleanup
 	if !systemInfoService.GetSystemInfo().ProductionMode {

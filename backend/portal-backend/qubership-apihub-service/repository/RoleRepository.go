@@ -16,10 +16,9 @@ package repository
 
 import (
 	"context"
-	"strings"
-
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/go-pg/pg/v10"
 )
 
@@ -162,21 +161,9 @@ func (r roleRepositoryImpl) GetPackageRolesHierarchyForUser(packageId string, us
 	if packageId == "" {
 		return nil, nil
 	}
-	packageIds := make([]string, 0)
-	parts := strings.Split(packageId, ".")
-	if len(parts) > 1 {
-		for i, part := range parts {
-			if i == 0 {
-				packageIds = append(packageIds, part)
-				continue
-			}
-			if i == (len(parts) - 1) {
-				break
-			}
-			packageIds = append(packageIds, packageIds[i-1]+"."+part)
-		}
-	}
-	packageIds = append([]string{packageId}, packageIds...)
+
+	packageIds := utils.GetPackageHierarchy(packageId)
+
 	//using unnest to sort result by packageIds array
 	query := `
 	select pg.id package_id, pg.kind package_kind, pg.name package_name, u.user_id, u.name user_name, u.email user_email, u.avatar_url user_avatar, role.id as role_id, role.role as role
@@ -206,21 +193,7 @@ func (r roleRepositoryImpl) GetPackageHierarchyMembers(packageId string) ([]enti
 	if packageId == "" {
 		return nil, nil
 	}
-	packageIds := make([]string, 0)
-	parts := strings.Split(packageId, ".")
-	if len(parts) > 1 {
-		for i, part := range parts {
-			if i == 0 {
-				packageIds = append(packageIds, part)
-				continue
-			}
-			if i == (len(parts) - 1) {
-				break
-			}
-			packageIds = append(packageIds, packageIds[i-1]+"."+part)
-		}
-	}
-	packageIds = append([]string{packageId}, packageIds...)
+	packageIds := utils.GetPackageHierarchy(packageId)
 	//using unnest to sort result by packageIds array
 	query := `
 	select pg.id package_id, pg.kind package_kind, pg.name package_name, u.user_id, u.name user_name, u.email user_email, u.avatar_url user_avatar, role.id as role_id, role.role as role
@@ -249,21 +222,7 @@ func (r roleRepositoryImpl) GetAvailablePackageRoles(packageId string, userId st
 	if packageId == "" {
 		return nil, nil
 	}
-	packageIds := make([]string, 0)
-	parts := strings.Split(packageId, ".")
-	if len(parts) > 1 {
-		for i, part := range parts {
-			if i == 0 {
-				packageIds = append(packageIds, part)
-				continue
-			}
-			if i == (len(parts) - 1) {
-				break
-			}
-			packageIds = append(packageIds, packageIds[i-1]+"."+part)
-		}
-	}
-	packageIds = append([]string{packageId}, packageIds...)
+	packageIds := utils.GetPackageHierarchy(packageId)
 	query := `
 	select distinct *
 	from role 
@@ -435,21 +394,7 @@ func (r roleRepositoryImpl) GetUserPermissions(packageId string, userId string) 
 	if packageId == "" {
 		return make([]string, 0), nil
 	}
-	packageIds := make([]string, 0)
-	parts := strings.Split(packageId, ".")
-	if len(parts) > 1 {
-		for i, part := range parts {
-			if i == 0 {
-				packageIds = append(packageIds, part)
-				continue
-			}
-			if i == (len(parts) - 1) {
-				break
-			}
-			packageIds = append(packageIds, packageIds[i-1]+"."+part)
-		}
-	}
-	packageIds = append([]string{packageId}, packageIds...)
+	packageIds := utils.GetPackageHierarchy(packageId)
 	query := `
 	select distinct unnest(permissions) as permission
 	from role 
