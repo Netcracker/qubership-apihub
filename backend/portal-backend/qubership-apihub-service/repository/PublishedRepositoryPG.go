@@ -2659,10 +2659,12 @@ func (p publishedRepositoryImpl) updateExcludeFromSearchForAllChildPackages(tx *
 }
 
 func (p publishedRepositoryImpl) GetParentPackageGroups(id string) ([]entity.PackageEntity, error) {
-	var parentIds []string
 	var result []entity.PackageEntity
 
-	parentIds = utils.GetParentPackageIds(id)
+	parentIds := utils.GetParentPackageIds(id)
+	if len(parentIds) == 0 {
+		return result, nil
+	}
 
 	err := p.cp.GetConnection().Model(&result).
 		Where("kind in (?)", pg.In([]string{entity.KIND_GROUP, entity.KIND_WORKSPACE})).
@@ -2682,6 +2684,9 @@ func (p publishedRepositoryImpl) GetParentsForPackage(id string) ([]entity.Packa
 	var result []entity.PackageEntity
 
 	parentIds = utils.GetParentPackageIds(id)
+	if len(parentIds) == 0 {
+		return result, nil
+	}
 
 	err := p.cp.GetConnection().Model(&result).
 		Where("deleted_at is ?", nil).

@@ -28,8 +28,8 @@ func GetPackageHierarchy(packageId string) []string {
 
 func GetParentPackageIds(packageId string) []string {
 	parts := strings.Split(packageId, ".")
-	packageIds := make([]string, 0, len(parts)+1)
-	if len(parts) == 0 {
+	packageIds := make([]string, 0)
+	if len(parts) == 0 || len(parts) == 1 {
 		return packageIds
 	}
 	for i, part := range parts {
