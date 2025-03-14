@@ -11,14 +11,16 @@ on:
     tags:
       - '**'
   delete:
+  pull_request:
+    types: [opened, reopened, synchronize]
 
 jobs:
   call-frontend-ci-workflow:
     uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@main
   call-docker-ci-workflow:
     needs: call-frontend-ci-workflow
-    if: github.event_name == 'push'
-    uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@main
+    if: (github.event_name == 'push') || (github.event_name == 'pull_request')
+    uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@e2e
     with:
       name: qubership-apihub-build-task-consumer
       file: Dockerfile
@@ -28,4 +30,19 @@ jobs:
         maintainer=qubership
         npm-package-version=${{ needs.call-frontend-ci-workflow.outputs.package_version }}
     secrets:
+      NPMRC: ${{ secrets.NPMRC }}
+  call-e2e-ci-workflow:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/e2e-ci.yml@e2e
+    needs: call-docker-ci-workflow
+    if: github.event_name == 'pull_request'
+    with:
+      postman-collections-run: false
+      task-consumer-image-tag: ${{ needs.call-docker-ci-workflow.outputs.image_tag }}
+      # backend-image-tag: next
+      # ui-image-tag: 1.2.3
+    secrets:
+      APIHUB_ACCESS_TOKEN: ${{ secrets.APIHUB_ACCESS_TOKEN }}
+      APIHUB_ADMIN_EMAIL: ${{ secrets.APIHUB_ADMIN_EMAIL }}
+      APIHUB_ADMIN_PASSWORD: ${{ secrets.APIHUB_ADMIN_PASSWORD }}
+      JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
       NPMRC: ${{ secrets.NPMRC }}
