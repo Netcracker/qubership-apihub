@@ -48,7 +48,7 @@ func TestGetParentPackageIds(t *testing.T) {
 	}
 }
 
-func TestSplitPackageId(t *testing.T) {
+func TestGetPackageHierarchy(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
