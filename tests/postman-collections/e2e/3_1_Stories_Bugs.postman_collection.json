@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "3_1_Stories_Bugs",
-        "_postman_id": "7da13baa-531c-4f9f-a386-188ea8a8254d",
+        "_postman_id": "acae6d91-afa6-49e1-9ffb-7e5f78c15d97",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -15762,6 +15762,518 @@
                                         "type": "default"
                                     }
                                 ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        }
+                    ]
+                },
+                {
+                    "name": "8.28 APIHUB-11283 [BE] Create dashboard version and operation group from CSV file",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "item": [
+                        {
+                            "name": "8.28.1 Delete static test data from DB",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 204\", function () {\r",
+                                            "    pm.response.to.have.status(204);\r",
+                                            "});\r",
+                                            ""
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/internal/clear/STATIC-TEST-D",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "internal",
+                                        "clear",
+                                        "STATIC-TEST-D"
+                                    ]
+                                },
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.28.2 Create Workspace",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 201\", function () {\r",
+                                            "    pm.response.to.have.status(201);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.environment.set(\"static_root_group_1\", data.groupId)"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v1/groups",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v1",
+                                        "groups"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"name\": \"Test Workspace D\",\r\n    \"Alias\" :\"QS-STATIC-TEST-D\",\r\n    \"parentId\": \"\",\r\n    \"description\": \"Required for to upload hardcoded packages\",\r\n    \"imageUrl\": \"\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.28.3 Create Dashboard",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 201\", function () {\r",
+                                            "    pm.response.to.have.status(201);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.environment.set(\"static_root_dash_1\", data.id)\r",
+                                            "pm.environment.set(\"dashboard_1\", data.packageId)"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-D.Dash1\",\r\n    \"Alias\" :\"Dash1\",\r\n    \"name\": \"Dashboard for CSV\",\r\n    \"parentId\": \"QS-STATIC-TEST-D\",\r\n    \"kind\":\"dashboard\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.28.4 Start dashboard publish process",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 202\", function () {",
+                                            "    pm.response.to.have.status(202);",
+                                            "});",
+                                            "",
+                                            "var data = pm.response.json();",
+                                            "pm.environment.set(\"csvDashPublishId\", data.publishId);",
+                                            "",
+                                            "let requestBody = pm.request.body.raw;",
+                                            "",
+                                            "// Updated regex to match multiline form-data value",
+                                            "let versionMatch = requestBody.match(/name=\"version\"\\s*\\r?\\n\\r?\\n(.*?)\\r?\\n/);",
+                                            "",
+                                            "if (versionMatch && versionMatch[1]) {",
+                                            "    let versionValue = versionMatch[1].trim();",
+                                            "    pm.environment.set(\"version\", versionValue);",
+                                            "    console.log(\"Extracted version:\", versionValue);",
+                                            "} else {",
+                                            "    console.log(\"Version not found in the request body\");",
+                                            "}",
+                                            "",
+                                            "setTimeout(function(){}, 10000);",
+                                            ""
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v1/packages/{{dashboard_1}}/publish/withOperationsGroup",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v1",
+                                        "packages",
+                                        "{{dashboard_1}}",
+                                        "publish",
+                                        "withOperationsGroup"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"version\"\r\n\r\n0001.1\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"status\"\r\n\r\nrelease\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"servicesWorkspaceId\"\r\n\r\nNC\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"csv_for_publish - api-hub.csv\"\r\n\r\napihub-backend,2024.3,POST,/api/internal/users\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                },
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.28.5 Get status",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Status = complete\", function () {",
+                                            "    let jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData.status).to.eql(\"complete\");",
+                                            "});",
+                                            ""
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v1/packages/{{dashboard_1}}/publish/{{csvDashPublishId}}/withOperationsGroup/status",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v1",
+                                        "packages",
+                                        "{{dashboard_1}}",
+                                        "publish",
+                                        "{{csvDashPublishId}}",
+                                        "withOperationsGroup",
+                                        "status"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.28.6 Get report",
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v1/packages/{{dashboardId}}/publish/{{csvDashPublishId}}/withOperationsGroup/report",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v1",
+                                        "packages",
+                                        "{{dashboardId}}",
+                                        "publish",
+                                        "{{csvDashPublishId}}",
+                                        "withOperationsGroup",
+                                        "report"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.28.7 Get Group from dashboard",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "    let jsonData = pm.response.json();",
+                                            "    ",
+                                            "    // Extract the first groupName",
+                                            "    let groupName = jsonData.operationGroups[0].groupName;",
+                                            "",
+                                            "    // Set it as an environment variable",
+                                            "    pm.environment.set(\"groupName\", groupName);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{dashboard_1}}/versions/{{version}}?includeGroups=true",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{dashboard_1}}",
+                                        "versions",
+                                        "{{version}}"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "includeGroups",
+                                            "value": "true"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.28.8 Get list of operations for operation group",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "var data = pm.response.json();",
+                                            "",
+                                            "pm.test(\"Only one operation in group\", function () {",
+                                            "    const operations = data.operations;",
+                                            "    pm.expect(operations.length).to.eql(1);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/versions/{{version}}/rest/groups/{{groupName}}",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{dashboard_1}}",
+                                        "versions",
+                                        "{{version}}",
+                                        "rest",
+                                        "groups",
+                                        "{{groupName}}"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "auth": {
+                                    "type": "noauth"
+                                }
                             },
                             "response": [],
                             "protocolProfileBehavior": {}

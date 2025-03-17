@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_1_Smoke_Portal",
-        "_postman_id": "47e65c48-9152-4acd-9ac1-a551fcbf4ba1",
+        "_postman_id": "c90f4c3f-5709-45e3-83c8-5f0745c5c18d",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -186,26 +186,6 @@
                 },
                 {
                     "name": "0.2 Prerequisites",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    ""
-                                ]
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    ""
-                                ]
-                            }
-                        }
-                    ],
                     "item": [
                         {
                             "name": "0.2.5 Set env",
@@ -355,26 +335,6 @@
                 },
                 {
                     "name": "0.4 Users Search",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    ""
-                                ]
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    ""
-                                ]
-                            }
-                        }
-                    ],
                     "item": [
                         {
                             "name": "0.4.1 Get avatar of non existing user",
@@ -9391,7 +9351,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2_2}}/rest/export/changes?apiKind=bwc&tag=pet",
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2_2}}/rest/export/changes?apiKind=bwc&tag=pet&severity=breaking",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -9414,6 +9374,10 @@
                                         {
                                             "key": "tag",
                                             "value": "pet"
+                                        },
+                                        {
+                                            "key": "severity",
+                                            "value": "breaking"
                                         }
                                     ]
                                 },
@@ -16966,26 +16930,6 @@
         },
         {
             "name": "7. Global Search",
-            "event": [
-                {
-                    "listen": "prerequest",
-                    "script": {
-                        "type": "text/javascript",
-                        "exec": [
-                            ""
-                        ]
-                    }
-                },
-                {
-                    "listen": "test",
-                    "script": {
-                        "type": "text/javascript",
-                        "exec": [
-                            ""
-                        ]
-                    }
-                }
-            ],
             "item": [
                 {
                     "name": "7.1 Operations search",
