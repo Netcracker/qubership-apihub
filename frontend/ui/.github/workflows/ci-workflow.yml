@@ -1,4 +1,4 @@
-name: Frontend & Docker CI Workflow 
+name: build & unit test, build Docker image, run E2E tests 
 
 on:
   push:
@@ -11,13 +11,17 @@ on:
     tags:
       - '**'
   delete:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths-ignore:
+      - 'docs/**' 
 
-jobs:
-  call-frontend-ci-workflow:
+jobs:  
+  build-and-unit-test:
     uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@main
-  call-docker-ci-workflow:
-    needs: call-frontend-ci-workflow
-    if: github.event_name == 'push'
+  build-docker-image:
+    needs: build-and-unit-test
+    if: (github.event_name == 'push') || (github.event_name == 'pull_request')
     uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@main
     with:
       name: qubership-apihub-ui
@@ -26,6 +30,20 @@ jobs:
       platforms: linux/amd64,linux/arm64
       labels: |
         maintainer=qubership
-        npm-package-version=${{ needs.call-frontend-ci-workflow.outputs.package_version }}
+        npm-package-version=${{ needs.build-and-unit-test.outputs.package_version }}
     secrets:
       NPMRC: ${{ secrets.NPMRC }}
+  run-e2e-tests:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@main
+    needs: build-docker-image
+    if: github.event_name == 'pull_request'
+    with:
+      postman-collections-run: false
+      apihub-ui-image-tag: ${{ needs.build-docker-image.outputs.image_tag }}      
+      # apihub-backend-image-tag: dev
+      # apihub-build-task-consumer-image-tag: dev
+    secrets:
+      APIHUB_ACCESS_TOKEN: ${{ secrets.APIHUB_ACCESS_TOKEN }}
+      APIHUB_ADMIN_EMAIL: ${{ secrets.APIHUB_ADMIN_EMAIL }}
+      APIHUB_ADMIN_PASSWORD: ${{ secrets.APIHUB_ADMIN_PASSWORD }}
+      JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}   
