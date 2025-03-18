@@ -6,10 +6,11 @@ on:
           description: "Compose repository branch to use"
           type: string
           default: "main"
-      compose-repository-compose-folder:
-          description: "Compose repository folder with compose"
-          type: string
-          default: "docker-compose/apihub-generic"
+      # userful parameter but GitHub workflows supports only 10 inputs for workflow_dispatch event
+      #compose-repository-compose-folder:
+      #    description: "Compose repository folder with compose"
+      #    type: string
+      #    default: "docker-compose/apihub-generic"
       postman-collections-run:
           description: "Flag for executing postman collections"
           type: boolean
@@ -52,6 +53,7 @@ jobs:
     uses: netcracker/qubership-apihub-ci/.github/workflows/docker-compose-run-and-test-ci.yml@feature/e2e-tests
     with:
       compose-repository-branch: ${{ github.event.inputs.compose-repository-branch }}
+      #compose-repository-compose-folder: ${{ github.event.inputs.compose-repository-compose-folder }}
       postman-collections-run: ${{ github.event.inputs.postman-collections-run }}
       postman-repository-branch: ${{ github.event.inputs.postman-repository-branch }}
       postman-collections-list: ${{ github.event.inputs.postman-collections-list }}
