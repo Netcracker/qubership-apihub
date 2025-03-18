@@ -1,0 +1,208 @@
+{
+    "id": "apihub",
+    "realm": "apihub",
+    "sslRequired": "none",
+    "enabled": true,
+    "eventsEnabled": true,
+    "eventsExpiration": 900,
+    "adminEventsEnabled": true,
+    "adminEventsDetailsEnabled": true,
+    "attributes": {
+      "adminEventsExpiration": "900"
+    },
+    "clients": [
+      {
+        "id": "b9d3dca4-b19b-4a26-8c51-06a0090ec312",
+        "clientId": "http://host.docker.internal:8081/saml/metadata",
+        "name": "apihub",
+        "description": "",
+        "rootUrl": "http://host.docker.internal:8081",
+        "adminUrl": "",
+        "baseUrl": "http://host.docker.internal:8081",
+        "surrogateAuthRequired": false,
+        "enabled": true,
+        "alwaysDisplayInConsole": true,
+        "clientAuthenticatorType": "client-secret",
+        "redirectUris": [
+          "http://localhost:8081/*",
+          "http://host.docker.internal:8081/*"
+        ],
+        "webOrigins": [
+          "http://localhost:8081"
+        ],
+        "notBefore": 0,
+        "bearerOnly": false,
+        "consentRequired": false,
+        "standardFlowEnabled": true,
+        "implicitFlowEnabled": false,
+        "directAccessGrantsEnabled": true,
+        "serviceAccountsEnabled": false,
+        "publicClient": true,
+        "frontchannelLogout": true,
+        "protocol": "saml",
+        "attributes": {
+          "saml.assertion.signature": "false",
+          "saml.force.post.binding": "true",
+          "saml.encrypt": "false",
+          "login_theme": "base",
+          "saml.server.signature": "true",
+          "saml.server.signature.keyinfo.ext": "false",
+          "realm_client": "false",
+          "saml.signing.certificate": "${SAML_CRT_KEYCLOAK}",
+          "saml.artifact.binding.identifier": "dxu8PAeDeyEZxQ0Xmu8ZO1XATVY=",
+          "saml.artifact.binding": "false",
+          "saml.signature.algorithm": "RSA_SHA256",
+          "saml_force_name_id_format": "false",
+          "saml.client.signature": "true",
+          "saml.authnstatement": "true",
+          "display.on.consent.screen": "false",
+          "saml_name_id_format": "username",
+          "saml.signing.private.key": "${SAML_KEY_KEYCLOAK}",
+          "saml.allow.ecp.flow": "false",
+          "saml.onetimeuse.condition": "false",
+          "saml.server.signature.keyinfo.xmlSigKeyInfoKeyNameTransformer": "NONE",
+          "saml_signature_canonicalization_method": "http://www.w3.org/2001/10/xml-exc-c14n#"
+        },
+        "authenticationFlowBindingOverrides": {},
+        "fullScopeAllowed": true,
+        "nodeReRegistrationTimeout": -1,
+        "defaultClientScopes": [
+          "saml_organization",
+          "role_list",
+          "SAML_user_principal_name",
+          "SAML_surname",
+          "SAML_givenname",
+          "SAML_email"
+        ],
+        "optionalClientScopes": []
+      }
+    ],
+    "users": [
+      {
+        "id": "user",
+        "email": "user@user",
+        "username": "${APIHUB_USER_USERNAME}",
+        "firstName": "APIHUB",
+        "lastName": "QUBERSHIP",
+        "enabled": true,
+        "emailVerified": true,
+        "credentials": [
+          {
+            "temporary": false,
+            "type": "password",
+            "value": "${APIHUB_USER_PASSWORD}"
+          }
+        ]
+      }
+    ],
+    "clientScopes": [
+      {
+        "id": "7aa3ec97-2137-47ea-a046-833c9b13e746",
+        "name": "SAML_user_principal_name",
+        "description": "",
+        "protocol": "saml",
+        "attributes": {
+          "include.in.token.scope": "true",
+          "display.on.consent.screen": "true",
+          "gui.order": "",
+          "consent.screen.text": ""
+        },
+        "protocolMappers": [
+          {
+            "id": "e2d9658f-d1e5-4cd6-a2d1-c5aa4f87325c",
+            "name": "User-Principal-Name",
+            "protocol": "saml",
+            "protocolMapper": "saml-user-property-mapper",
+            "consentRequired": false,
+            "config": {
+              "attribute.nameformat": "Basic",
+              "user.attribute": "username",
+              "friendly.name": "User-Principal-Name",
+              "attribute.name": "User-Principal-Name"
+            }
+          }
+        ]
+      },
+      {
+        "id": "5862966c-83a4-4af7-a6c0-1543e66d7689",
+        "name": "SAML_givenname",
+        "description": "",
+        "protocol": "saml",
+        "attributes": {
+          "include.in.token.scope": "true",
+          "display.on.consent.screen": "true",
+          "gui.order": "",
+          "consent.screen.text": ""
+        },
+        "protocolMappers": [
+          {
+            "id": "5f8bac03-21b2-44a8-8f43-04a4afdc07ee",
+            "name": "X500 givenName",
+            "protocol": "saml",
+            "protocolMapper": "saml-user-property-mapper",
+            "consentRequired": false,
+            "config": {
+              "attribute.nameformat": "urn:oasis:names:tc:SAML:2.0:attrname-format:uri",
+              "user.attribute": "firstName",
+              "friendly.name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
+              "attribute.name": "urn:oid:2.5.4.42"
+            }
+          }
+        ]
+      },
+      {
+        "id": "a7f08713-219e-45b4-aa41-992749e205af",
+        "name": "SAML_surname",
+        "description": "",
+        "protocol": "saml",
+        "attributes": {
+          "include.in.token.scope": "true",
+          "display.on.consent.screen": "true",
+          "gui.order": "",
+          "consent.screen.text": ""
+        },
+        "protocolMappers": [
+          {
+            "id": "aee65d67-1f47-4460-815d-7f86d6ce9119",
+            "name": "X500 surname",
+            "protocol": "saml",
+            "protocolMapper": "saml-user-property-mapper",
+            "consentRequired": false,
+            "config": {
+              "attribute.nameformat": "urn:oasis:names:tc:SAML:2.0:attrname-format:uri",
+              "user.attribute": "lastName",
+              "friendly.name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
+              "attribute.name": "urn:oid:2.5.4.4"
+            }
+          }
+        ]
+      },
+      {
+        "id": "0f0a63c1-856c-4e00-8a74-9cc2ecd1e41e",
+        "name": "SAML_email",
+        "description": "",
+        "protocol": "saml",
+        "attributes": {
+          "include.in.token.scope": "true",
+          "display.on.consent.screen": "true",
+          "gui.order": "",
+          "consent.screen.text": ""
+        },
+        "protocolMappers": [
+          {
+            "id": "0781903d-58bc-4884-9709-f6d010173fa7",
+            "name": "X500 email",
+            "protocol": "saml",
+            "protocolMapper": "saml-user-property-mapper",
+            "consentRequired": false,
+            "config": {
+              "attribute.nameformat": "urn:oasis:names:tc:SAML:2.0:attrname-format:uri",
+              "user.attribute": "email",
+              "friendly.name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+              "attribute.name": "urn:oid:1.2.840.113549.1.9.1"
+            }
+          }
+        ]
+      }
+    ]
+  }
