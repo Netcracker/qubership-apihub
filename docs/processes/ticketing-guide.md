@@ -47,8 +47,8 @@ User Story definition of done: implemented, dev tested, demonstrated, merged to 
 **Mandatory fields:**
 
 - **Assignees: empty**
-- **Labels: enhancement**
-- **Type: feature**
+- **Labels: User Story**
+- **Type: Feature**
 - **Projects: qubership-apihub**
   - **Priority: Choose your option**
   - **Status: empty**
