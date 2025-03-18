@@ -19,6 +19,10 @@ It provides the following features
 
 ## Modules
 
+### High Level architecture
+
+![](./docs/images/arch.png)
+
 ### API Registry 
 
 The **API Registry** is a backend component that serves as a centralized repository for storing and managing API data. It stores API operations, documentation, metadata, and other relevant information.
