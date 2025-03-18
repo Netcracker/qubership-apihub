@@ -54,11 +54,11 @@ jobs:
     with:
       compose-repository-branch: ${{ github.event.inputs.compose-repository-branch }}
       #compose-repository-compose-folder: ${{ github.event.inputs.compose-repository-compose-folder }}
-      postman-collections-run: ${{ github.event.inputs.postman-collections-run }}
+      postman-collections-run: ${{ fromJson(github.event.inputs.postman-collections-run) }}
       postman-repository-branch: ${{ github.event.inputs.postman-repository-branch }}
       postman-collections-list: ${{ github.event.inputs.postman-collections-list }}
       playwright-repository-branch: ${{ github.event.inputs.playwright-repository-branch }}
-      playwright-tests-run: ${{ github.event.inputs.playwright-tests-run }}
+      playwright-tests-run: ${{ fromJson(github.event.inputs.playwright-tests-run) }}
       playwright-test-args: ${{ github.event.inputs.playwright-test-args }}
       apihub-backend-image-tag: ${{ github.event.inputs.apihub-backend-image-tag }}
       apihub-build-task-consumer-image-tag: ${{ github.event.inputs.apihub-build-task-consumer-image-tag }}
