@@ -3,15 +3,19 @@ on:
   workflow_dispatch:
     inputs:
       compose-repository-branch:
-          description: "Branch to clone"
+          description: "Compose repository branch to use"
           type: string
           default: "main"
+      compose-repository-compose-folder:
+          description: "Compose repository folder with compose"
+          type: string
+          default: "docker-compose/apihub-generic"
       postman-collections-run:
           description: "Flag for executing postman collections"
           type: boolean
           default: true
       postman-repository-branch:
-          description: "https://github.com/Netcracker/qubership-apihub-postman-collections branch to clone"
+          description: "qubership-apihub-postman-collections branch to clone"
           type: string
           default: "main"
       postman-collections-list:
@@ -23,7 +27,7 @@ on:
           type: boolean
           default: true
       playwright-repository-branch:
-          description: "https://github.com/Netcracker/qubership-apihub-ui-tests branch to clone"
+          description: "qubership-apihub-ui-tests branch to clone"
           type: string
           default: "main"
       playwright-test-args:
@@ -31,15 +35,15 @@ on:
           type: string
           default: "--project=Portal --workers=8"
       apihub-backend-image-tag:
-          description: "Branch to clone"
+          description: "APIHUB Backend docker image tag"
           type: string
           default: "dev"
       apihub-build-task-consumer-image-tag:
-          description: "Branch to clone"
+          description: "APIHUB Build Task Consumer docker image tag"
           type: string
           default: "dev"
       apihub-ui-image-tag:
-          description: "Branch to clone"
+          description: "APIHUB UI docker image tag"
           type: string
           default: "dev"
 
@@ -54,9 +58,9 @@ jobs:
       playwright-repository-branch: ${{ github.event.inputs.playwright-repository-branch }}
       playwright-tests-run: ${{ github.event.inputs.playwright-tests-run }}
       playwright-test-args: ${{ github.event.inputs.playwright-test-args }}
-      apihub-backend-image-tag: ${{ github.event.inputs.backend-image-tag }}
-      apihub-build-task-consumer-image-tag: ${{ github.event.inputs.task-consumer-image-tag }}
-      apihub-ui-image-tag: ${{ github.event.inputs.ui-image-tag }}
+      apihub-backend-image-tag: ${{ github.event.inputs.apihub-backend-image-tag }}
+      apihub-build-task-consumer-image-tag: ${{ github.event.inputs.apihub-build-task-consumer-image-tag }}
+      apihub-ui-image-tag: ${{ github.event.inputs.apihub-ui-image-tag }}
     secrets:
       APIHUB_ACCESS_TOKEN: ${{ secrets.APIHUB_ACCESS_TOKEN }}
       APIHUB_ADMIN_EMAIL: ${{ secrets.APIHUB_ADMIN_EMAIL }}
