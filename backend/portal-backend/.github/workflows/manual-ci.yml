@@ -18,7 +18,7 @@ on:
       postman-repository-branch:
           description: "qubership-apihub-postman-collections branch to clone"
           type: string
-          default: "main"
+          default: "develop"
       postman-collections-list:
           description: "Collections to execute"
           type: string
@@ -30,7 +30,7 @@ on:
       playwright-repository-branch:
           description: "qubership-apihub-ui-tests branch to clone"
           type: string
-          default: "main"
+          default: "develop"
       playwright-test-args:
           description: "Playwright test command CLI arguments"
           type: string
@@ -50,7 +50,7 @@ on:
 
 jobs:
   call-docker-compose-run-and-test-ci-workflow:
-    uses: netcracker/qubership-apihub-ci/.github/workflows/docker-compose-run-and-test-ci.yml@feature/e2e-tests
+    uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@main
     with:
       compose-repository-branch: ${{ github.event.inputs.compose-repository-branch }}
       #compose-repository-compose-folder: ${{ github.event.inputs.compose-repository-compose-folder }}

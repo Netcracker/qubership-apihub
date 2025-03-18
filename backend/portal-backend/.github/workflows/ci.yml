@@ -23,7 +23,7 @@ jobs:
             maintainer=qubership
 
   run-e2e-tests:
-    uses: netcracker/qubership-apihub-ci/.github/workflows/docker-compose-run-and-test-ci.yml@feature/e2e-tests
+    uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@main
     needs: build-docker-image
     if: github.event_name == 'pull_request'
     with:
