@@ -1,0 +1,64 @@
+name: Manual Deploy and Test Workflow
+on:
+  workflow_dispatch:
+    inputs:
+      compose-repository-branch:
+          description: "Branch to clone"
+          type: string
+          default: "main"
+      postman-collections-run:
+          description: "Flag for executing postman collections"
+          type: boolean
+          default: true
+      postman-repository-branch:
+          description: "https://github.com/Netcracker/qubership-apihub-postman-collections branch to clone"
+          type: string
+          default: "main"
+      postman-collections-list:
+          description: "Collections to execute"
+          type: string
+          default: "./e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json"
+      playwright-tests-run:
+          description: "Flag for executing playwright tests"
+          type: boolean
+          default: true
+      playwright-repository-branch:
+          description: "https://github.com/Netcracker/qubership-apihub-ui-tests branch to clone"
+          type: string
+          default: "main"
+      playwright-test-args:
+          description: "Playwright test command CLI arguments"
+          type: string
+          default: "--project=Portal --workers=8"
+      apihub-backend-image-tag:
+          description: "Branch to clone"
+          type: string
+          default: "dev"
+      apihub-build-task-consumer-image-tag:
+          description: "Branch to clone"
+          type: string
+          default: "dev"
+      apihub-ui-image-tag:
+          description: "Branch to clone"
+          type: string
+          default: "dev"
+
+jobs:
+  call-docker-compose-run-and-test-ci-workflow:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/docker-compose-run-and-test-ci.yml@feature/e2e-tests
+    with:
+      compose-repository-branch: ${{ github.event.inputs.compose-repository-branch }}
+      postman-collections-run: ${{ github.event.inputs.postman-collections-run }}
+      postman-repository-branch: ${{ github.event.inputs.postman-repository-branch }}
+      postman-collections-list: ${{ github.event.inputs.postman-collections-list }}
+      playwright-repository-branch: ${{ github.event.inputs.playwright-repository-branch }}
+      playwright-tests-run: ${{ github.event.inputs.playwright-tests-run }}
+      playwright-test-args: ${{ github.event.inputs.playwright-test-args }}
+      apihub-backend-image-tag: ${{ github.event.inputs.backend-image-tag }}
+      apihub-build-task-consumer-image-tag: ${{ github.event.inputs.task-consumer-image-tag }}
+      apihub-ui-image-tag: ${{ github.event.inputs.ui-image-tag }}
+    secrets:
+      APIHUB_ACCESS_TOKEN: ${{ secrets.APIHUB_ACCESS_TOKEN }}
+      APIHUB_ADMIN_EMAIL: ${{ secrets.APIHUB_ADMIN_EMAIL }}
+      APIHUB_ADMIN_PASSWORD: ${{ secrets.APIHUB_ADMIN_PASSWORD }}
+      JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
