@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "3_1_Stories_Bugs",
-        "_postman_id": "acae6d91-afa6-49e1-9ffb-7e5f78c15d97",
+        "_postman_id": "d05b6e76-8f45-495e-a2da-9690a13896fc",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -7819,70 +7819,6 @@
                                         }
                                     }
                                 }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        }
-                    ]
-                },
-                {
-                    "name": "8.16 APIHUB-3954 [BE] Unauthorized system info endpoint",
-                    "item": [
-                        {
-                            "name": "8.16.1 SSO integration status",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "\r",
-                                            "pm.test(\"ssoIntegrationEnabled = true\", () => {\r",
-                                            "    pm.expect(data.ssoIntegrationEnabled).to.eql(true)\r",
-                                            "});\r",
-                                            "\r",
-                                            "pm.test(\"autoRedirect = true\", () => {\r",
-                                            "    pm.expect(data.autoRedirect).to.eql(true)\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v1/system/configuration",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v1",
-                                        "system",
-                                        "configuration"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{token}}",
-                                        "type": "default"
-                                    }
-                                ]
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
@@ -15902,7 +15838,140 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "8.28.3 Create Dashboard",
+                            "name": "8.28..3 Create source package",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 201\", function () {\r",
+                                            "    pm.response.to.have.status(201);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.environment.set(\"source_package\", data.packageId)\r",
+                                            "\r",
+                                            "setTimeout(() => { }, 300);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-D.PKG1\",\r\n    \"Alias\" :\"PKG1\",\r\n    \"name\": \"Source package\",\r\n    \"parentId\": \"QS-STATIC-TEST-D\",\r\n    \"kind\":\"package\",\r\n    \"serviceName\": \"backend\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.28.4 Publish version for source package",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 202\", function () {\r",
+                                            "    pm.response.to.have.status(202);\r",
+                                            "});\r",
+                                            "\r",
+                                            "setTimeout(function(){}, 20000)"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{source_package}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{source_package}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"{{source_package}}\",\r\n    \"version\": \"2024.3\",\r\n    \"status\": \"release\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"{{Pack_version1_fileId}}\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"petstore_yml.zip\"\r\nContent-Type: application/zip;base64\r\n\r\n{{Pack_version1_data}}\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.28.5 Create Dashboard",
                             "event": [
                                 {
                                     "listen": "test",
@@ -15963,7 +16032,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "8.28.4 Start dashboard publish process",
+                            "name": "8.28.6 Start dashboard publish process",
                             "event": [
                                 {
                                     "listen": "test",
@@ -16040,7 +16109,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"version\"\r\n\r\n0001.1\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"status\"\r\n\r\nrelease\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"servicesWorkspaceId\"\r\n\r\nNC\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"csv_for_publish - api-hub.csv\"\r\n\r\napihub-backend,2024.3,POST,/api/internal/users\r\n----------------------------127308995100818139707097--",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"version\"\r\n\r\n0001.1\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"status\"\r\n\r\nrelease\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"servicesWorkspaceId\"\r\n\r\nQS-STATIC-TEST-D\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"csv_for_publish - api-hub.csv\"\r\n\r\nbackend,2024.3,POST,/api/v1/store/order\r\n----------------------------127308995100818139707097--",
                                     "options": {
                                         "raw": {
                                             "language": "text"
@@ -16055,7 +16124,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "8.28.5 Get status",
+                            "name": "8.28.7 Get status",
                             "event": [
                                 {
                                     "listen": "test",
@@ -16117,7 +16186,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "8.28.6 Get report",
+                            "name": "8.28.8 Get report",
                             "request": {
                                 "url": {
                                     "raw": "{{SERVER_HOST}}/api/v1/packages/{{dashboardId}}/publish/{{csvDashPublishId}}/withOperationsGroup/report",
@@ -16151,7 +16220,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "8.28.7 Get Group from dashboard",
+                            "name": "8.28.9  Get Group from dashboard",
                             "event": [
                                 {
                                     "listen": "test",
@@ -16215,7 +16284,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "8.28.8 Get list of operations for operation group",
+                            "name": "8.28.10 Get list of operations for operation group",
                             "event": [
                                 {
                                     "listen": "test",
