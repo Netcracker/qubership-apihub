@@ -47,19 +47,13 @@ func Secure(next http.HandlerFunc) http.HandlerFunc {
 				for _, e := range multiError {
 					if customError, ok := e.(*exception.CustomError); ok {
 						if customError.Status == http.StatusForbidden {
-							log.Debugf("Authorization failed(403): %+v", err)
 							controller.RespondWithCustomError(w, customError)
 							return
 						}
 					}
 				}
 			}
-			log.Debugf("Authorization failed(401): %+v", err)
-			controller.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusUnauthorized,
-				Message: http.StatusText(http.StatusUnauthorized),
-				Debug:   fmt.Sprintf("%v", err),
-			})
+			respondWithAuthFailedError(w, err)
 			return
 		}
 
@@ -85,12 +79,7 @@ func SecureJWT(next http.HandlerFunc) http.HandlerFunc {
 		}()
 		user, err := jwtStrategy.Authenticate(r.Context(), r)
 		if err != nil {
-			log.Debugf("Authorization failed(401): %+v", err)
-			controller.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusUnauthorized,
-				Message: http.StatusText(http.StatusUnauthorized),
-				Debug:   fmt.Sprintf("%v", err),
-			})
+			respondWithAuthFailedError(w, err)
 			return
 		}
 
@@ -118,15 +107,9 @@ func SecureWebsocket(next http.HandlerFunc) http.HandlerFunc {
 		r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 		_, user, err := strategy.AuthenticateRequest(r)
 		if err != nil {
-			log.Errorf("Authorization failed(401): %+v", err)
-			controller.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusUnauthorized,
-				Message: http.StatusText(http.StatusUnauthorized),
-				Debug:   fmt.Sprintf("%v", err),
-			})
+			respondWithAuthFailedError(w, err)
 			return
 		}
-		//log.Debugf("User %s Authenticated", user.GetUserName())
 
 		r = auth.RequestWithUser(user, r)
 		next.ServeHTTP(w, r)
@@ -169,12 +152,7 @@ func SecureAgentProxy(next http.HandlerFunc) http.HandlerFunc {
 		}()
 		user, err := customJwtStrategy.Authenticate(r.Context(), r)
 		if err != nil {
-			log.Debugf("Authorization failed(401): %+v", err)
-			controller.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusUnauthorized,
-				Message: http.StatusText(http.StatusUnauthorized),
-				Debug:   fmt.Sprintf("%v", err),
-			})
+			respondWithAuthFailedError(w, err)
 			return
 		}
 		r = auth.RequestWithUser(user, r)
@@ -199,16 +177,21 @@ func SecureProxy(next http.HandlerFunc) http.HandlerFunc {
 		}()
 		user, err := customJwtStrategy.Authenticate(r.Context(), r)
 		if err != nil {
-			log.Debugf("Authorization failed(401): %+v", err)
-			controller.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusUnauthorized,
-				Message: http.StatusText(http.StatusUnauthorized),
-				Debug:   fmt.Sprintf("%v", err),
-			})
+			respondWithAuthFailedError(w, err)
 			return
 		}
 		r = auth.RequestWithUser(user, r)
 		r.Header.Del(CustomJwtAuthHeader)
 		next.ServeHTTP(w, r)
 	}
+}
+
+func respondWithAuthFailedError(w http.ResponseWriter, err error) {
+	log.Tracef("Authorization failed(401): %+v", err)
+	customErr := &exception.CustomError{
+		Status:  http.StatusUnauthorized,
+		Message: http.StatusText(http.StatusUnauthorized),
+		Debug:   fmt.Sprintf("%v", err),
+	}
+	controller.RespondWithJson(w, customErr.Status, customErr)
 }
