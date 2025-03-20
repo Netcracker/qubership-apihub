@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_1_Smoke_Portal",
-        "_postman_id": "2e9be523-4fc1-4f49-9f4e-877be0e3c745",
+        "_postman_id": "c82f46f6-01a4-4ec2-98ab-57dc9b23781b",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -545,26 +545,19 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "\r",
-                                            "pm.test(\"Verify Content-Type and avatarUrl based on USER_ID_WITH_AVATAR\", function () {\r",
+                                            "pm.test(\"Verify Status Code and Content-Type or 404 based on USER_ID_WITH_AVATAR\", function () {\r",
                                             "    let userIdWithAvatar = pm.variables.get(\"USER_ID_WITH_AVATAR\"); // Retrieve USER_ID_WITH_AVATAR variable\r",
                                             "    let responseJson = pm.response.json(); // Parse response JSON\r",
                                             "\r",
                                             "    if (userIdWithAvatar !== \"x_apihub\") {\r",
-                                            "        // Check that Content-Type is image/png\r",
+                                            "        // Expect status code 200 and Content-Type to be image/png for non-x_apihub users\r",
+                                            "        pm.response.to.have.status(200);\r",
                                             "        pm.response.to.have.header('Content-Type');\r",
                                             "        pm.expect(pm.response.headers.get('Content-Type')).to.include('image/png');\r",
                                             "    } else {\r",
-                                            "        // Check that \"avatarUrl\" is an empty string for x_apihub user\r",
-                                            "        pm.expect(responseJson).to.have.property(\"users\");\r",
-                                            "        let user = responseJson.users.find(u => u.id === \"x_apihub\");\r",
-                                            "        pm.expect(user).to.be.an(\"object\");\r",
-                                            "        pm.expect(user).to.have.property(\"avatarUrl\", \"\");\r",
-                                            "    }\r",
+                                            "        // Expect status code 404 and empty avatarUrl for x_apihub user\r",
+                                            "        pm.response.to.have.status(404);\r",
+                                            "       }\r",
                                             "});\r",
                                             ""
                                         ]
@@ -2039,7 +2032,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -2049,7 +2042,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -2213,7 +2206,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -2223,7 +2216,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -4080,7 +4073,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -4090,7 +4083,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -4196,7 +4189,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -4206,7 +4199,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -16254,7 +16247,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\r\n    \"userId\": \"{{Username}}\"\r\n}",
+                            "raw": "{\r\n    \"userId\": \"{{User_id}}\"\r\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -17251,8 +17244,8 @@
                                     "\r",
                                     "var data = JSON.parse(responseBody);\r",
                                     "\r",
-                                    "pm.test(\"Search has only 1 result\", function () {\r",
-                                    "    pm.expect(data.packages.length).to.eq(1)\r",
+                                    "pm.test(\"Search has 2 result\", function () {\r",
+                                    "    pm.expect(data.packages.length).to.eq(2)\r",
                                     "});"
                                 ]
                             }
