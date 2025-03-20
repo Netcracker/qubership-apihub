@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "4_Access_control",
-        "_postman_id": "5356cf46-c2b4-46a6-bd5c-90dc9d2e1670",
+        "_postman_id": "1986b8d2-c95b-4d8e-b228-0949c03fb15a",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -29507,7 +29507,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -29517,7 +29517,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -29628,7 +29628,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -29638,7 +29638,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -30739,7 +30739,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -30749,7 +30749,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -30829,10 +30829,21 @@
                                         "value": "{{admin_api_key}}",
                                         "type": "default"
                                     }
-                                ]
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
                             },
                             "response": [],
-                            "protocolProfileBehavior": {}
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
                         },
                         {
                             "name": "6.5.16 Remove user from list of members",
@@ -30860,7 +30871,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -30870,7 +30881,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
