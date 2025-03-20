@@ -135,7 +135,7 @@ services:
             - "-c"
             - "log_min_duration_statement=200ms"
             - "-c"
-            - "idle_in_transaction_session_timeout=10s"
+            - "idle_in_transaction_session_timeout=60s"
             - "-c"
             - "lock_timeout=1s"
             - "-c"

@@ -44,7 +44,7 @@
           "saml.assertion.signature": "false",
           "saml.force.post.binding": "true",
           "saml.encrypt": "false",
-          "login_theme": "base",
+          "login_theme": "keycloak",
           "saml.server.signature": "true",
           "saml.server.signature.keyinfo.ext": "false",
           "realm_client": "false",
