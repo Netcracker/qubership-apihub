@@ -1,4 +1,4 @@
-name: Manual Deploy and Test Workflow
+name: Manual Run E2E Tests Workflow
 on:
   workflow_dispatch:
     inputs:
