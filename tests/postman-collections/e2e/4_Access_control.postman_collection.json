@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "4_Access_control",
-        "_postman_id": "d0086bf7-7ab7-4ad0-bd49-a49c33c03e97",
+        "_postman_id": "5356cf46-c2b4-46a6-bd5c-90dc9d2e1670",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -183,6 +183,78 @@
                                 "v1",
                                 "system",
                                 "info"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "0.5 Get users list",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {\r",
+                                    "    pm.response.to.have.status(200);\r",
+                                    "});\r",
+                                    "\r",
+                                    "var data = pm.response.json();\r",
+                                    "\r",
+                                    "for (var i = 0; i<data.users.length; i++) {\r",
+                                    "    if (data.users[i].id === pm.variables.replaceIn(\"{{Username}}\")){\r",
+                                    "        pm.environment.set(\"User_name\", data.users[i].name),\r",
+                                    "        pm.environment.set(\"User_id\", data.users[i].id),\r",
+                                    "        pm.environment.set(\"User_email\", data.users[i].email)\r",
+                                    "    } else {\r",
+                                    "        pm.environment.set(\"User_name\", data.users[0].name),\r",
+                                    "        pm.environment.set(\"User_id\", data.users[0].id),\r",
+                                    "        pm.environment.set(\"User_email\", data.users[0].email)\r",
+                                    "    }\r",
+                                    "};"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/v2/users?filter={{Username}}&page=0",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v2",
+                                "users"
+                            ],
+                            "query": [
+                                {
+                                    "key": "filter",
+                                    "value": "{{Username}}"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                }
                             ]
                         },
                         "method": "GET",
@@ -3712,7 +3784,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"name\":\"Viewer\",\r\n    \"roles\": [\"viewer\"],\r\n    \"createdFor\": \"{{Username}}\"\r\n}",
+                                    "raw": "{\r\n    \"name\":\"Viewer\",\r\n    \"roles\": [\"viewer\"],\r\n    \"createdFor\": \"{{User_id}}\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -3783,7 +3855,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"name\":\"Editor\",\r\n    \"roles\": [\"editor\"],\r\n    \"createdFor\": \"{{Username}}\"\r\n}",
+                                    "raw": "{\r\n    \"name\":\"Editor\",\r\n    \"roles\": [\"editor\"],\r\n   \"createdFor\": \"{{User_id}}\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -3854,7 +3926,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"name\":\"Owner\",\r\n    \"roles\": [\"owner\"],\r\n    \"createdFor\": \"{{Username}}\"\r\n}",
+                                    "raw": "{\r\n    \"name\":\"Owner\",\r\n    \"roles\": [\"owner\"],\r\n   \"createdFor\": \"{{User_id}}\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -3925,7 +3997,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"name\":\"Admin\",\r\n    \"roles\": [\"admin\"],\r\n    \"createdFor\": \"{{Username}}\"\r\n}",
+                                    "raw": "{\r\n    \"name\":\"Admin\",\r\n    \"roles\": [\"admin\"],\r\n    \"createdFor\": \"{{User_id}}\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -3996,7 +4068,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"name\":\"Sysadmin\",\r\n    \"createdFor\": \"{{Username}}\"\r\n}",
+                                    "raw": "{\r\n    \"name\":\"Sysadmin\",\r\n   \"createdFor\": \"{{User_id}}\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -26919,7 +26991,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -26929,7 +27001,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -27040,7 +27112,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -27050,7 +27122,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -28202,7 +28274,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -28212,7 +28284,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -28323,7 +28395,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -28333,7 +28405,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -31900,7 +31972,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -31910,7 +31982,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -32021,7 +32093,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -32031,7 +32103,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -33132,7 +33204,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -33142,7 +33214,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -33253,7 +33325,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -33263,7 +33335,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
