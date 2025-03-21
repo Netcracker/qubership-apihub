@@ -19,37 +19,32 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	log "github.com/sirupsen/logrus"
-	"os"
-)
-
-const (
-	APIHUB_ADMIN_EMAIL    = "APIHUB_ADMIN_EMAIL"
-	APIHUB_ADMIN_PASSWORD = "APIHUB_ADMIN_PASSWORD"
 )
 
 type ZeroDayAdminService interface {
 	CreateZeroDayAdmin() error
 }
 
-func NewZeroDayAdminService(userService UserService, roleService RoleService, repo repository.UserRepository) ZeroDayAdminService {
+func NewZeroDayAdminService(userService UserService, roleService RoleService, repo repository.UserRepository, systemInfoService SystemInfoService) ZeroDayAdminService {
 	return &zeroDayAdminServiceImpl{
-		userService: userService,
-		roleService: roleService,
-		repo:        repo,
+		userService:       userService,
+		roleService:       roleService,
+		repo:              repo,
+		systemInfoService: systemInfoService,
 	}
 }
 
 type zeroDayAdminServiceImpl struct {
-	userService UserService
-	roleService RoleService
-	repo        repository.UserRepository
+	userService       UserService
+	roleService       RoleService
+	repo              repository.UserRepository
+	systemInfoService SystemInfoService
 }
 
 func (a zeroDayAdminServiceImpl) CreateZeroDayAdmin() error {
-	email := os.Getenv(APIHUB_ADMIN_EMAIL)
-	password := os.Getenv(APIHUB_ADMIN_PASSWORD)
-	if email == "" || password == "" {
-		return fmt.Errorf("CreateZeroDayAdmin: empty envs detected, admin will not be created")
+	email, password, err := a.systemInfoService.GetZeroDayAdminCreds()
+	if err != nil {
+		return fmt.Errorf("CreateZeroDayAdmin: credentials error: %w, admin will not be created", err)
 	}
 
 	user, _ := a.userService.GetUserByEmail(email)
@@ -64,9 +59,9 @@ func (a zeroDayAdminServiceImpl) CreateZeroDayAdmin() error {
 			if err != nil {
 				return err
 			}
-			log.Infof("CreateZeroDayAdmin: password is updated for sysadm user")
+			log.Infof("CreateZeroDayAdmin: password is updated for system admin user")
 		} else {
-			log.Infof("CreateZeroDayAdmin: sysadm user is already present")
+			log.Infof("CreateZeroDayAdmin: system admin user is already present")
 		}
 	} else {
 		user, err := a.userService.CreateInternalUser(
@@ -83,7 +78,7 @@ func (a zeroDayAdminServiceImpl) CreateZeroDayAdmin() error {
 		if err != nil {
 			return err
 		}
-		log.Infof("CreateZeroDayAdmin: sysadm user with has been created")
+		log.Infof("CreateZeroDayAdmin: system admin user '%s' has been created", email)
 	}
 	return nil
 }

@@ -108,6 +108,9 @@ const IncorrectFileNameMsg = "File name is incorrect: '$name'"
 const FileByRefNotFound = "47"
 const FileByRefNotFoundMsg = "File for path $fileId not found by reference $ref in project $projectGitId"
 
+const PreviousPackageVersionNotRelease = "48"
+const PreviousPackageVersionNotReleaseMsg = "Previous version $version for package $packageId is not in the 'release' status"
+
 const PublishedPackageVersionNotFound = "49"
 const PublishedPackageVersionNotFoundMsg = "Published version $version not found for package $packageId"
 
@@ -649,7 +652,7 @@ const TransitionActivityNotFound = "6303"
 const TransitionActivityNotFoundMsg = "Transition activity $id not found"
 
 const ToPackageExists = "6304"
-const ToPackageExistsMsg = "Unable to perform package move operation since 'to' package $packageId already exists"
+const ToPackageExistsMsg = "Unable to perform package move operation since 'to' package $packageId already exists $deletedAt"
 
 const ToPackageRedirectExists = "6305"
 const ToPackageRedirectExistsMsg = "Unable to perform package move operation since 'to' package $packageId is already used by 'old' package id which was moved to $newPackageId. " +
@@ -725,3 +728,15 @@ const InvalidPackageKindMsg = `Action is not allowed for package with kind="$kin
 
 const HostNotAllowed = "6900"
 const HostNotAllowedMsg = "Host not allowed: $host"
+
+const PersonalAccessTokenLimitExceeded = "7000"
+const PersonalAccessTokenLimitExceededMsg = "Unable to create personal access token since the limit $limit is exceeded"
+
+const PersonalAccessTokenNameIsUsed = "7001"
+const PersonalAccessTokenNameIsUsedMsg = "Personal access token name '$name' is already used"
+
+const PersonalAccessTokenIncorrectExpiry = "7002"
+const PersonalAccessTokenIncorrectExpiryMsg = "Allowed values for '$param' are -1, 1+"
+
+const PersonalAccessTokenNotFound = "7003"
+const PersonalAccessTokenNotFoundMsg = "Personal access token with id '$id' not found"

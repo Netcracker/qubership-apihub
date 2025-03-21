@@ -885,7 +885,7 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 				cellsValues[fmt.Sprintf("H%d", rowIndex)] = changelogView.Path
 				cellsValues[fmt.Sprintf("I%d", rowIndex)] = changelogView.Action
 				cellsValues[fmt.Sprintf("J%d", rowIndex)] = commonOperationChange.Description
-				cellsValues[fmt.Sprintf("K%d", rowIndex)] = mapServerity(commonOperationChange.Severity)
+				cellsValues[fmt.Sprintf("K%d", rowIndex)] = mapSeverity(commonOperationChange.Severity)
 				cellsValues[fmt.Sprintf("L%d", rowIndex)] = versionChanges.Packages[key].Kind
 				cellsValues[fmt.Sprintf("M%d", rowIndex)] = changelogView.ApiKind
 				err := setCellsValues(report.workbook, view.RestAPISheetName, cellsValues)
@@ -943,7 +943,7 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 				cellsValues[fmt.Sprintf("H%d", rowIndex)] = changelogView.Type
 				cellsValues[fmt.Sprintf("I%d", rowIndex)] = changelogView.Action
 				cellsValues[fmt.Sprintf("J%d", rowIndex)] = commonOperationChange.Description
-				cellsValues[fmt.Sprintf("K%d", rowIndex)] = mapServerity(commonOperationChange.Severity)
+				cellsValues[fmt.Sprintf("K%d", rowIndex)] = mapSeverity(commonOperationChange.Severity)
 				cellsValues[fmt.Sprintf("L%d", rowIndex)] = versionChanges.Packages[key].Kind
 				cellsValues[fmt.Sprintf("M%d", rowIndex)] = changelogView.ApiKind
 				err := setCellsValues(report.workbook, view.GraphQLSheetName, cellsValues)
@@ -1001,7 +1001,7 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 				cellsValues[fmt.Sprintf("H%d", rowIndex)] = changelogView.Type
 				cellsValues[fmt.Sprintf("I%d", rowIndex)] = changelogView.Action
 				cellsValues[fmt.Sprintf("J%d", rowIndex)] = commonOperationChange.Description
-				cellsValues[fmt.Sprintf("K%d", rowIndex)] = mapServerity(commonOperationChange.Severity)
+				cellsValues[fmt.Sprintf("K%d", rowIndex)] = mapSeverity(commonOperationChange.Severity)
 				cellsValues[fmt.Sprintf("L%d", rowIndex)] = versionChanges.Packages[key].Kind
 				cellsValues[fmt.Sprintf("M%d", rowIndex)] = changelogView.ApiKind
 				err := setCellsValues(report.workbook, view.ProtobufSheetName, cellsValues)
@@ -1023,7 +1023,7 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 	return report.workbook, nil
 }
 
-func mapServerity(severity string) string {
+func mapSeverity(severity string) string {
 	switch severity {
 	case "semi-breaking":
 		return "requires attention"

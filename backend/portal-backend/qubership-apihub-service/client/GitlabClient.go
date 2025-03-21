@@ -16,6 +16,7 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -42,7 +43,13 @@ func NewGitlabOauthClient(gitlabUrl, accessToken string, userId string, tokenRev
 	if accessToken == "" {
 		return nil, fmt.Errorf("parameter %s can't be blank", "accessToken")
 	}
-	client, err := gitlab.NewOAuthClient(accessToken, gitlab.WithBaseURL(gitlabUrl+"/api/v4"))
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	httpClient := &http.Client{Transport: tr}
+
+	client, err := gitlab.NewOAuthClient(accessToken, gitlab.WithBaseURL(gitlabUrl+"/api/v4"), gitlab.WithHTTPClient(httpClient))
 	if err != nil {
 		return nil, err
 	}

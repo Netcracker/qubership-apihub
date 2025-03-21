@@ -88,6 +88,11 @@ func (c cleanupServiceImpl) ClearTestData(testId string) error {
 	if err != nil {
 		return err
 	}
+
+	//clear personal access tokens
+	_, err = c.cp.GetConnection().Model(&entity.PersonaAccessTokenEntity{}).
+		Where("user_id ilike ?", "%"+utils.LikeEscaped(testId)+"%").
+		ForceDelete()
 	//clear table user_data
 	_, err = c.cp.GetConnection().Model(&entity.UserEntity{}).
 		Where("user_id ilike ?", "%"+utils.LikeEscaped(testId)+"%").
@@ -129,5 +134,8 @@ func (c cleanupServiceImpl) ClearTestData(testId string) error {
 	if err != nil {
 		return err
 	}
+
+	// TODO: need to clear business metrics as well
+
 	return nil
 }
