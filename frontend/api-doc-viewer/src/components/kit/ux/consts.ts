@@ -55,7 +55,7 @@ export const DIFF_TYPE_COLORS: Record<DiffType, string> = {
 
 export const DIFF_TYPE_NAME_MAP: Record<DiffType, string> = {
   [breaking]: 'breaking',
-  [semiBreaking]: 'risky',
+  [semiBreaking]: 'requires attention',
   [deprecated]: 'deprecated',
   [nonBreaking]: 'non-breaking',
   [unclassified]: 'unclassified',
