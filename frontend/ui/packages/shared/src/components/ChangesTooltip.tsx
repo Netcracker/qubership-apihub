@@ -20,7 +20,7 @@ import type { ChangeSeverity } from '../entities/change-severities'
 import {
   CHANGE_SEVERITY_COLOR_MAP,
   CHANGE_SEVERITY_DESCRIPTION_MAP,
-  CHANGE_SEVERITY_NAME_MAP,
+  CHANGE_SEVERITY_TOOLTIP_TITLE_MAP,
 } from '../entities/change-severities'
 import { Box, Divider, Tooltip } from '@mui/material'
 import ListItem from '@mui/material/ListItem'
@@ -67,7 +67,7 @@ const ChangesTooltipContent: FC<ChangesTooltipContentProps> = memo<ChangesToolti
   category,
 }) => {
   const tooltipContent = CHANGE_SEVERITY_DESCRIPTION_MAP[changeType]
-  const categoryTitle = `${category ? `${TOOLTIP_TITLE_BY_CATEGORY[category]} with ` : ''}${CHANGE_SEVERITY_NAME_MAP[changeType]} Changes`
+  const categoryTitle = `${category ? `${TOOLTIP_TITLE_BY_CATEGORY[category]} with ` : ''}${CHANGE_SEVERITY_TOOLTIP_TITLE_MAP[changeType]}`
 
   return (
     <Box sx={{ p: '4px 4px' }}>

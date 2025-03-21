@@ -697,7 +697,7 @@ If during package version publication, you specified a previous release version,
 
 - Breaking – Breaking change is a change that breaks backward compatibility with the previous version of API.  
   For example, deleting an operation, adding a required parameter or changing the type of a parameter are breaking changes.
-- Risky – Risky change is a change that breaks backward compatibility according to the rules:
+- Requires Attention – A change requiring attention is a change that breaks backward compatibility according to the rules:
   - operation or entity in the operation was annotated as deprecated in at least two previous consecutive releases and then it was deleted
   - operation is marked as no-BWC
 - Deprecated – Deprecating change is a change that annotates an operation, parameter or schema as deprecated. Removing a "deprecated" annotation is also considered a deprecating change.
