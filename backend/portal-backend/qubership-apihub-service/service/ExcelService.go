@@ -717,7 +717,7 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 	cellsValues["A6"] = view.PreviousVersionColumnName
 	cellsValues["A7"] = view.APITypeColumnName
 	cellsValues["A8"] = "Number of operations with breaking changes"
-	cellsValues["A9"] = "Number of operations with risky changes"
+	cellsValues["A9"] = "Number of operations with changes requiring attention"
 	cellsValues["A10"] = "Number of operations with non-breaking changes"
 	cellsValues["A11"] = "Number of operations with deprecated changes"
 	cellsValues["A12"] = "Number of operations with annotation changes"
@@ -1026,7 +1026,7 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 func mapSeverity(severity string) string {
 	switch severity {
 	case "semi-breaking":
-		return "risky"
+		return "requires attention"
 	default:
 		return severity
 	}
