@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "3_1_Stories_Bugs",
-        "_postman_id": "68008625-cb04-4d50-8282-620800dcfc17",
+        "_postman_id": "cd45c01c-dfec-44f1-89f4-4bb6c5fc316e",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -10884,7 +10884,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_2}}/versions/{{version_2}}/rest/build/groups/{{operation_group_1}}/buildType/mergedSpecification",
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_2}}/versions/{{version_2}}/rest/build/groups/{{operation_group_1}}/buildType/mergedSpecification?format=yaml",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -10901,6 +10901,12 @@
                                         "{{operation_group_1}}",
                                         "buildType",
                                         "mergedSpecification"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "format",
+                                            "value": "yaml"
+                                        }
                                     ]
                                 },
                                 "method": "POST",
