@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_1_Smoke_Portal",
-        "_postman_id": "c82f46f6-01a4-4ec2-98ab-57dc9b23781b",
+        "_postman_id": "1b5e7d43-7eac-4644-a2c7-cd73af46b2f2",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -547,7 +547,7 @@
                                         "exec": [
                                             "pm.test(\"Verify Status Code and Content-Type or 404 based on USER_ID_WITH_AVATAR\", function () {\r",
                                             "    let userIdWithAvatar = pm.variables.get(\"USER_ID_WITH_AVATAR\"); // Retrieve USER_ID_WITH_AVATAR variable\r",
-                                            "    let responseJson = pm.response.json(); // Parse response JSON\r",
+                                            "   \r",
                                             "\r",
                                             "    if (userIdWithAvatar !== \"x_apihub\") {\r",
                                             "        // Expect status code 200 and Content-Type to be image/png for non-x_apihub users\r",
