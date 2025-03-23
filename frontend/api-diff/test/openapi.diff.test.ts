@@ -193,13 +193,13 @@ describe('Openapi3 operation changes', () => {
         action: DiffAction.replace,
         beforeDeclarationPaths: [['paths', '/path1/{param1}/{anotherParam1}', 'parameters', 0, 'name']],
         afterDeclarationPaths: [['paths', '/path1/{param2}/{anotherParam2}', 'parameters', 1, 'name']],
-        type: nonBreaking,
+        type: annotation,
       }),
       expect.objectContaining({
         action: DiffAction.replace,
         beforeDeclarationPaths: [['paths', '/path1/{param1}/{anotherParam1}', 'parameters', 1, 'name']],
         afterDeclarationPaths: [['paths', '/path1/{param2}/{anotherParam2}', 'parameters', 0, 'name']],
-        type: nonBreaking,
+        type: annotation,
       }),
     ]))
   })
@@ -217,13 +217,13 @@ describe('Openapi3 operation changes', () => {
         action: DiffAction.replace,
         beforeDeclarationPaths: [['paths', '/path1/{param1}/{anotherParam1}', 'get', 'parameters', 0, 'name']],
         afterDeclarationPaths: [['paths', '/path1/{param2}/{anotherParam2}', 'get', 'parameters', 1, 'name']],
-        type: nonBreaking,
+        type: annotation,
       }),
       expect.objectContaining({
         action: DiffAction.replace,
         beforeDeclarationPaths: [['paths', '/path1/{param1}/{anotherParam1}', 'get', 'parameters', 1, 'name']],
         afterDeclarationPaths: [['paths', '/path1/{param2}/{anotherParam2}', 'get', 'parameters', 0, 'name']],
-        type: nonBreaking,
+        type: annotation,
       }),
     ]))
   })
@@ -258,7 +258,7 @@ describe('Openapi3 operation changes', () => {
         action: DiffAction.replace,
         beforeDeclarationPaths: [['paths', '/path1/{param1}', 'get', 'parameters', 0, 'name']],
         afterDeclarationPaths: [['paths', '/path1/{param2}', 'get', 'parameters', 0, 'name']],
-        type: nonBreaking,
+        type: annotation,
       }),
       expect.objectContaining({
         action: DiffAction.add,

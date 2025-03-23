@@ -73,7 +73,7 @@ export const parameterAllowReservedClassifyRule: ClassifyRule = [
 export const parameterNameClassifyRule: ClassifyRule = [
   nonBreaking,
   breaking,
-  ({ before }) => (getKeyValue(before.parent, 'in') === 'path' ? nonBreaking : breaking),
+  ({ before }) => (getKeyValue(before.parent, 'in') === 'path' ? annotation : breaking),
 ]
 
 export const parameterRequiredClassifyRule: ClassifyRule = [
