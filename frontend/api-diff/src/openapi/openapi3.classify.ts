@@ -14,6 +14,7 @@ import { getKeyValue, isExist, isNotEmptyArray } from '../utils'
 import { emptySecurity, getDefaultStyle, includeSecurity } from './openapi3.utils'
 import type { ClassifyRule, CompareContext } from '../types'
 import { DiffType } from '../types'
+import { hidePathParamNames } from './openapi3.mapping'
 
 export const paramClassifyRule: ClassifyRule = [
   ({ after }) => {
@@ -140,4 +141,18 @@ export const operationSecurityItemClassifyRule: ClassifyRule = [
     before,
     after,
   }) => (includeSecurity(after.parent, before.parent) || emptySecurity(after.value) ? nonBreaking : breaking),
+]
+
+export const pathChangeClassifyRule: ClassifyRule = [
+  nonBreaking,
+  breaking,
+  ({ before, after }) => {
+    const beforePath = before.key as string
+    const afterPath = after.key as string
+    const unifiedBeforePath = hidePathParamNames(beforePath)
+    const unifiedAfterPath = hidePathParamNames(afterPath)
+    
+    // If unified paths are the same, it means only parameter names changed
+    return unifiedBeforePath === unifiedAfterPath ? annotation : breaking
+  }
 ]

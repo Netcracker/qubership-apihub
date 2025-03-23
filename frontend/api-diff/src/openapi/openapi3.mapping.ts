@@ -124,7 +124,7 @@ export const contentMediaTypeMappingResolver: MappingResolver<string> = (before,
   return result
 }
 
-function hidePathParamNames(path: string): string {
+export function hidePathParamNames(path: string): string {
   return path.replace(PATH_PARAMETER_REGEXP, PATH_PARAM_UNIFIED_PLACEHOLDER)
 }
 

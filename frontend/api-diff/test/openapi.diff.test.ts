@@ -7,6 +7,7 @@ import {
   DIFF_META_KEY,
   DiffAction,
   nonBreaking,
+  annotation,
 } from '../src'
 
 import { OpenapiBuilder, TEST_DIFF_FLAG, TEST_ORIGINS_FLAG, TEST_SYNTHETIC_TITLE_FLAG } from './helper'
@@ -186,8 +187,7 @@ describe('Openapi3 operation changes', () => {
         action: DiffAction.rename,
         beforeDeclarationPaths: [['paths', '/path1/{param1}/{anotherParam1}']],
         afterDeclarationPaths: [['paths', '/path1/{param2}/{anotherParam2}']],
-        // todo fix
-        type: breaking,
+        type: annotation, // Only parameter names changed, unified paths are the same
       }),
       expect.objectContaining({
         action: DiffAction.replace,
@@ -211,8 +211,7 @@ describe('Openapi3 operation changes', () => {
         action: DiffAction.rename,
         beforeDeclarationPaths: [['paths', '/path1/{param1}/{anotherParam1}']],
         afterDeclarationPaths: [['paths', '/path1/{param2}/{anotherParam2}']],
-        // todo fix
-        type: breaking,
+        type: annotation, // Only parameter names changed, unified paths are the same
       }),
       expect.objectContaining({
         action: DiffAction.replace,
@@ -253,8 +252,7 @@ describe('Openapi3 operation changes', () => {
         action: DiffAction.rename,
         beforeDeclarationPaths: [['paths', '/path1/{param1}']],
         afterDeclarationPaths: [['paths', '/path1/{param2}']],
-        // todo fix
-        type: breaking,
+        type: annotation, // Only parameter name changed, unified paths are the same
       }),
       expect.objectContaining({
         action: DiffAction.replace,
