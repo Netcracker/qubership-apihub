@@ -27,6 +27,7 @@ Please refer to [`docker-compose/README.md`](/docker-compose/README.md)
 APIHUB_POSTGRESQL_DB_NAME=apihub;
 APIHUB_POSTGRESQL_USERNAME=apihub;
 APIHUB_POSTGRESQL_PASSWORD=apihub;
+APIHUB_POSTGRESQL_HOST=pg.local;
 APIHUB_POSTGRESQL_PORT=5432;
 JWT_PRIVATE_KEY=${any ssh private key, base64 encoded};
 APIHUB_ACCESS_TOKEN=${any string}
@@ -58,6 +59,9 @@ APIHUB_ACCESS_TOKEN=${any string}
 | LDAP_SERVER | No | | `ldap://ldap.example.com:389` | LDAP server URL. Required for SAML integration for syncing user inf |
 | LDAP_USER | No | | `cn=apihub,dc=example,dc=com` | LDAP User used for connecting to LDAP server |
 | LDAP_USER_PASSWORD | No |     | `ldap-password` | Password for LDAP User |
+| LDAP_BASE_DN | No |  |  | TODO |
+| LDAP_ORGANIZATION_UNIT | No |  |  | TODO |
+| LDAP_SEARCH_BASE | No |  |  | TODO |
 | MINIO_STORAGE_ACTIVE | No | false | `false` | Set to true to enable S3 integration. S3 is used for store debug data |
 | STORAGE_SERVER_USERNAME | No |     | `minio-access-key` | Access Key ID from Minio S3 storage |
 | STORAGE_SERVER_BUCKET_NAME | No | | `apihub-bucket` | Bucket name in Minio S3 storage |
@@ -73,6 +77,20 @@ APIHUB_ACCESS_TOKEN=${any string}
 | INSECURE_PROXY | No | false | `true` | Set to true to enable apihub playground work without authtorization. |
 | MONITORING_ENABLED | No | | `false` | Set to true to enable Prometheus metrics endpoints |
 | ARTIFACT_DESCRIPTOR_VERSION | No | `unknown` | `1.1.0` | APIHUB release version, need to be shown in UI |
+| BASE_PATH | No |  |  | TODO |
+| LOG_LEVEL | No |  |  | Info, Warn, Error, etc |
+| GITLAB_URL | No |  |  | Deprecated. Required for Editor feature |
+| CLIENT_ID | No |  |  | Deprecated. Required for Editor feature |
+| CLIENT_SECRET | No |  |  | Deprecated. Required for Editor feature |
+| LISTEN_ADDRESS | Yes | :8080 |  | Need to be set for local run case |
+| PG_SSL_MODE | No |  |  | TODO |
+| BRANCH_CONTENT_SIZE_LIMIT_MB | No |  |  | TODO |
+| BUILDS_CLEANUP_SCHEDULE | No |  |  | "0 1 * * 0" // at 01:00 AM on Sunday |
+| METRICS_GETTER_SCHEDULE | No |  |  | "* * * * *" // every minute |
+| EXTERNAL_LINKS | No |  |  | TODO |
+| DEFAULT_WORKSPACE_ID | No |  |  | TODO |
+| CUSTOM_PATH_PREFIXES | No |  |  | TODO |
+| ALLOWED_HOSTS | No |  |  | TODO |
 
 | Deploy Parameter name | Mandatory | Default Value | Example | Description |
 | --- | --- | --- | --- | --- |
@@ -95,4 +113,15 @@ APIHUB_ACCESS_TOKEN=${any string}
 
 # Helm
 
-todo
+## Prerequisites
+
+1. Install k8s locally
+2. Install Helm
+
+## Set up values.yml
+
+TODO
+
+## Execute helm install
+
+TODO
