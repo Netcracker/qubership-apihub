@@ -142,7 +142,7 @@ export const DiffBlock: React.FunctionComponent<{
 
   return (
     <>
-      <Box style={{ minHeight }} title={type}>
+      <Box style={{ minHeight }} title={type ? DIFF_TYPE_NAME_MAP[type] : ''}>
         <Box ref={ref} style={{ ...innerStyle, display: 'flex', flexDirection: 'column' }}>
           {invisible ? null : children}
         </Box>
