@@ -78,19 +78,19 @@ APIHUB_ACCESS_TOKEN=${any string}
 | MONITORING_ENABLED | No | | `false` | Set to true to enable Prometheus metrics endpoints |
 | ARTIFACT_DESCRIPTOR_VERSION | No | `unknown` | `1.1.0` | APIHUB release version, need to be shown in UI |
 | BASE_PATH | No |  |  | TODO |
-| LOG_LEVEL | No |  |  | Info, Warn, Error, etc |
+| LOG_LEVEL | No | `INFO` | `DEBUG` | Info, Warn, Error, etc |
 | GITLAB_URL | No |  |  | Deprecated. Required for Editor feature |
 | CLIENT_ID | No |  |  | Deprecated. Required for Editor feature |
 | CLIENT_SECRET | No |  |  | Deprecated. Required for Editor feature |
 | LISTEN_ADDRESS | Yes | :8080 |  | Need to be set for local run case |
-| PG_SSL_MODE | No |  |  | TODO |
-| BRANCH_CONTENT_SIZE_LIMIT_MB | No |  |  | TODO |
-| BUILDS_CLEANUP_SCHEDULE | No |  |  | "0 1 * * 0" // at 01:00 AM on Sunday |
-| METRICS_GETTER_SCHEDULE | No |  |  | "* * * * *" // every minute |
-| EXTERNAL_LINKS | No |  |  | TODO |
-| DEFAULT_WORKSPACE_ID | No |  |  | TODO |
+| PG_SSL_MODE | No | `false` | `true` | TODO |
+| BRANCH_CONTENT_SIZE_LIMIT_MB | No | `50` | `75` | Size limit for the branch content (Editor case). Deprecated |
+| BUILDS_CLEANUP_SCHEDULE | No | `0 1 * * 0` | `0 1 * * 0` | `0 1 * * 0` // at 01:00 AM on Sunday |
+| METRICS_GETTER_SCHEDULE | No | `* * * * *` | `* * * * *` | `* * * * *` // every minute |
+| EXTERNAL_LINKS | No |  |  | Links to be shown under (i) button in UI |
+| DEFAULT_WORKSPACE_ID | No |  | `QS` | Default workspace ID for Agent UI |
 | CUSTOM_PATH_PREFIXES | No |  |  | TODO |
-| ALLOWED_HOSTS | No |  |  | TODO |
+| ALLOWED_HOSTS | No |  | `host.docker.internal,localhost` | TODO |
 
 | Deploy Parameter name | Mandatory | Default Value | Example | Description |
 | --- | --- | --- | --- | --- |
@@ -98,11 +98,6 @@ APIHUB_ACCESS_TOKEN=${any string}
 | APIHUB_URL | Yes |     | `https://apihub.example.com` | APIHUB server URL. |
 | APIHUB_BACKEND_ADDRESS | Yes | apihub-backend:8080 | `apihub-backend:8080` | apihub-backend address. |
 | APIHUB_NC_SERVICE_ADDRESS | Yes | apihub-nc-service:8080 | `apihub-nc-service:8080` | Custom add-on service address. |
-| DNS_ROUTE_ENABLE | No |     | `true` | Set to true to enable Ingress bounded to external DNS name. |
-| DNS_ROUTE | Yes (if DNS_ROUTE_ENABLE=true) |     | `apihub-ui.example.com` | DNS name for Ingress. Required if DNS_ROUTE_ENABLE=true. |
-| TLS_CRT | Yes (if DNS_ROUTE_ENABLE=true) |     | `base64-encoded-certificate` | TLS certificate to be set on DNS Ingress. Required if DNS_ROUTE_ENABLE=true |
-| TLS_KEY | Yes (if DNS_ROUTE_ENABLE=true) |     | `base64-encoded-private-key` | TLS certificate puplic key to be set on DNS Ingress. Required if DNS_ROUTE_ENABLE=true" |
-
 
 | Deploy Parameter name | Mandatory | Default Value | Example | Description |
 | --- | --- | --- | --- | --- |
