@@ -373,7 +373,7 @@ test.describe('6.1 API Changes (Package)', () => {
       await expect.soft(apiChangesTab.table.getChangeDescriptionCell(CREATE_LIST_OF_USERS_V1_UPDATED.changes!.annotation!.description).changeSeverityIndicator).toHaveText('annotation')
       await expect.soft(apiChangesTab.table.getChangeDescriptionCell(CREATE_LIST_OF_USERS_V1_UPDATED.changes!.unclassified!.description).changeSeverityIndicator).toHaveText('unclassified')
       await expect.soft(apiChangesTab.table.getChangeDescriptionCell(CREATE_LIST_OF_USERS_V1_UPDATED.changes!.deprecated!.description).changeSeverityIndicator).toHaveText('deprecated')
-      await expect.soft(apiChangesTab.table.getChangeDescriptionCell(CREATE_LIST_OF_USERS_V1_UPDATED.changes!.semiBreaking!.description).changeSeverityIndicator).toHaveText('risky')
+      await expect.soft(apiChangesTab.table.getChangeDescriptionCell(CREATE_LIST_OF_USERS_V1_UPDATED.changes!.semiBreaking!.description).changeSeverityIndicator).toHaveText('requires attention')
       await expect.soft(apiChangesTab.table.getChangeDescriptionCell(CREATE_LIST_OF_USERS_V1_UPDATED.changes!.nonBreaking!.description).changeSeverityIndicator).toHaveText('non-breaking')
       await expect.soft(apiChangesTab.table.getChangeDescriptionCell(CREATE_LIST_OF_USERS_V1_UPDATED.changes!.breaking!.description).changeSeverityIndicator).toHaveText('breaking')
 
@@ -383,7 +383,7 @@ test.describe('6.1 API Changes (Package)', () => {
 
       await apiChangesTab.table.getOperationRow(DEL_ORDER_V1).expandBtn.click()
 
-      await expect.soft(apiChangesTab.table.getChangeDescriptionCell(DEL_ORDER_V1.changes!.semiBreaking!.description).changeSeverityIndicator).toHaveText('risky')
+      await expect.soft(apiChangesTab.table.getChangeDescriptionCell(DEL_ORDER_V1.changes!.semiBreaking!.description).changeSeverityIndicator).toHaveText('requires attention')
     })
 
   test('[P-CHPVW-5] Navigation to the Operation Compare page',
