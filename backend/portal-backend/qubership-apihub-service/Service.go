@@ -350,85 +350,88 @@ func main() {
 	buildCleanupController := controller.NewBuildCleanupController(dbCleanupService, roleService.IsSysadm)
 	transitionController := controller.NewTransitionController(transitionService, roleService.IsSysadm)
 	businessMetricController := controller.NewBusinessMetricController(businessMetricService, excelService, roleService.IsSysadm)
-
 	apiDocsController := controller.NewApiDocsController(basePath)
-
 	transformationController := controller.NewTransformationController(roleService, buildService, versionService, transformationService, operationGroupService)
-
 	minioStorageController := controller.NewMinioStorageController(minioStorageCreds, minioStorageService)
-
 	gitHookController := controller.NewGitHookController(gitHookService)
-
 	personalAccessTokenController := controller.NewPersonalAccessTokenController(personalAccessTokenService)
-
 	packageExportConfigController := controller.NewPackageExportConfigController(roleService, packageExportConfigService, ptHandler)
 
-	r.HandleFunc("/api/v1/integrations/{integrationId}/apikey", security.Secure(integrationsController.GetUserApiKeyStatus)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/integrations/{integrationId}/apikey", security.Secure(integrationsController.SetUserApiKey)).Methods(http.MethodPut)
-	r.HandleFunc("/api/v1/integrations/{integrationId}/repositories", security.Secure(integrationsController.ListRepositories)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/integrations/{integrationId}/repositories/{repositoryId}/branches", security.Secure(integrationsController.ListBranchesAndTags)).Methods(http.MethodGet)
+	if !systemInfoService.GetEditorDisabled() {
+		r.HandleFunc("/api/v1/integrations/{integrationId}/apikey", security.Secure(integrationsController.GetUserApiKeyStatus)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/integrations/{integrationId}/apikey", security.Secure(integrationsController.SetUserApiKey)).Methods(http.MethodPut)
+		r.HandleFunc("/api/v1/integrations/{integrationId}/repositories", security.Secure(integrationsController.ListRepositories)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/integrations/{integrationId}/repositories/{repositoryId}/branches", security.Secure(integrationsController.ListBranchesAndTags)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v1/projects", security.Secure(projectController.GetFilteredProjects)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects", security.Secure(projectController.AddProject)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/projects/{projectId}", security.Secure(projectController.GetProject)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects/{projectId}", security.Secure(projectController.UpdateProject)).Methods(http.MethodPut)
-	r.HandleFunc("/api/v1/projects/{projectId}", security.Secure(projectController.DeleteProject)).Methods(http.MethodDelete)
-	r.HandleFunc("/api/v1/projects/{projectId}/favor", security.Secure(projectController.FavorProject)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/projects/{projectId}/disfavor", security.Secure(projectController.DisfavorProject)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/projects", security.Secure(projectController.GetFilteredProjects)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects", security.Secure(projectController.AddProject)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/projects/{projectId}", security.Secure(projectController.GetProject)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{projectId}", security.Secure(projectController.UpdateProject)).Methods(http.MethodPut)
+		r.HandleFunc("/api/v1/projects/{projectId}", security.Secure(projectController.DeleteProject)).Methods(http.MethodDelete)
+		r.HandleFunc("/api/v1/projects/{projectId}/favor", security.Secure(projectController.FavorProject)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/projects/{projectId}/disfavor", security.Secure(projectController.DisfavorProject)).Methods(http.MethodPost)
 
-	r.HandleFunc("/api/v1/groups", security.Secure(groupController.AddGroup)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/groups/{groupId}", security.Secure(groupController.GetGroupInfo)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/groups", security.Secure(groupController.GetAllGroups)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/groups/{groupId}/favor", security.Secure(groupController.FavorGroup)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/groups/{groupId}/disfavor", security.Secure(groupController.DisfavorGroup)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/groups", security.Secure(groupController.AddGroup)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/groups/{groupId}", security.Secure(groupController.GetGroupInfo)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/groups", security.Secure(groupController.GetAllGroups)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/groups/{groupId}/favor", security.Secure(groupController.FavorGroup)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/groups/{groupId}/disfavor", security.Secure(groupController.DisfavorGroup)).Methods(http.MethodPost)
 
-	r.HandleFunc("/api/v1/projects/{projectId}/branches", security.Secure(branchController.GetProjectBranches)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}", security.Secure(branchController.GetProjectBranchDetails)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/config", security.Secure(branchController.GetProjectBranchConfigRaw)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/save", security.Secure(branchController.CommitBranchDraftChanges)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/zip", security.Secure(branchController.GetProjectBranchContentZip)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/integration/files", security.Secure(branchController.GetProjectBranchFiles)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/history", security.Secure(branchController.GetProjectBranchCommitHistory_deprecated)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}", security.Secure(branchController.DeleteBranch)).Methods(http.MethodDelete)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/clone", security.Secure(branchController.CloneBranch)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/reset", security.Secure(branchController.DeleteBranchDraft)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/conflicts", security.Secure(branchController.GetBranchConflicts)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/integration/files", security.Secure(contentController.AddFile)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/refs", security.Secure(refController.UpdateRefs)).Methods(http.MethodPatch)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/editors", security.Secure(branchController.AddBranchEditor)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/editors", security.Secure(branchController.RemoveBranchEditor)).Methods(http.MethodDelete)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches", security.Secure(branchController.GetProjectBranches)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}", security.Secure(branchController.GetProjectBranchDetails)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/config", security.Secure(branchController.GetProjectBranchConfigRaw)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/save", security.Secure(branchController.CommitBranchDraftChanges)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/zip", security.Secure(branchController.GetProjectBranchContentZip)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/integration/files", security.Secure(branchController.GetProjectBranchFiles)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/history", security.Secure(branchController.GetProjectBranchCommitHistory_deprecated)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}", security.Secure(branchController.DeleteBranch)).Methods(http.MethodDelete)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/clone", security.Secure(branchController.CloneBranch)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/reset", security.Secure(branchController.DeleteBranchDraft)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/conflicts", security.Secure(branchController.GetBranchConflicts)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/integration/files", security.Secure(contentController.AddFile)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/refs", security.Secure(refController.UpdateRefs)).Methods(http.MethodPatch)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/editors", security.Secure(branchController.AddBranchEditor)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/editors", security.Secure(branchController.RemoveBranchEditor)).Methods(http.MethodDelete)
 
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}", security.Secure(contentController.GetContent)).Methods(http.MethodGet) //deprecated???
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}/file", security.Secure(contentController.GetContentAsFile)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}", security.Secure(contentController.UpdateContent)).Methods(http.MethodPut)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/upload", security.Secure(contentController.UploadContent)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}/history", security.Secure(contentController.GetContentHistory)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}/history/{commitId}", security.Secure(contentController.GetContentFromCommit)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects/{projectId}/blobs/{blobId}", security.Secure(contentController.GetContentFromBlobId)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}/rename", security.Secure(contentController.MoveFile)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}/reset", security.Secure(contentController.ResetFile)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}/restore", security.Secure(contentController.RestoreFile)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}", security.Secure(contentController.DeleteFile)).Methods(http.MethodDelete)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}/meta", security.Secure(contentController.UpdateMetadata)).Methods(http.MethodPatch)
-	r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/allfiles", security.Secure(contentController.GetAllContent)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}", security.Secure(contentController.GetContent)).Methods(http.MethodGet) //deprecated???
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}/file", security.Secure(contentController.GetContentAsFile)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}", security.Secure(contentController.UpdateContent)).Methods(http.MethodPut)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/upload", security.Secure(contentController.UploadContent)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}/history", security.Secure(contentController.GetContentHistory)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}/history/{commitId}", security.Secure(contentController.GetContentFromCommit)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{projectId}/blobs/{blobId}", security.Secure(contentController.GetContentFromBlobId)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}/rename", security.Secure(contentController.MoveFile)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}/reset", security.Secure(contentController.ResetFile)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}/restore", security.Secure(contentController.RestoreFile)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}", security.Secure(contentController.DeleteFile)).Methods(http.MethodDelete)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/files/{fileId}/meta", security.Secure(contentController.UpdateMetadata)).Methods(http.MethodPatch)
+		r.HandleFunc("/api/v1/projects/{projectId}/branches/{branchName}/allfiles", security.Secure(contentController.GetAllContent)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v1/projects/{packageId}/versions/{version}", security.Secure(publishedController.GetVersion)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects/{packageId}/versions/{version}/documentation", security.Secure(publishedController.GenerateVersionDocumentation)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects/{packageId}/versions/{version}/files/{slug}/documentation", security.Secure(publishedController.GenerateFileDocumentation)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/projects/{packageId}/versions/{version}/files/{fileSlug}/share", security.Secure(publishedController.SharePublishedFile)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/shared/{shared_id}", security.NoSecure(publishedController.GetSharedContentFile)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{packageId}/versions/{version}", security.Secure(publishedController.GetVersion)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{packageId}/versions/{version}/documentation", security.Secure(publishedController.GenerateVersionDocumentation)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{packageId}/versions/{version}/files/{slug}/documentation", security.Secure(publishedController.GenerateFileDocumentation)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/projects/{packageId}/versions/{version}/files/{fileSlug}/share", security.Secure(publishedController.SharePublishedFile)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/shared/{shared_id}", security.NoSecure(publishedController.GetSharedContentFile)).Methods(http.MethodGet)
+
+		r.HandleFunc("/api/v1/projects/{projectId}/versions/{version}/files/{fileSlug}/share", security.Secure(publishedController.SharePublishedFile)).Methods(http.MethodPost)
+
+		r.HandleFunc("/login/gitlab/callback", security.NoSecure(oauthController.GitlabOauthCallback)).Methods(http.MethodGet)
+		r.HandleFunc("/login/gitlab", security.NoSecure(oauthController.StartOauthProcessWithGitlab)).Methods(http.MethodGet)
+
+		r.HandleFunc("/api/v1/git/webhook", gitHookController.HandleEvent).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/projects/{projectId}/integration/hooks", security.Secure(gitHookController.SetGitLabToken)).Methods(http.MethodPut)
+
+		//websocket
+		r.HandleFunc("/ws/v1/projects/{projectId}/branches/{branchName}", security.SecureWebsocket(branchWSController.ConnectToProjectBranch))
+		r.HandleFunc("/ws/v1/projects/{projectId}/branches/{branchName}/files/{fileId}", security.SecureWebsocket(fileWSController.ConnectToFile))
+	}
 
 	r.HandleFunc("/api/v1/system/info", security.Secure(systemInfoController.GetSystemInfo)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/system/configuration", samlAuthController.GetSystemSSOInfo).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v1/projects/{projectId}/versions/{version}/files/{fileSlug}/share", security.Secure(publishedController.SharePublishedFile)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/debug/logs", security.Secure(logsController.StoreLogs)).Methods(http.MethodPut)
 	r.HandleFunc("/api/v1/debug/logs/setLevel", security.Secure(logsController.SetLogLevel)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/debug/logs/checkLevel", security.Secure(logsController.CheckLogLevel)).Methods(http.MethodGet)
-
-	//websocket
-	r.HandleFunc("/ws/v1/projects/{projectId}/branches/{branchName}", security.SecureWebsocket(branchWSController.ConnectToProjectBranch))
-	r.HandleFunc("/ws/v1/projects/{projectId}/branches/{branchName}/files/{fileId}", security.SecureWebsocket(fileWSController.ConnectToFile))
 
 	//Search
 	r.HandleFunc("/api/v2/search/{searchLevel}", security.Secure(searchController.Search_deprecated)).Methods(http.MethodPost) //deprecated
@@ -508,9 +511,6 @@ func main() {
 	r.HandleFunc("/api/v2/users/{userId}/space", security.Secure(userController.CreatePrivatePackageForUser)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/space", security.SecureJWT(userController.CreatePrivateUserPackage)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/space", security.SecureJWT(userController.GetPrivateUserPackage)).Methods(http.MethodGet)
-
-	r.HandleFunc("/login/gitlab/callback", security.NoSecure(oauthController.GitlabOauthCallback)).Methods(http.MethodGet)
-	r.HandleFunc("/login/gitlab", security.NoSecure(oauthController.StartOauthProcessWithGitlab)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/changes/summary", security.Secure(comparisonController.GetComparisonChangesSummary)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations", security.Secure(operationController.GetOperationList)).Methods(http.MethodGet)
@@ -612,9 +612,6 @@ func main() {
 
 	r.HandleFunc("/api/v2/businessMetrics", security.Secure(businessMetricController.GetBusinessMetrics)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v1/git/webhook", gitHookController.HandleEvent).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/projects/{projectId}/integration/hooks", security.Secure(gitHookController.SetGitLabToken)).Methods(http.MethodPut)
-
 	r.HandleFunc("/api/v1/publishHistory", security.Secure(versionController.GetPublishedVersionsHistory)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v1/personalAccessToken", security.Secure(personalAccessTokenController.CreatePAT)).Methods(http.MethodPost)
@@ -626,18 +623,20 @@ func main() {
 
 	//debug + cleanup
 	if !systemInfoService.GetSystemInfo().ProductionMode {
-		r.HandleFunc("/api/internal/websocket/branches/log", security.Secure(branchWSController.TestLogWebsocketClient)).Methods(http.MethodPost)
-		r.HandleFunc("/api/internal/websocket/branches/log", security.Secure(branchWSController.TestGetWebsocketClientMessages)).Methods(http.MethodGet)
-		r.HandleFunc("/api/internal/websocket/files/log", security.Secure(fileWSController.TestLogWebsocketClient)).Methods(http.MethodPost)
-		r.HandleFunc("/api/internal/websocket/files/log", security.Secure(fileWSController.TestGetWebsocketClientMessages)).Methods(http.MethodGet)
-		r.HandleFunc("/api/internal/websocket/files/send", security.Secure(fileWSController.TestSendMessageToWebsocket)).Methods(http.MethodPut)
-
+		if !systemInfoService.GetEditorDisabled() {
+			r.HandleFunc("/api/internal/websocket/branches/log", security.Secure(branchWSController.TestLogWebsocketClient)).Methods(http.MethodPost)
+			r.HandleFunc("/api/internal/websocket/branches/log", security.Secure(branchWSController.TestGetWebsocketClientMessages)).Methods(http.MethodGet)
+			r.HandleFunc("/api/internal/websocket/files/log", security.Secure(fileWSController.TestLogWebsocketClient)).Methods(http.MethodPost)
+			r.HandleFunc("/api/internal/websocket/files/log", security.Secure(fileWSController.TestGetWebsocketClientMessages)).Methods(http.MethodGet)
+			r.HandleFunc("/api/internal/websocket/files/send", security.Secure(fileWSController.TestSendMessageToWebsocket)).Methods(http.MethodPut)
+			r.HandleFunc("/api/internal/websocket/loadbalancer", security.Secure(branchWSController.DebugSessionsLoadBalance)).Methods(http.MethodGet)
+		}
 		r.HandleFunc("/api/internal/users/{userId}/systemRole", security.Secure(roleController.TestSetUserSystemRole)).Methods(http.MethodPost)
 		r.HandleFunc("/api/internal/users", security.NoSecure(userController.CreateInternalUser)).Methods("POST")
 		r.HandleFunc("/api/v2/auth/local", security.NoSecure(security.CreateLocalUserToken)).Methods("POST")
 
 		r.HandleFunc("/api/internal/clear/{testId}", security.Secure(cleanupController.ClearTestData)).Methods(http.MethodDelete)
-		r.HandleFunc("/api/internal/websocket/loadbalancer", security.Secure(branchWSController.DebugSessionsLoadBalance)).Methods(http.MethodGet)
+
 		r.PathPrefix("/debug/").Handler(http.DefaultServeMux)
 
 		r.HandleFunc("/api/internal/minio/download", security.Secure(minioStorageController.DownloadFilesFromMinioToDatabase)).Methods(http.MethodPost)
