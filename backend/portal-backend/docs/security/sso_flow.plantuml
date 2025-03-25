@@ -1,0 +1,44 @@
+@startuml
+
+title SSO authentication in Apihub
+
+participant browser
+
+participant backend
+participant adfs
+
+browser -> backend: /login/sso/saml
+backend -> adfs: start SAML auth
+adfs -> backend: redirect URL
+backend -> browser: redirect to ADFS URL
+browser -> adfs: follow ADFS URL
+adfs-> browser: login form
+
+note over browser
+User enters credentials and clicks login button. 
+end note
+browser -> adfs: user credentials
+
+note over adfs
+Checks credentials and generates appropriate response
+end note
+adfs -> browser: redirect to backend /saml/acs
+browser -> backend: /saml/acs
+note over backend
+Parse ADFS response and check the status.
+If case of success, extract username, email, avatar from the response.
+end note
+backend -> backend: Create or update corresponding user in Apihub DB.
+backend -> backend: Generate access and renew tokens
+
+note over backend
+Set cookie "userView" with user data and tokens.
+end note
+backend -> browser: redirect to the original URL or start page with the auth cookie
+
+note over browser
+Read the "userView" cookie and extract data to the localstorage.
+Use access token in further requests until it expires(12h).
+end note
+
+@enduml
