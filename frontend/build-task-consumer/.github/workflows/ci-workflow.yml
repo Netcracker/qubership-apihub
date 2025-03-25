@@ -1,4 +1,4 @@
-name: FE build, Docker build, Compose Run, BE tests, FE tests -  CI Workflow 
+name: build & unit test, build Docker image, run E2E tests 
 
 on:
   push:
@@ -13,12 +13,14 @@ on:
   delete:
   pull_request:
     types: [opened, reopened, synchronize]
+    paths-ignore:
+      - 'docs/**' 
 
-jobs:
-  call-frontend-ci-workflow:
+jobs:  
+  build-and-unit-test:
     uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@main
-  call-docker-ci-workflow:
-    needs: call-frontend-ci-workflow
+  build-docker-image:
+    needs: build-and-unit-test
     if: (github.event_name == 'push') || (github.event_name == 'pull_request')
     uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@main
     with:
@@ -28,21 +30,20 @@ jobs:
       platforms: linux/amd64,linux/arm64
       labels: |
         maintainer=qubership
-        npm-package-version=${{ needs.call-frontend-ci-workflow.outputs.package_version }}
+        npm-package-version=${{ needs.build-and-unit-test.outputs.package_version }}
     secrets:
       NPMRC: ${{ secrets.NPMRC }}
-  call-docker-compose-run-and-test-ci-workflow:
-    uses: netcracker/qubership-apihub-ci/.github/workflows/docker-compose-run-and-test-ci.yml@main
-    needs: call-docker-ci-workflow
+  run-e2e-tests:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@main
+    needs: build-docker-image
     if: github.event_name == 'pull_request'
     with:
       postman-collections-run: false
-      apihub-build-task-consumer-image-tag: ${{ needs.call-docker-ci-workflow.outputs.image_tag }}
-      # backend-image-tag: next
-      # ui-image-tag: 1.2.3
+      apihub-build-task-consumer-image-tag: ${{ needs.build-docker-image.outputs.image_tag }}      
+      # apihub-backend-image-tag: dev
+      # apihub-ui-image-tag: dev
     secrets:
       APIHUB_ACCESS_TOKEN: ${{ secrets.APIHUB_ACCESS_TOKEN }}
       APIHUB_ADMIN_EMAIL: ${{ secrets.APIHUB_ADMIN_EMAIL }}
       APIHUB_ADMIN_PASSWORD: ${{ secrets.APIHUB_ADMIN_PASSWORD }}
       JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
-      NPMRC: ${{ secrets.NPMRC }}
