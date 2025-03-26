@@ -34,7 +34,7 @@
     "release-finish": "release-finish"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-diff": "1.0.4",
+    "@netcracker/qubership-apihub-api-diff": "dev",
     "@netcracker/qubership-apihub-api-unifier": "1.0.4",
     "@netcracker/qubership-apihub-json-crawl": "1.0.4",
     "@netcracker/qubership-apihub-graphapi": "1.0.8",
