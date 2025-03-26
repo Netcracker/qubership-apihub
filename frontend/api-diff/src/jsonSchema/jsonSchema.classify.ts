@@ -4,6 +4,7 @@ import {
   breakingIfAfterTrue,
   nonBreaking,
   PARENT_JUMP,
+  semiBreaking,
   strictResolveValueFromContext,
   unclassified,
 } from '../core'
@@ -100,6 +101,9 @@ export const enumClassifyRule: ClassifyRule = [
   ({ before }) => (isNotEmptyArray(before.parent) ? nonBreaking : breaking),
   ({ after }) => (isNotEmptyArray(after.parent) ? breaking : nonBreaking),
   breaking,
+  ({ before }) => (isNotEmptyArray(before.parent) ? semiBreaking : nonBreaking),
+  ({ after }) => (isNotEmptyArray(after.parent) ? nonBreaking: semiBreaking ),
+  nonBreaking
 ]
 
 export const nonInvertible = (rule: ClassifyRule): ClassifyRule => {

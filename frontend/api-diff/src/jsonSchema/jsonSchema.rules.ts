@@ -20,6 +20,7 @@ import {
   transformCompareRules,
   unclassified,
   deepEqualsUniqueItemsArrayMappingResolver,
+  semiBreaking,
 } from '../core'
 import {
   enumClassifyRule,
@@ -122,7 +123,7 @@ export const jsonSchemaRules = ({
     '/default': simpleRule([nonBreaking, breaking, breaking], resolveSchemaDescriptionTemplates('default value')),
 
     '/enum': {
-      $: [breaking, nonBreaking, breaking],
+      $: [breaking, nonBreaking, breaking, nonBreaking, semiBreaking, nonBreaking],
       mapping: deepEqualsUniqueItemsArrayMappingResolver,
       '/*': ({ key, value }) => {
         if (!isNumber(key)) {
