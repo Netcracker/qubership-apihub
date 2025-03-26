@@ -187,7 +187,7 @@ func SecureProxy(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func respondWithAuthFailedError(w http.ResponseWriter, err error) {
-	log.Tracef("Authorization failed(401): %+v", err)
+	log.Tracef("Authentication failed: %+v", err)
 	customErr := &exception.CustomError{
 		Status:  http.StatusUnauthorized,
 		Message: http.StatusText(http.StatusUnauthorized),
