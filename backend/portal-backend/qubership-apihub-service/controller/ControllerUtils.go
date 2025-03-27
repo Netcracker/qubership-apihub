@@ -146,6 +146,10 @@ func getLimitQueryParamWithIncreasedMax(r *http.Request) (int, *exception.Custom
 	return getLimitQueryParamBase(r, 100, 500)
 }
 
+func getLimitQueryParamWithExtendedMax(r *http.Request) (int, *exception.CustomError) {
+	return getLimitQueryParamBase(r, 100, 1000)
+}
+
 func getLimitQueryParamBase(r *http.Request, defaultLimit, maxLimit int) (int, *exception.CustomError) {
 	if r.URL.Query().Get("limit") != "" {
 		limit, err := strconv.Atoi(r.URL.Query().Get("limit"))

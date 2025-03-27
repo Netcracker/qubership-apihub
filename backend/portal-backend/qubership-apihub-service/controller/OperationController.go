@@ -150,7 +150,7 @@ func (o operationControllerImpl) GetOperationList(w http.ResponseWriter, r *http
 		return
 	}
 
-	limit, customError := getLimitQueryParam(r)
+	limit, customError := getLimitQueryParamWithExtendedMax(r)
 	if customError != nil {
 		RespondWithCustomError(w, customError)
 		return
