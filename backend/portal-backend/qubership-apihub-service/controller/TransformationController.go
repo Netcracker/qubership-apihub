@@ -487,7 +487,7 @@ func (t transformationControllerImpl) TransformDocuments(w http.ResponseWriter, 
 		return
 	}
 
-	content, err := t.versionService.GetTransformedDocuments_deprecated(packageId, versionName, apiType, groupName, string(view.JsonDocumentFormat))
+	content, err := t.versionService.GetTransformedDocuments(packageId, versionName, apiType, groupName, buildType, format)
 	if err != nil {
 		RespondWithError(w, "Failed to get transformed documents", err)
 		return
@@ -543,7 +543,7 @@ func (t transformationControllerImpl) TransformDocuments(w http.ResponseWriter, 
 	case string(view.StatusComplete):
 		//this case is possible only if we have an old finished build for which we don't have a transformed documents (rebuild required)
 		//or if this build completed during this method execution (rebuild is not requried)
-		content, err := t.versionService.GetTransformedDocuments_deprecated(packageId, versionName, apiType, groupName, string(view.JsonDocumentFormat))
+		content, err := t.versionService.GetTransformedDocuments(packageId, versionName, apiType, groupName, buildType, format)
 		if err != nil {
 			RespondWithError(w, "Failed to get transformed documents", err)
 			return
