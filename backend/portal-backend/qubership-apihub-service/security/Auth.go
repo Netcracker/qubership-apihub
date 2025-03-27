@@ -23,8 +23,6 @@ import (
 	"net/http"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/controller"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/shaj13/go-guardian/v2/auth"
@@ -100,28 +98,17 @@ type UserView struct {
 func CreateLocalUserToken(w http.ResponseWriter, r *http.Request) {
 	email, password, ok := r.BasicAuth()
 	if !ok {
-		controller.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusUnauthorized,
-			Message: http.StatusText(http.StatusUnauthorized),
-		})
+		respondWithAuthFailedError(w, fmt.Errorf("user credentials are not provided"))
 		return
 	}
 	user, err := userService.AuthenticateUser(email, password)
 	if err != nil {
-		controller.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusUnauthorized,
-			Message: http.StatusText(http.StatusUnauthorized),
-			Debug:   err.Error(),
-		})
+		respondWithAuthFailedError(w, err)
 		return
 	}
 	userView, err := CreateTokenForUser(*user)
 	if err != nil {
-		controller.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusUnauthorized,
-			Message: http.StatusText(http.StatusUnauthorized),
-			Debug:   err.Error(),
-		})
+		respondWithAuthFailedError(w, err)
 		return
 	}
 
