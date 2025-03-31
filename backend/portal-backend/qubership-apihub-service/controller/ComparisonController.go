@@ -174,7 +174,7 @@ func (c comparisonControllerImpl) CompareTwoVersions(w http.ResponseWriter, r *h
 	}
 
 	if reCalculate {
-		buildId, err := c.buildService.CreateChangelogBuild(buildConfig, clientBuild, builderId)
+		buildId, buildConfig, err := c.buildService.CreateChangelogBuild(buildConfig, clientBuild, builderId)
 		if err != nil {
 			RespondWithError(w, "Failed to create changelog type build", err)
 			return
@@ -223,7 +223,7 @@ func (c comparisonControllerImpl) CompareTwoVersions(w http.ResponseWriter, r *h
 	if err != nil {
 		if customError, ok := err.(*exception.CustomError); ok {
 			if customError.Status == http.StatusNotFound {
-				buildId, err := c.buildService.CreateChangelogBuild(buildConfig, clientBuild, builderId)
+				buildId, buildConfig, err := c.buildService.CreateChangelogBuild(buildConfig, clientBuild, builderId)
 				if err != nil {
 					RespondWithError(w, "Failed to create changelog type build", err)
 					return
@@ -270,7 +270,7 @@ func (c comparisonControllerImpl) CompareTwoVersions(w http.ResponseWriter, r *h
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		buildId, err := c.buildService.CreateChangelogBuild(buildConfig, clientBuild, builderId)
+		buildId, buildConfig, err := c.buildService.CreateChangelogBuild(buildConfig, clientBuild, builderId)
 		if err != nil {
 			RespondWithError(w, "Failed to create changelog type build", err)
 			return

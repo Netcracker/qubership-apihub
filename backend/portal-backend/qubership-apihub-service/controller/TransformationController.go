@@ -193,7 +193,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 	}
 
 	if reCalculate {
-		buildId, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
+		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 		if err != nil {
 			RespondWithError(w, "Failed to create documentGroup type build", err)
 			return
@@ -233,7 +233,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 		if customError, ok := err.(*exception.CustomError); ok {
 			if customError.Status == http.StatusNotFound {
 
-				buildId, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
+				buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 				if err != nil {
 					RespondWithError(w, "Failed to create documentGroup type build", err)
 					return
@@ -273,7 +273,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		buildId, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
+		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 		if err != nil {
 			RespondWithError(w, "Failed to create documentGroup type build", err)
 			return
@@ -469,7 +469,7 @@ func (t transformationControllerImpl) TransformDocuments(w http.ResponseWriter, 
 	}
 
 	if reCalculate {
-		buildId, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
+		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 		if err != nil {
 			RespondWithError(w, "Failed to create documentGroup type build", err)
 			return
@@ -511,7 +511,7 @@ func (t transformationControllerImpl) TransformDocuments(w http.ResponseWriter, 
 		if customError, ok := err.(*exception.CustomError); ok {
 			if customError.Status == http.StatusNotFound {
 
-				buildId, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
+				buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 				if err != nil {
 					RespondWithError(w, "Failed to create documentGroup type build", err)
 					return
@@ -552,7 +552,7 @@ func (t transformationControllerImpl) TransformDocuments(w http.ResponseWriter, 
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		buildId, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
+		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 		if err != nil {
 			RespondWithError(w, "Failed to create documentGroup type build", err)
 			return

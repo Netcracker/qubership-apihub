@@ -42,12 +42,12 @@ type BuildService interface {
 	GetStatuses(buildIds []string) ([]view.PublishStatusResponse, error)
 	UpdateBuildStatus(buildId string, status view.BuildStatusEnum, details string) error
 	GetFreeBuild(builderId string) ([]byte, error)
-	CreateChangelogBuild(config view.BuildConfig, isExternal bool, builderId string) (string, error) //deprecated
+	CreateChangelogBuild(config view.BuildConfig, isExternal bool, builderId string) (string, view.BuildConfig, error) //deprecated
 	GetBuildViewByChangelogSearchQuery(searchRequest view.ChangelogBuildSearchRequest) (*view.BuildView, error)
 	GetBuildViewByDocumentGroupSearchQuery(searchRequest view.DocumentGroupBuildSearchRequest) (*view.BuildView, error)
 	ValidateBuildOwnership(buildId string, builderId string) error
 
-	CreateBuildWithoutDependencies(config view.BuildConfig, isExternal bool, builderId string) (string, error)
+	CreateBuildWithoutDependencies(config view.BuildConfig, isExternal bool, builderId string) (string, view.BuildConfig, error)
 	AwaitBuildCompletion(buildId string) error
 }
 
@@ -208,7 +208,7 @@ func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config vi
 		}
 	}
 
-	publishId, err := b.addBuild(ctx, config, src, clientBuild, builderId, dependencies)
+	publishId, config, err := b.addBuild(ctx, config, src, clientBuild, builderId, dependencies)
 	if err != nil {
 		return nil, err
 	}
@@ -220,8 +220,23 @@ func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config vi
 	}
 }
 
+func (b *buildServiceImpl) setValidationRulesSeverity(config view.BuildConfig) view.BuildConfig {
+	var severity string
+	if b.systemInfoService.FailBuildOnBrokenRefs() {
+		severity = view.BrokenRefsSeverityError
+	} else {
+		severity = view.BrokenRefsSeverityWarning
+	}
+	config.ValidationRulesSeverity = view.ValidationRulesSeverity{
+		BrokenRefs: severity,
+	}
+	return config
+}
+
 // CreateChangelogBuild deprecated. use to CreateBuildWithoutDependencies
-func (b *buildServiceImpl) CreateChangelogBuild(config view.BuildConfig, isExternal bool, builderId string) (string, error) {
+func (b *buildServiceImpl) CreateChangelogBuild(config view.BuildConfig, isExternal bool, builderId string) (string, view.BuildConfig, error) {
+	config = b.setValidationRulesSeverity(config)
+
 	status := view.StatusNotStarted
 	if isExternal {
 		status = view.StatusRunning
@@ -248,7 +263,7 @@ func (b *buildServiceImpl) CreateChangelogBuild(config view.BuildConfig, isExter
 
 	confAsMap, err := view.BuildConfigToMap(config)
 	if err != nil {
-		return "", err
+		return "", config, err
 	}
 
 	sourceEnt := entity.BuildSourceEntity{
@@ -258,12 +273,14 @@ func (b *buildServiceImpl) CreateChangelogBuild(config view.BuildConfig, isExter
 
 	err = b.buildRepository.StoreBuild(buildEnt, sourceEnt, nil)
 	if err != nil {
-		return "", err
+		return "", config, err
 	}
-	return buildEnt.BuildId, nil
+	return buildEnt.BuildId, config, nil
 }
 
-func (b *buildServiceImpl) CreateBuildWithoutDependencies(config view.BuildConfig, clientBuild bool, builderId string) (string, error) {
+func (b *buildServiceImpl) CreateBuildWithoutDependencies(config view.BuildConfig, clientBuild bool, builderId string) (string, view.BuildConfig, error) {
+	config = b.setValidationRulesSeverity(config)
+
 	status := view.StatusNotStarted
 	if clientBuild {
 		status = view.StatusRunning
@@ -294,7 +311,7 @@ func (b *buildServiceImpl) CreateBuildWithoutDependencies(config view.BuildConfi
 
 	confAsMap, err := view.BuildConfigToMap(config)
 	if err != nil {
-		return "", err
+		return "", config, err
 	}
 
 	sourceEnt := entity.BuildSourceEntity{
@@ -304,13 +321,14 @@ func (b *buildServiceImpl) CreateBuildWithoutDependencies(config view.BuildConfi
 
 	err = b.buildRepository.StoreBuild(buildEnt, sourceEnt, nil)
 	if err != nil {
-		return "", err
+		return "", config, err
 	}
-	return buildEnt.BuildId, nil
+	return buildEnt.BuildId, config, nil
 }
 
-// AddBuild this is intended for build only, shouldn't be called if build is not required in scope of publish
-func (b *buildServiceImpl) addBuild(ctx context.SecurityContext, config view.BuildConfig, src []byte, clientBuild bool, builderId string, dependencies []string) (string, error) {
+func (b *buildServiceImpl) addBuild(ctx context.SecurityContext, config view.BuildConfig, src []byte, clientBuild bool, builderId string, dependencies []string) (string, view.BuildConfig, error) {
+	config = b.setValidationRulesSeverity(config)
+
 	status := view.StatusNotStarted
 	if clientBuild {
 		status = view.StatusRunning
@@ -342,7 +360,7 @@ func (b *buildServiceImpl) addBuild(ctx context.SecurityContext, config view.Bui
 
 	confAsMap, err := view.BuildConfigToMap(config)
 	if err != nil {
-		return "", err
+		return "", config, err
 	}
 
 	sourceEnt := entity.BuildSourceEntity{
@@ -358,7 +376,7 @@ func (b *buildServiceImpl) addBuild(ctx context.SecurityContext, config view.Bui
 
 	err = b.buildRepository.StoreBuild(buildEnt, sourceEnt, depends)
 	if err != nil {
-		return "", err
+		return "", config, err
 	}
 
 	if !clientBuild {
@@ -367,7 +385,7 @@ func (b *buildServiceImpl) addBuild(ctx context.SecurityContext, config view.Bui
 		log.Infof("Build %s added as external", buildEnt.BuildId)
 	}
 
-	return buildEnt.BuildId, nil
+	return buildEnt.BuildId, config, nil
 }
 
 func (b *buildServiceImpl) GetStatus(buildId string) (string, string, error) {
