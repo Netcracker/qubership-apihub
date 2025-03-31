@@ -15,10 +15,13 @@
  */
 
 import {
+  BuildResult,
   ChangeMessage,
   ChangeSummary,
   DeprecateItem,
   EMPTY_CHANGE_SUMMARY,
+  MESSAGE_SEVERITY,
+  NotificationMessage,
   OperationChanges,
   type OperationsApiType,
   OperationType,
@@ -32,6 +35,8 @@ import { ArrayContaining, ObjectContaining, RecursiveMatcher } from '../../.jest
 export type ApihubComparisonMatcher = ObjectContaining<VersionsComparison> & VersionsComparison
 export type ApihubOperationChangesMatcher = ObjectContaining<OperationChanges> & OperationChanges
 export type ApihubChangesSummaryMatcher = ObjectContaining<ChangeSummary> & ChangeSummary
+export type ApihubNotificationsMatcher = ObjectContaining<BuildResult> & BuildResult
+export type ApihubErrorNotificationMatcher = ObjectContaining<NotificationMessage> & NotificationMessage
 export type ApihubChangeMessagesMatcher = ArrayContaining<ChangeMessage> & ChangeMessage[]
 
 export function apihubComparisonMatcher(
@@ -130,3 +135,21 @@ export function deprecatedItemDescriptionMatcher(
 }
 
 type Matcher = ObjectContaining<DeprecateItem>
+
+export function notificationsMatcher(
+  expected: Array<RecursiveMatcher<NotificationMessage>>,
+): ApihubNotificationsMatcher {
+  return expect.objectContaining({
+      notifications: expect.toIncludeSameMembers(expected),
+    },
+  )
+}
+
+export function errorNotificationMatcher(
+  message: string | RegExp,
+): ApihubErrorNotificationMatcher {
+  return expect.objectContaining({
+    message: expect.stringMatching(message),
+    severity: MESSAGE_SEVERITY.Error,
+  })
+}

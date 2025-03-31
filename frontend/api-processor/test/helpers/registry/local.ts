@@ -319,7 +319,7 @@ export class LocalRegistry implements IRegistry {
     return null
   }
 
-  async publish(projectId: string, publishParams?: Partial<BuildConfig>): Promise<void> {
+  async publish(projectId: string, publishParams?: Partial<BuildConfig>): Promise<BuildResult> {
     const loadedConfig = await loadConfig(this.projectsDir, projectId) as BuildConfig
     const versionConfig = {
       ...loadedConfig,
@@ -336,6 +336,8 @@ export class LocalRegistry implements IRegistry {
     const buildResult = await builder.run()
 
     await this.publishPackage(buildResult, builder.builderContext(versionConfig), versionConfig)
+
+    return buildResult
   }
 
   async publishPackage(

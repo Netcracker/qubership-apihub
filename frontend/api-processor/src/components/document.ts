@@ -55,7 +55,7 @@ export const buildDocument = async (parsedFile: File, file: BuildConfigFile, ctx
 
     return await apiBuilder.buildDocument(parsedFile, file, ctx)
   } catch (error) {
-    throw new Error(`Cannot build file ${file.fileId}. ${error instanceof Error ? error.message : 'Unknown error'}`)
+    throw new Error(`Cannot process the "${file.fileId}" document. ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 

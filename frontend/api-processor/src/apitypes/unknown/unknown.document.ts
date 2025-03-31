@@ -15,7 +15,7 @@
  */
 
 import { BuildConfigFile, DocumentBuilder, DocumentDumper, File, VersionDocument } from '../../types'
-import { getBundledFileDataWithDependencies, getDocumentTitle } from '../../utils'
+import { createBundlingErrorHandler, getBundledFileDataWithDependencies, getDocumentTitle } from '../../utils'
 import { FILE_FORMAT } from '../../consts'
 
 export const buildUnknownDocument: DocumentBuilder<string> = async (parsedFile, file, ctx) => {
@@ -33,7 +33,7 @@ export const buildUnknownDocument: DocumentBuilder<string> = async (parsedFile, 
       const {
         data,
         dependencies: fileDependencies,
-      } = await getBundledFileDataWithDependencies(fileId, ctx.parsedFileResolver)
+      } = await getBundledFileDataWithDependencies(fileId, ctx.parsedFileResolver, createBundlingErrorHandler(ctx, fileId))
       bundledFileData = data
       dependencies = fileDependencies
     }
