@@ -36,9 +36,8 @@ jobs:
   run-e2e-tests:
     uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@main
     needs: build-docker-image
-    if: github.event_name == 'pull_request'
-    with:
-      postman-collections-run: false
+    if: (github.event_name == 'push') || (github.event_name == 'pull_request')
+    with:      
       apihub-build-task-consumer-image-tag: ${{ needs.build-docker-image.outputs.image_tag }}      
       # apihub-backend-image-tag: dev
       # apihub-ui-image-tag: dev
