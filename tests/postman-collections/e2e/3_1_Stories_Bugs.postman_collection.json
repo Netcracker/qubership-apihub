@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "3_1_Stories_Bugs",
-        "_postman_id": "cd45c01c-dfec-44f1-89f4-4bb6c5fc316e",
+        "_postman_id": "887761ed-e8dc-424f-ae9c-e85c623fd865",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -15134,8 +15134,8 @@
                                             "var data = pm.response.json();\r",
                                             "\r",
                                             "pm.test(\"Changes summary is correct\", function () {\r",
-                                            "    pm.expect(data.operationTypes[0].changesSummary.breaking).to.eql(1);\r",
-                                            "    pm.expect(data.operationTypes[0].changesSummary[\"semi-breaking\"]).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].changesSummary.breaking).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].changesSummary[\"semi-breaking\"]).to.eql(1);\r",
                                             "    pm.expect(data.operationTypes[0].changesSummary.deprecated).to.eql(0);\r",
                                             "    pm.expect(data.operationTypes[0].changesSummary[\"non-breaking\"]).to.eql(1);\r",
                                             "    pm.expect(data.operationTypes[0].changesSummary.annotation).to.eql(0);\r",
@@ -15143,8 +15143,8 @@
                                             "});\r",
                                             "\r",
                                             "pm.test(\"Summary of impacted operations is correct\", function () {\r",
-                                            "    pm.expect(data.operationTypes[0].numberOfImpactedOperations.breaking).to.eql(2);\r",
-                                            "    pm.expect(data.operationTypes[0].numberOfImpactedOperations[\"semi-breaking\"]).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].numberOfImpactedOperations.breaking).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].numberOfImpactedOperations[\"semi-breaking\"]).to.eql(2);\r",
                                             "    pm.expect(data.operationTypes[0].numberOfImpactedOperations.deprecated).to.eql(0);\r",
                                             "    pm.expect(data.operationTypes[0].numberOfImpactedOperations[\"non-breaking\"]).to.eql(1);\r",
                                             "    pm.expect(data.operationTypes[0].numberOfImpactedOperations.annotation).to.eql(0);\r",
