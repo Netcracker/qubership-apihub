@@ -1,0 +1,30 @@
+{{ if .Values.qubershipApihubBackend.monitoringEnabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app.kubernetes.io/component: 'monitoring'
+    app.kubernetes.io/processed-by-operator: victoriametrics-operator
+    app.kubernetes.io/name: 'qubership-apihub-backend-monitor'
+    app.kubernetes.io/part-of: qubership-apihub
+    app.kubernetes.io/managed-by: helm
+    k8s-app: 'qubership-apihub-backend-monitor'
+  name: 'qubership-apihub-backend-monitor'
+spec:
+  targetLabels:
+    - domain
+  endpoints:
+    - interval: 30s
+      path: '/metrics'
+      port: web
+      scheme: http
+  jobLabel: k8s-app
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: qubership-apihub-backend
+---
+  {{end}}

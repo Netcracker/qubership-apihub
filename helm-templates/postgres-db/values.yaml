@@ -1,0 +1,40 @@
+replicaCount: 1
+namespace: '{{ .Release.Namespace }}'
+image:
+  repository: postgres
+  tag: "16.8"
+  pullPolicy: IfNotPresent
+
+postgresql:
+  database: apihub_backend
+  username: apihub_backend_user
+  password: apihub_backend_password
+  additionalUsers:
+    - name: apihub_backend_user
+      password: apihub_backend_password
+      databases:
+        - apihub_backend
+  initdbScripts:
+    init.sql: |
+      -- Создание пользователя и базы данных
+      CREATE USER apihub_backend_user WITH PASSWORD 'apihub_backend_password' CREATEDB INHERIT;
+      CREATE DATABASE apihub_backend OWNER apihub_backend_user;
+      GRANT ALL PRIVILEGES ON DATABASE apihub_backend TO apihub_backend_user;
+
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: "standard"
+
+service:
+  name: pg-common
+  type: ClusterIP
+  port: 5432
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
