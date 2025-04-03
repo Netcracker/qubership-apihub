@@ -105,7 +105,6 @@ Built-in roles:
 * Editor - role with an ability to publish new version
 * Owner - role with full ability to manage the entity, but without access configuration
 * Admin - full access to the entity
-* Release Manager - role to manage release versions
 
 It's possible to create a new custom role with any set of permissions(but read permission is mandatory).
 

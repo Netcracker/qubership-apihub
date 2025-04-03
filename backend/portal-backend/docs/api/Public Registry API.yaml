@@ -7149,7 +7149,7 @@ paths:
                   type: array
                   items:
                     type: string
-                  example: [admin, owner, release-manager, editor, viewer, none]
+                  example: [admin, owner, editor, viewer, none]
       responses:
         "204":
           description: No content
