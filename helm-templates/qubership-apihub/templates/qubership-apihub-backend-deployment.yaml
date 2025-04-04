@@ -131,67 +131,75 @@ spec:
                       secretKeyRef:
                          name: 'qubership-apihub-backend-ldap-user-secret'
                          key: ldap_user
-                -  name: LDAP_USER_PASSWORD
-                   valueFrom:
-                     secretKeyRef:
-                        name: 'qubership-apihub-backend-ldap-user-secret'
-                        key: ldap_user_password
-                -  name: SYSTEM_NOTIFICATION
-                   value: '{{ .Values.qubershipApihubBackend.env.systemNotification }}'
-                -  name: INSECURE_PROXY
-                   value: '{{ .Values.qubershipApihubBackend.env.insecureProxy }}'
-                - name: MONITORING_ENABLED
-                  value: '{{ .Values.qubershipApihubBackend.monitoring.enabled }}'
-                - name: STORAGE_SERVER_USERNAME
-                  valueFrom:
-                    secretKeyRef:
-                      name: 'qubership-apihub-backend-storage-secret'
-                      key: storage_server_access_key_id
-                - name: STORAGE_SERVER_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: 'qubership-apihub-backend-storage-secret'
-                      key: storage_server_secret_access_key
-                - name: STORAGE_SERVER_CRT
-                  valueFrom:
-                    secretKeyRef:
-                      name: 'qubership-apihub-backend-storage-secret'
-                      key: storage_server_crt
-                - name: STORAGE_SERVER_URL
-                  valueFrom:
-                    secretKeyRef:
-                      name: 'qubership-apihub-backend-storage-secret'
-                      key: storage_server_endpoint
-                - name: STORAGE_SERVER_BUCKET_NAME
-                  valueFrom:
-                    secretKeyRef:
-                      name: 'qubership-apihub-backend-storage-secret'
-                      key: storage_server_bucket_name
-                - name: STORAGE_SERVER_ACTIVE
-                  valueFrom:
-                    secretKeyRef:
-                      name: 'qubership-apihub-backend-storage-secret'
-                      key: storage_server_active
-                - name: STORAGE_SERVER_STORE_ONLY_BUILD_RESULT
-                  valueFrom:
-                    secretKeyRef:
-                      name: 'qubership-apihub-backend-storage-secret'
-                      key: storage_server_store_only_build_result
+                -   name: LDAP_USER_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                         name: 'qubership-apihub-backend-ldap-user-secret'
+                         key: ldap_user_password
+                -   name: LDAP_SERVER  
+                    value: '{{ .Values.qubershipApihubBackend.env.ldap.ldapServer }}'
+                -   name: LDAP_BASE_DN
+                    value: '{{ .Values.qubershipApihubBackend.env.ldap.baseDN }}'
+                -   name: LDAP_ORGANIZATION_UNIT  
+                    value: '{{ .Values.qubershipApihubBackend.env.ldap.organizationUnit }}'
+                -   name: LDAP_SEARCH_BASE  
+                    value: '{{ .Values.qubershipApihubBackend.env.ldap.searchBase }}'
+                -   name: SYSTEM_NOTIFICATION
+                    value: '{{ .Values.qubershipApihubBackend.env.systemNotification }}'
+                -   name: INSECURE_PROXY
+                    value: '{{ .Values.qubershipApihubBackend.env.insecureProxy }}'
+                -   name: MONITORING_ENABLED
+                    value: '{{ .Values.qubershipApihubBackend.monitoring.enabled }}'
+                -   name: STORAGE_SERVER_USERNAME
+                    valueFrom:
+                      secretKeyRef:
+                        name: 'qubership-apihub-backend-storage-secret'
+                        key: storage_server_access_key_id
+                -   name: STORAGE_SERVER_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: 'qubership-apihub-backend-storage-secret'
+                        key: storage_server_secret_access_key
+                -   name: STORAGE_SERVER_CRT
+                    valueFrom:
+                      secretKeyRef:
+                        name: 'qubership-apihub-backend-storage-secret'
+                        key: storage_server_crt
+                -   name: STORAGE_SERVER_URL
+                    valueFrom:
+                      secretKeyRef:
+                        name: 'qubership-apihub-backend-storage-secret'
+                        key: storage_server_endpoint
+                -   name: STORAGE_SERVER_BUCKET_NAME
+                    valueFrom:
+                      secretKeyRef:
+                        name: 'qubership-apihub-backend-storage-secret'
+                        key: storage_server_bucket_name
+                -   name: STORAGE_SERVER_ACTIVE
+                    valueFrom:
+                      secretKeyRef:
+                        name: 'qubership-apihub-backend-storage-secret'
+                        key: storage_server_active
+                -   name: STORAGE_SERVER_STORE_ONLY_BUILD_RESULT
+                    valueFrom:
+                      secretKeyRef:
+                        name: 'qubership-apihub-backend-storage-secret'
+                        key: storage_server_store_only_build_result
                 -   name: APIHUB_ADMIN_EMAIL
                     valueFrom:
                       secretKeyRef:
                         name: 'qubership-apihub-backend-zero-day-admin-secret'
                         key: apihub_admin_email
-                -  name: APIHUB_ADMIN_PASSWORD
-                   valueFrom:
-                     secretKeyRef:
-                       name: 'qubership-apihub-backend-zero-day-admin-secret'
-                       key: apihub_admin_password
-                -  name: APIHUB_ACCESS_TOKEN
-                   valueFrom:
-                     secretKeyRef:
-                       name: 'qubership-apihub-backend-access-token-secret'
-                       key: token
+                -   name: APIHUB_ADMIN_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: 'qubership-apihub-backend-zero-day-admin-secret'
+                        key: apihub_admin_password
+                -   name: APIHUB_ACCESS_TOKEN
+                    valueFrom:
+                      secretKeyRef:
+                        name: 'qubership-apihub-backend-access-token-secret'
+                        key: token
                 -   name: CUSTOM_PATH_PREFIXES
                     value: '{{ .Values.qubershipApihubBackend.env.customPathPrefixes }}'
                 -   name: ALLOWED_HOSTS

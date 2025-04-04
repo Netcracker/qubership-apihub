@@ -94,6 +94,10 @@ qubershipApihubBackend:
       user: ''
       # (todo: wording) Optional # Password for LDAP User
       password: ''
+      baseDN: ''
+      organizationUnit: ''
+      searchBase: ''
+
 
 
     storageServer:
