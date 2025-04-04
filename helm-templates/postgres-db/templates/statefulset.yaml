@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pg-common
+  labels:
+    app: pg-common
+spec:
+  replicas: {{ .Values.replicaCount }}
+  serviceName: pg-common
+  selector:
+    matchLabels:
+      app: pg-common
+  template:
+    metadata:
+      labels:
+        app: pg-common
+    spec:
+      containers:
+      - name: postgresql
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        - name: POSTGRES_DB
+          value: {{ .Values.postgresql.database }}
+        - name: POSTGRES_USER
+          value: {{ .Values.postgresql.username }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.postgresql.password }}
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: postgresql-data
+          mountPath: /var/lib/postgresql/data
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+      volumes:
+      - name: postgresql-data
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-postgresql-pvc

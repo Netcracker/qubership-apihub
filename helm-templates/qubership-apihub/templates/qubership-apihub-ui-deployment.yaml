@@ -1,0 +1,77 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: qubership-apihub-ui
+    labels:
+        name: qubership-apihub-ui
+        app.kubernetes.io/name: 'qubership-apihub-ui'
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/part-of: qubership-apihub
+        app.kubernetes.io/managed-by: helm
+        app.kubernetes.io/technology: 'cpp'
+spec:
+    selector:
+        matchLabels:
+          name: qubership-apihub-ui
+    replicas: {{ .Values.qubershipApihubUi.replicas }}
+    strategy:
+        type: RollingUpdate
+        rollingUpdate:
+            maxSurge: 25%
+            maxUnavailable: 25%
+    template:
+        metadata:
+            labels:
+                name: qubership-apihub-ui
+                app.kubernetes.io/name: 'qubership-apihub-ui'
+                app.kubernetes.io/component: frontend
+                app.kubernetes.io/part-of: qubership-apihub
+                app.kubernetes.io/managed-by: helm
+                app.kubernetes.io/technology: 'cpp'
+        spec:
+            restartPolicy: Always
+            terminationGracePeriodSeconds: 30
+            dnsPolicy: ClusterFirst
+            containers:
+            -   name: 'qubership-apihub-ui'
+                image: '{{ .Values.qubershipApihubUi.image.repository }}:{{ .Values.qubershipApihubUi.image.tag }}'
+                imagePullPolicy: Always
+                ports:
+                -   name: web
+                    containerPort: 8080
+                    protocol: TCP
+                env:
+                - name: APIHUB_BACKEND_ADDRESS
+                  value: '{{ .Values.qubershipApihubUi.apihubBackendAddress }}'
+                - name: APIHUB_NC_SERVICE_ADDRESS
+                  value: '{{ .Values.qubershipApihubUi.apihubNcServiceAddress }}'
+                resources:
+                    requests:
+                        cpu: '{{ .Values.qubershipApihubUi.resource.cpu.request }}'
+                        memory: '{{ .Values.qubershipApihubUi.resource.memory.request }}'
+                    limits:
+                        memory: '{{ .Values.qubershipApihubUi.resource.memory.limit }}'
+                        cpu: {{ .Values.qubershipApihubUi.resource.cpu.limit }}
+                livenessProbe:
+                  httpGet:
+                    path: /probes/live
+                    port: web
+                  initialDelaySeconds: 5
+                  timeoutSeconds: 15
+                readinessProbe:
+                  httpGet:
+                    path: /probes/ready
+                    port: web
+                  initialDelaySeconds: 5
+                securityContext:
+                    runAsGroup: 10001
+                    readOnlyRootFilesystem: false
+                    runAsNonRoot: true
+                    seccompProfile:
+                        type: RuntimeDefault
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                        drop:
+                          - ALL
+    revisionHistoryLimit: 3

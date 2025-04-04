@@ -1,0 +1,24 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+    name: 'qubership-apihub-backend'
+    labels:
+        name: 'qubership-apihub-backend'
+        app.kubernetes.io/name: 'qubership-apihub-backend'
+        app.kubernetes.io/part-of: qubership-apihub
+        app.kubernetes.io/managed-by: helm
+spec:
+    ports:
+    -   name: web
+        port: 8080
+        targetPort: 8080
+    -   name: olric
+        port: 3320
+        targetPort: 3320
+    -   name: olric-memberlist
+        port: 3322
+        targetPort: 3322
+    selector:
+        name: 'qubership-apihub-backend'
+

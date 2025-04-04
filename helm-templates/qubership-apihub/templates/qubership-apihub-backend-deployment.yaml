@@ -1,0 +1,236 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: 'qubership-apihub-backend'
+    labels:
+        name: 'qubership-apihub-backend'
+        app.kubernetes.io/name: 'qubership-apihub-backend'
+        app.kubernetes.io/version: '{{ .Values.qubershipApihub.version }}'
+        app.kubernetes.io/component: 'backend'
+        app.kubernetes.io/part-of: qubership-apihub
+        app.kubernetes.io/managed-by: helm
+        app.kubernetes.io/technology: 'go'
+spec:
+    replicas: {{ .Values.qubershipApihubBackend.replicas }}
+    strategy:
+        type: RollingUpdate
+        rollingUpdate:
+            maxSurge: 25%
+            maxUnavailable: 25%
+    template:
+        metadata:
+            labels:
+                name: 'qubership-apihub-backend'
+                app.kubernetes.io/name: 'qubership-apihub-backend'
+                app.kubernetes.io/version: '{{ .Values.qubershipApihub.version }}'
+                app.kubernetes.io/component: 'backend'
+                app.kubernetes.io/part-of: qubership-apihub
+                app.kubernetes.io/managed-by: helm
+                app.kubernetes.io/technology: 'go'
+        spec:
+            serviceAccountName: 'qubership-apihub-backend'
+            volumes:
+            -   configMap:
+                    defaultMode: 420
+                    name: qubership-apihub-config
+                name: qubership-apihub-config
+            containers:
+            -   name: 'qubership-apihub-backend'
+                image: '{{ .Values.qubershipApihubBackend.image.repository }}:{{ .Values.qubershipApihubBackend.image.tag }}'
+                volumeMounts:
+                -   name: qubership-apihub-config
+                    mountPath: /app/qubership-apihub-service/etc/
+                    readOnly: true
+                ports:
+                -   name: web
+                    containerPort: 8080
+                    protocol: TCP
+                -   name: olric
+                    containerPort: 3320
+                    protocol: TCP
+                -   name: memberlist
+                    containerPort: 3322
+                    protocol: TCP
+                env:
+                -   name: PRODUCTION_MODE
+                    value: '{{ .Values.qubershipApihubBackend.env.productionMode  }}'
+                -   name: LOG_LEVEL
+                    value: '{{ .Values.qubershipApihub.logLevel }}'
+                -   name: DIFF_SERVICE_URL
+                    value: '{{ .Values.qubershipApihubBackend.env.diffServiceUrl }}'
+                -   name: GITLAB_URL
+                    value: '{{ .Values.qubershipApihubBackend.env.gitlabUrl }}'
+                -   name: DB_TYPE
+                    value: '{{ .Values.qubershipApihubBackend.env.dbType }}'
+                -   name: APIHUB_POSTGRESQL_HOST
+                    value: '{{ .Values.qubershipApihubBackend.env.dbHost }}'
+                -   name: APIHUB_POSTGRESQL_PORT
+                    value: '{{ .Values.qubershipApihubBackend.env.dbPort }}'
+                -   name: APIHUB_POSTGRESQL_DB_NAME
+                    value: '{{ .Values.qubershipApihubBackend.env.dbName }}'
+                -   name: APIHUB_POSTGRESQL_USERNAME
+                    valueFrom:
+                      secretKeyRef:
+                         name: 'qubership-apihub-backend-db-secret'
+                         key: apihub_postgresql_username
+                -   name: APIHUB_POSTGRESQL_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                         name: 'qubership-apihub-backend-db-secret'
+                         key: apihub_postgresql_password
+                -   name: NAMESPACE
+                    valueFrom:
+                        fieldRef:
+                            fieldPath: metadata.namespace
+                -   name: OLRIC_DISCOVERY_MODE
+                    value: 'lan'
+                -   name: OLRIC_REPLICA_COUNT
+                    value: '{{ .Values.qubershipApihubBackend.replicas }}'
+                -   name: ADFS_METADATA_URL  
+                    value: '{{ .Values.qubershipApihubBackend.env.adfsMetadataUrl }}'
+                -   name: APIHUB_URL  
+                    value: '{{ .Values.qubershipApihub.apihubUrl }}'
+                -   name: SAML_CRT
+                    valueFrom:
+                      secretKeyRef:
+                         name: 'qubership-apihub-backend-saml-secret'
+                         key: saml_crt
+                -   name: SAML_KEY
+                    valueFrom:
+                      secretKeyRef:
+                         name: 'qubership-apihub-backend-saml-secret'
+                         key: saml_key
+                -   name: EXTERNAL_LINKS
+                    value: '{{ .Values.qubershipApihubBackend.env.externalLinks }}'
+                -   name: DEFAULT_WORKSPACE_ID
+                    value: '{{ .Values.qubershipApihubBackend.env.defaultWorkspaceId }}'
+                -   name: RELEASE_VERSION_PATTERN
+                    value: '{{ .Values.qubershipApihubBackend.env.releaseVersionPattern }}'
+                -   name: JWT_PRIVATE_KEY
+                    valueFrom:
+                      secretKeyRef:
+                         name: 'qubership-apihub-backend-jwt-secret'
+                         key: jwt_private_key
+                -   name: CLIENT_ID
+                    valueFrom:
+                      secretKeyRef:
+                         name: 'qubership-apihub-backend-gitlab-secret'
+                         key: client_id
+                -   name: CLIENT_SECRET
+                    valueFrom:
+                      secretKeyRef:
+                         name: 'qubership-apihub-backend-gitlab-secret'
+                         key: client_secret
+                -   name: PUBLISH_FILE_SIZE_LIMIT_MB
+                    value: '{{ .Values.qubershipApihubBackend.env.publishFileSizeLimitMb }}'
+                -   name: PUBLISH_ARCHIVE_SIZE_LIMIT_MB
+                    value: '{{ .Values.qubershipApihubBackend.env.publishArchiveSizeLimitMb }}'
+                -   name: ORIGIN_ALLOWED
+                    value: '{{ .Values.qubershipApihubBackend.env.originAllowed }}'
+                -   name: LDAP_SERVER  
+                    value: '{{ .Values.qubershipApihubBackend.env.ldap.ldapServer }}'
+                -   name: LDAP_USER
+                    valueFrom:
+                      secretKeyRef:
+                         name: 'qubership-apihub-backend-ldap-user-secret'
+                         key: ldap_user
+                -  name: LDAP_USER_PASSWORD
+                   valueFrom:
+                     secretKeyRef:
+                        name: 'qubership-apihub-backend-ldap-user-secret'
+                        key: ldap_user_password
+                -  name: SYSTEM_NOTIFICATION
+                   value: '{{ .Values.qubershipApihubBackend.env.systemNotification }}'
+                -  name: INSECURE_PROXY
+                   value: '{{ .Values.qubershipApihubBackend.env.insecureProxy }}'
+                - name: MONITORING_ENABLED
+                  value: '{{ .Values.qubershipApihubBackend.monitoring.enabled }}'
+                - name: STORAGE_SERVER_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: 'qubership-apihub-backend-storage-secret'
+                      key: storage_server_access_key_id
+                - name: STORAGE_SERVER_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: 'qubership-apihub-backend-storage-secret'
+                      key: storage_server_secret_access_key
+                - name: STORAGE_SERVER_CRT
+                  valueFrom:
+                    secretKeyRef:
+                      name: 'qubership-apihub-backend-storage-secret'
+                      key: storage_server_crt
+                - name: STORAGE_SERVER_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: 'qubership-apihub-backend-storage-secret'
+                      key: storage_server_endpoint
+                - name: STORAGE_SERVER_BUCKET_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: 'qubership-apihub-backend-storage-secret'
+                      key: storage_server_bucket_name
+                - name: STORAGE_SERVER_ACTIVE
+                  valueFrom:
+                    secretKeyRef:
+                      name: 'qubership-apihub-backend-storage-secret'
+                      key: storage_server_active
+                - name: STORAGE_SERVER_STORE_ONLY_BUILD_RESULT
+                  valueFrom:
+                    secretKeyRef:
+                      name: 'qubership-apihub-backend-storage-secret'
+                      key: storage_server_store_only_build_result
+                -   name: APIHUB_ADMIN_EMAIL
+                    valueFrom:
+                      secretKeyRef:
+                        name: 'qubership-apihub-backend-zero-day-admin-secret'
+                        key: apihub_admin_email
+                -  name: APIHUB_ADMIN_PASSWORD
+                   valueFrom:
+                     secretKeyRef:
+                       name: 'qubership-apihub-backend-zero-day-admin-secret'
+                       key: apihub_admin_password
+                -  name: APIHUB_ACCESS_TOKEN
+                   valueFrom:
+                     secretKeyRef:
+                       name: 'qubership-apihub-backend-access-token-secret'
+                       key: token
+                -   name: APIHUB_SKIP_DB_CREATION
+                    value: '{{ .Values.qubershipApihubBackend.env.skipDbCreation }}'
+                resources:
+                    requests:
+                        cpu: {{ .Values.qubershipApihubBackend.resource.cpu.request }}
+                        memory: '{{ .Values.qubershipApihubBackend.resource.memory.limit }}'
+                    limits:
+                        cpu: {{ .Values.qubershipApihubBackend.resource.cpu.limit }}
+                        memory: '{{ .Values.qubershipApihubBackend.resource.memory.limit }}'
+                livenessProbe:
+                    httpGet:
+                        path: /live
+                        port: web
+                    initialDelaySeconds: 5
+                    periodSeconds: 10
+                    timeoutSeconds: 2
+                    failureThreshold: 2
+                readinessProbe:
+                    httpGet:
+                        path: /ready
+                        port: web
+                    initialDelaySeconds: 5
+                    periodSeconds: 5
+                    timeoutSeconds: 2
+                securityContext:
+                    runAsGroup: 10001
+                    readOnlyRootFilesystem: false
+                    runAsNonRoot: true
+                    seccompProfile:
+                        type: RuntimeDefault
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                        drop:
+                          - ALL
+    selector:
+        matchLabels:
+            name: 'qubership-apihub-backend'
+

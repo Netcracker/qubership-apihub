@@ -1,0 +1,27 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+    name: qubership-apihub-ui
+    labels:
+        name: qubership-apihub-ui
+        app.kubernetes.io/name: 'qubership-apihub-ui'
+        app.kubernetes.io/version: '{{ .Values.qubershipApihub.version }}'
+        app.kubernetes.io/part-of: qubership-apihub
+        app.kubernetes.io/managed-by: helm
+spec:
+   type: {{ .Values.qubershipApihubUi.service.type }}
+   ports:
+   - name: http-service
+     port: {{ .Values.qubershipApihubUi.service.http.port }}
+     targetPort: {{ .Values.qubershipApihubUi.service.http.targetPort }}
+     nodePort: {{ .Values.qubershipApihubUi.service.http.nodePort }}
+     protocol: TCP
+   - name: https-service
+     port: {{ .Values.qubershipApihubUi.service.https.port }}
+     targetPort: {{ .Values.qubershipApihubUi.service.https.targetPort }}
+     nodePort: {{ .Values.qubershipApihubUi.service.https.nodePort }}
+     protocol: TCP
+   selector:
+     name: qubership-apihub-ui
+
