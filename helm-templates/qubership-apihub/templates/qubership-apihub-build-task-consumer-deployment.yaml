@@ -43,9 +43,9 @@ spec:
                 -   name: APIHUB_BACKEND_ADDRESS
                     value: '{{ .Values.qubershipApihubUi.apihubBackendAddress }}'
                 -   name: FOLDER_STORE
-                    value: '{{ .Values.qubershipApihubBuildTaskConsumer.env.folderStore }}'
-                - name: OPERATIONS_BUILD_BATCH
-                  value: '{{ .Values.qubershipApihubBuildTaskConsumer.env.operationsBuildBatch }}'
+                    value: '/tmp' 
+                -   name: OPERATIONS_BUILD_BATCH
+                    value: '{{ .Values.qubershipApihubBuildTaskConsumer.env.operationsBuildBatch }}'
                 -   name: APIHUB_API_KEY
                     valueFrom:
                         secretKeyRef:

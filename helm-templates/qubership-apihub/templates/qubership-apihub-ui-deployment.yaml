@@ -9,7 +9,7 @@ metadata:
         app.kubernetes.io/component: frontend
         app.kubernetes.io/part-of: qubership-apihub
         app.kubernetes.io/managed-by: helm
-        app.kubernetes.io/technology: 'cpp'
+        app.kubernetes.io/technology: 'nginx'
 spec:
     selector:
         matchLabels:

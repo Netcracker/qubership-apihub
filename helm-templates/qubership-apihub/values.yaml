@@ -1,14 +1,16 @@
+#todo: add examples for values
+#todo: add welcome comment
+
+
 qubershipApihub:
+  # todo
   version: ''
-  # LOG_LEVEL # Optional #  Info, Warn, Error, etc
+  # Optional. Possible values: INFO, WARN, DEBUG, etc. If not set - INFO is default
   logLevel: '' 
-  # APIHUB_ACCESS_TOKEN # Mandatory # Default system access token (any string). The token will be provisioned automatically during bootstrap
+  # Mandatory. Default system access token (any string). The token will be provisioned automatically during bootstrap. Example: "xyz12345"
   accessToken: ''
-  delimiter: '-'
-#?????? Optional  # APIHUB_URL # Optional # Factual APIHUB server URL in your environment. Required only if SAML integration enabled
+  # Mandatory. APIHUB server URL in your environment. Example: "apihub.example.com"
   apihubUrl: '' 
-
-
 
 ########################
 qubershipApihubBackend:
@@ -16,105 +18,108 @@ qubershipApihubBackend:
     repository: 'ghcr.io/netcracker/qubership-apihub-backend'  
     tag: 'latest'
   replicas: 1
+  # Optional. Set to true to enable Prometheus metrics endpoints
   monitoring:
-    # MONITORING_ENABLED # Optional # Set to true to enable Prometheus metrics endpoints
     enabled: '' 
 
+  # todo
   resource:
     cpu:
       request: "100m"
       limit: "1"
     memory:
      limit: "512Mi"
+
+  # todo 
   env:  
-    # PRODUCTION_MODE # Mandatory # Enables production mode - login under local apihub users is prohibited in this mode. In this mode only SAML auth is possible, so SAML integration related deploy parameters are mandatory in this case
-    productionMode: 'FALSE' 
-    deploymentResourceName: "qubership-apihub-backend"
-    # DIFF_SERVICE_URL # Mandatory # qubership-build-task-consumer service URL. May vary depends on deploy schema
-    diffServiceUrl: 'http://qubership-apihub-build-task-consumer:3000' 
+    # (todo: wording) Optional. Enables production mode - login under local apihub users is prohibited in this mode. In this mode only SAML auth is possible, so SAML integration related deploy parameters are mandatory in this case
+    productionMode: 'true'  # disable at your own risk
 
-#    # GITLAB_URL # Optional # Deprecated. Required for Editor feature
-#    gitlabUrl: '' 
+    database:   
+      # Mandatory. PG host address
+      dbHost: '' 
+      # Mandatory. PG port
+      dbPort: '' 
+      # Mandatory. Logical database in PG cluster for APIHUB. Manual pre-creation required
+      dbName: '' 
+      # Mandatory. User for APIHUB_POSTGRESQL_DB_NAME database
+      dbUsername: ''  
+      # Mandatory. Password for APIHUB_POSTGRESQL_USERNAME user.
+      dbPassword: '' 
 
-    # DB_TYPE # Optional #
-    dbType: '' 
-    # APIHUB_POSTGRESQL_HOST # Mandatory # PG host address
-    dbHost: '' 
-    # APIHUB_POSTGRESQL_PORT # Mandatory # PG port
-    dbPort: '' 
-    # Mandatory # Logical database in PG cluster for APIHUB. Manual pre-creation required
-    dbName: '' 
-    # Mandatory # User for APIHUB_POSTGRESQL_DB_NAME database
-    dbUsername: ''  
-    # Mandatory # Password for APIHUB_POSTGRESQL_USERNAME user.
-    dbPassword: '' 
-    skipDbCreation: true
-    # Optional # Default admin user login (example: x_apihub). If set - this admin user will be created automatically.
+    # (todo: wording) jwtPrivateKey - Self generated private PKCS#8 private key in base64 encode format.
+    jwtPrivateKey: ''
+
+    # (todo: wording) ORIGIN_ALLOWED # Optional # TODO
+    originAllowed: ''
+
+    # (todo: wording)
+    customPathPrefixes: ''
+
+    # Optional. Default admin user login (example: x_apihub). If set - this admin user will be created automatically.
     adminEmail: '' 
-    # Optional # Default admin user password (example: password)
+    # Optional. Default admin user password (example: password)
     adminPassword: '' 
 
-#    # ADFS_METADATA_URL # Optional # SAML metadata URL. If set - enables SAML integration
-#    adfsMetadataUrl: '' 
-
-#    # EXTERNAL_LINKS # Optional # Links to be shown under (i) button in UI
-#    externalLinks: '' 
-#    # DEFAULT_WORKSPACE_ID # Optional # Default workspace ID for Agent UI
-#    defaultWorkspaceId: ''
-
-    # RELEASE_VERSION_PATTERN # Optional # Regex pattern for releases names validation.
-    releaseVersionPattern: '^[0-9]{4}[.]{1}[1-4]{1}$'
-    # PUBLISH_ARCHIVE_SIZE_LIMIT_MB # Optional # Limit for uploaded package size in order to avoid OOM
-    publishArchiveSizeLimitMb: '50' 
-    # PUBLISH_FILE_SIZE_LIMIT_MB # Optional # Limit for uploaded file (inside package) size in order to avoid OOM
-    publishFileSizeLimitMb: '15'
-
-#    # ORIGIN_ALLOWED # Optional # TODO
-#    originAllowed: ''
-#    # SYSTEM_NOTIFICATION # Optional # If set - footer with this text is shown for alll APIHUB users in APIHUB UI. Designed for maintenance windows.
-#    systemNotification: '' 
-
-    # INSECURE_PROXY # Optional # Set to true to enable apihub playground work without authtorization.
-    insecureProxy: 'FALSE' 
-
-    ldap:
-#      enabled: '' 
-      # LDAP_SERVER # Optional # LDAP server URL. Required for SAML integration for syncing user inf
-      server: '' 
-      # Optional # LDAP User used for connecting to LDAP server
-      user: ''
-      # Optional # Password for LDAP User
-      password: ''
-    # Optional # Deprecated. Required for Editor feature
-    clientId: '' 
-    # Optional # Deprecated. Required for Editor feature
-    clientSecret: '' 
-
-    #jwtPrivateKey - Self generated private PKCS#8 private key in base64 encode format.
-    jwtPrivateKey: ''
-    saml:
-#      enabled: ''
+    # todo: ar
+    samlIntegration:
+      # Optional. SAML metadata URL. If set - enables SAML integration
+      adfsMetadataUrl: '' 
       crt: ''
       key: ''
-    storageServer:
-      # MINIO_STORAGE_ACTIVE # Optional # Set to true to enable S3 integration. S3 is used for store debug data
-      active: 'FALSE' 
-#      username: ''
-#      password: ''
-       # Optional # SAML server certificate, base64 encoded. Required only if SAML integration enabled
-#      crt: ''
-       # Optional # SAML metadata URL. If set - enables SAML integration
-#      url: ''
-#      bucketTame: ''
-#      # MINIO_STORE_ONLY_BUILD_RESULT # Optional # Set to true to store only build results (less data amout) in S3 storage
-#      storeOnlyBuildResult: '' 
 
-#####apihub-node-service
+    # todo: ar
+    businessParameters:
+      # (todo: wording) EXTERNAL_LINKS # Optional # Links to be shown under (i) button in UI
+      externalLinks: '' 
+      # (todo: wording) DEFAULT_WORKSPACE_ID # Optional # Default workspace ID for Agent UI
+      defaultWorkspaceId: ''
+      # (todo: wording) RELEASE_VERSION_PATTERN # Optional # Regex pattern for releases names validation. Example: "^[0-9]{4}[.]{1}[1-4]{1}$"
+      releaseVersionPattern: '*'
+      # (todo: wording) PUBLISH_ARCHIVE_SIZE_LIMIT_MB # Optional # Limit for uploaded package size in order to avoid OOM
+      publishArchiveSizeLimitMb: '50' 
+      # (todo: wording) PUBLISH_FILE_SIZE_LIMIT_MB # Optional # Limit for uploaded file (inside package) size in order to avoid OOM
+      publishFileSizeLimitMb: '15'
+      # (todo: wording) SYSTEM_NOTIFICATION # Optional # If set - footer with this text is shown for alll APIHUB users in APIHUB UI. Designed for maintenance windows.
+      systemNotification: '' 
+      # (todo: wording) INSECURE_PROXY # Optional # Set to true to enable apihub playground work without authtorization.
+      insecureProxy: 'FALSE' 
+      # (todo: wording)
+      allowedHosts: '' 
+
+    ldap:
+      # (todo: wording) Optional # LDAP server URL. Required for SAML integration for syncing user inf
+      server: '' 
+      # (todo: wording) Optional # LDAP User used for connecting to LDAP server
+      user: ''
+      # (todo: wording) Optional # Password for LDAP User
+      password: ''
+
+
+    storageServer:
+      # (todo: comments) 
+      active: 'FALSE' 
+      username: ''
+      password: ''
+      crt: ''
+      url: ''
+      bucketTame: ''
+      storeOnlyBuildResult: '' 
+
+  # todo: ar
+  # Parameters for APIHUB Editor feature. Deprecated. Will be removed in future releases.
+#    editor:
+#      gitlabUrl: '' 
+#      clientId: '' 
+#      clientSecret: '' 
+
+########################
 qubershipApihubBuildTaskConsumer:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-build-task-consumer' 
     tag: 'latest'
   replicas: 1  
+
   resource:
     cpu:
       request: "100m"
@@ -123,18 +128,13 @@ qubershipApihubBuildTaskConsumer:
      limit: "4200Mi"
      request: "750Mi"
   env:
-    # FOLDER_STORE # Mandatory # Folder to store file cache. Not required to be persistence volume
-    folderStore: '/tmp' 
     operationsBuildBatch: "16"
-#####apihub-ui 
+
+########################
 qubershipApihubUi:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-ui'  
     tag: 'latest'
-  # APIHUB_BACKEND_ADDRESS # Mandatory # apihub-backend address.
-  apihubBackendAddress: 'qubership-apihub-backend:8080'
-  # APIHUB_NC_SERVICE_ADDRESS # Mandatory # Custom add-on service address.
-  apihubNcServiceAddress: 'qubership-apihub-backend:8080' #'apihub-nc-service:8080' 
   replicas: 1  
   resource:
     cpu:
@@ -143,14 +143,22 @@ qubershipApihubUi:
     memory:
      limit: "64Mi"
      request: "64Mi"
+  env:
+    # todo: ar
+    apihubBackendAddress: 'qubership-apihub-backend:8080'
+    apihubNcServiceAddress: 'qubership-apihub-backend:8080'
+
   ingress:
     enabled: false
-  tlsIngress:
+
   # tls Ingress URL is used in APIHUB_URL ENV VAR on backend, so disabling its creation will make APIHUB deployment unable to work
+  tlsIngress:
     enabled: true
     tlsSecret:
       certificate: ''
       certificateKey: ''
+
+  # todo: ar - remove it
   service:
     type: ClusterIP  
     http:

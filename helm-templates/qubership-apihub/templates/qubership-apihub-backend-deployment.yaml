@@ -57,12 +57,8 @@ spec:
                     value: '{{ .Values.qubershipApihubBackend.env.productionMode  }}'
                 -   name: LOG_LEVEL
                     value: '{{ .Values.qubershipApihub.logLevel }}'
-                -   name: DIFF_SERVICE_URL
-                    value: '{{ .Values.qubershipApihubBackend.env.diffServiceUrl }}'
                 -   name: GITLAB_URL
                     value: '{{ .Values.qubershipApihubBackend.env.gitlabUrl }}'
-                -   name: DB_TYPE
-                    value: '{{ .Values.qubershipApihubBackend.env.dbType }}'
                 -   name: APIHUB_POSTGRESQL_HOST
                     value: '{{ .Values.qubershipApihubBackend.env.dbHost }}'
                 -   name: APIHUB_POSTGRESQL_PORT
@@ -196,8 +192,10 @@ spec:
                      secretKeyRef:
                        name: 'qubership-apihub-backend-access-token-secret'
                        key: token
-                -   name: APIHUB_SKIP_DB_CREATION
-                    value: '{{ .Values.qubershipApihubBackend.env.skipDbCreation }}'
+                -   name: CUSTOM_PATH_PREFIXES
+                    value: '{{ .Values.qubershipApihubBackend.env.customPathPrefixes }}'
+                -   name: ALLOWED_HOSTS
+                    value: '{{ .Values.qubershipApihubBackend.env.businessParameters.allowedHosts }}'
                 resources:
                     requests:
                         cpu: {{ .Values.qubershipApihubBackend.resource.cpu.request }}
