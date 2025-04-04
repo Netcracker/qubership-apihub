@@ -1,38 +1,57 @@
+###{{- if .Values.qubershipApihubUi.ingress.enabled }}
+###
+### apiVersion: networking.k8s.io/v1
+### kind: Ingress
+### metadata:
+###     name: qubership-apihub
+###     annotations:
+###         nginx.ingress.kubernetes.io/proxy-connect-timeout: '3600'
+###         nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
+###         nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
+###         nginx.ingress.kubernetes.io/ssl-redirect: 'false'
+###     labels:
+###         app.kubernetes.io/part-of: qubership-apihub
+###         app.kubernetes.io/managed-by: helm
+### spec:
+###     ingressClassName: nginx
+###     rules:
+###         -   host: {{ .Values.qubershipApihub.apihubUrl }}
+###             http:
+###                 paths:
+###                     -   path: /
+###                         pathType: Prefix
+###                         backend:
+###                             service:
+###                                 name: 'qubership-apihub-ui'
+###                                 port:
+###                                     name: http-service
+###
+###{{- end }}
+
 {{- if .Values.qubershipApihubUi.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-    name: apihub
-    annotations:
-        nginx.ingress.kubernetes.io/proxy-connect-timeout: '3600'
-        nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
-        nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
-        nginx.ingress.kubernetes.io/ssl-redirect: 'false'
-    labels:
-        app.kubernetes.io/part-of: qubership-apihub
-        app.kubernetes.io/managed-by: helm
+  name: qubership-apihub
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  labels:
+    app.kubernetes.io/part-of: qubership-apihub
+    app.kubernetes.io/managed-by: helm
 spec:
-    ingressClassName: nginx
-    rules:
-        -   host: 'qubership-apihub.localhost'
-            http:
-                paths:
-                    -   path: /
-                        pathType: Prefix
-                        backend:
-                            service:
-                                name: 'qubership-apihub-ui'
-                                port:
-                                    name: http-service
-#    rules:
-#        -   host: '{{ .Values.qubershipApihubUi.ingress.host }}.{{ .Values.qubershipApihubUi.ingress.url }}'
-#            http:
-#                paths:
-#                    -   path: '{{ .Values.qubershipApihubUi.ingress.path }}'
-#                        pathType: '{{ .Values.qubershipApihubUi.ingress.pathType }}'
-#                        backend:
-#                            service:
-#                                name: 'qubership-apihub-ui'
-#                                port:
-#                                    name: web
+  ingressClassName: nginx
+  rules:
+  - host: {{ .Values.qubershipApihub.apihubUrl | quote }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: qubership-apihub-ui
+            port:
+              name: http-service
 {{- end }}

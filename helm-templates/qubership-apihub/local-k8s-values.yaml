@@ -1,16 +1,17 @@
 qubershipApihub:
   version: dev
-  serverHostname: 'qubership-apihub.localhost'
   # LOG_LEVEL # Optional #  Info, Warn, Error, etc
   logLevel: 'INFO' 
   # APIHUB_ACCESS_TOKEN # Mandatory # Default system access token (any string). The token will be provisioned automatically during bootstrap
   accessToken: ''
   delimiter: '-'
+  # APIHUB_URL # Optional # Factual APIHUB server URL in your environment. Required only if SAML integration enabled
+  apihubUrl: 'qubership-apihub.localhost' 
 
 ########################
 qubershipApihubBackend:
   image:
-    repository: 'ghcr.io/netcracker/qubership-apihub-backend'  #TO_BE_SET
+    repository: 'ghcr.io/netcracker/qubership-apihub-backend'  
     tag: 'dev'
   replicas: 1
 
@@ -29,7 +30,7 @@ qubershipApihubBackend:
     productionMode: 'FALSE' 
     deploymentResourceName: "qubership-apihub-backend"
     # DIFF_SERVICE_URL # Mandatory # qubership-build-task-consumer service URL. May vary depends on deploy schema
-    diffServiceUrl: 'http://localhost:3000 ' 
+    diffServiceUrl: 'http://qubership-apihub-build-task-consumer:3000' 
 
 #    # GITLAB_URL # Optional # Deprecated. Required for Editor feature
 #    gitlabUrl: '' 
@@ -57,8 +58,6 @@ qubershipApihubBackend:
 #    # ADFS_METADATA_URL # Optional # SAML metadata URL. If set - enables SAML integration
 #    adfsMetadataUrl: '' 
 
-#    # APIHUB_URL # Optional # Factual APIHUB server URL in your environment. Required only if SAML integration enabled
-#    apihubUrl: '' 
 #    # EXTERNAL_LINKS # Optional # Links to be shown under (i) button in UI
 #    externalLinks: '' 
 #    # DEFAULT_WORKSPACE_ID # Optional # Default workspace ID for Agent UI
@@ -80,7 +79,7 @@ qubershipApihubBackend:
     insecureProxy: 'FALSE' 
 
     ldap:
-      enabled: 'true' 
+#      enabled: 'true' 
       # LDAP_SERVER # Optional # LDAP server URL. Required for SAML integration for syncing user inf
       server: '' 
       # Optional # LDAP User used for connecting to LDAP server
@@ -88,17 +87,17 @@ qubershipApihubBackend:
       # Optional # Password for LDAP User
       password: ''
     # Optional # Deprecated. Required for Editor feature
-    clientId: '' #TO_BE_SET
+    clientId: '' 
     # Optional # Deprecated. Required for Editor feature
-    clientSecret: '' #TO_BE_SET
+    clientSecret: '' 
 
     #jwtPrivateKey - Self generated private PKCS#8 private key in base64 encode format.
     jwtPrivateKey: ''
 
     saml:
-      enabled: false
-#      crt: ''
-#      key: ''
+#      enabled: false
+      crt: ''
+      key: ''
     storageServer:
       # MINIO_STORAGE_ACTIVE # Optional # Set to true to enable S3 integration. S3 is used for store debug data
       active: 'FALSE' 
@@ -115,7 +114,7 @@ qubershipApihubBackend:
 #####apihub-node-service
 qubershipApihubBuildTaskConsumer:
   image:
-    repository: 'ghcr.io/netcracker/qubership-apihub-build-task-consumer' #TO_BE_SET
+    repository: 'ghcr.io/netcracker/qubership-apihub-build-task-consumer' 
     tag: 'dev'
   replicas: 1  
   resource:
@@ -133,7 +132,7 @@ qubershipApihubBuildTaskConsumer:
 #####apihub-ui 
 qubershipApihubUi:
   image:
-    repository: 'ghcr.io/netcracker/qubership-apihub-ui'  #TO_BE_SET
+    repository: 'ghcr.io/netcracker/qubership-apihub-ui'  
     tag: 'dev'
   # APIHUB_BACKEND_ADDRESS # Mandatory # apihub-backend address.
   apihubBackendAddress: 'qubership-apihub-backend:8080'
@@ -149,24 +148,21 @@ qubershipApihubUi:
      request: "64Mi"
   ingress:
     enabled: true
-    host: 'qubership-apihub'
-    url: 'localhost'    
-    path: '/'
-    pathType: Prefix
-  dnsIngress:
+  tlsIngress:
+  # tls Ingress URL is used in APIHUB_URL ENV VAR on backend, so disabling its creation will make APIHUB deployment unable to work
     enabled: false
-    dnsRoute: 'qubership-apihub'
-    url: 'localhost'
     tlsSecret:
       certificate: ''
       certificateKey: ''
+
+
   service:
     type: ClusterIP  # NodePort
     http:
       port: 8080
       targetPort: 8080
-      nodePort: 30080
+#      nodePort: 30080
     https:
       port: 8443
       targetPort: 8443
-      nodePort: 30443
+#      nodePort: 30443

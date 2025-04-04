@@ -10,21 +10,17 @@ metadata:
         app.kubernetes.io/part-of: qubership-apihub
         app.kubernetes.io/managed-by: helm
 spec:
- #   ports:
- #   -   name: web
- #       port: 8080
- #       targetPort: 8080
    type: {{ .Values.qubershipApihubUi.service.type }}
    ports:
    - name: http-service
      port: {{ .Values.qubershipApihubUi.service.http.port }}
      targetPort: {{ .Values.qubershipApihubUi.service.http.targetPort }}
-#     nodePort: {{ .Values.qubershipApihubUi.service.http.nodePort }}
+     nodePort: {{ .Values.qubershipApihubUi.service.http.nodePort }}
      protocol: TCP
-   - name: https-serive
+   - name: https-service
      port: {{ .Values.qubershipApihubUi.service.https.port }}
      targetPort: {{ .Values.qubershipApihubUi.service.https.targetPort }}
-#     nodePort: {{ .Values.qubershipApihubUi.service.https.nodePort }}
+     nodePort: {{ .Values.qubershipApihubUi.service.https.nodePort }}
      protocol: TCP
    selector:
      name: qubership-apihub-ui

@@ -1,26 +1,25 @@
-# Optional # Default admin user login (example: x_apihub). If set - this admin user will be created automatically." 
 qubershipApihub:
-  version: dev
-  serverHostname: 'qubership-apihub.localhost'
-  logLevel: "INFO"
-#  accessToken: 'uHw6L2LnuxY5z46qcVnN7fv7zaW6FpthbuG8wVYeYmYKzQjGeddVeFwdDHy1zGyB'
+  version: ''
+  # LOG_LEVEL # Optional #  Info, Warn, Error, etc
+  logLevel: '' 
+  # APIHUB_ACCESS_TOKEN # Mandatory # Default system access token (any string). The token will be provisioned automatically during bootstrap
   accessToken: ''
   delimiter: '-'
-#  ingress:
-#    enabled: true
-#    host: 'qubership-apihub.localhost'
-#    path: '/'
-#    pathType: Prefix
+#?????? Optional  # APIHUB_URL # Optional # Factual APIHUB server URL in your environment. Required only if SAML integration enabled
+  apihubUrl: '' 
+
 
 
 ########################
 qubershipApihubBackend:
   image:
-    repository: 'ghcr.io/netcracker/qubership-apihub-backend'  #TO_BE_SET
-    tag: 'dev'
+    repository: 'ghcr.io/netcracker/qubership-apihub-backend'  
+    tag: 'latest'
   replicas: 1
   monitoring:
-    enabled: false
+    # MONITORING_ENABLED # Optional # Set to true to enable Prometheus metrics endpoints
+    enabled: '' 
+
   resource:
     cpu:
       request: "100m"
@@ -28,59 +27,93 @@ qubershipApihubBackend:
     memory:
      limit: "512Mi"
   env:  
-    productionMode: true
+    # PRODUCTION_MODE # Mandatory # Enables production mode - login under local apihub users is prohibited in this mode. In this mode only SAML auth is possible, so SAML integration related deploy parameters are mandatory in this case
+    productionMode: 'FALSE' 
     deploymentResourceName: "qubership-apihub-backend"
-    diffServiceUrl: "http://apihub-node-service:3000"
-    gitlabUrl: "https://git.netcracker.com" #to_be_set
-    dbType: "postgres"
-    dbHost: "pg-common.postgres-db.svc.cluster.local"
-    dbPort: "5432"
-    dbAdminUsername: 'apihub_backend_user'
-    dbAdminPassword: 'apihub_backend_password'
-    dbName: 'apihub_backend'
-    dbUsername: 'apihub_backend_user'
-    dbPassword: 'apihub_backend_password'
+    # DIFF_SERVICE_URL # Mandatory # qubership-build-task-consumer service URL. May vary depends on deploy schema
+    diffServiceUrl: 'http://qubership-apihub-build-task-consumer:3000' 
+
+#    # GITLAB_URL # Optional # Deprecated. Required for Editor feature
+#    gitlabUrl: '' 
+
+    # DB_TYPE # Optional #
+    dbType: '' 
+    # APIHUB_POSTGRESQL_HOST # Mandatory # PG host address
+    dbHost: '' 
+    # APIHUB_POSTGRESQL_PORT # Mandatory # PG port
+    dbPort: '' 
+    # Mandatory # Logical database in PG cluster for APIHUB. Manual pre-creation required
+    dbName: '' 
+    # Mandatory # User for APIHUB_POSTGRESQL_DB_NAME database
+    dbUsername: ''  
+    # Mandatory # Password for APIHUB_POSTGRESQL_USERNAME user.
+    dbPassword: '' 
     skipDbCreation: true
-    adminEmail: ''
-    adminPassword: ''
-#    adminEmail: 'x_APIHUB'
-#    adminPassword: 'Tmf@c23s'
-    adfsMetadataUrl: '' #TO_BE_SET
-    apihubUrl: '' #TO_BE_SET
-    externalLinks: ''
-    defaultWorkspaceId: ''
+    # Optional # Default admin user login (example: x_apihub). If set - this admin user will be created automatically.
+    adminEmail: '' 
+    # Optional # Default admin user password (example: password)
+    adminPassword: '' 
+
+#    # ADFS_METADATA_URL # Optional # SAML metadata URL. If set - enables SAML integration
+#    adfsMetadataUrl: '' 
+
+#    # EXTERNAL_LINKS # Optional # Links to be shown under (i) button in UI
+#    externalLinks: '' 
+#    # DEFAULT_WORKSPACE_ID # Optional # Default workspace ID for Agent UI
+#    defaultWorkspaceId: ''
+
+    # RELEASE_VERSION_PATTERN # Optional # Regex pattern for releases names validation.
     releaseVersionPattern: '^[0-9]{4}[.]{1}[1-4]{1}$'
-    publishArchiveSizeLimitMb: "50"
-    publishFileSizeLimitMb: "15"
-    originAllowed: '' #TO_BE_SET
-    systemNotification: ''
-    insecureProxy: true
+    # PUBLISH_ARCHIVE_SIZE_LIMIT_MB # Optional # Limit for uploaded package size in order to avoid OOM
+    publishArchiveSizeLimitMb: '50' 
+    # PUBLISH_FILE_SIZE_LIMIT_MB # Optional # Limit for uploaded file (inside package) size in order to avoid OOM
+    publishFileSizeLimitMb: '15'
+
+#    # ORIGIN_ALLOWED # Optional # TODO
+#    originAllowed: ''
+#    # SYSTEM_NOTIFICATION # Optional # If set - footer with this text is shown for alll APIHUB users in APIHUB UI. Designed for maintenance windows.
+#    systemNotification: '' 
+
+    # INSECURE_PROXY # Optional # Set to true to enable apihub playground work without authtorization.
+    insecureProxy: 'FALSE' 
+
     ldap:
-      server: ''
+#      enabled: '' 
+      # LDAP_SERVER # Optional # LDAP server URL. Required for SAML integration for syncing user inf
+      server: '' 
+      # Optional # LDAP User used for connecting to LDAP server
       user: ''
+      # Optional # Password for LDAP User
       password: ''
-    clientId: '' #TO_BE_SET
-    clientSecret: '' #TO_BE_SET
+    # Optional # Deprecated. Required for Editor feature
+    clientId: '' 
+    # Optional # Deprecated. Required for Editor feature
+    clientSecret: '' 
+
     #jwtPrivateKey - Self generated private PKCS#8 private key in base64 encode format.
-#    jwtPrivateKey: 'LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2Z0lCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktnd2dnU2tBZ0VBQW9JQkFRQ1ZpTlJ3cVRZaFZyekkKZjhQM2g4SWJrd3dRQUY1bW41NnZCT21YbTZTUWdsOGQwQTI5VXlvSVRicmJtbVNJeE11NjEyaHJMMVJzdmlMTwo2OXBJUTd6cU9qOC9Xd3FRSzNaNTNWTGcycG5ncG1YTXRFQ3RqVFR6QWJTR0xsdklqdm1iSGhZdnhHdDFaY2lTCkYwdjNVb3RJUTFmRm9UWkdkQ205cXFWaU1pYUJFUFAya0QzVlExbFMwQ1crbWFTUmJUZ1pjR1pxb3ZUdG5zUDkKODhHRTRhZTc1QkptS2lCeVdjZGpJTlFxaTFyTFRDNVJQdGhtYWdUMVFhYTVZQmFBdy9QY1M3VnJwYS9QS0JzNwpQdTBZZUNLa3lyOGxXNDFYU29OQkJ3ZlNvbmhnUG14MUNmaStBdXFRMEF6VWxJNURScWFyWndIc2Q0UGh4SHJkCjcxNWp5R0h6QWdNQkFBRUNnZ0VBSm0vcm02SURSZ0tUdUQ0UFUzdFVDOTU2aFVweStaSWlLZjdyUklzL2U5M24KTVRTZnM0RERGeXRUMHNzVytJa05qVk45aGIrK3hjMENDWXBhcTZTdDFNOXdIb3I2WmlDbDdhRlVnblB1aGU1LwowR1N0RTI5dW91QlhWUDVwblY0VER5cG1yWlNod3FXTkx2QktHS0xoSm93WTdiWUl5NGRraTFwbjlKdkxoZlUrCjZCcm9SS0NMVzNWZlNSbVExRkd2QzhLR2daTGh4am9panVVemhIdkJxRVYxaERraU5GdzNQMjl5Ui8vQkU2VVkKbkRLZ1lNUmRRWXY3ZkFld095OHJ4RTBTS3ZiVUxOUXAxb2IxNHMxWlZGU1R4SWtvN2RYV1l0U0FwUENwdFp5bgpHVC91eG0xZnErSlhJQnI4OXFPSmlBcFBBMFVYWHM5czBITXRXTGdkSVFLQmdRRE9Ebkl2N1NaemhPdGpnSTV3Cm91WmFPRzNva3puS0xrMGp5RUQrWWhpQ2lGM1diNnZnZnUxbUh4M3NnRVp3Z2hnTTJMVERhOXpTWGV5RmpRRDAKcjNXcUM2NFNxMWdhUVVQejJ6bUVOdk8wRGdKN3pkMUVKTURxZGJacllLQUs4NUJ3ZmsvcTJoc1prM2Z5SHl4dwprZ1RzZzM0NkJGZVpsVnFGL0N0MkpnSVdtUUtCZ1FDNXgwUHkzVENBV2p5OEw5NGhrMzM0b2hwUXpDeTVxeXR3CnVHUklCTXlFVE9wNU5hUFBIQVdnbEZ3YzFMSis4bldmckZjeUEySjIrZ2V6K0ovOG1uU2hPNjF1MXVaNVV3dVkKQUQyaFlwUFcxMzJHZG9LcnI1ZkplVDJJUmR2bzRHa2FXN1Q2YnV1MGhjNzB0ZXZ4eDcxc2llWVBWaTBRenRGcgpnZSswNFBad2F3S0JnUUM2c1JnQUdFdklTbHZDOFUwYy9GcmN6MWUxYXY3bkVnQk9OVGU5d3o4VnRWdmYxNW5RCmN1L0FvTnpKMUliOWxNRVprcFprb0t1WDVnVlFFeXNVaG95REhzWCtvRVBZdGQxTmFnaTRvOWsxLzZOOGJFN1gKV0wxNU1HR3c5QUROSzFSb3Qrak1qZ1FUcmlyMHNnM2ZpRXp4eFVsdVkxVERFRERPU0dWUVRLdURzUUtCZ1FDcgpFUFRkbnBWNXF4My8vMmZnclFxek5ybGFxeGVJQkRqays3WERweitYbDZmVTR2S3ExRmZPTEs3QkVZNG5YU1c0CldSNlZmQTVnRmcyZnlCR3hyWncxbDFrMUZnZDFzbVdibXFVbGhUc3krb3lvazFueHM2Zm1LcERoZWNwc25xL0oKU0tiV2IrcjArTDNBRWdCb1M0OStjV0I1d05XUWc1RE5HUUhjSWNacmJ3S0JnRmV4a1JWUU1sZE5NVjFrTHFyMApSVzdXWTVIRk1XcnRJVkNacTZzRVIzT2NCR2xUaE9XNnpGcUJMK1pmODUzdmRtK3h6OG5ZRXRaSktiYmM3Yi9iClFQc0Uzay9FZFBRbSt4S214Y2hHQUg5ZFg0eUM5OEViSjMvc25TekxGYUpGdWdnMjArQWRxY3hNa1ZnaWhMVEMKWW1teTdTREY5OXRackxrT0dab2ZvSml4Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0='
     jwtPrivateKey: ''
     saml:
-      enabled: false
+#      enabled: ''
       crt: ''
       key: ''
     storageServer:
-      username: ''
-      password: ''
-      crt: ''
-      url: ''
-      bucketTame: ''
-      active: false
-      storeOnlyBuildResult: true
+      # MINIO_STORAGE_ACTIVE # Optional # Set to true to enable S3 integration. S3 is used for store debug data
+      active: 'FALSE' 
+#      username: ''
+#      password: ''
+       # Optional # SAML server certificate, base64 encoded. Required only if SAML integration enabled
+#      crt: ''
+       # Optional # SAML metadata URL. If set - enables SAML integration
+#      url: ''
+#      bucketTame: ''
+#      # MINIO_STORE_ONLY_BUILD_RESULT # Optional # Set to true to store only build results (less data amout) in S3 storage
+#      storeOnlyBuildResult: '' 
+
 #####apihub-node-service
 qubershipApihubBuildTaskConsumer:
   image:
-    repository: 'ghcr.io/netcracker/qubership-apihub-build-task-consumer' #TO_BE_SET
-    tag: 'dev'
+    repository: 'ghcr.io/netcracker/qubership-apihub-build-task-consumer' 
+    tag: 'latest'
   replicas: 1  
   resource:
     cpu:
@@ -90,15 +123,18 @@ qubershipApihubBuildTaskConsumer:
      limit: "4200Mi"
      request: "750Mi"
   env:
-    folderStore: "/tmp"
+    # FOLDER_STORE # Mandatory # Folder to store file cache. Not required to be persistence volume
+    folderStore: '/tmp' 
     operationsBuildBatch: "16"
 #####apihub-ui 
 qubershipApihubUi:
   image:
-    repository: 'ghcr.io/netcracker/qubership-apihub-ui'  #TO_BE_SET
-    tag: 'dev'
-  apihubBackendAddress: "qubership-apihub-backend:8080"
-  apihubNcServiceAddress: "qubership-apihub-build-task-consumer:3000"
+    repository: 'ghcr.io/netcracker/qubership-apihub-ui'  
+    tag: 'latest'
+  # APIHUB_BACKEND_ADDRESS # Mandatory # apihub-backend address.
+  apihubBackendAddress: 'qubership-apihub-backend:8080'
+  # APIHUB_NC_SERVICE_ADDRESS # Mandatory # Custom add-on service address.
+  apihubNcServiceAddress: 'qubership-apihub-backend:8080' #'apihub-nc-service:8080' 
   replicas: 1  
   resource:
     cpu:
@@ -108,27 +144,20 @@ qubershipApihubUi:
      limit: "64Mi"
      request: "64Mi"
   ingress:
-    enabled: true
-    host: 'qubership-apihub'
-    url: 'localhost'    
-    path: '/'
-    pathType: Prefix
-  dnsIngress:
     enabled: false
-    dnsRoute: 'qubership-apihub'
-    url: 'localhost'
+  tlsIngress:
+  # tls Ingress URL is used in APIHUB_URL ENV VAR on backend, so disabling its creation will make APIHUB deployment unable to work
+    enabled: true
     tlsSecret:
       certificate: ''
       certificateKey: ''
   service:
-    type: ClusterIP  # NodePort
+    type: ClusterIP  
     http:
       port: 8080
       targetPort: 8080
-      nodePort: 30080
     https:
       port: 8443
       targetPort: 8443
-      nodePort: 30443
 
 

@@ -1,0 +1,30 @@
+{{- if .Values.qubershipApihubUi.tlsIngress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: qubership-apihub-tls
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: '3600'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
+  labels:
+    app.kubernetes.io/part-of: qubership-apihub
+    app.kubernetes.io/managed-by: helm
+spec:
+  tls:
+    - hosts:
+        - '{{ .Values.qubershipApihub.apihubUrl }}'
+      secretName: 'qubership-apihub-ui-tls'
+  rules:
+    - host: '{{ .Values.qubershipApihub.apihubUrl }}'
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: 'qubership-apihub-ui'
+                port:
+                  name: https-service
+
+{{- end }}
