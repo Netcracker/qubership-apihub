@@ -1,6 +1,7 @@
 # APIHUB Development Process in GitHub
 
 This document outlines the development process for the **APIHUB** product in GitHub, covering:
+
 1. **Work items (issues)** and their lifecycle
 2. **Iterative development process**
 3. **Release process**
@@ -38,6 +39,7 @@ The APIHUB application's source code is distributed across **20+ repositories**:
 [View the full list](https://github.com/Netcracker?q=topic%3Aapihub&type=all&language=&sort=).
 
 Each repository represents either:
+
 - A standalone sub-component (microservice, library)
 - A utility (autotests, workflow scripts, etc.)
 
@@ -45,6 +47,7 @@ The **umbrella repository** is:
 [https://github.com/Netcracker/qubership-apihub](https://github.com/Netcracker/qubership-apihub).
 
 This repository serves as the **entry point** for all GitHub issues and contains:
+
 - Application-level deployment descriptors
 - Application-level documentation
 
@@ -63,6 +66,7 @@ This repository serves as the **entry point** for all GitHub issues and contains
 ## Branching model
 
 We follow the **Gitflow** approach.
+
 - Reference: [A Successful Git Branching Model](https://nvie.com/posts/a-successful-git-branching-model/).
 - **Note**: The FE team adheres strictly to Gitflow, while the BE team uses a simplified version without a `release` branch.
 
@@ -76,6 +80,7 @@ We have the following work items types:
 4. Task
 
 All work items are GitHub issues, categorized by `type` and `labels`.
+
 - **Creation**: Must be created in the umbrella repository (may be transferred later).
 - **Tracking**: Must be added to the `qubership-apihub` project.
 
@@ -108,6 +113,7 @@ Epics statuses reviewed by Technical Manager on regular basis (once per month)
 - **Description: provide as much detailed description as you can**
 
 **Examples**:
+
 - [Epic #3](https://github.com/Netcracker/qubership-apihub/issues/3)
 - [Epic #116](https://github.com/Netcracker/qubership-apihub/issues/116)
 
@@ -127,7 +133,7 @@ User Story definition of done: implemented, dev tested, demonstrated, merged to 
 - **Projects: qubership-apihub**
   - **Priority: Choose your option**
   - **Status: empty**
-  - **Sprint: empty** (exception: Dev Lead can create User Story directly to current Sprint)
+  - **Sprint: empty** (exception: **Dev Lead** can create User Story directly to current Sprint)
   - **Team: choose BE or FE**
 - **Relationships: choose corresponding Epic issue.**
 
@@ -149,7 +155,7 @@ Bug definition of done: fixed, dev tested, merged to develop, QA tested, include
 - **Projects: qubership-apihub**
   - **Priority: Choose your option**
   - **Status: empty**
-  - **Sprint: empty** (exception: Dev Lead can create a Bug directly to current Sprint; QA can create Bug directly to current Sprint if the Bug found during testing of a feature from current Sprint)
+  - **Sprint: empty** (exception: **Dev Lead** can create a Bug directly to current Sprint; QA can create Bug directly to current Sprint if the Bug found during testing of a feature from current Sprint)
   - **Team: choose BE or FE**
 
 **Example**: [Bug #30](https://github.com/Netcracker/qubership-apihub-backend/issues/30).
@@ -158,7 +164,7 @@ Bug definition of done: fixed, dev tested, merged to develop, QA tested, include
 
 Task is a some job which is not a new feature and not a bug. Technical tasks, one-time activities, configuration, etc
 
-Task definition of done: the task completed and accepted by Dev Lead/Technical Manager
+Task definition of done: the task completed and accepted by **Dev Lead**/**TM**
 
 **Mandatory fields:**
 
@@ -168,7 +174,7 @@ Task definition of done: the task completed and accepted by Dev Lead/Technical M
 - **Projects: qubership-apihub**
   - **Priority: Choose your option**
   - **Status: empty**
-  - **Sprint: empty** (exception: Dev Lead can create Task directly to current Sprint; Developer can create Task for himself directly to current Sprint)
+  - **Sprint: empty** (exception: **Dev Lead** can create Task directly to current Sprint; Developer can create Task for himself directly to current Sprint)
   - **Team: choose BE or FE**
 
 **Example**: [Task #33](https://github.com/Netcracker/qubership-apihub/issues/33).
@@ -188,7 +194,7 @@ The difference is:
 
 ### User Story workflow
 
-1. Issue created. **Hint:** It has *Status=`Empty`*, so on the project board it is placed it the very left column - it makes it subject for review by Leads on regular Leads sync-up
+1. Issue created. **Hint:** It has **Status=`Empty`**, so on the project board it is placed it the very left column - it makes it subject for review by Leads on regular Leads sync-up
 2. The issue is reviewed by **Dev Lead**, the Dev Lead **set Status=`Backlog`/`Ready for Dev`**, **set Sprint**. The issue *could* be Transferred to concrete GitHub repository
    1. Issues without Sprint but with not empty status - are in a Backlog
 3. When time is come, **Dev Lead assign** the issue to **Developer**
@@ -214,10 +220,9 @@ Step 7: **QA** validates the Bug fixed and after succesfull testing **set Status
 
 If the fix is not accepted - **QA** **set Status=In Progress** and notify **Developer**
 
-
 ### PR review process and rules
 
-todo
+*todo*
 
 ### Special cases
 
@@ -260,30 +265,30 @@ High level flow is the following:
 
 1. Tactical planning horizon called **Quarter Release**. It is 3 months (12 weeks) period. Scope for it is subject for planning with Product Owner. This scope is defined by business needs and strategic roadmap. Work items: Epics
 2. Operational development iteration called **Sprint**. Sprint is 2 weeks long. Work items: User Stories and Bugs
-3. Development team creates deliverable (Release) in the end of each Sprint
+3. Development team creates deliverable (**Release**) in the end of each Sprint
 
 ## Quarter Release
 
-Before start of new Quarter Release (each 3 months) Product Owner prepares prioritized list of Epics.
+Before start of new Quarter Release (each 3 months) **Product Owner** prepares prioritized list of Epics.
 
-These Epics are reviewed with TM and Dev Leads in order to define technical and resource ability for implementation.
+These Epics are reviewed with **TM** and **Dev Leads** in order to define technical and resource ability for implementation.
 
 Finalized list of Epics is a scope for development.
 
-TM and Dev Leads responsibility to make each Epic decomposition to User Stories
+**TM** and **Dev Leads** responsibility to make each Epic decomposition to User Stories
 
 ## Sprint
 
 Sprint is 2 weeks long development iteration
 
-Sprints are pre-created in project by TM
+Sprints are pre-created in project by **TM**
 
 Sprint start and end happen automatically accroding to start/finish dates
 
-* Sprint scope (included issues) need to be defined and agreed before Sprint start. It is TM and Dev Leads responsibility
-* Keeping Sprint board be always up to date - TM responsibility
-* Implementation of Sprint scope in time - TM and Dev Leads responsibility
-* If Sprint is over but there are still not completed issues in it - they are manually moved to the next Sprint/no Sprint (Backlog) by TM
+* Sprint scope (included issues) need to be defined and agreed before Sprint start. It is **TM** and **Dev Leads** responsibility
+* Keeping Sprint board be always up to date - **TM** responsibility
+* Implementation of Sprint scope in time - **TM** and **Dev Leads** responsibility
+* If Sprint is over but there are still not completed issues in it - they are manually moved to the next Sprint/no Sprint (Backlog) by **TM**
 * Release is created right after Sprint completion
 
 ## Release
@@ -304,13 +309,13 @@ Release contains:
 
 Release represented as a `tag` in umbrella repository.
 
-TM is responsible for release quality.
+**TM** is responsible for release quality.
 
-TM is responsible for release creation.
+**TM** is responsible for release creation.
 
 Notes:
 
 1. BE and FE team responsible for releasing owned sub components
 2. Physically release is a `tag` in each repository which produces docker image
 
-Release example: [https://github.com/Netcracker/qubership-apihub/releases/tag/1.1.1](https://github.com/Netcracker/qubership-apihub/releases/tag/1.1.1)
+**Release Example**: [v1.1.1](https://github.com/Netcracker/qubership-apihub/releases/tag/1.1.1).Release example: [https://github.com/Netcracker/qubership-apihub/releases/tag/1.1.1](https://github.com/Netcracker/qubership-apihub/releases/tag/1.1.1
