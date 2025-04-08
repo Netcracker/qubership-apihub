@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-doc-viewer",
-  "version": "2.0.7",
+  "version": "2.0.7-next.0",
   "type": "module",
   "exports": {
     ".": {
@@ -52,8 +52,8 @@
     "strip-ansi": "6.0.1"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-data-model": "dev",
-    "@netcracker/qubership-apihub-api-diff": "dev",
+    "@netcracker/qubership-apihub-api-data-model": "next",
+    "@netcracker/qubership-apihub-api-diff": "next",
     "react-markdown": "8.0.7",
     "react-use": "^17.6.0",
     "remark-gfm": "3.0.1"
