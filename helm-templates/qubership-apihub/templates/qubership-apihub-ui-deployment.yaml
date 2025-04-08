@@ -28,7 +28,7 @@ spec:
                 app.kubernetes.io/component: frontend
                 app.kubernetes.io/part-of: qubership-apihub
                 app.kubernetes.io/managed-by: helm
-                app.kubernetes.io/technology: 'cpp'
+                app.kubernetes.io/technology: 'nginx'
         spec:
             restartPolicy: Always
             terminationGracePeriodSeconds: 30
@@ -43,9 +43,9 @@ spec:
                     protocol: TCP
                 env:
                 - name: APIHUB_BACKEND_ADDRESS
-                  value: '{{ .Values.qubershipApihubUi.apihubBackendAddress }}'
+                  value: '{{ .Values.qubershipApihubUi.env.apihubBackendAddress }}'
                 - name: APIHUB_NC_SERVICE_ADDRESS
-                  value: '{{ .Values.qubershipApihubUi.apihubNcServiceAddress }}'
+                  value: '{{ .Values.qubershipApihubUi.env.apihubNcServiceAddress }}'
                 resources:
                     requests:
                         cpu: '{{ .Values.qubershipApihubUi.resource.cpu.request }}'

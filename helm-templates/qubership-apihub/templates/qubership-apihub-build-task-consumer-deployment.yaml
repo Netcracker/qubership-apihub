@@ -41,7 +41,7 @@ spec:
                 -   name: LOG_LEVEL
                     value: '{{ .Values.qubershipApihub.logLevel }}'
                 -   name: APIHUB_BACKEND_ADDRESS
-                    value: '{{ .Values.qubershipApihubUi.apihubBackendAddress }}'
+                    value: '{{ .Values.qubershipApihubUi.env.apihubBackendAddress }}'
                 -   name: FOLDER_STORE
                     value: '/tmp' 
                 -   name: OPERATIONS_BUILD_BATCH

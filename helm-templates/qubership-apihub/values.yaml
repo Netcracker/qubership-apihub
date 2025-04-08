@@ -61,14 +61,12 @@ qubershipApihubBackend:
     # Optional. Default admin user password (example: password)
     adminPassword: '' 
 
-    # todo: ar
     samlIntegration:
       # Optional. SAML metadata URL. If set - enables SAML integration
       adfsMetadataUrl: '' 
       crt: ''
       key: ''
 
-    # todo: ar
     businessParameters:
       # (todo: wording) EXTERNAL_LINKS # Optional # Links to be shown under (i) button in UI
       externalLinks: '' 
@@ -110,12 +108,11 @@ qubershipApihubBackend:
       bucketTame: ''
       storeOnlyBuildResult: '' 
 
-  # todo: ar
   # Parameters for APIHUB Editor feature. Deprecated. Will be removed in future releases.
-#    editor:
-#      gitlabUrl: '' 
-#      clientId: '' 
-#      clientSecret: '' 
+    editor:
+      gitlabUrl: '' 
+      clientId: '' 
+      clientSecret: '' 
 
 ########################
 qubershipApihubBuildTaskConsumer:
@@ -148,7 +145,6 @@ qubershipApihubUi:
      limit: "64Mi"
      request: "64Mi"
   env:
-    # todo: ar
     apihubBackendAddress: 'qubership-apihub-backend:8080'
     apihubNcServiceAddress: 'qubership-apihub-backend:8080'
 
@@ -161,15 +157,7 @@ qubershipApihubUi:
     tlsSecret:
       certificate: ''
       certificateKey: ''
+      
 
-  # todo: ar - remove it
-  service:
-    type: ClusterIP  
-    http:
-      port: 8080
-      targetPort: 8080
-    https:
-      port: 8443
-      targetPort: 8443
 
 
