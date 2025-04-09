@@ -127,7 +127,7 @@ spec:
                 -   name: INSECURE_PROXY
                     value: '{{ .Values.qubershipApihubBackend.env.businessParameters.insecureProxy }}'
                 -   name: ORIGIN_ALLOWED
-                    value: '{{ .Values.qubershipApihubBackend.env.originAllowed }}'
+                    value: '{{ .Values.qubershipApihubBackend.env.technicalParameters.originAllowed }}'
                 -   name: LDAP_SERVER  
                     value: '{{ .Values.qubershipApihubBackend.env.ldap.ldapServer }}'
                 -   name: LDAP_USER
@@ -199,7 +199,7 @@ spec:
                         name: 'qubership-apihub-backend-access-token-secret'
                         key: token
                 -   name: CUSTOM_PATH_PREFIXES
-                    value: '{{ .Values.qubershipApihubBackend.env.customPathPrefixes }}'
+                    value: '{{ .Values.qubershipApihubBackend.env.technicalParameters.customPathPrefixes }}'
                 -   name: ALLOWED_HOSTS
                     value: '{{ .Values.qubershipApihubBackend.env.businessParameters.allowedHosts }}'
                 resources:

@@ -14,9 +14,9 @@ echo $(expr $(date +%N) + $(date +%s) \* $(date +%N%s) ) | base64 | cut -c $A-$B
 
 function generate-local-passwords ()
 { 
-export APIHUB_ADMIN_EMAIL=x_apihub_$(rnd 13 17)          # Optional # Default admin user login (example: x_apihub). If set - this admin user will be created automatically." 
-export APIHUB_ADMIN_PASSWORD=$(rnd 11 19)                # Optional # Default admin user password (example: password)" 
-export JWT_PRIVATE_KEY=$(cat jwt_private_key)            # Mandatory # Self generated private PKCS" 
+   export APIHUB_ADMIN_EMAIL=x_apihub_$(rnd 13 17)
+   export APIHUB_ADMIN_PASSWORD=$(rnd 11 19)
+   export JWT_PRIVATE_KEY=$(cat jwt_private_key)
 }
 
 generate-local-passwords 
