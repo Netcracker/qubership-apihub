@@ -15,15 +15,22 @@ type PackageExportConfigService interface {
 	SetConfig(packageId string, AllowedOasExtensions []string) error
 }
 
-func NewPackageExportConfigService(repo repository.PackageExportConfigRepository) PackageExportConfigService {
-	return packageExportConfigServiceImpl{repo: repo}
+func NewPackageExportConfigService(repo repository.PackageExportConfigRepository, packageService PackageService) PackageExportConfigService {
+	return packageExportConfigServiceImpl{
+		repo:           repo,
+		packageService: packageService,
+	}
 }
 
 type packageExportConfigServiceImpl struct {
-	repo repository.PackageExportConfigRepository
+	repo           repository.PackageExportConfigRepository
+	packageService PackageService
 }
 
 func (p packageExportConfigServiceImpl) GetConfig(packageId string) (*view.PackageExportConfig, error) {
+	if err := p.checkPackageExistence(packageId); err != nil {
+		return nil, err
+	}
 	ents, err := p.repo.GetConfigForHierarchy(packageId)
 	if err != nil {
 		return nil, err
@@ -46,6 +53,9 @@ func (p packageExportConfigServiceImpl) GetConfig(packageId string) (*view.Packa
 }
 
 func (p packageExportConfigServiceImpl) SetConfig(packageId string, AllowedOasExtensions []string) error {
+	if err := p.checkPackageExistence(packageId); err != nil {
+		return err
+	}
 	var incorrectExtensions []string
 	var duplicates []string
 	set := map[string]struct{}{}
@@ -86,4 +96,20 @@ func (p packageExportConfigServiceImpl) SetConfig(packageId string, AllowedOasEx
 	}
 
 	return p.repo.SetConfig(ent)
+}
+
+func (p packageExportConfigServiceImpl) checkPackageExistence(packageId string) error {
+	exists, err := p.packageService.PackageExists(packageId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.PackageNotFound,
+			Message: exception.PackageNotFoundMsg,
+			Params:  map[string]interface{}{"packageId": packageId},
+		}
+	}
+	return nil
 }

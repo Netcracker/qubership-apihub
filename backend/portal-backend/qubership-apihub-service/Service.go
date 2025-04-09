@@ -309,7 +309,7 @@ func main() {
 	zeroDayAdminService := service.NewZeroDayAdminService(userService, roleService, usersRepository, systemInfoService)
 
 	personalAccessTokenService := service.NewPersonalAccessTokenService(personalAccessTokenRepository, userService, roleService)
-	packageExportConfigService := service.NewPackageExportConfigService(packageExportConfigRepository)
+	packageExportConfigService := service.NewPackageExportConfigService(packageExportConfigRepository, packageService)
 
 	integrationsController := controller.NewIntegrationsController(integrationsService)
 	projectController := controller.NewProjectController(projectService, groupService, searchService)
