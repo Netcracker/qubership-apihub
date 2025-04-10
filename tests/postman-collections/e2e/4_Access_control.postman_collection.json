@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "4_Access_control",
-        "_postman_id": "771d9462-e549-42d8-9760-0e2c7cf4cb48",
+        "_postman_id": "65f000ad-ff96-46e6-a5c1-e0ceece421c4",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -1441,65 +1441,6 @@
                                 "body": {
                                     "mode": "raw",
                                     "raw": "{\r\n    \"users\": [\"{{user_2_id}}\"],\r\n    \"RoleIds\": [\"editor\"],\r\n    \"Emails\": [\"{{user_2_login}}\"]\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "1.2.13 Add user_3 as members to package 2",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 201\", function () {\r",
-                                            "    pm.response.to.have.status(201);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_2}}/members",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_2}}",
-                                        "members"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"users\": [\"{{user_3_id}}\"],\r\n    \"RoleIds\": [\"admin\"],\r\n    \"Emails\": [\"{{user_3_login}}\"]\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -4208,67 +4149,6 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "1.4.7 Login as User_3",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "pm.environment.set(\"TOKEN\", data.token)"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/auth/local",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "auth",
-                                        "local"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [],
-                                "auth": {
-                                    "type": "basic",
-                                    "basic": [
-                                        {
-                                            "key": "username",
-                                            "value": "{{user_3_login}}",
-                                            "type": "string"
-                                        },
-                                        {
-                                            "key": "password",
-                                            "value": "{{user_3_password}}",
-                                            "type": "string"
-                                        }
-                                    ]
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
                             "name": "1.4.8 Retrieve and delete list of PATs",
                             "event": [
                                 {
@@ -4339,70 +4219,6 @@
                                         "type": "default"
                                     }
                                 ],
-                                "auth": {
-                                    "type": "noauth"
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "1.4.9 Create PAT for User_3",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 201\", function () {",
-                                            "    pm.response.to.have.status(201);",
-                                            "});",
-                                            "",
-                                            "var data = pm.response.json();",
-                                            "",
-                                            "pm.environment.set(\"rmanager_PAT\", data.token);"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v1/personalAccessToken",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v1",
-                                        "personalAccessToken"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"name\": \"{{user_3_name}}_PAT_1\",\r\n    \"daysUntilExpiry\": 1\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                },
                                 "auth": {
                                     "type": "noauth"
                                 }
