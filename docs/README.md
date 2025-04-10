@@ -12,5 +12,5 @@
 
 # Development docs
 
-## [Ticketing process guide](./processes/development-management-guide.md
+## [Ticketing process guide](./processes/development-management-guide.md)
 ## [Local k8s with APIHUB](/helm-templates/local-k8s-guide.md)
