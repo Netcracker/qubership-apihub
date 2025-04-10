@@ -111,16 +111,16 @@ Please also refer to official [Installation Notes](/docs/installation-guide.md)
     cd qubership-apihub/helm-templates/qubership-apihub
 
     # Generate JWT key
-    ./generate_jwt_pkey.sh
+    generate_jwt_pkey.sh
 
     # Generate passwords
-    ./generate-local-passwords.sh
+    generate-local-passwords.sh
     
     # Deploy PostgreSQL Database
-    helm install postgres-db -n postgres-db --create-namespace ../helm-templates/postgres-db
+    helm install postgres-db -n postgres-db --create-namespace ../postgres-db
 
     # Deploy APIHIB Application
-    helm install apihub -n apihub --create-namespace -f ../helm-templates/qubership-apihub/local-k8s-values.yaml -f ../helm-templates/qubership-apihub/local-secrets.yaml ../helm-templates/qubership-apihub
+    helm install apihub -n apihub --create-namespace -f ../qubership-apihub/local-k8s-values.yaml -f ../qubership-apihub/local-secrets.yaml ../qubership-apihub
 ```
 
 ## Verify Installation
@@ -137,10 +137,12 @@ Expected output:
 
 Qubership APIHUB will be accessible on [https://qubership-apihub.localhost/login](https://qubership-apihub.localhost/login)
 
+Credentials for login can be found in `/helm-templates/qubership-apihub/local-secrets.yaml` file
+
 
 ## Uninstallation
 
 ```
     helm uninstall apihub -n apihub
-    heml uninstall postgres-db -n postgres-db
+    helm uninstall postgres-db -n postgres-db
 ```

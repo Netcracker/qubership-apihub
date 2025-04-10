@@ -17,6 +17,7 @@ function generate-local-passwords ()
    export APIHUB_ADMIN_EMAIL=x_apihub_$(rnd 13 17)
    export APIHUB_ADMIN_PASSWORD=$(rnd 11 19)
    export JWT_PRIVATE_KEY=$(cat jwt_private_key)
+   export APIHUB_ACCESS_TOKEN=$(rnd 2 7)
 }
 
 generate-local-passwords 
