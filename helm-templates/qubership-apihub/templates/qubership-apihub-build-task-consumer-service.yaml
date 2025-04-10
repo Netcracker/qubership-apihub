@@ -1,0 +1,18 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+    name: 'qubership-apihub-build-task-consumer'
+    labels:
+        name: 'qubership-apihub-build-task-consumer'
+        app.kubernetes.io/name: 'qubership-apihub-build-task-consumer'
+        app.kubernetes.io/part-of: qubership-apihub
+        app.kubernetes.io/managed-by: helm
+spec:
+    ports:
+    -   name: web
+        port: 3000
+        targetPort: 3000
+    selector:
+        name: 'qubership-apihub-build-task-consumer'
+

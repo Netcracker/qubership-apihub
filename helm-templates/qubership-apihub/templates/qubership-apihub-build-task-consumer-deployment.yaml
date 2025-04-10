@@ -1,0 +1,90 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: 'qubership-apihub-build-task-consumer'
+    labels:
+        name: 'qubership-apihub-build-task-consumer'
+        app.kubernetes.io/name: 'qubership-apihub-build-task-consumer'
+        app.kubernetes.io/version: '{{ .Values.qubershipApihub.version }}'
+        app.kubernetes.io/component: 'job'
+        app.kubernetes.io/part-of: qubership-apihub
+        app.kubernetes.io/managed-by: helm
+        app.kubernetes.io/technology: 'node-js'
+spec:
+    replicas: {{ .Values.qubershipApihubBuildTaskConsumer.replicas }}
+    strategy:
+        type: RollingUpdate
+        rollingUpdate:
+            maxSurge: 25%
+            maxUnavailable: 25%
+    template:
+        metadata:
+            labels:
+                name: 'qubership-apihub-build-task-consumer'
+                app.kubernetes.io/name: 'qubership-apihub-build-task-consumer'
+                app.kubernetes.io/version: '{{ .Values.qubershipApihub.version }}'
+                app.kubernetes.io/component: 'backend'
+                app.kubernetes.io/part-of: qubership-apihub
+                app.kubernetes.io/managed-by: helm
+                app.kubernetes.io/technology: 'node-js'
+        spec:
+            serviceAccountName: 'qubership-apihub-build-task-consumer'
+            containers:
+            -   name: 'qubership-apihub-build-task-consumer'
+                image: '{{ .Values.qubershipApihubBuildTaskConsumer.image.repository }}:{{ .Values.qubershipApihubBuildTaskConsumer.image.tag }}'
+                ports:
+                -   name: web
+                    containerPort: 3000
+                    protocol: TCP
+                env:
+                -   name: LOG_LEVEL
+                    value: '{{ .Values.qubershipApihub.logLevel }}'
+                -   name: APIHUB_BACKEND_ADDRESS
+                    value: '{{ .Values.qubershipApihubUi.env.apihubBackendAddress }}'
+                -   name: FOLDER_STORE
+                    value: '/tmp' 
+                -   name: OPERATIONS_BUILD_BATCH
+                    value: '{{ .Values.qubershipApihubBuildTaskConsumer.env.operationsBuildBatch }}'
+                -   name: APIHUB_API_KEY
+                    valueFrom:
+                        secretKeyRef:
+                            name: 'qubership-apihub-build-task-consumer-api-key-secret'
+                            key: access_token
+                resources:
+                    requests:
+                        cpu: {{ .Values.qubershipApihubBuildTaskConsumer.resource.cpu.request }}
+                        memory: '{{ .Values.qubershipApihubBuildTaskConsumer.resource.memory.request }}'
+                    limits:
+                        cpu: {{ .Values.qubershipApihubBuildTaskConsumer.resource.cpu.limit }}
+                        memory: '{{ .Values.qubershipApihubBuildTaskConsumer.resource.memory.limit }}'
+                livenessProbe:
+                    httpGet:
+                        path: /swagger
+                        port: web
+                    initialDelaySeconds: 15
+                    timeoutSeconds: 600
+                    periodSeconds: 60
+                    failureThreshold: 5
+                readinessProbe:
+                    httpGet:
+                        path: /swagger
+                        port: web
+                    initialDelaySeconds: 15
+                    timeoutSeconds: 600
+                    periodSeconds: 60
+                    failureThreshold: 5
+                securityContext:
+                    runAsGroup: 10001
+                    readOnlyRootFilesystem: false
+                    runAsNonRoot: true
+                    seccompProfile:
+                        type: RuntimeDefault
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                        drop:
+                          - ALL
+    selector:
+        matchLabels:
+            name: 'qubership-apihub-build-task-consumer'
+

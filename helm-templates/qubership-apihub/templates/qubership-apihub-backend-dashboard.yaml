@@ -1,0 +1,29 @@
+{{ if .Values.qubershipApihubBackend.monitoring.enabled }}
+---
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: apihub-overview-dashboard
+  labels:
+    app: grafana
+    app.kubernetes.io/part-of: qubership-apihub
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/processed-by-operator: monitoring-operator
+spec:
+  name: apihub-overview.json
+  json: {{ .Files.Get  "dashboards/apihub-overview.json" | toJson }}
+---
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: apihub-metrics-from-postrgres
+  labels:
+    app: grafana
+    app.kubernetes.io/part-of: qubership-apihub
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/processed-by-operator: monitoring-operator
+spec:
+  name: apihub-metrics-from-postrgres.json
+  json: {{ .Files.Get  "dashboards/apihub-metrics-from-postrgres.json" | toJson }}
+---
+{{ end }}
