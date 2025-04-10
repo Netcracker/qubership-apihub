@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type {
+import {
   BuildConfig,
   BuildConfigFile,
   BuildConfigRef,
@@ -28,6 +28,7 @@ import type {
   ResolvedDocuments,
   ResolvedOperations,
   ResolvedVersionOperationsHashMap,
+  VALIDATION_RULES_SEVERITY_LEVEL_WARNING,
   VersionId,
 } from './types'
 import {
@@ -50,7 +51,14 @@ import {
 import type { NotificationMessage, PackageConfig } from './types/package'
 import { graphqlApiBuilder, REST_API_TYPE, restApiBuilder, textApiBuilder, unknownApiBuilder } from './apitypes'
 import { filesDiff, findSharedPath, getCompositeKey, getFileExtension, getOperationsList } from './utils'
-import { BUILD_TYPE, DEFAULT_BATCH_SIZE, MESSAGE_SEVERITY, SUPPORTED_FILE_FORMATS, VERSION_STATUS } from './consts'
+import {
+  BUILD_TYPE,
+  DEFAULT_BATCH_SIZE,
+  DEFAULT_VALIDATION_RULES_SEVERITY_CONFIG,
+  MESSAGE_SEVERITY,
+  SUPPORTED_FILE_FORMATS,
+  VERSION_STATUS,
+} from './consts'
 import { unknownParsedFile } from './apitypes/unknown/unknown.parser'
 import { createVersionPackage } from './components/package'
 import { compareVersions } from './components/compare'
@@ -90,7 +98,15 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
 
   constructor(config: BuildConfig, public params: BuilderParams, fileSources?: FileSourceMap) {
     this.apiBuilders.push(restApiBuilder, graphqlApiBuilder, textApiBuilder, unknownApiBuilder)
-    this.config = { previousVersion: '', previousVersionPackageId: '', ...config }
+    this.config = {
+      previousVersion: '',
+      previousVersionPackageId: '',
+      ...config,
+      validationRulesSeverity: {
+        ...DEFAULT_VALIDATION_RULES_SEVERITY_CONFIG,
+        ...config.validationRulesSeverity,
+      },
+    }
 
     this.params.configuration = {
       batchSize: DEFAULT_BATCH_SIZE,
@@ -232,11 +248,6 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
 
     const source = await this.params.resolvers.fileResolver(fileId)
     if (!source) {
-      this.notifications.push({
-        severity: MESSAGE_SEVERITY.Error,
-        message: 'Cannot resolve file',
-        fileId: fileId,
-      })
       return null
     }
 

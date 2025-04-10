@@ -20,10 +20,9 @@ import { convertObj } from 'swagger2openapi'
 import { REST_DOCUMENT_TYPE, REST_KIND_KEY } from './rest.consts'
 import type { RestDocumentInfo } from './rest.types'
 
-import type { DocumentBuilder, DocumentDumper } from '../../types'
-import { YAML_EXPORT_GROUP_FORMAT } from '../../types'
+import { DocumentBuilder, DocumentDumper, YAML_EXPORT_GROUP_FORMAT } from '../../types'
 import { FILE_FORMAT } from '../../consts'
-import { getBundledFileDataWithDependencies, getDocumentTitle } from '../../utils'
+import { createBundlingErrorHandler, getBundledFileDataWithDependencies, getDocumentTitle } from '../../utils'
 import YAML from 'js-yaml'
 
 const openApiDocumentMeta = (data: OpenAPIV3.Document): RestDocumentInfo => {
@@ -53,7 +52,10 @@ const openApiDocumentMeta = (data: OpenAPIV3.Document): RestDocumentInfo => {
 export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (parsedFile, file, ctx) => {
   const { fileId, slug = '', publish = true, apiKind, ...fileMetadata } = file
 
-  const { data, dependencies } = await getBundledFileDataWithDependencies(fileId, ctx.parsedFileResolver)
+  const {
+    data,
+    dependencies,
+  } = await getBundledFileDataWithDependencies(fileId, ctx.parsedFileResolver, createBundlingErrorHandler(ctx, fileId))
 
   let bundledFileData = data
 

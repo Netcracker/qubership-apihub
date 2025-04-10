@@ -24,7 +24,7 @@ export const buildOperations = async (document: VersionDocument, ctx: BuilderCon
     try {
       return await builder.buildOperations?.(document, ctx, debugCtx) ?? []
     } catch (error) {
-      throw new Error(`Cannot build document "${document.slug}" operations. ${error instanceof Error ? error.message : 'Unknown error'}`)
+      throw new Error(`Cannot process the "${document.fileId}" document. ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 

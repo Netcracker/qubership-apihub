@@ -29,6 +29,17 @@ export type OperationsGroupExportFormat =
   | typeof JSON_EXPORT_GROUP_FORMAT
   | typeof HTML_EXPORT_GROUP_FORMAT
 
+export const VALIDATION_RULES_SEVERITY_LEVEL_ERROR = 'error'
+export const VALIDATION_RULES_SEVERITY_LEVEL_WARNING = 'warning'
+
+export type ValidationRulesSeverityLevel =
+  | typeof VALIDATION_RULES_SEVERITY_LEVEL_ERROR
+  | typeof VALIDATION_RULES_SEVERITY_LEVEL_WARNING
+
+export interface ValidationRulesSeverity {
+  brokenRefs: ValidationRulesSeverityLevel
+}
+
 export interface BuildConfig {
   packageId: PackageId
   version: VersionId // @revision for rebuild
@@ -48,6 +59,8 @@ export interface BuildConfig {
 
   metadata?: Record<string, unknown>
   format?: OperationsGroupExportFormat
+
+  validationRulesSeverity?: ValidationRulesSeverity
 }
 
 export interface BuildConfigFile {
