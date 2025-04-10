@@ -1,13 +1,25 @@
 # Qubership APIHUB Installation Guide
 
+This guide describes Qubership APIHUB installation process
+
+- [3rd party dependencies](#3rd-party-dependencies)
+- [HWE](#hwe)
+- [docker-compose](#docker-compose)
+  * [Minimal parameters set](#minimal-parameters-set)
+    + [Full ENV VARs list per container](#full-env-vars-list-per-container)
+- [Helm](#helm)
+  * [Prerequisites](#prerequisites)
+  * [Set up values.yml](#set-up-valuesyml)
+  * [Execute helm install](#execute-helm-install)
+
 # 3rd party dependencies
 
 | Name | Version | Mandatory/Optional | Comment |
 | ---- | ------- |------------------- | ------- |
-| PostgreSQL | 14+ | Mandatory | JDBC connection string |
-| GitLab | 14+ | Optional | For APIHUB Editor |
-| Minio | 1.2.3 | Optional | For store cold data and reduce load to PG |
-| ADFS | Any | Optional | For SSO |
+| PostgreSQL | 14+ | Mandatory |  |
+| GitLab | 14+ | Optional | For APIHUB Editor. Deprecated |
+| S3 | Any | Optional | For store cold data and reduce load to PG |
+| SAML provider | Any | Optional | For SSO |
 | LDAP | Any | Optional | For User info sync |
 
 # HWE
@@ -19,7 +31,7 @@
 
 # docker-compose
 
-Please refer to [`docker-compose/README.md`](/docker-compose/README.md)
+Please refer to [`docker-compose/apihub-generic/README.md`](/docker-compose/apihub-generic/README.md)
 
 ## Minimal parameters set
 
@@ -105,15 +117,29 @@ APIHUB_ACCESS_TOKEN=${any string}
 
 # Helm
 
+Qubership APIHUB Helm Chart located here: [`helm-templates/qubership-apihub`](/helm-templates/qubership-apihub)
+
 ## Prerequisites
 
-1. Install k8s locally
-2. Install Helm
+1. kubectl installed and configured for k8s cluster access. Namespace admin permissions required.
+1. Helm installed
+1. Supported k8s version - 1.23+
 
 ## Set up values.yml
 
-TODO
+1. Download Qubership APIHUB helm chart
+1. Fill `values.yaml` with corresponding deploy parameters. `values.yaml` is self-documented, so please refer to it
 
 ## Execute helm install
 
-TODO
+In order to deploy Qubership APIHUB to your k8s cluster execute the following command:
+
+```
+helm install apihub -n apihub --create-namespace -f ./helm-templates/qubership-apihub/values.yaml ./helm-templates/qubership-apihub
+```
+
+In order to uninstall Qubership APIHUB from your k8s cluster execute the following command:
+
+```
+helm uninstall apihub -n apihub
+```
