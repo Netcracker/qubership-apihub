@@ -1,6 +1,6 @@
 import { compareFiles, compareFilesWithMerge, TEST_DEFAULTS_DECLARATION_PATHS } from '../utils'
 import { diffsMatcher } from '../../helper/matchers'
-import { annotation, breaking, DiffAction, nonBreaking } from '../../../src'
+import { annotation, breaking, DiffAction, nonBreaking, semiBreaking } from '../../../src'
 import { JSON_SCHEMA_NODE_SYNTHETIC_TYPE_ANY } from '@netcracker/qubership-apihub-api-unifier'
 
 const SUITE_ID = 'response-body-schema'
@@ -160,7 +160,7 @@ describe('Openapi3 ResponseBody.Schema ', () => {
       expect.objectContaining({
         action: DiffAction.remove,
         beforeDeclarationPaths: [[...RESPONSE_SCHEMA_PATH, 'enum']],
-        type: breaking,
+        type: semiBreaking,
       }),
     ]))
   })
@@ -172,7 +172,7 @@ describe('Openapi3 ResponseBody.Schema ', () => {
       expect.objectContaining({
         action: DiffAction.add,
         afterDeclarationPaths: [[...RESPONSE_SCHEMA_PATH, 'enum', 2]],
-        type: breaking,
+        type: semiBreaking,
       }),
     ]))
   })
@@ -189,7 +189,7 @@ describe('Openapi3 ResponseBody.Schema ', () => {
         expect.objectContaining({
           action: DiffAction.add,
           afterDeclarationPaths: [[...RESPONSE_SCHEMA_PATH, 'enum', 1]],
-          type: breaking,
+          type: semiBreaking,
         }),
       ],
     ))
