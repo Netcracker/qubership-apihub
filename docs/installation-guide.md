@@ -6,7 +6,7 @@ This guide describes Qubership APIHUB installation process
 - [HWE](#hwe)
 - [docker-compose](#docker-compose)
   * [Minimal parameters set](#minimal-parameters-set)
-    + [Full ENV VARs list per container](#full-env-vars-list-per-container)
+  * [Full ENV VARs list per container](#full-env-vars-list-per-container)
 - [Helm](#helm)
   * [Prerequisites](#prerequisites)
   * [Set up values.yml](#set-up-valuesyml)
@@ -47,7 +47,7 @@ APIHUB_ACCESS_TOKEN=${any string}
 
 **NOTE:** database should be pre-created
 
-### Full ENV VARs list per container
+## Full ENV VARs list per container
 
 | ENV name | Mandatory | Default Value | Example | Description |
 | --- | --- | --- | --- | --- |

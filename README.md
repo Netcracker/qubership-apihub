@@ -54,9 +54,3 @@ See [qubership-apihub-ui](https://github.com/Netcracker/qubership-apihub-ui)
 ## User Guide
 
 [User Guide](./docs/user-guide.md)
-
-## Development docs
-
-### local k8s deploymnet
-
-[local k8s deploymnet](./docs/local-k8s-guide.md)
