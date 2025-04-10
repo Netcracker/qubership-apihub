@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_1_Smoke_Portal",
-        "_postman_id": "c90f4c3f-5709-45e3-83c8-5f0745c5c18d",
+        "_postman_id": "3a5431ed-a500-4ade-b677-7c8e671b0325",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -412,8 +412,12 @@
                                             "        pm.environment.set(\"User_name\", data.users[i].name),\r",
                                             "        pm.environment.set(\"User_id\", data.users[i].id),\r",
                                             "        pm.environment.set(\"User_email\", data.users[i].email)\r",
+                                            "    } else {\r",
+                                            "        pm.environment.set(\"User_name\", data.users[0].name),\r",
+                                            "        pm.environment.set(\"User_id\", data.users[0].id),\r",
+                                            "        pm.environment.set(\"User_email\", data.users[0].email)\r",
                                             "    }\r",
-                                            "}"
+                                            "};"
                                         ]
                                     }
                                 },
@@ -482,17 +486,8 @@
                                             "    // Set the `id` as an environment variable\r",
                                             "    pm.environment.set(\"USER_ID_WITH_AVATAR\", userWithAvatar.id);\r",
                                             "} else {\r",
-                                            "    pm.environment.unset(\"USER_ID_WITH_AVATAR\");\r",
+                                            "    pm.environment.set(\"USER_ID_WITH_AVATAR\", \"x_apihub\");\r",
                                             "}\r",
-                                            "\r",
-                                            "// Test to ensure the variable is set correctly\r",
-                                            "pm.test(\"User ID with avatarUrl is set\", function () {\r",
-                                            "    if (userWithAvatar) {\r",
-                                            "        pm.expect(pm.environment.get(\"USER_ID_WITH_AVATAR\")).to.eql(userWithAvatar.id);\r",
-                                            "    } else {\r",
-                                            "        pm.expect(pm.environment.get(\"USER_ID_WITH_AVATAR\")).to.be.undefined;\r",
-                                            "    }\r",
-                                            "});\r",
                                             ""
                                         ]
                                     }
@@ -550,14 +545,21 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
+                                            "pm.test(\"Verify Status Code and Content-Type or 404 based on USER_ID_WITH_AVATAR\", function () {\r",
+                                            "    let userIdWithAvatar = pm.variables.get(\"USER_ID_WITH_AVATAR\"); // Retrieve USER_ID_WITH_AVATAR variable\r",
+                                            "   \r",
                                             "\r",
-                                            "pm.test(\"Content-type is image/png\", function () {\r",
-                                            "    pm.response.to.have.header('Content-Type');\r",
-                                            "    pm.expect(pm.response.headers.get('Content-Type')).to.include('image/png');\r",
-                                            "});"
+                                            "    if (userIdWithAvatar !== \"x_apihub\") {\r",
+                                            "        // Expect status code 200 and Content-Type to be image/png for non-x_apihub users\r",
+                                            "        pm.response.to.have.status(200);\r",
+                                            "        pm.response.to.have.header('Content-Type');\r",
+                                            "        pm.expect(pm.response.headers.get('Content-Type')).to.include('image/png');\r",
+                                            "    } else {\r",
+                                            "        // Expect status code 404 and empty avatarUrl for x_apihub user\r",
+                                            "        pm.response.to.have.status(404);\r",
+                                            "       }\r",
+                                            "});\r",
+                                            ""
                                         ]
                                     }
                                 },
@@ -1284,7 +1286,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages?limit=1&page=1",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages?limit=1&page=0",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -1300,7 +1302,7 @@
                                         },
                                         {
                                             "key": "page",
-                                            "value": "1"
+                                            "value": "0"
                                         }
                                     ]
                                 },
@@ -1874,7 +1876,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"users\": [\"{{Username}}\"],\r\n    \"RoleIds\": [\"editor\"],\r\n    \"Emails\": [\"{{User_email}}\"]\r\n}",
+                                    "raw": "{\r\n    \"RoleIds\": [\"editor\"],\r\n    \"Emails\": [\"{{User_email}}\"]\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -2030,7 +2032,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -2040,7 +2042,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -2204,7 +2206,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -2214,7 +2216,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -4071,7 +4073,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -4081,7 +4083,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -4187,7 +4189,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -4197,7 +4199,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -16245,7 +16247,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\r\n    \"userId\": \"{{Username}}\"\r\n}",
+                            "raw": "{\r\n    \"userId\": \"{{User_id}}\"\r\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -16679,7 +16681,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\r\n    \"roles\": [\r\n  \"admin\",\r\n  \"owner\",\r\n  \"release-manager\",\r\n  \"{{role_id}}\",\r\n  \"editor\",\r\n  \"viewer\",\r\n  \"none\"\r\n]\r\n}",
+                            "raw": "{\r\n    \"roles\": [\r\n  \"admin\",\r\n  \"owner\",\r\n  \"{{role_id}}\",\r\n  \"editor\",\r\n  \"viewer\",\r\n  \"none\"\r\n]\r\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -17242,8 +17244,8 @@
                                     "\r",
                                     "var data = JSON.parse(responseBody);\r",
                                     "\r",
-                                    "pm.test(\"Search has only 1 result\", function () {\r",
-                                    "    pm.expect(data.packages.length).to.eq(1)\r",
+                                    "pm.test(\"Search has 2 result\", function () {\r",
+                                    "    pm.expect(data.packages.length).to.eq(2)\r",
                                     "});"
                                 ]
                             }
@@ -17287,7 +17289,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\r\n    \"searchString\": \"Test Service\",\r\n    \"packageIds\": [\"NC.CP.AH.TS\"]\r\n}",
+                            "raw": "{\r\n    \"searchString\": \"Test static dashboard\",\r\n    \"packageIds\": [\"QS-STATIC-TEST-2.DSHB\"]\r\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"

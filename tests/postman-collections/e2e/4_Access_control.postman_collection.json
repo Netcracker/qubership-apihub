@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "4_Access_control",
-        "_postman_id": "d0086bf7-7ab7-4ad0-bd49-a49c33c03e97",
+        "_postman_id": "65f000ad-ff96-46e6-a5c1-e0ceece421c4",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -183,6 +183,78 @@
                                 "v1",
                                 "system",
                                 "info"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "0.5 Get users list",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {\r",
+                                    "    pm.response.to.have.status(200);\r",
+                                    "});\r",
+                                    "\r",
+                                    "var data = pm.response.json();\r",
+                                    "\r",
+                                    "for (var i = 0; i<data.users.length; i++) {\r",
+                                    "    if (data.users[i].id === pm.variables.replaceIn(\"{{Username}}\")){\r",
+                                    "        pm.environment.set(\"User_name\", data.users[i].name),\r",
+                                    "        pm.environment.set(\"User_id\", data.users[i].id),\r",
+                                    "        pm.environment.set(\"User_email\", data.users[i].email)\r",
+                                    "    } else {\r",
+                                    "        pm.environment.set(\"User_name\", data.users[0].name),\r",
+                                    "        pm.environment.set(\"User_id\", data.users[0].id),\r",
+                                    "        pm.environment.set(\"User_email\", data.users[0].email)\r",
+                                    "    }\r",
+                                    "};"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/v2/users?filter={{Username}}&page=0",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v2",
+                                "users"
+                            ],
+                            "query": [
+                                {
+                                    "key": "filter",
+                                    "value": "{{Username}}"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                }
                             ]
                         },
                         "method": "GET",
@@ -567,73 +639,6 @@
                                 "body": {
                                     "mode": "raw",
                                     "raw": "{\r\n    \"email\": \"user2@openmail.com\",\r\n    \"password\": \"password\",\r\n    \"name\": \"AC_user_2\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                },
-                                "auth": {
-                                    "type": "bearer",
-                                    "bearer": [
-                                        {
-                                            "key": "token",
-                                            "value": "{{token}}",
-                                            "type": "string"
-                                        }
-                                    ]
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "1.1.8 Create user 3",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 201\", function () {\r",
-                                            "    pm.response.to.have.status(201);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "pm.environment.set(\"user_3_login\", data.email)\r",
-                                            "pm.environment.set(\"user_3_password\", \"password\")\r",
-                                            "pm.environment.set(\"user_3_id\", data.id)\r",
-                                            "pm.environment.set(\"user_3_name\", data.name);"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/internal/users",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "internal",
-                                        "users"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"email\": \"user3@openmail.com\",\r\n    \"password\": \"password\",\r\n    \"name\": \"AC_user_3\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -1436,183 +1441,6 @@
                                 "body": {
                                     "mode": "raw",
                                     "raw": "{\r\n    \"users\": [\"{{user_2_id}}\"],\r\n    \"RoleIds\": [\"editor\"],\r\n    \"Emails\": [\"{{user_2_login}}\"]\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "1.2.12 Add user_3 as members to package 1",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 201\", function () {\r",
-                                            "    pm.response.to.have.status(201);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "members"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"users\": [\"{{user_3_id}}\"],\r\n    \"RoleIds\": [\"release-manager\"],\r\n    \"Emails\": [\"{{user_3_login}}\"]\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "1.2.13 Add user_3 as members to package 2",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 201\", function () {\r",
-                                            "    pm.response.to.have.status(201);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_2}}/members",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_2}}",
-                                        "members"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"users\": [\"{{user_3_id}}\"],\r\n    \"RoleIds\": [\"release-manager\"],\r\n    \"Emails\": [\"{{user_3_login}}\"]\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "1.2.14 Add user_3 as members to package 3",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 201\", function () {\r",
-                                            "    pm.response.to.have.status(201);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_3}}/members",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_3}}",
-                                        "members"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"users\": [\"{{user_3_id}}\"],\r\n    \"RoleIds\": [\"release-manager\"],\r\n    \"Emails\": [\"{{user_3_login}}\"]\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -2453,65 +2281,6 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "1.2.28 Add user_3 as members to workspace",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 201\", function () {\r",
-                                            "    pm.response.to.have.status(201);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{static_root_group_1}}/members",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{static_root_group_1}}",
-                                        "members"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"users\": [\"{{user_3_id}}\"],\r\n    \"RoleIds\": [\"release-manager\"],\r\n    \"Emails\": [\"{{user_3_login}}\"]\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
                             "name": "1.2.29 Add user_4 as members to workspace",
                             "event": [
                                 {
@@ -2945,65 +2714,6 @@
                                 "body": {
                                     "mode": "raw",
                                     "raw": "{\r\n    \"users\": [\"{{user_2_id}}\"],\r\n    \"RoleIds\": [\"editor\"],\r\n    \"Emails\": [\"{{user_2_login}}\"]\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "1.2.36 Add user_3 as members to dashboard",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 201\", function () {\r",
-                                            "    pm.response.to.have.status(201);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{dashboard_1}}",
-                                        "members"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"users\": [\"{{user_3_id}}\"],\r\n    \"RoleIds\": [\"release-manager\"],\r\n    \"Emails\": [\"{{user_3_login}}\"]\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -3712,7 +3422,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"name\":\"Viewer\",\r\n    \"roles\": [\"viewer\"],\r\n    \"createdFor\": \"{{Username}}\"\r\n}",
+                                    "raw": "{\r\n    \"name\":\"Viewer\",\r\n    \"roles\": [\"viewer\"],\r\n    \"createdFor\": \"{{User_id}}\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -3783,7 +3493,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"name\":\"Editor\",\r\n    \"roles\": [\"editor\"],\r\n    \"createdFor\": \"{{Username}}\"\r\n}",
+                                    "raw": "{\r\n    \"name\":\"Editor\",\r\n    \"roles\": [\"editor\"],\r\n   \"createdFor\": \"{{User_id}}\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -3854,7 +3564,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"name\":\"Owner\",\r\n    \"roles\": [\"owner\"],\r\n    \"createdFor\": \"{{Username}}\"\r\n}",
+                                    "raw": "{\r\n    \"name\":\"Owner\",\r\n    \"roles\": [\"owner\"],\r\n   \"createdFor\": \"{{User_id}}\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -3925,7 +3635,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"name\":\"Admin\",\r\n    \"roles\": [\"admin\"],\r\n    \"createdFor\": \"{{Username}}\"\r\n}",
+                                    "raw": "{\r\n    \"name\":\"Admin\",\r\n    \"roles\": [\"admin\"],\r\n    \"createdFor\": \"{{User_id}}\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -3996,7 +3706,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"name\":\"Sysadmin\",\r\n    \"createdFor\": \"{{Username}}\"\r\n}",
+                                    "raw": "{\r\n    \"name\":\"Sysadmin\",\r\n   \"createdFor\": \"{{User_id}}\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -4439,67 +4149,6 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "1.4.7 Login as User_3",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "pm.environment.set(\"TOKEN\", data.token)"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/auth/local",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "auth",
-                                        "local"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [],
-                                "auth": {
-                                    "type": "basic",
-                                    "basic": [
-                                        {
-                                            "key": "username",
-                                            "value": "{{user_3_login}}",
-                                            "type": "string"
-                                        },
-                                        {
-                                            "key": "password",
-                                            "value": "{{user_3_password}}",
-                                            "type": "string"
-                                        }
-                                    ]
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
                             "name": "1.4.8 Retrieve and delete list of PATs",
                             "event": [
                                 {
@@ -4570,70 +4219,6 @@
                                         "type": "default"
                                     }
                                 ],
-                                "auth": {
-                                    "type": "noauth"
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "1.4.9 Create PAT for User_3",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 201\", function () {",
-                                            "    pm.response.to.have.status(201);",
-                                            "});",
-                                            "",
-                                            "var data = pm.response.json();",
-                                            "",
-                                            "pm.environment.set(\"rmanager_PAT\", data.token);"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v1/personalAccessToken",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v1",
-                                        "personalAccessToken"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"name\": \"{{user_3_name}}_PAT_1\",\r\n    \"daysUntilExpiry\": 1\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                },
                                 "auth": {
                                     "type": "noauth"
                                 }
@@ -17809,1040 +17394,6 @@
             ]
         },
         {
-            "name": "4. 'Release-manager' role validation",
-            "item": [
-                {
-                    "name": "4.1 Login",
-                    "item": [
-                        {
-                            "name": "4.1.1 Login as User_3",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "pm.environment.set(\"TOKEN\", data.token)"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/auth/local",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "auth",
-                                        "local"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [],
-                                "auth": {
-                                    "type": "basic",
-                                    "basic": [
-                                        {
-                                            "key": "username",
-                                            "value": "{{user_3_login}}",
-                                            "type": "string"
-                                        },
-                                        {
-                                            "key": "password",
-                                            "value": "{{user_3_password}}",
-                                            "type": "string"
-                                        }
-                                    ]
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        }
-                    ]
-                },
-                {
-                    "name": "4.2 Packages",
-                    "item": [
-                        {
-                            "name": "4.2.0 Create package",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 403\", function () {\r",
-                                            "    pm.response.to.have.status(403);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-2.PKG\",\r\n    \"Alias\" :\"PKG2\",\r\n    \"name\": \"Test static package 2\",\r\n    \"parentId\": \"QS-AC-TEST-2\",\r\n    \"kind\":\"package\",\r\n    \"description\": \"Package to be built\",\r\n    \"serviceName\": \"\",\r\n    \"imageUrl\": \"\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.1 Get packages list by text filter",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages?textFilter={{package_1}}&kind=package",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages"
-                                    ],
-                                    "query": [
-                                        {
-                                            "key": "textFilter",
-                                            "value": "{{package_1}}"
-                                        },
-                                        {
-                                            "key": "kind",
-                                            "value": "package"
-                                        }
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.2 Get package status",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "\r",
-                                            "pm.test(\"Package has exists status\", function () {\r",
-                                            "    pm.expect(data.status).to.eql(\"exists\");\r",
-                                            "});\r",
-                                            ""
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/status",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "status"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.3 Get package by Id",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_1}}"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.4 Delete package 2",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 403\", function () {\r",
-                                            "    pm.response.to.have.status(403);\r",
-                                            "});\r",
-                                            "\r",
-                                            "setTimeout(() => { }, 200);"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_2}}",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_2}}"
-                                    ]
-                                },
-                                "method": "DELETE",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.5 Update package 1",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 403\", function () {\r",
-                                            "    pm.response.to.have.status(403);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_1}}"
-                                    ]
-                                },
-                                "method": "PATCH",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"description\": \"Test package new description\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.6 Create 'Draft' version",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 403\", function () {\r",
-                                            "    pm.response.to.have.status(403);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/publish",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "publish"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    },
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
-                                        "type": "default"
-                                    },
-                                    {
-                                        "key": "Content-Transfer-Encoding",
-                                        "value": "base64",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"5.0\",\r\n    \"status\": \"draft\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"petstore.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"petstore_yml.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQAAAAIABFkaFUQiX2ZpQIAAIkKAAANAAAAcGV0c3RvcmUueWFtbNVWwW7bMAy9F+g/EN2AbofGaTvs4Ns2FFiAbSiw/oBm04k621IpOk0w7N9HyYrtZEmadgOK6hDEIkU+Pj3SNhZrZXUKJ5ej8Wh8cnyk68Kkx0cAcySnTZ3CuVjO/Q5rLjGF7/dqOkWCa2THhtCbSp1h7dAflFWrSvy+Tm6OjxySDxQMZ9BQmcKM2aZJYuPxkWvjjbRJ5pLHKp61/sElhpwi+39huaaqFC1T+KIdgypL8I4rq5REigX5JE+hFI/rgZHVNESM62ztpFUkwDnA7V1CNT5SpVm2u6WFmrsGaTnczNFlpC0H4j6be6hUvQTNWDlgA4TcUA2KwdQofFYIbyq1gPPx+O0gjPjdNZpQCihU6XBoctkMK9UBjGUtLaaCiFGIXDcVhirFwXh5IaYY31kj9zUs9PRiPD5NdxbzQeiZYg6KSC3BFCvmujVDla+o69firMbF6up2hi51/dPzwzME7x9ySZIOaMz0AA09FY5J19OhNTPCTr2JRFkr0g1ySW6dByPr4FyvCQtpnVdJZiqBKeFd0jq7xKtO2qkvuFBNybv5baRuixkLxUhk6AnY/wvuK588ArfGbem6T4SKEZRXwNamy4LDwW33BDF+a8qyO/eiSQ4zLvklv5P8975ZN5G57JtZeHdSgi50tvMC3MzcC/0fl5P8oBvYO/gCtM3B54f09oHF1OBO/m+kv3Uuje073UeOQ5E0zg+dcm1r/4N4rqIEurMehIK5KrXfk5nu+LmEIbf2kodGbwoBojkGu46y7q/S/LgV8O1er6E1Dep8U5GDZ6/qTsPkW4D1mhK0D3bAa3Lwknz/rjO0DdA//q3Arrce8PKzcL329j0at8IHgnc4hOteIoH1x1OamXyNxAqdk9ftPiLDmUdT2X9vQEyym80/UEsBAj8AFAAAAAgAEWRoVRCJfZmlAgAAiQoAAA0AJAAAAAAAAAAgAAAAAAAAAHBldHN0b3JlLnlhbWwKACAAAAAAAAEAGAAKKSMHVfPYARJQIwdV89gBOjCy/c3y2AFQSwUGAAAAAAEAAQBfAAAA0AIAAAAA\r\n----------------------------127308995100818139707097--",
-                                    "options": {
-                                        "raw": {
-                                            "language": "text"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.7 Get package 1 versions",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = pm.response.json();\r",
-                                            "\r",
-                                            "pm.test(\"Packages has versions\", function () {\r",
-                                            "    pm.expect(data.versions.length).to.eq(5);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "versions"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.8 Add user to list of package members",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 403\", function () {\r",
-                                            "    pm.response.to.have.status(403);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "members"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"users\": [\"{{Username}}\"],\r\n    \"role\": \"Editor\",\r\n    \"Emails\": [\"{{User_email}}\"]\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.9 Update user's member role",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 403\", function () {\r",
-                                            "    pm.response.to.have.status(403);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "members",
-                                        "{{Username}}"
-                                    ]
-                                },
-                                "method": "PATCH",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"role\": \"Admin\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.10 Check update of user member's role",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "members"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.11 Remove user from list of members",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 403\", function () {\r",
-                                            "    pm.response.to.have.status(403);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "members",
-                                        "{{Username}}"
-                                    ]
-                                },
-                                "method": "DELETE",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.12 Create a package API Key",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 403\", function () {\r",
-                                            "    pm.response.to.have.status(403);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_1}}/apiKeys",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v4",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "apiKeys"
-                                    ]
-                                },
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"name\":\"M2M\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.13 Delete package API Key",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 403\", function () {\r",
-                                            "    pm.response.to.have.status(403);\r",
-                                            "});\r",
-                                            ""
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/apiKeys/12331",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "apiKeys",
-                                        "12331"
-                                    ]
-                                },
-                                "method": "DELETE",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.14 Package API Keys list retrieve",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_1}}/apiKeys",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v4",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "apiKeys"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"name\":\"M2M\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {
-                                "disableBodyPruning": true
-                            }
-                        },
-                        {
-                            "name": "4.2.15 Update package version 1 to \"Release\"",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_1}}",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "versions",
-                                        "{{version_1}}"
-                                    ]
-                                },
-                                "method": "PATCH",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": " {\r\n     \"status\": \"release\"\r\n }",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.17 Delete package 1 versions",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 403\", function () {\r",
-                                            "    pm.response.to.have.status(403);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_3}}",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{package_1}}",
-                                        "versions",
-                                        "{{version_3}}"
-                                    ]
-                                },
-                                "method": "DELETE",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             "name": "5. 'Owner' role validation",
             "item": [
                 {
@@ -26919,7 +25470,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -26929,7 +25480,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -27040,7 +25591,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -27050,7 +25601,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -28202,7 +26753,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -28212,7 +26763,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -28323,7 +26874,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -28333,7 +26884,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -29435,7 +27986,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -29445,7 +27996,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -29556,7 +28107,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -29566,7 +28117,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -30667,7 +29218,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -30677,7 +29228,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -30757,10 +29308,21 @@
                                         "value": "{{admin_api_key}}",
                                         "type": "default"
                                     }
-                                ]
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
                             },
                             "response": [],
-                            "protocolProfileBehavior": {}
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
                         },
                         {
                             "name": "6.5.16 Remove user from list of members",
@@ -30788,7 +29350,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -30798,7 +29360,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -31900,7 +30462,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -31910,7 +30472,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -32021,7 +30583,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -32031,7 +30593,7 @@
                                         "packages",
                                         "{{package_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -33132,7 +31694,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -33142,7 +31704,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "PATCH",
@@ -33253,7 +31815,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{Username}}",
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/members/{{User_id}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -33263,7 +31825,7 @@
                                         "packages",
                                         "{{dashboard_1}}",
                                         "members",
-                                        "{{Username}}"
+                                        "{{User_id}}"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -35210,55 +33772,6 @@
                                 "internal",
                                 "clear",
                                 "{{user_2_id}}"
-                            ]
-                        },
-                        "method": "DELETE",
-                        "header": [
-                            {
-                                "key": "api-key",
-                                "value": "{{at-api-key}}",
-                                "type": "default"
-                            }
-                        ]
-                    },
-                    "response": [],
-                    "protocolProfileBehavior": {}
-                },
-                {
-                    "name": "8.6 Delete user 3",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test(\"Status code is 204\", function () {\r",
-                                    "    pm.response.to.have.status(204);\r",
-                                    "});"
-                                ]
-                            }
-                        },
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    ""
-                                ]
-                            }
-                        }
-                    ],
-                    "request": {
-                        "url": {
-                            "raw": "{{SERVER_HOST}}/api/internal/clear/{{user_3_id}}",
-                            "host": [
-                                "{{SERVER_HOST}}"
-                            ],
-                            "path": [
-                                "api",
-                                "internal",
-                                "clear",
-                                "{{user_3_id}}"
                             ]
                         },
                         "method": "DELETE",

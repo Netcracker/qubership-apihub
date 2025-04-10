@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "3_1_Stories_Bugs",
-        "_postman_id": "acae6d91-afa6-49e1-9ffb-7e5f78c15d97",
+        "_postman_id": "887761ed-e8dc-424f-ae9c-e85c623fd865",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -21,7 +21,13 @@
                                         "exec": [
                                             "var data = JSON.parse(responseBody);",
                                             "",
-                                            "pm.environment.set(\"token\", data.token)"
+                                            "pm.environment.set(\"token\", data.token);",
+                                            "",
+                                            "pm.environment.set(\"Pack_version1_data\", \"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\");",
+                                            "pm.environment.set(\"Pack_version1_fileId\", \"atui_petstore30 - 0000.yaml\");",
+                                            "pm.environment.set(\"Pack_version2_data\", \"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\");",
+                                            "pm.environment.set(\"Pack_version2_fileId\", \"atui_petstore30 - 0000_SemiBreaking_in_all_operations.yaml\");",
+                                            ""
                                         ]
                                     }
                                 },
@@ -7826,70 +7832,6 @@
                     ]
                 },
                 {
-                    "name": "8.16 APIHUB-3954 [BE] Unauthorized system info endpoint",
-                    "item": [
-                        {
-                            "name": "8.16.1 SSO integration status",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "\r",
-                                            "pm.test(\"ssoIntegrationEnabled = true\", () => {\r",
-                                            "    pm.expect(data.ssoIntegrationEnabled).to.eql(true)\r",
-                                            "});\r",
-                                            "\r",
-                                            "pm.test(\"autoRedirect = true\", () => {\r",
-                                            "    pm.expect(data.autoRedirect).to.eql(true)\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v1/system/configuration",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v1",
-                                        "system",
-                                        "configuration"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{token}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        }
-                    ]
-                },
-                {
                     "name": "8.17 APIHUB-5840 [BE] Get user's private workspace (packageId)",
                     "item": [
                         {
@@ -10942,7 +10884,7 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_2}}/versions/{{version_2}}/rest/build/groups/{{operation_group_1}}/buildType/mergedSpecification",
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_2}}/versions/{{version_2}}/rest/build/groups/{{operation_group_1}}/buildType/mergedSpecification?format=yaml",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -10959,6 +10901,12 @@
                                         "{{operation_group_1}}",
                                         "buildType",
                                         "mergedSpecification"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "format",
+                                            "value": "yaml"
+                                        }
                                     ]
                                 },
                                 "method": "POST",
@@ -15186,8 +15134,8 @@
                                             "var data = pm.response.json();\r",
                                             "\r",
                                             "pm.test(\"Changes summary is correct\", function () {\r",
-                                            "    pm.expect(data.operationTypes[0].changesSummary.breaking).to.eql(1);\r",
-                                            "    pm.expect(data.operationTypes[0].changesSummary[\"semi-breaking\"]).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].changesSummary.breaking).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].changesSummary[\"semi-breaking\"]).to.eql(1);\r",
                                             "    pm.expect(data.operationTypes[0].changesSummary.deprecated).to.eql(0);\r",
                                             "    pm.expect(data.operationTypes[0].changesSummary[\"non-breaking\"]).to.eql(1);\r",
                                             "    pm.expect(data.operationTypes[0].changesSummary.annotation).to.eql(0);\r",
@@ -15195,8 +15143,8 @@
                                             "});\r",
                                             "\r",
                                             "pm.test(\"Summary of impacted operations is correct\", function () {\r",
-                                            "    pm.expect(data.operationTypes[0].numberOfImpactedOperations.breaking).to.eql(2);\r",
-                                            "    pm.expect(data.operationTypes[0].numberOfImpactedOperations[\"semi-breaking\"]).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].numberOfImpactedOperations.breaking).to.eql(0);\r",
+                                            "    pm.expect(data.operationTypes[0].numberOfImpactedOperations[\"semi-breaking\"]).to.eql(2);\r",
                                             "    pm.expect(data.operationTypes[0].numberOfImpactedOperations.deprecated).to.eql(0);\r",
                                             "    pm.expect(data.operationTypes[0].numberOfImpactedOperations[\"non-breaking\"]).to.eql(1);\r",
                                             "    pm.expect(data.operationTypes[0].numberOfImpactedOperations.annotation).to.eql(0);\r",
@@ -15902,7 +15850,140 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "8.28.3 Create Dashboard",
+                            "name": "8.28..3 Create source package",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 201\", function () {\r",
+                                            "    pm.response.to.have.status(201);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.environment.set(\"source_package\", data.packageId)\r",
+                                            "\r",
+                                            "setTimeout(() => { }, 300);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-D.PKG1\",\r\n    \"Alias\" :\"PKG1\",\r\n    \"name\": \"Source package\",\r\n    \"parentId\": \"QS-STATIC-TEST-D\",\r\n    \"kind\":\"package\",\r\n    \"serviceName\": \"backend\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.28.4 Publish version for source package",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 202\", function () {\r",
+                                            "    pm.response.to.have.status(202);\r",
+                                            "});\r",
+                                            "\r",
+                                            "setTimeout(function(){}, 20000)"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{source_package}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{source_package}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"{{source_package}}\",\r\n    \"version\": \"2024.3\",\r\n    \"status\": \"release\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"{{Pack_version1_fileId}}\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"petstore_yml.zip\"\r\nContent-Type: application/zip;base64\r\n\r\n{{Pack_version1_data}}\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.28.5 Create Dashboard",
                             "event": [
                                 {
                                     "listen": "test",
@@ -15963,7 +16044,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "8.28.4 Start dashboard publish process",
+                            "name": "8.28.6 Start dashboard publish process",
                             "event": [
                                 {
                                     "listen": "test",
@@ -16040,7 +16121,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"version\"\r\n\r\n0001.1\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"status\"\r\n\r\nrelease\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"servicesWorkspaceId\"\r\n\r\nNC\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"csv_for_publish - api-hub.csv\"\r\n\r\napihub-backend,2024.3,POST,/api/internal/users\r\n----------------------------127308995100818139707097--",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"version\"\r\n\r\n0001.1\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"status\"\r\n\r\nrelease\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"servicesWorkspaceId\"\r\n\r\nQS-STATIC-TEST-D\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"csv_for_publish - api-hub.csv\"\r\n\r\nbackend,2024.3,POST,/api/v1/store/order\r\n----------------------------127308995100818139707097--",
                                     "options": {
                                         "raw": {
                                             "language": "text"
@@ -16055,7 +16136,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "8.28.5 Get status",
+                            "name": "8.28.7 Get status",
                             "event": [
                                 {
                                     "listen": "test",
@@ -16117,7 +16198,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "8.28.6 Get report",
+                            "name": "8.28.8 Get report",
                             "request": {
                                 "url": {
                                     "raw": "{{SERVER_HOST}}/api/v1/packages/{{dashboardId}}/publish/{{csvDashPublishId}}/withOperationsGroup/report",
@@ -16151,7 +16232,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "8.28.7 Get Group from dashboard",
+                            "name": "8.28.9  Get Group from dashboard",
                             "event": [
                                 {
                                     "listen": "test",
@@ -16215,7 +16296,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "8.28.8 Get list of operations for operation group",
+                            "name": "8.28.10 Get list of operations for operation group",
                             "event": [
                                 {
                                     "listen": "test",
