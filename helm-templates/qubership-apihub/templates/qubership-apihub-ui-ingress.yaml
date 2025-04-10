@@ -23,5 +23,5 @@ spec:
           service:
             name: qubership-apihub-ui
             port:
-              name: web #http-service
+              name: web
 {{- end }}

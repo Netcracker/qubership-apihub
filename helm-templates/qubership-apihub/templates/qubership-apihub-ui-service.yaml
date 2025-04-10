@@ -15,5 +15,5 @@ spec:
         port: 8080
         targetPort: 8080
     selector:
-        name: 'qubership-apihub-backend'
+        name: 'qubership-apihub-ui'
 
