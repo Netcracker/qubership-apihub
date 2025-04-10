@@ -22,7 +22,7 @@ import { usePackageKey } from '../../usePackage'
 
 export function usePreviousVersionOptions(): VersionKey[] {
   const defaultPackageKey = usePackageKey()
-  const [versions] = usePackageVersions({ packageKey: defaultPackageKey, status: RELEASE_VERSION_STATUS })
+  const { versions } = usePackageVersions({ packageKey: defaultPackageKey, status: RELEASE_VERSION_STATUS })
 
   return useMemo(() => ([
     NO_PREVIOUS_RELEASE_VERSION_OPTION,

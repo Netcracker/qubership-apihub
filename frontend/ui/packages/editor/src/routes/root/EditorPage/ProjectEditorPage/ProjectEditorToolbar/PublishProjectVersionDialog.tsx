@@ -77,7 +77,7 @@ const PublishProjectVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
 
   const defaultPackageKey = usePackageKey()
   const [versionsFilter, setVersionsFilter] = useState('')
-  const [versions, areVersionsLoading] = usePackageVersions({ packageKey: defaultPackageKey, textFilter: versionsFilter })
+  const { versions, areVersionsLoading } = usePackageVersions({ packageKey: defaultPackageKey, textFilter: versionsFilter })
 
   const previousVersionOptions = usePreviousVersionOptions()
 
