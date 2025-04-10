@@ -1030,7 +1030,7 @@ func (o operationGroupServiceImpl) publishOperationGroup(ctx context.SecurityCon
 }
 
 func (o operationGroupServiceImpl) transformDocuments(ctx context.SecurityContext, version *entity.PublishedVersionEntity, apiType string, groupName string) error {
-	buildId, err := o.buildService.CreateBuildWithoutDependencies(view.BuildConfig{
+	buildId, _, err := o.buildService.CreateBuildWithoutDependencies(view.BuildConfig{
 		PackageId: version.PackageId,
 		Version:   view.MakeVersionRefKey(version.Version, version.Revision),
 		BuildType: view.ReducedSourceSpecificationsType,

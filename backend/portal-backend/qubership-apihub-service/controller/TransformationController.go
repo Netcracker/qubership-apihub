@@ -193,7 +193,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 	}
 
 	if reCalculate {
-		buildId, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
+		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 		if err != nil {
 			RespondWithError(w, "Failed to create documentGroup type build", err)
 			return
@@ -233,7 +233,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 		if customError, ok := err.(*exception.CustomError); ok {
 			if customError.Status == http.StatusNotFound {
 
-				buildId, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
+				buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 				if err != nil {
 					RespondWithError(w, "Failed to create documentGroup type build", err)
 					return
@@ -273,7 +273,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		buildId, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
+		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 		if err != nil {
 			RespondWithError(w, "Failed to create documentGroup type build", err)
 			return
@@ -469,7 +469,7 @@ func (t transformationControllerImpl) TransformDocuments(w http.ResponseWriter, 
 	}
 
 	if reCalculate {
-		buildId, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
+		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 		if err != nil {
 			RespondWithError(w, "Failed to create documentGroup type build", err)
 			return
@@ -487,7 +487,7 @@ func (t transformationControllerImpl) TransformDocuments(w http.ResponseWriter, 
 		return
 	}
 
-	content, err := t.versionService.GetTransformedDocuments_deprecated(packageId, versionName, apiType, groupName, string(view.JsonDocumentFormat))
+	content, err := t.versionService.GetTransformedDocuments(packageId, versionName, apiType, groupName, buildType, format)
 	if err != nil {
 		RespondWithError(w, "Failed to get transformed documents", err)
 		return
@@ -511,7 +511,7 @@ func (t transformationControllerImpl) TransformDocuments(w http.ResponseWriter, 
 		if customError, ok := err.(*exception.CustomError); ok {
 			if customError.Status == http.StatusNotFound {
 
-				buildId, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
+				buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 				if err != nil {
 					RespondWithError(w, "Failed to create documentGroup type build", err)
 					return
@@ -543,7 +543,7 @@ func (t transformationControllerImpl) TransformDocuments(w http.ResponseWriter, 
 	case string(view.StatusComplete):
 		//this case is possible only if we have an old finished build for which we don't have a transformed documents (rebuild required)
 		//or if this build completed during this method execution (rebuild is not requried)
-		content, err := t.versionService.GetTransformedDocuments_deprecated(packageId, versionName, apiType, groupName, string(view.JsonDocumentFormat))
+		content, err := t.versionService.GetTransformedDocuments(packageId, versionName, apiType, groupName, buildType, format)
 		if err != nil {
 			RespondWithError(w, "Failed to get transformed documents", err)
 			return
@@ -552,7 +552,7 @@ func (t transformationControllerImpl) TransformDocuments(w http.ResponseWriter, 
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		buildId, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
+		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 		if err != nil {
 			RespondWithError(w, "Failed to create documentGroup type build", err)
 			return

@@ -39,19 +39,31 @@ type AgentController interface {
 	ListServiceNames(w http.ResponseWriter, r *http.Request)
 }
 
-func NewAgentController(agentRegistrationService service.AgentRegistrationService, agentClient client.AgentClient) AgentController {
+func NewAgentController(agentRegistrationService service.AgentRegistrationService, agentClient client.AgentClient, isSysadm func(context.SecurityContext) bool) AgentController {
 	return &agentControllerImpl{
 		agentRegistrationService: agentRegistrationService,
 		agentClient:              agentClient,
+		isSysadm:                 isSysadm,
 	}
 }
 
 type agentControllerImpl struct {
 	agentRegistrationService service.AgentRegistrationService
 	agentClient              client.AgentClient
+	isSysadm                 func(context.SecurityContext) bool
 }
 
 func (a agentControllerImpl) ProcessAgentSignal(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Create(r)
+	sufficientPrivileges := a.isSysadm(ctx)
+	if !sufficientPrivileges {
+		RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {

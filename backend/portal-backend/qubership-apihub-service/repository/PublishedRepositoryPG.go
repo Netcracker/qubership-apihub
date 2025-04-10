@@ -2659,23 +2659,11 @@ func (p publishedRepositoryImpl) updateExcludeFromSearchForAllChildPackages(tx *
 }
 
 func (p publishedRepositoryImpl) GetParentPackageGroups(id string) ([]entity.PackageEntity, error) {
-	var parentIds []string
 	var result []entity.PackageEntity
 
-	parts := strings.Split(id, ".")
-	if len(parts) == 0 || len(parts) == 1 {
+	parentIds := utils.GetParentPackageIds(id)
+	if len(parentIds) == 0 {
 		return result, nil
-	}
-
-	for i, part := range parts {
-		if i == 0 {
-			parentIds = append(parentIds, part)
-			continue
-		}
-		if i == (len(parts) - 1) {
-			break
-		}
-		parentIds = append(parentIds, parentIds[i-1]+"."+part)
 	}
 
 	err := p.cp.GetConnection().Model(&result).
@@ -2695,20 +2683,9 @@ func (p publishedRepositoryImpl) GetParentsForPackage(id string) ([]entity.Packa
 	var parentIds []string
 	var result []entity.PackageEntity
 
-	parts := strings.Split(id, ".")
-	if len(parts) == 0 || len(parts) == 1 {
+	parentIds = utils.GetParentPackageIds(id)
+	if len(parentIds) == 0 {
 		return result, nil
-	}
-
-	for i, part := range parts {
-		if i == 0 {
-			parentIds = append(parentIds, part)
-			continue
-		}
-		if i == (len(parts) - 1) {
-			break
-		}
-		parentIds = append(parentIds, parentIds[i-1]+"."+part)
 	}
 
 	err := p.cp.GetConnection().Model(&result).

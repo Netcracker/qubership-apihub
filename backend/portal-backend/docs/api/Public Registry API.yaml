@@ -7149,7 +7149,7 @@ paths:
                   type: array
                   items:
                     type: string
-                  example: [admin, owner, release-manager, editor, viewer, none]
+                  example: [admin, owner, editor, viewer, none]
       responses:
         "204":
           description: No content
@@ -7910,87 +7910,7 @@ paths:
                       **Required**, if the files array is filled in config.
                     format: binary
                   config.json:
-                    type: object
-                    description: |
-                      Configuration of the source files.
-                      Files or/and Refs are **required**.
-                    required:
-                      - version
-                      - status
-                    properties:
-                      version:
-                        description: Version name for publication.
-                        type: string
-                        example: "2022.3"
-                      previousVersion:
-                        description: Name of the previous published version.
-                        type: string
-                        example: "2022.2"
-                        default: ""
-                      previousVersionPackageId:
-                        description: Previous release version package id.
-                        type: string
-                        example: "QS.CQSS.CPQ.TMF"
-                      status:
-                        $ref: "#/components/schemas/VersionStatusEnum"
-                      versionLabels:
-                        description: List of version labels.
-                        type: array
-                        items:
-                          type: string
-                        example: ["part-of:CloudQSS-CPQBE"]
-                      files:
-                        description: |
-                          Detailed data about files in sources archive.
-                          Required in no Refs are provided.
-                        type: array
-                        items:
-                          type: object
-                          required:
-                            - fileId
-                          properties:
-                            fileId:
-                              type: string
-                              description: File name.
-                              example: "qitmf-v5.11.json"
-                            publish:
-                              description: Flag, publish the source file or not.
-                              type: boolean
-                              default: true
-                            labels:
-                              description: List of file labels.
-                              type: array
-                              items:
-                                type: string
-                              example: ["TMF"]
-                            blobId:
-                              description: Git blob ID of the file.
-                              type: string
-                              example: a5d45af7
-                            xApiKind:
-                              description: Custom x-api-kind parameter.
-                              type: string
-                              example: "no-BWC"
-                      refs:
-                        description: |
-                          Detailed data about referenced versions for current package version.
-                          Required in no Files are provided.
-                        type: array
-                        items:
-                          type: object
-                          required:
-                            - refId
-                            - version
-                            - type
-                          properties:
-                            refId:
-                              description: Referenced package Id.
-                              type: string
-                              example: "QS.CloudQSS.CPQ.CORE"
-                            version:
-                              description: Referenced package version number.
-                              type: string
-                              example: "2022.2@5"
+                    $ref: "#/components/schemas/BuildConfig"                    
         "204":
           description: No content
           content: {}
@@ -16124,6 +16044,18 @@ components:
           example: "QS.CloudOSS.PL.MC"
         status:
           $ref: "#/components/schemas/VersionStatusEnum"
+        validationRulesSeverity:
+          type: object
+          description: Configuration for validation rules severity levels          
+          readOnly: true
+          properties:
+            brokenRefs:
+              type: string
+              enum:
+                - "error"
+                - "warning"
+              default: "warning"
+              description: Severity level for broken references validation
         groupName:
           description: |
             Operation group name. groupName is required if buildType = documentGroup.

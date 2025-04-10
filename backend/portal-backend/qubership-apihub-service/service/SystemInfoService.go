@@ -76,6 +76,8 @@ const (
 	APIHUB_ADMIN_EMAIL                     = "APIHUB_ADMIN_EMAIL"
 	APIHUB_ADMIN_PASSWORD                  = "APIHUB_ADMIN_PASSWORD"
 	APIHUB_SYSTEM_API_KEY                  = "APIHUB_ACCESS_TOKEN"
+	EDITOR_DISABLED                        = "EDITOR_DISABLED"
+	FAIL_BUILDS_ON_BROKEN_REFS             = "FAIL_BUILDS_ON_BROKEN_REFS"
 )
 
 type SystemInfoService interface {
@@ -131,6 +133,8 @@ type SystemInfoService interface {
 	GetAllowedHosts() []string
 	GetZeroDayAdminCreds() (string, string, error)
 	GetSystemApiKey() (string, error)
+	GetEditorDisabled() bool
+	FailBuildOnBrokenRefs() bool
 }
 
 func (g systemInfoServiceImpl) GetCredsFromEnv() *view.DbCredentials {
@@ -234,6 +238,8 @@ func (g systemInfoServiceImpl) Init() error {
 	g.setDefaultWorkspaceId()
 	g.setCustomPathPrefixes()
 	g.setAllowedHosts()
+	g.setEditorDisabled()
+	g.setFailBuildOnBrokenRefs()
 
 	return nil
 }
@@ -754,7 +760,7 @@ func (g systemInfoServiceImpl) setDefaultWorkspaceId() {
 
 func (g systemInfoServiceImpl) setCustomPathPrefixes() {
 	prefixes := make([]string, 0)
-	prefixesStr := os.Getenv("CUSTOM_PATH_PREFIXES")
+	prefixesStr := os.Getenv(CUSTOM_PATH_PREFIXES)
 	if prefixesStr != "" {
 		prefixes = strings.Split(prefixesStr, ",")
 	}
@@ -767,7 +773,7 @@ func (g systemInfoServiceImpl) GetCustomPathPrefixes() []string {
 
 func (g systemInfoServiceImpl) setAllowedHosts() {
 	hosts := make([]string, 0)
-	hostsStr := os.Getenv("ALLOWED_HOSTS")
+	hostsStr := os.Getenv(ALLOWED_HOSTS)
 	if hostsStr != "" {
 		hosts = strings.Split(hostsStr, ",")
 	}
@@ -793,4 +799,34 @@ func (g systemInfoServiceImpl) GetSystemApiKey() (string, error) {
 		return "", fmt.Errorf("system api key env '%s' is empty or not set", APIHUB_SYSTEM_API_KEY)
 	}
 	return apiKey, nil
+}
+
+func (g systemInfoServiceImpl) setEditorDisabled() {
+	envVal := os.Getenv(EDITOR_DISABLED)
+	editorDisabled, err := strconv.ParseBool(envVal)
+	if err != nil {
+		log.Infof("environment variable %v has invalid value, using false value instead", EDITOR_DISABLED)
+		editorDisabled = false
+	}
+	g.systemInfoMap[EDITOR_DISABLED] = editorDisabled
+}
+
+func (g systemInfoServiceImpl) GetEditorDisabled() bool {
+	return g.systemInfoMap[EDITOR_DISABLED].(bool)
+}
+func (g systemInfoServiceImpl) setFailBuildOnBrokenRefs() {
+	envVal := os.Getenv(FAIL_BUILDS_ON_BROKEN_REFS)
+	if envVal == "" {
+		envVal = "true"
+	}
+	val, err := strconv.ParseBool(envVal)
+	if err != nil {
+		log.Errorf("failed to parse %v env value: %v. Value by default - false", FAIL_BUILDS_ON_BROKEN_REFS, err.Error())
+		val = false
+	}
+	g.systemInfoMap[FAIL_BUILDS_ON_BROKEN_REFS] = val
+}
+
+func (g systemInfoServiceImpl) FailBuildOnBrokenRefs() bool {
+	return g.systemInfoMap[FAIL_BUILDS_ON_BROKEN_REFS].(bool)
 }

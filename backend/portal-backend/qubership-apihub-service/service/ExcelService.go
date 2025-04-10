@@ -880,7 +880,7 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 				cellsValues[fmt.Sprintf("C%d", rowIndex)] = versionChanges.Packages[key].ServiceName
 				cellsValues[fmt.Sprintf("D%d", rowIndex)] = versionName
 				cellsValues[fmt.Sprintf("E%d", rowIndex)] = previousVersionName
-				cellsValues[fmt.Sprintf("F%d", rowIndex)] = strings.Replace(changelogView.Title, "Semi-Breaking", "Risky", -1)
+				cellsValues[fmt.Sprintf("F%d", rowIndex)] = changelogView.Title
 				cellsValues[fmt.Sprintf("G%d", rowIndex)] = changelogView.Method
 				cellsValues[fmt.Sprintf("H%d", rowIndex)] = changelogView.Path
 				cellsValues[fmt.Sprintf("I%d", rowIndex)] = changelogView.Action
@@ -938,7 +938,7 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 				cellsValues[fmt.Sprintf("C%d", rowIndex)] = versionChanges.Packages[key].ServiceName
 				cellsValues[fmt.Sprintf("D%d", rowIndex)] = versionName
 				cellsValues[fmt.Sprintf("E%d", rowIndex)] = previousVersionName
-				cellsValues[fmt.Sprintf("F%d", rowIndex)] = strings.Replace(changelogView.Title, "Semi-Breaking", "Risky", -1)
+				cellsValues[fmt.Sprintf("F%d", rowIndex)] = changelogView.Title
 				cellsValues[fmt.Sprintf("G%d", rowIndex)] = changelogView.Method
 				cellsValues[fmt.Sprintf("H%d", rowIndex)] = changelogView.Type
 				cellsValues[fmt.Sprintf("I%d", rowIndex)] = changelogView.Action
@@ -996,7 +996,7 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 				cellsValues[fmt.Sprintf("C%d", rowIndex)] = versionChanges.Packages[key].ServiceName
 				cellsValues[fmt.Sprintf("D%d", rowIndex)] = versionName
 				cellsValues[fmt.Sprintf("E%d", rowIndex)] = previousVersionName
-				cellsValues[fmt.Sprintf("F%d", rowIndex)] = strings.Replace(changelogView.Title, "Semi-Breaking", "Risky", -1)
+				cellsValues[fmt.Sprintf("F%d", rowIndex)] = changelogView.Title
 				cellsValues[fmt.Sprintf("G%d", rowIndex)] = changelogView.Method
 				cellsValues[fmt.Sprintf("H%d", rowIndex)] = changelogView.Type
 				cellsValues[fmt.Sprintf("I%d", rowIndex)] = changelogView.Action
