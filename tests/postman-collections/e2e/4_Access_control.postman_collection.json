@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "4_Access_control",
-        "_postman_id": "65f000ad-ff96-46e6-a5c1-e0ceece421c4",
+        "_postman_id": "41cc2ca6-948a-42f1-b8c2-d993a946bcbb",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -4141,84 +4141,6 @@
                                         }
                                     }
                                 },
-                                "auth": {
-                                    "type": "noauth"
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "1.4.8 Retrieve and delete list of PATs",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "let responseData = pm.response.json();",
-                                            "let serverHost = pm.environment.get(\"SERVER_HOST\");",
-                                            "let userToken = pm.environment.get(\"TOKEN\");",
-                                            "",
-                                            "// Check if the response contains any items",
-                                            "if (responseData.length > 0) {",
-                                            "    console.log(\"IDs found:\", responseData.map(item => item.id));",
-                                            "",
-                                            "    // Loop through each item and send a \"DELETE PAT\" requests",
-                                            "    responseData.forEach(item => {",
-                                            "        let deleteUrl = `${serverHost}/api/v1/personalAccessToken/${item.id}`;",
-                                            "",
-                                            "        pm.sendRequest({",
-                                            "            url: deleteUrl,",
-                                            "            method: 'DELETE',",
-                                            "            header: {",
-                                            "                'Authorization': `Bearer ${userToken}`",
-                                            "            }",
-                                            "        }, function (err, res) {",
-                                            "            if (err) {",
-                                            "                console.log(`Error deleting ${item.id}:`, err);",
-                                            "            } else {",
-                                            "                console.log(`Deleted ${item.id}:`, res.status);",
-                                            "            }",
-                                            "        });",
-                                            "    });",
-                                            "} else {",
-                                            "    console.log(\"No IDs found, skipping DELETE requests.\");",
-                                            "}",
-                                            ""
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v1/personalAccessToken",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v1",
-                                        "personalAccessToken"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ],
                                 "auth": {
                                     "type": "noauth"
                                 }
@@ -15175,7 +15097,7 @@
                                 "header": [
                                     {
                                         "key": "X-Personal-Access-Token",
-                                        "value": "{{editor_PAT}}",
+                                        "value": "{{TOKEN2}}",
                                         "type": "default"
                                     }
                                 ],
