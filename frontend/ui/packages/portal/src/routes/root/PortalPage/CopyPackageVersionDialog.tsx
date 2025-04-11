@@ -133,6 +133,12 @@ const CopyPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpe
 
   useEffect(() => {isCopyingStartedSuccessfully && isPublished && setOpen(false)}, [setOpen, isCopyingStartedSuccessfully, isPublished])
   useEffect(() => {reset(defaultValues)}, [defaultValues, reset])
+  useEffect(() =>{
+    if(!workspace){
+      setTargetPackage(null)
+      setValue('package', null)
+    }
+  }, [workspace, setValue])
 
   const onCopy = useCallback(async (data: CopyInfo): Promise<void> => {
     const { package: targetPackage, version, status, labels, previousVersion } = data
