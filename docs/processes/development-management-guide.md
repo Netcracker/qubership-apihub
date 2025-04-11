@@ -328,4 +328,4 @@ Notes:
 1. BE and FE team responsible for releasing owned sub components
 2. Physically release is a `tag` in each repository which produces docker image
 
-**Release Example**: [v1.1.1](https://github.com/Netcracker/qubership-apihub/releases/tag/1.1.1).Release example: [https://github.com/Netcracker/qubership-apihub/releases/tag/1.1.1](https://github.com/Netcracker/qubership-apihub/releases/tag/1.1.1
+**Release Example**: [https://github.com/Netcracker/qubership-apihub/releases/tag/1.2.0](https://github.com/Netcracker/qubership-apihub/releases/tag/1.2.0)
