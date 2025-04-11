@@ -67,8 +67,18 @@ This repository serves as the **entry point** for all GitHub issues and contains
 
 We follow the **Gitflow** approach.
 
-- Reference: [A Successful Git Branching Model](https://nvie.com/posts/a-successful-git-branching-model/).
-- **Note**: The FE team adheres strictly to Gitflow, while the BE team uses a simplified version without a `release` branch.
+Reference: [A Successful Git Branching Model](https://nvie.com/posts/a-successful-git-branching-model/).
+
+Long story short
+- `develop` is the the top-forward integration branch. Default branch.
+- `bugfix/X` and `feature/X` branched from `develop` and merged after dev testing, review in the branch.
+- `develop` must be stable evetually
+- Stable means all AT are green
+- In the end of a sprint `develop` is stable, `release` branch created from `develop`
+- artifacts built from `release` branch are release candidates (docker tag: `next`). Can be provided for any customer who ready to onboard release candidates
+- If any critical issues found during acceptacnce - bugfix taking place in `release` branch
+- After acceptance, `release` branch merged iinto `develop` and `main`
+- A new `tag` is set on `main` branch. Build from this tag is our release.
 
 # Work Items (aka tickets, aka issues)
 
