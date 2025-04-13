@@ -19,8 +19,7 @@ import {
   breaking,
   deprecated,
   DiffType,
-  nonBreaking,
-  semiBreaking,
+  nonBreaking, risky,
   unclassified,
 } from '@netcracker/qubership-apihub-api-diff'
 import {
@@ -46,7 +45,7 @@ export const COLOR_SCHEMAS: Record<BadgeKind, string> = {
 
 export const DIFF_TYPE_COLORS: Record<DiffType, string> = {
   [breaking]: '#ED4A54',
-  [semiBreaking]: '#E98554',
+  [risky]: '#E98554',
   [deprecated]: '#FFB02E',
   [nonBreaking]: '#84CB7A',
   [annotation]: '#B866C9',
@@ -55,7 +54,7 @@ export const DIFF_TYPE_COLORS: Record<DiffType, string> = {
 
 export const DIFF_TYPE_NAME_MAP: Record<DiffType, string> = {
   [breaking]: 'breaking',
-  [semiBreaking]: 'requires attention',
+  [risky]: 'requires attention',
   [deprecated]: 'deprecated',
   [nonBreaking]: 'non-breaking',
   [unclassified]: 'unclassified',
