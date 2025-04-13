@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-processor",
-  "version": "3.1.1-dev.0",
+  "version": "3.1.1",
   "description": "",
   "license": "Apache-2.0",
   "module": "dist/esm/src/index.js",
@@ -34,7 +34,7 @@
     "release-finish": "release-finish"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-diff": "1.1.0",
+    "@netcracker/qubership-apihub-api-diff": "dev",
     "@netcracker/qubership-apihub-api-unifier": "1.0.4",
     "@netcracker/qubership-apihub-json-crawl": "1.0.4",
     "@netcracker/qubership-apihub-graphapi": "1.0.8",

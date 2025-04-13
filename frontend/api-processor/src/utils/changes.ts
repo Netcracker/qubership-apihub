@@ -15,10 +15,10 @@
  */
 
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
-import { BREAKING_CHANGE_TYPE, OperationChanges, SEMI_BREAKING_CHANGE_TYPE } from '../types'
+import { BREAKING_CHANGE_TYPE, OperationChanges, RISKY_CHANGE_TYPE } from '../types'
 
-export function markChangeAsSemiBreaking(diff: Diff, operationChange: OperationChanges): void {
-  diff.type = SEMI_BREAKING_CHANGE_TYPE
+export function markChangeAsRisky(diff: Diff, operationChange: OperationChanges): void {
+  diff.type = RISKY_CHANGE_TYPE
 
   const {
     changeSummary,
@@ -26,8 +26,8 @@ export function markChangeAsSemiBreaking(diff: Diff, operationChange: OperationC
   } = operationChange
 
   changeSummary[BREAKING_CHANGE_TYPE] -= 1
-  changeSummary[SEMI_BREAKING_CHANGE_TYPE] += 1
+  changeSummary[RISKY_CHANGE_TYPE] += 1
 
   impactedSummary[BREAKING_CHANGE_TYPE] = !!changeSummary[BREAKING_CHANGE_TYPE]
-  impactedSummary[SEMI_BREAKING_CHANGE_TYPE] = true
+  impactedSummary[RISKY_CHANGE_TYPE] = true
 }

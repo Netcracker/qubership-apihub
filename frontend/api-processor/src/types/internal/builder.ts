@@ -15,7 +15,7 @@
  */
 
 import { BuildConfig, BuilderResolvers, FileId, PackageId, ResolvedVersion, VersionId } from '../external'
-import { VersionsComparisonDto } from './compare'
+import { VersionsComparison, VersionsComparisonDto } from './compare'
 import { PackageConfig } from '../package/config'
 import { NotificationMessage } from '../package/notifications'
 import { VersionDocument } from './documents'
@@ -27,9 +27,18 @@ export type VersionCache = ResolvedVersion & {
   version: VersionId
 }
 
-export interface BuildResult {
+export interface BuildResultDto {
   config: PackageConfig
   comparisons: VersionsComparisonDto[]
+  notifications: NotificationMessage[]
+  documents: Map<string, VersionDocument>
+  operations: Map<string, ApiOperation>
+  merged?: VersionDocument
+}
+
+export interface BuildResult {
+  config: PackageConfig
+  comparisons: VersionsComparison[]
   notifications: NotificationMessage[]
   documents: Map<string, VersionDocument>
   operations: Map<string, ApiOperation>

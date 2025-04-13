@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ApiAudienceTransition } from './../types/external/comparison'
+import { ApiAudienceTransition, RISKY_CHANGE_TYPE } from './../types/external/comparison'
 import { ApiKind, ChangeSummary, ResolvedOperation } from '../types'
 import {
   ANNOTATION_CHANGE_TYPE,
@@ -22,7 +22,6 @@ import {
   DEPRECATED_CHANGE_TYPE,
   ImpactedOperationSummary,
   NON_BREAKING_CHANGE_TYPE,
-  SEMI_BREAKING_CHANGE_TYPE,
   UNCLASSIFIED_CHANGE_TYPE,
 } from '../types'
 import { API_KIND } from '../consts'
@@ -108,7 +107,7 @@ export const calculateChangeSummary = (changes: Diff[]): ChangeSummary => ({
   [BREAKING_CHANGE_TYPE]: countByType(BREAKING_CHANGE_TYPE, changes),
   [NON_BREAKING_CHANGE_TYPE]: countByType(NON_BREAKING_CHANGE_TYPE, changes),
   [UNCLASSIFIED_CHANGE_TYPE]: countByType(UNCLASSIFIED_CHANGE_TYPE, changes),
-  [SEMI_BREAKING_CHANGE_TYPE]: countByType(SEMI_BREAKING_CHANGE_TYPE, changes),
+  [RISKY_CHANGE_TYPE]: countByType(RISKY_CHANGE_TYPE, changes),
   [DEPRECATED_CHANGE_TYPE]: countByType(DEPRECATED_CHANGE_TYPE, changes),
   [ANNOTATION_CHANGE_TYPE]: countByType(ANNOTATION_CHANGE_TYPE, changes),
 })
@@ -121,7 +120,7 @@ export const calculateImpactedSummary = (changeSummaries: ChangeSummary[]): Impa
   [BREAKING_CHANGE_TYPE]: checkIfHaveChanges(BREAKING_CHANGE_TYPE, changeSummaries),
   [NON_BREAKING_CHANGE_TYPE]: checkIfHaveChanges(NON_BREAKING_CHANGE_TYPE, changeSummaries),
   [UNCLASSIFIED_CHANGE_TYPE]: checkIfHaveChanges(UNCLASSIFIED_CHANGE_TYPE, changeSummaries),
-  [SEMI_BREAKING_CHANGE_TYPE]: checkIfHaveChanges(SEMI_BREAKING_CHANGE_TYPE, changeSummaries),
+  [RISKY_CHANGE_TYPE]: checkIfHaveChanges(RISKY_CHANGE_TYPE, changeSummaries),
   [DEPRECATED_CHANGE_TYPE]: checkIfHaveChanges(DEPRECATED_CHANGE_TYPE, changeSummaries),
   [ANNOTATION_CHANGE_TYPE]: checkIfHaveChanges(ANNOTATION_CHANGE_TYPE, changeSummaries),
 })

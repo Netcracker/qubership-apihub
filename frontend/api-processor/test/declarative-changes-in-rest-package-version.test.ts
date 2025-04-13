@@ -15,7 +15,7 @@
  */
 
 import { buildChangelogPackage, changesSummaryMatcher, numberOfImpactedOperationsMatcher } from './helpers'
-import { BREAKING_CHANGE_TYPE, NON_BREAKING_CHANGE_TYPE, SEMI_BREAKING_CHANGE_TYPE } from '../src'
+import { BREAKING_CHANGE_TYPE, NON_BREAKING_CHANGE_TYPE, RISKY_CHANGE_TYPE, SEMI_BREAKING_CHANGE_TYPE } from '../src'
 
 describe('Number of declarative changes in rest package version test', () => {
   test('Two operations use one schema in response', async () => {
@@ -56,11 +56,11 @@ describe('Number of declarative changes in rest package version test', () => {
     const result = await buildChangelogPackage('declarative-changes-in-rest-package-version/case5')
     expect(result).toEqual(changesSummaryMatcher({
       [BREAKING_CHANGE_TYPE]: 1,
-      [SEMI_BREAKING_CHANGE_TYPE]: 1,
+      [RISKY_CHANGE_TYPE]: 1,
     }))
     expect(result).toEqual(numberOfImpactedOperationsMatcher({
       [BREAKING_CHANGE_TYPE]: 1,
-      [SEMI_BREAKING_CHANGE_TYPE]: 1,
+      [RISKY_CHANGE_TYPE]: 1,
     }))
   })
 })

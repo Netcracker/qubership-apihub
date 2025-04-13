@@ -67,7 +67,7 @@ export type TemplateResolver = (
 ) => Promise<string>
 
 export interface CompareOperationsPairContext {
-  notifications: NotificationMessage[],
+  notifications: NotificationMessage[]
   versionDeprecatedResolver: VersionDeprecatedResolver
   previousVersion: VersionId
   currentVersion: VersionId

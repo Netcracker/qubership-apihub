@@ -26,7 +26,7 @@ import {
   EMPTY_CHANGE_SUMMARY,
   FILE_FORMAT,
   GRAPHQL_API_TYPE,
-  graphqlApiBuilder,
+  graphqlApiBuilder, MESSAGE_SEVERITY,
   NotificationMessage,
   OperationId,
   OperationsApiType,
@@ -71,6 +71,7 @@ import { getCompositeKey, getSplittedVersionKey, isNotEmpty, toBase64 } from '..
 import { groupBy } from 'graphql/jsutils/groupBy'
 import { IRegistry } from './types'
 import { calculateTotalChangeSummary } from '../../../src/components/compare'
+import { toVersionsComparisonDto } from '../../../src/utils/transformToDto'
 
 const VERSIONS_PATH = 'test/versions'
 const DEFAULT_PROJECTS_PATH = 'test/projects'
@@ -368,8 +369,15 @@ export class LocalRegistry implements IRegistry {
     await saveOperationsArray(operations, basePath)
     await saveEachOperation(operations, basePath)
 
-    await saveComparisonsArray(comparisons, basePath)
-    await saveEachComparison(comparisons, basePath)
+    const logError = (message: string): void => {
+      notifications.push({
+        severity: MESSAGE_SEVERITY.Error,
+        message: message,
+      })
+    }
+    const comparisonsDto = comparisons.map(comparison => toVersionsComparisonDto(comparison, logError))
+    await saveComparisonsArray(comparisonsDto, basePath)
+    await saveEachComparison(comparisonsDto, basePath)
     await saveNotifications(notifications, basePath)
   }
 
