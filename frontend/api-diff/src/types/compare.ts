@@ -13,13 +13,13 @@ export const COMPARE_SCOPE_ROOT: CompareScope = 'root'
 /**
  * Diff should be unique by [type, beforeDeclarationPaths, afterDeclarationPaths, scope]
  */
-interface DiffBase {
-  type: DiffType
+interface DiffBase<T> {
+  type: T
   scope: CompareScope
   description?: string
 }
 
-export interface DiffAdd extends DiffBase {
+export interface DiffAdd<T = DiffType> extends DiffBase<T> {
   action: typeof DiffAction.add
   /**
    * declaration path in after document. Empty array can be if value doesn't exist in 'after' spec or value have synthetic origin
@@ -29,7 +29,7 @@ export interface DiffAdd extends DiffBase {
   afterNormalizedValue: unknown
 }
 
-export interface DiffRemove extends DiffBase {
+export interface DiffRemove<T = DiffType> extends DiffBase<T> {
   action: typeof DiffAction.remove
   /**
    * declaration path in before document. Empty array can be if value doesn't exist in 'before' spec or value have synthetic origin
@@ -39,7 +39,7 @@ export interface DiffRemove extends DiffBase {
   beforeNormalizedValue: unknown
 }
 
-export interface DiffReplace extends DiffBase {
+export interface DiffReplace<T = DiffType> extends DiffBase<T> {
   action: typeof DiffAction.replace
   /**
    * declaration path in before document. Empty array can be if value doesn't exist in 'before' spec or value have synthetic origin
@@ -55,7 +55,7 @@ export interface DiffReplace extends DiffBase {
   beforeNormalizedValue: unknown
 }
 
-export interface DiffRename extends DiffBase {
+export interface DiffRename<T = DiffType> extends DiffBase<T> {
   action: typeof DiffAction.rename
   /**
    * declaration path in before document. Empty array can be if value doesn't exist in 'before' spec or value have synthetic origin
@@ -69,7 +69,7 @@ export interface DiffRename extends DiffBase {
   beforeKey: unknown
 }
 
-export type Diff = DiffAdd | DiffRemove | DiffReplace | DiffRename
+export type Diff<T = DiffType> = DiffAdd<T> | DiffRemove<T> | DiffReplace<T> | DiffRename<T>
 
 export interface CompareResult {
   diffs: Diff[]

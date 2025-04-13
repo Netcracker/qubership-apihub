@@ -16,13 +16,13 @@ export const DiffAction = {
 export const ClassifierType = {
   breaking: 'breaking',
   nonBreaking: 'non-breaking',
-  semiBreaking: 'semi-breaking',
+  risky: 'risky',
   annotation: 'annotation',
   unclassified: 'unclassified',
   deprecated: 'deprecated',
 } as const
 
-export const { breaking, nonBreaking, semiBreaking, unclassified, annotation, deprecated } = ClassifierType
+export const { breaking, nonBreaking, risky, unclassified, annotation, deprecated } = ClassifierType
 
 // predefined classifiers
 export const allNonBreaking: ClassifyRule = [nonBreaking, nonBreaking, nonBreaking]
