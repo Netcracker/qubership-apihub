@@ -22,7 +22,7 @@ import {
   BREAKING_CHANGE_SEVERITY,
   DEPRECATED_CHANGE_SEVERITY,
   NON_BREAKING_CHANGE_SEVERITY,
-  SEMI_BREAKING_CHANGE_SEVERITY,
+  RISKY_CHANGE_SEVERITY,
   UNCLASSIFIED_CHANGE_SEVERITY,
 } from '../entities/change-severities'
 import type { StatusMarkerVariant } from '../components/StatusMarker'
@@ -52,8 +52,8 @@ export function countVersionDifferencesBySeverity(
   if (changeSeverity === BREAKING_CHANGE_SEVERITY) {
     return changes.breaking
   }
-  if (changeSeverity === SEMI_BREAKING_CHANGE_SEVERITY) {
-    return changes[SEMI_BREAKING_CHANGE_SEVERITY]
+  if (changeSeverity === RISKY_CHANGE_SEVERITY) {
+    return changes[RISKY_CHANGE_SEVERITY]
   }
   if (changeSeverity === DEPRECATED_CHANGE_SEVERITY) {
     return changes.deprecated
@@ -78,8 +78,8 @@ export function getMajorSeverity(changes: ChangeSummary): ChangeSeverity {
   if (changes.breaking) {
     return BREAKING_CHANGE_SEVERITY
   }
-  if (changes[SEMI_BREAKING_CHANGE_SEVERITY]) {
-    return SEMI_BREAKING_CHANGE_SEVERITY
+  if (changes[RISKY_CHANGE_SEVERITY]) {
+    return RISKY_CHANGE_SEVERITY
   }
   if (changes.deprecated) {
     return DEPRECATED_CHANGE_SEVERITY

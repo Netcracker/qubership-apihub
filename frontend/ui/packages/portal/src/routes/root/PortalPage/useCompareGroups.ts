@@ -15,7 +15,7 @@
  */
 
 import { useGroupComparisons } from './VersionPage/useGroupComparisons'
-import type { VersionsComparisonDto } from '@netcracker/qubership-apihub-api-processor'
+import type { VersionsComparison } from '@netcracker/qubership-apihub-api-processor'
 import { useVersionWithRevision } from '../useVersionWithRevision'
 import type { Key, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
@@ -31,7 +31,7 @@ export type UseCompareGroupsOptions = Partial<{
   previousGroup: Key
 }>
 
-export function useCompareGroups(options: UseCompareGroupsOptions): [VersionsComparisonDto, IsLoading] {
+export function useCompareGroups(options: UseCompareGroupsOptions): [VersionsComparison, IsLoading] {
   const {
     originPackageKey,
     changedVersionKey,
@@ -56,7 +56,7 @@ export function useCompareGroups(options: UseCompareGroupsOptions): [VersionsCom
   return [groupsComparisons ? groupsComparisons[0] : EMPTY_VERSIONS_COMPARISON, isLoading]
 }
 
-export const EMPTY_VERSIONS_COMPARISON: VersionsComparisonDto = {
+export const EMPTY_VERSIONS_COMPARISON: VersionsComparison = {
   comparisonFileId: '',
   packageId: '',
   version: '',

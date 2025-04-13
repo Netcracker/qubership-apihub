@@ -16,12 +16,15 @@
 
 import type { ActionType, ChangeSeverity } from './change-severities'
 import type { JsonPath } from '../utils/operations'
-import type { Hash } from '@netcracker/qubership-apihub-api-processor'
+import type { DiffTypeDto, Hash} from '@netcracker/qubership-apihub-api-processor'
+import { SEMI_BREAKING_CHANGE_TYPE } from '@netcracker/qubership-apihub-api-processor'
+import type { DiffType} from '@netcracker/qubership-apihub-api-diff'
+import { risky } from '@netcracker/qubership-apihub-api-diff'
 
 export type OperationChangeDto = {
   description?: string
   action: ActionType
-  severity: ChangeSeverity
+  severity: ChangeSeverity<DiffTypeDto>
   scope: string
   currentValueHash?: Hash
   currentDeclarationJsonPaths?: JsonPath[]
@@ -35,10 +38,10 @@ export type OperationChangesDto = Readonly<{
   changes: ReadonlyArray<OperationChangeDto>
 }>
 
-export type OperationChange = {
+export type OperationChange<T = DiffType> = {
   description: string
   action: ActionType
-  severity: ChangeSeverity
+  severity: ChangeSeverity<T>
   scope: string
   currentValueHash?: Hash
   currentDeclarationJsonPaths?: JsonPath[]
@@ -57,6 +60,7 @@ export function toOperationChanges(value: OperationChangesDto): OperationChanges
 export function toOperationChange(value: OperationChangeDto): OperationChange {
   return {
     ...value,
+    severity: value.severity === SEMI_BREAKING_CHANGE_TYPE ? risky : value.severity,
     description: value.description ?? '',
-  }
+  } as OperationChange
 }

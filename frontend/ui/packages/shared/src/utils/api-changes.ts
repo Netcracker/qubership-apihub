@@ -22,7 +22,7 @@ import {
   ANNOTATION_CHANGE_SEVERITY,
   BREAKING_CHANGE_SEVERITY,
   DEPRECATED_CHANGE_SEVERITY, NON_BREAKING_CHANGE_SEVERITY,
-  SEMI_BREAKING_CHANGE_SEVERITY, UNCLASSIFIED_CHANGE_SEVERITY,
+  RISKY_CHANGE_SEVERITY, UNCLASSIFIED_CHANGE_SEVERITY,
 } from '../entities/change-severities'
 
 function getFirstValidPath(change: OperationChange): string[] {
@@ -59,9 +59,9 @@ export function sortChanges(changes: OperationChanges): OperationChange[] {
   })
 }
 
-const severityOrder: Record<ChangeSeverity, number> = {
+export const severityOrder: Record<ChangeSeverity, number> = {
   [BREAKING_CHANGE_SEVERITY]: 1,
-  [SEMI_BREAKING_CHANGE_SEVERITY]: 2,
+  [RISKY_CHANGE_SEVERITY]: 2,
   [DEPRECATED_CHANGE_SEVERITY]: 3,
   [NON_BREAKING_CHANGE_SEVERITY]: 4,
   [ANNOTATION_CHANGE_SEVERITY]: 5,

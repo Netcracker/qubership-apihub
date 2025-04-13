@@ -74,6 +74,7 @@ export async function getChangesSummary(
   })
 
   const pathPattern = '/packages/:packageId/versions/:versionId/changes/summary'
+
   return await portalRequestJson<VersionChangesSummaryDto>(
     `${generatePath(pathPattern, { packageId, versionId })}?${queryParams}`,
     { method: 'get' },

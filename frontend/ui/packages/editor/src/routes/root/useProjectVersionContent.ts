@@ -24,6 +24,8 @@ import { editorRequestJson } from '@apihub/utils/requests'
 import { toPublishedSpec } from '@apihub/entities/published-specs'
 import { alphabeticallyBy } from '@netcracker/qubership-apihub-ui-shared/utils/comparers'
 import { toRef } from '@apihub/entities/refs'
+import { DiffTypeDto, replacePropertyInChangesSummary } from '@netcracker/qubership-apihub-api-processor'
+import { ChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 
 const PROJECT_VERSION_CONTENT_QUERY_KEY = 'project-version-content'
 
@@ -72,6 +74,7 @@ function toProjectVersionContent(value: ProjectVersionContentDto): ProjectVersio
   return {
     key: crypto.randomUUID(),
     status: value.status,
+    summary: replacePropertyInChangesSummary(value.summary as ChangesSummary<DiffTypeDto>),
     publishedAt: new Date(value.publishedAt).toDateString(),
     specs: value.files.map(toPublishedSpec).sort((it, that) => alphabeticallyBy('title', it, that)),
     refs: value.refs.map(toRef),

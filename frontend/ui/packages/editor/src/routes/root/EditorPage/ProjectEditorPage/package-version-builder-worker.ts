@@ -15,7 +15,11 @@
  */
 
 import { expose } from 'comlink'
-import type { BuildConfig, BuildResult, VersionsComparisonDto } from '@netcracker/qubership-apihub-api-processor'
+import type {
+  BuildConfig,
+  BuildResult,
+  VersionsComparison,
+} from '@netcracker/qubership-apihub-api-processor'
 import { PackageVersionBuilder } from '@netcracker/qubership-apihub-api-processor'
 
 import type { BuilderOptions } from './package-version-builder'
@@ -55,7 +59,7 @@ to specific directory ('@netcracker/qubership-apihub-ui-shared/utils' for exampl
 export type PackageVersionBuilderWorker = {
   init: (options: BuilderOptions) => Promise<void>
   getBranchCache: () => Promise<BranchCache>
-  checkBwc: (options: BuilderOptions) => Promise<VersionsComparisonDto[]>
+  checkBwc: (options: BuilderOptions) => Promise<VersionsComparison[]>
   dereference: (
     fileKey: FileKey,
     options: BuilderOptions,
@@ -119,7 +123,7 @@ const worker: PackageVersionBuilderWorker = {
   getBranchCache: (): Promise<BranchCache> => {
     return getBuilderCache()
   },
-  checkBwc: async (options: BuilderOptions): Promise<VersionsComparisonDto[]> => {
+  checkBwc: async (options: BuilderOptions): Promise<VersionsComparison[]> => {
     if (!builder) {
       await initializeBuilder(options)
     } else {

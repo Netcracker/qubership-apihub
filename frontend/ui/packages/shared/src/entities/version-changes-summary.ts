@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-import type { OperationType } from '@netcracker/qubership-apihub-api-processor'
+import type {
+  DiffTypeDto,
+  OperationType,
+} from '@netcracker/qubership-apihub-api-processor'
+import { convertDtoFieldOperationTypes } from '@netcracker/qubership-apihub-api-processor'
+
 import type { PackageRef, PackagesRefs } from './operations'
 import { toPackageRef } from './operations'
 import { EMPTY_CHANGE_SUMMARY } from './version-changelog'
 import type { VersionStatus } from './version-status'
 import type { Key } from './keys'
 import { hasNoChangesInSummary } from '../utils/change-severities'
+import type { DiffType } from '@netcracker/qubership-apihub-api-diff'
 
-export type VersionChangesSummaryDto = PackageComparisonSummaryDto | DashboardComparisonSummaryDto
+export type VersionChangesSummaryDto = PackageComparisonSummary<DiffTypeDto> | DashboardComparisonSummaryDto
 export type VersionChangesSummary = PackageComparisonSummary | DashboardComparisonSummary
 
 export type DashboardComparisonSummaryDto = Readonly<{
@@ -33,7 +39,7 @@ export type DashboardComparisonSummaryDto = Readonly<{
 export type RefComparisonSummaryDto = Readonly<{
   packageRef?: string
   previousPackageRef?: string
-  operationTypes: ReadonlyArray<OperationType>
+  operationTypes: ReadonlyArray<OperationType<DiffTypeDto>>
   noContent?: boolean
 }>
 
@@ -54,12 +60,10 @@ export type RefComparisonSummary = Readonly<{
 
 export type DashboardComparisonSummary = ReadonlyArray<RefComparisonSummary>
 
-export type PackageComparisonSummaryDto = Readonly<{
-  operationTypes: ReadonlyArray<OperationType>
+export type PackageComparisonSummary<T extends DiffType | DiffTypeDto = DiffType> = Readonly<{
+  operationTypes: ReadonlyArray<OperationType<T>>
   noContent?: boolean
 }>
-
-export type PackageComparisonSummary = PackageComparisonSummaryDto
 
 const UNDEFINED_NAME = 'UNDEFINED NAME'
 
@@ -81,13 +85,13 @@ export function toVersionChangesSummary(value: VersionChangesSummaryDto): Versio
       const changedPackage = toPackageRef(ref.packageRef, value.packages)
       const originalPackage = toPackageRef(ref.previousPackageRef, value.packages)
       return {
+        operationTypes: convertDtoFieldOperationTypes(ref.operationTypes),
         refKey: changedPackage?.refId || originalPackage?.refId,
         name: changedPackage?.name ?? originalPackage?.name ?? UNDEFINED_NAME,
         version: changedPackage?.version,
         previousVersion: originalPackage?.version,
         status: changedPackage?.status as VersionStatus,
         previousStatus: originalPackage?.status as VersionStatus,
-        operationTypes: ref.operationTypes,
         parentPackages: changedPackage?.parentPackages ?? originalPackage?.parentPackages ?? [],
         packageRef: changedPackage,
         previousPackageRef: originalPackage,
@@ -96,7 +100,7 @@ export function toVersionChangesSummary(value: VersionChangesSummaryDto): Versio
       }
     })
   } else {
-    return value
+    return value ? { ...value, operationTypes: convertDtoFieldOperationTypes(value?.operationTypes) } : value
   }
 }
 

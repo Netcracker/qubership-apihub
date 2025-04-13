@@ -26,7 +26,10 @@ import type { ApiAudience, ApiKind } from '@netcracker/qubership-apihub-ui-share
 import { ALL_API_KIND, API_AUDIENCE_ALL } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { API_V3 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
-import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import {
+  replaceStringDiffTypeForDTO,
+} from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/api/getOperationChangelog'
+import { type DiffType } from '@netcracker/qubership-apihub-api-diff'
 
 export function useDownloadChangesAsExcel(): [DownloadChangesAsExcelFunction, IsLoading] {
   const showErrorNotification = useShowErrorNotification()
@@ -62,13 +65,14 @@ export const downloadChangesAsExcel = async (
   } = options
   const packageId = encodeURIComponent(packageKey)
   const versionId = encodeURIComponent(version)
+  const severityDto = replaceStringDiffTypeForDTO(severityFilter)
 
   const queryParams = optionalSearchParams({
     textFilter: { value: textFilter },
     apiKind: { value: apiKind !== ALL_API_KIND ? apiKind : undefined },
     apiAudience: { value: apiAudience },
     tag: { value: tag },
-    severity: { value: severityFilter },
+    severity: { value: severityDto},
     group: { value: group },
     emptyGroup: { value: emptyGroup },
     refPackageId: { value: refPackageId },
@@ -106,7 +110,7 @@ type Options = {
   apiKind?: ApiKind
   apiAudience?: ApiAudience
   tag?: Key
-  severityFilter?: ChangeSeverity[]
+  severityFilter?: DiffType[]
   group?: Key
   emptyGroup?: boolean
   refPackageId?: Key

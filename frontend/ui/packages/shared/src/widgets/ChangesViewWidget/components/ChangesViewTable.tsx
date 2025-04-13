@@ -44,7 +44,7 @@ import {
   ACTION_TYPE_COLOR_MAP,
   NON_BREAKING_CHANGE_SEVERITY,
   REPLACE_ACTION_TYPE,
-  SEMI_BREAKING_CHANGE_SEVERITY,
+  RISKY_CHANGE_SEVERITY,
 } from '../../../entities/change-severities'
 import { useIntersectionObserver } from '../../../hooks/common/useIntersectionObserver'
 import { ColumnDelimiter } from '../../../components/ColumnDelimiter'
@@ -194,7 +194,7 @@ export const ChangesViewTable: FC<ChangeViewTableProps> = memo<ChangeViewTablePr
       action,
       changeSummary: {
         breaking = 0,
-        [SEMI_BREAKING_CHANGE_SEVERITY]: semiBreaking = 0,
+        [RISKY_CHANGE_SEVERITY]: risky = 0,
         deprecated = 0,
         [NON_BREAKING_CHANGE_SEVERITY]: nonBreaking = 0,
         annotation = 0,
@@ -203,7 +203,7 @@ export const ChangesViewTable: FC<ChangeViewTableProps> = memo<ChangeViewTablePr
     } = change
     return {
       change: change,
-      canExpand: action === REPLACE_ACTION_TYPE && (breaking > 0 || semiBreaking > 0 || deprecated > 0 || nonBreaking > 0 || annotation > 0 || unclassified > 0),
+      canExpand: action === REPLACE_ACTION_TYPE && (breaking > 0 || risky > 0 || deprecated > 0 || nonBreaking > 0 || annotation > 0 || unclassified > 0),
     }
   }), [value])
 

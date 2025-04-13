@@ -15,8 +15,10 @@
  */
 
 import type { PackageKey, ServicePublishInfoKey } from './keys'
-import type { ChangesSummary, ChangesSummaryDto } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import type { ChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { DiffTypeDto } from '@netcracker/qubership-apihub-api-processor'
+import { replacePropertyInChangesSummary } from '@netcracker/qubership-apihub-api-processor'
 
 export type ServicePublishInfo = Readonly<{
   key: ServicePublishInfoKey
@@ -36,7 +38,7 @@ export type ServicePublishInfoDto = Readonly<{
   apiTypes?: ApiType[]
   packageId: PackageKey
   previousVersionPackageId?: PackageKey
-  changes?: ChangesSummaryDto
+  changes?: ChangesSummary<DiffTypeDto>
   viewChangesUrl?: string
   viewSnapshotUrl?: string
   viewBaselineUrl?: string
@@ -50,7 +52,7 @@ export function toServicePublishInfo(value: ServicePublishInfoDto): ServicePubli
     apiTypes: value.apiTypes,
     packageKey: value.packageId,
     previousVersionPackageKey: value.previousVersionPackageId,
-    changeSummary: value.changes,
+    changeSummary: value.changes && replacePropertyInChangesSummary(value.changes),
     viewChangesUrl: value.viewChangesUrl,
     viewSnapshotUrl: value.viewSnapshotUrl,
     viewBaselineUrl: value.viewBaselineUrl,

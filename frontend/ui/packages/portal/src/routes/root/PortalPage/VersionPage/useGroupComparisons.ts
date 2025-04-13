@@ -2,9 +2,8 @@
  * Copyright 2024-2025 NetCracker Technology Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -15,7 +14,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query'
-import type { VersionsComparisonDto } from '@netcracker/qubership-apihub-api-processor'
+import type { VersionsComparison } from '@netcracker/qubership-apihub-api-processor'
 import { PackageVersionBuilder } from '../package-version-builder'
 import { usePackage } from '../../usePackage'
 import type { Key, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
@@ -29,7 +28,7 @@ export function useGroupComparisons(options?: {
   versionKey?: VersionKey
   currentGroup?: Key
   previousGroup?: Key
-}): [VersionsComparisonDto[] | undefined, IsLoading] {
+}): [VersionsComparison[] | undefined, IsLoading] {
   const [packageObj] = usePackage()
   const restGroupingPrefix = packageObj?.restGroupingPrefix
 
@@ -43,7 +42,7 @@ export function useGroupComparisons(options?: {
 
   const allComparisonParamsProvided = packageKey !== NO_GROUP_TO_COMPARE && versionKey !== NO_GROUP_TO_COMPARE
 
-  const { data, isLoading } = useQuery<VersionsComparisonDto[] | undefined, Error>({
+  const { data, isLoading } = useQuery<VersionsComparison[] | undefined, Error>({
     queryKey: [GROUPS_CHANGES_QUERY_KEY, packageKey!, versionKey, currentGroup, previousGroup],
     enabled: allComparisonParamsProvided && !!restGroupingPrefix,
     retry: false,

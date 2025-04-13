@@ -14,8 +14,18 @@
  * limitations under the License.
  */
 
-import type { ChangeSummary } from '@netcracker/qubership-apihub-api-processor'
-import type { DiffType } from '@netcracker/qubership-apihub-api-diff'
+import type { ChangeSummary, DiffTypeDto } from '@netcracker/qubership-apihub-api-processor'
+import {
+  annotation,
+  breaking,
+  deprecated,
+  nonBreaking,
+  unclassified,
+  risky,
+} from '@netcracker/qubership-apihub-api-diff'
+import type {
+  DiffType,
+} from '@netcracker/qubership-apihub-api-diff'
 import type { Color } from '../utils/types'
 
 export const ADD_ACTION_TYPE = 'add'
@@ -30,65 +40,63 @@ export type ActionType =
   | typeof REPLACE_ACTION_TYPE
   | typeof RENAME_ACTION_TYPE
 
-export const BREAKING_CHANGE_SEVERITY = 'breaking'
-export const NON_BREAKING_CHANGE_SEVERITY = 'non-breaking'
-export const SEMI_BREAKING_CHANGE_SEVERITY = 'semi-breaking'
-export const DEPRECATED_CHANGE_SEVERITY = 'deprecated'
-export const ANNOTATION_CHANGE_SEVERITY = 'annotation'
-export const UNCLASSIFIED_CHANGE_SEVERITY = 'unclassified'
+export const BREAKING_CHANGE_SEVERITY = breaking
+export const NON_BREAKING_CHANGE_SEVERITY = nonBreaking
+export const RISKY_CHANGE_SEVERITY = risky
+export const DEPRECATED_CHANGE_SEVERITY = deprecated
+export const ANNOTATION_CHANGE_SEVERITY = annotation
+export const UNCLASSIFIED_CHANGE_SEVERITY = unclassified
 
-export type ChangesSummary = ChangesSummaryDto
+export type ChangesSummary<T extends DiffType | DiffTypeDto = DiffType> = ChangeSummary<T>
 
-export type ChangesSummaryDto = ChangeSummary
-
-export type ChangeSeverity = DiffType
+export type ChangeSeverity<T = DiffType> = T
 
 export const CHANGE_SEVERITY_COLOR_MAP: Record<ChangeSeverity, string> = {
-  [BREAKING_CHANGE_SEVERITY]: '#ED4A54',
-  [SEMI_BREAKING_CHANGE_SEVERITY]: '#E98554',
-  [DEPRECATED_CHANGE_SEVERITY]: '#FFB02E',
-  [NON_BREAKING_CHANGE_SEVERITY]: '#6BCE70',
-  [UNCLASSIFIED_CHANGE_SEVERITY]: '#61AAF2',
-  [ANNOTATION_CHANGE_SEVERITY]: '#C55DCF',
+  [breaking]: '#ED4A54',
+  [risky]: '#E98554',
+  [deprecated]: '#FFB02E',
+  [nonBreaking]: '#6BCE70',
+  [unclassified]: '#61AAF2',
+  [annotation]: '#C55DCF',
 }
 
 export const CHANGE_SEVERITY_NAME_MAP: Record<ChangeSeverity, string> = {
-  [BREAKING_CHANGE_SEVERITY]: 'Breaking',
-  [SEMI_BREAKING_CHANGE_SEVERITY]: 'Requires Attention',
-  [DEPRECATED_CHANGE_SEVERITY]: 'Deprecated',
-  [NON_BREAKING_CHANGE_SEVERITY]: 'Non-breaking',
-  [UNCLASSIFIED_CHANGE_SEVERITY]: 'Unclassified',
-  [ANNOTATION_CHANGE_SEVERITY]: 'Annotation',
+  [breaking]: 'Breaking',
+  [risky]: 'Requires Attention',
+  [deprecated]: 'Deprecated',
+  [nonBreaking]: 'Non-breaking',
+  [unclassified]: 'Unclassified',
+  [annotation]: 'Annotation',
 }
 
 export const CHANGE_SEVERITY_TOOLTIP_TITLE_MAP: Record<ChangeSeverity, string> = {
-  [BREAKING_CHANGE_SEVERITY]: 'Breaking Changes',
-  [SEMI_BREAKING_CHANGE_SEVERITY]: 'Changes Requiring Attention',
-  [DEPRECATED_CHANGE_SEVERITY]: 'Deprecated Changes',
-  [NON_BREAKING_CHANGE_SEVERITY]: 'Non-breaking Changes',
-  [UNCLASSIFIED_CHANGE_SEVERITY]: 'Unclassified Changes',
-  [ANNOTATION_CHANGE_SEVERITY]: 'Annotation Changes',
+  [breaking]: 'Breaking Changes',
+  [risky]: 'Changes Requiring Attention',
+  [deprecated]: 'Deprecated Changes',
+  [nonBreaking]: 'Non-breaking Changes',
+  [unclassified]: 'Unclassified Changes',
+  [annotation]: 'Annotation Changes',
 }
 
 export const CHANGE_SEVERITY_DESCRIPTION_MAP: Record<ChangeSeverity, { text: string; options?: string[] }> = {
-  [BREAKING_CHANGE_SEVERITY]: { text: 'Breaking change is a change that breaks backward compatibility with the previous version of API. For example, deleting an operation, adding a required parameter or changing type of a parameter are breaking changes.' },
-  [SEMI_BREAKING_CHANGE_SEVERITY]: {
+  [breaking]: { text: 'Breaking change is a change that breaks backward compatibility with the previous version of API. For example, deleting an operation, adding a required parameter or changing type of a parameter are breaking changes.' },
+  [risky]: {
     text: 'A change requiring attention is a change that breaks backward compatibility according to the rules:',
     options: ['operation was annotated as deprecated in at least two previous consecutive releases and then it was deleted', 'operation is marked as no-BWC'],
   },
-  [DEPRECATED_CHANGE_SEVERITY]: { text: 'Deprecating change is a change that annotates an operation, parameter or schema as deprecated. Removing a "deprecated" annotation is also considered a deprecating change.' },
-  [NON_BREAKING_CHANGE_SEVERITY]: { text: 'Non-breaking change is change that does not break backward compatibility with the previous version of API. For example, adding new operation or optional parameter is non-breaking change.' },
-  [UNCLASSIFIED_CHANGE_SEVERITY]: { text: 'An unclassified change is a change that cannot be classified as any of the other types.' },
-  [ANNOTATION_CHANGE_SEVERITY]: { text: 'An annotation change is a change to enrich the API documentation with information that does not affect the functionality of the API. For example, adding/changing/deleting descriptions or examples is annotation change.' },
+  [deprecated]: { text: 'Deprecating change is a change that annotates an operation, parameter or schema as deprecated. Removing a "deprecated" annotation is also considered a deprecating change.' },
+  [nonBreaking]: { text: 'Non-breaking change is change that does not break backward compatibility with the previous version of API. For example, adding new operation or optional parameter is non-breaking change.' },
+  [unclassified]: { text: 'An unclassified change is a change that cannot be classified as any of the other types.' },
+  [annotation]: { text: 'An annotation change is a change to enrich the API documentation with information that does not affect the functionality of the API. For example, adding/changing/deleting descriptions or examples is annotation change.' },
 }
 
 export const CHANGE_SEVERITIES: ReadonlySet<ChangeSeverity> = new Set([
-    BREAKING_CHANGE_SEVERITY,
-    SEMI_BREAKING_CHANGE_SEVERITY,
-    DEPRECATED_CHANGE_SEVERITY,
-    NON_BREAKING_CHANGE_SEVERITY,
-    ANNOTATION_CHANGE_SEVERITY,
-    UNCLASSIFIED_CHANGE_SEVERITY,
+    breaking,
+    risky,
+    deprecated,
+    nonBreaking,
+    unclassified,
+    annotation,
   ],
 )
 
@@ -99,10 +107,10 @@ export const ACTION_TYPE_COLOR_MAP: Partial<Record<ActionType, Color>> = {
 }
 
 export const DEFAULT_CHANGE_SEVERITY_MAP = {
-  [BREAKING_CHANGE_SEVERITY]: 0,
-  [SEMI_BREAKING_CHANGE_SEVERITY]: 0,
-  [DEPRECATED_CHANGE_SEVERITY]: 0,
-  [NON_BREAKING_CHANGE_SEVERITY]: 0,
-  [ANNOTATION_CHANGE_SEVERITY]: 0,
-  [UNCLASSIFIED_CHANGE_SEVERITY]: 0,
+  [breaking]: 0,
+  [risky]: 0,
+  [deprecated]: 0,
+  [nonBreaking]: 0,
+  [unclassified]: 0,
+  [annotation]: 0,
 }

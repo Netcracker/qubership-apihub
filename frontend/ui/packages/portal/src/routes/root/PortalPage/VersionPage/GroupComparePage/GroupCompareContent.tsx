@@ -19,7 +19,11 @@ import { memo, useCallback, useEffect, useMemo } from 'react'
 import { Box, Card, CardContent, Grid, ListItem, ListItemText, Typography } from '@mui/material'
 import { NavLink, useParams } from 'react-router-dom'
 
-import type { ChangeSummary, OperationChangesDto, OperationChangesMetadata } from '@netcracker/qubership-apihub-api-processor'
+import type {
+  ChangeSummary,
+  OperationChanges,
+  OperationChangesMetadata,
+} from '@netcracker/qubership-apihub-api-processor'
 import { useBackwardLocation } from '../../../useBackwardLocation'
 import { useChangesLoadingStatus, useSetChangesLoadingStatus } from '../ChangesLoadingStatusProvider'
 import { useChangesSummaryContext } from '../ChangesSummaryProvider'
@@ -48,7 +52,10 @@ import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apih
 import {
   useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
-import { filterChangesBySeverity, getMajorSeverity } from '@netcracker/qubership-apihub-ui-shared/utils/change-severities'
+import {
+  filterChangesBySeverity,
+  getMajorSeverity,
+} from '@netcracker/qubership-apihub-ui-shared/utils/change-severities'
 import { isEmpty, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
@@ -69,7 +76,7 @@ import { Changes } from '@netcracker/qubership-apihub-ui-shared/components/Chang
 import type { ComparedPackagesBreadcrumbsData } from '../breadcrumbs'
 
 type GroupCompareContentProps = {
-  groupChanges: OperationChangesDto[]
+  groupChanges: OperationChanges[]
   breadcrumbsData: ComparedPackagesBreadcrumbsData | null
 }
 export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupChanges, breadcrumbsData }) => {
@@ -108,7 +115,7 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
   }, [changesSummary, setChangesLoadingStatus])
 
   const [filters] = useSeverityFiltersSearchParam()
-  const filteredGroupChanges = useMemo(
+  const filteredGroupChanges: OperationChanges[] = useMemo(
     () => groupChanges.filter(change => (selectedTag && change.metadata?.tags
       ? Array.isArray(change.metadata?.tags) && change.metadata?.tags.includes(selectedTag) && filterChangesBySeverity(filters, change.changeSummary)
       : filterChangesBySeverity(filters, change.changeSummary))),
@@ -168,12 +175,12 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
                   operationId,
                   changeSummary,
                   metadata: metadataObject,
-                  changes,
+                  diffs,
                 } = change
 
                 const metadata = metadataObject as OperationChangesMetadata & Partial<RestChangesMetadata> & Partial<GraphQLChangesMetadata>
 
-                const { action } = changes?.[0] ?? {}
+                const { action } = diffs?.[0] ?? {}
                 const operationAction = getActionForOperation(change, REPLACE_ACTION_TYPE)
                 const severity = getMajorSeverity(changeSummary!)
 

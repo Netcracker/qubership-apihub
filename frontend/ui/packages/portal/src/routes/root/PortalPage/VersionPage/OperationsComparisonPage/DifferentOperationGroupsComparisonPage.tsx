@@ -24,7 +24,7 @@ import { useVersionSearchParam } from '../../../useVersionSearchParam'
 import { SelectedOperationTagsProvider } from '../SelectedOperationTagsProvider'
 import { usePackageSearchParam } from '../../../usePackageSearchParam'
 import { useOperation } from '../useOperation'
-import type { OperationChangesDto } from '@netcracker/qubership-apihub-api-processor'
+import type { OperationChanges } from '@netcracker/qubership-apihub-api-processor'
 import { convertToSlug } from '@netcracker/qubership-apihub-api-processor'
 import { useChangesSummaryContext } from '../ChangesSummaryProvider'
 import { usePackageParamsWithRef } from '../../usePackageParamsWithRef'
@@ -120,7 +120,7 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
   const operationAction = useMemo((): ActionType | string => {
     const targetChange = compareGroups?.data?.find(
       element => element.operationId === operationKey && isFullyAddedOrRemovedOperationChange(element),
-    )?.changes?.[0]
+    )?.diffs?.[0]
 
     return isEmpty(compareGroups?.data) ? '' : targetChange?.action ?? 'rename'
   }, [compareGroups, operationKey])
@@ -167,7 +167,7 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
 
   const areChangesAndOperationsLoading = isOriginOperationLoading && isChangedOperationLoading
   const operationsGroupedByTags: OperationsGroupedByTag<OperationChangeData> = useMemo(() => {
-    const filteredChanges: OperationChangesDto[] = compareGroups.data?.filter(
+    const filteredChanges: OperationChanges[] = compareGroups.data?.filter(
       operationChange => filterChangesBySeverity(filters, operationChange.changeSummary),
     ) ?? []
 

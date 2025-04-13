@@ -19,7 +19,6 @@ import type { Key, VersionKey } from '../../../entities/keys'
 import type { ApiAudience, ApiKind } from '../../../entities/operations'
 import { ALL_API_KIND, API_AUDIENCE_ALL, DEFAULT_API_TYPE } from '../../../entities/operations'
 import type { OperationGroupName } from '../../../entities/operation-groups'
-import type { ChangeSeverity } from '../../../entities/change-severities'
 import { getFullVersion } from '../../../utils/versions'
 import { optionalSearchParams } from '../../../utils/search-params'
 import { isEmptyTag } from '../../../utils/tags'
@@ -27,6 +26,8 @@ import { API_V3, requestJson } from '../../../utils/requests'
 import { getPackageRedirectDetails } from '../../../utils/redirects'
 import type { VersionChangesDto } from '../../../entities/version-changelog'
 import type { ApiType } from '../../../entities/api-types'
+import { replaceStringDiffTypeForDTO } from './getOperationChangelog'
+import type { DiffType } from '@netcracker/qubership-apihub-api-diff'
 
 export type VersionChangelogOptions = Partial<{
   packageKey: Key
@@ -41,7 +42,7 @@ export type VersionChangelogOptions = Partial<{
   apiKind: ApiKind
   apiAudience: ApiAudience
   group: OperationGroupName
-  severityFilters: ChangeSeverity[]
+  severityFilters: DiffType[]
   page: number
   limit: number
   enabled: boolean
@@ -75,6 +76,7 @@ export async function getVersionChangelog(
   const packageId = encodeURIComponent(packageKey!)
   const fullVersion = await getFullVersion({ packageKey, versionKey }, signal)
   const versionId = encodeURIComponent(fullVersion.version)
+  const severityDto = replaceStringDiffTypeForDTO(severityFilters)
 
   const queryParams = optionalSearchParams({
     refPackageId: { value: packageIdFilter },
@@ -88,7 +90,7 @@ export async function getVersionChangelog(
     apiAudience: { value: apiAudience },
     apiType: { value: apiType },
     group: { value: group },
-    severity: { value: severityFilters },
+    severity: { value: severityDto },
     emptyGroup: { value: emptyGroup },
     page: { value: page },
     limit: { value: limit },

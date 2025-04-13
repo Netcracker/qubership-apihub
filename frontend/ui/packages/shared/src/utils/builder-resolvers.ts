@@ -39,6 +39,7 @@ export async function packageVersionResolver(authorization: string): Promise<Ver
     if (!versionConfig) {
       return null
     }
+
     return {
       packageId: packageId,
       ...versionConfig,

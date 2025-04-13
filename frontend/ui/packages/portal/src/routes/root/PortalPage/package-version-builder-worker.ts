@@ -21,7 +21,7 @@ import type {
   FileId,
   FileSourceMap,
   OperationsGroupExportFormat,
-  VersionsComparisonDto,
+  VersionsComparison,
   VersionStatus,
 } from '@netcracker/qubership-apihub-api-processor'
 import { BUILD_TYPE, PackageVersionBuilder, VERSION_STATUS } from '@netcracker/qubership-apihub-api-processor'
@@ -284,8 +284,8 @@ type ExportOperationsOptions = {
 
 export type PackageVersionBuilderWorker = {
   exportOperations: (options: ExportOperationsOptions) => Promise<[Blob, Filename]>
-  buildChangelogPackage: (options: BuilderOptions) => Promise<[VersionsComparisonDto[], Blob]>
-  buildGroupChangelogPackage: (options: BuilderOptions) => Promise<[VersionsComparisonDto[], Blob]>
+  buildChangelogPackage: (options: BuilderOptions) => Promise<[VersionsComparison[], Blob]>
+  buildGroupChangelogPackage: (options: BuilderOptions) => Promise<[VersionsComparison[], Blob]>
   publishPackage: (
     options: PublishOptions,
     authorization: string,

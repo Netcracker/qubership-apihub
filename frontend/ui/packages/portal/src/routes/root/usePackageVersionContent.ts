@@ -19,6 +19,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { generatePath } from 'react-router-dom'
 import type { Key, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type {
+  OperationTypeSummary,
+  OperationTypeSummaryDto,
   PackageVersionContent,
   PackageVersionContentDto,
 } from '@netcracker/qubership-apihub-ui-shared/entities/version-contents'
@@ -29,6 +31,7 @@ import { portalRequestJson } from '@apihub/utils/requests'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import { API_V3, DEFAULT_REFETCH_INTERVAL } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { toApiTypeMap } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { replacePropertyInChangesSummary } from '@netcracker/qubership-apihub-api-processor'
 
 export const PACKAGE_VERSION_CONTENT_QUERY_KEY = 'package-version-content-query-key'
 
@@ -180,7 +183,7 @@ function toPackageVersionContent(value: PackageVersionContentDto): PackageVersio
     packageKey: value.packageId,
     key: crypto.randomUUID(),
     createdAt: new Date(value.createdAt).toDateString(),
-    operationTypes: toApiTypeMap(value.operationTypes),
+    operationTypes: toApiTypeMap(convertDtoFieldOperationTypesWithApiType(value.operationTypes)),
     latestRevision: !value?.notLatestRevision,
     revisionsCount: value.revisionsCount ?? 0,
     operationGroups: value.operationGroups?.map(groupDto => ({
@@ -189,4 +192,15 @@ function toPackageVersionContent(value: PackageVersionContentDto): PackageVersio
       operationsCount: groupDto?.operationsCount ?? 0,
     })) ?? [],
   }
+}
+
+function convertDtoFieldOperationTypesWithApiType(operationTypes: ReadonlyArray<OperationTypeSummaryDto> | undefined): ReadonlyArray<OperationTypeSummary> {
+  return operationTypes?.map((type) => {
+    if (!type.changesSummary || !type.numberOfImpactedOperations) return { ...type }
+    return {
+      ...type,
+      changesSummary: replacePropertyInChangesSummary(type.changesSummary),
+      numberOfImpactedOperations: replacePropertyInChangesSummary(type.numberOfImpactedOperations),
+    }
+  }) as ReadonlyArray<OperationTypeSummary>
 }

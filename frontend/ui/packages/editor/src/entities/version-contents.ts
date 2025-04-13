@@ -18,7 +18,8 @@ import type { Key, VersionKey } from './keys'
 import type { PublishedSpec, PublishedSpecDto } from './published-specs'
 import type { Ref, RefDto } from './refs'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
-import type { ChangesSummary, ChangesSummaryDto } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import type { ChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import type { DiffTypeDto } from '@netcracker/qubership-apihub-api-processor'
 
 export type ProjectVersionContent = Readonly<{
   key: Key
@@ -40,7 +41,7 @@ export type ProjectVersionContentDto = Readonly<{
   previousVersion?: VersionKey
   previousVersionPackageId?: VersionKey
   versionLabels?: string[]
-  summary?: ChangesSummaryDto
+  summary?: ChangesSummary<DiffTypeDto>
   files: ReadonlyArray<PublishedSpecDto>
   refs: ReadonlyArray<RefDto>
 }>

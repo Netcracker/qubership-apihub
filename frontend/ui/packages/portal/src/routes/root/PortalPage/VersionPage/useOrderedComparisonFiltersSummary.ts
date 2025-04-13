@@ -22,7 +22,7 @@ import {
   BREAKING_CHANGE_SEVERITY,
   DEPRECATED_CHANGE_SEVERITY,
   NON_BREAKING_CHANGE_SEVERITY,
-  SEMI_BREAKING_CHANGE_SEVERITY,
+  RISKY_CHANGE_SEVERITY,
   UNCLASSIFIED_CHANGE_SEVERITY,
 } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import type { DashboardComparisonSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
@@ -65,7 +65,7 @@ export function useOrderedComparisonFiltersSummary(options: {
 
   return {
     [BREAKING_CHANGE_SEVERITY]: totalVersionChanges[BREAKING_CHANGE_SEVERITY],
-    [SEMI_BREAKING_CHANGE_SEVERITY]: totalVersionChanges[SEMI_BREAKING_CHANGE_SEVERITY],
+    [RISKY_CHANGE_SEVERITY]: totalVersionChanges[RISKY_CHANGE_SEVERITY],
     [DEPRECATED_CHANGE_SEVERITY]: totalVersionChanges[DEPRECATED_CHANGE_SEVERITY],
     [NON_BREAKING_CHANGE_SEVERITY]: totalVersionChanges[NON_BREAKING_CHANGE_SEVERITY],
     [ANNOTATION_CHANGE_SEVERITY]: totalVersionChanges[ANNOTATION_CHANGE_SEVERITY],
@@ -93,5 +93,6 @@ function calculateDashboardChangesSummary(
     .flatMap(({ operationTypes }) => operationTypes
       .filter(type => type.apiType === apiType)
       .map(type => type.numberOfImpactedOperations ?? EMPTY_CHANGE_SUMMARY))
+
   return calculateTotalChangeSummary(refChangesSummaries)
 }

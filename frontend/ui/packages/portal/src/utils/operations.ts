@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { OperationChangesDto } from '@netcracker/qubership-apihub-api-processor'
+import type { OperationChanges } from '@netcracker/qubership-apihub-api-processor'
 import type { Operation, OperationsGroupedByTag } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { DEFAULT_TAG, EMPTY_TAG } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
@@ -37,10 +37,10 @@ export function groupOperationsByTags<T extends Operation>(operations: ReadonlyA
   return newOperationsGroupedByTag
 }
 
-export const getActionForOperation = (change: OperationChangesDto, actionType: string): string => {
+export const getActionForOperation = (change: OperationChanges, actionType: string): string => {
   return !isFullyAddedOrRemovedOperationChange(change)
     ? actionType
-    : change?.changes?.[0]?.action ?? ''
+    : change?.diffs?.[0]?.action ?? ''
 }
 
 export function handleOperationTags(tags: readonly string[] | undefined): Set<string> {
@@ -54,13 +54,13 @@ export function handleOperationTags(tags: readonly string[] | undefined): Set<st
   return operationTagsSet
 }
 
-export function isFullyAddedOrRemovedOperationChange(change: OperationChangesDto): boolean {
-  if (change.changes && change.changes[0]) {
-    if (change.changes[0].action === DiffAction.remove) {
-      return isOperationChange(change.changes[0].previousDeclarationJsonPaths)
+export function isFullyAddedOrRemovedOperationChange(change: OperationChanges): boolean {
+  if (change.diffs?.[0]) {
+    if (change.diffs[0].action === DiffAction.remove) {
+      return isOperationChange(change.diffs[0].beforeDeclarationPaths)
     }
-    if (change.changes[0].action === DiffAction.add) {
-      return isOperationChange(change.changes[0].currentDeclarationJsonPaths)
+    if (change.diffs[0].action === DiffAction.add) {
+      return isOperationChange(change.diffs[0].afterDeclarationPaths)
     }
   }
   return false
