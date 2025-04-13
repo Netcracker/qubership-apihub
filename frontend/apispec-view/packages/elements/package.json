@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-apispec-view",
-  "version": "1.0.25-dev.0",
+  "version": "1.0.25",
   "description": "Web Component to represent various API-specifications as a human-readable document",
   "license": "Apache-2.0",
   "sideEffects": [

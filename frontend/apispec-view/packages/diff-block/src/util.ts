@@ -1,5 +1,8 @@
 import {
   ActionType,
+  annotation,
+  breaking,
+  deprecated,
   Diff,
   DiffAdd,
   DiffMetaRecord,
@@ -10,8 +13,11 @@ import {
   isDiffAdd,
   isDiffRemove,
   isDiffRename,
-  isDiffReplace
-} from '@netcracker/qubership-apihub-api-diff';
+  isDiffReplace,
+  nonBreaking,
+  risky,
+  unclassified,
+} from '@netcracker/qubership-apihub-api-diff'
 import { clone, mapValues, values } from 'lodash';
 import { isObject } from "@stoplight/diff-elements-core/utils/guards";
 
@@ -33,8 +39,8 @@ export const combineDiffType = (a: DiffType, b: DiffType): DiffType => {
   if (a === 'breaking' || b === 'breaking') {
     return 'breaking';
   }
-  if (a === 'semi-breaking' || b === 'semi-breaking') {
-    return 'semi-breaking';
+  if (a === 'risky' || b === 'risky') {
+    return 'risky';
   }
   if (a === 'deprecated' || b === 'deprecated') {
     return 'deprecated';
@@ -155,12 +161,12 @@ const visitedSet = new Set();
 
 export const extractAmountOfDiffs = (value: any, diffMetaKey: symbol): { [key in DiffType]: number } => {
   const initial = {
-    breaking: 0,
-    'non-breaking': 0,
-    deprecated: 0,
-    unclassified: 0,
-    annotation: 0,
-    'semi-breaking': 0,
+    [breaking]: 0,
+    [nonBreaking]: 0,
+    [deprecated]: 0,
+    [unclassified]: 0,
+    [annotation]: 0,
+    [risky]: 0,
   };
 
   const addMetaToInitial = (meta: Diff | DiffMetaRecord) => {
