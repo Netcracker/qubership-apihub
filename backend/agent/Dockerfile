@@ -25,8 +25,7 @@ RUN apk --no-cache add curl
 
 WORKDIR /app/qubership-apihub-agent
 
-COPY --from=builder /workspace/qubership-apihub-agent/api-linter-service ./qubership-apihub-agent
-COPY --from=builder /workspace/qubership-apihub-agent/resources ./resources
+COPY --from=builder /workspace/qubership-apihub-agent/qubership-apihub-agent ./qubership-apihub-agent
 
 RUN chmod -R a+rwx /app
 
