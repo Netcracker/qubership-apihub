@@ -1,0 +1,14 @@
+apihub-agent-service/.idea
+apihub-agent-service/go.sum
+.idea
+.vscode
+apihub-agent-service/data/**
+apihub-agent-service/static/**
+apihub-agent-service/logs/**
+apihub-agent-service/apihub-agent.exe
+apihub-agent-service/apihub-agent
+apihub-agent-service/bin/**
+
+*.bak
+*.iml
+*.orig

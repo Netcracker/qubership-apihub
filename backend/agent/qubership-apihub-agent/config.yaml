@@ -1,0 +1,22 @@
+openshift:
+  microservice:
+    name: apihub-agent
+
+log.level: debug
+
+http:
+  server:
+    bind: ":8080"
+
+  client:
+    retry:
+      maxAttempts: 5
+      attemptDelay: 2
+
+microservice:
+  url: http://apihub-agent:8080
+
+# =====================================================
+# this application specific properties
+# =====================================================
+

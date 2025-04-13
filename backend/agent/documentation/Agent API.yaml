@@ -1,0 +1,1012 @@
+openapi: 3.0.3
+info:
+  title: APIHUB agent API
+  description: |
+    The API contract for APIHUB agent UI.
+servers:
+  - url: "https://{agentUrl}/api"
+    description: Agent backend address
+    variables:
+      agentUrl:
+        default: localhost
+        description: Local server
+tags:
+  - name: Package Versions
+    description: Published package versions API
+  - name: Cloud Services
+    description: Cloud Services API
+  - name: Client Publish
+    description: Client publish API
+paths:
+  /v1/namespaces:
+    get:
+      summary: Get Namespace list
+      description: Get Namespace list from current Cloud. 
+      operationId: getNamespaces
+      tags: 
+        - Cloud Services
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  namespaces:
+                    description: List of cloud Namespaces
+                    type: array
+                    items:
+                      type: string
+                      description: Namespace name
+                  cloudName:
+                    type: string
+                    description: Cloud name
+        "500":
+          $ref: "#/components/responses/internalServerError500"  
+        "503":
+          $ref: "#/components/responses/serviceUnavailable503" 
+  /v1/namespaces/{name}/services:
+    parameters:
+      - $ref: "#/components/parameters/Namespace"
+    get:
+      summary: Get list of services with data
+      description: |
+        Get list of discovered services. I.e. requires discovery first.
+        In addition to the service list, API checks the status of the async discovery process.
+        "none" status means that there's no discovered data for the namespace, i.e. need to start the discovery process.
+        If the "running" status is return in response, then discovery is in progress, the API will return only part of the services list. Need to repeat the request and wait for the terminal status.
+        Terminal statuses:
+        "error" means that discovery is failed in some case.
+        "complete" means that discovery is done and the list of services is ready to be used.
+      operationId: getNamespaceServices
+      deprecated: true
+      x-deprecation-reason: New version of API is created - GET /v2/namespaces/{name}/workspaces/{workspaceId}/services
+      tags:
+        - Cloud Services
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - services
+                  - status
+                properties:
+                  services:
+                    description: The list of the services found
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ServiceV1"
+                  status:
+                    description: Overall status of the discovery process
+                    type: string
+                    enum:
+                      - none
+                      - running
+                      - complete
+                      - error
+        "500":
+          $ref: "#/components/responses/internalServerError500"                      
+        "503":
+          $ref: "#/components/responses/serviceUnavailable503" 
+  /v2/namespaces/{name}/workspaces/{workspaceId}/services:
+    parameters:
+      - $ref: "#/components/parameters/Namespace"
+      - name: workspaceId
+        in: path
+        description: Workspace unique identifier. Workspace determines scope within which packages are searched by service names.
+        required: true
+        schema:
+          type: string
+        example: NC
+    get:
+      summary: Get list of services with data
+      description: |
+        Get list of discovered services. I.e. requires discovery first.
+        In addition to the service list, API checks the status of the async discovery process.
+        "none" status means that there's no discovered data for the namespace, i.e. need to start the discovery process.
+        If the "running" status is return in response, then discovery is in progress, the API will return only part of the services list. Need to repeat the request and wait for the terminal status.
+        Terminal statuses:
+        "error" means that discovery is failed in some case.
+        "complete" means that discovery is done and the list of services is ready to be used.
+      operationId: getNamespaceServicesV2
+      tags:
+        - Cloud Services
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - services
+                  - status
+                properties:
+                  services:
+                    description: The list of the services found
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Service"
+                  status:
+                    description: Overall status of the discovery process
+                    type: string
+                    enum:
+                      - none
+                      - running
+                      - complete
+                      - error
+        "500":
+          $ref: "#/components/responses/internalServerError500"                      
+        "503":
+          $ref: "#/components/responses/serviceUnavailable503" 
+  /v1/namespaces/{name}/discover:
+    parameters:
+      - $ref: "#/components/parameters/Namespace"
+    post:
+      tags:
+        - Cloud Services
+      operationId: postNamespaceDiscover
+      deprecated: true
+      x-deprecation-reason: New version of API is created - POST /v2/namespaces/{name}/workspaces/{workspaceId}/discover
+      summary: Start discovery process
+      description: |
+        Starts the asyncronous service discovery process. 
+        The process status may be get by the getServices operation.
+        API doesn't return the process ID, because Agent may have only one discovery process in one moment of time.
+      responses:
+        "202":
+          description: Success
+          content: {}
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+        "503":
+          $ref: "#/components/responses/serviceUnavailable503" 
+  /v2/namespaces/{name}/workspaces/{workspaceId}/discover:
+    parameters:
+      - $ref: "#/components/parameters/Namespace"
+      - name: workspaceId
+        in: path
+        description: Workspace unique identifier. Workspace determines scope within which packages are searched by service names.
+        required: true
+        schema:
+          type: string
+        example: NC
+    post:
+      tags:
+        - Cloud Services
+      operationId: postNamespaceDiscoverV2
+      summary: Start discovery process
+      description: |
+        Starts the asyncronous service discovery process. 
+        The process status may be get by the getServices operation.
+        API doesn't return the process ID, because Agent may have only one discovery process in one moment of time.
+      responses:
+        "202":
+          description: Success
+          content: {}
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+        "503":
+          $ref: "#/components/responses/serviceUnavailable503" 
+  /v1/namespaces/{name}/services/{serviceId}/specs/{specId}:
+    parameters:
+      - $ref: "#/components/parameters/Namespace"
+      - $ref: "#/components/parameters/ServiceId"
+      - $ref: "#/components/parameters/SpecificationId"
+    get:
+      summary: Get service specification
+      description: Get one service specification
+      operationId: getNamespaceServicesIdSpecsId
+      deprecated: true
+      x-deprecation-reason: New version of API is created - GET /v2/namespaces/{name}/workspaces/{workspaceId}/services/{serviceId}/specs/{specId}
+      tags:
+        - Cloud Services
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            text/plain; charset=utf-8:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
+            application/x-yaml:
+              schema:
+                type: string
+        "404":
+          $ref: "#/components/responses/notFound404"
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+        "503":
+          $ref: "#/components/responses/serviceUnavailable503" 
+  /v2/namespaces/{name}/workspaces/{workspaceId}/services/{serviceId}/specs/{specId}:
+    parameters:
+      - $ref: "#/components/parameters/Namespace"
+      - name: workspaceId
+        in: path
+        description: Workspace unique identifier. Workspace determines scope within which packages are searched by service names.
+        required: true
+        schema:
+          type: string
+        example: NC
+      - $ref: "#/components/parameters/ServiceId"
+      - $ref: "#/components/parameters/SpecificationId"
+    get:
+      summary: Get service specification
+      description: Get one service specification
+      operationId: getNamespaceServicesIdSpecsIdV2
+      tags:
+        - Cloud Services
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            text/plain; charset=utf-8:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
+            application/x-yaml:
+              schema:
+                type: string
+        "404":
+          $ref: "#/components/responses/notFound404"
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+        "503":
+          $ref: "#/components/responses/serviceUnavailable503" 
+  /v1/agents/{agentId}/namespaces/{name}/services/{serviceId}/proxy/{path}:
+    get:
+      summary: Proxy endpoint to service
+      description: Proxy endpoint to service
+      operationId: getAgentsIdNamespacesIdServicesProxy
+      security:
+        - { }
+      tags:
+        - Cloud Services
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+        - $ref: "#/components/parameters/Namespace"
+        - $ref: "#/components/parameters/ServiceId"
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+          description: String that includes paths and query params
+          example: api/v2/escaped/te%20xt/text/text123?escaped=te%20xt
+        - name: X-Apihub-Authorization
+          in: header
+          schema:
+            type: string
+          description: |
+            nc-service authorization:
+              * if system env INSECURE_PROXY is empty or false, then X-Apihub-Authorization is **required**
+              * if system env INSECURE_PROXY = true, then then X-Apihub-Authorization is optional
+      responses:
+        1XX:
+          description: Information responses
+          content:
+            "*/*":
+              schema:
+                description: Schema of any type
+        2XX:
+          description: Successful responses
+          content:
+            "*/*":
+              schema:
+                description: Schema of any type
+        3XX:
+          description: Redirection messages
+          content:
+            "*/*":
+              schema:
+                description: Schema of any type
+        4XX:
+          description: Client error responses
+          content:
+            "*/*":
+              schema:
+                description: Schema of any type
+        5XX:
+          description: Server error responses
+          content:
+            "*/*":
+              schema:
+                description: Schema of any type
+  /v1/namespaces/{name}/serviceNames:
+    parameters:
+      - $ref: "#/components/parameters/Namespace"
+    get:
+      summary: Get list of service names
+      description: |
+        Synchronoulsy get list of service names in selected namespace without discovery.
+      operationId: getNamespaceServicesNames
+      tags:
+        - Cloud Services
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - serviceNames
+                properties:
+                  serviceNames:
+                    description: List of the service names in namespace
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: service id
+                        name:
+                          type: string
+                          description: service name
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+        "503":
+          $ref: "#/components/responses/serviceUnavailable503" 
+  /v1/discover:
+    post:
+      summary: Run discover for whole cloud
+      description: |
+        Run discover for the whole cloud.
+      operationId: postCloudDiscover
+      deprecated: true
+      x-deprecation-reason: New version of API is created - POST /v2/workspaces/{workspaceId}/discover
+      tags:
+        - Cloud Services
+      responses:
+        "202":
+          description: Success
+          content: {}
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+        "503":
+          $ref: "#/components/responses/serviceUnavailable503" 
+  /v2/workspaces/{workspaceId}/discover:
+    parameters:
+    - name: workspaceId
+      in: path
+      description: Workspace unique identifier. Workspace determines scope within which packages are searched by service names.
+      required: true
+      schema:
+        type: string
+      example: NC
+    post:
+      summary: Run discover for whole cloud
+      description: |
+        Run discover for the whole cloud.
+      operationId: postCloudDiscoverV2
+      tags:
+        - Cloud Services
+      responses:
+        "202":
+          description: Success
+          content: {}
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+        "503":
+          $ref: "#/components/responses/serviceUnavailable503" 
+  /v1/services:
+    get:
+      summary: Get namespaces summary for the whole cloud 
+      description: |
+        Get namespaces summary for the whole cloud.
+      operationId: getCloudNamespaces
+      deprecated: true
+      x-deprecation-reason: New version of API is created - GET /v2/workspaces/{workspaceId}/services
+      tags:
+        - Cloud Services
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    description: Overall status of the discovery process
+                    type: string
+                    enum:
+                      - none
+                      - running
+                      - complete
+                      - error
+                  progress:
+                    description: Total number of namespaces / Number of discovered namespaces
+                    type: number
+                  elapsedSec:
+                    description: Time spent (in sec)
+                    type: number
+                  totalNamespaces:
+                    description: Total number of discovered cloud namespaces
+                    type: number
+                  totalServices:
+                    description: Total number of discovered cloud services
+                    type: number
+                  totalServicesWithBaselines:
+                    description: Total number of discovered cloud services with baseline
+                    type: number
+                  totalDocuments:
+                    description: Total number of documents
+                    type: number
+                  namespaceData:
+                    type: object
+                    properties:
+                      namespace:
+                        description: Discovered namespaces
+                        type: object
+                        properties:
+                          services:
+                            description: The list of found services
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/ServiceV1"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+        "503":
+          $ref: "#/components/responses/serviceUnavailable503" 
+  /v2/workspaces/{workspaceId}/services:
+    parameters:
+    - name: workspaceId
+      in: path
+      description: Workspace unique identifier. Workspace determines scope within which packages are searched by service names.
+      required: true
+      schema:
+        type: string
+      example: NC
+    get:
+      summary: Get namespaces summary for the whole cloud 
+      description: |
+        Get namespaces summary for the whole cloud.
+      operationId: getCloudNamespacesV2
+      tags:
+        - Cloud Services
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    description: Overall status of the discovery process
+                    type: string
+                    enum:
+                      - none
+                      - running
+                      - complete
+                      - error
+                  progress:
+                    description: Total number of namespaces / Number of discovered namespaces
+                    type: number
+                  elapsedSec:
+                    description: Time spent (in sec)
+                    type: number
+                  totalNamespaces:
+                    description: Total number of discovered cloud namespaces
+                    type: number
+                  totalServices:
+                    description: Total number of discovered cloud services
+                    type: number
+                  totalServicesWithBaselines:
+                    description: Total number of discovered cloud services with baseline
+                    type: number
+                  totalDocuments:
+                    description: Total number of documents
+                    type: number
+                  namespaceData:
+                    type: object
+                    properties:
+                      namespace:
+                        $ref: "#/components/schemas/namespaceData"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+        "503":
+          $ref: "#/components/responses/serviceUnavailable503" 
+  /api/v1/namespaces/{name}/routes/{routeName}:
+    parameters:
+      - $ref: "#/components/parameters/Namespace"
+      - name: routeName
+        in: path
+        description: Route/Ingress unique identifier
+        required: true
+        schema:
+          type: string
+        example: public-gateway
+    get:
+      summary: Get route/ingress description
+      description: Get route/ingress description
+      operationId: getRouteByName
+      tags:
+        - Cloud Services
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    description: Route/Ingress unique identifier
+                    type: string
+                  namespace:
+                    description: Route/Ingress namespace
+                    type: string
+                  host:
+                    description: Route/Ingress host without protocol, port and path - only domain
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "404":
+          $ref: "#/components/responses/notFound404"
+        "500":
+          $ref: "#/components/responses/internalServerError500"        
+        "503":
+          $ref: "#/components/responses/serviceUnavailable503" 
+  /v1/namespaces/{name}/serviceItems:
+    parameters:
+      - $ref: "#/components/parameters/Namespace"
+    get:
+      summary: Get list of service items
+      description: |
+        Synchronoulsy get list of services in selected namespace without discovery.
+      operationId: getNamespaceServicesItems
+      tags:
+        - Cloud Services
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - serviceItems
+                properties:
+                  serviceItems:
+                    description: List of the service items in namespace
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: service id
+                        namespace:
+                          type: string
+                          description: service namespace
+                        serviceName:
+                          type: string
+                          description: service name
+                        url:
+                          type: string
+                          description: service base url
+                        serviceLabels:
+                          description: List of service's labels and values as a key-value pairs.
+                          type: object
+                          additionalProperties:
+                            type: string
+                        serviceAnnotations:
+                          description: List of service's annotations as a key-value pairs.
+                          type: object
+                          additionalProperties:
+                            type: string
+                        servicePods:
+                          type: array
+                          description: list of service pod ids
+                          items: 
+                            type: string
+                        proxyServerUrl:
+                          type: string
+                          description: The server used in 'Try It' component.
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+
+components:
+  parameters:
+    AgentId:
+      name: agentId
+      in: path
+      description: Id of Agent instance
+      required: true
+      schema:
+        type: string
+      example: k8s-apps3_api-hub-dev
+    Namespace:
+      name: name
+      description: Cloud Namespace name
+      in: path
+      required: true
+      schema:
+        type: string
+    ServiceId:
+      name: serviceId
+      description: Cloud service identifier
+      in: path
+      required: true
+      schema:
+        type: string
+    SpecificationId:
+      name: specId
+      description: Specification Id
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    SpecificationType:  
+      title: type
+      description: Type of the specification notation.
+      type: string
+      enum:
+        - openapi-3-1
+        - openapi-3-0
+        - openapi-2-0
+        - json-schema
+        - markdown
+        - graphql-schema
+        # используется ли где-то graphapi?
+        - graphapi
+        - introspection
+        - protobuf-3
+        - unknown
+      example: openapi-3-0
+    DocumentFormat:
+      title: format
+      description: Format of the document.
+      type: string
+      enum:
+        - json
+        - yaml
+        - md
+        - graphql
+        - gql
+        - proto
+        - unknown
+      example: json
+    ServiceV1:
+      description: Discovered service
+      type: object
+      required:
+        - id
+        - name
+        - specs
+      properties:
+        id:
+          description: Cloud deployment service identifier
+          type: string
+          example: "apihub-be"
+        name:
+          description: Original service name
+          type: string
+          example: apihub-be
+        url:
+          type: string
+          description: The URL to view this baseline package in APIHUB Portal
+        serviceLabels:
+          description: List of service's labels and values as a key-value pairs.
+          type: object
+          additionalProperties:
+            type: string
+          example: 
+            part-of: CloudBSS-CPQBE
+            app_name: cpq
+        availablePromoteStatuses:
+            description: |
+              List of statuses available to the user to promote the service. 
+              The list of statuses is calculated based on the user's permissions.
+            type: array
+            items:
+              type: string
+              enum:       
+                - draft
+                - release
+                - release candidate
+                - deprecated
+                - archived
+        baseline:
+          description: Baseline Package with serviceName equals to id
+          type: object
+          required:
+            - packageId
+            - name
+            - url
+            - versions
+          properties:
+            packageId:
+              description: Package id
+              type: string
+            name:
+              description: Package Name
+              type: string
+            url:
+              type: string
+              description: The URL to view this baseline package in APIHUB Portal
+            versions:
+              description: Package release versions
+              type: array
+              items: 
+                type: string
+        specs:
+          description: List of the service's API documents, found on environment.
+          type: array
+          items:
+            description: Service API documents
+            type: object
+            required:
+              - fileId
+              - name
+              - originalPath
+              - format
+              - type
+            properties:
+              fileId:
+                type: string
+                description: Document file id
+              name:
+                type: string
+                description: Document display name
+                example: "Apihub public API"
+              originalPath:
+                type: string
+                description: Document path on the target service
+                example: "/v3/api-docs"
+              format:
+                type: string
+                description: Document file format
+                enum:
+                  - json
+                  - yaml
+                  - graphql
+                  - md
+                  - unknown
+                example: json
+              type:
+                type: string
+                description: Document type
+                example: "openapi-3-0"
+                enum:
+                  - openapi-2-0
+                  - openapi-3-0
+                  - openapi-3-1
+                  - markdown
+                  - graphql
+                  - json-schema
+                  - unknown
+              xApiKind:
+                type: string
+                description: Api kind value from swagger/apihub config
+                example: "BWC"
+        proxyServerUrl:
+          type: string
+          description: The server used in 'Try It' component.
+          example: '/agents/k8s-apps3_api-hub-dev/namespaces/api-hub-dev/services/apihub-agent-test-service/proxy/'
+        error:
+          type: string
+          description: Discovery error(s)
+    Service:
+      description: Discovered service
+      type: object
+      required:
+        - id
+        - name
+        - specs
+      properties:
+        id:
+          description: Cloud deployment service identifier
+          type: string
+          example: "apihub-be"
+        name:
+          description: Original service name
+          type: string
+          example: apihub-be
+        url:
+          type: string
+          description: The URL to view this baseline package in APIHUB Portal
+        serviceLabels:
+          description: List of service's labels and values as a key-value pairs.
+          type: object
+          additionalProperties:
+            type: string
+          example: 
+            part-of: CloudBSS-CPQBE
+            app_name: cpq
+        availablePromoteStatuses:
+            description: |
+              List of statuses available to the user to promote the service. 
+              The list of statuses is calculated based on the user's permissions.
+            type: array
+            items:
+              type: string
+              enum:       
+                - draft
+                - release
+                - release candidate
+                - deprecated
+                - archived
+        baseline:
+          description: Baseline Package with serviceName equals to id
+          type: object
+          required:
+            - packageId
+            - name
+            - url
+            - versions
+          properties:
+            packageId:
+              description: Package id
+              type: string
+            name:
+              description: Package Name
+              type: string
+            url:
+              type: string
+              description: The URL to view this baseline package in APIHUB Portal
+            versions:
+              description: Package release versions
+              type: array
+              items: 
+                type: string
+        specs:
+          description: List of the service's API documents, found on environment.
+          type: array
+          items:
+            description: Service API documents
+            type: object
+            required:
+              - fileId
+              - name
+              - originalPath
+              - format
+              - type
+            properties:
+              fileId:
+                type: string
+                description: Document file id
+              name:
+                type: string
+                description: Document display name
+                example: "Apihub public API"
+              originalPath:
+                type: string
+                description: Document path on the target service
+                example: "/v3/api-docs"
+              format:
+                $ref: "#/components/schemas/DocumentFormat"
+              type:
+                $ref: "#/components/schemas/SpecificationType"
+              xApiKind:
+                type: string
+                description: Api kind value from swagger/apihub config
+                example: "BWC"
+        proxyServerUrl:
+          type: string
+          description: The server used in 'Try It' component.
+          example: '/agents/k8s-apps3_api-hub-dev/namespaces/api-hub-dev/services/apihub-agent-test-service/proxy/'
+        error:
+          type: string
+          description: Discovery error(s)
+    namespaceData:
+      description: Discovered namespaces
+      type: object
+      properties:
+        services:
+          description: The list of found services
+          type: array
+          items:
+            $ref: "#/components/schemas/Service"
+    ErrorResponse:
+      description: An error description
+      type: object
+      properties:
+        status:
+          description: HTTP Status Code
+          type: number
+        code:
+          description: Internal string error code. Mandatory in response.
+          type: string
+        message:
+          description: The attribute contains an error message.
+          type: string
+        params:
+          description: Message parameters
+          type: object
+          example:
+            "id": "12345"
+            "type": "string"
+        debug:
+          description: |
+            The attribute contains debug details (e.g. stack-trace). 
+            Presented in the error response only on Dev/Test environments if corresponding logging level is enabled.
+          type: string
+      required:
+        - status
+        - code
+        - message                  
+  responses:
+    badRequest400:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    notFound404:
+      description: Not found or incorrect ID
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    internalServerError500:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    serviceUnavailable503:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"

@@ -1,0 +1,38 @@
+name: build Docker image, run E2E BE tests, run E2E FE tests
+
+on:
+  push:
+    branches:
+      - "**"     
+    tags:
+      - '**'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+    types: [opened, reopened, synchronize]
+
+jobs:
+  build-docker-image:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@main
+    with:
+        name: qubership-apihub-agent
+        file: Dockerfile
+        context: ""
+        platforms: linux/amd64,linux/arm64
+        labels: |
+            maintainer=qubership
+
+  # run-e2e-tests:
+  #   uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@main
+  #   needs: build-docker-image
+  #   if: github.event_name == 'pull_request'
+  #   with:
+  #     postman-collections-list: './e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json'
+  #     apihub-backend-image-tag: ${{ needs.build-docker-image.outputs.image_tag }}
+  #     # apihub-ui-image-tag: dev
+  #     # apihub-build-task-consumer-image-tag: dev
+  #   secrets:
+  #     APIHUB_ACCESS_TOKEN: ${{ secrets.APIHUB_ACCESS_TOKEN }}
+  #     APIHUB_ADMIN_EMAIL: ${{ secrets.APIHUB_ADMIN_EMAIL }}
+  #     APIHUB_ADMIN_PASSWORD: ${{ secrets.APIHUB_ADMIN_PASSWORD }}
+  #     JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
