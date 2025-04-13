@@ -155,7 +155,7 @@ export const CREATE_LIST_OF_USERS_V1_UPDATED: Operation = {
     breaking: {
       description: '[Deleted] response \'400\'',
     },
-    semiBreaking: {
+    risky: {
       description: '[Deleted] header \'X-Expires-After\'',
     },
     nonBreaking: {
@@ -236,7 +236,7 @@ export const DEL_ORDER_V1: Operation = {
   method: 'delete',
   tags: 'store',
   changes: {
-    semiBreaking: {
+    risky: {
       description: '[Deleted] response \'400\'',
     },
   },

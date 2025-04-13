@@ -122,7 +122,7 @@ test.describe('13.1.1.1 Package revisions', () => {
       await expect(comparePackagesPage.swapper.leftTitle).toHaveText('@1', { timeout: LONG_EXPECT })
       await expect.soft(comparePackagesPage.swapper.rightTitle).toHaveText('@2')
       await expect.soft(comparePackagesPage.toolbar.breakingChangesFilterBtn).toHaveText('2')
-      await expect.soft(comparePackagesPage.toolbar.semiBreakingChangesFilterBtn).toHaveText('0')
+      await expect.soft(comparePackagesPage.toolbar.riskyChangesFilterBtn).toHaveText('0')
       await expect.soft(comparePackagesPage.toolbar.deprecatedChangesFilterBtn).toHaveText('2')
       await expect.soft(comparePackagesPage.toolbar.nonBreakingChangesFilterBtn).toHaveText('3')
       await expect.soft(comparePackagesPage.toolbar.annotationChangesFilterBtn).toHaveText('1')
@@ -134,7 +134,7 @@ test.describe('13.1.1.1 Package revisions', () => {
 
       await expect(comparePackagesPage.swapper.leftTitle).toHaveText('@2', { timeout: LONG_EXPECT })
       await expect.soft(comparePackagesPage.swapper.rightTitle).toHaveText('@1')
-      await expect(delOrderRow.rightSummary.changes.semiBreaking).toHaveText('1')
+      await expect(delOrderRow.rightSummary.changes.risky).toHaveText('1')
     })
 
   test('[P-COPR-4] Search package revision',

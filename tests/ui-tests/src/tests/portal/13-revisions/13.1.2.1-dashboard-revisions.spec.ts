@@ -122,7 +122,7 @@ test.describe('13.1.2.1 Dashboard revisions', () => {
       await expect(compareDashboardsPage.swapper.leftTitle).toHaveText('@1', { timeout: LONG_EXPECT })
       await expect.soft(compareDashboardsPage.swapper.rightTitle).toHaveText('@2')
       await expect.soft(compareDashboardsPage.toolbar.breakingChangesFilterBtn).toHaveText('1')
-      await expect.soft(compareDashboardsPage.toolbar.semiBreakingChangesFilterBtn).toHaveText('0')
+      await expect.soft(compareDashboardsPage.toolbar.riskyChangesFilterBtn).toHaveText('0')
       await expect.soft(compareDashboardsPage.toolbar.deprecatedChangesFilterBtn).toHaveText('1')
       await expect.soft(compareDashboardsPage.toolbar.nonBreakingChangesFilterBtn).toHaveText('2')
       await expect.soft(compareDashboardsPage.toolbar.annotationChangesFilterBtn).toHaveText('1')
@@ -134,7 +134,7 @@ test.describe('13.1.2.1 Dashboard revisions', () => {
 
       await expect(compareDashboardsPage.swapper.leftTitle).toHaveText('@2', { timeout: LONG_EXPECT })
       await expect.soft(compareDashboardsPage.swapper.rightTitle).toHaveText('@1')
-      await expect(pkg11Row.rightSummary.restApiChanges.semiBreaking).toHaveText('2')
+      await expect(pkg11Row.rightSummary.restApiChanges.risky).toHaveText('2')
     })
 
   test('[P-CODR-4] Search dashboard revision',

@@ -262,13 +262,13 @@ test.describe('09.2 Compare Operations (Package)', () => {
       await portalPage.gotoComparisonOperationInPackages(testPackage, currentVersion.version, previousVersion.version, CREATE_LIST_OF_USERS_V1_UPDATED)
 
       await expect(compareOperationsPage.toolbar.breakingChangesFilterBtn).not.toBePressed()
-      await expect(compareOperationsPage.toolbar.semiBreakingChangesFilterBtn).not.toBePressed()
+      await expect(compareOperationsPage.toolbar.riskyChangesFilterBtn).not.toBePressed()
       await expect(compareOperationsPage.toolbar.deprecatedChangesFilterBtn).not.toBePressed()
       await expect(compareOperationsPage.toolbar.nonBreakingChangesFilterBtn).not.toBePressed()
       await expect(compareOperationsPage.toolbar.annotationChangesFilterBtn).not.toBePressed()
       await expect(compareOperationsPage.toolbar.unclassifiedChangesFilterBtn).not.toBePressed()
       await expect(compareOperationsPage.toolbar.breakingChangesFilterBtn).toHaveText('1')
-      await expect(compareOperationsPage.toolbar.semiBreakingChangesFilterBtn).toHaveText('1')
+      await expect(compareOperationsPage.toolbar.riskyChangesFilterBtn).toHaveText('1')
       await expect(compareOperationsPage.toolbar.deprecatedChangesFilterBtn).toHaveText('1')
       await expect(compareOperationsPage.toolbar.nonBreakingChangesFilterBtn).toHaveText('1')
       await expect(compareOperationsPage.toolbar.annotationChangesFilterBtn).toHaveText('1')
@@ -280,9 +280,9 @@ test.describe('09.2 Compare Operations (Package)', () => {
       await expect(compareOperationsPage.sidebar.getOperationButton()).toHaveCount(1)
       await expect(compareOperationsPage.sidebar.getTagButton()).toHaveCount(2)
 
-      await compareOperationsPage.toolbar.semiBreakingChangesFilterBtn.click()
+      await compareOperationsPage.toolbar.riskyChangesFilterBtn.click()
 
-      await expect.soft(compareOperationsPage.toolbar.semiBreakingChangesFilterBtn).toBePressed()
+      await expect.soft(compareOperationsPage.toolbar.riskyChangesFilterBtn).toBePressed()
       await expect(compareOperationsPage.sidebar.getOperationButton()).toHaveCount(1)
       await expect(compareOperationsPage.sidebar.getTagButton()).toHaveCount(3)
 
@@ -316,9 +316,9 @@ test.describe('09.2 Compare Operations (Package)', () => {
       await expect(compareOperationsPage.sidebar.getOperationButton()).toHaveCount(3)
       await expect(compareOperationsPage.sidebar.getTagButton()).toHaveCount(2)
 
-      await compareOperationsPage.toolbar.semiBreakingChangesFilterBtn.click()
+      await compareOperationsPage.toolbar.riskyChangesFilterBtn.click()
 
-      await expect.soft(compareOperationsPage.toolbar.semiBreakingChangesFilterBtn).not.toBePressed()
+      await expect.soft(compareOperationsPage.toolbar.riskyChangesFilterBtn).not.toBePressed()
       await expect(compareOperationsPage.sidebar.getOperationButton()).toHaveCount(3)
       await expect(compareOperationsPage.sidebar.getTagButton()).toHaveCount(1)
 

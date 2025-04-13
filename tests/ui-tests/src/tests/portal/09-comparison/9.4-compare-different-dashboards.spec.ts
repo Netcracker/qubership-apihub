@@ -269,7 +269,7 @@ test.describe('09.4 Compare different Dashboards', () => {
 
         await expect(comparePage.compareContent.getPackageRow()).toHaveCount(2)
         await expect.soft(pk11Row.rightSummary.restApiChanges.breaking).toHaveText('2')
-        await expect.soft(pk11Row.rightSummary.restApiChanges.semiBreaking).toHaveText('2')
+        await expect.soft(pk11Row.rightSummary.restApiChanges.risky).toHaveText('2')
         await expect.soft(pk11Row.rightSummary.restApiChanges.deprecated).toHaveText('2')
         await expect.soft(pk11Row.rightSummary.restApiChanges.nonBreaking).toHaveText('2')
         await expect.soft(pk11Row.rightSummary.restApiChanges.annotation).toHaveText('1')

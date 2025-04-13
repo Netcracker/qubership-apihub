@@ -71,13 +71,13 @@ test.describe('09.3 Compare Dashboard versions', () => {
       await portalPage.gotoComparisonDashboards(testDashboard, currentVersion.version, previousVersion.version)
 
       await expect(comparePage.toolbar.breakingChangesFilterBtn).not.toBePressed()
-      await expect(comparePage.toolbar.semiBreakingChangesFilterBtn).not.toBePressed()
+      await expect(comparePage.toolbar.riskyChangesFilterBtn).not.toBePressed()
       await expect(comparePage.toolbar.deprecatedChangesFilterBtn).not.toBePressed()
       await expect(comparePage.toolbar.nonBreakingChangesFilterBtn).not.toBePressed()
       await expect(comparePage.toolbar.annotationChangesFilterBtn).not.toBePressed()
       await expect(comparePage.toolbar.unclassifiedChangesFilterBtn).not.toBePressed()
       await expect(comparePage.toolbar.breakingChangesFilterBtn).toHaveText('2')
-      await expect(comparePage.toolbar.semiBreakingChangesFilterBtn).toHaveText('1')
+      await expect(comparePage.toolbar.riskyChangesFilterBtn).toHaveText('1')
       await expect(comparePage.toolbar.deprecatedChangesFilterBtn).toHaveText('1')
       await expect(comparePage.toolbar.nonBreakingChangesFilterBtn).toHaveText('1')
       //! await expect(comparePage.toolbar.annotationChangesFilterBtn).toHaveText('2') //Issue GraphQL checks temporarily disabled
@@ -89,9 +89,9 @@ test.describe('09.3 Compare Dashboard versions', () => {
       await expect.soft(comparePage.toolbar.breakingChangesFilterBtn).toBePressed()
       await expect(comparePage.compareContent.getPackageRow()).toHaveCount(3)
 
-      await comparePage.toolbar.semiBreakingChangesFilterBtn.click()
+      await comparePage.toolbar.riskyChangesFilterBtn.click()
 
-      await expect.soft(comparePage.toolbar.semiBreakingChangesFilterBtn).toBePressed()
+      await expect.soft(comparePage.toolbar.riskyChangesFilterBtn).toBePressed()
       await expect(comparePage.compareContent.getPackageRow()).toHaveCount(3)
 
       await comparePage.toolbar.deprecatedChangesFilterBtn.click()
@@ -119,9 +119,9 @@ test.describe('09.3 Compare Dashboard versions', () => {
       await expect.soft(comparePage.toolbar.breakingChangesFilterBtn).not.toBePressed()
       await expect(comparePage.compareContent.getPackageRow()).toHaveCount(2)
 
-      await comparePage.toolbar.semiBreakingChangesFilterBtn.click()
+      await comparePage.toolbar.riskyChangesFilterBtn.click()
 
-      await expect.soft(comparePage.toolbar.semiBreakingChangesFilterBtn).not.toBePressed()
+      await expect.soft(comparePage.toolbar.riskyChangesFilterBtn).not.toBePressed()
       await expect(comparePage.compareContent.getPackageRow()).toHaveCount(2)
 
       await comparePage.toolbar.deprecatedChangesFilterBtn.click()
@@ -214,7 +214,7 @@ test.describe('09.3 Compare Dashboard versions', () => {
       await expect.soft(pk11Row.rightSummary.packageVersionStatus).toHaveText(V_P_PKG_CHANGELOG_MULTI_CHANGED_R.status)
       await expect.soft(pk11Row.rightSummary.graphQlChanges.breaking).toHaveText('1')
       await expect.soft(pk11Row.rightSummary.restApiChanges.breaking).toHaveText('2')
-      await expect.soft(pk11Row.rightSummary.restApiChanges.semiBreaking).toHaveText('2')
+      await expect.soft(pk11Row.rightSummary.restApiChanges.risky).toHaveText('2')
       await expect.soft(pk11Row.rightSummary.restApiChanges.deprecated).toHaveText('2')
       await expect.soft(pk11Row.rightSummary.restApiChanges.nonBreaking).toHaveText('2')
       await expect.soft(pk11Row.rightSummary.restApiChanges.annotation).toHaveText('1')

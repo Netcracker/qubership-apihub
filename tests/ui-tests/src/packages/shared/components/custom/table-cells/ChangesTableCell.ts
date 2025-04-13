@@ -3,12 +3,12 @@ import { Content, TableCell } from '@shared/components/base'
 
 export class ChangesTableCell extends TableCell {
 
-  readonly breakingChanges = new Content(this.mainLocator.getByTestId('breaking'), 'Breaking Сhanges')
-  readonly deprecatedChanges = new Content(this.mainLocator.getByTestId('deprecated'), 'Deprecated Сhanges')
-  readonly nonBreakingChanges = new Content(this.mainLocator.getByTestId('non-breaking'), 'Non-breaking Сhanges')
-  readonly semiBreakingChanges = new Content(this.mainLocator.getByTestId('semi-breaking'), 'Changes Requiring Attention')
-  readonly annotationChanges = new Content(this.mainLocator.getByTestId('annotation'), 'Annotation Сhanges')
-  readonly unclassifiedChanges = new Content(this.mainLocator.getByTestId('unclassified'), 'Unclassified Сhanges')
+  readonly breakingChanges = new Content(this.mainLocator.getByTestId('breaking'), 'Breaking changes')
+  readonly deprecatedChanges = new Content(this.mainLocator.getByTestId('deprecated'), 'Deprecated changes')
+  readonly nonBreakingChanges = new Content(this.mainLocator.getByTestId('non-breaking'), 'Non-breaking changes')
+  readonly riskyChanges = new Content(this.mainLocator.getByTestId('risky'), 'Changes Requiring Attention')
+  readonly annotationChanges = new Content(this.mainLocator.getByTestId('annotation'), 'Annotation changes')
+  readonly unclassifiedChanges = new Content(this.mainLocator.getByTestId('unclassified'), 'Unclassified changes')
 
   constructor(rootLocator: Locator, componentName?: string, componentType?: string) {
     super(rootLocator, componentName, componentType || 'changes cell')

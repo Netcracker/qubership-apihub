@@ -16,7 +16,7 @@ type OperationMetadataTest = {
     breaking: {
       description: string
     }
-    semiBreaking: {
+    risky: {
       description: string
     }
     nonBreaking: {
