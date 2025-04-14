@@ -1,7 +1,7 @@
 import { test } from '@fixtures'
 import { expect } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
-import { SHORT_EXPECT, SHORT_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
+import { OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION, SHORT_EXPECT, SHORT_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
 import { VERSION_OPERATIONS_TAB_REST } from '@portal/entities'
 import { PK_REV_VAR, V_P_PKG_REV_1_N } from '@test-data/portal'
 
@@ -16,8 +16,11 @@ test.describe('13.1.1.2 Package revisions (Outdated revision notification)', () 
 
   test('[P-COPR-3.1] Outdated revision notification on the "Operations" tab',
     {
-      tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8412` },
+      tag: ['@smoke', '@flaky'],
+      annotation: [
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8412` },
+        { type: 'Flaky', description: OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION },
+      ],
     },
     async ({ sysadminPage: page, apihubTDM }) => {
 
@@ -60,9 +63,12 @@ test.describe('13.1.1.2 Package revisions (Outdated revision notification)', () 
 
   test.skip('[P-COPR-3.2] Outdated revision notification on the "API Changes" tab',
     {
+      tag: ['@flaky'],
       annotation: [
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8412` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-977` }],
+        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-977` },
+        { type: 'Flaky', description: OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION },
+      ],
     },
     async ({ sysadminPage: page, apihubTDM }) => {
 
@@ -105,9 +111,12 @@ test.describe('13.1.1.2 Package revisions (Outdated revision notification)', () 
 
   test.skip('[P-COPR-3.3] Outdated revision notification on the "Deprecated" tab',
     {
+      tag: ['@flaky'],
       annotation: [
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8412` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-976` }],
+        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-976` },
+        { type: 'Flaky', description: OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION },
+      ],
     },
     async ({ sysadminPage: page, apihubTDM }) => {
 
@@ -150,7 +159,11 @@ test.describe('13.1.1.2 Package revisions (Outdated revision notification)', () 
 
   test('[P-COPR-3.4] Outdated revision notification on the "Documents" tab',
     {
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8412` },
+      tag: ['@flaky'],
+      annotation: [
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8412` },
+        { type: 'Flaky', description: OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION },
+      ],
     },
     async ({ sysadminPage: page, apihubTDM }) => {
 
@@ -193,7 +206,11 @@ test.describe('13.1.1.2 Package revisions (Outdated revision notification)', () 
 
   test('[P-COPR-3.5] Outdated revision notification on the "Overview" tab',
     {
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8412` },
+      tag: ['@flaky'],
+      annotation: [
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8412` },
+        { type: 'Flaky', description: OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION },
+      ],
     },
     async ({ sysadminPage: page, apihubTDM }) => {
 
@@ -246,8 +263,11 @@ test.describe('13.1.1.2 Package revisions (Outdated revision notification)', () 
 
   test('[P-COPR-3.6] Outdated revision notification on the "Settings" page',
     {
-      tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8412` },
+      tag: ['@smoke', '@flaky'],
+      annotation: [
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8412` },
+        { type: 'Flaky', description: OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION },
+      ],
     },
     async ({ sysadminPage: page, apihubTDM }) => {
 
@@ -272,8 +292,11 @@ test.describe('13.1.1.2 Package revisions (Outdated revision notification)', () 
 
   test('[P-COPR-3.7] Outdated revision notification on the "Comparison" page',
     {
-      tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8412` },
+      tag: ['@smoke', '@flaky'],
+      annotation: [
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8412` },
+        { type: 'Flaky', description: OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION },
+      ],
     },
     async ({ sysadminPage: page, apihubTDM }) => {
 
