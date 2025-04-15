@@ -79,7 +79,7 @@ qubershipApihubBackend:
       # Optional; Default workspace ID for Agent UI; If not set, default value: ""; Example: QS
       defaultWorkspaceId: ''
       # Optional; Regex pattern for releases names validation.; If not set, default value: ^[0-9]{4}[.]{1}[1-4]{1}$; Example: ^2023\.1$
-      releaseVersionPattern: '*'
+      releaseVersionPattern: '.*'
       # Optional; Limit for uploaded package size in order to avoid OOM; If not set, default value: 50; Example: 50
       publishArchiveSizeLimitMb: '50'
       # Optional; Limit for uploaded file (inside package) size in order to avoid OOM; If not set, default value: 15; Example: 20
