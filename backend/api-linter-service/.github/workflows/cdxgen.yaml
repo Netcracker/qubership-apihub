@@ -1,0 +1,20 @@
+---
+
+# The workflow will generate the SBOM file for the repository
+# and vulerability scan report for the SBOM file using CycloneDX
+# The workflow will run on push to main branch and manually triggered workflows
+# The results will be stored in the action artifacts
+
+name: 'CDXGen'
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  cdxgen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "cdxgen"
+        uses: netcracker/qubership-workflow-hub/actions/cdxgen@main
