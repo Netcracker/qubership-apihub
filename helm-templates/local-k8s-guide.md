@@ -146,3 +146,36 @@ Credentials for login can be found in `/helm-templates/qubership-apihub/local-se
     helm uninstall apihub -n apihub
     helm uninstall postgres-db -n postgres-db
 ```
+
+# Appendix
+
+Script for setting up everything
+
+```
+cat <<EOF | kind create cluster --config=-
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
+EOF
+
+kubectl apply -f https://kind.sigs.k8s.io/examples/ingress/deploy-ingress-nginx.yaml
+./generate_jwt_pkey.sh
+./generate-local-passwords.sh
+sleep 30
+helm install postgres-db -n postgres-db --create-namespace ../postgres-db
+sleep 30
+helm install apihub -n apihub --create-namespace -f ../qubership-apihub/local-k8s-values.yaml -f ../qubership-apihub/local-secrets.yaml ../qubership-apihub
+sleep 30
+echo "######"
+echo "APIHUB is accesible by https://qubership-apihub.localhost/login"
+cat local-secrets.yaml | grep -E 'adminEmail|adminPassword|accessToken'
+echo "######"
+```
