@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "4_Access_control",
-        "_postman_id": "41cc2ca6-948a-42f1-b8c2-d993a946bcbb",
+        "_postman_id": "2a7a15c4-9ec8-445a-b5c5-890b9576f9a2",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -15097,7 +15097,7 @@
                                 "header": [
                                     {
                                         "key": "X-Personal-Access-Token",
-                                        "value": "{{TOKEN2}}",
+                                        "value": "{{editor_PAT}}",
                                         "type": "default"
                                     }
                                 ],
