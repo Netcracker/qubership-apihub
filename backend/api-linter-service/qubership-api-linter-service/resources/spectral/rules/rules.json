@@ -1,0 +1,19 @@
+{
+    "extends": ["spectral:oas"],
+    "description": "Netcracker's rules for a high quality specification.",
+    "documentationUrl": "https://apihub.netcracker.com",
+    "rules": {
+        "no-example-com-in-url": {
+            "description": "Url must not use example.com based domain inside",
+            "given": "$..*",
+            "severity": "warn",
+            "then": {
+                "field": "url",
+                "function": "pattern",
+                "functionOptions": {
+                    "notMatch": "example\\.com"
+                }
+            }
+        }
+    }
+}

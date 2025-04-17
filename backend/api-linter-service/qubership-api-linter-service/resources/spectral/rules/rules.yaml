@@ -1,0 +1,90 @@
+# Copyright 2024-2025 NetCracker Technology Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+extends: [[spectral:oas, recommended]]
+description: Netcracker's rules for a high quality specification.
+documentationUrl: https://apihub.netcracker.com
+rules:
+  license-url:
+    description: License URL check
+    given: $.info.license
+    severity: warn
+    then:
+        field: url
+        function: truthy
+  no-example-com-in-url:
+    description: Url must not use example.com based domain inside
+    given: $..*
+    severity: warn
+    then:
+      field: url
+      function: pattern
+      functionOptions:
+        notMatch: example\.com
+  server-variables-descriptions:
+    description: Server variables need to be described
+    given: $.servers.variables[*]
+    severity: warn
+    then:
+      field: description
+      function: truthy
+  paths-description:
+    description: All the paths need to be described
+    given: $.paths[*][*]
+    severity: warn
+    then:
+      field: description
+      function: truthy
+  request-body-description:
+    description: All the request bodies need to be described
+    given: $.paths[*][*].requestBody
+    severity: warn
+    then:
+      field: description
+      function: truthy
+  responses-description:
+    description: All the responses need to be described
+    given: $.paths[*][*].responses[*]
+    severity: warn
+    then:
+      field: description
+      function: truthy
+  components-security-schemas-description:
+    description: All the component security schemas need to be described
+    given: $.components.securitySchemes[*]
+    severity: warn
+    then:
+      field: description
+      function: truthy
+  schema-description:
+    description: All the schemas need to be described
+    given: $.schema[*]
+    severity: warn
+    then:
+      field: description
+      function: truthy
+  schema-properties-description:
+    description: All the schema properties need to be described
+    given: $.schema.properties[*]
+    severity: warn
+    then:
+      field: description
+      function: truthy
+  schema-properties-children-description:
+    description: All the schema children properties need to be described
+    given: $.schema.properties[*][*].properties
+    severity: warn
+    then:
+      field: description
+      function: truthy
