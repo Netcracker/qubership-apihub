@@ -40,6 +40,7 @@ RUN apk --no-cache add curl
 WORKDIR /app/qubership-apihub-agent
 
 COPY --from=builder /workspace/qubership-apihub-agent/qubership-apihub-agent ./qubership-apihub-agent
+ADD qubership-apihub-agent/config.yaml ./
 
 RUN chmod -R a+rwx /app
 
