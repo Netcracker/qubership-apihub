@@ -329,3 +329,7 @@ Notes:
 2. Physically release is a `tag` in each repository which produces docker image
 
 **Release Example**: [https://github.com/Netcracker/qubership-apihub/releases/tag/1.2.0](https://github.com/Netcracker/qubership-apihub/releases/tag/1.2.0)
+
+### Release delivery to customer cadence
+
+![](../images/release_delivery.png)
