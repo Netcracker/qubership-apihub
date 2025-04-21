@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-import { Box, Typography } from '@mui/material'
-
-import type { FC } from 'react'
-import React, { memo, useCallback } from 'react'
+import { Box, Tooltip, Typography } from '@mui/material'
+import React, { type FC, memo, useCallback } from 'react'
 import type { PackageSettingsTabProps } from '../package-settings'
-import Tooltip from '@mui/material/Tooltip'
 import { EditGrouppingPrefixDialog } from './EditGrouppingPrefixDialog'
 import { useEventBus } from '@apihub/routes/EventBusProvider'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
@@ -27,7 +24,7 @@ import { transformStringValue } from '@netcracker/qubership-apihub-ui-shared/uti
 import { GROUP_TYPE_REST_PATH_PREFIX } from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'
 import { SettingsEditableParameter } from '@netcracker/qubership-apihub-ui-shared/components/SettingsEditableParameter'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
-import { InfoIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoIcon'
+import { InfoContextIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoContextIcon'
 
 export const SpecificConfigurationPackageSettingsTab: FC<PackageSettingsTabProps> = memo<PackageSettingsTabProps>(({ packageObject }) => {
   const { showEditPackagePrefixDialog } = useEventBus()
@@ -64,9 +61,7 @@ export const SpecificConfigurationPackageSettingsTab: FC<PackageSettingsTabProps
                 title="The parameter allows you to define custom regular expression, which will be applied to the paths of REST operations. This expression must begin and end with a / character and contain the {group} keyword. For example: /api/{group}/. The system will look for the {group} entry in the REST operation paths during the publication of the package version. All found matches will form a list of groups that will include the corresponding operations."
                 placement="right"
               >
-                <Box height={20}>
-                  <InfoIcon/>
-                </Box>
+                <InfoContextIcon fontSize="extra-small"/>
               </Tooltip>
             </Box>
           </Box>

@@ -21,7 +21,7 @@ import { Box, TextField, Typography } from '@mui/material'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { useCopyToClipboard } from 'react-use'
 import type { Key } from '../entities/keys'
-import { InfoIcon } from '../icons/InfoIcon'
+import { InfoContextIcon } from '../icons/InfoContextIcon'
 import type { LinkType } from './Notifications/Notification'
 
 export type NotificationDetail = {
@@ -70,7 +70,7 @@ export const DisplayToken: FC<DisplayTokenProps> = memo(({
         data-testid="AccessTokenTextField"
       />
       <Box display="flex" alignItems="center" marginTop="4px" data-testid="TokenWarning">
-        <InfoIcon/>
+        <InfoContextIcon/>
         <Typography sx={{ ml: '4px', fontSize: '12px', color: '#626D82' }}>
           Copy and save this token because it won’t be saved
         </Typography>

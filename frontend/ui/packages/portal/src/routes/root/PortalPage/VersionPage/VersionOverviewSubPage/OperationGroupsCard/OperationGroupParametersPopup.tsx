@@ -37,9 +37,13 @@ import { DialogForm } from '@netcracker/qubership-apihub-ui-shared/components/Di
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import ExpandMoreOutlinedIcon from '@mui/icons-material/ExpandMoreOutlined'
 import { TemplateUpload } from './TemplateUpload'
-import { InfoIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoIcon'
+import { InfoContextIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoContextIcon'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST, API_TYPE_TITLE_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  API_TYPE_GRAPHQL,
+  API_TYPE_REST,
+  API_TYPE_TITLE_MAP,
+} from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 export type OperationGroupParameters = {
   groupName: string
@@ -214,7 +218,11 @@ export const OperationGroupParametersPopup: FC<OperationGroupParametersPopupProp
           onChange={(_, expanded) => setExpanded(expanded)}
           sx={ACCORDION_STYLE}
         >
-          <AccordionSummary sx={{ px: 0, pt: 1 }} expandIcon={<ExpandMoreOutlinedIcon/>} data-testid="AdditionalOptionsButton">
+          <AccordionSummary
+            sx={{ px: 0, pt: 1 }}
+            expandIcon={<ExpandMoreOutlinedIcon/>}
+            data-testid="AdditionalOptionsButton"
+          >
             <Typography variant="button">Additional Options</Typography>
           </AccordionSummary>
           <AccordionDetails>
@@ -225,9 +233,7 @@ export const OperationGroupParametersPopup: FC<OperationGroupParametersPopupProp
                 placement="right"
                 title={TOOLTIP_TITLE}
               >
-                <Box sx={{ cursor: 'pointer' }}>
-                  <InfoIcon/>
-                </Box>
+                <InfoContextIcon fontSize="extra-small"/>
               </Tooltip>
             </Box>
             <TemplateUpload

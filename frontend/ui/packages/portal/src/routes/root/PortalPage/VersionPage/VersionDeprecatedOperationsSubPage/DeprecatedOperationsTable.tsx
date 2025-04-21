@@ -27,15 +27,25 @@ import { Box, Typography } from '@mui/material'
 import Tooltip from '@mui/material/Tooltip'
 import type { Row } from '@tanstack/react-table'
 import type { ColumnModel } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
-import type { FetchNextOperationList, OperationsData, OperationWithDeprecations } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import type {
+  FetchNextOperationList,
+  OperationsData,
+  OperationWithDeprecations,
+} from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { HasNextPage, IsFetchingNextPage, IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { CustomTableHeadCell } from '@netcracker/qubership-apihub-ui-shared/components/CustomTableHeadCell'
-import { InfoIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoIcon'
+import { InfoContextIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoContextIcon'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
-import { API_AUDIENCE_COLUMN_ID, API_KIND_COLUMN_ID, ENDPOINT_COLUMN_ID, PACKAGE_COLUMN_ID, TAGS_COLUMN_ID } from '@netcracker/qubership-apihub-ui-shared/entities/table-columns'
+import {
+  API_AUDIENCE_COLUMN_ID,
+  API_KIND_COLUMN_ID,
+  ENDPOINT_COLUMN_ID,
+  PACKAGE_COLUMN_ID,
+  TAGS_COLUMN_ID,
+} from '@netcracker/qubership-apihub-ui-shared/entities/table-columns'
 
 export const DETAILS_COLUMN_ID = 'details'
 export const DEPRECATED_SINCE_COLUMN_ID = 'deprecated-since'
@@ -80,34 +90,26 @@ export const DeprecatedOperationsTable: FC<DeprecatedOperationsTabProps> = memo<
   const deprecatedInfoColumns: ColumnDef<OpenApiTableData>[] = useMemo(() => [
     {
       id: DETAILS_COLUMN_ID,
-      header: () => <CustomTableHeadCell title="Details" />,
+      header: () => <CustomTableHeadCell title="Details"/>,
       cell: ({ row: { original: { operation } } }) => {
         const { deprecatedCount, deprecatedInfo } = operation as OperationWithDeprecations
         if (deprecatedCount) {
           return (
             <Box display="flex" alignItems="center">
-              <Box component="span" sx={{ background: '#FFB02E', width: 12, height: 12, borderRadius: '50%', mr: 1 }} />
+              <Box component="span" sx={{ background: '#FFB02E', width: 12, height: 12, borderRadius: '50%', mr: 1 }}/>
               <Typography noWrap component="span" sx={{ fontSize: 12, fontWeight: 500, color: '#353C4E', mr: 1.5 }}>
                 {deprecatedCount}
               </Typography>
 
               {deprecatedInfo && (
-                <Box
-                  sx={{ visibility: 'hidden', height: '20px' }}
-                  className="hoverable"
+                <Tooltip
+                  disableHoverListener={false}
+                  title={<DeprecatedInfo info={deprecatedInfo}/>}
+                  placement="right"
                 >
-                  <Tooltip
-                    disableHoverListener={false}
-                    title={<DeprecatedInfo info={deprecatedInfo} />}
-                    placement="right"
-                  >
-                    <Box sx={{ display: 'inline' }}>
-                      <InfoIcon />
-                    </Box>
-                  </Tooltip>
-                </Box>
+                  <InfoContextIcon sx={{ visibility: 'hidden' }} className="visible-on-hover"/>
+                </Tooltip>
               )}
-
             </Box>
           )
         }
@@ -115,7 +117,7 @@ export const DeprecatedOperationsTable: FC<DeprecatedOperationsTabProps> = memo<
     },
     {
       id: DEPRECATED_SINCE_COLUMN_ID,
-      header: () => <CustomTableHeadCell title="Deprecated Since" />,
+      header: () => <CustomTableHeadCell title="Deprecated Since"/>,
       cell: ({ row: { original: { operation } } }) => {
         const [deprecatedSince] = (operation as OperationWithDeprecations)?.deprecatedInPreviousVersions ?? []
         if (deprecatedSince) {

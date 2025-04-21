@@ -19,7 +19,7 @@ import type { ChangeEvent, DragEvent, FC, PropsWithChildren, ReactNode } from 'r
 import { memo, useCallback, useMemo, useState } from 'react'
 import borderSvg from './border.svg'
 import { ClockBackwardIcon } from '../../icons/ClockBackwardIcon'
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
+import { InfoContextIcon } from '../../icons/InfoContextIcon'
 import { CloudUploadIcon } from '../../icons/CloudUploadIcon'
 import { transformFileListToFileArray } from '../../utils/files'
 import { DeleteIcon } from '../../icons/DeleteIcon'
@@ -165,7 +165,12 @@ export const FileTableUpload: FC<FileTableUploadProps> = memo<FileTableUploadPro
               {hasFiles ? 'Drop files here to attach' : 'Drop files here to attach or'}
             </Typography>
             {!hasFiles &&
-              <Button sx={{ p: 0, lineHeight: '22px', fontSize: '15px', minWidth: 'fit-content' }} data-testid="BrowseButton">browse</Button>
+              <Button
+                sx={{ p: 0, lineHeight: '22px', fontSize: '15px', minWidth: 'fit-content' }}
+                data-testid="BrowseButton"
+              >
+                browse
+              </Button>
             }
           </Box>
         </Box>
@@ -255,6 +260,6 @@ export const FileInfoIcon: FC = memo(() => {
       sx: { '.MuiTooltip-tooltip': { maxWidth: 'unset' } },
     }}
   >
-    <InfoOutlinedIcon sx={{ color: '#626D82', cursor: 'pointer', marginLeft: '6px' }} fontSize="small"/>
+    <InfoContextIcon sx={{ ml: '6px' }}/>
   </Tooltip>
 })

@@ -17,7 +17,7 @@
 import type { ChangeEvent, FC, ReactNode } from 'react'
 import { memo, useCallback, useEffect, useState } from 'react'
 import { Box, Tooltip } from '@mui/material'
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
+import { InfoContextIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoContextIcon'
 import { useEventBus } from '../../../EventBusProvider'
 import { useFileActions, useFiles, useFilesLoading } from '../FilesProvider'
 import { specTypeViewers } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/useSpecViewer'
@@ -139,7 +139,7 @@ export const VersionConfigurationSubPage: FC = memo(() => {
               sx: { '.MuiTooltip-tooltip': { maxWidth: 'unset' } },
             }}
           >
-            <InfoOutlinedIcon sx={{ color: '#626D82' }} fontSize="small"/>
+            <InfoContextIcon/>
           </Tooltip>
         </Box>
       }

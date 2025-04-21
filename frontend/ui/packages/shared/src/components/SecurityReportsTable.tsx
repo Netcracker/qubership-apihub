@@ -40,7 +40,7 @@ import type { HasNextPage, IsFetchingNextPage, IsLoading } from '../utils/aliase
 import type { ColumnModel } from '../hooks/table-resizing/useColumnResizing'
 import { DEFAULT_CONTAINER_WIDTH, useColumnsSizing } from '../hooks/table-resizing/useColumnResizing'
 import { useIntersectionObserver } from '../hooks/common/useIntersectionObserver'
-import { InfoIcon } from '../icons/InfoIcon'
+import { InfoContextIcon } from '../icons/InfoContextIcon'
 import { isEmpty } from '../utils/arrays'
 import { DEFAULT_NUMBER_SKELETON_ROWS } from '../utils/constants'
 import { createComponents } from '../utils/components'
@@ -118,9 +118,7 @@ export const SecurityReportsTable: FC<SecurityReportsTableProps> = memo(({
               <Typography fontSize="13px">{status}</Typography>
               {status !== RUNNING_SECURITY_REPORT_STATUS && details && (
                 <Tooltip title={details}>
-                  <Box display="flex" alignItems="center" ml={0.5}>
-                    <InfoIcon/>
-                  </Box>
+                  <InfoContextIcon fontSize="extra-small" sx={{ ml: 0.5 }}/>
                 </Tooltip>
               )}
             </Box>

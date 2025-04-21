@@ -19,7 +19,7 @@ import React, { memo, useRef, useState } from 'react'
 import { usePagedRevisions } from '../usePagedRevisions'
 import { useParams } from 'react-router-dom'
 import { VersionHistoryTable } from '../../VersionHistoryTable'
-import { Box, Typography } from '@mui/material'
+import { Box, Tooltip, Typography } from '@mui/material'
 import { useFullMainVersion } from '../../FullMainVersionProvider'
 import { useIntersectionObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useIntersectionObserver'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
@@ -30,9 +30,8 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
-import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
 import { MetaDataContent } from '@apihub/components/MetaDataContent'
-import { InfoIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoIcon'
+import { InfoContextIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoContextIcon'
 import type { Revision } from '@netcracker/qubership-apihub-ui-shared/entities/revisions'
 
 export const RevisionsHistoryCard: FC = memo(() => {
@@ -101,19 +100,16 @@ const RevisionActions: FC<RevisionActionsProps> = memo<RevisionActionsProps>(({ 
   const { publishMeta } = revision
   if (publishMeta && isNotEmpty(Object.keys(publishMeta))) {
     return (
-      <ButtonWithHint
-        area-label="info"
-        hint={<MetaDataContent metaData={publishMeta}/>}
-        size="small"
-        sx={{ visibility: 'hidden', height: '20px' }}
-        className="hoverable"
-        startIcon={<InfoIcon/>}
-        disableHint={false}
-        disabled={false}
-        testId="InfoButton"
-        tooltipMaxWidth={REVISION_ACTION_TOOLTIP_MAX_WIDTH}
-        tooltipPlacement="left"
-      />
+      <Tooltip
+        disableHoverListener={false}
+        title={<MetaDataContent metaData={publishMeta}/>}
+        placement="left"
+        slotProps={{
+          tooltip: { sx: { maxWidth: REVISION_ACTION_TOOLTIP_MAX_WIDTH } },
+        }}
+      >
+        <InfoContextIcon sx={{ visibility: 'hidden' }} className="visible-on-hover" area-label="info"/>
+      </Tooltip>
     )
   }
 

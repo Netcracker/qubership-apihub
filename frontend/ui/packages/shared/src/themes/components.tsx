@@ -16,6 +16,7 @@
 
 import React from 'react'
 import type { Components } from '@mui/material/styles/components'
+import { SECONDARY_TEXT_COLOR } from './colors'
 
 export const APP_HEADER_HEIGHT = '44px'
 
@@ -675,8 +676,10 @@ export function createComponents(): Components {
         root: {
           '&:hover': {
             '& .MuiTableCell-root': {
-              '& .hoverable': {
+              '& .hoverable, & .visible-on-hover': {
                 visibility: 'visible',
+              },
+              '& .hoverable': {
                 cursor: 'pointer',
               },
             },
@@ -774,6 +777,23 @@ export function createComponents(): Components {
           },
         },
       },
+    },
+    MuiSvgIcon: {
+      variants: [
+        {
+          props: { color: 'muted' },
+          style: {
+            color: SECONDARY_TEXT_COLOR,
+            opacity: 0.9,
+          },
+        },
+        {
+          props: { fontSize: 'extra-small' },
+          style: {
+            fontSize: '1.12rem',
+          },
+        },
+      ],
     },
   }
 }

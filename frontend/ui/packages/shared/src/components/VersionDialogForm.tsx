@@ -62,7 +62,7 @@ import type { Package, Packages } from '../entities/packages'
 import { OptionItem } from './OptionItem'
 import { disableAutocompleteSearch } from '../utils/mui'
 import { DEFAULT_DEBOUNCE } from '../utils/constants'
-import { InfoIcon } from '../icons/InfoIcon'
+import { InfoContextIcon } from '../icons/InfoContextIcon'
 import { CSV_FILE_EXTENSION } from '../utils/files'
 import { FileUploadField } from './FileUploadField'
 
@@ -339,9 +339,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                   sx: { '.MuiTooltip-tooltip': { maxWidth: '600px' } },
                 }}
               >
-                <Box sx={{ cursor: 'pointer' }}>
-                  <InfoIcon/>
-                </Box>
+                <InfoContextIcon fontSize="extra-small"/>
               </Tooltip>
             </Box>
 
@@ -373,9 +371,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                   sx: { '.MuiTooltip-tooltip': { maxWidth: '600px' } },
                 }}
               >
-                <Box sx={{ cursor: 'pointer' }}>
-                  <InfoIcon/>
-                </Box>
+                <InfoContextIcon fontSize="extra-small"/>
               </Tooltip>
             </Box>
 
