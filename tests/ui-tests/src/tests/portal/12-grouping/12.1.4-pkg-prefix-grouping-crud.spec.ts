@@ -40,7 +40,8 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
       await portalPage.gotoPackage(P_PKG_PPGR_SETTINGS_R, SETTINGS_TAB_API_CONFIG)
 
       await test.step('Set invalid prefix', async () => {
-        await apiSpecConfigTab.prefix.click()
+        await apiSpecConfigTab.prefix.hover()
+        await apiSpecConfigTab.editBtn.click()
         await editPrefixDialog.prefixTxtFld.fill(INVALID_PREFIX_GROUP)
         await editPrefixDialog.saveBtn.click()
 
@@ -90,7 +91,8 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
       await test.step('Set new prefix', async () => {
         await versionPage.toolbar.settingsBtn.click()
         await apiSpecConfigTab.click()
-        await apiSpecConfigTab.prefix.click()
+        await apiSpecConfigTab.prefix.hover()
+        await apiSpecConfigTab.editBtn.click()
         await editPrefixDialog.prefixTxtFld.fill(API_PREFIX_GROUP)
         await editPrefixDialog.recalculateChx.click()
         await editPrefixDialog.saveBtn.click()
@@ -141,7 +143,8 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
 
       await test.step('Delete prefix', async () => {
         await portalPage.gotoPackage(P_PKG_PPGR_SETTINGS_R, SETTINGS_TAB_API_CONFIG)
-        await apiSpecConfigTab.prefix.click()
+        await apiSpecConfigTab.prefix.hover()
+        await apiSpecConfigTab.editBtn.click()
         await editPrefixDialog.prefixTxtFld.clear()
         await editPrefixDialog.recalculateChx.click()
         await editPrefixDialog.saveBtn.click()

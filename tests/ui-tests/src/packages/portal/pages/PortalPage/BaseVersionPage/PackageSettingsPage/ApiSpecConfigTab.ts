@@ -5,7 +5,7 @@ import { EditRestGroupingPrefixDialog } from './ApiSpecConfigTab/EditRestGroupin
 
 export class ApiSpecConfigTab extends BaseSettingsTab {
 
-  readonly prefix = new Content(this.page.getByTestId('PrefixContent'), 'REST Path Prefix for Grouping')
+  readonly prefix = new Content(this.page.getByTestId('PrefixContent').getByTestId('SettingsParameterContent'), 'REST Path Prefix for Grouping')
   readonly infoIcon = new Icon(this.page.getByTestId('InfoIcon'), 'Info')
   readonly editBtn = new Button(this.page.getByTestId('EditButton'), 'Edit')
   readonly editPrefixDialog = new EditRestGroupingPrefixDialog(this.page)

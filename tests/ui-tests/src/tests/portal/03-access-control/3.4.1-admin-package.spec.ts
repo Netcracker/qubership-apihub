@@ -651,7 +651,8 @@ test.describe('03.4.1 Access Control. Admin role. (Package)', () => {
       })
 
       await test.step('Set valid prefix', async () => {
-        await apiSpecConfigTab.prefix.click()
+        await apiSpecConfigTab.prefix.hover()
+        await apiSpecConfigTab.editBtn.click()
 
         await editPrefixDialog.prefixTxtFld.fill(DEF_PREFIX_GROUP)
         await editPrefixDialog.saveBtn.click()
