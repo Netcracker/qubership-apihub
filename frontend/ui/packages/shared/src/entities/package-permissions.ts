@@ -24,6 +24,8 @@ export const MANAGE_ARCHIVED_VERSION_PERMISSION = 'manage_archived_version'
 export const USER_ACCESS_MANAGEMENT_PERMISSION = 'user_access_management'
 export const ACCESS_TOKEN_MANAGEMENT_PERMISSION = 'access_token_management'
 
+export const NO_PERMISSION_TO_EDIT_PACKAGE = 'You do not have permission to edit the package'
+
 export type PackagePermission =
   | typeof READ_PERMISSION
   | typeof CREATE_AND_UPDATE_PACKAGE_PERMISSION

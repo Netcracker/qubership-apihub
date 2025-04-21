@@ -293,6 +293,14 @@ export function createComponents(): Components {
           fontSize: 13,
         },
       },
+      variants: [{
+        props: { variant: 'readonly' },
+        style: {
+          '& .MuiChip-label': {
+            opacity: 0.5,
+          },
+        },
+      }],
     },
     MuiCssBaseline: {
       styleOverrides: `${ScrollbarBaseline}`,

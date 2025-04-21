@@ -30,6 +30,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import {
   CREATE_AND_UPDATE_PACKAGE_PERMISSION,
   DELETE_PACKAGE_PERMISSION,
+  NO_PERMISSION_TO_EDIT_PACKAGE,
 } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
@@ -99,7 +100,7 @@ export const GeneralPackageSettingsTabViewer: FC<PackageSettingsTabProps> = memo
             title="Edit"
             disabled={!hasUpdatePackagePermission}
             disableHint={hasUpdatePackagePermission}
-            hint="You do not have permission to edit the package"
+            hint={NO_PERMISSION_TO_EDIT_PACKAGE}
             onClick={() => setEditable(true)}
             testId="EditButton"
           />

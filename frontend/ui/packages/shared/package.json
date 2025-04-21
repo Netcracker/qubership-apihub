@@ -13,6 +13,7 @@
     "format": "npm run lint --fix",
     "storybook": "storybook dev -p 6006",
     "build:showcase": "storybook build -o ../../dist-showcase --disable-telemetry",
+    "test": "jest -c .jest/unit-tests/unit-test.jest.config.js",
     "integration-test:develop": "npm run build:showcase && start-server-and-test integration-test:server http://localhost:6006 integration-test:run-local",
     "integration-test:ci": "npm run build:showcase && start-server-and-test integration-test:server http://localhost:6006 integration-test:run-ci",
     "integration-test:server": "ws -p 6006 -d dist-showcase --spa index.html --static.maxage 3600",

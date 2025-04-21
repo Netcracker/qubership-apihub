@@ -15,7 +15,7 @@
  */
 
 import { Autorenew } from '@mui/icons-material'
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material'
 import type { FC, PropsWithChildren } from 'react'
 
 export const ModuleFetchingErrorPopup: FC<PropsWithChildren> = () => (
@@ -41,8 +41,8 @@ export const ModuleFetchingErrorPopup: FC<PropsWithChildren> = () => (
     </DialogContent>
     <DialogActions>
       <Button
-        variant='contained'
-        startIcon={<Autorenew />}
+        variant="contained"
+        startIcon={<Autorenew/>}
         onClick={() => { location.reload() }}
       >
         Reload

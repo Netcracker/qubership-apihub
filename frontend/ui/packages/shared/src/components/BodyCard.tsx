@@ -87,6 +87,7 @@ export const BodyCard: FC<BodyCardProps> = memo<BodyCardProps>((props) => {
           ...DEFAULT_BODY_SX,
           ...overrideBodySx,
         }}
+        data-testid="CardContent"
       >
         {body}
       </CardContent>

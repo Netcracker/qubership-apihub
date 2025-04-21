@@ -89,6 +89,10 @@ declare module '@mui/material/Chip' {
     active: true
     expired: true
   }
+
+  interface ChipPropsVariantOverrides {
+    readonly: true
+  }
 }
 
 declare module '@mui/material/Typography' {

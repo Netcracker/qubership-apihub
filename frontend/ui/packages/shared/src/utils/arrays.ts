@@ -31,6 +31,25 @@ export function groupBy<T extends ReadonlyArray<any>>(
   )
 }
 
+export function sortByProperty<T>(
+  array: ReadonlyArray<T>,
+  property: keyof T,
+): T[] {
+  const collator = new Intl.Collator(undefined, { numeric: true })
+  
+  return [...array].sort((a, b) => {
+    const aValue = a[property]
+    const bValue = b[property]
+
+    // Handle nullish values first (null/undefined values come last)
+    if (aValue === undefined || aValue === null) return 1
+    if (bValue === undefined || bValue === null) return -1
+
+    // Convert to strings and use Intl.Collator for proper sorting of all types
+    return collator.compare(String(aValue), String(bValue))
+  })
+}
+
 export function deduplicate<T>(array: ReadonlyArray<T>): T[] {
   return [...new Set(array)]
 }

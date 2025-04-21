@@ -65,6 +65,7 @@ export const PROFILE_PAGE_PATH_PATTERN = `/portal/${PROFILE_PAGE}/`
 // Package settings tabs have not self path patterns because they have not specific parameters
 export const GENERAL_PAGE = 'general'
 export const API_SPECIFIC_CONFIGURATION_PAGE = 'configuration'
+export const EXPORT_SETTINGS_PAGE = 'export'
 export const VERSIONS_PAGE = 'versions'
 export const ACCESS_TOKENS_PAGE = 'tokens'
 export const USER_ACCESS_CONTROLS_PAGE = 'members'
@@ -126,6 +127,7 @@ export const SUMMARY_ROUTE = `${OVERVIEW_PAGE}/${SUMMARY_PAGE}`
 export type PackageSettingsPageRoute =
   | typeof GENERAL_PAGE
   | typeof API_SPECIFIC_CONFIGURATION_PAGE
+  | typeof EXPORT_SETTINGS_PAGE
   | typeof VERSIONS_PAGE
   | typeof ACCESS_TOKENS_PAGE
   | typeof USER_ACCESS_CONTROLS_PAGE

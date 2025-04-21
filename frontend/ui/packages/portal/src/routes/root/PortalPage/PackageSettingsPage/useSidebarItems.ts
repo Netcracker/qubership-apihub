@@ -19,6 +19,7 @@ import { PACKAGE_KINDS_NAMES_MAP } from './package-settings'
 import {
   ACCESS_TOKENS_PAGE,
   API_SPECIFIC_CONFIGURATION_PAGE,
+  EXPORT_SETTINGS_PAGE,
   GENERAL_PAGE,
   USER_ACCESS_CONTROLS_PAGE,
   VERSIONS_PAGE,
@@ -60,6 +61,12 @@ const SETTINGS_SIDEBAR_ITEM = (
     description: 'Configuration parameters',
     value: API_SPECIFIC_CONFIGURATION_PAGE,
     url: getPackageSettingsPath({ packageKey: packageKey, tab: API_SPECIFIC_CONFIGURATION_PAGE }),
+  },
+  {
+    label: 'Export Settings',
+    description: 'Export configuration parameters',
+    value: EXPORT_SETTINGS_PAGE,
+    url: getPackageSettingsPath({ packageKey: packageKey, tab: EXPORT_SETTINGS_PAGE }),
   },
   {
     label: 'Versions',

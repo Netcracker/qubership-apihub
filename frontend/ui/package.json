@@ -11,6 +11,7 @@
     "build:showcase": "npm run --workspace=@netcracker/qubership-apihub-ui-shared build:showcase",
     "lint": "eslint . --ext .ts,.tsx,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
     "format": "npm run lint --fix",
+    "test": "npm run test --workspace=@netcracker/qubership-apihub-ui-shared",
     "development:link": "npm link @netcracker/qubership-apihub-api-processor",
     "development:unlink": "npm unlink @netcracker/qubership-apihub-api-processor",
     "dev:agents": "npx lerna run dev:backend,dev:frontend --stream --scope=@netcracker/qubership-apihub-ui-agents",

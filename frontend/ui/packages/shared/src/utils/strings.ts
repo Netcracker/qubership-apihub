@@ -69,9 +69,11 @@ export function toTitleCase(value: string): string {
   )
 }
 
+export const NO_DATA_STRING = '—'
+
 export const transformStringValue = (value: string | undefined): string => {
   if (!value) {
-    return '—'
+    return NO_DATA_STRING
   }
   return value
 
