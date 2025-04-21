@@ -15,7 +15,7 @@ export class ConfigureVersionTab extends Tab {
   readonly status = new Content(this.page.getByTestId('VersionStatusChip'), 'Version Status')
   readonly publishBtn = new Button(this.page.getByTestId('PublishButton'), 'Publish')
   readonly exitBtn = new Button(this.page.getByTestId('ExitButton'), 'Exit')
-  readonly infoIcon = new Icon(this.page.getByTestId('CardHeader').getByTestId('InfoOutlinedIcon'), 'Title', 'info icon')
+  readonly infoIcon = new Icon(this.page.getByTestId('CardHeader').getByTestId('InfoIcon'), 'Title', 'info icon')
   readonly searchbar = new SearchBar(this.page.getByTestId('SearchFile'), 'File')
   readonly browseFilesBtn = new Button(this.page.getByTestId('BrowseFilesButton'), 'Browse Files')
   readonly browseBtn = new Button(this.page.getByTestId('BrowseButton'), 'browse')

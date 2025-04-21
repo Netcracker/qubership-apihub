@@ -10,7 +10,7 @@ export class OverviewRevisionRow extends TableRow {
   readonly publicationDateCell = new TableCell(this.rootLocator.getByTestId('Cell-publication-date'), `${this.componentName} Publication Date`)
   readonly publishedByCell = new TableCell(this.rootLocator.getByTestId('Cell-published-by'), `${this.componentName} Published By`)
   readonly link = new Link(this.rootLocator.getByRole('link'), `${this.componentName} Revision`)
-  readonly infoIcon = new Icon(this.rootLocator.getByTestId('InfoButton'), `${this.componentName} Info`)
+  readonly infoIcon = new Icon(this.rootLocator.getByTestId('InfoIcon'), `${this.componentName} Info`)
   readonly infoTooltip = new BaseComponent(this.rootLocator.page().getByRole('tooltip'), `${this.componentName} Info`, 'tooltip')
 
   constructor(rootLocator: Locator, componentName?: string, componentType?: string) {
