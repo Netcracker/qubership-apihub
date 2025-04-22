@@ -1,0 +1,46 @@
+# Section with Qubership APIHUB Agent deployment configuration
+qubershipApihubAgent:
+  # Optional; APIHUB Agent release version to be shown in UI; If not set, default value: unknown; Example: 1.0.0
+  version: ''
+
+  image:
+    repository: 'ghcr.io/netcracker/qubership-apihub-agent' 
+    tag: 'latest'
+
+  # Section with resource limits
+  # Mandatory
+  # Below are the default values which are good enough for any cases including production
+  resource:
+    memory:
+      request: "256Mi"
+      limit: "256Mi"
+    cpu:  
+      request: "30m"
+      limit: "1"
+
+  # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG
+  logLevel: ''
+  
+  # Section with business and technical parameters for Qubership APIHUB Agent.
+  env:
+    # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
+    apihubUrl: ''
+
+    # Mandatory; Provide admin access token for your Qubership APIHUB; If not set, default value: ""; Example: access-token-12345
+    accessToken: ''
+
+    # Mandatory; Display name of Qubership APIHUB Agent's k8s cluster; If not set, default value: ""; Example: myStagingK8sCluster
+    cloudName: ''
+
+    # Mandatory; Factual Qubership APIHUB Agent Ingress URL in your environment.; If not set, default value: ""; Example: https://apihub-agent.k8s.example.com
+    agentUrl: '' 
+
+    # Mandatory; Display name of Qubership APIHUB Agent's instance; If not set, default value: ""; Example: apihub-agent-1
+    agentName: ''
+
+    # Optional; Set to true to enable apihub playground work without authtorization. Dangerous. Not recommended; If not set, default value: false; Example: false
+    insecureProxy: false
+
+    # Optional; Timeout for getting API spec files from service in k8s cluster; If not set, default value: 15; Example: 30
+    discoveryTimeoutSec: 15
+    
