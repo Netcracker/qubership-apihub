@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
+import { DiffNodeValue, JsonSchemaDiffNodeMeta } from '@netcracker/qubership-apihub-api-data-model'
 import type { FC } from 'react'
 import { useMemo, useState } from 'react'
-import { DiffNodeValue, JsonSchemaDiffNodeMeta } from '@netcracker/qubership-apihub-api-data-model'
-import { isCombinerItemNode } from '../../../utils/nodes'
-import { JsonCombinerNodePropsWithState } from '../../../types/internal/PropsWithState'
-import { PropsWithChanges } from '../../../types/internal/PropsWithChanges'
-import { useLayoutMode } from '../../../contexts/LayoutModeContext'
-import { NodeTypeData } from '../../../types/NodeTypeData'
 import { buildNodeTypeData } from '../../../builders/nodes'
-import { SelectNestedNodeRow } from '../../common/SelectNestedNodeRow'
-import { DOCUMENT_LAYOUT_MODE } from '../../../types/LayoutMode'
+import { useLayoutMode } from '../../../contexts/LayoutModeContext'
 import { LevelContext, useLevelContext } from '../../../contexts/LevelContext'
-import { PropsWithoutChangesSummary } from '../../../types/PropsWithoutChangesSummary'
 import { useSetNoSubHeaderSide } from '../../../contexts/NoSubHeaderContext'
 import { NodeId } from '../../../types/aliases/nodes'
+import { PropsWithChanges } from '../../../types/internal/PropsWithChanges'
+import { JsonCombinerNodePropsWithState } from '../../../types/internal/PropsWithState'
+import { DOCUMENT_LAYOUT_MODE } from '../../../types/LayoutMode'
+import { NodeTypeData } from '../../../types/NodeTypeData'
+import { PropsWithoutChangesSummary } from '../../../types/PropsWithoutChangesSummary'
+import { takeNodeChangeIfWholeNodeChanged } from '../../../utils/common/changes'
+import { isCombinerItemNode } from '../../../utils/nodes'
+import { SelectNestedNodeRow } from '../../common/SelectNestedNodeRow'
 
 export type JsonCombinerNodeViewerProps = PropsWithoutChangesSummary<
   JsonCombinerNodePropsWithState &
@@ -90,6 +91,8 @@ export const JsonCombinerNodeViewer: FC<JsonCombinerNodeViewerProps> = (props) =
   const selectedNode = nested.find(node => node?.id === selectedNodeId)
   const combinerType = isCombinerItemNode(selectedNode) ? selectedNode?.kind : ''
 
+  const $appliedNodeChange = takeNodeChangeIfWholeNodeChanged($nodeChange ?? $nodeMeta?.$nodeChange)
+
   return (
     <LevelContext.Provider value={currentLevel}>
       <SelectNestedNodeRow
@@ -99,7 +102,7 @@ export const JsonCombinerNodeViewer: FC<JsonCombinerNodeViewerProps> = (props) =
         onSelect={onSelect}
         layoutMode={layoutMode}
         level={level}
-        $nodeChange={$nodeChange ?? $nodeMeta?.$nodeChange}
+        $nodeChange={$appliedNodeChange}
         $nestedChanges={$nodeMeta?.$nestedChanges}
         $nestedChangesSummary={layoutMode !== DOCUMENT_LAYOUT_MODE
           ? state.$nestedChangesSummary

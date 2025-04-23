@@ -249,6 +249,17 @@ export function takeNodeChangeIfAllChildrenChanged(
   return nodeChange
 }
 
+export function takeNodeChangeIfWholeNodeChanged(
+  nodeChange: NodeChange | undefined
+): NodeChange | undefined {
+  // For OAS path parameters we consider changing original property "name"
+  // as a whole node change with type = annotation, action = rename.
+  // In one hand this is really whole node change,
+  // but in another hand this doesn't affect node annotations and validation.
+  // So, in such case we don't need to show this change in UI for them.
+  return diffRename(nodeChange) ? undefined : nodeChange
+}
+
 export function inferRowChange(
   itemsCount: number,
   $rowChanges: Diff | DiffRecord | undefined
