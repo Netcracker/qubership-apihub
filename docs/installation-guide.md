@@ -62,10 +62,15 @@ APIHUB_ACCESS_TOKEN=${any string}
 | APIHUB\_ADMIN\_PASSWORD | No | "" | admin-password | Default local admin user password |
 | APIHUB\_ACCESS\_TOKEN | Yes | "" | access-token-12345 | Default system access token (any string). The token will be provisioned automatically during startup |
 | APIHUB\_URL | Yes | "" | https://apihub.example.com | Factual APIHUB server URL in your environment. |
+| DEFAULT\_IDP\_ID | No | "" | external-idp | Default identity provider ID to use for authentication. |
+| EXTERNAL\_IDP\_DISPLAY\_NAME | No | "" | External Identity Provider | Display name for external identity provider. |
+| EXTERNAL\_IDP\_IMAGE\_SVG | No | "" | <svg fill="#000000" width="800px"... | SVG image for external identity provider logo. |
 | ADFS\_METADATA\_URL | No | "" | [https://idp.example.com/FederationMetadata/2007-06/FederationMetadata.xml](https://idp.example.com/FederationMetadata/2007-06/FederationMetadata.xml) | SAML metadata URL. If set - enables SAML integration |
 | SAML\_CRT | No | "" | LS0tLS1CRUdJTi... | SAML server certificate, base64 encoded. Required only if SAML integration enabled |
 | SAML\_KEY | No | "" | LS0tLS1CRUdJTi... | SAML server private key, base64 encoded. Required only if SAML integration enabled |
 | JWT\_PRIVATE\_KEY | Yes | "" | LS0tLS1CRUdJTiBQUklWQV... | Self generated private PKCS#8 private key, base64 encoded. Used for siging of JWT tokens issued by APIHUB, must be unique fore each APIHUB instance |
+| JWT\_ACCESS\_TOKEN\_DURATION\_SEC | No | 3600 | 3600 | Duration in seconds for access tokens issued by APIHUB. |
+| JWT\_REFRESH\_TOKEN\_DURATION\_SEC | No | 43200 | 43200 | Duration in seconds for refresh tokens issued by APIHUB. |
 | LDAP\_SERVER | No | "" | ldap://ldap.example.com:389 | LDAP server URL. Required for SAML integration for syncing users information |
 | LDAP\_USER | No | "" | x\_apihub | LDAP User used for connecting to LDAP server |
 | LDAP\_USER\_PASSWORD | No | "" | x\_apihub\_password | Password for LDAP User |

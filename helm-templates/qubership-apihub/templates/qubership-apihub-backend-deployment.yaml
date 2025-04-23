@@ -83,8 +83,14 @@ spec:
                     value: 'lan'
                 -   name: OLRIC_REPLICA_COUNT
                     value: '{{ .Values.qubershipApihubBackend.replicas }}'
+                -   name: DEFAULT_IDP_ID
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.defaultProviderId }}'
+                -   name: EXTERNAL_IDP_DISPLAY_NAME
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdp.displayName }}'
+                -   name: EXTERNAL_IDP_IMAGE_SVG
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdp.imageSvg }}'
                 -   name: ADFS_METADATA_URL  
-                    value: '{{ .Values.qubershipApihubBackend.env.samlIntegration.adfsMetadataUrl }}'
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdp.saml.metadataUrl }}'
                 -   name: APIHUB_URL  
                     value: '{{ .Values.qubershipApihub.apihubUrl }}'
                 -   name: SAML_CRT
@@ -102,6 +108,10 @@ spec:
                       secretKeyRef:
                          name: 'qubership-apihub-backend-jwt-secret'
                          key: jwt_private_key
+                -   name: JWT_ACCESS_TOKEN_DURATION_SEC
+                    value: '{{ .Values.qubershipApihubBackend.env.jwt.accessTokenDurationSec }}'
+                -   name: JWT_REFRESH_TOKEN_DURATION_SEC
+                    value: '{{ .Values.qubershipApihubBackend.env.jwt.refreshTokenDurationSec }}'
                 -   name: CLIENT_ID
                     valueFrom:
                       secretKeyRef:
