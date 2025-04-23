@@ -44,7 +44,7 @@ import {
   getLayoutModeFlags,
   isDiffTypeIncluded,
   maxDiffType,
-  toChangesList,
+  toChangesList
 } from '../../../../utils/common/changes'
 import { defaultOnContextMenu } from '../../../../utils/common/event-handlers'
 import { NestingIndicator } from '../../../common/NestingIndicator'
@@ -127,10 +127,11 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
     !!$metaChanges && TRACKED_KEYS_META_CHANGES.some(key => isDiff($metaChanges[key]))
 
   // TODO 26.10.23 // Move to generalize hook with memoization because this is really frequent calculations
-  const { nodeAdded, nodeRemoved, nodeReplaced } = {
+  const { nodeAdded, nodeRemoved, nodeReplaced, nodeRenamed } = {
     nodeAdded: isNodeChanged && $nodeChange.action === DiffAction.add,
     nodeRemoved: isNodeChanged && $nodeChange.action === DiffAction.remove,
     nodeReplaced: isNodeChanged && $nodeChange.action === DiffAction.replace,
+    nodeRenamed: isNodeChanged && $nodeChange.action === DiffAction.rename,
   }
 
   const rowContentChangesList = filterChangesList(toChangesList($changes, $metaChanges, API_TYPE_REST), filters)
@@ -189,16 +190,16 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
         !isDocumentLayoutMode &&
         isExpandable && !expanded
       ) && (
-        <div className="text-xs font-normal text-slate-500">
-          <UxMarkerPanel
-            values={diffTypesFromNodeChangesSummary}
-            filter={diffTypesFromNodeChangesSummaryFilter}
-          />
-        </div>
-      )}
+          <div className="text-xs font-normal text-slate-500">
+            <UxMarkerPanel
+              values={diffTypesFromNodeChangesSummary}
+              filter={diffTypesFromNodeChangesSummaryFilter}
+            />
+          </div>
+        )}
       {isCircularRef && (
         <UxTooltip text={CIRCULAR_REF_TOOLTIP}>
-          <CircularRefIcon/>
+          <CircularRefIcon />
         </UxTooltip>
       )}
       <DiffTags
@@ -227,7 +228,7 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
     return (
       <div className={`flex flex-col ${DEFAULT_ROW_PADDING_LEFT} ${width}`}>
         <div className="flex flex-row relative">
-          <NestingIndicator level={level}/>
+          <NestingIndicator level={level} />
           <Expander
             isRoot={isRoot}
             isExpandable={isExpandable}
@@ -248,9 +249,10 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
                 layoutMode={layoutMode}
                 layoutSide={layoutSide}
                 requiredChange={$metaChanges?.required}
+                titleChange={$nodeChange}
               />
             </div>
-            {!noSubHeader && <SubHeader/>}
+            {!noSubHeader && <SubHeader />}
             <UxContextMenu
               visible={contextMenuOpen}
               onClickAway={() => onToggleContextMenu({ open: false })}
@@ -265,7 +267,7 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
   if (isDocumentLayoutMode) {
     return (
       <div className="flex flex-row">
-        <Content {...props} layoutSide={CHANGED_LAYOUT_SIDE}/>
+        <Content {...props} layoutSide={CHANGED_LAYOUT_SIDE} />
       </div>
     )
   }
@@ -274,15 +276,15 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
     if (!isNodeChanged && !isContentChanged) {
       return (
         <div className="flex flex-row">
-          <Content {...props} layoutSide={ORIGIN_LAYOUT_SIDE}/>
+          <Content {...props} layoutSide={ORIGIN_LAYOUT_SIDE} />
         </div>
       )
     }
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause}/>}
-        <Content {...props} layoutSide={ORIGIN_LAYOUT_SIDE}/>
+        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
+        <Content {...props} layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
     )
   }
@@ -291,24 +293,24 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
     if (!isNodeChanged && !isContentChanged) {
       return (
         <div className="flex flex-row">
-          <Content {...props} layoutSide={ORIGIN_LAYOUT_SIDE}/>
-          <Content {...props} layoutSide={CHANGED_LAYOUT_SIDE}/>
+          <Content {...props} layoutSide={ORIGIN_LAYOUT_SIDE} />
+          <Content {...props} layoutSide={CHANGED_LAYOUT_SIDE} />
         </div>
       )
     }
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause}/>}
-        {!isNodeChanged && isContentChanged || isNodeChanged && (nodeRemoved || nodeReplaced)
-          ? <Content {...props} layoutSide={ORIGIN_LAYOUT_SIDE}/>
-          : <EmptyContent level={$nodeChange?.depth ?? level}/>}
-        {!isNodeChanged && isContentChanged || isNodeChanged && (nodeAdded || nodeReplaced)
-          ? <Content {...props} layoutSide={CHANGED_LAYOUT_SIDE}/>
-          : <EmptyContent level={$nodeChange?.depth ?? level}/>}
+        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
+        {!isNodeChanged && isContentChanged || isNodeChanged && (nodeRemoved || nodeReplaced || nodeRenamed)
+          ? <Content {...props} layoutSide={ORIGIN_LAYOUT_SIDE} />
+          : <EmptyContent level={$nodeChange?.depth ?? level} />}
+        {!isNodeChanged && isContentChanged || isNodeChanged && (nodeAdded || nodeRenamed || nodeReplaced)
+          ? <Content {...props} layoutSide={CHANGED_LAYOUT_SIDE} />
+          : <EmptyContent level={$nodeChange?.depth ?? level} />}
       </div>
     )
   }
 
-  return <UnsupportedContent layoutMode={layoutMode}/>
+  return <UnsupportedContent layoutMode={layoutMode} />
 }

@@ -30,6 +30,7 @@ export const NODE_DIFF_COLOR_MAP: Partial<Record<ActionType, string>> = {
   [DiffAction.add]: 'bg-green-50',
   [DiffAction.remove]: 'bg-red-50',
   [DiffAction.replace]: 'bg-yellow-50',
+  [DiffAction.rename]: 'bg-yellow-50',
 }
 
 export const BLOCK_CONTENT_DIFF_COLOR_MAP: Partial<Record<ActionType, string>> = {

@@ -52,7 +52,7 @@ export function diffReplace(diff?: Diff): diff is DiffReplace {
   return !!diff && isDiffReplace(diff)
 }
 
-export function diffRename(diff?: Diff): diff is DiffReplace {
+export function diffRename(diff?: Diff): diff is DiffRename {
   return !!diff && isDiffRename(diff)
 }
 

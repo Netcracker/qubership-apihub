@@ -17,13 +17,15 @@
 import { DiffRecord } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
 import type { FC } from 'react'
-import { LayoutSide } from '../../types/internal/LayoutSide'
+import { CHANGED_LAYOUT_SIDE, LayoutSide, ORIGIN_LAYOUT_SIDE } from '../../types/internal/LayoutSide'
 import { LayoutMode } from '../../types/LayoutMode'
 import { NodeTitleData } from '../../types/NodeTitleData'
+import { diffRename } from '../../utils/common/changes'
 import { BADGE_KIND_INFO } from "../kit/ux/types"
 import { UxBadge } from '../kit/ux/UxBadge'
 import { NullableAsterisk } from './NullableAsterisk'
 import { RequiredStar } from './RequiredStar'
+import { DEFAULT_STRIKETHROUGH_VALUE_CLASS } from '../../consts/changes'
 
 export type NodeTitleProps = NodeTitleData & {
   // control flags
@@ -34,11 +36,11 @@ export type NodeTitleProps = NodeTitleData & {
   layoutSide?: LayoutSide
   requiredChange?: Diff | DiffRecord
   nullableChange?: Diff | DiffRecord
+  titleChange?: Diff
 }
 
 export const NodeTitle: FC<NodeTitleProps> = (props) => {
   const {
-    title,
     required,
     nullable,
     isBadge,
@@ -53,17 +55,34 @@ export const NodeTitle: FC<NodeTitleProps> = (props) => {
     layoutSide,
     requiredChange,
     nullableChange,
+    titleChange,
   } = props
+
+  let { title } = props
+
+  let titleStrikethrough = false
+  if (diffRename(titleChange)) {
+    if (layoutSide === ORIGIN_LAYOUT_SIDE) {
+      title = `${titleChange.beforeKey}`
+      titleStrikethrough = true
+    }
+    if (layoutSide === CHANGED_LAYOUT_SIDE) {
+      title = `${titleChange.afterKey}`
+    }
+  }
 
   let titleNode
   if (isBadge) {
     titleNode = <UxBadge kind={badgeKind} text={title} inline={true} />
   } else if (isIndex) {
-    titleNode = <>{`[${title}]`}</>
+    title = `[${title}]`
   } else if (isDirective) {
-    titleNode = <>{`@${title}`}</>
-  } else {
-    titleNode = <>{title}</>
+    title = `@${title}`
+  }
+  if (!titleNode) {
+    titleNode = titleStrikethrough
+      ? <span className={DEFAULT_STRIKETHROUGH_VALUE_CLASS}>{title}</span>
+      : <>{title}</>
   }
 
   return (

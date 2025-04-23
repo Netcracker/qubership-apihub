@@ -72,9 +72,10 @@ export const NestingIndicatorTitleRow: FC<NestingIndicatorTitleRowProps> = (prop
     isInlineDiffsLayoutMode
   } = getLayoutModeFlags(layoutMode)
 
-  const { nodeAdded, nodeRemoved } = {
+  const { nodeAdded, nodeRemoved, nodeRenamed } = {
     nodeAdded: $nodeChange?.action === DiffAction.add,
-    nodeRemoved: $nodeChange?.action === DiffAction.remove
+    nodeRemoved: $nodeChange?.action === DiffAction.remove,
+    nodeRenamed: $nodeChange?.action === DiffAction.rename
   }
 
   const beforeOrAfterTypeComplex = isBeforeOrAfterTypeComplex(nodeTypeData, $changes)
@@ -144,7 +145,7 @@ export const NestingIndicatorTitleRow: FC<NestingIndicatorTitleRowProps> = (prop
   }
 
   if (isSideBySideDiffsLayoutMode) {
-    if (!isNodeChanged && !isContentChanged) {
+    if (!isNodeChanged || nodeRenamed && !isContentChanged) {
       return (
         <div className="flex flex-row relative">
           <Content
