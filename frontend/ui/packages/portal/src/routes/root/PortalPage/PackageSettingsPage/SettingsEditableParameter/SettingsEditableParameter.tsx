@@ -1,10 +1,16 @@
 import React, { memo, useCallback, useMemo } from 'react'
 import { Box, IconButton, type SxProps, type Theme, Tooltip, Typography } from '@mui/material'
-import { DISABLED_BUTTON_COLOR, ENABLED_BUTTON_COLOR } from '../entities/operation-groups'
-import { CREATE_AND_UPDATE_PACKAGE_PERMISSION, NO_PERMISSION_TO_EDIT_PACKAGE } from '../entities/package-permissions'
-import { EditIcon } from '../icons/EditIcon'
+import {
+  DISABLED_BUTTON_COLOR,
+  ENABLED_BUTTON_COLOR,
+} from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'
+import {
+  CREATE_AND_UPDATE_PACKAGE_PERMISSION,
+  NO_PERMISSION_TO_EDIT_PACKAGE,
+} from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
+import { EditIcon } from '@netcracker/qubership-apihub-ui-shared/icons/EditIcon'
 import type { BoxProps } from '@mui/system/Box/Box'
-import type { Package } from '../entities/packages'
+import type { Package } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 
 export type SettingsEditableParameterProps = {
   title: string

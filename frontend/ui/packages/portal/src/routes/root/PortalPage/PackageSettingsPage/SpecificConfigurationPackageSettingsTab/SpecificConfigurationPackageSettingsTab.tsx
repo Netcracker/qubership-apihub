@@ -22,7 +22,7 @@ import { useEventBus } from '@apihub/routes/EventBusProvider'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { transformStringValue } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
 import { GROUP_TYPE_REST_PATH_PREFIX } from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'
-import { SettingsEditableParameter } from '@netcracker/qubership-apihub-ui-shared/components/SettingsEditableParameter'
+import { SettingsEditableParameter } from '../SettingsEditableParameter/SettingsEditableParameter'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { InfoContextIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoContextIcon'
 

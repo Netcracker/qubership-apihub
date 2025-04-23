@@ -16,7 +16,7 @@
 
 import type { StorybookConfig } from '@storybook/react-vite'
 
-import { dirname, join } from 'path'
+import { dirname, join, resolve } from 'path'
 import { mergeConfig } from 'vite'
 
 /**
@@ -29,8 +29,10 @@ function getAbsolutePath(value: string): any {
 
 const config: StorybookConfig = {
   stories: [
-    '../src/stories/**/*.mdx',
-    '../src/stories/**/*.stories.@(js|jsx|mjs|ts|tsx)',
+    '../src/**/*.mdx',
+    '../src/**/*.stories.@(js|jsx|ts|tsx)',
+    '../../{portal,agents}/src/**/*.mdx',
+    '../../{portal,agents}/src/**/*.stories.@(js|jsx|ts|tsx)',
   ],
   addons: [
     getAbsolutePath('@storybook/addon-links'),
@@ -46,10 +48,20 @@ const config: StorybookConfig = {
   docs: {
     autodocs: 'tag',
   },
+  core: {
+    disableTelemetry: true,
+  },
   viteFinal: (config) => {
     return mergeConfig(config, {
       define: {
         'process.env': {},
+      },
+      resolve: {
+        alias: {
+          '@netcracker/qubership-apihub-ui-shared': resolve(__dirname, '../src'),
+          '@netcracker/qubership-apihub-ui-portal': resolve(__dirname, '../../portal'),
+          '@netcracker/qubership-apihub-ui-agents': resolve(__dirname, '../../agents'),
+        },
       },
     })
   },

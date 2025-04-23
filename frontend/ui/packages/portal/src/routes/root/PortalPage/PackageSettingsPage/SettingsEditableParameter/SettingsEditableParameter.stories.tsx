@@ -1,11 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import React from 'react'
-import { SettingsEditableParameter } from '../components/SettingsEditableParameter'
+import { SettingsEditableParameter } from './SettingsEditableParameter'
 import { Box, Chip, Skeleton, ThemeProvider, Typography } from '@mui/material'
-import { CREATE_AND_UPDATE_PACKAGE_PERMISSION } from '../entities/package-permissions'
-import type { Package } from '../entities/packages'
-import { theme } from '../themes/theme'
-import { OverflowTooltip } from '../components/OverflowTooltip'
+import {
+  CREATE_AND_UPDATE_PACKAGE_PERMISSION,
+} from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
+import type { Package } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { theme } from '@netcracker/qubership-apihub-ui-shared/themes/theme'
+import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 
 const meta: Meta<typeof SettingsEditableParameter> = {
   title: 'Settings Editable Parameter',

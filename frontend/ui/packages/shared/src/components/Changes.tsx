@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FC} from 'react'
+import type { FC } from 'react'
 import { memo, useMemo } from 'react'
 import Box from '@mui/material/Box'
 import List from '@mui/material/List'
@@ -40,11 +40,12 @@ export const Changes: FC<ChangesProps> = memo<ChangesProps>(({
   zeroView = false,
   category,
 }) => {
-  if (!value) {
+
+  const sortedChanges = useMemo(() => (value ? sortSummaryChanges(value) : null), [value])
+
+  if (!sortedChanges) {
     return null
   }
-
-  const sortedChanges = useMemo(() => sortSummaryChanges(value), [value])
 
   return (
     <List component="span" sx={{ display: 'flex', p: 0, width: 'fit-content' }} data-testid="ChangesSummary">

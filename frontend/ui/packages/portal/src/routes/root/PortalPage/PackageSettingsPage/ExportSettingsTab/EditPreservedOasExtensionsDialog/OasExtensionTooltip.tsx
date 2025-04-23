@@ -1,20 +1,17 @@
 import React, { memo } from 'react'
 import { Box, List, ListItem, Tooltip, Typography } from '@mui/material'
-import {
-  OAS_EXTENSION_KIND_INHERITED,
-  type OasExtension,
-} from '@netcracker/qubership-apihub-ui-shared/entities/package-export-config'
+import { OAS_EXTENSION_KIND_INHERITED, type OasSettingsExtension } from '../package-export-config'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 
 type OasExtensionTooltipProps = {
-  extension: OasExtension
+  extension: OasSettingsExtension
 }
 
 const LIST_SX = { listStyleType: 'disc', pl: 2 }
 const LIST_ITEM_SX = { display: 'list-item', p: 0 }
 const LABEL_CONTENT_SX = { textOverflow: 'ellipsis', overflow: 'hidden' }
 
-const getTooltipTitle = (extension: OasExtension): React.ReactNode => {
+const getTooltipTitle = (extension: OasSettingsExtension): React.ReactNode => {
   const { name, inheritances = [] } = extension
 
   if (!inheritances?.length) return <Typography>Extension {name} has no inheritance information</Typography>

@@ -61,7 +61,9 @@ import type { ShowEmptyPackageDetail } from '@netcracker/qubership-apihub-ui-sha
 import { SHOW_EMPTY_PACKAGE_DIALOG } from '@netcracker/qubership-apihub-ui-shared/components/EmptyPackageDialog'
 import { SHOW_ADD_USER_DIALOG, SHOW_USER_ROLES_DIALOG } from '@netcracker/qubership-apihub-ui-shared/types/dialogs'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import type { OasExtension } from '@netcracker/qubership-apihub-ui-shared/entities/package-export-config'
+import type {
+  OasSettingsExtension,
+} from '@netcracker/qubership-apihub-ui-portal/src/routes/root/PortalPage/PackageSettingsPage/ExportSettingsTab/package-export-config'
 
 // base
 export const SHOW_SUCCESS_NOTIFICATION = 'show-success-notification'
@@ -180,7 +182,7 @@ export type ShowEditPackagePrefixDetail = {
 
 export type ShowEditPreservedOasExtensionsDetail = {
   packageKey: string
-  oasExtensions: OasExtension[]
+  oasExtensions: OasSettingsExtension[]
 }
 
 type EventBus = {

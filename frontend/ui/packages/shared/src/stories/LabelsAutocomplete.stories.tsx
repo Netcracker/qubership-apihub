@@ -18,7 +18,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { LabelsAutocomplete } from '../components/LabelsAutocomplete'
 
 const meta: Meta<typeof LabelsAutocomplete> = {
-  title: 'Labels Autocomplete',
+  title: 'Autocompletes/Labels Autocomplete',
   component: LabelsAutocomplete,
 }
 

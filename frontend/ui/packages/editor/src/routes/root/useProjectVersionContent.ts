@@ -24,8 +24,8 @@ import { editorRequestJson } from '@apihub/utils/requests'
 import { toPublishedSpec } from '@apihub/entities/published-specs'
 import { alphabeticallyBy } from '@netcracker/qubership-apihub-ui-shared/utils/comparers'
 import { toRef } from '@apihub/entities/refs'
-import { DiffTypeDto, replacePropertyInChangesSummary } from '@netcracker/qubership-apihub-api-processor'
-import { ChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import { type DiffTypeDto, replacePropertyInChangesSummary } from '@netcracker/qubership-apihub-api-processor'
+import type { ChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 
 const PROJECT_VERSION_CONTENT_QUERY_KEY = 'project-version-content'
 

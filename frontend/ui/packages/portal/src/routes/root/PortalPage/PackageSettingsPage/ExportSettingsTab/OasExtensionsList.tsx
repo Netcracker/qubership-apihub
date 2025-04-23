@@ -4,10 +4,10 @@ import React, { memo } from 'react'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { NO_DATA_STRING } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import type { OasExtension } from '@netcracker/qubership-apihub-ui-shared/entities/package-export-config'
+import type { OasSettingsExtension } from './package-export-config'
 
 const EXTENSION_NAME_STYLE = { textOverflow: 'ellipsis', overflow: 'hidden' }
-export const OasExtensionsList: FC<{ extensions: ReadonlyArray<OasExtension> }> = memo(({ extensions }) => {
+export const OasExtensionsList: FC<{ extensions: ReadonlyArray<OasSettingsExtension> }> = memo(({ extensions }) => {
   if (isEmpty(extensions)) {
     return <Typography variant="body2">{NO_DATA_STRING}</Typography>
   }

@@ -16,7 +16,7 @@
     "test": "jest -c .jest/unit-tests/unit-test.jest.config.js",
     "integration-test:develop": "npm run build:showcase && start-server-and-test integration-test:server http://localhost:6006 integration-test:run-local",
     "integration-test:ci": "npm run build:showcase && start-server-and-test integration-test:server http://localhost:6006 integration-test:run-ci",
-    "integration-test:server": "ws -p 6006 -d dist-showcase --spa index.html --static.maxage 3600",
+    "integration-test:server": "ws -p 6006 -d ../../dist-showcase --spa index.html --static.maxage 3600",
     "integration-test:run-local": "jest -w 3 -c .jest/integration/it-test-docker.jest.config.js",
     "integration-test:run-ci": "jest -w 8 -c .jest/integration/it-test.jest.config.js"
   },

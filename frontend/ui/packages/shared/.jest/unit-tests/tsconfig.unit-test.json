@@ -4,9 +4,13 @@
     "types": [
       "node",
       "jest"
-    ]
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@netcracker/qubership-apihub-ui-shared/*": ["../../src/*"]
+    }
   },
   "include": [
-    "src/it/**/*.ts"
+    "../../../**/*.ts"
   ]
 }

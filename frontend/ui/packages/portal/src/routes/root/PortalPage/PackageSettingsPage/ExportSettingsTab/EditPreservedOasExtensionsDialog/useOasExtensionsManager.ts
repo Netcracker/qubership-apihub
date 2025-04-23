@@ -1,26 +1,24 @@
 import { useCallback } from 'react'
-import type { UseFormWatch } from 'react-hook-form'
 import { type Control, useForm, type UseFormHandleSubmit, type UseFormSetValue } from 'react-hook-form'
 import {
   OAS_EXTENSION_KIND_DIRECT,
   OAS_EXTENSION_KIND_INHERITED,
   OAS_EXTENSION_KIND_MIXED,
   OAS_EXTENSION_PREFIX,
-  type OasExtension,
+  type OasSettingsExtension,
   separateExtensionsByInheritance,
-} from '@netcracker/qubership-apihub-ui-shared/entities/package-export-config'
+} from '../package-export-config'
 import { isEmpty, sortByProperty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 
 export type EditOasExtensionsForm = {
-  oasExtensions: OasExtension[] | undefined
+  oasExtensions: OasSettingsExtension[] | undefined
 }
 
 type OasExtensionsManagerResult = {
   control: Control<EditOasExtensionsForm>
   handleSubmit: UseFormHandleSubmit<EditOasExtensionsForm>
   setValue: UseFormSetValue<EditOasExtensionsForm>
-  watch: UseFormWatch<EditOasExtensionsForm>
-  processExtensionsUpdate: (newExtensions: Array<string | OasExtension>, currentExtensions?: OasExtension[]) => OasExtension[]
+  processExtensionsUpdate: (newExtensions: Array<string | OasSettingsExtension>, currentExtensions?: OasSettingsExtension[]) => OasSettingsExtension[]
 }
 
 /**
@@ -35,8 +33,8 @@ type OasExtensionsManagerResult = {
  * @returns An object containing `react-hook-form` control elements (`control`, `handleSubmit`, `setValue`)
  *          and a `processExtensionsUpdate` function to handle changes to the extensions list.
  **/
-export const useOasExtensionsManager = (initialExtensions?: OasExtension[]): OasExtensionsManagerResult => {
-  const { control, handleSubmit, setValue, watch } = useForm<EditOasExtensionsForm>({
+export const useOasExtensionsManager = (initialExtensions?: OasSettingsExtension[]): OasExtensionsManagerResult => {
+  const { control, handleSubmit, setValue } = useForm<EditOasExtensionsForm>({
     defaultValues: {
       oasExtensions: initialExtensions,
     },
@@ -45,7 +43,7 @@ export const useOasExtensionsManager = (initialExtensions?: OasExtension[]): Oas
   /**
    * Converts a string extension key to an OasExtension object
    */
-  const convertToExtension = useCallback((item: string | OasExtension): OasExtension => {
+  const convertToExtension = useCallback((item: string | OasSettingsExtension): OasSettingsExtension => {
     if (typeof item === 'string') {
       return {
         key: item,
@@ -60,9 +58,9 @@ export const useOasExtensionsManager = (initialExtensions?: OasExtension[]): Oas
    * Handles inheritance for deleted extensions (keeps inherited/mixed ones and updates their kind)
    */
   const handleDeletedExtensions = useCallback((
-    newExtensions: OasExtension[],
-    currentExtensions: OasExtension[],
-  ): OasExtension[] => {
+    newExtensions: OasSettingsExtension[],
+    currentExtensions: OasSettingsExtension[],
+  ): OasSettingsExtension[] => {
 
     // Track new extension keys for fast lookup
     const newExtensionKeys = new Set(newExtensions.map(ext => ext.key))
@@ -81,9 +79,9 @@ export const useOasExtensionsManager = (initialExtensions?: OasExtension[]): Oas
    * Processes extension updates, handling additions, deletions and inheritance
    */
   const processExtensionsUpdate = useCallback((
-    newExtensions: Array<string | OasExtension>,
-    currentExtensions: OasExtension[] = [],
-  ): OasExtension[] => {
+    newExtensions: Array<string | OasSettingsExtension>,
+    currentExtensions: OasSettingsExtension[] = [],
+  ): OasSettingsExtension[] => {
     // Convert all extensions to uniform OasExtension objects
     const newConvertedExtensions = newExtensions.map(convertToExtension)
 
@@ -110,6 +108,5 @@ export const useOasExtensionsManager = (initialExtensions?: OasExtension[]): Oas
     handleSubmit,
     setValue,
     processExtensionsUpdate,
-    watch,
   }
 }

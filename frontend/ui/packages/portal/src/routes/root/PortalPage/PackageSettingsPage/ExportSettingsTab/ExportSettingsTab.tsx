@@ -2,13 +2,11 @@ import { Box } from '@mui/material'
 import type { FC } from 'react'
 import React, { memo, useCallback } from 'react'
 import type { PackageSettingsTabProps } from '../package-settings'
-import { EditPreservedOasExtensionsDialog } from './EditPreservedOasExtensionsDialog'
+import { EditPreservedOasExtensionsDialog } from './EditPreservedOasExtensionsDialog/EditPreservedOasExtensionsDialog'
 import { useEventBus } from '@apihub/routes/EventBusProvider'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
-import { SettingsEditableParameter } from '@netcracker/qubership-apihub-ui-shared/components/SettingsEditableParameter'
-import {
-  useAllowedOasExtensions,
-} from '@netcracker/qubership-apihub-ui-shared/hooks/package-export-config/usePackageExportConfig'
+import { SettingsEditableParameter } from '../SettingsEditableParameter/SettingsEditableParameter'
+import { useAllowedOasExtensions } from './useAllowedOasExtensions'
 import { OasExtensionsList } from './OasExtensionsList'
 
 const BODY_CONTAINER_SX = {
