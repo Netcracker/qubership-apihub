@@ -26,7 +26,7 @@ test.describe('4.4.2 Dashboard editing/publishing', () => {
       tag: '@smoke',
       annotation: [
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-4496` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-A-10451` },
+        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-1226` },
       ],
     },
     async ({ sysadminPage: page }) => {
@@ -67,7 +67,7 @@ test.describe('4.4.2 Dashboard editing/publishing', () => {
         await versionPage.toolbar.settingsBtn.click()
         await packageSettingsPage.versionsTab.click()
 
-        //! await expect(packageSettingsPage.versionsTab.getVersionRow('publish-draft')).toBeVisible() //Issue TestCase-A-10451
+        //! await expect(packageSettingsPage.versionsTab.getVersionRow('publish-draft')).toBeVisible() //Issue TestCase-B-1226
       })
     })
 

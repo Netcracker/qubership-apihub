@@ -10,10 +10,6 @@ test.describe('13.1.1.2 Package revisions (Outdated revision notification)', () 
   const testPackage = PK_REV_VAR
   const testVersion = V_P_PKG_REV_1_N
 
-  test.beforeAll(async () => {
-
-  })
-
   test('[P-COPR-3.1] Outdated revision notification on the "Operations" tab',
     {
       tag: ['@smoke', '@flaky'],

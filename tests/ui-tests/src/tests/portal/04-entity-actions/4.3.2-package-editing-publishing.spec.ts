@@ -76,7 +76,7 @@ test.describe('4.3.2 Package publishing via Portal', () => {
       tag: '@smoke',
       annotation: [
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8915` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-A-10451` },
+        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-1226` },
       ],
     },
     async ({ sysadminPage: page }) => {
@@ -116,7 +116,7 @@ test.describe('4.3.2 Package publishing via Portal', () => {
         await versionPage.toolbar.settingsBtn.click()
         await packageSettingsPage.versionsTab.click()
 
-        //! await expect(packageSettingsPage.versionsTab.getVersionRow('publish-draft')).toBeVisible() //Issue TestCase-A-10451
+        //! await expect(packageSettingsPage.versionsTab.getVersionRow('publish-draft')).toBeVisible() //Issue TestCase-B-1226
       })
     })
 

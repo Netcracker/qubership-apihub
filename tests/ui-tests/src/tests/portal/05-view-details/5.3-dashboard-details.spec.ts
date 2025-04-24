@@ -63,7 +63,7 @@ test.describe('5.3 Dashboard details', () => {
       tag: '@smoke',
       annotation: [
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-5895` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-1023` }],
+      ],
     },
     async ({ sysadminPage: page }) => {
 
@@ -88,7 +88,7 @@ test.describe('5.3 Dashboard details', () => {
       await expect.soft(overviewTab.packagesTab.getExcludedPackageRow(PK11).statusCell).toHaveText(V_P_PKG_OPERATIONS_REST_R.status)
       await expect.soft(overviewTab.packagesTab.getPackageRow(PK12).versionCell).toHaveText(V_P_PKG_FOR_DASHBOARDS_REST_BASE_R.version)
       await expect.soft(overviewTab.packagesTab.getPackageRow(PK12).statusCell).toHaveText(V_P_PKG_FOR_DASHBOARDS_REST_BASE_R.status)
-      // await expect.soft(overviewTab.packagesTab.getReferenceRow(PK13).versionCell).toHaveText(PKG_FOR_DASHBOARDS_DELETED_TEST_VERSION.version) // TODO TestCase-B-1023
+      await expect.soft(overviewTab.packagesTab.getPackageRow(PK13).versionCell).toHaveText(V_P_PKG_FOR_DASHBOARDS_DELETED_R.version)
       await expect.soft(overviewTab.packagesTab.getPackageRow(PK13).statusCell).toHaveText(V_P_PKG_FOR_DASHBOARDS_DELETED_R.status)
       await expect.soft(overviewTab.packagesTab.getPackageRow(PK13).packageCell.notExistAlertIcon).toBeVisible()
     })

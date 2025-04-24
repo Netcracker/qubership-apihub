@@ -52,7 +52,7 @@ test.describe('4.3.3 Package publishing via Portal (Negative)', () => {
       })
     })
 
-  test('[P-PVC-3] Publish draft version that does not match the new pattern and the global pattern',
+  test('[P-PVC-3-N] Publish draft version that does not match the new pattern and the global pattern',
     {
       annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8923` },
     },

@@ -209,7 +209,6 @@ test.describe('09.2 Compare Operations (Package)', () => {
       tag: '@smoke',
       annotation: [
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-1734` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-1447` },
       ],
     },
     async ({ sysadminPage: page }) => {
@@ -233,7 +232,7 @@ test.describe('09.2 Compare Operations (Package)', () => {
       await compareOperationsPage.sidebar.filtersBtn.click()
       await compareOperationsPage.sidebar.documentFilterAc.click()
 
-      //! await expect(compareOperationsPage.sidebar.documentFilterAc.getListItem()).toHaveCount(2) //Issue TestCase-B-1447
+      await expect(compareOperationsPage.sidebar.documentFilterAc.getListItem()).toHaveCount(3) // Documents without changes are allowed in the filter
       await expect(compareOperationsPage.sidebar.documentFilterAc.getListItem(docTitle1)).toBeVisible()
       await expect(compareOperationsPage.sidebar.documentFilterAc.getListItem(docTitle2)).toBeVisible()
 

@@ -228,7 +228,6 @@ test.describe('12.1.1 Manual grouping: CRUD (Packages)', () => {
       tag: '@smoke',
       annotation: [
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10190` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-1390` },
       ],
     },
     async ({ sysadminPage: page }) => {
@@ -243,11 +242,11 @@ test.describe('12.1.1 Manual grouping: CRUD (Packages)', () => {
       await portalPage.gotoVersion(testVersion, VERSION_OVERVIEW_TAB_GROUPS)
       await groupsTab.getGroupRow(groupName).openEditGroupParametersDialog()
 
-      /*!await updateDialog.fillForm({ template: testMeta!.templateYaml }) //Issue TestCase-B-1390
+      await updateDialog.fillForm({ template: testMeta!.templateYaml })
 
       await expect(updateDialog.notDownloadableFilePreview).toBeVisible()
 
-      await updateDialog.notDownloadableFilePreview.deleteBtn.click()*/
+      await updateDialog.notDownloadableFilePreview.deleteBtn.click()
 
       await expect(updateDialog.browseBtn).toBeEnabled()
 
