@@ -12,7 +12,7 @@ echo $(expr $(date +%N) + $(date +%s) \* $(date +%N%s) ) | base64 | cut -c $A-$B
 } 
   
 
-function generate_local_passwords ()
+function generate-local-passwords ()
 { 
    export APIHUB_ADMIN_EMAIL=x_apihub_$(rnd 13 17)
    export APIHUB_ADMIN_PASSWORD=$(rnd 11 19)
@@ -20,7 +20,7 @@ function generate_local_passwords ()
    export APIHUB_ACCESS_TOKEN=$(rnd 2 7)
 }
 
-generate_local_passwords
+generate-local-passwords
 envsubst <local-secrets.template >./local-secrets.yaml 
 
 
