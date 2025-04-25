@@ -13,8 +13,7 @@
 # limitations under the License.
 
 extends: [[spectral:oas, recommended]]
-description: Netcracker's rules for a high quality specification.
-documentationUrl: https://apihub.netcracker.com
+description: Qubership's rules for a high quality specification.
 rules:
   license-url:
     description: License URL check

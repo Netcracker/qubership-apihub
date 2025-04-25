@@ -13,8 +13,7 @@
 # limitations under the License.
 
 extends: [[spectral:oas, recommended]]
-description: Netcracker's rules for a high quality specification.
-documentationUrl: https://apihub.netcracker.com
+description: Qubership's rules for a high quality specification.
 rules:
   license-url:
     message: "License must have an URL defined"
@@ -48,7 +47,6 @@ rules:
         notMatch: example\.com
   server-variables-descriptions:
     description: Server variables need to be described
-    documentationUrl: https://bass.betcracker.com
     given: $.servers.variables[*]
     howToFix: Please add 'description' field to the server variable
     recommended: true
@@ -59,7 +57,6 @@ rules:
     type: style
   paths-description:
     description: All the paths need to be described
-    documentationUrl: https://bass.betcracker.com
     given: $.paths[*][*]
     howToFix: Please add 'description' field to the path
     recommended: true
@@ -70,7 +67,6 @@ rules:
     type: style
   request-body-description:
     description: All the request bodies need to be described
-    documentationUrl: https://bass.betcracker.com
     given: $.paths[*][*].requestBody
     howToFix: Please add 'description' field to the request body
     severity: warn
@@ -80,7 +76,7 @@ rules:
     type: style
   responses-description:
     description: All the responses need to be described
-    documentationUrl: https://bass.betcracker.com
+
     given: $.paths[*][*].responses[*]
     howToFix: Please add 'description' field to the response children
     severity: warn
@@ -90,7 +86,6 @@ rules:
     type: style
   components-security-schemas-description:
     description: All the component security schemas need to be described
-    documentationUrl: https://bass.betcracker.com
     given: $.components.securitySchemes[*]
     howToFix: Please add 'description' field to all the component security schemas
     severity: warn
@@ -100,7 +95,6 @@ rules:
     type: style
   schema-description:
     description: All the schemas need to be described
-    documentationUrl: https://bass.betcracker.com
     given: $.schema[*]
     howToFix: Please add 'description' field to all the schemas
     severity: warn
@@ -110,7 +104,6 @@ rules:
     type: style
   schema-properties-description:
     description: All the schema properties need to be described
-    documentationUrl: https://bass.betcracker.com
     given: $.schema.properties[*]
     howToFix: Please add 'description' field to all the schema propertiess
     severity: warn
@@ -120,7 +113,6 @@ rules:
     type: style
   schema-properties-children-description:
     description: All the schema children properties need to be described
-    documentationUrl: https://bass.betcracker.com
     given: $.schema.properties[*][*].properties
     howToFix: Please add 'description' field to all the schema children propertiess
     severity: warn

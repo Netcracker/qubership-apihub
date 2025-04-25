@@ -1,7 +1,6 @@
 {
     "extends": ["spectral:oas"],
-    "description": "Netcracker's rules for a high quality specification.",
-    "documentationUrl": "https://apihub.netcracker.com",
+    "description": "Qubership's rules for a high quality specification.",
     "rules": {
         "no-example-com-in-url": {
             "description": "Url must not use example.com based domain inside",

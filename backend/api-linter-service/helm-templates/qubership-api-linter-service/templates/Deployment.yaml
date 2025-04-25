@@ -1,0 +1,77 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: 'qubership-api-linter-service'
+    labels:
+        name: 'qubership-api-linter-service'
+        app.kubernetes.io/name: 'qubership-api-linter-service'
+        app.kubernetes.io/version: '{{ .Values.qubershipApiLinterService.version }}'
+        app.kubernetes.io/component: 'backend'
+        app.kubernetes.io/part-of: 'qubership-api-linter-service'
+        app.kubernetes.io/managed-by: 'helm'
+        app.kubernetes.io/technology: 'go'
+spec:
+    replicas: {{ .Values.qubershipApiLinterService.replicas }}
+    strategy:
+        rollingUpdate:
+            maxSurge: 25%
+            maxUnavailable: 25%
+    template:
+        metadata:
+            labels:
+                name: 'qubership-api-linter-service'
+                app.kubernetes.io/name: 'qubership-api-linter-service'
+                app.kubernetes.io/version: '{{ .Values.qubershipApiLinterService.version }}'
+                app.kubernetes.io/component: 'backend'
+                app.kubernetes.io/part-of: 'qubership-api-linter-service'
+                app.kubernetes.io/managed-by: 'helm'
+                app.kubernetes.io/technology: 'go'
+        spec:
+            containers:
+            -   name: 'qubership-api-linter-service'
+                image: '{{ .Values.qubershipApiLinterService.image.repository }}:{{ .Values.qubershipApiLinterService.image.tag }}'
+                ports:
+                -   name: web
+                    containerPort: 8080
+                    protocol: TCP
+                env:
+                -   name: LOG_LEVEL
+                    value: '{{ .Values.qubershipApiLinterService.logLevel }}'
+                -   name: ORIGIN_ALLOWED
+                    value: '{{ .Values.qubershipApiLinterService.env.originAllowed }}'
+                resources:
+                    requests:
+                        cpu: {{ .Values.qubershipApiLinterService.resource.cpu.request }}
+                        memory: '{{ .Values.qubershipApiLinterService.resource.memory.request }}'
+                    limits:
+                        cpu: {{ .Values.qubershipApiLinterService.resource.cpu.limit }}
+                        memory: '{{ .Values.qubershipApiLinterService.resource.memory.limit }}'
+                livenessProbe:
+                    httpGet:
+                        path: /live
+                        port: web
+                    initialDelaySeconds: 35
+                    timeoutSeconds: 10
+                readinessProbe:
+                    httpGet:
+                        path: /ready
+                        port: web
+                    initialDelaySeconds: 35
+                    timeoutSeconds: 10
+                securityContext:
+                    runAsUser: 10001
+                    runAsGroup: 10001
+                    readOnlyRootFilesystem: false
+                    runAsNonRoot: true
+                    seccompProfile:
+                        type: RuntimeDefault
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                        drop:
+                          - ALL
+
+    selector:
+        matchLabels:
+            name: 'qubership-api-linter-service'
+

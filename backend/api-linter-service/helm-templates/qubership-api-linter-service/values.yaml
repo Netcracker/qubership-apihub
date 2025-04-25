@@ -1,0 +1,36 @@
+# Section with global Qubership API Linter Service configuration
+qubershipApiLinterService:
+  # Optional; Qubership API Linter Service release version; If not set, default value: unknown; Example: 1.0.0
+  version: ''
+
+  # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG  
+  logLevel: "INFO"
+
+  image:
+    repository: 'ghcr.io/netcracker/qubership-api-linter-service' 
+    tag: 'latest'
+  replicas: 1 
+ 
+  # Section with resource limits
+  # Mandatory
+  # Below are the default values which are good enough for any cases including production
+   resource:
+    memory:
+      request: "150Mi"
+      limit: "150Mi"
+    cpu:  
+      request: "30m"
+      limit: "1"
+
+  # Section with business and technical parameters for Qubership API Linter Service.
+  env:
+    # Optional; Allows to set extra allowed origin to CORS header. Used for FE debugging. Should be empty on prod evs.; If not set, default value: ""; Example: https://localhost:5137
+    originAllowed: ''
+
+  # Section with ingress parameters for Qubership API Linter Service.
+  ingress:
+    # Flag to enable/disable http UI ingress creation
+    enabled: false
+    # Mandatory; Factual Qubership API Linter Service Ingress URL in your environment.; If not set, default value: ""; Example: qubership-api-linter-service.localhost
+    url: ''
+  

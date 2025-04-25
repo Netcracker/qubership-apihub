@@ -1,0 +1,25 @@
+
+services:
+    qubership-api-linter-service:
+        image: ghcr.io/netcracker/qubership-api-linter-service:dev
+        container_name: qubership-api-linter-service
+        ports:
+        - "8090:8080"
+        healthcheck:
+            test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]
+            interval: 10s
+            timeout: 10s
+            retries: 10
+            start_period: 5s
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 150M
+        networks:
+            default:
+                aliases:
+                - qubership-api-linter-service
+
+
