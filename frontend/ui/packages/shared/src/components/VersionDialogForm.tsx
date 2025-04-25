@@ -178,8 +178,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
   const debouncedOnVersionsChange = useMemo(() => debounce(onVersionsChange, DEFAULT_DEBOUNCE), [onVersionsChange])
 
   const [descriptorContent, setDescriptorContent] = useState<string | null>(null)
-  const [isFileReading, setIsFileReading] = useState<boolean>(false)
-
+  const [isFileReading, setIsFileReading] = useState<boolean>(false)  
   const onFileContentLoaded = useCallback((event: ProgressEvent<FileReader>): void => {
     setDescriptorContent(event?.target?.result ? String(event.target.result) : null)
     setIsFileReading(false)
@@ -414,8 +413,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
 
         {!hideCopyPackageFields && (
           <>
-            <Typography sx={{ mb: 1 }} variant="body2">Target Package</Typography>
-
+            <Typography sx={{ mb: 1 }} variant="body2">Target {packagesTitle}</Typography>
             <Controller
               name="workspace"
               control={control}
