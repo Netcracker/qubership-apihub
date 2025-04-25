@@ -32,6 +32,7 @@ export const SpecificConfigurationPackageSettingsTab: FC<PackageSettingsTabProps
   const onEditPackagePrefix = useCallback(() => {
     showEditPackagePrefixDialog({
       packageKey: packageObject?.key,
+      existingPrefix: packageObject?.restGroupingPrefix ?? '',
     })
   }, [packageObject, showEditPackagePrefixDialog])
 

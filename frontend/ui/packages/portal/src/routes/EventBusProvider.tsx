@@ -178,6 +178,7 @@ export type OperationsMovementDetails =
 
 export type ShowEditPackagePrefixDetail = {
   packageKey?: string
+  existingPrefix?:string
 }
 
 export type ShowEditPreservedOasExtensionsDetail = {

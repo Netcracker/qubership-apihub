@@ -38,15 +38,15 @@ export const EditGrouppingPrefixDialog: FC = memo(() => {
 })
 
 const EditPrefixDialogPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpen, detail }) => {
-  const { packageKey } = detail as ShowEditPackagePrefixDetail
+  const { packageKey, existingPrefix = '' } = detail as ShowEditPackagePrefixDetail &  { existingPrefix?: string }
   const [updatePackage, isUpdateLoading, isSuccess] = useUpdatePackage()
   const [recalculatePackageVersionGroups] = useRecalculatePackageVersionGroups()
   useEffect(() => {isSuccess && setOpen(false)}, [isSuccess, setOpen])
 
   const defaultValues = useMemo(() => ({
-    restGroupingPrefix: '',
+    restGroupingPrefix: existingPrefix,
     recalculate: false,
-  }), [])
+  }), [existingPrefix])
 
   const { handleSubmit, control, formState: { errors }, watch } = useForm<FormData>({ defaultValues })
   const { recalculate } = watch()
