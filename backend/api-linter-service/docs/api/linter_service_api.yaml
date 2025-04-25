@@ -1,0 +1,338 @@
+openapi: 3.0.3
+info:
+  title: Linter Service API
+  version: "1.0"
+  description: The Linter Service API provides a set of operations for validating (linting) the quality of OpenAPI specifications. It enables the management of rulesets used for validation, as well as the validation process itself.
+servers:
+  - url: /
+security:
+  - BearerAuth: []
+  - PersonalAccessToken: []
+tags:
+  - name: Ruleset Management
+    description: API related to management of validation rulesets.
+paths:
+  /api/v1/rulesets:
+    get:
+      tags:
+        - Ruleset Management
+      summary: Get a list of rulesets.
+      description: >
+        Returns a sorted list of rulesets. There is always one active ruleset.
+      operationId: getRulesets
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          example: 1
+        - name: limit
+          in: query
+          description: Number of items per page (max 100).
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 100
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ruleset"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - Ruleset Management
+      summary: Create a new ruleset
+      description: >
+        Allows an admin to create a new ruleset by uploading a YAML file.
+        The new ruleset is set to 'Inactive' by default.
+      security:
+        - BearerAuth: []
+        - api-key: []
+      operationId: postRuleset
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/RulesetCreate"
+      responses:
+        "201":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ruleset"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/rulesets/{id}:
+    delete:
+      tags:
+        - Ruleset Management
+      summary: Delete a ruleset
+      description: >
+        Delete a ruleset.\
+        Ruleset can be deleted if it is in inactive status and no version validated against this ruleset exist.
+      operationId: deleteRuleset
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique ruleset identifier
+      responses:
+        "204":
+          description: Success
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/rulesets/{id}/activate:
+    post:
+      tags:
+        - Ruleset Management
+      summary: Activate a ruleset
+      description: >
+        Activate an inactive ruleset. Currently active ruleset is automatically deactivated after new ruleset is activated.
+      operationId: postRulesetsActivate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique ruleset ID.
+      responses:
+        "204":
+          description: Success
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/rulesets/{id}/download:
+    get:
+      tags:
+        - Ruleset Management
+      summary: Download spetral ruleset file
+      description: >
+        Returns the plain YAML content of the ruleset.
+      security: []
+      operationId: getRulesetDownload
+      parameters:
+        - name: id
+          in: path
+          description: Unique ruleset ID
+          required: true
+          schema:
+            type: string
+        - name: inlineContent
+          in: query
+          description: Flag to indicate whether spectral ruleset should be displayed inline in the browser or downloaded as an attachment locally.
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Success
+          content:
+            application/yaml:
+              schema:
+                type: string
+                description: YAML content of spetral ruleset file.
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                description: Header is required if inlineContent = false. When present, must have "attachment" and "fileName" parameters.
+                example: attachment; filename="<original file name>.yaml"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    ErrorResponse:
+      description: An error description
+      type: object
+      required:
+        - status
+        - code
+        - message
+      properties:
+        status:
+          description: HTTP Status Code
+          type: integer
+        code:
+          description: Internal string error code. Mandatory in response.
+          type: string
+        message:
+          description: The attribute contains an error message.
+          type: string
+        params:
+          type: object
+          description: Optional message parameters
+        debug:
+          description: Debug details
+          type: string
+    Ruleset:
+      description: Ruleset's parameters
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the ruleset.
+        name:
+          type: string
+          description: Unique name of the ruleset.
+          example: "OpenAPI Quality Ruleset"
+        status:
+          description: Status of the ruleset.
+          type: string
+          enum:
+            - active
+            - inactive
+        activationHistory:
+          description: Information about periods when rulest was activated/deactivated. If empty, means that ruleset was never activated.
+          type: array
+          items:
+            type: object
+            properties:
+              activeFrom:
+                description: Date when ruleset was activated.
+                type: string
+                format: date-time
+              activeTo:
+                description: Date when ruleset was deactivated.
+                type: string
+                format: date-time
+        createdAt:
+          description: Date of ruleset creation.
+          type: string
+          format: date-time
+    RulesetCreate:
+      type: object
+      required:
+        - rulesetName
+        - rulesetFile
+      properties:
+        rulesetName:
+          description: Unique name of the ruleset.
+          type: string
+          example: "New Ruleset"
+        rulesetFile:
+          description: YAML file with spectral rules.
+          type: string
+          format: binary
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    PersonalAccessToken:
+      type: apiKey
+      description: Authentication by personal access token.
+      name: X-Personal-Access-Token
+      in: header
