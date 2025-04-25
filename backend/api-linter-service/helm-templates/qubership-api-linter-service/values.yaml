@@ -14,7 +14,7 @@ qubershipApiLinterService:
   # Section with resource limits
   # Mandatory
   # Below are the default values which are good enough for any cases including production
-   resource:
+  resource:
     memory:
       request: "150Mi"
       limit: "150Mi"
