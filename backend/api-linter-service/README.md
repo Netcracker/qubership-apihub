@@ -1,16 +1,26 @@
 # qubership-api-linter-service
+The qubership-api-linter-service is a Golang-based microservice that provides a REST API endpoint for linting and validating OpenAPI Specification (OAS) files. It serves as a quality control tool for API definitions, helping developers maintain consistency and adhere to best practices in their API documentation.
 
-qubership-api-linter-service is a golang application (microservice) providing REST API for linting OAS specification files.
+# Key Features
 
-Based on Spectral and Vacuum engines.
+Dual-engine support (Spectral and Vacuum) for comprehensive OAS validation
 
-Not production ready, under development.
+RESTful interface for easy integration into CI/CD pipelines
 
-## Installation
+Lightweight container-friendly design
 
-todo
+# Current Status:
+⚠️ Development Preview
+This service is currently under active development and not yet recommended for production use. The team is working on additional features and stability improvements.
 
+# Installation:
+Installation instructions will be provided in future releases (TODO).
 
-## Build
+# Build Instructions:
+To compile the service, simply execute the appropriate build script:
 
-Just run build.cmd(sh) file from this repository
+Windows: build.cmd
+
+Linux/macOS: build.sh
+
+The build process generates a standalone binary with all required dependencies. Future versions will include containerization support and package management options.
