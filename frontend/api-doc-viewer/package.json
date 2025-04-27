@@ -24,7 +24,7 @@
     "build:showcase": "storybook build -o dist-showcase --disable-telemetry",
     "dev": "vite",
     "development:link": "npm link && npm link @netcracker/qubership-apihub-api-data-model && npm link @netcracker/qubership-apihub-graphapi && npm link @netcracker/qubership-apihub-api-diff && npm link @netcracker/qubership-apihub-api-unifier && npm link @netcracker/qubership-apihub-json-crawl",
-    "development:unlink": "npm unlink && npm unlink @netcracker/qubership-apihub-api-data-model && npm unlink @netcracker/qubership-apihub-graphapi && npm unlink @netcracker/qubership-apihub-api-diff && npm unlink @netcracker/qubership-apihub-api-unifier && npm unlink @netcracker/qubership-apihub-json-crawl",    
+    "development:unlink": "npm unlink && npm unlink @netcracker/qubership-apihub-api-data-model && npm unlink @netcracker/qubership-apihub-graphapi && npm unlink @netcracker/qubership-apihub-api-diff && npm unlink @netcracker/qubership-apihub-api-unifier && npm unlink @netcracker/qubership-apihub-json-crawl",
     "generate-stories": "node bin/generate-graphql-compatibility-suite-stories.mjs",
     "generate-tests": "node bin/generate-graphql-compatibility-suite-tests.mjs",
     "postinstall": "npm run generate-stories & npm run generate-tests",
@@ -39,7 +39,7 @@
     "lint:check": "eslint -c .eslintrc.json . --ext .js,.cjs,.ts,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
     "lint:fix": "npm run lint:check -- --fix",
     "preview": "vite preview",
-    "update-lock-file": "update-lock-file @netcracker"    
+    "update-lock-file": "update-lock-file @netcracker"
   },
   "eslintConfig": {
     "extends": ".eslintrc.json"
@@ -56,7 +56,7 @@
     "remark-gfm": "3.0.1"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-api-unifier": "1.0.4",
+    "@netcracker/qubership-apihub-api-unifier": "dev",
     "@netcracker/qubership-apihub-compatibility-suites": "2.0.3",
     "@netcracker/qubership-apihub-graphapi": "1.0.8",
     "@netcracker/qubership-apihub-npm-gitflow": "3.0.1",
