@@ -13,7 +13,7 @@
     "@babel/preset-typescript": "^7.16.7",
     "@chromatic-com/storybook": "1",
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
-    "@netcracker/qubership-apihub-api-unifier": "1.0.4",
+    "@netcracker/qubership-apihub-api-unifier": "dev",
     "@netcracker/qubership-apihub-compatibility-suites": "2.0.3",
     "@netcracker/qubership-apihub-api-diff": "dev",
     "@netcracker/qubership-apihub-api-doc-viewer": "dev",

@@ -1,4 +1,4 @@
-import { denormalize, normalize, NormalizeOptions, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier';
+import { denormalize, normalize, NormalizeOptions, RefErrorType, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier';
 import { apiDiff, COMPARE_MODE_OPERATION, CompareResult } from '@netcracker/qubership-apihub-api-diff';
 import { safeStringify } from '@stoplight/json';
 import { diffMetaKey } from 'diff-block';
@@ -42,12 +42,13 @@ export const getCompareResult = (
     afterSource: after,
     mode: COMPARE_MODE_OPERATION,
     metaKey: diffMetaKey,
-    onRefResolveError: (message: string, path: PropertyKey[], ref: string) => {
+    onRefResolveError: (message: string, path: PropertyKey[], ref: string, errorType: RefErrorType) => {
       console.debug([
         '[ASV] [Ref Resolve Error]',
         `Message: ${message}`,
         `JSON path: ${path}`,
-        `Ref: ${ref}`
+        `Ref: ${ref}`,
+        `Error type: ${errorType}`,
       ].join('\n'));
     },
     onMergeError: (message: string, path: PropertyKey[], values: any[]) => {
