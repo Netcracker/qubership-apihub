@@ -22,7 +22,7 @@ describe('Reference bundling test', () => {
     const result = await pkg.publish(pkg.packageId)
 
     expect(result).toEqual(notificationsMatcher([
-      errorNotificationMatcher('references an invalid location'),
+      errorNotificationMatcher('can\'t be resolved'),
       errorNotificationMatcher('does not exist'),
     ]))
     expect(result.operations.size).toBe(1)
@@ -52,7 +52,7 @@ describe('Reference bundling test', () => {
     const result = await pkg.publish(pkg.packageId)
 
     expect(result).toEqual(notificationsMatcher([
-      errorNotificationMatcher('references an invalid location'),
+      errorNotificationMatcher('can\'t be resolved'),
       errorNotificationMatcher('does not exist'),
     ]))
     expect(result.operations.size).toBe(1)
@@ -64,14 +64,14 @@ describe('Reference bundling test', () => {
 
     await expect(
       pkg.publish(pkg.packageId, { validationRulesSeverity: { brokenRefs: VALIDATION_RULES_SEVERITY_LEVEL_ERROR } }),
-    ).rejects.toThrow(/references an invalid location/)
+    ).rejects.toThrow(/can't be resolved/)
   })
 
   test('should collect missing internal reference notification if severity level is not configured', async () => {
     const pkg = LocalRegistry.openPackage('reference-bundling/case5')
     const result = await pkg.publish(pkg.packageId)
 
-    expect(result).toEqual(notificationsMatcher([errorNotificationMatcher('references an invalid location')]))
+    expect(result).toEqual(notificationsMatcher([errorNotificationMatcher('can\'t be resolved')]))
     expect(result.operations.size).toBe(1)
   })
 
@@ -80,5 +80,19 @@ describe('Reference bundling test', () => {
     await expect(
       pkg.publish(pkg.packageId, { validationRulesSeverity: { brokenRefs: VALIDATION_RULES_SEVERITY_LEVEL_ERROR } }),
     ).rejects.toThrow(/not a valid text file/)
+  })
+
+  test('should collect notifications on publishing specification with incorrect description override', async () => {
+    const pkg = LocalRegistry.openPackage('reference-bundling/description-override')
+    const result = await pkg.publish(pkg.packageId, {
+      validationRulesSeverity: {
+        brokenRefs: VALIDATION_RULES_SEVERITY_LEVEL_ERROR,
+      },
+    })
+
+    expect(result).toEqual(notificationsMatcher([
+      errorNotificationMatcher('can\'t have siblings in this specification version'),      
+    ]))
+    expect(result.operations.size).toBe(1)    
   })
 })

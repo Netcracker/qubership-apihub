@@ -1,0 +1,13 @@
+{
+  "packageId": "reference-bundling/description-override",
+  "apiType": "rest",
+  "version": "v1",
+  "files": [
+    {
+      "fileId": "openapi.yaml",
+      "publish": true,
+      "labels": [],
+      "commitId": "6c778b1f44200bd19944a6a8eac10a4e5a21a1xd"
+    }
+  ]
+}

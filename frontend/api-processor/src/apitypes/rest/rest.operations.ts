@@ -24,7 +24,7 @@ import type * as TYPE from './rest.types'
 import { HASH_FLAG, INLINE_REFS_FLAG, MESSAGE_SEVERITY, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
 import { asyncFunction } from '../../utils/async'
 import { logLongBuild, syncDebugPerformance } from '../../utils/logs'
-import { normalize } from '@netcracker/qubership-apihub-api-unifier'
+import { normalize, RefErrorType } from '@netcracker/qubership-apihub-api-unifier'
 
 export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async (document, ctx, debugCtx) => {
   const documentWithoutComponents = removeComponents(document.data)
@@ -38,8 +38,8 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
         originsFlag: ORIGINS_SYMBOL,
         hashFlag: HASH_FLAG,
         source: document.data,
-        onRefResolveError: (_: string, __: PropertyKey[], ref: string) =>
-          bundlingErrorHandler([`The $ref "${ref}" references an invalid location in the document.`]),
+        onRefResolveError: (message: string, _path: PropertyKey[], _ref: string, errorType: RefErrorType) =>
+          bundlingErrorHandler([{ message, errorType }]),
       },
     ) as OpenAPIV3.Document
     const refsOnlyDocument = normalize(

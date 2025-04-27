@@ -28,11 +28,11 @@
     "operation:test": "node ./test/operation.js",
     "profile": "node --inspect-brk ./test/profile.js",
     "test:coverage": "jest --verbose --coverage",
-    "update-lock-file": "update-lock-file @netcracker"    
+    "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
     "@netcracker/qubership-apihub-api-diff": "dev",
-    "@netcracker/qubership-apihub-api-unifier": "1.0.4",
+    "@netcracker/qubership-apihub-api-unifier": "dev",
     "@netcracker/qubership-apihub-json-crawl": "1.0.4",
     "@netcracker/qubership-apihub-graphapi": "1.0.8",
     "adm-zip": "0.5.10",
