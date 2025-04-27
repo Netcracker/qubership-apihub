@@ -5,8 +5,7 @@
   "workspaces": [
     "packages/*"
   ],
-  "scripts": {
-    "update-dev-deps": "npm ls --json | jq -r \".dependencies | keys[]\" | grep '@netcracker' | xargs --no-run-if-empty npm update",
+  "scripts": {    
     "build": "npx lerna run build",
     "build:showcase": "npm run --workspace=@netcracker/qubership-apihub-ui-shared build:showcase",
     "lint": "eslint . --ext .ts,.tsx,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
@@ -17,10 +16,7 @@
     "dev:agents": "npx lerna run dev:backend,dev:frontend --stream --scope=@netcracker/qubership-apihub-ui-agents",
     "dev:editor": "npx lerna run dev:backend,dev:frontend --stream --scope=@netcracker/qubership-apihub-ui-editor",
     "dev:portal": "npx lerna run dev:backend,dev:frontend --stream --scope=@netcracker/qubership-apihub-ui-portal",
-    "feature-start": "feature-start --featureName",
-    "feature-finish": "feature-finish",
-    "release-start": "release-start",
-    "release-finish": "release-finish"
+    "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
     "@emotion/react": "11.10.6",
@@ -109,7 +105,7 @@
   "devDependencies": {
     "@esbuild-plugins/node-globals-polyfill": "0.2.3",
     "@esbuild-plugins/node-modules-polyfill": "0.2.2",
-    "@netcracker/qubership-apihub-npm-gitflow": "2.2.2",
+    "@netcracker/qubership-apihub-npm-gitflow": "3.0.1",
     "@rollup/plugin-inject": "5.0.5",
     "@storybook/addon-essentials": "7.5.1",
     "@storybook/addon-interactions": "7.5.1",
