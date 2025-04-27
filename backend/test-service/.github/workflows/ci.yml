@@ -1,0 +1,23 @@
+name: build Docker image, run E2E BE tests, run E2E FE tests
+
+on:
+  push:
+    branches:
+      - "**"     
+    tags:
+      - '**'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+    types: [opened, reopened, synchronize]
+
+jobs:
+  build-docker-image:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@main
+    with:
+        name: qubership-apihub-test-service
+        file: Dockerfile
+        context: ""
+        platforms: linux/amd64,linux/arm64
+        labels: |
+            maintainer=qubership
