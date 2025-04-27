@@ -1,12 +1,13 @@
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
-import { normalize } from '../../src'
+import { normalize, RefErrorType, RefErrorTypes } from '../../src'
 
 describe("merge errors handling", function () {
   it('should trigger onRefResolveError when merging broken $ref', (done) => {
 
-    const onRefResolveError = (message: string, path: JsonPath, ref: string) => {
+    const onRefResolveError = (message: string, path: JsonPath, ref: string, errorType: RefErrorType) => {
       
-      expect(ref).toBe ("#/foo")
+      expect(ref).toBe("#/foo")
+      expect(errorType).toBe(RefErrorTypes.REF_NOT_FOUND)
       done()
     }
 

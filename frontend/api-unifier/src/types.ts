@@ -7,6 +7,14 @@ export type JsonSchema = Record<PropertyKey, unknown>
 
 export type NormalizationRules = CrawlRules<NormalizationRule>
 
+export const RefErrorTypes = {
+  RICH_REF_NOT_ALLOWED: 'richRefObjectNotAllowed' as const,
+  REF_NOT_FOUND: 'refNotFound' as const,
+  REF_NOT_VALID_FORMAT: 'refNotValidFormat' as const,
+} as const
+
+export type RefErrorType = typeof RefErrorTypes[keyof typeof RefErrorTypes]
+
 //todo ugly API. Some Flag activate transformation (like syntheticTitleFlag) some flags just mark result for transfomration
 export interface ResolveOptions {
   resolveRef?: boolean            // execute resolve ref phase (inline usages that can produce cycled JSO)
@@ -17,7 +25,7 @@ export interface ResolveOptions {
   originsFlag?: symbol            // used in JSO as anchor to chained declaration path (contains link to parent in declarationPath)
   originsAlreadyDefined?: boolean // are there already origins in the spec
   ignoreSymbols?: symbol[],       // symbols to ignore scan
-  onRefResolveError?: (message: string, path: JsonPath, ref: string) => void
+  onRefResolveError?: (message: string, path: JsonPath, ref: string, errorType: RefErrorType) => void
 }
 
 export interface MergeOptions {

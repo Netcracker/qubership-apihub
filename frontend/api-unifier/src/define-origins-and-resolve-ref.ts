@@ -18,6 +18,7 @@ import {
   NormalizationRule,
   OriginCache,
   OriginsMetaRecord,
+  RefErrorTypes,
   ResolveOptions,
   RichReference,
 } from './types'
@@ -164,7 +165,7 @@ const createDefineOriginsAndResolveRefHook: (rootJso: unknown, options: Internal
           value: JSON_SCHEMA_PROPERTY_REF,
         }, state.originCache) //abuse cache. Keys should be a real node value only!!!
         if (typeof $ref !== 'string') {
-          options.onRefResolveError?.(ErrorMessage.refNotValidFormat($ref), path, $ref)
+          options.onRefResolveError?.(ErrorMessage.refNotValidFormat($ref), path, $ref, RefErrorTypes.REF_NOT_VALID_FORMAT)
           const brokenValueClone = { [JSON_SCHEMA_PROPERTY_REF]: $ref }
           state.node[safeKey] = brokenValueClone
           setOrigins(state.node, safeKey, options.originsFlag, [originForObj])
@@ -172,7 +173,7 @@ const createDefineOriginsAndResolveRefHook: (rootJso: unknown, options: Internal
           return { done: true }
         }
         if (!options.richRefAllowed && Reflect.ownKeys(sibling).length !== 0) {
-          options.onRefResolveError?.(ErrorMessage.richRefObjectNotAllowed(), path, $ref)
+          options.onRefResolveError?.(ErrorMessage.richRefObjectNotAllowed($ref), path, $ref, RefErrorTypes.RICH_REF_NOT_ALLOWED)
           sibling = {}
         }
         const reference = parseRef($ref)
@@ -342,7 +343,7 @@ const createDefineOriginsAndResolveRefHook: (rootJso: unknown, options: Internal
             const { refValue, origin } = refInSourceJso
             return wrapRefWithAllOfIfNeed(refValue, sibling, origin)
           }
-          options.onRefResolveError?.(ErrorMessage.refNotFound($ref), path, $ref)
+          options.onRefResolveError?.(ErrorMessage.refNotFound($ref), path, $ref, RefErrorTypes.REF_NOT_FOUND)
           const brokenValueClone = { [JSON_SCHEMA_PROPERTY_REF]: $ref }
           state.node[safeKey] = brokenValueClone
           setOrigins(state.node, safeKey, options.originsFlag, [originForObj])
