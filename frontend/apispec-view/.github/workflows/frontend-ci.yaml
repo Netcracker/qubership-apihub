@@ -11,7 +11,6 @@ on:
     tags:
       - '**'
   delete:
-    branches:
 
 jobs:
   call-frontend-ci-workflow:

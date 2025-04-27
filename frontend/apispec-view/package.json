@@ -137,16 +137,13 @@
     "webpack-dev-server": "3.11.2",
     "xml-formatter": "^2.4.0",
     "raw-loader": "^4.0.2",
-    "@netcracker/qubership-apihub-npm-gitflow": "2.2.2"
+    "@netcracker/qubership-apihub-npm-gitflow": "3.0.1"
   },
   "scripts": {
     "build": "npm run build:dist",
     "build:dist": "npm run --workspace=@netcracker/qubership-apihub-apispec-view build",
     "build:showcase": "npm run --workspace=@netcracker/qubership-apihub-apispec-view build:showcase",
     "screenshot-test:ci": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:ci",
-    "feature-start": "feature-start --featureName",
-    "feature-finish": "feature-finish",
-    "release-start": "release-start",
-    "release-finish": "release-finish"
+    "update-lock-file": "update-lock-file @netcracker"    
   }
 }
