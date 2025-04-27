@@ -22,10 +22,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config jest-e2e.json",
-    "feature-start": "feature-start --featureName",
-    "feature-finish": "feature-finish",
-    "release-start": "release-start",
-    "release-finish": "release-finish"
+    "update-lock-file": "update-lock-file @netcracker"    
   },
   "dependencies": {
     "@nestjs/axios": "^2.0.0",
@@ -50,7 +47,7 @@
     "@nestjs/cli": "^8.2.8",
     "@nestjs/schematics": "8.0.8",
     "@nestjs/testing": "8.4.1",
-    "@netcracker/qubership-apihub-npm-gitflow": "2.2.2",
+    "@netcracker/qubership-apihub-npm-gitflow": "3.0.1",
     "@types/adm-zip": "^0.5.0",
     "@types/express": "4.17.17",
     "@types/jest": "29.5.1",
