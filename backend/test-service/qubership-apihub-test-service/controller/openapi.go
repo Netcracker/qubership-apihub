@@ -15,7 +15,7 @@
 package controller
 
 import (
-	"github.com/Qubership/qubership-apihub-test-service/exception"
+	"github.com/Netcracker/qubership-apihub-test-service/exception"
 	"net/http"
 	"os"
 )

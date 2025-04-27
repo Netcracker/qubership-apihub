@@ -18,7 +18,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Qubership/qubership-apihub-test-service/exception"
+	"github.com/Netcracker/qubership-apihub-test-service/exception"
 )
 
 type SwaggerConfigController interface {

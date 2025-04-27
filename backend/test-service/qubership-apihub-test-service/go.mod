@@ -1,4 +1,4 @@
-module github.com/Qubership/qubership-apihub-test-service
+module github.com/Netcracker/qubership-apihub-test-service
 
 go 1.17
 

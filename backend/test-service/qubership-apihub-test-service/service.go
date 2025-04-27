@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Qubership/qubership-apihub-test-service/controller"
+	"github.com/Netcracker/qubership-apihub-test-service/controller"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/gorilla/handlers"
