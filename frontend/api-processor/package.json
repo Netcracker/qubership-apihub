@@ -28,10 +28,7 @@
     "operation:test": "node ./test/operation.js",
     "profile": "node --inspect-brk ./test/profile.js",
     "test:coverage": "jest --verbose --coverage",
-    "feature-start": "feature-start --featureName",
-    "feature-finish": "feature-finish",
-    "release-start": "release-start",
-    "release-finish": "release-finish"
+    "update-lock-file": "update-lock-file @netcracker"    
   },
   "dependencies": {
     "@netcracker/qubership-apihub-api-diff": "dev",
@@ -52,7 +49,7 @@
     "swagger2openapi": "^7.0.8"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-npm-gitflow": "2.2.2",
+    "@netcracker/qubership-apihub-npm-gitflow": "3.0.1",
     "@types/adm-zip": "0.5.7",
     "@types/jest": "^29.5.12",
     "@types/js-yaml": "^4.0.5",
