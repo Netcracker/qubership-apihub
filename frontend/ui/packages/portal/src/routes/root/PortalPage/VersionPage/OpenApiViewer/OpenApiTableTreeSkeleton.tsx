@@ -21,10 +21,11 @@ import { Box, Skeleton, TableCell, TableRow } from '@mui/material'
 export const OpenApiTableTreeSkeleton: FC = memo(() => {
   return (
     <>
-      {Array(2).fill(0).map(() => {
+      {/* eslint-disable-next-line @typescript-eslint/no-unused-vars */}
+      {Array(2).fill(0).map((_, index) => {
         return (
-          <TableRow key={crypto.randomUUID()}>
-            <TableCell key={crypto.randomUUID()}>
+          <TableRow key={index}>
+            <TableCell>
               <Box display="flex" flexDirection="column">
                 <Skeleton sx={{ width: '100%', height: '32px' }}/>
                 <Skeleton sx={{ width: '25%', height: '18px' }}/>

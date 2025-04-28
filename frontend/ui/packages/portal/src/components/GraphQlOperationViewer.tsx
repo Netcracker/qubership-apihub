@@ -29,7 +29,6 @@ export const GraphQlOperationViewer: FC<GraphQlOperationViewerProps> = memo<Grap
   return (
     <Box lineHeight={1.5} height="100%">
       <GraphQLOperationViewer
-        key={`graphql-operation-viewer-${displayMode}`}
         source={source}
         displayMode={displayMode}
       />

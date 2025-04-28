@@ -104,7 +104,7 @@ export const Selector: FC<SelectorProps> = memo<SelectorProps>(({
                 >
                   {options?.map((option) => (
                     <MenuItem
-                      key={crypto.randomUUID()}
+                      key={`selector-option-${option.value}`}
                       onClick={() => {
                         onChange?.(option)
                         setAnchor(undefined)

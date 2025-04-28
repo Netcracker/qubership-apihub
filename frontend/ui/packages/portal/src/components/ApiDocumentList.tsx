@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+import { Link, List, ListItem, ListItemIcon, ListItemText, Skeleton } from '@mui/material'
+import { SpecLogo } from '@netcracker/qubership-apihub-ui-shared/components/SpecLogo'
 import type { FC } from 'react'
 import { memo } from 'react'
-import { Link, List, ListItem, ListItemIcon, ListItemText, Skeleton } from '@mui/material'
 import type { To } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
-import { SpecLogo } from '@netcracker/qubership-apihub-ui-shared/components/SpecLogo'
 
 export type ApiDocumentListProps = {
   isLoading: boolean
@@ -29,7 +29,7 @@ export type ApiDocumentListProps = {
 export const ApiDocumentList: FC<ApiDocumentListProps> = memo<ApiDocumentListProps>(({ value, isLoading }) => {
   if (isLoading) {
     return (
-      <Skeleton variant="rectangular" width={150}/>
+      <Skeleton variant="rectangular" width={150} />
     )
   }
 
@@ -37,11 +37,11 @@ export const ApiDocumentList: FC<ApiDocumentListProps> = memo<ApiDocumentListPro
     <List>
       {value.map(({ type, title, url, subtitle }) => (
         <ListItem
-          key={crypto.randomUUID()}
+          key={`api-document-${type}-${title}`}
           sx={{ px: 0, alignItems: 'start' }}
         >
           <ListItemIcon sx={{ minWidth: 2, mt: 0, mr: 1 }}>
-            <SpecLogo value={type}/>
+            <SpecLogo value={type} />
           </ListItemIcon>
           <ListItemText
             primary={
