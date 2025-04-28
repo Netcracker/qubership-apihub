@@ -7741,13 +7741,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2}}/rest/changes?textFilter=post&apiKind=bwc&tag=pet&severity=breaking",
+                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_1}}/versions/{{version_2}}/rest/changes?textFilter=post&apiKind=bwc&tag=pet&severity=breaking",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v3",
+                                        "v4",
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
@@ -8620,7 +8620,7 @@
                                             "var data = JSON.parse(responseBody);\r",
                                             "\r",
                                             "pm.test(\"Found chages have specified path\", () => {\r",
-                                            "    pm.expect(data.operations[0].path).to.include('/api/v1/pet')\r",
+                                            "    pm.expect(data.operations[0].currentOperation.path).to.include('/api/v1/pet')\r",
                                             "});"
                                         ]
                                     }
@@ -8637,13 +8637,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2_2}}/rest/changes?textFilter=/api/v1/pet&refPackageId={{package_1}}",
+                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_1}}/versions/{{version_2_2}}/rest/changes?textFilter=/api/v1/pet&refPackageId={{package_1}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v3",
+                                        "v4",
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
@@ -8712,13 +8712,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2_2}}/rest/changes?textFilter=pet",
+                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_1}}/versions/{{version_2_2}}/rest/changes?textFilter=pet",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v3",
+                                        "v4",
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
