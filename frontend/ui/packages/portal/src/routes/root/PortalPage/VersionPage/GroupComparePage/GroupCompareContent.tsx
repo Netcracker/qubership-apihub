@@ -197,7 +197,7 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
 
                 return (
                   <Grid
-                    key={crypto.randomUUID()}
+                    key={`group-compare-content-filtered-group-changes-grid-${operationId}`}
                     component={NavLink}
                     container
                     spacing={0}

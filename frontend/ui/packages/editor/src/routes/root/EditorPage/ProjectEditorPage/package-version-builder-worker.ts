@@ -51,6 +51,7 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 import { NONE_CHANGE_TYPE } from '@apihub/entities/branches'
 import { fetchFileContent } from '@apihub/utils/resolvers'
+import { v4 as uuidv4 } from 'uuid'
 
 /*
 For using worker in proxy mode you need to change common apihub-shared import
@@ -177,7 +178,7 @@ const worker: PackageVersionBuilderWorker = {
   },
   publishPackage: async (options, authorization): Promise<PublishDetails> => {
     const { packageId: packageKey } = options
-    const builderId = crypto.randomUUID()
+    const builderId = uuidv4()
     const sources = await fetchAllFilesBlob(options.projectId, options.metadata.branchName, authorization)
     const {
       publishId,

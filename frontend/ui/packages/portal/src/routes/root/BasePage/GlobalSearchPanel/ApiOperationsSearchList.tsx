@@ -50,21 +50,21 @@ export const ApiOperationsSearchList: FC<ApiOperationsSearchListProps> = memo<Ap
   return (
     <Box width={CONTENT_WIDTH} position="relative">
       {value.map(({
-        packageKey,
-        name,
-        parentPackages,
-        version,
-        title,
-        status,
-        operationKey,
-        path,
-        method,
-        apiType,
-        type,
-      }) => {
+          packageKey,
+          name,
+          parentPackages,
+          version,
+          title,
+          status,
+          operationKey,
+          path,
+          method,
+          apiType,
+          type,
+        }) => {
         const { versionKey } = getSplittedVersionKey(version)
         return (
-          <Box mb={2} key={crypto.randomUUID()} data-testid="SearchResultRow">
+          <Box mb={2} key={`api-operations-search-list-box-${packageKey}-${operationKey}-${version}`} data-testid="SearchResultRow">
             <ResultCommonHeader
               url={getOperationsPath({
                 packageKey: packageKey,

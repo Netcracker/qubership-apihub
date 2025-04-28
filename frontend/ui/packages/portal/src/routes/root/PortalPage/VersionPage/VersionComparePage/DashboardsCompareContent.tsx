@@ -14,28 +14,35 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo, useCallback, useEffect } from 'react'
-import { Box, Card, CardContent, Grid, ListItem, ListItemText, Typography } from '@mui/material'
-import { NavLink } from 'react-router-dom'
-import { useBackwardLocation } from '../../../useBackwardLocation'
-import { useChangesLoadingStatus, useSetChangesLoadingStatus } from '../ChangesLoadingStatusProvider'
-import type { DashboardComparisonSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
-import type { OperationType } from '@netcracker/qubership-apihub-api-processor'
-import { calculateTotalChangeSummary, EMPTY_CHANGE_SUMMARY } from '@netcracker/qubership-apihub-api-processor'
-import { useChangesSummaryFromContext } from '../ChangesSummaryProvider'
-import { useBreadcrumbsData } from '../ComparedPackagesBreadcrumbsProvider'
-import { useVersionsComparisonGlobalParams } from '../VersionsComparisonGlobalParams'
-import { VERSION_SWAPPER_HEIGHT } from '../shared-styles'
-import { useFilteredDashboardChanges } from './useFilteredDashboardChanges'
-import { ComparisonSwapper } from '../ComparisonSwapper'
-import { useIsPackageFromDashboard } from '../../useIsPackageFromDashboard'
-import { useNavigation } from '../../../../NavigationProvider'
 import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
 import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { isRevisionCompare } from '@apihub/routes/root/PortalPage/VersionPage/VersionComparePage/VersionCompareContent'
+import { getDefaultApiType } from '@apihub/utils/operation-types'
+import { Box, Card, CardContent, Grid, ListItem, ListItemText, Typography } from '@mui/material'
+import type { OperationType } from '@netcracker/qubership-apihub-api-processor'
+import { calculateTotalChangeSummary, EMPTY_CHANGE_SUMMARY } from '@netcracker/qubership-apihub-api-processor'
+import { ChangeSeverityIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityIndicator'
+import { Changes } from '@netcracker/qubership-apihub-ui-shared/components/Changes'
+import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
+import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
+import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_TITLE_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import {
+  ACTION_TYPE_COLOR_MAP,
+  ADD_ACTION_TYPE,
+  REMOVE_ACTION_TYPE,
+} from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import { calculateAction } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
+import type { DashboardComparisonSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
+import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import {
   useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
+import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import { getMajorSeverity } from '@netcracker/qubership-apihub-ui-shared/utils/change-severities'
 import {
   API_TYPE_SEARCH_PARAM,
   FILTERS_SEARCH_PARAM,
@@ -44,28 +51,21 @@ import {
   REF_SEARCH_PARAM,
   VERSION_SEARCH_PARAM,
 } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
-import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
-import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import { getMajorSeverity } from '@netcracker/qubership-apihub-ui-shared/utils/change-severities'
-import { calculateAction } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
-import { getDefaultApiType } from '@apihub/utils/operation-types'
 import { format } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
-import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
-import {
-  ACTION_TYPE_COLOR_MAP,
-  ADD_ACTION_TYPE,
-  REMOVE_ACTION_TYPE,
-} from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
-import { ChangeSeverityIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityIndicator'
-import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
-import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_TITLE_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { Changes } from '@netcracker/qubership-apihub-ui-shared/components/Changes'
-import { isRevisionCompare } from '@apihub/routes/root/PortalPage/VersionPage/VersionComparePage/VersionCompareContent'
+import type { FC } from 'react'
+import { memo, useCallback, useEffect } from 'react'
+import { NavLink } from 'react-router-dom'
+import { useNavigation } from '../../../../NavigationProvider'
+import { useBackwardLocation } from '../../../useBackwardLocation'
+import { useIsPackageFromDashboard } from '../../useIsPackageFromDashboard'
+import { useChangesLoadingStatus, useSetChangesLoadingStatus } from '../ChangesLoadingStatusProvider'
+import { useChangesSummaryFromContext } from '../ChangesSummaryProvider'
+import { useBreadcrumbsData } from '../ComparedPackagesBreadcrumbsProvider'
+import { ComparisonSwapper } from '../ComparisonSwapper'
+import { useVersionsComparisonGlobalParams } from '../VersionsComparisonGlobalParams'
+import { VERSION_SWAPPER_HEIGHT } from '../shared-styles'
+import { useFilteredDashboardChanges } from './useFilteredDashboardChanges'
 
 export const DashboardsCompareContent: FC = memo(() => {
   const location = useBackwardLocation()
@@ -125,7 +125,7 @@ export const DashboardsCompareContent: FC = memo(() => {
 
   if (isLoading) {
     return (
-      <LoadingIndicator/>
+      <LoadingIndicator />
     )
   }
 
@@ -153,7 +153,7 @@ export const DashboardsCompareContent: FC = memo(() => {
           {/*todo think about unification changes list */}
           <Box pt={2}>
             {
-              filteredDashboardChanges.map(refChangesSummary => {
+              filteredDashboardChanges.map((refChangesSummary) => {
                 const {
                   refKey,
                   version,
@@ -179,7 +179,7 @@ export const DashboardsCompareContent: FC = memo(() => {
 
                 return (
                   <Grid
-                    key={crypto.randomUUID()}
+                    key={`dashboards-compare-content-filtered-dashboard-changes-grid-${refKey}-${version}-${previousVersion}`}
                     component={NavLink}
                     container
                     spacing={0}
@@ -281,8 +281,8 @@ const Package: FC<PackageProps> = memo<PackageProps>(({ value, operationTypes })
   const primary = (
     <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
       {title && <Typography component="span" noWrap variant="inherit"
-                            data-testid="PackageVersionTitle">{title} / {versionKey}</Typography>}
-      {status && <CustomChip sx={{ ml: 1 }} value={status} data-testid="PackageVersionStatus"/>}
+        data-testid="PackageVersionTitle">{title} / {versionKey}</Typography>}
+      {status && <CustomChip sx={{ ml: 1 }} value={status} data-testid="PackageVersionStatus" />}
     </Box>
   )
   return (
@@ -311,11 +311,11 @@ const Package: FC<PackageProps> = memo<PackageProps>(({ value, operationTypes })
       </Box>
       {operationTypes?.map(operationTypeChange =>
         <Box component="span" gap={1} sx={{ display: 'flex', alignItems: 'center' }}
-             data-testid={`ChangesApiType-${operationTypeChange.apiType}`}>
+          data-testid={`ChangesApiType-${operationTypeChange.apiType}`}>
           <Typography component="span" noWrap variant="subtitle2">
             {API_TYPE_TITLE_MAP[operationTypeChange.apiType]}:
           </Typography>
-          <Changes value={operationTypeChange.changesSummary} mode="compact"/>
+          <Changes value={operationTypeChange.changesSummary} mode="compact" />
         </Box>,
       )}
     </ListItem>

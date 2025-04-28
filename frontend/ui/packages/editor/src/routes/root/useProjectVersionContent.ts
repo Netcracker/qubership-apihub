@@ -24,7 +24,8 @@ import { editorRequestJson } from '@apihub/utils/requests'
 import { toPublishedSpec } from '@apihub/entities/published-specs'
 import { alphabeticallyBy } from '@netcracker/qubership-apihub-ui-shared/utils/comparers'
 import { toRef } from '@apihub/entities/refs'
-import { type DiffTypeDto, replacePropertyInChangesSummary } from '@netcracker/qubership-apihub-api-processor'
+import type { DiffTypeDto} from '@netcracker/qubership-apihub-api-processor'
+import { replacePropertyInChangesSummary } from '@netcracker/qubership-apihub-api-processor'
 import type { ChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 
 const PROJECT_VERSION_CONTENT_QUERY_KEY = 'project-version-content'
@@ -72,7 +73,6 @@ export async function getProjectVersionContent(
 
 function toProjectVersionContent(value: ProjectVersionContentDto): ProjectVersionContent {
   return {
-    key: crypto.randomUUID(),
     status: value.status,
     summary: replacePropertyInChangesSummary(value.summary as ChangesSummary<DiffTypeDto>),
     publishedAt: new Date(value.publishedAt).toDateString(),

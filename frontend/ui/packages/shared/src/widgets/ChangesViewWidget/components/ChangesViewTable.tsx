@@ -265,9 +265,9 @@ export const ChangesViewTable: FC<ChangeViewTableProps> = memo<ChangeViewTablePr
           ))}
         </TableHead>
         <TableBody>
-          {getRowModel().rows.map(row => (
-            <Fragment key={crypto.randomUUID()}>
-              <TableRow key={row.id} sx={{ backgroundColor: ACTION_TYPE_COLOR_MAP[row.original.change?.action] }}>
+          {getRowModel().rows.map((row) => (
+            <Fragment key={row.id}>
+              <TableRow sx={{ backgroundColor: ACTION_TYPE_COLOR_MAP[row.original.change?.action] }}>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id} data-testid={`Cell-${cell.column.id}`}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

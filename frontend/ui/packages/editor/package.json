@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-ui-editor",
-  "version": "2.11.1",
+  "version": "2.11.1-feature-revision-use-crypto-random.0",
   "license": "Apache-2.0",
   "files": [
     "/dist"

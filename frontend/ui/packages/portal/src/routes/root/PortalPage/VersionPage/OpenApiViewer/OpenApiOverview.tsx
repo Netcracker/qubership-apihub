@@ -81,7 +81,13 @@ export const OpenApiOverview: FC<OpenApiOverviewProps> = memo<OpenApiOverviewPro
       >
         {labels && labels.length !== 0 && (
           <Box sx={blockStyle} data-testid="DocumentLabels">
-            {labels.map(label => <CustomChip key={crypto.randomUUID()} value={label} sx={{ mr: 1 }}/>)}
+            {labels.map(label => (
+              <CustomChip
+                key={`open-api-overview-custom-chip-${label}`}
+                value={label}
+                sx={{ mr: 1 }}
+              />
+            ))}
           </Box>
         )}
         <Box sx={blockStyle}>
@@ -91,7 +97,7 @@ export const OpenApiOverview: FC<OpenApiOverviewProps> = memo<OpenApiOverviewPro
         </Box>
         {description && (
           <Box sx={blockStyle}>
-            <MarkdownViewer value={description}/>
+            <MarkdownViewer value={description} />
           </Box>
         )}
         {info?.termsOfService && (

@@ -45,10 +45,10 @@ export const PackageSearchList: FC<PackageSearchListProps> = memo<PackageSearchL
 
   return (
     <Box width={CONTENT_WIDTH} position="relative">
-      {value.map(({ packageKey, name, parentPackages, createdAt, serviceName, labels, version, status }) => {
+      {value.map(({ packageKey, name, parentPackages, createdAt, serviceName, labels, version, status }, index) => {
         const { versionKey } = getSplittedVersionKey(version)
         return (
-          <Box mb={2} key={crypto.randomUUID()} data-testid="SearchResultRow">
+          <Box mb={2} key={`package-search-list-box-${packageKey}-${versionKey}`} data-testid="SearchResultRow">
             <ResultCommonHeader
               url={getOverviewPath({ packageKey: packageKey, versionKey: versionKey })}
               title={`${name} / ${versionKey}`}

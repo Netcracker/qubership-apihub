@@ -39,7 +39,7 @@ export const ConfigureDashboardNavigation: FC = memo(() => {
     <List>
       {CONFIGURE_DASHBOARD_SIDEBAR.map(({ id, title, testId }) =>
         <ListItem
-          key={crypto.randomUUID()}
+          key={`configure-dashboard-navigation-list-item-${id}-${title}`}
           sx={{ p: 0 }}
         >
           <ListItemButton

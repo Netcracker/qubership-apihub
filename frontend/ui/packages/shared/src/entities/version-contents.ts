@@ -27,7 +27,6 @@ import type { DiffType } from '@netcracker/qubership-apihub-api-diff'
 export type NumberOfImpactedOperations = ChangesSummary
 
 export type PackageVersionContent = Readonly<{
-  key: Key
   version: Key
   packageKey: Key
   status: VersionStatus

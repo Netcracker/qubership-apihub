@@ -25,7 +25,6 @@ export type Snapshots = {
 }
 
 export type Snapshot = Readonly<{
-  key: SnapshotKey
   versionKey: VersionKey
   previousVersionKey?: VersionKey
   createdAt: string
@@ -56,7 +55,6 @@ export function toSnapshots(value: SnapshotsDto): Snapshots {
     packageKey: value.packageId,
     snapshots: value.snapshots.map(snapshot => {
       return ({
-        key: crypto.randomUUID(),
         versionKey: snapshot.version,
         previousVersionKey: snapshot.previousVersion === '' ? undefined : snapshot.previousVersion,
         createdAt: snapshot.createdAt,

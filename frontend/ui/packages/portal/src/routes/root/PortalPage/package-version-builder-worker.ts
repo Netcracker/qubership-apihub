@@ -52,6 +52,7 @@ import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { API_V3, NotFoundError } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { packToZip } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { v4 as uuidv4 } from 'uuid'
 
 /*
 For using worker in proxy mode you need to change common apihub-shared import
@@ -298,7 +299,7 @@ const worker: PackageVersionBuilderWorker = {
       return await exportOperations(options)
     } catch (error) {
       if (error instanceof NotFoundError) {
-        const builderId = crypto.randomUUID()
+        const builderId = uuidv4()
         await handleNotFound({ ...options, builderId })
         return await exportOperations(options)
       }
@@ -359,7 +360,7 @@ const worker: PackageVersionBuilderWorker = {
   },
   publishPackage: async (options, authorization): Promise<PublishDetails> => {
     const { packageId, sources } = options
-    const builderId = crypto.randomUUID()
+    const builderId = uuidv4()
     const sourcesZip = sources && await packToZip(sources)
     const {
       publishId,

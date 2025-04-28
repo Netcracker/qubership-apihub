@@ -76,7 +76,6 @@ export async function getGroupVersionContent(
 
 function toGroupVersionContent(value: GroupVersionContentDto): GroupVersionContent {
   return {
-    key: crypto.randomUUID(),
     status: value.status,
     publishedAt: new Date(value.publishedAt).toDateString(),
     specs: value.files.map(toPublishedSpec).sort((it, that) => alphabeticallyBy('title', it, that)),

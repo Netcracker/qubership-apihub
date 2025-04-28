@@ -20,6 +20,7 @@ import { lazy, memo, Suspense } from 'react'
 import type { PlaygroundElementProps } from './PlaygroundElement'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { getToken } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
+import { v4 as uuidv4 } from 'uuid'
 
 export type PlaygroundProps = PropsWithChildren<{
   document?: string
@@ -30,10 +31,12 @@ const PlaygroundElement: FC<PlaygroundElementProps> = lazy(() => import('./Playg
 
 export const Playground: FC<PlaygroundProps> = memo<PlaygroundProps>(({ document, customServers }) => {
   return (
-    <Suspense fallback={<LoadingIndicator />}>
+    <Suspense fallback={<LoadingIndicator/>}>
       <Box lineHeight={1.5} height="100%" width="100%" data-testid="PlaygroundPanel">
         <PlaygroundElement
-          key={crypto.randomUUID()}
+          //TODO: This key allows you to update the list of servers after adding a new one.
+          //TODO: It is necessary to find out why the list is not updated independently in order to get rid of key={uuidv4()}
+          key={uuidv4()}
           document={document}
           customServers={customServers}
           token={getToken()}

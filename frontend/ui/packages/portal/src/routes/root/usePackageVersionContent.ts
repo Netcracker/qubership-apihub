@@ -181,7 +181,6 @@ function toPackageVersionContent(value: PackageVersionContentDto): PackageVersio
   return {
     ...value,
     packageKey: value.packageId,
-    key: crypto.randomUUID(),
     createdAt: new Date(value.createdAt).toDateString(),
     operationTypes: toApiTypeMap(convertDtoFieldOperationTypesWithApiType(value.operationTypes)),
     latestRevision: !value?.notLatestRevision,

@@ -25,6 +25,7 @@ import type { ServiceKey, VersionKey } from '@netcracker/qubership-apihub-ui-sha
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
+import { v4 as uuidv4 } from 'uuid'
 
 export function usePromoteVersion(): [PromoteVersion, IsLoading, IsSuccess, IsError, Error | null] {
   const { agentId, namespaceKey } = useParams()
@@ -33,7 +34,7 @@ export function usePromoteVersion(): [PromoteVersion, IsLoading, IsSuccess, IsEr
 
   const { mutate, isLoading, isSuccess, isError, error } = useMutation<PublishConfig, Error, PromoteVersionOptions>({
     mutationFn: async ({ version, previousVersion, status, serviceKeys }) => {
-      const builderId = crypto.randomUUID()
+      const builderId = uuidv4()
 
       const config = await publishSnapshot(
         agentId!,

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Key, VersionKey } from './keys'
+import type { VersionKey } from './keys'
 import type { PublishedSpec, PublishedSpecDto } from './published-specs'
 import type { Ref, RefDto } from './refs'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
@@ -22,7 +22,6 @@ import type { ChangesSummary } from '@netcracker/qubership-apihub-ui-shared/enti
 import type { DiffTypeDto } from '@netcracker/qubership-apihub-api-processor'
 
 export type ProjectVersionContent = Readonly<{
-  key: Key
   status: VersionStatus
   publishedAt: string
   publishedBy: string
@@ -47,7 +46,6 @@ export type ProjectVersionContentDto = Readonly<{
 }>
 
 export type GroupVersionContent = Readonly<{
-  key: Key
   status: VersionStatus
   publishedAt: string
   specs: ReadonlyArray<PublishedSpec>

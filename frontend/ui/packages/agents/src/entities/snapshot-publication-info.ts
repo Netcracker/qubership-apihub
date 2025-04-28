@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { AgentKey, NamespaceKey, SnapshotKey, SnapshotPublishInfoKey, WorkspaceKey } from './keys'
+import type { AgentKey, NamespaceKey, SnapshotKey, WorkspaceKey } from './keys'
 import type { ServicePublishInfo, ServicePublishInfoDto } from './service-publish-info'
 import { toServicePublishInfo } from './service-publish-info'
 import { ncCustomAgentsRequestJson } from '@apihub/utils/requests'
@@ -23,7 +23,6 @@ import { APIHUB_NC_BASE_PATH } from '@netcracker/qubership-apihub-ui-shared/util
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 export type SnapshotPublicationInfo = Readonly<{
-  key: SnapshotPublishInfoKey
   services: ReadonlyArray<ServicePublishInfo>
   apiTypes?: ApiType[]
 }>
@@ -34,13 +33,11 @@ export type SnapshotPublicationInfoDto = Readonly<{
 }>
 
 export const EMPTY_SNAPSHOT_PUBLICATION_INFO: SnapshotPublicationInfo = {
-  key: '',
   services: [],
 }
 
 export function toSnapshotPublicationInfo(value: SnapshotPublicationInfoDto): SnapshotPublicationInfo {
   return {
-    key: crypto.randomUUID(),
     services: value.services.map(toServicePublishInfo),
     apiTypes: value.apiTypes,
   }

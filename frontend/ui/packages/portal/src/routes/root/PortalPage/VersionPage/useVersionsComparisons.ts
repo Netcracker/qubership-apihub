@@ -34,6 +34,7 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 import { getAuthorization } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
 import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
+import { v4 as uuidv4 } from 'uuid'
 
 const VERSION_CHANGES_QUERY_KEY = 'version-changes-query-key'
 
@@ -45,7 +46,7 @@ export function useVersionsComparisons(options?: {
   originVersionKey?: VersionKey
 }): [VersionsComparison[] | undefined, IsLoading, IsSuccess] {
   const { packageId: packageKey, versionId: versionKey } = useParams()
-  const builderId = crypto.randomUUID()
+  const builderId = uuidv4()
   const showErrorNotification = useShowErrorNotification()
 
   const [recalculateChangelog, setRecalculateChangelog] = useState(false)

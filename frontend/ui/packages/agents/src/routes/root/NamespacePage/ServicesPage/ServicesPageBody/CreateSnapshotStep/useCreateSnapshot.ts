@@ -28,6 +28,7 @@ import type { PublishConfig} from '@apihub/entities/publish-config'
 import { toPublishConfig } from '@apihub/entities/publish-config'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
+import { v4 as uuidv4 } from 'uuid'
 
 export function useCreateSnapshot(): [CreateSnapshot, IsLoading, IsSuccess, IsError, Error | null] {
   const { agentId, namespaceKey } = useParams()
@@ -43,7 +44,7 @@ export function useCreateSnapshot(): [CreateSnapshot, IsLoading, IsSuccess, IsEr
     error,
   } = useMutation<PublishConfig, Error, CreateSnapshotPublicationOptions>({
     mutationFn: async ({ name, baseline, serviceKeys }) => {
-      const builderId = crypto.randomUUID()
+      const builderId = uuidv4()
 
       const publishConfigDto = await publishSnapshot(
         agentId!,

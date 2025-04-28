@@ -45,7 +45,6 @@ export const OverviewNavigationItem: FC<OverviewNavigationItemProps> = memo<Over
 
   return (
     <ListItem
-      key={crypto.randomUUID()}
       sx={{ p: 0 }}
     >
       <ListItemButton

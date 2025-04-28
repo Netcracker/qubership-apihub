@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import type { AgentKey, NamespaceKey, SettingsKey, VersionKey, WorkspaceKey } from './keys'
+import type { AgentKey, NamespaceKey, VersionKey, WorkspaceKey } from './keys'
 import type { AutodiscoveryStatus } from './statuses'
 import { NONE_DISCOVERY_STATUS } from './statuses'
 import { ncCustomAgentsRequestJson, ncCustomAgentsRequestVoid } from '@apihub/utils/requests'
 
 export type Settings = Readonly<{
-  key: SettingsKey
   name: string
   versionKey: VersionKey
   previousVersionKey: VersionKey
@@ -41,7 +40,6 @@ export type SettingsDto = Readonly<{
 }>
 
 export const EMPTY_SETTINGS: Settings = {
-  key: '',
   name: '',
   versionKey: '',
   previousVersionKey: '',
@@ -53,7 +51,6 @@ export const EMPTY_SETTINGS: Settings = {
 
 export function toSettings(value: SettingsDto): Settings {
   return {
-    key: crypto.randomUUID(),
     name: value.name,
     versionKey: value.version,
     previousVersionKey: value.previousVersion,
