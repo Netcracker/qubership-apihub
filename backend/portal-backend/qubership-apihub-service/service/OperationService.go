@@ -32,6 +32,7 @@ type OperationService interface {
 	GetOperation(searchReq view.OperationBasicSearchReq) (interface{}, error)
 	GetOperationsTags(searchReq view.OperationBasicSearchReq, skipRefs bool) (*view.OperationTags, error)
 	GetOperationChanges(packageId string, version string, operationId string, previousPackageId string, previousVersion string, severities []string) (*view.OperationChangesView, error)
+	GetOperationChanges_deprecated_2(packageId string, version string, operationId string, previousPackageId string, previousVersion string, severities []string) (*view.OperationChangesView, error)
 	GetVersionChanges_deprecated(packageId string, version string, apiType string, searchReq view.VersionChangesReq) (*view.VersionChangesView, error)
 	GetVersionChanges(packageId string, version string, apiType string, searchReq view.VersionChangesReq) (*view.VersionChangesView, error)
 	SearchForOperations_deprecated(searchReq view.SearchQueryReq) (*view.SearchResult_deprecated, error)
@@ -362,6 +363,95 @@ func (o operationServiceImpl) GetOperationsTags(searchReq view.OperationBasicSea
 }
 
 func (o operationServiceImpl) GetOperationChanges(packageId string, version string, operationId string, previousPackageId string, previousVersion string, severities []string) (*view.OperationChangesView, error) {
+	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+	if err != nil {
+		return nil, err
+	}
+	if versionEnt == nil {
+		return nil, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.PublishedPackageVersionNotFound,
+			Message: exception.PublishedPackageVersionNotFoundMsg,
+			Params:  map[string]interface{}{"version": version, "packageId": packageId},
+		}
+	}
+
+	if previousVersion == "" || previousPackageId == "" {
+		if versionEnt.PreviousVersion == "" {
+			return nil, &exception.CustomError{
+				Status:  http.StatusNotFound,
+				Code:    exception.NoPreviousVersion,
+				Message: exception.NoPreviousVersionMsg,
+				Params:  map[string]interface{}{"version": version},
+			}
+		}
+		previousVersion = versionEnt.PreviousVersion
+		if versionEnt.PreviousVersionPackageId != "" {
+			previousPackageId = versionEnt.PreviousVersionPackageId
+		} else {
+			previousPackageId = packageId
+		}
+	}
+	previousVersionEnt, err := o.publishedRepo.GetVersion(previousPackageId, previousVersion)
+	if err != nil {
+		return nil, err
+	}
+	if previousVersionEnt == nil {
+		return nil, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.PublishedPackageVersionNotFound,
+			Message: exception.PublishedPackageVersionNotFoundMsg,
+			Params:  map[string]interface{}{"version": previousVersion, "packageId": previousPackageId},
+		}
+	}
+
+	comparisonId := view.MakeVersionComparisonId(
+		versionEnt.PackageId, versionEnt.Version, versionEnt.Revision,
+		previousVersionEnt.PackageId, previousVersionEnt.Version, previousVersionEnt.Revision,
+	)
+	versionComparison, err := o.publishedRepo.GetVersionComparison(comparisonId)
+	if err != nil {
+		return nil, err
+	}
+	if versionComparison == nil || versionComparison.NoContent {
+		return nil, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.ComparisonNotFound,
+			Message: exception.ComparisonNotFoundMsg,
+			Params: map[string]interface{}{
+				"comparisonId":      comparisonId,
+				"packageId":         versionEnt.PackageId,
+				"version":           versionEnt.Version,
+				"revision":          versionEnt.Revision,
+				"previousPackageId": previousVersionEnt.PackageId,
+				"previousVersion":   previousVersionEnt.Version,
+				"previousRevision":  previousVersionEnt.Revision,
+			},
+		}
+	}
+
+	changes := make([]interface{}, 0)
+	changedOperationEnt, err := o.operationRepository.GetOperationChanges(comparisonId, operationId, severities)
+	if err != nil {
+		return nil, err
+	}
+	if changedOperationEnt != nil {
+		changesView := entity.MakeOperationChangesListView(*changedOperationEnt)
+		for _, changeView := range changesView {
+			if len(severities) == 0 {
+				changes = append(changes, changeView)
+			} else {
+				if utils.SliceContains(severities, view.GetSingleOperationChangeCommon(changeView).Severity) {
+					changes = append(changes, changeView)
+
+				}
+			}
+		}
+	}
+	return &view.OperationChangesView{Changes: changes}, nil
+}
+
+func (o operationServiceImpl) GetOperationChanges_deprecated_2(packageId string, version string, operationId string, previousPackageId string, previousVersion string, severities []string) (*view.OperationChangesView, error) {
 	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
 	if err != nil {
 		return nil, err

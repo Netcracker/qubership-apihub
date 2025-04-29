@@ -376,21 +376,32 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities() ([]*e
 				}
 			}
 			for _, operationComparison := range operationChanges.OperationComparisons {
+				err = validateOperationComparison(operationComparison)
+				if err != nil {
+					return nil, nil, nil, &exception.CustomError{
+						Status:  http.StatusBadRequest,
+						Code:    exception.InvalidPackagedFile,
+						Message: exception.InvalidPackagedFileMsg,
+						Params:  map[string]interface{}{"file": comparison.ComparisonFileId, "error": err.Error()},
+					}
+				}
+
 				//todo maybe check that changedOperation.OperationId really exists in this package or in our db
 				operationComparisonEntities = append(operationComparisonEntities,
 					&entity.OperationComparisonEntity{
-						PackageId:         versionComparisonEnt.PackageId,
-						Version:           versionComparisonEnt.Version,
-						Revision:          versionComparisonEnt.Revision,
-						PreviousPackageId: versionComparisonEnt.PreviousPackageId,
-						PreviousVersion:   versionComparisonEnt.PreviousVersion,
-						PreviousRevision:  versionComparisonEnt.PreviousRevision,
-						ComparisonId:      versionComparisonEnt.ComparisonId,
-						OperationId:       operationComparison.OperationId,
-						DataHash:          operationComparison.DataHash,
-						PreviousDataHash:  operationComparison.PreviousDataHash,
-						ChangesSummary:    operationComparison.ChangeSummary,
-						Changes:           map[string]interface{}{"changes": operationComparison.Changes},
+						PackageId:           versionComparisonEnt.PackageId,
+						Version:             versionComparisonEnt.Version,
+						Revision:            versionComparisonEnt.Revision,
+						OperationId:         operationComparison.OperationId,
+						PreviousPackageId:   versionComparisonEnt.PreviousPackageId,
+						PreviousVersion:     versionComparisonEnt.PreviousVersion,
+						PreviousRevision:    versionComparisonEnt.PreviousRevision,
+						PreviousOperationId: operationComparison.PreviousOperationId,
+						ComparisonId:        versionComparisonEnt.ComparisonId,
+						DataHash:            operationComparison.DataHash,
+						PreviousDataHash:    operationComparison.PreviousDataHash,
+						ChangesSummary:      operationComparison.ChangeSummary,
+						Changes:             map[string]interface{}{"changes": operationComparison.Changes},
 					})
 			}
 		}
@@ -407,6 +418,33 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities() ([]*e
 		mainVersionComparison.Refs = mainVersionRefs
 	}
 	return versionComparisonEntities, operationComparisonEntities, versionComparisonsFromCache, nil
+}
+
+func validateOperationComparison(oc view.OperationComparison) error {
+	oidIsEmpty := false
+	if oc.OperationId == "" {
+		if oc.DataHash != "" {
+			return fmt.Errorf("invalid operation comparison: operationId is empty, but dataHash is set to %s", oc.DataHash)
+		}
+		oidIsEmpty = true
+	} else {
+		if oc.DataHash == "" {
+			return fmt.Errorf("invalid operation comparison: operationId is set to %s, but dataHash is empty", oc.OperationId)
+		}
+	}
+	if oc.PreviousOperationId == "" {
+		if oc.PreviousDataHash != "" {
+			return fmt.Errorf("invalid operation comparison: previousOperationId is empty, but previousDataHash is set to %s", oc.DataHash)
+		}
+		if oidIsEmpty {
+			return fmt.Errorf("invalid operation comparison: both operationId and previousOperationId are empty, jsonPath=%+v", oc.JsonPath)
+		}
+	} else {
+		if oc.PreviousDataHash == "" {
+			return fmt.Errorf("invalid operation comparison: previousOperationId is set to %s, but previousDataHash is empty", oc.PreviousOperationId)
+		}
+	}
+	return nil
 }
 
 func (a *BuildResultToEntitiesReader) ReadBuilderNotificationsToEntities(publishId string) []*entity.BuilderNotificationsEntity {
