@@ -37,6 +37,7 @@ import { AdditionalInfoArrayRow } from '../AdditionalInfoArrayRow'
 import { AdditionalInfoObjectRow } from '../AdditionalInfoObjectRow'
 import { DeprecationReasonRow } from './DeprecationReasonRow'
 import { DescriptionRow } from './Description/DescriptionRow'
+import { takeNodeChangeIfWholeNodeChanged } from '../../../utils/common/changes'
 
 export type AnnotationsProps = PropsWithoutChangesSummary<
   PropsWithShift &
@@ -76,6 +77,8 @@ export const Annotations: FC<AnnotationsProps> = (props) => {
   // Examples
   const examples = (nodeValue as IJsonSchemaBaseType)?.examples as unknown[]
 
+  const $appliedNodeChange = takeNodeChangeIfWholeNodeChanged($nodeChange ?? $nodeMeta?.$nodeChange)
+
   return (
     <>
       {isDefined(deprecationReason) && (
@@ -93,7 +96,7 @@ export const Annotations: FC<AnnotationsProps> = (props) => {
           value={description!}
           layoutMode={layoutMode}
           level={level}
-          $nodeChange={$nodeChange ?? $nodeMeta?.$nodeChange}
+          $nodeChange={$appliedNodeChange}
           $changes={$nodeValue?.$changes}
         />
       )}
@@ -107,7 +110,7 @@ export const Annotations: FC<AnnotationsProps> = (props) => {
           }}
           layoutMode={layoutMode}
           level={level}
-          $nodeChange={$nodeChange ?? $nodeMeta?.$nodeChange}
+          $nodeChange={$appliedNodeChange}
           $changes={$nodeValue?.$changes}
         />
       )}
@@ -121,7 +124,7 @@ export const Annotations: FC<AnnotationsProps> = (props) => {
           }}
           layoutMode={layoutMode}
           level={level}
-          $nodeChange={$nodeChange ?? $nodeMeta?.$nodeChange}
+          $nodeChange={$appliedNodeChange}
           $changes={$nodeValue?.$changes}
         />
       )}
@@ -133,7 +136,7 @@ export const Annotations: FC<AnnotationsProps> = (props) => {
           items={examples}
           layoutMode={layoutMode}
           level={level}
-          $nodeChange={$nodeChange ?? $nodeMeta?.$nodeChange}
+          $nodeChange={$appliedNodeChange}
           $changes={$nodeValue?.$changes}
         />
       )}

@@ -34,7 +34,7 @@ import { PropsWithChanges } from '../../../../types/internal/PropsWithChanges'
 import { PropsWithShift } from '../../../../types/internal/PropsWithShift'
 import { JsonPropNodePropsWithState } from '../../../../types/internal/PropsWithState'
 import { PropsWithoutChangesSummary } from '../../../../types/PropsWithoutChangesSummary'
-import { filterChangeKeys } from '../../../../utils/common/changes'
+import { filterChangeKeys, takeNodeChangeIfWholeNodeChanged } from '../../../../utils/common/changes'
 import { isDefined } from '../../../../utils/common/checkers'
 import {
   isAdditionalPropertyNode,
@@ -133,8 +133,7 @@ export const Validations: FC<ValidationsProps> = (props) => {
   const itemsCountChangeKeys = filterChangeKeys(array, ChangesKeys.itemsCount)
   // ---
 
-  const $actualNodeChange = $nodeChange ?? $nodeMeta?.$nodeChange
-  const $actualChanges = $nodeValue?.$changes
+  const $appliedNodeChange = takeNodeChangeIfWholeNodeChanged($nodeChange ?? $nodeMeta?.$nodeChange)
 
   return (
     <>
@@ -147,8 +146,8 @@ export const Validations: FC<ValidationsProps> = (props) => {
           items={any!.allowedValues}
           layoutMode={layoutMode}
           level={level}
-          $nodeChange={$actualNodeChange}
-          $changes={$actualChanges}
+          $nodeChange={$appliedNodeChange}
+          $changes={$nodeValue?.$changes}
         />
       )}
 
@@ -166,8 +165,8 @@ export const Validations: FC<ValidationsProps> = (props) => {
               }}
               layoutMode={layoutMode}
               level={level}
-              $nodeChange={$actualNodeChange}
-              $changes={$actualChanges}
+              $nodeChange={$appliedNodeChange}
+              $changes={$nodeValue?.$changes}
             />
           )}
           {isDefined(string?.pattern) && (
@@ -180,8 +179,8 @@ export const Validations: FC<ValidationsProps> = (props) => {
               }}
               layoutMode={layoutMode}
               level={level}
-              $nodeChange={$actualNodeChange}
-              $changes={$actualChanges}
+              $nodeChange={$appliedNodeChange}
+              $changes={$nodeValue?.$changes}
             />
           )}
         </>
@@ -198,7 +197,7 @@ export const Validations: FC<ValidationsProps> = (props) => {
               items={valueRangeHandledData}
               layoutMode={layoutMode}
               level={level}
-              $nodeChange={$actualNodeChange}
+              $nodeChange={$appliedNodeChange}
               $changes={valueRangeHandledChanges}
             />
           )}
@@ -212,8 +211,8 @@ export const Validations: FC<ValidationsProps> = (props) => {
               }}
               layoutMode={layoutMode}
               level={level}
-              $nodeChange={$actualNodeChange}
-              $changes={$actualChanges}
+              $nodeChange={$appliedNodeChange}
+              $changes={$nodeValue?.$changes}
             />
           )}
         </>
@@ -234,7 +233,7 @@ export const Validations: FC<ValidationsProps> = (props) => {
               }}
               layoutMode={layoutMode}
               level={level}
-              $nodeChange={$actualNodeChange}
+              $nodeChange={$appliedNodeChange}
             />
           )}
           {isAdditionalProperty && object?.allowedPropertyNames && (
@@ -245,7 +244,7 @@ export const Validations: FC<ValidationsProps> = (props) => {
               items={object!.allowedPropertyNames}
               layoutMode={layoutMode}
               level={level}
-              $nodeChange={$actualNodeChange}
+              $nodeChange={$appliedNodeChange}
               $changes={$parentNodeValue?.$changes}
             />
           )}
@@ -260,8 +259,8 @@ export const Validations: FC<ValidationsProps> = (props) => {
               }}
               layoutMode={layoutMode}
               level={level}
-              $nodeChange={$actualNodeChange}
-              $changes={$actualChanges}
+              $nodeChange={$appliedNodeChange}
+              $changes={$nodeValue?.$changes}
             />
           )}
         </>
@@ -280,8 +279,8 @@ export const Validations: FC<ValidationsProps> = (props) => {
               }}
               layoutMode={layoutMode}
               level={level}
-              $nodeChange={$actualNodeChange}
-              $changes={$actualChanges}
+              $nodeChange={$appliedNodeChange}
+              $changes={$nodeValue?.$changes}
             />
           )}
           {(isDefined(array?.minItems) || isDefined(array?.maxItems)) && (
@@ -295,8 +294,8 @@ export const Validations: FC<ValidationsProps> = (props) => {
               }}
               layoutMode={layoutMode}
               level={level}
-              $nodeChange={$actualNodeChange}
-              $changes={$actualChanges}
+              $nodeChange={$appliedNodeChange}
+              $changes={$nodeValue?.$changes}
             />
           )}
         </>
