@@ -581,3 +581,52 @@ StringToInteger.args = {
     },
   )
 }
+
+export const ChangePathParamName: any = Template.bind({})
+ChangePathParamName.args = {
+  mergedDocument: getMergedDocument(
+    {
+      openapi: '3.0.0',
+      paths: {
+        '/test/{id}': {
+          get: {
+            summary: 'Get test by id',
+            parameters: [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: {
+                  type: 'string',
+                  description: 'Id of the test',
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      openapi: '3.0.0',
+      paths: {
+        '/test/{key}': {
+          get: {
+            summary: 'Get test by key',
+            parameters: [
+              { 
+                name: 'key',
+                in: 'path',
+                required: true,
+                schema: {
+                  type: 'string',
+                  description: 'Key of the test',
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  )
+}
+ChangePathParamName.storyName = '[path] Changed path param name'
