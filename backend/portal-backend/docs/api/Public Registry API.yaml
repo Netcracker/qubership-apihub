@@ -5167,6 +5167,8 @@ paths:
                   $ref: "#/components/examples/InternalServerError"
   "/api/v3/packages/{packageId}/versions/{version}/{apiType}/changes":
     get:
+      deprecated: true
+      x-deprecation-reason: New version of API is created - API api/v4/packages/{packageId}/versions/{version}/{apiType}/change
       tags:
         - Changes
         - Versions
@@ -5348,6 +5350,215 @@ paths:
                               $ref: "#/components/schemas/OperationInfoFromDifferentVersions"
                             currentOperation:
                               $ref: "#/components/schemas/OperationInfoFromDifferentVersions"
+                            changeSummary:
+                              allOf:
+                                - $ref: "#/components/schemas/ChangeSummary"
+                                - type: object
+                                  description: Number of declarative changes in one specific operation.
+                  packages:
+                    description: >
+                      A mapped list of the packageId and version name
+                      concatenation with At sign to the package objects.
+                        type: object
+                    additionalProperties:
+                      allOf:
+                        - $ref: "#/components/schemas/ReferencedPackage"
+                        - type: object
+                    example:
+                      QS.CloudQSS.CPQ.Q-TMF@2023.2:
+                        refId: QS.CloudQSS.CPQ.Q-TMF
+                        kind: package
+                        name: Quote Management TMF648
+                        version: "2022.2@5"
+                        status: release
+                        parentPackages: ["qubership", "Qubership JSS", "Sample Management"]
+                        deletedAt: "2023-05-30T17:17:11.755146Z"
+                        deletedBy: "user1221"
+                        notLatestRevision: true
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema: 
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v4/packages/{packageId}/versions/{version}/{apiType}/changes":
+    get:
+      tags:
+        - Changes
+        - Versions
+      summary: Get list of changed operations
+      description: |
+        Get changes between two compared package versions with details by operations.\
+        The result list depends on the API type.
+      operationId: getPackagesIdVersionsIdApiTypeChangesV4
+      security:
+        - BearerAuth: []
+        - api-key: []
+      parameters:
+        - $ref: "#/components/parameters/apiType"
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/apiAudience"
+        - $ref: "#/components/parameters/severity"
+        - name: previousVersion
+          in: query
+          description: |
+            Package previous version.\
+            If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used
+          schema:
+            type: string
+            example: "2022.3"
+        - name: previousVersionPackageId
+          in: query
+          description: |
+            Package unique identifier for previous version.\
+            If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used
+          schema:
+            type: string
+            example: "QS.RUNENV.K8S-SERVER.CJM-QSS-DEV-2.Q-TMF"
+        - name: version
+          in: path
+          description: |
+            Package version. 
+            The mask <version>@<revision> may be used for search in a specific revision.
+          required: true
+          schema:
+            type: string
+            example: "2022.3@3"
+        - name: refPackageId
+          description: Filter by package id of ref package and previous ref package.
+          in: query
+          schema:
+            type: string
+        - name: apiKind
+          description: Filter by api kind
+          in: query
+          schema:
+            type: string
+            enum:
+              - bwc
+              - no-bwc
+              - experimental
+        - name: documentSlug
+          in: query
+          description: Document unique string identifier
+          schema:
+            type: string
+            pattern: "^[a-z0-9-]"
+            example: "qitmf-v5-11-json"
+        - name: tag
+          in: query
+          schema:
+            type: string
+          description: |
+            A full match is required.\
+            Multiple tags separated by comma can be specified.
+        - name: emptyTag
+          in: query
+          description: |
+            Flag, filtering the operations without tags at all.
+            In response will be returned the list of operations, on what the tag is not filled in.
+            This attribute has a higher priority than the **tag**. In case, then **emptyTag: true**, it will override the **tag** filter.
+          schema:
+            type: boolean
+            default: false
+        - name: group
+          in: query
+          description: |
+            Name of the group for filtering.\
+            The filter is applied only to the groups of current version. Groups from previous version will be ignored.\
+            Either "group" or "emptyGroup" (= true) can be sent in the request, if both of them are specified then 400 will be returned in the response.
+          schema:
+            type: string
+            example: v1
+        - name: emptyGroup
+          in: query
+          description: |
+            Flag for filtering operations without a group.\
+            The filter is applied only to the groups of current version. Groups from previous version will be ignored.\
+            Either "group" or "emptyGroup" (= true) can be sent in the request, if both of them are specified then 400 will be returned in the response.
+          schema:
+            type: boolean
+            default: false
+        - name: textFilter
+          in: query
+          description: Filter by operation's title/path/method.
+          schema:
+            type: string
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - operations
+                properties:
+                  previousVersion:
+                    description: Name of the previous published version. The <version>@<revision> mask is used to return the revision number.
+                    type: string
+                    example: "2022.2@5"
+                  previousVersionPackageId:
+                    description: Previous release version package id.
+                    type: string
+                    example: "QS.CloudQSS.CPQ.Q-TMF"
+                  operations:
+                    type: array
+                    items:
+                      allOf:
+                        - oneOf:
+                          - title: RestOperation
+                            type: object
+                            properties:
+                              previousOperation:
+                                $ref: "#/components/schemas/RestOperationInfoFromDifferentVersions"
+                              currentOperation:
+                                $ref: "#/components/schemas/RestOperationInfoFromDifferentVersions"
+                          - title: GraphQLOperation
+                            type: object
+                            required:
+                              - type
+                              - method
+                            properties:
+                              previousOperation:
+                                $ref: "#/components/schemas/GqlOperationInfoFromDifferentVersions"
+                              currentOperation:
+                                $ref: "#/components/schemas/GqlOperationInfoFromDifferentVersions"
+                        - type: object
+                          required:
+                            - changeSummary
+                          properties:
                             changeSummary:
                               allOf:
                                 - $ref: "#/components/schemas/ChangeSummary"
@@ -10287,6 +10498,13 @@ paths:
             type: string
           description: If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used.
           example: QS.RUNENV.K8S-SERVER.CJM-QSS-DEV-2.Q-TMF
+        - in: query
+          name: previousVersionOperationId
+          description: Operation unique identifier from previous version (not the same as operationId tag from the OpenAPI file).\
+            Empty, if requested operation is added in the current version; otherwise, must be specified.
+          schema:
+            type: string
+            example: get-quoteManagement-v5-quote-id
       responses:
         "200":
           description: Success
@@ -13528,7 +13746,7 @@ components:
       required: true
       schema:
         type: string
-        example: "get-quoteManagement-v5-quote"
+        example: "get-quoteManagement-v5-quote-quoteId"
     modelName:
       name: modelName
       in: path
@@ -14982,6 +15200,103 @@ components:
             version name with At sign.
           type: string
           example: QS.CloudQSS.CPQ.Q-TMF@2023.2
+    OperationInfoFromDifferentVersionsV2:
+      description: Operation info from previous/current version.
+      type: object
+      required:
+        - operationId
+        - title
+        - apiKind
+        - dataHash
+        - apiAudience
+      properties:
+        operationId:
+          description: Operation unique identifier (for rest api this operationId is not the same as operationId field from the OpenAPI file).
+          type: string
+          example: get-quoteManagement-v5-quote
+        title:
+          description: Operation summary/title.
+          type: string
+        apiKind:
+          type: string
+          enum:
+            - bwc
+            - no-bwc
+            - experimental
+        apiAudience:
+          description: |
+            Operation's target audience:
+            * internal - APIs are available for integration within product application.
+            * external - APIs exposed outside the boundary of product application: solution delivery integrations, 3rd party integrations, customer integrations.
+            * unknown - If any value other than internal or external is used, the API is considered as unknown.
+          type: string
+          enum:
+            - internal
+            - external
+            - unknown
+        tags:
+          description: Tags of operation. For rest - tag is taken from OAS, for graphql - tag is root schema type (query, mutation, subscription).
+          type: array
+          items:
+            type: string
+          example: ["Access Control API, Address Management API"]
+        dataHash:
+          description: Operation hash.
+          type: string
+          example: sdfsdfsf242
+        packageRef:
+          description: >
+            Parent package and version link. Created by
+            the concatenation of the packageId and
+            version name with At sign.
+          type: string
+          example: QS.CloudQSS.CPQ.Q-TMF@2023.2
+    RestOperationInfoFromDifferentVersions:
+      description: Operation info from previous/current version.
+      allOf:
+        - $ref: "#/components/schemas/OperationInfoFromDifferentVersionsV2"
+        - type: object
+          required:
+            - path
+            - method
+          properties:
+            path:
+              description: Operation endpoint path.
+              type: string
+              example: "/quoteManagement/v5/quote"
+            method:
+              description: Operation method.
+              type: string
+              enum:
+                - post
+                - get
+                - put
+                - patch
+                - delete
+                - head
+                - options
+                - connect
+                - trace
+    GqlOperationInfoFromDifferentVersions:
+      description: Operation info from previous/current version.
+      allOf:  
+        - $ref: "#/components/schemas/OperationInfoFromDifferentVersionsV2"
+        - type: object
+          required:
+            - type
+            - method
+          properties:
+            type:
+              description: Operation type
+              type: string
+              enum:
+                - query
+                - mutation
+                - subscription
+            method:
+              description: GraphQL operation method.
+              type: string
+              example: getPaymentMethodSpecificationCore
     BusinessMetric:
       description: Business metric
       title: BusinessMetric
@@ -15796,16 +16111,21 @@ components:
               items:
                 type: object
                 required:
-                  - operationId
                   - changes
                   - changesSummary
                 properties:
                   operationId:
                     description: >-
-                      Operation unique identifier (slug). Not the same as
-                      operationId tag from the OpenAPI file.
+                      Operation unique identifier (not the same as operationId tag from the OpenAPI file).\
+                      Parameter is required if operation was added or modified.
                     type: string
-                    example: get-quoteManagement-v5-quote
+                    example: get-quoteManagement-v5-quote-quoteId
+                  previousOperationId:
+                    description: >-
+                      Operation unique identifier from previous version (not the same as operationId tag from the OpenAPI file).\
+                      Parameter is required if operation was deleted or modified.
+                    type: string
+                    example: get-quoteManagement-v5-quote-id
                   dataHash:
                     description: Operation hash.
                     type: string
