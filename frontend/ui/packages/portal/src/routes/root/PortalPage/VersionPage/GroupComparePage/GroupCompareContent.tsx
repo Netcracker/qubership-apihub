@@ -41,6 +41,7 @@ import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/sea
 import {
   FILTERS_SEARCH_PARAM,
   GROUP_SEARCH_PARAM,
+  OPERATION_SEARCH_PARAM,
   optionalSearchParams,
   PACKAGE_SEARCH_PARAM,
   REF_SEARCH_PARAM,
@@ -144,7 +145,7 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
 
   if (changesLoadingStatus || isEmpty(groupChanges)) {
     return (
-      <LoadingIndicator/>
+      <LoadingIndicator />
     )
   }
 
@@ -173,19 +174,24 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
               filteredGroupChanges.map((change) => {
                 const {
                   operationId,
+                  previousOperationId,
                   changeSummary,
                   metadata: metadataObject,
+                  previousMetadata: previousMetadataObject,
                   diffs,
                 } = change
 
                 const metadata = metadataObject as OperationChangesMetadata & Partial<RestChangesMetadata> & Partial<GraphQLChangesMetadata>
+                const previousMetadata = previousMetadataObject as OperationChangesMetadata & Partial<RestChangesMetadata> & Partial<GraphQLChangesMetadata>
 
                 const { action } = diffs?.[0] ?? {}
                 const operationAction = getActionForOperation(change, REPLACE_ACTION_TYPE)
                 const severity = getMajorSeverity(changeSummary!)
 
-                const isMetaDataPresent = !!(metadata?.title && metadata?.path && metadata?.method)
-                const previousMetadata = metadata?.previousOperationMetadata
+                const isMetaDataPresent = !!(
+                  metadata?.title && metadata?.path && metadata?.method ||
+                  previousMetadata?.title && previousMetadata?.path && previousMetadata?.method
+                )
 
                 const comparingSearchParams = optionalSearchParams({
                   [PACKAGE_SEARCH_PARAM]: { value: changedPackageKey === originPackageKey ? '' : encodeURIComponent(originPackageKey!) },
@@ -193,11 +199,12 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
                   [REF_SEARCH_PARAM]: { value: refPackageKey },
                   [GROUP_SEARCH_PARAM]: { value: previousGroup },
                   [FILTERS_SEARCH_PARAM]: { value: [...CHANGE_SEVERITIES].join() },
+                  [OPERATION_SEARCH_PARAM]: { value: operationId ? previousOperationId : undefined },
                 })
 
                 return (
                   <Grid
-                    key={`group-compare-content-filtered-group-changes-grid-${operationId}`}
+                    key={`compare-group-${group}-operations-${operationId}-${previousOperationId}`}
                     component={NavLink}
                     container
                     spacing={0}
@@ -215,7 +222,7 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
                         encodeURIComponent(changedVersionKey!),
                         encodeURIComponent(group!),
                         `${apiType}`,
-                        encodeURIComponent(operationId),
+                        encodeURIComponent(operationId ?? previousOperationId!),
                       ),
                       search: `${comparingSearchParams}`,
                     }}
@@ -252,7 +259,7 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
                         <Spec
                           key={operationId}
                           value={isMetaDataPresent && action !== ADD_ACTION_TYPE && previousMetadata ||
-                          !previousMetadata && action === REMOVE_ACTION_TYPE ? {
+                            !previousMetadata && action === REMOVE_ACTION_TYPE ? {
                             title: previousMetadata?.title ?? metadata.title,
                             operationId: operationId,
                             method: previousMetadata?.method ?? metadata.method,
@@ -271,7 +278,7 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
                       <Spec
                         key={`changed-${operationId}`}
                         value={isMetaDataPresent && action !== REMOVE_ACTION_TYPE && previousMetadata ||
-                        !previousMetadata && action === ADD_ACTION_TYPE ? {
+                          !previousMetadata && action === ADD_ACTION_TYPE ? {
                           title: metadata.title,
                           operationId: operationId,
                           method: metadata.method,
@@ -306,7 +313,7 @@ const Spec: FC<SpecProps> = memo<SpecProps>(({ value, changes }) => {
 
   const secondary = (
     <Box component="span" sx={{ display: 'flex', alignItems: 'center' }} data-testid="OperationPath">
-      {method && <CustomChip component="span" sx={{ mr: 1 }} value={method} variant={'outlined'}/>}
+      {method && <CustomChip component="span" sx={{ mr: 1 }} value={method} variant={'outlined'} />}
       {path && (
         <OverflowTooltip title={path}>
           <Typography component="span" noWrap variant="inherit">{path}</Typography>
@@ -335,7 +342,7 @@ const Spec: FC<SpecProps> = memo<SpecProps>(({ value, changes }) => {
         />
       </Box>
       {changes && (
-        <Changes value={changes}/>
+        <Changes value={changes} />
       )}
     </ListItem>
   )

@@ -14,61 +14,61 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo, useCallback, useEffect, useMemo } from 'react'
-import { Box, Card, CardContent, Grid, ListItem } from '@mui/material'
-import { NavLink } from 'react-router-dom'
-import { API_AUDIENCE_EXTERNAL, type ChangeSummary } from '@netcracker/qubership-apihub-api-processor'
-import { useBackwardLocation } from '../../../useBackwardLocation'
-import { useChangesLoadingStatus, useSetChangesLoadingStatus } from '../ChangesLoadingStatusProvider'
-import { useChangesSummaryContext } from '../ChangesSummaryProvider'
-import { useTagSearchFilter } from '../useTagSearchFilter'
-import { useRefSearchParam } from '../../useRefSearchParam'
-import { useBreadcrumbsData } from '../ComparedPackagesBreadcrumbsProvider'
-import { useVersionsComparisonGlobalParams } from '../VersionsComparisonGlobalParams'
-import { VERSION_SWAPPER_HEIGHT } from '../shared-styles'
-import { ComparisonSwapper } from '../ComparisonSwapper'
-import { useIsPackageFromDashboard } from '../../useIsPackageFromDashboard'
-import { useNavigation } from '../../../../NavigationProvider'
 import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
 import { useEventBus } from '@apihub/routes/EventBusProvider'
-import type { OperationWithDifferenceChangeData } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
-import {
-  useSeverityFiltersSearchParam,
-} from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
-import { filterChangesBySeverity, getMajorSeverity } from '@netcracker/qubership-apihub-ui-shared/utils/change-severities'
-import {
-  API_TYPE_SEARCH_PARAM,
-  FILTERS_SEARCH_PARAM,
-  optionalSearchParams,
-  PACKAGE_SEARCH_PARAM,
-  REF_SEARCH_PARAM,
-  TAG_SEARCH_PARAM,
-  VERSION_SEARCH_PARAM,
-} from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
+import { Box, Card, CardContent, Grid, ListItem } from '@mui/material'
+import { type ChangeSummary } from '@netcracker/qubership-apihub-api-processor'
+import { ChangeSeverityIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityIndicator'
+import { Changes } from '@netcracker/qubership-apihub-ui-shared/components/Changes'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
+import { OperationTitleWithMeta } from '@netcracker/qubership-apihub-ui-shared/components/Operations/OperationTitleWithMeta'
 import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import { format } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
 import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import {
   ACTION_TYPE_COLOR_MAP,
   ADD_ACTION_TYPE,
   REMOVE_ACTION_TYPE,
 } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
-import { ChangeSeverityIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityIndicator'
 import type { Operation } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { ALL_API_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { OperationTitleWithMeta } from '@netcracker/qubership-apihub-ui-shared/components/Operations/OperationTitleWithMeta'
-import { Changes } from '@netcracker/qubership-apihub-ui-shared/components/Changes'
-import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
-import type { Key } from '@netcracker/qubership-apihub-ui-shared/utils/types'
+import type { OperationChangeBase } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
 import {
-  useDetailedVersionChangelog,
-} from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/api/useDetailedVersionChangelog'
+  useSeverityFiltersSearchParam,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
+import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import { filterChangesBySeverity, getMajorSeverity } from '@netcracker/qubership-apihub-ui-shared/utils/change-severities'
+import {
+  API_TYPE_SEARCH_PARAM,
+  FILTERS_SEARCH_PARAM,
+  OPERATION_SEARCH_PARAM,
+  optionalSearchParams,
+  PACKAGE_SEARCH_PARAM,
+  REF_SEARCH_PARAM,
+  TAG_SEARCH_PARAM,
+  VERSION_SEARCH_PARAM,
+} from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
+import { format } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
+import type { Key } from '@netcracker/qubership-apihub-ui-shared/utils/types'
+import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import {
   usePagedDetailedVersionChangelog,
 } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/api/useCommonPagedVersionChangelog'
+import {
+  useDetailedVersionChangelog,
+} from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/api/useDetailedVersionChangelog'
+import type { FC } from 'react'
+import { memo, useCallback, useEffect, useMemo } from 'react'
+import { NavLink } from 'react-router-dom'
+import { useNavigation } from '../../../../NavigationProvider'
+import { useBackwardLocation } from '../../../useBackwardLocation'
+import { useIsPackageFromDashboard } from '../../useIsPackageFromDashboard'
+import { useRefSearchParam } from '../../useRefSearchParam'
+import { useChangesLoadingStatus, useSetChangesLoadingStatus } from '../ChangesLoadingStatusProvider'
+import { useChangesSummaryContext } from '../ChangesSummaryProvider'
+import { useBreadcrumbsData } from '../ComparedPackagesBreadcrumbsProvider'
+import { ComparisonSwapper } from '../ComparisonSwapper'
+import { useVersionsComparisonGlobalParams } from '../VersionsComparisonGlobalParams'
+import { VERSION_SWAPPER_HEIGHT } from '../shared-styles'
+import { useTagSearchFilter } from '../useTagSearchFilter'
 
 export function isRevisionCompare(originVersion: Key, changedVersion: Key): boolean {
   const {
@@ -127,7 +127,7 @@ export const VersionCompareContent: FC = memo(() => {
     limit: 100,
   })
   const flatPackageChangelog = useDetailedVersionChangelog(packageChangelog)
-  const packageChanges: ReadonlyArray<OperationWithDifferenceChangeData> = flatPackageChangelog.operations
+  const packageChanges: ReadonlyArray<OperationChangeBase> = flatPackageChangelog.operations
 
   useEffect(() => {
     // Fetch next page
@@ -146,7 +146,8 @@ export const VersionCompareContent: FC = memo(() => {
   const [filters] = useSeverityFiltersSearchParam()
   const filteredPackageChanges = useMemo(
     () => packageChanges.filter(change => filterChangesBySeverity(filters, change.changeSummary)),
-    [filters, packageChanges])
+    [filters, packageChanges],
+  )
 
   const onClickOperationChange = (): void => {
     setBackwardLocation({ ...backwardLocation, fromOperationsComparison: location })
@@ -202,26 +203,11 @@ export const VersionCompareContent: FC = memo(() => {
             {
               filteredPackageChanges.map((operationChange) => {
                 const {
-                  operationKey,
                   action,
                   changeSummary,
                   currentOperation,
                   previousOperation,
                 } = operationChange
-
-                const firstOperation: Operation = {
-                  ...operationChange,
-                  title: previousOperation?.title ?? '',
-                  apiKind: previousOperation?.apiKind ?? ALL_API_KIND,
-                  apiAudience: previousOperation?.apiAudience ?? API_AUDIENCE_EXTERNAL,
-                }
-
-                const secondOperation: Operation = {
-                  ...operationChange,
-                  title: currentOperation?.title ?? '',
-                  apiKind: currentOperation?.apiKind ?? ALL_API_KIND,
-                  apiAudience: currentOperation?.apiAudience ?? API_AUDIENCE_EXTERNAL,
-                }
 
                 const severity = getMajorSeverity(changeSummary)
 
@@ -229,11 +215,16 @@ export const VersionCompareContent: FC = memo(() => {
                   [PACKAGE_SEARCH_PARAM]: { value: changedPackageKey === originPackageKey ? '' : encodeURIComponent(originPackageKey!) },
                   [VERSION_SEARCH_PARAM]: { value: originVersionKey! },
                   [REF_SEARCH_PARAM]: { value: refPackageKey },
+                  [OPERATION_SEARCH_PARAM]: {
+                    value: currentOperation?.operationKey
+                      ? previousOperation?.operationKey
+                      : undefined,
+                  },
                 })
 
                 return (
                   <Grid
-                    key={`compared-operations-${operationKey}`}
+                    key={`compared-operations-${previousOperation?.operationKey}-${currentOperation?.operationKey}`}
                     component={NavLink}
                     container
                     spacing={0}
@@ -250,7 +241,10 @@ export const VersionCompareContent: FC = memo(() => {
                         encodeURIComponent(changedPackageKey!),
                         encodeURIComponent(changedVersionKey!),
                         `${apiType}`,
-                        encodeURIComponent(operationKey),
+                        encodeURIComponent(
+                          currentOperation?.operationKey ??
+                          previousOperation!.operationKey,
+                        ),
                       ),
                       search: `${comparingSearchParams}`,
                     }}
@@ -285,8 +279,8 @@ export const VersionCompareContent: FC = memo(() => {
                           }}
                         />
                         <OperationChangesSummary
-                          key={operationKey}
-                          operation={action !== ADD_ACTION_TYPE ? firstOperation : undefined}
+                          key={`original-${previousOperation?.operationKey}`}
+                          operation={action !== ADD_ACTION_TYPE ? previousOperation : undefined}
                         />
                       </Box>
                     </Grid>
@@ -298,8 +292,8 @@ export const VersionCompareContent: FC = memo(() => {
                       data-testid="RightComparisonSummary"
                     >
                       <OperationChangesSummary
-                        key={`changed-${operationKey}`}
-                        operation={action !== REMOVE_ACTION_TYPE ? secondOperation : undefined}
+                        key={`changed-${currentOperation?.operationKey}`}
+                        operation={action !== REMOVE_ACTION_TYPE ? currentOperation : undefined}
                         changes={changeSummary}
                       />
                     </Grid>

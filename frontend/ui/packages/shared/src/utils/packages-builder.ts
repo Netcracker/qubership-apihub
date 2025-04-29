@@ -72,33 +72,31 @@ export async function fetchOperations(
   operationIds: string[] | undefined,
   includeData: boolean | undefined,
   authorization: string,
-  limit = 100,
-): Promise<OperationsDto | null> {
-  try {
-    const queryParams = optionalSearchParams({
-      ids: { value: operationIds },
-      includeData: { value: includeData },
-      limit: { value: limit },
-    })
-    const packageId = encodeURIComponent(packageKey)
-    const versionId = encodeURIComponent(versionKey)
-    const apiType = operationsApiType.toLowerCase()
+  page: number = 0,
+  limit: number = 100,
+): Promise<OperationsDto> {
+  const queryParams = optionalSearchParams({
+    ids: { value: operationIds },
+    includeData: { value: includeData },
+    page: { value: page },
+    limit: { value: limit },
+  })
+  const packageId = encodeURIComponent(packageKey)
+  const versionId = encodeURIComponent(versionKey)
+  const apiType = operationsApiType.toLowerCase()
 
-    const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/operations'
-    return await requestJson<OperationsDto>(
-      `${generatePath(pathPattern, { packageId, versionId, apiType })}?${queryParams}`,
-      {
-        headers: { authorization },
-        method: 'get',
-      },
-      {
-        basePath: API_V2,
-        customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
-      },
-    )
-  } catch (error) {
-    return null
-  }
+  const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/operations'
+  return requestJson<OperationsDto>(
+    `${generatePath(pathPattern, { packageId, versionId, apiType })}?${queryParams}`,
+    {
+      headers: { authorization },
+      method: 'get',
+    },
+    {
+      basePath: API_V2,
+      customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
+    },
+  )
 }
 
 export async function fetchDeprecatedItems(
@@ -311,7 +309,7 @@ export function toVersionOperation(value: OperationDto): ResolvedOperation {
     deprecated: value.deprecated ?? false,
     title: value.title,
     metadata: metadata,
-    apiType: API_TYPE_REST,
+    apiType: value.apiType,
   }
 }
 

@@ -18,7 +18,7 @@ import type { FC, HTMLAttributes } from 'react'
 import * as React from 'react'
 import { memo, useMemo } from 'react'
 import type { Operation } from '../entities/operations'
-import { isRestOperation } from '../entities/operations'
+import { isGraphQlOperation, isRestOperation } from '../entities/operations'
 import type { TestableProps } from './Testable'
 import { OptionItem } from './OptionItem'
 
@@ -35,7 +35,9 @@ export const OperationOptionItem: FC<OperationOptionItemProps> = memo<OperationO
   const [subtitle, chipValue] = useMemo(() => (
     isRestOperation(operation)
       ? [operation.path, operation.method]
-      : [operation.method, operation.type]
+      : isGraphQlOperation(operation)
+        ? [operation.type, operation.method]
+        : ['unknown', 'unknown'] // Default, should not happen
   ), [operation])
 
   return (

@@ -14,29 +14,30 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo } from 'react'
-import { useParams } from 'react-router-dom'
-import { useOperation } from '../useOperation'
-import { useOperationLocation } from '../useOperationLocation'
-import { ComparisonToolbar } from '../ComparisonToolbar'
-import { SelectedOperationTagsProvider } from '../SelectedOperationTagsProvider'
-import { CompareOperationPathsDialog } from '../CompareOperationPathsDialog'
-import { ChangesLoadingStatusProvider } from '../ChangesLoadingStatusProvider'
-import { usePackageParamsWithRef } from '../../usePackageParamsWithRef'
-import { VersionsComparisonGlobalParamsContext } from '../VersionsComparisonGlobalParams'
-import { ComparedOperationsContext } from '../ComparedOperationsContext'
-import { useComparisonParams } from '@apihub/routes/root/PortalPage/VersionPage/useComparisonParams'
+import { OperationContent } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationContent'
 import {
   COMPARE_DIFFERENT_OPERATIONS_MODE,
 } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationDisplayMode'
-import { OperationContent } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationContent'
-import { BreadcrumbsDataContext } from '../ComparedPackagesBreadcrumbsProvider'
+import { VERSION_SWAPPER_HEIGHT } from '@apihub/routes/root/PortalPage/VersionPage/shared-styles'
 import { useCompareBreadcrumbs } from '@apihub/routes/root/PortalPage/VersionPage/useCompareBreadcrumbs'
 import { useComparisonObjects } from '@apihub/routes/root/PortalPage/VersionPage/useComparisonObjects'
+import { useComparisonParams } from '@apihub/routes/root/PortalPage/VersionPage/useComparisonParams'
 import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithToolbar'
-import { VERSION_SWAPPER_HEIGHT } from '@apihub/routes/root/PortalPage/VersionPage/shared-styles'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { OperationData, OptionalOperationPair } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import type { FC } from 'react'
+import { memo } from 'react'
+import { useParams } from 'react-router-dom'
+import { usePackageParamsWithRef } from '../../usePackageParamsWithRef'
+import { ChangesLoadingStatusProvider } from '../ChangesLoadingStatusProvider'
+import { ComparedOperationsContext } from '../ComparedOperationsContext'
+import { BreadcrumbsDataContext } from '../ComparedPackagesBreadcrumbsProvider'
+import { CompareOperationPathsDialog } from '../CompareOperationPathsDialog'
+import { ComparisonToolbar } from '../ComparisonToolbar'
+import { SelectedOperationTagsProvider } from '../SelectedOperationTagsProvider'
+import { useOperation } from '../useOperation'
+import { useOperationLocation } from '../useOperationLocation'
+import { VersionsComparisonGlobalParamsContext } from '../VersionsComparisonGlobalParams'
 
 export const DifferentOperationsComparisonPage: FC = memo(() => {
   const { operationId: changedOperationKey, apiType } = useParams()
@@ -64,9 +65,9 @@ export const DifferentOperationsComparisonPage: FC = memo(() => {
     enabled: !!changedPackageKey,
   })
 
-  const comparedOperationsPair = {
-    left: originOperation,
-    right: changedOperation,
+  const comparedOperationsPair: OptionalOperationPair<OperationData> = {
+    previousOperation: originOperation,
+    currentOperation: changedOperation,
     isLoading: isOriginOperationLoading || isChangedOperationLoading,
   }
 
@@ -86,7 +87,7 @@ export const DifferentOperationsComparisonPage: FC = memo(() => {
           <ChangesLoadingStatusProvider>
             <SelectedOperationTagsProvider>
               <LayoutWithToolbar
-                toolbar={<ComparisonToolbar compareToolbarMode={COMPARE_DIFFERENT_OPERATIONS_MODE}/>}
+                toolbar={<ComparisonToolbar compareToolbarMode={COMPARE_DIFFERENT_OPERATIONS_MODE} />}
                 body={
                   <OperationContent
                     changedOperation={changedOperation}
@@ -97,7 +98,7 @@ export const DifferentOperationsComparisonPage: FC = memo(() => {
                   />
                 }
               />
-              <CompareOperationPathsDialog/>
+              <CompareOperationPathsDialog />
             </SelectedOperationTagsProvider>
           </ChangesLoadingStatusProvider>
         </ComparedOperationsContext.Provider>

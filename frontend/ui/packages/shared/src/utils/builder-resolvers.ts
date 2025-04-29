@@ -60,14 +60,34 @@ export async function versionReferencesResolver(authorization: string): Promise<
 }
 
 export async function versionOperationsResolver(authorization: string): Promise<VersionOperationsResolver> {
-  return async (apiType, version, packageId, operations, includeData) => {
-    const fetchedOperations = await fetchOperations(apiType, packageId, version, operations, includeData, authorization)
+  return async (apiType, version, packageId, operationsIds, includeData) => {
+    const EMPTY_OPERATIONS = { operations: [] }
+    const limit = includeData ? 100 : 1000
+    const result = []
+    let page = 0
+    let operationsCount = 0
 
-    if (!fetchedOperations) {
-      return { operations: [] }
+    try {
+      while (page === 0 || operationsCount === limit) {
+        const { operations } = await fetchOperations(
+          apiType,
+          packageId,
+          version,
+          operationsIds,
+          includeData,
+          authorization,
+          page,
+          limit,
+        ) ?? EMPTY_OPERATIONS
+        page += 1
+        result.push(...operations)
+        operationsCount = operations.length
+      }
+      return { operations: result.map(toVersionOperation) }
+    } catch (error) {
+      console.error(error)
+      return EMPTY_OPERATIONS
     }
-
-    return { operations: fetchedOperations.operations.map(toVersionOperation) }
   }
 }
 

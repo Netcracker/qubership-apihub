@@ -17,7 +17,7 @@
 import type { FC } from 'react'
 import { memo } from 'react'
 import { OperationChangesSubTableWrapper } from './OperationChangesSubTableWrapper'
-import type { OperationChangeData } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
+import type { OperationChangeBase } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { FetchNextPage } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/components/ChangesViewTable'
 import { ChangesViewTable } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/components/ChangesViewTable'
@@ -30,7 +30,7 @@ import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 export type ChangesViewWidgetProps = {
-  changes: ReadonlyArray<OperationChangeData>
+  changes: ReadonlyArray<OperationChangeBase>
   packageKey: Key
   versionKey: Key
   isLoading: boolean

@@ -15,7 +15,7 @@
  */
 
 import { useMemo } from 'react'
-import type { OperationWithDifferenceChangeData, DifferentVersionChanges , PagedDiffVersionChanges } from '../../../entities/version-changelog'
+import type { OperationChangeBase, DifferentVersionChanges, PagedDiffVersionChanges } from '../../../entities/version-changelog'
 import { EMPTY_CHANGES } from '../../../entities/version-changelog'
 
 export function useDetailedVersionChangelog(versionChangelog: PagedDiffVersionChanges): DifferentVersionChanges {
@@ -23,7 +23,7 @@ export function useDetailedVersionChangelog(versionChangelog: PagedDiffVersionCh
     if (versionChangelog.length === 0) {
       return EMPTY_CHANGES
     }
-    const operations: OperationWithDifferenceChangeData[] = []
+    const operations: OperationChangeBase[] = []
     versionChangelog.forEach((page) => {
       operations.push(...page.operations)
     })

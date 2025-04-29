@@ -14,32 +14,34 @@
  * limitations under the License.
  */
 
-import type { Dispatch, SetStateAction } from 'react'
-import { useCallback } from 'react'
-import { getOperationsPath, useNavigation } from '../../../NavigationProvider'
-import { useOperationViewMode } from './useOperationViewMode'
-import { useSidebarPlaygroundViewMode } from './useSidebarPlaygroundViewMode'
-import { useDocumentSearchParam } from './useDocumentSearchParam'
-import type { Path } from '@remix-run/router'
-import { useTextSearchParam } from '../../useTextSearchParam'
-import { useFileViewMode } from './useFileViewMode'
-import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
+import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import { DOC_OPERATION_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
+import type { PackageRef } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import type { PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import {
   DOCUMENT_SEARCH_PARAM,
   FILE_VIEW_MODE_PARAM_KEY,
   MODE_SEARCH_PARAM,
+  OPERATION_SEARCH_PARAM,
   PLAYGROUND_SIDEBAR_VIEW_MODE_SEARCH_PARAM,
   REF_SEARCH_PARAM,
   SEARCH_TEXT_PARAM_KEY,
 } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
-import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
-import { DOC_OPERATION_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
-import type { PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import type { PackageRef } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { Path } from '@remix-run/router'
+import type { Dispatch, SetStateAction } from 'react'
+import { useCallback } from 'react'
+import { getOperationsPath, useNavigation } from '../../../NavigationProvider'
+import { useTextSearchParam } from '../../useTextSearchParam'
+import { useDocumentSearchParam } from './useDocumentSearchParam'
+import { useFileViewMode } from './useFileViewMode'
+import { useOperationSearchParam } from './useOperationSearchParam'
+import { useOperationViewMode } from './useOperationViewMode'
+import { useSidebarPlaygroundViewMode } from './useSidebarPlaygroundViewMode'
 
 export function useNavigateToOperation(packageKey: Key, versionKey: Key, apiType: ApiType, setShouldAutoExpand: Dispatch<SetStateAction<boolean>>): (operationKey: Key) => void {
   const { navigateToOperations } = useNavigation()
@@ -50,6 +52,7 @@ export function useNavigateToOperation(packageKey: Key, versionKey: Key, apiType
   const ref = useSearchParam(REF_SEARCH_PARAM)
   const [documentSlug] = useDocumentSearchParam()
   const [searchValue] = useTextSearchParam()
+  const [previousOperationKey] = useOperationSearchParam()
 
   return useCallback((operationKey: Key) => {
     setShouldAutoExpand(false)
@@ -66,9 +69,10 @@ export function useNavigateToOperation(packageKey: Key, versionKey: Key, apiType
         [PLAYGROUND_SIDEBAR_VIEW_MODE_SEARCH_PARAM]: { value: playgroundViewMode ?? '' },
         [DOCUMENT_SEARCH_PARAM]: { value: documentSlug },
         [SEARCH_TEXT_PARAM_KEY]: { value: searchValue },
+        [OPERATION_SEARCH_PARAM]: { value: previousOperationKey },
       },
     })
-  }, [apiType, documentSlug, fileViewMode, mode, navigateToOperations, packageKey, playgroundViewMode, ref, searchValue, setShouldAutoExpand, versionKey])
+  }, [apiType, documentSlug, fileViewMode, mode, navigateToOperations, packageKey, playgroundViewMode, ref, searchValue, setShouldAutoExpand, versionKey, previousOperationKey])
 }
 
 export function getOperationLink(params: {

@@ -30,31 +30,32 @@ import { Fragment, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { OperationChangeCell } from './OperationChangeCell'
 
 import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstack/react-query'
-import type { Key } from '../../../entities/keys'
-import type { OperationChangeData, VersionChangesData } from '../../../entities/version-changelog'
-import type { Package, PackageKind } from '../../../entities/packages'
-import { DASHBOARD_KIND } from '../../../entities/packages'
-import { DEFAULT_CONTAINER_WIDTH, useColumnsSizing } from '../../../hooks/table-resizing/useColumnResizing'
+import { Changes } from '../../../components/Changes'
+import { ColumnDelimiter } from '../../../components/ColumnDelimiter'
 import { CustomTableHeadCell } from '../../../components/CustomTableHeadCell'
 import { TextWithOverflowTooltip } from '../../../components/TextWithOverflowTooltip'
-import { DEFAULT_TAG } from '../../../entities/operations'
-import { Changes } from '../../../components/Changes'
-import { insertIntoArrayByIndex } from '../../../utils/arrays'
+import type { ApiType } from '../../../entities/api-types'
 import {
   ACTION_TYPE_COLOR_MAP,
   NON_BREAKING_CHANGE_SEVERITY,
   REPLACE_ACTION_TYPE,
   RISKY_CHANGE_SEVERITY,
 } from '../../../entities/change-severities'
+import type { Key } from '../../../entities/keys'
+import type { Tag } from '../../../entities/operations'
+import { DEFAULT_TAG } from '../../../entities/operations'
+import type { Package, PackageKind } from '../../../entities/packages'
+import { DASHBOARD_KIND } from '../../../entities/packages'
+import { API_AUDIENCE_COLUMN_ID, API_KIND_COLUMN_ID, ENDPOINT_COLUMN_ID, PACKAGE_COLUMN_ID, TAGS_COLUMN_ID } from '../../../entities/table-columns'
+import type { OperationChangeBase, VersionChangesData } from '../../../entities/version-changelog'
 import { useIntersectionObserver } from '../../../hooks/common/useIntersectionObserver'
-import { ColumnDelimiter } from '../../../components/ColumnDelimiter'
+import { useResizeObserver } from '../../../hooks/common/useResizeObserver'
+import { DEFAULT_CONTAINER_WIDTH, useColumnsSizing } from '../../../hooks/table-resizing/useColumnResizing'
+import { insertIntoArrayByIndex } from '../../../utils/arrays'
 import { createComponents } from '../../../utils/components'
 import { DEFAULT_NUMBER_SKELETON_ROWS } from '../../../utils/constants'
 import type { ChangesViewTableData } from '../const/table'
 import { CHANGES_COLUMN_ID, COLUMNS_MODELS } from '../const/table'
-import { useResizeObserver } from '../../../hooks/common/useResizeObserver'
-import type { ApiType } from '../../../entities/api-types'
-import { API_AUDIENCE_COLUMN_ID, API_KIND_COLUMN_ID, ENDPOINT_COLUMN_ID, PACKAGE_COLUMN_ID, TAGS_COLUMN_ID } from '../../../entities/table-columns'
 
 export type FetchNextPage = (options?: FetchNextPageOptions) => Promise<InfiniteQueryObserverResult<VersionChangesData, Error>>
 
@@ -67,7 +68,7 @@ export type SubTableComponentProps = {
 }
 
 export type ChangeViewTableProps = {
-  value: ReadonlyArray<OperationChangeData>
+  value: ReadonlyArray<OperationChangeBase>
   packageKey: Key
   versionKey: Key
   packageObject: Package | null
@@ -125,10 +126,13 @@ export const ChangesViewTable: FC<ChangeViewTableProps> = memo<ChangeViewTablePr
         id: TAGS_COLUMN_ID,
         header: () => <CustomTableHeadCell title="Tags" />,
         cell: ({ row: { original: { change } } }) => {
-          const content = (change?.tags ?? []).join(', ')
+          const currentOperation = change?.currentOperation
+          const previousOperation = change?.previousOperation
+          const tags = new Set<Tag>([...currentOperation?.tags ?? [], ...previousOperation?.tags ?? []])
+          const tagsString = Array.from(tags).join(', ')
           return (
-            <TextWithOverflowTooltip tooltipText={content}>
-              {content || DEFAULT_TAG}
+            <TextWithOverflowTooltip tooltipText={tagsString}>
+              {tagsString || DEFAULT_TAG}
             </TextWithOverflowTooltip>
           )
         },
@@ -165,7 +169,7 @@ export const ChangesViewTable: FC<ChangeViewTableProps> = memo<ChangeViewTablePr
       {
         id: API_KIND_COLUMN_ID,
         header: 'Kind',
-        cell: ({ row: { original: { change } } }) => change.apiKind,
+        cell: ({ row: { original: { change } } }) => change.currentOperation?.apiKind ?? change.previousOperation?.apiKind,
       },
     ]
 
@@ -173,8 +177,8 @@ export const ChangesViewTable: FC<ChangeViewTableProps> = memo<ChangeViewTablePr
       insertIntoArrayByIndex(result, {
         id: PACKAGE_COLUMN_ID,
         header: () => <CustomTableHeadCell title="Package" />,
-        cell: ({ row: { original: { change: { packageRef, previousPackageRef } } } }) => {
-          const ref = packageRef ?? previousPackageRef
+        cell: ({ row: { original: { change: { currentOperation, previousOperation } } } }) => {
+          const ref = currentOperation?.packageRef ?? previousOperation?.packageRef
           if (ref) {
             return (
               <TextWithOverflowTooltip tooltipText={ref.name}>
@@ -277,8 +281,8 @@ export const ChangesViewTable: FC<ChangeViewTableProps> = memo<ChangeViewTablePr
               {row.getIsExpanded() && (
                 <SubTableComponent
                   value={row}
-                  packageKey={isDashboardType ? row.original.change.packageRef?.key : packageKey}
-                  versionKey={isDashboardType ? row.original.change.packageRef?.version : versionKey}
+                  packageKey={isDashboardType ? row.original.change.currentOperation?.packageRef?.key : packageKey}
+                  versionKey={isDashboardType ? row.original.change.currentOperation?.packageRef?.version : versionKey}
                   apiType={apiType}
                   packageKind={packageObject?.kind}
                 />
@@ -312,19 +316,19 @@ const DashboardRowSkeleton: FC<RowSkeletonProps> = memo<RowSkeletonProps>(({ ref
   return (
     <TableRow>
       <TableCell ref={refObject}>
-        <Skeleton variant="rectangular" width={'80%'} />
+        <Skeleton variant="rectangular" width='80%' />
       </TableCell>
       <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
+        <Skeleton variant="rectangular" width='80%' />
       </TableCell>
       <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
+        <Skeleton variant="rectangular" width='80%' />
       </TableCell>
       <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
+        <Skeleton variant="rectangular" width='80%' />
       </TableCell>
       <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
+        <Skeleton variant="rectangular" width='80%' />
       </TableCell>
       <TableCell />
     </TableRow>
@@ -335,16 +339,16 @@ const PackageRowSkeleton: FC<RowSkeletonProps> = memo<RowSkeletonProps>(({ refOb
   return (
     <TableRow>
       <TableCell ref={refObject}>
-        <Skeleton variant="rectangular" width={'80%'} />
+        <Skeleton variant="rectangular" width='80%' />
       </TableCell>
       <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
+        <Skeleton variant="rectangular" width='80%' />
       </TableCell>
       <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
+        <Skeleton variant="rectangular" width='80%' />
       </TableCell>
       <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
+        <Skeleton variant="rectangular" width='80%' />
       </TableCell>
       <TableCell />
     </TableRow>

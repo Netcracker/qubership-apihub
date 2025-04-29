@@ -17,6 +17,7 @@
 // TODO: Rename file
 import { merge } from 'lodash-es'
 import { safeParse } from '@stoplight/json'
+import { isObject } from './objects'
 
 export const GLOBAL_DIFF_META_KEY = Symbol('diffMeta')
 
@@ -36,10 +37,6 @@ export const getJsonValue = (source: unknown, ...path: PropertyKey[]): unknown =
   }
   return result
 
-}
-
-function isObject(obj: unknown): obj is Record<PropertyKey, unknown> {
-  return typeof obj === 'object' && obj !== null
 }
 
 export function getSchema(content: string | undefined): object | undefined {

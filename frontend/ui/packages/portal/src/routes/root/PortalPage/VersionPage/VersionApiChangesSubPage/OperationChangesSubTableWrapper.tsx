@@ -27,7 +27,8 @@ export type OperationChangesSubTableWrapper = SubTableComponentProps
 
 export const OperationChangesSubTableWrapper: FC<OperationChangesSubTableWrapper> = memo<OperationChangesSubTableWrapper>(
   ({ value, packageKey, versionKey, apiType, packageKind }) => {
-    const { operationKey } = value.original.change
+    const { currentOperation, previousOperation } = value.original.change
+    const operationKey = currentOperation?.operationKey ?? previousOperation!.operationKey
 
     const { versionContent, isLoading: isVersionLoading } = usePackageVersionContent({ packageKey, versionKey })
 

@@ -19,12 +19,13 @@ import type { MethodType } from './method-types'
 import type { PackageKind } from './packages'
 import type { VersionStatus } from './version-status'
 import type { GraphQlOperationType } from './graphql-operation-types'
-import type { OperationChangeData, OperationInfoFromDifferentVersions } from './version-changelog'
+import type { OperationChangeBase } from './version-changelog'
 import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstack/react-query'
 import type { Key, VersionKey } from './keys'
 import type { ApiType } from './api-types'
 import { API_TYPE_REST } from './api-types'
 import type { DeprecateItem } from '@netcracker/qubership-apihub-api-processor'
+import type { IsLoading } from '../utils/aliases'
 
 export const DEFAULT_API_TYPE: ApiType = API_TYPE_REST
 
@@ -37,7 +38,7 @@ export type OperationDto = RestOperationDto | GraphQlOperationDto
 export type OperationMetadataDto = Readonly<{
   operationId: Key
   title: string
-  apiType?: ApiType
+  apiType: ApiType
   apiKind: ApiKind
   apiAudience: ApiAudience
   data?: object
@@ -79,30 +80,23 @@ export type OperationsGroupedByTag<T extends Operation = OperationData> = {
   [tag: string]: T[]
 }
 
-export type OperationWithDifference = RestOperationWithDifference | GraphQlOperationWithDifference
-export type Operation = RestOperation | GraphQlOperation
+export type OperationPair<T extends Operation = Operation> = {
+  currentOperation?: T
+  previousOperation?: T
+}
+
+// When isLoading = true, the operation pair is not available yet
+export type OptionalOperationPair<T extends Operation = Operation> = OperationPair<T> & {
+  isLoading: IsLoading
+}
+
+export type OperationPairsGroupedByTag = {
+  [tag: string]: OperationPair[]
+}
+
 export type Operations = ReadonlyArray<Operation>
 export type OperationsData = ReadonlyArray<OperationData>
 export type PagedOperations = ReadonlyArray<OperationsData>
-
-type OperationCommon = Readonly<{
-  operationKey: Key
-  title: string
-  apiKind: ApiKind
-  apiAudience: ApiAudience
-  dataHash?: string
-  packageRef?: PackageRef
-  tags?: Readonly<Tags>
-  customTags?: CustomTags
-}>
-
-type OperationWithDifferenceCommon = Readonly<{
-  operationKey: Key
-  currentOperation?: OperationInfoFromDifferentVersions
-  previousOperation?: OperationInfoFromDifferentVersions
-  tags?: Readonly<Tags>
-  customTags?: CustomTags
-}>
 
 export type JSONValue =
   | null
@@ -115,31 +109,31 @@ export type JSONValue =
 
 export type CustomTags = { [key: string]: object }
 
-export type RestOperation = OperationCommon & Readonly<{
-  method: MethodType
-  path: string
-}>
+export interface Operation {
+  readonly operationKey: Key
+  readonly title: string
+  readonly apiKind: ApiKind
+  readonly apiAudience: ApiAudience
+  readonly dataHash?: string
+  readonly packageRef?: PackageRef
+  readonly tags?: Readonly<Tags>
+  readonly customTags?: CustomTags
+}
+export interface RestOperation extends Operation {
+  readonly method: MethodType
+  readonly path: string
+}
 
-export type GraphQlOperation = OperationCommon & Readonly<{
-  method: string
-  type: GraphQlOperationType
-}>
+export interface GraphQlOperation extends Operation {
+  readonly method: string
+  readonly type: GraphQlOperationType
+}
 
-export type RestOperationWithDifference = OperationWithDifferenceCommon & Readonly<{
-  method: MethodType
-  path: string
-}>
-
-export type GraphQlOperationWithDifference = OperationWithDifferenceCommon & Readonly<{
-  method: string
-  type: GraphQlOperationType
-}>
-
-export type OperationData = Operation & Readonly<{
+export interface OperationData extends Operation {
   apiType?: ApiType
   data?: object
   deprecated: boolean
-}>
+}
 
 export type PackagesRefs = {
   [rawRefId: string]: PackageRefDto
@@ -224,7 +218,8 @@ export const API_AUDIENCES: Record<ApiAudience, string> = {
   [API_AUDIENCE_ALL]: 'All',
 }
 
-export type Tags = readonly string[]
+export type Tag = string
+export type Tags = readonly Tag[]
 
 export type OperationTags = Readonly<Tags>
 export type OperationTagsDto = Readonly<{
@@ -265,7 +260,7 @@ export function toPackageRef(packageRef: string | undefined, packages?: Packages
   } : undefined
 }
 
-export function isRestOperation(operation: Operation | OperationWithDifference): operation is RestOperation {
+export function isRestOperation(operation: Operation): operation is RestOperation {
   const asRestOperation = (operation as RestOperation)
   return asRestOperation.path !== undefined
 }
@@ -275,7 +270,7 @@ export function isRestOperationDto(operation: OperationDto): operation is RestOp
   return asRestOperation.path !== undefined
 }
 
-export function isGraphQlOperation(operation: Operation | OperationWithDifference): operation is GraphQlOperation {
+export function isGraphQlOperation(operation: Operation): operation is GraphQlOperation {
   const asGraphQlOperation = (operation as GraphQlOperation)
   return asGraphQlOperation.type !== undefined
 }
@@ -288,7 +283,7 @@ export function isOperationData(value: unknown): value is OperationData {
   return isOperation(value) && 'deprecated' in value
 }
 
-export function isOperationChangeData(value: unknown): value is OperationChangeData {
+export function isOperationChangeData(value: unknown): value is OperationChangeBase {
   return isOperation(value) && 'changeSummary' in value
 }
 
@@ -296,7 +291,7 @@ export function isOperationDataArray(value: unknown): value is OperationData[] {
   return !!value && Array.isArray(value) && value.every(isOperationData)
 }
 
-export function isOperationChangeDataArray(value: unknown): value is OperationChangeData[] {
+export function isOperationChangeDataArray(value: unknown): value is OperationChangeBase[] {
   return !!value && Array.isArray(value) && value.every(isOperationChangeData)
 }
 

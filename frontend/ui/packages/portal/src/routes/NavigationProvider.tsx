@@ -113,6 +113,7 @@ export type OperationsDetail = {
   versionKey: Key
   apiType: ApiType
   operationKey?: Key
+  previousOperationKey?: Key
   search?: {
     [MODE_SEARCH_PARAM]?: SearchParam
     [FILE_VIEW_MODE_PARAM_KEY]?: SearchParam
@@ -122,6 +123,7 @@ export type OperationsDetail = {
     [SEARCH_TEXT_PARAM_KEY]?: SearchParam
     [EXPAND_NAVIGATION_MENU_SEARCH_PARAM]?: SearchParam
     [OPERATIONS_VIEW_MODE_PARAM]?: SearchParam
+    [OPERATION_SEARCH_PARAM]?: SearchParam
   }
 }
 
@@ -159,20 +161,26 @@ export type DocumentPreviewDetail = {
   documentKey: Key
 } & DocumentsDetail
 
+export type OperationsComparisonSearchParams = {
+  [OPERATION_SEARCH_PARAM]?: SearchParam
+  [REF_SEARCH_PARAM]: SearchParam
+  [PACKAGE_SEARCH_PARAM]?: SearchParam
+  [VERSION_SEARCH_PARAM]?: SearchParam
+  [DOCUMENT_SEARCH_PARAM]?: SearchParam
+  [SEARCH_TEXT_PARAM_KEY]?: SearchParam
+  [FILTERS_SEARCH_PARAM]?: SearchParam
+}
+
 export type OperationsComparisonDetail = {
   packageKey: Key
   versionKey: Key
   apiType: ApiType
   operationKey: Key
-  search: {
-    [OPERATION_SEARCH_PARAM]?: SearchParam
-    [REF_SEARCH_PARAM]: SearchParam
-    [PACKAGE_SEARCH_PARAM]?: SearchParam
-    [VERSION_SEARCH_PARAM]?: SearchParam
-    [DOCUMENT_SEARCH_PARAM]?: SearchParam
-    [SEARCH_TEXT_PARAM_KEY]?: SearchParam
-    [FILTERS_SEARCH_PARAM]?: SearchParam
-  }
+  search: OperationsComparisonSearchParams
+}
+
+export type GroupsOperationsComparisonSearchParams = OperationsComparisonSearchParams & {
+  [GROUP_SEARCH_PARAM]?: SearchParam
 }
 
 export type GroupsOperationsComparisonDetail = {
@@ -181,16 +189,7 @@ export type GroupsOperationsComparisonDetail = {
   groupKey: Key
   apiType: ApiType
   operationKey: Key
-  search: {
-    [OPERATION_SEARCH_PARAM]?: SearchParam
-    [REF_SEARCH_PARAM]: SearchParam
-    [PACKAGE_SEARCH_PARAM]?: SearchParam
-    [VERSION_SEARCH_PARAM]?: SearchParam
-    [DOCUMENT_SEARCH_PARAM]?: SearchParam
-    [GROUP_SEARCH_PARAM]?: SearchParam
-    [SEARCH_TEXT_PARAM_KEY]?: SearchParam
-    [FILTERS_SEARCH_PARAM]?: SearchParam
-  }
+  search: GroupsOperationsComparisonSearchParams
 }
 
 export type FirstGroupOperationDetail = {

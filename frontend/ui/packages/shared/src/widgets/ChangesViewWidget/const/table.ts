@@ -15,11 +15,11 @@
  */
 
 import { API_AUDIENCE_COLUMN_ID, API_KIND_COLUMN_ID, ENDPOINT_COLUMN_ID, PACKAGE_COLUMN_ID, TAGS_COLUMN_ID } from '../../../entities/table-columns'
-import type { OperationChangeData } from '../../../entities/version-changelog'
+import type { OperationChangeBase } from '../../../entities/version-changelog'
 import type { ColumnModel } from '../../../hooks/table-resizing/useColumnResizing'
 
 export type ChangesViewTableData = {
-  change: Readonly<OperationChangeData>
+  change: Readonly<OperationChangeBase>
   canExpand: boolean
 }
 

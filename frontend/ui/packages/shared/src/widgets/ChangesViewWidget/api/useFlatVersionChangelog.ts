@@ -15,7 +15,7 @@
  */
 
 import { useMemo } from 'react'
-import type { OperationChangeData, PagedVersionChanges, VersionChanges } from '../../../entities/version-changelog'
+import type { OperationChangeBase, PagedVersionChanges, VersionChanges } from '../../../entities/version-changelog'
 import { EMPTY_CHANGES } from '../../../entities/version-changelog'
 
 export function useFlatVersionChangelog(versionChangelog: PagedVersionChanges): VersionChanges {
@@ -24,7 +24,7 @@ export function useFlatVersionChangelog(versionChangelog: PagedVersionChanges): 
     if (!firstPage) {
       return EMPTY_CHANGES
     }
-    const operations: OperationChangeData[] = [...firstPage.operations]
+    const operations: OperationChangeBase[] = [...firstPage.operations]
     const result: VersionChanges = {
       previousVersion: firstPage.previousVersion,
       previousVersionPackageKey: firstPage.previousVersionPackageKey,

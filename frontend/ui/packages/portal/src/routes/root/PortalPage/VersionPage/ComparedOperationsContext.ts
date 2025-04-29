@@ -14,21 +14,15 @@
  * limitations under the License.
  */
 
+import type { OperationData, OptionalOperationPair } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { createContext, useContext } from 'react'
-import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 
-type ComparedOperationsPair = {
-  left: OperationData | undefined
-  right: OperationData | undefined
-  isLoading: boolean
-}
-
-export const ComparedOperationsContext = createContext<ComparedOperationsPair>({
-  left: undefined,
-  right: undefined,
+export const ComparedOperationsContext = createContext<OptionalOperationPair<OperationData>>({
+  previousOperation: undefined,
+  currentOperation: undefined,
   isLoading: true,
 })
 
-export function useComparedOperationsPair(): ComparedOperationsPair {
+export function useComparedOperationsPair(): OptionalOperationPair<OperationData> {
   return useContext(ComparedOperationsContext)
 }

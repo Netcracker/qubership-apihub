@@ -131,8 +131,8 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
     type,
   } = getFileDetails(apiType, fileViewMode, originOperationContent, changedOperationContent)
 
-  const rawViewActions = useMemo(() =>
-      API_TYPE_RAW_VIEW_ACTIONS_MAP[apiType](fileViewMode, setFileViewMode),
+  const rawViewActions = useMemo(
+    () => API_TYPE_RAW_VIEW_ACTIONS_MAP[apiType](fileViewMode, setFileViewMode),
     [apiType, fileViewMode, setFileViewMode],
   )
 
@@ -160,7 +160,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
   )
 
   if (isLoading || isApiDiffResultLoading) {
-    operationContentElement = <LoadingIndicator/>
+    operationContentElement = <LoadingIndicator />
   } else if (!changedOperationContent && !originOperationContent) {
     return (
       <Placeholder
@@ -240,7 +240,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
                     overflow="scroll"
                   >
                     {!!rawViewActions && (
-                      <OperationSubheader actions={rawViewActions}/>
+                      <OperationSubheader actions={rawViewActions} />
                     )}
                     <RawSpecView
                       value={changedValue}

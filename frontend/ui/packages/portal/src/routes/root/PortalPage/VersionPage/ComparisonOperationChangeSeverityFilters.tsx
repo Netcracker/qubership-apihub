@@ -42,8 +42,8 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
   const { isChangelogAvailable } = props
 
   const {
-    left: originOperation,
-    right: changedOperation,
+    previousOperation: originOperation,
+    currentOperation: changedOperation,
     isLoading: isOperationsLoading,
   } = useComparedOperationsPair()
 

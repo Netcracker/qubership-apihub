@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
+import type { DiffType } from '@netcracker/qubership-apihub-api-diff'
 import { generatePath } from 'react-router-dom'
+import type { ApiType } from '../../../entities/api-types'
 import type { Key, VersionKey } from '../../../entities/keys'
+import type { OperationGroupName } from '../../../entities/operation-groups'
 import type { ApiAudience, ApiKind } from '../../../entities/operations'
 import { ALL_API_KIND, API_AUDIENCE_ALL, DEFAULT_API_TYPE } from '../../../entities/operations'
-import type { OperationGroupName } from '../../../entities/operation-groups'
-import { getFullVersion } from '../../../utils/versions'
+import type { VersionChangesDto } from '../../../entities/version-changelog'
+import { getPackageRedirectDetails } from '../../../utils/redirects'
+import { API_V4, requestJson } from '../../../utils/requests'
 import { optionalSearchParams } from '../../../utils/search-params'
 import { isEmptyTag } from '../../../utils/tags'
-import { API_V3, requestJson } from '../../../utils/requests'
-import { getPackageRedirectDetails } from '../../../utils/redirects'
-import type { VersionChangesDto } from '../../../entities/version-changelog'
-import type { ApiType } from '../../../entities/api-types'
+import { getFullVersion } from '../../../utils/versions'
 import { replaceStringDiffTypeForDTO } from './getOperationChangelog'
-import type { DiffType } from '@netcracker/qubership-apihub-api-diff'
 
 export type VersionChangelogOptions = Partial<{
   packageKey: Key
@@ -101,7 +101,7 @@ export async function getVersionChangelog(
     `${generatePath(pathPattern, { packageId, versionId, apiType })}?${queryParams}`,
     { method: 'get' },
     {
-      basePath: API_V3,
+      basePath: API_V4,
       customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
       ignoreNotFound: true,
     },

@@ -118,7 +118,7 @@ export const OperationPage: FC = memo(() => {
   const [getOperationsWithSameModel] = useOperationsWithSameModel()
   const [, setNavigationDetails] = useOperationNavigationDetails()
 
-  const isPackage: boolean = operationPackage?.kind === PACKAGE_KIND ?? false
+  const isPackage: boolean = operationPackage?.kind === PACKAGE_KIND
   const showCompareGroups = isPackage && !!operationPackage?.restGroupingPrefix && API_TYPE_SHOW_GROUPS_MAP[apiType as ApiType]
 
   const handleBackClick = useCallback(() => {

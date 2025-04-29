@@ -32,7 +32,9 @@ export const OperationChangesSubTableWrapper: FC<OperationChangesSubTableWrapper
     packageKind,
   },
 ) => {
-  const { operationKey } = value.original.change
+  const { currentOperation, previousOperation } = value.original.change
+  const operationKey = currentOperation?.operationKey ?? previousOperation!.operationKey
+
   const [changes, isLoading] = useOperationChangelog({
     versionKey: versionKey!,
     packageKey: packageKey!,

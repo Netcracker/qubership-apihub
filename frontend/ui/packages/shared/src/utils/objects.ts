@@ -36,3 +36,7 @@ export function takeIfDefined(value: object): object {
     ...takeIf(value, !valueIsNotDefined),
   }
 }
+
+export function isObject(obj: unknown): obj is Record<PropertyKey, unknown> {
+  return typeof obj === 'object' && obj !== null
+}

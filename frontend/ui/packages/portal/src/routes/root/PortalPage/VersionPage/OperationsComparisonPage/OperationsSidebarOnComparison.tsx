@@ -14,27 +14,26 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import React, { memo, useState } from 'react'
 import { Box, CardContent, Divider } from '@mui/material'
-import { OperationsByTagList } from '../OperationsByTagList/OperationsByTagList'
-import { useAutoExpandTags } from '../useAutoExpandTags'
-import { OperationsFilterPanel } from '../OperationPage/OperationsFilterPanel'
-import { DIVIDER_STYLES } from '../shared-styles'
-import type { Key, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import type { OperationsGroupedByTag } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { DEFAULT_TAG } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import type { OperationChangeData } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
 import { SidebarPanel } from '@netcracker/qubership-apihub-ui-shared/components/Panels/SidebarPanel'
-import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
-import { isEmpty, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import { SidebarSkeleton } from '@netcracker/qubership-apihub-ui-shared/components/SidebarSkeleton'
 import {
   NAVIGATION_PLACEHOLDER_AREA,
   NO_SEARCH_RESULTS,
   Placeholder,
 } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
+import { SidebarSkeleton } from '@netcracker/qubership-apihub-ui-shared/components/SidebarSkeleton'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { Key, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import type { OperationPairsGroupedByTag } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { DEFAULT_TAG } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { isEmpty, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import type { FC } from 'react'
+import { memo, useState } from 'react'
+import { OperationsFilterPanel } from '../OperationPage/OperationsFilterPanel'
+import { OperationsByTagList } from '../OperationsByTagList/OperationsByTagList'
+import { DIVIDER_STYLES } from '../shared-styles'
+import { useAutoExpandTags } from '../useAutoExpandTags'
 
 export type OperationsSidebarOnComparisonProps = {
   operationPackageKey: Key
@@ -43,7 +42,7 @@ export type OperationsSidebarOnComparisonProps = {
   setSearchValue: (value: string) => void
   tags: string[]
   apiType: ApiType
-  operationsGroupedByTag: OperationsGroupedByTag<OperationChangeData>
+  operationsGroupedByTag: OperationPairsGroupedByTag
   areChangesLoading: boolean
   onOperationClick: (key: Key) => void
 }

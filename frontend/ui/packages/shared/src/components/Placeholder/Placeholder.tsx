@@ -51,7 +51,7 @@ export const Placeholder: FC<PlaceholderProps> = memo<PlaceholderProps>(({
       {area === CONTENT_PLACEHOLDER_AREA && (
         <Box
           sx={{
-            backgroundImage: `url(${variant === DATA_PLACEHOLDER_VARIANT ? noDataSvg : nothingFoundSvg})`,
+            backgroundImage: `url('${variant === DATA_PLACEHOLDER_VARIANT ? noDataSvg : nothingFoundSvg}')`,
             backgroundSize: 'cover',
             backgroundRepeat: 'round',
             height: 'inherit',

@@ -52,15 +52,15 @@ export const OperationTitleWithMeta: FC<OperationTitleWithMetaProps> = memo<Oper
         subtitle: operation.path,
         type: operation.method,
       }
-    } else if (isGraphQlOperation(operation)) {
+    }
+    if (isGraphQlOperation(operation)) {
       return {
         title: operation.title,
         subtitle: operation.method,
         type: operation.type,
       }
-    } else {
-      throw new Error('Operation must be either a REST or GraphQL operation')
     }
+    throw new Error('Operation must be either a REST or GraphQL operation')
   }, [operation])
 
   const titleNode = link
@@ -101,7 +101,7 @@ export const OperationTitleWithMeta: FC<OperationTitleWithMetaProps> = memo<Oper
       </Box>
       {!onlyTitle && (
         <Box display="flex" alignItems="center" gap={1} data-testid="OperationPath">
-          <CustomChip value={type} variant="outlined"/>
+          <CustomChip value={type} variant="outlined" />
           <TextWithOverflowTooltip tooltipText={subtitle} variant="subtitle2">
             {subtitle}
           </TextWithOverflowTooltip>
