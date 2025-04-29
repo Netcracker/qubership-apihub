@@ -18,13 +18,14 @@ import type { OpenAPIV3 } from 'openapi-types'
 
 import type { ApiOperation, NotificationMessage, VersionDocument } from '../../types'
 import { REST_DOCUMENT_TYPE, REST_KIND_KEY, REST_SCOPES } from './rest.consts'
+import { NormalizedPath } from '../../utils'
 
 export type RestScopeType = keyof typeof REST_SCOPES
 export type RestDocumentType = (typeof REST_DOCUMENT_TYPE)[keyof typeof REST_DOCUMENT_TYPE]
 export type CustomTags = Record<string, unknown>
 
 export interface RestOperationMeta {
-  path: string                            // `/packages/*/version/*`
+  path: NormalizedPath                    // `/packages/*/version/*`
   originalPath: string                    // `/packages/{packageId}/version/{version}`
   method: OpenAPIV3.HttpMethods           // `get` | `post` | ...
   tags?: string[]                         // operations tags

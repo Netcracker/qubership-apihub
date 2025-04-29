@@ -27,8 +27,6 @@ import {
   ResolvedDeprecatedOperations,
   ResolvedDocuments,
   ResolvedOperations,
-  ResolvedVersionOperationsHashMap,
-  VALIDATION_RULES_SEVERITY_LEVEL_WARNING,
   VersionId,
   VersionsComparison,
 } from './types'
@@ -288,7 +286,10 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     packageId = packageId ?? this.config.packageId
 
     if (this.canBeResolvedLocally(version, packageId)) {
-      const currentOperations = operationIds ? this.operationList.filter(({ operationId }) => operationIds.includes(operationId)) : this.operationList
+      const currentApiTypeOperations = this.operationList.filter((operation) => operation.apiType === apiType)
+      const currentOperations = operationIds
+        ? currentApiTypeOperations.filter(({ operationId }) => operationIds.includes(operationId))
+        : currentApiTypeOperations
       return { operations: currentOperations }
     }
 
@@ -417,6 +418,8 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       throw new Error('No versionResolver provided')
     }
 
+    // includeOperations=true is only used to extract unique apiTypes (see getUniqueApiTypesFromVersions)
+    // the operations map itself is no longer used in processor
     const versionContent = await versionResolver(packageId, version, true)
 
     if (!versionContent) {
@@ -495,10 +498,9 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     const operationsTypes: OperationTypes[] = []
 
     for (const apiType of this.existingOperationsApiTypes) {
-      const operationsHashMap = this.operationsHashMapByApiType(apiType)
       operationsTypes.push({
         apiType: apiType,
-        operations: operationsHashMap,
+        operationsCount: this.operations.size,
       })
     }
 
@@ -509,18 +511,6 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     const apiTypes: OperationsApiType[] = this.operationList.map(({ apiType }) => apiType) ?? []
 
     return new Set(apiTypes)
-  }
-
-  private operationsHashMapByApiType(operationsApiType: OperationsApiType): ResolvedVersionOperationsHashMap {
-    const hashMap: ResolvedVersionOperationsHashMap = {}
-
-    for (const { apiType, operationId, dataHash } of this.operations.values()) {
-      if (apiType === operationsApiType) {
-        hashMap[operationId] = dataHash
-      }
-    }
-
-    return hashMap
   }
 
   async parseFile(fileId: string, source: Blob): Promise<File | null> {

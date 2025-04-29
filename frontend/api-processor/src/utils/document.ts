@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import createSlug from 'slug'
+import createSlug, { CharMap } from 'slug'
 import {
   _ParsedFileResolver,
   ApiOperation,
@@ -35,6 +35,7 @@ import {
 import { bundle, Resolver } from 'api-ref-bundler'
 import { FILE_FORMAT_JSON, FILE_FORMAT_YAML, MESSAGE_SEVERITY } from '../consts'
 import { isNotEmpty } from './arrays'
+import { PATH_PARAM_UNIFIED_PLACEHOLDER } from './builder'
 import { RefErrorType, RefErrorTypes } from '@netcracker/qubership-apihub-api-unifier'
 
 export const EXPORT_FORMAT_TO_FILE_FORMAT = new Map<OperationsGroupExportFormat, FileFormat>([
@@ -99,12 +100,14 @@ export const findSharedPath = (fileIds: string[]): string => {
   return first.slice(0, i).join('/') + (i ? '/' : '')
 }
 
-export const slugify = (text: string, slugs: string[] = []): string => {
+export const IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER: CharMap = { [PATH_PARAM_UNIFIED_PLACEHOLDER]: PATH_PARAM_UNIFIED_PLACEHOLDER }
+
+export const slugify = (text: string, slugs: string[] = [], charMapEntry?: CharMap): string => {
   if (!text) {
     return ''
   }
 
-  const slug = createSlug(text)
+  const slug = createSlug(text, { charmap: { ...createSlug.charmap, ...charMapEntry } })
   let suffix: string = ''
   // add suffix if not unique
   while (slugs.includes(slug + suffix)) { suffix = String(+suffix + 1) }

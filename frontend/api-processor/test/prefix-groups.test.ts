@@ -15,6 +15,7 @@
  */
 
 import { Editor, LocalRegistry } from './helpers'
+import { BUILD_TYPE } from '../src'
 
 const pkg = LocalRegistry.openPackage('apihub')
 
@@ -70,7 +71,7 @@ describe('Prefix Groups test',  () => {
       previousVersion: 'prefix1',
       currentGroup: '/api/v3',
       previousGroup: 'api/v2',
-      buildType: 'prefix-groups-changelog',
+      buildType: BUILD_TYPE.PREFIX_GROUPS_CHANGELOG,
     })
 
     expect(result.comparisons?.[0].data?.length).toBe(95)

@@ -35,7 +35,7 @@ export interface ResolvedOperations {
 }
 
 export interface ResolvedOperation<M = any> {
-  operationId: string
+  operationId: OperationId
   title: string
   dataHash: string
   apiType: OperationsApiType

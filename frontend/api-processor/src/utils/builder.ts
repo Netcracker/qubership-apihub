@@ -15,13 +15,15 @@
  */
 
 import { ApiAudienceTransition, RISKY_CHANGE_TYPE } from './../types/external/comparison'
-import { ApiKind, ChangeSummary, ResolvedOperation } from '../types'
 import {
   ANNOTATION_CHANGE_TYPE,
+  ApiKind,
   BREAKING_CHANGE_TYPE,
+  ChangeSummary,
   DEPRECATED_CHANGE_TYPE,
   ImpactedOperationSummary,
   NON_BREAKING_CHANGE_TYPE,
+  ResolvedOperation,
   UNCLASSIFIED_CHANGE_TYPE,
 } from '../types'
 import { API_KIND } from '../consts'
@@ -40,9 +42,18 @@ export const removeFirstSlash = (input: string): string => {
   return input.startsWith('/') ? input.substring(1) : input
 }
 
-export const normalizePath = (path: string): string => {
-  return path.replace(new RegExp('{.*?}', 'g'), '*')
+export type NormalizedPath = string
+
+export const normalizePath = (path: string): NormalizedPath => {
+  return hidePathParamNames(path)
 }
+
+export function hidePathParamNames(path: string): string {
+  return path.replace(PATH_PARAMETER_REGEXP, PATH_PARAM_UNIFIED_PLACEHOLDER)
+}
+
+const PATH_PARAMETER_REGEXP = /\{.*?\}/g
+export const PATH_PARAM_UNIFIED_PLACEHOLDER = '*'
 
 export const filesDiff = (files1: { fileId: string }[], files2: { fileId: string }[]): { fileId: string }[] => {
   return files1.filter((f1) => !files2.find((f2) => f1.fileId === f2.fileId))

@@ -134,6 +134,7 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
 
 export function toOperationChangesDto({
   diffs,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   impactedSummary,
   ...rest
 }: OperationChanges, logError: (message: string) => void): OperationChangesDto {

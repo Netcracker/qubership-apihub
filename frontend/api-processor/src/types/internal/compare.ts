@@ -45,11 +45,11 @@ export type GraphQLChangesMetadata = {
 export type OperationChangesMetadata = {
   title: string
   tags: string[]
-  previousOperationMetadata?: OperationChangesMetadata
 } & Partial<RestChangesMetadata> & Partial<GraphQLChangesMetadata>
 
 export interface OperationChanges<T extends DiffType | DiffTypeDto = DiffType> {
-  operationId: string
+  operationId?: string
+  previousOperationId?: string
   apiType: BuilderType
   apiKind?: ApiKind
   previousApiKind?: ApiKind
@@ -62,6 +62,9 @@ export interface OperationChanges<T extends DiffType | DiffTypeDto = DiffType> {
   metadata?: OperationChangesMetadata & {
     [key: string]: unknown
   }
+  previousMetadata?: OperationChangesMetadata & {
+    [key: string]: unknown
+  } 
 }
 
 export interface OperationChangesDto extends Omit<OperationChanges<DiffTypeDto>, 'diffs' | 'impactedSummary' | 'mergedJso'> {

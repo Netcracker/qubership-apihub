@@ -1,0 +1,17 @@
+openapi: 3.0.0
+info:
+  title: Sample API
+  description: API specification example
+  version: 1.0.0
+paths:
+  /order/{id}:
+    parameters:
+      - name: id
+        in: path
+        description: Order unique id
+    get:
+      operationId: getOrder
+      summary: get order
+      responses:
+        '200':
+          description: OK

@@ -45,7 +45,6 @@ import {
   ResolvedReferenceMap,
   ResolvedReferences,
   ResolvedVersion,
-  ResolvedVersionOperationsHashMap,
   REST_API_TYPE,
   restApiBuilder,
   REVISION_DELIMITER,
@@ -117,8 +116,8 @@ export class LocalRegistry implements IRegistry {
   ): Promise<ResolvedVersion | null> {
     const {
       config,
-      operations,
       comparisons = [],
+      operations = [],
     } = await this.getVersion(packageId, getSplittedVersionKey(version)[0]) || {}
 
     if (!config) {
@@ -133,20 +132,6 @@ export class LocalRegistry implements IRegistry {
       )
     }
 
-    const apiTypeMap = groupBy([...operations?.values() ?? []], (operation) => operation.apiType)
-
-    const getOperationsHashMap = (apiType: OperationsApiType): ResolvedVersionOperationsHashMap => apiTypeMap.get(apiType)?.reduce((accumulator, {
-      dataHash,
-      operationId,
-    }) => {
-      return {
-        ...accumulator,
-        [operationId]: dataHash,
-      } as Record<string, string>
-    }, {}) ?? {}
-    const restOperations = getOperationsHashMap(REST_API_TYPE)
-    const gqlOperations = getOperationsHashMap(GRAPHQL_API_TYPE)
-
     return {
       ...config,
       apiTypes: [REST_API_TYPE, GRAPHQL_API_TYPE],
@@ -158,12 +143,10 @@ export class LocalRegistry implements IRegistry {
         {
           apiType: REST_API_TYPE,
           changesSummary: getChangesSummary(REST_API_TYPE),
-          operations: restOperations,
         },
         {
           apiType: GRAPHQL_API_TYPE,
           changesSummary: getChangesSummary(GRAPHQL_API_TYPE),
-          operations: gqlOperations,
         },
       ],
     }
@@ -179,11 +162,15 @@ export class LocalRegistry implements IRegistry {
     const { operations } = await this.getVersion(packageId || this.packageId, version) ?? {}
 
     const versionOperations: ResolvedOperation[] = (operationsIds ?? [...operations?.keys() ?? []])
-      ?.filter(id => operations?.has(id))
-      .map((id) => ({
-        ...operations!.get(id)!,
-        data: includeData ? operations?.get(id)?.data : undefined,
-      }))
+      .flatMap(id => {
+        const operation = operations?.get(id)
+        return operation?.apiType === apiType
+          ? [{
+            ...operation,
+            data: includeData ? operation.data : undefined,
+          }]
+          : []
+      })
 
     return { operations: versionOperations }
   }

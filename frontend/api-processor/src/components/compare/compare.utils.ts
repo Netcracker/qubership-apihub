@@ -15,10 +15,12 @@
  */
 
 import {
+  ApiBuilder,
   ChangeSummary,
   CompareContext,
   DIFF_TYPES,
   ImpactedOperationSummary,
+  NormalizedOperationId,
   OperationChangesMetadata,
   OperationId,
   OperationsApiType,
@@ -28,7 +30,15 @@ import {
   VersionCache,
 } from '../../types'
 import { BUILD_TYPE, EMPTY_CHANGE_SUMMARY, MESSAGE_SEVERITY } from '../../consts'
-import { convertToSlug, takeIfDefined } from '../../utils'
+import {
+  convertToSlug,
+  IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER,
+  NormalizedPath,
+  slugify,
+  takeIfDefined,
+} from '../../utils'
+import { REST_API_TYPE } from '../../apitypes'
+import { OpenAPIV3 } from 'openapi-types'
 
 export const totalChanges = (changeSummary?: ChangeSummary): number => {
   return changeSummary
@@ -87,17 +97,24 @@ type OperationIdWithoutGroupPrefix = string
 export type OperationIdentityMap = Record<OperationIdWithoutGroupPrefix, OperationId>
 
 export function getOperationsHashMapByApiType(
-  currentApiType: OperationsApiType,
-  operationTypes: OperationTypes[],
-  operationIdentityMap: OperationIdentityMap,
+  apiBuilder: ApiBuilder,
+  operations: ResolvedOperation[],
   ctx: CompareContext,
   areOperationsFromCurrentVersion: boolean = false,
-): ResolvedVersionOperationsHashMap {
-  const resolvedHashMap = { ...operationTypes.find(({ apiType: type }) => type === currentApiType)?.operations || {} }
+): [ResolvedVersionOperationsHashMap, OperationIdentityMap] {
   const { buildType, currentGroup, previousGroup } = ctx.config
+  const resolvedHashMap: ResolvedVersionOperationsHashMap = {}
+  const normalizedToOriginalOperationIdMap: Record<NormalizedOperationId | OperationId, OperationId> = {}
+
+  for (const operation of operations) {
+    const { operationId, dataHash } = operation
+    const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(operation) ?? operationId
+    resolvedHashMap[normalizedOperationId] = dataHash
+    normalizedToOriginalOperationIdMap[normalizedOperationId] = operationId
+  }
 
   if (buildType !== BUILD_TYPE.PREFIX_GROUPS_CHANGELOG) {
-    return resolvedHashMap
+    return [resolvedHashMap, normalizedToOriginalOperationIdMap]
   }
 
   if (!currentGroup || !previousGroup) {
@@ -105,8 +122,10 @@ export function getOperationsHashMapByApiType(
       severity: MESSAGE_SEVERITY.Warning,
       message: `Build type is prefix group changelog, but one of the groups is not provided: currentGroup=${currentGroup}, previousGroup=${previousGroup}`,
     })
-    return resolvedHashMap
+    return [resolvedHashMap, normalizedToOriginalOperationIdMap]
   }
+
+  const changedIdToOriginal: OperationIdentityMap = {}
 
   for (const [operationId, dataHash] of Object.entries(resolvedHashMap)) {
     Reflect.deleteProperty(resolvedHashMap, operationId)
@@ -116,11 +135,11 @@ export function getOperationsHashMapByApiType(
     if (operationId.startsWith(groupSlug)) {
       const changedOperationId = operationId.substring(groupSlug.length)
       resolvedHashMap[changedOperationId] = dataHash
-      operationIdentityMap[changedOperationId] = operationId
+      changedIdToOriginal[changedOperationId] = normalizedToOriginalOperationIdMap[operationId]
     }
   }
 
-  return resolvedHashMap
+  return [resolvedHashMap, changedIdToOriginal]
 }
 
 export function getOperationMetadata(operation: ResolvedOperation): OperationChangesMetadata {
