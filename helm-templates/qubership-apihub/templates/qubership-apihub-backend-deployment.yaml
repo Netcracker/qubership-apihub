@@ -85,12 +85,12 @@ spec:
                     value: '{{ .Values.qubershipApihubBackend.replicas }}'
                 -   name: DEFAULT_IDP_ID
                     value: '{{ .Values.qubershipApihubBackend.env.auth.defaultProviderId }}'
-                -   name: EXTERNAL_IDP_DISPLAY_NAME
-                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdp.displayName }}'
-                -   name: EXTERNAL_IDP_IMAGE_SVG
-                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdp.imageSvg }}'
+                -   name: EXTERNAL_SAML_IDP_DISPLAY_NAME
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.saml.displayName }}'
+                -   name: EXTERNAL_SAML_IDP_IMAGE_SVG
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.saml.imageSvg }}'
                 -   name: ADFS_METADATA_URL  
-                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdp.saml.metadataUrl }}'
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.saml.metadataUrl }}'
                 -   name: APIHUB_URL  
                     value: '{{ .Values.qubershipApihub.apihubUrl }}'
                 -   name: SAML_CRT
