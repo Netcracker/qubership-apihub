@@ -26,9 +26,11 @@ export const V_P_DSH_COPYING_SOURCE_R: Version = {
   ...V_P_DSH_CHANGELOG_REST_CHANGED_R,
   pkg: P_DSH_CP_SOURCE,
   previousVersion: '',
+  metadata: { versionLabels: ['source-label-1', 'source-label-2'] },
 } as const
 export const V_P_DSH_COPYING_RELEASE_N: Version = {
   ...V_P_DSH_CHANGELOG_REST_BASE_R,
   pkg: P_DSH_CP_RELEASE,
   version: '2000.1',
+  metadata: { versionLabels: ['release-label-1', 'release-label-2'] },
 } as const

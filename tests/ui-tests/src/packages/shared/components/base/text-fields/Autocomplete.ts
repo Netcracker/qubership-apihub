@@ -26,9 +26,9 @@ export class Autocomplete extends TextField {
 
   getChip(chipName?: string): Chip {
     if (chipName) {
-      return new Chip(this.page.locator('.MuiChip-root').filter({ hasText: chipName }).first(), chipName)
+      return new Chip(this.rootLocator.locator('.MuiChip-root').filter({ hasText: new RegExp(`^${chipName}$`) }), chipName)
     }
-    return new Chip(this.page.locator('.MuiChip-root'))
+    return new Chip(this.rootLocator.locator('.MuiChip-root'))
   }
 
   async set(listItem: string | string[], options?: { clearBefore?: boolean; fillItemName?: boolean }): Promise<void> {
