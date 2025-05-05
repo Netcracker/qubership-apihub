@@ -47,6 +47,8 @@ on:
           description: "APIHUB UI docker image tag"
           type: string
           default: "dev"
+  schedule:
+    - cron: '0 0 * * *' 
 
 jobs:
   call-docker-compose-run-and-test-ci-workflow:
