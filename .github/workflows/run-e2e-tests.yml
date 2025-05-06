@@ -48,23 +48,23 @@ on:
           type: string
           default: "dev"
   schedule:
-    - cron: '0 0 * * *' 
+    - cron: '0 0 * * *'
 
 jobs:
   call-docker-compose-run-and-test-ci-workflow:
     uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@main
     with:
-      compose-repository-branch: ${{ github.event.inputs.compose-repository-branch }}
-      #compose-repository-compose-folder: ${{ github.event.inputs.compose-repository-compose-folder }}
-      postman-collections-run: ${{ fromJson(github.event.inputs.postman-collections-run) }}
-      postman-repository-branch: ${{ github.event.inputs.postman-repository-branch }}
-      postman-collections-list: ${{ github.event.inputs.postman-collections-list }}
-      playwright-repository-branch: ${{ github.event.inputs.playwright-repository-branch }}
-      playwright-tests-run: ${{ fromJson(github.event.inputs.playwright-tests-run) }}
-      playwright-test-args: ${{ github.event.inputs.playwright-test-args }}
-      apihub-backend-image-tag: ${{ github.event.inputs.apihub-backend-image-tag }}
-      apihub-build-task-consumer-image-tag: ${{ github.event.inputs.apihub-build-task-consumer-image-tag }}
-      apihub-ui-image-tag: ${{ github.event.inputs.apihub-ui-image-tag }}
+      compose-repository-branch: ${{ github.event.inputs.compose-repository-branch || 'main'}}
+      #compose-repository-compose-folder: ${{ github.event.inputs.compose-repository-compose-folder}}
+      postman-collections-run: ${{ fromJson(github.event.inputs.postman-collections-run)  || true }}
+      postman-repository-branch: ${{ github.event.inputs.postman-repository-branch  || 'develop' }}
+      postman-collections-list: ${{ github.event.inputs.postman-collections-list  || './e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json' }}
+      playwright-repository-branch: ${{ github.event.inputs.playwright-repository-branch  || 'develop' }}
+      playwright-tests-run: ${{ fromJson(github.event.inputs.playwright-tests-run)  || true }}
+      playwright-test-args: ${{ github.event.inputs.playwright-test-args  || '--project=Portal --workers=8 --grep-invert=@flaky' }}
+      apihub-backend-image-tag: ${{ github.event.inputs.apihub-backend-image-tag  || 'dev' }}
+      apihub-build-task-consumer-image-tag: ${{ github.event.inputs.apihub-build-task-consumer-image-tag  || 'dev' }}
+      apihub-ui-image-tag: ${{ github.event.inputs.apihub-ui-image-tag  || 'dev' }}
     secrets:
       APIHUB_ACCESS_TOKEN: ${{ secrets.APIHUB_ACCESS_TOKEN }}
       APIHUB_ADMIN_EMAIL: ${{ secrets.APIHUB_ADMIN_EMAIL }}
