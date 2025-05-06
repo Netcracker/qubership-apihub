@@ -15,7 +15,7 @@
       "require": "./dist/cjs/src/index.js"
     }
   },
-  "scripts": {    
+  "scripts": {
     "build": "tsc --module commonjs --outDir dist/cjs && vite build",
     "build:web": "vite build",
     "performance:build": "vite build --sourcemap=inline -c=vite.performance.config.ts",
@@ -31,8 +31,8 @@
     "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-diff": "dev",
-    "@netcracker/qubership-apihub-api-unifier": "dev",
+    "@netcracker/qubership-apihub-api-diff": "next",
+    "@netcracker/qubership-apihub-api-unifier": "next",
     "@netcracker/qubership-apihub-json-crawl": "1.0.4",
     "@netcracker/qubership-apihub-graphapi": "1.0.8",
     "adm-zip": "0.5.10",
