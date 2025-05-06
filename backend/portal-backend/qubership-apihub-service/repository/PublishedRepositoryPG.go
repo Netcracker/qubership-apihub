@@ -81,7 +81,7 @@ func (p publishedRepositoryImpl) MarkVersionDeleted(packageId string, versionNam
 
 		clearDefaultReleaseVersionForProjectQuery := `
 			UPDATE package_group
-			SET default_released_version = null 
+			SET default_released_version = null
 			WHERE default_released_version = ? AND id = ?`
 		_, err = tx.Exec(clearDefaultReleaseVersionForProjectQuery, versionName, packageId)
 		if err != nil {
@@ -291,12 +291,12 @@ func (p publishedRepositoryImpl) GetReadonlyVersion(packageId string, versionNam
 		return nil, err
 	}
 	query := `
-	select pv.*,get_latest_revision(coalesce(pv.previous_version_package_id,pv.package_id),pv.previous_version) as previous_version_revision, 
+	select pv.*,get_latest_revision(coalesce(pv.previous_version_package_id,pv.package_id),pv.previous_version) as previous_version_revision,
 	    usr.name as prl_usr_name, usr.email as prl_usr_email, usr.avatar_url as prl_usr_avatar_url,
 		apikey.id as prl_apikey_id, apikey.name as prl_apikey_name,
 		case when coalesce(usr.name, apikey.name)  is null then pv.created_by else usr.user_id end prl_usr_id
-		from published_version as pv 
-	    left join user_data usr on usr.user_id = pv.created_by 
+		from published_version as pv
+	    left join user_data usr on usr.user_id = pv.created_by
 	    left join apihub_api_keys apikey on apikey.id = pv.created_by
 	where pv.package_id = ?
 	  and pv.version = ?
@@ -348,7 +348,7 @@ func (p publishedRepositoryImpl) GetVersionRevisionsList_deprecated(searchQuery 
 		searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
 	}
 	query := `
-		select pv.*, us.email, us.name, us.avatar_url, coalesce(us.user_id, pv.created_by) as user_id, pv.revision != get_latest_revision(pv.package_id, pv.version) as not_latest_revision 
+		select pv.*, us.email, us.name, us.avatar_url, coalesce(us.user_id, pv.created_by) as user_id, pv.revision != get_latest_revision(pv.package_id, pv.version) as not_latest_revision
 			from published_version as pv left join user_data as us on pv.created_by = us.user_id
 			where (?text_filter = ''
 				or exists(select 1 from unnest(pv.labels) as label where label ilike ?text_filter)
@@ -376,8 +376,8 @@ func (p publishedRepositoryImpl) GetVersionRevisionsList(searchQuery entity.Pack
 		select pv.*, pv.revision != get_latest_revision(pv.package_id, pv.version) as not_latest_revision,
 	    	us.user_id as prl_usr_id, us.name as prl_usr_name, us.email as prl_usr_email, us.avatar_url as prl_usr_avatar_url,
 			apikey.id as prl_apikey_id, apikey.name as prl_apikey_name,
-			case when coalesce(us.name, apikey.name)  is null then pv.created_by else us.user_id end prl_usr_id 
-			from published_version as pv 
+			case when coalesce(us.name, apikey.name)  is null then pv.created_by else us.user_id end prl_usr_id
+			from published_version as pv
 			left join user_data as us on pv.created_by = us.user_id
 			left join apihub_api_keys as apikey on pv.created_by = apikey.id
 			where (?text_filter = ''
@@ -757,7 +757,7 @@ func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo 
 		insert into migration_changes
 		values (?, ?)
 		on conflict (migration_id)
-		do update 
+		do update
 		set changes = coalesce(migration_changes.changes, '{}') || (
 			SELECT jsonb_object_agg(key, coalesce((migration_changes.changes ->> key)::int, 0) + 1)
 			from jsonb_each_text(EXCLUDED.changes)
@@ -921,15 +921,16 @@ func (p publishedRepositoryImpl) getOperationComparisonsChanges(tx *pg.Tx, packa
 		if err != nil {
 			return nil, fmt.Errorf("failed to get operation comparisons from db: %v", err.Error())
 		}
-		for _, s := range oldOperationComparisons {
-			key := fmt.Sprintf(`ComparisonId:%s;OperationId:%s`, s.ComparisonId, s.OperationId)
+		for _, oldComp := range oldOperationComparisons {
+			key := fmt.Sprintf(`ComparisonId:%s;OperationId:%s;PreviousOperationId:%s`, oldComp.ComparisonId, oldComp.OperationId, oldComp.PreviousOperationId)
 			found := false
-			for _, t := range operationComparisonEntities {
-				if s.ComparisonId == t.ComparisonId &&
-					s.OperationId == t.OperationId {
+			for _, newComp := range operationComparisonEntities {
+				if oldComp.ComparisonId == newComp.ComparisonId &&
+					oldComp.OperationId == newComp.OperationId &&
+					oldComp.PreviousOperationId == newComp.PreviousOperationId {
 					found = true
 					matchedOperationComparisons[key] = struct{}{}
-					if operationComparisonChanges := s.GetChanges(*t); len(operationComparisonChanges) > 0 {
+					if operationComparisonChanges := oldComp.GetChanges(*newComp); len(operationComparisonChanges) > 0 {
 						operationComparisonsChanges[key] = operationComparisonChanges
 						changesOverview.setTableChanges(currentTable, operationComparisonChanges)
 					}
@@ -941,8 +942,8 @@ func (p publishedRepositoryImpl) getOperationComparisonsChanges(tx *pg.Tx, packa
 			}
 		}
 	}
-	for _, t := range operationComparisonEntities {
-		key := fmt.Sprintf(`ComparisonId:%s;OperationId:%s`, t.ComparisonId, t.OperationId)
+	for _, newComp := range operationComparisonEntities {
+		key := fmt.Sprintf(`ComparisonId:%s;OperationId:%s;PreviousOperationId:%s`, newComp.ComparisonId, newComp.OperationId, newComp.PreviousOperationId)
 		if _, matched := matchedOperationComparisons[key]; !matched {
 			operationComparisonsChanges[key] = "unexpected operation comparison (not found in database)"
 			changesOverview.setUnexpectedEntry(currentTable)
@@ -1023,7 +1024,7 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 
 		if len(refs) > 0 {
 			start = time.Now()
-			_, err := tx.Model(&refs).OnConflict(`(package_id, version, revision, reference_id, reference_version, reference_revision, parent_reference_id, parent_reference_version, parent_reference_revision) 
+			_, err := tx.Model(&refs).OnConflict(`(package_id, version, revision, reference_id, reference_version, reference_revision, parent_reference_id, parent_reference_version, parent_reference_revision)
 			DO UPDATE SET "excluded" = EXCLUDED."excluded"`).Insert()
 			if err != nil {
 				return fmt.Errorf("failed to insert published_version_reference %+v: %w", refs, err)
@@ -1162,7 +1163,7 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 					to_tsvector(jsonb_extract_path_text(search_scope, ?)) scope_examples
 					from operation_data
 					where data_hash in (select distinct data_hash from operation where package_id = ? and version = ? and revision = ? and type = ?)
-				on conflict (data_hash) do update 
+				on conflict (data_hash) do update
 				set scope_request = EXCLUDED.scope_request,
 				scope_response = EXCLUDED.scope_response,
 				scope_annotation = EXCLUDED.scope_annotation,
@@ -1182,7 +1183,7 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 					to_tsvector(jsonb_extract_path_text(search_scope, ?)) scope_annotation
 					from operation_data
 					where data_hash in (select distinct data_hash from operation where package_id = ? and version = ? and revision = ? and type = ?)
-				on conflict (data_hash) do update 
+				on conflict (data_hash) do update
 				set scope_argument = EXCLUDED.scope_argument,
 				scope_property = EXCLUDED.scope_property,
 				scope_annotation = EXCLUDED.scope_annotation;`
@@ -1198,7 +1199,7 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 					to_tsvector(jsonb_extract_path_text(search_scope, ?)) scope_all
 					from operation_data
 					where data_hash in (select distinct data_hash from operation where package_id = ? and version = ? and revision = ?)
-				on conflict (data_hash) do update 
+				on conflict (data_hash) do update
 				set scope_all = EXCLUDED.scope_all`
 				_, err = tx.Exec(calculateAllTextSearchDataQuery,
 					view.ScopeAll,
@@ -1305,7 +1306,7 @@ func (p publishedRepositoryImpl) propagatePreviousOperationGroups(tx *pg.Tx, ver
 		return nil
 	}
 	copyExistingOperationsFromPackageQuery := `
-	insert into grouped_operation 
+	insert into grouped_operation
 	select ?, o.package_id, o.version, o.revision, o.operation_id
 	from grouped_operation g
 	inner join operation o
@@ -1422,7 +1423,7 @@ func (p publishedRepositoryImpl) validateChangelogMigrationResult(tx *pg.Tx, pac
 		insert into migration_changes
 		values (?, ?)
 		on conflict (migration_id)
-		do update 
+		do update
 		set changes = coalesce(migration_changes.changes, '{}') || (
 			SELECT jsonb_object_agg(key, coalesce((migration_changes.changes ->> key)::int, 0) + 1)
 			from jsonb_each_text(EXCLUDED.changes)
@@ -1482,7 +1483,7 @@ func (p publishedRepositoryImpl) SaveVersionChanges(packageInfo view.PackageInfo
 
 func (p publishedRepositoryImpl) saveVersionChangesTx(tx *pg.Tx, operationComparisons []*entity.OperationComparisonEntity, versionComparisons []*entity.VersionComparisonEntity) error {
 	_, err := tx.Model(&versionComparisons).
-		OnConflict(`(comparison_id) DO UPDATE 
+		OnConflict(`(comparison_id) DO UPDATE
 		SET operation_types=EXCLUDED.operation_types,
 			refs =			EXCLUDED.refs,
 			last_active =	EXCLUDED.last_active,
@@ -1619,7 +1620,7 @@ func (p publishedRepositoryImpl) GetContentData(packageId string, checksum strin
 	return result, nil
 }
 
-func (p *publishedRepositoryImpl) GetLatestContentByVersion(packageId string, versionName string) ([]entity.PublishedContentEntity, error) {
+func (p publishedRepositoryImpl) GetLatestContentByVersion(packageId string, versionName string) ([]entity.PublishedContentEntity, error) {
 	var latestVersionRev entity.PublishedVersionEntity
 	version, _, err := SplitVersionRevision(versionName)
 	if err != nil {
@@ -1803,7 +1804,7 @@ func (p publishedRepositoryImpl) GetVersionsByPreviousVersion(previousPackageId 
                           ) mx
                 on pv.package_id = mx.package_id
                 and pv.version = mx.version
-                and pv.revision = mx.revision 
+                and pv.revision = mx.revision
 			where pv.previous_version_package_id = ?
 			and pv.previous_version = ?
 			and pv.deleted_at is null
@@ -2041,7 +2042,7 @@ func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(searchQuery
 		select pv.*, get_latest_revision(coalesce(pv.previous_version_package_id,pv.package_id), pv.previous_version) as previous_version_revision,
 		    usr.name as prl_usr_name, usr.email as prl_usr_email, usr.avatar_url as prl_usr_avatar_url,
 			apikey.id as prl_apikey_id, apikey.name as prl_apikey_name,
-			case when coalesce(usr.name, apikey.name)  is null then pv.created_by else usr.user_id end prl_usr_id 
+			case when coalesce(usr.name, apikey.name)  is null then pv.created_by else usr.user_id end prl_usr_id
 		    from published_version pv
 			left join user_data usr on usr.user_id = pv.created_by
 			left join apihub_api_keys apikey on apikey.id = pv.created_by
@@ -2111,7 +2112,7 @@ func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(searchQuery
 			select pv.*, get_latest_revision(coalesce(pv.previous_version_package_id,pv.package_id), pv.previous_version) as previous_version_revision,
 			       usr.name as prl_usr_name, usr.email as prl_usr_email, usr.avatar_url as prl_usr_avatar_url,
 			       apikey.id as prl_apikey_id, apikey.name as prl_apikey_name,
-				   case when coalesce(usr.name, apikey.name) is null then pv.created_by else usr.user_id end prl_usr_id 
+				   case when coalesce(usr.name, apikey.name) is null then pv.created_by else usr.user_id end prl_usr_id
 			       from published_version pv
 			inner join (
 							select package_id, version, max(revision) as revision
@@ -2176,7 +2177,7 @@ func (p publishedRepositoryImpl) GetVersionRefs(searchQuery entity.PackageVersio
 			and refs.version = pub_version.version
 			and refs.revision = pub_version.revision
 			and not(refs.package_id = ?package_id and refs.version = ?version and refs.revision = ?revision)
-		offset ?offset				
+		offset ?offset
 		limit ?limit;
  		`
 	} else {
@@ -2204,7 +2205,7 @@ func (p publishedRepositoryImpl) GetVersionRefs(searchQuery entity.PackageVersio
 				and pub_version.revision = refs.revision
 				and (?text_filter = '' or pg.name ilike ?text_filter)
 				and (?kind = '' or pg.kind = ?kind)
-			offset ?offset				
+			offset ?offset
 			limit ?limit;`
 	}
 
@@ -2248,7 +2249,7 @@ func (p publishedRepositoryImpl) GetRevisionContentWithLimit(packageId string, v
 	query := p.cp.GetConnection().Model(&ents).
 		ColumnExpr("published_version_revision_content.*")
 	if !skipRefs {
-		query.Join(`inner join 
+		query.Join(`inner join
 			(with refs as(
 				select s.reference_id as package_id, s.reference_version as version, s.reference_revision as revision
 				from published_version_reference s
@@ -2372,7 +2373,7 @@ func (p publishedRepositoryImpl) GetDefaultVersion(packageId string, status stri
 	return result, nil
 }
 
-func (p *publishedRepositoryImpl) CleanupDeleted() error {
+func (p publishedRepositoryImpl) CleanupDeleted() error {
 	var ents []entity.PublishedVersionEntity
 	_, err := p.cp.GetConnection().Model(&ents).
 		Where("deleted_at is not ?", nil).
@@ -2441,8 +2442,8 @@ func (p publishedRepositoryImpl) CreatePackage(packageEntity *entity.PackageEnti
 		}
 		if packageEntity.ServiceName != "" {
 			insertServiceOwnerQuery := `
-			INSERT INTO package_service (workspace_id, package_id, service_name) 
-			VALUES (?, ?, ?) 
+			INSERT INTO package_service (workspace_id, package_id, service_name)
+			VALUES (?, ?, ?)
 			ON CONFLICT (workspace_id, package_id, service_name) DO NOTHING`
 			_, err := tx.Exec(insertServiceOwnerQuery, utils.GetPackageWorkspaceId(packageEntity.Id), packageEntity.Id, packageEntity.ServiceName)
 			if err != nil {
@@ -2636,7 +2637,7 @@ func (p publishedRepositoryImpl) GetAllChildPackageIdsIncludingParent(parentId s
 	query := `with recursive children as (
     select id from package_group where id=?
 		UNION ALL
-		select g.id from package_group g inner join children on children.id = g.parent_id) 
+		select g.id from package_group g inner join children on children.id = g.parent_id)
 	select id from children`
 	_, err := p.cp.GetConnection().Query(&ents, query, parentId)
 	if err != nil {
@@ -3030,7 +3031,7 @@ func (p publishedRepositoryImpl) SearchForVersions(searchQuery *entity.PackageSe
 	with    maxrev as
 			(
 				select package_id, version, revision, bool_or(s.latest_revision) as latest_revision
-				from 
+				from
 				(
 					select pv.package_id, pv.version, max(revision) as revision, true as latest_revision
 					from published_version pv
@@ -3038,13 +3039,13 @@ func (p publishedRepositoryImpl) SearchForVersions(searchQuery *entity.PackageSe
 								on pg.id = pv.package_id
 								and pg.exclude_from_search = false
 					--where (?packages = '{}' or pv.package_id = ANY(?packages))
-					/* 
-					for now packages list serves as a list of parents and packages, 
+					/*
+					for now packages list serves as a list of parents and packages,
 					after adding new parents list need to uncomment line above and change condition below to use parents list
 					*/
 					where (?packages = '{}' or pv.package_id like ANY(
 						select id from unnest(?packages::text[]) id
-						union 
+						union
 						select id||'.%' from unnest(?packages::text[]) id))
 					and (?versions = '{}' or pv.version = ANY(?versions))
 					group by pv.package_id, pv.version
@@ -3061,7 +3062,7 @@ func (p publishedRepositoryImpl) SearchForVersions(searchQuery *entity.PackageSe
 				) s
 				group by package_id, version, revision
 			)
-		select 
+		select
 		pkg.id as package_id,
 		pkg.name,
 		pkg.description,
@@ -3073,11 +3074,11 @@ func (p publishedRepositoryImpl) SearchForVersions(searchQuery *entity.PackageSe
 		pv.labels,
 		maxrev.latest_revision,
 		parent_package_names(pkg.id) parent_names,
-		case 
+		case
 			when init_rank > 0 then init_rank + default_version_tf + version_status_tf + version_open_count
 			else 0
 		end rank,
-		
+
 		--debug
 		coalesce(?open_count_weight) open_count_weight,
 		pkg_name_tf,
@@ -3145,18 +3146,18 @@ func (p publishedRepositoryImpl) SearchForDocuments(searchQuery *entity.Document
 								on pg.id = pv.package_id
 								and pg.exclude_from_search = false
 						--where (?packages = '{}' or pv.package_id = ANY(?packages))
-						/* 
-						for now packages list serves as a list of parents and packages, 
+						/*
+						for now packages list serves as a list of parents and packages,
 						after adding new parents list need to uncomment line above and change condition below to use parents list
 						*/
 						where (?packages = '{}' or pv.package_id like ANY(
 							select id from unnest(?packages::text[]) id
-							union 
+							union
 							select id||'.%' from unnest(?packages::text[]) id))
 						and (?versions = '{}' or pv.version = ANY(?versions))
 						group by pv.package_id, pv.version
 				),
-				versions as 
+				versions as
 				(
 						select pv.package_id, pv.version, pv.revision, pv.published_at, pv.status
 						from published_version pv
@@ -3204,7 +3205,7 @@ func (p publishedRepositoryImpl) SearchForDocuments(searchQuery *entity.Document
 			on oc.package_id = c.package_id
 			and oc.version = c.version
 			and oc.slug = c.slug,
-		coalesce(?content_weight * case	when c.data_type = ANY(?unknown_types) then 0 
+		coalesce(?content_weight * case	when c.data_type = ANY(?unknown_types) then 0
 										else (c.metadata->>'description' ilike ?text_filter)::int end, 0) content_tf,
 		coalesce(?title_weight * (c.title ilike ?text_filter)::int, 0) title_tf,
 		coalesce(?labels_weight * (c.metadata->>'labels' ilike ?text_filter)::int, 0) labels_tf,
@@ -3274,17 +3275,17 @@ func (p publishedRepositoryImpl) recalculateOperationsGroupsTx(tx *pg.Tx, packag
 		select distinct
 		package_id,
 		version,
-		revision, 
-		case 
-			when type = 'rest' 
+		revision,
+		case
+			when type = 'rest'
 				then case when ? = '' then null else substring(metadata ->> 'path', ?) end
-			when type = 'graphql' 
+			when type = 'graphql'
 				then case when ? = '' then null else substring(metadata ->> 'method', ?) end
 		end group_name,
-		type api_type, 
+		type api_type,
 		true autogenerated
 		from operation
-		where 
+		where
 		package_id = ?
 		and (? = '' or version = ?)
 		and (? = 0 or revision = ?)
@@ -3357,16 +3358,16 @@ func (p publishedRepositoryImpl) recalculateOperationsGroupsTx(tx *pg.Tx, packag
 			select distinct
 			package_id,
 			version,
-			revision, 
-			case 
-				when type = 'rest' 
+			revision,
+			case
+				when type = 'rest'
 					then case when ? = '' then null else substring(metadata ->> 'path', ?) end
-				when type = 'graphql' 
+				when type = 'graphql'
 					then case when ? = '' then null else substring(metadata ->> 'method', ?) end
 			end group_name,
 			operation_id
 			from operation
-			where 
+			where
 			package_id = ?
 			and version = ?
 			and revision = ?
@@ -3485,7 +3486,7 @@ func (p publishedRepositoryImpl) DeleteTransformedDocuments(packageId string, ve
 	ctx := context.Background()
 	return p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		query := `
-		delete from transformed_content_data 
+		delete from transformed_content_data
 		where package_id = ? and version = ? and revision = ? and api_type = ? and group_id = ?`
 		_, err := tx.Exec(query, packageId, version, revision, apiType, groupId)
 		return err
@@ -3496,7 +3497,7 @@ func (p publishedRepositoryImpl) GetVersionRevisionContentForDocumentsTransforma
 	var ents []entity.PublishedContentWithDataEntity
 	query := p.cp.GetConnection().Model(&ents).Distinct().
 		ColumnExpr("published_version_revision_content.*").ColumnExpr("pd.*")
-	query.Join(`inner join 
+	query.Join(`inner join
 			(with refs as(
 				select s.reference_id as package_id, s.reference_version as version, s.reference_revision as revision
 				from published_version_reference s
@@ -3528,7 +3529,7 @@ func (p publishedRepositoryImpl) GetVersionRevisionContentForDocumentsTransforma
 	}
 
 	if searchQuery.OperationGroup != "" {
-		query.Join(`inner join grouped_operation as go 
+		query.Join(`inner join grouped_operation as go
 					on go.operation_id = any(published_version_revision_content.operation_ids)
 					and published_version_revision_content.package_id = go.package_id
 					and published_version_revision_content.version = go.version
@@ -3571,7 +3572,7 @@ func (p publishedRepositoryImpl) DeletePublishedSourcesArchives(checksums []stri
 	ctx := context.Background()
 	var deletedRows int
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
-		query := `delete from published_sources_archives 
+		query := `delete from published_sources_archives
 		where checksum in (?)`
 		result, err := tx.Exec(query, pg.In(checksums))
 		if err != nil {
@@ -3712,7 +3713,7 @@ func (p publishedRepositoryImpl) GetPublishedVersionsHistory(filter view.Publish
 	// 	Offset(filter.Limit * filter.Page)
 	_, err := p.cp.GetConnection().Query(&result, `
 			with publications as(
-				select published_version.package_id, 
+				select published_version.package_id,
 						published_version.version,
 						published_version.revision,
 						status,
@@ -3725,7 +3726,7 @@ func (p publishedRepositoryImpl) GetPublishedVersionsHistory(filter view.Publish
 				and (? is null or published_at >= ?)
 				and (? is null or published_at <= ?)
 				order by published_at asc, package_id, version, revision
-				limit ? 
+				limit ?
 				offset ?
 			),
 			ops as (
@@ -3737,8 +3738,8 @@ func (p publishedRepositoryImpl) GetPublishedVersionsHistory(filter view.Publish
 				and o.revision = p.revision
 				group by o.package_id, o.version, o.revision
 			)
-			select 
-			p.*, coalesce(api_types,'{}') api_types 
+			select
+			p.*, coalesce(api_types,'{}') api_types
 			from publications p
 			left join ops o
 				on o.package_id = p.package_id
