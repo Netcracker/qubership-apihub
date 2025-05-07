@@ -7,10 +7,12 @@ import {
   booleanClassifier,
   breaking,
   breakingIf,
+  deepEqualsUniqueItemsArrayMappingResolver,
   diffDescription,
   nonBreaking,
   onlyAddBreaking,
   reverseClassifyRuleTransformer,
+  risky,
   TEMPLATE_PARAM_ACTION,
   TEMPLATE_PARAM_PLACE,
   TEMPLATE_PARAM_PREPOSITION,
@@ -19,8 +21,6 @@ import {
   TEMPLATE_PARAM_SCOPE,
   transformCompareRules,
   unclassified,
-  deepEqualsUniqueItemsArrayMappingResolver,
-  semiBreaking,
 } from '../core'
 import {
   enumClassifyRule,
@@ -123,7 +123,7 @@ export const jsonSchemaRules = ({
     '/default': simpleRule([nonBreaking, breaking, breaking], resolveSchemaDescriptionTemplates('default value')),
 
     '/enum': {
-      $: [breaking, nonBreaking, breaking, nonBreaking, semiBreaking, nonBreaking],
+      $: [breaking, nonBreaking, breaking, nonBreaking, risky, nonBreaking],
       mapping: deepEqualsUniqueItemsArrayMappingResolver,
       '/*': ({ key, value }) => {
         if (!isNumber(key)) {
