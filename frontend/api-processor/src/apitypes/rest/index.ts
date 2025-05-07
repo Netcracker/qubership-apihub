@@ -19,7 +19,7 @@ import { OpenAPIV3 } from 'openapi-types'
 import { buildRestDocument, dumpRestDocument } from './rest.document'
 import { REST_API_TYPE, REST_DOCUMENT_TYPE } from './rest.consts'
 import { compareRestOperationsData } from './rest.changes'
-import { buildRestOperations } from './rest.operations'
+import { buildRestOperations, createNormalizedOperationId } from './rest.operations'
 import { parseRestFile } from './rest.parser'
 
 import { ApiBuilder } from '../../types'
@@ -34,4 +34,5 @@ export const restApiBuilder: ApiBuilder<OpenAPIV3.Document> = {
   buildOperations: buildRestOperations,
   dumpDocument: dumpRestDocument,
   compareOperationsData: compareRestOperationsData,
+  createNormalizedOperationId: createNormalizedOperationId,
 }

@@ -57,7 +57,7 @@ describe('GraphQL test', () => {
       ],
     })
 
-    const changes = result.comparisons[0].data?.flatMap(data => data.changes)
+    const changes = result.comparisons[0].data?.flatMap(data => data.diffs)
 
     expect(changes?.length).toBeTruthy()
     expect(changes?.every(change => change?.description)).toBeTruthy()

@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { ChangeSummary, OperationId, OperationType, PackageId, VersionId } from '../external'
+import { ChangeSummary, DiffTypeDto, OperationId, OperationType, PackageId, VersionId } from '../external'
 import { ActionType, DiffAction, DiffType } from '@netcracker/qubership-apihub-api-diff'
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
+
+export type ChangeMessage<T = DiffType> = ChangeAdd<T> | ChangeRemove<T> | ChangeReplace<T> | ChangeRename<T>
 
 export interface PackageComparisons {
   comparisons: PackageComparison[]
@@ -31,7 +33,7 @@ export interface PackageComparison {
   previousVersionPackageId: PackageId
   previousVersionRevision?: number
   fromCache: boolean
-  operationTypes: OperationType[]
+  operationTypes: OperationType<DiffTypeDto>[]
 }
 
 export interface PackageComparisonOperations {
@@ -39,15 +41,16 @@ export interface PackageComparisonOperations {
 }
 
 export interface PackageComparisonOperation {
-  operationId: OperationId
+  operationId?: OperationId
+  previousOperationId?: OperationId
   dataHash?: string
   previousDataHash?: string
-  changeSummary?: ChangeSummary
-  changes?: ChangeMessage[]
+  changeSummary?: ChangeSummary<DiffTypeDto>
+  changes?: ChangeMessage<DiffTypeDto>[]
 }
 
-interface ChangeBase {
-  severity: DiffType
+interface ChangeBase<T> {
+  severity: T
   action: ActionType
   description?: string
   scope: string
@@ -55,19 +58,19 @@ interface ChangeBase {
 
 type Hash = string
 
-export interface ChangeAdd extends ChangeBase {
+export interface ChangeAdd<T> extends ChangeBase<T> {
   action: typeof DiffAction.add
   currentDeclarationJsonPaths: JsonPath[]
   currentValueHash: Hash
 }
 
-export interface ChangeRemove extends ChangeBase {
+export interface ChangeRemove<T> extends ChangeBase<T> {
   action: typeof DiffAction.remove
   previousDeclarationJsonPaths: JsonPath[]
   previousValueHash: Hash
 }
 
-export interface ChangeReplace extends ChangeBase {
+export interface ChangeReplace<T> extends ChangeBase<T> {
   action: typeof DiffAction.replace
   previousDeclarationJsonPaths: JsonPath[]
   currentDeclarationJsonPaths: JsonPath[]
@@ -75,12 +78,10 @@ export interface ChangeReplace extends ChangeBase {
   previousValueHash: Hash
 }
 
-export interface ChangeRename extends ChangeBase {
+export interface ChangeRename<T> extends ChangeBase<T> {
   action: typeof DiffAction.rename
   previousDeclarationJsonPaths: JsonPath[]
   currentDeclarationJsonPaths: JsonPath[]
   currentKey: unknown
   previousKey: unknown
 }
-
-export type ChangeMessage = ChangeAdd | ChangeRemove | ChangeReplace | ChangeRename

@@ -15,7 +15,7 @@
  */
 
 import { Editor, LocalRegistry } from './helpers'
-import { BREAKING_CHANGE_TYPE, BUILD_TYPE, SEMI_BREAKING_CHANGE_TYPE, VERSION_STATUS } from '../src'
+import { BREAKING_CHANGE_TYPE, BUILD_TYPE, RISKY_CHANGE_TYPE, SEMI_BREAKING_CHANGE_TYPE, VERSION_STATUS } from '../src'
 
 const portal = new LocalRegistry('deprecated')
 
@@ -89,8 +89,7 @@ describe('Deprecated Items test', () => {
     }, {}, portal)
 
     const result = await editor.run()
-
-    expect(result.comparisons[0].operationTypes[0].changesSummary?.[SEMI_BREAKING_CHANGE_TYPE]).toBe(1)
+    expect(result.comparisons[0].operationTypes[0].changesSummary?.[RISKY_CHANGE_TYPE]).toBe(1)
     expect(result.comparisons[0].operationTypes[0].changesSummary?.[BREAKING_CHANGE_TYPE]).toBe(0)
   })
 
@@ -104,7 +103,6 @@ describe('Deprecated Items test', () => {
     }, {}, portal)
 
     const result = await editor.run()
-
-    expect(result.comparisons[0].operationTypes[0].changesSummary?.[SEMI_BREAKING_CHANGE_TYPE]).toBe(4)
+    expect(result.comparisons[0].operationTypes[0].changesSummary?.[RISKY_CHANGE_TYPE]).toBe(4)
   })
 })

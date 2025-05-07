@@ -16,7 +16,15 @@
 
 import { ApiAudience } from '../package'
 import { OperationsApiType, PackageId, VersionId } from './types'
-import { ClassifierType, DiffType } from '@netcracker/qubership-apihub-api-diff'
+import {
+  annotation,
+  breaking,
+  ClassifierType, deprecated,
+  DiffType,
+  nonBreaking,
+  risky,
+  unclassified,
+} from '@netcracker/qubership-apihub-api-diff'
 
 export type VersionComparisonResolver = (
   version: VersionId,
@@ -37,24 +45,24 @@ export interface ResolvedComparisonSummary {
   operationTypes: OperationType[]
 }
 
-export interface OperationType {
+export interface OperationType<T extends DiffType | DiffTypeDto = DiffType> {
   apiType: OperationsApiType
-  changesSummary: ChangeSummary
-  numberOfImpactedOperations: ChangeSummary
+  changesSummary: ChangeSummary<T>
+  numberOfImpactedOperations: ChangeSummary<T>
   apiAudienceTransitions: ApiAudienceTransition[]
   tags?: string[]
 }
 
-export const BREAKING_CHANGE_TYPE = 'breaking'
-export const NON_BREAKING_CHANGE_TYPE = 'non-breaking'
-export const UNCLASSIFIED_CHANGE_TYPE = 'unclassified'
+export const BREAKING_CHANGE_TYPE = breaking
+export const NON_BREAKING_CHANGE_TYPE = nonBreaking
+export const UNCLASSIFIED_CHANGE_TYPE = unclassified
+export const RISKY_CHANGE_TYPE = risky
+export const DEPRECATED_CHANGE_TYPE = deprecated
+export const ANNOTATION_CHANGE_TYPE = annotation
 export const SEMI_BREAKING_CHANGE_TYPE = 'semi-breaking'
-export const DEPRECATED_CHANGE_TYPE = 'deprecated'
-export const ANNOTATION_CHANGE_TYPE = 'annotation'
 
-export type ChangeSummary = Record<DiffType, number>
+export type ChangeSummary<T extends DiffType | DiffTypeDto = DiffType> = Record<T, number>
 export type ImpactedOperationSummary = Record<DiffType, boolean>
-
 export const DIFF_TYPES: DiffType[] = Object.values(ClassifierType)
 
 export interface ApiAudienceTransition {
@@ -62,3 +70,14 @@ export interface ApiAudienceTransition {
   currentAudience: ApiAudience
   operationsCount: number
 }
+
+export type ChangeSummaryDto = Record<DiffTypeDto, number>
+export type DiffTypeDto = typeof ClassifierTypeDto[keyof typeof ClassifierTypeDto]
+export const ClassifierTypeDto = {
+  breaking,
+  nonBreaking,
+  SEMI_BREAKING_CHANGE_TYPE,
+  annotation,
+  unclassified,
+  deprecated,
+} as const

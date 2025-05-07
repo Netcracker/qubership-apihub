@@ -16,7 +16,7 @@
 
 import { BREAKING_CHANGE_TYPE, OperationChanges } from '../../types'
 import { API_KIND } from '../../consts'
-import { markChangeAsSemiBreaking } from '../../utils/changes'
+import { markChangeAsRisky } from '../../utils/changes'
 
 export function validateBwcBreakingChanges(
   operationChanges: OperationChanges,
@@ -31,6 +31,6 @@ export function validateBwcBreakingChanges(
     if (diff.type !== BREAKING_CHANGE_TYPE) {
       continue
     }
-    markChangeAsSemiBreaking(diff, operationChanges)
+    markChangeAsRisky(diff, operationChanges)
   }
 }

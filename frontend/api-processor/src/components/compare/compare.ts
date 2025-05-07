@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-import { BuildConfigRef, CompareContext, VersionParams, VersionsComparison, VersionsComparisonDto } from '../../types'
+import { BuildConfigRef, CompareContext, VersionParams, VersionsComparison } from '../../types'
 import { compareVersionsOperations } from './compare.operations'
 import { getSplittedVersionKey } from '../../utils'
-import { toVersionsComparisonDto } from '../../utils/transformToDto'
-import { MESSAGE_SEVERITY } from '../../consts'
 import { asyncDebugPerformance, DebugPerformanceContext } from '../../utils/logs'
 
 export async function compareVersions(
@@ -26,7 +24,7 @@ export async function compareVersions(
   curr: VersionParams,
   ctx: CompareContext,
   debugCtx?: DebugPerformanceContext,
-): Promise<VersionsComparisonDto[]> {
+): Promise<VersionsComparison[]> {
   let comparisons: VersionsComparison[] = []
   await asyncDebugPerformance('[CompareVersions]', async (versionsDebugContext) => {
     comparisons = await compareVersionsReferences(prev, curr, ctx)
@@ -37,14 +35,7 @@ export async function compareVersions(
     ))
   }, debugCtx, prev ? [prev[1], prev[0]] : ['empty previous id', 'empty previous version'])
 
-  const logError = (message: string): void => {
-    ctx.notifications.push({
-      severity: MESSAGE_SEVERITY.Error,
-      message: message,
-    })
-  }
-
-  return comparisons.map(comparison => toVersionsComparisonDto(comparison, logError))
+  return comparisons
 }
 
 export async function compareVersionsReferences(

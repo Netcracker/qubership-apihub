@@ -16,9 +16,20 @@
 
 import { RestOperationData, VersionRestOperation } from './rest.types'
 import { areDeprecatedOriginsNotEmpty, isOperationRemove, removeComponents } from '../../utils'
-import { apiDiff, breaking, COMPARE_MODE_OPERATION, Diff, DiffAction, semiBreaking } from '@netcracker/qubership-apihub-api-diff'
+import {
+  apiDiff,
+  breaking,
+  COMPARE_MODE_OPERATION,
+  Diff,
+  DiffAction,
+  risky,
+} from '@netcracker/qubership-apihub-api-diff'
 import { MESSAGE_SEVERITY, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
-import { BREAKING_CHANGE_TYPE, CompareOperationsPairContext, SEMI_BREAKING_CHANGE_TYPE } from '../../types'
+import {
+  BREAKING_CHANGE_TYPE,
+  CompareOperationsPairContext,
+  RISKY_CHANGE_TYPE,
+} from '../../types'
 import { isObject } from '@netcracker/qubership-apihub-json-crawl'
 import { areDeclarationPathsEqual } from '../../utils/path'
 import { JSON_SCHEMA_PROPERTY_DEPRECATED, pathItemToFullPath, resolveOrigins } from '@netcracker/qubership-apihub-api-unifier'
@@ -48,7 +59,7 @@ export const compareRestOperationsData = async (current: VersionRestOperation | 
       normalizedResult: true,
       beforeSource: previous?.data,
       afterSource: current?.data,
-    }
+    },
   )
   const olnyBreaking = diffResult.diffs.filter((diff) => diff.type === breaking)
   if (olnyBreaking.length > 0 && previous?.operationId) {
@@ -61,7 +72,7 @@ async function reclassifyBreakingChanges(
   operationId: string,
   mergedJso: unknown,
   diffs: Diff[],
-  ctx: CompareOperationsPairContext
+  ctx: CompareOperationsPairContext,
 ): Promise<void> {
   if (!ctx.previousVersion || !ctx.previousPackageId) {
     return
@@ -71,6 +82,7 @@ async function reclassifyBreakingChanges(
     return
   }
   previosVersionDeprecations.operations[0]
+
   const previousOperation = previosVersionDeprecations.operations[0]
 
   if (!previousOperation?.deprecatedItems) { return }
@@ -82,7 +94,7 @@ async function reclassifyBreakingChanges(
 
     const deprecatedInVersionsCount = previousOperation?.deprecatedInPreviousVersions?.length ?? 0
     if (isOperationRemove(diff) && deprecatedInVersionsCount > 1) {
-      diff.type = semiBreaking
+      diff.type = risky
       continue
     }
 
@@ -93,7 +105,7 @@ async function reclassifyBreakingChanges(
     if (!isObject(diff.beforeNormalizedValue)) {
       ctx.notifications.push({
         severity: MESSAGE_SEVERITY.Error,
-        message: '[Semi-breaking validation] Something wrong with beforeNormalizedValue from diff',
+        message: '[Risky validation] Something wrong with beforeNormalizedValue from diff',
       })
       continue
     }
@@ -102,7 +114,7 @@ async function reclassifyBreakingChanges(
     if (!areDeprecatedOriginsNotEmpty(diff.beforeNormalizedValue)) {
       ctx.notifications.push({
         severity: MESSAGE_SEVERITY.Error,
-        message: '[Semi-breaking validation] Something wrong with origins',
+        message: '[Risky validation] Something wrong with origins',
       })
       continue
     }
@@ -125,16 +137,16 @@ async function reclassifyBreakingChanges(
     }
 
     if (deprecatedItem && deprecatedItem?.deprecatedInPreviousVersions?.length > 1) {
-      diff.type = semiBreaking
+      diff.type = risky
     }
   }
-  // mark removed required status of the property as semi-breaking
+  // mark removed required status of the property as risky
   if (diffs.length) {
     const requiredProperties = findRequiredRemovedProperties(mergedJso, diffs)
 
     requiredProperties?.forEach(prop => {
-      if (prop.propDiff.type === SEMI_BREAKING_CHANGE_TYPE && prop.requiredDiff?.type === BREAKING_CHANGE_TYPE) {
-        prop.requiredDiff.type = semiBreaking
+      if (prop.propDiff.type === RISKY_CHANGE_TYPE && prop.requiredDiff?.type === BREAKING_CHANGE_TYPE) {
+        prop.requiredDiff.type = risky
       }
     })
   }

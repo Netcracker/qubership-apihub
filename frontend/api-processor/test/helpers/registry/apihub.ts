@@ -22,7 +22,7 @@ import {
   BuilderContext,
   BuilderResolvers,
   BuildResult,
-  graphqlApiBuilder,
+  graphqlApiBuilder, MESSAGE_SEVERITY,
   OperationId,
   OperationsApiType,
   PackageId,
@@ -51,6 +51,7 @@ import {
   saveNotifications,
   saveOperationsArray,
 } from './utils'
+import { toVersionsComparisonDto } from '../../../src/utils/transformToDto'
 
 export const VERSIONS_PATH = 'test/versions'
 
@@ -106,6 +107,14 @@ export class ApihubRegistry implements IRegistry {
     } catch (e) {
       // do nothing
     }
+
+    const logError = (message: string): void => {
+      notifications.push({
+        severity: MESSAGE_SEVERITY.Error,
+        message: message,
+      })
+    }
+
     await fs.mkdir(basePath, { recursive: true })
 
     await saveInfo(config, basePath)
@@ -115,9 +124,9 @@ export class ApihubRegistry implements IRegistry {
 
     await saveOperationsArray(operations, basePath)
     await saveEachOperation(operations, basePath)
-
-    await saveComparisonsArray(comparisons, basePath)
-    await saveEachComparison(comparisons, basePath)
+    const comparisonsDto = comparisons.map(comparison => toVersionsComparisonDto(comparison, logError))
+    await saveComparisonsArray(comparisonsDto, basePath)
+    await saveEachComparison(comparisonsDto, basePath)
     await saveNotifications(notifications, basePath)
   }
 

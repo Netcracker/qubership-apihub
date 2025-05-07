@@ -17,10 +17,10 @@
 import JSZip from 'jszip'
 import { version } from '../../package.json'
 
-import type {
+import {
   ApiOperation,
   BuilderContext,
-  BuildResult,
+  BuildResultDto,
   PackageComparison,
   PackageComparisonOperations,
   PackageComparisons,
@@ -30,10 +30,12 @@ import type {
   PackageOperation,
   PackageOperations,
   VersionDocument,
+  BuildResult,
 } from '../types'
 import { unknownApiBuilder } from '../apitypes'
-import { PACKAGE } from '../consts'
+import { MESSAGE_SEVERITY, PACKAGE } from '../consts'
 import { takeIf, toPackageDocument } from '../utils'
+import { toVersionsComparisonDto } from '../utils/transformToDto'
 
 export interface ZipTool {
   // todo method should only accept Blob content, transformation is not a responsibility of this method
@@ -48,30 +50,41 @@ export const createVersionPackage = async (
   ctx: BuilderContext,
   options?: JSZip.JSZipGeneratorOptions,
 ): Promise<any> => {
-  await createInfoFile(zip, buildResult.config)
+  const logError = (message: string): void => {
+    ctx.notifications.push({
+      severity: MESSAGE_SEVERITY.Error,
+      message: message,
+    })
+  }
+  const buildResultDto: BuildResultDto = {
+    ...buildResult,
+    comparisons: buildResult.comparisons.map(comparison => toVersionsComparisonDto(comparison, logError)),
+  }
 
-  const documents = buildResult.merged ? [buildResult.merged] : [...buildResult.documents.values()]
+  await createInfoFile(zip, buildResultDto.config)
+
+  const documents = buildResultDto.merged ? [buildResultDto.merged] : [...buildResultDto.documents.values()]
 
   createDocumentsFile(zip, documents)
   await createDocumentDataFiles(zip, documents, ctx)
 
-  createOperationsFile(zip, buildResult.operations)
+  createOperationsFile(zip, buildResultDto.operations)
   const operationsDir = zip.folder(PACKAGE.OPERATIONS_DIR_NAME)!
-  for (const { data, operationId } of buildResult.operations.values()) {
+  for (const { data, operationId } of buildResultDto.operations.values()) {
     createOperationDataFile(operationsDir, operationId, data)
   }
 
-  if (buildResult.comparisons.length) {
-    const comparisons: PackageComparison[] = buildResult.comparisons.map(({ data, ...rest }) => rest)
+  if (buildResultDto.comparisons.length) {
+    const comparisons: PackageComparison[] = buildResultDto.comparisons.map(({ data, ...rest }) => rest)
     createComparisonsFile(zip, { comparisons })
     const comparisonsDir = zip.folder(PACKAGE.COMPARISONS_DIR_NAME)
 
-    for (const comparison of buildResult.comparisons) {
+    for (const comparison of buildResultDto.comparisons) {
       if (!comparison.comparisonFileId || !comparison.data) { continue }
       createComparisonDataFile(comparisonsDir!, comparison.comparisonFileId, { operations: comparison.data })
     }
   }
-  createNotificationsFile(zip, { notifications: buildResult.notifications })
+  createNotificationsFile(zip, { notifications: buildResultDto.notifications })
 
   return await zip.buildResult(options)
 }

@@ -16,6 +16,7 @@
 
 import {
   ApiAudienceTransition,
+  ApiBuilder,
   CompareContext,
   CompareOperationsPairContext,
   OperationChanges,
@@ -33,9 +34,7 @@ import {
   getOperationMetadata,
   getOperationsHashMapByApiType,
   getOperationTags,
-  getOperationTypesFromTwoVersions,
   getUniqueApiTypesFromVersions,
-  OperationIdentityMap,
   takeSubstringIf,
   totalChanges,
 } from './compare.utils'
@@ -50,8 +49,7 @@ import {
   removeObjectDuplicates,
   slugify,
 } from '../../utils'
-import { asyncFunction } from '../../utils/async'
-import { asyncDebugPerformance, DebugPerformanceContext, logLongBuild, syncDebugPerformance } from '../../utils/logs'
+import { asyncDebugPerformance, DebugPerformanceContext } from '../../utils/logs'
 import { validateBwcBreakingChanges } from './bwc.validation'
 
 export async function compareVersionsOperations(
@@ -107,6 +105,18 @@ export async function compareVersionsOperations(
   }
 }
 
+const HANDLE_TYPE_ADDED = 'added'
+const HANDLE_TYPE_REMOVED = 'removed'
+const HANDLE_TYPE_CHANGED = 'changed'
+
+type HandleType = typeof HANDLE_TYPE_ADDED | typeof HANDLE_TYPE_REMOVED | typeof HANDLE_TYPE_CHANGED
+
+export interface OperationsMappingResult {
+  [HANDLE_TYPE_ADDED]: OperationId[]
+  [HANDLE_TYPE_REMOVED]: OperationId[]
+  [HANDLE_TYPE_CHANGED]: Record<OperationId, OperationId>
+}
+
 async function compareCurrentApiType(
   apiType: OperationsApiType,
   prev: VersionCache | null,
@@ -122,32 +132,34 @@ async function compareCurrentApiType(
   const apiBuilder = ctx.apiBuilders.find((builder) => apiType === builder.apiType)
   if (!apiBuilder) { return null }
 
-  const [prevOperationTypesData, currOperationTypesData] = getOperationTypesFromTwoVersions(prev, curr)
+  const { operations: prevOperations = [] } = await versionOperationsResolver(apiType, prev?.version ?? '', prev?.packageId ?? '', undefined, false) || {}
+  const { operations: currOperations = [] } = await versionOperationsResolver(apiType, curr?.version ?? '', curr?.packageId ?? '', undefined, false) || {}
 
-  const changedIdToOriginal: OperationIdentityMap = {}
-  const prevOperationHashMap = getOperationsHashMapByApiType(apiType, prevOperationTypesData, changedIdToOriginal, ctx)
-  const currOperationHashMap = getOperationsHashMapByApiType(apiType, currOperationTypesData, changedIdToOriginal, ctx, true)
+  const [prevReducedOperationIdToHashMap, prevReducedOperationIdToOriginal] = getOperationsHashMapByApiType(apiBuilder, prevOperations, ctx)
+  const [currReducedOperationIdToHashMap, currReducedOperationIdToOriginal] = getOperationsHashMapByApiType(apiBuilder, currOperations, ctx, true)
 
-  const operationIds = new Set([...Object.keys(prevOperationHashMap), ...Object.keys(currOperationHashMap)])
-  const operationsMapping: Record<string, Array<string>> = { added: [], removed: [], changed: [] }
+  const reducedOperationIds = new Set([...Object.keys(prevReducedOperationIdToHashMap), ...Object.keys(currReducedOperationIdToHashMap)])
+  const operationsMapping: OperationsMappingResult = { [HANDLE_TYPE_ADDED]: [], [HANDLE_TYPE_REMOVED]: [], [HANDLE_TYPE_CHANGED]: {} }
   const apiAudienceTransitions: ApiAudienceTransition[] = []
-  const pairedOperationIds: Array<string> = []
+  const pairedOperationIds: Record<OperationId, OperationId> = {}
 
-  for (const operationId of operationIds) {
-    const v1OperationHash = prevOperationHashMap[operationId]
-    const v2OperationHash = currOperationHashMap[operationId]
-    if (v1OperationHash && v2OperationHash) {
-      pairedOperationIds.push(changedIdToOriginal[operationId] || operationId)
+  for (const reducedOperationId of reducedOperationIds) {
+    const prevOperationHash = prevReducedOperationIdToHashMap[reducedOperationId]
+    const currOperationHash = currReducedOperationIdToHashMap[reducedOperationId]
+    const prevOperationId = prevReducedOperationIdToOriginal[reducedOperationId]
+    const currOperationId = currReducedOperationIdToOriginal[reducedOperationId]
+    if (prevOperationHash && currOperationHash) {
+      pairedOperationIds[prevOperationId] = currOperationId
       // operation not changed
-      if (v1OperationHash === v2OperationHash) { continue }
+      if (prevOperationHash === currOperationHash) { continue }
       // operation changed
-      operationsMapping.changed.push(changedIdToOriginal[operationId] || operationId)
-    } else if (v1OperationHash) {
+      operationsMapping[HANDLE_TYPE_CHANGED][prevOperationId] = currOperationId
+    } else if (prevOperationHash) {
       // operation removed
-      operationsMapping.removed.push(changedIdToOriginal[operationId] || operationId)
-    } else if (v2OperationHash) {
+      operationsMapping[HANDLE_TYPE_REMOVED].push(prevOperationId)
+    } else if (currOperationHash) {
       // operation added
-      operationsMapping.added.push(changedIdToOriginal[operationId] || operationId)
+      operationsMapping[HANDLE_TYPE_ADDED].push(currOperationId)
     }
   }
 
@@ -183,7 +195,7 @@ async function compareCurrentApiType(
     ) || {}
 
     if (!operations?.length) {
-      const errorMessage = `Cannot get operations for package ${packageId} and version ${version} (with ids=${operationIds.join(',')})`
+      const errorMessage = `Cannot get operations for package ${packageId} and version ${version} (requested ids=${operationIds})`
       ctx.notifications.push({
         severity: MESSAGE_SEVERITY.Error,
         message: errorMessage,
@@ -192,7 +204,7 @@ async function compareCurrentApiType(
     }
     if (operations.length !== operationIds.length) {
       const notResolvedOperationIds = operationIds.filter(id => !operations.find(({ operationId }) => id === operationId))
-      const errorMessage = `Some operations (${notResolvedOperationIds}) for package ${packageId} and version ${version} (with ids=${operationIds.join(',')})`
+      const errorMessage = `Cannot get some operations (${notResolvedOperationIds}) for package ${packageId} and version ${version} (requested ids=${operationIds})`
       ctx.notifications.push({
         severity: MESSAGE_SEVERITY.Error,
         message: errorMessage,
@@ -201,7 +213,7 @@ async function compareCurrentApiType(
     }
 
     for (const operation of operations) {
-      const isOperationAdded = handleType === HANDLE_TYPE_FULLY_ADDED
+      const isOperationAdded = handleType === HANDLE_TYPE_ADDED
       const [prevOperation, currOperation] = isOperationAdded ? [undefined, operation] : [operation, undefined]
       const operationDiffs = await asyncDebugPerformance(
         '[Operation]',
@@ -214,13 +226,13 @@ async function compareCurrentApiType(
 
       const changedOperation = {
         apiType,
-        operationId: operation.operationId,
+        [isOperationAdded ? 'operationId' : 'previousOperationId']: operation.operationId,
         [isOperationAdded ? 'dataHash' : 'previousDataHash']: operation.dataHash,
         [isOperationAdded ? 'apiKind' : 'previousApiKind']: operation.apiKind,
         diffs: operationDiffs,
         changeSummary: changeSummary,
         impactedSummary: impactedSummary,
-        metadata: getOperationMetadata(operation),
+        [isOperationAdded ? 'metadata' : 'previousMetadata']: getOperationMetadata(operation),
       }
       validateBwcBreakingChanges(changedOperation)
       changedOperations.set(operation.operationId, changedOperation)
@@ -229,11 +241,13 @@ async function compareCurrentApiType(
   }
 
   // todo: convert from objects analysis to apihub-diff result analysis after the "info" section participates in the comparison of operations
-  await asyncDebugPerformance('[ApiAudience]', async () => await executeInBatches(pairedOperationIds, async (operationsBatch) => {
-    const { operations: prevOperationsWithoutData = [] } = await versionOperationsResolver(apiType, prevVersion, prevPackageId, operationsBatch, false) || {}
-    const { operations: currOperationsWithoutData = [] } = await versionOperationsResolver(apiType, currVersion, currPackageId, operationsBatch, false) || {}
+  await asyncDebugPerformance('[ApiAudience]', async () => await executeInBatches(Object.entries(pairedOperationIds), async (operationsBatch) => {
+    const previousBatch = operationsBatch.map(([prevOperationId]) => prevOperationId)
+    const currentBatch = operationsBatch.map(([, currOperationId]) => currOperationId)
+    const { operations: currOperationsWithoutData = [] } = await versionOperationsResolver(apiType, currVersion, currPackageId, previousBatch, false) || {}
+    const { operations: prevOperationsWithoutData = [] } = await versionOperationsResolver(apiType, prevVersion, prevPackageId, currentBatch, false) || {}
 
-    const pairOperationsMap = createPairOperationsMap(currGroupSlug, prevGroupSlug, currOperationsWithoutData, prevOperationsWithoutData)
+    const pairOperationsMap = createPairOperationsMap(currGroupSlug, prevGroupSlug, currOperationsWithoutData, prevOperationsWithoutData, apiBuilder)
     Object.values(pairOperationsMap).forEach((pair) => {
       calculateApiAudienceTransitions(pair.current, pair.previous, apiAudienceTransitions)
     })
@@ -244,7 +258,7 @@ async function compareCurrentApiType(
       prevVersion!,
       prevPackageId!,
       operationsBatch,
-      HANDLE_TYPE_FULLY_REMOVED,
+      HANDLE_TYPE_REMOVED,
       innerDebugCtx,
     )
   }, batchSize), debugCtx)
@@ -254,7 +268,7 @@ async function compareCurrentApiType(
       currVersion!,
       currPackageId!,
       operationsBatch,
-      HANDLE_TYPE_FULLY_ADDED,
+      HANDLE_TYPE_ADDED,
       innerDebugCtx,
     )
   }, batchSize), debugCtx)
@@ -262,14 +276,13 @@ async function compareCurrentApiType(
   if (!apiBuilder.compareOperationsData) { return null }
 
   await asyncDebugPerformance('[Changed]', async (innerDebugCtx) =>
-    await executeInBatches(operationsMapping.changed, async (operationsBatch) => {
-      const currentBatch = currentGroup ? operationsBatch.map(operationId => currGroupSlug + operationId.substring(currGroupSlug.length)) : operationsBatch
-      const previousBatch = previousGroup ? operationsBatch.map(operationId => prevGroupSlug + operationId.substring(prevGroupSlug.length)) : operationsBatch
+    await executeInBatches(Object.entries(operationsMapping.changed), async (operationsBatch) => {
+      const previousBatch = operationsBatch.map(([prevOperationId]) => prevOperationId)
+      const currentBatch = operationsBatch.map(([, currOperationId]) => currOperationId)
+      const { operations: prevOperationsWithData = [] } = await versionOperationsResolver(apiType, prevVersion, prevPackageId, previousBatch) || {}
+      const { operations: currOperationsWithData = [] } = await versionOperationsResolver(apiType, currVersion, currPackageId, currentBatch) || {}
 
-      const { operations: prevOperationsWithData = [] } = await versionOperationsResolver(apiType, prevVersion!, prevPackageId!, previousBatch) || {}
-      const { operations: currOperationsWithData = [] } = await versionOperationsResolver(apiType, currVersion!, currPackageId!, currentBatch) || {}
-
-      const operationsMap = createPairOperationsMap(currGroupSlug, prevGroupSlug, currOperationsWithData, prevOperationsWithData)
+      const operationsMap = createPairOperationsMap(currGroupSlug, prevGroupSlug, currOperationsWithData, prevOperationsWithData, apiBuilder)
 
       // compare Operations Data
       for (const operationId of Object.keys(operationsMap)) {
@@ -302,6 +315,7 @@ async function compareCurrentApiType(
           const changedOperation = {
             apiType,
             operationId: takeSubstringIf(!!currGroupSlug, operationsEntry.current.operationId, removeFirstSlash(currentGroup ?? '').length),
+            previousOperationId: takeSubstringIf(!!prevGroupSlug, operationsEntry.previous.operationId, removeFirstSlash(previousGroup ?? '').length),
             dataHash: operationsEntry.current.dataHash,
             previousDataHash: operationsEntry.previous.dataHash,
             apiKind: operationsEntry.current.apiKind,
@@ -309,10 +323,8 @@ async function compareCurrentApiType(
             diffs: operationDiffs,
             changeSummary: changeSummary,
             impactedSummary: impactedSummary,
-            metadata: {
-              ...getOperationMetadata(operationsEntry.current),
-              previousOperationMetadata: getOperationMetadata(operationsEntry.previous),
-            },
+            metadata: getOperationMetadata(operationsEntry.current),
+            previousMetadata: getOperationMetadata(operationsEntry.previous),
           }
           validateBwcBreakingChanges(changedOperation)
           changedOperations.set(operationId, changedOperation)
@@ -343,21 +355,27 @@ async function compareCurrentApiType(
   ]
 }
 
-const HANDLE_TYPE_FULLY_ADDED = 'added'
-const HANDLE_TYPE_FULLY_REMOVED = 'removed'
-
-type HandleType = typeof HANDLE_TYPE_FULLY_ADDED | typeof HANDLE_TYPE_FULLY_REMOVED
-
-const createPairOperationsMap = (currGroupSlug: string, prevGroupSlug: string, currentOperations: ResolvedOperation[], previousOperations: ResolvedOperation[]): Record<string, { previous?: ResolvedOperation; current: ResolvedOperation }> => {
+const createPairOperationsMap = (
+  currGroupSlug: string,
+  prevGroupSlug: string,
+  currentOperations: ResolvedOperation[],
+  previousOperations: ResolvedOperation[],
+  apiBuilder: ApiBuilder,
+): Record<string, {
+  previous?: ResolvedOperation
+  current: ResolvedOperation
+}> => {
 
   const operationsMap: Record<string, { previous?: ResolvedOperation; current: ResolvedOperation }> = {}
 
   for (const currentOperation of currentOperations) {
-    operationsMap[takeSubstringIf(!!currGroupSlug, currentOperation.operationId, currGroupSlug.length)] = { current: currentOperation }
+    const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(currentOperation) ?? currentOperation.operationId
+    operationsMap[takeSubstringIf(!!currGroupSlug, normalizedOperationId, currGroupSlug.length)] = { current: currentOperation }
   }
 
   for (const previousOperation of previousOperations) {
-    const prevOperationId = takeSubstringIf(!!prevGroupSlug, previousOperation.operationId, prevGroupSlug.length)
+    const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(previousOperation) ?? previousOperation.operationId
+    const prevOperationId = takeSubstringIf(!!prevGroupSlug, normalizedOperationId, prevGroupSlug.length)
     const operationsMappingElement = operationsMap[prevOperationId]
     if (operationsMappingElement) {
       operationsMap[prevOperationId] = {

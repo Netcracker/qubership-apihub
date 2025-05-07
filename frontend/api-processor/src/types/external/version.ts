@@ -43,7 +43,6 @@ export type OperationTypes = {
   changesSummary?: ChangeSummary
   operationsCount?: number
   deprecatedCount?: number
-  operations?: ResolvedVersionOperationsHashMap
 }
 
 export interface ResolvedVersionOperationsHashMap {

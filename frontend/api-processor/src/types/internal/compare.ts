@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { Diff } from '@netcracker/qubership-apihub-api-diff'
+import { Diff, DiffType } from '@netcracker/qubership-apihub-api-diff'
 import {
   ApiKind,
   BuildConfig,
-  ChangeSummary,
+  ChangeSummary, DiffTypeDto,
   ImpactedOperationSummary,
   OperationType,
   PackageId,
@@ -45,30 +45,33 @@ export type GraphQLChangesMetadata = {
 export type OperationChangesMetadata = {
   title: string
   tags: string[]
-  previousOperationMetadata?: OperationChangesMetadata
 } & Partial<RestChangesMetadata> & Partial<GraphQLChangesMetadata>
 
-export interface OperationChanges {
-  operationId: string
+export interface OperationChanges<T extends DiffType | DiffTypeDto = DiffType> {
+  operationId?: string
+  previousOperationId?: string
   apiType: BuilderType
   apiKind?: ApiKind
   previousApiKind?: ApiKind
   dataHash?: string
   previousDataHash?: string
-  changeSummary: ChangeSummary
+  changeSummary: ChangeSummary<T>
   impactedSummary: ImpactedOperationSummary
   // @deprecated. OOM problem
-  diffs?: Diff[] 
+  diffs?: Diff[]
   metadata?: OperationChangesMetadata & {
     [key: string]: unknown
   }
+  previousMetadata?: OperationChangesMetadata & {
+    [key: string]: unknown
+  } 
 }
 
-export interface OperationChangesDto extends Omit<OperationChanges, 'diffs' | 'impactedSummary' | 'mergedJso'> {
-  changes?: ChangeMessage[]
+export interface OperationChangesDto extends Omit<OperationChanges<DiffTypeDto>, 'diffs' | 'impactedSummary' | 'mergedJso'> {
+  changes?: ChangeMessage<DiffTypeDto>[]
 }
 
-export interface VersionsComparison {
+export interface VersionsComparison<T extends DiffType | DiffTypeDto = DiffType> {
   comparisonFileId?: string
   packageId: PackageId
   version: VersionId
@@ -77,11 +80,11 @@ export interface VersionsComparison {
   previousVersionPackageId: PackageId
   previousVersionRevision?: number
   fromCache: boolean
-  operationTypes: OperationType[]
+  operationTypes: OperationType<T>[]
   data?: OperationChanges[]
 }
 
-export interface VersionsComparisonDto extends Omit<VersionsComparison, 'data'> {
+export interface VersionsComparisonDto extends Omit<VersionsComparison<DiffTypeDto>, 'data'> {
   data?: OperationChangesDto[]
 }
 

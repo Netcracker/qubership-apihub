@@ -14,24 +14,33 @@
  * limitations under the License.
  */
 
-import { Diff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
+import { Diff, DiffAction, DiffType, risky } from '@netcracker/qubership-apihub-api-diff'
 import { calculateObjectHash } from './hashes'
 import { ArrayType, isEmpty } from './arrays'
 import {
   ChangeMessage,
+  ChangeSummary,
+  DiffTypeDto,
   OperationChanges,
   OperationChangesDto,
+  OperationType,
+  SEMI_BREAKING_CHANGE_TYPE,
   VersionsComparison,
   VersionsComparisonDto,
 } from '../types'
 
-export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: string) => void): ChangeMessage {
+export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: string) => void): ChangeMessage<DiffTypeDto> {
+  const newDiff: ArrayType<Diff<DiffTypeDto>[]> = {
+    ...diff,
+    type: replaceStringDiffType(diff.type, { origin: risky, override: SEMI_BREAKING_CHANGE_TYPE }) as DiffTypeDto,
+  }
+
   const {
     description,
     action,
     type: severity,
     scope,
-  } = diff
+  } = newDiff
 
   const commonChangeProps = {
     description,
@@ -44,7 +53,7 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
       const {
         afterDeclarationPaths,
         afterNormalizedValue,
-      } = diff
+      } = newDiff
       if (afterNormalizedValue === undefined) {
         logError('Add diff has undefined afterNormalizedValue')
       }
@@ -62,7 +71,7 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
       const {
         beforeDeclarationPaths,
         beforeNormalizedValue,
-      } = diff
+      } = newDiff
       if (beforeNormalizedValue === undefined) {
         logError('Remove diff has undefined beforeNormalizedValue')
       }
@@ -82,7 +91,7 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
         afterDeclarationPaths,
         beforeNormalizedValue,
         afterNormalizedValue,
-      } = diff
+      } = newDiff
       if (afterNormalizedValue === undefined && beforeNormalizedValue === undefined) {
         logError('Replace diff has undefined beforeNormalizedValue and afterNormalizedValue')
       }
@@ -104,7 +113,7 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
         afterDeclarationPaths,
         beforeKey,
         afterKey,
-      } = diff
+      } = newDiff
       if (isEmpty(afterDeclarationPaths) && isEmpty(beforeDeclarationPaths)) {
         logError('Rename diff has empty afterDeclarationPaths and beforeDeclarationPaths')
       }
@@ -125,11 +134,16 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
 
 export function toOperationChangesDto({
   diffs,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   impactedSummary,
   ...rest
 }: OperationChanges, logError: (message: string) => void): OperationChangesDto {
   return {
     ...rest,
+    changeSummary: replacePropertyInChangesSummary<DiffType, DiffTypeDto>(rest.changeSummary, {
+      origin: risky,
+      override: SEMI_BREAKING_CHANGE_TYPE,
+    }),
     changes: diffs?.map(diff => toChangeMessage(diff, logError)),
   }
 }
@@ -140,6 +154,71 @@ export function toVersionsComparisonDto({
 }: VersionsComparison, logError: (message: string) => void): VersionsComparisonDto {
   return {
     ...rest,
+    operationTypes: convertDtoFieldOperationTypes<DiffType, DiffTypeDto>(rest.operationTypes, {
+      origin: risky,
+      override: SEMI_BREAKING_CHANGE_TYPE,
+    }),
     data: data?.map(data => toOperationChangesDto(data, logError)),
   }
+}
+
+export function convertDtoFieldOperationTypes<
+  T extends DiffTypeDto | DiffType = DiffTypeDto,
+  J extends DiffTypeDto | DiffType = DiffType>
+(operationTypes: ReadonlyArray<OperationType<T>>, {
+  origin,
+  override,
+}: OptionDiffReplacer = { origin: SEMI_BREAKING_CHANGE_TYPE, override: risky }): OperationType<J>[] {
+  return operationTypes?.map((type) => {
+    return {
+      ...type,
+      changesSummary: replacePropertyInChangesSummary<T, J>(type.changesSummary, {
+        origin,
+        override,
+      }),
+      numberOfImpactedOperations: replacePropertyInChangesSummary<T, J>(type.numberOfImpactedOperations, {
+        origin,
+        override,
+      }),
+    }
+  })
+}
+
+export function replacePropertyInChangesSummary<
+  T extends DiffTypeDto | DiffType = DiffTypeDto,
+  J extends DiffTypeDto | DiffType = DiffType>
+(obj: ChangeSummary<T>,
+  {
+    origin,
+    override,
+  }: OptionDiffReplacer = {
+    origin: SEMI_BREAKING_CHANGE_TYPE,
+    override: risky,
+  }): ChangeSummary<J> {
+  {
+    if (origin in obj) {
+      const copyObj = { ...obj } as Record<PropertyKey, unknown>
+
+      copyObj[override] = copyObj[origin]
+      delete copyObj[origin]
+
+      return copyObj as ChangeSummary<J>
+    }
+
+    return obj as unknown as ChangeSummary<J>
+  }
+}
+
+export type DiffTypeCompare = DiffType | DiffTypeDto
+export type OptionDiffReplacer = {
+  origin: DiffTypeCompare
+  override: DiffTypeCompare
+}
+
+export function replaceStringDiffType(value: DiffTypeCompare,
+  {
+    origin,
+    override,
+  }: OptionDiffReplacer = { origin: SEMI_BREAKING_CHANGE_TYPE, override: risky }): DiffTypeCompare {
+  return value === origin ? override : value
 }

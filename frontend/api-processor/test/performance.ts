@@ -44,4 +44,3 @@ await portal.publish('performance', {
         { fileId: '2024.1/openapi_large_x6.yaml' },
     ],
 })
-console.log('DONE')

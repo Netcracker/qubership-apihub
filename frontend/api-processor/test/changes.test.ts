@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-import { Editor, LocalRegistry } from './helpers'
+import {
+  buildChangelogPackage,
+  changesSummaryMatcher,
+  Editor,
+  LocalRegistry,
+  numberOfImpactedOperationsMatcher,
+} from './helpers'
 import { ANNOTATION_CHANGE_TYPE, BREAKING_CHANGE_TYPE } from '../src'
 
 let beforePackage: LocalRegistry
@@ -52,5 +58,11 @@ describe('Changes test', () => {
     const [{ operationTypes: [{ changesSummary }] }] = result.comparisons
     expect(changesSummary?.[BREAKING_CHANGE_TYPE]).toBe(1)
     expect(changesSummary?.[ANNOTATION_CHANGE_TYPE]).toBe(1)
+  })
+
+  test('compare parametrized operations', async () => {
+    const result = await buildChangelogPackage('compare-parametrized-operations')
+    expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 2}))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1}))
   })
 })

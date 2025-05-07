@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import createSlug from 'slug'
+import createSlug, { CharMap } from 'slug'
 import {
   _ParsedFileResolver,
   ApiOperation,
@@ -29,13 +29,14 @@ import {
   PackageDocument,
   ResolvedDocument,
   VALIDATION_RULES_SEVERITY_LEVEL_ERROR,
-  VALIDATION_RULES_SEVERITY_LEVEL_WARNING,
   VersionDocument,
   YAML_EXPORT_GROUP_FORMAT,
 } from '../types'
 import { bundle, Resolver } from 'api-ref-bundler'
 import { FILE_FORMAT_JSON, FILE_FORMAT_YAML, MESSAGE_SEVERITY } from '../consts'
 import { isNotEmpty } from './arrays'
+import { PATH_PARAM_UNIFIED_PLACEHOLDER } from './builder'
+import { RefErrorType, RefErrorTypes } from '@netcracker/qubership-apihub-api-unifier'
 
 export const EXPORT_FORMAT_TO_FILE_FORMAT = new Map<OperationsGroupExportFormat, FileFormat>([
   [YAML_EXPORT_GROUP_FORMAT, FILE_FORMAT_YAML],
@@ -99,12 +100,14 @@ export const findSharedPath = (fileIds: string[]): string => {
   return first.slice(0, i).join('/') + (i ? '/' : '')
 }
 
-export const slugify = (text: string, slugs: string[] = []): string => {
+export const IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER: CharMap = { [PATH_PARAM_UNIFIED_PLACEHOLDER]: PATH_PARAM_UNIFIED_PLACEHOLDER }
+
+export const slugify = (text: string, slugs: string[] = [], charMapEntry?: CharMap): string => {
   if (!text) {
     return ''
   }
 
-  const slug = createSlug(text)
+  const slug = createSlug(text, { charmap: { ...createSlug.charmap, ...charMapEntry } })
   let suffix: string = ''
   // add suffix if not unique
   while (slugs.includes(slug + suffix)) { suffix = String(+suffix + 1) }
@@ -121,42 +124,60 @@ export const getDocumentTitle = (fileId: string): string => {
   return fileId.substring(cutDot).split('/').pop()!.replace(/\.[^/.]+$/, '')
 }
 
-export const createBundlingErrorHandler = (ctx: BuilderContext, fileId: FileId) => (messages: string[]): void => {
-  switch (ctx.config.validationRulesSeverity?.brokenRefs) {
-    case VALIDATION_RULES_SEVERITY_LEVEL_ERROR:
-      throw new Error(messages[0])
-    case VALIDATION_RULES_SEVERITY_LEVEL_WARNING:
-    default:
-      for (const message of messages) {
-        ctx.notifications.push({
-          severity: MESSAGE_SEVERITY.Error,
-          message: message,
-          fileId: fileId,
-        })
-      }
+export interface BundlingError {
+  message: string
+  errorType: RefErrorType
+}
+
+export const createBundlingErrorHandler = (ctx: BuilderContext, fileId: FileId) => (errors: BundlingError[]): void => {
+  // Only throw if severity is ERROR and there's at least one critical error
+  if (ctx.config.validationRulesSeverity?.brokenRefs === VALIDATION_RULES_SEVERITY_LEVEL_ERROR) {
+    const criticalError = errors.find(error => 
+      error.errorType === RefErrorTypes.REF_NOT_FOUND || 
+      error.errorType === RefErrorTypes.REF_NOT_VALID_FORMAT,
+    )
+    
+    if (criticalError) {
+      throw new Error(criticalError.message)
+    }
+  }
+
+  // In other cases push all errors to notifications
+  for (const error of errors) {
+    ctx.notifications.push({
+      severity: MESSAGE_SEVERITY.Error,
+      message: error.message,
+      fileId: fileId,
+    })
   }
 }
 
 export const getBundledFileDataWithDependencies = async (
   fileId: FileId,
   parsedFileResolver: _ParsedFileResolver,
-  onError: (messages: string[]) => void,
+  onError: (errors: BundlingError[]) => void,
 ): Promise<{ data: any; dependencies: string[] }> => {
   const dependencies: string[] = []
-  const errorMessages: string[] = []
+  const errors: BundlingError[] = []
 
   const resolver: Resolver = async (filepath: string) => {
     const data = await parsedFileResolver(filepath)
 
     if (data === null) {
       // can't throw the error here because it will be suppressed: https://github.com/udamir/api-ref-bundler/blob/0.4.0/src/resolver.ts#L33
-      errorMessages.push(`Unable to resolve the file "${filepath}" because it does not exist.`)
+      errors.push({
+        message: `Unable to resolve the file "${filepath}" because it does not exist.`,
+        errorType: RefErrorTypes.REF_NOT_FOUND,
+      })
       return {}
     }
 
     if (data.kind !== FILE_KIND.TEXT) {
       // can't throw the error here because it will be suppressed: https://github.com/udamir/api-ref-bundler/blob/0.4.0/src/resolver.ts#L33
-      errorMessages.push(`Unable to resolve the file "${filepath}" because it is not a valid text file.`)
+      errors.push({
+        message: `Unable to resolve the file "${filepath}" because it is not a valid text file.`,
+        errorType: RefErrorTypes.REF_NOT_VALID_FORMAT,
+      })
       return {}
     }
 
@@ -169,8 +190,8 @@ export const getBundledFileDataWithDependencies = async (
 
   const bundledFileData = await bundle(fileId, resolver)
 
-  if (isNotEmpty(errorMessages)) {
-    onError(errorMessages)
+  if (isNotEmpty(errors)) {
+    onError(errors)
   }
 
   return { data: bundledFileData, dependencies: dependencies }

@@ -15,18 +15,12 @@
  */
 
 import { changesSummaryMatcher, Editor, LocalRegistry, numberOfImpactedOperationsMatcher } from './helpers'
-import {
-  BREAKING_CHANGE_TYPE,
-  BUILD_TYPE,
-  NON_BREAKING_CHANGE_TYPE,
-  SEMI_BREAKING_CHANGE_TYPE,
-  VERSION_STATUS,
-} from '../src'
+import { BREAKING_CHANGE_TYPE, BUILD_TYPE, NON_BREAKING_CHANGE_TYPE, RISKY_CHANGE_TYPE, VERSION_STATUS } from '../src'
 
 const portal = new LocalRegistry('new-deprecated')
 
-describe('Semi-breaking changes test', () => {
-  test('should build 1 semi-breaking change', async () => {
+describe('Risky changes test', () => {
+  test('should build 1 risky change', async () => {
     const packageId = 'new-deprecated-semibreaking'
 
     await portal.publish('new-deprecated', {
@@ -56,14 +50,13 @@ describe('Semi-breaking changes test', () => {
     }, {}, portal)
 
     const result = await editor.run()
-
     expect(result).toEqual(changesSummaryMatcher({
       [NON_BREAKING_CHANGE_TYPE]: 1,
-      [SEMI_BREAKING_CHANGE_TYPE]: 1,
+      [RISKY_CHANGE_TYPE]: 1,
     }))
     expect(result).toEqual(numberOfImpactedOperationsMatcher({
       [NON_BREAKING_CHANGE_TYPE]: 1,
-      [SEMI_BREAKING_CHANGE_TYPE]: 1,
+      [RISKY_CHANGE_TYPE]: 1,
     }))
   })
 
@@ -97,14 +90,13 @@ describe('Semi-breaking changes test', () => {
     }, {}, portal)
 
     const result = await editor.run()
-
     expect(result).toEqual(changesSummaryMatcher({
       [BREAKING_CHANGE_TYPE]: 1,
-      [SEMI_BREAKING_CHANGE_TYPE]: 1,
+      [RISKY_CHANGE_TYPE]: 1,
     }))
     expect(result).toEqual(numberOfImpactedOperationsMatcher({
       [BREAKING_CHANGE_TYPE]: 1,
-      [SEMI_BREAKING_CHANGE_TYPE]: 1,
+      [RISKY_CHANGE_TYPE]: 1,
     }))
   })
 
@@ -139,14 +131,14 @@ describe('Semi-breaking changes test', () => {
     const result = await editor.run()
 
     expect(result).toEqual(changesSummaryMatcher({
-      [SEMI_BREAKING_CHANGE_TYPE]: 2,
+      [RISKY_CHANGE_TYPE]: 2,
     }))
     expect(result).toEqual(numberOfImpactedOperationsMatcher({
-      [SEMI_BREAKING_CHANGE_TYPE]: 2,
+      [RISKY_CHANGE_TYPE]: 2,
     }))
   })
 
-  test('should build 3 semi-breaking change for removed required property and required status', async () => {
+  test('should build 3 risky change for removed required property and required status', async () => {
     const packageId = 'new-deprecated-semibreaking-required'
 
     await portal.publish('new-deprecated', {
@@ -177,11 +169,11 @@ describe('Semi-breaking changes test', () => {
     const result = await editor.run()
 
     expect(result).toEqual(changesSummaryMatcher({
-      [SEMI_BREAKING_CHANGE_TYPE]: 3,
+      [RISKY_CHANGE_TYPE]: 3,
       [NON_BREAKING_CHANGE_TYPE]: 1,
     }))
     expect(result).toEqual(numberOfImpactedOperationsMatcher({
-      [SEMI_BREAKING_CHANGE_TYPE]: 1,
+      [RISKY_CHANGE_TYPE]: 1,
       [NON_BREAKING_CHANGE_TYPE]: 1,
     }))
   })
