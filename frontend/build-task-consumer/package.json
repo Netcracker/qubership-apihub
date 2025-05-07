@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-build-task-consumer",
-  "version": "2.1.1",
+  "version": "3.0.0",
   "license": "Apache-2.0",
   "files": [
     "dist",
@@ -22,7 +22,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config jest-e2e.json",
-    "update-lock-file": "update-lock-file @netcracker"    
+    "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
     "@nestjs/axios": "^2.0.0",
@@ -31,7 +31,7 @@
     "@nestjs/core": "8.4.7",
     "@nestjs/platform-express": "8.4.7",
     "@nestjs/swagger": "5.2.1",
-    "@netcracker/qubership-apihub-api-processor": "dev",
+    "@netcracker/qubership-apihub-api-processor": "4.0.0",
     "@sinclair/typebox": "^0.28.9",
     "adm-zip": "^0.5.10",
     "dotenv": "^16.0.3",
