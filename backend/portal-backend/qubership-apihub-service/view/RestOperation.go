@@ -14,12 +14,6 @@
 
 package view
 
-type RestOperationChange struct {
-	Path   string   `json:"path"`
-	Method string   `json:"method"`
-	Tags   []string `json:"tags,omitempty"`
-}
-
 type RestOperationMetadata struct {
 	Path   string   `json:"path"`
 	Method string   `json:"method"`
@@ -50,15 +44,26 @@ type OperationSummary struct {
 
 type RestOperationComparisonChangelogView_deprecated struct {
 	OperationComparisonChangelogView_deprecated
-	RestOperationChange
+	RestOperationMetadata
 }
 
 type RestOperationComparisonChangelogView struct {
-	OperationComparisonChangelogView
-	RestOperationChange
+	GenericComparisonOperationView
+	RestOperationMetadata
+}
+
+type RestOperationComparisonChangelogView_deprecated_2 struct {
+	OperationComparisonChangelogView_deprecated_2
+	RestOperationMetadata
 }
 
 type RestOperationComparisonChangesView struct {
 	OperationComparisonChangesView
-	RestOperationChange
+	RestOperationMetadata
+}
+
+type RestOperationPairChangesView struct {
+	CurrentOperation  *RestOperationComparisonChangelogView `json:"currentOperation,omitempty"`
+	PreviousOperation *RestOperationComparisonChangelogView `json:"previousOperation,omitempty"`
+	ChangeSummary     ChangeSummary                         `json:"changeSummary"`
 }

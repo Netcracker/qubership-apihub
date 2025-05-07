@@ -85,18 +85,19 @@ type OperationDataEntity struct {
 type OperationComparisonEntity struct {
 	tableName struct{} `pg:"operation_comparison"`
 
-	PackageId         string                 `pg:"package_id, type:varchar, use_zero"`
-	Version           string                 `pg:"version, type:varchar, use_zero"`
-	Revision          int                    `pg:"revision, type:integer, use_zero"`
-	PreviousPackageId string                 `pg:"previous_package_id, type:varchar, use_zero"`
-	PreviousVersion   string                 `pg:"previous_version, type:varchar, use_zero"`
-	PreviousRevision  int                    `pg:"previous_revision, type:integer, use_zero"`
-	ComparisonId      string                 `pg:"comparison_id, type:varchar"`
-	OperationId       string                 `pg:"operation_id, type:varchar"`
-	DataHash          string                 `pg:"data_hash, type:varchar"`
-	PreviousDataHash  string                 `pg:"previous_data_hash, type:varchar"`
-	ChangesSummary    view.ChangeSummary     `pg:"changes_summary, type:jsonb"`
-	Changes           map[string]interface{} `pg:"changes, type:jsonb"`
+	PackageId           string                 `pg:"package_id, type:varchar, use_zero"`
+	Version             string                 `pg:"version, type:varchar, use_zero"`
+	Revision            int                    `pg:"revision, type:integer, use_zero"`
+	OperationId         string                 `pg:"operation_id, type:varchar"`
+	PreviousPackageId   string                 `pg:"previous_package_id, type:varchar, use_zero"`
+	PreviousVersion     string                 `pg:"previous_version, type:varchar, use_zero"`
+	PreviousRevision    int                    `pg:"previous_revision, type:integer, use_zero"`
+	PreviousOperationId string                 `pg:"previous_operation_id, type:varchar, use_zero"`
+	ComparisonId        string                 `pg:"comparison_id, type:varchar"`
+	DataHash            string                 `pg:"data_hash, type:varchar"`
+	PreviousDataHash    string                 `pg:"previous_data_hash, type:varchar"`
+	ChangesSummary      view.ChangeSummary     `pg:"changes_summary, type:jsonb"`
+	Changes             map[string]interface{} `pg:"changes, type:jsonb"`
 }
 
 type VersionComparisonEntity struct {
@@ -155,6 +156,7 @@ type OperationComparisonChangelogEntity struct {
 	Title               string   `pg:"title, type:varchar"`
 	PreviousTitle       string   `pg:"previous_title, type:varchar"`
 	Metadata            Metadata `pg:"metadata, type:jsonb"`
+	PreviousMetadata    Metadata `pg:"previous_metadata, type:jsonb"`
 	PackageRef          string   `pg:"package_ref, type:varchar"`
 	PreviousPackageRef  string   `pg:"previous_package_ref, type:varchar"`
 }
@@ -468,7 +470,7 @@ func MakeOperationComparisonChangelogView_deprecated(entity OperationComparisonC
 	case string(view.RestApiType):
 		return view.RestOperationComparisonChangelogView_deprecated{
 			OperationComparisonChangelogView_deprecated: operationComparisonChangelogView,
-			RestOperationChange: view.RestOperationChange{
+			RestOperationMetadata: view.RestOperationMetadata{
 				Path:   entity.Metadata.GetPath(),
 				Method: entity.Metadata.GetMethod(),
 				Tags:   entity.Metadata.GetTags(),
@@ -488,11 +490,126 @@ func MakeOperationComparisonChangelogView_deprecated(entity OperationComparisonC
 }
 
 func MakeOperationComparisonChangelogView(entity OperationComparisonChangelogEntity) interface{} {
-	var currentOperation *view.ComparisonOperationView
-	var previousOperation *view.ComparisonOperationView
+	currentGenericView := view.GenericComparisonOperationView{
+		OperationId: entity.OperationId,
+		Title:       entity.Title,
+		ApiKind:     entity.ApiKind,
+		DataHash:    entity.DataHash,
+		PackageRef:  view.MakePackageRefKey(entity.PackageId, entity.Version, entity.Revision),
+	}
+
+	previousGenericView := view.GenericComparisonOperationView{
+		OperationId: entity.PreviousOperationId,
+		Title:       entity.PreviousTitle,
+		ApiKind:     entity.PreviousApiKind,
+		ApiAudience: entity.PreviousApiAudience,
+		DataHash:    entity.PreviousDataHash,
+		PackageRef:  view.MakePackageRefKey(entity.PreviousPackageId, entity.PreviousVersion, entity.PreviousRevision),
+	}
+
+	switch entity.ApiType {
+	case string(view.RestApiType):
+		var current *view.RestOperationComparisonChangelogView
+		var previous *view.RestOperationComparisonChangelogView
+
+		if entity.OperationId != "" {
+			current = &view.RestOperationComparisonChangelogView{
+				GenericComparisonOperationView: currentGenericView,
+				RestOperationMetadata: view.RestOperationMetadata{
+					Tags:   entity.Metadata.GetTags(),
+					Path:   entity.Metadata.GetPath(),
+					Method: entity.Metadata.GetMethod(),
+				},
+			}
+		}
+
+		if entity.PreviousOperationId != "" {
+			previous = &view.RestOperationComparisonChangelogView{
+				GenericComparisonOperationView: previousGenericView,
+				RestOperationMetadata: view.RestOperationMetadata{
+					Tags:   entity.PreviousMetadata.GetTags(),
+					Path:   entity.PreviousMetadata.GetPath(),
+					Method: entity.PreviousMetadata.GetMethod(),
+				},
+			}
+		}
+
+		res := &view.RestOperationPairChangesView{
+			CurrentOperation:  current,
+			PreviousOperation: previous,
+			ChangeSummary:     entity.ChangesSummary,
+		}
+		return res
+	case string(view.GraphqlApiType):
+		var current *view.GraphqlOperationComparisonChangelogView
+		var previous *view.GraphqlOperationComparisonChangelogView
+
+		if entity.OperationId != "" {
+			current = &view.GraphqlOperationComparisonChangelogView{
+				GenericComparisonOperationView: currentGenericView,
+				GraphQLOperationMetadata: view.GraphQLOperationMetadata{
+					Type:   entity.Metadata.GetType(),
+					Method: entity.Metadata.GetMethod(),
+					Tags:   entity.Metadata.GetTags(),
+				},
+			}
+		}
+		if entity.PreviousOperationId != "" {
+			previous = &view.GraphqlOperationComparisonChangelogView{
+				GenericComparisonOperationView: previousGenericView,
+				GraphQLOperationMetadata: view.GraphQLOperationMetadata{
+					Type:   entity.PreviousMetadata.GetType(),
+					Method: entity.PreviousMetadata.GetMethod(),
+					Tags:   entity.PreviousMetadata.GetTags(),
+				},
+			}
+		}
+
+		result := &view.GraphqlOperationPairChangesView{
+			CurrentOperation:  current,
+			PreviousOperation: previous,
+			ChangeSummary:     entity.ChangesSummary,
+		}
+		return result
+	case string(view.ProtobufApiType):
+		var current *view.ProtobufOperationComparisonChangelogView
+		var previous *view.ProtobufOperationComparisonChangelogView
+
+		if entity.OperationId != "" {
+			current = &view.ProtobufOperationComparisonChangelogView{
+				GenericComparisonOperationView: currentGenericView,
+				ProtobufOperationMetadata: view.ProtobufOperationMetadata{
+					Type:   entity.Metadata.GetType(),
+					Method: entity.Metadata.GetMethod(),
+				},
+			}
+		}
+		if entity.PreviousOperationId != "" {
+			previous = &view.ProtobufOperationComparisonChangelogView{
+				GenericComparisonOperationView: previousGenericView,
+				ProtobufOperationMetadata: view.ProtobufOperationMetadata{
+					Type:   entity.PreviousMetadata.GetType(),
+					Method: entity.PreviousMetadata.GetMethod(),
+				},
+			}
+		}
+
+		result := &view.ProtobufOperationPairChangesView{
+			CurrentOperation:  current,
+			PreviousOperation: previous,
+			ChangeSummary:     entity.ChangesSummary,
+		}
+		return result
+	}
+	return nil
+}
+
+func MakeOperationComparisonChangelogView_deprecated_2(entity OperationComparisonChangelogEntity) interface{} {
+	var currentOperation *view.ComparisonOperationView_deprecated
+	var previousOperation *view.ComparisonOperationView_deprecated
 
 	if entity.DataHash != "" {
-		currentOperation = &view.ComparisonOperationView{
+		currentOperation = &view.ComparisonOperationView_deprecated{
 			Title:       entity.Title,
 			ApiKind:     entity.ApiKind,
 			ApiAudience: entity.ApiAudience,
@@ -501,7 +618,7 @@ func MakeOperationComparisonChangelogView(entity OperationComparisonChangelogEnt
 		}
 	}
 	if entity.PreviousDataHash != "" {
-		previousOperation = &view.ComparisonOperationView{
+		previousOperation = &view.ComparisonOperationView_deprecated{
 			Title:       entity.PreviousTitle,
 			ApiKind:     entity.PreviousApiKind,
 			ApiAudience: entity.PreviousApiAudience,
@@ -510,7 +627,7 @@ func MakeOperationComparisonChangelogView(entity OperationComparisonChangelogEnt
 		}
 	}
 
-	operationComparisonChangelogView := view.OperationComparisonChangelogView{
+	operationComparisonChangelogView := view.OperationComparisonChangelogView_deprecated_2{
 		OperationId:       entity.OperationId,
 		CurrentOperation:  currentOperation,
 		PreviousOperation: previousOperation,
@@ -519,17 +636,17 @@ func MakeOperationComparisonChangelogView(entity OperationComparisonChangelogEnt
 
 	switch entity.ApiType {
 	case string(view.RestApiType):
-		return view.RestOperationComparisonChangelogView{
-			OperationComparisonChangelogView: operationComparisonChangelogView,
-			RestOperationChange: view.RestOperationChange{
+		return view.RestOperationComparisonChangelogView_deprecated_2{
+			OperationComparisonChangelogView_deprecated_2: operationComparisonChangelogView,
+			RestOperationMetadata: view.RestOperationMetadata{
 				Path:   entity.Metadata.GetPath(),
 				Method: entity.Metadata.GetMethod(),
 				Tags:   entity.Metadata.GetTags(),
 			},
 		}
 	case string(view.GraphqlApiType):
-		return view.GraphQLOperationComparisonChangelogView{
-			OperationComparisonChangelogView: operationComparisonChangelogView,
+		return view.GraphQLOperationComparisonChangelogView_deprecated_2{
+			OperationComparisonChangelogView_deprecated_2: operationComparisonChangelogView,
 			GraphQLOperationMetadata: view.GraphQLOperationMetadata{
 				Type:   entity.Metadata.GetType(),
 				Method: entity.Metadata.GetMethod(),
@@ -537,8 +654,8 @@ func MakeOperationComparisonChangelogView(entity OperationComparisonChangelogEnt
 			},
 		}
 	case string(view.ProtobufApiType):
-		return view.ProtobufOperationComparisonChangelogView{
-			OperationComparisonChangelogView: operationComparisonChangelogView,
+		return view.ProtobufOperationComparisonChangelogView_deprecated_2{
+			OperationComparisonChangelogView_deprecated_2: operationComparisonChangelogView,
 			ProtobufOperationMetadata: view.ProtobufOperationMetadata{
 				Type:   entity.Metadata.GetType(),
 				Method: entity.Metadata.GetMethod(),
@@ -574,7 +691,7 @@ func MakeOperationComparisonChangesView(entity OperationComparisonChangelogEntit
 	case string(view.RestApiType):
 		return view.RestOperationComparisonChangesView{
 			OperationComparisonChangesView: operationComparisonChangelogView,
-			RestOperationChange: view.RestOperationChange{
+			RestOperationMetadata: view.RestOperationMetadata{
 				Path:   entity.Metadata.GetPath(),
 				Method: entity.Metadata.GetMethod(),
 				Tags:   entity.Metadata.GetTags(),

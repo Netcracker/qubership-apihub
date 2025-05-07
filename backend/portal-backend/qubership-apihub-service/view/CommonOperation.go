@@ -104,15 +104,16 @@ type DeprecatedItems struct {
 }
 
 type OperationComparison struct {
-	OperationId      string                 `json:"operationId" validate:"required"`
-	DataHash         string                 `json:"dataHash,omitempty"`
-	PreviousDataHash string                 `json:"previousDataHash,omitempty"`
-	ChangeSummary    ChangeSummary          `json:"changeSummary,omitempty"`
-	Changes          []interface{}          `json:"changes" validate:"required,dive,required"`
-	JsonPath         []string               `json:"jsonPath,omitempty"`
-	Action           string                 `json:"action,omitempty"`
-	Severity         string                 `json:"severity,omitempty"`
-	Metadata         map[string]interface{} `json:"metadata"`
+	OperationId         string                 `json:"operationId"`
+	PreviousOperationId string                 `json:"previousOperationId"`
+	DataHash            string                 `json:"dataHash,omitempty"`
+	PreviousDataHash    string                 `json:"previousDataHash,omitempty"`
+	ChangeSummary       ChangeSummary          `json:"changeSummary,omitempty"`
+	Changes             []interface{}          `json:"changes" validate:"required,dive,required"`
+	JsonPath            []string               `json:"jsonPath,omitempty"`
+	Action              string                 `json:"action,omitempty"`
+	Severity            string                 `json:"severity,omitempty"`
+	Metadata            map[string]interface{} `json:"metadata"`
 }
 
 type SingleOperationChangeAdd struct {
@@ -282,7 +283,8 @@ type OperationComparisonChangelogView_deprecated struct {
 	PreviousVersionPackageRef string        `json:"previousVersionPackageRef"`
 }
 
-type ComparisonOperationView struct {
+type GenericComparisonOperationView struct {
+	OperationId string `json:"operationId"`
 	Title       string `json:"title"`
 	ApiKind     string `json:"apiKind,omitempty"`
 	ApiAudience string `json:"apiAudience"`
@@ -290,11 +292,19 @@ type ComparisonOperationView struct {
 	PackageRef  string `json:"packageRef"`
 }
 
-type OperationComparisonChangelogView struct {
-	OperationId       string                   `json:"operationId"`
-	CurrentOperation  *ComparisonOperationView `json:"currentOperation,omitempty"`
-	PreviousOperation *ComparisonOperationView `json:"previousOperation,omitempty"`
-	ChangeSummary     ChangeSummary            `json:"changeSummary"`
+type ComparisonOperationView_deprecated struct {
+	Title       string `json:"title"`
+	ApiKind     string `json:"apiKind,omitempty"`
+	ApiAudience string `json:"apiAudience"`
+	DataHash    string `json:"dataHash,omitempty"`
+	PackageRef  string `json:"packageRef"`
+}
+
+type OperationComparisonChangelogView_deprecated_2 struct {
+	OperationId       string                              `json:"operationId"`
+	CurrentOperation  *ComparisonOperationView_deprecated `json:"currentOperation,omitempty"`
+	PreviousOperation *ComparisonOperationView_deprecated `json:"previousOperation,omitempty"`
+	ChangeSummary     ChangeSummary                       `json:"changeSummary"`
 }
 
 type OperationComparisonChangesView struct {
@@ -372,21 +382,6 @@ func ValidSeverity(s string) bool {
 		return true
 	}
 	return false
-}
-
-func ParseApiKind(s string) (ApiKind, error) {
-	switch s {
-	case string(BwcApiKind):
-		return BwcApiKind, nil
-	case string(NoBwcApiKind):
-		return NoBwcApiKind, nil
-	case string(DebugApiKind):
-		return DebugApiKind, nil
-	case string(ExperimentalApiKind):
-		return ExperimentalApiKind, nil
-	default:
-		return "", fmt.Errorf("unknown API Kind: %v", s)
-	}
 }
 
 type ApiType string

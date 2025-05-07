@@ -48,11 +48,23 @@ type DeprecateProtobufOperationView struct {
 	ProtobufOperationMetadata
 }
 
-type ProtobufOperationComparisonChangelogView struct {
-	OperationComparisonChangelogView
+type ProtobufOperationComparisonChangelogView_deprecated_2 struct {
+	OperationComparisonChangelogView_deprecated_2
 	ProtobufOperationMetadata
 }
+
 type ProtobufOperationComparisonChangesView struct {
 	OperationComparisonChangesView
 	ProtobufOperationMetadata
+}
+
+type ProtobufOperationComparisonChangelogView struct {
+	GenericComparisonOperationView
+	ProtobufOperationMetadata
+}
+
+type ProtobufOperationPairChangesView struct {
+	CurrentOperation  *ProtobufOperationComparisonChangelogView `json:"currentOperation,omitempty"`
+	PreviousOperation *ProtobufOperationComparisonChangelogView `json:"previousOperation,omitempty"`
+	ChangeSummary     ChangeSummary                             `json:"changeSummary"`
 }

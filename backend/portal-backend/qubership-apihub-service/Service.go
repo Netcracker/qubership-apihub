@@ -517,8 +517,9 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}", security.Secure(operationController.GetOperation)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/changes", security.Secure(operationController.GetOperationChanges)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/models/{modelName}/usages", security.Secure(operationController.GetOperationModelUsages)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/changes", security.Secure(operationController.GetOperationsChanges_deprecated)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/changes", security.Secure(operationController.GetOperationsChanges)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/changes", security.Secure(operationController.GetOperationsChanges_deprecated)).Methods(http.MethodGet)  // deprecated
+	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/changes", security.Secure(operationController.GetOperationChanges_deprecated_2)).Methods(http.MethodGet) // deprecated
+	r.HandleFunc("/api/v4/packages/{packageId}/versions/{version}/{apiType}/changes", security.Secure(operationController.GetOperationsChanges)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/tags", security.Secure(operationController.GetOperationsTags)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/deprecated", security.Secure(operationController.GetDeprecatedOperationsList)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/deprecatedItems", security.Secure(operationController.GetOperationDeprecatedItems)).Methods(http.MethodGet)

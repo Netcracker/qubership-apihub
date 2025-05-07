@@ -53,11 +53,23 @@ type GraphQLOperationComparisonChangelogView_deprecated struct {
 	GraphQLOperationMetadata
 }
 
-type GraphQLOperationComparisonChangelogView struct {
-	OperationComparisonChangelogView
+type GraphQLOperationComparisonChangelogView_deprecated_2 struct {
+	OperationComparisonChangelogView_deprecated_2
 	GraphQLOperationMetadata
 }
+
 type GraphQLOperationComparisonChangesView struct {
 	OperationComparisonChangesView
 	GraphQLOperationMetadata
+}
+
+type GraphqlOperationComparisonChangelogView struct {
+	GenericComparisonOperationView
+	GraphQLOperationMetadata
+}
+
+type GraphqlOperationPairChangesView struct {
+	CurrentOperation  *GraphqlOperationComparisonChangelogView `json:"currentOperation,omitempty"`
+	PreviousOperation *GraphqlOperationComparisonChangelogView `json:"previousOperation,omitempty"`
+	ChangeSummary     ChangeSummary                            `json:"changeSummary"`
 }

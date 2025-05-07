@@ -184,7 +184,7 @@ func MakeOperationSearchResultView_deprecated(ent OperationSearchResult_deprecat
 
 	switch operationSearchResult.ApiType {
 	case string(view.RestApiType):
-		restOperationChange := view.RestOperationChange{
+		restOperationChange := view.RestOperationMetadata{
 			Path:   ent.Metadata.GetPath(),
 			Method: ent.Metadata.GetMethod(),
 		}
