@@ -24,6 +24,7 @@ import { PublishFilesConfigType } from './builder.schema'
 import { BuildStatus, SOURCES_FOLDER } from './builder.constants'
 import { BehaviorSubject, filter, interval, tap } from 'rxjs'
 import { handleServerError } from '../../utils/errors'
+import { EMPTY_OPERATIONS, toVersionOperation } from './builder.utils'
 
 @Injectable()
 export class BuilderService implements OnModuleInit {
@@ -176,9 +177,26 @@ export class BuilderService implements OnModuleInit {
         },
         versionOperationsResolver: async (apiType, version, packageId, operationsIds, includeData) => {
           this.logger.debug(`[Builder Service] Start fetching operations for version (${version})`)
-          const response = await this.registry.getVersionOperations(apiType, operationsIds, version, packageId || config.packageId, includeData)
+          const limit = includeData ? 100 : 1000
+          const result = []
+          let page = 0
+          let operationsCount = 0
+          while (page === 0 || operationsCount === limit) {
+            const { operations } = await this.registry.getVersionOperations(
+              apiType,
+              operationsIds,
+              version,
+              packageId || config.packageId,
+              includeData,
+              limit,
+              page,
+            ) ?? EMPTY_OPERATIONS
+            page += 1
+            result.push(...operations)
+            operationsCount = operations.length
+          }
           this.logger.debug('[Builder Service] Finish fetching version operations')
-          return response
+          return { operations: result.map(toVersionOperation) }
         },
         versionDeprecatedResolver: async (apiType, version, packageId, operationsIds) => {
           this.logger.debug(`[Builder Service] Start fetching deprecated operations for version (${version})`)
