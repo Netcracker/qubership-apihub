@@ -1,4 +1,4 @@
-import { normalize } from '../../src'
+import { normalize, RefErrorType, RefErrorTypes } from '../../src'
 import source31x from '../resources/openapi31x.json'
 import source30x from '../resources/openapi30x.json'
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
@@ -7,7 +7,8 @@ import { ErrorMessage } from '../../src/errors'
 interface Error {
   readonly message: string,
   readonly path: JsonPath,
-  readonly ref: unknown
+  readonly ref: unknown,
+  readonly errorType: RefErrorType
 }
 
 describe('merge allof in openapi schema', function () {
@@ -128,7 +129,7 @@ describe('merge allof in openapi schema', function () {
     const errors: Error[] = []
     const result = normalize({ ...documentFragment, openapi: '3.0.0' }, {
       source: documentSource,
-      onRefResolveError: (message, path, ref) => errors.push({ message, path, ref: ref }),
+      onRefResolveError: (message, path, ref, errorType) => errors.push({ message, path, ref: ref, errorType }),
     })
     const expected = {
       openapi: '3.0.0',
@@ -170,19 +171,22 @@ describe('merge allof in openapi schema', function () {
     expect(result).toEqual(expected)
     expect(errors).toEqual([
       {
-        message: ErrorMessage.richRefObjectNotAllowed(),
+        message: ErrorMessage.richRefObjectNotAllowed('#/components/schemas/Human'),
         path: ['paths', 'humans', 'get', 'responses', '200', 'content', 'application/json', 'schema', 'items'],
         ref: '#/components/schemas/Human',
+        errorType: RefErrorTypes.RICH_REF_NOT_ALLOWED
       },
       {
-        message: ErrorMessage.richRefObjectNotAllowed(),
+        message: ErrorMessage.richRefObjectNotAllowed('#/components/schemas/Location'),
         path: ['paths', 'humans', 'get', 'responses', '200', 'content', 'application/json', 'schema', 'items', 'properties', 'location'],
         ref: '#/components/schemas/Location',
+        errorType: RefErrorTypes.RICH_REF_NOT_ALLOWED
       },
       {
-        message: ErrorMessage.richRefObjectNotAllowed(),
+        message: ErrorMessage.richRefObjectNotAllowed('#/components/schemas/Human'),
         path: ['paths', 'humans', 'get', 'responses', '200', 'content', 'application/json', 'schema', 'items', 'properties', 'location', 'allOf', 0, 'properties', 'ownedBy'],
         ref: '#/components/schemas/Human',
+        errorType: RefErrorTypes.RICH_REF_NOT_ALLOWED
       },
     ] as Error[])
   })
