@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_1_Smoke_Portal",
-        "_postman_id": "3a5431ed-a500-4ade-b677-7c8e671b0325",
+        "_postman_id": "546c2616-5849-4c47-a096-6b3b14ce9f6e",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -7741,13 +7741,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2}}/rest/changes?textFilter=post&apiKind=bwc&tag=pet&severity=breaking",
+                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_1}}/versions/{{version_2}}/rest/changes?textFilter=post&apiKind=bwc&tag=pet&severity=breaking",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v3",
+                                        "v4",
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
@@ -8637,13 +8637,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2_2}}/rest/changes?textFilter=/api/v1/pet&refPackageId={{package_1}}",
+                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_1}}/versions/{{version_2_2}}/rest/changes?textFilter=/api/v1/pet&refPackageId={{package_1}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v3",
+                                        "v4",
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
@@ -8712,13 +8712,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2_2}}/rest/changes?textFilter=pet",
+                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_1}}/versions/{{version_2_2}}/rest/changes?textFilter=pet",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v3",
+                                        "v4",
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
