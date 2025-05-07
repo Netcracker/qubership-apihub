@@ -5,7 +5,7 @@ import {
   deprecated,
   DiffType,
   nonBreaking,
-  semiBreaking,
+  risky,
   unclassified,
 } from '@netcracker/qubership-apihub-api-diff'
 import { keys } from 'lodash';
@@ -22,7 +22,7 @@ export const DIFF_TYPE_COLOR_MAP = {
   [breaking]: '#ED4A54',
   [deprecated]: '#F4B24D',
   [nonBreaking]: '#6BCE70',
-  [semiBreaking]: '#E98554',
+  [risky]: '#E98554',
   [annotation]: '#C55DCF',
   [unclassified]: '#61AAF2',
 };
@@ -31,14 +31,14 @@ export const DIFF_BUDGES_COLOR_MAP = {
   [breaking]: '#DC5759',
   [deprecated]: '#F4B24D',
   [nonBreaking]: '#6BCE70',
-  [semiBreaking]: '#E98554',
+  [risky]: '#E98554',
   [annotation]: '#B866C9',
   [unclassified]: '#70A9EC',
 };
 
 export const DIFF_TYPE_NAME_MAP: Record<DiffType, string> = {
   [breaking]: 'breaking',
-  [semiBreaking]: 'requires attention',
+  [risky]: 'requires attention',
   [deprecated]: 'deprecated',
   [nonBreaking]: 'non-breaking',
   [unclassified]: 'unclassified',

@@ -13,10 +13,10 @@
     "@babel/preset-typescript": "^7.16.7",
     "@chromatic-com/storybook": "1",
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
-    "@netcracker/qubership-apihub-api-unifier": "1.0.4",
+    "@netcracker/qubership-apihub-api-unifier": "2.0.0",
     "@netcracker/qubership-apihub-compatibility-suites": "2.0.3",
-    "@netcracker/qubership-apihub-api-diff": "1.1.0",
-    "@netcracker/qubership-apihub-api-doc-viewer": "2.0.7",
+    "@netcracker/qubership-apihub-api-diff": "2.0.0",
+    "@netcracker/qubership-apihub-api-doc-viewer": "2.1.0",
     "@netcracker/qubership-apihub-http-spec": "5.5.7",
     "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "2.0.0",
     "@schemastore/package": "0.0.4",
@@ -99,7 +99,7 @@
     "jest-puppeteer": "9.0.2",
     "jotai": "1.6.3",
     "json-schema": "^0.4.0",
-    "lerna": "8.1.9",
+    "lerna": "8.2.1",
     "local-web-server": "5.3.3",
     "lodash": "^4.17.19",
     "mark.js": "^8.11.1",
@@ -137,16 +137,13 @@
     "webpack-dev-server": "3.11.2",
     "xml-formatter": "^2.4.0",
     "raw-loader": "^4.0.2",
-    "@netcracker/qubership-apihub-npm-gitflow": "2.2.2"
+    "@netcracker/qubership-apihub-npm-gitflow": "3.0.1"
   },
   "scripts": {
     "build": "npm run build:dist",
     "build:dist": "npm run --workspace=@netcracker/qubership-apihub-apispec-view build",
     "build:showcase": "npm run --workspace=@netcracker/qubership-apihub-apispec-view build:showcase",
     "screenshot-test:ci": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:ci",
-    "feature-start": "feature-start --featureName",
-    "feature-finish": "feature-finish",
-    "release-start": "release-start",
-    "release-finish": "release-finish"
+    "update-lock-file": "update-lock-file @netcracker"
   }
 }
