@@ -14,12 +14,23 @@
  * limitations under the License.
  */
 
-import { ActionType, DiffAction, DiffType } from '@netcracker/qubership-apihub-api-diff'
+import {
+  ActionType,
+  annotation,
+  breaking,
+  deprecated,
+  DiffAction,
+  DiffType,
+  nonBreaking,
+  risky,
+  unclassified,
+} from '@netcracker/qubership-apihub-api-diff'
 
 export const NODE_DIFF_COLOR_MAP: Partial<Record<ActionType, string>> = {
   [DiffAction.add]: 'bg-green-50',
   [DiffAction.remove]: 'bg-red-50',
   [DiffAction.replace]: 'bg-yellow-50',
+  [DiffAction.rename]: 'bg-yellow-50',
 }
 
 export const BLOCK_CONTENT_DIFF_COLOR_MAP: Partial<Record<ActionType, string>> = {
@@ -35,12 +46,12 @@ export const INLINE_CONTENT_DIFF_COLOR_SCHEMAS: Partial<Record<ActionType, strin
 }
 
 export const CHANGE_SEVERITIES: Record<DiffType, number> = {
-  breaking: 6,
-  'semi-breaking': 5,
-  deprecated: 4,
-  'non-breaking': 3,
-  annotation: 2,
-  unclassified: 1,
+  [breaking]: 6,
+  [risky]: 5,
+  [deprecated]: 4,
+  [nonBreaking]: 3,
+  [annotation]: 2,
+  [unclassified]: 1,
 }
 
 export const DEFAULT_STRIKETHROUGH_VALUE_CLASS = 'line-through'

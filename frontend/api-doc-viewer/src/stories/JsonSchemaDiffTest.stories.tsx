@@ -48,6 +48,28 @@ export const Test: Story = {
   }
 }
 
+export const RenamedProperty: Story = {
+  args: {
+    schema: {
+      type: 'object',
+      properties: {
+        newProperty: { type: 'string' },
+        anotherProperty: { type: 'string' },
+        [DIFF_META_KEY]: {
+          newProperty: {
+            beforeKey: 'oldProperty',
+            afterKey: 'newProperty',
+            type: 'annotation',
+            action: 'rename',
+          }
+        }
+      }
+    },
+    layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+    diffMetaKey: DIFF_META_KEY,
+  }
+}
+
 export const Flags: Story = {
   args: {
     schema: prepareJsonDiffSchema({

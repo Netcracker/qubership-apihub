@@ -15,7 +15,7 @@
  */
 
 import { apiDiff, COMPARE_MODE_OPERATION, DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
-import { denormalize, normalize, NormalizeOptions, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier'
+import { denormalize, normalize, NormalizeOptions, stringifyCyclicJso, RefErrorType } from '@netcracker/qubership-apihub-api-unifier'
 import { ObjectUtils } from '../utils/common/objects'
 import { isObject } from '@netcracker/qubership-apihub-api-data-model'
 
@@ -259,12 +259,13 @@ export function prepareJsonDiffSchemaFromOAS(options: JsonDiffSchemaFromOASOptio
     afterSource: afterSource,
     mode: COMPARE_MODE_OPERATION,
     metaKey: DIFF_META_KEY,
-    onRefResolveError: (message: string, path: PropertyKey[], ref: string) => {
+    onRefResolveError: (message: string, path: PropertyKey[], ref: string, errorType: RefErrorType) => {
       console.debug([
         '[ASV] [Ref Resolve Error]',
         `Message: ${message}`,
         `JSON path: ${path}`,
         `Ref: ${ref}`,
+        `Error type: ${errorType}`,
       ].join('\n'))
     },
     onMergeError: (message: string, path: PropertyKey[], values: any[]) => {
