@@ -6,6 +6,7 @@
 # Example file can be found there:
 # https://github.com/Netcracker/.github/blob/main/config/examples/auto-labeler-config.yaml
 
+
 name: Automatic PR Labeler
 
 on:
@@ -21,6 +22,7 @@ permissions:
 
 jobs:
   assign-labels:
+
     if: (github.event.pull_request.merged == false) && (github.event.pull_request.user.login != 'dependabot[bot]') && (github.event.pull_request.user.login != 'github-actions[bot]')
     runs-on: ubuntu-latest
     steps:
