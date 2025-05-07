@@ -56,11 +56,11 @@ jobs:
     with:
       compose-repository-branch: ${{ github.event.inputs.compose-repository-branch || 'main'}}
       #compose-repository-compose-folder: ${{ github.event.inputs.compose-repository-compose-folder}}
-      postman-collections-run: ${{ fromJson(github.event.inputs.postman-collections-run)  || true }}
+      postman-collections-run: ${{ github.event.inputs.postman-collections-run && fromJson(github.event.inputs.postman-collections-run)  || true }}
       postman-repository-branch: ${{ github.event.inputs.postman-repository-branch  || 'develop' }}
       postman-collections-list: ${{ github.event.inputs.postman-collections-list  || './e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json' }}
       playwright-repository-branch: ${{ github.event.inputs.playwright-repository-branch  || 'develop' }}
-      playwright-tests-run: ${{ fromJson(github.event.inputs.playwright-tests-run)  || true }}
+      playwright-tests-run: ${{ github.event.inputs.playwright-tests-run && fromJson(github.event.inputs.playwright-tests-run)  || true }}
       playwright-test-args: ${{ github.event.inputs.playwright-test-args  || '--project=Portal --workers=8 --grep-invert=@flaky' }}
       apihub-backend-image-tag: ${{ github.event.inputs.apihub-backend-image-tag  || 'dev' }}
       apihub-build-task-consumer-image-tag: ${{ github.event.inputs.apihub-build-task-consumer-image-tag  || 'dev' }}
