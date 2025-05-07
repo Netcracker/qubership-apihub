@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-visitor",
-  "version": "1.0.5",
+  "version": "1.0.7",
   "description": "Takes OpenAPI documents apart",
   "license": "Apache-2.0",
   "main": "./dist/index.cjs.js",
@@ -22,17 +22,14 @@
     "lint:fix": "npm run lint:check -- --fix",
     "development:link": "npm link && npm link @netcracker/qubership-apihub-json-crawl && npm link @netcracker/qubership-apihub-api-unifier",
     "development:unlink": "npm unlink && npm unlink @netcracker/qubership-apihub-json-crawl && npm unlink @netcracker/qubership-apihub-api-unifier",
-    "feature-start": "feature-start --featureName",
-    "feature-finish": "feature-finish",
-    "release-start": "release-start",
-    "release-finish": "release-finish"
+    "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
     "@netcracker/qubership-apihub-json-crawl": "1.0.4",
-    "@netcracker/qubership-apihub-api-unifier": "1.0.4"
+    "@netcracker/qubership-apihub-api-unifier": "2.0.0"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-npm-gitflow": "2.2.2",
+    "@netcracker/qubership-apihub-npm-gitflow": "3.0.1",
     "@types/jest": "29.5.11",
     "@typescript-eslint/eslint-plugin": "6.13.2",
     "@typescript-eslint/parser": "6.13.2",
