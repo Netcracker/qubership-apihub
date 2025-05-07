@@ -2247,13 +2247,13 @@
                                     ],
                                     "request": {
                                         "url": {
-                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/test/rest/changes?limit=t",
+                                            "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_1}}/versions/test/rest/changes?limit=t",
                                             "host": [
                                                 "{{SERVER_HOST}}"
                                             ],
                                             "path": [
                                                 "api",
-                                                "v2",
+                                                "v4",
                                                 "packages",
                                                 "{{package_1}}",
                                                 "versions",
@@ -8799,13 +8799,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_1}}/rest/changes?limit=t",
+                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_1}}/versions/{{version_1}}/rest/changes?limit=t",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v2",
+                                        "v4",
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
@@ -8858,13 +8858,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/nothing123/rest/changes",
+                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_1}}/versions/nothing123/rest/changes",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v2",
+                                        "v4",
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
