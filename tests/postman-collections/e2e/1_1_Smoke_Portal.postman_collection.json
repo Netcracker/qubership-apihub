@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_1_Smoke_Portal",
-        "_postman_id": "546c2616-5849-4c47-a096-6b3b14ce9f6e",
+        "_postman_id": "785ce50e-ce48-4c78-8864-d9b4200e2b21",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -8613,15 +8613,23 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
+                                            "// Check that the response status code is 200\r",
                                             "pm.test(\"Status code is 200\", function () {\r",
                                             "    pm.response.to.have.status(200);\r",
                                             "});\r",
                                             "\r",
-                                            "var data = JSON.parse(responseBody);\r",
+                                            "// Parse the response body as JSON\r",
+                                            "const data = pm.response.json();\r",
                                             "\r",
-                                            "pm.test(\"Found chages have specified path\", () => {\r",
-                                            "    pm.expect(data.operations[0].currentOperation.path).to.include('/api/v1/pet')\r",
-                                            "});"
+                                            "// Check that all operations have the correct path\r",
+                                            "pm.test(\"All operations have specified path\", () => {\r",
+                                            "    pm.expect(data.operations).to.be.an('array').that.is.not.empty;\r",
+                                            "\r",
+                                            "    data.operations.forEach((op, index) => {\r",
+                                            "        pm.expect(op.path, `Operation at index ${index} should include /api/v1/pet`).to.include('/api/v1/pet');\r",
+                                            "    });\r",
+                                            "});\r",
+                                            ""
                                         ]
                                     }
                                 },
