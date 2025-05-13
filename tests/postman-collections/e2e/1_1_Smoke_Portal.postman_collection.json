@@ -8619,7 +8619,7 @@
                                             "});\r",
                                             "\r",
                                             "// Parse the response body as JSON\r",
-                                            "const data = pm.response.json();\r",
+                                            "var data = JSON.parse(responseBody);\r",
                                             "\r",
                                             "// Check that all operations have the correct path\r",
                                             "pm.test(\"All operations have specified path\", () => {\r",
