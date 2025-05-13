@@ -63,11 +63,16 @@ APIHUB_ACCESS_TOKEN=${any string}
 | APIHUB\_ACCESS\_TOKEN | Yes | "" | access-token-12345 | Default system access token (any string). The token will be provisioned automatically during startup |
 | APIHUB\_URL | Yes | "" | https://apihub.example.com | Factual APIHUB server URL in your environment. |
 | DEFAULT\_IDP\_ID | No | "" | external-idp | Default identity provider ID to use for authentication. |
-| EXTERNAL\_SAML\_IDP\_DISPLAY\_NAME | No | "" | External Identity Provider | Display name for external SANL identity provider. |
+| EXTERNAL\_SAML\_IDP\_DISPLAY\_NAME | No | "" | External Identity Provider | Display name for external SAML identity provider. |
 | EXTERNAL\_SAML\_IDP\_IMAGE_SVG | No | "" | <svg fill="#000000" width="800px"... | SVG image for external SAML identity provider logo. |
 | ADFS\_METADATA\_URL | No | "" | [https://idp.example.com/FederationMetadata/2007-06/FederationMetadata.xml](https://idp.example.com/FederationMetadata/2007-06/FederationMetadata.xml) | SAML metadata URL. If set - enables SAML integration |
 | SAML\_CRT | No | "" | LS0tLS1CRUdJTi... | SAML server certificate, base64 encoded. Required only if SAML integration enabled |
 | SAML\_KEY | No | "" | LS0tLS1CRUdJTi... | SAML server private key, base64 encoded. Required only if SAML integration enabled |
+| EXTERNAL\_OIDC\_IDP\_DISPLAY\_NAME | No | "" | External Identity Provider | Display name for external OIDC identity provider. |
+| EXTERNAL\_OIDC\_IDP\_IMAGE\_SVG | No | "" | <svg fill="#000000" width="800px"... | SVG image for external OIDC identity provider logo. |
+| OIDC\_PROVIDER\_URL | No | "" | https://idp.example.com/realms/apihub | OIDC identity provider URL. Required for OIDC configuration. |
+| OIDC\_CLIENT\_ID | No | "" | apihub | OIDC client ID. Required for OIDC configuration. |
+| OIDC\_CLIENT\_SECRET | No | "" | l5cKFvwDRSnhBErE9LUGeBk0dqqFB7No | OIDC client secret. Required for OIDC configuration. |
 | JWT\_PRIVATE\_KEY | Yes | "" | LS0tLS1CRUdJTiBQUklWQV... | Self generated private PKCS#8 private key, base64 encoded. Used for siging of JWT tokens issued by APIHUB, must be unique fore each APIHUB instance |
 | JWT\_ACCESS\_TOKEN\_DURATION\_SEC | No | 3600 | 3600 | Duration in seconds for access tokens issued by APIHUB. |
 | JWT\_REFRESH\_TOKEN\_DURATION\_SEC | No | 43200 | 43200 | Duration in seconds for refresh tokens issued by APIHUB. |

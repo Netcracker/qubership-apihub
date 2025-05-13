@@ -74,7 +74,7 @@ qubershipApihubBackend:
     auth:
       # Optional; Default identity provider ID to use for authentication; If not set, default value: ""; Example: external-idp
       defaultProviderId: ''
-      # External identity providers configuration
+      # External identity providers configuration. SAML or OIDC integration is mandatory for production mode.
       externalIdentityProviders:
         # Section with SAML integration parameters. SAML integration is used for authentication of APIHUB users. SAML integration is mandatory for production mode.
         saml:
@@ -88,6 +88,18 @@ qubershipApihubBackend:
           certificate: ''
           # Optional; SAML server private key, base64 encoded. Required for SAML configuration; If not set, default value: ""; Example: LS0tLS1CRUdJTi...
           privateKey: ''
+        # Section with OIDC integration parameters. OIDC integration is used for authentication of APIHUB users.
+        oidc:
+          # Optional; Display name for external OIDC identity provider; If not set, default value: ""; Example: External Identity Provider
+          displayName: ''
+          # Optional; SVG image for external OIDC identity provider logo; If not set, default value: ""; Example: <svg fill="#000000" width="800px"...
+          imageSvg: ''
+          # Optional; OIDC identity provider URL. Required for OIDC configuration; If not set, default value: ""; Example: https://idp.example.com/realms/apihub
+          providerUrl: ''
+          # Optional; OIDC client ID. Required for OIDC configuration; If not set, default value: ""; Example: apihub
+          clientId: ''
+          # Optional; OIDC client secret. Required for OIDC configuration; If not set, default value: ""; Example: l5cKFvwDRSnhBErE9LUGeBk0dqqFB7No
+          clientSecret: ''
 
     # Section with various parameters related to APIHUB business logic
     businessParameters:
