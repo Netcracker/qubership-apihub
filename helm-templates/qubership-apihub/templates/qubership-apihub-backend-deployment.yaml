@@ -103,6 +103,22 @@ spec:
                       secretKeyRef:
                          name: 'qubership-apihub-backend-saml-secret'
                          key: saml_key
+                -   name: EXTERNAL_OIDC_IDP_DISPLAY_NAME
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.oidc.displayName }}'
+                -   name: EXTERNAL_OIDC_IDP_IMAGE_SVG
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.oidc.imageSvg }}'
+                -   name: OIDC_PROVIDER_URL
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.oidc.providerUrl }}'
+                -   name: OIDC_CLIENT_ID
+                    valueFrom:
+                      secretKeyRef:
+                        name: 'qubership-apihub-backend-oidc-secret'
+                        key: oidc_client_id
+                -   name: OIDC_CLIENT_SECRET
+                    valueFrom:
+                      secretKeyRef:
+                        name: 'qubership-apihub-backend-oidc-secret'
+                        key: oidc_client_secret
                 -   name: JWT_PRIVATE_KEY
                     valueFrom:
                       secretKeyRef:
