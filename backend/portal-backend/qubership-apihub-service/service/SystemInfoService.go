@@ -78,6 +78,8 @@ const (
 	APIHUB_SYSTEM_API_KEY                  = "APIHUB_ACCESS_TOKEN"
 	EDITOR_DISABLED                        = "EDITOR_DISABLED"
 	FAIL_BUILDS_ON_BROKEN_REFS             = "FAIL_BUILDS_ON_BROKEN_REFS"
+	GIT_BRANCH                             = "GIT_BRANCH"
+	GIT_HASH                               = "GIT_HASH"
 )
 
 type SystemInfoService interface {
@@ -279,7 +281,12 @@ func (g systemInfoServiceImpl) setProductionMode() error {
 func (g systemInfoServiceImpl) setBackendVersion() {
 	version := os.Getenv(ARTIFACT_DESCRIPTOR_VERSION)
 	if version == "" {
-		version = "unknown"
+		gitBranch := os.Getenv(GIT_BRANCH)
+		gitHash := os.Getenv(GIT_HASH)
+		version = gitBranch + "." + gitHash
+		if version == "" {
+			version = "unknown"
+		}
 	}
 	g.systemInfoMap[ARTIFACT_DESCRIPTOR_VERSION] = version
 }

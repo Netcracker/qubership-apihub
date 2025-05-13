@@ -14,6 +14,12 @@ RUN set GOSUMDB=off && set CGO_ENABLED=0 && go mod tidy && go mod download && GO
 
 FROM docker.io/golang:1.23.4-alpine3.21
 
+ARG GIT_BRANCH=unknown
+ARG GIT_HASH=unknown
+
+ENV GIT_BRANCH=$GIT_BRANCH
+ENV GIT_HASH=$GIT_HASH
+
 MAINTAINER qubership.org
 
 WORKDIR /app/qubership-apihub-service
