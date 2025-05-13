@@ -8621,11 +8621,10 @@
                                             "pm.test(\"All operations have specified path\", () => {\r",
                                             "    pm.expect(data.operations).to.be.an('array').that.is.not.empty;\r",
                                             "\r",
-                                            "    data.operations.forEach(op => {\r",
-                                            "        pm.expect(op.path).to.include('/api/v1/pet');\r",
+                                            "    data.operations.forEach((op, index) => {\r",
+                                            "        pm.expect(op.currentOperation.path, `Operation at index ${index} should include /api/v1/pet`).to.include('/api/v1/pet');\r",
                                             "    });\r",
-                                            "});\r",
-                                            ""
+                                            "});"
                                         ]
                                     }
                                 },
