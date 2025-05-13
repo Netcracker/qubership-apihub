@@ -1,6 +1,11 @@
 FROM docker.io/node:20
 
 ARG TAG=dev
+ARG GIT_BRANCH=unknown
+ARG GIT_HASH=unknown
+
+ENV GIT_BRANCH=$GIT_BRANCH
+ENV GIT_HASH=$GIT_HASH
 
 WORKDIR /usr/src/app
 
