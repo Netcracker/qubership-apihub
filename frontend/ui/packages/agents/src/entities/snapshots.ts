@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { AgentKey, NamespaceKey, PackageKey, ServiceKey, SnapshotKey, VersionKey, WorkspaceKey } from './keys'
+import type { AgentKey, NamespaceKey, PackageKey, ServiceKey, VersionKey, WorkspaceKey } from './keys'
 import type { PublishConfigDto } from './publish-config'
 import { ncCustomAgentsRequestJson } from '@apihub/utils/requests'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
