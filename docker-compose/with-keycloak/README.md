@@ -14,6 +14,14 @@ Optional: For PostgreSQL access install PGADmin or any other similar tool.
 
 **NOTE2:** as soon as apihub does not support https out of the box - SAML integration will not work. As a WA you need to change `SamlAuthController.go` as shown below.
 
+In files:
+- AuthController.go
+- SamlAuthController.go (deprecated)
+- Auth.go
+- Middleware.go
+
+change similar code snippet in following way:
+
 ```
 	http.SetCookie(w, &http.Cookie{
 		Name:     "userView",
@@ -64,6 +72,8 @@ APIHUB_API_KEY=${APIHUB_ACCESS_TOKEN}
 ```
 keycloak/realm.json  --->
 
+"baseUrl": "http://host.docker.internal:8081", // change 8081 to 5173 if you are working on proxy FE application
+...
 "saml.signing.certificate": "${SAML_CRT_KEYCLOAK}",   //see NOTE2 below
 ...
 "saml.signing.private.key": "${SAML_KEY_KEYCLOAK}",   //see NOTE2 below
