@@ -262,10 +262,18 @@ If you PR brings changes which breaks auto tests (AT) either FE or BE, you have 
 2. Ask AT engineers to adopt tests to your changes
 
 AT adaptation must be implemented in a separate branch which will be merged to develop simultaniously with your PR.
+Branch name must be the same as feature/bugfix branch in your repository. This is important because CI pipeline on Pull Request will automatically execute tests from corresponding branch in tests repository
 
 #### Pull Request without issue
 
 If PR is created without any corresponding issue (small technical improvements, cosmetic changes, etc) - it must be added into project.
+
+#### Cross-cutting features
+
+If feature development involves several repositories (backend, ui, build-task-consumer) and/or requires tests adaptation - feature branch name must be the same across all involved repositories.
+It is important because CI pipeline on PR will automatically take builds from corresponding branches in all repositories and execute tests from corresponding repositories.
+
+**NOTE**: in order to make this automatic build taking - Pull Requests must be created in corresponding repositories. Just existing of a branch with the same name is not enough
 
 # Development process
 
