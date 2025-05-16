@@ -81,10 +81,7 @@
     "release": "sl-scripts release",
     "release.dryRun": "sl-scripts release --dry-run --debug",
     "test:skip": "jest",
-    "feature-start": "feature-start --featureName",
-    "feature-finish": "feature-finish",
-    "release-start": "release-start",
-    "release-finish": "release-finish"
+    "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
     "@stoplight/json": "^3.18.1",
@@ -103,7 +100,7 @@
     "type-is": "^1.6.18"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-npm-gitflow": "2.2.2",
+    "@netcracker/qubership-apihub-npm-gitflow": "3.0.1",
     "@stoplight/eslint-config": "^3.0.0",
     "@stoplight/scripts": "^9.2.0",
     "@types/jest": "27.4.1",
