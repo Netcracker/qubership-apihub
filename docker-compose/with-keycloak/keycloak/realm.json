@@ -13,7 +13,7 @@
     "clients": [
       {
         "id": "b9d3dca4-b19b-4a26-8c51-06a0090ec312",
-        "clientId": "http://host.docker.internal:8081/saml/metadata",
+        "clientId": "http://host.docker.internal:8081/api/v1/saml/external-idp/metadata",
         "name": "apihub",
         "description": "",
         "rootUrl": "http://host.docker.internal:8081",
@@ -25,10 +25,15 @@
         "clientAuthenticatorType": "client-secret",
         "redirectUris": [
           "http://localhost:8081/*",
-          "http://host.docker.internal:8081/*"
+          "http://host.docker.internal:8081/*",
+          "http://localhost:5173/*",
+          "http://host.docker.internal:5173/*"
         ],
         "webOrigins": [
-          "http://localhost:8081"
+          "http://localhost:8081",
+          "http://host.docker.internal:8081",
+          "http://localhost:5173",
+          "http://host.docker.internal:5173"
         ],
         "notBefore": 0,
         "bearerOnly": false,
@@ -80,10 +85,10 @@
     "users": [
       {
         "id": "user",
-        "email": "user@user",
+        "email": "sso-user@qubership.org",
         "username": "${APIHUB_USER_USERNAME}",
-        "firstName": "APIHUB",
-        "lastName": "QUBERSHIP",
+        "firstName": "SSO",
+        "lastName": "USER",
         "enabled": true,
         "emailVerified": true,
         "credentials": [
