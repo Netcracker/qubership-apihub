@@ -84,7 +84,8 @@ Add the following lines to the end:
 [automount]
 options = "metadata"
 ```
-3. Restart Podman machine
-4. Restart your PC
+One liner to do it: `echo -e "\n[automount]\noptions = "metadata"" | sudo tee -a /etc/wsl.conf`
+
+3. Restart your PC (restart of WSL only is not enough)
 
 
