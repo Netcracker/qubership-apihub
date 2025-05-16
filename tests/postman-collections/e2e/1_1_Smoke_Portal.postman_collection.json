@@ -8618,12 +8618,14 @@
                                             "    pm.response.to.have.status(200);\r",
                                             "});\r",
                                             "\r",
-                                            "pm.test(\"All operations have specified path\", () => {\r",
+                                            "pm.test(\"All currentOperation paths include /api/v1/pet\", function () {\r",
                                             "    pm.expect(data.operations).to.be.an('array').that.is.not.empty;\r",
                                             "\r",
-                                            "    data.operations.forEach((op, index) => {\r",
-                                            "        pm.expect(op.currentOperation.path, `Operation at index ${index} should include /api/v1/pet`).to.include('/api/v1/pet');\r",
-                                            "    });\r",
+                                            "    const invalidPaths = data.operations\r",
+                                            "        .map((op, index) => ({ path: op.currentOperation.path, index }))\r",
+                                            "        .filter(item => !item.path.includes('/api/v1/pet'));\r",
+                                            "\r",
+                                            "    pm.expect(invalidPaths.length, `Invalid paths found at indices: ${invalidPaths.map(i => i.index).join(', ')}`).to.equal(0);\r",
                                             "});"
                                         ]
                                     }
