@@ -1,0 +1,127 @@
+openapi: 3.0.3
+info:
+  title: Book Management API
+  description: API for creating a new book record.
+  version: 1.0.0
+
+servers:
+  - url: https://api.example.com/v1
+
+paths:
+  /books:
+    post:
+      summary: Create a new book
+      description: Adds a new book to the collection.
+      operationId: createBook
+      requestBody:
+        required: true
+        description: JSON payload representing the new book to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookInput'
+            examples:
+              newBookExample:
+                $ref: '#/components/examples/NewBookExample'
+      responses:
+        '201':
+          description: Book created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+              examples:
+                bookExample:
+                  $ref: '#/components/examples/BookExample'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidInputExample:
+                  $ref: '#/components/examples/InvalidInputExample'
+
+components:
+  schemas:
+    Book:
+      type: object
+      description: A single book record.
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the book.
+        title:
+          type: string
+          description: Title of the book.
+        author:
+          type: string
+          description: Author of the book.
+        publishedYear:
+          type: integer
+          description: Year the book was published.
+        genres:
+          type: array
+          description: List of genres the book belongs to.
+          items:
+            type: string
+
+    BookInput:
+      type: object
+      description: Input schema for creating a book. The ID is auto-generated.
+      required:
+        - title
+        - author
+        - publishedYear
+      properties:
+        title:
+          type: string
+        author:
+          type: string
+        publishedYear:
+          type: integer
+        genres:
+          type: array
+          items:
+            type: string
+
+    Error:
+      type: object
+      description: Error response schema.
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+
+  examples:
+    NewBookExample:
+      summary: Example book creation request
+      description: An example payload to create a new book.
+      value:
+        title: "1984"
+        author: "George Orwell"
+        publishedYear: 1949
+        genres:
+          - Dystopian
+          - Science Fiction
+
+    BookExample:
+      summary: Example book response
+      description: A response containing the created book with generated ID.
+      value:
+        id: "456"
+        title: "1984"
+        author: "George Orwell"
+        publishedYear: 1949
+        genres:
+          - Dystopian
+          - Science Fiction
+
+    InvalidInputExample:
+      summary: Invalid input error
+      description: Example response when required fields are missing or invalid.
+      value:
+        code: 400
+        message: "Title and author are required fields."

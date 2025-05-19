@@ -14,6 +14,7 @@ test-results
 # production
 build/
 dist/
+dist-showcase/
 docs-auto/
 dist-storybook/
 

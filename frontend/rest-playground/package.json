@@ -19,6 +19,7 @@
     "build": "npm run build.webcomponents && npm run build.styles",
     "build.styles": "postcss src/styles.css -o dist/styles.min.css",
     "build.webcomponents": "webpack -c ./web-components.webpack.config.js",
+    "build:showcase": "build-storybook -o ./dist-showcase --disable-telemetry",
     "storybook": "start-storybook -p 9001",
     "development:link": "echo please run \"npm link\" manually in console to avoid using the deprecated node_modules/.bin/npm as it will reinstall all dependencies",
     "development:unlink": "echo please run \"npm unlink\" manually in console to avoid using the deprecated node_modules/.bin/npm as it will reinstall all dependencies",
