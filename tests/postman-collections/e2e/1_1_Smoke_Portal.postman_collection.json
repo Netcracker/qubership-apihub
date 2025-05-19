@@ -8618,6 +8618,8 @@
                                             "    pm.response.to.have.status(200);\r",
                                             "});\r",
                                             "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "\r",
                                             "pm.test(\"All currentOperation paths include /api/v1/pet\", function () {\r",
                                             "    pm.expect(data.operations).to.be.an('array').that.is.not.empty;\r",
                                             "\r",
