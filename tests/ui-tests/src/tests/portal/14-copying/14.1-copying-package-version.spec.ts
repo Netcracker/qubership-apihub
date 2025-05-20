@@ -10,16 +10,15 @@ test.describe('14.1 Copying Package Version', () => {
 
   const sourceVersion = V_P_PKG_COPYING_SOURCE_R
 
-  test.skip('[P-CPAP-1.1] Copy Version dialog field validation logic',
+  test('[P-CPAP-1.1] Copy Version dialog field validation logic',
     {
       tag: '@smoke',
       annotation: [
         {
           type: 'Description',
-          description: 'Verifies the behavior of fields in the Copy Version dialog. The test checks pre-populated fields in the dialog, field clearing behavior, package field disabling when workspace is cleared, and ensures cleared target version fields are not auto-populated when workspace/package is selected.',
+          description: 'Verifies the behavior of fields in the Copy Version dialog. The test checks pre-populated fields in the dialog, field clearing behavior, validation of disabled fields, and ensures cleared target version fields are not auto-populated when workspace/package is selected.',
         },
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-9363` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-1403` },
       ],
     },
     async ({ sysadminPage: page }) => {
@@ -37,20 +36,25 @@ test.describe('14.1 Copying Package Version', () => {
         await expect(copyVersionDialog.workspaceAc).toHaveValue(targetWorkspace.name)
         await expect(copyVersionDialog.packageAc).toBeEnabled()
         await expect(copyVersionDialog.packageAc).toBeEmpty()
+        await expect(copyVersionDialog.versionAc).toBeDisabled()
         await expect(copyVersionDialog.versionAc).toHaveValue(sourceVersion.version)
+        await expect(copyVersionDialog.statusAc).toBeDisabled()
         await expect(copyVersionDialog.statusAc).toHaveValue(sourceVersion.status)
+        await expect(copyVersionDialog.labelsAc).toBeDisabled()
         for (const label of sourceVersion.metadata!.versionLabels!) {
           await expect(copyVersionDialog.labelsAc.getChip(label)).toBeVisible()
         }
+        await expect(copyVersionDialog.previousVersionAc).toBeDisabled()
       })
 
-      await test.step('Clear fields', async () => {
+      await test.step('Clear Workspace field', async () => {
         await copyVersionDialog.workspaceAc.clear()
-        await copyVersionDialog.versionAc.clear()
-        await copyVersionDialog.labelsAc.hover()
-        await copyVersionDialog.labelsAc.clearBtn.click()
 
         await expect(copyVersionDialog.packageAc).toBeDisabled()
+        await expect(copyVersionDialog.versionAc).toBeDisabled()
+        await expect(copyVersionDialog.statusAc).toBeDisabled()
+        await expect(copyVersionDialog.labelsAc).toBeDisabled()
+        await expect(copyVersionDialog.previousVersionAc).toBeDisabled()
       })
 
       await test.step('Set target Workspace', async () => {
@@ -61,9 +65,10 @@ test.describe('14.1 Copying Package Version', () => {
         await expect(copyVersionDialog.workspaceAc).toHaveValue(targetWorkspace.name)
         await expect(copyVersionDialog.packageAc).toBeEnabled()
         await expect(copyVersionDialog.packageAc).toBeEmpty()
-        await expect(copyVersionDialog.versionAc).toBeEmpty()
-        await expect(copyVersionDialog.statusAc).toHaveValue(sourceVersion.status)
-        await expect(copyVersionDialog.labelsAc.getChip()).toHaveCount(0)
+        await expect(copyVersionDialog.versionAc).toBeDisabled()
+        await expect(copyVersionDialog.statusAc).toBeDisabled()
+        await expect(copyVersionDialog.labelsAc).toBeDisabled()
+        await expect(copyVersionDialog.previousVersionAc).toBeDisabled()
       })
 
       await test.step('Set target Package', async () => {
@@ -72,6 +77,22 @@ test.describe('14.1 Copying Package Version', () => {
         })
 
         await expect(copyVersionDialog.packageAc).toHaveValue(targetPackage.name)
+        await expect(copyVersionDialog.versionAc).toBeEnabled()
+        await expect(copyVersionDialog.versionAc).toHaveValue(sourceVersion.version)
+        await expect(copyVersionDialog.statusAc).toBeEnabled()
+        await expect(copyVersionDialog.statusAc).toHaveValue(sourceVersion.status)
+        await expect(copyVersionDialog.labelsAc).toBeEnabled()
+        for (const label of sourceVersion.metadata!.versionLabels!) {
+          await expect(copyVersionDialog.labelsAc.getChip(label)).toBeVisible()
+        }
+        await expect(copyVersionDialog.previousVersionAc).toBeEnabled()
+      })
+
+      await test.step('Clear fields', async () => {
+        await copyVersionDialog.versionAc.clear()
+        await copyVersionDialog.labelsAc.hover()
+        await copyVersionDialog.labelsAc.clearBtn.click()
+
         await expect(copyVersionDialog.versionAc).toBeEmpty()
         await expect(copyVersionDialog.statusAc).toHaveValue(sourceVersion.status)
         await expect(copyVersionDialog.labelsAc.getChip()).toHaveCount(0)
@@ -107,13 +128,15 @@ test.describe('14.1 Copying Package Version', () => {
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-9365` },
       ],
     },
-    async ({ sysadminPage: page }) => {
+    async ({ sysadminPage: page }, testInfo) => {
 
+      const { retry = 0 } = testInfo
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
       const { overviewTab, operationsTab, deprecatedTab, documentsTab, copyVersionDialog } = versionPage
       const targetWorkspace = P_WS_MAIN_R
       const targetPackage = P_PK_CP_EMPTY
+      const targetVersion = `20${retry}0.2`
 
       await test.step('Open Copy Version dialog', async () => {
         await portalPage.gotoVersion(sourceVersion)
@@ -132,7 +155,7 @@ test.describe('14.1 Copying Package Version', () => {
 
       await test.step('Set target Version Info and copy Version', async () => {
         await copyVersionDialog.fillForm({
-          version: '2000.2',
+          version: targetVersion,
           status: DRAFT_VERSION_STATUS,
           labels: ['label-1', 'label-2'],
           previousVersion: NO_PREV_RELEASE_VERSION,
@@ -148,8 +171,8 @@ test.describe('14.1 Copying Package Version', () => {
 
         await expect(overviewTab.summaryTab.body.labels).toContainText('label-1')
         await expect(overviewTab.summaryTab.body.labels).toContainText('label-2')
-        await expect(overviewTab.summaryTab.body.summary.currentVersion).toHaveText('2000.2')
-        await expect(overviewTab.summaryTab.body.summary.revision).not.toBeEmpty() //not a specific number because it changes every retry
+        await expect(overviewTab.summaryTab.body.summary.currentVersion).toHaveText(targetVersion)
+        await expect(overviewTab.summaryTab.body.summary.revision).toHaveText('1')
         await expect(overviewTab.summaryTab.body.summary.previousVersion).toHaveText('-')
         await expect(overviewTab.summaryTab.body.summary.publishedBy).toHaveText(SYSADMIN.name)
         await expect(overviewTab.summaryTab.body.summary.publicationDate).not.toBeEmpty()
@@ -185,7 +208,7 @@ test.describe('14.1 Copying Package Version', () => {
         await versionPage.toolbar.versionSlt.click()
         await versionPage.toolbar.versionSlt.draftBtn.click()
 
-        await expect(versionPage.toolbar.versionSlt.getVersionRow()).toHaveCount(1)
+        await expect(versionPage.toolbar.versionSlt.getVersionRow(targetVersion)).toBeVisible()
       })
     })
 
@@ -201,13 +224,15 @@ test.describe('14.1 Copying Package Version', () => {
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-9371` },
       ],
     },
-    async ({ sysadminPage: page }) => {
+    async ({ sysadminPage: page }, testInfo) => {
 
+      const { retry = 0 } = testInfo
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
       const { overviewTab, operationsTab, apiChangesTab, deprecatedTab, documentsTab, copyVersionDialog } = versionPage
       const targetWorkspace = P_WS_MAIN_R
       const targetPackage = P_PK_CP_RELEASE
+      const targetVersion = `20${retry}0.2`
 
       await test.step('Open Copy Version dialog', async () => {
         await portalPage.gotoVersion(sourceVersion)
@@ -227,7 +252,7 @@ test.describe('14.1 Copying Package Version', () => {
 
       await test.step('Set target Version Info and copy Version', async () => {
         await copyVersionDialog.fillForm({
-          version: '2000.2',
+          version: targetVersion,
           status: RELEASE_VERSION_STATUS,
           labels: ['label-1', 'label-2'],
           previousVersion: V_P_PKG_COPYING_RELEASE_N.version,
@@ -243,8 +268,8 @@ test.describe('14.1 Copying Package Version', () => {
 
         await expect(overviewTab.summaryTab.body.labels).toContainText('label-1')
         await expect(overviewTab.summaryTab.body.labels).toContainText('label-2')
-        await expect(overviewTab.summaryTab.body.summary.currentVersion).toHaveText('2000.2')
-        await expect(overviewTab.summaryTab.body.summary.revision).not.toBeEmpty() //not a specific number because it changes every retry
+        await expect(overviewTab.summaryTab.body.summary.currentVersion).toHaveText(targetVersion)
+        await expect(overviewTab.summaryTab.body.summary.revision).toHaveText('1')
         await expect(overviewTab.summaryTab.body.summary.previousVersion).toHaveText(V_P_PKG_COPYING_RELEASE_N.version)
         await expect(overviewTab.summaryTab.body.summary.publishedBy).toHaveText(SYSADMIN.name)
         await expect(overviewTab.summaryTab.body.summary.publicationDate).not.toBeEmpty()
@@ -279,7 +304,7 @@ test.describe('14.1 Copying Package Version', () => {
       await test.step('Open the Version selector', async () => {
         await versionPage.toolbar.versionSlt.click()
 
-        await expect(versionPage.toolbar.versionSlt.getVersionRow()).toHaveCount(2)
+        await expect(versionPage.toolbar.versionSlt.getVersionRow(targetVersion)).toBeVisible()
       })
     })
 
