@@ -6,9 +6,10 @@ import { Autocomplete, Chip, TextField } from '@mui/material'
 export type LabelsAutocompleteProps = {
   onChange: (event: SyntheticEvent, value: AutocompleteValue<string, true, false, true>) => void
   value: string[] | undefined
+  disabled?: boolean
 }
 
-export const LabelsAutocomplete: FC<LabelsAutocompleteProps> = memo<LabelsAutocompleteProps>(({ onChange, value }) => {
+export const LabelsAutocomplete: FC<LabelsAutocompleteProps> = memo<LabelsAutocompleteProps>(({ onChange, value, disabled }) => {
   return (
     <Autocomplete
       sx={autocompleteSx}
@@ -18,6 +19,7 @@ export const LabelsAutocomplete: FC<LabelsAutocompleteProps> = memo<LabelsAutoco
       autoSelect
       multiple
       freeSolo
+      disabled={disabled}
       renderInput={(params) => (
         <TextField
           autoComplete="on"

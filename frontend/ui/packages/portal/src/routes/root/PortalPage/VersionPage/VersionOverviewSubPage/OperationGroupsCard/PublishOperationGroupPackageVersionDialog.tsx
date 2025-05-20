@@ -21,21 +21,32 @@ import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components
 import type { PublishOperationGroupPackageVersionDetail } from '@apihub/routes/EventBusProvider'
 import { SHOW_PUBLISH_OPERATION_GROUP_PACKAGE_VERSION_DIALOG } from '@apihub/routes/EventBusProvider'
 import type { VersionFormData } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
-import { replaceEmptyPreviousVersion, usePreviousVersionOptions, VersionDialogForm } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
+import {
+  getPackageOptions,
+  getVersionOptions,
+  replaceEmptyPreviousVersion,
+  usePreviousVersionOptions,
+  VersionDialogForm,
+} from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
 import { useForm } from 'react-hook-form'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
-import { DRAFT_VERSION_STATUS, NO_PREVIOUS_RELEASE_VERSION_OPTION, RELEASE_VERSION_STATUS } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
+import {
+  DRAFT_VERSION_STATUS,
+  NO_PREVIOUS_RELEASE_VERSION_OPTION,
+  RELEASE_VERSION_STATUS,
+} from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import type { Package } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { PACKAGE_KIND, WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { usePackages } from '@apihub/routes/root/usePackages'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
 import { usePackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
-import { getVersionLabelsMap } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
+import { getSplittedVersionKey, getVersionLabelsMap } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import { usePublishOperationGroupPackageVersion } from '../../../usePublishOperationGroupPackageVersion'
 import { useOperationGroupPublicationStatuses } from '../../../usePublicationStatus'
 import { useFullMainVersion } from '../../../FullMainVersionProvider'
 import { REST_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
+import { usePackageVersionConfig } from '@apihub/routes/root/PortalPage/usePackageVersionConfig'
 
 export const PublishOperationGroupPackageVersionDialog: FC = memo(() => {
   return (
@@ -51,69 +62,90 @@ const PublishOperationGroupPackageVersionPopup: FC<PopupProps> = memo<PopupProps
   const currentPackage = useCurrentPackage()
   const currentVersionId = useFullMainVersion()
 
-  const [targetPackage, setTargetPackage] = useState<Package | null>()
-  const [targetVersion, setTargetVersion] = useState<Key>('')
+  const [currentVersionConfig] = usePackageVersionConfig(currentPackage?.key, currentVersionId)
+  const [currentWorkspace] = useState(currentPackage?.parents?.[0] ?? null)
+  const [versionId] = useState(getSplittedVersionKey(currentVersionId).versionKey)
 
-  const [workspace, setWorkspace] = useState<Package | null>(currentPackage?.parents?.[0] ?? null)
+  const [targetWorkspace, setTargetWorkspace] = useState<Package | null>(currentWorkspace)
   const [workspacesFilter, setWorkspacesFilter] = useState('')
+  const [targetPackage, setTargetPackage] = useState<Package | null>(null)
+  const [packagesFilter, setPackagesFilter] = useState('')
+  const [targetVersion, setTargetVersion] = useState<Key>(versionId)
+  const [versionsFilter, setVersionsFilter] = useState('')
+
   const [workspaces, areWorkspacesLoading] = usePackages({
     kind: WORKSPACE_KIND,
     textFilter: workspacesFilter,
   })
-
-  const [packagesFilter, setPackagesFilter] = useState('')
-  const [packages, arePackagesLoading] = usePackages({
-    kind: PACKAGE_KIND,
-    parentId: workspace?.key,
-    showAllDescendants: true,
-    textFilter: packagesFilter,
-  })
-
-  const [versionsFilter, setVersionsFilter] = useState('')
-  const { versions: versionsWithRevisions, areVersionsLoading } = usePackageVersions({
-    packageKey: targetPackage?.key,
-    enabled: !!targetPackage,
-    textFilter: versionsFilter,
-  })
-  const versionLabelsMap = useMemo(() => getVersionLabelsMap(versionsWithRevisions), [versionsWithRevisions])
-  const versions = useMemo(() => Object.keys(versionLabelsMap), [versionLabelsMap])
-  const getVersionLabels = useCallback((version: Key) => versionLabelsMap[version] ?? [], [versionLabelsMap])
-
-  const { versions: targetPackagePreviousVersions } = usePackageVersions({
+  const { versions: targetPreviousVersions } = usePackageVersions({
     packageKey: targetPackage?.key,
     enabled: !!targetPackage,
     status: RELEASE_VERSION_STATUS,
   })
-  const targetVersionsPreviousVersionOptions = usePreviousVersionOptions(targetPackagePreviousVersions)
 
-  const onWorkspacesFilter = useCallback((value: Key) => setWorkspacesFilter(value), [setWorkspacesFilter])
-  const onSetWorkspace = useCallback((workspace: Package | null) => setWorkspace(workspace), [])
-  const onPackagesFilter = useCallback((value: Key) => setPackagesFilter(value), [setPackagesFilter])
-  const onSetTargetPackage = useCallback((pack: Package | null) => {
-    setTargetPackage(pack)
-  }, [])
-  const onVersionsFilter = useCallback((value: Key) => setVersionsFilter(value), [setVersionsFilter])
+  const [packages, arePackagesLoading] = usePackages({
+    kind: PACKAGE_KIND,
+    parentId: targetWorkspace?.key,
+    showAllDescendants: true,
+    textFilter: packagesFilter,
+  })
+  const { versions: filteredVersions, areVersionsLoading: areFilteredVersionsLoading } = usePackageVersions({
+    packageKey: targetPackage?.key,
+    enabled: !!targetPackage,
+    textFilter: versionsFilter,
+  })
 
+  const targetPreviousVersionOptions = usePreviousVersionOptions(targetPreviousVersions)
+  const {
+    publishId,
+    publishOperationGroupPackageVersion,
+    isLoading: isPublishStarting,
+    isSuccess: isPublishStartedSuccessfully,
+  } = usePublishOperationGroupPackageVersion()
+  const [isPublishing, isPublished] = useOperationGroupPublicationStatuses(targetPackage?.key ?? '', targetVersion, group.groupName, publishId ?? '')
+
+  const versionLabelsMap = useMemo(() => getVersionLabelsMap(filteredVersions), [filteredVersions])
+  const versionOptions = useMemo(() => getVersionOptions(versionLabelsMap, targetVersion), [targetVersion, versionLabelsMap])
+  const packageOptions = useMemo(() => getPackageOptions(packages, targetPackage, !!packagesFilter), [packages, packagesFilter, targetPackage])
+  const workspaceOptions = useMemo(() => getPackageOptions(workspaces, targetWorkspace, !!workspacesFilter), [targetWorkspace, workspaces, workspacesFilter])
   const targetPackagePermissions = useMemo(() => targetPackage?.permissions ?? [], [targetPackage?.permissions])
   const targetReleaseVersionPattern = useMemo(() => targetPackage?.releaseVersionPattern, [targetPackage?.releaseVersionPattern])
 
-  const defaultValues = useMemo(() => {
+  const defaultValues: VersionFormData = useMemo(() => {
     return {
-      workspace: workspace,
-      version: undefined,
-      status: DRAFT_VERSION_STATUS as VersionStatus,
+      package: null,
+      workspace: currentWorkspace,
+      version: versionId,
+      status: DRAFT_VERSION_STATUS,
       labels: [],
       previousVersion: NO_PREVIOUS_RELEASE_VERSION_OPTION,
     }
-  }, [workspace])
+  }, [currentWorkspace, versionId])
+
+  const getVersionLabels = useCallback((version: Key) => versionLabelsMap[version] ?? [], [versionLabelsMap])
+  const onWorkspacesFilter = useCallback((value: Key) => setWorkspacesFilter(value), [setWorkspacesFilter])
+  const onSetWorkspace = useCallback((workspace: Package | null) => setTargetWorkspace(workspace), [])
+  const onPackagesFilter = useCallback((value: Key) => setPackagesFilter(value), [setPackagesFilter])
+  const onSetTargetPackage = useCallback((pack: Package | null) => setTargetPackage(pack), [])
+  const onVersionsFilter = useCallback((value: Key) => setVersionsFilter(value), [setVersionsFilter])
+  const onSetTargetVersion = useCallback((version: string) => setTargetVersion(version), [])
 
   const { handleSubmit, control, reset, setValue, formState } = useForm<VersionFormData>({ defaultValues })
 
-  const { publishId, publishOperationGroupPackageVersion, isLoading: isPublishStarting, isSuccess: isPublishStartedSuccessfully } = usePublishOperationGroupPackageVersion()
-  const [isPublishing, isPublished] = useOperationGroupPublicationStatuses(targetPackage?.key ?? '', targetVersion, group.groupName, publishId ?? '')
-
   useEffect(() => { isPublishStartedSuccessfully && isPublished && setOpen(false) }, [isPublishStartedSuccessfully, isPublished, setOpen])
   useEffect(() => { reset(defaultValues) }, [defaultValues, reset])
+  useEffect(() => {
+    if (!targetWorkspace) {
+      setTargetPackage(null)
+      setValue('package', null)
+    }
+  }, [targetWorkspace, setValue])
+  useEffect(() => {
+    if (currentVersionConfig) {
+      setValue('status', currentVersionConfig.status as VersionStatus || DRAFT_VERSION_STATUS)
+      setValue('labels', currentVersionConfig.metaData?.versionLabels ?? [])
+    }
+  }, [currentVersionConfig, setValue])
 
   const onPublish = useCallback(async (data: PublishInfo): Promise<void> => {
     const previousVersion = replaceEmptyPreviousVersion(data.previousVersion)
@@ -143,23 +175,23 @@ const PublishOperationGroupPackageVersionPopup: FC<PopupProps> = memo<PopupProps
       setValue={setValue}
       formState={formState}
 
-      workspaces={workspaces}
+      workspaces={workspaceOptions}
       onSetWorkspace={onSetWorkspace}
       onWorkspacesFilter={onWorkspacesFilter}
       areWorkspacesLoading={areWorkspacesLoading}
 
-      packages={packages}
+      packages={packageOptions}
       onPackagesFilter={onPackagesFilter}
       arePackagesLoading={arePackagesLoading}
       onSetTargetPackage={onSetTargetPackage}
-      packagesTitle='Package'
+      packagesTitle="Package"
 
-      versions={versions}
+      versions={versionOptions}
       onVersionsFilter={onVersionsFilter}
-      areVersionsLoading={areVersionsLoading}
+      areVersionsLoading={areFilteredVersionsLoading}
       getVersionLabels={getVersionLabels}
-      previousVersions={targetVersionsPreviousVersionOptions}
-
+      previousVersions={targetPreviousVersionOptions}
+      onSetTargetVersion={onSetTargetVersion}
       packagePermissions={targetPackagePermissions}
       releaseVersionPattern={targetReleaseVersionPattern}
 
