@@ -1,4 +1,4 @@
-name: Frontend CI Workflow
+name: frontend-ci 
 
 on:
   push:
@@ -10,7 +10,6 @@ on:
       - bugfix/*      
     tags:
       - '**'
-  delete:
 
 jobs:
   call-frontend-ci-workflow:
