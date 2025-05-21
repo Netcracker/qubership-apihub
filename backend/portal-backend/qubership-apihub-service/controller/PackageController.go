@@ -490,7 +490,7 @@ func (p packageControllerImpl) GetAvailableVersionStatusesForPublish(w http.Resp
 func (p packageControllerImpl) RecalculateOperationGroups(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
 	ctx := context.Create(r)
-	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.CreateAndUpdatePackagePermission)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to check user privileges", err)
 		return
