@@ -10,7 +10,6 @@ on:
       - bugfix/*      
     tags:
       - '**'
-  delete:
   pull_request:
     types: [opened, reopened, synchronize]
     paths-ignore:
@@ -21,7 +20,6 @@ jobs:
     uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@main
   build-docker-image:
     needs: build-and-unit-test
-    if: (github.event_name == 'push') || (github.event_name == 'pull_request')
     uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@main
     with:
       name: qubership-apihub-ui
