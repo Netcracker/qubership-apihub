@@ -1,17 +1,15 @@
-name: Frontend CI Workflow
+name: frontend-ci 
 
 on:
   push:
     branches:
       - release
+      - hotfix
       - develop
       - feature/*
+      - bugfix/*      
     tags:
       - '**'
-  delete:
-    branches:
-      - release
-      - feature/*
 
 jobs:
   call-frontend-ci-workflow:
