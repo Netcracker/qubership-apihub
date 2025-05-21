@@ -39,7 +39,7 @@ spec:
                     protocol: TCP
                 env:
                 -   name: LOG_LEVEL
-                    value: '{{ .Values.qubershipApihub.logLevel }}'
+                    value: '{{ .Values.qubershipApihubBuildTaskConsumer.env.logLevel }}'
                 -   name: APIHUB_BACKEND_ADDRESS
                     value: '{{ .Values.qubershipApihubUi.env.apihubBackendAddress }}'
                 -   name: FOLDER_STORE

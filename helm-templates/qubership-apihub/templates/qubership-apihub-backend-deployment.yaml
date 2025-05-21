@@ -55,7 +55,7 @@ spec:
                 env:
                 -   name: OLRIC_DISCOVERY_MODE # todo: move to values.yaml
                     value: 'lan'
-                -   name: APIHUB_YAML_CONFIG_FILE_PATH
+                -   name: APIHUB_CONFIG_FOLDER
                     value: /app/qubership-apihub-service/etc
                 resources:
                     requests:
