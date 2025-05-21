@@ -1,0 +1,20 @@
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:17.6.0-ce.0
+    container_name: gitlab
+    restart: always
+    hostname: 'localhost'
+    environment:
+      #GITLAB_OMNIBUS_CONFIG: |
+      #  external_url 'http://localhost'
+      #GITLAB_ROOT_PASSWORD: Pa$$word1
+      EXTERNAL_URL: https://localhost
+    ports:
+      - '8100:80'
+      - '8443:443'
+      - '822:22'
+    volumes:
+      - './gitlab/config:/etc/gitlab'
+      - './gitlab/logs:/var/log/gitlab'
+      - './gitlab/data:/var/opt/gitlab'
+    shm_size: '256m'
