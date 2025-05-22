@@ -1,0 +1,113 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: qubership-apihub-agent
+    labels:
+        name: qubership-apihub-agent
+        app.kubernetes.io/version: '{{ .Values.qubershipApihubAgent.version }}'
+        app.kubernetes.io/component: 'backend'
+        app.kubernetes.io/technology: 'go'
+        app.kubernetes.io/part-of: qubership-apihub-agent
+        app.kubernetes.io/managed-by: helm
+spec:
+    replicas: 1
+    strategy:
+        rollingUpdate:
+            maxSurge: 25%
+            maxUnavailable: 25%
+    template:
+        metadata:
+            labels:
+                name: qubership-apihub-agent
+                app.kubernetes.io/version: '{{ .Values.qubershipApihubAgent.version }}'
+                app.kubernetes.io/component: 'backend'
+                app.kubernetes.io/part-of: qubership-apihub-agent
+                app.kubernetes.io/managed-by: helm
+                app.kubernetes.io/technology: 'go'
+        spec:
+            serviceAccountName: qubership-apihub-agent
+            volumes:
+            -   configMap:
+                    defaultMode: 420
+                    name: apihub-agent-config
+                name: apihub-agent-config
+            containers:
+            -   name: qubership-apihub-agent
+                image: '{{ .Values.qubershipApihubAgent.image.repository }}:{{ .Values.qubershipApihubAgent.image.tag }}'
+                volumeMounts:
+                -   name: apihub-agent-config
+                    mountPath: /app/apihub-agent/etc/
+                    readOnly: true
+                ports:
+                -   name: web
+                    containerPort: 8080
+                    protocol: TCP
+                env:
+                -   name: LOG_LEVEL
+                    value: '{{ .Values.qubershipApihubAgent.logLevel }}'
+                -   name: PAAS_PLATFORM
+                    value: 'KUBERNETES'
+                -   name: APIHUB_URL
+                    value: '{{ .Values.qubershipApihubAgent.env.apihubUrl }}'
+                -   name: APIHUB_ACCESS_TOKEN
+                    valueFrom:
+                        secretKeyRef:
+                            name: qubership-apihub-agent-api-key-secret
+                            key: access_token
+                -   name: CLOUD_NAME
+                    value: '{{ .Values.qubershipApihubAgent.env.cloudName }}'
+                -   name: ARTIFACT_DESCRIPTOR_VERSION
+                    value: '{{ .Values.qubershipApihubAgent.version }}'
+                -   name: AGENT_URL
+                    value: '{{ .Values.qubershipApihubAgent.env.agentUrl }}'
+                -   name: NAMESPACE
+                    value: '{{ .Release.Namespace }}'
+                -   name: MICROSERVICE_NAMESPACE
+                    value: '{{ .Release.Namespace }}'
+                -   name: AGENT_NAME
+                    value: '{{ .Values.qubershipApihubAgent.env.agentName }}'
+                -   name: INSECURE_PROXY
+                    value: '{{ .Values.qubershipApihubAgent.env.insecureProxy }}'
+                -   name: DISCOVERY_TIMEOUT_SEC
+                    value: '{{ .Values.qubershipApihubAgent.env.discoveryTimeoutSec }}'
+                resources:
+                    requests:
+                        cpu: {{ .Values.qubershipApihubAgent.resource.cpu.request }}
+                        memory: '{{ .Values.qubershipApihubAgent.resource.memory.request }}'
+                    limits:
+                        cpu: {{ .Values.qubershipApihubAgent.resource.cpu.limit }}
+                        memory: '{{ .Values.qubershipApihubAgent.resource.memory.limit }}'
+                livenessProbe:
+                    httpGet:
+                        path: /live
+                        port: web
+                    initialDelaySeconds: 5
+                    timeoutSeconds: 2
+                readinessProbe:
+                    httpGet:
+                        path: /ready
+                        port: web
+                    initialDelaySeconds: 5
+                    timeoutSeconds: 2
+                startupProbe:
+                    httpGet:
+                        path: /startup
+                        port: web
+                    initialDelaySeconds: 5
+                    timeoutSeconds: 2
+                    periodSeconds: 5
+                securityContext:
+                    runAsGroup: 10001
+                    readOnlyRootFilesystem: false
+                    runAsNonRoot: true
+                    seccompProfile:
+                        type: RuntimeDefault
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                        drop:
+                          - ALL
+    selector:
+        matchLabels:
+            name: qubership-apihub-agent
+

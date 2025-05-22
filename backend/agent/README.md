@@ -15,7 +15,8 @@ todo
 
 ## Installation
 
-todo: Helm
+Qubership APIHUB Agent is designed to work in k8s cluster only.
+Deployment to k8s is possible via Helm Chart. Please refer to [Installation Notes](./helm-templates/README.md)
 
 
 ## Build

@@ -1,0 +1,24 @@
+qubershipApihubAgent:
+  version: 'dev'
+  image:
+    repository: 'ghcr.io/netcracker/qubership-apihub-agent' 
+    tag: 'dev'
+  replicas: 1  
+
+  resource:
+    memory:
+      request: "256Mi"
+      limit: "256Mi"
+    cpu:  
+      request: "30m"
+      limit: "1"
+
+  logLevel: "INFO"
+
+  env:
+    apihubUrl: 'http://qubership-apihub-ui.apihub.svc.cluster.local:8080'
+    accessToken: '' # set access token from qubership-apihub
+    cloudName: 'Kind'
+    agentUrl: 'http://qubership-apihub-agent.qubership-apihub-agent.svc.cluster.local:8080' 
+    agentName: 'qsAgent'
+    insecureProxy: true

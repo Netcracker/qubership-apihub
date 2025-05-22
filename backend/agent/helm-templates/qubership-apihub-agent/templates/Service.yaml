@@ -1,0 +1,17 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+    name: qubership-apihub-agent
+    labels:
+        name: qubership-apihub-agent
+        app.kubernetes.io/part-of: qubership-apihub-agent
+        app.kubernetes.io/managed-by: helm
+spec:
+    ports:
+    -   name: web
+        port: 8080
+        targetPort: 8080
+    selector:
+        name: qubership-apihub-agent
+
