@@ -697,9 +697,7 @@ If during package version publication, you specified a previous release version,
 
 - Breaking – Breaking change is a change that breaks backward compatibility with the previous version of API.  
   For example, deleting an operation, adding a required parameter or changing the type of a parameter are breaking changes.
-- Requires Attention – A change requiring attention is a change that breaks backward compatibility according to the rules:
-  - operation or entity in the operation was annotated as deprecated in at least two previous consecutive releases and then it was deleted
-  - operation is marked as no-BWC
+- Requires Attention – A change requiring attention is a change that potentially may break backward compatibility with the previous version of API, depending on the particular implementation of a client code. This category also includes breaking changes in operations annotated as no-BWC.
 - Deprecated – Deprecating change is a change that annotates an operation, parameter or schema as deprecated. Removing a "deprecated" annotation is also considered a deprecating change.
 - Non-breaking – Non-breaking change is a change that does not break backward compatibility with the previous version of API.  
   For example, adding a new operation or an optional parameter is a non-breaking change.
