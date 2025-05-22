@@ -8,6 +8,10 @@ import { ArrayCallbackParameters, Fragment } from '../../types';
 import { entries } from '../../utils';
 import type { Oas3TranslateFunction } from '../types';
 import { translateHeaderObject } from './headers';
+import { JSONSchema7, JSONSchema7Array } from 'json-schema'
+import { translateToDefaultExample } from '../../oas/transformers/examples'
+import { translateToExample } from '../../oas3WithMeta/transformers/examples'
+import { translateSchemaObject } from '../../oas/transformers'
 
 const ACCEPTABLE_STYLES: (string | undefined)[] = [
   HttpParamStyles.Form,
@@ -68,13 +72,20 @@ export const translateMediaTypeObject = withContext<
   if (!isPlainObject(mediaObject)) return;
 
   const id = this.generateId.httpMedia({ mediaType });
-  const { schema, encoding } = mediaObject;
-
+  const { schema, encoding, examples } = mediaObject;
+  const jsonSchema = translateSchemaObject.call(this, schema);
+  const defaultExample = 'example' in mediaObject ? mediaObject.example : (jsonSchema?.examples as JSONSchema7Array)?.[0];
 
   return {
     id,
     mediaType,
     // Note that I'm assuming all references are resolved
+
+    // Examples are necessary here, because they are used in REST Playground (panel "Examples" on Operation Page)
+    examples: [
+      defaultExample !== undefined ? translateToDefaultExample.call(this, 'default', defaultExample) : undefined,
+      ...entries(examples).map(translateToExample, this),
+    ].filter(isNonNullable),
     encodings: entries(encoding).map(translateEncodingPropertyObject, this).filter(isNonNullable),
 
     ...pickBy(
