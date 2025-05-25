@@ -17,6 +17,8 @@ This can be helpful for development cases. It is not a production ready deployme
   * [Deployment via single script](#deployment-via-single-script)
   * [Verify Installation](#verify-installation)
   * [Uninstallation](#uninstallation)
+  * [Script for setting up everything](#script-for-setting-up-everything)
+  * [Deploy several APIHUBs simultaneously](#deploy-several-apihubs-simultaneously)
 
 # How to set up k8s cluster on your PC
 
@@ -147,9 +149,7 @@ Credentials for login can be found in `/helm-templates/qubership-apihub/local-se
     helm uninstall postgres-db -n postgres-db
 ```
 
-# Appendix
-
-Script for setting up everything
+## Script for setting up everything
 
 ```
 cat <<EOF | kind create cluster --config=-
@@ -179,3 +179,79 @@ echo "APIHUB is accesible by https://qubership-apihub.localhost/login"
 cat local-secrets.yaml | grep -E 'adminEmail|adminPassword|accessToken'
 echo "######"
 ```
+
+## Deploy several APIHUBs simultaneously
+
+**Prerequisites:**
+
+You already have k8s with Postgres and APIHUB in it.
+
+**Deployment:**
+
+Basically there are to options:
+
+1. Deploy separate Postgres for second APIHUB
+2. Create separate logical database in existing Postgres
+
+Option 2 simpler from execution perspective and cheaper from HW perspective so the following steps is for option 2
+
+**Step 1 - Create new logical database in Postgres cluster**
+
+Option 1:
+
+Execute the following command in `pg-common-0` POD in `postgres-db` namespace. Either via kubectl or OpenLens
+
+```
+psql -U apihub_backend_user -d postgres -c "CREATE USER apihub_backend_user_2 WITH PASSWORD 'apihub_backend_password_2' CREATEDB INHERIT;" -c "CREATE DATABASE apihub_backend_2 OWNER apihub_backend_user_2;" -c "GRANT ALL PRIVILEGES ON DATABASE apihub_backend_2 TO apihub_backend_user_2;"
+```
+
+*Hint:* Postgres admin credentials are: `apihub_backend_user/apihub_backend_password`
+
+Option 2:
+
+Do port forward for `pg-common` service in `postgres-db` namespace. Either via kubectl or OpenLens.
+
+Connect to PG via pgAdmin and execute the following SQL:
+
+```
+      CREATE USER apihub_backend_user_2 WITH PASSWORD 'apihub_backend_password_2' CREATEDB INHERIT;
+      CREATE DATABASE apihub_backend_2 OWNER apihub_backend_user_2;
+      GRANT ALL PRIVILEGES ON DATABASE apihub_backend_2 TO apihub_backend_user_2;
+```
+
+Or you can do the same (create user, create db) via pgAdmin UI.
+
+**Step 2 - prepare helm chart**
+
+Copy directory `qubership-apihub` with name `qubership-apihub-2`.
+
+Modify the following lines in `local-k8s-values.yaml`:
+
+```
+apihubUrl: 'qubership-apihub-2.localhost' 
+...
+      dbName: 'apihub_backend_2' 
+      dbUsername: 'apihub_backend_user_2'  
+      dbPassword: 'apihub_backend_password_2' 
+```
+
+Run the following commands to generate secrets:
+
+```
+./qubership-apihub-2/generate_jwt_pkey.sh
+./qubership-apihub-2/generate-local-passwords.sh
+```
+
+In order to change APIHUB release modify `tag: 'dev'` for services to desired docker images tags.
+
+**Step 3 - execute deploy**
+
+Run the following command:
+
+```
+helm install apihub -n apihub-2 --create-namespace -f ./qubership-apihub-2/local-k8s-values.yaml -f ../qubership-apihub-2/local-secrets.yaml ./qubership-apihub-2
+```
+
+**Done**
+
+New APIHUB is acessible via `http://qubership-apihub-2.localhost`
