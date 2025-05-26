@@ -2,7 +2,7 @@
 
 qubership-apihub-backend is a part of global qubership-apihub application, which is described here: [qubership-apihub](https://github.com/Netcracker/qubership-apihub).
 
-qubership-apihub-backend (aka API Registry) is the main backend microservice of qubership-apihub solution. It accumulates all bsuiness domain and core logic, provides REST API for qubership-apihub-ui and integrations.
+qubership-apihub-backend (aka API Registry) is the main backend microservice of qubership-apihub solution. It accumulates all business domain and core logic, provides REST API for qubership-apihub-ui and integrations.
 
 ## Installation
 
