@@ -271,6 +271,27 @@
           "manage": true
         }
       }
+    ],
+    "users": [
+      {
+        "id": "oidc-user",
+        "email": "oidc-user@qubership.org",
+        "username": "${APIHUB_USER_USERNAME}",
+        "firstName": "User",
+        "lastName": "OIDC",
+        "enabled": true,
+        "emailVerified": true,
+        "createdTimestamp" : 1748274366648,
+        "realmRoles" : [ "default-roles-apihub-2" ],
+        "totp" : false,
+        "credentials": [
+          {
+            "temporary": false,
+            "type": "password",
+            "value": "${APIHUB_USER_PASSWORD}"
+          }
+        ]
+      }
     ]
   }
 ]
