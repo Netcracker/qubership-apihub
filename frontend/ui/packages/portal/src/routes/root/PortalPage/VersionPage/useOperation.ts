@@ -58,7 +58,7 @@ export function useOperation(options?: OperationOptions): OperationQueryState {
   }
 
   const { fullVersion } = useVersionWithRevision(versionKey, packageKey)
-  const { data, isLoading, isInitialLoading, fetchStatus } = useQuery<OperationDto, Error, OperationData | undefined>({
+  const { data, isLoading, isInitialLoading } = useQuery<OperationDto, Error, OperationData | undefined>({
     queryKey: [OPERATION_QUERY_KEY, operationKey, packageKey, fullVersion, apiType],
     queryFn: () => getOperation(packageKey!, fullVersion!, operationKey!, apiType),
     enabled: !!operationKey && !!fullVersion && !!packageKey && enabled,
@@ -69,9 +69,9 @@ export function useOperation(options?: OperationOptions): OperationQueryState {
 
   return useMemo(() => ({
     data: data,
-    isLoading: isLoading && fetchStatus !== 'idle',
+    isLoading: isLoading,
     isInitialLoading: isInitialLoading,
-  }), [data, isInitialLoading, isLoading, fetchStatus])
+  }), [data, isInitialLoading, isLoading])
 }
 
 async function getOperation(
