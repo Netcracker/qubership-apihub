@@ -15,7 +15,7 @@ generate_saml_private_cert_and_key() {
 generate_jwt_private_key
 generate_saml_private_cert_and_key
 
-export APIHUB_ADMIN_EMAIL=$(generate_random_string 6)
+export APIHUB_ADMIN_EMAIL=$(generate_random_string 6)@qubership.org
 export APIHUB_ADMIN_PASSWORD=$(generate_random_string 6)
 export APIHUB_ACCESS_TOKEN=$(generate_random_string 10)
 export JWT_PRIVATE_KEY=$(cat ./jwt_private_key)
@@ -27,6 +27,7 @@ export SAML_CRT=$(echo -n "$SAML_CRT_ORIG" | base64 -w 0)
 export SAML_KEY=$(echo -n "$SAML_KEY_ORIG" | base64 -w 0)
 export APIHUB_USER_USERNAME=$(generate_random_string 6)
 export APIHUB_USER_PASSWORD=$(generate_random_string 6)
+export OIDC_CLIENT_SECRET=$(generate_random_string 32)
 
 rm -f rsakey.pem
 rm -f jwt_private_key

@@ -1,6 +1,7 @@
-{
-    "id": "apihub",
-    "realm": "apihub",
+[
+  {
+    "id": "apihub-1",
+    "realm": "apihub-1",
     "sslRequired": "none",
     "enabled": true,
     "eventsEnabled": true,
@@ -13,7 +14,7 @@
     "clients": [
       {
         "id": "b9d3dca4-b19b-4a26-8c51-06a0090ec312",
-        "clientId": "http://host.docker.internal:8081/saml/metadata",
+        "clientId": "http://host.docker.internal:8081/api/v1/saml/external-saml-idp/metadata",
         "name": "apihub",
         "description": "",
         "rootUrl": "http://host.docker.internal:8081",
@@ -25,10 +26,15 @@
         "clientAuthenticatorType": "client-secret",
         "redirectUris": [
           "http://localhost:8081/*",
-          "http://host.docker.internal:8081/*"
+          "http://host.docker.internal:8081/*",
+          "http://localhost:5173/*",
+          "http://host.docker.internal:5173/*"
         ],
         "webOrigins": [
-          "http://localhost:8081"
+          "http://localhost:8081",
+          "http://host.docker.internal:8081",
+          "http://localhost:5173",
+          "http://host.docker.internal:5173"
         ],
         "notBefore": 0,
         "bearerOnly": false,
@@ -79,11 +85,11 @@
     ],
     "users": [
       {
-        "id": "user",
-        "email": "user@user",
+        "id": "saml-user",
+        "email": "saml-user@qubership.org",
         "username": "${APIHUB_USER_USERNAME}",
-        "firstName": "APIHUB",
-        "lastName": "QUBERSHIP",
+        "firstName": "User",
+        "lastName": "SAML",
         "enabled": true,
         "emailVerified": true,
         "credentials": [
@@ -205,4 +211,87 @@
         ]
       }
     ]
+  },
+  {
+    "id": "apihub-2",
+    "realm": "apihub-2",
+    "enabled": true,
+    "clients": [
+      {
+        "id": "apihub-oidc",
+        "clientId": "apihub-oidc",
+        "name": "apihub",
+        "description": "",
+        "rootUrl": "http://host.docker.internal:8081",
+        "adminUrl": "http://host.docker.internal:8081",
+        "baseUrl": "http://host.docker.internal:8081",
+        "surrogateAuthRequired": false,
+        "enabled": true,
+        "alwaysDisplayInConsole": false,
+        "clientAuthenticatorType": "client-secret",
+        "secret": "${OIDC_CLIENT_SECRET}",
+        "redirectUris": [
+          "http://localhost:8081/*",
+          "http://host.docker.internal:8081/*"
+        ],
+        "webOrigins": [
+          "http://localhost:8081",
+          "http://host.docker.internal:8081"
+        ],
+        "notBefore": 0,
+        "bearerOnly": false,
+        "consentRequired": false,
+        "standardFlowEnabled": true,
+        "implicitFlowEnabled": false,
+        "directAccessGrantsEnabled": true,
+        "serviceAccountsEnabled": false,
+        "publicClient": false,
+        "frontchannelLogout": true,
+        "protocol": "openid-connect",
+        "attributes": {
+          "realm_client": "false",
+          "oidc.ciba.grant.enabled": "false",
+          "client.secret.creation.time": "1745573585",
+          "backchannel.logout.session.required": "true",
+          "oauth2.device.authorization.grant.enabled": "false",
+          "backchannel.logout.revoke.offline.tokens": "false"
+        },
+        "authenticationFlowBindingOverrides": {},
+        "fullScopeAllowed": true,
+        "nodeReRegistrationTimeout": -1,
+        "defaultClientScopes": [
+          "offline_access",
+          "profile",
+          "email"
+        ],
+        "optionalClientScopes": [],
+        "access": {
+          "view": true,
+          "configure": true,
+          "manage": true
+        }
+      }
+    ],
+    "users": [
+      {
+        "id": "oidc-user",
+        "email": "oidc-user@qubership.org",
+        "username": "${APIHUB_USER_USERNAME}",
+        "firstName": "User",
+        "lastName": "OIDC",
+        "enabled": true,
+        "emailVerified": true,
+        "createdTimestamp" : 1748274366648,
+        "realmRoles" : [ "default-roles-apihub-2" ],
+        "totp" : false,
+        "credentials": [
+          {
+            "temporary": false,
+            "type": "password",
+            "value": "${APIHUB_USER_PASSWORD}"
+          }
+        ]
+      }
+    ]
   }
+]
