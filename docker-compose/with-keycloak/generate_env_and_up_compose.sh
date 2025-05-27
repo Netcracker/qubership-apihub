@@ -27,6 +27,7 @@ export SAML_CRT=$(echo -n "$SAML_CRT_ORIG" | base64 -w 0)
 export SAML_KEY=$(echo -n "$SAML_KEY_ORIG" | base64 -w 0)
 export APIHUB_USER_USERNAME=$(generate_random_string 6)
 export APIHUB_USER_PASSWORD=$(generate_random_string 6)
+export OIDC_CLIENT_SECRET=$(generate_random_string 32)
 
 rm -f rsakey.pem
 rm -f jwt_private_key

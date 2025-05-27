@@ -229,7 +229,7 @@
         "enabled": true,
         "alwaysDisplayInConsole": false,
         "clientAuthenticatorType": "client-secret",
-        "secret": "l5cKFvwDRSnhBErE9LUGeBk0dqqFB7No",
+        "secret": "${OIDC_CLIENT_SECRET}",
         "redirectUris": [
           "http://localhost:8081/*",
           "http://host.docker.internal:8081/*"

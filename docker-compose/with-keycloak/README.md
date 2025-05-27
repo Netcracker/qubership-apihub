@@ -12,29 +12,6 @@ Optional: For PostgreSQL access install PGADmin or any other similar tool.
 
 **NOTE:** WA for Windows and podman required: you need to add the following line into your `hosts` file: `127.0.0.1 host.docker.internal`
 
-**NOTE2:** as soon as apihub does not support https out of the box - SAML integration will not work. As a WA you need to change `SamlAuthController.go` as shown below.
-
-In files:
-- AuthController.go
-- SamlAuthController.go (deprecated)
-- Auth.go
-- Middleware.go
-
-change similar code snippet in following way:
-
-```
-	http.SetCookie(w, &http.Cookie{
-		Name:     "userView",
-		Value:    cookieValue,
-		MaxAge:   int((time.Hour * 12).Seconds()),
-		Secure:   true,    --> false,
-		HttpOnly: false,
-		Path:     "/",
-	})
-```
-
-Also you can use prebuilt backend image tag `sso`.
-
 ## Parameters setup
 
 Review *.env files in this folder and fill values for the following ones:
