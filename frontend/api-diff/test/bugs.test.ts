@@ -27,6 +27,9 @@ import changeToNothingClassificationAfter from './helper/resources/change-to-not
 import spearedParamsBefore from './helper/resources/speared-parameters/before.json'
 import spearedParamsAfter from './helper/resources/speared-parameters/after.json'
 
+import wildcardContentSchemaMediaTypeCombinedWithSpecificMediaTypeBefore from './helper/resources/wildcard-content-schema-media-type-combined-with-specific-media-type/before.json'
+import wildcardContentSchemaMediaTypeCombinedWithSpecificMediaTypeAfter from './helper/resources/wildcard-content-schema-media-type-combined-with-specific-media-type/after.json'
+
 import { diffsMatcher } from './helper/matchers'
 import { TEST_DIFF_FLAG, TEST_ORIGINS_FLAG } from './helper'
 import { JSON_SCHEMA_NODE_SYNTHETIC_TYPE_NOTHING } from '@netcracker/qubership-apihub-api-unifier'
@@ -97,16 +100,7 @@ describe('Real Data', () => {
     const after: any = infinityAfter
     const { diffs } = apiDiff(before, after, OPTIONS)
     const responseContentPath = ['paths', '/api/v1/dictionaries/dictionary/item', 'get', 'responses', '200', 'content']
-    expect(diffs).toEqual(diffsMatcher([
-      expect.objectContaining({
-        beforeDeclarationPaths: [[...responseContentPath, '*/*']],
-        afterDeclarationPaths: [[...responseContentPath, 'application/json']],
-        action: DiffAction.rename,
-        beforeKey: '*/*',
-        afterKey: 'application/json',
-        type: nonBreaking,
-        scope: 'response',
-      }),
+    expect(diffs).toEqual(diffsMatcher([      
       expect.objectContaining({
         afterDeclarationPaths: [['components', 'schemas', 'DictionaryItem', 'x-entity']],
         afterValue: 'DictionaryItem',
@@ -210,10 +204,27 @@ describe('Real Data', () => {
       }),
     ]))
   })
-  it('spered parameters', () => {
+
+  it('speared parameters', () => {
     const before: any = spearedParamsBefore
     const after: any = spearedParamsAfter
     const { diffs } = apiDiff(before, after, OPTIONS)
     expect(diffs).toBeEmpty()
+  })
+
+  // The original issue was that media type was reported as added/removed, when nothing actually changed
+  it('wildcard content schema media type in combination with specific media type', () => {
+    const before: any = wildcardContentSchemaMediaTypeCombinedWithSpecificMediaTypeBefore
+    const after: any = wildcardContentSchemaMediaTypeCombinedWithSpecificMediaTypeAfter
+    const { diffs } = apiDiff(before, after, OPTIONS)
+    
+    expect(diffs).toEqual(diffsMatcher([
+      expect.objectContaining({
+        action: DiffAction.replace,
+        beforeDeclarationPaths: [['servers', 0, 'url']],
+        afterDeclarationPaths: [['servers', 0, 'url']],
+        type: annotation,
+      }),
+    ]))
   })
 })

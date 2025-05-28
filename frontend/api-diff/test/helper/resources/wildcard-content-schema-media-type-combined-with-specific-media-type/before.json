@@ -1,0 +1,38 @@
+{
+  "openapi": "3.0.1",
+  "servers": [
+    {
+      "url": "http://config-server:1111",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {
+    "/path1": {
+      "get": {
+        "operationId": "retrieve_1",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    }
+  },
+  "components": {}
+}
