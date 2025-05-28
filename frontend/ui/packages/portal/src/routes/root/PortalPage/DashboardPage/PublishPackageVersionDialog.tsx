@@ -29,7 +29,7 @@ import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components
 import { SHOW_PUBLISH_PACKAGE_VERSION_DIALOG } from '@apihub/routes/EventBusProvider'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { getVersionLabelsMap } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
+import { getSplittedVersionKey, getVersionLabelsMap } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import {
@@ -68,8 +68,13 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
   const isPackage = packageKind === PACKAGE_KIND
 
   const { filesWithLabels } = useFiles()
-  const [versionId] = useState(isEditingVersion ? currentVersionId ?? '' : '')
-  const [targetVersion, setTargetVersion] = useState<Key>(isEditingVersion ? currentVersionId ?? '' : '')
+  const versionId = useMemo(() => {
+    return isEditingVersion
+      ? getSplittedVersionKey(currentVersionId).versionKey ?? ''
+      : ''
+  }, [isEditingVersion, currentVersionId])
+
+  const [targetVersion, setTargetVersion] = useState<Key>(versionId)
   const [versionsFilter, setVersionsFilter] = useState('')
 
   const {
