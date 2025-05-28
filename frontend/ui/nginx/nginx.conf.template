@@ -120,35 +120,52 @@ http {
             proxy_redirect off;
         }
 
+        location ~* ^/agents/.*\.(?:js|css|woff2?|ttf|svg|png)$ {
+          add_header Cache-Control "public, max-age=604800, immutable";
+          root /usr/share/nginx/html;
+        }
 
         location /agents {
           root /usr/share/nginx/html;
           index /agents/index.html;
           try_files $uri $uri/ /agents/index.html;
+          add_header Cache-Control "no-cache";
 
           proxy_cookie_path / "/; secure; HttpOnly";
           add_header X-Content-Type-Options 'nosniff';
           add_header X-XSS-Protection "0";
           add_header Strict-Transport-Security "max-age=15768000; includeSubdomains; preload;";
           add_header Referrer-Policy "strict-origin-when-cross-origin";
+        }
+
+        location ~* ^/editor/.*\.(?:js|css|woff2?|ttf|svg|png)$ {
+          add_header Cache-Control "public, max-age=604800, immutable";
+          root /usr/share/nginx/html;
         }
 
         location /editor {
           root /usr/share/nginx/html;
           index /editor/index.html;
           try_files $uri $uri/ /editor/index.html;
+          add_header Cache-Control "no-cache";
 
           proxy_cookie_path / "/; secure; HttpOnly";
           add_header X-Content-Type-Options 'nosniff';
           add_header X-XSS-Protection "0";
           add_header Strict-Transport-Security "max-age=15768000; includeSubdomains; preload;";
           add_header Referrer-Policy "strict-origin-when-cross-origin";
+        }
+
+        location ~* ^/portal/.*\.(?:js|css|woff2?|ttf|svg|png)$ {
+          add_header Cache-Control "public, max-age=604800, immutable";
+          root /usr/share/nginx/html/portal;
         }
 
         location /portal {
           root /usr/share/nginx/html;
           index /portal/index.html;
           try_files $uri $uri/ /portal/index.html;
+          add_header Cache-Control "no-cache";
 
           proxy_cookie_path / "/; secure; HttpOnly";
           add_header X-Content-Type-Options 'nosniff';
@@ -157,10 +174,16 @@ http {
           add_header Referrer-Policy "strict-origin-when-cross-origin";
         }
 
+        location ~* \.(?:js|css|woff2?|ttf|svg|png)$ {
+          add_header Cache-Control "public, max-age=604800, immutable";
+          root /usr/share/nginx/html/portal;
+        }
+
         location / {
           root /usr/share/nginx/html/portal;
           index /index.html;
           try_files $uri $uri/ /index.html;
+          add_header Cache-Control "no-cache";
 
           proxy_cookie_path / "/; secure; HttpOnly";
           add_header X-Content-Type-Options 'nosniff';
