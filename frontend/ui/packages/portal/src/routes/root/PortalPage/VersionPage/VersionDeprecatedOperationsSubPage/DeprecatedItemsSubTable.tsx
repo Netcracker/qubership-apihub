@@ -117,7 +117,7 @@ export const DeprecatedItemsSubTable: FC<SubTableProps> = memo<SubTableProps>((
               cell.column.id === DESCRIPTION_COLUMN_ID
                 ? hasDeprecatedInfo
                   ? isDashboard ? 4 : 3
-                  : isDashboard ? 5 : 4
+                  : 5
                 : undefined
             }
             data-testid={`Cell-${cell.column.id}`}
