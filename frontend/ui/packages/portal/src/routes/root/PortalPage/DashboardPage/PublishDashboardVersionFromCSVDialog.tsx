@@ -24,7 +24,7 @@ import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components
 import { SHOW_PUBLISH_PACKAGE_VERSION_DIALOG } from '@apihub/routes/EventBusProvider'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import { type Package, WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { getVersionLabelsMap } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
+import { getSplittedVersionKey, getVersionLabelsMap } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import {
@@ -66,11 +66,15 @@ const PublishDashboardVersionFromCSVPopup: FC<PopupProps> = memo<PopupProps>(({ 
 
   const [currentVersionConfig, isCurrentVersionLoading] = usePackageVersionConfig(currentPackage?.key, currentVersionId)
   const [currentWorkspace] = useState(currentPackage?.parents?.[0] ?? null)
-  const [versionId] = useState(isEditingVersion ? currentVersionId ?? '' : '')
+  const versionId = useMemo(() => {
+    return isEditingVersion
+      ? getSplittedVersionKey(currentVersionId).versionKey ?? ''
+      : ''
+  }, [isEditingVersion, currentVersionId])
 
   const [targetWorkspace, setTargetWorkspace] = useState<Package | null>(currentPackage?.parents?.[0] ?? null)
   const [workspacesFilter, setWorkspacesFilter] = useState('')
-  const [targetVersion, setTargetVersion] = useState<Key>('')
+  const [targetVersion, setTargetVersion] = useState<Key>(versionId)
   const [versionsFilter, setVersionsFilter] = useState('')
 
   const [workspaces, areWorkspacesLoading] = usePackages({

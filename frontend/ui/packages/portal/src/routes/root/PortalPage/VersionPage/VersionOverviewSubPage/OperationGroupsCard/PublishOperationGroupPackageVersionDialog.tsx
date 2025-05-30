@@ -64,7 +64,7 @@ const PublishOperationGroupPackageVersionPopup: FC<PopupProps> = memo<PopupProps
 
   const [currentVersionConfig] = usePackageVersionConfig(currentPackage?.key, currentVersionId)
   const [currentWorkspace] = useState(currentPackage?.parents?.[0] ?? null)
-  const [versionId] = useState(getSplittedVersionKey(currentVersionId).versionKey)
+  const versionId = useMemo(() => getSplittedVersionKey(currentVersionId).versionKey, [currentVersionId])
 
   const [targetWorkspace, setTargetWorkspace] = useState<Package | null>(currentWorkspace)
   const [workspacesFilter, setWorkspacesFilter] = useState('')
