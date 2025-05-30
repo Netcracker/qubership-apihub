@@ -181,27 +181,15 @@ func (o operationControllerImpl) GetOperationList(w http.ResponseWriter, r *http
 		}
 	}
 
-	hashList, err := getListFromParam(r, "hashList")
-	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "hashList"},
-			Debug:   err.Error(),
-		})
+	hashList, customErr := getListFromParam(r, "hashList")
+	if customErr != nil {
+		RespondWithCustomError(w, customErr)
 		return
 	}
 
-	ids, err := getListFromParam(r, "ids")
-	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "ids"},
-			Debug:   err.Error(),
-		})
+	ids, customErr := getListFromParam(r, "ids")
+	if customErr != nil {
+		RespondWithCustomError(w, customErr)
 		return
 	}
 
@@ -563,15 +551,9 @@ func (o operationControllerImpl) GetOperationChanges(w http.ResponseWriter, r *h
 
 	previousVersion := r.URL.Query().Get("previousVersion")
 	previousVersionPackageId := r.URL.Query().Get("previousVersionPackageId")
-	severities, err := getListFromParam(r, "severity")
-	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "severity"},
-			Debug:   err.Error(),
-		})
+	severities, customErr := getListFromParam(r, "severity")
+	if customErr != nil {
+		RespondWithCustomError(w, customErr)
 		return
 	}
 	for _, severity := range severities {
@@ -634,15 +616,9 @@ func (o operationControllerImpl) GetOperationChanges_deprecated_2(w http.Respons
 
 	previousVersion := r.URL.Query().Get("previousVersion")
 	previousVersionPackageId := r.URL.Query().Get("previousVersionPackageId")
-	severities, err := getListFromParam(r, "severity")
-	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "severity"},
-			Debug:   err.Error(),
-		})
+	severities, customErr := getListFromParam(r, "severity")
+	if customErr != nil {
+		RespondWithCustomError(w, customErr)
 		return
 	}
 	for _, severity := range severities {
@@ -754,16 +730,11 @@ func (o operationControllerImpl) GetOperationsChanges_deprecated(w http.Response
 		}
 	}
 	tags := make([]string, 0)
+	var customErr *exception.CustomError
 	if !emptyTag {
-		tags, err = getListFromParam(r, "tag")
-		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.InvalidURLEscape,
-				Message: exception.InvalidURLEscapeMsg,
-				Params:  map[string]interface{}{"param": "tag"},
-				Debug:   err.Error(),
-			})
+		tags, customErr = getListFromParam(r, "tag")
+		if customErr != nil {
+			RespondWithCustomError(w, customErr)
 			return
 		}
 	}
@@ -793,15 +764,9 @@ func (o operationControllerImpl) GetOperationsChanges_deprecated(w http.Response
 	}
 
 	severities := make([]string, 0)
-	severities, err = getListFromParam(r, "severity")
-	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "severity"},
-			Debug:   err.Error(),
-		})
+	severities, customErr = getListFromParam(r, "severity")
+	if customErr != nil {
+		RespondWithCustomError(w, customErr)
 		return
 	}
 	if len(severities) > 0 {
@@ -945,16 +910,11 @@ func (o operationControllerImpl) GetOperationsChanges(w http.ResponseWriter, r *
 		}
 	}
 	tags := make([]string, 0)
+	var customErr *exception.CustomError
 	if !emptyTag {
-		tags, err = getListFromParam(r, "tag")
-		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.InvalidURLEscape,
-				Message: exception.InvalidURLEscapeMsg,
-				Params:  map[string]interface{}{"param": "tag"},
-				Debug:   err.Error(),
-			})
+		tags, customErr = getListFromParam(r, "tag")
+		if customErr != nil {
+			RespondWithCustomError(w, customErr)
 			return
 		}
 	}
@@ -984,15 +944,9 @@ func (o operationControllerImpl) GetOperationsChanges(w http.ResponseWriter, r *
 	}
 
 	severities := make([]string, 0)
-	severities, err = getListFromParam(r, "severity")
-	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "severity"},
-			Debug:   err.Error(),
-		})
+	severities, customErr = getListFromParam(r, "severity")
+	if customErr != nil {
+		RespondWithCustomError(w, customErr)
 		return
 	}
 	if len(severities) > 0 {
@@ -1112,15 +1066,9 @@ func (o operationControllerImpl) GetDeprecatedOperationsList(w http.ResponseWrit
 	}
 
 	tags := make([]string, 0)
-	tags, err = getListFromParam(r, "tag")
-	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "tag"},
-			Debug:   err.Error(),
-		})
+	tags, customErr := getListFromParam(r, "tag")
+	if customErr != nil {
+		RespondWithCustomError(w, customErr)
 		return
 	}
 
@@ -1145,15 +1093,9 @@ func (o operationControllerImpl) GetDeprecatedOperationsList(w http.ResponseWrit
 		}
 	}
 
-	ids, err := getListFromParam(r, "ids")
-	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "ids"},
-			Debug:   err.Error(),
-		})
+	ids, customErr := getListFromParam(r, "ids")
+	if customErr != nil {
+		RespondWithCustomError(w, customErr)
 		return
 	}
 

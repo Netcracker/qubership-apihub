@@ -325,8 +325,8 @@ func getYamlContentType(data *[]byte) (view.ShortcutType, string) {
 		//try to find content Title
 		if hasInfoTag && contentTitle == "" {
 			parts := yamlTitleRegexp.FindStringSubmatch(text)
-			for _, title := range parts {
-				contentTitle = title
+			if len(parts) > 1 {
+				contentTitle = parts[1]
 			}
 		}
 	}

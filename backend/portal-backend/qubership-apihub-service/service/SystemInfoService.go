@@ -80,6 +80,8 @@ const (
 	FAIL_BUILDS_ON_BROKEN_REFS             = "FAIL_BUILDS_ON_BROKEN_REFS"
 	GIT_BRANCH                             = "GIT_BRANCH"
 	GIT_HASH                               = "GIT_HASH"
+
+	maxMB = 8796093022207 // 8796093022207 * 1048576 is safely below MaxInt64
 )
 
 type SystemInfoService interface {
@@ -470,6 +472,11 @@ func (g systemInfoServiceImpl) setPublishArchiveSizeLimitMB() {
 		publishArchiveSizeLimit = 50
 		log.Warnf("PUBLISH_ARCHIVE_SIZE_LIMIT_MB has incorrect value, default=%d is going to be used", 50)
 	}
+	//validation was added based on security scan results to avoid integer overflow
+	if publishArchiveSizeLimit > maxMB {
+		publishArchiveSizeLimit = maxMB
+		log.Warnf("PUBLISH_ARCHIVE_SIZE_LIMIT_MB value is too large, limiting to %d", publishArchiveSizeLimit)
+	}
 	g.systemInfoMap[PUBLISH_ARCHIVE_SIZE_LIMIT_MB] = publishArchiveSizeLimit * bytesInMb
 }
 
@@ -484,8 +491,12 @@ func (g systemInfoServiceImpl) setPublishFileSizeLimitMB() {
 		publishFileSizeLimit = 15 //15Mb
 		log.Warnf("PUBLISH_FILE_SIZE_LIMIT_MB has incorrect value, default=%d is going to be used", 15)
 	}
-	publishFileSizeLimit = publishFileSizeLimit * bytesInMb
-	g.systemInfoMap[PUBLISH_FILE_SIZE_LIMIT_MB] = publishFileSizeLimit
+	//validation was added based on security scan results to avoid integer overflow
+	if publishFileSizeLimit > maxMB {
+		publishFileSizeLimit = maxMB
+		log.Warnf("PUBLISH_FILE_SIZE_LIMIT_MB value is too large, limiting to %d", publishFileSizeLimit)
+	}
+	g.systemInfoMap[PUBLISH_FILE_SIZE_LIMIT_MB] = publishFileSizeLimit * bytesInMb
 }
 
 func (g systemInfoServiceImpl) setBranchContentSizeLimitMB() {
@@ -494,6 +505,11 @@ func (g systemInfoServiceImpl) setBranchContentSizeLimitMB() {
 	if err != nil || branchContentSizeLimit == 0 {
 		branchContentSizeLimit = 50
 		log.Warnf("BRANCH_CONTENT_SIZE_LIMIT_MB has incorrect value, default=%d is going to be used", 50)
+	}
+	//validation was added based on security scan results to avoid integer overflow
+	if branchContentSizeLimit > maxMB {
+		branchContentSizeLimit = maxMB
+		log.Warnf("BRANCH_CONTENT_SIZE_LIMIT_MB value is too large, limiting to %d", branchContentSizeLimit)
 	}
 	g.systemInfoMap[BRANCH_CONTENT_SIZE_LIMIT_MB] = branchContentSizeLimit * bytesInMb
 }

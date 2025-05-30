@@ -202,15 +202,9 @@ func (p packageControllerImpl) GetPackagesList(w http.ResponseWriter, r *http.Re
 	var err error
 	filter := r.URL.Query().Get("textFilter")
 	parentId := r.URL.Query().Get("parentId")
-	kind, err := getListFromParam(r, "kind")
-	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "kind"},
-			Debug:   err.Error(),
-		})
+	kind, customErr := getListFromParam(r, "kind")
+	if customErr != nil {
+		RespondWithCustomError(w, customErr)
 		return
 	}
 	onlyFavorite := false

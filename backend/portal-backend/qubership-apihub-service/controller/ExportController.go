@@ -634,16 +634,11 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 		}
 	}
 	tags := make([]string, 0)
+	var customErr *exception.CustomError
 	if !emptyTag {
-		tags, err = getListFromParam(r, "tag")
-		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.InvalidURLEscape,
-				Message: exception.InvalidURLEscapeMsg,
-				Params:  map[string]interface{}{"param": "tag"},
-				Debug:   err.Error(),
-			})
+		tags, customErr = getListFromParam(r, "tag")
+		if customErr != nil {
+			RespondWithCustomError(w, customErr)
 			return
 		}
 	}
@@ -673,15 +668,9 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 		return
 	}
 
-	severities, err := getListFromParam(r, "severity")
-	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "severity"},
-			Debug:   err.Error(),
-		})
+	severities, customErr := getListFromParam(r, "severity")
+	if customErr != nil {
+		RespondWithCustomError(w, customErr)
 		return
 	}
 	for _, severity := range severities {
@@ -1012,15 +1001,10 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 		}
 	}
 	if !emptyTag {
-		tags, err = getListFromParam(r, "tag")
-		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.InvalidURLEscape,
-				Message: exception.InvalidURLEscapeMsg,
-				Params:  map[string]interface{}{"param": "tag"},
-				Debug:   err.Error(),
-			})
+		var customErr *exception.CustomError
+		tags, customErr = getListFromParam(r, "tag")
+		if customErr != nil {
+			RespondWithCustomError(w, customErr)
 			return
 		}
 	}

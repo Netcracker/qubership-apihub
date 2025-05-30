@@ -44,7 +44,10 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 )
 
-const ApiHubBaseConfigPath = "apihub-config/"
+const (
+	ApiHubBaseConfigPath = "apihub-config/"
+	maxZipArchiveFiles   = 10000
+)
 
 type BranchService interface {
 	GetProjectBranchesFromGit(ctx goctx.Context, projectId string, filter string, limit int) ([]view.BranchItemView, error)
@@ -330,6 +333,16 @@ func (b branchServiceImpl) getBranchContentFromRepositoyArchive(ctx goctx.Contex
 		return nil, err
 	}
 	defer zipReader.Close()
+
+	//validation was added based on security scan results to avoid resource exhaustion
+	if len(zipReader.File) > maxZipArchiveFiles {
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FilesLimitExceeded,
+			Message: exception.BranchFilesLimitExceededMsg,
+			Params:  map[string]interface{}{"maxFiles": maxZipArchiveFiles},
+		}
+	}
 
 	zipFileHeaders := make(map[string]*zip.File)
 	for _, file := range zipReader.File {
