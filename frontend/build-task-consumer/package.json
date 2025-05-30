@@ -22,7 +22,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config jest-e2e.json",
-    "update-lock-file": "update-lock-file @netcracker"    
+    "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
     "@nestjs/axios": "^3.0.0",
@@ -31,7 +31,7 @@
     "@nestjs/core": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/swagger": "^7.0.0",
-    "@netcracker/qubership-apihub-api-processor": "dev",
+    "@netcracker/qubership-apihub-api-processor": "next",
     "@sinclair/typebox": "^0.32.1",
     "adm-zip": "^0.5.10",
     "dotenv": "^16.3.1",
