@@ -31,7 +31,7 @@
         "@nestjs/cli": "^10.0.0",
         "@nestjs/schematics": "^10.0.0",
         "@nestjs/testing": "^10.0.0",
-        "@netcracker/qubership-apihub-npm-gitflow": "3.0.1",
+        "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
         "@types/adm-zip": "^0.5.1",
         "@types/express": "^4.17.21",
         "@types/jest": "^29.5.6",
@@ -1943,9 +1943,9 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-npm-gitflow": {
-      "version": "3.0.1",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-npm-gitflow/3.0.1/a1d6886a64fa8f94b894bbae4ddeb32816959a58",
-      "integrity": "sha512-e/fivYbbArdZw8HdXPT9NFBzI1bWLx5k7XXYAFIaR9MdfwZlkUczWuds/+mcdXe9u1WecDvTzwL1hfE/vR9Aow==",
+      "version": "3.1.0",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-npm-gitflow/3.1.0/9d5ec4db1aa7e1fc7ff3d15dcccc1c2741bc06cd",
+      "integrity": "sha512-MoZVHLurOpx1eWb+iSBcpqe6hSTGL60Dv+dcD2Q3Ze0LeE0XPlqLnMFeKyAEQnkq/nynPlnsbNPFGBAgJMYe6w==",
       "dev": true,
       "license": "Apache-2.0",
       "dependencies": {
