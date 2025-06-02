@@ -13,7 +13,7 @@ export class BasePage {
   async goto(url: string, options?: GotoOptions): Promise<void> {
     const _url = new URL(url, BASE_ORIGIN).toString()
     await report.step(`Go to "${url}"`, async () => {
-      await this.page.goto(_url, { waitUntil: 'networkidle', ...options })
+      await this.page.goto(_url, options)
     })
   }
 

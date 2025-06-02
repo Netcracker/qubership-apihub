@@ -29,6 +29,6 @@ export class LoginPage extends BasePage {
     await this.loginTxtFld.fill(credentials.email)
     await this.passwordTxtFld.fill(credentials.password)
     await this.signInBtn.click()
-    await this.page.waitForLoadState('networkidle')
+    await this.page.waitForLoadState()
   }
 }

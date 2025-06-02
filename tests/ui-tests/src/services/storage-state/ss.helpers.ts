@@ -30,7 +30,7 @@ export async function saveSsFileByLocalViaBrowser(credentials: Credentials): Pro
   await page.goto(`${BASE_ORIGIN}/login`)
   const loginPage = new LoginPage(page)
   await loginPage.signIn(credentials)
-  await page.waitForLoadState('networkidle')
+  await page.waitForLoadState()
   await page.context().storageState({ path: `${SS_PATH_PREFIX}${BASE_URL.hostname}-${credentials.email}.json` })
   await browser.close()
 
@@ -46,7 +46,7 @@ export async function saveSsFileBySsoViaBrowser(credentials: Credentials): Promi
     headless: !!process.env.CI,
   })
   const page = await newPage(browser, credentials)
-  await page.goto(BASE_ORIGIN, { waitUntil: 'networkidle', timeout: PAGE_LOADING })
+  await page.goto(BASE_ORIGIN, { timeout: PAGE_LOADING })
   for (let i = 0; i < 10; i++) {
     const ss = await page.context().storageState()
     if (ss.cookies.length !== 0 && ss.origins.length !== 0) {
