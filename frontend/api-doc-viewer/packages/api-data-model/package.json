@@ -1,0 +1,19 @@
+{
+  "name": "@netcracker/qubership-apihub-api-data-model",
+  "version": "0.0.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "description": "Convert JSON schema-based document into structured and simplified data tree ",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "jest --maxWorkers 3 --verbose",
+    "test:coverage": "jest --verbose --coverage"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.5",
+    "@types/treeify": "^1.0.0",
+    "js-yaml": "^4.1.0",
+    "treeify": "^1.1.0",
+    "ts-node": "10.7.0"
+  }
+}

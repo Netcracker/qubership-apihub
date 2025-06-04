@@ -1,0 +1,83 @@
+{
+  "name": "@netcracker/qubership-apihub-api-doc-viewer",
+  "version": "2.1.1",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./dist/style.css": {
+      "import": "./dist/style.css",
+      "default": "./dist/style.css"
+    }
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "scripts": {
+    "build": "npm run build:dist",
+    "build:dist": "tsc && vite build",
+    "build:showcase": "storybook build -o dist-showcase --disable-telemetry",
+    "generate-stories": "node bin/generate-graphql-compatibility-suite-stories.mjs",
+    "generate-tests": "node bin/generate-graphql-compatibility-suite-tests.mjs",
+    "development:storybook": "storybook dev -p 9009",
+    "development:local-server:static": "npm run build:showcase && ws -p 9009 -d dist-showcase --spa index.html --static.maxage 3600",
+    "screenshot-test:ci": "start-server-and-test development:local-server:static http://localhost:9009 screenshot-test:run-test:ci",
+    "screenshot-test:docker": "start-server-and-test development:local-server:static http://localhost:9009 screenshot-test:run-test:docker",
+    "screenshot-test:run-test:ci": "jest --maxWorkers 4 -c .config/it/it-test.jest.config.cjs",
+    "screenshot-test:run-test:docker": "jest --maxWorkers 4 -c .config/it/it-test-docker.jest.config.cjs",
+    "screenshot-test:regenerate-snapshots": "start-server-and-test development:local-server:static http://localhost:9009 screenshot-test:regenerate-snapshots:run",
+    "screenshot-test:regenerate-snapshots:run": "jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test-docker.jest.config.cjs"
+  },
+  "dependencies": {
+    "postcss": "8.4.29",
+    "react-markdown": "8.0.7",
+    "react-use": "^17.6.0",
+    "remark-gfm": "3.0.1",
+    "tailwindcss": "3.3.3"
+  },
+  "devDependencies": {
+    "@storybook/addon-essentials": "8.1.11",
+    "@storybook/addon-interactions": "8.1.11",
+    "@storybook/addon-links": "8.1.11",
+    "@storybook/addon-styling": "1.3.7",
+    "@storybook/blocks": "8.1.11",
+    "@storybook/react": "8.1.11",
+    "@storybook/react-vite": "8.1.11",
+    "@storybook/testing-library": "0.2.0",
+    "@types/fontfaceobserver": "2.1.0",
+    "@types/jest": "29.5.1",
+    "@types/jest-environment-puppeteer": "5.0.3",
+    "@types/jest-image-snapshot": "6.1.0",
+    "@types/json-schema": "^7.0.12",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "18.2.7",
+    "@vitejs/plugin-react": "4.0.3",
+    "autoprefixer": "10.4.15",
+    "docker-chromium": "1.4.2",
+    "find-node-modules": "2.1.3",
+    "fontfaceobserver": "^2.3.0",
+    "graphql": "16.9.0",
+    "jest": "29.5.0",
+    "jest-environment-puppeteer": "7.0.1",
+    "jest-image-snapshot": "6.1.0",
+    "jest-image-snapshot-diff-reporter": "1.0.0",
+    "jest-puppeteer": "7.0.1",
+    "local-web-server": "5.3.0",
+    "puppeteer": "21.11.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-remove-scroll": "^2.6.0",
+    "start-server-and-test": "2.0.0",
+    "storybook": "8.1.11",
+    "ts-jest": "29.1.0",
+    "typescript": "5.1.3",
+    "vite": "4.4.5",
+    "vite-plugin-dts": "3.5.3"
+  }
+}
