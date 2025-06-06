@@ -11,7 +11,7 @@ export function useTransformDocumentToNode(document: string): IHttpOperation<fal
   const bundledDocument = useBundleRefsIntoDocument(useMemo(() => merge(parsedDocument), [parsedDocument]))
 
   return React.useMemo(() => {
-    return transformOasToServiceNode(bundledDocument, true)?.children?.find(({ type }) => type === 'http_operation')
+    return transformOasToServiceNode(bundledDocument, false)?.children?.find(({ type }) => type === 'http_operation')
       ?.data as IHttpOperation | null
   }, [bundledDocument])
 }
