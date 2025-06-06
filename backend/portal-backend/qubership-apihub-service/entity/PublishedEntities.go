@@ -373,6 +373,7 @@ func MakeReadonlyPublishedVersionListView2(versionEnt *PackageVersionRevisionEnt
 		PreviousVersion:          view.MakeVersionRefKey(versionEnt.PreviousVersion, versionEnt.PreviousVersionRevision),
 		VersionLabels:            versionEnt.Labels,
 		PreviousVersionPackageId: versionEnt.PreviousVersionPackageId,
+		ApiProcessorVersion:      versionEnt.Metadata.GetBuilderVersion(),
 	}
 	return &item
 }

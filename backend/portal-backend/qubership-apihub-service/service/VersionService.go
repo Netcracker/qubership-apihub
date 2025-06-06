@@ -825,6 +825,7 @@ func (v versionServiceImpl) GetPackageVersionContent(packageId string, version s
 		PackageId:                versionEnt.PackageId,
 		Version:                  view.MakeVersionRefKey(versionEnt.Version, versionEnt.Revision),
 		RevisionsCount:           latestRevision,
+		ApiProcessorVersion:      versionEnt.Metadata.GetBuilderVersion(),
 	}
 
 	versionOperationTypes, err := v.getVersionOperationTypes(versionEnt, includeSummary, includeOperations)
