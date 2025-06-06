@@ -15,7 +15,7 @@
         "@nestjs/core": "^10.0.0",
         "@nestjs/platform-express": "^10.0.0",
         "@nestjs/swagger": "^7.0.0",
-        "@netcracker/qubership-apihub-api-processor": "4.0.0",
+        "@netcracker/qubership-apihub-api-processor": "4.0.1",
         "@sinclair/typebox": "^0.32.1",
         "adm-zip": "^0.5.10",
         "dotenv": "^16.3.1",
@@ -1843,9 +1843,9 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-diff": {
-      "version": "2.0.0",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/2.0.0/7bee78c7ca1081d458cfbb8407a0607ccdb8d1fe",
-      "integrity": "sha512-w7J0YhVRN0dXHmVjzz0OzqFCJx7xLQ5neoARFXxX2/vuWulJm2CJpVpoL2QBY5F64L0k2ezOFhBdXEuEcncWKw==",
+      "version": "2.0.1",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/2.0.1/692bd1e92217ba4cef0e7f241dd9bfa7388ce17c",
+      "integrity": "sha512-v2BBAR8v6qlX/nXw2FY1Qiy0oCuBJevnpysjUez4I0OMH/3GhU6UWlhaQm/5QRPse6Wum+dn/E9ugF6368/gVg==",
       "dependencies": {
         "@netcracker/qubership-apihub-api-unifier": "2.0.0",
         "@netcracker/qubership-apihub-json-crawl": "1.0.4",
@@ -1859,12 +1859,12 @@
       "license": "MIT"
     },
     "node_modules/@netcracker/qubership-apihub-api-processor": {
-      "version": "4.0.0",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/4.0.0/501c9e5bda0e50a3e2e427fc6a4dc67582dbd590",
-      "integrity": "sha512-lGqYlVlciioDteMkSewog4+yDymuc7IcYesBCoQULFyClaXMMWmPiFkuymLslSBBGAGu0G7PVe6BCHDsG7K81Q==",
+      "version": "4.0.1",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/4.0.1/ce6aeb5572257cc2e62bc1a2e00c5a33ca9871b6",
+      "integrity": "sha512-IpJ9ZhdaBTglQIodE1z2dqk/CHQqYXEsLkgrm0MKDk9j62PNAahjnZY3Ph/TSsQ9QYG8NLdCgAVRv3htdD/WQQ==",
       "license": "Apache-2.0",
       "dependencies": {
-        "@netcracker/qubership-apihub-api-diff": "2.0.0",
+        "@netcracker/qubership-apihub-api-diff": "2.0.1",
         "@netcracker/qubership-apihub-api-unifier": "2.0.0",
         "@netcracker/qubership-apihub-graphapi": "1.0.8",
         "@netcracker/qubership-apihub-json-crawl": "1.0.4",
@@ -1892,22 +1892,6 @@
       "license": "MIT",
       "engines": {
         "node": ">=6.0"
-      }
-    },
-    "node_modules/@netcracker/qubership-apihub-api-processor/node_modules/ajv": {
-      "version": "8.17.1",
-      "resolved": "https://registry.npmjs.org/ajv/-/ajv-8.17.1.tgz",
-      "integrity": "sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==",
-      "license": "MIT",
-      "dependencies": {
-        "fast-deep-equal": "^3.1.3",
-        "fast-uri": "^3.0.1",
-        "json-schema-traverse": "^1.0.0",
-        "require-from-string": "^2.0.2"
-      },
-      "funding": {
-        "type": "github",
-        "url": "https://github.com/sponsors/epoberezkin"
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-unifier": {
@@ -5023,22 +5007,6 @@
       "resolved": "https://registry.npmjs.org/fast-safe-stringify/-/fast-safe-stringify-2.1.1.tgz",
       "integrity": "sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==",
       "license": "MIT"
-    },
-    "node_modules/fast-uri": {
-      "version": "3.0.5",
-      "resolved": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.0.5.tgz",
-      "integrity": "sha512-5JnBCWpFlMo0a3ciDy/JckMzzv1U9coZrIhedq+HXxxUfDTAiS0LA8OKVao4G9BxmCVck/jtA5r3KAtRWEyD8Q==",
-      "funding": [
-        {
-          "type": "github",
-          "url": "https://github.com/sponsors/fastify"
-        },
-        {
-          "type": "opencollective",
-          "url": "https://opencollective.com/fastify"
-        }
-      ],
-      "license": "BSD-3-Clause"
     },
     "node_modules/fastq": {
       "version": "1.19.1",
