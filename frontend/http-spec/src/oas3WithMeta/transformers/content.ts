@@ -74,6 +74,11 @@ export const translateMediaTypeObject = withContext<
     id,
     mediaType,
     // Note that I'm assuming all references are resolved
+
+    /* For comparison, API spec examples aren't needed, because they aren't displayed in operation,
+     * but diffs of them are aggregated and displayed in some places, e.g.
+     * Response Codes. Also "Examples" panel isn't available for Doc View mode with diffs, only for Doc View mode. */
+    // examples:
     encodings: entries(encoding).map(translateEncodingPropertyObject, this).filter(isNonNullable),
 
     ...pickBy(
