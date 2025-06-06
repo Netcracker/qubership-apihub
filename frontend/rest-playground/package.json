@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-rest-playground",
-  "version": "1.0.9-dev.0",
+  "version": "1.0.9",
   "description": "Web Component for Try It",
   "sideEffects": [
     "./dist/index.js"
@@ -43,7 +43,7 @@
     "@mui/lab": "5.0.0-alpha.120",
     "@mui/material": "5.11.10",
     "@mui/private-theming": "5.11.9",
-    "@netcracker/qubership-apihub-http-spec": "dev",
+    "@netcracker/qubership-apihub-http-spec": "5.5.8",
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
     "@stoplight/eslint-config": "2.1.0",
     "@stoplight/json": "^3.18.1",
