@@ -92,36 +92,87 @@ export const contentMediaTypeMappingResolver: MappingResolver<string> = (before,
   const result: MapKeysResult<string> = { added: [], removed: [], mapped: {} }
 
   const beforeKeys = objectKeys(before)
-  const _beforeKeys = beforeKeys.map((key) => key.split(';')[0] ?? '')
   const afterKeys = objectKeys(after)
-  const _afterKeys = afterKeys.map((key) => key.split(';')[0] ?? '')
 
-  const mappedIndex = new Set(afterKeys.keys())
+  const unmappedAfterIndices = new Set(afterKeys.keys())
+  const unmappedBeforeIndices = new Set(beforeKeys.keys())
 
-  for (let i = 0; i < beforeKeys.length; i++) {
-    const _afterIndex = _afterKeys.findIndex((key) => {
-      const [afterType, afterSubType] = key.split('/')
-      const [beforeType, beforeSubType] = _beforeKeys[i].split('/')
+  function mapExactMatches(
+    getComparisonKey: (key: string) => string
+  ): void {
+    
+    for (const beforeIndex of unmappedBeforeIndices) {
+      const beforeKey = getComparisonKey(beforeKeys[beforeIndex])
+      
+      // Find matching after index by iterating over the after indices set
+      let matchingAfterIndex: number | undefined
+      for (const afterIndex of unmappedAfterIndices) {
+        const afterKey = getComparisonKey(afterKeys[afterIndex])
+        if (afterKey === beforeKey) {
+          matchingAfterIndex = afterIndex
+          break
+        }
+      }
 
-      if (afterType !== beforeType && afterType !== '*' && beforeType !== '*') { return false }
-      if (afterSubType !== beforeSubType && afterSubType !== '*' && beforeSubType !== '*') { return false }
-      return true
-    })
-
-    if (_afterIndex < 0 || !mappedIndex.has(_afterIndex)) {
-      // removed item
-      result.removed.push(beforeKeys[i])
-    } else {
-      // mapped items
-      result.mapped[beforeKeys[i]] = afterKeys[_afterIndex]
-      mappedIndex.delete(_afterIndex)
+      if (matchingAfterIndex !== undefined) {
+        // Match found - create mapping and remove from unmapped sets
+        result.mapped[beforeKeys[beforeIndex]] = afterKeys[matchingAfterIndex]
+        unmappedAfterIndices.delete(matchingAfterIndex)
+        unmappedBeforeIndices.delete(beforeIndex)
+      }
     }
   }
 
-  // added items
-  mappedIndex.forEach((i) => result.added.push(afterKeys[i]))
+  // First, map exact matches for full media type
+  mapExactMatches((key) => key)
+
+  // After that, try to map media types by base type for remaining unmapped keys
+  mapExactMatches(getMediaTypeBase)
+
+  // If exactly one unmapped item in both before and after, try wildcard matching
+  if (unmappedBeforeIndices.size === 1 && unmappedAfterIndices.size === 1) {
+    const beforeIndex = Array.from(unmappedBeforeIndices)[0]
+    const afterIndex = Array.from(unmappedAfterIndices)[0]
+    const beforeKey = beforeKeys[beforeIndex]
+    const afterKey = afterKeys[afterIndex]
+    const beforeBaseType = getMediaTypeBase(beforeKey)
+    const afterBaseType = getMediaTypeBase(afterKey)
+
+    // Check if they are compatible using wildcard matching
+    if (isWildcardCompatible(beforeBaseType, afterBaseType)) {
+      // Map them together
+      result.mapped[beforeKeys[beforeIndex]] = afterKeys[afterIndex]
+      unmappedAfterIndices.delete(afterIndex)
+      unmappedBeforeIndices.delete(beforeIndex)
+    }
+  }
+
+  // Mark remaining unmapped items as removed/added
+  unmappedBeforeIndices.forEach((index) => result.removed.push(beforeKeys[index]))
+  unmappedAfterIndices.forEach((index) => result.added.push(afterKeys[index]))
 
   return result
+}
+
+function getMediaTypeBase(mediaType: string): string {
+  return mediaType.split(';')[0] ?? ''
+}
+
+function isWildcardCompatible(beforeType: string, afterType: string): boolean {
+  const [beforeMainType, beforeSubType] = beforeType.split('/')
+  const [afterMainType, afterSubType] = afterType.split('/')
+
+  // Check main type compatibility
+  if (beforeMainType !== afterMainType && beforeMainType !== '*' && afterMainType !== '*') {
+    return false
+  }
+
+  // Check sub type compatibility
+  if (beforeSubType !== afterSubType && beforeSubType !== '*' && afterSubType !== '*') {
+    return false
+  }
+
+  return true
 }
 
 export function hidePathParamNames(path: string): string {
