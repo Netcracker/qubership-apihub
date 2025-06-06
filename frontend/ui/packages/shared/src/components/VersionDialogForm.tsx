@@ -41,6 +41,7 @@ import type { Key, VersionKey } from '../entities/keys'
 import type { PackagePermissions } from '../entities/package-permissions'
 import type { VersionStatus } from '../entities/version-status'
 import {
+  DRAFT_VERSION_STATUS,
   NO_PREVIOUS_RELEASE_VERSION_OPTION,
   RELEASE_VERSION_STATUS,
   VERSION_STATUS_MANAGE_PERMISSIONS,
@@ -65,6 +66,7 @@ import { DEFAULT_DEBOUNCE } from '../utils/constants'
 import { InfoContextIcon } from '../icons/InfoContextIcon'
 import { CSV_FILE_EXTENSION } from '../utils/files'
 import { FileUploadField } from './FileUploadField'
+import type { AutocompleteInputChangeReason } from '@mui/base/AutocompleteUnstyled/useAutocomplete'
 
 export type VersionFormData = {
   message?: string
@@ -95,6 +97,9 @@ export type VersionDialogFormProps<T extends VersionFormData = VersionFormData> 
   onPackagesFilter?: (value: string) => void
   onSetWorkspace?: (workspace: Package | null) => void
   onSetTargetPackage?: (pack: Package | null) => void
+  onSetTargetVersion?: (version: string) => void
+  onSetTargetStatus?: (status: VersionStatus) => void
+  onSetTargetLabels?: (labels: string[]) => void
   areWorkspacesLoading?: boolean
   arePackagesLoading?: boolean
   areVersionsLoading?: boolean
@@ -119,6 +124,7 @@ export type VersionDialogFormProps<T extends VersionFormData = VersionFormData> 
   hideCopyPackageFields?: boolean
   hidePreviousVersionField?: boolean
   publishButtonDisabled?: boolean
+  publishFieldsDisabled?: boolean
 }
 
 export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogFormProps>((props) => {
@@ -134,6 +140,9 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     areWorkspacesLoading,
     onSetWorkspace,
     onSetTargetPackage,
+    onSetTargetVersion,
+    onSetTargetStatus,
+    onSetTargetLabels,
     onWorkspacesFilter,
     arePackagesLoading,
     areVersionsLoading,
@@ -160,18 +169,25 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     hidePreviousVersionField,
     hideCopyPackageFields,
     publishButtonDisabled,
+    publishFieldsDisabled,
   } = props
 
   const { errors } = formState
 
   const workspace = useWatch({ control: control, name: 'workspace' })
+  const targetPackage = useWatch({ control: control, name: 'package' })
   const status = useWatch({ control: control, name: 'status' })
   const previousVersion = useWatch({ control: control, name: 'previousVersion' })
   const descriptorFile = useWatch({ control: control, name: 'descriptorFile' })
   const isReleaseStatus = status === RELEASE_VERSION_STATUS
   const onWorkspacesChange = useCallback((_: SyntheticEvent, value: string): void => onWorkspacesFilter?.(value), [onWorkspacesFilter])
   const onPackagesChange = useCallback((_: SyntheticEvent, value: string): void => onPackagesFilter?.(value), [onPackagesFilter])
-  const onVersionsChange = useCallback((_: SyntheticEvent, value: string): void => onVersionsFilter?.(value), [onVersionsFilter])
+  const onVersionsChange = useCallback((_: SyntheticEvent, value: string): void => {
+    onSetTargetVersion?.(value)
+    onVersionsFilter?.(value)
+  }, [onVersionsFilter, onSetTargetVersion])
+  const onLabelsChange = useCallback((_: SyntheticEvent, value: string[]): void => onSetTargetLabels?.(value), [onSetTargetLabels])
+  const onStatusChange = useCallback((_: SyntheticEvent, value: VersionStatus): void => onSetTargetStatus?.(value), [onSetTargetStatus])
 
   const debouncedOnWorkspacesChange = useMemo(() => debounce(onWorkspacesChange, DEFAULT_DEBOUNCE), [onWorkspacesChange])
   const debouncedOnPackagesChange = useMemo(() => debounce(onPackagesChange, DEFAULT_DEBOUNCE), [onPackagesChange])
@@ -206,6 +222,12 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     () => !hideSaveMessageField || !hideDescriptorVersionField || !hideDescriptorField,
     [hideDescriptorField, hideDescriptorVersionField, hideSaveMessageField],
   )
+  const isPublishFieldsDisabled = useMemo(() => {
+    const isCopyPackageEmpty = !hideCopyPackageFields && !targetPackage
+    const isCSVWorkspaceEmpty = !hideCSVRelatedFields && !workspace
+
+    return publishFieldsDisabled || isCopyPackageEmpty || isCSVWorkspaceEmpty
+  }, [publishFieldsDisabled, hideCopyPackageFields, targetPackage, hideCSVRelatedFields, workspace])
 
   /* todo move upload file text field to separated component */
   return (
@@ -394,7 +416,8 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                   setValue('package', null)
                   onSetWorkspace?.(value)
                 }}
-                onInputChange={debouncedOnWorkspacesChange}
+                onInputChange={createOnInputChange(debouncedOnWorkspacesChange)}
+                onClose={clearFilter(onWorkspacesFilter)}
                 renderInput={(params) =>
                   <TextField
                     required
@@ -434,7 +457,8 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                   setValue('package', null)
                   onSetWorkspace?.(value)
                 }}
-                onInputChange={debouncedOnWorkspacesChange}
+                onClose={clearFilter(onWorkspacesFilter)}
+                onInputChange={createOnInputChange(debouncedOnWorkspacesChange)}
                 renderInput={(params) =>
                   <TextField
                     required
@@ -452,18 +476,18 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
               render={({ field: { value } }) => <Autocomplete
                 value={value}
                 disabled={!workspace}
-                isOptionEqualToValue={(option, value) => option === value}
+                isOptionEqualToValue={(option, value) => option.key === value.key}
                 options={packages ?? []}
                 loading={arePackagesLoading}
                 filterOptions={disableAutocompleteSearch}
-                getOptionLabel={({ name }: Package) => name}
+                getOptionLabel={(option) => option?.name ?? ''}
                 renderOption={(props, { key, name }) => <OptionItem
                   key={key}
                   props={props}
                   title={name}
                   subtitle={key}
                 />}
-                onInputChange={debouncedOnPackagesChange}
+                onInputChange={createOnInputChange(debouncedOnPackagesChange)}
                 renderInput={(params) => <TextField
                   {...params}
                   required
@@ -474,6 +498,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                   setValue('package', value)
                   onSetTargetPackage?.(value)
                 }}
+                onClose={clearFilter(onPackagesFilter)}
                 data-testid="PackageAutocomplete"
               />}
             />
@@ -503,12 +528,13 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
           render={({ field }) => (
             <Autocomplete
               freeSolo
-              disabled={!field || !getVersionLabels}
-              value={field.value ?? ''}
+              disabled={!field || !getVersionLabels || isPublishFieldsDisabled}
+              value={field.value || ''}
               options={versions ?? []}
               loading={areVersionsLoading}
               renderOption={(props, versionKey) => <ListItem {...props} key={versionKey}>{versionKey}</ListItem>}
-              onInputChange={debouncedOnVersionsChange}
+              onInputChange={createOnInputChange(debouncedOnVersionsChange)}
+              filterOptions={disableAutocompleteSearch}
               renderInput={(params) => (
                 <TextField
                   {...field}
@@ -520,8 +546,9 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
               )}
               onChange={(_, value) => {
                 setValue('version', value ?? '')
-                setValue('labels', value && getVersionLabels?.(value) || [], { shouldTouch: true })
+                onSetTargetVersion?.(value ?? '')
               }}
+              onClose={clearFilter(onVersionsFilter)}
               data-testid="VersionAutocomplete"
             />
           )}
@@ -532,9 +559,11 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
           control={control}
           render={({ field: { value } }) => (
             <Autocomplete
+              disableClearable
               value={value ?? null}
               options={VERSION_STATUSES}
               getOptionDisabled={(option) => !packagePermissions.includes(VERSION_STATUS_MANAGE_PERMISSIONS[option])}
+              disabled={isPublishFieldsDisabled}
               renderOption={(props, option) =>
                 <ListItem
                   {...props}
@@ -545,6 +574,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                 </ListItem>
               }
               onChange={(_, value) => {
+                onStatusChange(_, value as VersionStatus || DRAFT_VERSION_STATUS)
                 setValue('status', value as VersionStatus)
               }}
               renderInput={(params) => (
@@ -564,6 +594,9 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                           color: 'transparent',
                         },
                       },
+                      ['& .Mui-disabled']: {
+                        WebkitTextFillColor: 'transparent',
+                      },
                     },
                     startAdornment: status ? <CustomChip sx={{ height: 16, mb: 1 }} value={status}/> : null,
                   }}
@@ -579,7 +612,11 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
           control={control}
           render={({ field }) => (
             <LabelsAutocomplete
-              onChange={(_, value) => setValue('labels', value ?? [])}
+              disabled={isPublishFieldsDisabled}
+              onChange={(_, value) => {
+                onLabelsChange(_, value)
+                setValue('labels', value ?? [])
+              }}
               value={field.value}
             />
           )}
@@ -593,9 +630,11 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
               control={control}
               render={({ field }) => (
                 <Autocomplete
+                  disabled={isPublishFieldsDisabled}
                   value={field.value ?? null}
                   options={previousVersions ?? []}
                   getOptionLabel={value => getSplittedVersionKey(value).versionKey}
+                  isOptionEqualToValue={(option, value) => option === getSplittedVersionKey(value).versionKey}
                   renderOption={(props, versionKey) => (
                     <ListItem {...props} key={versionKey}>
                       {getSplittedVersionKey(versionKey).versionKey}
@@ -632,7 +671,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
           variant="contained"
           type="submit"
           loading={isPublishing}
-          disabled={isFileReading || publishButtonDisabled}
+          disabled={isFileReading || publishButtonDisabled || publishFieldsDisabled}
           data-testid={submitButtonTittle ? `${submitButtonTittle}Button` : 'PublishButton'}
         >
           {submitButtonTittle ?? 'Publish'}
@@ -664,6 +703,21 @@ export function usePreviousVersionOptions(versions: PackageVersions): VersionKey
   ]), [versionsWithoutRevision])
 }
 
+export function getVersionOptions(versionLabelsMap: Record<string, string[]>, targetVersion: string): VersionKey[] {
+  const versions: string[] = Object.keys(versionLabelsMap)
+  if (targetVersion && !versions.includes(targetVersion)) {
+    versions.unshift(targetVersion)
+  }
+  return versions
+}
+
+export function getPackageOptions(packages: Packages, existingPackage: Package | null, isFiltered: boolean): Packages {
+  if (!isFiltered && existingPackage && packages && !packages.some(packageOption => packageOption.key === existingPackage.key)) {
+    return [existingPackage, ...packages]
+  }
+  return packages
+}
+
 export const EMPTY_VERSION_KEY: Key = ''
 
 function checkFileUpload(descriptorContent: string | null): boolean {
@@ -672,3 +726,17 @@ function checkFileUpload(descriptorContent: string | null): boolean {
 
 const DASHBOARD_VERSION_CONFIG_TITLE = 'CSV file must have the following information: "serviceName" and "serviceVersion". Published dashboard version will include package release versions (from selected workspace) for specified services. Additionally, "method" and "path" of REST API operations for services can be defined in the file. In this case, the system will create operations group with the operations for specified method and path.'
 const PACKAGE_SEARCH_SCOPE_TITLE = 'The workspace in which package versions for services from the CSV configuration will be searched. The package versions found in this workspace will be included into the dashboard version.'
+
+function createOnInputChange(onChange: (_: SyntheticEvent, value: string) => void) {
+  return (event: SyntheticEvent, value: string, reason: AutocompleteInputChangeReason) => {
+    if (reason === 'input') {
+      onChange(event, value)
+    }
+  }
+}
+
+function clearFilter(onFilter?: (value: string) => void) {
+  return () => {
+    onFilter?.('')
+  }
+}

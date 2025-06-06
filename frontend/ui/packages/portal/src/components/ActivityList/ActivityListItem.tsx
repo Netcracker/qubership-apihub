@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { FC, ReactNode } from 'react'
-import { useCallback, useMemo, useState } from 'react'
+import type { FC } from 'react'
+import { useMemo, useState } from 'react'
 import { useEffectOnce } from 'react-use'
 import { Box, Link, Typography } from '@mui/material'
 import { NavLink } from 'react-router-dom'
@@ -32,21 +32,15 @@ type ActivitiesListItemProps = {
 // First Order Component //
 export const ActivityListItem: FC<ActivitiesListItemProps> = ({ activity }) => {
   const [content, setContent] = useState<ActivityMessage>(EMPTY_ACTIVITY_MESSAGE)
-
   useEffectOnce(() => {
     const messageService = getActivityMessageServiceInstance(activity)
     setContent(messageService.mapActivityToMessage())
   })
 
-  const renderTextAsHTML = useCallback((text: string): ReactNode => {
-    return <div style={{ display: 'inline' }} dangerouslySetInnerHTML={{ __html: text }}/>
-  }, [])
-
   const activityMessageElement = useMemo(() => {
     const { messageTemplate, links } = content
-
     if (!links) {
-      return renderTextAsHTML(messageTemplate)
+      return messageTemplate
     }
 
     const templateAsArray = messageTemplate.split(LINK_PLACEHOLDER)
@@ -56,7 +50,7 @@ export const ActivityListItem: FC<ActivitiesListItemProps> = ({ activity }) => {
       const templateItem = templateAsArray[i]
       let linkElement = null
       if (i > 0) {
-        const link = links[linksHandled]
+        const link = links?.[linksHandled]
         if (!link) {
           throw new Error('Links array is incompatible with message template')
         }
@@ -71,7 +65,7 @@ export const ActivityListItem: FC<ActivitiesListItemProps> = ({ activity }) => {
         <>
           {element}
           {linkElement}
-          {renderTextAsHTML(templateItem)}
+          {templateItem}
         </>
       )
     }

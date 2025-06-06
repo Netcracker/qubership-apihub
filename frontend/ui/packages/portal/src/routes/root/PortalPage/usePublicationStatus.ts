@@ -161,11 +161,12 @@ export async function getOperationGroupPublishStatus(
   const packageId = encodeURIComponent(packageKey)
   const versionId = encodeURIComponent(versionKey)
   const publishId = encodeURIComponent(publishKey)
+  const encodedGroupName = encodeURIComponent(groupName)
   const apiType = REST_API_TYPE
 
-  const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/groups/:groupName/publish/:publishId/status'
+  const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/groups/:encodedGroupName/publish/:publishId/status'
   return await requestJson<PublishStatusDto>(
-    generatePath(pathPattern, { packageId, versionId, groupName, apiType, publishId }),
+    generatePath(pathPattern, { packageId, versionId, encodedGroupName, apiType, publishId }),
     { method: 'GET' },
     { basePath: API_V3 },
   )

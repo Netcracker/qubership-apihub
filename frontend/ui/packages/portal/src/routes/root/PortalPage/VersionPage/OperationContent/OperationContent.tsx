@@ -40,7 +40,9 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
 import { GRAPH_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import { FILE_FORMAT_VIEW, YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
-import { useOperationsPairAsStrings } from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationsPairAsStrings'
+import {
+  useOperationsPairAsStrings,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationsPairAsStrings'
 import {
   useIsDocOperationViewMode,
   useIsRawOperationViewMode,
@@ -61,7 +63,10 @@ import type { OpenApiData } from '@apihub/entities/operation-structure'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { normalizeOpenApiDocument } from '@netcracker/qubership-apihub-ui-shared/utils/normalize'
-import { useApiDiffResult, useIsApiDiffResultLoading } from '@apihub/routes/root/ApiDiffResultProvider'
+import {
+  useApiDiffResult,
+  useIsApiDiffResultLoading, useSetApiDiffResult,
+} from '@apihub/routes/root/ApiDiffResultProvider'
 import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
 import { RawSpecDiffView } from '@netcracker/qubership-apihub-ui-shared/components/RawSpecDiffView'
 import { removeComponents } from '@netcracker/qubership-apihub-api-processor'
@@ -138,6 +143,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
 
   const apiDiffResult = useApiDiffResult()
   const isApiDiffResultLoading = useIsApiDiffResultLoading()
+  const setApiDiffResult = useSetApiDiffResult()
 
   const mergedDocument = useMemo(
     () => {
@@ -159,8 +165,14 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
     [changedOperation?.data, comparisonMode, originOperation?.data, apiDiffResult?.merged],
   )
 
+  useEffect(() => {
+    return () => {
+      setApiDiffResult(undefined)
+    }
+  }, [])
+
   if (isLoading || isApiDiffResultLoading) {
-    operationContentElement = <LoadingIndicator />
+    operationContentElement = <LoadingIndicator/>
   } else if (!changedOperationContent && !originOperationContent) {
     return (
       <Placeholder
@@ -187,7 +199,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
             breadcrumbsData={breadcrumbsData}
             actions={isRawViewMode && rawViewActions}
           />
-          {isDocViewMode && (
+          {isDocViewMode && !!mergedDocument && (
             <OperationView
               apiType={apiType as ApiType}
               originOperation={originOperation}
@@ -240,7 +252,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
                     overflow="scroll"
                   >
                     {!!rawViewActions && (
-                      <OperationSubheader actions={rawViewActions} />
+                      <OperationSubheader actions={rawViewActions}/>
                     )}
                     <RawSpecView
                       value={changedValue}

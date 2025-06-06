@@ -31,15 +31,33 @@ jobs:
         npm-package-version=${{ needs.build-and-unit-test.outputs.package_version }}
     secrets:
       NPMRC: ${{ secrets.NPMRC }}
+  calculate-build-task-consumer-tag:
+    if: github.event_name == 'pull_request'
+    needs: build-docker-image
+    uses: netcracker/qubership-apihub-ci/.github/workflows/calculate-effective-tag.yaml@main
+    with:
+      branch-name: ${{ github.head_ref }} # pass PR source branch
+      repo-name: qubership-apihub-build-task-consumer
+  calculate-backend-tag:
+    if: github.event_name == 'pull_request'
+    needs: build-docker-image
+    uses: netcracker/qubership-apihub-ci/.github/workflows/calculate-effective-tag.yaml@main
+    with:
+      branch-name: ${{ github.head_ref }} # pass PR source branch
+      repo-name: qubership-apihub-backend
   run-e2e-tests:
     uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@main
-    needs: build-docker-image
+    needs: [build-docker-image, calculate-build-task-consumer-tag, calculate-backend-tag]
     if: github.event_name == 'pull_request'
     with:
       postman-collections-run: false
       apihub-ui-image-tag: ${{ needs.build-docker-image.outputs.image_tag }}      
-      # apihub-backend-image-tag: dev
-      # apihub-build-task-consumer-image-tag: dev
+      apihub-build-task-consumer-image-tag: ${{ needs.calculate-build-task-consumer-tag.outputs.tag }}
+      apihub-backend-image-tag: ${{ needs.calculate-backend-tag.outputs.tag }}
+      # pass PR source branch, will default to develop if corresponding branch for Playwright tests is not found 
+      playwright-repository-branch: ${{ github.head_ref }}
+      # pass PR source branch, will default to develop if corresponding branch for Postman tests is not found
+      postman-repository-branch: ${{ github.head_ref }}
     secrets:
       APIHUB_ACCESS_TOKEN: ${{ secrets.APIHUB_ACCESS_TOKEN }}
       APIHUB_ADMIN_EMAIL: ${{ secrets.APIHUB_ADMIN_EMAIL }}

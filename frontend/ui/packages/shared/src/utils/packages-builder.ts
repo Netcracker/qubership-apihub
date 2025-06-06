@@ -324,10 +324,11 @@ export async function fetchExportTemplate(
 ): Promise<[string, string]> {
   const packageId = encodeURIComponent(packageKey)
   const versionId = encodeURIComponent(versionKey)
+  const encodedGroupName = encodeURIComponent(groupName)
 
-  const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/groups/:groupName/template'
+  const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/groups/:encodedGroupName/template'
   const response = await requestBlob(
-    generatePath(pathPattern, { packageId, versionId, apiType, groupName }),
+    generatePath(pathPattern, { packageId, versionId, apiType, encodedGroupName }),
     {
       headers: { authorization },
       method: 'GET',

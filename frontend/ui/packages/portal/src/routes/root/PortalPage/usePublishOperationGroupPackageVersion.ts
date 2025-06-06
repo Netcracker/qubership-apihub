@@ -73,9 +73,10 @@ async function publishOperationGroupPackageVersion(data: PublishOperationGroupPa
   } = data
   const packageId = encodeURIComponent(packageKey)
   const versionId = encodeURIComponent(versionKey)
+  const encodedGroupName = encodeURIComponent(groupName)
 
-  const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/groups/:groupName/publish'
-  return await requestJson<PublishResponse>(generatePath(pathPattern, { packageId, versionId, apiType, groupName }), {
+  const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/groups/:encodedGroupName/publish'
+  return await requestJson<PublishResponse>(generatePath(pathPattern, { packageId, versionId, apiType, encodedGroupName }), {
     method: 'POST',
     body: JSON.stringify({
       packageId: value.targetPackageKey,
