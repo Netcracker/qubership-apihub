@@ -28,6 +28,8 @@ const EmptyParameterMsg = "Parameter $param should not be empty"
 
 const InvalidParameterValue = "9"
 const InvalidParameterValueMsg = "Value '$value' is not allowed for parameter $param"
+const InvalidParameterValueLengthMsg = "Parameter $param with value $value exceeds maximum allowed length: $maxLen"
+const InvalidItemsNumberMsg = "Too many items in parameter $param, allowed max number is $maxItems"
 const InvalidLimitMsg = "Value '$value' is not allowed for parameter limit. Allowed values are in range 1:$maxLimit"
 
 const BadRequestBody = "10"
@@ -746,3 +748,13 @@ const IncorrectOASExtensionsMsg = "OAS extension is required to be have 'x-' pre
 
 const DuplicateOASExtensionsNotAllowed = "7102"
 const DuplicateOASExtensionsNotAllowedMsg = "Duplicate OAS extension not allowed: $duplicates"
+
+const FilesLimitExceeded = "7400"
+const FilesLimitExceededMsg = "Files limit exceeded. Maximum allowed number of files is $maxFiles"
+const BranchFilesLimitExceededMsg = "Branch contains too many files. Maximum allowed number of files is $maxFiles"
+
+const HeadersLimitExceeded = "7401"
+const HeadersLimitExceededMsg = "HTTP headers limit exceeded. Maximum allowed number of headers is $maxHeaders"
+
+const HeaderValuesLimitExceeded = "7402"
+const HeaderValuesLimitExceededMsg = "HTTP header values limit exceeded for key '$key'. Maximum allowed number of values is $maxValues"

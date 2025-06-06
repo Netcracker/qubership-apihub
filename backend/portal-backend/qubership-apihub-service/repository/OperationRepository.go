@@ -1687,7 +1687,9 @@ func (o operationRepositoryImpl) GetGroupedOperations(packageId string, version 
 		query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
 			q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
 				WhereOr("operation.metadata->>? ilike ?", "path", searchReq.TextFilter).
-				WhereOr("operation.metadata->>? ilike ?", "method", searchReq.TextFilter)
+				WhereOr("operation.metadata->>? ilike ?", "method", searchReq.TextFilter).
+				WhereOr("exists(select 1 from jsonb_each_text(operation.custom_tags) where key ilike ? OR value ilike ?)",
+					searchReq.TextFilter, searchReq.TextFilter)
 			return q, nil
 		})
 	}

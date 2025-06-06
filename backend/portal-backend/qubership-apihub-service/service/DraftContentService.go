@@ -40,6 +40,8 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 )
 
+const maxFilesLimit = 10000
+
 type DraftContentService interface {
 	CreateDraftContentWithData(ctx context.SecurityContext, projectId string, branchName string, contents []view.Content, contentData []view.ContentData) ([]string, error)
 	GetContentFromDraftOrGit(ctx context.SecurityContext, projectId string, branchName string, contentId string) (*view.ContentData, error)
@@ -109,12 +111,31 @@ func (c draftContentServiceImpl) CreateDraftContentWithData(ctx context.Security
 		return nil, err
 	}
 	branch.RemoveFolders()
+	//validation was added based on security scan results to avoid resource exhaustion
+	if len(branch.Files) > maxFilesLimit {
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FilesLimitExceeded,
+			Message: exception.BranchFilesLimitExceededMsg,
+			Params:  map[string]interface{}{"maxFiles": maxFilesLimit},
+		}
+	}
 	for _, file := range branch.Files {
 		fileIds[file.FileId] = true
 		folders[file.Path+"/"] = true
 	}
 
 	var contentEnts []*entity.ContentDraftEntity
+
+	//validation was added based on security scan results to avoid resource exhaustion
+	if len(contents) > maxFilesLimit {
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FilesLimitExceeded,
+			Message: exception.FilesLimitExceededMsg,
+			Params:  map[string]interface{}{"maxFiles": maxFilesLimit},
+		}
+	}
 
 	for index, content := range contents {
 		if content.FileId == "" {

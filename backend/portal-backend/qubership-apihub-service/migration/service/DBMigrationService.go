@@ -43,6 +43,7 @@ type DBMigrationService interface {
 	GetMigrationReport(migrationId string, includeBuildSamples bool) (*mView.MigrationReport, error)
 	CancelRunningMigrations() error
 	GetSuspiciousBuilds(migrationId string, changedField string, limit int, page int) ([]mView.SuspiciousMigrationBuild, error)
+	IsMigrationInProgress() (bool, error)
 }
 
 func NewDBMigrationService(cp db.ConnectionProvider, mRRepo mRepository.MigrationRunRepository,
@@ -389,7 +390,7 @@ func (d *dbMigrationServiceImpl) getSchemaMigrationEntity(migrationNumber int) (
 
 func (d *dbMigrationServiceImpl) CancelRunningMigrations() error {
 	_, err := d.cp.GetConnection().Exec(`
-	update build set status = ?, details = ? 
+	update build set status = ?, details = ?
 	where status in (?) and created_by = 'db migration'`,
 		view.StatusError, CancelledMigrationError,
 		pg.In([]view.BuildStatusEnum{view.StatusNotStarted, view.StatusRunning}))
@@ -397,4 +398,12 @@ func (d *dbMigrationServiceImpl) CancelRunningMigrations() error {
 		return err
 	}
 	return nil
+}
+
+func (d *dbMigrationServiceImpl) IsMigrationInProgress() (bool, error) {
+	migrations, err := d.repo.GetRunningMigrations()
+	if err != nil {
+		return false, err
+	}
+	return len(migrations) > 0, nil
 }

@@ -322,7 +322,7 @@ func main() {
 	fileWSController := controller.NewFileWSController(wsFileEditService, wsLoadBalancer, internalWebsocketService)
 
 	logsController := controller.NewLogsController(logsService, roleService)
-	systemInfoController := controller.NewSystemInfoController(systemInfoService)
+	systemInfoController := controller.NewSystemInfoController(systemInfoService, dbMigrationService)
 	sysAdminController := controller.NewSysAdminController(roleService)
 	apihubApiKeyController := controller.NewApihubApiKeyController(apihubApiKeyService, roleService)
 	cleanupController := controller.NewCleanupController(cleanupService)

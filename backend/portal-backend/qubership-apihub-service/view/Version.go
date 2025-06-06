@@ -45,6 +45,7 @@ type VersionContent struct {
 	NotLatestRevision        bool                    `json:"notLatestRevision,omitempty"`
 	RevisionsCount           int                     `json:"revisionsCount,omitempty"`
 	OperationGroups          []VersionOperationGroup `json:"operationGroups,omitempty"`
+	ApiProcessorVersion      string                  `json:"apiProcessorVersion"`
 }
 
 type VersionOperationType struct {
@@ -133,6 +134,7 @@ type PublishedVersionListView struct {
 	PreviousVersion          string                 `json:"previousVersion"`
 	PreviousVersionPackageId string                 `json:"previousVersionPackageId,omitempty"`
 	NotLatestRevision        bool                   `json:"notLatestRevision,omitempty"`
+	ApiProcessorVersion      string                 `json:"apiProcessorVersion"`
 }
 
 type PublishedVersionsView_deprecated_v2 struct {

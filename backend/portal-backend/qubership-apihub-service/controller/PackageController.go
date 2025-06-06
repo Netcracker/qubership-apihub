@@ -202,15 +202,9 @@ func (p packageControllerImpl) GetPackagesList(w http.ResponseWriter, r *http.Re
 	var err error
 	filter := r.URL.Query().Get("textFilter")
 	parentId := r.URL.Query().Get("parentId")
-	kind, err := getListFromParam(r, "kind")
-	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "kind"},
-			Debug:   err.Error(),
-		})
+	kind, customErr := getListFromParam(r, "kind")
+	if customErr != nil {
+		RespondWithCustomError(w, customErr)
 		return
 	}
 	onlyFavorite := false
@@ -490,7 +484,7 @@ func (p packageControllerImpl) GetAvailableVersionStatusesForPublish(w http.Resp
 func (p packageControllerImpl) RecalculateOperationGroups(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
 	ctx := context.Create(r)
-	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.CreateAndUpdatePackagePermission)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to check user privileges", err)
 		return
