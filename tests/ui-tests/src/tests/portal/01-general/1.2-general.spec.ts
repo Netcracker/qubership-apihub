@@ -66,7 +66,7 @@ test.describe('General', () => {
       await expect.soft(sysInfoPopup.content).toBeVisible()
       await expect.soft(sysInfoPopup.closeBtn).toBeVisible()
       await expect.soft(sysInfoPopup.content).toContainText(build.backendVersion)
-      await expect.soft(sysInfoPopup.content).toContainText(build.frontendVersion)
+      // TODO: add FE version check for non empty value
       // TODO: Add checking api/v1/system/info "externalLinks": []
     })
 

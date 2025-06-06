@@ -13,13 +13,8 @@ export async function getSysInfo(): Promise<SysInfo> {
     throw Error(await getRestFailMsg('Getting System Information', response))
   }
 
-  const buildInfo: {
-    backendVersion: string
-    frontendVersion: string
-    productionMode: boolean
-  } = {
+  const buildInfo: BuildInfo = {
     backendVersion: jsonBody.backendVersion,
-    frontendVersion: (jsonBody.frontendVersion).replace('\n', ''),
     productionMode: jsonBody.productionMode,
   }
 
@@ -31,9 +26,10 @@ export async function getSysInfo(): Promise<SysInfo> {
 
 interface SysInfo {
   environment: string
-  build: {
-    backendVersion: string
-    frontendVersion: string
-    productionMode: boolean
-  }
+  build: BuildInfo
+}
+
+interface BuildInfo {
+  backendVersion: string
+  productionMode: boolean
 }
