@@ -29,7 +29,7 @@ export default class ApihubStyledHtmlReport extends BaseReport {
       ratio: this.getRatio(),
       envName: sysInfo.environment,
       backendVersion: sysInfo.build.backendVersion,
-      frontendVersion: sysInfo.build.frontendVersion,
+      frontendVersion: '-', // there is no more information about FE version on the backend
       pwBranch: process.env.CI_PW_BRANCH || '-',
       ciJobLink: process.env.CI_JOB_LINK ? `<a class="link" href="${process.env.CI_JOB_LINK}">#${process.env.CI_JOB_NUMBER}</a>` : '-',
       ciUser: process.env.CI_USER || '-',
