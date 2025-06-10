@@ -99,7 +99,7 @@
     "jest-puppeteer": "9.0.2",
     "jotai": "1.6.3",
     "json-schema": "^0.4.0",
-    "lerna": "8.2.1",
+    "lerna": "8.2.2",
     "local-web-server": "5.3.3",
     "lodash": "^4.17.19",
     "mark.js": "^8.11.1",
