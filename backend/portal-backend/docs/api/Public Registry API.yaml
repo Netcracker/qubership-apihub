@@ -1466,6 +1466,149 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+  "/api/v1/packages/{packageId}/exportConfig":
+    parameters:
+      - $ref: "#/components/parameters/packageId"
+    get:
+      tags:
+        - Packages
+      summary: Get package configuration for documents export settings.
+      description: Returns information about the configured document export settings for the current package.
+      operationId: getPackageIdExportConfig
+      security:
+        - BearerAuth: []
+        - api-key: []
+        - PersonalAccessToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PackageExportConfig"
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema: 
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+    patch:
+      tags:
+        - Packages
+      summary: Change parameter of package export config.
+      description: |
+        Change parameter of package export config:
+          - If the parameter is not transmitted in request - its value stays unchanged.
+          - The empty parameter value in request sets the empty value in database.
+        "create_and_update_package" permission is necessary to update package export config.
+      operationId: patchPackagesIdExportConfig
+      security:
+        - BearerAuth: []
+        - api-key: []
+        - PersonalAccessToken: []
+      requestBody:
+        description: Parameters of package export config for update.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PackageExportConfigUpdate"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PackageExportConfig"
+              examples: {}
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema: 
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+        "422":
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
   /api/v2/packages/{packageId}/activity:
     get:
       tags:
@@ -13955,6 +14098,56 @@ components:
             Groups for the package version are calculated during publication of this version.
           type: string
           example: "/api/v1/{group}/"
+    PackageExportConfig:
+      description: Configuration for documents export settings.
+      type: object
+      properties:
+        allowedOasExtensions:
+          description: >-
+            List of OAS extensions that shall be preserverd when user exports OpenAPI specification(s) with remove OAS extensions option. 
+          type: array
+          items:
+            type: object 
+            properties:
+              oasExtension:
+                description: |
+                  OAS extension that shall be preserverd when user exports OpenAPI specification(s) with remove OAS extensions option.
+                type: string
+                pattern: ^x-
+                example: x-internal-info
+              packageId:
+                description: |
+                  Id of the package in which the extension was specified. This can be the id of the current package or the parent package if the extension is inherited.
+                type: string
+                example: WS.GRP.PCKG
+              packageName:
+                description: Name of the package in which the extension was specified.
+                type: string
+                example: Resource Inventory
+              packageKind:
+                description: Kind of the package in which the extension was specified.
+                type: string
+                enum:
+                  - workspace
+                  - group
+                  - package
+    PackageExportConfigUpdate:
+      description: Parameters for update of package export config.
+      type: object 
+      properties:
+        allowedOasExtensions:
+          description: |
+            List of OAS extensions that shall be preserverd when user exports OpenAPI specification(s) with remove OAS extensions option.
+            List of OAS extensions is unique within current package.\
+            The full list of direct extensions must be included in the request, as the request replaces the items in the array rather than adding to them.
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            pattern: ^x-
+          example:
+            - x-internal-info
+            - x-design-details
     PackageList:
       description: Base package object for parents list.
       type: object
