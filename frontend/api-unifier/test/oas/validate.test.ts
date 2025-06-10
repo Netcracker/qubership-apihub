@@ -308,6 +308,7 @@ const FULLY_CYCLED_OPEN_API: OpenAPIV3.Document = {
     something: {
       description: 'str',
       parameters: [OPEN_API_PARAMETER],
+      servers: [OPEN_API_SERVER],
       get: {
         description: 'str',
         parameters: [OPEN_API_PARAMETER],

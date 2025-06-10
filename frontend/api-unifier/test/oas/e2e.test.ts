@@ -1048,4 +1048,41 @@ describe('e2e', () => {
     }
     expect(result).toEqual(expected)
   })
+
+  it('validates xml object', () => {
+    const schema = {
+      openapi: '3.0.3',
+      paths: {
+        '/path1': {
+          post: {
+            responses: {
+              '200': {
+                description: 'OK',
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        id: {
+                          type: 'integer',
+                          xml: {
+                            name: 'xml-id',
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }
+    const result = normalize(schema, {
+      validate: true,
+      unify: true,
+    })
+    expect(result).toHaveProperty(['paths', '/path1', 'post', 'responses', 200, 'content', 'application/json', 'schema', 'properties', 'id', 'xml', 'name'], 'xml-id')    
+  })
 })

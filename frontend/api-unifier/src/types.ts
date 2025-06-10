@@ -78,6 +78,17 @@ export interface HashOptions {
 
 export interface InternalHashOptions extends HashOptions {}
 
+const OPEN_API_EXTENSION_PREFIX = 'x-'
+
+export type OpenApiExtensionKey = `${typeof OPEN_API_EXTENSION_PREFIX}${string}`
+
+export interface RemoveOasExtensionsOptions {
+  removeOasExtensions?: boolean
+  shouldRemoveOasExtension?: (extensionKey: OpenApiExtensionKey) => boolean
+}
+
+export interface InternalRemoveOasExtensionsOptions extends RemoveOasExtensionsOptions {}
+
 export interface InternalLiftCombinersOptions extends Omit<LiftCombinersOptions, never>, InternalMergeOptions, HasInternalIgnoreSymbols {
   liftCombiners: boolean
 }
@@ -115,6 +126,7 @@ export type NormalizeOptions =
   & UnifyOptions
   & LiftCombinersOptions
   & HashOptions
+  & RemoveOasExtensionsOptions
 
 export type DenormalizeOptions =
   ResolveOptions
@@ -213,6 +225,7 @@ export interface NormalizationRule {
   readonly hashOwner?: boolean
   readonly newDataLayer?: boolean
   readonly deprecation?: DeprecationPolicy
+  readonly isExtension?: boolean
 }
 
 export type MergeAndLiftCombinersSyncCloneHook = SyncCloneHook<MergeAndLiftCombinersState, NormalizationRule>
