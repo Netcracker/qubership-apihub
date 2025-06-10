@@ -148,7 +148,7 @@ services:
         - POSTGRES_USER=postgres
         - POSTGRES_PASSWORD=postgres
         - POSTGRES_DB=postgres
-        - PGDATA=/C/pg-docker/data
+        - PGDATA=/pg-data
         ports:
         - 5432:5432
         healthcheck:
@@ -164,6 +164,6 @@ services:
                     cpus: '1'
                     memory: 3G
         volumes:
-        - '.:/var/lib/postgresql/data:Z'
+        - './data:/var/lib/postgresql/data:Z'
         - './scripts/init-db:/docker-entrypoint-initdb.d'
 

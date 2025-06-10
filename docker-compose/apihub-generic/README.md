@@ -64,3 +64,28 @@ If you want to start APIHUB via compose with locally build docker image of any m
 1. Build module repository (ex: qubership-apihub-backend) by executing its build.cmd/sh
 2. Change `image` URI in docker-compose.yml from `ghcr.io/netcarcker/qubership-apihub-backend:latest` to `localhost/netcracker/qubership-apihub-backend:latest`
 3. Run `podman compose up` as usual
+
+## How to make Postgres data be persistent
+
+1. Remove or comment the following line in `docker-compose.yml` file: `- PGDATA=/pgdata`
+2. Remove `.gitkeep` file from `./data` directory
+
+On Linux it is enough.
+
+On Windows need to tune WSL:
+
+**NOTE** for `Podman` only
+
+1. Go to Podman desktop, open Podman machine terminal
+2. Edit file '/etc/wsl.conf' (using sudo)
+Add the following lines to the end:
+
+```
+[automount]
+options = "metadata"
+```
+One liner to do it: `echo -e "\n[automount]\noptions = "metadata"" | sudo tee -a /etc/wsl.conf`
+
+3. Restart your PC (restart of WSL only is not enough)
+
+

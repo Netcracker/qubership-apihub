@@ -135,3 +135,25 @@ services:
         - './data:/var/lib/postgresql/data:Z'
         - './scripts/init-db:/docker-entrypoint-initdb.d'
 
+
+    gitlab:
+        image: gitlab/gitlab-ce:17.6.0-ce.0
+        container_name: gitlab
+        restart: always
+        hostname: 'gitlab.local.com'
+        environment:
+          GITLAB_OMNIBUS_CONFIG: |
+            external_url 'https://gitlab.local.com'
+        ports:
+          - '8100:80'
+          - '8443:443'
+          - '822:22'
+        volumes:
+          - './gitlab/config:/etc/gitlab'
+          - './gitlab/logs:/var/log/gitlab'
+          - './gitlab/data:/var/opt/gitlab'
+        shm_size: '256m'
+        networks:
+            default:
+                aliases:
+                - gitlab
