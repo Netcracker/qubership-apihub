@@ -80,6 +80,14 @@ Install Ingress Controller `kubectl apply -f https://kind.sigs.k8s.io/examples/i
 kind delete cluster
 ```
 
+### Tricks
+
+Nginx Ingress Controller may work unstable on WSL/Podman. Solution taken from https://github.com/kubernetes/ingress-nginx/issues/10765
+
+1. Go to Podman machine terminal
+1. Edit `/usr/share/containers/containers.conf`. Find line `#pids_limit = 2048` and chage to `pids_limit = -1`
+1. Restart Podman machine
+
 ## Rancher Desktop
 
 [Rancher Desktop Official Site](https://rancherdesktop.io/)
