@@ -1,5 +1,5 @@
 import { denormalize, normalize, NormalizeOptions, RefErrorType, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier';
-import { apiDiff, COMPARE_MODE_OPERATION, CompareResult } from '@netcracker/qubership-apihub-api-diff';
+import { apiDiff, COMPARE_MODE_DEFAULT, CompareResult } from '@netcracker/qubership-apihub-api-diff';
 import { safeStringify } from '@stoplight/json';
 import { diffMetaKey } from 'diff-block';
 
@@ -40,7 +40,7 @@ export const getCompareResult = (
     ...NORMALIZE_OPTIONS,
     beforeSource: before,
     afterSource: after,
-    mode: COMPARE_MODE_OPERATION,
+    mode: COMPARE_MODE_DEFAULT, // we do not really have guarantee that we have specs with single operation as an input, hence could not use COMPARE_MODE_SINGLE
     metaKey: diffMetaKey,
     onRefResolveError: (message: string, path: PropertyKey[], ref: string, errorType: RefErrorType) => {
       console.debug([
