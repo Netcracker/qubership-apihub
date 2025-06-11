@@ -9,15 +9,6 @@ postgresql:
   database: postgres
   username: postgres
   password: postgres
-  additionalUsers:
-    - name: apihub_backend_user
-      password: apihub_backend_password
-      databases:
-        - apihub_backend
-    - name: keycloak
-      password: keycloak
-      databases:
-        - keycloak
   initdbScripts:
     init.sql: |
       CREATE USER apihub_backend_user WITH PASSWORD 'apihub_backend_password' CREATEDB INHERIT;
