@@ -6,7 +6,7 @@ qubershipApihub:
 qubershipApihubBackend:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-backend'  
-    tag: 'dev'
+    tag: 'security_improvements'
   replicas: 1
   resource:
     cpu:
@@ -61,7 +61,7 @@ qubershipApihubBuildTaskConsumer:
 qubershipApihubUi:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-ui'
-    tag: 'dev'
+    tag: 'feature-saml-oidc'
   replicas: 1
   resource:
     cpu:
