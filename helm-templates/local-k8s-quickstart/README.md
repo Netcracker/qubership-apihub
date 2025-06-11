@@ -126,12 +126,13 @@ This folder contains `postgresql` and `keycloack` Helm charts for Qubserhip APIH
 
 Deployment phases represented by scripts in `scripts` folder, so you can see what happens on each step in them:
 
-1. `1-start-kind-cluster.sh`
-1. `2-deploy-postgres.sh`
-1. `3-generate-secrets.sh`
-1. `4-deploy-keycloack.sh` (optional, need for `5-deploy-apihub-with-keycloack`)
-1. `5-deploy-apihub.sh`
-1. `5-deploy-apihub-with-keycloack.sh`
+- `1-start-kind-cluster.sh`
+- `2-deploy-postgres.sh`
+- `3-generate-secrets.sh`
+- `4-deploy-keycloack.sh` (optional, need for `5-deploy-apihub-with-keycloack`)
+- `5-deploy-apihub.sh`
+- `5-deploy-apihub-with-keycloack.sh`
+- `6-patch-apihub-hosts.sh` (required for keycloak setup)
 
 One-liners:
 
