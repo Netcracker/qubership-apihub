@@ -20,7 +20,7 @@ function generate-local-passwords ()
    export APIHUB_ACCESS_TOKEN=$(rnd 2 7)
 }
 
-generate-local-passwords 
+generate-local-passwords
 envsubst <local-secrets.template >./local-secrets.yaml 
 
 
