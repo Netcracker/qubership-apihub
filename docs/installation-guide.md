@@ -2,15 +2,16 @@
 
 This guide describes Qubership APIHUB installation process
 
+- [Qubership APIHUB Installation Guide](#qubership-apihub-installation-guide)
 - [3rd party dependencies](#3rd-party-dependencies)
 - [HWE](#hwe)
 - [docker-compose](#docker-compose)
-  * [Minimal parameters set](#minimal-parameters-set)
-  * [Full ENV VARs list per container](#full-env-vars-list-per-container)
+  - [Minimal parameters set](#minimal-parameters-set)
+  - [Full ENV VARs list per container](#full-env-vars-list-per-container)
 - [Helm](#helm)
-  * [Prerequisites](#prerequisites)
-  * [Set up values.yml](#set-up-valuesyml)
-  * [Execute helm install](#execute-helm-install)
+  - [Prerequisites](#prerequisites)
+  - [Set up values.yml](#set-up-valuesyml)
+  - [Execute helm install](#execute-helm-install)
 
 # 3rd party dependencies
 
@@ -62,7 +63,7 @@ APIHUB_ACCESS_TOKEN=${any string}
 | APIHUB\_ADMIN\_PASSWORD | No | "" | admin-password | Default local admin user password |
 | APIHUB\_ACCESS\_TOKEN | Yes | "" | access-token-12345 | Default system access token (any string). The token will be provisioned automatically during startup |
 | APIHUB\_URL | Yes | "" | https://apihub.example.com | Factual APIHUB server URL in your environment. |
-| DEFAULT\_IDP\_ID | No | "" | external-idp | Default identity provider ID to use for authentication. |
+| AUTO_LOGIN | No | FALSE | TRUE | Enables automatic login with the configured identity provider instead of showing the APIHUB login page. Should be false if more than one IDP is configured |
 | EXTERNAL\_SAML\_IDP\_DISPLAY\_NAME | No | "" | External Identity Provider | Display name for external SAML identity provider. |
 | EXTERNAL\_SAML\_IDP\_IMAGE_SVG | No | "" | <svg fill="#000000" width="800px"... | SVG image for external SAML identity provider logo. |
 | ADFS\_METADATA\_URL | No | "" | [https://idp.example.com/FederationMetadata/2007-06/FederationMetadata.xml](https://idp.example.com/FederationMetadata/2007-06/FederationMetadata.xml) | SAML metadata URL. If set - enables SAML integration |
@@ -89,7 +90,7 @@ APIHUB_ACCESS_TOKEN=${any string}
 | STORAGE\_SERVER\_URL | No | "" | s3.example.com | S3 endpoint for client connection |
 | STORAGE\_SERVER\_PASSWORD | No | "" | s3-secret-key | Secret key for S3 storage access |
 | MINIO\_STORE\_ONLY\_BUILD\_RESULT | No | FALSE | TRUE | Set to true to store only build results (less data amout) in S3 storage |
-| ORIGIN\_ALLOWED | No | "" | [https://localhost:5137](https://localhost:5137/) | Allows to set extra allowed origin to CORS header. Used for FE debugging. Should be empty on prod evs. |
+| ORIGIN\_ALLOWED | No | "" | [https://localhost:5137](https://localhost:5137/) | Allows to set extra allowed origin to CORS header. Used for FE debugging. Should be empty on prod envs. |
 | PUBLISH\_ARCHIVE\_SIZE\_LIMIT\_MB | No | 50 | 50 | Limit for uploaded package size in order to avoid OOM |
 | PUBLISH\_FILE\_SIZE\_LIMIT\_MB | No | 15 | 20 | Limit for uploaded file (inside package) size in order to avoid OOM |
 | RELEASE\_VERSION\_PATTERN | No | ^\[0-9\]{4}\[.\]{1}\[1-4\]{1}$ | ^2023\\.1$ | Regex pattern for releases names validation. |

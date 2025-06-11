@@ -83,8 +83,8 @@ spec:
                     value: 'lan'
                 -   name: OLRIC_REPLICA_COUNT
                     value: '{{ .Values.qubershipApihubBackend.replicas }}'
-                -   name: DEFAULT_IDP_ID
-                    value: '{{ .Values.qubershipApihubBackend.env.auth.defaultProviderId }}'
+                -   name: AUTO_LOGIN
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.autoLogin }}'
                 -   name: EXTERNAL_SAML_IDP_DISPLAY_NAME
                     value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.saml.displayName }}'
                 -   name: EXTERNAL_SAML_IDP_IMAGE_SVG

@@ -72,8 +72,8 @@ qubershipApihubBackend:
 
     # Section with authentication configuration
     auth:
-      # Optional; Default identity provider ID to use for authentication; If not set, default value: ""; Example: external-idp
-      defaultProviderId: ''
+      # Optional; Enables automatic login with the configured identity provider instead of showing the APIHUB login page; If not set, default value: FALSE; Example: TRUE
+      autoLogin: 'false'
       # External identity providers configuration. SAML or OIDC integration is mandatory for production mode.
       externalIdentityProviders:
         # Section with SAML integration parameters. SAML integration is used for authentication of APIHUB users. SAML integration is mandatory for production mode.
