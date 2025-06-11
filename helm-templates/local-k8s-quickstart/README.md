@@ -25,7 +25,7 @@ It is not a production ready deployment schema.
 
 1. Install the following tools: podman, kind, kubectl, helm
 2. Run `apihub-quickstart.sh`
-3. APIHUB is on http://qubership-apihub.localhost/login
+3. APIHUB is on http://qubership-apihub.localtest.me/login
 
 # How to set up k8s cluster on your PC
 
@@ -151,7 +151,7 @@ Expected output:
      apihub          qubership-apihub-ui-99d98758b-sh5tk                     1/1     Running   0              3m
 ```
 
-Qubership APIHUB will be accessible on [https://qubership-apihub.localhost/login](https://qubership-apihub.localhost/login)
+Qubership APIHUB will be accessible on [https://qubership-apihub.localtest.me](https://qubership-apihub.localtest.me)
 
 Credentials for login can be found in `./qubership-apihub/local-secrets.yaml` file
 
@@ -211,7 +211,7 @@ Copy directory `qubership-apihub` with name `qubership-apihub-2`.
 Modify the following lines in `local-k8s-values.yaml`:
 
 ```
-apihubUrl: 'qubership-apihub-2.localhost' 
+apihubUrl: 'qubership-apihub-2.localtest.me' 
 ...
       dbName: 'apihub_backend_2' 
       dbUsername: 'apihub_backend_user_2'  
@@ -229,4 +229,4 @@ helm install apihub -n apihub-2 --create-namespace -f ../qubership-apihub-2/loca
 
 **Done**
 
-New APIHUB is acessible via `https://qubership-apihub-2.localhost`
+New APIHUB is acessible via `https://qubership-apihub-2.localtest.me`

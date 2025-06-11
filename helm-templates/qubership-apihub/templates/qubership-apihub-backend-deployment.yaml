@@ -83,6 +83,8 @@ spec:
                     value: 'lan'
                 -   name: OLRIC_REPLICA_COUNT
                     value: '{{ .Values.qubershipApihubBackend.replicas }}'
+                -   name: LEGACY_SAML
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.legacySaml }}'
                 -   name: AUTO_LOGIN
                     value: '{{ .Values.qubershipApihubBackend.env.auth.autoLogin }}'
                 -   name: EXTERNAL_SAML_IDP_DISPLAY_NAME
@@ -92,7 +94,7 @@ spec:
                 -   name: ADFS_METADATA_URL  
                     value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.saml.metadataUrl }}'
                 -   name: APIHUB_URL  
-                    value: '{{ .Values.qubershipApihub.apihubUrl }}'
+                    value: 'https://{{ .Values.qubershipApihub.apihubUrl }}'
                 -   name: SAML_CRT
                     valueFrom:
                       secretKeyRef:

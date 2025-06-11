@@ -10,4 +10,6 @@ sleep 30
 echo "Sleep 70 seconds, wait for Keycloack init"
 sleep 70
 ./5-deploy-apihub-with-keycloack.sh
+echo "Patch APIHUB Deployments for keycloak Ingress DNS resolution"
+./6-patch-apihub-hosts.sh
 cd ..
