@@ -1,169 +1,167 @@
 version: '3.9'
 services:
-    qubership-apihub-backend:
-        image: ghcr.io/netcracker/qubership-apihub-backend:sso
-        #image: localhost/netcracker/qubership-apihub-backend:latest
-        container_name: qubership-apihub-backend
-        ports:
-        - "8090:8080"
-        env_file: "qubership-apihub-backend.env"
-        healthcheck:
-            test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]
-            interval: 10s
-            timeout: 10s
-            retries: 10
-            start_period: 5s
-        restart: unless-stopped
-        deploy:
-            resources:
-                limits:
-                    cpus: '0.5'
-                    memory: 1G
-        networks:
-            default:
-                aliases:
-                - qubership-apihub-backend
-        depends_on:
-            keycloak:
-                condition: service_healthy
+  qubership-apihub-backend:
+    image: ghcr.io/netcracker/qubership-apihub-backend:security_improvements
+    container_name: qubership-apihub-backend
+    ports:
+      - "8090:8080"
+    env_file: "qubership-apihub-backend.env"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+    networks:
+      default:
+        aliases:
+          - qubership-apihub-backend
+    depends_on:
+      keycloak:
+        condition: service_healthy
 
-    qubership-apihub-build-task-consumer:
-        image: ghcr.io/netcracker/qubership-apihub-build-task-consumer:dev
-        container_name: qubership-apihub-build-task-consumer
-        ports:
-        - "3000:3000"
-        env_file: "qubership-apihub-build-task-consumer.env"
-        healthcheck:
-            test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/swagger || exit 1" ]
-            interval: 120s
-            timeout: 60s
-            retries: 10
-            start_period: 5s
-        restart: unless-stopped
-        deploy:
-            resources:
-                limits:
-                    cpus: '1'
-                    memory: 2G
-        networks:
-            default:
-                aliases:
-                - qubership-apihub-build-task-consumer
-        depends_on:
-            qubership-apihub-backend:
-                condition: service_healthy
+  qubership-apihub-build-task-consumer:
+    image: ghcr.io/netcracker/qubership-apihub-build-task-consumer:dev
+    container_name: qubership-apihub-build-task-consumer
+    ports:
+      - "3000:3000"
+    env_file: "qubership-apihub-build-task-consumer.env"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/swagger || exit 1" ]
+      interval: 120s
+      timeout: 60s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+    networks:
+      default:
+        aliases:
+          - qubership-apihub-build-task-consumer
+    depends_on:
+      qubership-apihub-backend:
+        condition: service_healthy
 
-    qubership-apihub-ui:
-        image: ghcr.io/netcracker/qubership-apihub-ui:dev
-        container_name: qubership-apihub-ui
-        ports:
-        - "8081:8080"
-        env_file: "qubership-apihub-ui.env"
-        healthcheck:
-            test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/probes/live || exit 1" ]
-            interval: 10s
-            timeout: 10s
-            retries: 10
-            start_period: 5s
-        restart: unless-stopped
-        deploy:
-            resources:
-                limits:
-                    cpus: '0.5'
-                    memory: 500M
-        networks:
-            default:
-                aliases:
-                - qubership-apihub-ui
-        depends_on:
-            qubership-apihub-backend:
-                condition: service_healthy
+  qubership-apihub-ui:
+    image: ghcr.io/netcracker/qubership-apihub-ui:feature-saml-oidc
+    container_name: qubership-apihub-ui
+    ports:
+      - "8081:8080"
+    env_file: "qubership-apihub-ui.env"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/probes/live || exit 1" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 500M
+    networks:
+      default:
+        aliases:
+          - qubership-apihub-ui
+    depends_on:
+      qubership-apihub-backend:
+        condition: service_healthy
 
-    ###### 3rd party services
+  ###### 3rd party services
 
-    keycloak:
-        image: quay.io/keycloak/keycloak:26.1.3
-        container_name: keycloak
-        command: ["start-dev", "--import-realm"]
-        restart: unless-stopped
-        environment:
-        - KC_DB=postgres
-        - KC_DB_USERNAME=keycloak
-        - KC_DB_PASSWORD=keycloak
-        - KC_DB_URL=jdbc:postgresql://host.docker.internal:5432/keycloak
-        - KC_REALM_NAME=apihub
-        - KC_BOOTSTRAP_ADMIN_USERNAME=admin
-        - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
-        - KC_LOG_LEVEL=INFO
-        ports:
-        - 8082:8080
-        volumes:
-        - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
-        deploy:
-            resources:
-                limits:
-                    cpus: '1'
-                    memory: 2G
-        healthcheck:
-            test: ['CMD-SHELL', '[ -f /tmp/HealthCheck.java ] || echo "public class HealthCheck { public static void main(String[] args) throws java.lang.Throwable { System.exit(java.net.HttpURLConnection.HTTP_OK == ((java.net.HttpURLConnection)new java.net.URL(args[0]).openConnection()).getResponseCode() ? 0 : 1); } }" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java http://localhost:8080']
-            interval: 5s
-            timeout: 5s
-            retries: 30
-        depends_on:
-            postgres:
-                condition: service_healthy
-    
-    postgres:
-        image: docker.io/postgres
-        container_name: postgres
-        command:
-            - "postgres"
-            - "-c"
-            - "max_connections=50"
-            - "-c"
-            - "shared_buffers=1GB"
-            - "-c"
-            - "effective_cache_size=1GB"
-            - "-c"
-            - "work_mem=16MB"
-            - "-c"
-            - "maintenance_work_mem=512MB"
-            - "-c"
-            - "random_page_cost=1.1"
-            - "-c"
-            - "temp_file_limit=10GB"
-            - "-c"
-            - "log_min_duration_statement=200ms"
-            - "-c"
-            - "idle_in_transaction_session_timeout=60s"
-            - "-c"
-            - "lock_timeout=1s"
-            - "-c"
-            - "shared_preload_libraries=pg_stat_statements"
-            - "-c"
-            - "pg_stat_statements.max=10000"
-            - "-c"
-            - "pg_stat_statements.track=all"
-        environment:
-        - POSTGRES_USER=postgres
-        - POSTGRES_PASSWORD=postgres
-        - POSTGRES_DB=postgres
-        - PGDATA=/pg-data
-        ports:
-        - 5432:5432
-        healthcheck:
-            test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-            interval: 10s
-            timeout: 15s
-            retries: 15
-            start_period: 5s
-        restart: unless-stopped
-        deploy:
-            resources:
-                limits:
-                    cpus: '1'
-                    memory: 3G
-        volumes:
-        - './data:/var/lib/postgresql/data:Z'
-        - './scripts/init-db:/docker-entrypoint-initdb.d'
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1.3
+    container_name: keycloak
+    command: [ "start-dev", "--import-realm" ]
+    restart: unless-stopped
+    environment:
+      - KC_DB=postgres
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=keycloak
+      - KC_DB_URL=jdbc:postgresql://host.docker.internal:5432/keycloak
+      - KC_REALM_NAME=apihub
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+      - KC_LOG_LEVEL=INFO
+    ports:
+      - 8082:8080
+    volumes:
+      - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+    healthcheck:
+      test: [ 'CMD-SHELL', '[ -f /tmp/HealthCheck.java ] || echo "public class HealthCheck { public static void main(String[] args) throws java.lang.Throwable { System.exit(java.net.HttpURLConnection.HTTP_OK == ((java.net.HttpURLConnection)new java.net.URL(args[0]).openConnection()).getResponseCode() ? 0 : 1); } }" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java http://localhost:8080' ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    depends_on:
+      postgres:
+        condition: service_healthy
 
+  postgres:
+    image: docker.io/postgres
+    container_name: postgres
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=50"
+      - "-c"
+      - "shared_buffers=1GB"
+      - "-c"
+      - "effective_cache_size=1GB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "maintenance_work_mem=512MB"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "temp_file_limit=10GB"
+      - "-c"
+      - "log_min_duration_statement=200ms"
+      - "-c"
+      - "idle_in_transaction_session_timeout=60s"
+      - "-c"
+      - "lock_timeout=1s"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"
+      - "-c"
+      - "pg_stat_statements.max=10000"
+      - "-c"
+      - "pg_stat_statements.track=all"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+      - PGDATA=/pg-data
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 15s
+      retries: 15
+      start_period: 5s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 3G
+    volumes:
+      - './data:/var/lib/postgresql/data:Z'
+      - './scripts/init-db:/docker-entrypoint-initdb.d'

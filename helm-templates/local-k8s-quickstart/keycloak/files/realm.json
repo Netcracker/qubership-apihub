@@ -54,7 +54,7 @@
           "saml.server.signature": "true",
           "saml.server.signature.keyinfo.ext": "false",
           "realm_client": "false",
-          "saml.signing.certificate": "${SAML_CRT_KEYCLOAK}",
+          "saml.signing.certificate": "MIIDCTCCAfGgAwIBAgIUVdGIpIdVTgZt9Wyd/jmLz5FmL4QwDQYJKoZIhvcNAQELBQAwFDESMBAGA1UEAwwJbG9jYWxob3N0MB4XDTI1MDYxMTE2MDM1MloXDTI2MDYxMTE2MDM1MlowFDESMBAGA1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAl/KWS1NfLRfbIRIo9oqg7RuHGUvQmgXnYKzTJafnDJkKTXBgRjYyaOGCtAGkOcOwo6OiIC7m2A109lWiTpIgvWL4Fg6i4euQmPe+mvtrBD2fWZUvbbxf0UDifY++uHA7a81ULt0prdR54kmuSCuvXXdt5OkZjqzQ4+vLYMnRhTkMWexMZwiu6GigUI9XGowcMWaXwJvkl7zDzZyYQAu/hNxgQoNLtbQBZee0uYZ/PguhaUFdVVVejDrTsjTZoGT7ns2ZhBcxKOndssQ6Yp6yp5WGcgwskztxTULiYa6sVqTouzDMN+WGaEnNu0H7tK0bD+Qbx8pIAwocwNVdv+o+9QIDAQABo1MwUTAdBgNVHQ4EFgQUIz7eNFmpjds9k5RwytYD7sLMI3kwHwYDVR0jBBgwFoAUIz7eNFmpjds9k5RwytYD7sLMI3kwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAc8ERH2ET8Co0MMx9LMtOhMjY+O3MRF/rEtVHN/4zj5vHiDgUMpv1f/N0nS+WWhFMVYp6coLG8Vo0T9F6G2+HjKDvvwWtEaA67VjMvekP+2sWre1dbgXXyqUISIae5QoDXRheEhhn/IVllnReXp6MUdpb/SccXRih49h1nIEluhR5KcSReu+/t5U/34OqF1ehFeH7vtXScbrCYBGGhw2ozOn9mVx1DnBZODggdqYFbjpxnMgrBfJaT7YLEKLRPLBa8eePjFS8vWdx23KgSVVKwzlx2C64IxTpSIQYAkC2JnVFDyvbrzDItHTW3VzCsK0NM1bAOoiI4mJ9q+hYZvzrog==",
           "saml.artifact.binding.identifier": "dxu8PAeDeyEZxQ0Xmu8ZO1XATVY=",
           "saml.artifact.binding": "false",
           "saml.signature.algorithm": "RSA_SHA256",
@@ -63,7 +63,7 @@
           "saml.authnstatement": "true",
           "display.on.consent.screen": "false",
           "saml_name_id_format": "username",
-          "saml.signing.private.key": "${SAML_KEY_KEYCLOAK}",
+          "saml.signing.private.key": "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCX8pZLU18tF9shEij2iqDtG4cZS9CaBedgrNMlp+cMmQpNcGBGNjJo4YK0AaQ5w7Cjo6IgLubYDXT2VaJOkiC9YvgWDqLh65CY976a+2sEPZ9ZlS9tvF/RQOJ9j764cDtrzVQu3Smt1HniSa5IK69dd23k6RmOrNDj68tgydGFOQxZ7ExnCK7oaKBQj1cajBwxZpfAm+SXvMPNnJhAC7+E3GBCg0u1tAFl57S5hn8+C6FpQV1VVV6MOtOyNNmgZPuezZmEFzEo6d2yxDpinrKnlYZyDCyTO3FNQuJhrqxWpOi7MMw35YZoSc27Qfu0rRsP5BvHykgDChzA1V2/6j71AgMBAAECggEAAj+hmr7CmfkQPJaMtaKf4V0MFu3oydwMLFbnuaxuPmD7ZoxNrcGlOv5vVTjwVGHWzi0gkT0Fxy0NIzdpiKPKnpLa3KoIc13C4jNJsPhx1npk+R88jZwBMlMKpv9cEVWpLh4NQLOe0hw4ANxvRaZ5Lgxo5hTO/y4D2gObcF9m3YOl7OsRlNB9VnF0dZhwVQwDPIgy+8Wb7uQD+Dwg29cvuBJYRmBRKNjx/jsCRg66G1Rw3xaLXcQGGwUrrQZYVx9tSuxWSA9NxDRC2kNlgB9l023ZtKwR1nzZ4tgGFfqP1OF1VdCAv/dwTePK04E7wrOnPOy89+wBaVH36iLY8sILQQKBgQDSNNcXXFPOgdE1QHZ9hR2jwzSAWAkcwWwYU6BKUIichx7FRbtftJAqBuQTyHsn0FHlAdSvI3WmhVoY85eOJn0ATnVJm4ewS7Im8J+LN7DwokTWZMdRgozBrOomwNqP34CC92NtU7rWmOzjIlAjyepZjCJIZySD/9p4/B6R1MQ6IQKBgQC5DKr2Vma0Ep44D41SFieFh2CLeMha3VLcxX8/0mBdp6C98rng3+Wh1AmF0uiLBLMgs8ao6/Pm6aMWHLYv20gsq6RSy5cSe0e2cagn+DsRkDN79QstXMko3adeURKh6e753S91u2w1xb8vgFYfjlo+FaWcH3/jEve0omrtz1iyVQKBgHSLt3XMSusELupHg2q0k2pooINITEUVOMmEFCsf255tjDH0J584jXW/vFT7oszAQ6elDDbOgjyBUyLia/T0gfnZhk35XZHxZiUQ5GRbzE6eqWv1FE2tBD2dkXVLF+MNGEOExiuncL/qqeyE6cnt+XEMsTVTent1L7xEjO5t+R4BAoGBALXeB2BXhlTQP4PldQUKFQmdBXvN10vGXZvw1qFJB8DD8Kz+k0S5iBxGIp3NrRKEKfCn/0UhsPJvCQPAcCYUo5iTkMp2oSFe3BopFhVCV/to99CKAtQwbtulDMsbbu6G1YHoqq5Q54bptH7g6MPWykZeTAdmxe/MQnrbbbAPqqKJAoGBAJTZYMuBqP9vLnzeLwgIFZcb0gANA1iBmlHvHT7vDje/Tv7HRORbOdLf6t8u0lZem02pl0rpURwuX5K6bO6W99JdBtoNFn9D+ExBguiGLZQzdlGx5g+Ue9bLb2DZqDK2evm8+i7obfMCZAwL1h9ugFNgG1JBG03roeRSuhh6yyYp",
           "saml.allow.ecp.flow": "false",
           "saml.onetimeuse.condition": "false",
           "saml.server.signature.keyinfo.xmlSigKeyInfoKeyNameTransformer": "NONE",
@@ -87,7 +87,7 @@
       {
         "id": "saml-user",
         "email": "saml-user@qubership.org",
-        "username": "${APIHUB_USER_USERNAME}",
+        "username": "IjkDex",
         "firstName": "User",
         "lastName": "SAML",
         "enabled": true,
@@ -96,7 +96,7 @@
           {
             "temporary": false,
             "type": "password",
-            "value": "${APIHUB_USER_PASSWORD}"
+            "value": "ecy9sj"
           }
         ]
       }
@@ -229,7 +229,7 @@
         "enabled": true,
         "alwaysDisplayInConsole": false,
         "clientAuthenticatorType": "client-secret",
-        "secret": "${OIDC_CLIENT_SECRET}",
+        "secret": "LGiBfr826TAenHCHvfBK6Xj1xY1g0vCh",
         "redirectUris": [
           "http://localhost:8081/*",
           "http://host.docker.internal:8081/*"
@@ -276,7 +276,7 @@
       {
         "id": "oidc-user",
         "email": "oidc-user@qubership.org",
-        "username": "${APIHUB_USER_USERNAME}",
+        "username": "IjkDex",
         "firstName": "User",
         "lastName": "OIDC",
         "enabled": true,
@@ -288,7 +288,7 @@
           {
             "temporary": false,
             "type": "password",
-            "value": "${APIHUB_USER_PASSWORD}"
+            "value": "ecy9sj"
           }
         ]
       }
