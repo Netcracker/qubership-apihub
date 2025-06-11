@@ -1682,14 +1682,14 @@ func (o operationRepositoryImpl) GetGroupedOperations(packageId string, version 
 		Offset(searchReq.Limit * searchReq.Page).
 		Limit(searchReq.Limit)
 
-	if searchReq.TextFilter != "" {
+	if searchReq.CustomTagKey != "" && searchReq.CustomTagValue != "" {
+		query.Where("exists(select 1 from jsonb_each_text(operation.custom_tags) where key = ? and value = ?)", searchReq.CustomTagKey, searchReq.CustomTagValue)
+	} else if searchReq.TextFilter != "" {
 		searchReq.TextFilter = "%" + utils.LikeEscaped(searchReq.TextFilter) + "%"
 		query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
 			q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
 				WhereOr("operation.metadata->>? ilike ?", "path", searchReq.TextFilter).
-				WhereOr("operation.metadata->>? ilike ?", "method", searchReq.TextFilter).
-				WhereOr("exists(select 1 from jsonb_each_text(operation.custom_tags) where key ilike ? OR value ilike ?)",
-					searchReq.TextFilter, searchReq.TextFilter)
+				WhereOr("operation.metadata->>? ilike ?", "method", searchReq.TextFilter)
 			return q, nil
 		})
 	}
