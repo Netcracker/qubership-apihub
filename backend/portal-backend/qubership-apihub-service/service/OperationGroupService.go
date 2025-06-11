@@ -878,6 +878,10 @@ func (o operationGroupServiceImpl) GetGroupedOperations(packageId string, versio
 	if searchReq.Kind == "all" {
 		searchReq.Kind = ""
 	}
+	searchReq.CustomTagKey, searchReq.CustomTagValue, err = parseTextFilterToCustomTagKeyValue(searchReq.TextFilter)
+	if err != nil {
+		return nil, err
+	}
 	operationEnts, err := o.operationRepo.GetGroupedOperations(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, groupName, searchReq)
 	if err != nil {
 		return nil, err
