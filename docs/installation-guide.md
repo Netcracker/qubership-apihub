@@ -2,16 +2,15 @@
 
 This guide describes Qubership APIHUB installation process
 
-- [Qubership APIHUB Installation Guide](#qubership-apihub-installation-guide)
 - [3rd party dependencies](#3rd-party-dependencies)
 - [HWE](#hwe)
 - [docker-compose](#docker-compose)
-  - [Minimal parameters set](#minimal-parameters-set)
-  - [Full ENV VARs list per container](#full-env-vars-list-per-container)
+  * [Minimal parameters set](#minimal-parameters-set)
+  * [Full ENV VARs list per container](#full-env-vars-list-per-container)
 - [Helm](#helm)
-  - [Prerequisites](#prerequisites)
-  - [Set up values.yml](#set-up-valuesyml)
-  - [Execute helm install](#execute-helm-install)
+  * [Prerequisites](#prerequisites)
+  * [Set up values.yml](#set-up-valuesyml)
+  * [Execute helm install](#execute-helm-install)
 
 # 3rd party dependencies
 
@@ -90,7 +89,7 @@ APIHUB_ACCESS_TOKEN=${any string}
 | STORAGE\_SERVER\_URL | No | "" | s3.example.com | S3 endpoint for client connection |
 | STORAGE\_SERVER\_PASSWORD | No | "" | s3-secret-key | Secret key for S3 storage access |
 | MINIO\_STORE\_ONLY\_BUILD\_RESULT | No | FALSE | TRUE | Set to true to store only build results (less data amout) in S3 storage |
-| ORIGIN\_ALLOWED | No | "" | [https://localhost:5137](https://localhost:5137/) | Allows to set extra allowed origin to CORS header. Used for FE debugging. Should be empty on prod envs. |
+| ORIGIN\_ALLOWED | No | "" | [https://localhost:5137](https://localhost:5137/) | Allows to set extra allowed origin to CORS header. Used for FE debugging. Should be empty on prod evs. |
 | PUBLISH\_ARCHIVE\_SIZE\_LIMIT\_MB | No | 50 | 50 | Limit for uploaded package size in order to avoid OOM |
 | PUBLISH\_FILE\_SIZE\_LIMIT\_MB | No | 15 | 20 | Limit for uploaded file (inside package) size in order to avoid OOM |
 | RELEASE\_VERSION\_PATTERN | No | ^\[0-9\]{4}\[.\]{1}\[1-4\]{1}$ | ^2023\\.1$ | Regex pattern for releases names validation. |
