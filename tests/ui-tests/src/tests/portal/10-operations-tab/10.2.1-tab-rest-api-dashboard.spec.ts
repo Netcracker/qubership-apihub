@@ -1,15 +1,7 @@
 import { test } from '@fixtures'
 import { expect, expectFile } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
-import {
-  D11,
-  GET_PET_BY_TAG_V1,
-  GET_PET_BY_TAG_V2_SWAGGER,
-  PK11,
-  PK12,
-  V_P_DSH_CHANGELOG_REST_CHANGED_R,
-  V_P_DSH_OVERVIEW_R,
-} from '@test-data/portal'
+import { D11, GET_PET_BY_TAG_V1, GET_PET_BY_TAG_V2_SWAGGER, PK11, PK12, V_P_DSH_CHANGELOG_REST_CHANGED_R, V_P_DSH_OVERVIEW_R } from '@test-data/portal'
 import { VERSION_OPERATIONS_TAB_REST } from '@portal/entities'
 import { TICKET_BASE_URL } from '@test-setup'
 
@@ -66,14 +58,14 @@ test.describe('10.2.1 Operations tab REST API (Dashboard)', () => {
 
       await portalPage.gotoVersion(versionChangedRest, VERSION_OPERATIONS_TAB_REST)
 
-      await test.step('Download all operations', async () => {
+      await test.step('Export all operations', async () => {
 
         const file = await operationsTab.toolbar.exportMenu.downloadAll()
 
         await expectFile.soft(file).toHaveName(`APIOperations_${testDashboard.packageId}_${V_P_DSH_CHANGELOG_REST_CHANGED_R.version}.xlsx`)
       })
 
-      await test.step('Download filtered operations', async () => {
+      await test.step('Export filtered operations', async () => {
 
         await operationsTab.sidebar.apiKindFilterAc.click()
         await operationsTab.sidebar.apiKindFilterAc.noBwcItm.click()

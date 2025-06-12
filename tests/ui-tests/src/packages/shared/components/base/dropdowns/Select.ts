@@ -1,6 +1,6 @@
 import type { Locator } from '@playwright/test'
 import { Dropdown } from './Dropdown'
-import { ListItem } from '../ListItem'
+import { ListItem } from '../list-items/ListItem'
 
 export class Select extends Dropdown {
 

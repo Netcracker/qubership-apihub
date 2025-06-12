@@ -26,14 +26,14 @@ test.describe('7.2 Documents actions (Dashboard)', () => {
 
       await documentsTab.sidebar.packageFilterAc.getListItem(PK11.name).click()
 
-      await expect(documentsTab.sidebar.getDocRestButton(FILE_P_PETSTORE30.testMeta!.docName)).toBeVisible()
-      await expect(documentsTab.sidebar.getDocRestButton(FILE_P_PETSTORE20.testMeta!.docName)).not.toBeVisible()
+      await expect(documentsTab.sidebar.getFileButton(FILE_P_PETSTORE30.testMeta!.docName)).toBeVisible()
+      await expect(documentsTab.sidebar.getFileButton(FILE_P_PETSTORE20.testMeta!.docName)).not.toBeVisible()
 
       await documentsTab.sidebar.packageFilterAc.clear()
       await documentsTab.sidebar.packageFilterAc.click()
       await documentsTab.sidebar.packageFilterAc.getListItem(PK12.name).click()
 
-      await expect(documentsTab.sidebar.getDocRestButton(FILE_P_PETSTORE20.testMeta!.docName)).toBeVisible()
-      await expect(documentsTab.sidebar.getDocRestButton(FILE_P_PETSTORE30.testMeta!.docName)).not.toBeVisible()
+      await expect(documentsTab.sidebar.getFileButton(FILE_P_PETSTORE20.testMeta!.docName)).toBeVisible()
+      await expect(documentsTab.sidebar.getFileButton(FILE_P_PETSTORE30.testMeta!.docName)).not.toBeVisible()
     })
 })

@@ -1,8 +1,6 @@
 import type { Page } from '@playwright/test'
 import { Button, SearchBar } from '@shared/components/base'
-import { DocOpenapiButton } from './DocumentsPackageTabSidebar/DocOpenapiButton'
-import { DocMdButton } from './DocumentsPackageTabSidebar/DocMdButton'
-import { DocFileButton } from './DocumentsPackageTabSidebar/DocFileButton'
+import { DocumentsFileButton } from './DocumentsPackageTabSidebar/DocumentsFileButton'
 
 export class DocumentsPackageTabSidebar {
 
@@ -14,24 +12,10 @@ export class DocumentsPackageTabSidebar {
     return new Button(this.page.getByTestId('DocumentButton'), '', 'file')
   }
 
-  getDocRestButton(docName: string): DocOpenapiButton {
-    return new DocOpenapiButton(this.page.getByTestId('DocumentsList').getByRole('button', {
-      name: docName,
+  getFileButton(fileName: string): DocumentsFileButton {
+    return new DocumentsFileButton(this.page.getByTestId('DocumentsList').getByRole('button', {
+      name: fileName,
       exact: true,
-    }), docName)
-  }
-
-  getDocMdButton(fileSlug: string): DocMdButton {
-    return new DocMdButton(this.page.getByTestId('DocumentsList').getByRole('button', {
-      name: fileSlug,
-      exact: true,
-    }), fileSlug)
-  }
-
-  getDocFileButton(fileSlug: string): DocFileButton {
-    return new DocFileButton(this.page.getByTestId('DocumentsList').getByRole('button', {
-      name: fileSlug,
-      exact: true,
-    }), fileSlug)
+    }), fileName)
   }
 }

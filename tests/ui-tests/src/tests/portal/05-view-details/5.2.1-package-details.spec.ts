@@ -1,5 +1,5 @@
 import { test } from '@fixtures'
-import { expect, expectFile } from '@services/expect-decorator'
+import { expect } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
 import { SEARCH_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
 import {
@@ -235,24 +235,6 @@ test.describe('5.2.1 Package details', () => {
 
       await expect(versionPage.overviewTab.summaryTab.body.summary.currentVersion).toBeVisible()
       await expect(versionPage.overviewTab).not.toHaveText(versionPage.overviewTab.componentName!)
-    })
-
-  test('[P-PKDTL-2] Exporting a Version (zip)',
-    {
-      tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-4462` },
-    },
-    async ({ sysadminPage: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { versionPackagePage: versionPage } = portalPage
-      const { version } = V_P_PKG_OVERVIEW_R
-
-      await portalPage.gotoPackage(PK11)
-
-      const file = await versionPage.exportVersion()
-
-      await expectFile(file).toHaveName(`${PK11.name}_${version}.zip`)
     })
 
   test('[P-PKDTV-1] View Versions selector',

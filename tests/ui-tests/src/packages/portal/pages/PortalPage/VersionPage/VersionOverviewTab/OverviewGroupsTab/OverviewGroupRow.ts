@@ -1,10 +1,7 @@
 import type { Locator } from '@playwright/test'
-import { type BaseComponent, Button, TableCell, TableRow } from '@shared/components/base'
-import { GroupDownloadMenu } from './OverviewGroupRow/GroupDownloadMenu'
+import { Button, TableCell, TableRow } from '@shared/components/base'
 import { test as report } from 'playwright/test'
-import type { DownloadedTestFile } from '@shared/entities'
 import { GroupNameCell } from './OverviewGroupRow/GroupNameCell'
-import { getDownloadedFile } from '@services/utils'
 
 export class OverviewGroupRow extends TableRow {
 
@@ -15,8 +12,8 @@ export class OverviewGroupRow extends TableRow {
   readonly operationsNumberCell = new TableCell(this.mainLocator.getByTestId('Cell-operations-number'), this.componentName, 'operations number cell')
   readonly addBtn = new Button(this.mainLocator.getByTestId('AddButton'), this.componentName, 'add button')
   readonly editBtn = new Button(this.mainLocator.getByTestId('EditButton'), this.componentName, 'edit button')
+  readonly exportBtn = new Button(this.mainLocator.getByTestId('ExportButton'), this.componentName, 'export button')
   readonly deleteBtn = new Button(this.mainLocator.getByTestId('DeleteButton'), this.componentName, 'delete button')
-  readonly downloadMenu = new GroupDownloadMenu(this.mainLocator)
 
   constructor(rootLocator: Locator, componentName?: string, componentType?: string) {
     super(rootLocator, componentName, componentType || 'group row')
@@ -36,44 +33,17 @@ export class OverviewGroupRow extends TableRow {
     })
   }
 
+  async openExportDialog(): Promise<void> {
+    await report.step(`Open "Export settings" dialog for the "${this.componentName}" group`, async () => {
+      await this.hover()
+      await this.exportBtn.click()
+    })
+  }
+
   async openDeleteGroupDialog(): Promise<void> {
     await report.step(`Open "Delete group" dialog for the "${this.componentName}" group`, async () => {
       await this.hover()
       await this.deleteBtn.click()
     })
-  }
-
-  async downloadCombinedYaml(): Promise<DownloadedTestFile> {
-    return await this.hoverableDownload(this.mainLocator, 'Download combined YAML', this.downloadMenu, this.downloadMenu.combinedYamlItm)
-  }
-
-  async downloadCombinedJson(): Promise<DownloadedTestFile> {
-    return await this.hoverableDownload(this.mainLocator, 'Download combined JSON', this.downloadMenu, this.downloadMenu.combinedJsonItm)
-  }
-
-  async downloadReducedYaml(): Promise<DownloadedTestFile> {
-    return await this.hoverableDownload(this.mainLocator, 'Download reduced YAML', this.downloadMenu, this.downloadMenu.reducedYamlItm)
-  }
-
-  async downloadReducedJson(): Promise<DownloadedTestFile> {
-    return await this.hoverableDownload(this.mainLocator, 'Download reduced JSON', this.downloadMenu, this.downloadMenu.reducedJsonItm)
-  }
-
-  async downloadReducedHtml(): Promise<DownloadedTestFile> {
-    return await this.hoverableDownload(this.mainLocator, 'Download reduced HTML', this.downloadMenu, this.downloadMenu.reducedHtmlItm)
-  }
-
-  //TODO: need to move to shared functions
-  private async hoverableDownload(hoverableElement: Locator, stepTitle: string, menu: BaseComponent, menuElement: BaseComponent): Promise<DownloadedTestFile> {
-    let file!: DownloadedTestFile
-    await report.step(stepTitle, async () => {
-      const downloadPromise = hoverableElement.page().waitForEvent('download')
-      await hoverableElement.hover()
-      await menu.click()
-      await menuElement.click({ position: { x: 1, y: 1 } }) //WA: tooltip handling
-      const download = await downloadPromise
-      file = await getDownloadedFile(download)
-    })
-    return file
   }
 }

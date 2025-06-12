@@ -1,14 +1,7 @@
 import { test } from '@fixtures'
 import { expect, expectFile } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
-import {
-  D11,
-  GET_PET_BY_TAG_V2_SWAGGER,
-  PK11,
-  PK12,
-  UPDATE_USER_V1,
-  V_P_DSH_CHANGELOG_REST_CHANGED_R,
-} from '@test-data/portal'
+import { D11, GET_PET_BY_TAG_V2_SWAGGER, PK11, PK12, UPDATE_USER_V1, V_P_DSH_CHANGELOG_REST_CHANGED_R } from '@test-data/portal'
 import { VERSION_CHANGES_TAB_REST } from '@portal/entities'
 import { TICKET_BASE_URL } from '@test-setup'
 
@@ -60,14 +53,14 @@ test.describe('6.2 API Changes (Dashboard)', () => {
 
       await portalPage.gotoVersion(versionChangedRest, VERSION_CHANGES_TAB_REST)
 
-      await test.step('Download all changes', async () => {
+      await test.step('Export all changes', async () => {
 
         const file = await apiChangesTab.toolbar.exportMenu.downloadAll()
 
         await expectFile.soft(file).toHaveName(`APIChanges_${testDashboard.packageId}_${V_P_DSH_CHANGELOG_REST_CHANGED_R.version}.xlsx`)
       })
 
-      await test.step('Download filtered changes', async () => {
+      await test.step('Export filtered changes', async () => {
 
         await apiChangesTab.toolbar.nonBreakingChangesFilterBtn.click()
 

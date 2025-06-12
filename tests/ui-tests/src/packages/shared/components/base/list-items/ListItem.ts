@@ -1,5 +1,5 @@
 import type { Locator } from '@playwright/test'
-import { BaseComponent } from './BaseComponent'
+import { BaseComponent } from '../BaseComponent'
 
 export class ListItem extends BaseComponent {
 

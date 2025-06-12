@@ -1,7 +1,7 @@
 import type { ComponentParams } from '@shared/components/types'
 import { Content } from '@shared/components/base'
 
-export class DocumentsOpenapiOverviewContent extends Content {
+export class DocumentsOasOverview extends Content {
 
   readonly labels = new Content(this.mainLocator.getByTestId('DocumentLabels'), 'Document labels')
 

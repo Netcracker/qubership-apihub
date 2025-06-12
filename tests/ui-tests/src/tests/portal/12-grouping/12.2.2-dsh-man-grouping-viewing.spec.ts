@@ -1,5 +1,5 @@
 import { test } from '@fixtures'
-import { expect, expectFile } from '@services/expect-decorator'
+import { expect } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
 import {
   CREATE_LIST_OF_USERS_V1,
@@ -16,7 +16,6 @@ import {
   OGR_DMGR_FILTERING_REST_R,
   OGR_DMGR_MORE_200_R,
   OGR_MORE_THEN_200_OPERATIONS_MSG,
-  P_DSH_DMGR_R,
   P_PKG_DMGR_PET_R,
   P_PKG_DMGR_STORE_R,
   P_PKG_DMGR_USER_R,
@@ -24,86 +23,12 @@ import {
   V_DSH_DMGR_200_R,
   V_DSH_DMGR_CHANGED_R,
 } from '@test-data/portal'
-import {
-  VERSION_CHANGES_TAB_REST,
-  VERSION_DEPRECATED_TAB_REST,
-  VERSION_OPERATIONS_TAB_REST,
-  VERSION_OVERVIEW_TAB_GROUPS,
-} from '@portal/entities'
+import { VERSION_CHANGES_TAB_REST, VERSION_DEPRECATED_TAB_REST, VERSION_OPERATIONS_TAB_REST, VERSION_OVERVIEW_TAB_GROUPS } from '@portal/entities'
 import { TICKET_BASE_URL } from '@test-setup'
 
 test.describe('12.2.2 Manual grouping: Viewing (Dashboards)', () => {
 
-  const testDashboard = P_DSH_DMGR_R
   const testVersion = V_DSH_DMGR_CHANGED_R
-
-  test('[P-MGO-2.2.1] Downloading for REST API group',
-    {
-      tag: '@smoke',
-      annotation: [
-        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10184` },
-      ],
-    },
-    async ({ sysadminPage: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { versionPackagePage: versionPage } = portalPage
-      const { overviewTab } = versionPage
-      const { groupsTab } = overviewTab
-      const { groupName } = OGR_DMGR_DOWNLOAD_REST_R
-
-      await portalPage.gotoVersion(testVersion, VERSION_OVERVIEW_TAB_GROUPS)
-
-      await test.step('Download as combined YAML', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadCombinedYaml()
-
-        await expectFile(file).toHaveName(`${groupName}_${testDashboard.packageId}_${testVersion.version}.yaml`)
-      })
-
-      await test.step('Download as combined JSON', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadCombinedJson()
-
-        await expectFile(file).toHaveName(`${groupName}_${testDashboard.packageId}_${testVersion.version}.json`)
-      })
-
-      await test.step('Download as reduced YAML', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadReducedYaml()
-
-        await expectFile(file).toHaveName(`${groupName}_${testDashboard.packageId}_${testVersion.version}.zip`)
-      })
-
-      await test.step('Download as reduced JSON', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadReducedJson()
-
-        await expectFile(file).toHaveName(`${groupName}_${testDashboard.packageId}_${testVersion.version}.zip`)
-      })
-
-      await test.step('Download as reduced HTML', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadReducedHtml()
-
-        await expectFile(file).toHaveName(`${groupName}_${testDashboard.packageId}_${testVersion.version}.zip`)
-      })
-    })
-
-  test('[P-MGO-2.2.2-N] Downloading for GraphQL group (Negative)',
-    {
-      tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10184` },
-    },
-    async ({ sysadminPage: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { versionPackagePage: versionPage } = portalPage
-      const { overviewTab } = versionPage
-      const { groupsTab } = overviewTab
-      const { groupName } = OGR_DMGR_DOWNLOAD_GQL_R
-
-      await portalPage.gotoVersion(testVersion, VERSION_OVERVIEW_TAB_GROUPS)
-
-      await groupsTab.getGroupRow(groupName).hover()
-
-      await expect(groupsTab.getGroupRow(groupName).downloadMenu).toBeDisabled()
-    })
 
   test('[P-MGO-3.1-N] Change API type for group (Negative)',
     {

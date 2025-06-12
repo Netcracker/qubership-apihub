@@ -660,14 +660,14 @@ test.describe('6.1 API Changes (Package)', () => {
 
       await portalPage.gotoVersion(versionChangedRest, VERSION_CHANGES_TAB_REST)
 
-      await test.step('Download all changes', async () => {
+      await test.step('Export all changes', async () => {
 
         const file = await apiChangesTab.toolbar.exportMenu.downloadAll()
 
         await expectFile.soft(file).toHaveName(`APIChanges_${PK11.packageId}_${V_P_PKG_CHANGELOG_REST_CHANGED_R.version}.xlsx`)
       })
 
-      await test.step('Download filtered changes', async () => {
+      await test.step('Export filtered changes', async () => {
 
         await apiChangesTab.toolbar.nonBreakingChangesFilterBtn.click()
 

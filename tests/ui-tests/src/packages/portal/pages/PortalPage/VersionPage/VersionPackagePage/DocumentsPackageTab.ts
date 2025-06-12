@@ -1,19 +1,19 @@
 import type { Page } from '@playwright/test'
 import { DocumentsPackageTabSidebar } from './DocumentsPackageTab/DocumentsPackageTabSidebar'
-import { DocumentsMdView } from './DocumentsPackageTab/DocumentsPackageTabViews/DocumentsMdView'
-import { DocumentsJsonSchemaView } from './DocumentsPackageTab/DocumentsPackageTabViews/DocumentsJsonSchemaView'
-import { DocumentsFileView } from './DocumentsPackageTab/DocumentsPackageTabViews/DocumentsFileView'
-import { DocumentsOpenapiView } from './DocumentsPackageTab/DocumentsPackageTabViews/DocumentsOpenapiView'
-import { Content, Tab } from '@shared/components/base'
+import { DocumentsFileView } from './DocumentsPackageTab/DocumentsFileView'
+import { DocumentsOasView } from './DocumentsPackageTab/DocumentsOasView'
+import { Tab } from '@shared/components/base'
+import { DocumentsViewToolbar } from './DocumentsPackageTab/DocumentsViewToolbar'
+import { JsonSchemaView, MdView } from '@shared/components/custom'
 
 export class DocumentsPackageTab extends Tab {
 
   readonly mainLocator = this.page.getByTestId('DocumentsButton')
-  readonly content = new Content(this.rootLocator, 'Documents Tab')
+  readonly toolbar = new DocumentsViewToolbar(this.page)
   readonly sidebar = new DocumentsPackageTabSidebar(this.page)
-  readonly openapiView = new DocumentsOpenapiView(this.page)
-  readonly mdView = new DocumentsMdView(this.page)
-  readonly jsonSchemaView = new DocumentsJsonSchemaView(this.page)
+  readonly oasView = new DocumentsOasView(this.page)
+  readonly jsonSchemaView = new JsonSchemaView(this.page)
+  readonly mdView = new MdView(this.page)
   readonly fileView = new DocumentsFileView(this.page)
 
   constructor(page: Page) {

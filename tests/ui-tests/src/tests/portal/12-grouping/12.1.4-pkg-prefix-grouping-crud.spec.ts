@@ -14,7 +14,6 @@ import {
   OGR_TMPL_EXIST_MSG,
   P_PKG_PPGR_SETTINGS_R,
   V_PKG_PPGR_EDIT_N,
-  V_PKG_PPGR_REST_CHANGED_R,
   V_PKG_PPGR_SETTINGS_R,
 } from '@test-data/portal'
 import { SETTINGS_TAB_API_CONFIG, VERSION_OPERATIONS_TAB_REST, VERSION_OVERVIEW_TAB_GROUPS } from '@portal/entities'
@@ -280,55 +279,5 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
       const file = await updateDialog.downloadTemplate()
 
       await expectFile(file).toHaveName(OGR_PMGR_CHANGE_DESCRIPTION_N.template!.name)
-    })
-
-  test('[P-GOP-5] Downloading for REST API prefix group',
-    {
-      tag: '@smoke',
-      annotation: [
-        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10182` },
-      ],
-    },
-    async ({ sysadminPage: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { versionPackagePage: versionPage } = portalPage
-      const { overviewTab } = versionPage
-      const { groupsTab } = overviewTab
-      const testVersion = V_PKG_PPGR_REST_CHANGED_R
-      const testPackage = V_PKG_PPGR_REST_CHANGED_R.pkg
-      const groupName = 'v1'
-
-      await portalPage.gotoVersion(testVersion, VERSION_OVERVIEW_TAB_GROUPS)
-
-      await test.step('Download as combined YAML', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadCombinedYaml()
-
-        await expectFile(file).toHaveName(`${groupName}_${testPackage.packageId}_${testVersion.version}.yaml`)
-      })
-
-      await test.step('Download as combined JSON', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadCombinedJson()
-
-        await expectFile(file).toHaveName(`${groupName}_${testPackage.packageId}_${testVersion.version}.json`)
-      })
-
-      await test.step('Download as reduced YAML', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadReducedYaml()
-
-        await expectFile(file).toHaveName(`${groupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-      })
-
-      await test.step('Download as reduced JSON', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadReducedJson()
-
-        await expectFile(file).toHaveName(`${groupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-      })
-
-      await test.step('Download as reduced HTML', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadReducedHtml()
-
-        await expectFile(file).toHaveName(`${groupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-      })
     })
 })

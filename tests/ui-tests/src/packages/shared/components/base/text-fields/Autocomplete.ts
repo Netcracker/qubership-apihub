@@ -1,7 +1,7 @@
 import type { Locator } from '@playwright/test'
 import { Button } from '../buttons/Button'
 import { TextField } from './TextField'
-import { ListItem } from '../ListItem'
+import { ListItem } from '../list-items/ListItem'
 import { Content } from '../Content'
 import { Chip } from '@shared/components/base'
 import { test as report } from 'playwright/test'

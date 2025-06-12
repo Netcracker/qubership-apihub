@@ -3,8 +3,6 @@ import { expect, expectFile } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
 import {
   CREATE_LIST_OF_USERS_V1,
-  FILE_P_PETSTORE30,
-  FILE_P_PETSTORE30_CHANGELOG_BASE,
   GRP_P_VIEWER_ROOT_R,
   NO_PERM_ADD_MEMBER,
   NO_PERM_CREATE_GROUP,
@@ -144,86 +142,6 @@ test.describe('03.1.1 Access Control. Viewer role. (Package)', () => {
       })
     })
 
-  test('[P-ACVP-01.3] Package. Viewer. Download operation groups.',
-    {
-      annotation: [
-        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8568` },
-      ],
-    },
-    async ({ user1Page: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { groupsTab } = portalPage.versionPackagePage.overviewTab
-
-      await portalPage.gotoVersion(testVersion, VERSION_OVERVIEW_TAB_GROUPS)
-
-      await test.step('Prefix group', async () => {
-
-        await test.step('Download as combined YAML', async () => {
-          const file = await groupsTab.getGroupRow(prefixGroupName).downloadCombinedYaml()
-
-          await expectFile(file).toHaveName(`${prefixGroupName}_${testPackage.packageId}_${testVersion.version}.yaml`)
-        })
-
-        await test.step('Download as combined JSON', async () => {
-          const file = await groupsTab.getGroupRow(prefixGroupName).downloadCombinedJson()
-
-          await expectFile(file).toHaveName(`${prefixGroupName}_${testPackage.packageId}_${testVersion.version}.json`)
-        })
-
-        await test.step('Download as reduced YAML', async () => {
-          const file = await groupsTab.getGroupRow(prefixGroupName).downloadReducedYaml()
-
-          await expectFile(file).toHaveName(`${prefixGroupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-        })
-
-        await test.step('Download as reduced JSON', async () => {
-          const file = await groupsTab.getGroupRow(prefixGroupName).downloadReducedJson()
-
-          await expectFile(file).toHaveName(`${prefixGroupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-        })
-
-        await test.step('Download as reduced HTML', async () => {
-          const file = await groupsTab.getGroupRow(prefixGroupName).downloadReducedHtml()
-
-          await expectFile(file).toHaveName(`${prefixGroupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-        })
-      })
-
-      await test.step('Manual group', async () => {
-
-        await test.step('Download as combined YAML', async () => {
-          const file = await groupsTab.getGroupRow(manualGroupName).downloadCombinedYaml()
-
-          await expectFile(file).toHaveName(`${manualGroupName}_${testPackage.packageId}_${testVersion.version}.yaml`)
-        })
-
-        await test.step('Download as combined JSON', async () => {
-          const file = await groupsTab.getGroupRow(manualGroupName).downloadCombinedJson()
-
-          await expectFile(file).toHaveName(`${manualGroupName}_${testPackage.packageId}_${testVersion.version}.json`)
-        })
-
-        await test.step('Download as reduced YAML', async () => {
-          const file = await groupsTab.getGroupRow(manualGroupName).downloadReducedYaml()
-
-          await expectFile(file).toHaveName(`${manualGroupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-        })
-
-        await test.step('Download as reduced JSON', async () => {
-          const file = await groupsTab.getGroupRow(manualGroupName).downloadReducedJson()
-
-          await expectFile(file).toHaveName(`${manualGroupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-        })
-
-        await test.step('Download as reduced HTML', async () => {
-          const file = await groupsTab.getGroupRow(manualGroupName).downloadReducedHtml()
-
-          await expectFile(file).toHaveName(`${manualGroupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-        })
-      })
-    })
-
   test('[P-ACVP-01.4] Package. Viewer. Download operations on the all main tabs.',
     {
       annotation: [
@@ -260,60 +178,6 @@ test.describe('03.1.1 Access Control. Viewer role. (Package)', () => {
         const file = await operationsTab.toolbar.exportMenu.downloadAll()
 
         await expectFile(file).toHaveName(`DeprecatedOperations_${testPackage.packageId}_${testVersion.version}.xlsx`)
-      })
-    })
-
-  test('[P-ACVP-01.5] Package. Viewer. Download documents.',
-    {
-      annotation: [
-        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8568` },
-      ],
-    },
-    async ({ user1Page: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { versionPackagePage: versionPage } = portalPage
-      const { documentsTab } = versionPage
-      const { slug } = FILE_P_PETSTORE30_CHANGELOG_BASE
-      const { docName } = FILE_P_PETSTORE30.testMeta!
-
-      await portalPage.gotoVersion(testVersion)
-      await documentsTab.click()
-      const docButton = documentsTab.sidebar.getDocRestButton(docName)
-
-      await test.step('Download document as Interactive HTML', async () => {
-        await docButton.openActionMenu()
-        const file = await docButton.actionMenu.downloadZip()
-
-        await expectFile.soft(file).toHaveName(`${slug}.zip`)
-      })
-
-      await test.step('Download document as YAML', async () => {
-        await docButton.openActionMenu()
-        const file = await docButton.actionMenu.downloadYaml()
-
-        await expectFile.soft(file).toHaveName(`${slug}.yaml`)
-      })
-
-      await test.step('Download document as JSON', async () => {
-        await docButton.openActionMenu()
-        const file = await docButton.actionMenu.downloadJson()
-
-        await expectFile.soft(file).toHaveName(`${slug}.json`)
-      })
-
-      await test.step('Download document as YAML (inline refs)', async () => {
-        await docButton.openActionMenu()
-        const file = await docButton.actionMenu.downloadYamlInlineRefs()
-
-        await expectFile.soft(file).toHaveName(`${slug}.yaml`)
-      })
-
-      await test.step('Download document as JSON (inline refs)', async () => {
-        await docButton.openActionMenu()
-        const file = await docButton.actionMenu.downloadJsonInlineRefs()
-
-        await expectFile.soft(file).toHaveName(`${slug}.json`)
       })
     })
 

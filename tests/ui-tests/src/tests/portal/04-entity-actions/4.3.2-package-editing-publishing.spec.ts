@@ -226,9 +226,9 @@ test.describe('4.3.2 Package publishing via Portal', () => {
 
       await test.step('Navigate to the "Documents" tab', async () => {
         await versionPage.documentsTab.click()
-        await versionPage.documentsTab.sidebar.getDocRestButton(FILE_P_PETSTORE20.testMeta!.docName).click()
+        await versionPage.documentsTab.sidebar.getFileButton(FILE_P_PETSTORE20.testMeta!.docName).click()
 
-        await expect.soft(versionPage.documentsTab.openapiView.overview.labels).toHaveText('labellabel 2')
+        await expect.soft(versionPage.documentsTab.oasView.overview.labels).toHaveText('labellabel 2')
       })
     })
 

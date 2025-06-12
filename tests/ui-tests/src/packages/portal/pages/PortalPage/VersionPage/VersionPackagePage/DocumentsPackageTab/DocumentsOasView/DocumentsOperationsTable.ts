@@ -1,7 +1,7 @@
 import { type Page, test as report } from '@playwright/test'
 import type { GetOperationWithMetaParams } from '@portal/entities'
 import { Link } from '@shared/components/base'
-import { MainOperationTableRow } from '../../../MainOperationTableRow'
+import { MainOperationTableRow } from '../../MainOperationTableRow'
 import { DocumentsTagRow } from './DocumentsTagRow'
 
 export class DocumentsOperationsTable {

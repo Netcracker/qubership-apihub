@@ -532,14 +532,14 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       await portalPage.gotoVersion(versionOperationsRest, VERSION_OPERATIONS_TAB_REST)
 
-      await test.step('Download all operations', async () => {
+      await test.step('Export all operations', async () => {
 
         const file = await operationsTab.toolbar.exportMenu.downloadAll()
 
         await expectFile.soft(file).toHaveName(`APIOperations_${testPackage.packageId}_${V_P_PKG_OPERATIONS_REST_R.version}.xlsx`)
       })
 
-      await test.step('Download filtered operations', async () => {
+      await test.step('Export filtered operations', async () => {
 
         await operationsTab.sidebar.apiKindFilterAc.click()
         await operationsTab.sidebar.apiKindFilterAc.noBwcItm.click()

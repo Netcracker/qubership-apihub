@@ -525,14 +525,14 @@ test.describe('8.1 Deprecated (Package)', () => {
 
       await portalPage.gotoVersion(versionDeprecatedRest, VERSION_DEPRECATED_TAB_REST)
 
-      await test.step('Download all operations', async () => {
+      await test.step('Export all operations', async () => {
 
         const file = await deprecatedTab.toolbar.exportMenu.downloadAll()
 
         await expectFile.soft(file).toHaveName(`DeprecatedOperations_${testPackage.packageId}_${V_P_PKG_DEPRECATED_REST_CHANGED_R.version}.xlsx`)
       })
 
-      await test.step('Download filtered operations', async () => {
+      await test.step('Export filtered operations', async () => {
 
         await deprecatedTab.sidebar.apiKindFilterAc.click()
         await deprecatedTab.sidebar.apiKindFilterAc.noBwcItm.click()

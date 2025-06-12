@@ -3,7 +3,7 @@ import { test, type Page } from '@playwright/test'
 export abstract class BaseDialog {
 
   protected readonly rootLocator = this.page.getByRole('dialog')
-  readonly title = this.rootLocator.getByRole('heading')
+  readonly title = this.rootLocator.getByRole('heading').first()
 
   protected constructor(protected readonly page: Page) { }
 
