@@ -45,7 +45,7 @@ export const PackageSearchList: FC<PackageSearchListProps> = memo<PackageSearchL
 
   return (
     <Box width={CONTENT_WIDTH} position="relative">
-      {value.map(({ packageKey, name, parentPackages, createdAt, serviceName, labels, version, status }, index) => {
+      {value.map(({ packageKey, name, parentPackages, createdAt, serviceName, labels, version, status }) => {
         const { versionKey } = getSplittedVersionKey(version)
         return (
           <Box mb={2} key={`package-search-list-box-${packageKey}-${versionKey}`} data-testid="SearchResultRow">

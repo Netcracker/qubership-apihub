@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
+import fileDownload from 'js-file-download'
 import { AUTHORIZATION_LOCAL_STORAGE_KEY } from './constants'
-import { getAuthorization } from './storages'
-import { redirectToSaml } from './redirects'
 import type { ErrorMessage } from './packages-builder'
-import type { Key } from './types'
+import { redirectToSaml } from './redirects'
 import { HttpError } from './responses'
+import { getAuthorization } from './storages'
+import type { Key } from './types'
 
 export const API_V1 = '/api/v1'
 export const API_V2 = '/api/v2'
@@ -68,6 +69,64 @@ export async function requestJson<T extends object | null>(
   await handleFetchRedirect(response, customRedirectHandler)
 
   return await response.json() as T
+}
+
+export type RequestUnknownExtraOptions = {
+  basePath?: string
+  customErrorHandler?: CustomErrorHandler
+  customRedirectHandler?: CustomRedirectHandler
+  ignoreNotFound?: boolean
+  mediaTypes?: string[]
+}
+
+export async function requestUnknown<T extends Record<PropertyKey, unknown> | null>(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  options: RequestUnknownExtraOptions = {},
+  signal?: AbortSignal,
+): Promise<T> {
+  const {
+    basePath = '',
+    customErrorHandler,
+    customRedirectHandler,
+    ignoreNotFound = false,
+    mediaTypes = [],
+  } = options
+
+  const authorization = (init?.headers as Record<string, string>)?.authorization ?? getAuthorization()
+
+  const response = await fetch(`${basePath}${input}`, {
+    headers: {
+      authorization: authorization,
+      ...mediaTypes.length ? { 'Accept': mediaTypes.join(', ') } : {},
+    },
+    ...init,
+    signal: signal,
+  })
+  if (!response.ok) {
+    handleAuthentication(response)
+
+    await handleFetchError(response, ignoreNotFound, customErrorHandler)
+    return null as T
+  }
+
+  await handleFetchRedirect(response, customRedirectHandler)
+
+  // Handle unknown response
+  const contentType = response.headers.get('content-type')
+  if (contentType?.includes('application/json')) {
+    return await response.json()
+  }
+  if (contentType?.includes('application/octet-stream')) {
+    const getFilename = (): string => response.headers
+      .get('content-disposition')!
+      .split('filename=')[1]
+      .split(';')[0]
+    const data = await response.blob()
+    fileDownload(data, getFilename())
+    return null as T
+  }
+  return null as T
 }
 
 export type RequestTextExtraOptions = {

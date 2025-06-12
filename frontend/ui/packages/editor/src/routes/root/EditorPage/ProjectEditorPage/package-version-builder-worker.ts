@@ -20,7 +20,7 @@ import type {
   BuildResult,
   VersionsComparison,
 } from '@netcracker/qubership-apihub-api-processor'
-import { PackageVersionBuilder } from '@netcracker/qubership-apihub-api-processor'
+import { BUILD_TYPE, PackageVersionBuilder } from '@netcracker/qubership-apihub-api-processor'
 
 import type { BuilderOptions } from './package-version-builder'
 import { safeStringify } from '@stoplight/yaml'
@@ -183,7 +183,7 @@ const worker: PackageVersionBuilderWorker = {
     const {
       publishId,
       config: buildConfig,
-    } = await startPackageVersionPublication(options, authorization, builderId, sources)
+    } = await startPackageVersionPublication({ ...options, buildType: BUILD_TYPE.BUILD }, authorization, builderId, sources)
 
     const abortController = new AbortController()
     const intervalId = setInterval(() => {
@@ -283,7 +283,8 @@ function toPackageVersionBuilderConfig(
     previousPackageKey,
     previousVersionKey,
     versionKey,
-  }: BuilderOptions): BuildConfig {
+  }: BuilderOptions,
+): BuildConfig {
   return {
     packageId: packageKey,
     version: versionKey,
@@ -296,6 +297,7 @@ function toPackageVersionBuilderConfig(
       blobId: blobKey,
       labels: labels,
     })) ?? [],
+    buildType: BUILD_TYPE.BUILD,
   }
 }
 

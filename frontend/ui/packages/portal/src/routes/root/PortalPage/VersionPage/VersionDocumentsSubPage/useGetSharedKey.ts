@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query'
 import type { Key } from '@apihub/entities/keys'
-import { useParams } from 'react-router-dom'
-import type { RefetchQuery } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { portalRequestJson } from '@apihub/utils/requests'
+import type { RefetchQuery } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import { useQuery } from '@tanstack/react-query'
 
 const SHARED_KEY_QUERY_KEY = 'shared-key-query-key'
 
-export function useGetSharedKey(slug: string, refPackageKey: string | undefined): RefetchQuery<string, Error> {
-  const { packageId, versionId } = useParams()
-  const packageKey = refPackageKey ?? packageId
+export function useGetSharedKey(
+  slug: string,
+  docPackageKey: string | undefined,
+  docPackageVersionKey: string | undefined,
+): RefetchQuery<string, Error> {
   const { refetch } = useQuery<string, Error, string>({
-    queryKey: [SHARED_KEY_QUERY_KEY, packageKey, versionId, slug],
-    queryFn: () => getSharedKey(packageKey!, versionId!, slug!),
+    queryKey: [SHARED_KEY_QUERY_KEY, docPackageKey, docPackageVersionKey, slug],
+    queryFn: () => getSharedKey(docPackageKey!, docPackageVersionKey!, slug!),
     enabled: false,
   })
 

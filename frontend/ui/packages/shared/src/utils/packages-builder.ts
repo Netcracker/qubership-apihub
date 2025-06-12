@@ -21,7 +21,7 @@ import type {
   ApiKind,
   BuildConfig,
   ResolvedDeprecatedOperations,
-  ResolvedDocuments,
+  ResolvedGroupDocuments,
   ResolvedOperation,
   ResolvedReferences,
 } from '@netcracker/qubership-apihub-api-processor'
@@ -32,7 +32,6 @@ import type { ResolvedVersionDto } from '../types/packages'
 import type { OperationDto, OperationsDto } from '../entities/operations'
 import { isRestOperationDto } from '../entities/operations'
 import type { ApiType } from '../entities/api-types'
-import { API_TYPE_REST } from '../entities/api-types'
 
 export async function getPackageVersionContent(
   packageKey: Key,
@@ -138,7 +137,7 @@ export async function fetchVersionDocuments(
   authorization: string,
   page: number,
   limit: number = 100,
-): Promise<ResolvedDocuments | null> {
+): Promise<ResolvedGroupDocuments | null> {
   const queryParams = optionalSearchParams({
     page: { value: page },
     limit: { value: limit },
@@ -149,7 +148,7 @@ export async function fetchVersionDocuments(
   const groupName = encodeURIComponent(filterByOperationGroup)
 
   const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/groups/:groupName/transformation/documents'
-  return await requestJson<ResolvedDocuments>(
+  return await requestJson<ResolvedGroupDocuments>(
     `${generatePath(pathPattern, { packageId, versionId, apiType, groupName })}?${queryParams}`,
     {
       headers: { authorization },

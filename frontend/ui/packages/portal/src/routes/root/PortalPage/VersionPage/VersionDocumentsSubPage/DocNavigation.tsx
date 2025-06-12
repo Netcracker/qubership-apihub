@@ -43,7 +43,7 @@ export const DocNavigation: FC = memo(() => {
   const { navigateToDocuments } = useNavigation()
 
   const [kind, isPackageKindLoading] = usePackageKind()
-  const isDashboard: boolean | null = useMemo(() => kind === DASHBOARD_KIND ?? null, [kind])
+  const isDashboard = useMemo(() => kind === DASHBOARD_KIND, [kind])
 
   const selectedPackage = useMemo(() => {
     if (isPackageKindLoading) {
@@ -103,9 +103,7 @@ export const DocNavigation: FC = memo(() => {
   })
 
   if (isPackageKindLoading) {
-    return (
-      <LoadingIndicator/>
-    )
+    return <LoadingIndicator />
   }
 
   return (
@@ -126,7 +124,11 @@ export const DocNavigation: FC = memo(() => {
         </Box>
       )}
       <Box sx={{ p: 2 }}>
-        <SearchBar value={searchValue} onValueChange={setSearchValue} data-testid="SearchDocuments"/>
+        <SearchBar
+          value={searchValue}
+          onValueChange={setSearchValue}
+          data-testid="SearchDocuments"
+        />
       </Box>
       <DocumentList
         isLoading={isInitialLoading}
