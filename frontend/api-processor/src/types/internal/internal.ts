@@ -17,7 +17,7 @@
 import { PackageId, VersionId } from '../external'
 import { ErrorObject } from 'ajv'
 
-import { VersionDocument } from './documents'
+import { FileFormat, VersionDocument } from './documents'
 
 export const FILE_KIND = {
   BINARY: 'binary',
@@ -27,7 +27,7 @@ export const FILE_KIND = {
 interface FileBase {
   fileId: string
   type: string
-  format: string
+  format: FileFormat
   source: Blob
 }
 
@@ -41,7 +41,7 @@ export interface BinaryFile extends FileBase {
   kind: typeof FILE_KIND.BINARY
 }
 
-export type File = TextFile | BinaryFile
+export type SourceFile = TextFile | BinaryFile
 
 export interface VersionFiles<T = VersionDocument> {
   files: T[]

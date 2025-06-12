@@ -56,7 +56,7 @@ export const parseRestFile = async (fileId: string, source: Blob): Promise<TextF
         kind: FILE_KIND.TEXT,
       }
     }
-  } else if ([REST_FILE_FORMAT.YAML, REST_FILE_FORMAT.YML].includes(extension) || !extension) {
+  } else if (([REST_FILE_FORMAT.YAML, REST_FILE_FORMAT.YML] as string[]).includes(extension) || !extension) {
     if (/\s*?'?"?openapi'?"?\s*?:\s*?\|?\s*'?"?3\.[01]\..+?'?"?/g.test(sourceString)) {
       const data = YAML.load(sourceString) as OpenAPIV3.Document
 

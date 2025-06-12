@@ -69,6 +69,7 @@ describe('Deprecated Items test', () => {
       status: VERSION_STATUS.RELEASE,
       previousVersion: 'v1',
       files: [{ fileId: 'PublicRegistry API(4)v2.yaml' }],
+      buildType: BUILD_TYPE.BUILD,
     }, {}, portal)
 
     const result = await editor.run()

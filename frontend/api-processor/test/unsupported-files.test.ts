@@ -55,7 +55,7 @@ describe('Unsupported files test', () => {
 
   test('Pack unsupported files using admzip', async () => {
     await editor.run()
-    const packageZip = await editor.createNodeVersionPackage()
-    await fs.writeFile(`${VERSIONS_PATH}/unsupported-files-admzip-result.zip`, packageZip)
+    const { packageVersion } = await editor.createNodeVersionPackage()
+    await fs.writeFile(`${VERSIONS_PATH}/unsupported-files-admzip-result.zip`, packageVersion)
   }, 100000)
 })

@@ -126,6 +126,7 @@ describe('Editor scenarios', () => {
         previousVersion: 'v1',
         status: VERSION_STATUS.RELEASE,
         files: [{ fileId: 'spec-1-v2.yaml' }, { fileId: 'spec-2-v2.yaml' }],
+        buildType: BUILD_TYPE.BUILD,
       }, {}, apiAudiencePackage)
 
       const result = await editor.run()

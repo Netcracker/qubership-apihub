@@ -16,19 +16,23 @@
 
 import {
   BuildConfig,
+  BuildConfigBase,
   BuildConfigFile,
   BuildConfigRef,
   FileId,
+  isPublishBuildConfig,
   OperationId,
   OperationsApiType,
   OperationTypes,
   PackageId,
   ResolvedComparisonSummary,
   ResolvedDeprecatedOperations,
-  ResolvedDocuments,
+  ResolvedGroupDocuments,
   ResolvedOperations,
+  ResolvedVersionDocuments,
   VersionId,
   VersionsComparison,
+  ZippableDocument,
 } from './types'
 import {
   ApiBuilder,
@@ -38,11 +42,11 @@ import {
   BuilderRunOptions,
   BuildResult,
   CompareContext,
-  File,
   FILE_KIND,
   FileSourceMap,
   IPackageVersionBuilder,
   OperationChanges,
+  SourceFile,
   VersionCache,
   VersionDocument,
 } from './types/internal'
@@ -70,6 +74,10 @@ import { BuildStrategy, ChangelogStrategy, DocumentGroupStrategy, PrefixGroupsCh
 import { BuilderStrategyContext } from './builder-strategy'
 import { MergedDocumentGroupStrategy } from './strategies/merged-document-group.strategy'
 import { asyncDebugPerformance } from './utils/logs'
+import { ExportVersionStrategy } from './strategies/export-version.strategy'
+import { ExportRestDocumentStrategy } from './strategies/export-rest-document.strategy'
+import { ExportRestOperationsGroupStrategy } from './strategies/export-rest-operations-group.strategy'
+import { ResolvedPackage } from './types/external/package'
 
 export const DEFAULT_RUN_OPTIONS: BuilderRunOptions = {
   cleanCache: false,
@@ -78,6 +86,8 @@ export const DEFAULT_RUN_OPTIONS: BuilderRunOptions = {
 export class PackageVersionBuilder implements IPackageVersionBuilder {
   apiBuilders: ApiBuilder[] = []
   documents = new Map<string, VersionDocument>()
+  exportDocuments: ZippableDocument[] = []
+  exportFileName?: string
   operations = new Map<string, ApiOperation>()
   comparisons: VersionsComparison[] = []
 
@@ -90,7 +100,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
   config: BuildConfig
   builderRunOptions = DEFAULT_RUN_OPTIONS
 
-  readonly parsedFiles: Map<string, File> = new Map()
+  readonly parsedFiles: Map<string, SourceFile> = new Map()
 
   private basePath: string = ''
 
@@ -124,8 +134,9 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     return createVersionPackage(this.buildResult, new JsZipTool(), this.builderContext(this.config), options)
   }
 
-  async createNodeVersionPackage(): Promise<Buffer> {
-    return createVersionPackage(this.buildResult, new AdmZipTool(), this.builderContext(this.config))
+  // todo rename
+  async createNodeVersionPackage(): Promise<{ packageVersion: any; exportFileName?: string }> {
+    return {packageVersion: await createVersionPackage(this.buildResult, new AdmZipTool(), this.builderContext(this.config)), exportFileName: this.buildResult.exportFileName}
   }
 
   get operationList(): ApiOperation[] {
@@ -143,6 +154,8 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       operations: this.operations,
       comparisons: this.comparisons,
       documents: this.documents,
+      exportDocuments: this.exportDocuments,
+      exportFileName: this.exportFileName,
       config: this.packageConfig,
       notifications: this.notifications,
       merged: this.merged,
@@ -153,23 +166,35 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     this.operations = buildResult.operations
     this.comparisons = buildResult.comparisons
     this.documents = buildResult.documents
+    this.exportDocuments = buildResult.exportDocuments
+    this.exportFileName = buildResult.exportFileName
     this.notifications = buildResult.notifications
     this.merged = buildResult.merged
   }
 
-  builderContext(config: BuildConfig): BuilderContext {
+  builderContext(config: BuildConfigBase): BuilderContext {
+    let basePath = ''
+    if (isPublishBuildConfig(config)) {
+      basePath = findSharedPath(config.files?.map(({ fileId }) => fileId).filter(Boolean) ?? [])
+    }
+
     return {
       apiBuilders: this.apiBuilders,
-      basePath: findSharedPath(config.files?.map(({ fileId }) => fileId).filter(Boolean) ?? []),
+      // todo only used in build strategy, move to the dedicated BuilderContext subtype
+      basePath: basePath,
+      packageResolver: this.packageResolver.bind(this),
       versionDeprecatedResolver: this.versionDeprecatedResolver.bind(this),
+      templateResolver: this.templateResolver.bind(this),
       parsedFileResolver: this.parsedFileResolver.bind(this),
+      rawDocumentResolver: this.rawDocumentResolver.bind(this),
       operationResolver: (operationId: OperationId) => this.operations.get(operationId) ?? null,
       notifications: this.notifications,
       config: this.config,
       configuration: this.params.configuration,
       builderRunOptions: this.builderRunOptions,
+      groupDocumentsResolver: this.groupDocumentsResolver.bind(this),
       versionDocumentsResolver: this.versionDocumentsResolver.bind(this),
-      templateResolver: this.params.resolvers.templateResolver,
+      groupExportTemplateResolver: this.params.resolvers.groupExportTemplateResolver,
       versionLabels: this.config.metadata?.versionLabels as Array<string>,
     }
   }
@@ -228,6 +253,18 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       builderStrategyContext.setStrategy(new MergedDocumentGroupStrategy())
     }
 
+    if (buildType === BUILD_TYPE.EXPORT_VERSION) {
+      builderStrategyContext.setStrategy(new ExportVersionStrategy())
+    }
+
+    if (buildType === BUILD_TYPE.EXPORT_REST_DOCUMENT) {
+      builderStrategyContext.setStrategy(new ExportRestDocumentStrategy())
+    }
+
+    if (buildType === BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP) {
+      builderStrategyContext.setStrategy(new ExportRestOperationsGroupStrategy())
+    }
+
     await asyncDebugPerformance('[Builder]', async (debugCtx) => {
       this.setBuildResult(await builderStrategyContext.executeStrategy(debugCtx))
     }, undefined, [buildType, this.config.packageId, this.config.version])
@@ -235,7 +272,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     return this.buildResult
   }
 
-  async parsedFileResolver(fileId: string): Promise<File | null> {
+  async parsedFileResolver(fileId: string): Promise<SourceFile | null> {
     if (this.parsedFiles.has(fileId)) {
       return this.parsedFiles.get(fileId) ?? null
     }
@@ -250,6 +287,38 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     }
 
     return await this.parseFile(fileId, source)
+  }
+
+  async templateResolver(
+    templatePath: string,
+  ): Promise<Blob> {
+    if (!this.params.resolvers.templateResolver) {
+      throw new Error('templateResolver is not provided')
+    }
+
+    const template = await this.params.resolvers.templateResolver(templatePath)
+    if (!template) {
+      throw new Error(`Template ${templatePath} is missing`)
+    }
+
+    return template
+  }
+
+  async rawDocumentResolver(
+    version: VersionId,
+    packageId: PackageId,
+    slug: string,
+  ): Promise<File> {
+    if (!this.params.resolvers.rawDocumentResolver) {
+      throw new Error('rawDocumentResolver is not provided')
+    }
+
+    const document = await this.params.resolvers.rawDocumentResolver(version, packageId, slug)
+    if (!document) {
+      throw new Error(`Raw document ${slug} is missing`)
+    }
+
+    return document
   }
 
   async versionComparisonResolver(
@@ -323,20 +392,20 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     return operations
   }
 
-  async versionDocumentsResolver(
+  async groupDocumentsResolver(
     apiType: OperationsApiType,
     version: VersionId,
     packageId: PackageId,
     filterByOperationGroup: string,
-  ): Promise<ResolvedDocuments | null> {
+  ): Promise<ResolvedGroupDocuments | null> {
     packageId = packageId ?? this.config.packageId
 
-    const { versionDocumentsResolver } = this.params.resolvers
-    if (!versionDocumentsResolver) {
-      throw new Error('No versionDocumentsResolver provided')
+    const { groupDocumentsResolver } = this.params.resolvers
+    if (!groupDocumentsResolver) {
+      throw new Error('No groupDocumentsResolver provided')
     }
 
-    const documents = await versionDocumentsResolver(
+    const documents = await groupDocumentsResolver(
       apiType,
       version,
       packageId,
@@ -355,6 +424,50 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
           message: `Not all documents have data for ${packageId}/${version} that match the criteria (apiType=${apiType}, filterByOperationGroup=${filterByOperationGroup})`,
         })
       }
+    }
+
+    return documents
+  }
+
+  async packageResolver(
+    packageId: string,
+  ): Promise<ResolvedPackage> {
+    const { packageResolver } = this.params.resolvers
+    if (!packageResolver) {
+      throw new Error('No packageResolver provided')
+    }
+
+    const resolvedPackage = await packageResolver(packageId)
+    if (!resolvedPackage) {
+      throw new Error(`No such package: packageId: ${packageId}`)
+    }
+
+    return resolvedPackage
+  }
+
+  async versionDocumentsResolver(
+    version: VersionId,
+    packageId: PackageId,
+    apiType?: OperationsApiType,
+  ): Promise<ResolvedVersionDocuments | null> {
+    packageId = packageId ?? this.config.packageId
+
+    const { versionDocumentsResolver } = this.params.resolvers
+    if (!versionDocumentsResolver) {
+      throw new Error('No versionDocumentsResolver provided')
+    }
+
+    const documents = await versionDocumentsResolver(
+      version,
+      packageId,
+      apiType,
+    )
+
+    if (!documents?.documents.length) {
+      this.notifications.push({
+        severity: MESSAGE_SEVERITY.Warning,
+        message: `No documents for ${packageId}/${version} that match the criteria (apiType=${apiType})`,
+      })
     }
 
     return documents
@@ -513,12 +626,12 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     return new Set(apiTypes)
   }
 
-  async parseFile(fileId: string, source: Blob): Promise<File | null> {
+  async parseFile(fileId: string, source: Blob): Promise<SourceFile | null> {
     if (this.parsedFiles.has(fileId)) {
       return this.parsedFiles.get(fileId) ?? null
     }
 
-    if (SUPPORTED_FILE_FORMATS.includes(getFileExtension(fileId))) {
+    if ((SUPPORTED_FILE_FORMATS as string[]).includes(getFileExtension(fileId))) {
       for (const { parser } of this.apiBuilders) {
         try {
           // todo check source.type

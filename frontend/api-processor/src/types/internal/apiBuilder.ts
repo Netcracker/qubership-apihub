@@ -18,25 +18,30 @@ import {
   BuildConfig,
   BuildConfigFile,
   BuildConfigRef,
+  FileId,
+  GroupDocumentsResolver,
+  OperationId,
   OperationsApiType,
   OperationsGroupExportFormat,
   PackageId,
   ResolvedOperation,
+  TemplatePath,
   VersionDeprecatedResolver,
   VersionDocumentsResolver,
   VersionId,
 } from '../external'
 import { CompareContext, OperationChanges } from './compare'
 import { BuilderConfiguration, BuilderRunOptions, VersionCache } from './builder'
-import { VersionDocument } from './documents'
+import { VersionDocument, ZippableDocument } from './documents'
 import { NotificationMessage } from '../package/notifications'
 import { RestOperationData } from '../../apitypes/rest/rest.types'
 import { GRAPHQL_API_TYPE, REST_API_TYPE, TEXT_API_TYPE, UNKNOWN_API_TYPE } from '../../apitypes'
 import { ChangeMessage } from '../package'
-import { File, TextFile } from './internal'
+import { SourceFile, TextFile } from './internal'
 import { ApiOperation } from './operation'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
 import { DebugPerformanceContext } from '../../utils/logs'
+import { ResolvedPackage } from '../external/package'
 
 export type BuilderType =
   | typeof REST_API_TYPE
@@ -50,21 +55,31 @@ export interface BuilderContext<T = any> {
   versionDeprecatedResolver: VersionDeprecatedResolver
   basePath: string
   parsedFileResolver: _ParsedFileResolver
+  templateResolver: _TemplateResolver
+  packageResolver: _PackageResolver
   notifications: NotificationMessage[]
   config: BuildConfig
   builderRunOptions: BuilderRunOptions
   configuration?: BuilderConfiguration
   versionDocumentsResolver: VersionDocumentsResolver
-  templateResolver?: TemplateResolver
+  groupDocumentsResolver: GroupDocumentsResolver
+  groupExportTemplateResolver?: GroupExportTemplateResolver
+  rawDocumentResolver: _RawDocumentResolver
   versionLabels?: Array<string>
 }
 
-export type TemplateResolver = (
+export type GroupExportTemplateResolver = (
   apiType: OperationsApiType,
   version: VersionId,
   packageId: PackageId,
   filterByOperationGroup: string,
 ) => Promise<string>
+
+export type _RawDocumentResolver = (
+  version: VersionId,
+  packageId: PackageId,
+  slug: string,
+) => Promise<File>
 
 export interface CompareOperationsPairContext {
   notifications: NotificationMessage[]
@@ -77,10 +92,10 @@ export interface CompareOperationsPairContext {
 
 export type NormalizedOperationId = string
 
-export type FileParser = (fileId: string, data: Blob) => Promise<File | undefined>
+export type FileParser = (fileId: string, data: Blob) => Promise<SourceFile | undefined>
 export type DocumentBuilder<T> = (parsedFile: TextFile, file: BuildConfigFile, ctx: BuilderContext<T>) => Promise<VersionDocument<T>>
 export type OperationsBuilder<T, M = any> = (document: VersionDocument<T>, ctx: BuilderContext<T>, debugCtx?: DebugPerformanceContext) => Promise<ApiOperation<M>[]>
-export type DocumentDumper<T> = (document: VersionDocument<T>, format?: OperationsGroupExportFormat) => Blob
+export type DocumentDumper<T> = (document: ZippableDocument<T>, format?: OperationsGroupExportFormat) => Blob
 export type OperationDataCompare<T> = (current: T, previous: T, ctx: CompareOperationsPairContext) => Promise<Diff[]>
 export type OperationChangesValidator = (
   changes: ChangeMessage, // + ctx with internal resolvers
@@ -103,8 +118,10 @@ export interface ApiBuilder<T = any, O = any, M = any> {
 }
 
 // internal
+export type _PackageResolver = (packageId: PackageId) => Promise<ResolvedPackage>
 export type _VersionResolver = (packageId: PackageId, version: VersionId) => Promise<VersionCache | null>
 export type _VersionReferencesResolver = (packageId: PackageId, version: VersionId) => Promise<BuildConfigRef[]>
 
-export type _ParsedFileResolver = (fileId: string) => Promise<File | null>
-export type _OperationResolver = (operationId: string) => ResolvedOperation | null
+export type _ParsedFileResolver = (fileId: FileId) => Promise<SourceFile | null>
+export type _TemplateResolver = (templatePath: TemplatePath) => Promise<Blob>
+export type _OperationResolver = (operationId: OperationId) => ResolvedOperation | null

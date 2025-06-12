@@ -29,7 +29,7 @@ import {
   PackageVersionBuilder,
   ResolvedComparisonSummary,
   ResolvedDeprecatedOperations,
-  ResolvedDocuments,
+  ResolvedGroupDocuments,
   ResolvedOperations,
   ResolvedReferences,
   ResolvedVersion,
@@ -138,7 +138,8 @@ export class ApihubRegistry implements IRegistry {
       versionReferencesResolver: this.versionReferencesResolver.bind(this),
       versionComparisonResolver: this.versionComparisonResolver.bind(this),
       versionDeprecatedResolver: this.versionDeprecatedResolver.bind(this),
-      versionDocumentsResolver: this.versionDocumentsResolver.bind(this),
+      // todo versionDocumentsResolver: this.versionDocumentsResolver.bind(this),
+      groupDocumentsResolver: this.groupDocumentsResolver.bind(this),
     }
   }
 
@@ -231,15 +232,15 @@ export class ApihubRegistry implements IRegistry {
     return data ?? null
   }
 
-  async versionDocumentsResolver(
+  async groupDocumentsResolver(
     apiType: OperationsApiType,
     version: VersionId,
     packageId: PackageId,
     filterByOperationGroup: string,
-  ): Promise<ResolvedDocuments | null> {
+  ): Promise<ResolvedGroupDocuments | null> {
     const encodedPackageKey = encodeURIComponent(packageId)
     const encodedVersionKey = encodeURIComponent(version)
-    const response: ResolvedDocuments = { documents: [] }
+    const response: ResolvedGroupDocuments = { documents: [], packages: {} }
 
     const LIMIT = 100
     let page = 0

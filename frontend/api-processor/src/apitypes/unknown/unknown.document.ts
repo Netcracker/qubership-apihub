@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BuildConfigFile, DocumentBuilder, DocumentDumper, File, VersionDocument } from '../../types'
+import { BuildConfigFile, DocumentBuilder, DocumentDumper, SourceFile, VersionDocument } from '../../types'
 import { createBundlingErrorHandler, getBundledFileDataWithDependencies, getDocumentTitle } from '../../utils'
 import { FILE_FORMAT } from '../../consts'
 
@@ -57,7 +57,7 @@ export const buildUnknownDocument: DocumentBuilder<string> = async (parsedFile, 
   }
 }
 
-export const buildBinaryDocument: (parsedFile: File, file: BuildConfigFile) => Promise<VersionDocument> = async (parsedFile, file) => {
+export const buildBinaryDocument: (parsedFile: SourceFile, file: BuildConfigFile) => Promise<VersionDocument> = async (parsedFile, file) => {
   const { fileId, slug = '', publish, ...metadata } = file
   const { type, format, source } = parsedFile
 

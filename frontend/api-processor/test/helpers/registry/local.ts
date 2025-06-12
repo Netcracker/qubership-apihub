@@ -26,11 +26,14 @@ import {
   EMPTY_CHANGE_SUMMARY,
   FILE_FORMAT,
   GRAPHQL_API_TYPE,
-  graphqlApiBuilder, MESSAGE_SEVERITY,
+  graphqlApiBuilder,
+  KIND_PACKAGE,
+  MESSAGE_SEVERITY,
   NotificationMessage,
   OperationId,
   OperationsApiType,
   PACKAGE,
+  PackageId,
   PackageNotifications,
   PackageVersionBuilder,
   ReferenceElement,
@@ -38,13 +41,14 @@ import {
   ResolvedComparisonSummary,
   ResolvedDeprecatedOperation,
   ResolvedDeprecatedOperations,
-  ResolvedDocument,
-  ResolvedDocuments,
+  ResolvedGroupDocument,
+  ResolvedGroupDocuments,
   ResolvedOperation,
   ResolvedOperations,
   ResolvedReferenceMap,
   ResolvedReferences,
   ResolvedVersion,
+  ResolvedVersionDocuments,
   REST_API_TYPE,
   restApiBuilder,
   REVISION_DELIMITER,
@@ -53,6 +57,7 @@ import {
   VERSION_STATUS,
   VersionDocument,
   VersionDocuments,
+  VersionId,
   VersionsComparison,
 } from '../../../src'
 import {
@@ -66,11 +71,12 @@ import {
   saveNotifications,
   saveOperationsArray,
 } from './utils'
-import { getCompositeKey, getSplittedVersionKey, isNotEmpty, toBase64 } from '../../../src/utils'
-import { groupBy } from 'graphql/jsutils/groupBy'
+import { getCompositeKey, getDocumentTitle, getSplittedVersionKey, isNotEmpty, takeIfDefined, toBase64 } from '../../../src/utils'
 import { IRegistry } from './types'
 import { calculateTotalChangeSummary } from '../../../src/components/compare'
 import { toVersionsComparisonDto } from '../../../src/utils/transformToDto'
+import path from 'path'
+import { ResolvedPackage } from '../../../src/types/external/package'
 
 const VERSIONS_PATH = 'test/versions'
 const DEFAULT_PROJECTS_PATH = 'test/projects'
@@ -89,12 +95,15 @@ export class LocalRegistry implements IRegistry {
 
   get versionResolvers(): Omit<BuilderResolvers, 'fileResolver'> {
     return {
+      packageResolver: this.packageResolver.bind(this),
       versionResolver: this.versionResolver.bind(this),
       versionOperationsResolver: this.versionOperationsResolver.bind(this),
       versionReferencesResolver: this.versionReferencesResolver.bind(this),
       versionComparisonResolver: this.versionComparisonResolver.bind(this),
       versionDeprecatedResolver: this.versionDeprecatedResolver.bind(this),
+      groupDocumentsResolver: this.groupDocumentsResolver.bind(this),
       versionDocumentsResolver: this.versionDocumentsResolver.bind(this),
+      rawDocumentResolver: this.rawDocumentResolver.bind(this),
     }
   }
 
@@ -108,6 +117,21 @@ export class LocalRegistry implements IRegistry {
 
   static openPackage(packageId: string, groupOperationIds: Record<string, string[]> = {}, projectsDir: string = DEFAULT_PROJECTS_PATH): LocalRegistry {
     return new LocalRegistry(packageId, groupOperationIds, projectsDir)
+  }
+
+  async packageResolver(
+    packageId: string,
+  ): Promise<ResolvedPackage | null> {
+    const config = await loadConfig(this.projectsDir, packageId)
+
+    if (!config || !config.packageName) {
+      return null
+    }
+
+    return {
+      packageId: config.packageId,
+      name: config.packageName,
+    }
   }
 
   async versionResolver(
@@ -175,18 +199,21 @@ export class LocalRegistry implements IRegistry {
     return { operations: versionOperations }
   }
 
-  async versionDocumentsResolver(
+  async groupDocumentsResolver(
     apiType: OperationsApiType,
     version: string,
     packageId: string,
     filterByOperationGroup: string,
-  ): Promise<ResolvedDocuments | null> {
+  ): Promise<ResolvedGroupDocuments | null> {
     const { config: { refs = [] } = {}, documents } = await this.getVersion(packageId || this.packageId, version) ?? {}
 
     const documentsFromVersion = Array.from(documents?.values() ?? [])
 
     if (isNotEmpty(documentsFromVersion)) {
-      return { documents: this.resolveDocuments(documentsFromVersion, this.filterOperationIdsByGroup(filterByOperationGroup)) }
+      return {
+        documents: this.resolveDocuments(documentsFromVersion, this.filterOperationIdsByGroup(filterByOperationGroup)),
+        packages: {},
+      }
     }
 
     const documentsFromRefs = (
@@ -194,20 +221,89 @@ export class LocalRegistry implements IRegistry {
         const versionCache = await this.getVersion(refId, version)
         if (!versionCache) return []
         const { documents } = versionCache
-        return Array.from(documents.values())
+        return this.resolveDocuments(Array.from(documents.values()), this.filterOperationIdsByGroup(filterByOperationGroup), refId)
       }))
     ).flat()
 
-    return { documents: this.resolveDocuments(documentsFromRefs, this.filterOperationIdsByGroup(filterByOperationGroup)) }
+    const packages = refs.reduce((acc, ref) => {
+      acc[ref.refId] = {
+        refId: ref.refId,
+        version: ref.version,
+        kind: KIND_PACKAGE,
+        name: ref.refId,
+        status: VERSION_STATUS.DRAFT,
+      }
+      return acc
+    }, {} as ResolvedReferenceMap)
+
+    return { documents: documentsFromRefs, packages: packages }
+  }
+
+  async versionDocumentsResolver(
+    version: VersionId,
+    packageId: PackageId,
+    apiType?: OperationsApiType,
+  ): Promise<ResolvedVersionDocuments | null> {
+    const { config: { refs = [] } = {}, documents } = await this.getVersion(packageId || this.packageId, version) ?? {}
+
+    const documentsFromVersion = Array.from(documents?.values() ?? [])
+
+    if (isNotEmpty(documentsFromVersion)) {
+      return {
+        documents: this.resolveDocuments(documentsFromVersion),
+        packages: {},
+      }
+    }
+
+    const documentsFromRefs = (
+      await Promise.all(refs.map(async ({ refId, version }) => {
+        const versionCache = await this.getVersion(refId, version)
+        if (!versionCache) return []
+        const { documents } = versionCache
+        return this.resolveDocuments(Array.from(documents.values()), undefined, refId)
+      }))
+    ).flat()
+
+    const packages = refs.reduce((acc, ref) => {
+      acc[ref.refId] = {
+        refId: ref.refId,
+        version: ref.version,
+        kind: KIND_PACKAGE,
+        name: ref.refId,
+        status: VERSION_STATUS.DRAFT,
+      }
+      return acc
+    }, {} as ResolvedReferenceMap)
+
+    return { documents: documentsFromRefs, packages: packages }
+  }
+
+  private async findFileNameBySlug(directory: string, slug: string): Promise<string> {
+    const files = await fs.readdir(directory)
+    const fileName = files.find(file => getDocumentTitle(file).toLowerCase() === slug.toLowerCase())
+    if (!fileName) {
+      throw new Error(`File for slug ${slug} was not found in ${directory}`)
+    }
+    return fileName
+  }
+
+  async rawDocumentResolver(
+    version: VersionId,
+    packageId: PackageId,
+    slug: string,
+  ): Promise<File | null> {
+    const documentsPath = `${packageId}/${version}/documents`
+    const fileName = await this.findFileNameBySlug(path.join(process.cwd(), VERSIONS_PATH, documentsPath), slug)
+    return loadFile(VERSIONS_PATH, documentsPath, fileName)
   }
 
   private filterOperationIdsByGroup(filterByOperationGroup: string): (id: string) => boolean {
     return (id: string): boolean => this.groupToOperationIdsMap[filterByOperationGroup]?.includes(id)
   }
 
-  private resolveDocuments(documents: VersionDocument[], filterOperationIdsByGroup: (id: string) => boolean): ResolvedDocument[] {
+  private resolveDocuments(documents: VersionDocument[], filterOperationIdsByGroup?: (id: string) => boolean, refId?: string): ResolvedGroupDocument[] {
     return documents
-      .filter(versionDocument => versionDocument.operationIds.some(filterOperationIdsByGroup))
+      .filter(versionDocument => (filterOperationIdsByGroup ? versionDocument.operationIds.some(filterOperationIdsByGroup) : true))
       .map(document => ({
         version: document.version,
         fileId: document.fileId,
@@ -217,8 +313,10 @@ export class LocalRegistry implements IRegistry {
         filename: document.filename,
         labels: [],
         title: document.title,
-        includedOperationIds: document.operationIds.filter(filterOperationIdsByGroup),
+        ...(filterOperationIdsByGroup ? { includedOperationIds: document.operationIds.filter(filterOperationIdsByGroup!) } : {}),
+        description: document.description,
         data: toBase64(JSON.stringify(document.data)),
+        ...takeIfDefined({ packageRef: refId }),
       }))
   }
 
@@ -282,7 +380,9 @@ export class LocalRegistry implements IRegistry {
           packages[packageRef] = {
             refId: ref.refId,
             version: ref.version,
-            versionRevision: 0,
+            kind: KIND_PACKAGE,
+            name: ref.refId,
+            status: VERSION_STATUS.DRAFT,
           }
           references.push({
             packageRef: packageRef,
@@ -388,16 +488,15 @@ export class LocalRegistry implements IRegistry {
     )
   }
 
-  async getVersion(packageId: string, version: string): Promise<PackageVersionCache | undefined> {
-    const [verisonKey] = getSplittedVersionKey(version)
-    const compositeKey = getCompositeKey(packageId, verisonKey)
+  async getVersion(packageId: string, versionKey: string): Promise<PackageVersionCache | undefined> {
+    const compositeKey = getCompositeKey(packageId, versionKey)
     if (this.versions.has(compositeKey)) {
       return this.versions.get(compositeKey)
     }
 
     const versionConfig = await loadConfig(
       VERSIONS_PATH,
-      `${packageId}/${verisonKey}`,
+      `${packageId}/${versionKey}`,
       PACKAGE.INFO_FILE_NAME,
     ) as BuildConfig
     const versionCache: PackageVersionCache = {
@@ -414,7 +513,7 @@ export class LocalRegistry implements IRegistry {
 
     const operationsFile = await loadFileAsString(
       VERSIONS_PATH,
-      `${packageId}/${verisonKey}`,
+      `${packageId}/${versionKey}`,
       PACKAGE.OPERATIONS_FILE_NAME,
     )
 
@@ -427,7 +526,7 @@ export class LocalRegistry implements IRegistry {
 
       const data = await loadFileAsString(
         VERSIONS_PATH,
-        `${packageId}/${verisonKey}/${PACKAGE.OPERATIONS_DIR_NAME}`,
+        `${packageId}/${versionKey}/${PACKAGE.OPERATIONS_DIR_NAME}`,
         `${operation.operationId}.json`,
       )
       versionCache.operations.set(
@@ -441,14 +540,14 @@ export class LocalRegistry implements IRegistry {
 
     const documentsFile = await loadFileAsString(
       VERSIONS_PATH,
-      `${packageId}/${verisonKey}`,
+      `${packageId}/${versionKey}`,
       PACKAGE.DOCUMENTS_FILE_NAME,
     )
     const { documents } = documentsFile ? JSON.parse(documentsFile) : null as VersionDocuments | null ?? { documents: [] }
     for (const document of documents) {
       const data = await loadFileAsString(
         VERSIONS_PATH,
-        `${packageId}/${verisonKey}/${PACKAGE.DOCUMENTS_DIR_NAME}`,
+        `${packageId}/${versionKey}/${PACKAGE.DOCUMENTS_DIR_NAME}`,
         document.filename,
       )
 
@@ -465,7 +564,7 @@ export class LocalRegistry implements IRegistry {
 
     const comparisonsFile = await loadFileAsString(
       VERSIONS_PATH,
-      `${packageId}/${verisonKey}`,
+      `${packageId}/${versionKey}`,
       PACKAGE.COMPARISONS_FILE_NAME,
     )
     const { comparisons } = (comparisonsFile
@@ -478,7 +577,7 @@ export class LocalRegistry implements IRegistry {
 
     const notificationsFile = await loadFileAsString(
       VERSIONS_PATH,
-      `${packageId}/${verisonKey}`,
+      `${packageId}/${versionKey}`,
       PACKAGE.NOTIFICATIONS_FILE_NAME,
     )
     const { notifications } = (notificationsFile

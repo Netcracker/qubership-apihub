@@ -21,7 +21,8 @@ import {
   ChangeSummary,
   DEPRECATED_CHANGE_TYPE,
   NON_BREAKING_CHANGE_TYPE,
-  RISKY_CHANGE_TYPE, SEMI_BREAKING_CHANGE_TYPE,
+  RISKY_CHANGE_TYPE,
+  SEMI_BREAKING_CHANGE_TYPE,
   UNCLASSIFIED_CHANGE_TYPE,
   VALIDATION_RULES_SEVERITY_LEVEL_WARNING,
   ValidationRulesSeverity,
@@ -80,7 +81,16 @@ export const BUILD_TYPE = {
   DOCUMENT_GROUP: 'documentGroup',
   REDUCED_SOURCE_SPECIFICATIONS: 'reducedSourceSpecifications',
   MERGED_SPECIFICATION: 'mergedSpecification',
+  EXPORT_VERSION: 'exportVersion',
+  EXPORT_REST_DOCUMENT: 'exportRestDocument',
+  EXPORT_REST_OPERATIONS_GROUP: 'exportRestOperationsGroup',
 } as const
+
+export const EXPORT_BUILD_TYPES = [
+  BUILD_TYPE.EXPORT_VERSION,
+  BUILD_TYPE.EXPORT_REST_DOCUMENT,
+  BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP,
+]
 
 export const VERSION_STATUS = {
   RELEASE: 'release',
@@ -111,6 +121,8 @@ export const FILE_FORMAT_UNKNOWN = 'unknown'
 export const FILE_FORMAT_GRAPHQL = 'graphql'
 export const FILE_FORMAT_GQL = 'gql'
 export const FILE_FORMAT_MD = 'md'
+export const FILE_FORMAT_PROTO = 'proto'
+export const FILE_FORMAT_HTML = 'html'
 
 export const FILE_FORMAT = {
   JSON: FILE_FORMAT_JSON,
@@ -120,9 +132,16 @@ export const FILE_FORMAT = {
   GRAPHQL: FILE_FORMAT_GRAPHQL,
   GQL: FILE_FORMAT_GQL,
   MD: FILE_FORMAT_MD,
-}
+  PROTO: FILE_FORMAT_PROTO,
+} as const
 
+//todo separate supported for build and for export
 export const SUPPORTED_FILE_FORMATS = Object.values(FILE_FORMAT)
+
+export type ExportFileFormat =
+  | typeof FILE_FORMAT_YAML
+  | typeof FILE_FORMAT_JSON
+  | typeof FILE_FORMAT_HTML
 
 export const SYNTHETIC_TITLE_FLAG = Symbol('synthetic-title')
 export const ORIGINS_SYMBOL = Symbol('origins')

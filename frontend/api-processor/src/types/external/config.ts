@@ -15,7 +15,8 @@
  */
 
 import { FileId, KeyOfConstType, OperationsApiType, PackageId, VersionId } from './types'
-import { BUILD_TYPE, VERSION_STATUS } from '../../consts'
+import { BUILD_TYPE, FILE_FORMAT_HTML, FILE_FORMAT_JSON, FILE_FORMAT_YAML, VERSION_STATUS } from '../../consts'
+import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
 
 export type BuildType = KeyOfConstType<typeof BUILD_TYPE>
 export type VersionStatus = KeyOfConstType<typeof VERSION_STATUS>
@@ -29,6 +30,11 @@ export type OperationsGroupExportFormat =
   | typeof JSON_EXPORT_GROUP_FORMAT
   | typeof HTML_EXPORT_GROUP_FORMAT
 
+export type ExportFormat =
+  | typeof FILE_FORMAT_YAML
+  | typeof FILE_FORMAT_JSON
+  | typeof FILE_FORMAT_HTML
+
 export const VALIDATION_RULES_SEVERITY_LEVEL_ERROR = 'error'
 export const VALIDATION_RULES_SEVERITY_LEVEL_WARNING = 'warning'
 
@@ -40,14 +46,15 @@ export interface ValidationRulesSeverity {
   brokenRefs: ValidationRulesSeverityLevel
 }
 
-export interface BuildConfig {
+// todo remove
+export interface BuildConfig extends BuildConfigBase {
   packageId: PackageId
   version: VersionId // @revision for rebuild
   status: VersionStatus
   previousVersion?: VersionId
   previousVersionPackageId?: PackageId
 
-  buildType?: BuildType
+  buildType: BuildType
 
   currentGroup?: string
   previousGroup?: string
@@ -60,8 +67,131 @@ export interface BuildConfig {
   metadata?: Record<string, unknown>
   format?: OperationsGroupExportFormat
 
+  // todo since it goes straight to the info.json, remove it from every buildconfig except the one that is 'build'
   validationRulesSeverity?: ValidationRulesSeverity
+  operationsSpecTransformation?: OperationsSpecTransformation
 }
+
+// todo rename
+export interface BuildConfigBase {
+// export interface BuildConfig {
+  buildType: BuildType
+}
+
+export function isPublishBuildConfig(config: BuildConfigBase): config is PublishBuildConfig {
+  return config.buildType === BUILD_TYPE.BUILD
+}
+
+export interface PublishBuildConfig extends BuildConfigBase {
+  buildType: typeof BUILD_TYPE.BUILD
+  version: VersionId // @revision for rebuild
+  previousVersion?: VersionId
+  previousVersionPackageId?: PackageId
+  status: VersionStatus
+  versionLabels?: string[]
+  refs?: BuildConfigRef[]
+  files?: BuildConfigFile[]
+
+  metadata?: Record<string, unknown>
+}
+
+export interface ExportVersionBuildConfig extends BuildConfigBase {
+  buildType: typeof BUILD_TYPE.EXPORT_VERSION
+  packageId: PackageId
+  version: VersionId // @revision for rebuild
+  format: OperationsGroupExportFormat
+  allowedOasExtensions?: OpenApiExtensionKey[]
+}
+
+export interface ExportRestDocumentBuildConfig extends BuildConfigBase {
+  buildType: typeof BUILD_TYPE.EXPORT_REST_DOCUMENT
+  packageId: PackageId
+  version: VersionId // @revision for rebuild
+  documentId: string
+  // apiType?: OperationsApiType //todo Document transformation is available only for apiType = REST
+  format: OperationsGroupExportFormat
+  allowedOasExtensions?: OpenApiExtensionKey[]
+}
+
+export interface ExportRestOperationsGroupBuildConfig extends BuildConfigBase {
+  buildType: typeof BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP
+  packageId: PackageId
+  version: VersionId // @revision for rebuild
+  // apiType?: OperationsApiType //todo Document transformation is available only for apiType = REST
+  groupName: string
+  operationsSpecTransformation: OperationsSpecTransformation
+  format: OperationsGroupExportFormat
+  allowedOasExtensions?: OpenApiExtensionKey[]
+}
+
+// deprecated
+export interface ReducedSourceSpecificationsBuildConfig extends BuildConfigBase {
+  buildType: typeof BUILD_TYPE.REDUCED_SOURCE_SPECIFICATIONS
+  packageId: PackageId
+  version: VersionId // @revision for rebuild
+  groupName: string
+  format: OperationsGroupExportFormat
+  // allowedOasExtensions?: OpenApiExtensionKey[]
+  apiType?: OperationsApiType
+}
+
+// deprecated
+export interface MergedSpecificationBuildConfig extends BuildConfigBase {
+  buildType: typeof BUILD_TYPE.MERGED_SPECIFICATION
+  packageId: PackageId
+  version: VersionId // @revision for rebuild
+  groupName: string
+  format: OperationsGroupExportFormat
+  // allowedOasExtensions?: OpenApiExtensionKey[]
+  apiType?: OperationsApiType
+}
+
+// todo
+export interface ChangelogBuildConfig extends BuildConfigBase {
+  buildType: typeof BUILD_TYPE.CHANGELOG
+  packageId: PackageId
+  version: VersionId // @revision for rebuild
+  status: VersionStatus
+  previousVersion?: VersionId
+  previousVersionPackageId?: PackageId
+
+  format: OperationsGroupExportFormat
+  // allowedOasExtensions?: OpenApiExtensionKey[]
+  apiType?: OperationsApiType
+}
+// todo
+export interface PrefixGroupsChangelogBuildConfig extends BuildConfigBase {
+  buildType: typeof BUILD_TYPE.PREFIX_GROUPS_CHANGELOG
+  packageId: PackageId
+  version: VersionId // @revision for rebuild
+  status: VersionStatus
+  previousVersion?: VersionId
+  previousVersionPackageId?: PackageId
+  currentGroup?: string
+  previousGroup?: string
+
+  format: OperationsGroupExportFormat
+  // allowedOasExtensions?: OpenApiExtensionKey[]
+  apiType?: OperationsApiType
+}
+
+// todo rename
+export type BuildConfigAggregator =
+  | PublishBuildConfig
+  | ExportVersionBuildConfig
+  | ExportRestDocumentBuildConfig
+  | ExportRestOperationsGroupBuildConfig
+  | ReducedSourceSpecificationsBuildConfig
+  | MergedSpecificationBuildConfig
+  | ChangelogBuildConfig
+  | PrefixGroupsChangelogBuildConfig
+
+export const TRANSFORMATION_KIND_REDUCED = 'reducedSourceSpecifications'
+export const TRANSFORMATION_KIND_MERGED = 'mergedSpecification'
+
+export type OperationsSpecTransformation =
+  | typeof TRANSFORMATION_KIND_REDUCED
+  | typeof TRANSFORMATION_KIND_MERGED
 
 export interface BuildConfigFile {
   fileId: FileId

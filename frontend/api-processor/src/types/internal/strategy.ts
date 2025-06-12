@@ -15,19 +15,19 @@
  */
 
 import { BuildResult } from './builder'
-import { BuildConfig } from '../external'
+import { BuildConfig, BuildConfigBase } from '../external'
 import { BuilderContext } from './apiBuilder'
 import { CompareContext } from './compare'
 import { DebugPerformanceContext } from '../../utils/logs'
 
 export type BuildTypeContexts = {
-  builderContext: (config: BuildConfig) => BuilderContext
+  builderContext: (config: BuildConfigBase) => BuilderContext
   compareContext: (config: BuildConfig) => CompareContext
 }
 
 export interface BuilderStrategy {
   execute(
-    config: BuildConfig,
+    config: BuildConfigBase,
     buildResult: BuildResult,
     contexts: BuildTypeContexts,
     debugContext?: DebugPerformanceContext,

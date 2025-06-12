@@ -15,10 +15,11 @@
  */
 
 import {
-  BuildConfig,
+  BuilderStrategy,
   BuildResult,
   BuildTypeContexts,
   JSON_EXPORT_GROUP_FORMAT,
+  MergedSpecificationBuildConfig,
   YAML_EXPORT_GROUP_FORMAT,
 } from '../types'
 import { ExportTemplate, getSplittedVersionKey, isJson, isYaml, mergeOpenapiDocuments } from '../utils'
@@ -33,8 +34,8 @@ export const MERGED_OPERATIONS_GROUP_EXPORT_FORMAT = [
   JSON_EXPORT_GROUP_FORMAT,
 ]
 
-export class MergedDocumentGroupStrategy extends DocumentGroupStrategy {
-  async execute(config: BuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
+export class MergedDocumentGroupStrategy implements BuilderStrategy {
+  async execute(config: MergedSpecificationBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
     const { packageId, version, groupName, apiType, format = JSON_EXPORT_GROUP_FORMAT } = config
 
     if (!groupName) {
@@ -49,14 +50,21 @@ export class MergedDocumentGroupStrategy extends DocumentGroupStrategy {
       throw new Error(`Export format ${format} is not supported for build type ${BUILD_TYPE.MERGED_SPECIFICATION}`)
     }
 
-    const { documents: documentsMap } = await super.execute(config, buildResult, contexts)
+    const { documents: documentsMap } = await new DocumentGroupStrategy().execute(
+      {
+        ...config,
+        buildType: BUILD_TYPE.REDUCED_SOURCE_SPECIFICATIONS,
+      },
+      buildResult,
+      contexts,
+    )
     const documents = [...documentsMap.values()]
     const specs = documents.map(doc => doc.data) as OpenAPIV3.Document[]
 
     const { builderContext } = contexts
     const builderContextObject = builderContext(config)
 
-    const template = await builderContextObject.templateResolver?.(
+    const template = await builderContextObject.groupExportTemplateResolver?.(
       apiType,
       version,
       packageId,
@@ -76,6 +84,8 @@ export class MergedDocumentGroupStrategy extends DocumentGroupStrategy {
     buildResult.merged = {
       fileId: info.title,
       type: firstDocument.type,
+      // todo html will be handled in api-processor
+      // @ts-ignore
       format: format,
       data: mergeOpenapiDocuments(specs, info, templateDocument),
       slug: info.title,

@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { KeyOfConstType } from '../../types'
 
 export const TEXT_API_TYPE = 'text' as const
 
 export const TEXT_DOCUMENT_TYPE = {
   MARKDOWN: 'markdown',
 } as const
+
+export type TextDocumentType = KeyOfConstType<typeof TEXT_DOCUMENT_TYPE>
 
 export const TEXT_FILE_FORMAT = {
   MD: 'md',

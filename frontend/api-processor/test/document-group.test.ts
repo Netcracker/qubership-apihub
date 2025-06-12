@@ -79,10 +79,10 @@ describe('Document Group test', () => {
 
     expect(Array.from(result.documents.values())).toEqual(
       expect.toIncludeSameMembers([
-        expect.objectContaining({ fileId: '1.yaml', filename: '1.json' }),
-        expect.objectContaining({ fileId: '2.yaml', filename: '2.json' }),
-        expect.objectContaining({ fileId: '1-1.yaml', filename: '1-1.json' }),
-        expect.objectContaining({ fileId: '1-2.yaml', filename: '1-2.json' }),
+        expect.objectContaining({ fileId: 'documents-collision/package1_1.yaml', filename: 'documents-collision/package1_1.json' }),
+        expect.objectContaining({ fileId: 'documents-collision/package1_2.yaml', filename: 'documents-collision/package1_2.json' }),
+        expect.objectContaining({ fileId: 'documents-collision/package2_1.yaml', filename: 'documents-collision/package2_1.json' }),
+        expect.objectContaining({ fileId: 'documents-collision/package3_1.yaml', filename: 'documents-collision/package3_1.json' }),
       ]),
     )
 

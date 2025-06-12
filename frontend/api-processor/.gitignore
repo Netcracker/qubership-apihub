@@ -5,7 +5,6 @@ temp
 coverage
 .idea
 .DS_store
-export
 dist/
 *.iml
 test/versions/
