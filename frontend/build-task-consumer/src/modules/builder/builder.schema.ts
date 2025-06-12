@@ -51,6 +51,19 @@ export const OperationSchema = Type.Object({
 })
 
 export const PublishFilesConfigSchema = Type.Object({
+  buildType: Type.Any({
+    enum: [
+      'build',
+      'changelog',
+      'documentGroup',
+      'reducedSourceSpecifications',
+      'mergedSpecification',
+      'exportVersion',
+      'build',
+      'exportRestDocument',
+      'exportRestOperationsGroup',
+    ],
+  }),
   packageId: Type.String(),
   version: Type.String(),
   status: Type.Any({enum: ['release', 'draft', 'archived', 'release-candidate'], description: 'Version status'}),
