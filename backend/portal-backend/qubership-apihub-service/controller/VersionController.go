@@ -867,12 +867,13 @@ func (v versionControllerImpl) GetVersionedContentFileRaw(w http.ResponseWriter,
 	v.monitoringService.AddDocumentOpenCount(packageId, versionName, slug)
 	v.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.DocumentsCalled, packageId)
 
-	_, contentData, err := v.versionService.GetLatestContentDataBySlug(packageId, versionName, slug)
+	content, contentData, err := v.versionService.GetLatestContentDataBySlug(packageId, versionName, slug)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get published content", err)
 		return
 	}
 	w.Header().Set("Content-Type", contentData.DataType)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", content.Name))
 	w.WriteHeader(http.StatusOK)
 	w.Write(contentData.Data)
 }

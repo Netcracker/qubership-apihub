@@ -60,22 +60,22 @@ type BuildDependencyEntity struct {
 }
 
 type ChangelogBuildSearchQueryEntity struct {
-	PackageId                string `pg:"package_id, type:varchar, use_zero"`
-	Version                  string `pg:"version, type:varchar, use_zero"`
-	PreviousVersionPackageId string `pg:"previous_version_package_id, type:varchar, use_zero"`
-	PreviousVersion          string `pg:"previous_version, type:varchar, use_zero"`
-	BuildType                string `pg:"build_type, type:varchar, use_zero"`
-	ComparisonRevision       int    `pg:"comparison_revision, type:integer, use_zero"`
-	ComparisonPrevRevision   int    `pg:"comparison_prev_revision, type:integer, use_zero"`
+	PackageId                string         `pg:"package_id, type:varchar, use_zero"`
+	Version                  string         `pg:"version, type:varchar, use_zero"`
+	PreviousVersionPackageId string         `pg:"previous_version_package_id, type:varchar, use_zero"`
+	PreviousVersion          string         `pg:"previous_version, type:varchar, use_zero"`
+	BuildType                view.BuildType `pg:"build_type, type:varchar, use_zero"`
+	ComparisonRevision       int            `pg:"comparison_revision, type:integer, use_zero"`
+	ComparisonPrevRevision   int            `pg:"comparison_prev_revision, type:integer, use_zero"`
 }
 
 type DocumentGroupBuildSearchQueryEntity struct {
-	PackageId string `pg:"package_id, type:varchar, use_zero"`
-	Version   string `pg:"version, type:varchar, use_zero"`
-	BuildType string `pg:"build_type, type:varchar, use_zero"`
-	Format    string `pg:"format, type:varchar, use_zero"`
-	ApiType   string `pg:"api_type, type:varchar, use_zero"`
-	GroupName string `pg:"group_name, type:varchar, use_zero"`
+	PackageId string         `pg:"package_id, type:varchar, use_zero"`
+	Version   string         `pg:"version, type:varchar, use_zero"`
+	BuildType view.BuildType `pg:"build_type, type:varchar, use_zero"`
+	Format    string         `pg:"format, type:varchar, use_zero"`
+	ApiType   string         `pg:"api_type, type:varchar, use_zero"`
+	GroupName string         `pg:"group_name, type:varchar, use_zero"`
 }
 
 func MakeBuildView(buildEnt *BuildEntity) *view.BuildView {

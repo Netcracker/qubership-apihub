@@ -26,10 +26,11 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 )
 
+// deprecated
 type TransformationController interface {
-	TransformDocuments_deprecated(w http.ResponseWriter, r *http.Request)
-	TransformDocuments(w http.ResponseWriter, r *http.Request)
-	GetDataForDocumentsTransformation(w http.ResponseWriter, r *http.Request)
+	TransformDocuments_deprecated(w http.ResponseWriter, r *http.Request)     //deprecated
+	TransformDocuments(w http.ResponseWriter, r *http.Request)                //deprecated
+	GetDataForDocumentsTransformation(w http.ResponseWriter, r *http.Request) //deprecated
 }
 
 func NewTransformationController(roleService service.RoleService, buildService service.BuildService, versionService service.VersionService, transformationService service.TransformationService, operationGroupService service.OperationGroupService) TransformationController {
@@ -461,7 +462,7 @@ func (t transformationControllerImpl) TransformDocuments(w http.ResponseWriter, 
 	buildConfig := view.BuildConfig{
 		PackageId: packageId,
 		Version:   versionName,
-		BuildType: buildType,
+		BuildType: view.BuildType(buildType),
 		Format:    format,
 		CreatedBy: ctx.GetUserId(),
 		ApiType:   apiType,
@@ -500,7 +501,7 @@ func (t transformationControllerImpl) TransformDocuments(w http.ResponseWriter, 
 	searchRequest := view.DocumentGroupBuildSearchRequest{
 		PackageId: packageId,
 		Version:   versionName,
-		BuildType: buildType,
+		BuildType: view.BuildType(buildType),
 		Format:    format,
 		ApiType:   apiType,
 		GroupName: groupName,

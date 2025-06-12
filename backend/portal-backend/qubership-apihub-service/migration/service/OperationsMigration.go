@@ -345,7 +345,7 @@ MigrationProcess:
 						Error:       fmt.Sprintf("addTaskToRebuild failed: %v", err.Error()),
 						BuildId:     buildId,
 						MigrationId: migrationId,
-						BuildType:   view.BuildType,
+						BuildType:   view.PublishType,
 						NoChangelog: noChangelog,
 					}
 					_, err := d.cp.GetConnection().Model(&mvEnt).Insert()
@@ -388,7 +388,7 @@ MigrationProcess:
 						Error:       "",
 						BuildId:     buildEnt.BuildId,
 						MigrationId: migrationId,
-						BuildType:   view.BuildType,
+						BuildType:   view.PublishType,
 						NoChangelog: noChangelog,
 					}
 
@@ -480,7 +480,7 @@ MigrationProcess:
 					Error:       fmt.Sprintf("addTaskToRebuild failed: %v", err.Error()),
 					BuildId:     buildId,
 					MigrationId: migrationId,
-					BuildType:   view.BuildType,
+					BuildType:   view.PublishType,
 					NoChangelog: noChangelog,
 				}
 				_, err := d.cp.GetConnection().Model(&mvEnt).Insert()
@@ -529,7 +529,7 @@ MigrationProcess:
 					Error:       "",
 					BuildId:     buildEnt.BuildId,
 					MigrationId: migrationId,
-					BuildType:   view.BuildType,
+					BuildType:   view.PublishType,
 					NoChangelog: noChangelog,
 				}
 
@@ -806,8 +806,8 @@ func (d dbMigrationServiceImpl) rebuildTextSearchTables(migrationId string) erro
 		to_tsvector(jsonb_extract_path_text(search_scope, ?)) scope_examples
 		from operation_data
 		where data_hash in (
-			select distinct o.data_hash 
-			from operation o 
+			select distinct o.data_hash
+			from operation o
 			inner join migration."expired_ts_operation_data_%s"  exp
 			on exp.package_id = o.package_id
 			and exp.version = o.version
@@ -816,7 +816,7 @@ func (d dbMigrationServiceImpl) rebuildTextSearchTables(migrationId string) erro
 		)
         order by 1
         for update skip locked
-	on conflict (data_hash) do update 
+	on conflict (data_hash) do update
 	set scope_request = EXCLUDED.scope_request,
 	scope_response = EXCLUDED.scope_response,
 	scope_annotation = EXCLUDED.scope_annotation,
@@ -838,8 +838,8 @@ func (d dbMigrationServiceImpl) rebuildTextSearchTables(migrationId string) erro
 		to_tsvector(jsonb_extract_path_text(search_scope, ?)) scope_annotation
 		from operation_data
 		where data_hash in (
-			select distinct o.data_hash 
-			from operation o 
+			select distinct o.data_hash
+			from operation o
 			inner join migration."expired_ts_operation_data_%s"  exp
 			on exp.package_id = o.package_id
 			and exp.version = o.version
@@ -848,7 +848,7 @@ func (d dbMigrationServiceImpl) rebuildTextSearchTables(migrationId string) erro
 		)
         order by 1
         for update skip locked
-	on conflict (data_hash) do update 
+	on conflict (data_hash) do update
 	set scope_argument = EXCLUDED.scope_argument,
 	scope_property = EXCLUDED.scope_property,
 	scope_annotation = EXCLUDED.scope_annotation;`, migrationId)
@@ -866,8 +866,8 @@ func (d dbMigrationServiceImpl) rebuildTextSearchTables(migrationId string) erro
 		to_tsvector(jsonb_extract_path_text(search_scope, ?)) scope_all
 		from operation_data
 		where data_hash in (
-			select distinct o.data_hash 
-			from operation o 
+			select distinct o.data_hash
+			from operation o
 			inner join migration."expired_ts_operation_data_%s"  exp
 			on exp.package_id = o.package_id
 			and exp.version = o.version
@@ -875,7 +875,7 @@ func (d dbMigrationServiceImpl) rebuildTextSearchTables(migrationId string) erro
 		)
         order by 1
         for update skip locked
-	on conflict (data_hash) do update 
+	on conflict (data_hash) do update
 	set scope_all = EXCLUDED.scope_all`, migrationId)
 	_, err = d.cp.GetConnection().Exec(calculateAllTextSearchDataQuery, view.ScopeAll)
 	if err != nil {

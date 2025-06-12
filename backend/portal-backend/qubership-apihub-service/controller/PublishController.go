@@ -249,7 +249,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 	}
 
 	config.CreatedBy = ctx.GetUserId()
-	config.BuildType = view.BuildType
+	config.BuildType = view.PublishType
 
 	for i, file := range config.Files {
 		if file.Publish == nil {
@@ -556,7 +556,7 @@ func (p publishV2ControllerImpl) SetPublishStatus_deprecated(w http.ResponseWrit
 				return
 			}
 		})
-		err = p.publishedService.SaveBuildResult_deprecated(packageId, packageData, publishId, availableVersionStatuses)
+		err = p.buildResultService.SaveBuildResult_deprecated(packageId, packageData, publishId, availableVersionStatuses)
 		if err != nil {
 			RespondWithError(w, "Failed to publish build package", err)
 			return
@@ -580,7 +580,7 @@ func (p publishV2ControllerImpl) SetPublishStatus_deprecated(w http.ResponseWrit
 
 func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	publishId := getStringParam(r, "publishId") //buildId
+	buildId := getStringParam(r, "publishId") //buildId
 
 	ctx := context.Create(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
@@ -638,7 +638,7 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 		})
 		return
 	}
-	err = p.buildService.ValidateBuildOwnership(publishId, builderId)
+	err = p.buildService.ValidateBuildOwnership(buildId, builderId)
 	if err != nil {
 		RespondWithError(w, "Failed to validate build ownership", err)
 		return
@@ -648,14 +648,14 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 	switch status {
 	case view.StatusError:
 		details = r.FormValue("errors")
-		err = p.buildService.UpdateBuildStatus(publishId, status, details)
+		err = p.buildService.UpdateBuildStatus(buildId, status, details)
 		if err != nil {
 			RespondWithError(w, "Failed to update build status", err)
 			return
 		}
 	case view.StatusComplete:
-		var packageData []byte
-		sourcesFile, archiveFileHeader, err := r.FormFile("data")
+		var data []byte
+		sourcesFile, fileHeader, err := r.FormFile("data")
 		if err != nil {
 			if err == http.ErrMissingFile {
 				RespondWithCustomError(w, &exception.CustomError{
@@ -673,7 +673,7 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 				Debug:   err.Error()})
 			return
 		}
-		packageData, err = ioutil.ReadAll(sourcesFile)
+		data, err = ioutil.ReadAll(sourcesFile)
 		closeErr := sourcesFile.Close()
 		if closeErr != nil {
 			log.Debugf("failed to close temporal file: %+v", err)
@@ -686,18 +686,9 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 				Debug:   err.Error()})
 			return
 		}
-		if !strings.HasSuffix(archiveFileHeader.Filename, ".zip") {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.InvalidParameter,
-				Message: exception.InvalidParameterMsg,
-				Params:  map[string]interface{}{"param": "data file name, expecting .zip archive"},
-			})
-			return
-		}
 		encoding := r.Header.Get("Content-Transfer-Encoding")
 		if strings.EqualFold(encoding, "base64") {
-			_, err := base64.StdEncoding.Decode(packageData, packageData)
+			_, err := base64.StdEncoding.Decode(data, data)
 			if err != nil {
 				RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusBadRequest,
@@ -712,15 +703,7 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 			RespondWithError(w, "Failed to check user privileges", err)
 			return
 		}
-		// TODO: enable for debug only?
-		utils.SafeAsync(func() {
-			err = p.buildResultService.StoreBuildResult(publishId, packageData)
-			if err != nil {
-				log.Errorf("Failed to save build result for %s: %s", publishId, err.Error())
-				return
-			}
-		})
-		err = p.publishedService.SaveBuildResult(packageId, packageData, publishId, availableVersionStatuses)
+		err = p.buildResultService.SaveBuildResult(packageId, data, fileHeader.Filename, buildId, availableVersionStatuses)
 		if err != nil {
 			RespondWithError(w, "Failed to publish build package", err)
 			return
@@ -732,7 +715,7 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 		})
 		return
 	case view.StatusRunning:
-		err = p.buildService.UpdateBuildStatus(publishId, status, details)
+		err = p.buildService.UpdateBuildStatus(buildId, status, details)
 		if err != nil {
 			RespondWithError(w, "Failed to update build status", err)
 			return

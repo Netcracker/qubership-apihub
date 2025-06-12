@@ -674,8 +674,8 @@ const PrivateWorkspaceNotModifiableMsg = "Only sysadmin can modify private works
 const OperationModelNotFound = "6410"
 const OperationModelNotFoundMsg = "Model '$modelName' doesn't exist for operation '$operationId'"
 
-const InvalidDocumentTransformationReq = "6217"
-const InvalidDocumentTransformationReqMsg = "Document transformation req 'documentTransformationReq' has incorrect format: $error"
+const InvalidDocumentTransformation = "6217"
+const InvalidDocumentTransformationMsg = "Document transformation value $value is unknown"
 
 const UnknownBuildType = "6270"
 const UnknownBuildTypeMsg = "Unknown build type: $type"
@@ -748,6 +748,12 @@ const IncorrectOASExtensionsMsg = "OAS extension is required to be have 'x-' pre
 
 const DuplicateOASExtensionsNotAllowed = "7102"
 const DuplicateOASExtensionsNotAllowedMsg = "Duplicate OAS extension not allowed: $duplicates"
+
+const ExportProcessNotFound = "7201"
+const ExportProcessNotFoundMsg = "Export process with exportId=$exportId not found"
+
+const ExportFormatUnknown = "7202"
+const ExportFormatUnknownMsg = "Export format $format is unknown"
 
 const FilesLimitExceeded = "7400"
 const FilesLimitExceededMsg = "Files limit exceeded. Maximum allowed number of files is $maxFiles"

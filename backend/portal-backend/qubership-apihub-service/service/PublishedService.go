@@ -65,8 +65,10 @@ type PublishedService interface {
 	GetFilteredPackages(ctx context.SecurityContext, filter string, groupId string, onlyFavorite bool) ([]view.Package, error)
 	GetPackagesByServiceName(ctx context.SecurityContext, serviceName string) ([]view.Package, error)
 	GetPackageById(ctx context.SecurityContext, id string) (*view.Package, error)
-	SaveBuildResult_deprecated(packageId string, archiveData []byte, publishId string, availableVersionStatuses []string) error
-	SaveBuildResult(packageId string, archiveData []byte, publishId string, availableVersionStatuses []string) error
+
+	PublishPackage(buildArc *archive.BuildResultArchive, buildSrcEnt *entity.BuildSourceEntity,
+		buildConfig *view.BuildConfig, existingPackage *entity.PackageEntity) error
+	PublishChanges(buildArc *archive.BuildResultArchive, publishId string) error
 }
 
 func NewPublishedService(branchService BranchService,
@@ -887,7 +889,7 @@ func validatePublishSources(filesFromSourcesArchive map[string]struct{}, filesFr
 	return nil
 }
 
-func (p publishedServiceImpl) publishPackage(buildArc *archive.BuildResultArchive, buildSrcEnt *entity.BuildSourceEntity,
+func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchive, buildSrcEnt *entity.BuildSourceEntity,
 	buildConfig *view.BuildConfig, existingPackage *entity.PackageEntity) error {
 
 	publishStart := time.Now()
@@ -1194,220 +1196,6 @@ func (p publishedServiceImpl) publishPackage(buildArc *archive.BuildResultArchiv
 	return nil
 }
 
-func (p publishedServiceImpl) SaveBuildResult_deprecated(packageId string, archiveData []byte, publishId string, availableVersionStatuses []string) error {
-	// Update last active time to make sure that the build won't be restarted. Assuming that publication will take < 30 seconds!
-	// TODO: another option could be different status like "result_processing" for such builds
-	err := p.buildRepository.UpdateBuildStatus(publishId, view.StatusRunning, "")
-	if err != nil {
-		log.Errorf("Failed refresh last active time before publication for build %s with err: %s", publishId, err)
-	}
-
-	start := time.Now()
-	zipReader, err := zip.NewReader(bytes.NewReader(archiveData), int64(len(archiveData)))
-	if err != nil {
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidPackageArchive,
-			Message: exception.InvalidPackageArchiveMsg,
-			Params:  map[string]interface{}{"error": err.Error()},
-		}
-	}
-
-	buildArc := archive.NewBuildResultArchive(zipReader)
-	if err := buildArc.ReadPackageInfo(); err != nil {
-		return err
-	}
-	utils.PerfLog(time.Since(start).Milliseconds(), 50, "SaveBuildResult: archive parsing")
-
-	if buildArc.PackageInfo.PackageId != packageId {
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidPackagedFile,
-			Message: exception.InvalidPackagedFileMsg,
-			Params: map[string]interface{}{
-				"file":  "info",
-				"error": fmt.Sprintf("packageId:%v provided by %v doesn't match packageId:%v requested in path", buildArc.PackageInfo.PackageId, archive.InfoFilePath, packageId),
-			},
-		}
-	}
-
-	start = time.Now()
-	buildSrcEnt, err := p.buildRepository.GetBuildSrc(publishId)
-	if err != nil {
-		return fmt.Errorf("failed to get build src with err: %w", err)
-	}
-	if buildSrcEnt == nil {
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.BuildSourcesNotFound,
-			Message: exception.BuildSourcesNotFoundMsg,
-			Params:  map[string]interface{}{"publishId": publishId},
-		}
-	}
-
-	buildConfig, err := view.BuildConfigFromMap(buildSrcEnt.Config, publishId)
-	if err != nil {
-		return err
-	}
-	utils.PerfLog(time.Since(start).Milliseconds(), 200, "SaveBuildResult: get build src")
-
-	start = time.Now()
-	err = p.publishedValidator.ValidateBuildResultAgainstConfig(buildArc, buildConfig)
-	if err != nil {
-		return err
-	}
-	utils.PerfLog(time.Since(start).Milliseconds(), 100, "SaveBuildResult: ValidateBuildResultAgainstConfig")
-
-	start = time.Now()
-	existingPackage, err := p.publishedRepo.GetPackage(buildArc.PackageInfo.PackageId)
-	if err != nil {
-		return err
-	}
-	utils.PerfLog(time.Since(start).Milliseconds(), 100, "SaveBuildResult: get existing package")
-	if existingPackage == nil {
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidPackagedFile,
-			Message: exception.InvalidPackagedFileMsg,
-			Params:  map[string]interface{}{"file": "info", "error": fmt.Sprintf("package with packageId = '%v' doesn't exist", buildArc.PackageInfo.PackageId)},
-		}
-	}
-	buildArc.PackageInfo.Kind = existingPackage.Kind
-	//todo zip check for unknown files
-
-	switch buildArc.PackageInfo.BuildType {
-	case view.BuildType:
-		sufficientPrivileges := utils.SliceContains(availableVersionStatuses, buildArc.PackageInfo.Status)
-		if !sufficientPrivileges && !buildArc.PackageInfo.MigrationBuild {
-			return &exception.CustomError{
-				Status:  http.StatusForbidden,
-				Code:    exception.InsufficientPrivileges,
-				Message: exception.InsufficientPrivilegesMsg,
-			}
-		}
-		return p.publishPackage(buildArc, buildSrcEnt, buildConfig, existingPackage)
-		//support view.ReducedSourceSpecificationsType type because of node-service that is not yet ready for v3 publish
-		//we need view.ReducedSourceSpecificationsType build on node-service for operation group publication
-	case view.DocumentGroupType_deprecated, view.ReducedSourceSpecificationsType:
-		return p.publishTransformedDocuments(buildArc, publishId)
-	case view.ChangelogType:
-		return p.publishChanges(buildArc, publishId)
-	default:
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.UnknownBuildType,
-			Message: exception.UnknownBuildTypeMsg,
-			Params:  map[string]interface{}{"type": buildArc.PackageInfo.BuildType},
-		}
-	}
-}
-
-func (p publishedServiceImpl) SaveBuildResult(packageId string, archiveData []byte, publishId string, availableVersionStatuses []string) error {
-	// Update last active time to make sure that the build won't be restarted. Assuming that publication will take < 30 seconds!
-	// TODO: another option could be different status like "result_processing" for such builds
-	err := p.buildRepository.UpdateBuildStatus(publishId, view.StatusRunning, "")
-	if err != nil {
-		log.Errorf("Failed refresh last active time before publication for build %s with err: %s", publishId, err)
-	}
-
-	start := time.Now()
-	zipReader, err := zip.NewReader(bytes.NewReader(archiveData), int64(len(archiveData)))
-	if err != nil {
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidPackageArchive,
-			Message: exception.InvalidPackageArchiveMsg,
-			Params:  map[string]interface{}{"error": err.Error()},
-		}
-	}
-
-	buildArc := archive.NewBuildResultArchive(zipReader)
-	if err := buildArc.ReadPackageInfo(); err != nil {
-		return err
-	}
-	utils.PerfLog(time.Since(start).Milliseconds(), 50, "SaveBuildResult: archive parsing")
-
-	if buildArc.PackageInfo.PackageId != packageId {
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidPackagedFile,
-			Message: exception.InvalidPackagedFileMsg,
-			Params: map[string]interface{}{
-				"file":  "info",
-				"error": fmt.Sprintf("packageId:%v provided by %v doesn't match packageId:%v requested in path", buildArc.PackageInfo.PackageId, archive.InfoFilePath, packageId),
-			},
-		}
-	}
-
-	start = time.Now()
-	buildSrcEnt, err := p.buildRepository.GetBuildSrc(publishId)
-	if err != nil {
-		return fmt.Errorf("failed to get build src with err: %w", err)
-	}
-	if buildSrcEnt == nil {
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.BuildSourcesNotFound,
-			Message: exception.BuildSourcesNotFoundMsg,
-			Params:  map[string]interface{}{"publishId": publishId},
-		}
-	}
-
-	buildConfig, err := view.BuildConfigFromMap(buildSrcEnt.Config, publishId)
-	if err != nil {
-		return err
-	}
-	utils.PerfLog(time.Since(start).Milliseconds(), 200, "SaveBuildResult: get build src")
-
-	start = time.Now()
-	err = p.publishedValidator.ValidateBuildResultAgainstConfig(buildArc, buildConfig)
-	if err != nil {
-		return err
-	}
-	utils.PerfLog(time.Since(start).Milliseconds(), 100, "SaveBuildResult: ValidateBuildResultAgainstConfig")
-
-	start = time.Now()
-	existingPackage, err := p.publishedRepo.GetPackage(buildArc.PackageInfo.PackageId)
-	if err != nil {
-		return err
-	}
-	utils.PerfLog(time.Since(start).Milliseconds(), 100, "SaveBuildResult: get existing package")
-	if existingPackage == nil {
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidPackagedFile,
-			Message: exception.InvalidPackagedFileMsg,
-			Params:  map[string]interface{}{"file": "info", "error": fmt.Sprintf("package with packageId = '%v' doesn't exist", buildArc.PackageInfo.PackageId)},
-		}
-	}
-	buildArc.PackageInfo.Kind = existingPackage.Kind
-	//todo zip check for unknown files
-
-	switch buildArc.PackageInfo.BuildType {
-	case view.BuildType:
-		sufficientPrivileges := utils.SliceContains(availableVersionStatuses, buildArc.PackageInfo.Status)
-		if !sufficientPrivileges && !buildArc.PackageInfo.MigrationBuild {
-			return &exception.CustomError{
-				Status:  http.StatusForbidden,
-				Code:    exception.InsufficientPrivileges,
-				Message: exception.InsufficientPrivilegesMsg,
-			}
-		}
-		return p.publishPackage(buildArc, buildSrcEnt, buildConfig, existingPackage)
-	case view.ChangelogType:
-		return p.publishChanges(buildArc, publishId)
-	case view.ReducedSourceSpecificationsType, view.MergedSpecificationType:
-		return p.publishTransformedDocuments(buildArc, publishId)
-	default:
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.UnknownBuildType,
-			Message: exception.UnknownBuildTypeMsg,
-			Params:  map[string]interface{}{"type": buildArc.PackageInfo.BuildType},
-		}
-	}
-}
-
 func (p publishedServiceImpl) makePublishedReferencesEntities(packageInfo view.PackageInfoFile, packageRefs []view.BCRef) ([]*entity.PublishedReferenceEntity, error) {
 	uniqueRefs := make(map[string]struct{}, 0)
 	publishedReferences := make([]*entity.PublishedReferenceEntity, 0)
@@ -1494,7 +1282,7 @@ func (p publishedServiceImpl) reCalculateChangelogs(packageInfo view.PackageInfo
 	return nil
 }
 
-func (p publishedServiceImpl) publishChanges(buildArc *archive.BuildResultArchive, publishId string) error {
+func (p publishedServiceImpl) PublishChanges(buildArc *archive.BuildResultArchive, publishId string) error {
 	var err error
 	if err = buildArc.ReadPackageComparisons(false); err != nil {
 		return err
@@ -1532,27 +1320,6 @@ func (p publishedServiceImpl) publishChanges(buildArc *archive.BuildResultArchiv
 	}
 	log.Debugf("Operation changes creation time: %v", time.Since(operationChangesCreationStart).Milliseconds())
 	return nil
-}
-
-func (p publishedServiceImpl) publishTransformedDocuments(buildArc *archive.BuildResultArchive, publishId string) error {
-	var err error
-	if err = buildArc.ReadPackageDocuments(true); err != nil {
-		return err
-	}
-	if err = validation.ValidatePublishBuildResult(buildArc); err != nil {
-		return err
-	}
-	buildArc.PackageInfo.Version, buildArc.PackageInfo.Revision, err = SplitVersionRevision(buildArc.PackageInfo.Version)
-	if err != nil {
-		return err
-	}
-
-	buildArcEntitiesReader := archive.NewBuildResultToEntitiesReader(buildArc)
-	transformedDocumentsEntity, err := buildArcEntitiesReader.ReadTransformedDocumentsToEntity()
-	if err != nil {
-		return err
-	}
-	return p.publishedRepo.SaveTransformedDocument(transformedDocumentsEntity, publishId)
 }
 
 func SplitVersionRevision(version string) (string, int, error) {

@@ -24,32 +24,35 @@ import (
 )
 
 type BuildConfig struct {
-	PackageId                string                  `json:"packageId"`
-	Version                  string                  `json:"version"`
-	BuildType                string                  `json:"buildType"`
-	PreviousVersion          string                  `json:"previousVersion"`
-	PreviousVersionPackageId string                  `json:"previousVersionPackageId"`
-	Status                   string                  `json:"status"`
-	Refs                     []BCRef                 `json:"refs,omitempty"`
-	Files                    []BCFile                `json:"files,omitempty"`
-	PublishId                string                  `json:"publishId"`
-	Metadata                 BuildConfigMetadata     `json:"metadata,omitempty"`
-	CreatedBy                string                  `json:"createdBy"`
-	NoChangelog              bool                    `json:"noChangeLog,omitempty"`    // for migration
-	PublishedAt              time.Time               `json:"publishedAt,omitempty"`    // for migration
-	MigrationBuild           bool                    `json:"migrationBuild,omitempty"` //for migration
-	MigrationId              string                  `json:"migrationId,omitempty"`    //for migration
-	ComparisonRevision       int                     `json:"comparisonRevision,omitempty"`
-	ComparisonPrevRevision   int                     `json:"comparisonPrevRevision,omitempty"`
-	UnresolvedRefs           bool                    `json:"unresolvedRefs,omitempty"`
-	ResolveRefs              bool                    `json:"resolveRefs,omitempty"`
-	ResolveConflicts         bool                    `json:"resolveConflicts,omitempty"`
-	ServiceName              string                  `json:"serviceName,omitempty"`
-	ApiType                  string                  `json:"apiType,omitempty"`   //for operation group
-	GroupName                string                  `json:"groupName,omitempty"` //for operation group
-	Format                   string                  `json:"format,omitempty"`    //for operation group
-	ExternalMetadata         map[string]interface{}  `json:"externalMetadata,omitempty"`
-	ValidationRulesSeverity  ValidationRulesSeverity `json:"validationRulesSeverity,omitempty"`
+	PackageId                    string                  `json:"packageId"`
+	Version                      string                  `json:"version"`
+	BuildType                    BuildType               `json:"buildType"`
+	PreviousVersion              string                  `json:"previousVersion"`
+	PreviousVersionPackageId     string                  `json:"previousVersionPackageId"`
+	Status                       string                  `json:"status"`
+	Refs                         []BCRef                 `json:"refs,omitempty"`
+	Files                        []BCFile                `json:"files,omitempty"`
+	PublishId                    string                  `json:"publishId"`
+	Metadata                     BuildConfigMetadata     `json:"metadata,omitempty"`
+	CreatedBy                    string                  `json:"createdBy"`
+	NoChangelog                  bool                    `json:"noChangeLog,omitempty"`    // for migration
+	PublishedAt                  time.Time               `json:"publishedAt,omitempty"`    // for migration
+	MigrationBuild               bool                    `json:"migrationBuild,omitempty"` //for migration
+	MigrationId                  string                  `json:"migrationId,omitempty"`    //for migration
+	ComparisonRevision           int                     `json:"comparisonRevision,omitempty"`
+	ComparisonPrevRevision       int                     `json:"comparisonPrevRevision,omitempty"`
+	UnresolvedRefs               bool                    `json:"unresolvedRefs,omitempty"`
+	ResolveRefs                  bool                    `json:"resolveRefs,omitempty"`
+	ResolveConflicts             bool                    `json:"resolveConflicts,omitempty"`
+	ServiceName                  string                  `json:"serviceName,omitempty"`
+	ApiType                      string                  `json:"apiType,omitempty"`   //for operation group
+	GroupName                    string                  `json:"groupName,omitempty"` //for operation group
+	Format                       string                  `json:"format,omitempty"`    //for operation group
+	ExternalMetadata             map[string]interface{}  `json:"externalMetadata,omitempty"`
+	ValidationRulesSeverity      ValidationRulesSeverity `json:"validationRulesSeverity,omitempty"`
+	AllowedOasExtensions         *[]string               `json:"allowedOasExtensions,omitempty"`         // for export
+	DocumentId                   string                  `json:"documentId,omitempty"`                   // for export
+	OperationsSpecTransformation string                  `json:"operationsSpecTransformation,omitempty"` // for export
 }
 
 type BuildConfigMetadata struct {
@@ -86,16 +89,23 @@ const StatusRunning BuildStatusEnum = "running"
 const StatusComplete BuildStatusEnum = "complete"
 const StatusError BuildStatusEnum = "error"
 
-// todo string -> BuildType type
-const ChangelogType string = "changelog"
-const BuildType string = "build"
-const DocumentGroupType_deprecated string = "documentGroup"
-const ReducedSourceSpecificationsType string = "reducedSourceSpecifications"
-const MergedSpecificationType string = "mergedSpecification"
+type BuildType string
 
-func ValidateGroupBuildType(buildType string) error {
+const ChangelogType BuildType = "changelog"
+const PublishType BuildType = "build"
+const DocumentGroupType_deprecated BuildType = "documentGroup"
+const ReducedSourceSpecificationsType_deprecated BuildType = "reducedSourceSpecifications"
+const MergedSpecificationType_deprecated BuildType = "mergedSpecification"
+
+const ExportVersion BuildType = "exportVersion"
+const ExportRestDocument BuildType = "exportRestDocument"
+const ExportRestOperationsGroup BuildType = "exportRestOperationsGroup"
+
+// TODO: add new export type here
+
+func ValidateGroupBuildType(buildType BuildType) error {
 	switch buildType {
-	case ReducedSourceSpecificationsType, MergedSpecificationType:
+	case ReducedSourceSpecificationsType_deprecated, MergedSpecificationType_deprecated:
 		return nil
 	}
 	return &exception.CustomError{
@@ -158,22 +168,22 @@ type BuildsStatusRequest struct {
 }
 
 type ChangelogBuildSearchRequest struct {
-	PackageId                string `json:"packageId"`
-	Version                  string `json:"version"`
-	PreviousVersionPackageId string `json:"previousVersionPackageId"`
-	PreviousVersion          string `json:"previousVersion"`
-	BuildType                string `json:"buildType"`
-	ComparisonRevision       int    `json:"comparisonRevision"`
-	ComparisonPrevRevision   int    `json:"comparisonPrevRevision"`
+	PackageId                string    `json:"packageId"`
+	Version                  string    `json:"version"`
+	PreviousVersionPackageId string    `json:"previousVersionPackageId"`
+	PreviousVersion          string    `json:"previousVersion"`
+	BuildType                BuildType `json:"buildType"`
+	ComparisonRevision       int       `json:"comparisonRevision"`
+	ComparisonPrevRevision   int       `json:"comparisonPrevRevision"`
 }
 
 type DocumentGroupBuildSearchRequest struct {
-	PackageId string `json:"packageId"`
-	Version   string `json:"version"`
-	BuildType string `json:"buildType"`
-	Format    string `json:"format"`
-	ApiType   string `json:"apiType"`
-	GroupName string `json:"groupName"`
+	PackageId string    `json:"packageId"`
+	Version   string    `json:"version"`
+	BuildType BuildType `json:"buildType"`
+	Format    string    `json:"format"`
+	ApiType   string    `json:"apiType"`
+	GroupName string    `json:"groupName"`
 }
 
 type BuildView struct {
@@ -194,24 +204,24 @@ type PublishedVersionSourceDataConfig struct {
 }
 
 type ChangelogBuildConfigView struct {
-	PackageId                string `json:"packageId"`
-	Version                  string `json:"version"`
-	BuildType                string `json:"buildType"`
-	PreviousVersion          string `json:"previousVersion"`
-	PreviousVersionPackageId string `json:"previousVersionPackageId"`
-	CreatedBy                string `json:"createdBy"`
-	BuildId                  string `json:"buildId"`
+	PackageId                string    `json:"packageId"`
+	Version                  string    `json:"version"`
+	BuildType                BuildType `json:"buildType"`
+	PreviousVersion          string    `json:"previousVersion"`
+	PreviousVersionPackageId string    `json:"previousVersionPackageId"`
+	CreatedBy                string    `json:"createdBy"`
+	BuildId                  string    `json:"buildId"`
 }
 
 type DocumentTransformConfigView struct {
-	PackageId string `json:"packageId"`
-	Version   string `json:"version"`
-	BuildType string `json:"buildType"`
-	Format    string `json:"format,omitempty"`
-	ApiType   string `json:"apiType"`
-	GroupName string `json:"groupName"`
-	CreatedBy string `json:"createdBy"`
-	BuildId   string `json:"buildId"`
+	PackageId string    `json:"packageId"`
+	Version   string    `json:"version"`
+	BuildType BuildType `json:"buildType"`
+	Format    string    `json:"format,omitempty"`
+	ApiType   string    `json:"apiType"`
+	GroupName string    `json:"groupName"`
+	CreatedBy string    `json:"createdBy"`
+	BuildId   string    `json:"buildId"`
 }
 
 const BrokenRefsSeverityError = "error"
