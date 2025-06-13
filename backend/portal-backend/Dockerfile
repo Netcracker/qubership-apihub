@@ -29,12 +29,12 @@ USER root
 RUN apk --no-cache add curl
 
 COPY --from=builder /workspace/qubership-apihub-service/qubership-apihub-service ./qubership-apihub-service
-ADD qubership-apihub-service/static ./static
-ADD qubership-apihub-service/resources ./resources
-ADD docs/api ./api
+COPY qubership-apihub-service/static ./static
+COPY qubership-apihub-service/resources ./resources
+COPY docs/api ./api
 
 RUN chmod -R a+rwx /app
 
 USER 10001
 
-ENTRYPOINT ./qubership-apihub-service
+ENTRYPOINT ["./qubership-apihub-service"]
