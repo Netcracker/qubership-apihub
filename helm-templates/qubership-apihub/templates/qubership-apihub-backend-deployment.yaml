@@ -30,6 +30,8 @@ spec:
                 app.kubernetes.io/technology: 'go'
         spec:
             serviceAccountName: 'qubership-apihub-backend'
+            hostPID: false
+            hostIPC: false
             volumes:
             -   configMap:
                     defaultMode: 420
@@ -257,8 +259,6 @@ spec:
                     runAsGroup: 10001
                     readOnlyRootFilesystem: true
                     runAsNonRoot: true
-                    hostPID: false
-                    hostIPC: false
                     seccompProfile:
                         type: RuntimeDefault
                     allowPrivilegeEscalation: false

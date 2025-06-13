@@ -79,8 +79,6 @@ spec:
                     runAsGroup: 10001
                     readOnlyRootFilesystem: true
                     runAsNonRoot: true
-                    hostPID: false
-                    hostIPC: false
                     seccompProfile:
                         type: RuntimeDefault
                     allowPrivilegeEscalation: false

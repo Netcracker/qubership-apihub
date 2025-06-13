@@ -33,6 +33,8 @@ spec:
             restartPolicy: Always
             terminationGracePeriodSeconds: 30
             dnsPolicy: ClusterFirst
+            hostPID: false
+            hostIPC: false
             containers:
             -   name: 'qubership-apihub-ui'
                 image: '{{ .Values.qubershipApihubUi.image.repository }}:{{ .Values.qubershipApihubUi.image.tag }}'
@@ -69,8 +71,6 @@ spec:
                     runAsGroup: 10001
                     readOnlyRootFilesystem: false
                     runAsNonRoot: true
-                    hostPID: false
-                    hostIPC: false
                     seccompProfile:
                         type: RuntimeDefault
                     allowPrivilegeEscalation: false
