@@ -62,8 +62,10 @@ spec:
                 securityContext:
                     runAsUser: 10001
                     runAsGroup: 10001
-                    readOnlyRootFilesystem: false
+                    readOnlyRootFilesystem: true
                     runAsNonRoot: true
+                    hostPID: false
+                    hostIPC: false
                     seccompProfile:
                         type: RuntimeDefault
                     allowPrivilegeEscalation: false
