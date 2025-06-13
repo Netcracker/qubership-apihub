@@ -65,9 +65,12 @@ spec:
                     port: web
                   initialDelaySeconds: 5
                 securityContext:
+                    runAsUser: 10001
                     runAsGroup: 10001
                     readOnlyRootFilesystem: false
                     runAsNonRoot: true
+                    hostPID: false
+                    hostIPC: false
                     seccompProfile:
                         type: RuntimeDefault
                     allowPrivilegeEscalation: false
