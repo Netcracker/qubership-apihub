@@ -85,7 +85,7 @@ export class Editor {
   }
 
   async templateResolver(templatePath: string): Promise<Blob | null> {
-    const template = await fs.readFile(path.join(__dirname, '..', '..', '..', 'templates', templatePath))
+    const template = await fs.readFile(path.join(__dirname, '..', '..', 'templates', templatePath))
     if (!template) {
       throw new Error(`Error during reading file ${templatePath} from templates`)
     }
