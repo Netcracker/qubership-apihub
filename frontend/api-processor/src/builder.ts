@@ -816,6 +816,8 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     this.packageChangesCache.clear()
     this.operations.clear()
     this.documents.clear()
+    this.exportDocuments = []
+    this.exportFileName = undefined
     this.comparisons = []
 
     this.notifications = []

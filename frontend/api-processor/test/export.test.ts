@@ -157,7 +157,7 @@ describe('Export test', () => {
       buildType: BUILD_TYPE.EXPORT_VERSION,
       format: 'json',
     })
-    expect(result.exportFileName).toEqual('export_single-document-version.zip')
+    expect(result.exportFileName).toEqual('export_single-document-version_1.json')
     // todo check zip content
   })
 
@@ -167,7 +167,7 @@ describe('Export test', () => {
       buildType: BUILD_TYPE.EXPORT_VERSION,
       format: 'yaml',
     })
-    expect(result.exportFileName).toEqual('export_single-document-version.zip')
+    expect(result.exportFileName).toEqual('export_single-document-version_1.yaml')
     // todo check zip content
   })
 
