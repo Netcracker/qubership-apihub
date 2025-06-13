@@ -46,4 +46,4 @@ RUN chmod -R a+rwx /app
 
 USER 10001
 
-ENTRYPOINT ./qubership-api-linter-service
+ENTRYPOINT ["./qubership-api-linter-service"]
