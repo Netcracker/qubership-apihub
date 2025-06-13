@@ -35,10 +35,10 @@ MAINTAINER qubership.org
 WORKDIR /app/qubership-apihub-test-service
 
 COPY --from=builder /workspace/qubership-apihub-test-service/qubership-apihub-test-service ./qubership-apihub-test-service
-ADD qubership-apihub-test-service/static ./static
+COPY qubership-apihub-test-service/static ./static
 
 RUN chmod -R a+rwx /app
 
 USER 10001
 
-ENTRYPOINT ./qubership-apihub-test-service
+ENTRYPOINT ["./qubership-apihub-test-service"]
