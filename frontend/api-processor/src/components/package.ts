@@ -85,22 +85,9 @@ export const createVersionPackage = async (
 
   const documents = buildResultDto.merged ? [buildResultDto.merged] : [...buildResultDto.documents.values()]
 
-  // todo refactor accordingly to new reqs
   switch (buildResult.config.buildType) {
-    case BUILD_TYPE.EXPORT_REST_DOCUMENT:
-      if (buildResult.exportDocuments.length === 1) {
-        return Buffer.from(await dumpRestDocument(buildResultDto.exportDocuments[0], ctx.config.format).arrayBuffer())
-      }
-      await createExportDocumentDataFiles(zip, buildResultDto.exportDocuments, ctx)
-      return await zip.buildResult(options)
-
     case BUILD_TYPE.EXPORT_VERSION:
-      if (buildResult.exportDocuments.length === 1) {
-        return Buffer.from(await dumpRestDocument(buildResultDto.exportDocuments[0], ctx.config.format).arrayBuffer())
-      }
-      await createExportDocumentDataFiles(zip, buildResultDto.exportDocuments, ctx)
-      return await zip.buildResult(options)
-
+    case BUILD_TYPE.EXPORT_REST_DOCUMENT:
     case BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP:
       if (buildResult.exportDocuments.length === 1) {
         return Buffer.from(await dumpRestDocument(buildResultDto.exportDocuments[0], ctx.config.format).arrayBuffer())

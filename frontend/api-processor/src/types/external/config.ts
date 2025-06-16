@@ -131,7 +131,6 @@ export interface ReducedSourceSpecificationsBuildConfig extends BuildConfigBase 
   version: VersionId // @revision for rebuild
   groupName: string
   format: OperationsGroupExportFormat
-  // allowedOasExtensions?: OpenApiExtensionKey[]
   apiType?: OperationsApiType
 }
 
@@ -142,7 +141,6 @@ export interface MergedSpecificationBuildConfig extends BuildConfigBase {
   version: VersionId // @revision for rebuild
   groupName: string
   format: OperationsGroupExportFormat
-  // allowedOasExtensions?: OpenApiExtensionKey[]
   apiType?: OperationsApiType
 }
 
@@ -156,7 +154,6 @@ export interface ChangelogBuildConfig extends BuildConfigBase {
   previousVersionPackageId?: PackageId
 
   format: OperationsGroupExportFormat
-  // allowedOasExtensions?: OpenApiExtensionKey[]
   apiType?: OperationsApiType
 }
 // todo
@@ -171,7 +168,6 @@ export interface PrefixGroupsChangelogBuildConfig extends BuildConfigBase {
   previousGroup?: string
 
   format: OperationsGroupExportFormat
-  // allowedOasExtensions?: OpenApiExtensionKey[]
   apiType?: OperationsApiType
 }
 
