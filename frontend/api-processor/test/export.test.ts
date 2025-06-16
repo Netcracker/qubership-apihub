@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Editor, LocalRegistry } from './helpers'
+import { Editor, exportDocumentMatcher, exportDocumentsMatcher, LocalRegistry } from './helpers'
 import {
   BUILD_TYPE,
   ExportRestOperationsGroupBuildConfig,
@@ -30,33 +30,39 @@ import {
 
 let pkg: LocalRegistry
 let editor: Editor
-const GROUP_NAME = 'manualGroup'
-const groupToOperationIdsMap2 = {
-  [GROUP_NAME]: [
+const GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS = 'GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS'
+const GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY = 'GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY'
+const groupToOperationIdsMap = {
+  [GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS]: [
     'path1-get',
+    'path2-post',
+  ],
+  [GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY]: [
+    'path2-get',
     'path2-post',
   ],
 }
 
 const REGULAR_VERSION = 'regular-version@123'
 const SINGLE_DOCUMENT_VERSION = 'single-document-version@24'
+const SINGLE_DOCUMENT_VERSION_WITH_README = 'single-document-version-with-readme@31'
 
 const COMMON_GROUP_EXPORT_CONFIG = {
   packageId: 'export',
   version: REGULAR_VERSION,
-  groupName: GROUP_NAME,
+  groupName: GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS,
 }
 
 const COMMON_REDUCED_GROUP_EXPORT_CONFIG: Partial<ExportRestOperationsGroupBuildConfig> = {
   ...COMMON_GROUP_EXPORT_CONFIG,
-  groupName: GROUP_NAME,
+  groupName: GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS,
   buildType: BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP,
   operationsSpecTransformation: TRANSFORMATION_KIND_REDUCED,
 }
 
 const COMMON_MERGED_GROUP_EXPORT_CONFIG: Partial<ExportRestOperationsGroupBuildConfig> = {
   ...COMMON_GROUP_EXPORT_CONFIG,
-  groupName: GROUP_NAME,
+  groupName: GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS,
   buildType: BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP,
   operationsSpecTransformation: TRANSFORMATION_KIND_MERGED,
 }
@@ -64,8 +70,12 @@ const COMMON_MERGED_GROUP_EXPORT_CONFIG: Partial<ExportRestOperationsGroupBuildC
 describe('Export test', () => {
   beforeAll(async () => {
     pkg = LocalRegistry.openPackage('export')
-    await pkg.publish(pkg.packageId, {version: REGULAR_VERSION})
-    await pkg.publish(pkg.packageId, {version: SINGLE_DOCUMENT_VERSION, files: [{fileId: '1.yaml'}]})
+    await pkg.publish(pkg.packageId, { version: REGULAR_VERSION })
+    await pkg.publish(pkg.packageId, { version: SINGLE_DOCUMENT_VERSION, files: [{ fileId: '1.yaml' }] })
+    await pkg.publish(pkg.packageId, {
+      version: SINGLE_DOCUMENT_VERSION_WITH_README,
+      files: [{ fileId: '1.yaml' }, { fileId: 'README.md' }],
+    })
 
     editor = await Editor.openProject(pkg.packageId, pkg)
 
@@ -88,7 +98,12 @@ describe('Export test', () => {
       format: 'html',
     })
     expect(result.exportFileName).toEqual('export_regular-version_1.zip')
-    // todo check zip content
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('1.html'),
+      exportDocumentMatcher('ls.html'),
+      exportDocumentMatcher('resources/corporatelogo.png'),
+      exportDocumentMatcher('resources/styles.css'),
+    ]))
   })
 
   test('should export rest document to json', async () => {
@@ -98,7 +113,9 @@ describe('Export test', () => {
       format: 'json',
     })
     expect(result.exportFileName).toEqual('export_regular-version_1.json')
-    // todo check zip content
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('1.json'),
+    ]))
   })
 
   test('should export rest document to yaml', async () => {
@@ -108,7 +125,9 @@ describe('Export test', () => {
       format: 'yaml',
     })
     expect(result.exportFileName).toEqual('export_regular-version_1.yaml')
-    // todo check zip content
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('1.yaml'),
+    ]))
   })
 
   test('should export version to html', async () => {
@@ -118,7 +137,19 @@ describe('Export test', () => {
       format: 'html',
     })
     expect(result.exportFileName).toEqual('export_regular-version.zip')
-    // todo check zip content
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('1.html'),
+      exportDocumentMatcher('2.html'),
+      exportDocumentMatcher('atui_graphql_changelog_base.graphql'),
+      exportDocumentMatcher('Document.docx'),
+      exportDocumentMatcher('Test.png'),
+      exportDocumentMatcher('README.md'),
+
+      exportDocumentMatcher('index.html'),
+      exportDocumentMatcher('ls.html'),
+      exportDocumentMatcher('resources/corporatelogo.png'),
+      exportDocumentMatcher('resources/styles.css'),
+    ]))
   })
 
   test('should export version to json', async () => {
@@ -128,7 +159,14 @@ describe('Export test', () => {
       format: 'json',
     })
     expect(result.exportFileName).toEqual('export_regular-version.zip')
-    // todo check zip content
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('1.json'),
+      exportDocumentMatcher('2.json'),
+      exportDocumentMatcher('atui_graphql_changelog_base.graphql'),
+      exportDocumentMatcher('Document.docx'),
+      exportDocumentMatcher('Test.png'),
+      exportDocumentMatcher('README.md'),
+    ]))
   })
 
   test('should export version to yaml', async () => {
@@ -138,7 +176,14 @@ describe('Export test', () => {
       format: 'yaml',
     })
     expect(result.exportFileName).toEqual('export_regular-version.zip')
-    // todo check zip content
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('1.yaml'),
+      exportDocumentMatcher('2.yaml'),
+      exportDocumentMatcher('atui_graphql_changelog_base.graphql'),
+      exportDocumentMatcher('Document.docx'),
+      exportDocumentMatcher('Test.png'),
+      exportDocumentMatcher('README.md'),
+    ]))
   })
 
   test('should export single document version to html', async () => {
@@ -148,7 +193,13 @@ describe('Export test', () => {
       format: 'html',
     })
     expect(result.exportFileName).toEqual('export_single-document-version.zip')
-    // todo check zip content
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('1.html'),
+
+      exportDocumentMatcher('ls.html'),
+      exportDocumentMatcher('resources/corporatelogo.png'),
+      exportDocumentMatcher('resources/styles.css'),
+    ]))
   })
 
   test('should export single document version to json', async () => {
@@ -158,7 +209,9 @@ describe('Export test', () => {
       format: 'json',
     })
     expect(result.exportFileName).toEqual('export_single-document-version_1.json')
-    // todo check zip content
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('1.json'),
+    ]))
   })
 
   test('should export single document version to yaml', async () => {
@@ -168,80 +221,171 @@ describe('Export test', () => {
       format: 'yaml',
     })
     expect(result.exportFileName).toEqual('export_single-document-version_1.yaml')
-    // todo check zip content
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('1.yaml'),
+    ]))
   })
 
-  // todo check case with readme
+  test('should export single document version with readme to html', async () => {
+    const result = await editor.run({
+      version: SINGLE_DOCUMENT_VERSION_WITH_README,
+      buildType: BUILD_TYPE.EXPORT_VERSION,
+      format: 'html',
+    })
+    expect(result.exportFileName).toEqual('export_single-document-version-with-readme.zip')
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('1.html'),
+      exportDocumentMatcher('README.md'),
+
+      exportDocumentMatcher('index.html'), // contains index.html due to the presence of README
+      exportDocumentMatcher('ls.html'),
+      exportDocumentMatcher('resources/corporatelogo.png'),
+      exportDocumentMatcher('resources/styles.css'),
+    ]))
+  })
 
   // todo same 3 tests but without extensions? (excessive)
 
   test('should export reduced rest operations group to html', async () => {
-    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap2)
+    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
     editor = await Editor.openProject(pkg.packageId, pkg)
 
     const result = await editor.run({
       ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
       format: HTML_EXPORT_GROUP_FORMAT,
     })
-    expect(result.exportFileName).toEqual('export_regular-version_manualGroup.zip')
-    // todo check zip content
+    expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.zip')
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('1.html'),
+      exportDocumentMatcher('2.html'),
+
+      exportDocumentMatcher('index.html'),
+      exportDocumentMatcher('ls.html'),
+      exportDocumentMatcher('resources/corporatelogo.png'),
+      exportDocumentMatcher('resources/styles.css'),
+    ]))
+  })
+
+  test('should export reduced rest operations group to html (operations originated from one document)', async () => {
+    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
+    editor = await Editor.openProject(pkg.packageId, pkg)
+
+    const result = await editor.run({
+      ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
+      groupName: GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY,
+      format: HTML_EXPORT_GROUP_FORMAT,
+    })
+    expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY.zip')
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('2.html'),
+
+      exportDocumentMatcher('ls.html'),
+      exportDocumentMatcher('resources/corporatelogo.png'),
+      exportDocumentMatcher('resources/styles.css'),
+    ]))
   })
 
   test('should export reduced rest operations group to json', async () => {
-    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap2)
+    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
     editor = await Editor.openProject(pkg.packageId, pkg)
 
     const result = await editor.run({
       ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
       format: JSON_EXPORT_GROUP_FORMAT,
     })
-    expect(result.exportFileName).toEqual('export_regular-version_manualGroup.zip')
-    // todo check zip content
+    expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.zip')
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('1.json'),
+      exportDocumentMatcher('2.json'),
+    ]))
+  })
+
+  test('should export reduced rest operations group to json (operations originated from one document)', async () => {
+    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
+    editor = await Editor.openProject(pkg.packageId, pkg)
+
+    const result = await editor.run({
+      ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
+      groupName: GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY,
+      format: JSON_EXPORT_GROUP_FORMAT,
+    })
+    expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY.json')
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('2.json'),
+    ]))
   })
 
   test('should export reduced rest operations group to yaml', async () => {
-    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap2)
+    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
     editor = await Editor.openProject(pkg.packageId, pkg)
 
     const result = await editor.run({
       ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
       format: YAML_EXPORT_GROUP_FORMAT,
     })
-    expect(result.exportFileName).toEqual('export_regular-version_manualGroup.zip')
-    // todo check zip content
+    expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.zip')
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('1.yaml'),
+      exportDocumentMatcher('2.yaml'),
+    ]))
+  })
+
+  test('should export reduced rest operations group to yaml (operations originated from one document)', async () => {
+    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
+    editor = await Editor.openProject(pkg.packageId, pkg)
+
+    const result = await editor.run({
+      ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
+      groupName: GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY,
+      format: YAML_EXPORT_GROUP_FORMAT,
+    })
+    expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY.yaml')
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('2.yaml'),
+    ]))
   })
 
   test('should export merged rest operations group to html', async () => {
-    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap2)
+    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
     editor = await Editor.openProject(pkg.packageId, pkg)
     const result = await editor.run({
       ...COMMON_MERGED_GROUP_EXPORT_CONFIG,
       format: HTML_EXPORT_GROUP_FORMAT,
     })
-    expect(result.exportFileName).toEqual('export_regular-version_manualGroup.zip')
-    // todo check zip content
+    expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.zip')
+     expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.html'),
+
+      exportDocumentMatcher('ls.html'),
+      exportDocumentMatcher('resources/corporatelogo.png'),
+      exportDocumentMatcher('resources/styles.css'),
+    ]))
   })
 
   test('should export merged rest operations group to json', async () => {
-    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap2)
+    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
     editor = await Editor.openProject(pkg.packageId, pkg)
     const result = await editor.run({
       ...COMMON_MERGED_GROUP_EXPORT_CONFIG,
       format: JSON_EXPORT_GROUP_FORMAT,
     })
-    expect(result.exportFileName).toEqual('export_regular-version_manualGroup.json')
-    // todo check zip content
+    expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.json')
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.json'),
+    ]))
   })
 
   test('should export merged rest operations group to yaml', async () => {
-    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap2)
+    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
     editor = await Editor.openProject(pkg.packageId, pkg)
 
     const result = await editor.run({
       ...COMMON_MERGED_GROUP_EXPORT_CONFIG,
       format: YAML_EXPORT_GROUP_FORMAT,
     })
-    expect(result.exportFileName).toEqual('export_regular-version_manualGroup.yaml')
-    // todo check zip content
+    expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.yaml')
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.yaml'),
+    ]))
   })
 })

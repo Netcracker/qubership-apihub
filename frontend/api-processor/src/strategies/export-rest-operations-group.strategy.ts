@@ -57,7 +57,13 @@ export class ExportRestOperationsGroupStrategy implements BuilderStrategy {
 }
 
 async function exportMergedDocument(config: ExportRestOperationsGroupBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
-  const { packageId, version: versionWithRevision, groupName, format = JSON_EXPORT_GROUP_FORMAT, allowedOasExtensions } = config
+  const {
+    packageId,
+    version: versionWithRevision,
+    groupName,
+    format = JSON_EXPORT_GROUP_FORMAT,
+    allowedOasExtensions,
+  } = config
   const [version] = getSplittedVersionKey(versionWithRevision)
   const { templateResolver, packageResolver } = contexts.builderContext(config)
   const { name: packageName } = await packageResolver(packageId)
@@ -97,7 +103,13 @@ async function exportMergedDocument(config: ExportRestOperationsGroupBuildConfig
 }
 
 async function exportReducedDocuments(config: ExportRestOperationsGroupBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
-  const { packageId, version: versionWithRevision, groupName, format = JSON_EXPORT_GROUP_FORMAT, allowedOasExtensions } = config
+  const {
+    packageId,
+    version: versionWithRevision,
+    groupName,
+    format = JSON_EXPORT_GROUP_FORMAT,
+    allowedOasExtensions,
+  } = config
   const [version] = getSplittedVersionKey(versionWithRevision)
   const { templateResolver, packageResolver } = contexts.builderContext(config)
   const { name: packageName } = await packageResolver(packageId)
@@ -116,8 +128,11 @@ async function exportReducedDocuments(config: ExportRestOperationsGroupBuildConf
   buildResult.exportDocuments.push(...transformedDocuments)
 
   if (format === HTML_EXPORT_GROUP_FORMAT) {
-    buildResult.exportDocuments.push(createExportDocument('index.html', await generateIndexHtmlPage(packageName, version, generatedHtmlExportDocuments, templateResolver)))
     buildResult.exportDocuments.push(...await createCommonStaticExportDocuments(packageName, version, templateResolver))
+
+    if (generatedHtmlExportDocuments.length > 1) {
+      buildResult.exportDocuments.push(createExportDocument('index.html', await generateIndexHtmlPage(packageName, version, generatedHtmlExportDocuments, templateResolver)))
+    }
   }
 
   if (buildResult.exportDocuments.length > 1) {
@@ -150,7 +165,7 @@ async function createTransformedDocument(
   }
 
   return {
-    fileId,
+    fileId, // todo unused
     type,
     data: isRestDocument(document) ? removeOasExtensions(document.data, allowedOasExtensions) : '',
     description: '',
