@@ -257,7 +257,7 @@ spec:
                 securityContext:
                     runAsUser: 10001
                     runAsGroup: 10001
-                    readOnlyRootFilesystem: true
+                    readOnlyRootFilesystem: falses
                     runAsNonRoot: true
                     seccompProfile:
                         type: RuntimeDefault
