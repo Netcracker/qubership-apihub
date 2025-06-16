@@ -314,23 +314,17 @@ func getAllAnnotationsForService(service entity.Service) map[string]string {
 
 var bgRegexp = regexp.MustCompile(`(.*?)-v\d+$`)
 
-const CustomApihubServiceName = "apihub-service-name"
-
 // Extract service name from blue-green name
 func getServiceName(nameFromKuber string, annotations map[string]string) string {
-	if value, exists := annotations[CustomApihubServiceName]; exists {
-		return value
-	} else {
-		if bgRegexp.MatchString(nameFromKuber) {
-			res := bgRegexp.FindStringSubmatch(nameFromKuber)
-			if len(res) < 2 {
-				return nameFromKuber
-			} else {
-				return res[1]
-			}
-		} else {
+	if bgRegexp.MatchString(nameFromKuber) {
+		res := bgRegexp.FindStringSubmatch(nameFromKuber)
+		if len(res) < 2 {
 			return nameFromKuber
+		} else {
+			return res[1]
 		}
+	} else {
+		return nameFromKuber
 	}
 }
 

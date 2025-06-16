@@ -32,6 +32,8 @@ spec:
                     defaultMode: 420
                     name: apihub-agent-config
                 name: apihub-agent-config
+            hostPID: false
+            hostIPC: false
             containers:
             -   name: qubership-apihub-agent
                 image: '{{ .Values.qubershipApihubAgent.image.repository }}:{{ .Values.qubershipApihubAgent.image.tag }}'
@@ -98,8 +100,9 @@ spec:
                     timeoutSeconds: 2
                     periodSeconds: 5
                 securityContext:
+                    runAsUser: 10001
                     runAsGroup: 10001
-                    readOnlyRootFilesystem: false
+                    readOnlyRootFilesystem: true
                     runAsNonRoot: true
                     seccompProfile:
                         type: RuntimeDefault
