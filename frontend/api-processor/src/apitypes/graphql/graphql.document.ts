@@ -52,11 +52,5 @@ export const buildGraphQLDocument: DocumentBuilder<GraphApiSchema> = async (pars
 }
 
 export const dumpGraphQLDocument: DocumentDumper<GraphApiSchema> = (document) => {
-  if (document.data) {
-    return new Blob([printGraphApi(document.data)], { type: 'text/plain' })
-  }
-  if (document.source) {
-    return document.source
-  }
-  throw new Error(`Document ${document.fileId} has neither data nor source`)
+  return new Blob([printGraphApi(document.data)], { type: 'text/plain' })
 }

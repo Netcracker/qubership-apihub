@@ -20,6 +20,7 @@ import {
   ApiOperation,
   BuildConfig,
   BuilderContext,
+  FILE_FORMAT_JSON,
   NotificationMessage,
   PackageDocuments,
   PackageOperations,
@@ -185,5 +186,5 @@ export function getDocumentFileContent(
   ctx: BuilderContext,
 ): Blob {
   const builder = ctx.apiBuilders.find(({ types }) => types.includes(document.type)) || unknownApiBuilder
-  return builder.dumpDocument(document)
+  return builder.dumpDocument(document, FILE_FORMAT_JSON)
 }

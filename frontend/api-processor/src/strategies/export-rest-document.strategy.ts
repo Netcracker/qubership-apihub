@@ -19,21 +19,16 @@ import {
   BuilderStrategy,
   BuildResult,
   BuildTypeContexts,
+  DocumentExporter,
+  ExportDocument,
   ExportRestDocumentBuildConfig,
   HTML_EXPORT_GROUP_FORMAT,
   OperationsGroupExportFormat,
-  ZippableDocument,
 } from '../types'
-import { REST_DOCUMENT_TYPE } from '../apitypes'
 import { getDocumentTitle, getSplittedVersionKey } from '../utils'
 import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
-import { removeOasExtensions } from '../utils/removeOasExtensions'
-import {
-  createCommonStaticExportDocuments,
-  createExportDocument,
-  createSingleFileExportName,
-  generateHtmlPage,
-} from '../utils/export'
+import { createCommonStaticExportDocuments, createSingleFileExportName } from '../utils/export'
+import { createRestExportDocument } from '../apitypes/rest/rest.document'
 
 async function createTransformedDocument(
   file: File,
@@ -41,26 +36,11 @@ async function createTransformedDocument(
   packageName: string,
   version: string,
   templateResolver: _TemplateResolver,
+  createExportDocument: DocumentExporter,
   allowedOasExtensions?: OpenApiExtensionKey[],
-): Promise<ZippableDocument> {
-  const data = removeOasExtensions(JSON.parse(await file.text()), allowedOasExtensions)
-
-  if (format === HTML_EXPORT_GROUP_FORMAT) {
-    return createExportDocument(
-      `${getDocumentTitle(file.name)}.${HTML_EXPORT_GROUP_FORMAT}`,
-      await generateHtmlPage(JSON.stringify(data, undefined, 2), getDocumentTitle(file.name), packageName, version, templateResolver),
-    )
-  }
-
-  return {
-    data: data,
-    fileId: file.name,
-    type: REST_DOCUMENT_TYPE.OAS3, // todo one of REST_DOCUMENT_TYPE
-    description: '',
-    publish: true,
-    filename: `${getDocumentTitle(file.name)}.${format}`,
-    source: file,
-  }
+  generatedHtmlExportDocuments?: ExportDocument[],
+): Promise<ExportDocument> {
+  return createExportDocument?.(file.name, await file.text(), format, packageName, version, templateResolver, allowedOasExtensions, generatedHtmlExportDocuments)
 }
 
 export class ExportRestDocumentStrategy implements BuilderStrategy {
@@ -77,10 +57,10 @@ export class ExportRestDocumentStrategy implements BuilderStrategy {
     )
     const { name: packageName } = await packageResolver(packageId)
 
-    buildResult.exportDocuments.push(await createTransformedDocument(file, format, packageName, version, templateResolver, allowedOasExtensions))
+    buildResult.exportDocuments.push(await createTransformedDocument(file, format, packageName, version, templateResolver, createRestExportDocument, allowedOasExtensions))
 
     if (format === HTML_EXPORT_GROUP_FORMAT) {
-      buildResult.exportDocuments.push(...await createCommonStaticExportDocuments(packageName, version, templateResolver, buildResult.exportDocuments[0].fileId))
+      buildResult.exportDocuments.push(...await createCommonStaticExportDocuments(packageName, version, templateResolver, buildResult.exportDocuments[0].filename))
       buildResult.exportFileName = createSingleFileExportName(packageId, version, getDocumentTitle(file.name), 'zip')
       return buildResult
     }

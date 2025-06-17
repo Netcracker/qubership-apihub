@@ -32,7 +32,7 @@ import {
 } from '../external'
 import { CompareContext, OperationChanges } from './compare'
 import { BuilderConfiguration, BuilderRunOptions, VersionCache } from './builder'
-import { VersionDocument, ZippableDocument } from './documents'
+import { ExportDocument, VersionDocument, ZippableDocument } from './documents'
 import { NotificationMessage } from '../package/notifications'
 import { RestOperationData } from '../../apitypes/rest/rest.types'
 import { GRAPHQL_API_TYPE, REST_API_TYPE, TEXT_API_TYPE, UNKNOWN_API_TYPE } from '../../apitypes'
@@ -42,6 +42,8 @@ import { ApiOperation } from './operation'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
 import { DebugPerformanceContext } from '../../utils/logs'
 import { ResolvedPackage } from '../external/package'
+import { FILE_FORMAT_JSON, FILE_FORMAT_YAML } from '../../consts'
+import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
 
 export type BuilderType =
   | typeof REST_API_TYPE
@@ -95,7 +97,7 @@ export type NormalizedOperationId = string
 export type FileParser = (fileId: string, data: Blob) => Promise<SourceFile | undefined>
 export type DocumentBuilder<T> = (parsedFile: TextFile, file: BuildConfigFile, ctx: BuilderContext<T>) => Promise<VersionDocument<T>>
 export type OperationsBuilder<T, M = any> = (document: VersionDocument<T>, ctx: BuilderContext<T>, debugCtx?: DebugPerformanceContext) => Promise<ApiOperation<M>[]>
-export type DocumentDumper<T> = (document: ZippableDocument<T>, format?: OperationsGroupExportFormat) => Blob
+export type DocumentDumper<T> = (document: ZippableDocument<T>, format?: typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON) => Blob
 export type OperationDataCompare<T> = (current: T, previous: T, ctx: CompareOperationsPairContext) => Promise<Diff[]>
 export type OperationChangesValidator = (
   changes: ChangeMessage, // + ctx with internal resolvers
@@ -103,6 +105,16 @@ export type OperationChangesValidator = (
   prePreviousOperation?: RestOperationData, // TODO remove
 ) => boolean
 export type OperationIdNormalizer = (operation: ResolvedOperation) => NormalizedOperationId
+export type DocumentExporter = (
+  filename: string,
+  data: string,
+  format: OperationsGroupExportFormat,
+  packageName: string,
+  version: string,
+  templateResolver: _TemplateResolver,
+  allowedOasExtensions?: OpenApiExtensionKey[],
+  generatedHtmlExportDocuments?: ExportDocument[],
+) => Promise<ExportDocument>
 export type BreakingChangeReclassifier = (changes: OperationChanges[], previousVersion: string, previousPackageId: string, ctx: CompareContext) => Promise<void>
 
 export interface ApiBuilder<T = any, O = any, M = any> {
@@ -115,6 +127,7 @@ export interface ApiBuilder<T = any, O = any, M = any> {
   compareOperationsData?: OperationDataCompare<O>
   validateOperationChanges?: OperationChangesValidator
   createNormalizedOperationId?: OperationIdNormalizer
+  createExportDocument?: DocumentExporter
 }
 
 // internal

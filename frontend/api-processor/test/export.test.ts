@@ -25,6 +25,7 @@ import {
   YAML_EXPORT_GROUP_FORMAT,
 } from '../src'
 // import fs from 'fs/promises'
+// import AdmZip = require('adm-zip')
 
 // const EXPORT_RESULTS_PATH = 'test/versions/export_results'
 
@@ -79,16 +80,21 @@ describe('Export test', () => {
 
     editor = await Editor.openProject(pkg.packageId, pkg)
 
-    // try {
-    //   await fs.mkdir(EXPORT_RESULTS_PATH)
-    // } catch (e) {
-      //
-    // }
+    // fs.rm(EXPORT_RESULTS_PATH, { recursive: true, force: true })
+    // await fs.mkdir(EXPORT_RESULTS_PATH)
   })
 
   // afterEach(async () => {
   //   const { packageVersion, exportFileName } = await editor.createNodeVersionPackage()
-  //   await fs.writeFile(`${EXPORT_RESULTS_PATH}/${exportFileName}`, packageVersion)
+  //   const infoPrefix = editor.config.operationsSpecTransformation
+  //     ? `${editor.config.operationsSpecTransformation}___${editor.config.format}___`
+  //     : `${editor.config.format}___`
+  //
+  //   if (exportFileName?.endsWith('.zip')) {
+  //     const zip = new AdmZip(packageVersion)
+  //     return zip.extractAllTo(`${EXPORT_RESULTS_PATH}/${infoPrefix}${exportFileName}`)
+  //   }
+  //   return await fs.writeFile(`${EXPORT_RESULTS_PATH}/${infoPrefix}${exportFileName}`, packageVersion)
   // })
 
   test('should export rest document to html', async () => {
@@ -353,7 +359,7 @@ describe('Export test', () => {
       format: HTML_EXPORT_GROUP_FORMAT,
     })
     expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.zip')
-     expect(result).toEqual(exportDocumentsMatcher([
+    expect(result).toEqual(exportDocumentsMatcher([
       exportDocumentMatcher('GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.html'),
 
       exportDocumentMatcher('ls.html'),

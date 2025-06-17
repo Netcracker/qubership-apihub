@@ -20,10 +20,25 @@ import { convertObj } from 'swagger2openapi'
 import { REST_DOCUMENT_TYPE, REST_KIND_KEY } from './rest.consts'
 import type { RestDocumentInfo } from './rest.types'
 
-import { DocumentBuilder, DocumentDumper, YAML_EXPORT_GROUP_FORMAT } from '../../types'
-import { FILE_FORMAT } from '../../consts'
-import { createBundlingErrorHandler, getBundledFileDataWithDependencies, getDocumentTitle } from '../../utils'
-import YAML from 'js-yaml'
+import {
+  _TemplateResolver,
+  DocumentBuilder,
+  DocumentDumper,
+  ExportDocument,
+  HTML_EXPORT_GROUP_FORMAT,
+  OperationsGroupExportFormat,
+} from '../../types'
+import { FILE_FORMAT, FILE_FORMAT_JSON } from '../../consts'
+import {
+  createBundlingErrorHandler,
+  EXPORT_FORMAT_TO_FILE_FORMAT,
+  getBundledFileDataWithDependencies,
+  getDocumentTitle,
+} from '../../utils'
+import { dump } from './rest.utils'
+import { generateHtmlPage } from '../../utils/export'
+import { removeOasExtensions } from '../../utils/removeOasExtensions'
+import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
 
 const openApiDocumentMeta = (data: OpenAPIV3.Document): RestDocumentInfo => {
   if (typeof data !== 'object' || !data) {
@@ -99,8 +114,40 @@ export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (par
 }
 
 export const dumpRestDocument: DocumentDumper<OpenAPIV3.Document> = (document, format) => {
-  if (format === YAML_EXPORT_GROUP_FORMAT) {
-    return new Blob([YAML.dump(document.data)], { type: 'application/yaml' })
+  return new Blob(...dump(document.data, format ?? FILE_FORMAT_JSON))
+}
+
+export async function createRestExportDocument(
+  filename: string,
+  data: string,
+  format: OperationsGroupExportFormat,
+  packageName: string,
+  version: string,
+  templateResolver: _TemplateResolver,
+  allowedOasExtensions?: OpenApiExtensionKey[],
+  generatedHtmlExportDocuments?: ExportDocument[],
+): Promise<ExportDocument> {
+  const exportFilename = `${getDocumentTitle(filename)}.${format}`
+  const [d, bp] = dump(removeOasExtensions(JSON.parse(data), allowedOasExtensions), EXPORT_FORMAT_TO_FILE_FORMAT.get(format)!)
+
+  if (format === HTML_EXPORT_GROUP_FORMAT) {
+    const htmlExportDocument = {
+      data: await generateHtmlPage(
+        d[0],
+        getDocumentTitle(filename),
+        packageName,
+        version,
+        templateResolver,
+        true,
+      ),
+      filename: exportFilename,
+    }
+    generatedHtmlExportDocuments?.push(htmlExportDocument)
+    return htmlExportDocument
   }
-  return new Blob([JSON.stringify(document.data, undefined, 2)], { type: 'application/json' })
+
+  return {
+    data: new Blob(d, bp),
+    filename: exportFilename,
+  }
 }

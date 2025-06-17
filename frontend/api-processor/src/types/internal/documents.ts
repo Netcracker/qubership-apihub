@@ -21,6 +21,12 @@ export interface VersionDocuments {
   documents: VersionDocument[]
 }
 
+
+export interface ExportDocument {
+  data: Blob
+  filename: string
+}
+
 export interface ZippableDocument<T = any> {
   fileId: FileId
   type: string

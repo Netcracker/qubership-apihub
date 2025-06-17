@@ -19,6 +19,7 @@ import {
   BuildConfigBase,
   BuildConfigFile,
   BuildConfigRef,
+  ExportDocument,
   FileId,
   isPublishBuildConfig,
   OperationId,
@@ -32,7 +33,6 @@ import {
   ResolvedVersionDocuments,
   VersionId,
   VersionsComparison,
-  ZippableDocument,
 } from './types'
 import {
   ApiBuilder,
@@ -86,7 +86,7 @@ export const DEFAULT_RUN_OPTIONS: BuilderRunOptions = {
 export class PackageVersionBuilder implements IPackageVersionBuilder {
   apiBuilders: ApiBuilder[] = []
   documents = new Map<string, VersionDocument>()
-  exportDocuments: ZippableDocument[] = []
+  exportDocuments: ExportDocument[] = []
   exportFileName?: string
   operations = new Map<string, ApiOperation>()
   comparisons: VersionsComparison[] = []

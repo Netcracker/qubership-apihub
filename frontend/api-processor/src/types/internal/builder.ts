@@ -18,7 +18,7 @@ import { BuildConfig, BuilderResolvers, FileId, PackageId, ResolvedVersion, Vers
 import { VersionsComparison, VersionsComparisonDto } from './compare'
 import { PackageConfig } from '../package/config'
 import { NotificationMessage } from '../package/notifications'
-import { VersionDocument, ZippableDocument } from './documents'
+import { ExportDocument, VersionDocument } from './documents'
 import { SourceFile } from './internal'
 import { ApiOperation } from './operation'
 
@@ -32,7 +32,7 @@ export interface BuildResultDto {
   comparisons: VersionsComparisonDto[]
   notifications: NotificationMessage[]
   documents: Map<string, VersionDocument>
-  exportDocuments: ZippableDocument[]
+  exportDocuments: ExportDocument[]
   operations: Map<string, ApiOperation>
   merged?: VersionDocument
 }
@@ -42,7 +42,7 @@ export interface BuildResult {
   comparisons: VersionsComparison[]
   notifications: NotificationMessage[]
   documents: Map<string, VersionDocument>
-  exportDocuments: ZippableDocument[]
+  exportDocuments: ExportDocument[]
   exportFileName?: string
   operations: Map<string, ApiOperation>
   merged?: VersionDocument
