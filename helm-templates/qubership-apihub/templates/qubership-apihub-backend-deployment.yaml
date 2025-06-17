@@ -232,6 +232,12 @@ spec:
                     value: '{{ .Values.qubershipApihubBackend.env.technicalParameters.customPathPrefixes }}'
                 -   name: ALLOWED_HOSTS
                     value: '{{ .Values.qubershipApihubBackend.env.businessParameters.allowedHosts }}'
+                -   name: REVISIONS_TTL_DAYS
+                    value: '{{ .Values.qubershipApihubBackend.env.revisionsCleanup.ttlDays }}'
+                -   name: REVISIONS_CLEANUP_DELETE_LAST_REVISION
+                    value: '{{ .Values.qubershipApihubBackend.env.revisionsCleanup.deleteLastRevision }}'
+                -   name: REVISIONS_CLEANUP_DELETE_RELEASE_REVISIONS
+                    value: '{{ .Values.qubershipApihubBackend.env.revisionsCleanup.deleteReleaseRevisions }}'
                 resources:
                     requests:
                         cpu: {{ .Values.qubershipApihubBackend.resource.cpu.request }}
