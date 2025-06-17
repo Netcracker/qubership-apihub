@@ -2,16 +2,15 @@
 
 This guide describes Qubership APIHUB installation process
 
-- [Qubership APIHUB Installation Guide](#qubership-apihub-installation-guide)
 - [3rd party dependencies](#3rd-party-dependencies)
 - [HWE](#hwe)
 - [docker-compose](#docker-compose)
-  - [Minimal parameters set](#minimal-parameters-set)
-  - [Full ENV VARs list per container](#full-env-vars-list-per-container)
+  * [Minimal parameters set](#minimal-parameters-set)
+  * [Full ENV VARs list per container](#full-env-vars-list-per-container)
 - [Helm](#helm)
-  - [Prerequisites](#prerequisites)
-  - [Set up values.yml](#set-up-valuesyml)
-  - [Execute helm install](#execute-helm-install)
+  * [Prerequisites](#prerequisites)
+  * [Set up values.yml](#set-up-valuesyml)
+  * [Execute helm install](#execute-helm-install)
 
 # 3rd party dependencies
 
