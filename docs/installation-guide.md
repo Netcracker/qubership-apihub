@@ -2,15 +2,16 @@
 
 This guide describes Qubership APIHUB installation process
 
+- [Qubership APIHUB Installation Guide](#qubership-apihub-installation-guide)
 - [3rd party dependencies](#3rd-party-dependencies)
 - [HWE](#hwe)
 - [docker-compose](#docker-compose)
-  * [Minimal parameters set](#minimal-parameters-set)
-  * [Full ENV VARs list per container](#full-env-vars-list-per-container)
+  - [Minimal parameters set](#minimal-parameters-set)
+  - [Full ENV VARs list per container](#full-env-vars-list-per-container)
 - [Helm](#helm)
-  * [Prerequisites](#prerequisites)
-  * [Set up values.yml](#set-up-valuesyml)
-  * [Execute helm install](#execute-helm-install)
+  - [Prerequisites](#prerequisites)
+  - [Set up values.yml](#set-up-valuesyml)
+  - [Execute helm install](#execute-helm-install)
 
 # 3rd party dependencies
 
@@ -109,7 +110,9 @@ APIHUB_ACCESS_TOKEN=${any string}
 | DEFAULT\_WORKSPACE\_ID | No | "" | QS | Default workspace ID for Agent UI |
 | CUSTOM\_PATH\_PREFIXES | No | "" |  | Allows to specify custom paths for extension (plug-in) backend services |
 | ALLOWED\_HOSTS | No | "" | \*.example.com | Allowed list of hosts that are accepted for proxy(playground) requests. |
-
+| REVISIONS\_TTL\_DAYS | No | 360 | 180 | Number of days to keep revisions before cleanup. |
+| REVISIONS\_CLEANUP\_DELETE\_LAST\_REVISION | No | false | true | If set to true, the revisions cleanup job will delete the last revision of the version. Otherwise, such revisions are skipped. |
+| REVISIONS\_CLEANUP\_DELETE\_RELEASE\_REVISIONS | No | false | true | If set to true, the revisions cleanup job will delete revisions with a 'release' status. Otherwise, such revisions are skipped. |
 
 | Deploy Parameter name | Mandatory | Default Value | Example | Description |
 | --- | --- | --- | --- | --- |
