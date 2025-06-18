@@ -130,6 +130,14 @@ http {
           add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self'" always;
         }
 
+         location ~ ^/(portal|agents)/version\.json$ {
+             root /usr/share/nginx/html;
+             add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate" always;
+             add_header Pragma "no-cache" always;
+             add_header Expires 0 always;
+             try_files $uri =404;
+         }
+
         location ~* \.(?:js|css|woff2?|ttf|svg|png)$ {
           add_header Cache-Control "public, max-age=604800, immutable";
           root /usr/share/nginx/html/portal;

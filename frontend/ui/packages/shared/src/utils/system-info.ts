@@ -31,6 +31,7 @@ export type SystemInfo = {
   productionMode: boolean
   externalLinks: Link[]
   notification?: string
+  migrationInProgress: boolean
 }
 
 export type SystemInfoDto = {
@@ -39,6 +40,7 @@ export type SystemInfoDto = {
   productionMode: boolean
   externalLinks: string[]
   notification?: string
+  migrationInProgress: boolean
 }
 
 export const EMPTY_SYSTEM_INFO: SystemInfo = {
@@ -46,6 +48,7 @@ export const EMPTY_SYSTEM_INFO: SystemInfo = {
   frontendVersionKey: '0.0.0',
   productionMode: false,
   externalLinks: [],
+  migrationInProgress: false,
 }
 
 export function toSystemInfo(value: SystemInfoDto): SystemInfo {
@@ -67,6 +70,7 @@ export function toSystemInfo(value: SystemInfoDto): SystemInfo {
     productionMode: value.productionMode,
     externalLinks: externalLinks,
     notification: value.notification,
+    migrationInProgress: value.migrationInProgress,
   }
 }
 

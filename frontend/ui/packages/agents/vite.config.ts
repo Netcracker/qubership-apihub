@@ -23,6 +23,7 @@ import NodeGlobalsPolyfill from '@esbuild-plugins/node-globals-polyfill'
 import ignoreDotsOnDevServer from 'vite-plugin-rewrite-all'
 import { VitePluginFonts } from 'vite-plugin-fonts'
 import { visualizer as bundleVisualizer } from 'rollup-plugin-visualizer'
+import createVersionJsonFilePlugin from '../../vite-create-version-json'
 
 const proxyServer = ''
 const devServer = 'http://localhost:3003'
@@ -60,6 +61,7 @@ export default defineConfig(({ mode }) => {
           injectTo: 'head-prepend',
         },
       }),
+      createVersionJsonFilePlugin(),
     ],
     optimizeDeps: {
       // npm link creates a symlink that points outside node_modules and by default such packages are not optimized.

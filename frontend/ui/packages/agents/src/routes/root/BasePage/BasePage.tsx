@@ -30,10 +30,16 @@ import { AppHeader } from '@netcracker/qubership-apihub-ui-shared/components/App
 import { MaintenanceNotification } from '@netcracker/qubership-apihub-ui-shared/components/MaintenanceNotification'
 import { SystemInfoPopup } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import * as packageJson from '../../../../package.json'
+import { useVersionInfo } from '@netcracker/qubership-apihub-ui-shared/hooks/frontend-version/useVersionInfo'
+import { agent } from '@netcracker/qubership-apihub-ui-shared/utils/version-info'
+import {
+  ModuleFetchingErrorBoundary,
+} from '@netcracker/qubership-apihub-ui-shared/components/ModuleFetchingErrorBoundary/ModuleFetchingErrorBoundary'
 
 export const BasePage: FC = memo(() => {
   useAuthorization()
   const { notification: systemNotification } = useSystemInfo()
+  const { frontendVersion, apiProcessorVersion } = useVersionInfo(agent)
 
   const viewPortStyleCalculator = useCallback(
     (theme: Theme): SystemStyleObject<Theme> => {
@@ -43,33 +49,36 @@ export const BasePage: FC = memo(() => {
   )
 
   return (
-    <Box
-      display="grid"
-      gridTemplateRows="max-content 1fr"
-      height="100vh"
-    >
-      <AppHeader
-        logo={<LogoIcon />}
-        title="APIHUB"
-        links={[
-          { name: 'Portal', pathname: '/portal', testId: 'PortalHeaderButton' },
-          { name: 'API Editor', pathname: '/editor', testId: 'EditorHeaderButton' },
-          { name: 'Agent', pathname: '/agents', active: true, testId: 'AgentHeaderButton' },
-        ]}
-        action={
-          <>
-            <SystemInfoPopup frontendVersionKey={packageJson.version} />
-            <UserPanel />
-          </>
-        } />
-      <Box sx={viewPortStyleCalculator}>
-        <Outlet />
-        <ErrorNotificationHandler />
-        <SuccessNotificationHandler />
+    <ModuleFetchingErrorBoundary showReloadPopup={packageJson.version !== frontendVersion}>
+      <Box
+        display="grid"
+        gridTemplateRows="max-content 1fr"
+        height="100vh"
+      >
+        <AppHeader
+          logo={<LogoIcon/>}
+          title="APIHUB"
+          links={[
+            { name: 'Portal', pathname: '/portal', testId: 'PortalHeaderButton' },
+            { name: 'API Editor', pathname: '/editor', testId: 'EditorHeaderButton' },
+            { name: 'Agent', pathname: '/agents', active: true, testId: 'AgentHeaderButton' },
+          ]}
+          action={
+            <>
+              <SystemInfoPopup frontendVersionKey={frontendVersion}
+                               apiProcessorVersion={apiProcessorVersion}/>
+              <UserPanel/>
+            </>
+          }/>
+        <Box sx={viewPortStyleCalculator}>
+          <Outlet/>
+          <ErrorNotificationHandler/>
+          <SuccessNotificationHandler/>
+        </Box>
+        {systemNotification && (
+          <MaintenanceNotification value={systemNotification}/>
+        )}
       </Box>
-      {systemNotification && (
-        <MaintenanceNotification value={systemNotification} />
-      )}
-    </Box>
+    </ModuleFetchingErrorBoundary>
   )
 })
