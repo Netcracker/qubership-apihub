@@ -135,13 +135,7 @@ export const FILE_FORMAT = {
   PROTO: FILE_FORMAT_PROTO,
 } as const
 
-//todo separate supported for build and for export
 export const SUPPORTED_FILE_FORMATS = Object.values(FILE_FORMAT)
-
-export type ExportFileFormat =
-  | typeof FILE_FORMAT_YAML
-  | typeof FILE_FORMAT_JSON
-  | typeof FILE_FORMAT_HTML
 
 export const SYNTHETIC_TITLE_FLAG = Symbol('synthetic-title')
 export const ORIGINS_SYMBOL = Symbol('origins')

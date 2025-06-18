@@ -70,11 +70,9 @@ export const resolveApiAudience = (info: unknown): ApiAudience => {
 export const dump = (value: unknown, format: typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON): [[string], BlobPropertyBag] => {
   if (format === FILE_FORMAT_YAML) {
     return [[YAML.dump(value)], { type: 'application/yaml' }]
-    // return new Blob([YAML.dump(value)], { type: 'application/yaml' })
   }
   if (format === FILE_FORMAT_JSON) {
     return [[JSON.stringify(value, undefined, 2)], { type: 'application/json' }]
-    // return new Blob([JSON.stringify(value, undefined, 2)], { type: 'application/json' })
   }
   throw new Error(`Unsupported format: ${format}`)
 }

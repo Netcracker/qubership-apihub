@@ -18,11 +18,11 @@ import { Editor, exportDocumentMatcher, exportDocumentsMatcher, LocalRegistry } 
 import {
   BUILD_TYPE,
   ExportRestOperationsGroupBuildConfig,
-  HTML_EXPORT_GROUP_FORMAT,
-  JSON_EXPORT_GROUP_FORMAT,
+  FILE_FORMAT_HTML,
+  FILE_FORMAT_JSON,
   TRANSFORMATION_KIND_MERGED,
   TRANSFORMATION_KIND_REDUCED,
-  YAML_EXPORT_GROUP_FORMAT,
+  FILE_FORMAT_YAML,
 } from '../src'
 // import fs from 'fs/promises'
 // import AdmZip = require('adm-zip')
@@ -80,7 +80,7 @@ describe('Export test', () => {
 
     editor = await Editor.openProject(pkg.packageId, pkg)
 
-    // fs.rm(EXPORT_RESULTS_PATH, { recursive: true, force: true })
+    // await fs.rm(EXPORT_RESULTS_PATH, { recursive: true, force: true })
     // await fs.mkdir(EXPORT_RESULTS_PATH)
   })
 
@@ -101,7 +101,7 @@ describe('Export test', () => {
     const result = await editor.run({
       buildType: BUILD_TYPE.EXPORT_REST_DOCUMENT,
       documentId: '1',
-      format: 'html',
+      format: FILE_FORMAT_HTML,
     })
     expect(result.exportFileName).toEqual('export_regular-version_1.zip')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -116,7 +116,7 @@ describe('Export test', () => {
     const result = await editor.run({
       buildType: BUILD_TYPE.EXPORT_REST_DOCUMENT,
       documentId: '1',
-      format: 'json',
+      format: FILE_FORMAT_JSON,
     })
     expect(result.exportFileName).toEqual('export_regular-version_1.json')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -128,7 +128,7 @@ describe('Export test', () => {
     const result = await editor.run({
       buildType: BUILD_TYPE.EXPORT_REST_DOCUMENT,
       documentId: '1',
-      format: 'yaml',
+      format: FILE_FORMAT_YAML,
     })
     expect(result.exportFileName).toEqual('export_regular-version_1.yaml')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -140,7 +140,7 @@ describe('Export test', () => {
     const result = await editor.run({
       packageId: pkg.packageId,
       buildType: BUILD_TYPE.EXPORT_VERSION,
-      format: 'html',
+      format: FILE_FORMAT_HTML,
     })
     expect(result.exportFileName).toEqual('export_regular-version.zip')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -162,7 +162,7 @@ describe('Export test', () => {
     const result = await editor.run({
       packageId: pkg.packageId,
       buildType: BUILD_TYPE.EXPORT_VERSION,
-      format: 'json',
+      format: FILE_FORMAT_JSON,
     })
     expect(result.exportFileName).toEqual('export_regular-version.zip')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -179,7 +179,7 @@ describe('Export test', () => {
     const result = await editor.run({
       packageId: pkg.packageId,
       buildType: BUILD_TYPE.EXPORT_VERSION,
-      format: 'yaml',
+      format: FILE_FORMAT_YAML,
     })
     expect(result.exportFileName).toEqual('export_regular-version.zip')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -196,7 +196,7 @@ describe('Export test', () => {
     const result = await editor.run({
       version: SINGLE_DOCUMENT_VERSION,
       buildType: BUILD_TYPE.EXPORT_VERSION,
-      format: 'html',
+      format: FILE_FORMAT_HTML,
     })
     expect(result.exportFileName).toEqual('export_single-document-version.zip')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -212,7 +212,7 @@ describe('Export test', () => {
     const result = await editor.run({
       version: SINGLE_DOCUMENT_VERSION,
       buildType: BUILD_TYPE.EXPORT_VERSION,
-      format: 'json',
+      format: FILE_FORMAT_JSON,
     })
     expect(result.exportFileName).toEqual('export_single-document-version_1.json')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -224,7 +224,7 @@ describe('Export test', () => {
     const result = await editor.run({
       version: SINGLE_DOCUMENT_VERSION,
       buildType: BUILD_TYPE.EXPORT_VERSION,
-      format: 'yaml',
+      format: FILE_FORMAT_YAML,
     })
     expect(result.exportFileName).toEqual('export_single-document-version_1.yaml')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -236,7 +236,7 @@ describe('Export test', () => {
     const result = await editor.run({
       version: SINGLE_DOCUMENT_VERSION_WITH_README,
       buildType: BUILD_TYPE.EXPORT_VERSION,
-      format: 'html',
+      format: FILE_FORMAT_HTML,
     })
     expect(result.exportFileName).toEqual('export_single-document-version-with-readme.zip')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -258,7 +258,7 @@ describe('Export test', () => {
 
     const result = await editor.run({
       ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
-      format: HTML_EXPORT_GROUP_FORMAT,
+      format: FILE_FORMAT_HTML,
     })
     expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.zip')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -279,7 +279,7 @@ describe('Export test', () => {
     const result = await editor.run({
       ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
       groupName: GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY,
-      format: HTML_EXPORT_GROUP_FORMAT,
+      format: FILE_FORMAT_HTML,
     })
     expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY.zip')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -297,7 +297,7 @@ describe('Export test', () => {
 
     const result = await editor.run({
       ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
-      format: JSON_EXPORT_GROUP_FORMAT,
+      format: FILE_FORMAT_JSON,
     })
     expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.zip')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -313,7 +313,7 @@ describe('Export test', () => {
     const result = await editor.run({
       ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
       groupName: GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY,
-      format: JSON_EXPORT_GROUP_FORMAT,
+      format: FILE_FORMAT_JSON,
     })
     expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY.json')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -327,7 +327,7 @@ describe('Export test', () => {
 
     const result = await editor.run({
       ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
-      format: YAML_EXPORT_GROUP_FORMAT,
+      format: FILE_FORMAT_YAML,
     })
     expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.zip')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -343,7 +343,7 @@ describe('Export test', () => {
     const result = await editor.run({
       ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
       groupName: GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY,
-      format: YAML_EXPORT_GROUP_FORMAT,
+      format: FILE_FORMAT_YAML,
     })
     expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY.yaml')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -356,7 +356,7 @@ describe('Export test', () => {
     editor = await Editor.openProject(pkg.packageId, pkg)
     const result = await editor.run({
       ...COMMON_MERGED_GROUP_EXPORT_CONFIG,
-      format: HTML_EXPORT_GROUP_FORMAT,
+      format: FILE_FORMAT_HTML,
     })
     expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.zip')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -373,7 +373,7 @@ describe('Export test', () => {
     editor = await Editor.openProject(pkg.packageId, pkg)
     const result = await editor.run({
       ...COMMON_MERGED_GROUP_EXPORT_CONFIG,
-      format: JSON_EXPORT_GROUP_FORMAT,
+      format: FILE_FORMAT_JSON,
     })
     expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.json')
     expect(result).toEqual(exportDocumentsMatcher([
@@ -387,7 +387,7 @@ describe('Export test', () => {
 
     const result = await editor.run({
       ...COMMON_MERGED_GROUP_EXPORT_CONFIG,
-      format: YAML_EXPORT_GROUP_FORMAT,
+      format: FILE_FORMAT_YAML,
     })
     expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.yaml')
     expect(result).toEqual(exportDocumentsMatcher([

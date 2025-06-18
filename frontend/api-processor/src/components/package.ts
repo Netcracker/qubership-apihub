@@ -36,7 +36,7 @@ import {
 } from '../types'
 import { unknownApiBuilder } from '../apitypes'
 import { BUILD_TYPE, MESSAGE_SEVERITY, PACKAGE } from '../consts'
-import { takeIf, toPackageDocument } from '../utils'
+import { EXPORT_FORMAT_TO_FILE_FORMAT, takeIf, toPackageDocument } from '../utils'
 import { toVersionsComparisonDto } from '../utils/transformToDto'
 
 export interface ZipTool {
@@ -130,8 +130,8 @@ const writeDocumentsToZip = async (zip: ZipTool, documents: ZippableDocument[], 
 
     const apiBuilder =
       apiBuilders.find(({ types }) => types.includes(document.type)) || unknownApiBuilder
-    // @ts-ignore todo
-    const data = apiBuilder.dumpDocument(document, format)
+    const documentFormat = EXPORT_FORMAT_TO_FILE_FORMAT.get(format!)
+    const data = apiBuilder.dumpDocument(document, documentFormat)
     await zip.file(document.filename, data)
   }
 }

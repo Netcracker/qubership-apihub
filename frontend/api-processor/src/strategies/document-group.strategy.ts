@@ -19,7 +19,6 @@ import {
   BuildResult,
   BuildTypeContexts,
   FileFormat,
-  JSON_EXPORT_GROUP_FORMAT,
   ReducedSourceSpecificationsBuildConfig,
   ResolvedGroupDocument,
   ResolvedReferenceMap,
@@ -37,7 +36,7 @@ import {
 import { OpenAPIV3 } from 'openapi-types'
 import { getOperationBasePath } from '../apitypes/rest/rest.utils'
 import { VersionRestDocument } from '../apitypes/rest/rest.types'
-import { INLINE_REFS_FLAG, NORMALIZE_OPTIONS } from '../consts'
+import { FILE_FORMAT_JSON, INLINE_REFS_FLAG, NORMALIZE_OPTIONS } from '../consts'
 import { normalize } from '@netcracker/qubership-apihub-api-unifier'
 import { calculateSpecRefs, extractCommonPathItemProperties } from '../apitypes/rest/rest.operation'
 
@@ -71,7 +70,7 @@ function getTransformedDocument(document: ResolvedGroupDocument, format: FileFor
 export class DocumentGroupStrategy implements BuilderStrategy {
   async execute(config: ReducedSourceSpecificationsBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
     const { builderContext } = contexts
-    const { packageId, version, groupName, apiType, format = JSON_EXPORT_GROUP_FORMAT } = config
+    const { packageId, version, groupName, apiType, format = FILE_FORMAT_JSON } = config
 
     if (!groupName) {
       throw new Error('No group to transform documents for provided')

@@ -15,47 +15,50 @@
  */
 
 import {
-  _TemplateResolver,
   BuilderStrategy,
   BuildResult,
   BuildTypeContexts,
-  DocumentExporter,
   ExportDocument,
   ExportRestOperationsGroupBuildConfig,
-  HTML_EXPORT_GROUP_FORMAT,
-  JSON_EXPORT_GROUP_FORMAT,
-  OperationsGroupExportFormat,
   TRANSFORMATION_KIND_MERGED,
   TRANSFORMATION_KIND_REDUCED,
 } from '../types'
 import { DocumentGroupStrategy } from './document-group.strategy'
 import { MergedDocumentGroupStrategy } from './merged-document-group.strategy'
 import { EXPORT_FORMAT_TO_FILE_FORMAT, getSplittedVersionKey } from '../utils'
-import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
-import { BUILD_TYPE } from '../consts'
+import { BUILD_TYPE, FILE_FORMAT_HTML, FILE_FORMAT_JSON } from '../consts'
 import { createCommonStaticExportDocuments, createUnknownExportDocument, generateIndexHtmlPage } from '../utils/export'
 import { createRestExportDocument } from '../apitypes/rest/rest.document'
+import { isRestDocument } from '../apitypes'
 
 export class ExportRestOperationsGroupStrategy implements BuilderStrategy {
   async execute(config: ExportRestOperationsGroupBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
-
     switch (config.operationsSpecTransformation) {
       case TRANSFORMATION_KIND_MERGED:
         await exportMergedDocument(config, buildResult, contexts)
-        return buildResult
+        break
       case TRANSFORMATION_KIND_REDUCED:
         await exportReducedDocuments(config, buildResult, contexts)
-        return buildResult
+        break
     }
+
+    const { packageId, version: versionWithRevision, format = FILE_FORMAT_JSON, groupName } = config
+    const [version] = getSplittedVersionKey(versionWithRevision)
+    if (buildResult.exportDocuments.length > 1) {
+      buildResult.exportFileName = `${packageId}_${version}_${groupName}.zip`
+      return buildResult
+    }
+
+    buildResult.exportFileName = `${packageId}_${version}_${groupName}.${format}`
+    return buildResult
   }
 }
 
-async function exportMergedDocument(config: ExportRestOperationsGroupBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
+async function exportMergedDocument(config: ExportRestOperationsGroupBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<void> {
   const {
     packageId,
     version: versionWithRevision,
-    groupName,
-    format = JSON_EXPORT_GROUP_FORMAT,
+    format = FILE_FORMAT_JSON,
     allowedOasExtensions,
   } = config
   const [version] = getSplittedVersionKey(versionWithRevision)
@@ -74,23 +77,16 @@ async function exportMergedDocument(config: ExportRestOperationsGroupBuildConfig
 
   buildResult.exportDocuments.push(await createRestExportDocument(buildResult.merged.filename, JSON.stringify(buildResult.merged?.data), format, packageName, version, templateResolver, allowedOasExtensions))
 
-  if (format === HTML_EXPORT_GROUP_FORMAT) {
-    buildResult.exportDocuments.push(...await createCommonStaticExportDocuments(packageName, version, templateResolver))
-    buildResult.exportFileName = `${packageId}_${version}_${groupName}.zip`
-    return buildResult
+  if (format === FILE_FORMAT_HTML) {
+    buildResult.exportDocuments.push(...await createCommonStaticExportDocuments(packageName, version, templateResolver, buildResult.exportDocuments[0].filename))
   }
-
-  buildResult.exportFileName = `${packageId}_${version}_${groupName}.${format}`
-
-  return buildResult
 }
 
-async function exportReducedDocuments(config: ExportRestOperationsGroupBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
+async function exportReducedDocuments(config: ExportRestOperationsGroupBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<void> {
   const {
     packageId,
     version: versionWithRevision,
-    groupName,
-    format = JSON_EXPORT_GROUP_FORMAT,
+    format = FILE_FORMAT_JSON,
     allowedOasExtensions,
   } = config
   const [version] = getSplittedVersionKey(versionWithRevision)
@@ -104,39 +100,19 @@ async function exportReducedDocuments(config: ExportRestOperationsGroupBuildConf
   }, buildResult, contexts)
 
   const generatedHtmlExportDocuments: ExportDocument[] = []
+  const restDocuments = [...buildResult.documents.values()].filter(isRestDocument)
   const transformedDocuments = await Promise.all([...buildResult.documents.values()].map(async document => {
-    return await createTransformedDocument(document.filename, JSON.stringify(document.data), format, packageName, version, templateResolver, createRestExportDocument, allowedOasExtensions, generatedHtmlExportDocuments)
+    return createRestExportDocument?.(document.filename, JSON.stringify(document.data), format, packageName, version, templateResolver, allowedOasExtensions, generatedHtmlExportDocuments, restDocuments.length > 1)
   }))
 
   buildResult.exportDocuments.push(...transformedDocuments)
 
-  if (format === HTML_EXPORT_GROUP_FORMAT) {
-    buildResult.exportDocuments.push(...await createCommonStaticExportDocuments(packageName, version, templateResolver))
+  if (format === FILE_FORMAT_HTML) {
+    const shouldAddIndexPage = generatedHtmlExportDocuments.length > 1
+    buildResult.exportDocuments.push(...await createCommonStaticExportDocuments(packageName, version, templateResolver, shouldAddIndexPage ? 'index.html' : buildResult.exportDocuments[0].filename))
 
-    if (generatedHtmlExportDocuments.length > 1) {
+    if (shouldAddIndexPage) {
       buildResult.exportDocuments.push(createUnknownExportDocument('index.html', await generateIndexHtmlPage(packageName, version, generatedHtmlExportDocuments, templateResolver)))
     }
   }
-
-  if (buildResult.exportDocuments.length > 1) {
-    buildResult.exportFileName = `${packageId}_${version}_${groupName}.zip`
-    return buildResult
-  }
-
-  buildResult.exportFileName = `${packageId}_${version}_${groupName}.${format}`
-  return buildResult
-}
-
-async function createTransformedDocument(
-  filename: string,
-  data: string,
-  format: OperationsGroupExportFormat,
-  packageName: string,
-  version: string,
-  templateResolver: _TemplateResolver,
-  createExportDocument: DocumentExporter,
-  allowedOasExtensions?: OpenApiExtensionKey[],
-  generatedHtmlExportDocuments?: ExportDocument[],
-): Promise<ExportDocument> {
-  return createExportDocument?.(filename, data, format, packageName, version, templateResolver, allowedOasExtensions, generatedHtmlExportDocuments)
 }

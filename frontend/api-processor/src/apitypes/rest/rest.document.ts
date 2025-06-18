@@ -25,10 +25,9 @@ import {
   DocumentBuilder,
   DocumentDumper,
   ExportDocument,
-  HTML_EXPORT_GROUP_FORMAT,
-  OperationsGroupExportFormat,
+  ExportFormat,
 } from '../../types'
-import { FILE_FORMAT, FILE_FORMAT_JSON } from '../../consts'
+import { FILE_FORMAT, FILE_FORMAT_HTML, FILE_FORMAT_JSON } from '../../consts'
 import {
   createBundlingErrorHandler,
   EXPORT_FORMAT_TO_FILE_FORMAT,
@@ -120,25 +119,26 @@ export const dumpRestDocument: DocumentDumper<OpenAPIV3.Document> = (document, f
 export async function createRestExportDocument(
   filename: string,
   data: string,
-  format: OperationsGroupExportFormat,
+  format: ExportFormat,
   packageName: string,
   version: string,
   templateResolver: _TemplateResolver,
   allowedOasExtensions?: OpenApiExtensionKey[],
   generatedHtmlExportDocuments?: ExportDocument[],
+  addBackLink?: boolean,
 ): Promise<ExportDocument> {
   const exportFilename = `${getDocumentTitle(filename)}.${format}`
-  const [d, bp] = dump(removeOasExtensions(JSON.parse(data), allowedOasExtensions), EXPORT_FORMAT_TO_FILE_FORMAT.get(format)!)
+  const [[document], blobProperties] = dump(removeOasExtensions(JSON.parse(data), allowedOasExtensions), EXPORT_FORMAT_TO_FILE_FORMAT.get(format)!)
 
-  if (format === HTML_EXPORT_GROUP_FORMAT) {
+  if (format === FILE_FORMAT_HTML) {
     const htmlExportDocument = {
       data: await generateHtmlPage(
-        d[0],
+        document,
         getDocumentTitle(filename),
         packageName,
         version,
         templateResolver,
-        true,
+        addBackLink,
       ),
       filename: exportFilename,
     }
@@ -147,7 +147,7 @@ export async function createRestExportDocument(
   }
 
   return {
-    data: new Blob(d, bp),
+    data: new Blob([document], blobProperties),
     filename: exportFilename,
   }
 }

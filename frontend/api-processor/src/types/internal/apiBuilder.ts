@@ -22,7 +22,7 @@ import {
   GroupDocumentsResolver,
   OperationId,
   OperationsApiType,
-  OperationsGroupExportFormat,
+  ExportFormat,
   PackageId,
   ResolvedOperation,
   TemplatePath,
@@ -108,12 +108,13 @@ export type OperationIdNormalizer = (operation: ResolvedOperation) => Normalized
 export type DocumentExporter = (
   filename: string,
   data: string,
-  format: OperationsGroupExportFormat,
+  format: ExportFormat,
   packageName: string,
   version: string,
   templateResolver: _TemplateResolver,
   allowedOasExtensions?: OpenApiExtensionKey[],
   generatedHtmlExportDocuments?: ExportDocument[],
+  addBackLink?: boolean,
 ) => Promise<ExportDocument>
 export type BreakingChangeReclassifier = (changes: OperationChanges[], previousVersion: string, previousPackageId: string, ctx: CompareContext) => Promise<void>
 

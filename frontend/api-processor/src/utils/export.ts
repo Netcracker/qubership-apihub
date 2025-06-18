@@ -16,7 +16,7 @@
 import { _TemplateResolver, ExportDocument } from '../types'
 import { getDocumentTitle } from './document'
 
-export async function createCommonStaticExportDocuments(packageName: string, version: string, templateResolver: _TemplateResolver, backLinkFilename: string = 'index.html'): Promise<ExportDocument[]> {
+export async function createCommonStaticExportDocuments(packageName: string, version: string, templateResolver: _TemplateResolver, backLinkFilename: string): Promise<ExportDocument[]> {
   return [
     createUnknownExportDocument('ls.html', await generateLegalStatementPage(packageName, version, await templateResolver('ls.html'), backLinkFilename)),
     createUnknownExportDocument('resources/corporatelogo.png', await templateResolver('resources/corporatelogo.png')),
