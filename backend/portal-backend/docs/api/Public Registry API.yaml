@@ -14819,6 +14819,9 @@ components:
         notLatestRevision:
           type: boolean
           default: false
+        apiProcessorVerson:
+          description: Version of api-processor with which current version was built.
+          type: string
     PackageVersionContentV2:
       deprecated: true
       description: Published package version content
@@ -14884,6 +14887,7 @@ components:
         - revision
         - revisionsCount
         - status
+        - apiProcessorVerson
       properties:
         packageId:
           description: Package unique string identifier (full alias)
@@ -14923,6 +14927,9 @@ components:
           example: 3
         status:
           $ref: "#/components/schemas/VersionStatusEnum"
+        apiProcessorVerson:
+          description: Version of api-processor with which current version was built.
+          type: string
     PackageVersionFile:
       description: Parameters of published file in package version
       type: object
