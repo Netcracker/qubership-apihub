@@ -64,7 +64,7 @@ async function exportToHTML(config: ExportVersionBuildConfig, buildResult: Build
   const generatedHtmlExportDocuments: ExportDocument[] = []
   const restDocuments = documents.filter(isRestDocument)
   const hasReadme = !!documents.find(({ filename }) => filename.toLowerCase() === 'readme.md')
-  const shouldAddIndexPage = restDocuments.length > 1 || hasReadme
+  const shouldAddIndexPage = hasReadme && restDocuments.length > 0 || restDocuments.length > 1
   const transformedDocuments = await Promise.all(documents.map(async document => {
     const { createExportDocument } = apiBuilders.find(({ types }) => types.includes(document.type)) || unknownApiBuilder
     const file = await rawDocumentResolver(versionWithRevision, packageId, document.slug)
