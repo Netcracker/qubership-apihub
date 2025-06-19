@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-import { Editor, exportDocumentMatcher, exportDocumentsMatcher, LocalRegistry } from './helpers'
+import { Editor, exportDocumentMatcher, exportDocumentsMatcher, loadFileAsString, LocalRegistry } from './helpers'
 import {
   BUILD_TYPE,
   ExportRestOperationsGroupBuildConfig,
   FILE_FORMAT_HTML,
   FILE_FORMAT_JSON,
+  FILE_FORMAT_YAML,
   TRANSFORMATION_KIND_MERGED,
   TRANSFORMATION_KIND_REDUCED,
-  FILE_FORMAT_YAML,
 } from '../src'
+import YAML from 'js-yaml'
 // import fs from 'fs/promises'
 // import AdmZip = require('adm-zip')
 
@@ -33,6 +34,8 @@ let pkg: LocalRegistry
 let editor: Editor
 const GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS = 'GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS'
 const GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY = 'GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY'
+const GROUP_WITH_OPERATIONS_FROM_DOCUMENTS_WITH_THE_SAME_NAMES = 'GROUP_WITH_OPERATIONS_FROM_DOCUMENTS_WITH_THE_SAME_NAMES'
+
 const groupToOperationIdsMap = {
   [GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS]: [
     'path1-get',
@@ -42,11 +45,19 @@ const groupToOperationIdsMap = {
     'path2-get',
     'path2-post',
   ],
+  [GROUP_WITH_OPERATIONS_FROM_DOCUMENTS_WITH_THE_SAME_NAMES]: [
+    'some-path1-get',
+    'another-path1-put',
+    'some-path2-post',
+  ],
 }
 
 const REGULAR_VERSION = 'regular-version@123'
 const SINGLE_DOCUMENT_VERSION = 'single-document-version@24'
 const SINGLE_DOCUMENT_VERSION_WITH_README = 'single-document-version-with-readme@31'
+const NO_DOCUMENTS_VERSION = 'no-documents-version@51'
+
+const EXPECTED_RESULT_FILE = 'result.yaml'
 
 const COMMON_GROUP_EXPORT_CONFIG = {
   packageId: 'export',
@@ -56,26 +67,28 @@ const COMMON_GROUP_EXPORT_CONFIG = {
 
 const COMMON_REDUCED_GROUP_EXPORT_CONFIG: Partial<ExportRestOperationsGroupBuildConfig> = {
   ...COMMON_GROUP_EXPORT_CONFIG,
-  groupName: GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS,
   buildType: BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP,
   operationsSpecTransformation: TRANSFORMATION_KIND_REDUCED,
 }
 
 const COMMON_MERGED_GROUP_EXPORT_CONFIG: Partial<ExportRestOperationsGroupBuildConfig> = {
   ...COMMON_GROUP_EXPORT_CONFIG,
-  groupName: GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS,
   buildType: BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP,
   operationsSpecTransformation: TRANSFORMATION_KIND_MERGED,
 }
 
 describe('Export test', () => {
   beforeAll(async () => {
-    pkg = LocalRegistry.openPackage('export')
+    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
     await pkg.publish(pkg.packageId, { version: REGULAR_VERSION })
     await pkg.publish(pkg.packageId, { version: SINGLE_DOCUMENT_VERSION, files: [{ fileId: '1.yaml' }] })
     await pkg.publish(pkg.packageId, {
       version: SINGLE_DOCUMENT_VERSION_WITH_README,
       files: [{ fileId: '1.yaml' }, { fileId: 'README.md' }],
+    })
+    await pkg.publish(pkg.packageId, {
+      version: NO_DOCUMENTS_VERSION,
+      files: [{ fileId: 'Document.docx' }, { fileId: 'README.md' }, { fileId: 'Test.png' }],
     })
 
     editor = await Editor.openProject(pkg.packageId, pkg)
@@ -250,12 +263,21 @@ describe('Export test', () => {
     ]))
   })
 
-  // todo same 3 tests but without extensions? (excessive)
+  test('should export version without documents to html without adding any extra files', async () => {
+    const result = await editor.run({
+      version: NO_DOCUMENTS_VERSION,
+      buildType: BUILD_TYPE.EXPORT_VERSION,
+      format: FILE_FORMAT_HTML,
+    })
+    expect(result.exportFileName).toEqual('export_no-documents-version.zip')
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('Document.docx'),
+      exportDocumentMatcher('README.md'),
+      exportDocumentMatcher('Test.png'),
+    ]))
+  })
 
   test('should export reduced rest operations group to html', async () => {
-    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
-    editor = await Editor.openProject(pkg.packageId, pkg)
-
     const result = await editor.run({
       ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
       format: FILE_FORMAT_HTML,
@@ -273,9 +295,6 @@ describe('Export test', () => {
   })
 
   test('should export reduced rest operations group to html (operations originated from one document)', async () => {
-    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
-    editor = await Editor.openProject(pkg.packageId, pkg)
-
     const result = await editor.run({
       ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
       groupName: GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY,
@@ -292,9 +311,6 @@ describe('Export test', () => {
   })
 
   test('should export reduced rest operations group to json', async () => {
-    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
-    editor = await Editor.openProject(pkg.packageId, pkg)
-
     const result = await editor.run({
       ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
       format: FILE_FORMAT_JSON,
@@ -307,9 +323,6 @@ describe('Export test', () => {
   })
 
   test('should export reduced rest operations group to json (operations originated from one document)', async () => {
-    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
-    editor = await Editor.openProject(pkg.packageId, pkg)
-
     const result = await editor.run({
       ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
       groupName: GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY,
@@ -322,9 +335,6 @@ describe('Export test', () => {
   })
 
   test('should export reduced rest operations group to yaml', async () => {
-    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
-    editor = await Editor.openProject(pkg.packageId, pkg)
-
     const result = await editor.run({
       ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
       format: FILE_FORMAT_YAML,
@@ -337,9 +347,6 @@ describe('Export test', () => {
   })
 
   test('should export reduced rest operations group to yaml (operations originated from one document)', async () => {
-    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
-    editor = await Editor.openProject(pkg.packageId, pkg)
-
     const result = await editor.run({
       ...COMMON_REDUCED_GROUP_EXPORT_CONFIG,
       groupName: GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY,
@@ -352,8 +359,6 @@ describe('Export test', () => {
   })
 
   test('should export merged rest operations group to html', async () => {
-    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
-    editor = await Editor.openProject(pkg.packageId, pkg)
     const result = await editor.run({
       ...COMMON_MERGED_GROUP_EXPORT_CONFIG,
       format: FILE_FORMAT_HTML,
@@ -369,8 +374,6 @@ describe('Export test', () => {
   })
 
   test('should export merged rest operations group to json', async () => {
-    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
-    editor = await Editor.openProject(pkg.packageId, pkg)
     const result = await editor.run({
       ...COMMON_MERGED_GROUP_EXPORT_CONFIG,
       format: FILE_FORMAT_JSON,
@@ -379,12 +382,11 @@ describe('Export test', () => {
     expect(result).toEqual(exportDocumentsMatcher([
       exportDocumentMatcher('GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.json'),
     ]))
+    const expectedResult = JSON.stringify(YAML.load((await loadFileAsString(pkg.projectsDir, pkg.packageId, EXPECTED_RESULT_FILE))!), undefined, 2)
+    expect(await result.exportDocuments[0].data.text()).toEqual(expectedResult)
   })
 
   test('should export merged rest operations group to yaml', async () => {
-    pkg = LocalRegistry.openPackage('export', groupToOperationIdsMap)
-    editor = await Editor.openProject(pkg.packageId, pkg)
-
     const result = await editor.run({
       ...COMMON_MERGED_GROUP_EXPORT_CONFIG,
       format: FILE_FORMAT_YAML,
@@ -393,5 +395,7 @@ describe('Export test', () => {
     expect(result).toEqual(exportDocumentsMatcher([
       exportDocumentMatcher('GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS.yaml'),
     ]))
+    const expectedResult = await loadFileAsString(pkg.projectsDir, pkg.packageId, EXPECTED_RESULT_FILE)
+    expect(await result.exportDocuments[0].data.text()).toEqual(expectedResult)
   })
 })
