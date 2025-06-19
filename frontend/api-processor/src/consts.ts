@@ -78,9 +78,9 @@ export const BUILD_TYPE = {
   BUILD: 'build',
   CHANGELOG: 'changelog',
   PREFIX_GROUPS_CHANGELOG: 'prefix-groups-changelog',
-  DOCUMENT_GROUP: 'documentGroup',
-  REDUCED_SOURCE_SPECIFICATIONS: 'reducedSourceSpecifications',
-  MERGED_SPECIFICATION: 'mergedSpecification',
+  DOCUMENT_GROUP: 'documentGroup', // deprecated
+  REDUCED_SOURCE_SPECIFICATIONS: 'reducedSourceSpecifications', // deprecated
+  MERGED_SPECIFICATION: 'mergedSpecification', // deprecated
   EXPORT_VERSION: 'exportVersion',
   EXPORT_REST_DOCUMENT: 'exportRestDocument',
   EXPORT_REST_OPERATIONS_GROUP: 'exportRestOperationsGroup',
