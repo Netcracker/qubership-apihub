@@ -864,7 +864,7 @@
                                             "});\r",
                                             "\r",
                                             "var data = JSON.parse(responseBody);\r",
-                                            "pm.environment.set(\"static_root_group_1\", data.groupId)"
+                                            "pm.environment.set(\"static_root_group_1\", data.packageId)"
                                         ]
                                     }
                                 },
@@ -880,16 +880,16 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v1/groups",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v1",
-                                        "groups"
-                                    ]
-                                },
+									"raw": "{{SERVER_HOST}}/api/v2/packages",
+									"host": [
+										"{{SERVER_HOST}}"
+									],
+									"path": [
+										"api",
+										"v2",
+										"packages"
+									]
+								},
                                 "method": "POST",
                                 "header": [
                                     {
@@ -899,14 +899,14 @@
                                     }
                                 ],
                                 "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"name\": \"AT_BE_AC\",\r\n    \"Alias\" :\"QS-AC-TEST-2\",\r\n    \"parentId\": \"\",\r\n    \"description\": \"Required for to upload hardcoded packages\",\r\n    \"imageUrl\": \"\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                },
+									"mode": "raw",
+									"raw": "{\r\n    \"id\": \"QS-AC-TEST-2\",\r\n    \"Alias\" :\"QS-AC-TEST-2\",\r\n    \"name\": \"AT_BE_AC\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
                                 "auth": {
                                     "type": "noauth"
                                 }
@@ -32145,7 +32145,7 @@
                                             "if(pm.response.code === 400){\r",
                                             "        pm.environment.set(\"static_root_group_1\", pm.variables.replaceIn('{{user_5_id}}') + \".\" + data.params.alias);\r",
                                             "} else {\r",
-                                            "        pm.environment.set(\"static_root_group_1\", data.groupId);\r",
+                                            "        pm.environment.set(\"static_root_group_1\", data.packageId);\r",
                                             "        postman.setNextRequest(\"7.1.4 Create package\");\r",
                                             "}});\r",
                                             ""
@@ -32164,16 +32164,16 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v1/groups",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v1",
-                                        "groups"
-                                    ]
-                                },
+									"raw": "{{SERVER_HOST}}/api/v2/packages",
+									"host": [
+										"{{SERVER_HOST}}"
+									],
+									"path": [
+										"api",
+										"v2",
+										"packages"
+									]
+								},
                                 "method": "POST",
                                 "header": [
                                     {
@@ -32183,14 +32183,14 @@
                                     }
                                 ],
                                 "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"name\": \"AT_BE_AC_1\",\r\n    \"Alias\" :\"QS-AC-TEST-3\",\r\n    \"parentId\": \"{{pr_workspace}}\",\r\n    \"description\": \"Required for to upload hardcoded packages\",\r\n    \"imageUrl\": \"\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
+									"mode": "raw",
+									"raw": "{\r\n    \"id\": \"QS-AC-TEST-3\",\r\n    \"Alias\" :\"QS-AC-TEST-3\",\r\n    \"name\": \"AT_BE_AC_1\",\r\n    \"parentId\": \"{{pr_workspace}}\",\r\n    \"kind\":\"group\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
