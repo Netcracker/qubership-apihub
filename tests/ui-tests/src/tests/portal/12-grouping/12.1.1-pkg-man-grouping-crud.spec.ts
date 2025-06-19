@@ -2,7 +2,7 @@ import { test } from '@fixtures'
 import { expect, expectFile } from '@services/expect-decorator'
 import { API_TITLES_MAP, FILE_ICON } from '@shared/entities'
 import {
-  genGroupsForEscaping,
+  generateGroupsForEscaping,
   OGR_PMGR_ADD_TO_EMPTY_N,
   OGR_PMGR_CHANGE_DESCRIPTION_N,
   OGR_PMGR_CHANGE_NAME_N,
@@ -12,12 +12,12 @@ import {
   OGR_PMGR_DELETE_N,
   OGR_TMPL_EXIST_MSG,
   P_PKG_PMGR1_N,
+  V_PKG_PMGR_CHAR_ESC_N,
   V_PKG_PMGR_N,
 } from '@test-data/portal'
 import { PortalPage } from '@portal/pages/PortalPage'
 import { VERSION_OVERVIEW_TAB_GROUPS } from '@portal/entities'
 import { SHORT_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
-import type { OperationGroup, Version } from '@test-data/props'
 
 test.describe('12.1.1 Manual grouping: CRUD (Packages)', () => {
 
@@ -291,58 +291,47 @@ test.describe('12.1.1 Manual grouping: CRUD (Packages)', () => {
       await expectFile(file).toHaveName(OGR_PMGR_CHANGE_DESCRIPTION_N.template!.name)
     })
 
-  test('[P-MGOP-2.6] Check special char escaping in operation group name',
-    {
-      annotation: [
-        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10190` },
-      ],
-    },
-    async ({ sysadminPage: page, apihubTDM: tdm }, testInfo) => {
-      test.setTimeout(380000)
+  generateGroupsForEscaping(V_PKG_PMGR_CHAR_ESC_N).forEach((group, index) => {
 
-      const portalPage = new PortalPage(page)
-      const { versionPackagePage: versionPage } = portalPage
-      const { overviewTab } = versionPage
-      const { groupsTab } = overviewTab
-      const { editOperationGroupDialog } = groupsTab
+    test(`[P-MGOP-2.6.${index}] Check special char escaping in operation group name - "${group.groupName}"`,
+      {
+        annotation: [
+          { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10190` },
+        ],
+      },
+      async ({ sysadminPage: page, apihubTDM: tdm }, testInfo) => {
+        const portalPage = new PortalPage(page)
+        const { versionPackagePage: versionPage } = portalPage
+        const { overviewTab } = versionPage
+        const { groupsTab } = overviewTab
+        const { editOperationGroupDialog } = groupsTab
+        const testVersion = V_PKG_PMGR_CHAR_ESC_N
+        const retryGroupName = `${group.groupName}-${testInfo.retry}`
+        const testGroup = { ...group, groupName: retryGroupName }
 
-      const { retry } = testInfo
-      const testVersion: Version = {
-        ...V_PKG_PMGR_N,
-        version: `char-escaping-${retry}`,
-        status: 'draft',
-      }
-      const operationGroups: OperationGroup[] = genGroupsForEscaping(testVersion)
+        await tdm.createOperationGroup(testGroup)
 
-      await tdm.publishVersion(testVersion)
+        await portalPage.gotoVersion(testVersion, VERSION_OVERVIEW_TAB_GROUPS)
 
-      for (const group of operationGroups) {
-        await tdm.createOperationGroup(group)
-
-        await test.step(`"${group.groupName}" group name`, async () => {
-
-          await portalPage.gotoVersion(testVersion, VERSION_OVERVIEW_TAB_GROUPS)
-
-          await test.step(`Open "Edit Operation Group" dialog for "${group.groupName}"`, async () => {
-            await groupsTab.getGroupRow(group.groupName).openEditGroupDialog()
-          })
-
-          await test.step('Add operations', async () => {
-            await editOperationGroupDialog.leftList.getOperationListItem(group.testMeta!.toAdd![0].operations[0]).checkbox.click()
-            await editOperationGroupDialog.toRightBtn.click()
-
-            await expect.soft(editOperationGroupDialog.rightList.getOperationListItem()).toHaveCount(1)
-          })
-
-          await test.step(`Save the "${group.groupName}" operation group`, async () => {
-            await editOperationGroupDialog.saveBtn.click()
-
-            await expect.soft(editOperationGroupDialog.saveBtn).toBeHidden()
-            await expect.soft(groupsTab.getGroupRow(group.groupName).operationsNumberCell).toHaveText('1')
-          })
+        await test.step(`Open "Edit Operation Group" dialog for "${retryGroupName}"`, async () => {
+          await groupsTab.getGroupRow(retryGroupName).openEditGroupDialog()
         })
-      }
-    })
+
+        await test.step('Add operations', async () => {
+          await editOperationGroupDialog.leftList.getOperationListItem(group.testMeta!.toAdd![0].operations[0]).checkbox.click()
+          await editOperationGroupDialog.toRightBtn.click()
+
+          await expect.soft(editOperationGroupDialog.rightList.getOperationListItem()).toHaveCount(1)
+        })
+
+        await test.step(`Save the "${retryGroupName}" operation group`, async () => {
+          await editOperationGroupDialog.saveBtn.click()
+
+          await expect.soft(editOperationGroupDialog.saveBtn).toBeHidden()
+          await expect.soft(groupsTab.getGroupRow(retryGroupName).operationsNumberCell).toHaveText('1')
+        })
+      })
+  })
 
   test('[P-MGOP-4.1] Delete a group of operations',
     {

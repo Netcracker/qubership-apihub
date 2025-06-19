@@ -155,3 +155,9 @@ export const V_DSH_DMGR_PROP_DIF_SPEC_N: Version = {
     { refId: P_PKG_DMGR_USER_R.packageId, version: V_PKG_DMGR_USER_BASE_R.version },
   ],
 } as const
+
+export const V_DSH_DMGR_CHAR_ESC_N: Version = {
+  ...V_DSH_DMGR_N,
+  version: 'char-escaping',
+  status: 'draft',
+} as const

@@ -2,7 +2,7 @@ import type { OperationGroup } from '@test-data/props'
 import { REST_API_TYPE } from '@shared/entities'
 import { GET_PET_BY_TAG_V1 } from '../operations'
 
-export const genGroupsForEscaping = ({ pkg, version }: {
+export const generateGroupsForEscaping = ({ pkg, version }: {
   pkg: { packageId: string }
   version: string
 }): OperationGroup[] => {

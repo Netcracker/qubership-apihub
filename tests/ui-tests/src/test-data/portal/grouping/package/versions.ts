@@ -7,15 +7,7 @@ import {
   FILE_P_PETSTORE30_CHANGELOG_BASE,
   FILE_P_PETSTORE30_CHANGELOG_CHANGED,
 } from '../../files'
-import {
-  P_PKG_PMGR1_N,
-  P_PKG_PMGR2_N,
-  P_PKG_PMGR_R,
-  P_PKG_PPGR_EDIT_N,
-  P_PKG_PPGR_GQL_R,
-  P_PKG_PPGR_REST_R,
-  P_PKG_PPGR_SETTINGS_R,
-} from './packages'
+import { P_PKG_PMGR1_N, P_PKG_PMGR2_N, P_PKG_PMGR_R, P_PKG_PPGR_EDIT_N, P_PKG_PPGR_GQL_R, P_PKG_PPGR_REST_R, P_PKG_PPGR_SETTINGS_R } from './packages'
 import { V_PKG_DMGR_PET_BASE_R, V_PKG_DMGR_PET_PROP_R } from '../dashboard/versions'
 import { V_P_PKG_CHANGELOG_MULTI_BASE_R, V_P_PKG_CHANGELOG_MULTI_CHANGED_R } from '../../changelog/versions'
 
@@ -115,4 +107,10 @@ export const V_PKG_PPGR_EDIT_N: Version = {
   ...V_PKG_PPGR_REST_BASE_R,
   pkg: P_PKG_PPGR_EDIT_N,
   version: '2001.1',
+} as const
+
+export const V_PKG_PMGR_CHAR_ESC_N: Version = {
+  ...V_PKG_PMGR_N,
+  version: 'char-escaping',
+  status: 'draft',
 } as const
