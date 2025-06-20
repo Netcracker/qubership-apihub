@@ -14,120 +14,92 @@
  * limitations under the License.
  */
 
-import {
-  _TemplateResolver,
-  BuilderStrategy,
-  BuildResult,
-  BuildTypeContexts,
-  ExportVersionBuildConfig,
-  HTML_EXPORT_GROUP_FORMAT,
-  JSON_EXPORT_GROUP_FORMAT,
-  OperationsGroupExportFormat,
-  ResolvedVersionDocument,
-  ZippableDocument,
-} from '../types'
+import { BuilderStrategy, BuildResult, BuildTypeContexts, ExportDocument, ExportVersionBuildConfig } from '../types'
 import { getDocumentTitle, getSplittedVersionKey } from '../utils'
 import {
   createCommonStaticExportDocuments,
-  createExportDocument,
-  generateHtmlPage,
   createSingleFileExportName,
+  createUnknownExportDocument,
   generateIndexHtmlPage,
 } from '../utils/export'
-import { removeOasExtensions } from '../utils/removeOasExtensions'
-import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
-import { isRestDocument, isTextDocument } from '../apitypes'
-
-function extractTypeAndSubtype(type: string): string {
-  return type.split(';')[0]
-}
-
-async function prepareData(file: File): Promise<ZippableDocument['data']> {
-  switch (extractTypeAndSubtype(file.type)) {
-    // BE responds with 'text/plain' for all textual files and a more precise content-type in other cases
-    // however, just in case, other processable types are also listed here
-    case 'text/plain':
-    case 'application/json':
-    case 'application/yaml':
-    case 'text/markdown':
-      return await file.text()
-    default:
-    case 'application/octet-stream':
-      return ''
-  }
-}
-
-async function createTransformedDocument(
-  document: ResolvedVersionDocument,
-  file: File,
-  format: OperationsGroupExportFormat,
-  packageName: string,
-  version: string,
-  generatedHtmlExportDocuments: ZippableDocument[],
-  templateResolver: _TemplateResolver,
-  allowedOasExtensions?: OpenApiExtensionKey[],
-): Promise<ZippableDocument> {
-  const { fileId, type } = document
-
-  const data = await prepareData(file)
-
-  if (isRestDocument(document) && format === HTML_EXPORT_GROUP_FORMAT) {
-    const htmlExportDocument = createExportDocument(
-      `${getDocumentTitle(file.name)}.${HTML_EXPORT_GROUP_FORMAT}`,
-      await generateHtmlPage(JSON.stringify(removeOasExtensions(JSON.parse(data), allowedOasExtensions), undefined, 2), getDocumentTitle(file.name), packageName, version, templateResolver, true),
-    )
-    generatedHtmlExportDocuments.push(htmlExportDocument)
-    return htmlExportDocument
-  }
-
-  return {
-    fileId,
-    type,
-    data: isRestDocument(document) ? removeOasExtensions(JSON.parse(data), allowedOasExtensions) : '',
-    description: isTextDocument(document) ? data : '',
-    publish: true,
-    filename: isRestDocument(document) ? `${getDocumentTitle(fileId)}.${format}` : fileId,
-    source: file,
-  }
-}
+import { isRestDocument, unknownApiBuilder } from '../apitypes'
+import { FILE_FORMAT_HTML, FILE_FORMAT_JSON } from '../consts'
 
 export class ExportVersionStrategy implements BuilderStrategy {
   async execute(config: ExportVersionBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
-    const { builderContext } = contexts
-    const { versionDocumentsResolver, rawDocumentResolver, templateResolver, packageResolver } = builderContext(config)
-    const { packageId, version: versionWithRevision, format = JSON_EXPORT_GROUP_FORMAT, allowedOasExtensions } = config
-    const [version] = getSplittedVersionKey(versionWithRevision)
-    const { name: packageName } = await packageResolver(packageId)
-
-    const { documents } = await versionDocumentsResolver(
-      versionWithRevision,
-      packageId,
-    ) ?? { documents: [] }
-
-    const generatedHtmlExportDocuments: ZippableDocument[] = []
-    const transformedDocuments = await Promise.all(documents.map(async document => {
-      const file = await rawDocumentResolver(versionWithRevision, packageId, document.slug)
-      return await createTransformedDocument(document, file, format, packageName, version, generatedHtmlExportDocuments, templateResolver, allowedOasExtensions)
-    }))
-
-    buildResult.exportDocuments.push(...transformedDocuments)
-
-    const restDocuments = documents.filter(isRestDocument)
-    if (format === HTML_EXPORT_GROUP_FORMAT && restDocuments.length > 0) {
-      buildResult.exportDocuments.push(...await createCommonStaticExportDocuments(packageName, version, templateResolver))
-      const readme = buildResult.exportDocuments.find(({ fileId }) => fileId.toLowerCase() === 'readme.md')?.description
-
-      if (restDocuments.length > 1 || readme) {
-        buildResult.exportDocuments.push(createExportDocument('index.html', await generateIndexHtmlPage(packageName, version, generatedHtmlExportDocuments, templateResolver, readme)))
-      }
+    switch (config.format) {
+      case FILE_FORMAT_HTML:
+        await exportToHTML(config, buildResult, contexts)
+        break
+      default:
+        await defaultExport(config, buildResult, contexts)
+        break
     }
 
+    const { packageId, version: versionWithRevision, format = FILE_FORMAT_JSON } = config
+    const [version] = getSplittedVersionKey(versionWithRevision)
     if (buildResult.exportDocuments.length > 1) {
       buildResult.exportFileName = `${packageId}_${version}.zip`
       return buildResult
     }
 
-    buildResult.exportFileName = createSingleFileExportName(packageId, version, getDocumentTitle(buildResult.exportDocuments[0].fileId), format)
+    buildResult.exportFileName = createSingleFileExportName(packageId, version, getDocumentTitle(buildResult.exportDocuments[0].filename), format)
     return buildResult
   }
+}
+
+async function exportToHTML(config: ExportVersionBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<void> {
+  const {
+    versionDocumentsResolver,
+    rawDocumentResolver,
+    templateResolver,
+    packageResolver,
+    apiBuilders,
+  } = contexts.builderContext(config)
+  const { packageId, version: versionWithRevision, format, allowedOasExtensions } = config
+  const [version] = getSplittedVersionKey(versionWithRevision)
+  const { name: packageName } = await packageResolver(packageId)
+  const { documents } = await versionDocumentsResolver(versionWithRevision, packageId) ?? { documents: [] }
+
+  const generatedHtmlExportDocuments: ExportDocument[] = []
+  const restDocuments = documents.filter(isRestDocument)
+  const hasReadme = !!documents.find(({ filename }) => filename.toLowerCase() === 'readme.md')
+  const shouldAddIndexPage = hasReadme && restDocuments.length > 0 || restDocuments.length > 1
+  const transformedDocuments = await Promise.all(documents.map(async document => {
+    const { createExportDocument } = apiBuilders.find(({ types }) => types.includes(document.type)) || unknownApiBuilder
+    const file = await rawDocumentResolver(versionWithRevision, packageId, document.slug)
+    return await createExportDocument?.(file.name, await file.text(), format, packageName, version, templateResolver, allowedOasExtensions, generatedHtmlExportDocuments, shouldAddIndexPage) ?? createUnknownExportDocument(file.name, file)
+  }))
+
+  buildResult.exportDocuments.push(...transformedDocuments)
+
+  if (generatedHtmlExportDocuments.length > 0) {
+    buildResult.exportDocuments.push(...await createCommonStaticExportDocuments(packageName, version, templateResolver, shouldAddIndexPage ? 'index.html' : buildResult.exportDocuments[0].filename))
+  }
+  if (shouldAddIndexPage) {
+    const readme = await buildResult.exportDocuments.find(({ filename }) => filename.toLowerCase() === 'readme.md')?.data.text()
+    buildResult.exportDocuments.push(createUnknownExportDocument('index.html', await generateIndexHtmlPage(packageName, version, generatedHtmlExportDocuments, templateResolver, readme)))
+  }
+}
+
+async function defaultExport(config: ExportVersionBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<void> {
+  const {
+    versionDocumentsResolver,
+    rawDocumentResolver,
+    templateResolver,
+    packageResolver,
+    apiBuilders,
+  } = contexts.builderContext(config)
+  const { packageId, version: versionWithRevision, format, allowedOasExtensions } = config
+  const [version] = getSplittedVersionKey(versionWithRevision)
+  const { name: packageName } = await packageResolver(packageId)
+  const { documents } = await versionDocumentsResolver(versionWithRevision, packageId) ?? { documents: [] }
+
+  const transformedDocuments = await Promise.all(documents.map(async document => {
+    const { createExportDocument } = apiBuilders.find(({ types }) => types.includes(document.type)) || unknownApiBuilder
+    const file = await rawDocumentResolver(versionWithRevision, packageId, document.slug)
+    return await createExportDocument?.(file.name, await file.text(), format, packageName, version, templateResolver, allowedOasExtensions) ?? createUnknownExportDocument(file.name, file)
+  }))
+
+  buildResult.exportDocuments.push(...transformedDocuments)
 }

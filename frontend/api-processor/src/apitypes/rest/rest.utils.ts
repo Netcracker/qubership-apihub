@@ -18,7 +18,8 @@ import { OpenAPIV3 } from 'openapi-types'
 import { CustomTags } from './rest.types'
 import { API_AUDIENCE_EXTERNAL, API_AUDIENCE_INTERNAL, API_AUDIENCE_UNKNOWN, ApiAudience } from '../../types'
 import { isObject } from '@netcracker/qubership-apihub-json-crawl'
-import { CUSTOM_PARAMETER_API_AUDIENCE } from '../../consts'
+import { CUSTOM_PARAMETER_API_AUDIENCE, FILE_FORMAT_JSON, FILE_FORMAT_YAML } from '../../consts'
+import YAML from 'js-yaml'
 
 export const getOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): string => {
   if (!Array.isArray(servers) || !servers.length) { return '' }
@@ -64,4 +65,16 @@ export const resolveApiAudience = (info: unknown): ApiAudience => {
   let apiAudience = Object.entries(info).find(([key, _]) => key === CUSTOM_PARAMETER_API_AUDIENCE)!.pop() as ApiAudience
   apiAudience = [API_AUDIENCE_INTERNAL, API_AUDIENCE_EXTERNAL].includes(apiAudience) ? apiAudience : API_AUDIENCE_UNKNOWN
   return apiAudience
+}
+
+type TextBlobConstructorParameters = [[string], BlobPropertyBag]
+
+export const dump = (value: unknown, format: typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON): TextBlobConstructorParameters => {
+  if (format === FILE_FORMAT_YAML) {
+    return [[YAML.dump(value)], { type: 'application/yaml' }]
+  }
+  if (format === FILE_FORMAT_JSON) {
+    return [[JSON.stringify(value, undefined, 2)], { type: 'application/json' }]
+  }
+  throw new Error(`Unsupported format: ${format}`)
 }

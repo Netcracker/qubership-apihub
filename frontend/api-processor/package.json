@@ -67,7 +67,6 @@
     "jest-extended": "^4.0.2",
     "mime-types": "^3.0.1",
     "openapi-types": "^12.1.0",
-    "rollup-plugin-copy": "^3.5.0",
     "ts-jest": "29.1.2",
     "ts-node": "^10.9.1",
     "tslint": "^6.1.3",

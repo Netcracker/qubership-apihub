@@ -13,27 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { _TemplateResolver, ZippableDocument } from '../types'
-import { UNKNOWN_API_TYPE } from '../apitypes'
+import { _TemplateResolver, ExportDocument } from '../types'
 import { getDocumentTitle } from './document'
 
-export async function createCommonStaticExportDocuments(packageName: string, version: string, templateResolver: _TemplateResolver, backLinkFilename: string = 'index.html'): Promise<ZippableDocument[]> {
+export async function createCommonStaticExportDocuments(packageName: string, version: string, templateResolver: _TemplateResolver, backLinkFilename: string): Promise<ExportDocument[]> {
   return [
-    createExportDocument('ls.html', await generateLegalStatementPage(packageName, version, await templateResolver('ls.html'), backLinkFilename)),
-    createExportDocument('resources/corporatelogo.png', await templateResolver('resources/corporatelogo.png')),
-    createExportDocument('resources/styles.css', await templateResolver('resources/styles.css')),
+    createUnknownExportDocument('ls.html', await generateLegalStatementPage(packageName, version, await templateResolver('ls.html'), backLinkFilename)),
+    createUnknownExportDocument('resources/corporatelogo.png', await templateResolver('resources/corporatelogo.png')),
+    createUnknownExportDocument('resources/styles.css', await templateResolver('resources/styles.css')),
   ]
 }
 
-export function createExportDocument(fileId: string, source: Blob): ZippableDocument {
+export function createUnknownExportDocument(filename: string, data: Blob): ExportDocument {
   return {
-    fileId: fileId,
-    type: UNKNOWN_API_TYPE,
-    data: '',
-    description: '',
-    publish: true,
-    filename: fileId,
-    source: source,
+    filename: filename,
+    data: data,
   }
 }
 
@@ -78,7 +72,7 @@ async function generateReadmeParts(templateResolver: _TemplateResolver, readme?:
   return [readmeHtml, `<script>${markdownIt}</script>`]
 }
 
-export async function generateIndexHtmlPage(packageName: string, version: string, generatedHtmlExportDocuments: ZippableDocument[], templateResolver: _TemplateResolver, readme?: string): Promise<Blob> {
+export async function generateIndexHtmlPage(packageName: string, version: string, generatedHtmlExportDocuments: ExportDocument[], templateResolver: _TemplateResolver, readme?: string): Promise<Blob> {
   const template = await (await templateResolver('index.html')).text()
   const htmlList = generatedHtmlExportDocuments.reduce(
     (acc, { filename }) => acc.concat(`        <li><a href="${filename}">${getDocumentTitle(filename)}</a></li>\n`),

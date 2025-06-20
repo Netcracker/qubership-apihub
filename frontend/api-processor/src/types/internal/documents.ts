@@ -21,6 +21,12 @@ export interface VersionDocuments {
   documents: VersionDocument[]
 }
 
+
+export interface ExportDocument {
+  data: Blob
+  filename: string
+}
+
 export interface ZippableDocument<T = any> {
   fileId: FileId
   type: string
@@ -32,7 +38,6 @@ export interface ZippableDocument<T = any> {
   publish?: boolean
 }
 
-// todo is there's a need to convert everything to VersionDocument, even if it is for export? (looks like yes cos buildBinaryDocument and buildUnknownDocument already use it) (nope)
 export interface VersionDocument<T = any> extends ZippableDocument<T> {
   format: FileFormat
   slug: string

@@ -1,5 +1,6 @@
 {
   "packageId": "documents-collision",
+  "packageName": "documents collision dashboard",
   "apiType": "rest",
   "version": "v1",
   "refs": [

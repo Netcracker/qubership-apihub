@@ -78,9 +78,9 @@ export const BUILD_TYPE = {
   BUILD: 'build',
   CHANGELOG: 'changelog',
   PREFIX_GROUPS_CHANGELOG: 'prefix-groups-changelog',
-  DOCUMENT_GROUP: 'documentGroup',
-  REDUCED_SOURCE_SPECIFICATIONS: 'reducedSourceSpecifications',
-  MERGED_SPECIFICATION: 'mergedSpecification',
+  DOCUMENT_GROUP: 'documentGroup', // deprecated
+  REDUCED_SOURCE_SPECIFICATIONS: 'reducedSourceSpecifications', // deprecated
+  MERGED_SPECIFICATION: 'mergedSpecification', // deprecated
   EXPORT_VERSION: 'exportVersion',
   EXPORT_REST_DOCUMENT: 'exportRestDocument',
   EXPORT_REST_OPERATIONS_GROUP: 'exportRestOperationsGroup',
@@ -135,13 +135,7 @@ export const FILE_FORMAT = {
   PROTO: FILE_FORMAT_PROTO,
 } as const
 
-//todo separate supported for build and for export
 export const SUPPORTED_FILE_FORMATS = Object.values(FILE_FORMAT)
-
-export type ExportFileFormat =
-  | typeof FILE_FORMAT_YAML
-  | typeof FILE_FORMAT_JSON
-  | typeof FILE_FORMAT_HTML
 
 export const SYNTHETIC_TITLE_FLAG = Symbol('synthetic-title')
 export const ORIGINS_SYMBOL = Symbol('origins')

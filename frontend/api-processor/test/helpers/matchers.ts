@@ -27,6 +27,7 @@ import {
   OperationType,
   REST_API_TYPE,
   VersionsComparison,
+  ZippableDocument,
 } from '../../src'
 import { JsonPath } from 'json-crawl'
 import { ActionType } from '@netcracker/qubership-apihub-api-diff'
@@ -38,6 +39,8 @@ export type ApihubChangesSummaryMatcher = ObjectContaining<ChangeSummary> & Chan
 export type ApihubNotificationsMatcher = ObjectContaining<BuildResult> & BuildResult
 export type ApihubErrorNotificationMatcher = ObjectContaining<NotificationMessage> & NotificationMessage
 export type ApihubChangeMessagesMatcher = ArrayContaining<ChangeMessage> & ChangeMessage[]
+export type ApihubExportDocumentsMatcher = ObjectContaining<BuildResult> & BuildResult
+export type ApihubExportDocumentMatcher = ObjectContaining<ZippableDocument> & ZippableDocument
 
 export function apihubComparisonMatcher(
   expected: RecursiveMatcher<VersionsComparison>,
@@ -151,5 +154,22 @@ export function errorNotificationMatcher(
   return expect.objectContaining({
     message: expect.stringMatching(message),
     severity: MESSAGE_SEVERITY.Error,
+  })
+}
+
+export function exportDocumentsMatcher(
+  expected: Array<RecursiveMatcher<ZippableDocument>>,
+): ApihubExportDocumentsMatcher {
+  return expect.objectContaining({
+      exportDocuments: expect.toIncludeSameMembers(expected),
+    },
+  )
+}
+
+export function exportDocumentMatcher(
+  filename: string,
+): ApihubExportDocumentMatcher {
+  return expect.objectContaining({
+    filename: filename,
   })
 }

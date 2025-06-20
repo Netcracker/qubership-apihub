@@ -21,14 +21,9 @@ import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
 export type BuildType = KeyOfConstType<typeof BUILD_TYPE>
 export type VersionStatus = KeyOfConstType<typeof VERSION_STATUS>
 
-export const YAML_EXPORT_GROUP_FORMAT = 'yaml'
-export const JSON_EXPORT_GROUP_FORMAT = 'json'
-export const HTML_EXPORT_GROUP_FORMAT = 'html'
-
-export type OperationsGroupExportFormat =
-  | typeof YAML_EXPORT_GROUP_FORMAT
-  | typeof JSON_EXPORT_GROUP_FORMAT
-  | typeof HTML_EXPORT_GROUP_FORMAT
+export type MergedOperationsGroupExportFormat =
+  | typeof FILE_FORMAT_YAML
+  | typeof FILE_FORMAT_JSON
 
 export type ExportFormat =
   | typeof FILE_FORMAT_YAML
@@ -65,7 +60,7 @@ export interface BuildConfig extends BuildConfigBase {
   files?: BuildConfigFile[]
 
   metadata?: Record<string, unknown>
-  format?: OperationsGroupExportFormat
+  format?: ExportFormat
 
   // todo since it goes straight to the info.json, remove it from every buildconfig except the one that is 'build'
   validationRulesSeverity?: ValidationRulesSeverity
@@ -98,29 +93,29 @@ export interface PublishBuildConfig extends BuildConfigBase {
 export interface ExportVersionBuildConfig extends BuildConfigBase {
   buildType: typeof BUILD_TYPE.EXPORT_VERSION
   packageId: PackageId
-  version: VersionId // @revision for rebuild
-  format: OperationsGroupExportFormat
+  version: VersionId
+  format: ExportFormat
   allowedOasExtensions?: OpenApiExtensionKey[]
 }
 
 export interface ExportRestDocumentBuildConfig extends BuildConfigBase {
   buildType: typeof BUILD_TYPE.EXPORT_REST_DOCUMENT
   packageId: PackageId
-  version: VersionId // @revision for rebuild
+  version: VersionId
   documentId: string
   // apiType?: OperationsApiType //todo Document transformation is available only for apiType = REST
-  format: OperationsGroupExportFormat
+  format: ExportFormat
   allowedOasExtensions?: OpenApiExtensionKey[]
 }
 
 export interface ExportRestOperationsGroupBuildConfig extends BuildConfigBase {
   buildType: typeof BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP
   packageId: PackageId
-  version: VersionId // @revision for rebuild
+  version: VersionId
   // apiType?: OperationsApiType //todo Document transformation is available only for apiType = REST
   groupName: string
   operationsSpecTransformation: OperationsSpecTransformation
-  format: OperationsGroupExportFormat
+  format: ExportFormat
   allowedOasExtensions?: OpenApiExtensionKey[]
 }
 
@@ -128,50 +123,46 @@ export interface ExportRestOperationsGroupBuildConfig extends BuildConfigBase {
 export interface ReducedSourceSpecificationsBuildConfig extends BuildConfigBase {
   buildType: typeof BUILD_TYPE.REDUCED_SOURCE_SPECIFICATIONS
   packageId: PackageId
-  version: VersionId // @revision for rebuild
+  version: VersionId
   groupName: string
-  format: OperationsGroupExportFormat
-  // allowedOasExtensions?: OpenApiExtensionKey[]
-  apiType?: OperationsApiType
+  format: ExportFormat
+  apiType?: OperationsApiType //todo Document transformation is available only for apiType = REST
 }
 
 // deprecated
 export interface MergedSpecificationBuildConfig extends BuildConfigBase {
   buildType: typeof BUILD_TYPE.MERGED_SPECIFICATION
   packageId: PackageId
-  version: VersionId // @revision for rebuild
+  version: VersionId
   groupName: string
-  format: OperationsGroupExportFormat
-  // allowedOasExtensions?: OpenApiExtensionKey[]
-  apiType?: OperationsApiType
+  format: MergedOperationsGroupExportFormat
+  apiType?: OperationsApiType //todo Document transformation is available only for apiType = REST
 }
 
 // todo
 export interface ChangelogBuildConfig extends BuildConfigBase {
   buildType: typeof BUILD_TYPE.CHANGELOG
   packageId: PackageId
-  version: VersionId // @revision for rebuild
+  version: VersionId
   status: VersionStatus
   previousVersion?: VersionId
   previousVersionPackageId?: PackageId
 
-  format: OperationsGroupExportFormat
-  // allowedOasExtensions?: OpenApiExtensionKey[]
+  format: ExportFormat
   apiType?: OperationsApiType
 }
 // todo
 export interface PrefixGroupsChangelogBuildConfig extends BuildConfigBase {
   buildType: typeof BUILD_TYPE.PREFIX_GROUPS_CHANGELOG
   packageId: PackageId
-  version: VersionId // @revision for rebuild
+  version: VersionId
   status: VersionStatus
   previousVersion?: VersionId
   previousVersionPackageId?: PackageId
   currentGroup?: string
   previousGroup?: string
 
-  format: OperationsGroupExportFormat
-  // allowedOasExtensions?: OpenApiExtensionKey[]
+  format: ExportFormat
   apiType?: OperationsApiType
 }
 
