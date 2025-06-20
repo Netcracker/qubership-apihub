@@ -1855,13 +1855,12 @@
     "node_modules/@netcracker/qubership-apihub-api-diff/node_modules/fast-equals": {
       "version": "4.0.3",
       "resolved": "https://registry.npmjs.org/fast-equals/-/fast-equals-4.0.3.tgz",
-      "integrity": "sha512-G3BSX9cfKttjr+2o1O22tYMLq0DPluZnYtq1rXumE1SpL/F/SLIfHx08WYQoWSIpeMYf8sRbJ8++71+v6Pnxfg==",
-      "license": "MIT"
+      "integrity": "sha512-G3BSX9cfKttjr+2o1O22tYMLq0DPluZnYtq1rXumE1SpL/F/SLIfHx08WYQoWSIpeMYf8sRbJ8++71+v6Pnxfg=="
     },
     "node_modules/@netcracker/qubership-apihub-api-processor": {
-      "version": "4.0.2-dev.20250612200511",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/4.0.2-dev.20250612200511/2175de9c1a03322dea25a7d7aaf14af06f7e5444",
-      "integrity": "sha512-qXYmN4dmwySWAEhrvWhZf6Oeb4WG+fab92RYafLaLE8dbf9rLlufqORrx5o90annCE1Raq4l2OIbEMCvTH577g==",
+      "version": "4.0.2-dev.20250620153858",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/4.0.2-dev.20250620153858/98efb60e28f0aed13df7d18f928ca0982ffff320",
+      "integrity": "sha512-yRMSz+lMrvOuotnqqCZpMJfZ7p63nOuJ4Sq1vTNC3AZ/CvY2yIwkGxqkadKWd0xvVluD1RZMpsav1ZQ67omfFA==",
       "license": "Apache-2.0",
       "dependencies": {
         "@netcracker/qubership-apihub-api-diff": "dev",
@@ -1889,7 +1888,6 @@
       "version": "0.5.10",
       "resolved": "https://registry.npmjs.org/adm-zip/-/adm-zip-0.5.10.tgz",
       "integrity": "sha512-x0HvcHqVJNTPk/Bw8JbLWlWoo6Wwnsug0fnYYro1HBrjxZ3G7/AZk7Ahv8JwDe1uIcz8eBqvu86FuF1POiG7vQ==",
-      "license": "MIT",
       "engines": {
         "node": ">=6.0"
       }
@@ -1907,8 +1905,7 @@
     "node_modules/@netcracker/qubership-apihub-api-unifier/node_modules/fast-equals": {
       "version": "4.0.3",
       "resolved": "https://registry.npmjs.org/fast-equals/-/fast-equals-4.0.3.tgz",
-      "integrity": "sha512-G3BSX9cfKttjr+2o1O22tYMLq0DPluZnYtq1rXumE1SpL/F/SLIfHx08WYQoWSIpeMYf8sRbJ8++71+v6Pnxfg==",
-      "license": "MIT"
+      "integrity": "sha512-G3BSX9cfKttjr+2o1O22tYMLq0DPluZnYtq1rXumE1SpL/F/SLIfHx08WYQoWSIpeMYf8sRbJ8++71+v6Pnxfg=="
     },
     "node_modules/@netcracker/qubership-apihub-graphapi": {
       "version": "1.0.8",
@@ -1956,7 +1953,6 @@
       "resolved": "https://registry.npmjs.org/semver/-/semver-5.7.2.tgz",
       "integrity": "sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==",
       "dev": true,
-      "license": "ISC",
       "bin": {
         "semver": "bin/semver"
       }
