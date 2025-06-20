@@ -66,6 +66,9 @@ describe('Export operations group with filename collision test', () => {
     // await fs.mkdir(EXPORT_RESULTS_PATH)
   })
 
+  // commented unnecessary writing to fs to speed up testing stage on CI
+  // uncomment for debugging purposes
+  //
   // afterEach(async () => {
   //   const { packageVersion, exportFileName } = await editor.createNodeVersionPackage()
   //   const infoPrefix = editor.config.operationsSpecTransformation

@@ -67,7 +67,9 @@ export const resolveApiAudience = (info: unknown): ApiAudience => {
   return apiAudience
 }
 
-export const dump = (value: unknown, format: typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON): [[string], BlobPropertyBag] => {
+type TextBlobConstructorParameters = [[string], BlobPropertyBag]
+
+export const dump = (value: unknown, format: typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON): TextBlobConstructorParameters => {
   if (format === FILE_FORMAT_YAML) {
     return [[YAML.dump(value)], { type: 'application/yaml' }]
   }
