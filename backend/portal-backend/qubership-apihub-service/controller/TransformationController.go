@@ -26,11 +26,10 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 )
 
-// deprecated
 type TransformationController interface {
-	TransformDocuments_deprecated(w http.ResponseWriter, r *http.Request)     //deprecated
-	TransformDocuments(w http.ResponseWriter, r *http.Request)                //deprecated
-	GetDataForDocumentsTransformation(w http.ResponseWriter, r *http.Request) //deprecated
+	TransformDocuments_deprecated(w http.ResponseWriter, r *http.Request)   //deprecated
+	TransformDocuments_deprecated_2(w http.ResponseWriter, r *http.Request) //deprecated
+	GetDataForDocumentsTransformation(w http.ResponseWriter, r *http.Request)
 }
 
 func NewTransformationController(roleService service.RoleService, buildService service.BuildService, versionService service.VersionService, transformationService service.TransformationService, operationGroupService service.OperationGroupService) TransformationController {
@@ -298,7 +297,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 	}
 }
 
-func (t transformationControllerImpl) TransformDocuments(w http.ResponseWriter, r *http.Request) {
+func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
 	ctx := context.Create(r)
 	sufficientPrivileges, err := t.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)

@@ -27,13 +27,19 @@ type TransformationService interface {
 	GetDataForDocumentsTransformation(packageId, version string, filterReq view.DocumentsForTransformationFilterReq) (interface{}, error)
 }
 
-func NewTransformationService(publishedRepo repository.PublishedRepository, operationRepo repository.OperationRepository) TransformationService {
-	return &transformationServiceImpl{publishedRepo: publishedRepo, operationRepo: operationRepo}
+func NewTransformationService(publishedRepo repository.PublishedRepository, operationRepo repository.OperationRepository,
+	packageVersionEnrichmentService PackageVersionEnrichmentService) TransformationService {
+	return &transformationServiceImpl{
+		publishedRepo:                   publishedRepo,
+		operationRepo:                   operationRepo,
+		packageVersionEnrichmentService: packageVersionEnrichmentService,
+	}
 }
 
 type transformationServiceImpl struct {
-	publishedRepo repository.PublishedRepository
-	operationRepo repository.OperationRepository
+	publishedRepo                   repository.PublishedRepository
+	operationRepo                   repository.OperationRepository
+	packageVersionEnrichmentService PackageVersionEnrichmentService
 }
 
 func (t transformationServiceImpl) GetDataForDocumentsTransformation(packageId, version string, filterReq view.DocumentsForTransformationFilterReq) (interface{}, error) {
@@ -79,13 +85,24 @@ func (t transformationServiceImpl) GetDataForDocumentsTransformation(packageId, 
 	if err != nil {
 		return nil, err
 	}
+
+	packageVersions := make(map[string][]string, 0)
+
 	for _, versionDocumentEnt := range content {
 		transformationView := *entity.MakeDocumentForTransformationView(&versionDocumentEnt)
 		transformationView.IncludedOperationIds = getCommonOperationFromGroupAndDocumentOperations(operationIdsByGroupName, transformationView)
 		versionDocuments = append(versionDocuments, transformationView)
+
+		packageVersions[versionDocumentEnt.ContentPackageId] =
+			append(packageVersions[versionDocumentEnt.ContentPackageId], view.MakeVersionRefKey(versionDocumentEnt.Version, versionDocumentEnt.Revision))
 	}
 
-	return &view.DocumentsForTransformationView{Documents: versionDocuments}, nil
+	packagesRefs, err := t.packageVersionEnrichmentService.GetPackageVersionRefsMap(packageVersions)
+	if err != nil {
+		return nil, err
+	}
+
+	return &view.DocumentsForTransformationView{Documents: versionDocuments, Packages: packagesRefs}, nil
 }
 
 func getCommonOperationFromGroupAndDocumentOperations(operationIdsByGroupName []string, document view.DocumentForTransformationView) []string {

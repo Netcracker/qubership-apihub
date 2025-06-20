@@ -102,7 +102,8 @@ type PublishedRepository interface {
 	SaveVersionChanges(packageInfo view.PackageInfoFile, publishId string, operationComparisons []*entity.OperationComparisonEntity, versionComparisons []*entity.VersionComparisonEntity, versionComparisonsFromCache []string) error
 	GetLatestRevision(packageId, version string) (int, error)
 
-	GetVersionRevisionContentForDocumentsTransformation(packageId string, version string, revision int, searchQuery entity.ContentForDocumentsTransformationSearchQueryEntity) ([]entity.PublishedContentWithDataEntity, error)
+	GetVersionRevisionContentForDocumentsTransformation(packageId string, version string, revision int,
+		searchQuery entity.ContentForDocumentsTransformationSearchQueryEntity) ([]entity.PublishedContentWithDataEntity, error)
 	GetPublishedSourcesArchives(offset int) (*entity.PublishedSrcArchiveEntity, error)
 	DeletePublishedSourcesArchives(checksums []string) error
 	SavePublishedSourcesArchive(ent *entity.PublishedSrcArchiveEntity) error

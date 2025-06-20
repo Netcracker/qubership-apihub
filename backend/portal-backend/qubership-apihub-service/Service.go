@@ -310,7 +310,7 @@ func main() {
 	}
 
 	transitionService := service.NewTransitionService(transitionRepository, publishedRepository)
-	transformationService := service.NewTransformationService(publishedRepository, operationRepository)
+	transformationService := service.NewTransformationService(publishedRepository, operationRepository, packageVersionEnrichmentService)
 
 	gitHookService := service.NewGitHookService(projectRepository, branchService, buildService, userService)
 
@@ -612,9 +612,9 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/transform", security.Secure(transformationController.TransformDocuments_deprecated)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/export/groups/{groupName}", security.Secure(exportController.ExportOperationGroupAsOpenAPIDocuments_deprecated)).Methods(http.MethodGet)                         //deprecated
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/transformation/documents", security.Secure(transformationController.GetDataForDocumentsTransformation)).Methods(http.MethodGet)               //deprecated
-	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/build/groups/{groupName}/buildType/{buildType}", security.Secure(transformationController.TransformDocuments)).Methods(http.MethodPost)                          //deprecated
+	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/build/groups/{groupName}/buildType/{buildType}", security.Secure(transformationController.TransformDocuments_deprecated_2)).Methods(http.MethodPost)             //deprecated
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/export/groups/{groupName}/buildType/{buildType}", security.Secure(exportController.ExportOperationGroupAsOpenAPIDocuments_deprecated_2)).Methods(http.MethodGet) //deprecated
-	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/documents", security.Secure(transformationController.GetDataForDocumentsTransformation)).Methods(http.MethodGet)                              //deprecated
+	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/documents", security.Secure(transformationController.GetDataForDocumentsTransformation)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/publish", security.Secure(operationGroupController.StartOperationGroupPublish)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/publish/{publishId}/status", security.Secure(operationGroupController.GetOperationGroupPublishStatus)).Methods(http.MethodGet)

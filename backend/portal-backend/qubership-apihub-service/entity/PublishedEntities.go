@@ -193,6 +193,8 @@ type PublishedContentEntity struct {
 
 type PublishedContentWithDataEntity struct {
 	tableName struct{} `pg:"published_version_revision_content, alias:published_version_revision_content"`
+	// both PublishedContentEntity and PublishedContentDataEntity have PackageId field, so go-pg mapping works incorrect(randomly). ContentPackageId is required to fix the issue.
+	ContentPackageId string `pg:"content_package_id, type:varchar"`
 	PublishedContentEntity
 	PublishedContentDataEntity
 }
@@ -467,6 +469,7 @@ func MakeDocumentForTransformationView(ent *PublishedContentWithDataEntity) *vie
 		Filename:             ent.Filename,
 		IncludedOperationIds: ent.OperationIds,
 		Data:                 ent.Data,
+		PackageRef:           view.MakePackageRefKey(ent.ContentPackageId, ent.Version, ent.Revision),
 	}
 }
 

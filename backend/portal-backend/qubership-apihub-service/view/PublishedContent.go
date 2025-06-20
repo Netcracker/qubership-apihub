@@ -88,6 +88,7 @@ type PublishedDocumentRefView struct {
 
 type DocumentsForTransformationView struct {
 	Documents []DocumentForTransformationView `json:"documents"`
+	Packages  map[string]PackageVersionRef    `json:"packages,omitempty"`
 }
 
 type DocumentForTransformationView struct {
@@ -102,6 +103,7 @@ type DocumentForTransformationView struct {
 	Filename             string   `json:"filename"`
 	IncludedOperationIds []string `json:"includedOperationIds"`
 	Data                 []byte   `json:"data"`
+	PackageRef           string   `json:"packageRef"`
 }
 
 type Openapi struct {

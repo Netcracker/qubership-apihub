@@ -3423,7 +3423,7 @@ func (p publishedRepositoryImpl) GetVersionRefsComparisons(comparisonId string) 
 func (p publishedRepositoryImpl) GetVersionRevisionContentForDocumentsTransformation(packageId string, versionName string, revision int, searchQuery entity.ContentForDocumentsTransformationSearchQueryEntity) ([]entity.PublishedContentWithDataEntity, error) {
 	var ents []entity.PublishedContentWithDataEntity
 	query := p.cp.GetConnection().Model(&ents).Distinct().
-		ColumnExpr("published_version_revision_content.*").ColumnExpr("pd.*")
+		ColumnExpr("published_version_revision_content.*").ColumnExpr("pd.*").ColumnExpr("published_version_revision_content.package_id as content_package_id")
 	query.Join(`inner join
 			(with refs as(
 				select s.reference_id as package_id, s.reference_version as version, s.reference_revision as revision
