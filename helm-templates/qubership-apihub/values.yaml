@@ -167,8 +167,8 @@ qubershipApihubBackend:
       deleteLastRevision: 'false'
       # Optional; If set to true, the revisions cleanup job will delete revisions with a 'release' status. Otherwise, such revisions are skipped; If not set, default value: false; Example: true
       deleteReleaseRevisions: 'false'
-      # Optional; Number of days to keep revisions before cleanup; If not set, default value: 360; Example: 180
-      ttlDays: '360'
+      # Optional; Number of days to keep revisions before cleanup; If not set, default value: 365; Example: 180
+      ttlDays: '365'
 
     # Parameters for APIHUB Editor feature. Deprecated. Will be removed in future releases.
     editor:
