@@ -6,6 +6,6 @@ It is ready for usage Helm chart. Please refer to [Qubership APIHUB Installation
 
 ## Dev cases
 
-Also this folder contains a set of scripts, guides and 3rd party charts which are intended for "single command" set up of lightweight k8s cluster on your PC with APIHUB and its dependecies (PG) in it. Helpful for Qubsership APIHUB developers and for RnD activities.
+Folder `local-k8s-quickstart` contains a set of scripts, guides and 3rd party charts which are intended for "single command" set up of lightweight k8s cluster on your PC with APIHUB and its dependecies (PG) in it. Helpful for Qubsership APIHUB developers and for RnD activities.
 
-Please refer to [Qubership APIHUB Installation on local k8s cluster](./local-k8s-guide.md)
+Please refer to [Qubership APIHUB quickstart Installation on local k8s cluster](./local-k8s-quickstart)

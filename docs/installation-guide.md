@@ -62,10 +62,20 @@ APIHUB_ACCESS_TOKEN=${any string}
 | APIHUB\_ADMIN\_PASSWORD | No | "" | admin-password | Default local admin user password |
 | APIHUB\_ACCESS\_TOKEN | Yes | "" | access-token-12345 | Default system access token (any string). The token will be provisioned automatically during startup |
 | APIHUB\_URL | Yes | "" | https://apihub.example.com | Factual APIHUB server URL in your environment. |
+| AUTO_LOGIN | No | FALSE | TRUE | Enables automatic login with the configured identity provider instead of showing the APIHUB login page. Should be false if more than one IDP is configured |
+| EXTERNAL\_SAML\_IDP\_DISPLAY\_NAME | No | "" | External Identity Provider | Display name for external SAML identity provider. |
+| EXTERNAL\_SAML\_IDP\_IMAGE_SVG | No | "" | <svg fill="#000000" width="800px"... | SVG image for external SAML identity provider logo. |
 | ADFS\_METADATA\_URL | No | "" | [https://idp.example.com/FederationMetadata/2007-06/FederationMetadata.xml](https://idp.example.com/FederationMetadata/2007-06/FederationMetadata.xml) | SAML metadata URL. If set - enables SAML integration |
 | SAML\_CRT | No | "" | LS0tLS1CRUdJTi... | SAML server certificate, base64 encoded. Required only if SAML integration enabled |
 | SAML\_KEY | No | "" | LS0tLS1CRUdJTi... | SAML server private key, base64 encoded. Required only if SAML integration enabled |
+| EXTERNAL\_OIDC\_IDP\_DISPLAY\_NAME | No | "" | External Identity Provider | Display name for external OIDC identity provider. |
+| EXTERNAL\_OIDC\_IDP\_IMAGE\_SVG | No | "" | <svg fill="#000000" width="800px"... | SVG image for external OIDC identity provider logo. |
+| OIDC\_PROVIDER\_URL | No | "" | https://idp.example.com/realms/apihub | OIDC identity provider URL. Required for OIDC configuration. |
+| OIDC\_CLIENT\_ID | No | "" | apihub | OIDC client ID. Required for OIDC configuration. |
+| OIDC\_CLIENT\_SECRET | No | "" | l5cKFvwDRSnhBErE9LUGeBk0dqqFB7No | OIDC client secret. Required for OIDC configuration. |
 | JWT\_PRIVATE\_KEY | Yes | "" | LS0tLS1CRUdJTiBQUklWQV... | Self generated private PKCS#8 private key, base64 encoded. Used for siging of JWT tokens issued by APIHUB, must be unique fore each APIHUB instance |
+| JWT\_ACCESS\_TOKEN\_DURATION\_SEC | No | 3600 | 3600 | Duration in seconds for access tokens issued by APIHUB. |
+| JWT\_REFRESH\_TOKEN\_DURATION\_SEC | No | 43200 | 43200 | Duration in seconds for refresh tokens issued by APIHUB. |
 | LDAP\_SERVER | No | "" | ldap://ldap.example.com:389 | LDAP server URL. Required for SAML integration for syncing users information |
 | LDAP\_USER | No | "" | x\_apihub | LDAP User used for connecting to LDAP server |
 | LDAP\_USER\_PASSWORD | No | "" | x\_apihub\_password | Password for LDAP User |
@@ -99,7 +109,9 @@ APIHUB_ACCESS_TOKEN=${any string}
 | DEFAULT\_WORKSPACE\_ID | No | "" | QS | Default workspace ID for Agent UI |
 | CUSTOM\_PATH\_PREFIXES | No | "" |  | Allows to specify custom paths for extension (plug-in) backend services |
 | ALLOWED\_HOSTS | No | "" | \*.example.com | Allowed list of hosts that are accepted for proxy(playground) requests. |
-
+| REVISIONS\_TTL\_DAYS | No | 365 | 180 | Number of days to keep revisions before cleanup. |
+| REVISIONS\_CLEANUP\_DELETE\_LAST\_REVISION | No | false | true | If set to true, the revisions cleanup job will delete the last revision of the version. Otherwise, such revisions are skipped. |
+| REVISIONS\_CLEANUP\_DELETE\_RELEASE\_REVISIONS | No | false | true | If set to true, the revisions cleanup job will delete revisions with a 'release' status. Otherwise, such revisions are skipped. |
 
 | Deploy Parameter name | Mandatory | Default Value | Example | Description |
 | --- | --- | --- | --- | --- |

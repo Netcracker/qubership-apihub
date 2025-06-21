@@ -31,9 +31,14 @@ spec:
         volumeMounts:
         - name: postgresql-data
           mountPath: /var/lib/postgresql/data
+        - name: initdb-scripts
+          mountPath: /docker-entrypoint-initdb.d
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
       volumes:
       - name: postgresql-data
         persistentVolumeClaim:
           claimName: {{ .Release.Name }}-postgresql-pvc
+      - name: initdb-scripts
+        configMap:
+          name: {{ .Release.Name }}-initdb-scripts

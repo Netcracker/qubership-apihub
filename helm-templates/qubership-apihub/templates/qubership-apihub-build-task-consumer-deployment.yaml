@@ -75,8 +75,9 @@ spec:
                     periodSeconds: 60
                     failureThreshold: 5
                 securityContext:
+                    runAsUser: 10001
                     runAsGroup: 10001
-                    readOnlyRootFilesystem: false
+                    readOnlyRootFilesystem: true
                     runAsNonRoot: true
                     seccompProfile:
                         type: RuntimeDefault

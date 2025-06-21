@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-initdb-scripts
+  labels:
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  {{- range $filename, $script := .Values.postgresql.initdbScripts }}
+  {{ $filename }}: |-
+{{ $script | indent 4 }}
+  {{- end }}
