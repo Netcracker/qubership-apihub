@@ -37,6 +37,8 @@ spec:
                     defaultMode: 420
                     name: qubership-apihub-config
                 name: qubership-apihub-config
+            -   name: tmp-volume
+                emptyDir: {}
             containers:
             -   name: 'qubership-apihub-backend'
                 image: '{{ .Values.qubershipApihubBackend.image.repository }}:{{ .Values.qubershipApihubBackend.image.tag }}'
@@ -44,6 +46,8 @@ spec:
                 -   name: qubership-apihub-config
                     mountPath: /app/qubership-apihub-service/etc/
                     readOnly: true
+                -   name: tmp-volume
+                    mountPath: /tmp
                 ports:
                 -   name: web
                     containerPort: 8080
@@ -263,7 +267,7 @@ spec:
                 securityContext:
                     runAsUser: 10001
                     runAsGroup: 10001
-                    readOnlyRootFilesystem: false
+                    readOnlyRootFilesystem: true
                     runAsNonRoot: true
                     seccompProfile:
                         type: RuntimeDefault
