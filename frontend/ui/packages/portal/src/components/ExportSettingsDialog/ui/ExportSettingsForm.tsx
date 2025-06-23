@@ -120,7 +120,9 @@ export const ExportSettingsForm: FC<ExportSettingsFormProps> = memo(props => {
 
   // Initialize form with cached data or default values
   const { control, handleSubmit, setValue } = useForm<ExportSettingsFormData>({
-    defaultValues: cachedFormData ?? fieldsDefaultValues,
+    defaultValues: cachedFormData
+      ? { ...fieldsDefaultValues, ...cachedFormData }
+      : fieldsDefaultValues,
   })
 
   // Handle form submission 
