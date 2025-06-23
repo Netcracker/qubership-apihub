@@ -19,6 +19,6 @@ qubershipApihubAgent:
     apihubUrl: 'http://qubership-apihub-ui.apihub.svc.cluster.local:8080'
     accessToken: '' # set access token from qubership-apihub
     cloudName: 'Kind'
-    agentUrl: 'http://qubership-apihub-agent.qubership-apihub-agent.svc.cluster.local:8080' 
+    agentUrl: 'qubership-apihub-agent.qubership-apihub-agent.svc.cluster.local' 
     agentName: 'qsAgent'
     insecureProxy: true
