@@ -19,6 +19,13 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/Netcracker/qubership-apihub-agent/exception"
+)
+
+const (
+	maxHeaders      = 100
+	maxHeaderValues = 1000
 )
 
 type ProxyController interface {
@@ -47,15 +54,38 @@ func (p *proxyControllerImpl) Proxy(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer resp.Body.Close()
-	copyHeader(w.Header(), resp.Header)
+	if err := copyHeader(w.Header(), resp.Header); err != nil {
+		RespondWithCustomError(w, err)
+		return
+	}
 	w.WriteHeader(resp.StatusCode)
 	io.Copy(w, resp.Body)
 }
 
-func copyHeader(dst, src http.Header) {
+func copyHeader(dst, src http.Header) *exception.CustomError {
+	//validation was added based on security scan results to avoid resource exhaustion
+	if len(src) > maxHeaders {
+		return &exception.CustomError{
+			Status:  http.StatusBadGateway,
+			Code:    exception.HeadersLimitExceeded,
+			Message: exception.HeadersLimitExceededMsg,
+			Params:  map[string]interface{}{"maxHeaders": maxHeaders},
+		}
+	}
+
 	for k, vv := range src {
+		//validation was added based on security scan results to avoid resource exhaustion
+		if len(vv) > maxHeaderValues {
+			return &exception.CustomError{
+				Status:  http.StatusBadGateway,
+				Code:    exception.HeaderValuesLimitExceeded,
+				Message: exception.HeaderValuesLimitExceededMsg,
+				Params:  map[string]interface{}{"key": k, "maxValues": maxHeaderValues},
+			}
+		}
 		for _, v := range vv {
 			dst.Add(k, v)
 		}
 	}
+	return nil
 }
