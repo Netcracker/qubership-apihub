@@ -15,6 +15,7 @@
 package client
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -45,6 +46,7 @@ type ApihubClient interface {
 	SendKeepaliveMessage(msg view.AgentKeepaliveMessage) (string, error)
 
 	CheckApiKeyValid(apiKey string) (bool, error)
+	CheckAuthToken(ctx context.Context, token string) (bool, error)
 }
 
 func NewApihubClient(apihubUrl string, accessToken string, cloudName string) ApihubClient {
@@ -212,6 +214,25 @@ func (a apihubClientImpl) CheckApiKeyValid(apiKey string) (bool, error) {
 	req.SetHeader("api-key", apiKey)
 
 	resp, err := req.Get(fmt.Sprintf("%s/api/v1/system/info", a.apihubUrl))
+	if err != nil || resp.StatusCode() != http.StatusOK {
+		if authErr := checkUnauthorized(resp); authErr != nil {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func (a apihubClientImpl) CheckAuthToken(ctx context.Context, token string) (bool, error) {
+	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
+
+	client := resty.NewWithClient(&cl)
+	req := client.R()
+	req.SetContext(ctx)
+	req.SetHeader("Cookie", fmt.Sprintf("%s=%s", view.AccessTokenCookieName, token))
+
+	resp, err := req.Get(fmt.Sprintf("%s/api/v1/auth/token", a.apihubUrl))
 	if err != nil || resp.StatusCode() != http.StatusOK {
 		if authErr := checkUnauthorized(resp); authErr != nil {
 			return false, nil

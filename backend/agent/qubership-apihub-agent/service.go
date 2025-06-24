@@ -158,6 +158,9 @@ func main() {
 
 	healthController := controller.NewHealthController()
 	healthController.AddStartupCheck(func() bool {
+		if stubPm != "" {
+			return true
+		}
 		_, err := namespaceListCache.ListNamespaces()
 		if err != nil {
 			log.Errorf("Failed to list namespaces: %s", err)
