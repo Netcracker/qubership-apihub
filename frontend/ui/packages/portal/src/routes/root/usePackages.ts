@@ -69,9 +69,13 @@ export function useRefetchPackages(options: Partial<{
   refererPageName: string
 }>): InvalidateQuery<void> {
   const {
-    refererPageName = EMPTY_PAGE_REFERER,
+    refererPageName,
     queryKey = [PACKAGES_QUERY_KEY, refererPageName],
   } = options
   const client = useQueryClient()
   return () => client.refetchQueries({ queryKey }).then()
+}
+
+export function useRefetchAllPackages(): InvalidateQuery<void> {
+  return useRefetchPackages({ queryKey: [PACKAGES_QUERY_KEY] })
 }

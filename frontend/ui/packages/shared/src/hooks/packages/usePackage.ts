@@ -121,7 +121,7 @@ export function toCreatePackageProps(value: Partial<Package>): CreatePackageProp
 }
 
 export function toPackage(value: PackageDto): Package {
-  return {
+  return value && {
     key: value.packageId,
     parentGroup: value.parentId,
     alias: value.alias,

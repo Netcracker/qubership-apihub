@@ -77,7 +77,7 @@ export const GeneralPackageSettingsTabViewer: FC<PackageSettingsTabProps> = memo
 
   useEffect(() => {
     if (isDeleteSuccess) {
-      location.replace('/portal')
+      navigate('/portal')
     }
   }, [isDeleteSuccess, navigate])
 
