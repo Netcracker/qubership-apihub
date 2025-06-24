@@ -43,4 +43,10 @@ qubershipApihubAgent:
 
     # Optional; Timeout for getting API spec files from service in k8s cluster; If not set, default value: 15; Example: 30
     discoveryTimeoutSec: 15
+
+    # Optional; Comma-separated list of k8s labels keys which will be a mark to skip this service during discovery; If not set, default value: ''; Example: 'gateway,cronJob'
+    discoveryExcludeLabels: ''
+    
+    # Optional; Comma-separated list of k8s labels keys by which services will be grouped during discovery; If not set, default value: ''; Example: 'app_name,application'
+    discoveryGroupingLabels: ''
     

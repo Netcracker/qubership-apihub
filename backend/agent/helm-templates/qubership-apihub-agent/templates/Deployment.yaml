@@ -77,6 +77,10 @@ spec:
                     value: '{{ .Values.qubershipApihubAgent.env.insecureProxy }}'
                 -   name: DISCOVERY_TIMEOUT_SEC
                     value: '{{ .Values.qubershipApihubAgent.env.discoveryTimeoutSec }}'
+                -   name: DISCOVERY_EXCLUDE_LABELS
+                    value: '{{ .Values.qubershipApihubAgent.env.discoveryExcludeLabels }}'
+                -   name: DISCOVERY_GROUPING_LABELS
+                    value: '{{ .Values.qubershipApihubAgent.env.discoveryGroupingLabels }}'
                 resources:
                     requests:
                         cpu: {{ .Values.qubershipApihubAgent.resource.cpu.request }}
