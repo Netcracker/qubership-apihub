@@ -1,7 +1,14 @@
-import { Dictionary, IHttpOperation, IMediaTypeContent } from '@stoplight/types'
-import { Request as HarRequest } from 'har-format'
+import {
+  Dictionary,
+  IHttpOperation,
+  IMediaTypeContent,
+} from "@stoplight/types";
+import { Request as HarRequest } from "har-format";
 
-import { getServerUrlWithDefaultValues, IServer } from '../../utils/http-spec/IServer'
+import {
+  getServerUrlWithDefaultValues,
+  IServer,
+} from "../../utils/http-spec/IServer";
 import {
   filterOutAuthorizationParams,
   HttpSecuritySchemeWithValues,
@@ -10,18 +17,25 @@ import {
   isBearerSecurityScheme,
   isDigestSecurityScheme,
   isOAuth2SecurityScheme,
-} from './Auth/authentication-utils'
-import { BodyParameterValues, createRequestBody } from './Body/request-body-utils'
-import { MockData } from './Mocking/mocking-utils'
+} from "./Auth/authentication-utils";
+import {
+  BodyParameterValues,
+  createRequestBody,
+} from "./Body/request-body-utils";
+import { CookieStore } from "./cookie-store";
+import { MockData } from "./Mocking/mocking-utils";
 
-const PROXY_ENDPOINT = '/playground/proxy'
+const PROXY_ENDPOINT = "/playground/proxy";
 
 type NameAndValue = {
   name: string;
   value: string;
 };
 
-const nameAndValueObjectToPair = ({ name, value }: NameAndValue): [string, string] => [name, value]
+const nameAndValueObjectToPair = ({
+  name,
+  value,
+}: NameAndValue): [string, string] => [name, value];
 
 interface BuildRequestInput {
   httpOperation: IHttpOperation;
@@ -29,11 +43,10 @@ interface BuildRequestInput {
   parameterValues: Dictionary<string, string>;
   bodyInput?: BodyParameterValues | string;
   mockData?: MockData;
-  token: string;
   origin: string;
   auth?: HttpSecuritySchemeWithValues;
   chosenServer?: IServer | null;
-  credentials?: 'omit' | 'include' | 'same-origin';
+  credentials?: "omit" | "include" | "same-origin";
   corsProxy?: string;
 }
 
@@ -43,17 +56,20 @@ const getServerUrl = ({
   mockData,
   corsProxy,
   origin,
-}: Pick<BuildRequestInput, 'httpOperation' | 'chosenServer' | 'mockData' | 'corsProxy' | 'origin'>) => {
-  const server = chosenServer || httpOperation.servers?.[0]
-  const chosenServerUrl = server && getServerUrlWithDefaultValues(server)
-  const serverUrl = mockData?.url || chosenServerUrl || origin
+}: Pick<
+  BuildRequestInput,
+  "httpOperation" | "chosenServer" | "mockData" | "corsProxy" | "origin"
+>) => {
+  const server = chosenServer || httpOperation.servers?.[0];
+  const chosenServerUrl = server && getServerUrlWithDefaultValues(server);
+  const serverUrl = mockData?.url || chosenServerUrl || origin;
 
   if (corsProxy && !mockData) {
-    return `${corsProxy}${serverUrl}`
+    return `${corsProxy}${serverUrl}`;
   }
 
-  return serverUrl
-}
+  return serverUrl;
+};
 
 export async function buildFetchRequest({
   httpOperation,
@@ -61,52 +77,72 @@ export async function buildFetchRequest({
   bodyInput,
   parameterValues,
   mockData,
-  token,
   origin,
   auth,
   chosenServer,
-  credentials = 'omit',
+  credentials = "include",
   corsProxy,
 }: BuildRequestInput): Promise<Parameters<typeof fetch>> {
-  const serverUrl = getServerUrl({ httpOperation, mockData, chosenServer, corsProxy, origin })
+  const serverUrl = getServerUrl({
+    httpOperation,
+    mockData,
+    chosenServer,
+    corsProxy,
+    origin,
+  });
 
-  const shouldIncludeBody = ['PUT', 'POST', 'PATCH'].includes(httpOperation.method.toUpperCase())
+  const shouldIncludeBody = ["PUT", "POST", "PATCH"].includes(
+    httpOperation.method.toUpperCase()
+  );
 
   const queryParams =
     httpOperation.request?.query
-      ?.map(param => ({ name: param.name, value: parameterValues[param.name] ?? '' }))
-      .filter(({ value }) => value.length > 0) ?? []
+      ?.map((param) => ({
+        name: param.name,
+        value: parameterValues[param.name] ?? "",
+      }))
+      .filter(({ value }) => value.length > 0) ?? [];
 
-  const rawHeaders = filterOutAuthorizationParams(httpOperation.request?.headers ?? [], httpOperation.security)
-    .map(header => ({ name: header.name, value: parameterValues[header.name] ?? '' }))
-    .filter(({ value }) => value.length > 0)
+  const rawHeaders = filterOutAuthorizationParams(
+    httpOperation.request?.headers ?? [],
+    httpOperation.security
+  )
+    .map((header) => ({
+      name: header.name,
+      value: parameterValues[header.name] ?? "",
+    }))
+    .filter(({ value }) => value.length > 0);
 
-  const [queryParamsWithAuth, headersWithAuth] = runAuthRequestEhancements(auth, queryParams, rawHeaders)
+  const [queryParamsWithAuth, headersWithAuth] = runAuthRequestEnhancements(
+    auth,
+    queryParams,
+    rawHeaders
+  );
 
-  const expandedPath = uriExpand(httpOperation.path, parameterValues)
+  const expandedPath = uriExpand(httpOperation.path, parameterValues);
 
-  const shouldUseProxyEndpoint = chosenServer?.shouldUseProxyEndpoint
+  const shouldUseProxyEndpoint = chosenServer?.shouldUseProxyEndpoint;
 
   // urlObject is concatenated this way to avoid /user and /user/ endpoint edge cases
-  const urlObject = new URL(serverUrl + expandedPath)
-  urlObject.search = new URLSearchParams(queryParamsWithAuth.map(nameAndValueObjectToPair)).toString()
+  const urlObject = new URL(serverUrl + expandedPath);
+  urlObject.search = new URLSearchParams(
+    queryParamsWithAuth.map(nameAndValueObjectToPair)
+  ).toString();
 
-  const body = typeof bodyInput === 'object' ? await createRequestBody(mediaTypeContent, bodyInput) : bodyInput
+  const body =
+    typeof bodyInput === "object"
+      ? await createRequestBody(mediaTypeContent, bodyInput)
+      : bodyInput;
 
   const headers = {
     // do not include multipart/form-data - browser handles its content type and boundary
-    ...(mediaTypeContent?.mediaType !== 'multipart/form-data' && {
-      'Content-Type': mediaTypeContent?.mediaType ?? 'application/json',
-    }),
+    ...(mediaTypeContent?.mediaType !== "multipart/form-data"
+      ? { "Content-Type": mediaTypeContent?.mediaType ?? "application/json" }
+      : {}),
     ...Object.fromEntries(headersWithAuth.map(nameAndValueObjectToPair)),
     ...mockData?.header,
-    ...(shouldUseProxyEndpoint
-      ? {
-        'X-Apihub-Authorization': token,
-        'X-Apihub-Proxy-Url': urlObject.href,
-      }
-      : {}),
-  }
+    ...(shouldUseProxyEndpoint ? { "X-Apihub-Proxy-Url": urlObject.href } : {}),
+  };
 
   return [
     shouldUseProxyEndpoint ? `${origin}${PROXY_ENDPOINT}` : urlObject.href,
@@ -116,65 +152,72 @@ export async function buildFetchRequest({
       headers,
       body: shouldIncludeBody ? body : undefined,
     },
-  ]
+  ];
 }
 
-const runAuthRequestEhancements = (
+const runAuthRequestEnhancements = (
   auth: HttpSecuritySchemeWithValues | undefined,
   queryParams: NameAndValue[],
-  headers: NameAndValue[],
+  headers: NameAndValue[]
 ): [NameAndValue[], NameAndValue[]] => {
-  if (!auth) return [queryParams, headers]
+  if (!auth) return [queryParams, headers];
 
-  const newQueryParams = [...queryParams]
-  const newHeaders = [...headers]
+  const newQueryParams = [...queryParams];
+  const newHeaders = [...headers];
 
   if (isApiKeySecurityScheme(auth.scheme)) {
-    if (auth.scheme.in === 'query') {
+    if (auth.scheme.in === "query") {
       newQueryParams.push({
         name: auth.scheme.name,
-        value: auth.authValue ?? '',
-      })
+        value: auth.authValue ?? "",
+      });
     }
 
-    if (auth.scheme.in === 'header') {
+    if (auth.scheme.in === "header") {
       newHeaders.push({
         name: auth.scheme.name,
-        value: auth.authValue ?? '',
-      })
+        value: auth.authValue ?? "",
+      });
+    }
+
+    if (auth.scheme.in === "cookie") {
+      CookieStore.set(auth.scheme.name, auth.authValue ?? "", {
+        path: "/",
+        maxAge: 60_000,
+      });
     }
   }
 
   if (isOAuth2SecurityScheme(auth.scheme)) {
     newHeaders.push({
-      name: 'Authorization',
-      value: auth.authValue ?? '',
-    })
+      name: "Authorization",
+      value: auth.authValue ?? "",
+    });
   }
 
   if (isBearerSecurityScheme(auth.scheme)) {
     newHeaders.push({
-      name: 'Authorization',
+      name: "Authorization",
       value: `Bearer ${auth.authValue}`,
-    })
+    });
   }
 
   if (isDigestSecurityScheme(auth.scheme)) {
     newHeaders.push({
-      name: 'Authorization',
-      value: auth.authValue?.replace(/\s\s+/g, ' ').trim() ?? '',
-    })
+      name: "Authorization",
+      value: auth.authValue?.replace(/\s\s+/g, " ").trim() ?? "",
+    });
   }
 
   if (isBasicSecurityScheme(auth.scheme)) {
     newHeaders.push({
-      name: 'Authorization',
+      name: "Authorization",
       value: `Basic ${auth.authValue}`,
-    })
+    });
   }
 
-  return [newQueryParams, newHeaders]
-}
+  return [newQueryParams, newHeaders];
+};
 
 export async function buildHarRequest({
   httpOperation,
@@ -186,34 +229,48 @@ export async function buildHarRequest({
   chosenServer,
   corsProxy,
   origin,
-}: Omit<BuildRequestInput, 'token'>): Promise<HarRequest> {
-  const serverUrl = getServerUrl({ httpOperation, mockData, chosenServer, corsProxy, origin })
+}: BuildRequestInput): Promise<HarRequest> {
+  const serverUrl = getServerUrl({
+    httpOperation,
+    mockData,
+    chosenServer,
+    corsProxy,
+    origin,
+  });
 
-  const mimeType = mediaTypeContent?.mediaType ?? 'application/json'
-  const shouldIncludeBody = ['PUT', 'POST', 'PATCH'].includes(httpOperation.method.toUpperCase())
+  const mimeType = mediaTypeContent?.mediaType ?? "application/json";
+  const shouldIncludeBody = ["PUT", "POST", "PATCH"].includes(
+    httpOperation.method.toUpperCase()
+  );
 
   const queryParams =
     httpOperation.request?.query
-      ?.map(param => ({ name: param.name, value: parameterValues[param.name] ?? '' }))
-      .filter(({ value }) => value.length > 0) ?? []
+      ?.map((param) => ({
+        name: param.name,
+        value: parameterValues[param.name] ?? "",
+      }))
+      .filter(({ value }) => value.length > 0) ?? [];
 
   const headerParams =
-    httpOperation.request?.headers?.map(header => ({ name: header.name, value: parameterValues[header.name] ?? '' })) ??
-    []
+    httpOperation.request?.headers?.map((header) => ({
+      name: header.name,
+      value: parameterValues[header.name] ?? "",
+    })) ?? [];
 
   if (mockData?.header) {
-    headerParams.push({ name: 'Prefer', value: mockData.header.Prefer })
+    headerParams.push({ name: "Prefer", value: mockData.header.Prefer });
   }
 
-  const [queryParamsWithAuth, headerParamsWithAuth] = runAuthRequestEhancements(auth, queryParams, headerParams)
-  const expandedPath = uriExpand(httpOperation.path, parameterValues)
-  const urlObject = new URL(serverUrl + expandedPath)
+  const [queryParamsWithAuth, headerParamsWithAuth] =
+    runAuthRequestEnhancements(auth, queryParams, headerParams);
+  const expandedPath = uriExpand(httpOperation.path, parameterValues);
+  const urlObject = new URL(serverUrl + expandedPath);
 
-  let postData: HarRequest['postData'] = undefined
-  if (shouldIncludeBody && typeof bodyInput === 'string') {
-    postData = { mimeType, text: bodyInput }
+  let postData: HarRequest["postData"] = undefined;
+  if (shouldIncludeBody && typeof bodyInput === "string") {
+    postData = { mimeType, text: bodyInput };
   }
-  if (shouldIncludeBody && typeof bodyInput === 'object') {
+  if (shouldIncludeBody && typeof bodyInput === "object") {
     postData = {
       mimeType,
       params: Object.entries(bodyInput).map(([name, value]) => {
@@ -222,34 +279,37 @@ export async function buildHarRequest({
             name,
             fileName: value.name,
             contentType: value.type,
-          }
+          };
         }
         return {
           name,
           value,
-        }
+        };
       }),
-    }
+    };
   }
 
   return {
     method: httpOperation.method.toUpperCase(),
     url: urlObject.href,
-    httpVersion: 'HTTP/1.1',
+    httpVersion: "HTTP/1.1",
     cookies: [],
-    headers: [{ name: 'Content-Type', value: mimeType }, ...headerParamsWithAuth],
+    headers: [
+      { name: "Content-Type", value: mimeType },
+      ...headerParamsWithAuth,
+    ],
     queryString: queryParamsWithAuth,
     postData: postData,
     headersSize: -1,
     bodySize: -1,
-  }
+  };
 }
 
 function uriExpand(uri: string, data: Dictionary<string, string>) {
   if (!data) {
-    return uri
+    return uri;
   }
   return uri.replace(/{([^#?]+?)}/g, (match, value) => {
-    return data[value] || value
-  })
+    return data[value] || value;
+  });
 }
