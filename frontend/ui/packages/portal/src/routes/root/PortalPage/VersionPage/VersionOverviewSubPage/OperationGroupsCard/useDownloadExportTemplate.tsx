@@ -19,7 +19,6 @@ import { useMutation } from '@tanstack/react-query'
 import type { Key } from '@apihub/entities/keys'
 import fileDownload from 'js-file-download'
 import { useShowErrorNotification } from '@apihub/routes/root/BasePage/Notification'
-import { getAuthorization } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
 import { fetchExportTemplate } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
@@ -43,7 +42,7 @@ async function downloadExportTemplate(
   apiType: ApiType,
   groupName: string,
 ): Promise<void> {
-  const [content, fileName] = await fetchExportTemplate(packageKey, versionKey, apiType, groupName, getAuthorization())
+  const [content, fileName] = await fetchExportTemplate(packageKey, versionKey, apiType, groupName)
   fileDownload(content, fileName)
 }
 

@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
+import type { UserConnectedEventData } from '@apihub/entities/ws-branch-events'
+import { Avatar, Box, Button, Typography } from '@mui/material'
+import { MenuButtonItems } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
+import { UserAvatar } from '@netcracker/qubership-apihub-ui-shared/components/Users/UserAvatar'
+import { DEFAULT_USER_NAME } from '@netcracker/qubership-apihub-ui-shared/types/user'
 import type { FC } from 'react'
 import { memo, useState } from 'react'
-import { Avatar, Box, Button, Typography } from '@mui/material'
-import { UserAvatar } from '@netcracker/qubership-apihub-ui-shared/components/Users/UserAvatar'
-import { MenuButtonItems } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
-import type { UserConnectedEventData } from '@apihub/entities/ws-branch-events'
 
 export type RedactorsBarProps = {
   redactors: UserConnectedEventData[]
@@ -60,7 +61,7 @@ export const RedactorsBar: FC<RedactorsBarProps> = memo<RedactorsBarProps>(({ re
                   marginLeft: index === redactors.length - 1 ? 0 : -1,
                 }}
                 key={sessionId}
-                name={name}
+                name={name ?? DEFAULT_USER_NAME}
                 src={avatarUrl}
                 size="small"
               />

@@ -14,39 +14,39 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo, useMemo } from 'react'
-import { Card, CardContent, CardHeader, MenuItem, Paper } from '@mui/material'
-import { GroupsAndProjectsFilterer } from './GroupsAndProjectsFilterer'
-import { useEventBus } from '../../EventBusProvider'
-import { useIsFavoriteMainViewMode, useIsTableMainViewMode, useIsTreeMainViewMode } from './useMainPageMode'
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
-import { GroupsAndProjectsTree } from './GroupsAndProjectsTree'
-import { GroupsAndProjectsTable } from './GroupsAndProjectsTable'
-import { CreateProjectDialog } from './CreateProjectDialog/CreateProjectDialog'
-import { CreateGroupDialog } from './CreateGroupDialog'
-import { useGitlabIntegrationCheck } from '../EditorPage/useGitlabIntegrationCheck'
-import { useAuthorization } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
+import { Card, CardContent, CardHeader, MenuItem, Paper } from '@mui/material'
+import { MenuButton } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
 import { NoIntegrationPlaceholder } from '@netcracker/qubership-apihub-ui-shared/components/NoIntegrationPlaceholder'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
-import { MenuButton } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
 import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
+import { useUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useUser'
+import type { FC } from 'react'
+import { memo, useMemo } from 'react'
+import { useEventBus } from '../../EventBusProvider'
+import { useGitlabIntegrationCheck } from '../EditorPage/useGitlabIntegrationCheck'
+import { CreateGroupDialog } from './CreateGroupDialog'
+import { CreateProjectDialog } from './CreateProjectDialog/CreateProjectDialog'
+import { GroupsAndProjectsFilterer } from './GroupsAndProjectsFilterer'
+import { GroupsAndProjectsTable } from './GroupsAndProjectsTable'
+import { GroupsAndProjectsTree } from './GroupsAndProjectsTree'
+import { useIsFavoriteMainViewMode, useIsTableMainViewMode, useIsTreeMainViewMode } from './useMainPageMode'
 
 export const MainPage: FC = memo(() => {
-  const [authorization] = useAuthorization()
+  const [user] = useUser()
   const { showCreateProjectDialog, showCreateGroupDialog } = useEventBus()
   const isTreeMainPageMode = useIsTreeMainViewMode()
   const isTableMainPageMode = useIsTableMainViewMode()
   const isFavoriteMainPageMode = useIsFavoriteMainViewMode()
   const { productionMode } = useSystemInfo()
   const groupCreationAvailable = useMemo(
-    () => (productionMode && (authorization?.user.key === 'user001' || authorization?.user.key === 'user002')) || !productionMode,
-    [authorization?.user.key, productionMode],
+    () => (productionMode && (user?.key === 'user001' || user?.key === 'user002')) || !productionMode,
+    [user?.key, productionMode],
   )
 
   const isIntegratedWithGitlab = useGitlabIntegrationCheck()
 
-  if (authorization && !isIntegratedWithGitlab) {
+  if (user && !isIntegratedWithGitlab) {
     return <NoIntegrationPlaceholder />
   }
 

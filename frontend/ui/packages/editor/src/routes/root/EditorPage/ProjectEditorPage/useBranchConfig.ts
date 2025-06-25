@@ -32,7 +32,7 @@ import { getFileFormat } from '@netcracker/qubership-apihub-ui-shared/utils/file
 import { UNMODIFIED_CHANGE_STATUS } from '@netcracker/qubership-apihub-ui-shared/entities/change-statuses'
 import { toRef } from '@apihub/entities/refs'
 import type { ProjectFile, ProjectFileDto } from '@apihub/entities/project-files'
-import { toUser } from '@netcracker/qubership-apihub-ui-shared/types/user'
+import { EMPTY_USER, toUser } from '@netcracker/qubership-apihub-ui-shared/types/user'
 
 export const BRANCH_CONFIG_QUERY_KEY = 'branch-config-query-key'
 
@@ -96,11 +96,10 @@ export function useUpdateEditorsInBranchConfig(): UpdateEditorsInBranchConfig {
       let updatedEditors = projectBranchConfig.editors
 
       if (isBranchEditorsAddedEventData(value)) {
-        updatedEditors = [...updatedEditors, {
-          key: userId,
-          name: '',
-          avatarUrl: '',
-        }]
+        updatedEditors = [
+          ...updatedEditors,
+          { ...EMPTY_USER, key: userId },
+        ]
       }
 
       if (isBranchEditorsRemovedEventData(value)) {
@@ -227,15 +226,15 @@ export function useUpdateRefsInBranchConfig(): UpdateRefsInBranchConfig {
         return {
           ...oldBranchConfig,
           refs: oldBranchConfig.refs.map((ref) => (
-              ref.key === updatedRefId
-                ? {
-                  ...ref,
-                  version: updatedData.version ?? ref.version,
-                  versionStatus: updatedData.versionStatus ?? ref.versionStatus,
-                  status: updatedData.status ?? ref.status,
-                }
-                : ref
-            ),
+            ref.key === updatedRefId
+              ? {
+                ...ref,
+                version: updatedData.version ?? ref.version,
+                versionStatus: updatedData.versionStatus ?? ref.versionStatus,
+                status: updatedData.status ?? ref.status,
+              }
+              : ref
+          ),
           ),
         }
       }

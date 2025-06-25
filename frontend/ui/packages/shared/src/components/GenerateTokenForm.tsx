@@ -26,7 +26,7 @@ import type { Key } from '../entities/keys'
 import type { IsLoading } from '../utils/aliases'
 import { ButtonWithHint } from './Buttons/ButtonWithHint'
 import { UserAvatar } from './Users/UserAvatar'
-import type { User } from '../types/user'
+import { EMPTY_USER, type User } from '../types/user'
 import { useDebounce } from 'react-use'
 import { DEFAULT_DEBOUNCE } from '../utils/constants'
 
@@ -74,7 +74,7 @@ export const GenerateTokenForm: FC<GenerateTokenFormProps> = memo(({
   }, [generateApiKey, reset])
 
   if (generatedApiKey) {
-    return <DisplayToken generatedApiKey={generatedApiKey} showSuccessNotification={showSuccessNotification}/>
+    return <DisplayToken generatedApiKey={generatedApiKey} showSuccessNotification={showSuccessNotification} />
   }
 
   return (
@@ -152,7 +152,7 @@ export const GenerateTokenForm: FC<GenerateTokenFormProps> = memo(({
               disabled={disabled}
               sx={{ width: '260px' }}
               loading={isLoading}
-              loadingText={<CircularProgress size={16}/>}
+              loadingText={<CircularProgress size={16} />}
               options={users ?? []}
               getOptionLabel={(option) => option.name}
               onChange={(_, value) => onChange(value)}
@@ -198,9 +198,3 @@ export const GenerateTokenForm: FC<GenerateTokenFormProps> = memo(({
     </Box>
   )
 })
-
-const EMPTY_USER: User = {
-  key: '',
-  name: '',
-  avatarUrl: '',
-}

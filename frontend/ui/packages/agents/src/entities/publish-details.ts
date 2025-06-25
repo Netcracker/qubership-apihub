@@ -49,11 +49,11 @@ export async function getPublishDetails(
 
   const pathPattern = '/packages/:packageId/publish/statuses'
   return await ncCustomAgentsRequestJson<PublishDetails[]>(generatePath(pathPattern, { packageId }), {
-      method: 'post',
-      body: JSON.stringify({
-        publishIds: publishKeys,
-      }),
-    },
+    method: 'post',
+    body: JSON.stringify({
+      publishIds: publishKeys,
+    }),
+  },
     {
       basePath: API_V2,
       ignoreNotFound: true,
@@ -70,7 +70,6 @@ export async function setPublicationDetails(options: SetPublicationDetailsOption
     packageKey,
     publishKey,
     status,
-    authorization,
     builderId,
     abortController,
     data,
@@ -87,10 +86,11 @@ export async function setPublicationDetails(options: SetPublicationDetailsOption
 
   const signal = abortController?.signal
   const pathPattern = '/packages/:packageId/publish/:publishId/status'
-  return await ncCustomAgentsRequestVoid(generatePath(pathPattern, { packageId, publishId }), {
+  return await ncCustomAgentsRequestVoid(
+    generatePath(pathPattern, { packageId, publishId }),
+    {
       method: 'post',
       body: formData,
-      headers: { authorization },
       signal: signal,
     },
     {

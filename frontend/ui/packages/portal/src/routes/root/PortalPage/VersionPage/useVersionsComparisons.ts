@@ -14,15 +14,9 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query'
 import type { Key, VersionKey } from '@apihub/entities/keys'
-import { useParams } from 'react-router-dom'
-import type { BuildType, VersionsComparison } from '@netcracker/qubership-apihub-api-processor'
-import { PackageVersionBuilder } from '../package-version-builder'
-import { useVersionWithRevision } from '../../useVersionWithRevision'
-import { useState } from 'react'
-import { useShowErrorNotification } from '../../BasePage/Notification'
 import { portalRequestJson } from '@apihub/utils/requests'
+import type { BuildType, VersionsComparison } from '@netcracker/qubership-apihub-api-processor'
 import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import type { PublishStatus } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 import {
@@ -32,9 +26,15 @@ import {
   RUNNING_PUBLISH_STATUS,
   setPublicationDetails,
 } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
-import { getAuthorization } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
 import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
+import { onQueryUnauthorized } from '@netcracker/qubership-apihub-ui-shared/utils/security'
+import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { v4 as uuidv4 } from 'uuid'
+import { useShowErrorNotification } from '../../BasePage/Notification'
+import { useVersionWithRevision } from '../../useVersionWithRevision'
+import { PackageVersionBuilder } from '../package-version-builder'
 
 const VERSION_CHANGES_QUERY_KEY = 'version-changes-query-key'
 
@@ -100,7 +100,6 @@ export function useVersionsComparisons(options?: {
             packageKey: changedPackageKey,
             publishKey: comparisonBuild.buildId,
             status: RUNNING_PUBLISH_STATUS,
-            authorization: getAuthorization(),
             builderId: builderId,
             abortController: abortController,
           })
@@ -115,7 +114,6 @@ export function useVersionsComparisons(options?: {
             versionKey: changedVersion!,
             previousPackageKey: originPackageKey!, //from search param
             previousVersionKey: originVersion!,
-            authorization: getAuthorization(),
           })
 
           builtVersionComparisons.push(...versionsComparisons)
@@ -125,7 +123,6 @@ export function useVersionsComparisons(options?: {
             packageKey: changedPackageKey,
             publishKey: comparisonBuild.buildId,
             status: publicationStatus,
-            authorization: getAuthorization(),
             builderId: builderId,
             abortController: null,
             data: data,
@@ -137,7 +134,6 @@ export function useVersionsComparisons(options?: {
             packageKey: changedPackageKey,
             publishKey: comparisonBuild.buildId,
             status: publicationStatus,
-            authorization: getAuthorization(),
             builderId: builderId,
             abortController: null,
             errors: `${error}`,
@@ -151,6 +147,9 @@ export function useVersionsComparisons(options?: {
       }
 
       return []
+    },
+    onError: (error: Error) => {
+      onQueryUnauthorized<VersionsComparison[] | undefined, Error>(refetch)(error)
     },
   })
 

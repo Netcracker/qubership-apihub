@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-import { expose } from 'comlink'
 import type { FileId, FileSourceMap, VersionsComparison } from '@netcracker/qubership-apihub-api-processor'
 import { BUILD_TYPE, PackageVersionBuilder, VERSION_STATUS } from '@netcracker/qubership-apihub-api-processor'
-import type { BuilderOptions } from './package-version-builder'
 import {
   packageVersionResolver,
   versionDeprecatedResolver,
   versionOperationsResolver,
   versionReferencesResolver,
 } from '@netcracker/qubership-apihub-ui-shared/utils/builder-resolvers'
-import type { PublishOptions } from './usePublishPackageVersion'
+import { packToZip } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import type { PublishDetails, PublishStatus } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 import {
   COMPLETE_PUBLISH_STATUS,
@@ -34,8 +32,11 @@ import {
   setPublicationDetails,
   startPackageVersionPublication,
 } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
-import { packToZip } from '@netcracker/qubership-apihub-ui-shared/utils/files'
+import { WorkerUnauthorizedError } from '@netcracker/qubership-apihub-ui-shared/utils/security'
+import { expose, transferHandlers } from 'comlink'
 import { v4 as uuidv4 } from 'uuid'
+import type { BuilderOptions } from './package-version-builder'
+import type { PublishOptions } from './usePublishPackageVersion'
 
 /*
 For using worker in proxy mode you need to change common apihub-shared import
@@ -55,20 +56,17 @@ function toFileSourceMap(files: File[]): FileSourceMap {
 export type PackageVersionBuilderWorker = {
   buildChangelogPackage: (options: BuilderOptions) => Promise<[VersionsComparison[], Blob]>
   buildGroupChangelogPackage: (options: BuilderOptions) => Promise<[VersionsComparison[], Blob]>
-  publishPackage: (
-    options: PublishOptions,
-    authorization: string,
-  ) => Promise<PublishDetails>
+  publishPackage: (options: PublishOptions) => Promise<PublishDetails>
 }
 
 const worker: PackageVersionBuilderWorker = {
-  buildChangelogPackage: async ({ authorization, packageKey, versionKey, previousPackageKey, previousVersionKey }) => {
+  buildChangelogPackage: async ({ packageKey, versionKey, previousPackageKey, previousVersionKey }) => {
     const builderResolvers = {
       fileResolver: async () => null,
-      versionResolver: await packageVersionResolver(authorization),
-      versionReferencesResolver: await versionReferencesResolver(authorization),
-      versionOperationsResolver: await versionOperationsResolver(authorization),
-      versionDeprecatedResolver: await versionDeprecatedResolver(authorization),
+      versionResolver: await packageVersionResolver(),
+      versionReferencesResolver: await versionReferencesResolver(),
+      versionOperationsResolver: await versionOperationsResolver(),
+      versionDeprecatedResolver: await versionDeprecatedResolver(),
     }
     const builder = new PackageVersionBuilder(
       {
@@ -88,13 +86,13 @@ const worker: PackageVersionBuilderWorker = {
 
     return [builder.buildResult.comparisons, await builder.createVersionPackage({ type: 'blob' })]
   },
-  buildGroupChangelogPackage: async ({ authorization, packageKey, versionKey, currentGroup, previousGroup }) => {
+  buildGroupChangelogPackage: async ({ packageKey, versionKey, currentGroup, previousGroup }) => {
     const builderResolvers = {
       fileResolver: async () => null,
-      versionResolver: await packageVersionResolver(authorization),
-      versionReferencesResolver: await versionReferencesResolver(authorization),
-      versionOperationsResolver: await versionOperationsResolver(authorization),
-      versionDeprecatedResolver: await versionDeprecatedResolver(authorization),
+      versionResolver: await packageVersionResolver(),
+      versionReferencesResolver: await versionReferencesResolver(),
+      versionOperationsResolver: await versionOperationsResolver(),
+      versionDeprecatedResolver: await versionDeprecatedResolver(),
     }
     const builder = new PackageVersionBuilder(
       {
@@ -114,24 +112,24 @@ const worker: PackageVersionBuilderWorker = {
 
     return [builder.buildResult.comparisons, await builder.createVersionPackage({ type: 'blob' })]
   },
-  publishPackage: async (options, authorization): Promise<PublishDetails> => {
+  publishPackage: async (options): Promise<PublishDetails> => {
     const { packageId, sources } = options
     const builderId = uuidv4()
     const sourcesZip = sources && await packToZip(sources)
     const {
       publishId,
       config: buildConfig,
-    } = await startPackageVersionPublication(options, authorization, builderId, sourcesZip)
+    } = await startPackageVersionPublication(options, builderId, sourcesZip)
 
     const fileSources = sources && toFileSourceMap(sources)
 
     const builder = new PackageVersionBuilder(buildConfig, {
       resolvers: {
         fileResolver: async (fileId: FileId) => fileSources?.[fileId] ?? null,
-        versionResolver: await packageVersionResolver(authorization),
-        versionReferencesResolver: await versionReferencesResolver(authorization),
-        versionOperationsResolver: await versionOperationsResolver(authorization),
-        versionDeprecatedResolver: await versionDeprecatedResolver(authorization),
+        versionResolver: await packageVersionResolver(),
+        versionReferencesResolver: await versionReferencesResolver(),
+        versionOperationsResolver: await versionOperationsResolver(),
+        versionDeprecatedResolver: await versionDeprecatedResolver(),
       },
     }, fileSources)
 
@@ -141,7 +139,6 @@ const worker: PackageVersionBuilderWorker = {
         packageKey: packageId,
         publishKey: publishId,
         status: RUNNING_PUBLISH_STATUS,
-        authorization: authorization,
         builderId: builderId,
         abortController: abortController,
       })
@@ -167,7 +164,6 @@ const worker: PackageVersionBuilderWorker = {
         packageKey: packageId,
         publishKey: publishId,
         status: publicationStatus,
-        authorization: authorization,
         builderId: builderId,
         abortController: null,
         data: data,
@@ -181,7 +177,6 @@ const worker: PackageVersionBuilderWorker = {
         packageKey: packageId,
         publishKey: publishId,
         status: publicationStatus,
-        authorization: authorization,
         builderId: builderId,
         abortController: null,
         errors: `${error}`,
@@ -195,5 +190,37 @@ const worker: PackageVersionBuilderWorker = {
     }
   },
 }
+
+// Override default handlers for thrown values from worker
+// This is necessary to handle custom errors from worker in the calling thread
+transferHandlers.set('throw', {
+  canHandle: transferHandlers.get('throw')!.canHandle,
+  serialize: ({ value }) => {
+    let serialized
+    if (value instanceof Error) {
+      serialized = {
+        isError: true,
+        value: {
+          message: value.message,
+          name: value.name,
+          stack: value.stack,
+          responseStatus: (value as WorkerUnauthorizedError).responseStatus,
+        },
+      }
+    } else {
+      serialized = {
+        isError: false,
+        value: value,
+      }
+    }
+    return [serialized, []]
+  },
+  deserialize: (serialized: { isError: boolean; value: { message: string; name: string; stack: string; responseStatus: number } }) => {
+    if (serialized.isError) {
+      throw new WorkerUnauthorizedError()
+    }
+    throw serialized.value
+  },
+})
 
 expose(worker)

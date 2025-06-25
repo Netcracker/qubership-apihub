@@ -17,26 +17,26 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { useParams } from 'react-router-dom'
-import { useInvalidateProject, useProject } from '../../useProject'
 import { useShowErrorNotification, useShowSuccessNotification } from '../../BasePage/Notification'
+import { useInvalidateProject, useProject } from '../../useProject'
 import { useInvalidateFileHistory } from './ProjectEditorBody/FilesModeBody/FileHistoryDialog/useFileHistory'
 
-import { BRANCH_CONFIG_QUERY_KEY } from './useBranchConfig'
-import { PackageVersionBuilder } from './package-version-builder'
-import { useBranchSearchParam } from '../../useBranchSearchParam'
-import { useAllBranchFiles } from './useBranchCache'
-import type { FileSourceMap, VersionStatus } from '@netcracker/qubership-apihub-api-processor'
-import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { useAuthorization } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
+import type { BranchConfig } from '@apihub/entities/branches'
+import type { ProjectFile } from '@apihub/entities/project-files'
+import type { Project } from '@apihub/entities/projects'
 import type { PublishDetails, PublishOptions } from '@apihub/entities/publish-details'
 import { COMPLETE_PUBLISH_STATUS, ERROR_PUBLISH_STATUS } from '@apihub/entities/publish-details'
-import type { BranchConfig } from '@apihub/entities/branches'
-import { getAuthorization } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
-import type { Project } from '@apihub/entities/projects'
-import type { ProjectFile } from '@apihub/entities/project-files'
+import type { FileSourceMap, VersionStatus } from '@netcracker/qubership-apihub-api-processor'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
+import { useUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useUser'
 import { useInvalidatePackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
+import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import { isTokenRefreshed, onMutationUnauthorized } from '@netcracker/qubership-apihub-ui-shared/utils/security'
+import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
+import { useBranchSearchParam } from '../../useBranchSearchParam'
+import { PackageVersionBuilder } from './package-version-builder'
+import { useAllBranchFiles } from './useBranchCache'
+import { BRANCH_CONFIG_QUERY_KEY } from './useBranchConfig'
 
 export function usePublishProjectVersion(): [PublishProjectVersion, IsLoading, IsSuccess] {
   const { projectId } = useParams()
@@ -45,7 +45,7 @@ export function usePublishProjectVersion(): [PublishProjectVersion, IsLoading, I
   const queryClient = useQueryClient()
   const [sources] = useAllBranchFiles()
   const [project] = useProject(projectId)
-  const [authorization] = useAuthorization()
+  const [user] = useUser()
 
   const invalidateFileHistory = useInvalidateFileHistory()
   const invalidateProjectVersions = useInvalidatePackageVersions()
@@ -57,8 +57,7 @@ export function usePublishProjectVersion(): [PublishProjectVersion, IsLoading, I
       const config = queryClient.getQueryData([BRANCH_CONFIG_QUERY_KEY, projectId, branchName!]) as BranchConfig
 
       return PackageVersionBuilder.publishPackage(
-        toPublishOptions(project!, branchName!, options, config?.files ?? [], sources, authorization!.user.key),
-        getAuthorization(),
+        toPublishOptions(project!, branchName!, options, config?.files ?? [], sources, user!.key),
       )
     },
     onSuccess: (details) => {
@@ -71,8 +70,12 @@ export function usePublishProjectVersion(): [PublishProjectVersion, IsLoading, I
       invalidateProjectVersions()
       return invalidateFileHistory()
     },
-    onError: ({ message }) => {
-      showErrorNotification({ message: message })
+    onError: async (error: Error, variables: Options, context: unknown) => {
+      const tokenRefreshResult = await onMutationUnauthorized<PublishDetails, Error, Options>(mutate)(error, variables, context)
+      if (!isTokenRefreshed(tokenRefreshResult)) {
+        const { message } = error
+        showErrorNotification({ message: message })
+      }
     },
   })
 

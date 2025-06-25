@@ -24,7 +24,6 @@ import type { FileSourceMap } from '@netcracker/qubership-apihub-api-processor'
 export type BuilderOptions = {
   packageKey: Key
   versionKey: Key
-  authorization: string
   previousPackageKey: Key
   previousVersionKey: Key
   branchName?: string

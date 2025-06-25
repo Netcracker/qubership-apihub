@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import type { Key } from './types'
-import { API_V1, API_V2, API_V3, requestBlob, requestJson, requestVoid } from './requests'
 import type {
   ApiAudience,
   ApiKind,
@@ -25,19 +23,20 @@ import type {
   ResolvedOperation,
   ResolvedReferences,
 } from '@netcracker/qubership-apihub-api-processor'
-import { optionalSearchParams } from './search-params'
-import { getPackageRedirectDetails } from './redirects'
 import { generatePath } from 'react-router-dom'
-import type { ResolvedVersionDto } from '../types/packages'
+import type { ApiType } from '../entities/api-types'
 import type { OperationDto, OperationsDto } from '../entities/operations'
 import { isRestOperationDto } from '../entities/operations'
-import type { ApiType } from '../entities/api-types'
+import type { ResolvedVersionDto } from '../types/packages'
+import { getPackageRedirectDetails } from './redirects'
+import { API_V1, API_V2, API_V3, requestBlob, requestJson, requestVoid } from './requests'
+import { optionalSearchParams } from './search-params'
+import type { Key } from './types'
 
 export async function getPackageVersionContent(
   packageKey: Key,
   versionKey: Key,
   includeOperations: boolean = false,
-  authorization: string,
 ): Promise<ResolvedVersionDto | null> {
   try {
     const queryParams = optionalSearchParams({
@@ -50,10 +49,7 @@ export async function getPackageVersionContent(
     const pathPattern = '/packages/:packageId/versions/:versionId'
     return await requestJson<ResolvedVersionDto>(
       `${generatePath(pathPattern, { packageId, versionId })}?${queryParams}`,
-      {
-        method: 'get',
-        headers: { authorization },
-      },
+      { method: 'get' },
       {
         basePath: API_V2,
         customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
@@ -70,7 +66,6 @@ export async function fetchOperations(
   versionKey: Key,
   operationIds: string[] | undefined,
   includeData: boolean | undefined,
-  authorization: string,
   page: number = 0,
   limit: number = 100,
 ): Promise<OperationsDto> {
@@ -87,10 +82,7 @@ export async function fetchOperations(
   const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/operations'
   return requestJson<OperationsDto>(
     `${generatePath(pathPattern, { packageId, versionId, apiType })}?${queryParams}`,
-    {
-      headers: { authorization },
-      method: 'get',
-    },
+    { method: 'get' },
     {
       basePath: API_V2,
       customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
@@ -103,7 +95,6 @@ export async function fetchDeprecatedItems(
   packageKey: Key,
   versionKey: Key,
   operationIds: string[] | undefined,
-  authorization: string,
 ): Promise<ResolvedDeprecations | null> {
 
   const queryParams = optionalSearchParams({
@@ -118,10 +109,7 @@ export async function fetchDeprecatedItems(
   const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/deprecated'
   return await requestJson<ResolvedDeprecations>(
     `${generatePath(pathPattern, { packageId, versionId, apiType })}?${queryParams}`,
-    {
-      headers: { authorization },
-      method: 'GET',
-    },
+    { method: 'GET' },
     {
       basePath: API_V2,
       customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
@@ -134,7 +122,6 @@ export async function fetchVersionDocuments(
   packageKey: Key,
   versionKey: Key,
   filterByOperationGroup: string,
-  authorization: string,
   page: number,
   limit: number = 100,
 ): Promise<ResolvedGroupDocuments | null> {
@@ -150,10 +137,7 @@ export async function fetchVersionDocuments(
   const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/groups/:groupName/transformation/documents'
   return await requestJson<ResolvedGroupDocuments>(
     `${generatePath(pathPattern, { packageId, versionId, apiType, groupName })}?${queryParams}`,
-    {
-      headers: { authorization },
-      method: 'GET',
-    },
+    { method: 'GET' },
     {
       basePath: API_V2,
       customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
@@ -167,7 +151,6 @@ export type SetPublicationDetailsOptions = {
   packageKey: Key
   publishKey: Key
   status: PublishStatus
-  authorization: string
   builderId: string
   abortController: AbortController | null
   data?: Blob
@@ -179,7 +162,6 @@ export async function setPublicationDetails(options: SetPublicationDetailsOption
     packageKey,
     publishKey,
     status,
-    authorization,
     builderId,
     abortController,
     data,
@@ -202,7 +184,6 @@ export async function setPublicationDetails(options: SetPublicationDetailsOption
     {
       method: 'post',
       body: formData,
-      headers: { authorization },
       signal: signal,
     },
     {
@@ -215,7 +196,6 @@ export async function setPublicationDetails(options: SetPublicationDetailsOption
 export async function getVersionReferences(
   packageKey: Key,
   version: Key,
-  authorization: string,
 ): Promise<Readonly<ResolvedReferences>> {
   const packageId = encodeURIComponent(packageKey)
   const versionId = encodeURIComponent(version)
@@ -223,10 +203,7 @@ export async function getVersionReferences(
   const pathPattern = '/packages/:packageId/versions/:versionId/references'
   return await requestJson<Readonly<ResolvedReferences>>(
     generatePath(pathPattern, { packageId, versionId }),
-    {
-      method: 'GET',
-      headers: { authorization },
-    },
+    { method: 'GET' },
     {
       basePath: API_V3,
       customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
@@ -238,7 +215,6 @@ export type PublishConfig = { publishId: Key; config: BuildConfig }
 
 export async function startPackageVersionPublication(
   config: BuildConfig,
-  authorization: string,
   builderId: string,
   sources?: Blob | null,
 ): Promise<PublishConfig> {
@@ -259,7 +235,6 @@ export async function startPackageVersionPublication(
     `${generatePath(pathPattern, { packageId })}?clientBuild=true`,
     {
       method: 'POST',
-      headers: { authorization },
       body: formData,
     },
     {
@@ -319,7 +294,6 @@ export async function fetchExportTemplate(
   versionKey: Key,
   apiType: ApiType,
   groupName: string,
-  authorization: string,
 ): Promise<[string, string]> {
   const packageId = encodeURIComponent(packageKey)
   const versionId = encodeURIComponent(versionKey)
@@ -328,10 +302,7 @@ export async function fetchExportTemplate(
   const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/groups/:encodedGroupName/template'
   const response = await requestBlob(
     generatePath(pathPattern, { packageId, versionId, apiType, encodedGroupName }),
-    {
-      headers: { authorization },
-      method: 'GET',
-    },
+    { method: 'GET' },
     {
       customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
       basePath: API_V1,

@@ -330,12 +330,12 @@ const RowSkeleton: FC<RowSkeletonProps> = memo<RowSkeletonProps>(({ refObject, c
         const refAttr = index === 0 ? refObject : undefined
         if (column.loadable) {
           return (
-            <TableCell ref={refAttr}>
+            <TableCell key={column.name} ref={refAttr}>
               <Skeleton variant="rectangular" width="80%" />
             </TableCell>
           )
         }
-        return <TableCell ref={refAttr} />
+        return <TableCell key={column.name} ref={refAttr} />
       })}
     </TableRow>
   )

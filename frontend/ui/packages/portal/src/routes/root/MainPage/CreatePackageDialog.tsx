@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import * as React from 'react'
-import { memo, useEffect, useState } from 'react'
-import { useCreatePackage, usePackage } from '../usePackage'
-import { useSelectedWorkspaceContexts } from './MainPageProvider'
-import { usePackages } from '../usePackages'
-import { useParams } from 'react-router-dom'
-import { useIsPrivateMainPage } from './useMainPage'
-import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
-import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
+import { WORKSPACES_PAGE_REFERER } from '@apihub/entities/referer-pages-names'
 import type { ShowCreatePackageDetail } from '@apihub/routes/EventBusProvider'
 import { SHOW_CREATE_PACKAGE_DIALOG } from '@apihub/routes/EventBusProvider'
-import { GROUP_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { useAuthorization } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
-import { WORKSPACES_PAGE_REFERER } from '@apihub/entities/referer-pages-names'
-import { toTitleCase } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
 import { PackageDialogForm } from '@netcracker/qubership-apihub-ui-shared/components/Forms/PackageDialogForm'
+import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
+import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
+import { GROUP_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { useUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useUser'
+import { toTitleCase } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
+import type { FC } from 'react'
+import { memo, useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import { useCreatePackage, usePackage } from '../usePackage'
+import { usePackages } from '../usePackages'
+import { useSelectedWorkspaceContexts } from './MainPageProvider'
+import { useIsPrivateMainPage } from './useMainPage'
 
 export const CreatePackageDialog: FC = memo(() => {
   return (
@@ -56,8 +55,8 @@ const CreatePackagePopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpen, de
   })
 
   const isPrivatePage = useIsPrivateMainPage()
-  const [authorization] = useAuthorization()
-  const userId = authorization?.user.key
+  const [user] = useUser()
+  const userId = user?.key
 
   const optionRefererPage = isPrivatePage ? userId : WORKSPACES_PAGE_REFERER
 

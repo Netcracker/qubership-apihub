@@ -16,22 +16,6 @@
 
 import { useQuery } from '@tanstack/react-query'
 
-import { useParams } from 'react-router-dom'
-import { useUpdateBwcFileProblems } from './useFileProblems'
-import { useBranchSearchParam } from '../../useBranchSearchParam'
-import { useBranchConfig } from './useBranchConfig'
-import type { BuilderOptions } from './package-version-builder'
-import { PackageVersionBuilder } from './package-version-builder'
-import { useAllBranchFiles } from './useBranchCache'
-import { useProject } from '../../useProject'
-import { VERSION_CANDIDATE } from './consts'
-import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import type { IsFetched, IsFetching, RefetchQuery } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { getAuthorization } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
-import { groupBy } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import { calculateAction, EMPTY_CHANGE_SUMMARY } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
-import type { ChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
-import { getMajorSeverity } from '@netcracker/qubership-apihub-ui-shared/utils/change-severities'
 import type { FileProblem, FileProblemType } from '@apihub/entities/file-problems'
 import {
   ERROR_FILE_PROBLEM_TYPE,
@@ -39,6 +23,22 @@ import {
   WARN_FILE_PROBLEM_TYPE,
 } from '@apihub/entities/file-problems'
 import { calculateTotalChangeSummary } from '@netcracker/qubership-apihub-api-processor'
+import type { ChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import { calculateAction, EMPTY_CHANGE_SUMMARY } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
+import type { IsFetched, IsFetching, RefetchQuery } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import { groupBy } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import { getMajorSeverity } from '@netcracker/qubership-apihub-ui-shared/utils/change-severities'
+import { onQueryUnauthorized } from '@netcracker/qubership-apihub-ui-shared/utils/security'
+import { useParams } from 'react-router-dom'
+import { useBranchSearchParam } from '../../useBranchSearchParam'
+import { useProject } from '../../useProject'
+import { VERSION_CANDIDATE } from './consts'
+import type { BuilderOptions } from './package-version-builder'
+import { PackageVersionBuilder } from './package-version-builder'
+import { useAllBranchFiles } from './useBranchCache'
+import { useBranchConfig } from './useBranchConfig'
+import { useUpdateBwcFileProblems } from './useFileProblems'
 
 const BWC_PROBLEMS_QUERY_KEY = 'bwc-problems-query-key'
 
@@ -60,7 +60,6 @@ export function useBwcProblems(previousVersionKey?: Key): [BwcProblems, IsFetche
       versionKey: VERSION_CANDIDATE,
       previousPackageKey: packageKey!,
       previousVersionKey: previousVersionKey!,
-      authorization: getAuthorization(),
       files: branchConfig?.files ?? [],
       sources: branchFiles,
     }),
@@ -69,6 +68,9 @@ export function useBwcProblems(previousVersionKey?: Key): [BwcProblems, IsFetche
       for (const [fileKey, bwcProblems] of bwcFileProblems) {
         updateBwcFileProblems({ fileKey, bwcProblems })
       }
+    },
+    onError: (error): void => {
+      onQueryUnauthorized(refetch)(error)
     },
   })
 

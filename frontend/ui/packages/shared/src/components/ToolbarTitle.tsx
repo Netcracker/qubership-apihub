@@ -28,9 +28,11 @@ export type ToolbarTitleProps = Partial<{
 export const ToolbarTitle: FC<ToolbarTitleProps> = memo<ToolbarTitleProps>(({ value, titleTypographyProps }) => {
   return (
     <OverflowTooltip title={value ?? ''}>
-      <Typography data-testid="ToolbarTitleTypography" noWrap variant="inherit" {...titleTypographyProps}>
-        {value}
-      </Typography>
+      {typeof value === 'string' ? (
+        <Typography data-testid="ToolbarTitleTypography" noWrap variant="inherit" {...titleTypographyProps}>
+          {value}
+        </Typography>
+      ) : <>{value}</>}
     </OverflowTooltip>
   )
 })

@@ -12,9 +12,8 @@ import inject from '@rollup/plugin-inject'
 import monacoWorkerHashPlugin from '../../vite-monaco-worker-hash'
 import createVersionJsonFilePlugin from '../../vite-create-version-json'
 
-const proxyServer = ''
+const proxyServer = 'http://host.docker.internal:8081'
 const devServer = 'http://localhost:3003'
-const userView = ''
 
 export default defineConfig(({ mode }) => {
   const isProxyMode = mode === 'proxy'
@@ -110,7 +109,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      open: `/login?userView=${userView}`,
+      open: '/login',
       proxy: {
         '/playground': {
           target: isProxyMode ? `${proxyServer}/playground` : devServer,

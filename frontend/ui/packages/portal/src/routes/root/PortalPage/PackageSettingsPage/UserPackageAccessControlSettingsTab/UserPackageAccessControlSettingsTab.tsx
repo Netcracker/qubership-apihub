@@ -14,36 +14,36 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import React, { memo, useCallback, useMemo, useState } from 'react'
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
-import { Box, IconButton } from '@mui/material'
-import type { PackageSettingsTabProps } from '../package-settings'
-import { USER_ACCESS_MANAGEMENT_PERMISSION } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
-import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
-import { useAuthorization } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
-import { useAvailablePackageRoles } from '@netcracker/qubership-apihub-ui-shared/hooks/tokens/useTokens'
+import { useEventBus } from '@apihub/routes/EventBusProvider'
+import {
+  UserAccessControlTable,
+} from '@apihub/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/UserAccessControlTable'
+import {
+  UserRolesDialog,
+} from '@apihub/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/UserRolesDialog'
 import {
   useAddPackageMember,
   usePackageMembers,
 } from '@apihub/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/useUserPackageAccess'
-import {
-  UserAccessControlTable,
-} from '@apihub/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/UserAccessControlTable'
-import { AddIcon } from '@netcracker/qubership-apihub-ui-shared/icons/AddIcon'
-import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
-import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
-import { AddUserDialog } from '@netcracker/qubership-apihub-ui-shared/components/Users/AddUserDialog'
 import { useUsers } from '@apihub/routes/root/useUsers'
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
+import { Box, IconButton } from '@mui/material'
+import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
+import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
-import {
-  UserRolesDialog,
-} from '@apihub/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/UserRolesDialog'
-import { useRoles } from '@netcracker/qubership-apihub-ui-shared/hooks/user-roles/useRoles'
+import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
+import { AddUserDialog } from '@netcracker/qubership-apihub-ui-shared/components/Users/AddUserDialog'
+import { USER_ACCESS_MANAGEMENT_PERMISSION } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
+import { useUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useUser'
+import { useAvailablePackageRoles } from '@netcracker/qubership-apihub-ui-shared/hooks/tokens/useTokens'
 import { usePermissions } from '@netcracker/qubership-apihub-ui-shared/hooks/user-roles/usePermissions'
-import type { User } from '@netcracker/qubership-apihub-ui-shared/types/user'
+import { useRoles } from '@netcracker/qubership-apihub-ui-shared/hooks/user-roles/useRoles'
+import { AddIcon } from '@netcracker/qubership-apihub-ui-shared/icons/AddIcon'
 import type { Role } from '@netcracker/qubership-apihub-ui-shared/types/roles'
+import type { User } from '@netcracker/qubership-apihub-ui-shared/types/user'
+import type { FC } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
+import type { PackageSettingsTabProps } from '../package-settings'
 
 export const UserPackageAccessControlSettingsTab: FC<PackageSettingsTabProps> = memo<PackageSettingsTabProps>(({ packageObject }) => {
   const { showAddUserDialog, showUserRolesDialog } = useEventBus()
@@ -58,8 +58,8 @@ export const UserPackageAccessControlSettingsTab: FC<PackageSettingsTabProps> = 
     setSearchValue(value)
   }, [])
 
-  const [authorization] = useAuthorization()
-  const [availablePackageRoles, isRolesPackageLoading] = useAvailablePackageRoles(packageObject.key, authorization?.user.key ?? '')
+  const [user] = useUser()
+  const [availablePackageRoles, isRolesPackageLoading] = useAvailablePackageRoles(packageObject.key, user?.key ?? '')
   const [packageMembers, isPackageMembersLoading] = usePackageMembers(packageObject.key)
 
   const isLoading = useMemo(() => isRolesPackageLoading && isPackageMembersLoading, [isRolesPackageLoading, isPackageMembersLoading])
@@ -93,7 +93,7 @@ export const UserPackageAccessControlSettingsTab: FC<PackageSettingsTabProps> = 
           <Box display="flex" alignItems="center">
             Access Control
             <IconButton onClick={showUserRolesDialog} data-testid="AcHelpButton">
-              <HelpOutlineIcon sx={{ color: '#626D82', width: '16px', height: '16px' }}/>
+              <HelpOutlineIcon sx={{ color: '#626D82', width: '16px', height: '16px' }} />
             </IconButton>
           </Box>
         }
@@ -104,7 +104,7 @@ export const UserPackageAccessControlSettingsTab: FC<PackageSettingsTabProps> = 
               disabled={!hasUserAccessManagementPermission}
               disableHint={hasUserAccessManagementPermission}
               hint="You do not have permission to add member"
-              startIcon={<AddIcon/>}
+              startIcon={<AddIcon />}
               title="Add User"
               onClick={showAddUserDialog}
               testId="AddUserButton"
@@ -119,7 +119,7 @@ export const UserPackageAccessControlSettingsTab: FC<PackageSettingsTabProps> = 
           </Box>
         }
         body={isLoading ? (
-          <LoadingIndicator/>
+          <LoadingIndicator />
         ) : (
           <Box marginTop="8px" marginBottom="16px" overflow="hidden" height="100%">
             <UserAccessControlTable

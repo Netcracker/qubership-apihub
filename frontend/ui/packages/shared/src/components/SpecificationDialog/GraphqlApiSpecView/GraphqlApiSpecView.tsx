@@ -30,7 +30,6 @@ import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '../../Placeholder'
 import 'graphiql/graphiql.css'
 import '@graphiql/plugin-explorer/dist/style.css'
 import './custom-graphiql-styles.css'
-import { getAuthorization } from '../../../utils/storages'
 
 type GraphqlApiSpecViewProps = {
   value: string
@@ -49,11 +48,13 @@ export const GraphqlApiSpecView: FC<GraphqlApiSpecViewProps> = /* @__PURE__ */ m
   const fetcher = createGraphiQLFetcher({
     url: fetchDataUrl ?? EMPTY_FETCH_DATA_URL,
     headers: {
-      'X-Apihub-Authorization': getAuthorization(), // for INSECURE_PROXY = false
+      // TODO 05.05.2025 // Fix it when it is available on UI
+      'X-Apihub-Authorization': 'TOKEN', // for INSECURE_PROXY = false
     },
   })
 
-  const explorer = explorerPlugin({})
+  // TODO 05.05.2025 // Fix it when it is available on UI
+  const explorer = explorerPlugin({ showAttribution: false })
 
   const defaultHeader = JSON.stringify({
     Authorization: header || 'Bearer XXX',

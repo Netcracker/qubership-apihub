@@ -17,10 +17,6 @@
 import type { Dispatch, FC, PropsWithChildren, SetStateAction } from 'react'
 import { createContext, memo, useCallback, useContext, useEffect, useRef, useState } from 'react'
 
-import { useInterval, useLocation } from 'react-use'
-import { useParams } from 'react-router-dom'
-import { useBranchSearchParam } from '../../useBranchSearchParam'
-import { useFileSearchParam } from '../../useFileSearchParam'
 import type { UserConnectedEventData, UserDisconnectedEventData } from '@apihub/entities/ws-branch-events'
 import { isUserConnectedEventData, isUserDisconnectedEventData } from '@apihub/entities/ws-branch-events'
 import type { DocumentSnapshotEventData, UserCursorEventData } from '@apihub/entities/ws-file-events'
@@ -30,7 +26,10 @@ import {
   isSocketClosed,
   NORMAL_CLOSURE_CODE,
 } from '@netcracker/qubership-apihub-ui-shared/utils/sockets'
-import { getToken } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
+import { useParams } from 'react-router-dom'
+import { useInterval, useLocation } from 'react-use'
+import { useBranchSearchParam } from '../../useBranchSearchParam'
+import { useFileSearchParam } from '../../useFileSearchParam'
 
 export const FileEditingWebSocketProvider: FC<PropsWithChildren> = memo<PropsWithChildren>(({ children }) => {
   const [connectedUsersData, setConnectedUsersData] = useState<UserConnectedEventData[]>([])
@@ -78,8 +77,9 @@ export const FileEditingWebSocketProvider: FC<PropsWithChildren> = memo<PropsWit
       if (isSocketClosed(websocket.current) && fileId) {
         setConnecting(true)
 
+        // TODO 05.05.2025 // Token in WebSocket URI
         websocket.current = new WebSocket(
-          `${protocol === 'https:' ? 'wss:' : 'ws:'}//${host}/ws/v1/projects/${encodeURIComponent(projectId!)}/branches/${encodeURIComponent(branch!)}/files/${encodeURIComponent(fileId)}?token=${getToken()}`,
+          `${protocol === 'https:' ? 'wss:' : 'ws:'}//${host}/ws/v1/projects/${encodeURIComponent(projectId!)}/branches/${encodeURIComponent(branch!)}/files/${encodeURIComponent(fileId)}`,
         )
 
         websocket.current.onopen = () => {

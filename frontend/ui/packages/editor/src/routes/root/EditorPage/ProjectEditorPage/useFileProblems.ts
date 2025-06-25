@@ -14,42 +14,44 @@
  * limitations under the License.
  */
 
-import { useMemo } from 'react'
-import { useParams } from 'react-router-dom'
-import type { BranchCache } from './useBranchCache'
-import { BRANCH_CACHE_QUERY_KEY, useBranchCache } from './useBranchCache'
-import type { JsonPath } from '@stoplight/types'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import type { BwcProblems } from './useBwcProblems'
-import { useBwcProblems } from './useBwcProblems'
-import type { ValidationDiagnostic, ValidationWorker } from './spectral-worker'
-import { MAX_CONCURRENT_WORKERS_COUNT } from './spectral-worker'
-import { useBranchSearchParam } from '../../useBranchSearchParam'
-import { useBwcVersionKey } from './BwcVersionKeyProvider'
-import Worker from './spectral-worker?worker'
-import { wrap } from 'comlink'
-import pLimit from 'p-limit'
-import type { FileKey, Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { FileProblem } from '@apihub/entities/file-problems'
 import {
   ERROR_FILE_PROBLEM_TYPE,
   INFO_FILE_PROBLEM_TYPE,
   WARN_FILE_PROBLEM_TYPE,
 } from '@apihub/entities/file-problems'
-import type { InvalidateQuery, IsFetching } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { deduplicate, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
-import { UNKNOWN_SPEC_TYPE } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
-import type { FileFormat } from '@netcracker/qubership-apihub-ui-shared/utils/files'
-import { JSON_FILE_FORMAT, UNKNOWN_FILE_FORMAT, YAML_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import type { SpecContent } from '@apihub/entities/specs'
 import type { AddedLineCount } from '@apihub/utils/specifications'
 import { generateSpecificationByPathItems } from '@apihub/utils/specifications'
+import type { FileKey, Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import type { InvalidateQuery, IsFetching } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import { deduplicate, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import type { FileFormat } from '@netcracker/qubership-apihub-ui-shared/utils/files'
+import { JSON_FILE_FORMAT, UNKNOWN_FILE_FORMAT, YAML_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/utils/files'
+import { onQueryUnauthorized } from '@netcracker/qubership-apihub-ui-shared/utils/security'
+import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import { UNKNOWN_SPEC_TYPE } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import type { JsonPath } from '@stoplight/types'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { wrap } from 'comlink'
+import pLimit from 'p-limit'
+import { useMemo } from 'react'
+import { useParams } from 'react-router-dom'
+import { useBranchSearchParam } from '../../useBranchSearchParam'
+import { useBwcVersionKey } from './BwcVersionKeyProvider'
+import type { ValidationDiagnostic, ValidationWorker } from './spectral-worker'
+import { MAX_CONCURRENT_WORKERS_COUNT } from './spectral-worker'
+import Worker from './spectral-worker?worker'
+import type { BranchCache } from './useBranchCache'
+import { BRANCH_CACHE_QUERY_KEY, useBranchCache } from './useBranchCache'
+import type { BwcProblems } from './useBwcProblems'
+import { useBwcProblems } from './useBwcProblems'
 
 const FILE_PROBLEMS_QUERY_KEY = 'file-problems'
 const FILE_PROBLEMS_MAP: Record<FileKey, FileProblem[]> = {}
 
 const { validate } = wrap<ValidationWorker>(new Worker())
+
 export function useFileProblems(
   fileKey?: FileKey | null,
   withoutCache = false,
@@ -62,7 +64,7 @@ export function useFileProblems(
   const [, isBranchCacheLoading] = useBranchCache()
   const client = useQueryClient()
 
-  const { data, isLoading, isFetching } = useQuery<FileProblem[], Error>({
+  const { data, isLoading, isFetching, refetch } = useQuery<FileProblem[], Error>({
     queryKey: [FILE_PROBLEMS_QUERY_KEY, projectId, branchName, fileKey, withoutCache],
     queryFn: async () => {
       const branchCache = client.getQueryData<BranchCache>([BRANCH_CACHE_QUERY_KEY, projectId, branchName])!
@@ -77,6 +79,9 @@ export function useFileProblems(
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
+    onError: (error) => {
+      onQueryUnauthorized(refetch)(error)
+    },
   })
 
   return [data ?? [], isFetching || isLoading]

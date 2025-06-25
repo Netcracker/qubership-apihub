@@ -25,9 +25,8 @@ import { VitePluginFonts } from 'vite-plugin-fonts'
 import { visualizer as bundleVisualizer } from 'rollup-plugin-visualizer'
 import createVersionJsonFilePlugin from '../../vite-create-version-json'
 
-const proxyServer = ''
+const proxyServer = 'http://host.docker.internal:8081'
 const devServer = 'http://localhost:3003'
-const userView = ''
 
 export default defineConfig(({ mode }) => {
   const isProxyMode = mode === 'proxy'
@@ -102,7 +101,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      open: `/login?userView=${userView}`,
+      open: '/login',
       proxy: {
         '/api': { // /apihub-nc/api also proxied as it meets a substring inclusion condition
           target: isProxyMode ? `${proxyServer}` : devServer,

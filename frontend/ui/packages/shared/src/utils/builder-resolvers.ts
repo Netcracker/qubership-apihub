@@ -28,9 +28,9 @@ import type {
   VersionResolver,
 } from '@netcracker/qubership-apihub-api-processor'
 
-export async function packageVersionResolver(authorization: string): Promise<VersionResolver> {
+export async function packageVersionResolver(): Promise<VersionResolver> {
   return async (packageId, version, includeOperations = false) => {
-    const versionConfig = await getPackageVersionContent(packageId, version, includeOperations, authorization)
+    const versionConfig = await getPackageVersionContent(packageId, version, includeOperations)
     if (!versionConfig) {
       return null
     }
@@ -42,9 +42,9 @@ export async function packageVersionResolver(authorization: string): Promise<Ver
   }
 }
 
-export async function versionReferencesResolver(authorization: string): Promise<VersionReferencesResolver> {
+export async function versionReferencesResolver(): Promise<VersionReferencesResolver> {
   return async (version, packageId) => {
-    const references = await getVersionReferences(packageId, version, authorization)
+    const references = await getVersionReferences(packageId, version)
 
     if (!references) {
       return null
@@ -54,7 +54,7 @@ export async function versionReferencesResolver(authorization: string): Promise<
   }
 }
 
-export async function versionOperationsResolver(authorization: string): Promise<VersionOperationsResolver> {
+export async function versionOperationsResolver(): Promise<VersionOperationsResolver> {
   return async (apiType, version, packageId, operationsIds, includeData) => {
     const EMPTY_OPERATIONS = { operations: [] }
     const limit = includeData ? 100 : 1000
@@ -70,7 +70,6 @@ export async function versionOperationsResolver(authorization: string): Promise<
           version,
           operationsIds,
           includeData,
-          authorization,
           page,
           limit,
         ) ?? EMPTY_OPERATIONS
@@ -86,8 +85,8 @@ export async function versionOperationsResolver(authorization: string): Promise<
   }
 }
 
-export async function versionDeprecatedResolver(authorization: string): Promise<VersionDeprecatedResolver> {
+export async function versionDeprecatedResolver(): Promise<VersionDeprecatedResolver> {
   return async (apiType, version, packageId, operationsIds) => {
-    return await fetchDeprecatedItems(apiType, packageId, version, operationsIds, authorization)
+    return await fetchDeprecatedItems(apiType, packageId, version, operationsIds)
   }
 }

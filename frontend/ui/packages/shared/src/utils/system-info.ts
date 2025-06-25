@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { Key } from './types'
-import { DEFAULT_REFETCH_INTERVAL, requestJson } from './requests'
 import type { UseQueryOptions } from '@tanstack/react-query'
+import { API_V1, DEFAULT_REFETCH_INTERVAL, requestJson } from './requests'
+import type { Key } from './types'
 
 const SYSTEM_INFO_QUERY_KEY = 'system-info'
 
@@ -88,7 +88,9 @@ export function getSystemInfoOptions(enabled = true): UseQueryOptions<SystemInfo
 }
 
 export async function getSystemInfo(): Promise<SystemInfoDto> {
-  return await requestJson<SystemInfoDto>('/api/v1/system/info', {
-    method: 'get',
-  })
+  return await requestJson<SystemInfoDto>(
+    '/system/info',
+    { method: 'get' },
+    { basePath: API_V1 },
+  )
 }

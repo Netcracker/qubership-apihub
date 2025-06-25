@@ -40,7 +40,6 @@ export type PublishServiceOptions = {
   namespaceKey: NamespaceKey
   workspaceKey: WorkspaceKey
   serviceConfig: ServiceConfig
-  authorization: string
   builderId?: string
 }
 
@@ -49,14 +48,13 @@ export type PackageVersionBuilderWorker = {
 }
 
 const worker: PackageVersionBuilderWorker = {
-  publishService: async ({ agentId, namespaceKey, workspaceKey, serviceConfig, authorization, builderId }) => {
+  publishService: async ({ agentId, namespaceKey, workspaceKey, serviceConfig, builderId }) => {
     const abortController = new AbortController()
     const intervalId = setInterval(() => {
       setPublicationDetails({
         packageKey: serviceConfig.packageId,
         publishKey: serviceConfig.publishId,
         status: RUNNING_PUBLISH_STATUS,
-        authorization: authorization,
         abortController: abortController,
         builderId: builderId,
       })
@@ -69,11 +67,11 @@ const worker: PackageVersionBuilderWorker = {
       },
       {
         resolvers: {
-          fileResolver: fileId => getSpecBlob(agentId, namespaceKey, workspaceKey, serviceConfig.serviceId, fileId, authorization),
-          versionResolver: await packageVersionResolver(authorization),
-          versionReferencesResolver: await versionReferencesResolver(authorization),
-          versionOperationsResolver: await versionOperationsResolver(authorization),
-          versionDeprecatedResolver: await versionDeprecatedResolver(authorization),
+          fileResolver: fileId => getSpecBlob(agentId, namespaceKey, workspaceKey, serviceConfig.serviceId, fileId),
+          versionResolver: await packageVersionResolver(),
+          versionReferencesResolver: await versionReferencesResolver(),
+          versionOperationsResolver: await versionOperationsResolver(),
+          versionDeprecatedResolver: await versionDeprecatedResolver(),
         },
       })
 
@@ -91,7 +89,6 @@ const worker: PackageVersionBuilderWorker = {
         packageKey: serviceConfig.packageId,
         publishKey: serviceConfig.publishId,
         status: status,
-        authorization: authorization,
         abortController: null,
         builderId: builderId,
         data: data,
@@ -104,7 +101,6 @@ const worker: PackageVersionBuilderWorker = {
         packageKey: serviceConfig.packageId,
         publishKey: serviceConfig.publishId,
         status: status,
-        authorization: authorization,
         abortController: null,
         builderId: builderId,
         errors: `${error}`,

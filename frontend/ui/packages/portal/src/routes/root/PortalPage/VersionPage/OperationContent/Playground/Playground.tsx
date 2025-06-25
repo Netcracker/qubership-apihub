@@ -19,7 +19,6 @@ import type { FC, PropsWithChildren } from 'react'
 import { lazy, memo, Suspense } from 'react'
 import type { PlaygroundElementProps } from './PlaygroundElement'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
-import { getToken } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
 import { v4 as uuidv4 } from 'uuid'
 
 export type PlaygroundProps = PropsWithChildren<{
@@ -39,7 +38,6 @@ export const Playground: FC<PlaygroundProps> = memo<PlaygroundProps>(({ document
           key={uuidv4()}
           document={document}
           customServers={customServers}
-          token={getToken()}
           origin={window.location.origin}
         />
       </Box>

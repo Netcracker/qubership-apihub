@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import * as React from 'react'
-import { memo, useCallback, useMemo, useState } from 'react'
+import { useShowSuccessNotification } from '@apihub/routes/root/BasePage/Notification'
+import { useUsers } from '@apihub/routes/root/useUsers'
 import { Box } from '@mui/material'
+import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
+import { GenerateTokenForm } from '@netcracker/qubership-apihub-ui-shared/components/GenerateTokenForm'
+import { TokensTable } from '@netcracker/qubership-apihub-ui-shared/components/TokensTable'
+import { useUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useUser'
 import {
   useDeleteApiKey,
   useGenerateApiKey,
@@ -25,12 +28,8 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/hooks/tokens/useTokens'
 import { useRoles } from '@netcracker/qubership-apihub-ui-shared/hooks/user-roles/useRoles'
 import type { GenerateApiKeyValue } from '@netcracker/qubership-apihub-ui-shared/types/tokens'
-import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
-import { GenerateTokenForm } from '@netcracker/qubership-apihub-ui-shared/components/GenerateTokenForm'
-import { TokensTable } from '@netcracker/qubership-apihub-ui-shared/components/TokensTable'
-import { useUsers } from '@apihub/routes/root/useUsers'
-import { useAuthorization } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
-import { useShowSuccessNotification } from '@apihub/routes/root/BasePage/Notification'
+import type { FC } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 
 export const SystemTokensTab: FC = memo(() => {
   const [systemTokens, isSystemTokensLoading] = useTokens()
@@ -38,7 +37,7 @@ export const SystemTokensTab: FC = memo(() => {
   const [generatedApiKey, generateApiKey, isLoading] = useGenerateApiKey()
   const { data: roles, isLoading: isRolesLoading } = useRoles()
 
-  const [authorization] = useAuthorization()
+  const [user] = useUser()
   const [userSearch, setUserSearch] = useState<string>('')
   const [usersData, isUsersDataLoading] = useUsers(userSearch)
 
@@ -62,7 +61,7 @@ export const SystemTokensTab: FC = memo(() => {
           <Box>
             <GenerateTokenForm
               roles={availableRoles}
-              defaultUser={authorization?.user}
+              defaultUser={user}
               users={usersData?.users}
               setUserSearch={handleSetUserSearch}
               generatedApiKey={generatedApiKey}
