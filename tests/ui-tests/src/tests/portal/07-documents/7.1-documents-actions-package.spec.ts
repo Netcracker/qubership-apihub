@@ -2,7 +2,7 @@ import { test } from '@fixtures'
 import { expect, expectFile, expectText } from '@services/expect-decorator'
 import { SUCCESS_MSG } from '@shared/entities'
 import { PortalPage } from '@portal/pages/PortalPage'
-import { BASE_ORIGIN, TICKET_BASE_URL } from '@test-setup'
+import { BASE_URL, TICKET_BASE_URL } from '@test-setup'
 import {
   FILE_P_ARCHIVE,
   FILE_P_GQL_SMALL,
@@ -326,7 +326,7 @@ test.describe('7.1 Documents actions (Package)', () => {
 
         await expect(portalPage.snackbar).toContainText(SUCCESS_MSG)
         await expect(portalPage.snackbar).toContainText('Template copied')
-        await expectText(clipboard).toContain(`apiDescriptionUrl="${BASE_ORIGIN}/api/v2/sharedFiles/`)
+        await expectText(clipboard).toContain(`apiDescriptionUrl="${BASE_URL.origin}/api/v2/sharedFiles/`)
       })
 
       await test.step('Copy public link to source', async () => {
@@ -335,7 +335,7 @@ test.describe('7.1 Documents actions (Package)', () => {
 
         await expect(portalPage.snackbar).toContainText(SUCCESS_MSG)
         await expect(portalPage.snackbar).toContainText('Link copied')
-        await expectText(clipboard).toContain(`${BASE_ORIGIN}/api/v2/sharedFiles/`)
+        await expectText(clipboard).toContain(`${BASE_URL.origin}/api/v2/sharedFiles/`)
 
         const file = await portalPage.downloadFile(clipboard)
 
@@ -370,7 +370,7 @@ test.describe('7.1 Documents actions (Package)', () => {
 
         await expect(portalPage.snackbar).toContainText(SUCCESS_MSG)
         await expect(portalPage.snackbar).toContainText('Link copied')
-        await expectText(clipboard).toContain(`${BASE_ORIGIN}/api/v2/sharedFiles/`)
+        await expectText(clipboard).toContain(`${BASE_URL.origin}/api/v2/sharedFiles/`)
 
         const file = await portalPage.downloadFile(clipboard)
 
@@ -400,7 +400,7 @@ test.describe('7.1 Documents actions (Package)', () => {
 
         await expect(portalPage.snackbar).toContainText(SUCCESS_MSG)
         await expect(portalPage.snackbar).toContainText('Template copied')
-        await expectText(clipboard).toContain(`apiDescriptionUrl="${BASE_ORIGIN}/api/v2/sharedFiles/`)
+        await expectText(clipboard).toContain(`apiDescriptionUrl="${BASE_URL.origin}/api/v2/sharedFiles/`)
       })
 
       await test.step('Copy public link to source', async () => {
@@ -409,7 +409,7 @@ test.describe('7.1 Documents actions (Package)', () => {
 
         await expect(portalPage.snackbar).toContainText(SUCCESS_MSG)
         await expect(portalPage.snackbar).toContainText('Link copied')
-        await expectText(clipboard).toContain(`${BASE_ORIGIN}/api/v2/sharedFiles/`)
+        await expectText(clipboard).toContain(`${BASE_URL.origin}/api/v2/sharedFiles/`)
 
         const file = await portalPage.downloadFile(clipboard)
 
@@ -443,7 +443,7 @@ test.describe('7.1 Documents actions (Package)', () => {
 
         await expect(portalPage.snackbar).toContainText(SUCCESS_MSG)
         await expect(portalPage.snackbar).toContainText('Link copied')
-        await expectText(clipboard).toContain(`${BASE_ORIGIN}/api/v2/sharedFiles/`)
+        await expectText(clipboard).toContain(`${BASE_URL.origin}/api/v2/sharedFiles/`)
 
         const file = await portalPage.downloadFile(clipboard)
 
@@ -474,7 +474,7 @@ test.describe('7.1 Documents actions (Package)', () => {
 
         await expect(portalPage.snackbar).toContainText(SUCCESS_MSG)
         await expect(portalPage.snackbar).toContainText('Link copied')
-        await expectText(clipboard).toContain(`${BASE_ORIGIN}/api/v2/sharedFiles/`)
+        await expectText(clipboard).toContain(`${BASE_URL.origin}/api/v2/sharedFiles/`)
 
         const file = await portalPage.downloadFile(clipboard)
 
@@ -507,7 +507,7 @@ test.describe('7.1 Documents actions (Package)', () => {
 
         await expect(portalPage.snackbar).toContainText(SUCCESS_MSG)
         await expect(portalPage.snackbar).toContainText('Link copied')
-        await expectText(clipboard).toContain(`${BASE_ORIGIN}/api/v2/sharedFiles/`)
+        await expectText(clipboard).toContain(`${BASE_URL.origin}/api/v2/sharedFiles/`)
 
         const file = await portalPage.downloadFile(clipboard)
 
@@ -538,7 +538,7 @@ test.describe('7.1 Documents actions (Package)', () => {
 
         await expect(portalPage.snackbar).toContainText(SUCCESS_MSG)
         await expect(portalPage.snackbar).toContainText('Link copied')
-        await expectText(clipboard).toContain(`${BASE_ORIGIN}/api/v2/sharedFiles/`)
+        await expectText(clipboard).toContain(`${BASE_URL.origin}/api/v2/sharedFiles/`)
 
         const file = await portalPage.downloadFile(clipboard)
 

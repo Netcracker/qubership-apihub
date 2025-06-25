@@ -1,7 +1,7 @@
 import { type Page, test as report } from '@playwright/test'
 import { BaseComponent, Link } from '@shared/components/base'
 import type { CloseOptions, DownloadedTestFile, GotoOptions, ReloadOptions } from '@shared/entities'
-import { BASE_ORIGIN } from '@test-setup'
+import { BASE_URL } from '@test-setup'
 import { getDownloadedFile } from '@services/utils'
 
 export class BasePage {
@@ -11,7 +11,7 @@ export class BasePage {
   constructor(protected readonly page: Page) { }
 
   async goto(url: string, options?: GotoOptions): Promise<void> {
-    const _url = new URL(url, BASE_ORIGIN).toString()
+    const _url = new URL(url, BASE_URL.origin).toString()
     await report.step(`Go to "${url}"`, async () => {
       await this.page.goto(_url, options)
     })

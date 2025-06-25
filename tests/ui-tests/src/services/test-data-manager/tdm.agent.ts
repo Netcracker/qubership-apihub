@@ -1,16 +1,14 @@
 import type { RestAgentConfig, RestSnapshot } from '@services/rest/rest.types'
 import { type APIResponse, test } from '@playwright/test'
-import { getAuthDataFromStorageStateFile } from '@services/auth'
-import { createRest, type Rest, rGetNamespaces, rGetServices, rRunDiscovery } from '@services/rest'
+import { createRestWithCredentials, type Rest, rGetNamespaces, rGetServices, rRunDiscovery } from '@services/rest'
 import { rCreateSnapshot } from '@services/rest/requests.agent'
-import { SS_SYSADMIN_PATH } from '@services/storage-state'
-import { BASE_ORIGIN } from '@test-setup'
+import { BASE_URL } from '@test-setup'
 import type { TdmAgentConfig } from '@services/test-data-manager'
 import { asyncTimeout, getRestFailMsg } from '@services/utils'
+import { SYSADMIN } from '@test-data'
 
-export async function createAgentTDM(): Promise<AgentTestDataManager> {
-  const authData = await getAuthDataFromStorageStateFile(SS_SYSADMIN_PATH)
-  const rest = await createRest(BASE_ORIGIN, authData.token)
+export const createAgentTDM = async (): Promise<AgentTestDataManager> => {
+  const rest = await createRestWithCredentials(BASE_URL, SYSADMIN)
   return new AgentTestDataManager(rest)
 }
 

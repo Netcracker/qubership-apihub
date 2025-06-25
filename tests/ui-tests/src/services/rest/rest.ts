@@ -3,9 +3,11 @@ import type { APIRequestContext, APIResponse } from '@playwright/test'
 import { request } from '@playwright/test'
 import { DEFAULT_REQUEST_TIMEOUT, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_TIMEOUT } from './rest.consts'
 import { asyncTimeout, stringifyError } from '@services/utils'
+import { getAuthDataFromApi } from '@services/auth'
+import type { Credentials } from '@shared/entities'
 
-export async function createRest(url: string, token?: string, timeout?: number): Promise<Rest> {
-  const _url = new URL(url).origin
+export const createRestWithToken = async (url: URL, token?: string, timeout?: number): Promise<Rest> => {
+  const _url = url.origin
   const reqContext = await request.newContext({
     baseURL: _url,
     ignoreHTTPSErrors: true,
@@ -15,6 +17,11 @@ export async function createRest(url: string, token?: string, timeout?: number):
     timeout: timeout || DEFAULT_REQUEST_TIMEOUT,
   })
   return new Rest(reqContext)
+}
+
+export const createRestWithCredentials = async (url: URL, credentials: Credentials, timeout?: number): Promise<Rest> => {
+  const { token } = await getAuthDataFromApi(url, credentials)
+  return await createRestWithToken(url, token, timeout)
 }
 
 export class Rest {

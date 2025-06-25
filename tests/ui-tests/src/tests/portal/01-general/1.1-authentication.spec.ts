@@ -3,8 +3,9 @@ import { expect } from '@services/expect-decorator'
 import { LoginPage } from '@shared/pages'
 import { PortalPage } from '@portal/pages'
 import { TICKET_BASE_URL } from '@test-setup'
-import { INVALID_LOGIN, INVALID_PASSWORD, SYSADMIN } from '@test-data'
+import { INVALID_LOGIN, INVALID_PASSWORD, TEST_USER_AUTH } from '@test-data'
 import { INVALID_CREDENTIALS_MSG } from '@shared/entities'
+import { createUserStorageStateWithAuthCookieFromApi } from '@services/storage-state/save'
 
 test.describe('Internal Authentication', () => {
 
@@ -19,7 +20,7 @@ test.describe('Internal Authentication', () => {
       const portalPage = new PortalPage(page)
 
       await loginPage.goto()
-      await loginPage.signIn(SYSADMIN)
+      await loginPage.signIn(TEST_USER_AUTH)
 
       await expect(portalPage.header.userMenu).toBeVisible()
       await expect.soft(portalPage.header.globalSearchBtn).toBeVisible()
@@ -33,7 +34,11 @@ test.describe('Internal Authentication', () => {
       tag: '@smoke',
       annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-4256` },
     },
-    async ({ sysadminPage: page }) => {
+    async ({ browser }) => {
+
+      const storageState = await createUserStorageStateWithAuthCookieFromApi(TEST_USER_AUTH)
+      const context = await browser.newContext({ storageState: storageState })
+      const page = await context.newPage()
 
       const loginPage = new LoginPage(page)
       const portalPage = new PortalPage(page)
@@ -49,6 +54,8 @@ test.describe('Internal Authentication', () => {
 
       await expect(loginPage.loginFormTitle).toBeVisible()
       await expect.soft(loginPage.signInBtn).toBeVisible()
+
+      await context.close()
     })
 
   test('[P-LAU-3-N] Empty fields',
@@ -78,7 +85,7 @@ test.describe('Internal Authentication', () => {
       const loginPage = new LoginPage(page)
 
       await loginPage.goto()
-      await loginPage.signIn({ email: SYSADMIN.email, password: '' })
+      await loginPage.signIn({ email: TEST_USER_AUTH.email, password: '' })
 
       await expect(loginPage.loginTxtFld).not.toBeEmpty()
       await expect.soft(loginPage.passwordTxtFld).toBeEmpty()
@@ -95,7 +102,7 @@ test.describe('Internal Authentication', () => {
       const loginPage = new LoginPage(page)
 
       await loginPage.goto()
-      await loginPage.signIn({ email: '', password: SYSADMIN.password })
+      await loginPage.signIn({ email: '', password: TEST_USER_AUTH.password })
 
       await expect.soft(loginPage.loginTxtFld).toBeEmpty()
       await expect.soft(loginPage.passwordTxtFld).not.toBeEmpty()
@@ -113,7 +120,7 @@ test.describe('Internal Authentication', () => {
       const loginPage = new LoginPage(page)
 
       await loginPage.goto()
-      await loginPage.signIn({ email: SYSADMIN.email, password: INVALID_PASSWORD })
+      await loginPage.signIn({ email: TEST_USER_AUTH.email, password: INVALID_PASSWORD })
 
       await expect(loginPage.errorAlert).toBeVisible()
       await expect.soft(loginPage.errorAlert).toHaveText(INVALID_CREDENTIALS_MSG)
@@ -133,7 +140,7 @@ test.describe('Internal Authentication', () => {
       const loginPage = new LoginPage(page)
 
       await loginPage.goto()
-      await loginPage.signIn({ email: INVALID_LOGIN, password: SYSADMIN.password })
+      await loginPage.signIn({ email: INVALID_LOGIN, password: TEST_USER_AUTH.password })
 
       await expect(loginPage.errorAlert).toBeVisible()
       await expect.soft(loginPage.errorAlert).toHaveText(INVALID_CREDENTIALS_MSG)

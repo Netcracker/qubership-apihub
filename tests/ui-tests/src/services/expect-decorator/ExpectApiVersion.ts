@@ -1,11 +1,13 @@
 import { test } from '@fixtures'
-import { getAuthDataFromStorageStateFile } from '@services/auth'
-import { SS_SYSADMIN_PATH } from '@services/storage-state'
-import { createRest, rGetPackageVersion } from '@services/rest'
-import { BASE_ORIGIN } from '@test-setup'
+import { createRestWithCredentials, rGetPackageVersion } from '@services/rest'
+import { BASE_URL } from '@test-setup'
 import { BaseExpect } from './BaseExpect'
+import { SYSADMIN } from '@test-data'
 
-export type VersionInput = { packageId: string; version: string }
+export interface VersionInput {
+  packageId: string
+  version: string
+}
 
 export class ExpectApiVersion extends BaseExpect<VersionInput> {
 
@@ -24,8 +26,7 @@ export class ExpectApiVersion extends BaseExpect<VersionInput> {
 
   async toBePublished(): Promise<void> {
     await test.step(this.formatStepMessage('to be created'), async () => {
-      const authData = await getAuthDataFromStorageStateFile(SS_SYSADMIN_PATH)
-      const rest = await createRest(BASE_ORIGIN, authData.token)
+      const rest = await createRestWithCredentials(BASE_URL, SYSADMIN)
       const response = await rest.send(rGetPackageVersion, [200, 404], this.actual)
       const expectedStatus = 200
 

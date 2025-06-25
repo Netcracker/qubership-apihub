@@ -38,3 +38,10 @@ export const TEST_USER_4 = {
   email: 'x_atui_user4@qa.at',
   name: 'x_ATUI_User4',
 } as const
+
+export const TEST_USER_AUTH = {
+  ...TEST_SYSADMIN_LOCAL,
+  id: 'x_atui_authatqa-at',
+  email: 'x_atui_auth@qa.at',
+  name: 'x_ATUI_Auth',
+} as const

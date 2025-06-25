@@ -1,15 +1,6 @@
 import { test } from '@fixtures'
 import { expect } from '@services/expect-decorator'
-import {
-  ARCHIVED_VERSION_STATUS,
-  DRAFT_VERSION_STATUS,
-  GRAPHQL_API_TYPE_TITLE,
-  GRAPHQL_ICON,
-  OPENAPI_ICON,
-  RELEASE_VERSION_STATUS,
-  REST_API_TYPE_TITLE,
-  RESTAPI_ICON,
-} from '@shared/entities'
+import { ARCHIVED_VERSION_STATUS, DRAFT_VERSION_STATUS, GRAPHQL_API_TYPE_TITLE, GRAPHQL_ICON, OPENAPI_ICON, RELEASE_VERSION_STATUS, REST_API_TYPE_TITLE, RESTAPI_ICON } from '@shared/entities'
 import { PortalPage } from '@portal/pages/PortalPage'
 import { SEARCH_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
 import {
@@ -98,7 +89,7 @@ test.describe('02 Global Search', () => {
       await test.step('Navigate to the founded operation', async () => { //Cover TestCase-A-5756
         await globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST).link.click()
 
-        await expect(portalPage.versionPackagePage.toolbar.title).toContainText(GS_OPERATION_REST.title)
+        await expect(portalPage.operationPage.toolbar.title).toContainText(GS_OPERATION_REST.title)
       })
     })
 

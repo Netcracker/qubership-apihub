@@ -1,7 +1,6 @@
 import { test } from '@fixtures'
-import { saveSsFileByLocalViaAPI, SS_USER1_PATH } from '@services/storage-state'
 import { createApihubTDM } from '@services/test-data-manager'
-import { AUTH, CREATE_TD } from '@test-setup'
+import { CREATE_TD } from '@test-setup'
 import { isReusableTestDataExist } from '@test-data/utils'
 import {
   COPYING_REST_GR,
@@ -361,24 +360,17 @@ import {
   VAR_GR,
   WSP_P_UAC_GENERAL_N,
 } from '@test-data/portal'
-import { TEST_USER_1, TEST_USER_2, TEST_USER_3, TEST_USER_4 } from '@test-data'
+import { TEST_USER_1, TEST_USER_2, TEST_USER_3, TEST_USER_4, TEST_USER_AUTH } from '@test-data'
 
 test.describe.configure({ mode: 'serial', retries: 0 })
 
 test.describe('Users', async () => {
 
   test('Create Users', async ({ usersTDM: tdm }) => {
-    test.skip(CREATE_TD === 'skip', 'Test Data creation is skipped')
-    const users = [TEST_USER_1, TEST_USER_2, TEST_USER_3, TEST_USER_4]
+    const users = [TEST_USER_1, TEST_USER_2, TEST_USER_3, TEST_USER_4, TEST_USER_AUTH]
     for (const user of users) {
       await tdm.createGeneralUser(user)
     }
-  })
-
-  test('Authentication', async () => {
-    test.skip(AUTH === 'skip', 'Authentication is skipped')
-    await saveSsFileByLocalViaAPI(TEST_USER_1)
-    await saveSsFileByLocalViaAPI(TEST_USER_4)
   })
 })
 
@@ -624,7 +616,7 @@ test.describe('Reusable Test Data creation', async () => {
       })
 
       await test.step('Publish by another User', async () => {
-        const tdmUser1 = await createApihubTDM(SS_USER1_PATH)
+        const tdmUser1 = await createApihubTDM(TEST_USER_1)
         const versions = [V_P_PKG_REV_3_R, V_P_DSH_REV_3_R]
         for (const version of versions) {
           await tdmUser1.publishVersion(version)

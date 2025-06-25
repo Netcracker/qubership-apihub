@@ -9,7 +9,7 @@ export class OperationPageToolbar {
     .or(this.page.locator('.MuiCardHeader-root')) // TODO Add 'MainPageCardHeader' in APIHUBUI
   readonly breadcrumbs = new Breadcrumbs(this.locator.getByTestId('PackageBreadcrumbs'), 'Operation')
   readonly backBtn = new Button(this.locator.getByTestId('BackButton'), 'Back')
-  readonly title = new Title(this.locator.getByTestId('ToolbarTitleTypography'), 'Package')
+  readonly title = new Title(this.locator.getByTestId('ToolbarTitle'), 'Operation')
   readonly operationSlt = new OperationSelect(this.locator)
   readonly docBtn = new Button(this.locator.getByTestId('ModeButton-doc'), 'Doc')
   readonly simpleBtn = new Button(this.locator.getByTestId('ModeButton-simple'), 'Simple')

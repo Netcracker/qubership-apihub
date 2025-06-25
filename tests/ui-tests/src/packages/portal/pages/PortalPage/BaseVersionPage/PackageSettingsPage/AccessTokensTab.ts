@@ -50,7 +50,9 @@ export class AccessTokensTab extends BaseSettingsTab {
     await this.tokenValueTxtFld.copyBtn.click()
     await report.step('Get token from the clipboard', async () => {
       await this.page.waitForTimeout(2000)
-      str = await this.mainLocator.evaluate('navigator.clipboard.readText()')
+      str = await this.page.evaluate(async () => {
+        return await navigator.clipboard.readText()
+      })
     })
     return str
   }

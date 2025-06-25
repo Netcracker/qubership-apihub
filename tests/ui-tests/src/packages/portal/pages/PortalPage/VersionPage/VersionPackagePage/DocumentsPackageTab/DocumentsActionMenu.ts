@@ -35,7 +35,9 @@ export class DocumentsActionMenu extends DropdownMenu {
     await report.step('Copy public link to source', async () => {
       await this.copyPublicLinkItm.click()
       await this.page.waitForTimeout(2000)
-      str = await this.mainLocator.evaluate('navigator.clipboard.readText()')
+      str = await this.page.evaluate(async () => {
+        return await navigator.clipboard.readText()
+      })
     })
     return str
   }
@@ -45,7 +47,9 @@ export class DocumentsActionMenu extends DropdownMenu {
     await report.step('Copy page template', async () => {
       await this.copyPageTemplateItm.click()
       await this.page.waitForTimeout(2000)
-      str = await this.mainLocator.evaluate('navigator.clipboard.readText()')
+      str = await this.page.evaluate(async () => {
+        return await navigator.clipboard.readText()
+      })
     })
     return str
   }

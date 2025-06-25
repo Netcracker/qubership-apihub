@@ -1,13 +1,10 @@
-import type { APIResponse, Page } from '@playwright/test'
+import type { APIResponse } from '@playwright/test'
 import { request } from '@playwright/test'
 import type { Credentials } from '@shared/entities'
-import type { StorageStateDto } from '@services/storage-state'
-import { StorageState } from '@services/storage-state'
 import { DEFAULT_REQUEST_TIMEOUT, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_TIMEOUT } from '@services/rest'
-import { readFile } from 'fs/promises'
-import { asyncTimeout } from '@services/utils'
+import { asyncTimeout, getRestFailMsg } from '@services/utils'
 
-export type AuthData = {
+export interface AuthData {
   token: string
   renewToken: string
   user: {
@@ -18,20 +15,7 @@ export type AuthData = {
   }
 }
 
-async function localAuth(url: string, credentials: Credentials): Promise<APIResponse> {
-  const auth = Buffer.from(`${credentials.email}:${credentials.password}`).toString('base64')
-  const requestContext = await request.newContext({
-    baseURL: url,
-    ignoreHTTPSErrors: true,
-    extraHTTPHeaders: {
-      'Authorization': `Basic ${auth}`,
-    },
-    timeout: DEFAULT_REQUEST_TIMEOUT,
-  })
-  return await requestContext.post('/api/v2/auth/local')
-}
-
-export async function getAuthDataFromAPI(url: string, credentials: Credentials): Promise<AuthData> {
+export const getAuthDataFromApi = async (url: URL, credentials: Credentials): Promise<AuthData> => {
   let response!: APIResponse
   for (let i = 0; i < DEFAULT_RETRY_COUNT; i++) {
     response = await localAuth(url, credentials)
@@ -40,25 +24,22 @@ export async function getAuthDataFromAPI(url: string, credentials: Credentials):
       if (!jsonData.token) {
         continue
       }
-      return await response.json()
+      return jsonData as AuthData
     }
     await asyncTimeout(DEFAULT_RETRY_TIMEOUT)
   }
-  throw new Error(`Getting Auth Data via API for "${credentials.email}" has been failed:\n ${await response.text()}`)
+  throw new Error(await getRestFailMsg(`Getting Auth Data from API for "${credentials.email}"`, response))
 }
 
-export async function getAuthDataFromStorageState(storageStateDto: StorageStateDto): Promise<AuthData> {
-  const ss = new StorageState(storageStateDto)
-  return ss.getAuthData()
-}
-
-export async function getAuthDataFromStorageStateFile(path: string): Promise<AuthData> {
-  const contentString = (await readFile(path, 'utf8')).toString()
-  const storageStateDto = JSON.parse(contentString)
-  return await getAuthDataFromStorageState(storageStateDto)
-}
-
-export async function getAuthDataFromPage(page: Page): Promise<AuthData> {
-  const storageStateDto = await page.context().storageState()
-  return await getAuthDataFromStorageState(storageStateDto)
+async function localAuth(url: URL, credentials: Credentials): Promise<APIResponse> {
+  const auth = Buffer.from(`${credentials.email}:${credentials.password}`).toString('base64')
+  const requestContext = await request.newContext({
+    baseURL: url.origin,
+    ignoreHTTPSErrors: true,
+    extraHTTPHeaders: {
+      'Authorization': `Basic ${auth}`,
+    },
+    timeout: DEFAULT_REQUEST_TIMEOUT,
+  })
+  return await requestContext.post('/api/v2/auth/local')
 }

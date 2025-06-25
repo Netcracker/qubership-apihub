@@ -15,10 +15,3 @@ export const CREATE_TD = process.env.CREATE_TD as 'all' | 'skip' | undefined
  * **skip** - skip test data clearing
  */
 export const CLEAR_TD = process.env.CLEAR_TD as 'all' | 'skip' | undefined
-
-/**
- * **undefined** (*default*) - use local authentication
- *
- * **skip** - skip authentication (storage state must be already saved)
- */
-export const AUTH = process.env.AUTH as 'skip' | undefined

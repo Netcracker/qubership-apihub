@@ -19,11 +19,14 @@ export class AddPackageDialog extends BaseAddDialog {
   }): Promise<void> {
     if (params.workspaceName) {
       await this.workspaceAc.click()
+      await this.workspaceAc.fill(params.workspaceName)
       await this.workspaceAc.getListItem(params.workspaceName).click()
     }
     await this.packageAc.click()
+    await this.packageAc.fill(params.packageId)
     await this.packageAc.getListItem(params.packageId, { exact: false }).click()
     await this.versionAc.click()
+    await this.versionAc.fill(params.version)
     await this.versionAc.getListItem(params.version, { exact: false }).click()
   }
 }

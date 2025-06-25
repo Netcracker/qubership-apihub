@@ -1,16 +1,9 @@
 import { type APIResponse, expect, test } from '@playwright/test'
-import { getAuthDataFromStorageStateFile } from '@services/auth'
 import type { RestPublishConfig, RestPublishFile } from '@services/rest/rest.types'
-import type { PackageApiKey, TestFile, VersionStatuses } from '@shared/entities'
-import type {
-  TdmOperationGroup,
-  TdmPackageCreate,
-  TdmPackageUpdate,
-  TdmPublishFile,
-  TdmPublishVersion,
-} from './tdm.entities'
+import type { Credentials, PackageApiKey, TestFile, VersionStatuses } from '@shared/entities'
+import type { TdmOperationGroup, TdmPackageCreate, TdmPackageUpdate, TdmPublishFile, TdmPublishVersion } from './tdm.entities'
 import {
-  createRest,
+  createRestWithToken,
   getRootGroupsList,
   rAddMembersToPackage,
   rAddSysadmin,
@@ -34,14 +27,15 @@ import {
   rUpdatePackage,
   rUpdatePackageVersion,
 } from '@services/rest'
-import { BASE_ORIGIN } from '@test-setup'
+import { BASE_URL } from '@test-setup'
 import { TEST_PREFIX } from '@test-data'
 import { packToZip } from '@services/utils/files'
 import { asyncTimeout, getResponseDebugMsg, getRestFailMsg, getTestIdFromName } from '@services/utils'
+import { getAuthDataFromApi } from '@services/auth'
 
-export async function createApihubTDM(ssPath: string, requestTimeout?: number): Promise<ApihubTestDataManager> {
-  const authData = await getAuthDataFromStorageStateFile(ssPath)
-  const rest = await createRest(BASE_ORIGIN, authData.token, requestTimeout)
+export const createApihubTDM = async (credentials: Credentials, requestTimeout?: number): Promise<ApihubTestDataManager> => {
+  const { token } = await getAuthDataFromApi(BASE_URL, credentials)
+  const rest = await createRestWithToken(BASE_URL, token, requestTimeout)
   return new ApihubTestDataManager(rest)
 }
 

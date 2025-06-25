@@ -2,10 +2,8 @@
 /* eslint-disable ui-testing/no-wait-in-tests */
 import { expect, test } from '@fixtures'
 import { PortalPage } from '@portal/pages'
-import { BASE_ORIGIN } from '@test-setup'
+import { BASE_URL } from '@test-setup'
 import { readFileSync } from 'fs'
-import { saveSsFileByLocalViaAPI } from '@services/storage-state'
-import { SYSADMIN } from '@test-data'
 
 // TestCase-A-9527
 // TestCase-A-9634
@@ -15,18 +13,14 @@ test.describe.configure({ mode: 'parallel' })
 const data = readFileSync(`./src/tests/adv/urls/${process.env.ADV_FILE}.json`, 'utf8')
 const paths: string[] = JSON.parse(data).urls
 
-for (const [index, path] of paths.entries()) {
-  const url = `${BASE_ORIGIN}${path}`
+for (const path of paths) {
+  const url = `${BASE_URL.origin}${path}`
 
   test(path,
     {
       annotation: { type: 'URL', description: url },
     },
     async ({ sysadminPage: page }) => {
-
-      if (index % 5000 === 0 && index !== 0) {
-        await saveSsFileByLocalViaAPI(SYSADMIN)
-      }
 
       const responsePromise = page.waitForResponse(response =>
         response.url().includes('changes?'))
