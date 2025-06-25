@@ -1,0 +1,138 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+spec:
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: http
+      name: http
+  selector:
+    app: keycloak
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: keycloak
+  name: keycloak-discovery
+spec:
+  selector:
+    app: keycloak
+  publishNotReadyAddresses: true
+  clusterIP: None
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+spec:
+  serviceName: keycloak-discovery
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      volumes:
+        - name: import-realm
+          configMap:
+            name: keycloak-realm
+            items:
+              - key: realm.json
+                path: realm.json
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:26.2.5
+          args: ["start-dev", "--import-realm"]
+          volumeMounts:
+            - name: import-realm
+              mountPath: /opt/keycloak/data/import/realm.json 
+              subPath: realm.json   
+          env:
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              value: "admin"
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              value: "admin"
+            - name: KC_PROXY_HEADERS
+              value: "xforwarded"
+            - name: KC_HTTP_ENABLED
+              value: "true"
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
+            - name: KC_HEALTH_ENABLED
+              value: "true"
+            - name: 'KC_CACHE'
+              value: 'ispn'
+            - name: 'KC_CACHE_STACK'
+              value: 'kubernetes'
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: JAVA_OPTS_APPEND
+              value: '-Djgroups.dns.query="keycloak-discovery" -Djgroups.bind.address=$(POD_IP)'
+            - name: 'KC_DB_URL_DATABASE'
+              value: 'keycloak'
+            - name: 'KC_DB_URL_HOST'
+              value: 'pg-common.postgres-db.svc.cluster.local'
+            - name: 'KC_DB'
+              value: 'postgres'
+            - name: 'KC_DB_PASSWORD'
+              value: 'keycloak'
+            - name: 'KC_DB_USERNAME'
+              value: 'keycloak'
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: http-mgmt
+              containerPort: 9000
+          startupProbe:
+            httpGet:
+              path: /health/started
+              port: http-mgmt
+            initialDelaySeconds: 120
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http-mgmt
+            initialDelaySeconds: 120
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http-mgmt
+            initialDelaySeconds: 120
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 2000Mi
+            requests:
+              cpu: 500m
+              memory: 1700Mi
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: keycloak
+spec:
+ rules:
+    - host: {{ .Values.keycloakUrl }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080

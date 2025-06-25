@@ -30,11 +30,15 @@ spec:
                 app.kubernetes.io/technology: 'go'
         spec:
             serviceAccountName: 'qubership-apihub-backend'
+            hostPID: false
+            hostIPC: false
             volumes:
             -   configMap:
                     defaultMode: 420
                     name: qubership-apihub-config
                 name: qubership-apihub-config
+            -   name: tmp-volume
+                emptyDir: {}
             containers:
             -   name: 'qubership-apihub-backend'
                 image: '{{ .Values.qubershipApihubBackend.image.repository }}:{{ .Values.qubershipApihubBackend.image.tag }}'
@@ -42,6 +46,8 @@ spec:
                 -   name: qubership-apihub-config
                     mountPath: /app/qubership-apihub-service/etc/
                     readOnly: true
+                -   name: tmp-volume
+                    mountPath: /tmp
                 ports:
                 -   name: web
                     containerPort: 8080
@@ -83,10 +89,18 @@ spec:
                     value: 'lan'
                 -   name: OLRIC_REPLICA_COUNT
                     value: '{{ .Values.qubershipApihubBackend.replicas }}'
+                -   name: LEGACY_SAML
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.legacySaml }}'
+                -   name: AUTO_LOGIN
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.autoLogin }}'
+                -   name: EXTERNAL_SAML_IDP_DISPLAY_NAME
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.saml.displayName }}'
+                -   name: EXTERNAL_SAML_IDP_IMAGE_SVG
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.saml.imageSvg }}'
                 -   name: ADFS_METADATA_URL  
-                    value: '{{ .Values.qubershipApihubBackend.env.samlIntegration.adfsMetadataUrl }}'
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.saml.metadataUrl }}'
                 -   name: APIHUB_URL  
-                    value: '{{ .Values.qubershipApihub.apihubUrl }}'
+                    value: 'https://{{ .Values.qubershipApihub.apihubUrl }}'
                 -   name: SAML_CRT
                     valueFrom:
                       secretKeyRef:
@@ -97,11 +111,31 @@ spec:
                       secretKeyRef:
                          name: 'qubership-apihub-backend-saml-secret'
                          key: saml_key
+                -   name: EXTERNAL_OIDC_IDP_DISPLAY_NAME
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.oidc.displayName }}'
+                -   name: EXTERNAL_OIDC_IDP_IMAGE_SVG
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.oidc.imageSvg }}'
+                -   name: OIDC_PROVIDER_URL
+                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.oidc.providerUrl }}'
+                -   name: OIDC_CLIENT_ID
+                    valueFrom:
+                      secretKeyRef:
+                        name: 'qubership-apihub-backend-oidc-secret'
+                        key: oidc_client_id
+                -   name: OIDC_CLIENT_SECRET
+                    valueFrom:
+                      secretKeyRef:
+                        name: 'qubership-apihub-backend-oidc-secret'
+                        key: oidc_client_secret
                 -   name: JWT_PRIVATE_KEY
                     valueFrom:
                       secretKeyRef:
                          name: 'qubership-apihub-backend-jwt-secret'
                          key: jwt_private_key
+                -   name: JWT_ACCESS_TOKEN_DURATION_SEC
+                    value: '{{ .Values.qubershipApihubBackend.env.jwt.accessTokenDurationSec }}'
+                -   name: JWT_REFRESH_TOKEN_DURATION_SEC
+                    value: '{{ .Values.qubershipApihubBackend.env.jwt.refreshTokenDurationSec }}'
                 -   name: CLIENT_ID
                     valueFrom:
                       secretKeyRef:
@@ -202,6 +236,12 @@ spec:
                     value: '{{ .Values.qubershipApihubBackend.env.technicalParameters.customPathPrefixes }}'
                 -   name: ALLOWED_HOSTS
                     value: '{{ .Values.qubershipApihubBackend.env.businessParameters.allowedHosts }}'
+                -   name: REVISIONS_TTL_DAYS
+                    value: '{{ .Values.qubershipApihubBackend.env.revisionsCleanup.ttlDays }}'
+                -   name: REVISIONS_CLEANUP_DELETE_LAST_REVISION
+                    value: '{{ .Values.qubershipApihubBackend.env.revisionsCleanup.deleteLastRevision }}'
+                -   name: REVISIONS_CLEANUP_DELETE_RELEASE_REVISIONS
+                    value: '{{ .Values.qubershipApihubBackend.env.revisionsCleanup.deleteReleaseRevisions }}'
                 resources:
                     requests:
                         cpu: {{ .Values.qubershipApihubBackend.resource.cpu.request }}
@@ -225,8 +265,9 @@ spec:
                     periodSeconds: 5
                     timeoutSeconds: 2
                 securityContext:
+                    runAsUser: 10001
                     runAsGroup: 10001
-                    readOnlyRootFilesystem: false
+                    readOnlyRootFilesystem: true
                     runAsNonRoot: true
                     seccompProfile:
                         type: RuntimeDefault

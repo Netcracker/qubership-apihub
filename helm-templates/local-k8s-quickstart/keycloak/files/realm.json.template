@@ -14,25 +14,25 @@
     "clients": [
       {
         "id": "b9d3dca4-b19b-4a26-8c51-06a0090ec312",
-        "clientId": "http://host.docker.internal:8081/api/v1/saml/external-saml-idp/metadata",
+        "clientId": "https://qubership-apihub.localtest.me/api/v1/saml/external-saml-idp/metadata",
         "name": "apihub",
         "description": "",
-        "rootUrl": "http://host.docker.internal:8081",
+        "rootUrl": "https://qubership-apihub.localtest.me",
         "adminUrl": "",
-        "baseUrl": "http://host.docker.internal:8081",
+        "baseUrl": "https://qubership-apihub.localtest.me",
         "surrogateAuthRequired": false,
         "enabled": true,
         "alwaysDisplayInConsole": true,
         "clientAuthenticatorType": "client-secret",
         "redirectUris": [
           "http://localhost:8081/*",
-          "http://host.docker.internal:8081/*",
+          "https://qubership-apihub.localtest.me/*",
           "http://localhost:5173/*",
           "http://host.docker.internal:5173/*"
         ],
         "webOrigins": [
           "http://localhost:8081",
-          "http://host.docker.internal:8081",
+          "https://qubership-apihub.localtest.me",
           "http://localhost:5173",
           "http://host.docker.internal:5173"
         ],
@@ -222,9 +222,9 @@
         "clientId": "apihub-oidc",
         "name": "apihub",
         "description": "",
-        "rootUrl": "http://host.docker.internal:8081",
-        "adminUrl": "http://host.docker.internal:8081",
-        "baseUrl": "http://host.docker.internal:8081",
+        "rootUrl": "https://qubership-apihub.localtest.me",
+        "adminUrl": "https://qubership-apihub.localtest.me",
+        "baseUrl": "https://qubership-apihub.localtest.me",
         "surrogateAuthRequired": false,
         "enabled": true,
         "alwaysDisplayInConsole": false,
@@ -232,11 +232,11 @@
         "secret": "${OIDC_CLIENT_SECRET}",
         "redirectUris": [
           "http://localhost:8081/*",
-          "http://host.docker.internal:8081/*"
+          "https://qubership-apihub.localtest.me/*"
         ],
         "webOrigins": [
           "http://localhost:8081",
-          "http://host.docker.internal:8081"
+          "https://qubership-apihub.localtest.me"
         ],
         "notBefore": 0,
         "bearerOnly": false,
