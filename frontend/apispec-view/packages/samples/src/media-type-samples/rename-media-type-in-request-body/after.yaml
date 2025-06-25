@@ -1,0 +1,19 @@
+openapi: 3.0.1
+info:
+  title: test
+  version: v6.19
+paths:
+  /path1:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                brandId:
+                  type: string
+      responses:
+        '200':
+          description: Test
+          content: { }

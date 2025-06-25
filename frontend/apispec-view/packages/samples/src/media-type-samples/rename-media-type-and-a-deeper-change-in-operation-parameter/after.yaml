@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    post:
+      parameters:
+        - in: query
+          name: offset
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  brandId:
+                    type: string
+                    nullable: true
+      requestBody:
+        content: { }
+      responses:
+        '200':
+          description: OK
+          content: { }

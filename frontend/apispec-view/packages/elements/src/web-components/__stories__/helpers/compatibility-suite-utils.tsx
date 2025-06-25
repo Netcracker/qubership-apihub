@@ -1,13 +1,11 @@
-import { isDiffAdd, isDiffRemove, isDiffRename, isDiffReplace } from '@netcracker/qubership-apihub-api-diff'
-import { stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier'
 import { getCompatibilitySuite, TestSpecType } from '@netcracker/qubership-apihub-compatibility-suites'
 import { DiffOperationAPI } from '@stoplight/elements/containers/DiffOperationAPI'
 import { getCompareResult } from '@stoplight/elements/web-components/__stories__/helpers/getMergedDocument'
 import { parse } from '@stoplight/yaml'
 import { diffMetaKey } from 'diff-block'
 import FontFaceObserver from 'fontfaceobserver'
-import { isEmpty } from 'lodash'
 import React, { useState } from 'react'
+import { stringifyDiffs } from '@stoplight/elements/web-components/__stories__/helpers/stringifyDiffs'
 
 export type OpenapiCompatibilitySuiteStoryArgs = { before: string, after: string }
 
@@ -23,46 +21,7 @@ export function StoryComponent({ before, after }: OpenapiCompatibilitySuiteStory
     setFontLoaded(true)
   })
 
-  console.log(stringifyCyclicJso(
-    diffs.map(diff => {
-      if (isDiffAdd(diff)) {
-        const {
-          afterDeclarationPaths = [],
-          ...rest
-        } = diff
-
-        return {
-          ...rest,
-          ...(!isEmpty(afterDeclarationPaths) ? { afterDeclarationPaths: `[${afterDeclarationPaths.map(path => `[${path.join()}]`).join()}]` } : {}),
-        }
-      }
-      if (isDiffRemove(diff)) {
-        const {
-          beforeDeclarationPaths = [],
-          ...rest
-        } = diff
-
-        return {
-          ...rest,
-          ...(!isEmpty(beforeDeclarationPaths) ? { beforeDeclarationPaths: `[${beforeDeclarationPaths.map(path => `[${path.join()}]`).join()}]` } : {}),
-        }
-      }
-      if (isDiffReplace(diff) || isDiffRename(diff)) {
-        const {
-          beforeDeclarationPaths = [],
-          afterDeclarationPaths = [],
-          ...rest
-        } = diff
-
-        return {
-          ...rest,
-          ...(!isEmpty(beforeDeclarationPaths) ? { beforeDeclarationPaths: `[${beforeDeclarationPaths.map(path => `[${path.join()}]`).join()}]` } : {}),
-          ...(!isEmpty(afterDeclarationPaths) ? { afterDeclarationPaths: `[${afterDeclarationPaths.map(path => `[${path.join()}]`).join()}]` } : {}),
-        }
-      }
-      return null
-    }),
-  ))
+  console.log(stringifyDiffs(diffs))
 
   if (!fontLoaded) {
     return <></>

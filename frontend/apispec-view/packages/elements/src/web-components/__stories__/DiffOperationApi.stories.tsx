@@ -9,12 +9,32 @@ import { DeprecatedOperations } from '@netcracker/qubership-apihub-apispec-view-
 import {
   WhollyChangedRequestBodyOrResponse,
 } from '@netcracker/qubership-apihub-apispec-view-samples/operations-new-samples/operationsForWhollyChangedRequestBodyOrResponse'
+import renameMediaTypeAndADeeperChangeInResponseBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-response/before.yaml'
+import renameMediaTypeAndADeeperChangeInResponseAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-response/after.yaml'
+import renameMediaTypeInResponseBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-in-response/before.yaml'
+import renameMediaTypeInResponseAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-in-response/after.yaml'
+import renameMediaTypeAndADeeperChangeInRequestBodyBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-request-body/before.yaml'
+import renameMediaTypeAndADeeperChangeInRequestBodyAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-request-body/after.yaml'
+import renameMediaTypeInRequestBodyBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-in-request-body/before.yaml'
+import renameMediaTypeInRequestBodyAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-in-request-body/after.yaml'
+import renameMediaTypeAndADeeperChangeInPathItemParameterBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-path-item-parameter/before.yaml'
+import renameMediaTypeAndADeeperChangeInPathItemParameterAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-path-item-parameter/after.yaml'
+import renameMediaTypeAndADeeperChangeInOperationParameterBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-operation-parameter/before.yaml'
+import renameMediaTypeAndADeeperChangeInOperationParameterAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-operation-parameter/after.yaml'
+import renameMediaTypeAndADeeperChangeInResponseHeaderBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-response-header/before.yaml'
+import renameMediaTypeAndADeeperChangeInResponseHeaderAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-response-header/after.yaml'
+
 import { COMPARE_DISPLAY_MODE } from '@stoplight/elements'
 import { DiffOperationAPI } from '@stoplight/elements/containers/DiffOperationAPI'
-import { getMergedDocument } from '@stoplight/elements/web-components/__stories__/helpers/getMergedDocument'
+import {
+  getCompareResult,
+  getMergedDocument,
+} from '@stoplight/elements/web-components/__stories__/helpers/getMergedDocument'
 import { diffMetaKey } from 'diff-block'
 import React from 'react'
 import '../index'
+import { Meta, StoryObj } from '@storybook/react/*'
+import { stringifyDiffs } from '@stoplight/elements/web-components/__stories__/helpers/stringifyDiffs'
 
 declare global {
   namespace JSX {
@@ -630,3 +650,42 @@ ChangePathParamName.args = {
   )
 }
 ChangePathParamName.storyName = '[path] Changed path param name'
+
+function StoryComponent({ before, after }: { before: object, after: object }) {
+  const { diffs, merged } = getCompareResult(before, after)
+  console.log(stringifyDiffs(diffs))
+  console.log(diffs)
+  return <DiffOperationAPI mergedDocument={merged} filters={[]} diffMetaKey={diffMetaKey} />
+}
+
+const meta: Meta<{ before: object, after: object }> = {
+  title: 'web-components/DiffOperationAPI',
+}
+
+type Story = StoryObj<typeof meta>
+
+export const RenameMediaTypeAndADeeperChangeInResponse: Story = {
+  name: '[Response] Rename media type and a deeper change in response',
+  render: StoryComponent,
+  args: { before: renameMediaTypeAndADeeperChangeInResponseBefore, after: renameMediaTypeAndADeeperChangeInResponseAfter },
+}
+
+// todo should be shown
+export const RenameMediaTypeInResponse: Story = {
+  name: '[Response] Rename media type in response',
+  render: StoryComponent,
+  args: { before: renameMediaTypeInResponseBefore, after: renameMediaTypeInResponseAfter },
+}
+
+export const RenameMediaTypeAndADeeperChangeInRequestBody: Story = {
+  name: '[Request] Rename media type and a deeper change in request body',
+  render: StoryComponent,
+  args: { before: renameMediaTypeAndADeeperChangeInRequestBodyBefore, after: renameMediaTypeAndADeeperChangeInRequestBodyAfter },
+}
+
+// todo should be shown
+export const RenameMediaTypeInRequestBody: Story = {
+  name: '[Request] Rename media type in request body',
+  render: StoryComponent,
+  args: { before: renameMediaTypeInRequestBodyBefore, after: renameMediaTypeInRequestBodyAfter },
+}
