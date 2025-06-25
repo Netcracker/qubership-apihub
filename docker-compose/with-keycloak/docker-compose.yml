@@ -1,7 +1,7 @@
 version: '3.9'
 services:
   qubership-apihub-backend:
-    image: ghcr.io/netcracker/qubership-apihub-backend:security_improvements
+    image: ghcr.io/netcracker/qubership-apihub-backend:dev
     container_name: qubership-apihub-backend
     ports:
       - "8090:8080"
@@ -53,7 +53,7 @@ services:
         condition: service_healthy
 
   qubership-apihub-ui:
-    image: ghcr.io/netcracker/qubership-apihub-ui:feature-saml-oidc
+    image: ghcr.io/netcracker/qubership-apihub-ui:dev
     container_name: qubership-apihub-ui
     ports:
       - "8081:8080"
