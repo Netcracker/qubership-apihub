@@ -1,20 +1,83 @@
 # Authentication
 Apihub provides no anonymous access except some dedicated endpoints like shared document or it's own openapi spec.
-System supports SSO and local(disabled in production mode) authentication.
+User authentication is primarily handled through external Identity Providers (IDPs), making Single Sign-On (SSO) the preferred authentication method.
+The system also supports local authentication (disabled in production mode) for development purposes.
 
-At this moment SSO is implemented via SAML and tested with ADFS.
+## JWT-based Authentication
+Apihub provides two JWT-based authentication approaches:
 
-## SSO via Saml
-![SSO auth flow](./sso_flow.png)
+### 1. HttpOnly Cookie Authentication
+An approach that stores tokens in HTTP-only cookies for enhanced security.
 
-Notes:
-* Apihub is using external authentication, but issuing its own Bearer token which is used for all requests to Apihub.
-* Attributes "User-Principal-Name", "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress" are mandatory in SAML response.
-* Attributes "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname", "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname", "thumbnailPhoto" are not mandatory, but expected in SAML response to fill the user profile.
+**Key characteristics**:
+  - Tokens stored in HttpOnly cookies: `apihub_access_token` and `apihub_refresh_token`
+  - Enhanced protection against XSS attacks through HttpOnly flag
+  - Seamless user experience with automatic token refresh mechanism
 
-In the result of successful IDP auth, user is synced to Apihub DB and bearer token is generated. The token validity period is limited to 12h, but it could be re-issued with corresponding refresh token.
-The bearer token is used for authentication/authorization, it should be passed in "Authorization" header for any API calls.  
+### 2. Bearer Token Authentication
+An approach that uses standard `Authorization: Bearer <token>` header.
+
+**Key characteristics**:
+  - Simple integration with standard API tools and libraries
+  - Suitable for scenarios where cookie-based auth is not preferred
+  - Manual token refresh required
+  - Requires additional security considerations for XSS protection
+
+### Token configuration
+You can configure token lifetimes using these environment variables:
+```properties
+JWT_ACCESS_TOKEN_DURATION_SEC=1800    # Access token duration in seconds (default: 30 minutes)
+JWT_REFRESH_TOKEN_DURATION_SEC=43200  # Refresh token duration in seconds (default: 12 hours)
+```
+### Automatic token refresh
+The system will automatically refresh your access token if:
+- The current access token expired.
+- You have a valid refresh token.
+- You make a request to login endpoint(`/api/v1/login/sso/{idpId}`) with `apihub_refresh_token` cookie.
+
+**Note**: automatic token refresh is only available when using HttpOnly cookie authentication. 
+If you're using Bearer token authentication, you'll need to issue a new access token manually.
+
+## External Identity Providers
+Apihub supports multiple external identity providers (IDPs) simultaneously, enabling flexible authentication strategies.
+
+### Supported protocols:
+1. SAML (tested with ADFS and Keycloak).
+2. OpenID Connect (OIDC) (tested with Keycloak).
+
+Each IDP can be configured independently with its own parameter set. The system allows for:
+- Multiple IDPs running simultaneously.
+- Different protocols (SAML/OIDC) working in parallel.
+
+In the result of successful IDP auth, a user is synced to Apihub DB and auth tokens are generated:
+- Access token with a configurable lifetime.
+- Refresh token for automatic token renewal.
+- All tokens are stored in HttpOnly cookies for enhanced security.
+
+**Note**: Apihub uses external authentication, but issues its own auth tokens stored in HttpOnly cookies. 
+The access token is used for authentication/authorization and should be passed in `apihub_access_token` cookie for any API calls.
 Library https://github.com/shaj13/go-guardian is used on the backend to issue and check JWT tokens.
+
+### SSO via SAML
+![SSO auth flow](./sso_saml_flow.png)
+
+**Notes**:
+* Attributes "User-Principal-Name", "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress" are mandatory in SAML response
+* Attributes "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname", "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname", "thumbnailPhoto" are not mandatory but expected in SAML response to fill the user profile
+* When setting up the SAML client in your Identity Provider, please note that Apihub uses a parameterized metadata endpoint `/api/v1/saml/{idpId}/metadata`
+
+### SSO via OIDC
+![SSO auth flow](./sso_oidc_flow.png)
+
+**Notes**:
+* The implementation uses the Authorization Code Flow with the following security measures:
+    - State parameter to prevent CSRF attacks.
+    - Nonce parameter to prevent replay attacks.
+    - PKCE (Proof Key for Code Exchange) to prevent authorization code interception.
+    - Strict redirect URI validation.
+* Client scopes `openid`, `profile`, `email` are mandatory.
+* Claims `sub` and `email` are mandatory in ID token.
+* Claims `name` and `picture` are not mandatory but expected in ID token to fill the user profile.
 
 ## Internal(local) user management
 Apihub supports local user management, but this functionality is disabled in production.  
@@ -25,7 +88,7 @@ Local login is supported via UI page("/login") and dedicated endpoint ("/api/v2/
 
 ## API keys
 API key is another auth method intended for some automation.
-Despite API key have "created by" and "created for" relations with users, it acts like a separate entity. 
+Despite API key have "created by" and "created for" relations with users, it acts like a separate entity.
 E.g. if some version was published with API key, it's "created by" property will point to the key, not to user.
 
 API key is bound to workspace/group/package/dashboard (see Data entities chapter), so it limit's the scope of the key.
@@ -36,7 +99,7 @@ However, system API keys exist as well, but it could be issued only by system ad
 PAT is equals to the bearer token when we talk about the permissions and user representation, but it have different properties in terms of TTL. Lifetime is configurable on creation and could be unlimited.  
 PAT is intended for personal automation, for example for Qubership APIHUB VS Code extension ( https://github.com/Netcracker/qubership-apihub-vscode ).  
 It's possible to delete a token.  
-There's a limit for 100 PAT per user in the system.  
+There's a limit for 100 PAT per user in the system.
 
 # Authorization
 ## Data entities
@@ -79,7 +142,7 @@ flowchart LR
 User have a set of roles for particular entity.  
 Role have a set of permissions.  
 Roles are defined system-wide by system administrators.  
-Roles have a hierarchy which limits privilege escalation. 
+Roles have a hierarchy which limits privilege escalation.
 
 Permission in required to execute some action like view content, publish version, create package, etc.
 
@@ -90,13 +153,13 @@ Default role for most entities is "Viewer", i.e. read only access.
 Permissions are hardcoded, i.e. it's not possible to modify permissions list via configuration.
 
 Available permissions:
-* read content of public packages	
-* create, update group/package	
-* delete group/package	
-* manage version in draft status	
-* manage version in release status	
-* manage version in archived status	
-* user access management	
+* read content of public packages
+* create, update group/package
+* delete group/package
+* manage version in draft status
+* manage version in release status
+* manage version in archived status
+* user access management
 * access token management
 
 ### Role management
@@ -128,9 +191,9 @@ The roles configuration provides flexibility to create required roles with requi
 ### Roles inheritance
 The assigned roles are inherited in the Workspace/group tree in a hierarchy approach approach.
 I.e. nested entities inherit access control configuration from the parents, but can add extra roles.  
-Inherited roles can't be revoked down the hierarchy.  
+Inherited roles can't be revoked down the hierarchy.
 
-So the final set of roles for a particular package/dashboard a calculated as as sum of roles in the parent groups and workspace plus package/dashboard roles.  
+So the final set of roles for a particular package/dashboard a calculated as as sum of roles in the parent groups and workspace plus package/dashboard roles.
 
 #### Example:
 Package tree contains the following hierarchy:
@@ -157,8 +220,8 @@ User may not assign a role higher than his own. (It's not used in default hierar
 Default roles Hierarchy:
 ![roles hierarchy](roles_hierarchy.png)
 
-#### Example:  
-* Create a role "Gatekeeper" with permission to manage user access only. Move it to the top of hierarchy.  
+#### Example:
+* Create a role "Gatekeeper" with permission to manage user access only. Move it to the top of hierarchy.
 * Add permission to manage roles to role "Editor".
 
 ![roles hierarchy example](roles_hierarchy_example.png)

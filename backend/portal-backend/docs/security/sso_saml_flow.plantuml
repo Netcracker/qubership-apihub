@@ -1,0 +1,46 @@
+@startuml
+
+title SSO(SAML) authentication in Apihub
+
+participant browser
+
+participant backend
+participant IDP
+
+browser -> backend: /api/v1/login/sso/{idpId}
+note over backend
+Generate authentication request
+end note
+backend -> browser: redirect to IDP URL with authentication request
+browser -> IDP: follow IDP URL
+IDP-> browser: login form
+
+note over browser
+User enters credentials and clicks login button.
+end note
+browser -> IDP: user credentials
+
+note over IDP
+Checks credentials and generates appropriate response
+end note
+IDP -> browser: redirect to backend /api/v1/saml/{idpId}/acs
+browser -> backend: /api/v1/saml/{idpId}/acs
+note over backend
+Parse IDP response and check the status.
+If case of success, extract username, email, avatar from the response.
+end note
+backend -> backend: Create or update corresponding user in Apihub DB.
+backend -> backend: Generate access and refresh tokens
+
+note over backend
+Set HttpOnly cookies:
+- apihub_access_token
+- apihub_refresh_token
+end note
+backend -> browser: redirect to the original URL or start page with the auth cookies
+
+note over browser
+Cookies will be automatically added to further requests to the corresponding domain.
+end note
+
+@enduml

@@ -1,0 +1,79 @@
+@startuml
+
+title SSO(OIDC) authentication in Apihub
+
+participant browser
+participant backend
+participant IDP
+participant "Avatar Storage" as storage
+
+browser -> backend: /api/v1/login/sso/{idpId}
+note over backend
+Generate authentication request
+end note
+
+backend -> browser: redirect to IDP URL with authentication request
+browser -> IDP: follow IDP URL
+IDP -> browser: redirect to login page
+
+note over browser
+User enters credentials and clicks login button
+end note
+
+browser -> IDP: submit credentials
+note over IDP
+Validates credentials and
+generates authorization code
+end note
+
+IDP -> browser: redirect to callback URL with code and state
+browser -> backend: /api/v1/oidc/{idpId}/callback
+
+note over backend
+Verify state parameter
+end note
+
+backend -> IDP: Exchange code for tokens using code_verifier
+IDP -> backend: ID token, access token, refresh token
+
+note over backend
+1. Verify ID token
+2. Verify nonce in ID token
+3. Get user info from ID token claims (id, email, name)
+end note
+
+alt Avatar URL in ID token claims
+    backend -> storage: request avatar image
+    storage --> backend: return avatar image
+    note over backend
+    If successful, store avatar.
+    If that fails, try to get it using the URL from UserInfo endpoint response
+    end note
+else UserInfo endpoint available
+    backend -> IDP: Request UserInfo
+    IDP -> backend: Return user profile (with picture claim)
+    alt If avatar URL exists in UserInfo and differs from the URL from claims
+        backend -> storage: request avatar image
+        storage --> backend: return avatar image
+        note left: If successful, store avatar
+    end
+end
+
+backend -> backend: Create or update user in Apihub DB
+backend -> backend: Generate Apihub tokens
+
+note over backend
+Set HttpOnly cookies:
+- apihub_access_token
+- apihub_refresh_token
+end note
+
+backend -> browser: redirect to original URL or start page
+
+note over browser
+Authenticated session established.
+Cookies will be automatically added to
+further requests to the corresponding domain.
+end note
+
+@enduml
