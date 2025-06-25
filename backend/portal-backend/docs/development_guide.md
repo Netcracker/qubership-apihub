@@ -82,16 +82,10 @@ Example:
 
 # Pull requests
 ## Title
-PR title should contain issue id, otherwise it couldn't be merged by rules.  
-The title should be in the following format: `ISSUE-ID Changes short summary`
-
+Should follow [conventional commits naming](https://www.conventionalcommits.org/en/v1.0.0/#summary)
 
 ## Merge options
 It's recommended to delete dev branch after merge and squash commits to get clean develop/main branches history.
-
-So both checkboxes should be checked:
-* Delete source branch when merge request is accepted. 
-* **Squash commits when merge request is accepted.**
 
 ## Code review
 Everyone is welcome to the code reviews.
@@ -107,13 +101,16 @@ Everyone is welcome to the code reviews.
 # Demo
 At this moment we run demo every week. Every developer should prepare ready and in-progress(if's suitable and makes sense) stories for demonstration.
 The goal of demonstration is to collect the whole team's feedback.
+
 ## Introduction
 Demo listeners need to understand the context of presented story.
 What is the business goal(epic) and how it's transformed into implemented changes.
 Or answer the question: "why the change is required, which purpose it serves?".
 It's going to be great if you'll describe the background of the problem. You may ask dev lead or BA team for details if required.
+
 ## Demonstration
 Live process demonstration is preferred. But if it's not possible, you can show the final result or a set of screenshots/presentation.
+
 ## Questions
 Try to answer all questions.
 
@@ -143,3 +140,13 @@ baseline package - a package that contains release versions and compared to snap
 BWC - BackWard Compatibility / BackWard Compatible, an API that is supposed to be backward compatible, i.e. contain no breaking changes between releases.
 
 TODO: append
+
+# Local development tricks
+
+## Logs to file
+
+After https://github.com/Netcracker/qubership-apihub-backend/pull/132/files backend doesn;t write logs if run from IDE.
+
+You must set `LOG_FILE_PATH=/logs/apihub.log` or any other path to log file. Root directory must be `rwx` for owner of the process.
+
+By default logs will be written only to `os.Stdout`

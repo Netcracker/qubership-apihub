@@ -17,11 +17,12 @@ package service
 import (
 	"crypto/sha256"
 	"fmt"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
+	"github.com/go-ldap/ldap"
 	"net/http"
 	"strconv"
 	"strings"
-
-	"github.com/go-ldap/ldap"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
@@ -40,20 +41,22 @@ type UserService interface {
 	GetUsersEmailMap(emails []string) (map[string]view.User, error)
 	GetUserFromDB(userId string) (*view.User, error)
 	GetUserByEmail(email string) (*view.User, error)
-	GetOrCreateUserForIntegration(user view.User, integration view.ExternalIntegration) (*view.User, error)
+	GetOrCreateUserForIntegration(user view.User, integration view.ExternalIntegration, providerId string) (*view.User, error)
 	CreateInternalUser(internalUser *view.InternalUser) (*view.User, error)
 	StoreUserAvatar(id string, avatar []byte) error
 	GetUserAvatar(userId string) (*view.UserAvatar, error)
 	AuthenticateUser(email string, password string) (*view.User, error)
 	SearchUsersInLdap(ldapSearch view.LdapSearchFilterReq, withAvatars bool) (*view.LdapUsers, error)
+	GetExtendedUser(ctx context.SecurityContext) (*view.ExtendedUser, error)
 }
 
-func NewUserService(repo repository.UserRepository, gitClientProvider GitClientProvider, systemInfoService SystemInfoService, privateUserPackageService PrivateUserPackageService) UserService {
+func NewUserService(repo repository.UserRepository, gitClientProvider GitClientProvider, systemInfoService SystemInfoService, privateUserPackageService PrivateUserPackageService, integrationService IntegrationsService) UserService {
 	return &usersServiceImpl{
 		repo:                      repo,
 		gitClientProvider:         gitClientProvider,
 		systemInfoService:         systemInfoService,
 		privateUserPackageService: privateUserPackageService,
+		integrationService:        integrationService,
 	}
 }
 
@@ -62,6 +65,7 @@ type usersServiceImpl struct {
 	gitClientProvider         GitClientProvider
 	systemInfoService         SystemInfoService
 	privateUserPackageService PrivateUserPackageService
+	integrationService        IntegrationsService
 }
 
 func (u usersServiceImpl) saveUserAvatar(userAvatar *view.UserAvatar) error {
@@ -311,7 +315,7 @@ func (u usersServiceImpl) GetUserByEmail(email string) (*view.User, error) {
 	return nil, nil
 }
 
-func (u usersServiceImpl) GetOrCreateUserForIntegration(externalUser view.User, integration view.ExternalIntegration) (*view.User, error) {
+func (u usersServiceImpl) GetOrCreateUserForIntegration(externalUser view.User, integration view.ExternalIntegration, providerId string) (*view.User, error) {
 	if externalUser.Email == "" {
 		return nil, &exception.CustomError{
 			Status:  http.StatusBadRequest,
@@ -324,19 +328,19 @@ func (u usersServiceImpl) GetOrCreateUserForIntegration(externalUser view.User, 
 	if externalId == "" {
 		return nil, fmt.Errorf("external id is missing for user in '%v' integration", integration)
 	}
-	externalIdentity, err := u.repo.GetUserExternalIdentity(string(integration), externalId)
+	externalIdentity, err := u.repo.GetUserExternalIdentity(string(integration), providerId, externalId)
 	if err != nil {
 		return nil, err
 	}
 	if externalIdentity == nil {
-		return u.createExternalUser(externalUser, integration)
+		return u.createExternalUser(externalUser, integration, providerId)
 	}
 	userEnt, err := u.repo.GetUserById(externalIdentity.InternalId)
 	if err != nil {
 		return nil, err
 	}
 	if userEnt == nil {
-		return u.createExternalUser(externalUser, integration)
+		return u.createExternalUser(externalUser, integration, providerId)
 	}
 	if len(userEnt.Password) != 0 {
 		err = u.repo.ClearUserPassword(userEnt.Id)
@@ -352,7 +356,7 @@ func (u usersServiceImpl) GetOrCreateUserForIntegration(externalUser view.User, 
 	return entity.MakeUserView(userEnt), nil
 }
 
-func (u usersServiceImpl) createExternalUser(externalUser view.User, integration view.ExternalIntegration) (*view.User, error) {
+func (u usersServiceImpl) createExternalUser(externalUser view.User, integration view.ExternalIntegration, providerId string) (*view.User, error) {
 	externalId := view.GetIntegrationExternalId(externalUser, integration)
 	if externalId == "" {
 		return nil, fmt.Errorf("external id is missing for user in %v integration", integration)
@@ -362,7 +366,7 @@ func (u usersServiceImpl) createExternalUser(externalUser view.User, integration
 		return nil, err
 	}
 	if existingUser != nil {
-		err = u.repo.UpdateUserExternalIdentity(string(integration), externalId, existingUser.Id)
+		err = u.repo.UpdateUserExternalIdentity(string(integration), providerId, externalId, existingUser.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -393,7 +397,7 @@ func (u usersServiceImpl) createExternalUser(externalUser view.User, integration
 		externalUser.Name = externalUser.Email
 	}
 
-	err = u.saveExternalUserToDB(&externalUser, integration, externalId)
+	err = u.saveExternalUserToDB(&externalUser, integration, providerId, externalId)
 	if err != nil {
 		return nil, err
 	}
@@ -420,13 +424,13 @@ func (u usersServiceImpl) updateExternalUserInfo(existingUser *entity.UserEntity
 	return existingUser, nil
 }
 
-func (u usersServiceImpl) saveExternalUserToDB(user *view.User, integration view.ExternalIntegration, externalId string) error {
+func (u usersServiceImpl) saveExternalUserToDB(user *view.User, integration view.ExternalIntegration, providerId string, externalId string) error {
 	userPrivatePackageId, err := u.privateUserPackageService.GenerateUserPrivatePackageId(user.Id)
 	if err != nil {
 		return err
 	}
 	userEntity := entity.MakeExternalUserEntity(user, userPrivatePackageId)
-	externalIdentityEnt := &entity.ExternalIdentityEntity{Provider: string(integration), InternalId: user.Id, ExternalId: externalId}
+	externalIdentityEnt := &entity.ExternalIdentityEntity{Provider: string(integration), ProviderId: providerId, InternalId: user.Id, ExternalId: externalId}
 	return u.repo.SaveExternalUser(userEntity, externalIdentityEnt)
 }
 
@@ -551,6 +555,31 @@ func (u usersServiceImpl) AuthenticateUser(email string, password string) (*view
 	}
 
 	return entity.MakeUserView(userEntity), nil
+}
+
+func (u usersServiceImpl) GetExtendedUser(ctx context.SecurityContext) (*view.ExtendedUser, error) {
+	userId := ctx.GetUserId()
+	userEntity, err := u.repo.GetUserById(userId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from DB: %v", err)
+	}
+	if userEntity != nil {
+		apiKeyStatus, err := u.integrationService.GetUserApiKeyStatus(view.GitlabIntegration, userId)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check gitlab integration status: %v", err)
+		}
+		gitIntegrationStatus := false
+		if apiKeyStatus.Status == ApiKeyStatusPresent {
+			gitIntegrationStatus = true
+		}
+		var ttlSeconds *int
+		if ctx.GetTokenExpirationTimestamp() > 0 {
+			remainingSeconds := int(utils.GetRemainingSeconds(ctx.GetTokenExpirationTimestamp()))
+			ttlSeconds = &remainingSeconds
+		}
+		return entity.MakeExtendedUserView(userEntity, gitIntegrationStatus, ctx.GetUserSystemRole(), ttlSeconds), nil
+	}
+	return nil, nil
 }
 
 func createBcryptHashedPassword(password string) ([]byte, error) {

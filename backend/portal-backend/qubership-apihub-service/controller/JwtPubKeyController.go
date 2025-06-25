@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package security
+package controller
 
 import (
-	"net/http"
-
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/controller"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
+	"net/http"
 )
 
 type JwtPubKeyController interface {
@@ -33,9 +33,9 @@ type jwtPubKeyControllerImpl struct {
 }
 
 func (t jwtPubKeyControllerImpl) GetRsaPublicKey(w http.ResponseWriter, r *http.Request) {
-	key := GetPublicKey()
+	key := security.GetPublicKey()
 	if key == nil {
-		controller.RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Message: "public key not found",
 		})

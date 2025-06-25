@@ -15,6 +15,7 @@
 package controller
 
 import (
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"net/http"
 
 	mservice "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/service"
@@ -37,10 +38,10 @@ type systemInfoControllerImpl struct {
 func (g systemInfoControllerImpl) GetSystemInfo(w http.ResponseWriter, r *http.Request) {
 	migrationInProgress, err := g.migrationService.IsMigrationInProgress()
 	if err != nil {
-		RespondWithError(w, "Failed to check if migration is currently in progress", err)
+		utils.RespondWithError(w, "Failed to check if migration is currently in progress", err)
 		return
 	}
 	systemInfo := g.service.GetSystemInfo()
 	systemInfo.MigrationInProgress = migrationInProgress
-	RespondWithJson(w, http.StatusOK, systemInfo)
+	utils.RespondWithJson(w, http.StatusOK, systemInfo)
 }

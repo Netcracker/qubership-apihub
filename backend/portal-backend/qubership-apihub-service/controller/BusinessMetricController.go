@@ -16,6 +16,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"net/http"
 	"strconv"
 
@@ -49,7 +50,7 @@ func (b businessMetricControllerImpl) GetBusinessMetrics(w http.ResponseWriter, 
 	ctx := context.Create(r)
 	sufficientPrivileges := b.isSysadm(ctx)
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -62,7 +63,7 @@ func (b businessMetricControllerImpl) GetBusinessMetrics(w http.ResponseWriter, 
 	if r.URL.Query().Get("hierarchyLevel") != "" {
 		hierarchyLevel, err = strconv.Atoi(r.URL.Query().Get("hierarchyLevel"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -78,17 +79,17 @@ func (b businessMetricControllerImpl) GetBusinessMetrics(w http.ResponseWriter, 
 	}
 	businessMetrics, err := b.businessMetricService.GetBusinessMetrics(parentPackageId, hierarchyLevel)
 	if err != nil {
-		RespondWithError(w, "Failed to get business metrics", err)
+		utils.RespondWithError(w, "Failed to get business metrics", err)
 		return
 	}
 	switch format {
 	case view.ExportFormatJson:
-		RespondWithJson(w, http.StatusOK, businessMetrics)
+		utils.RespondWithJson(w, http.StatusOK, businessMetrics)
 		return
 	case view.ExportFormatXlsx:
 		report, filename, err := b.excelService.ExportBusinessMetrics(businessMetrics)
 		if err != nil {
-			RespondWithError(w, "Failed to export business metrics as xlsx", err)
+			utils.RespondWithError(w, "Failed to export business metrics as xlsx", err)
 			return
 		}
 		w.Header().Set("Content-Type", "application/octet-stream")

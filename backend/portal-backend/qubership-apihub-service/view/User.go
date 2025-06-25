@@ -21,6 +21,13 @@ type User struct {
 	AvatarUrl string `json:"avatarUrl"`
 }
 
+type ExtendedUser struct {
+	User
+	GitIntegrationStatus  bool   `json:"gitIntegrationStatus"`
+	SystemRole            string `json:"systemRole"`
+	AccessTokenTTLSeconds *int   `json:"accessTokenTTLSeconds,omitempty"`
+}
+
 type UserAvatar struct {
 	Id       string
 	Avatar   []byte

@@ -16,6 +16,7 @@ package controller
 
 import (
 	"encoding/json"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -56,7 +57,7 @@ func (c fileWSControllerImpl) ConnectToFile(w http.ResponseWriter, r *http.Reque
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -67,7 +68,7 @@ func (c fileWSControllerImpl) ConnectToFile(w http.ResponseWriter, r *http.Reque
 	}
 	fileId, err := getUnescapedStringParam(r, "fileId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -79,7 +80,7 @@ func (c fileWSControllerImpl) ConnectToFile(w http.ResponseWriter, r *http.Reque
 
 	srv, err := c.wsLoadBalancer.SelectWsServer(projectId, branchName, fileId)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.UnableToSelectWsServer,
 			Message: exception.UnableToSelectWsServerMsg,
@@ -94,7 +95,7 @@ func (c fileWSControllerImpl) ConnectToFile(w http.ResponseWriter, r *http.Reque
 	}
 	websocket, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.ConnectionNotUpgraded,
 			Message: exception.ConnectionNotUpgradedMsg,
@@ -135,7 +136,7 @@ func (c fileWSControllerImpl) TestGetWebsocketClientMessages(w http.ResponseWrit
 	fileId := url.PathEscape(r.URL.Query().Get("fileId"))
 
 	messages := c.internalWebsocketService.GetFileSessionLogs(projectId, branchName, fileId)
-	RespondWithJson(w, http.StatusOK, messages)
+	utils.RespondWithJson(w, http.StatusOK, messages)
 }
 
 func (c fileWSControllerImpl) TestSendMessageToWebsocket(w http.ResponseWriter, r *http.Request) {
@@ -147,7 +148,7 @@ func (c fileWSControllerImpl) TestSendMessageToWebsocket(w http.ResponseWriter, 
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -158,7 +159,7 @@ func (c fileWSControllerImpl) TestSendMessageToWebsocket(w http.ResponseWriter, 
 	var message interface{}
 	err = json.Unmarshal(body, &message)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,

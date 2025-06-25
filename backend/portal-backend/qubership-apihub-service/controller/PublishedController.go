@@ -16,6 +16,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"net/http"
 	"net/url"
 
@@ -55,7 +56,7 @@ func (v publishControllerImpl) GetVersion(w http.ResponseWriter, r *http.Request
 	packageId := getStringParam(r, "packageId")
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -71,23 +72,23 @@ func (v publishControllerImpl) GetVersion(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		log.Error("Failed to get package version: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get package version",
 				Debug:   err.Error()})
 		}
 		return
 	}
-	RespondWithJson(w, http.StatusOK, version)
+	utils.RespondWithJson(w, http.StatusOK, version)
 }
 
 func (v publishControllerImpl) GetVersionSources(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -100,9 +101,9 @@ func (v publishControllerImpl) GetVersionSources(w http.ResponseWriter, r *http.
 	if err != nil {
 		log.Error("Failed to get package version sources: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get package version sources",
 				Debug:   err.Error()})
@@ -119,7 +120,7 @@ func (v publishControllerImpl) GetPublishedVersionSourceDataConfig(w http.Respon
 	packageId := getStringParam(r, "packageId")
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -132,9 +133,9 @@ func (v publishControllerImpl) GetPublishedVersionSourceDataConfig(w http.Respon
 	if err != nil {
 		log.Error("Failed to get package version sources: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get package version sources",
 				Debug:   err.Error()})
@@ -142,14 +143,14 @@ func (v publishControllerImpl) GetPublishedVersionSourceDataConfig(w http.Respon
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, publishedVersionSourceDataConfig)
+	utils.RespondWithJson(w, http.StatusOK, publishedVersionSourceDataConfig)
 }
 
 func (v publishControllerImpl) GetPublishedVersionBuildConfig(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -163,9 +164,9 @@ func (v publishControllerImpl) GetPublishedVersionBuildConfig(w http.ResponseWri
 	if err != nil {
 		log.Error("Failed to get package version build config: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get package version build config",
 				Debug:   err.Error()})
@@ -173,7 +174,7 @@ func (v publishControllerImpl) GetPublishedVersionBuildConfig(w http.ResponseWri
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, publishedVersionBuildConfig)
+	utils.RespondWithJson(w, http.StatusOK, publishedVersionBuildConfig)
 }
 
 func (v publishControllerImpl) GetSharedContentFile(w http.ResponseWriter, r *http.Request) {
@@ -183,9 +184,9 @@ func (v publishControllerImpl) GetSharedContentFile(w http.ResponseWriter, r *ht
 	if err != nil {
 		log.Error("Failed to get published content by shared ID: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get published content by shared ID",
 				Debug:   err.Error()})
@@ -201,7 +202,7 @@ func (v publishControllerImpl) SharePublishedFile(w http.ResponseWriter, r *http
 	packageId := getStringParam(r, "packageId")
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -212,7 +213,7 @@ func (v publishControllerImpl) SharePublishedFile(w http.ResponseWriter, r *http
 	}
 	fileSlug, err := url.QueryUnescape(getStringParam(r, "fileSlug"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -226,23 +227,23 @@ func (v publishControllerImpl) SharePublishedFile(w http.ResponseWriter, r *http
 	if err != nil {
 		log.Error("Failed to create shared URL for content: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to create shared URL for content",
 				Debug:   err.Error()})
 		}
 		return
 	}
-	RespondWithJson(w, http.StatusOK, sharedUrlInfo)
+	utils.RespondWithJson(w, http.StatusOK, sharedUrlInfo)
 }
 
 func (v publishControllerImpl) GenerateFileDocumentation(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -263,9 +264,9 @@ func (v publishControllerImpl) GenerateFileDocumentation(w http.ResponseWriter, 
 		if err != nil {
 			log.Error("Failed to generate interactive HTML page for file ", packageId+":"+versionName+":"+slug, " ", err.Error())
 			if customError, ok := err.(*exception.CustomError); ok {
-				RespondWithCustomError(w, customError)
+				utils.RespondWithCustomError(w, customError)
 			} else {
-				RespondWithCustomError(w, &exception.CustomError{
+				utils.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusInternalServerError,
 					Message: "Failed to generate interactive HTML page for file",
 					Debug:   err.Error()})
@@ -280,9 +281,9 @@ func (v publishControllerImpl) GenerateFileDocumentation(w http.ResponseWriter, 
 		if err != nil {
 			log.Error("Failed to get published content as file: ", err.Error())
 			if customError, ok := err.(*exception.CustomError); ok {
-				RespondWithCustomError(w, customError)
+				utils.RespondWithCustomError(w, customError)
 			} else {
-				RespondWithCustomError(w, &exception.CustomError{
+				utils.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusInternalServerError,
 					Message: "Failed to get published content as file",
 					Debug:   err.Error()})
@@ -294,7 +295,7 @@ func (v publishControllerImpl) GenerateFileDocumentation(w http.ResponseWriter, 
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%v", content.Name))
 
 	case view.DTPdf, view.DTStatic:
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotImplemented,
 			Message: "Document type " + string(docType) + " is not supported yet"})
 		return
@@ -308,7 +309,7 @@ func (v publishControllerImpl) GenerateVersionDocumentation(w http.ResponseWrite
 	packageId := getStringParam(r, "packageId")
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -329,9 +330,9 @@ func (v publishControllerImpl) GenerateVersionDocumentation(w http.ResponseWrite
 		if err != nil {
 			log.Error("Failed to generate interactive HTML page for version ", packageId+":"+versionName, " ", err.Error())
 			if customError, ok := err.(*exception.CustomError); ok {
-				RespondWithCustomError(w, customError)
+				utils.RespondWithCustomError(w, customError)
 			} else {
-				RespondWithCustomError(w, &exception.CustomError{
+				utils.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusInternalServerError,
 					Message: "Failed to generate interactive HTML page for version",
 					Debug:   err.Error()})
@@ -343,13 +344,13 @@ func (v publishControllerImpl) GenerateVersionDocumentation(w http.ResponseWrite
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%v", filename))
 
 	case view.DTRaw:
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Message: "Document type " + string(docType) + " is not applicable for version"})
 		return
 
 	case view.DTPdf, view.DTStatic:
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotImplemented,
 			Message: "Document type " + string(docType) + " is not supported yet"})
 		return

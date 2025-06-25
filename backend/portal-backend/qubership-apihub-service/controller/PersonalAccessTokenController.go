@@ -46,7 +46,7 @@ func (u PersonalAccessTokenControllerImpl) CreatePAT(w http.ResponseWriter, r *h
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -57,7 +57,7 @@ func (u PersonalAccessTokenControllerImpl) CreatePAT(w http.ResponseWriter, r *h
 	var req view.PersonalAccessTokenCreateRequest
 	err = json.Unmarshal(body, &req)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -69,7 +69,7 @@ func (u PersonalAccessTokenControllerImpl) CreatePAT(w http.ResponseWriter, r *h
 	if validationErr != nil {
 		var customError *exception.CustomError
 		if errors.As(validationErr, &customError) {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 			return
 		}
 	}
@@ -78,22 +78,22 @@ func (u PersonalAccessTokenControllerImpl) CreatePAT(w http.ResponseWriter, r *h
 
 	resp, err := u.svc.CreatePAT(ctx, req)
 	if err != nil {
-		RespondWithError(w, "Failed to create personal access token", err)
+		utils.RespondWithError(w, "Failed to create personal access token", err)
 		return
 	}
 	// TODO: do we need business metric for PATs?
 
-	RespondWithJson(w, http.StatusCreated, resp)
+	utils.RespondWithJson(w, http.StatusCreated, resp)
 }
 
 func (u PersonalAccessTokenControllerImpl) ListPATs(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Create(r)
 	result, err := u.svc.ListPATs(ctx.GetUserId())
 	if err != nil {
-		RespondWithError(w, "Failed to list personal access tokens", err)
+		utils.RespondWithError(w, "Failed to list personal access tokens", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, result)
+	utils.RespondWithJson(w, http.StatusOK, result)
 }
 
 func (u PersonalAccessTokenControllerImpl) DeletePAT(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +101,7 @@ func (u PersonalAccessTokenControllerImpl) DeletePAT(w http.ResponseWriter, r *h
 	ctx := context.Create(r)
 	err := u.svc.DeletePAT(ctx, id)
 	if err != nil {
-		RespondWithError(w, "Failed to delete personal access token", err)
+		utils.RespondWithError(w, "Failed to delete personal access token", err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

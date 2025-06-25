@@ -46,7 +46,7 @@ func (a sysAdminControllerImpl) GetSystemAdministrators(w http.ResponseWriter, r
 	ctx := context.Create(r)
 	sufficientPrivileges := a.roleService.IsSysadm(ctx)
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -55,17 +55,17 @@ func (a sysAdminControllerImpl) GetSystemAdministrators(w http.ResponseWriter, r
 	}
 	admins, err := a.roleService.GetSystemAdministrators()
 	if err != nil {
-		RespondWithError(w, "Failed to get system administrators", err)
+		utils.RespondWithError(w, "Failed to get system administrators", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, admins)
+	utils.RespondWithJson(w, http.StatusOK, admins)
 }
 
 func (a sysAdminControllerImpl) AddSystemAdministrator(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Create(r)
 	sufficientPrivileges := a.roleService.IsSysadm(ctx)
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -75,7 +75,7 @@ func (a sysAdminControllerImpl) AddSystemAdministrator(w http.ResponseWriter, r 
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -86,7 +86,7 @@ func (a sysAdminControllerImpl) AddSystemAdministrator(w http.ResponseWriter, r 
 	var addSysadmReq view.AddSysadmReq
 	err = json.Unmarshal(body, &addSysadmReq)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -97,17 +97,17 @@ func (a sysAdminControllerImpl) AddSystemAdministrator(w http.ResponseWriter, r 
 	validationErr := utils.ValidateObject(addSysadmReq)
 	if validationErr != nil {
 		if customError, ok := validationErr.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 			return
 		}
 	}
 
 	admins, err := a.roleService.AddSystemAdministrator(addSysadmReq.UserId)
 	if err != nil {
-		RespondWithError(w, "Failed to add system administrator", err)
+		utils.RespondWithError(w, "Failed to add system administrator", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, admins)
+	utils.RespondWithJson(w, http.StatusOK, admins)
 }
 
 func (a sysAdminControllerImpl) DeleteSystemAdministrator(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +115,7 @@ func (a sysAdminControllerImpl) DeleteSystemAdministrator(w http.ResponseWriter,
 	ctx := context.Create(r)
 	sufficientPrivileges := a.roleService.IsSysadm(ctx)
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -124,7 +124,7 @@ func (a sysAdminControllerImpl) DeleteSystemAdministrator(w http.ResponseWriter,
 	}
 	err := a.roleService.DeleteSystemAdministrator(userId)
 	if err != nil {
-		RespondWithError(w, "Failed to delete system administrator", err)
+		utils.RespondWithError(w, "Failed to delete system administrator", err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

@@ -34,11 +34,11 @@ func (p packageExportConfigControllerImpl) GetConfig(w http.ResponseWriter, r *h
 
 	result, err := p.expConfSvc.GetConfig(packageId)
 	if err != nil {
-		RespondWithError(w, "Failed to get package export config", err)
+		utils.RespondWithError(w, "Failed to get package export config", err)
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, result)
+	utils.RespondWithJson(w, http.StatusOK, result)
 }
 
 func (p packageExportConfigControllerImpl) SetConfig(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +50,7 @@ func (p packageExportConfigControllerImpl) SetConfig(w http.ResponseWriter, r *h
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -61,7 +61,7 @@ func (p packageExportConfigControllerImpl) SetConfig(w http.ResponseWriter, r *h
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -72,7 +72,7 @@ func (p packageExportConfigControllerImpl) SetConfig(w http.ResponseWriter, r *h
 	var req view.PackageExportConfigUpdate
 	err = json.Unmarshal(body, &req)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -84,22 +84,22 @@ func (p packageExportConfigControllerImpl) SetConfig(w http.ResponseWriter, r *h
 	if validationErr != nil {
 		var customError *exception.CustomError
 		if errors.As(validationErr, &customError) {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 			return
 		}
 	}
 
 	err = p.expConfSvc.SetConfig(packageId, req.AllowedOasExtensions)
 	if err != nil {
-		RespondWithError(w, "Failed to update package export config", err)
+		utils.RespondWithError(w, "Failed to update package export config", err)
 		return
 	}
 
 	result, err := p.expConfSvc.GetConfig(packageId)
 	if err != nil {
-		RespondWithError(w, "Failed to get package export config after update", err)
+		utils.RespondWithError(w, "Failed to get package export config after update", err)
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, result)
+	utils.RespondWithJson(w, http.StatusOK, result)
 }

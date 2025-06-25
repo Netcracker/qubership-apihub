@@ -49,7 +49,7 @@ func (c refControllerImpl) UpdateRefs(w http.ResponseWriter, r *http.Request) {
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -61,7 +61,7 @@ func (c refControllerImpl) UpdateRefs(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -72,7 +72,7 @@ func (c refControllerImpl) UpdateRefs(w http.ResponseWriter, r *http.Request) {
 	var refPatch view.RefPatch
 	err = json.Unmarshal(body, &refPatch)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -83,7 +83,7 @@ func (c refControllerImpl) UpdateRefs(w http.ResponseWriter, r *http.Request) {
 	validationErr := utils.ValidateObject(refPatch)
 	if validationErr != nil {
 		if customError, ok := validationErr.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 			return
 		}
 	}
@@ -92,10 +92,10 @@ func (c refControllerImpl) UpdateRefs(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error("Failed to update refs: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
 			c.wsBranchService.DisconnectClients(projectId, branchName)
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to update refs",
 				Debug:   err.Error()})

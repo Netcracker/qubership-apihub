@@ -63,7 +63,7 @@ func (u userRepositoryImpl) SaveExternalUser(userEntity *entity.UserEntity, exte
 			return err
 		}
 		_, err = tx.Model(externalIdentity).
-			OnConflict("(provider, external_id) DO UPDATE").
+			OnConflict("(provider, provider_id, external_id) DO UPDATE").
 			Insert()
 		return err
 	})
@@ -180,10 +180,11 @@ func (u userRepositoryImpl) GetUsersByEmails(emails []string) ([]entity.UserEnti
 	return result, nil
 }
 
-func (u userRepositoryImpl) GetUserExternalIdentity(provider string, externalId string) (*entity.ExternalIdentityEntity, error) {
+func (u userRepositoryImpl) GetUserExternalIdentity(providerType string, providerId string, externalId string) (*entity.ExternalIdentityEntity, error) {
 	result := new(entity.ExternalIdentityEntity)
 	err := u.cp.GetConnection().Model(result).
-		Where("provider = ?", provider).
+		Where("provider = ?", providerType).
+		Where("provider_id = ?", providerId).
 		Where("external_id = ?", externalId).
 		First()
 	if err != nil {
@@ -222,10 +223,10 @@ func (u userRepositoryImpl) ClearUserPassword(userId string) error {
 	return err
 }
 
-func (u userRepositoryImpl) UpdateUserExternalIdentity(provider string, externalId string, internalId string) error {
-	entity := entity.ExternalIdentityEntity{Provider: provider, ExternalId: externalId, InternalId: internalId}
+func (u userRepositoryImpl) UpdateUserExternalIdentity(providerType string, providerId string, externalId string, internalId string) error {
+	entity := entity.ExternalIdentityEntity{Provider: providerType, ProviderId: providerId, ExternalId: externalId, InternalId: internalId}
 	_, err := u.cp.GetConnection().Model(&entity).
-		OnConflict("(provider, external_id) DO UPDATE").
+		OnConflict("(provider, provider_id, external_id) DO UPDATE").
 		Insert()
 	return err
 }

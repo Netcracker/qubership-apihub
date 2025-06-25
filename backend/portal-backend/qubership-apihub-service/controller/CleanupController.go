@@ -15,6 +15,7 @@
 package controller
 
 import (
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"net/http"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
@@ -39,7 +40,7 @@ type cleanupControllerImpl struct {
 func (c cleanupControllerImpl) ClearTestData(w http.ResponseWriter, r *http.Request) {
 	testId, err := getUnescapedStringParam(r, "testId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -52,9 +53,9 @@ func (c cleanupControllerImpl) ClearTestData(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		log.Error("Failed to clear test data: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to clear test data",
 				Debug:   err.Error()})

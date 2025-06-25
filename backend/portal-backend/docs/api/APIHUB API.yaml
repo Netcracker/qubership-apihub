@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: APIHUB BE API contract
   description: >
-    The API contract for APIHUB UI and APIDOC UI. 
+    The API contract for APIHUB UI and APIDOC UI.
 
     You can find more information about the project at [DOC
     page](url: https://qubership.org/APIHUB).
@@ -1501,7 +1501,7 @@ paths:
         - Export
       summary: Export offline API documentation by selected file
       description: |
-        Export of offline API documentation by selected file as a zip archive. 
+        Export of offline API documentation by selected file as a zip archive.
         Type of the documentation file is provided as input parameters:
         - STATIC/INTERACTIVE - html document.
         - PDF - pdf document.
@@ -1566,7 +1566,7 @@ paths:
         - Export
       summary: Export offline API documentation by whole version
       description: |
-        Export of offline API documentation as a zip archive. 
+        Export of offline API documentation as a zip archive.
         Type of the documentation file is provided as input parameters:
         - STATIC/INTERACTIVE - html document.
         - PDF - pdf document.
@@ -2763,7 +2763,7 @@ components:
         externalLinks:
           description: List of links to the external resource, for example URL to the documentation or URL pointing to the contact information of support group.
           type: array
-          items: 
+          items:
             description: |
               Title for the link and corresponding URL. Value must written in the following format <linkTitle>|<URL>. If array item does not contain vertical bar (|), then this item will be skipped.
             type: string
@@ -2980,6 +2980,11 @@ components:
       description: Common security scheme for API usage
       scheme: bearer
       bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      description: Authentication via the `apihub-access-token` cookie.
+      in: cookie
+      name: apihub-access-token
     api-key:
       type: apiKey
       description: Api-key authentication
@@ -3022,4 +3027,5 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
 security:
   - BearerAuth: []
+  - CookieAuth: []
   - api-key: []

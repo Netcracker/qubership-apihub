@@ -16,13 +16,13 @@ package view
 
 type ExternalIntegration string
 
-const ExternalSamlIntegration ExternalIntegration = "saml"
+const ExternalIdpIntegration ExternalIntegration = "idp"
 const ExternalGitlabIntegration ExternalIntegration = "gitlab"
 const ExternalLdapIntegration ExternalIntegration = "ldap"
 
 func GetIntegrationExternalId(user User, integration ExternalIntegration) string {
 	switch integration {
-	case ExternalSamlIntegration,
+	case ExternalIdpIntegration,
 		ExternalGitlabIntegration,
 		ExternalLdapIntegration:
 		return user.Id

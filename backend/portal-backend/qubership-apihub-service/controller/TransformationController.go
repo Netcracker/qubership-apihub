@@ -16,6 +16,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -49,11 +50,11 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 	ctx := context.Create(r)
 	sufficientPrivileges, err := t.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -62,7 +63,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -73,7 +74,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 	}
 	apiType, err := getUnescapedStringParam(r, "apiType")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -84,7 +85,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 	}
 	_, err = view.ParseApiType(apiType)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,
@@ -95,7 +96,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 	}
 	groupName, err := getUnescapedStringParam(r, "groupName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -107,11 +108,11 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 
 	exists, err := t.operationGroupService.CheckOperationGroupExists(packageId, versionName, apiType, groupName)
 	if err != nil {
-		RespondWithError(w, "Failed to check if operation group exists", err)
+		utils.RespondWithError(w, "Failed to check if operation group exists", err)
 		return
 	}
 	if !exists {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.OperationGroupNotFound,
 			Message: exception.OperationGroupNotFoundMsg,
@@ -122,7 +123,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 
 	builderId, err := url.QueryUnescape(r.URL.Query().Get("builderId"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -135,7 +136,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 	if r.URL.Query().Get("clientBuild") != "" {
 		clientBuild, err = strconv.ParseBool(r.URL.Query().Get("clientBuild"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -146,7 +147,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 		}
 	}
 	if clientBuild && builderId == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.RequiredParamsMissing,
 			Message: exception.RequiredParamsMissingMsg,
@@ -159,7 +160,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 	if r.URL.Query().Get("reCalculate") != "" {
 		reCalculate, err = strconv.ParseBool(r.URL.Query().Get("reCalculate"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -172,13 +173,13 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 
 	_, revision, err := service.SplitVersionRevision(versionName)
 	if err != nil {
-		RespondWithError(w, "Failed to split version revision", err)
+		utils.RespondWithError(w, "Failed to split version revision", err)
 		return
 	}
 	if revision == 0 {
 		latestRevision, err := t.versionService.GetLatestRevision(packageId, versionName)
 		if err != nil {
-			RespondWithError(w, "Failed to get version", err)
+			utils.RespondWithError(w, "Failed to get version", err)
 			return
 		}
 		versionName = fmt.Sprintf("%s@%d", versionName, latestRevision)
@@ -195,10 +196,10 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 	if reCalculate {
 		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 		if err != nil {
-			RespondWithError(w, "Failed to create documentGroup type build", err)
+			utils.RespondWithError(w, "Failed to create documentGroup type build", err)
 			return
 		}
-		RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
+		utils.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
 			PackageId: buildConfig.PackageId,
 			Version:   buildConfig.Version,
 			ApiType:   buildConfig.ApiType,
@@ -212,7 +213,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 
 	content, err := t.versionService.GetTransformedDocuments_deprecated(packageId, versionName, apiType, groupName, string(view.JsonDocumentFormat))
 	if err != nil {
-		RespondWithError(w, "Failed to get transformed documents", err)
+		utils.RespondWithError(w, "Failed to get transformed documents", err)
 		return
 	}
 	if content != nil {
@@ -235,10 +236,10 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 
 				buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 				if err != nil {
-					RespondWithError(w, "Failed to create documentGroup type build", err)
+					utils.RespondWithError(w, "Failed to create documentGroup type build", err)
 					return
 				}
-				RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
+				utils.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
 					PackageId: buildConfig.PackageId,
 					Version:   buildConfig.Version,
 					ApiType:   buildConfig.ApiType,
@@ -250,7 +251,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 				return
 			}
 		}
-		RespondWithError(w, "Failed to get buildStatus", err)
+		utils.RespondWithError(w, "Failed to get buildStatus", err)
 		return
 	}
 	switch buildView.Status {
@@ -259,14 +260,14 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 			Status:  string(view.StatusError),
 			Message: buildView.Details,
 		}
-		RespondWithJson(w, http.StatusAccepted, calculationProcessStatus)
+		utils.RespondWithJson(w, http.StatusAccepted, calculationProcessStatus)
 		return
 	case string(view.StatusComplete):
 		//this case is possible only if we have an old finished build for which we don't have a transformed documents (rebuild required)
 		//or if this build completed during this method execution (rebuild is not requried)
 		content, err := t.versionService.GetTransformedDocuments_deprecated(packageId, versionName, apiType, groupName, string(view.JsonDocumentFormat))
 		if err != nil {
-			RespondWithError(w, "Failed to get transformed documents", err)
+			utils.RespondWithError(w, "Failed to get transformed documents", err)
 			return
 		}
 		if content != nil {
@@ -275,10 +276,10 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 		}
 		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 		if err != nil {
-			RespondWithError(w, "Failed to create documentGroup type build", err)
+			utils.RespondWithError(w, "Failed to create documentGroup type build", err)
 			return
 		}
-		RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
+		utils.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
 			PackageId: buildConfig.PackageId,
 			Version:   buildConfig.Version,
 			ApiType:   buildConfig.ApiType,
@@ -292,7 +293,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated(w http.Respo
 		calculationProcessStatus = view.CalculationProcessStatus{
 			Status: string(view.StatusRunning),
 		}
-		RespondWithJson(w, http.StatusAccepted, calculationProcessStatus)
+		utils.RespondWithJson(w, http.StatusAccepted, calculationProcessStatus)
 		return
 	}
 }
@@ -302,11 +303,11 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	ctx := context.Create(r)
 	sufficientPrivileges, err := t.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -315,7 +316,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -326,7 +327,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	}
 	apiType, err := getUnescapedStringParam(r, "apiType")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -337,7 +338,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	}
 	_, err = view.ParseApiType(apiType)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,
@@ -348,7 +349,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	}
 	groupName, err := getUnescapedStringParam(r, "groupName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -359,7 +360,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	}
 	buildType, err := getUnescapedStringParam(r, "buildType")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -376,17 +377,17 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 
 	err = view.ValidateFormatForBuildType(buildType, format)
 	if err != nil {
-		RespondWithError(w, "buildType format validation failed", err)
+		utils.RespondWithError(w, "buildType format validation failed", err)
 		return
 	}
 
 	exists, err := t.operationGroupService.CheckOperationGroupExists(packageId, versionName, apiType, groupName)
 	if err != nil {
-		RespondWithError(w, "Failed to check if operation group exists", err)
+		utils.RespondWithError(w, "Failed to check if operation group exists", err)
 		return
 	}
 	if !exists {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.OperationGroupNotFound,
 			Message: exception.OperationGroupNotFoundMsg,
@@ -397,7 +398,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 
 	builderId, err := url.QueryUnescape(r.URL.Query().Get("builderId"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -410,7 +411,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	if r.URL.Query().Get("clientBuild") != "" {
 		clientBuild, err = strconv.ParseBool(r.URL.Query().Get("clientBuild"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -421,7 +422,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 		}
 	}
 	if clientBuild && builderId == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.RequiredParamsMissing,
 			Message: exception.RequiredParamsMissingMsg,
@@ -434,7 +435,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	if r.URL.Query().Get("reCalculate") != "" {
 		reCalculate, err = strconv.ParseBool(r.URL.Query().Get("reCalculate"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -447,13 +448,13 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 
 	_, revision, err := service.SplitVersionRevision(versionName)
 	if err != nil {
-		RespondWithError(w, "Failed to split version revision", err)
+		utils.RespondWithError(w, "Failed to split version revision", err)
 		return
 	}
 	if revision == 0 {
 		latestRevision, err := t.versionService.GetLatestRevision(packageId, versionName)
 		if err != nil {
-			RespondWithError(w, "Failed to get version", err)
+			utils.RespondWithError(w, "Failed to get version", err)
 			return
 		}
 		versionName = view.MakeVersionRefKey(versionName, latestRevision)
@@ -471,10 +472,10 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	if reCalculate {
 		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 		if err != nil {
-			RespondWithError(w, "Failed to create documentGroup type build", err)
+			utils.RespondWithError(w, "Failed to create documentGroup type build", err)
 			return
 		}
-		RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
+		utils.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
 			PackageId: buildConfig.PackageId,
 			Version:   buildConfig.Version,
 			ApiType:   buildConfig.ApiType,
@@ -489,7 +490,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 
 	content, err := t.versionService.GetTransformedDocuments(packageId, versionName, apiType, groupName, buildType, format)
 	if err != nil {
-		RespondWithError(w, "Failed to get transformed documents", err)
+		utils.RespondWithError(w, "Failed to get transformed documents", err)
 		return
 	}
 	if content != nil {
@@ -513,10 +514,10 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 
 				buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 				if err != nil {
-					RespondWithError(w, "Failed to create documentGroup type build", err)
+					utils.RespondWithError(w, "Failed to create documentGroup type build", err)
 					return
 				}
-				RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
+				utils.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
 					PackageId: buildConfig.PackageId,
 					Version:   buildConfig.Version,
 					ApiType:   buildConfig.ApiType,
@@ -529,7 +530,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 				return
 			}
 		}
-		RespondWithError(w, "Failed to get buildStatus", err)
+		utils.RespondWithError(w, "Failed to get buildStatus", err)
 		return
 	}
 	switch buildView.Status {
@@ -538,14 +539,14 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 			Status:  string(view.StatusError),
 			Message: buildView.Details,
 		}
-		RespondWithJson(w, http.StatusAccepted, calculationProcessStatus)
+		utils.RespondWithJson(w, http.StatusAccepted, calculationProcessStatus)
 		return
 	case string(view.StatusComplete):
 		//this case is possible only if we have an old finished build for which we don't have a transformed documents (rebuild required)
 		//or if this build completed during this method execution (rebuild is not requried)
 		content, err := t.versionService.GetTransformedDocuments(packageId, versionName, apiType, groupName, buildType, format)
 		if err != nil {
-			RespondWithError(w, "Failed to get transformed documents", err)
+			utils.RespondWithError(w, "Failed to get transformed documents", err)
 			return
 		}
 		if content != nil {
@@ -554,10 +555,10 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 		}
 		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
 		if err != nil {
-			RespondWithError(w, "Failed to create documentGroup type build", err)
+			utils.RespondWithError(w, "Failed to create documentGroup type build", err)
 			return
 		}
-		RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
+		utils.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
 			PackageId: buildConfig.PackageId,
 			Version:   buildConfig.Version,
 			ApiType:   buildConfig.ApiType,
@@ -572,7 +573,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 		calculationProcessStatus = view.CalculationProcessStatus{
 			Status: string(view.StatusRunning),
 		}
-		RespondWithJson(w, http.StatusAccepted, calculationProcessStatus)
+		utils.RespondWithJson(w, http.StatusAccepted, calculationProcessStatus)
 		return
 	}
 }
@@ -582,11 +583,11 @@ func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.R
 	ctx := context.Create(r)
 	sufficientPrivileges, err := t.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -595,7 +596,7 @@ func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.R
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -606,14 +607,14 @@ func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.R
 	}
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		RespondWithCustomError(w, customError)
+		utils.RespondWithCustomError(w, customError)
 		return
 	}
 	page := 0
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -625,7 +626,7 @@ func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.R
 	}
 	apiType, err := getUnescapedStringParam(r, "apiType")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -636,7 +637,7 @@ func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.R
 	}
 	_, err = view.ParseApiType(apiType)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,
@@ -647,7 +648,7 @@ func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.R
 	}
 	groupName, err := getUnescapedStringParam(r, "groupName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -666,8 +667,8 @@ func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.R
 
 	data, err := t.transformationService.GetDataForDocumentsTransformation(packageId, versionName, documentsForTransformationFilterReq)
 	if err != nil {
-		RespondWithError(w, "Failed to get version documents", err)
+		utils.RespondWithError(w, "Failed to get version documents", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, data)
+	utils.RespondWithJson(w, http.StatusOK, data)
 }

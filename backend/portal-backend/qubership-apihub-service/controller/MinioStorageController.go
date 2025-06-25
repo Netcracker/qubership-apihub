@@ -15,6 +15,7 @@
 package controller
 
 import (
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"net/http"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
@@ -41,7 +42,7 @@ type minioStorageControllerImpl struct {
 
 func (m minioStorageControllerImpl) DownloadFilesFromMinioToDatabase(w http.ResponseWriter, r *http.Request) {
 	if !m.minioCreds.IsActive {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusMethodNotAllowed,
 			Message: "Minio integration is inactive. Please check envs for configuration"})
 		return
@@ -50,9 +51,9 @@ func (m minioStorageControllerImpl) DownloadFilesFromMinioToDatabase(w http.Resp
 	if err != nil {
 		log.Error("Failed to download data from minio: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to download data from minio",
 				Debug:   err.Error()})

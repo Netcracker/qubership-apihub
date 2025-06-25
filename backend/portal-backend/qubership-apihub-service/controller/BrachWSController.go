@@ -16,6 +16,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"net/http"
 	"net/url"
 	"strings"
@@ -53,7 +54,7 @@ func (c branchWSControllerImpl) ConnectToProjectBranch(w http.ResponseWriter, r 
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -65,7 +66,7 @@ func (c branchWSControllerImpl) ConnectToProjectBranch(w http.ResponseWriter, r 
 
 	srv, err := c.wsLoadBalancer.SelectWsServer(projectId, branchName, "")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.UnableToSelectWsServer,
 			Message: exception.UnableToSelectWsServerMsg,
@@ -80,7 +81,7 @@ func (c branchWSControllerImpl) ConnectToProjectBranch(w http.ResponseWriter, r 
 	}
 	websocket, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.ConnectionNotUpgraded,
 			Message: exception.ConnectionNotUpgradedMsg,
@@ -110,7 +111,7 @@ func (c branchWSControllerImpl) ConnectToProjectBranch(w http.ResponseWriter, r 
 func (c branchWSControllerImpl) DebugSessionsLoadBalance(w http.ResponseWriter, r *http.Request) {
 	sessions, err := c.wsLoadBalancer.ListSessions()
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Message: "Failed to list websocket loadbalancer sessions",
 			Debug:   err.Error(),
@@ -120,7 +121,7 @@ func (c branchWSControllerImpl) DebugSessionsLoadBalance(w http.ResponseWriter, 
 
 	nodes, err := c.wsLoadBalancer.ListNodes()
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Message: "Failed to list websocket loadbalancer nodes",
 			Debug:   err.Error(),
@@ -132,7 +133,7 @@ func (c branchWSControllerImpl) DebugSessionsLoadBalance(w http.ResponseWriter, 
 
 	bindAddr := c.wsLoadBalancer.GetBindAddr()
 
-	RespondWithJson(w, http.StatusOK, debugResp{BindAddr: bindAddr, Sessions: sessions, Nodes: nodes, ForwardedSessions: forwardedSessions})
+	utils.RespondWithJson(w, http.StatusOK, debugResp{BindAddr: bindAddr, Sessions: sessions, Nodes: nodes, ForwardedSessions: forwardedSessions})
 }
 
 type debugResp struct {
@@ -156,5 +157,5 @@ func (c branchWSControllerImpl) TestGetWebsocketClientMessages(w http.ResponseWr
 	branchName := url.PathEscape(r.URL.Query().Get("branchName"))
 
 	messages := c.internalWebsocketService.GetBranchSessionLogs(projectId, branchName)
-	RespondWithJson(w, http.StatusOK, messages)
+	utils.RespondWithJson(w, http.StatusOK, messages)
 }

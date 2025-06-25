@@ -55,7 +55,7 @@ func (p projectControllerImpl) AddProject(w http.ResponseWriter, r *http.Request
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -66,7 +66,7 @@ func (p projectControllerImpl) AddProject(w http.ResponseWriter, r *http.Request
 	var project view.Project
 	err = json.Unmarshal(body, &project)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -79,9 +79,9 @@ func (p projectControllerImpl) AddProject(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		log.Error("Failed to add project: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to add project",
 				Debug:   err.Error()})
@@ -91,13 +91,13 @@ func (p projectControllerImpl) AddProject(w http.ResponseWriter, r *http.Request
 	validationErr := utils.ValidateObject(project)
 	if validationErr != nil {
 		if customError, ok := validationErr.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 			return
 		}
 	}
 
 	if !IsAcceptableAlias(project.Alias) {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.AliasContainsForbiddenChars,
 			Message: exception.AliasContainsForbiddenCharsMsg,
@@ -109,9 +109,9 @@ func (p projectControllerImpl) AddProject(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		log.Error("Failed to add project: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to add project",
 				Debug:   err.Error()})
@@ -119,7 +119,7 @@ func (p projectControllerImpl) AddProject(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	RespondWithJson(w, http.StatusCreated, resultProject)
+	utils.RespondWithJson(w, http.StatusCreated, resultProject)
 }
 
 func (p projectControllerImpl) GetProject(w http.ResponseWriter, r *http.Request) {
@@ -139,9 +139,9 @@ func (p projectControllerImpl) GetProject(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		log.Error("Failed to get project: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get project",
 				Debug:   err.Error()})
@@ -149,7 +149,7 @@ func (p projectControllerImpl) GetProject(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, project)
+	utils.RespondWithJson(w, http.StatusOK, project)
 }
 
 func (p projectControllerImpl) GetFilteredProjects(w http.ResponseWriter, r *http.Request) {
@@ -161,7 +161,7 @@ func (p projectControllerImpl) GetFilteredProjects(w http.ResponseWriter, r *htt
 	if onlyFavoriteStr != "" {
 		onlyFavorite, err = strconv.ParseBool(onlyFavoriteStr)
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -176,7 +176,7 @@ func (p projectControllerImpl) GetFilteredProjects(w http.ResponseWriter, r *htt
 	if onlyPublishedStr != "" {
 		onlyPublished, err = strconv.ParseBool(onlyPublishedStr)
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -188,14 +188,14 @@ func (p projectControllerImpl) GetFilteredProjects(w http.ResponseWriter, r *htt
 	}
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		RespondWithCustomError(w, customError)
+		utils.RespondWithCustomError(w, customError)
 		return
 	}
 	page := 0
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -213,16 +213,16 @@ func (p projectControllerImpl) GetFilteredProjects(w http.ResponseWriter, r *htt
 	if err != nil {
 		log.Error("Failed to get projects: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get projects",
 				Debug:   err.Error()})
 		}
 		return
 	}
-	RespondWithJson(w, http.StatusOK, filteredObjects)
+	utils.RespondWithJson(w, http.StatusOK, filteredObjects)
 }
 
 func (p projectControllerImpl) UpdateProject(w http.ResponseWriter, r *http.Request) {
@@ -231,7 +231,7 @@ func (p projectControllerImpl) UpdateProject(w http.ResponseWriter, r *http.Requ
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -243,7 +243,7 @@ func (p projectControllerImpl) UpdateProject(w http.ResponseWriter, r *http.Requ
 
 	err = json.Unmarshal(body, &newProject)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -257,9 +257,9 @@ func (p projectControllerImpl) UpdateProject(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		log.Errorf("Failed to update Project info: %s", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to update Project info",
 				Debug:   err.Error()})
@@ -267,7 +267,7 @@ func (p projectControllerImpl) UpdateProject(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, savedProject)
+	utils.RespondWithJson(w, http.StatusOK, savedProject)
 }
 
 func (p projectControllerImpl) DeleteProject(w http.ResponseWriter, r *http.Request) {
@@ -276,9 +276,9 @@ func (p projectControllerImpl) DeleteProject(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		log.Error("Failed to delete project: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to delete project",
 				Debug:   err.Error()})
@@ -295,9 +295,9 @@ func (p projectControllerImpl) FavorProject(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		log.Error("Failed to add project to favorites: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to add project to favorites",
 				Debug:   err.Error()})
@@ -314,9 +314,9 @@ func (p projectControllerImpl) DisfavorProject(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		log.Error("Failed to remove project from favorites: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to remove project from favorites",
 				Debug:   err.Error()})
