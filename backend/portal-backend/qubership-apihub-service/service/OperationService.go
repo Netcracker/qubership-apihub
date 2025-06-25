@@ -263,6 +263,12 @@ func parseTextFilterToCustomTagKeyValue(textFilter string) (string, string, erro
 		}
 		return strings.Split(textFilter, ": ")[0], strings.Split(textFilter, ": ")[1], nil
 	}
+
+	if strings.HasPrefix(textFilter, "x-") && strings.HasSuffix(textFilter, ":") {
+		tagKey := textFilter[:len(textFilter)-1]
+		return tagKey, "", nil
+	}
+
 	return "", "", nil
 }
 
