@@ -17,6 +17,9 @@ postgresql:
       CREATE USER keycloak WITH PASSWORD 'keycloak' CREATEDB INHERIT;
       CREATE DATABASE keycloak OWNER keycloak;
       GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
+      CREATE USER traffic_analyzer WITH PASSWORD 'traffic_analyzer' CREATEDB INHERIT;
+      CREATE DATABASE traffic_analyzer OWNER traffic_analyzer;
+      GRANT ALL PRIVILEGES ON DATABASE traffic_analyzer TO traffic_analyzer;
 
 persistence:
   enabled: true
