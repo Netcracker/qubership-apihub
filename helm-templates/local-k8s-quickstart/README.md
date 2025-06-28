@@ -149,7 +149,7 @@ One-liners:
 
 
 ## Verify Installation
-Check running pods: `kubectl get pods -n apihub`
+Check running pods: `kubectl get pods -n qubership-apihub`
 
 Expected output:
 
@@ -168,7 +168,7 @@ Credentials for login can be found in `./qubership-apihub/local-secrets.yaml` fi
 ## Uninstallation
 
 ```
-    helm uninstall apihub -n apihub
+    helm uninstall apihub -n qubership-apihub
     helm uninstall postgres-db -n postgres-db
 ```
 
@@ -233,7 +233,7 @@ In order to change APIHUB release modify `tag: 'dev'` for services to desired do
 Run the following command:
 
 ```
-helm install apihub -n apihub-2 --create-namespace -f ../qubership-apihub-2/local-k8s-values.yaml -f ../qubership-apihub-2/local-secrets.yaml ../../qubership-apihub
+helm install apihub -n qubership-apihub-2 --create-namespace -f ../qubership-apihub-2/local-k8s-values.yaml -f ../qubership-apihub-2/local-secrets.yaml ../../qubership-apihub
 ```
 
 **Done**

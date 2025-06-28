@@ -2,7 +2,7 @@
 set -eu
 
 # Namespace where your Deployments live
-NS="apihub"
+NS="qubership-apihub"
 
 # Ingress controller service info
 INGRESS_NS="ingress-nginx"
