@@ -147,11 +147,11 @@ Qubership APIHUB Helm Chart located here: [`helm-templates/qubership-apihub`](/h
 In order to deploy Qubership APIHUB to your k8s cluster execute the following command:
 
 ```
-helm install apihub -n apihub --create-namespace -f ./helm-templates/qubership-apihub/values.yaml ./helm-templates/qubership-apihub
+helm install apihub -n qubership-apihub --create-namespace -f ./helm-templates/qubership-apihub/values.yaml ./helm-templates/qubership-apihub
 ```
 
 In order to uninstall Qubership APIHUB from your k8s cluster execute the following command:
 
 ```
-helm uninstall apihub -n apihub
+helm uninstall apihub -n qubership-apihub
 ```
