@@ -1845,12 +1845,12 @@ func (p publishedRepositoryImpl) GetVersionsByPreviousVersion(previousPackageId 
                 on pv.package_id = mx.package_id
                 and pv.version = mx.version
                 and pv.revision = mx.revision
-			where pv.previous_version_package_id = ?
+			where (pv.previous_version_package_id = ? or (pv.package_id = ? and pv.previous_version_package_id is null))
 			and pv.previous_version = ?
 			and pv.deleted_at is null
 			order by pv.published_at desc
  `
-	_, err = p.cp.GetConnection().Query(&ents, query, previousPackageId, previousVersion, previousPackageId, previousVersion)
+	_, err = p.cp.GetConnection().Query(&ents, query, previousPackageId, previousPackageId, previousVersion)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
