@@ -10,4 +10,4 @@ jobs:
   call-storybook-cd-workflow:
     uses: netcracker/qubership-apihub-ci/.github/workflows/storybook-cd.yaml@main 
     with:      
-      container: "ghcr.io/netcracker/qubership-apihub-nodejs-dev-image:1.7.3"
+      container: "ghcr.io/netcracker/qubership-apihub-nodejs-dev-image:1.8.0"

@@ -1,0 +1,40 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@apihub/builders/*": [
+        "./src/builders/*"
+      ],
+      "@apihub/components/*": [
+        "./src/components/*"
+      ],
+      "@apihub/constants/*": [
+        "./src/consts/*"
+      ],
+      "@apihub/contexts/*": [
+        "./src/contexts/*"
+      ],
+      "@apihub/hooks/*": [
+        "./src/hooks/*"
+      ],
+      "@apihub/types/*": [
+        "./src/types/*"
+      ],
+      "@apihub/utils/*": [
+        "./src/utils/*"
+      ],
+      "@netcracker/qubership-apihub-api-state-model": [
+        "./../api-state-model/src"
+      ],
+      "@netcracker/qubership-apihub-api-data-model": [
+        "./../api-data-model/src"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    ".jest/**/*.ts"
+  ]
+}

@@ -11,6 +11,7 @@ lerna-debug.log*
 *.generated.*
 __diff_output__/
 __received_output__/
+coverage/
 
 node_modules/
 dist/

@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@apihub/graph-api/*": [
+        "./src/graph-api/*"
+      ],
+      "@apihub/graph-schema/*": [
+        "./src/graph-schema/*"
+      ],
+      "@apihub/json-schema/*": [
+        "./src/json-schema/*"
+      ],
+      "@apihub/types/*": [
+        "./src/types/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}
