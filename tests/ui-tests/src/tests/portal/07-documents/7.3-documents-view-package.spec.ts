@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { expect } from '@services/expect-decorator'
 import { FILE_ICON, GRAPHQL_ICON, MARKDOWN_ICON, OPENAPI_ICON, SWAGGER_ICON } from '@shared/entities'
@@ -60,16 +44,16 @@ test.describe('7.3 Documents viewing (Package)', () => {
       await versionPage.documentsTab.click()
 
       await expect.soft(documentsTab.sidebar.searchbar).toBeVisible()
-      await expect.soft(documentsTab.sidebar.getDocRestButton(FILE_P_PETSTORE20.testMeta!.docName)).toHaveIcon(SWAGGER_ICON)
-      await expect.soft(documentsTab.sidebar.getDocRestButton(FILE_P_PETSTORE30.testMeta!.docName)).toHaveIcon(OPENAPI_ICON)
-      await expect.soft(documentsTab.sidebar.getDocRestButton(FILE_P_PETSTORE31.testMeta!.docName)).toHaveIcon(OPENAPI_ICON)
-      await expect.soft(documentsTab.sidebar.getDocFileButton(FILE_P_GQL_SMALL.slug)).toHaveIcon(GRAPHQL_ICON)
-      await expect.soft(documentsTab.sidebar.getDocFileButton(FILE_P_JSON_SCHEMA_JSON.slug)).toHaveIcon(FILE_ICON) // WA - should be JSON_SCHEMA_ICON
-      await expect.soft(documentsTab.sidebar.getDocFileButton(FILE_P_JSON_SCHEMA_YAML.slug)).toHaveIcon(FILE_ICON) // WA - should be JSON_SCHEMA_ICON
-      await expect.soft(documentsTab.sidebar.getDocFileButton(FILE_P_MSOFFICE.slug)).toHaveIcon(FILE_ICON)
-      await expect.soft(documentsTab.sidebar.getDocMdButton(FILE_P_MARKDOWN.slug)).toHaveIcon(MARKDOWN_ICON)
-      await expect.soft(documentsTab.sidebar.getDocFileButton(FILE_P_PICTURE.slug)).toHaveIcon(FILE_ICON)
-      await expect.soft(documentsTab.sidebar.getDocFileButton(FILE_P_ARCHIVE.slug)).toHaveIcon(FILE_ICON)
+      await expect.soft(documentsTab.sidebar.getFileButton(FILE_P_PETSTORE20.testMeta!.docName)).toHaveIcon(SWAGGER_ICON)
+      await expect.soft(documentsTab.sidebar.getFileButton(FILE_P_PETSTORE30.testMeta!.docName)).toHaveIcon(OPENAPI_ICON)
+      await expect.soft(documentsTab.sidebar.getFileButton(FILE_P_PETSTORE31.testMeta!.docName)).toHaveIcon(OPENAPI_ICON)
+      await expect.soft(documentsTab.sidebar.getFileButton(FILE_P_GQL_SMALL.slug)).toHaveIcon(GRAPHQL_ICON)
+      await expect.soft(documentsTab.sidebar.getFileButton(FILE_P_JSON_SCHEMA_JSON.slug)).toHaveIcon(FILE_ICON) // WA - should be JSON_SCHEMA_ICON
+      await expect.soft(documentsTab.sidebar.getFileButton(FILE_P_JSON_SCHEMA_YAML.slug)).toHaveIcon(FILE_ICON) // WA - should be JSON_SCHEMA_ICON
+      await expect.soft(documentsTab.sidebar.getFileButton(FILE_P_MSOFFICE.slug)).toHaveIcon(FILE_ICON)
+      await expect.soft(documentsTab.sidebar.getFileButton(FILE_P_MARKDOWN.slug)).toHaveIcon(MARKDOWN_ICON)
+      await expect.soft(documentsTab.sidebar.getFileButton(FILE_P_PICTURE.slug)).toHaveIcon(FILE_ICON)
+      await expect.soft(documentsTab.sidebar.getFileButton(FILE_P_ARCHIVE.slug)).toHaveIcon(FILE_ICON)
     })
 
   test('[P-DCPVW-1] Viewing a Swagger 2.0 Document',
@@ -97,9 +81,9 @@ test.describe('7.3 Documents viewing (Package)', () => {
       await portalPage.gotoDocument(testVersion, slug)
 
       await test.step('Overview', async () => {
-        await expect.soft(documentsTab.openapiView.toolbar.title).toHaveText(`${docTitle}${docVersion}`)
+        await expect.soft(documentsTab.toolbar.title).toHaveText(`${docTitle}${docVersion}`)
         for (const label of labels) {
-          await expect.soft(documentsTab.openapiView.overview.labels).toContainText(label)
+          await expect.soft(documentsTab.oasView.overview.labels).toContainText(label)
         }
         await expect.soft(portalPage.getLinkByName(email!)).toBeVisible()
         await expect.soft(portalPage.getLinkByName(license!)).toBeVisible()
@@ -109,18 +93,18 @@ test.describe('7.3 Documents viewing (Package)', () => {
       })
 
       await test.step('Operations', async () => {
-        await documentsTab.openapiView.toolbar.operationsBtn.click()
+        await documentsTab.toolbar.operationsBtn.click()
 
-        await expect.soft(documentsTab.openapiView.toolbar.searchbar).toBeVisible()
-        await expect.soft(documentsTab.openapiView.table.getTagRow(GET_PET_BY_TAG_V2_SWAGGER.tags)).toBeVisible()
-        await expect.soft(documentsTab.openapiView.table.getOperationRow(GET_PET_BY_TAG_V2_SWAGGER).endpointCell).toContainText('Deprecated')
-        await expect.soft(documentsTab.openapiView.table.getOperationRow(GET_PET_BY_TAG_V2_SWAGGER).kindCell).toHaveText(GET_PET_BY_TAG_V2_SWAGGER.apiKind)
+        await expect.soft(documentsTab.toolbar.searchbar).toBeVisible()
+        await expect.soft(documentsTab.oasView.table.getTagRow(GET_PET_BY_TAG_V2_SWAGGER.tags)).toBeVisible()
+        await expect.soft(documentsTab.oasView.table.getOperationRow(GET_PET_BY_TAG_V2_SWAGGER).endpointCell).toContainText('Deprecated')
+        await expect.soft(documentsTab.oasView.table.getOperationRow(GET_PET_BY_TAG_V2_SWAGGER).kindCell).toHaveText(GET_PET_BY_TAG_V2_SWAGGER.apiKind)
       })
 
       await test.step('Back to Overview', async () => {
-        await documentsTab.openapiView.toolbar.overviewBtn.click()
+        await documentsTab.toolbar.overviewBtn.click()
 
-        await expect.soft(documentsTab.openapiView.toolbar.searchbar).not.toBeVisible()
+        await expect.soft(documentsTab.toolbar.searchbar).not.toBeVisible()
         await expect.soft(portalPage.getLinkByName(email!)).toBeVisible()
       })
     })
@@ -150,9 +134,9 @@ test.describe('7.3 Documents viewing (Package)', () => {
       await portalPage.gotoDocument(testVersion, slug)
 
       await test.step('Overview', async () => {
-        await expect.soft(documentsTab.openapiView.toolbar.title).toHaveText(`${docTitle}${docVersion}`)
+        await expect.soft(documentsTab.toolbar.title).toHaveText(`${docTitle}${docVersion}`)
         for (const label of labels) {
-          await expect.soft(documentsTab.openapiView.overview.labels).toContainText(label)
+          await expect.soft(documentsTab.oasView.overview.labels).toContainText(label)
         }
         await expect.soft(portalPage.getLinkByName(email!)).toBeVisible()
         await expect.soft(portalPage.getLinkByName(license!)).toBeVisible()
@@ -162,11 +146,11 @@ test.describe('7.3 Documents viewing (Package)', () => {
       })
 
       await test.step('Operations', async () => {
-        await documentsTab.openapiView.toolbar.operationsBtn.click()
+        await documentsTab.toolbar.operationsBtn.click()
 
-        await expect.soft(documentsTab.openapiView.toolbar.searchbar).toBeVisible()
-        await expect.soft(documentsTab.openapiView.table.getTagRow(DEL_PET_V1.tags)).toBeVisible()
-        await expect.soft(documentsTab.openapiView.table.getOperationRow(DEL_PET_V1).kindCell).toHaveText(DEL_PET_V1.apiKind)
+        await expect.soft(documentsTab.toolbar.searchbar).toBeVisible()
+        await expect.soft(documentsTab.oasView.table.getTagRow(DEL_PET_V1.tags)).toBeVisible()
+        await expect.soft(documentsTab.oasView.table.getOperationRow(DEL_PET_V1).kindCell).toHaveText(DEL_PET_V1.apiKind)
       })
     })
 
@@ -194,8 +178,8 @@ test.describe('7.3 Documents viewing (Package)', () => {
       await portalPage.gotoDocument(testVersion, slug)
 
       await test.step('Overview', async () => {
-        await expect.soft(documentsTab.openapiView.toolbar.title).toHaveText(`${docTitle}${docVersion}`)
-        await expect.soft(documentsTab.openapiView.overview.labels).not.toBeVisible()
+        await expect.soft(documentsTab.toolbar.title).toHaveText(`${docTitle}${docVersion}`)
+        await expect.soft(documentsTab.oasView.overview.labels).not.toBeVisible()
         await expect.soft(portalPage.getLinkByName(email!)).toBeVisible()
         await expect.soft(portalPage.getLinkByName(license!)).toBeVisible()
         await expect.soft(portalPage.getLinkByName(description!)).toBeVisible()
@@ -204,11 +188,11 @@ test.describe('7.3 Documents viewing (Package)', () => {
       })
 
       await test.step('Operations', async () => {
-        await documentsTab.openapiView.toolbar.operationsBtn.click()
+        await documentsTab.toolbar.operationsBtn.click()
 
-        await expect.soft(documentsTab.openapiView.toolbar.searchbar).toBeVisible()
-        await expect.soft(documentsTab.openapiView.table.getTagRow(DEL_PET_V3.tags)).toBeVisible()
-        await expect.soft(documentsTab.openapiView.table.getOperationRow(DEL_PET_V3).kindCell).toHaveText(DEL_PET_V3.apiKind)
+        await expect.soft(documentsTab.toolbar.searchbar).toBeVisible()
+        await expect.soft(documentsTab.oasView.table.getTagRow(DEL_PET_V3.tags)).toBeVisible()
+        await expect.soft(documentsTab.oasView.table.getOperationRow(DEL_PET_V3).kindCell).toHaveText(DEL_PET_V3.apiKind)
       })
     })
 
@@ -226,21 +210,21 @@ test.describe('7.3 Documents viewing (Package)', () => {
       await test.step('Schema JSON', async () => {
         await portalPage.gotoDocument(testVersion, FILE_P_JSON_SCHEMA_JSON.slug)
 
-        await expect.soft(documentsTab.jsonSchemaView.toolbar.title).toHaveText(FILE_P_JSON_SCHEMA_JSON.slug)
-        await expect.soft(documentsTab.jsonSchemaView.viewer).toBeVisible()
-        await expect.soft(documentsTab.openapiView.toolbar.searchbar).not.toBeVisible()
-        await expect.soft(documentsTab.openapiView.toolbar.overviewBtn).not.toBeVisible()
-        await expect.soft(documentsTab.openapiView.toolbar.operationsBtn).not.toBeVisible()
+        await expect.soft(documentsTab.toolbar.title).toHaveText(FILE_P_JSON_SCHEMA_JSON.slug)
+        await expect.soft(documentsTab.jsonSchemaView).toBeVisible()
+        await expect.soft(documentsTab.toolbar.searchbar).not.toBeVisible()
+        await expect.soft(documentsTab.toolbar.overviewBtn).not.toBeVisible()
+        await expect.soft(documentsTab.toolbar.operationsBtn).not.toBeVisible()
       })
 
       await test.step('Schema YAML', async () => {
         await portalPage.gotoDocument(testVersion, FILE_P_JSON_SCHEMA_YAML.slug)
 
-        await expect.soft(documentsTab.jsonSchemaView.toolbar.title).toHaveText(FILE_P_JSON_SCHEMA_YAML.slug)
-        await expect.soft(documentsTab.jsonSchemaView.viewer).toBeVisible()
-        await expect.soft(documentsTab.openapiView.toolbar.searchbar).not.toBeVisible()
-        await expect.soft(documentsTab.openapiView.toolbar.overviewBtn).not.toBeVisible()
-        await expect.soft(documentsTab.openapiView.toolbar.operationsBtn).not.toBeVisible()
+        await expect.soft(documentsTab.toolbar.title).toHaveText(FILE_P_JSON_SCHEMA_YAML.slug)
+        await expect.soft(documentsTab.jsonSchemaView).toBeVisible()
+        await expect.soft(documentsTab.toolbar.searchbar).not.toBeVisible()
+        await expect.soft(documentsTab.toolbar.overviewBtn).not.toBeVisible()
+        await expect.soft(documentsTab.toolbar.operationsBtn).not.toBeVisible()
       })
     })
 
@@ -261,11 +245,11 @@ test.describe('7.3 Documents viewing (Package)', () => {
 
       await portalPage.gotoDocument(testVersion, slug)
 
-      await expect.soft(documentsTab.mdView.toolbar.title).toHaveText(slug)
-      await expect.soft(documentsTab.mdView.viewer).toContainText(txtString!)
-      await expect.soft(documentsTab.openapiView.toolbar.searchbar).not.toBeVisible()
-      await expect.soft(documentsTab.openapiView.toolbar.overviewBtn).not.toBeVisible()
-      await expect.soft(documentsTab.openapiView.toolbar.operationsBtn).not.toBeVisible()
+      await expect.soft(documentsTab.toolbar.title).toHaveText(slug)
+      await expect.soft(documentsTab.mdView).toContainText(txtString!)
+      await expect.soft(documentsTab.toolbar.searchbar).not.toBeVisible()
+      await expect.soft(documentsTab.toolbar.overviewBtn).not.toBeVisible()
+      await expect.soft(documentsTab.toolbar.operationsBtn).not.toBeVisible()
     })
 
   test('[P-DCPVW-6] Search Operations on the Document details page',
@@ -282,45 +266,45 @@ test.describe('7.3 Documents viewing (Package)', () => {
 
       await portalPage.gotoDocument(testVersion, slug)
 
-      await documentsTab.openapiView.toolbar.operationsBtn.click()
+      await documentsTab.toolbar.operationsBtn.click()
 
       await test.step('Part of a word', async () => {
-        await documentsTab.openapiView.toolbar.searchbar.fill('f')
+        await documentsTab.toolbar.searchbar.fill('f')
 
-        await expect.soft(documentsTab.openapiView.table.getOperationRow()).toHaveCount(5 + 3 + 2)
+        await expect.soft(documentsTab.oasView.table.getOperationRow()).toHaveCount(5 + 3 + 2)
       })
 
       await test.step('Adding part of a word', async () => {
-        await documentsTab.openapiView.toolbar.searchbar.type('inds')
+        await documentsTab.toolbar.searchbar.type('inds')
 
-        await expect.soft(documentsTab.openapiView.table.getOperationRow()).toHaveCount(2)
+        await expect.soft(documentsTab.oasView.table.getOperationRow()).toHaveCount(2)
       })
 
       await test.step('Clearing a search query', async () => {
-        await documentsTab.openapiView.toolbar.searchbar.clear()
+        await documentsTab.toolbar.searchbar.clear()
 
-        await expect.soft(documentsTab.openapiView.table.getOperationRow()).toHaveCount(9 + 5 + 7)
+        await expect.soft(documentsTab.oasView.table.getOperationRow()).toHaveCount(9 + 5 + 7)
       })
 
       await test.step('Two words', async () => {
-        await documentsTab.openapiView.toolbar.searchbar.clear()
-        await documentsTab.openapiView.toolbar.searchbar.fill('find pet')
+        await documentsTab.toolbar.searchbar.clear()
+        await documentsTab.toolbar.searchbar.fill('find pet')
 
-        await expect.soft(documentsTab.openapiView.table.getOperationRow()).toHaveCount(1)
+        await expect.soft(documentsTab.oasView.table.getOperationRow()).toHaveCount(1)
       })
 
       await test.step('Upper case', async () => {
-        await documentsTab.openapiView.toolbar.searchbar.clear()
-        await documentsTab.openapiView.toolbar.searchbar.fill('Finds')
+        await documentsTab.toolbar.searchbar.clear()
+        await documentsTab.toolbar.searchbar.fill('Finds')
 
-        await expect.soft(documentsTab.openapiView.table.getOperationRow()).toHaveCount(2)
+        await expect.soft(documentsTab.oasView.table.getOperationRow()).toHaveCount(2)
       })
 
       await test.step('Invalid search query with valid substring', async () => {
-        await documentsTab.openapiView.toolbar.searchbar.clear()
-        await documentsTab.openapiView.toolbar.searchbar.fill('Finds123')
+        await documentsTab.toolbar.searchbar.clear()
+        await documentsTab.toolbar.searchbar.fill('Finds123')
 
-        await expect.soft(documentsTab.openapiView.table.getOperationRow()).toHaveCount(0)
+        await expect.soft(documentsTab.oasView.table.getOperationRow()).toHaveCount(0)
       })
     })
 
@@ -338,32 +322,32 @@ test.describe('7.3 Documents viewing (Package)', () => {
 
       await portalPage.gotoDocument(testVersion, slug)
 
-      await documentsTab.openapiView.toolbar.operationsBtn.click()
+      await documentsTab.toolbar.operationsBtn.click()
 
       await test.step('Collapse tag', async () => {
-        await documentsTab.openapiView.table.getTagRow('pet').collapseBtn.click()
+        await documentsTab.oasView.table.getTagRow('pet').collapseBtn.click()
 
-        await expect.soft(documentsTab.openapiView.table.getOperationRow()).toHaveCount(5 + 7)
+        await expect.soft(documentsTab.oasView.table.getOperationRow()).toHaveCount(5 + 7)
       })
 
       await test.step('Search operation', async () => {
-        await documentsTab.openapiView.toolbar.searchbar.fill('find')
+        await documentsTab.toolbar.searchbar.fill('find')
 
-        await expect.soft(documentsTab.openapiView.table.getTagRow()).toHaveCount(2)
-        await expect.soft(documentsTab.openapiView.table.getOperationRow()).toHaveCount(1)
+        await expect.soft(documentsTab.oasView.table.getTagRow()).toHaveCount(2)
+        await expect.soft(documentsTab.oasView.table.getOperationRow()).toHaveCount(1)
       })
 
       await test.step('Expand tag', async () => {
-        await documentsTab.openapiView.table.getTagRow('pet').expandBtn.click()
+        await documentsTab.oasView.table.getTagRow('pet').expandBtn.click()
 
-        await expect.soft(documentsTab.openapiView.table.getOperationRow()).toHaveCount(4)
+        await expect.soft(documentsTab.oasView.table.getOperationRow()).toHaveCount(4)
       })
 
       await test.step('Clear search query', async () => {
-        await documentsTab.openapiView.toolbar.searchbar.clear()
+        await documentsTab.toolbar.searchbar.clear()
 
-        await expect.soft(documentsTab.openapiView.table.getTagRow()).toHaveCount(3)
-        await expect.soft(documentsTab.openapiView.table.getOperationRow()).toHaveCount(9 + 5 + 7)
+        await expect.soft(documentsTab.oasView.table.getTagRow()).toHaveCount(3)
+        await expect.soft(documentsTab.oasView.table.getOperationRow()).toHaveCount(9 + 5 + 7)
       })
     })
 
@@ -382,9 +366,9 @@ test.describe('7.3 Documents viewing (Package)', () => {
 
       await portalPage.gotoDocument(testVersion, slug)
 
-      await documentsTab.openapiView.toolbar.operationsBtn.click()
+      await documentsTab.toolbar.operationsBtn.click()
 
-      await documentsTab.openapiView.table.openOperation(DEL_PET_V1)
+      await documentsTab.oasView.table.openOperation(DEL_PET_V1)
 
       await expect.soft(operationPage.toolbar.title).toContainText(DEL_PET_V1.title)
     })

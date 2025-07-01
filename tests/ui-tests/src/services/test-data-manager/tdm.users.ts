@@ -1,32 +1,17 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { Rest } from '@services/rest'
-import { createRest, rAddSysytemRole, rCreateUser, rGetUsersList } from '@services/rest'
+import { createRestWithCredentials, createRestWithToken, rAddSysytemRole, rCreateUser, rGetUsersList } from '@services/rest'
 import type { RestUser } from '@services/rest/rest.types'
-import { getAuthDataFromAPI, getAuthDataFromStorageStateFile } from '@services/auth'
-import { BASE_ORIGIN } from '@test-setup'
+import { getAuthDataFromApi } from '@services/auth'
+import { BASE_URL } from '@test-setup'
 import { getRestFailMsg } from '@services/utils'
+import type { Credentials } from '@shared/entities'
 
-export async function createUsersTDM(ssPath?: string): Promise<UsersTestDataManager> {
-  if (ssPath) {
-    const authData = await getAuthDataFromStorageStateFile(ssPath)
-    return new UsersTestDataManager(await createRest(BASE_ORIGIN, authData.token))
+export const createUsersTDM = async (credentials?: Credentials): Promise<UsersTestDataManager> => {
+  if (credentials) {
+    const authData = await getAuthDataFromApi(BASE_URL, credentials)
+    return new UsersTestDataManager(await createRestWithToken(BASE_URL, authData.token))
   } else {
-    return new UsersTestDataManager(await createRest(BASE_ORIGIN, ''))
+    return new UsersTestDataManager(await createRestWithToken(BASE_URL, ''))
   }
 
 }
@@ -54,9 +39,7 @@ export class UsersTestDataManager {
 
   async addSystemRole(credentials: { id: string; email: string; password: string }): Promise<void> {
     const message = `Adding System Role for "${credentials.id}" user`
-
-    const authData = await getAuthDataFromAPI(BASE_ORIGIN, credentials)
-    const rest = await createRest(BASE_ORIGIN, authData.token)
+    const rest = await createRestWithCredentials(BASE_URL, credentials)
     const response = await rest.send(rAddSysytemRole, [204], credentials)
     if (response.status() !== 204) {
       throw Error(await getRestFailMsg(message, response))

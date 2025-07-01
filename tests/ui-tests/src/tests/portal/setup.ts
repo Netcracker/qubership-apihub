@@ -1,23 +1,6 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
-import { saveSsFileByLocalViaAPI, SS_USER1_PATH } from '@services/storage-state'
 import { createApihubTDM } from '@services/test-data-manager'
-import { AUTH, CREATE_TD } from '@test-setup'
+import { CREATE_TD } from '@test-setup'
 import { isReusableTestDataExist } from '@test-data/utils'
 import {
   COPYING_REST_GR,
@@ -225,6 +208,7 @@ import {
   V_DSH_DIFF_4444_1_R,
   V_DSH_DMGR_BASE_R,
   V_DSH_DMGR_CHANGED_R,
+  V_DSH_DMGR_CHAR_ESC_N,
   V_DSH_DMGR_N,
   V_DSH_DMGR_PROP_N,
   V_P_DSH_CHANGELOG_REST_BASE_R,
@@ -364,6 +348,7 @@ import {
   V_PKG_DMGR_USER_CHANGED_R,
   V_PKG_PMGR_BASE_R,
   V_PKG_PMGR_CHANGED_R,
+  V_PKG_PMGR_CHAR_ESC_N,
   V_PKG_PMGR_DOWNLOAD_PUBLISH_N,
   V_PKG_PMGR_N,
   V_PKG_PMGR_PROP_N,
@@ -375,24 +360,17 @@ import {
   VAR_GR,
   WSP_P_UAC_GENERAL_N,
 } from '@test-data/portal'
-import { TEST_USER_1, TEST_USER_2, TEST_USER_3, TEST_USER_4 } from '@test-data'
+import { TEST_USER_1, TEST_USER_2, TEST_USER_3, TEST_USER_4, TEST_USER_AUTH } from '@test-data'
 
 test.describe.configure({ mode: 'serial', retries: 0 })
 
 test.describe('Users', async () => {
 
   test('Create Users', async ({ usersTDM: tdm }) => {
-    test.skip(CREATE_TD === 'skip', 'Test Data creation is skipped')
-    const users = [TEST_USER_1, TEST_USER_2, TEST_USER_3, TEST_USER_4]
+    const users = [TEST_USER_1, TEST_USER_2, TEST_USER_3, TEST_USER_4, TEST_USER_AUTH]
     for (const user of users) {
       await tdm.createGeneralUser(user)
     }
-  })
-
-  test('Authentication', async () => {
-    test.skip(AUTH === 'skip', 'Authentication is skipped')
-    await saveSsFileByLocalViaAPI(TEST_USER_1)
-    await saveSsFileByLocalViaAPI(TEST_USER_4)
   })
 })
 
@@ -638,7 +616,7 @@ test.describe('Reusable Test Data creation', async () => {
       })
 
       await test.step('Publish by another User', async () => {
-        const tdmUser1 = await createApihubTDM(SS_USER1_PATH)
+        const tdmUser1 = await createApihubTDM(TEST_USER_1)
         const versions = [V_P_PKG_REV_3_R, V_P_DSH_REV_3_R]
         for (const version of versions) {
           await tdmUser1.publishVersion(version)
@@ -910,10 +888,12 @@ test.describe('Non-Reusable Test Data creation', async () => {
           V_P_DSH_CRUD_RELEASE_N,
           V_DSH_DMGR_N,
           V_DSH_DMGR_PROP_N,
+          V_DSH_DMGR_CHAR_ESC_N,
           V_PKG_PMGR_N,
           V_PKG_PMGR_PROP_N,
           V_PKG_PMGR_DOWNLOAD_PUBLISH_N,
           V_PKG_PPGR_EDIT_N,
+          V_PKG_PMGR_CHAR_ESC_N,
           V_P_PKG_REV_PREV_N,
           V_P_PKG_REV_1_N,
           V_P_DSH_REV_PREV_N,

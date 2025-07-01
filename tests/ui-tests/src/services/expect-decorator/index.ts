@@ -1,17 +1,21 @@
 /**
- * Copyright 2024-2025 NetCracker Technology Corporation
+ * @module expect-decorator
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This module provides a fluent, chainable API for writing expressive test assertions.
+ * It wraps Playwright's assertion library and enhances it with domain-specific assertions,
+ * improved error reporting, and automatic test step reporting.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * The module exports several expect functions, each specialized for different types of assertions:
+ * - expect: For common UI element assertions
+ * - expectFile: For file-related assertions
+ * - expectText: For text-specific assertions
+ * - expectApiVersion: For API version-related assertions
+ * - expectApiPackage: For API package-related assertions
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * All expect functions support:
+ * - Soft assertions (via .soft) that don't stop test execution on failure
+ * - Negated assertions (via .not)
+ * - Custom error messages
  */
 
 export * from './expect'

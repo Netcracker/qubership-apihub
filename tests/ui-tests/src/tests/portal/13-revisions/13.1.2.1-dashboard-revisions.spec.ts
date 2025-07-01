@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { expect } from '@services/expect-decorator'
 import { DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS } from '@shared/entities'
@@ -138,7 +122,7 @@ test.describe('13.1.2.1 Dashboard revisions', () => {
       await expect(compareDashboardsPage.swapper.leftTitle).toHaveText('@1', { timeout: LONG_EXPECT })
       await expect.soft(compareDashboardsPage.swapper.rightTitle).toHaveText('@2')
       await expect.soft(compareDashboardsPage.toolbar.breakingChangesFilterBtn).toHaveText('1')
-      await expect.soft(compareDashboardsPage.toolbar.semiBreakingChangesFilterBtn).toHaveText('0')
+      await expect.soft(compareDashboardsPage.toolbar.riskyChangesFilterBtn).toHaveText('0')
       await expect.soft(compareDashboardsPage.toolbar.deprecatedChangesFilterBtn).toHaveText('1')
       await expect.soft(compareDashboardsPage.toolbar.nonBreakingChangesFilterBtn).toHaveText('2')
       await expect.soft(compareDashboardsPage.toolbar.annotationChangesFilterBtn).toHaveText('1')
@@ -150,7 +134,7 @@ test.describe('13.1.2.1 Dashboard revisions', () => {
 
       await expect(compareDashboardsPage.swapper.leftTitle).toHaveText('@2', { timeout: LONG_EXPECT })
       await expect.soft(compareDashboardsPage.swapper.rightTitle).toHaveText('@1')
-      await expect(pkg11Row.rightSummary.restApiChanges.semiBreaking).toHaveText('2')
+      await expect(pkg11Row.rightSummary.restApiChanges.risky).toHaveText('2')
     })
 
   test('[P-CODR-4] Search dashboard revision',

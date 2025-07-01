@@ -1,21 +1,5 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
-import { expect, expectFile } from '@services/expect-decorator'
+import { expect } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
 import {
   CREATE_LIST_OF_USERS_V1,
@@ -23,145 +7,19 @@ import {
   DEL_PET_V1,
   GET_PET_BY_TAG_V1,
   OGR_PMGR_DOWNLOAD_GQL_R,
-  OGR_PMGR_DOWNLOAD_PUBLISH_N,
   OGR_PMGR_DOWNLOAD_REST_R,
   OGR_PMGR_FILTERING_GQL_R,
   OGR_PMGR_FILTERING_REST_DEPRECATED_R,
   OGR_PMGR_FILTERING_REST_R,
-  P_PKG_PMGR_R,
   UPDATE_USER_V1,
   V_PKG_PMGR_CHANGED_R,
-  V_PKG_PMGR_DOWNLOAD_PUBLISH_N,
 } from '@test-data/portal'
-import {
-  VERSION_CHANGES_TAB_REST,
-  VERSION_DEPRECATED_TAB_REST,
-  VERSION_OPERATIONS_TAB_REST,
-  VERSION_OVERVIEW_TAB_GROUPS,
-} from '@portal/entities'
-import type { DownloadedTestFile } from '@shared/entities'
-import { ROOT_DOWNLOADS, TestFile } from '@shared/entities'
-import path from 'node:path'
+import { VERSION_CHANGES_TAB_REST, VERSION_DEPRECATED_TAB_REST, VERSION_OPERATIONS_TAB_REST, VERSION_OVERVIEW_TAB_GROUPS } from '@portal/entities'
 import { TICKET_BASE_URL } from '@test-setup'
 
 test.describe('12.1.2 Manual grouping: Viewing (Packages)', () => {
 
-  const testPackage = P_PKG_PMGR_R
   const testVersion = V_PKG_PMGR_CHANGED_R
-
-  test('[P-MGOP-2.2.1] Downloading for REST API group',
-    {
-      tag: '@smoke',
-      annotation: [
-        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10191` },
-      ],
-    },
-    async ({ sysadminPage: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { versionPackagePage: versionPage } = portalPage
-      const { overviewTab } = versionPage
-      const { groupsTab } = overviewTab
-      const { groupName } = OGR_PMGR_DOWNLOAD_REST_R
-
-      await portalPage.gotoVersion(testVersion, VERSION_OVERVIEW_TAB_GROUPS)
-
-      await test.step('Download as combined YAML', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadCombinedYaml()
-
-        await expectFile(file).toHaveName(`${groupName}_${testPackage.packageId}_${testVersion.version}.yaml`)
-      })
-
-      await test.step('Download as combined JSON', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadCombinedJson()
-
-        await expectFile(file).toHaveName(`${groupName}_${testPackage.packageId}_${testVersion.version}.json`)
-      })
-
-      await test.step('Download as reduced YAML', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadReducedYaml()
-
-        await expectFile(file).toHaveName(`${groupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-      })
-
-      await test.step('Download as reduced JSON', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadReducedJson()
-
-        await expectFile(file).toHaveName(`${groupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-      })
-
-      await test.step('Download as reduced HTML', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadReducedHtml()
-
-        await expectFile(file).toHaveName(`${groupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-      })
-    })
-
-  test('[P-MGOP-2.2.2-N] Downloading for GraphQL group (Negative)',
-    {
-      tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10191` },
-    },
-    async ({ sysadminPage: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { versionPackagePage: versionPage } = portalPage
-      const { overviewTab } = versionPage
-      const { groupsTab } = overviewTab
-      const { groupName } = OGR_PMGR_DOWNLOAD_GQL_R
-
-      await portalPage.gotoVersion(testVersion, VERSION_OVERVIEW_TAB_GROUPS)
-
-      await groupsTab.getGroupRow(groupName).hover()
-
-      await expect(groupsTab.getGroupRow(groupName).downloadMenu).toBeDisabled()
-    })
-
-  test('[P-MGOP-2.2.3] Downloading the combined specification and its subsequent publication',
-    {
-      tag: '@smoke',
-      annotation: [
-        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10191` },
-      ],
-    },
-    async ({ sysadminPage: page, apihubTDM: tdm }) => {
-
-      const portalPage = new PortalPage(page)
-      const { versionPackagePage: versionPage } = portalPage
-      const { overviewTab, apiChangesTab } = versionPage
-      const { groupsTab } = overviewTab
-      const testVersion = V_PKG_PMGR_DOWNLOAD_PUBLISH_N
-      const testGroup = OGR_PMGR_DOWNLOAD_PUBLISH_N
-      let downloadedFile: DownloadedTestFile
-      let testGroupFile: TestFile
-
-      await portalPage.gotoVersion(testVersion, VERSION_OVERVIEW_TAB_GROUPS)
-
-      await test.step('Download group as combined YAML', async () => {
-        downloadedFile = await groupsTab.getGroupRow(testGroup.groupName).downloadCombinedYaml()
-      })
-
-      await test.step('Publish version with downloaded file', async () => {
-        testGroupFile = new TestFile(path.resolve(ROOT_DOWNLOADS, downloadedFile.fileId))
-
-        await tdm.publishVersion({
-          ...V_PKG_PMGR_DOWNLOAD_PUBLISH_N,
-          version: 'grouping-download-publish',
-          previousVersion: V_PKG_PMGR_DOWNLOAD_PUBLISH_N.version,
-          status: 'draft',
-          files: [{ file: testGroupFile }],
-        })
-      })
-
-      await test.step('Check API Changes tab', async () => {
-        await portalPage.gotoVersion({
-          ...V_PKG_PMGR_DOWNLOAD_PUBLISH_N,
-          version: 'grouping-download-publish',
-        }, VERSION_CHANGES_TAB_REST)
-
-        await expect(apiChangesTab.table.noChangesPlaceholder).toBeVisible()
-      })
-    })
 
   test('[P-MGOP-3.1-N] Change API type for group (Negative)',
     {

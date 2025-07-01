@@ -1,22 +1,6 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { Locator } from '@playwright/test'
 import type { ClickOptions, HoverOptions, TimeoutOption } from '@shared/entities'
-import { descriptiveClick, descriptiveFocus, descriptiveHover, descriptiveScroll } from '@shared/components/decorator'
+import { descriptive } from '@shared/components/decorator'
 
 export class BaseComponent {
 
@@ -44,19 +28,23 @@ export class BaseComponent {
     this.componentType = componentType || 'component'
   }
 
+  @descriptive('Click')
   async click(options?: ClickOptions): Promise<void> {
-    await descriptiveClick(this, options)
+    await this.mainLocator.click(options)
   }
 
+  @descriptive('Hover', true)
   async hover(options?: HoverOptions): Promise<void> {
-    await descriptiveHover(this, options)
+    await this.mainLocator.hover(options)
   }
 
+  @descriptive('Scroll to visible')
   async scrollIntoViewIfNeeded(options?: TimeoutOption): Promise<void> {
-    await descriptiveScroll(this, options)
+    await this.mainLocator.scrollIntoViewIfNeeded(options)
   }
 
-  async focus(options?: HoverOptions): Promise<void> {
-    await descriptiveFocus(this, options)
+  @descriptive('Focus')
+  async focus(options?: TimeoutOption): Promise<void> {
+    await this.mainLocator.focus(options)
   }
 }

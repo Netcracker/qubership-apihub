@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { expect, expectText } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
@@ -57,7 +41,6 @@ test.describe('03.0 Access Control. General.', () => {
 
         await expect(accessControlTab.getUserRow(TEST_USER_1.name).adminChx).not.toBeChecked()
         await expect(accessControlTab.getUserRow(TEST_USER_1.name).ownerChx).not.toBeChecked()
-        await expect(accessControlTab.getUserRow(TEST_USER_1.name).releaseManagerChx).not.toBeChecked()
         await expect(accessControlTab.getUserRow(TEST_USER_1.name).editorChx).not.toBeChecked()
         await expect(accessControlTab.getUserRow(TEST_USER_1.name).viewerChx).toBeChecked()
       })
@@ -69,7 +52,6 @@ test.describe('03.0 Access Control. General.', () => {
 
         await expect(accessControlTab.getUserRow(TEST_USER_2.name).adminChx).not.toBeChecked()
         await expect(accessControlTab.getUserRow(TEST_USER_2.name).ownerChx).not.toBeChecked()
-        await expect(accessControlTab.getUserRow(TEST_USER_2.name).releaseManagerChx).not.toBeChecked()
         await expect(accessControlTab.getUserRow(TEST_USER_2.name).editorChx).toBeChecked()
         await expect(accessControlTab.getUserRow(TEST_USER_2.name).viewerChx).not.toBeChecked()
       })
@@ -81,7 +63,6 @@ test.describe('03.0 Access Control. General.', () => {
 
         await expect(accessControlTab.getUserRow(TEST_USER_3.name).adminChx).not.toBeChecked()
         await expect(accessControlTab.getUserRow(TEST_USER_3.name).ownerChx).toBeChecked()
-        await expect(accessControlTab.getUserRow(TEST_USER_3.name).releaseManagerChx).not.toBeChecked()
         await expect(accessControlTab.getUserRow(TEST_USER_3.name).editorChx).not.toBeChecked()
         await expect(accessControlTab.getUserRow(TEST_USER_3.name).viewerChx).not.toBeChecked()
       })
@@ -93,7 +74,6 @@ test.describe('03.0 Access Control. General.', () => {
 
         await expect(accessControlTab.getUserRow(TEST_USER_4.name).adminChx).toBeChecked()
         await expect(accessControlTab.getUserRow(TEST_USER_4.name).ownerChx).not.toBeChecked()
-        await expect(accessControlTab.getUserRow(TEST_USER_4.name).releaseManagerChx).not.toBeChecked()
         await expect(accessControlTab.getUserRow(TEST_USER_4.name).editorChx).not.toBeChecked()
         await expect(accessControlTab.getUserRow(TEST_USER_4.name).viewerChx).not.toBeChecked()
       })
@@ -199,22 +179,22 @@ test.describe('03.0 Access Control. General.', () => {
 
       await portalPage.gotoPackage(PKG_P_UAC_G_MULT1_N, SETTINGS_TAB_USERS)
 
-      await test.step('Add "Release Manager" role by checkbox clicking', async () => {
-        await accessControlTab.getUserRow(testUserName).releaseManagerChx.click()
+      await test.step('Add "Editor" role by checkbox clicking', async () => {
+        await accessControlTab.getUserRow(testUserName).editorChx.click()
 
-        await expect(accessControlTab.getUserRow(testUserName).releaseManagerChx).toBeChecked()
+        await expect(accessControlTab.getUserRow(testUserName).editorChx).toBeChecked()
       })
 
-      await test.step('Remove "Release Manager" role by checkbox clicking', async () => {
-        await accessControlTab.getUserRow(testUserName).releaseManagerChx.click()
+      await test.step('Remove "Editor" role by checkbox clicking', async () => {
+        await accessControlTab.getUserRow(testUserName).editorChx.click()
 
-        await expect(accessControlTab.getUserRow(testUserName).releaseManagerChx).not.toBeChecked()
+        await expect(accessControlTab.getUserRow(testUserName).editorChx).not.toBeChecked()
       })
 
       await test.step('Undo changes', async () => {
         await portalPage.snackbar.undoBtn.click()
 
-        await expect(accessControlTab.getUserRow(testUserName).releaseManagerChx).toBeChecked()
+        await expect(accessControlTab.getUserRow(testUserName).editorChx).toBeChecked()
       })
     })
 
@@ -235,7 +215,6 @@ test.describe('03.0 Access Control. General.', () => {
 
       await expect(accessControlTab.getUserRow(testUserName).adminChx).toBeChecked()
       await expect(accessControlTab.getUserRow(testUserName).ownerChx).not.toBeChecked()
-      await expect(accessControlTab.getUserRow(testUserName).releaseManagerChx).not.toBeChecked()
       await expect(accessControlTab.getUserRow(testUserName).editorChx).toBeChecked()
       await expect(accessControlTab.getUserRow(testUserName).viewerChx).toBeChecked()
     })
@@ -259,7 +238,6 @@ test.describe('03.0 Access Control. General.', () => {
 
       await expect(accessControlTab.getUserRow(testUserName).adminChx).not.toBeChecked()
       await expect(accessControlTab.getUserRow(testUserName).ownerChx).not.toBeChecked()
-      await expect(accessControlTab.getUserRow(testUserName).releaseManagerChx).not.toBeChecked()
       await expect(accessControlTab.getUserRow(testUserName).editorChx).toBeChecked()
       await expect(accessControlTab.getUserRow(testUserName).viewerChx).toBeChecked()
     })
@@ -283,7 +261,6 @@ test.describe('03.0 Access Control. General.', () => {
 
       await expect(accessControlTab.getUserRow(testUserName).adminChx).toBeChecked()
       await expect(accessControlTab.getUserRow(testUserName).ownerChx).not.toBeChecked()
-      await expect(accessControlTab.getUserRow(testUserName).releaseManagerChx).not.toBeChecked()
       await expect(accessControlTab.getUserRow(testUserName).editorChx).toBeChecked()
       await expect(accessControlTab.getUserRow(testUserName).viewerChx).not.toBeChecked()
     })
@@ -308,12 +285,10 @@ test.describe('03.0 Access Control. General.', () => {
 
       await expect(accessControlTab.getUserRow(testUser2Name).adminChx).not.toBeChecked()
       await expect(accessControlTab.getUserRow(testUser2Name).ownerChx).not.toBeChecked()
-      await expect(accessControlTab.getUserRow(testUser2Name).releaseManagerChx).not.toBeChecked()
       await expect(accessControlTab.getUserRow(testUser2Name).editorChx).toBeChecked()
       await expect(accessControlTab.getUserRow(testUser2Name).viewerChx).not.toBeChecked()
       await expect(accessControlTab.getUserRow(testUser3Name).adminChx).not.toBeChecked()
       await expect(accessControlTab.getUserRow(testUser3Name).ownerChx).not.toBeChecked()
-      await expect(accessControlTab.getUserRow(testUser3Name).releaseManagerChx).not.toBeChecked()
       await expect(accessControlTab.getUserRow(testUser3Name).editorChx).toBeChecked()
       await expect(accessControlTab.getUserRow(testUser3Name).viewerChx).not.toBeChecked()
     })
@@ -526,6 +501,7 @@ test.describe('03.0 Access Control. General.', () => {
       await test.step('Copy token', async () => {
         const token = await accessTokensTab.copyToken()
 
+        await expect(portalPage.snackbar).toContainText('Access token copied')
         await expectText(token).toMatch(/[a-z0-9]+/)
       })
     })

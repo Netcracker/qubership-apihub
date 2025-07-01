@@ -1,33 +1,14 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { expect, expectFile } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
 import {
   CREATE_LIST_OF_USERS_V1,
   DEF_PREFIX_GROUP,
-  FILE_P_PETSTORE30,
-  FILE_P_PETSTORE30_CHANGELOG_BASE,
   GRP_P_ADMIN_CRUD_N,
   OGR_PREFIX_DELETION_MSG,
   OGR_PREFIX_EDITING_MSG,
   ORG_PKG_UAC_ADMIN_REST_CHANGING_OPERATIONS_N,
   ORG_PKG_UAC_ADMIN_REST_DELETING_N,
-  ORG_PKG_UAC_ADMIN_REST_DOWNLOADING_N,
   ORG_PKG_UAC_ADMIN_REST_EDITING_PARAMS_N,
   PKG_P_ADMIN_DELETING_N,
   PKG_P_ADMIN_EDITING_N,
@@ -43,22 +24,9 @@ import {
   V_P_PKG_UAC_ADMIN_EDITING_RELEASE_N,
   VERSION_DELETED_MSG,
 } from '@test-data/portal'
-import {
-  SETTINGS_TAB_API_CONFIG,
-  SETTINGS_TAB_GENERAL,
-  SETTINGS_TAB_TOKENS,
-  SETTINGS_TAB_USERS,
-  SETTINGS_TAB_VERSIONS,
-  VERSION_OVERVIEW_TAB_GROUPS,
-} from '@portal/entities'
+import { SETTINGS_TAB_API_CONFIG, SETTINGS_TAB_GENERAL, SETTINGS_TAB_TOKENS, SETTINGS_TAB_USERS, SETTINGS_TAB_VERSIONS, VERSION_OVERVIEW_TAB_GROUPS } from '@portal/entities'
 import type { VersionStatuses } from '@shared/entities'
-import {
-  API_TITLES_MAP,
-  ARCHIVED_VERSION_STATUS,
-  DRAFT_VERSION_STATUS,
-  RELEASE_VERSION_STATUS,
-  REST_API_TYPE,
-} from '@shared/entities'
+import { API_TITLES_MAP, ARCHIVED_VERSION_STATUS, DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS, REST_API_TYPE } from '@shared/entities'
 import { PUBLISH_TIMEOUT, SNAPSHOT_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
 import { EMPTY_VALUE } from '@test-data/shared'
 import { TEST_USER_1, TEST_USER_2, TEST_USER_3, TEST_USER_4 } from '@test-data'
@@ -70,7 +38,6 @@ test.describe('03.4.1 Access Control. Admin role. (Package)', () => {
   const testPackageForEditing = PKG_P_ADMIN_EDITING_N
   const testVersion = V_P_PKG_UAC_ADMIN_CHANGED_N
   const prefixGroupName = 'v1'
-  const downloadingGroupName = ORG_PKG_UAC_ADMIN_REST_DOWNLOADING_N.groupName
 
   test('[P-ACAP-01.1] Package. Admin. Shared and Overview tabs.',
     {
@@ -268,86 +235,6 @@ test.describe('03.4.1 Access Control. Admin role. (Package)', () => {
       })
     })
 
-  test('[P-ACAP-01.6] Package. Admin. Download operation groups.',
-    {
-      annotation: [
-        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10611` },
-      ],
-    },
-    async ({ user1Page: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { groupsTab } = portalPage.versionPackagePage.overviewTab
-
-      await portalPage.gotoVersion(testVersion, VERSION_OVERVIEW_TAB_GROUPS)
-
-      await test.step('Prefix group', async () => {
-
-        await test.step('Download as combined YAML', async () => {
-          const file = await groupsTab.getGroupRow(prefixGroupName).downloadCombinedYaml()
-
-          await expectFile(file).toHaveName(`${prefixGroupName}_${testPackage.packageId}_${testVersion.version}.yaml`)
-        })
-
-        await test.step('Download as combined JSON', async () => {
-          const file = await groupsTab.getGroupRow(prefixGroupName).downloadCombinedJson()
-
-          await expectFile(file).toHaveName(`${prefixGroupName}_${testPackage.packageId}_${testVersion.version}.json`)
-        })
-
-        await test.step('Download as reduced YAML', async () => {
-          const file = await groupsTab.getGroupRow(prefixGroupName).downloadReducedYaml()
-
-          await expectFile(file).toHaveName(`${prefixGroupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-        })
-
-        await test.step('Download as reduced JSON', async () => {
-          const file = await groupsTab.getGroupRow(prefixGroupName).downloadReducedJson()
-
-          await expectFile(file).toHaveName(`${prefixGroupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-        })
-
-        await test.step('Download as reduced HTML', async () => {
-          const file = await groupsTab.getGroupRow(prefixGroupName).downloadReducedHtml()
-
-          await expectFile(file).toHaveName(`${prefixGroupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-        })
-      })
-
-      await test.step('Manual group', async () => {
-
-        await test.step('Download as combined YAML', async () => {
-          const file = await groupsTab.getGroupRow(downloadingGroupName).downloadCombinedYaml()
-
-          await expectFile(file).toHaveName(`${downloadingGroupName}_${testPackage.packageId}_${testVersion.version}.yaml`)
-        })
-
-        await test.step('Download as combined JSON', async () => {
-          const file = await groupsTab.getGroupRow(downloadingGroupName).downloadCombinedJson()
-
-          await expectFile(file).toHaveName(`${downloadingGroupName}_${testPackage.packageId}_${testVersion.version}.json`)
-        })
-
-        await test.step('Download as reduced YAML', async () => {
-          const file = await groupsTab.getGroupRow(downloadingGroupName).downloadReducedYaml()
-
-          await expectFile(file).toHaveName(`${downloadingGroupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-        })
-
-        await test.step('Download as reduced JSON', async () => {
-          const file = await groupsTab.getGroupRow(downloadingGroupName).downloadReducedJson()
-
-          await expectFile(file).toHaveName(`${downloadingGroupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-        })
-
-        await test.step('Download as reduced HTML', async () => {
-          const file = await groupsTab.getGroupRow(downloadingGroupName).downloadReducedHtml()
-
-          await expectFile(file).toHaveName(`${downloadingGroupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-        })
-      })
-    })
-
   test('[P-ACAP-01.7] Package. Admin. Download operations on the all main tabs.',
     {
       annotation: [
@@ -384,60 +271,6 @@ test.describe('03.4.1 Access Control. Admin role. (Package)', () => {
         const file = await operationsTab.toolbar.exportMenu.downloadAll()
 
         await expectFile(file).toHaveName(`DeprecatedOperations_${testPackage.packageId}_${testVersion.version}.xlsx`)
-      })
-    })
-
-  test('[P-ACAP-01.8] Package. Admin. Download documents.',
-    {
-      annotation: [
-        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10611` },
-      ],
-    },
-    async ({ user1Page: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { versionPackagePage: versionPage } = portalPage
-      const { documentsTab } = versionPage
-      const { slug } = FILE_P_PETSTORE30_CHANGELOG_BASE
-      const { docName } = FILE_P_PETSTORE30.testMeta!
-
-      await portalPage.gotoVersion(testVersion)
-      await documentsTab.click()
-      const docButton = documentsTab.sidebar.getDocRestButton(docName)
-
-      await test.step('Download document as Interactive HTML', async () => {
-        await docButton.openActionMenu()
-        const file = await docButton.actionMenu.downloadZip()
-
-        await expectFile.soft(file).toHaveName(`${slug}.zip`)
-      })
-
-      await test.step('Download document as YAML', async () => {
-        await docButton.openActionMenu()
-        const file = await docButton.actionMenu.downloadYaml()
-
-        await expectFile.soft(file).toHaveName(`${slug}.yaml`)
-      })
-
-      await test.step('Download document as JSON', async () => {
-        await docButton.openActionMenu()
-        const file = await docButton.actionMenu.downloadJson()
-
-        await expectFile.soft(file).toHaveName(`${slug}.json`)
-      })
-
-      await test.step('Download document as YAML (inline refs)', async () => {
-        await docButton.openActionMenu()
-        const file = await docButton.actionMenu.downloadYamlInlineRefs()
-
-        await expectFile.soft(file).toHaveName(`${slug}.yaml`)
-      })
-
-      await test.step('Download document as JSON (inline refs)', async () => {
-        await docButton.openActionMenu()
-        const file = await docButton.actionMenu.downloadJsonInlineRefs()
-
-        await expectFile.soft(file).toHaveName(`${slug}.json`)
       })
     })
 
@@ -667,7 +500,8 @@ test.describe('03.4.1 Access Control. Admin role. (Package)', () => {
       })
 
       await test.step('Set valid prefix', async () => {
-        await apiSpecConfigTab.prefix.click()
+        await apiSpecConfigTab.prefix.hover()
+        await apiSpecConfigTab.editBtn.click()
 
         await editPrefixDialog.prefixTxtFld.fill(DEF_PREFIX_GROUP)
         await editPrefixDialog.saveBtn.click()

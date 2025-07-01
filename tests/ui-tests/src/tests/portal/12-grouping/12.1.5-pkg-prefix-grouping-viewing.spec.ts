@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { expect } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
@@ -171,7 +155,7 @@ test.describe('12.1.4 Prefix grouping: Viewing', () => {
         await compareSelectDialog.compareBtn.click()
 
         /*! await expect(comparePage.toolbar.breakingChangesFilterBtn).toHaveText('2') //Issue TestCase-B-1442
-        await expect(comparePage.toolbar.semiBreakingChangesFilterBtn).toHaveText('0')
+        await expect(comparePage.toolbar.riskyChangesFilterBtn).toHaveText('0')
         await expect(comparePage.toolbar.deprecatedChangesFilterBtn).toHaveText('2')
         await expect(comparePage.toolbar.nonBreakingChangesFilterBtn).toHaveText('2')
         await expect(comparePage.toolbar.annotationChangesFilterBtn).toHaveText('1')
@@ -192,7 +176,7 @@ test.describe('12.1.4 Prefix grouping: Viewing', () => {
         await expect.soft(createListV1Row.leftSummary.changes).toBeHidden()
         await expect.soft(createListV1Row.rightSummary.path).toHaveText(`${CREATE_LIST_OF_USERS_V2.method}${CREATE_LIST_OF_USERS_V2.path}`)
         await expect.soft(createListV1Row.rightSummary.changes.breaking).toHaveText('Breaking: 1')
-        await expect.soft(createListV1Row.rightSummary.changes.semiBreaking).toBeHidden()
+        await expect.soft(createListV1Row.rightSummary.changes.risky).toBeHidden()
         await expect.soft(createListV1Row.rightSummary.changes.deprecated).toHaveText('Deprecated: 1')
         //! await expect.soft(createListV1Row.rightSummary.changes.nonBreaking).toHaveText('Non-breaking: 1') //Issue TestCase-B-1442
         await expect.soft(createListV1Row.rightSummary.changes.annotation).toHaveText('Annotation: 2')
@@ -203,7 +187,7 @@ test.describe('12.1.4 Prefix grouping: Viewing', () => {
         await comparePage.swapper.swapBtn.click()
 
         // await expect(comparePage.toolbar.breakingChangesFilterBtn).toHaveText('2')
-        // await expect(comparePage.toolbar.semiBreakingChangesFilterBtn).toHaveText('0')
+        // await expect(comparePage.toolbar.riskyChangesFilterBtn).toHaveText('0')
         // await expect(comparePage.toolbar.deprecatedChangesFilterBtn).toHaveText('2')
         // await expect(comparePage.toolbar.nonBreakingChangesFilterBtn).toHaveText('2')
         // await expect(comparePage.toolbar.annotationChangesFilterBtn).toHaveText('1')
@@ -224,7 +208,7 @@ test.describe('12.1.4 Prefix grouping: Viewing', () => {
         await expect.soft(createListV1Row.leftSummary.changes).toBeHidden()
         await expect.soft(createListV1Row.rightSummary.path).toHaveText(`${CREATE_LIST_OF_USERS_V1_UPDATED.method}${CREATE_LIST_OF_USERS_V1_UPDATED.path}`)
         await expect.soft(createListV1Row.rightSummary.changes.breaking).toHaveText('Breaking: 1')
-        await expect.soft(createListV1Row.rightSummary.changes.semiBreaking).toBeHidden
+        await expect.soft(createListV1Row.rightSummary.changes.risky).toBeHidden
         await expect.soft(createListV1Row.rightSummary.changes.deprecated).toHaveText('Deprecated: 1')
         //! await expect.soft(createListV1Row.rightSummary.changes.nonBreaking).toHaveText('Non-breaking: 1') //Issue TestCase-B-1442
         await expect.soft(createListV1Row.rightSummary.changes.annotation).toHaveText('Annotation: 2')

@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { type APIResponse } from '@playwright/test'
 import { getResponseDebugMsg } from './rest'
 
@@ -32,4 +16,21 @@ export const stringifyError = (error: unknown): string => {
 
 export const getRestFailMsg = async (message: string, response: APIResponse): Promise<string> => {
   return `${message} has been failed\n${await getResponseDebugMsg(response)}`
+}
+
+export const handlePlaywrightError = (error: unknown, message: string): void => {
+  // Add component context to the error message
+  const originalMessage = error instanceof Error ? error.message : String(error)
+  const contextualMessage = `${message}: ${originalMessage}`
+
+  // Create a new error with the enhanced message but preserve the stack trace
+  const enhancedError = new Error(contextualMessage)
+  if (error instanceof Error) {
+    enhancedError.stack = error.stack
+    enhancedError.name = error.name
+    // Copy any additional properties from the original error
+    Object.assign(enhancedError, error)
+  }
+
+  throw enhancedError
 }

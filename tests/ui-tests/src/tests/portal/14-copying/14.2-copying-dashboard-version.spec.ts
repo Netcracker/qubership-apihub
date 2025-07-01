@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { PortalPage } from '@portal/pages/PortalPage'
 import { expect } from '@services/expect-decorator'
@@ -26,8 +10,8 @@ import {
   PK11,
   PK12,
   RV_PATTERN_NEW,
-  V_P_DSH_CHANGELOG_REST_CHANGED_R,
   V_P_DSH_COPYING_RELEASE_N,
+  V_P_DSH_COPYING_SOURCE_R,
   VERSION_COPIED_MSG,
 } from '@test-data/portal'
 import { PUBLISH_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
@@ -35,39 +19,53 @@ import { SYSADMIN } from '@test-data'
 
 test.describe('14.2 Copying Dashboard Version', () => {
 
-  const sourceVersion = V_P_DSH_CHANGELOG_REST_CHANGED_R
+  const sourceVersion = V_P_DSH_COPYING_SOURCE_R
 
-  test('[P-CDAD-1] Copy Version to an empty dashboard',
+  test('[P-CDAD-1.1] Copy Version dialog field validation logic',
     {
       tag: '@smoke',
       annotation: [
-        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-9381` },
+        {
+          type: 'Description',
+          description: 'Verifies the behavior of fields in the Copy Version dialog. The test checks pre-populated fields in the dialog, field clearing behavior, validation of disabled fields, and ensures cleared target version fields are not auto-populated when workspace/dashboard is selected.',
+        },
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-9380` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-1403` },
       ],
     },
     async ({ sysadminPage: page }) => {
 
       const portalPage = new PortalPage(page)
       const { versionDashboardPage: versionPage } = portalPage
-      const { overviewTab, operationsTab, deprecatedTab, documentsTab, copyVersionDialog } = versionPage
+      const { copyVersionDialog } = versionPage
       const targetWorkspace = P_WS_MAIN_R
       const targetDashboard = P_DSH_CP_EMPTY
 
-      await test.step('Open source Version', async () => {
+      await test.step('Open Copy Version dialog', async () => {
         await portalPage.gotoVersion(sourceVersion)
         await versionPage.toolbar.copyBtn.click()
 
         await expect(copyVersionDialog.workspaceAc).toHaveValue(targetWorkspace.name)
+        await expect(copyVersionDialog.packageAc).toBeEnabled()
+        await expect(copyVersionDialog.packageAc).toBeEmpty()
+        await expect(copyVersionDialog.versionAc).toBeDisabled()
         await expect(copyVersionDialog.versionAc).toHaveValue(sourceVersion.version)
+        await expect(copyVersionDialog.statusAc).toBeDisabled()
+        await expect(copyVersionDialog.statusAc).toHaveValue(sourceVersion.status)
+        await expect(copyVersionDialog.labelsAc).toBeDisabled()
+        for (const label of sourceVersion.metadata!.versionLabels!) {
+          await expect(copyVersionDialog.labelsAc.getChip(label)).toBeVisible()
+        }
+        await expect(copyVersionDialog.previousVersionAc).toBeDisabled()
       })
 
-      await test.step('Clear fields', async () => {
+      await test.step('Clear Workspace field', async () => {
         await copyVersionDialog.workspaceAc.clear()
-        await copyVersionDialog.versionAc.clear()
-        await copyVersionDialog.statusAc.clear()
 
         await expect(copyVersionDialog.packageAc).toBeDisabled()
+        await expect(copyVersionDialog.versionAc).toBeDisabled()
+        await expect(copyVersionDialog.statusAc).toBeDisabled()
+        await expect(copyVersionDialog.labelsAc).toBeDisabled()
+        await expect(copyVersionDialog.previousVersionAc).toBeDisabled()
       })
 
       await test.step('Set target Workspace', async () => {
@@ -75,12 +73,13 @@ test.describe('14.2 Copying Dashboard Version', () => {
           workspace: targetWorkspace,
         })
 
+        await expect(copyVersionDialog.workspaceAc).toHaveValue(targetWorkspace.name)
         await expect(copyVersionDialog.packageAc).toBeEnabled()
-        /*!await expect(copyVersionDialog.versionAc).toHaveValue(sourceVersion.version) //Issue: TestCase-B-1403
-        await expect(copyVersionDialog.statusAc).toHaveValue(sourceVersion.status)
-        for (const label of sourceVersion.metadata!.versionLabels!) {
-          await expect(copyVersionDialog.labelsAc).toContainText(label)
-        }*/
+        await expect(copyVersionDialog.packageAc).toBeEmpty()
+        await expect(copyVersionDialog.versionAc).toBeDisabled()
+        await expect(copyVersionDialog.statusAc).toBeDisabled()
+        await expect(copyVersionDialog.labelsAc).toBeDisabled()
+        await expect(copyVersionDialog.previousVersionAc).toBeDisabled()
       })
 
       await test.step('Set target Dashboard', async () => {
@@ -88,16 +87,86 @@ test.describe('14.2 Copying Dashboard Version', () => {
           package: targetDashboard,
         })
 
-        /*!await expect(copyVersionDialog.versionAc).toHaveValue(sourceVersion.version) //Issue: TestCase-B-1403
+        await expect(copyVersionDialog.packageAc).toHaveValue(targetDashboard.name)
+        await expect(copyVersionDialog.versionAc).toBeEnabled()
+        await expect(copyVersionDialog.versionAc).toHaveValue(sourceVersion.version)
+        await expect(copyVersionDialog.statusAc).toBeEnabled()
         await expect(copyVersionDialog.statusAc).toHaveValue(sourceVersion.status)
+        await expect(copyVersionDialog.labelsAc).toBeEnabled()
         for (const label of sourceVersion.metadata!.versionLabels!) {
-          await expect(copyVersionDialog.labelsAc).toContainText(label)
-        }*/
+          await expect(copyVersionDialog.labelsAc.getChip(label)).toBeVisible()
+        }
+        await expect(copyVersionDialog.previousVersionAc).toBeEnabled()
+      })
+
+      await test.step('Clear fields', async () => {
+        await copyVersionDialog.versionAc.clear()
+        await copyVersionDialog.labelsAc.hover()
+        await copyVersionDialog.labelsAc.clearBtn.click()
+
+        await expect(copyVersionDialog.versionAc).toBeEmpty()
+        await expect(copyVersionDialog.statusAc).toHaveValue(sourceVersion.status)
+        await expect(copyVersionDialog.labelsAc.getChip()).toHaveCount(0)
+      })
+
+      await test.step('Set target Version Info', async () => {
+        await copyVersionDialog.fillForm({
+          version: '2000.2',
+          status: DRAFT_VERSION_STATUS,
+          labels: ['label-1', 'label-2'],
+          previousVersion: NO_PREV_RELEASE_VERSION,
+        })
+
+        await expect(copyVersionDialog.workspaceAc).toHaveValue(targetWorkspace.name)
+        await expect(copyVersionDialog.packageAc).toHaveValue(targetDashboard.name)
+        await expect(copyVersionDialog.versionAc).toHaveValue('2000.2')
+        await expect(copyVersionDialog.statusAc).toHaveValue(DRAFT_VERSION_STATUS)
+        await expect(copyVersionDialog.labelsAc.getChip()).toHaveCount(2)
+        await expect(copyVersionDialog.labelsAc.getChip('label-1')).toBeVisible()
+        await expect(copyVersionDialog.labelsAc.getChip('label-2')).toBeVisible()
+      })
+    })
+
+  test('[P-CDAD-1.2] Copy Version to an empty dashboard',
+    {
+      tag: '@smoke',
+      annotation: [
+        {
+          type: 'Description',
+          description: 'Verifies the Copy Version functionality to an empty dashboard. The test validates version copying process and verifies the copied version content (operations, documents, deprecated items).',
+        },
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-9380` },
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-9381` },
+      ],
+    },
+    async ({ sysadminPage: page }, testInfo) => {
+
+      const { retry = 0 } = testInfo
+      const portalPage = new PortalPage(page)
+      const { versionDashboardPage: versionPage } = portalPage
+      const { overviewTab, operationsTab, deprecatedTab, documentsTab, copyVersionDialog } = versionPage
+      const targetWorkspace = P_WS_MAIN_R
+      const targetDashboard = P_DSH_CP_EMPTY
+      const targetVersion = `20${retry}0.2`
+
+      await test.step('Open Copy Version dialog', async () => {
+        await portalPage.gotoVersion(sourceVersion)
+        await versionPage.toolbar.copyBtn.click()
+
+        await expect(copyVersionDialog.workspaceAc).toHaveValue(targetWorkspace.name)
+      })
+
+      await test.step('Set target Dashboard', async () => {
+        await copyVersionDialog.fillForm({
+          package: targetDashboard,
+        })
+
+        await expect(copyVersionDialog.packageAc).toHaveValue(targetDashboard.name)
       })
 
       await test.step('Set target Version Info and copy Version', async () => {
         await copyVersionDialog.fillForm({
-          version: '2000.2',
+          version: targetVersion,
           status: DRAFT_VERSION_STATUS,
           labels: ['label-1', 'label-2'],
           previousVersion: NO_PREV_RELEASE_VERSION,
@@ -113,9 +182,9 @@ test.describe('14.2 Copying Dashboard Version', () => {
 
         await expect(overviewTab.summaryTab.body.labels).toContainText('label-1')
         await expect(overviewTab.summaryTab.body.labels).toContainText('label-2')
-        await expect(overviewTab.summaryTab.body.summary.currentVersion).toHaveText('2000.2')
-        await expect(overviewTab.summaryTab.body.summary.revision).not.toBeEmpty() //not a specific number because it changes every retry
-        await expect(overviewTab.summaryTab.body.summary.previousVersion).toBeEmpty()
+        await expect(overviewTab.summaryTab.body.summary.currentVersion).toHaveText(targetVersion)
+        await expect(overviewTab.summaryTab.body.summary.revision).toHaveText('1')
+        await expect(overviewTab.summaryTab.body.summary.previousVersion).toHaveText('-')
         await expect(overviewTab.summaryTab.body.summary.publishedBy).toHaveText(SYSADMIN.name)
         await expect(overviewTab.summaryTab.body.summary.publicationDate).not.toBeEmpty()
         await expect(overviewTab.summaryTab.body.restApi.operations).toHaveText('38')
@@ -166,28 +235,33 @@ test.describe('14.2 Copying Dashboard Version', () => {
         await versionPage.toolbar.versionSlt.click()
         await versionPage.toolbar.versionSlt.draftBtn.click()
 
-        await expect(versionPage.toolbar.versionSlt.getVersionRow()).toHaveCount(1)
+        await expect(versionPage.toolbar.versionSlt.getVersionRow(targetVersion)).toBeVisible()
       })
     })
 
-  test('[P-CDAD-4] Copy Version with previous version (dashboard)	',
+  test('[P-CDAD-4] Copy Version with previous version (dashboard)',
     {
       tag: '@smoke',
       annotation: [
-        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-9384` },
+        {
+          type: 'Description',
+          description: 'Verifies copying a version to a dashboard using previous version. Tests specifying a previous version during copying, validating the status can be set to Release, and proper version relationship is established. Confirms all copied content (operations, API changes, deprecated items, documents) are correctly displayed, and verifies version history shows both versions.',
+        },
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-9383` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-1403` },
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-9384` },
       ],
     },
-    async ({ sysadminPage: page }) => {
+    async ({ sysadminPage: page }, testInfo) => {
 
+      const { retry = 0 } = testInfo
       const portalPage = new PortalPage(page)
       const { versionDashboardPage: versionPage } = portalPage
       const { overviewTab, operationsTab, apiChangesTab, deprecatedTab, documentsTab, copyVersionDialog } = versionPage
       const targetWorkspace = P_WS_MAIN_R
       const targetDashboard = P_DSH_CP_RELEASE
+      const targetVersion = `20${retry}0.2`
 
-      await test.step('Open source Version', async () => {
+      await test.step('Open Copy Version dialog', async () => {
         await portalPage.gotoVersion(sourceVersion)
         await versionPage.toolbar.copyBtn.click()
 
@@ -200,17 +274,12 @@ test.describe('14.2 Copying Dashboard Version', () => {
         })
 
         await expect(copyVersionDialog.packageAc).toHaveValue(targetDashboard.name)
-        /*!await expect(copyVersionDialog.versionAc).toHaveValue(sourceVersion.version) //Issue: TestCase-B-1403
-        await expect(copyVersionDialog.statusAc).toHaveValue(sourceVersion.status)
-        for (const label of sourceVersion.metadata!.versionLabels!) {
-          await expect(copyVersionDialog.labelsAc).toContainText(label)
-        }*/
         await expect(copyVersionDialog.previousVersionAc).toHaveValue(NO_PREV_RELEASE_VERSION)
       })
 
       await test.step('Set target Version Info and copy Version', async () => {
         await copyVersionDialog.fillForm({
-          version: '2000.2',
+          version: targetVersion,
           status: RELEASE_VERSION_STATUS,
           labels: ['label-1', 'label-2'],
           previousVersion: V_P_DSH_COPYING_RELEASE_N.version,
@@ -226,7 +295,7 @@ test.describe('14.2 Copying Dashboard Version', () => {
 
         await expect(overviewTab.summaryTab.body.labels).toContainText('label-1')
         await expect(overviewTab.summaryTab.body.labels).toContainText('label-2')
-        await expect(overviewTab.summaryTab.body.summary.currentVersion).toHaveText('2000.2')
+        await expect(overviewTab.summaryTab.body.summary.currentVersion).toHaveText(targetVersion)
         await expect(overviewTab.summaryTab.body.summary.revision).toHaveText('1')
         await expect(overviewTab.summaryTab.body.summary.previousVersion).toHaveText(V_P_DSH_COPYING_RELEASE_N.version)
         await expect(overviewTab.summaryTab.body.summary.publishedBy).toHaveText(SYSADMIN.name)
@@ -282,7 +351,7 @@ test.describe('14.2 Copying Dashboard Version', () => {
       await test.step('Open the Version selector', async () => {
         await versionPage.toolbar.versionSlt.click()
 
-        await expect(versionPage.toolbar.versionSlt.getVersionRow()).toHaveCount(2)
+        await expect(versionPage.toolbar.versionSlt.getVersionRow(targetVersion)).toBeVisible()
       })
     })
 
@@ -290,6 +359,10 @@ test.describe('14.2 Copying Dashboard Version', () => {
     {
       tag: '@smoke',
       annotation: [
+        {
+          type: 'Description',
+          description: 'The test attempts to create a version that violates the target dashboard pattern requirement and confirms the appropriate error message is displayed, preventing invalid version creation.',
+        },
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-9382` },
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-9383` },
       ],
@@ -302,7 +375,7 @@ test.describe('14.2 Copying Dashboard Version', () => {
       const targetWorkspace = P_WS_MAIN_R
       const targetDashboard = P_DSH_CP_PATTERN
 
-      await test.step('Open source Version', async () => {
+      await test.step('Open Copy Version dialog', async () => {
         await portalPage.gotoVersion(sourceVersion)
         await versionPage.toolbar.copyBtn.click()
 

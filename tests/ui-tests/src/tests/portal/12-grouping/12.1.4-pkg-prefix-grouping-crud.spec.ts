@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { expect, expectFile } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
@@ -30,7 +14,6 @@ import {
   OGR_TMPL_EXIST_MSG,
   P_PKG_PPGR_SETTINGS_R,
   V_PKG_PPGR_EDIT_N,
-  V_PKG_PPGR_REST_CHANGED_R,
   V_PKG_PPGR_SETTINGS_R,
 } from '@test-data/portal'
 import { SETTINGS_TAB_API_CONFIG, VERSION_OPERATIONS_TAB_REST, VERSION_OVERVIEW_TAB_GROUPS } from '@portal/entities'
@@ -56,7 +39,8 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
       await portalPage.gotoPackage(P_PKG_PPGR_SETTINGS_R, SETTINGS_TAB_API_CONFIG)
 
       await test.step('Set invalid prefix', async () => {
-        await apiSpecConfigTab.prefix.click()
+        await apiSpecConfigTab.prefix.hover()
+        await apiSpecConfigTab.editBtn.click()
         await editPrefixDialog.prefixTxtFld.fill(INVALID_PREFIX_GROUP)
         await editPrefixDialog.saveBtn.click()
 
@@ -106,7 +90,8 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
       await test.step('Set new prefix', async () => {
         await versionPage.toolbar.settingsBtn.click()
         await apiSpecConfigTab.click()
-        await apiSpecConfigTab.prefix.click()
+        await apiSpecConfigTab.prefix.hover()
+        await apiSpecConfigTab.editBtn.click()
         await editPrefixDialog.prefixTxtFld.fill(API_PREFIX_GROUP)
         await editPrefixDialog.recalculateChx.click()
         await editPrefixDialog.saveBtn.click()
@@ -157,7 +142,8 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
 
       await test.step('Delete prefix', async () => {
         await portalPage.gotoPackage(P_PKG_PPGR_SETTINGS_R, SETTINGS_TAB_API_CONFIG)
-        await apiSpecConfigTab.prefix.click()
+        await apiSpecConfigTab.prefix.hover()
+        await apiSpecConfigTab.editBtn.click()
         await editPrefixDialog.prefixTxtFld.clear()
         await editPrefixDialog.recalculateChx.click()
         await editPrefixDialog.saveBtn.click()
@@ -230,7 +216,6 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
       tag: '@smoke',
       annotation: [
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10181` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-1390` },
       ],
     },
     async ({ sysadminPage: page }) => {
@@ -246,11 +231,11 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
       await portalPage.gotoVersion(testVersion, VERSION_OVERVIEW_TAB_GROUPS)
       await groupsTab.getGroupRow(groupName).openEditGroupParametersDialog()
 
-      /*!await updateDialog.fillForm({ template: testMeta!.templateYaml }) //Issue TestCase-B-1390
+      await updateDialog.fillForm({ template: testMeta!.templateYaml })
 
       await expect(updateDialog.notDownloadableFilePreview).toBeVisible()
 
-      await updateDialog.notDownloadableFilePreview.deleteBtn.click()*/
+      await updateDialog.notDownloadableFilePreview.deleteBtn.click()
 
       await expect(updateDialog.browseBtn).toBeEnabled()
 
@@ -294,55 +279,5 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
       const file = await updateDialog.downloadTemplate()
 
       await expectFile(file).toHaveName(OGR_PMGR_CHANGE_DESCRIPTION_N.template!.name)
-    })
-
-  test('[P-GOP-5] Downloading for REST API prefix group',
-    {
-      tag: '@smoke',
-      annotation: [
-        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10182` },
-      ],
-    },
-    async ({ sysadminPage: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { versionPackagePage: versionPage } = portalPage
-      const { overviewTab } = versionPage
-      const { groupsTab } = overviewTab
-      const testVersion = V_PKG_PPGR_REST_CHANGED_R
-      const testPackage = V_PKG_PPGR_REST_CHANGED_R.pkg
-      const groupName = 'v1'
-
-      await portalPage.gotoVersion(testVersion, VERSION_OVERVIEW_TAB_GROUPS)
-
-      await test.step('Download as combined YAML', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadCombinedYaml()
-
-        await expectFile(file).toHaveName(`${groupName}_${testPackage.packageId}_${testVersion.version}.yaml`)
-      })
-
-      await test.step('Download as combined JSON', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadCombinedJson()
-
-        await expectFile(file).toHaveName(`${groupName}_${testPackage.packageId}_${testVersion.version}.json`)
-      })
-
-      await test.step('Download as reduced YAML', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadReducedYaml()
-
-        await expectFile(file).toHaveName(`${groupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-      })
-
-      await test.step('Download as reduced JSON', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadReducedJson()
-
-        await expectFile(file).toHaveName(`${groupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-      })
-
-      await test.step('Download as reduced HTML', async () => {
-        const file = await groupsTab.getGroupRow(groupName).downloadReducedHtml()
-
-        await expectFile(file).toHaveName(`${groupName}_${testPackage.packageId}_${testVersion.version}.zip`)
-      })
     })
 })

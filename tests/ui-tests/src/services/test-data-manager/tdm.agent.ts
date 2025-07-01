@@ -1,32 +1,14 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { RestAgentConfig, RestSnapshot } from '@services/rest/rest.types'
 import { type APIResponse, test } from '@playwright/test'
-import { getAuthDataFromStorageStateFile } from '@services/auth'
-import { createRest, type Rest, rGetNamespaces, rGetServices, rRunDiscovery } from '@services/rest'
+import { createRestWithCredentials, type Rest, rGetNamespaces, rGetServices, rRunDiscovery } from '@services/rest'
 import { rCreateSnapshot } from '@services/rest/requests.agent'
-import { SS_SYSADMIN_PATH } from '@services/storage-state'
-import { BASE_ORIGIN } from '@test-setup'
+import { BASE_URL } from '@test-setup'
 import type { TdmAgentConfig } from '@services/test-data-manager'
 import { asyncTimeout, getRestFailMsg } from '@services/utils'
+import { SYSADMIN } from '@test-data'
 
-export async function createAgentTDM(): Promise<AgentTestDataManager> {
-  const authData = await getAuthDataFromStorageStateFile(SS_SYSADMIN_PATH)
-  const rest = await createRest(BASE_ORIGIN, authData.token)
+export const createAgentTDM = async (): Promise<AgentTestDataManager> => {
+  const rest = await createRestWithCredentials(BASE_URL, SYSADMIN)
   return new AgentTestDataManager(rest)
 }
 

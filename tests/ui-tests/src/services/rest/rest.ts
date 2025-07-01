@@ -1,27 +1,13 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { APIRequestContext, APIResponse } from '@playwright/test'
 import { request } from '@playwright/test'
 import { DEFAULT_REQUEST_TIMEOUT, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_TIMEOUT } from './rest.consts'
 import { asyncTimeout, stringifyError } from '@services/utils'
+import { getAuthDataFromApi } from '@services/auth'
+import type { Credentials } from '@shared/entities'
 
-export async function createRest(url: string, token?: string, timeout?: number): Promise<Rest> {
-  const _url = new URL(url).origin
+export const createRestWithToken = async (url: URL, token?: string, timeout?: number): Promise<Rest> => {
+  const _url = url.origin
   const reqContext = await request.newContext({
     baseURL: _url,
     ignoreHTTPSErrors: true,
@@ -31,6 +17,11 @@ export async function createRest(url: string, token?: string, timeout?: number):
     timeout: timeout || DEFAULT_REQUEST_TIMEOUT,
   })
   return new Rest(reqContext)
+}
+
+export const createRestWithCredentials = async (url: URL, credentials: Credentials, timeout?: number): Promise<Rest> => {
+  const { token } = await getAuthDataFromApi(url, credentials)
+  return await createRestWithToken(url, token, timeout)
 }
 
 export class Rest {

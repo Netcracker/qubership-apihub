@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { expect } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
@@ -225,7 +209,6 @@ test.describe('09.2 Compare Operations (Package)', () => {
       tag: '@smoke',
       annotation: [
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-1734` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-1447` },
       ],
     },
     async ({ sysadminPage: page }) => {
@@ -249,7 +232,7 @@ test.describe('09.2 Compare Operations (Package)', () => {
       await compareOperationsPage.sidebar.filtersBtn.click()
       await compareOperationsPage.sidebar.documentFilterAc.click()
 
-      //! await expect(compareOperationsPage.sidebar.documentFilterAc.getListItem()).toHaveCount(2) //Issue TestCase-B-1447
+      await expect(compareOperationsPage.sidebar.documentFilterAc.getListItem()).toHaveCount(3) // Documents without changes are allowed in the filter
       await expect(compareOperationsPage.sidebar.documentFilterAc.getListItem(docTitle1)).toBeVisible()
       await expect(compareOperationsPage.sidebar.documentFilterAc.getListItem(docTitle2)).toBeVisible()
 
@@ -278,13 +261,13 @@ test.describe('09.2 Compare Operations (Package)', () => {
       await portalPage.gotoComparisonOperationInPackages(testPackage, currentVersion.version, previousVersion.version, CREATE_LIST_OF_USERS_V1_UPDATED)
 
       await expect(compareOperationsPage.toolbar.breakingChangesFilterBtn).not.toBePressed()
-      await expect(compareOperationsPage.toolbar.semiBreakingChangesFilterBtn).not.toBePressed()
+      await expect(compareOperationsPage.toolbar.riskyChangesFilterBtn).not.toBePressed()
       await expect(compareOperationsPage.toolbar.deprecatedChangesFilterBtn).not.toBePressed()
       await expect(compareOperationsPage.toolbar.nonBreakingChangesFilterBtn).not.toBePressed()
       await expect(compareOperationsPage.toolbar.annotationChangesFilterBtn).not.toBePressed()
       await expect(compareOperationsPage.toolbar.unclassifiedChangesFilterBtn).not.toBePressed()
       await expect(compareOperationsPage.toolbar.breakingChangesFilterBtn).toHaveText('1')
-      await expect(compareOperationsPage.toolbar.semiBreakingChangesFilterBtn).toHaveText('1')
+      await expect(compareOperationsPage.toolbar.riskyChangesFilterBtn).toHaveText('1')
       await expect(compareOperationsPage.toolbar.deprecatedChangesFilterBtn).toHaveText('1')
       await expect(compareOperationsPage.toolbar.nonBreakingChangesFilterBtn).toHaveText('1')
       await expect(compareOperationsPage.toolbar.annotationChangesFilterBtn).toHaveText('1')
@@ -296,9 +279,9 @@ test.describe('09.2 Compare Operations (Package)', () => {
       await expect(compareOperationsPage.sidebar.getOperationButton()).toHaveCount(1)
       await expect(compareOperationsPage.sidebar.getTagButton()).toHaveCount(2)
 
-      await compareOperationsPage.toolbar.semiBreakingChangesFilterBtn.click()
+      await compareOperationsPage.toolbar.riskyChangesFilterBtn.click()
 
-      await expect.soft(compareOperationsPage.toolbar.semiBreakingChangesFilterBtn).toBePressed()
+      await expect.soft(compareOperationsPage.toolbar.riskyChangesFilterBtn).toBePressed()
       await expect(compareOperationsPage.sidebar.getOperationButton()).toHaveCount(1)
       await expect(compareOperationsPage.sidebar.getTagButton()).toHaveCount(3)
 
@@ -332,9 +315,9 @@ test.describe('09.2 Compare Operations (Package)', () => {
       await expect(compareOperationsPage.sidebar.getOperationButton()).toHaveCount(3)
       await expect(compareOperationsPage.sidebar.getTagButton()).toHaveCount(2)
 
-      await compareOperationsPage.toolbar.semiBreakingChangesFilterBtn.click()
+      await compareOperationsPage.toolbar.riskyChangesFilterBtn.click()
 
-      await expect.soft(compareOperationsPage.toolbar.semiBreakingChangesFilterBtn).not.toBePressed()
+      await expect.soft(compareOperationsPage.toolbar.riskyChangesFilterBtn).not.toBePressed()
       await expect(compareOperationsPage.sidebar.getOperationButton()).toHaveCount(3)
       await expect(compareOperationsPage.sidebar.getTagButton()).toHaveCount(1)
 

@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { expect } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
@@ -428,13 +412,13 @@ test.describe('09.1 Compare Package versions', () => {
       await portalPage.gotoComparisonPackages(testPackage, currentVersion.version, previousVersion.version)
 
       await expect(comparePage.toolbar.breakingChangesFilterBtn).not.toBePressed()
-      await expect(comparePage.toolbar.semiBreakingChangesFilterBtn).not.toBePressed()
+      await expect(comparePage.toolbar.riskyChangesFilterBtn).not.toBePressed()
       await expect(comparePage.toolbar.deprecatedChangesFilterBtn).not.toBePressed()
       await expect(comparePage.toolbar.nonBreakingChangesFilterBtn).not.toBePressed()
       await expect(comparePage.toolbar.annotationChangesFilterBtn).not.toBePressed()
       await expect(comparePage.toolbar.unclassifiedChangesFilterBtn).not.toBePressed()
       await expect(comparePage.toolbar.breakingChangesFilterBtn).toHaveText('2')
-      await expect(comparePage.toolbar.semiBreakingChangesFilterBtn).toHaveText('2')
+      await expect(comparePage.toolbar.riskyChangesFilterBtn).toHaveText('2')
       await expect(comparePage.toolbar.deprecatedChangesFilterBtn).toHaveText('2')
       await expect(comparePage.toolbar.nonBreakingChangesFilterBtn).toHaveText('2')
       await expect(comparePage.toolbar.annotationChangesFilterBtn).toHaveText('1')
@@ -445,7 +429,7 @@ test.describe('09.1 Compare Package versions', () => {
       await expect.soft(comparePage.toolbar.breakingChangesFilterBtn).toBePressed()
       await expect(comparePage.compareContent.getOperationRow()).toHaveCount(2)
 
-      await comparePage.toolbar.semiBreakingChangesFilterBtn.click()
+      await comparePage.toolbar.riskyChangesFilterBtn.click()
 
       await expect.soft(comparePage.toolbar.breakingChangesFilterBtn).toBePressed()
       await expect(comparePage.compareContent.getOperationRow()).toHaveCount(3)
@@ -475,9 +459,9 @@ test.describe('09.1 Compare Package versions', () => {
       await expect.soft(comparePage.toolbar.breakingChangesFilterBtn).not.toBePressed()
       await expect(comparePage.compareContent.getOperationRow()).toHaveCount(4)
 
-      await comparePage.toolbar.semiBreakingChangesFilterBtn.click()
+      await comparePage.toolbar.riskyChangesFilterBtn.click()
 
-      await expect.soft(comparePage.toolbar.semiBreakingChangesFilterBtn).not.toBePressed()
+      await expect.soft(comparePage.toolbar.riskyChangesFilterBtn).not.toBePressed()
       await expect(comparePage.compareContent.getOperationRow()).toHaveCount(3)
 
       await comparePage.toolbar.deprecatedChangesFilterBtn.click()
@@ -530,10 +514,10 @@ test.describe('09.1 Compare Package versions', () => {
 
         await expect.soft(portalPage.tooltip).toContainText(TOOLTIP_SEVERITY_MSG.breaking)
 
-        await comparePage.toolbar.semiBreakingChangesFilterBtn.hover()
+        await comparePage.toolbar.riskyChangesFilterBtn.hover()
 
         await expect(portalPage.tooltip).toHaveCount(1)
-        for (const msg of TOOLTIP_SEVERITY_MSG.semiBreaking) {
+        for (const msg of TOOLTIP_SEVERITY_MSG.risky) {
           await expect.soft(portalPage.tooltip).toContainText(msg)
         }
 
@@ -639,7 +623,7 @@ test.describe('09.1 Compare Package versions', () => {
       await expect.soft(createListRow.rightSummary.title).toHaveText(`${CREATE_LIST_OF_USERS_V1.title} UPDATED`)
       await expect.soft(createListRow.rightSummary.path).toHaveText(`${CREATE_LIST_OF_USERS_V1.method}${CREATE_LIST_OF_USERS_V1.path}`)
       await expect.soft(createListRow.rightSummary.changes.breaking).toHaveText('1')
-      await expect.soft(createListRow.rightSummary.changes.semiBreaking).toHaveText('1')
+      await expect.soft(createListRow.rightSummary.changes.risky).toHaveText('1')
       await expect.soft(createListRow.rightSummary.changes.deprecated).toHaveText('1')
       await expect.soft(createListRow.rightSummary.changes.nonBreaking).toHaveText('1')
       await expect.soft(createListRow.rightSummary.changes.annotation).toHaveText('1')
@@ -653,13 +637,13 @@ test.describe('09.1 Compare Package versions', () => {
       await expect.soft(updateUserRow.rightSummary.path).toHaveText(`${UPDATE_USER_V1.method}${UPDATE_USER_V1.path}`)
       await expect.soft(updateUserRow.rightSummary.changes.deprecated).toHaveText('1')
 
-      await expect.soft(delOrderRow.changeSeverityIndicator).toHaveText('semi-breaking')
+      await expect.soft(delOrderRow.changeSeverityIndicator).toHaveText('requires attention')
       await expect.soft(delOrderRow.leftSummary.title).toHaveText(DEL_ORDER_V1.title)
       await expect.soft(delOrderRow.leftSummary.path).toHaveText(`${DEL_ORDER_V1.method}${DEL_ORDER_V1.path}`)
       await expect.soft(delOrderRow.leftSummary.changes).not.toBeVisible()
       await expect.soft(delOrderRow.rightSummary.title).toHaveText(DEL_ORDER_V1.title)
       await expect.soft(delOrderRow.rightSummary.path).toHaveText(`${DEL_ORDER_V1.method}${DEL_ORDER_V1.path}`)
-      await expect.soft(delOrderRow.rightSummary.changes.semiBreaking).toHaveText('1')
+      await expect.soft(delOrderRow.rightSummary.changes.risky).toHaveText('1')
 
       await expect.soft(getUserRow.changeSeverityIndicator).toHaveText('non-breaking')
       await expect.soft(getUserRow.leftSummary.title).not.toBeVisible()

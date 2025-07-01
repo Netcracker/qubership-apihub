@@ -1,31 +1,7 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { expect, expectFile } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
-import {
-  D11,
-  GET_PET_BY_TAG_V1,
-  GET_PET_BY_TAG_V2_SWAGGER,
-  PK11,
-  PK12,
-  V_P_DSH_CHANGELOG_REST_CHANGED_R,
-  V_P_DSH_OVERVIEW_R,
-} from '@test-data/portal'
+import { D11, GET_PET_BY_TAG_V1, GET_PET_BY_TAG_V2_SWAGGER, PK11, PK12, V_P_DSH_CHANGELOG_REST_CHANGED_R, V_P_DSH_OVERVIEW_R } from '@test-data/portal'
 import { VERSION_OPERATIONS_TAB_REST } from '@portal/entities'
 import { TICKET_BASE_URL } from '@test-setup'
 
@@ -82,14 +58,14 @@ test.describe('10.2.1 Operations tab REST API (Dashboard)', () => {
 
       await portalPage.gotoVersion(versionChangedRest, VERSION_OPERATIONS_TAB_REST)
 
-      await test.step('Download all operations', async () => {
+      await test.step('Export all operations', async () => {
 
         const file = await operationsTab.toolbar.exportMenu.downloadAll()
 
         await expectFile.soft(file).toHaveName(`APIOperations_${testDashboard.packageId}_${V_P_DSH_CHANGELOG_REST_CHANGED_R.version}.xlsx`)
       })
 
-      await test.step('Download filtered operations', async () => {
+      await test.step('Export filtered operations', async () => {
 
         await operationsTab.sidebar.apiKindFilterAc.click()
         await operationsTab.sidebar.apiKindFilterAc.noBwcItm.click()

@@ -1,34 +1,15 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { expect, expectFile } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
 import {
   CREATE_LIST_OF_USERS_V1,
   DSH_P_EDITOR_N,
-  FILE_P_PETSTORE30,
-  FILE_P_PETSTORE30_CHANGELOG_BASE,
   GRP_P_EDITOR_ROOT_N,
   NO_PERM_ADD_MEMBER,
   NO_PERM_DEL_PACKAGE,
   NO_PERM_EDIT_PACKAGE,
   NO_PERM_GEN_TOKEN,
   NO_PERM_MANAGE_ROLES,
-  OGR_DSH_UAC_EDITOR_REST_DOWNLOADING_N,
   ORG_DSH_UAC_EDITOR_REST_CHANGING_OPERATIONS_N,
   ORG_DSH_UAC_EDITOR_REST_DELETING_N,
   ORG_DSH_UAC_EDITOR_REST_EDITING_PARAMS_N,
@@ -42,13 +23,7 @@ import {
 } from '@test-data/portal'
 import { SETTINGS_TAB_VERSIONS, VERSION_OVERVIEW_TAB_GROUPS } from '@portal/entities'
 import type { VersionStatuses } from '@shared/entities'
-import {
-  API_TITLES_MAP,
-  ARCHIVED_VERSION_STATUS,
-  DRAFT_VERSION_STATUS,
-  RELEASE_VERSION_STATUS,
-  REST_API_TYPE,
-} from '@shared/entities'
+import { API_TITLES_MAP, ARCHIVED_VERSION_STATUS, DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS, REST_API_TYPE } from '@shared/entities'
 import { PUBLISH_TIMEOUT, SNAPSHOT_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
 
 test.describe('03.2.2 Access Control. Editor role. (Dashboard)', () => {
@@ -57,7 +32,6 @@ test.describe('03.2.2 Access Control. Editor role. (Dashboard)', () => {
   const testPackage = PKG_P_EDITOR_N
   const testDashboard = DSH_P_EDITOR_N
   const testVersion = V_P_DSH_UAC_EDITOR_CHANGED_N
-  const downloadingGroupName = OGR_DSH_UAC_EDITOR_REST_DOWNLOADING_N.groupName
 
   test('[P-ACED-01.1] Dashboard. Editor. Shared and Overview tabs.',
     {
@@ -215,50 +189,6 @@ test.describe('03.2.2 Access Control. Editor role. (Dashboard)', () => {
       await expect(groupsTab.getGroupRow(manualGroup.groupName).operationsNumberCell).toHaveText('2')
     })
 
-  test('[P-ACED-01.6] Dashboard. Editor. Download operation group.',
-    {
-      annotation: [
-        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10488` },
-      ],
-    },
-    async ({ user1Page: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { groupsTab } = portalPage.versionDashboardPage.overviewTab
-
-      await portalPage.gotoVersion(testVersion, VERSION_OVERVIEW_TAB_GROUPS)
-
-      await test.step('Download as combined YAML', async () => {
-        const file = await groupsTab.getGroupRow(downloadingGroupName).downloadCombinedYaml()
-
-        await expectFile(file).toHaveName(`${downloadingGroupName}_${testDashboard.packageId}_${testVersion.version}.yaml`)
-      })
-
-      await test.step('Download as combined JSON', async () => {
-        const file = await groupsTab.getGroupRow(downloadingGroupName).downloadCombinedJson()
-
-        await expectFile(file).toHaveName(`${downloadingGroupName}_${testDashboard.packageId}_${testVersion.version}.json`)
-      })
-
-      await test.step('Download as reduced YAML', async () => {
-        const file = await groupsTab.getGroupRow(downloadingGroupName).downloadReducedYaml()
-
-        await expectFile(file).toHaveName(`${downloadingGroupName}_${testDashboard.packageId}_${testVersion.version}.zip`)
-      })
-
-      await test.step('Download as reduced JSON', async () => {
-        const file = await groupsTab.getGroupRow(downloadingGroupName).downloadReducedJson()
-
-        await expectFile(file).toHaveName(`${downloadingGroupName}_${testDashboard.packageId}_${testVersion.version}.zip`)
-      })
-
-      await test.step('Download as reduced HTML', async () => {
-        const file = await groupsTab.getGroupRow(downloadingGroupName).downloadReducedHtml()
-
-        await expectFile(file).toHaveName(`${downloadingGroupName}_${testDashboard.packageId}_${testVersion.version}.zip`)
-      })
-    })
-
   test('[P-ACED-01.7] Dashboard. Editor. Download operations on the all main tabs.',
     {
       annotation: [
@@ -295,61 +225,6 @@ test.describe('03.2.2 Access Control. Editor role. (Dashboard)', () => {
         const file = await operationsTab.toolbar.exportMenu.downloadAll()
 
         await expectFile(file).toHaveName(`DeprecatedOperations_${testDashboard.packageId}_${testVersion.version}.xlsx`)
-      })
-    })
-
-  test('[P-ACED-01.8] Dashboard. Editor. Download documents.',
-    {
-      annotation: [
-        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10488` },
-      ],
-    },
-    async ({ user1Page: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { versionDashboardPage: versionPage } = portalPage
-      const { documentsTab } = versionPage
-      const { slug } = FILE_P_PETSTORE30_CHANGELOG_BASE
-      const { docName } = FILE_P_PETSTORE30.testMeta!
-
-      await portalPage.gotoVersion(testVersion)
-      await documentsTab.click()
-      await documentsTab.sidebar.packageFilterAc.set(testPackage.name)
-      const docButton = documentsTab.sidebar.getDocRestButton(docName)
-
-      await test.step('Download document as Interactive HTML', async () => {
-        await docButton.openActionMenu()
-        const file = await docButton.actionMenu.downloadZip()
-
-        await expectFile.soft(file).toHaveName(`${slug}.zip`)
-      })
-
-      await test.step('Download document as YAML', async () => {
-        await docButton.openActionMenu()
-        const file = await docButton.actionMenu.downloadYaml()
-
-        await expectFile.soft(file).toHaveName(`${slug}.yaml`)
-      })
-
-      await test.step('Download document as JSON', async () => {
-        await docButton.openActionMenu()
-        const file = await docButton.actionMenu.downloadJson()
-
-        await expectFile.soft(file).toHaveName(`${slug}.json`)
-      })
-
-      await test.step('Download document as YAML (inline refs)', async () => {
-        await docButton.openActionMenu()
-        const file = await docButton.actionMenu.downloadYamlInlineRefs()
-
-        await expectFile.soft(file).toHaveName(`${slug}.yaml`)
-      })
-
-      await test.step('Download document as JSON (inline refs)', async () => {
-        await docButton.openActionMenu()
-        const file = await docButton.actionMenu.downloadJsonInlineRefs()
-
-        await expectFile.soft(file).toHaveName(`${slug}.json`)
       })
     })
 

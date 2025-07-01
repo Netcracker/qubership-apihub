@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { expect } from '@services/expect-decorator'
 import { DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS } from '@shared/entities'
@@ -138,7 +122,7 @@ test.describe('13.1.1.1 Package revisions', () => {
       await expect(comparePackagesPage.swapper.leftTitle).toHaveText('@1', { timeout: LONG_EXPECT })
       await expect.soft(comparePackagesPage.swapper.rightTitle).toHaveText('@2')
       await expect.soft(comparePackagesPage.toolbar.breakingChangesFilterBtn).toHaveText('2')
-      await expect.soft(comparePackagesPage.toolbar.semiBreakingChangesFilterBtn).toHaveText('0')
+      await expect.soft(comparePackagesPage.toolbar.riskyChangesFilterBtn).toHaveText('0')
       await expect.soft(comparePackagesPage.toolbar.deprecatedChangesFilterBtn).toHaveText('2')
       await expect.soft(comparePackagesPage.toolbar.nonBreakingChangesFilterBtn).toHaveText('3')
       await expect.soft(comparePackagesPage.toolbar.annotationChangesFilterBtn).toHaveText('1')
@@ -150,7 +134,7 @@ test.describe('13.1.1.1 Package revisions', () => {
 
       await expect(comparePackagesPage.swapper.leftTitle).toHaveText('@2', { timeout: LONG_EXPECT })
       await expect.soft(comparePackagesPage.swapper.rightTitle).toHaveText('@1')
-      await expect(delOrderRow.rightSummary.changes.semiBreaking).toHaveText('1')
+      await expect(delOrderRow.rightSummary.changes.risky).toHaveText('1')
     })
 
   test('[P-COPR-4] Search package revision',

@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { PortalPage } from '@portal/pages/PortalPage'
 import { expect } from '@services/expect-decorator'
@@ -79,7 +63,7 @@ test.describe('5.3 Dashboard details', () => {
       tag: '@smoke',
       annotation: [
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-5895` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-1023` }],
+      ],
     },
     async ({ sysadminPage: page }) => {
 
@@ -104,7 +88,7 @@ test.describe('5.3 Dashboard details', () => {
       await expect.soft(overviewTab.packagesTab.getExcludedPackageRow(PK11).statusCell).toHaveText(V_P_PKG_OPERATIONS_REST_R.status)
       await expect.soft(overviewTab.packagesTab.getPackageRow(PK12).versionCell).toHaveText(V_P_PKG_FOR_DASHBOARDS_REST_BASE_R.version)
       await expect.soft(overviewTab.packagesTab.getPackageRow(PK12).statusCell).toHaveText(V_P_PKG_FOR_DASHBOARDS_REST_BASE_R.status)
-      // await expect.soft(overviewTab.packagesTab.getReferenceRow(PK13).versionCell).toHaveText(PKG_FOR_DASHBOARDS_DELETED_TEST_VERSION.version) // TODO TestCase-B-1023
+      await expect.soft(overviewTab.packagesTab.getPackageRow(PK13).versionCell).toHaveText(V_P_PKG_FOR_DASHBOARDS_DELETED_R.version)
       await expect.soft(overviewTab.packagesTab.getPackageRow(PK13).statusCell).toHaveText(V_P_PKG_FOR_DASHBOARDS_DELETED_R.status)
       await expect.soft(overviewTab.packagesTab.getPackageRow(PK13).packageCell.notExistAlertIcon).toBeVisible()
     })

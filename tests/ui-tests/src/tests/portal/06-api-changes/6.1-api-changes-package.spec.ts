@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { expect, expectFile } from '@services/expect-decorator'
 import { GRAPHQL_API_TYPE_TITLE, REST_API_TYPE_TITLE } from '@shared/entities'
@@ -62,7 +46,7 @@ test.describe('6.1 API Changes (Package)', () => {
       await expect.soft(apiChangesTab.sidebar.searchbar).toBeVisible()
       await expect.soft(apiChangesTab.toolbar.comparedToLnk).toBeVisible()
       await expect.soft(apiChangesTab.toolbar.breakingChangesFilterBtn).toBeVisible()
-      await expect.soft(apiChangesTab.toolbar.semiBreakingChangesFilterBtn).toBeVisible()
+      await expect.soft(apiChangesTab.toolbar.riskyChangesFilterBtn).toBeVisible()
       await expect.soft(apiChangesTab.toolbar.deprecatedChangesFilterBtn).toBeVisible()
       await expect.soft(apiChangesTab.toolbar.nonBreakingChangesFilterBtn).toBeVisible()
       await expect.soft(apiChangesTab.toolbar.annotationChangesFilterBtn).toBeVisible()
@@ -358,7 +342,7 @@ test.describe('6.1 API Changes (Package)', () => {
       await expect.soft(apiChangesTab.table.getOperationRow(UPLOADS_IMAGE_V1).changesCell.breakingChanges).toHaveText('1')
 
       await expect.soft(apiChangesTab.table.getOperationRow(CREATE_LIST_OF_USERS_V1_UPDATED).changesCell.breakingChanges).toHaveText('1')
-      await expect.soft(apiChangesTab.table.getOperationRow(CREATE_LIST_OF_USERS_V1_UPDATED).changesCell.semiBreakingChanges).toHaveText('1')
+      await expect.soft(apiChangesTab.table.getOperationRow(CREATE_LIST_OF_USERS_V1_UPDATED).changesCell.riskyChanges).toHaveText('1')
       await expect.soft(apiChangesTab.table.getOperationRow(CREATE_LIST_OF_USERS_V1_UPDATED).changesCell.deprecatedChanges).toHaveText('1')
       await expect.soft(apiChangesTab.table.getOperationRow(CREATE_LIST_OF_USERS_V1_UPDATED).changesCell.nonBreakingChanges).toHaveText('1')
       await expect.soft(apiChangesTab.table.getOperationRow(CREATE_LIST_OF_USERS_V1_UPDATED).changesCell.annotationChanges).toHaveText('1')
@@ -366,7 +350,7 @@ test.describe('6.1 API Changes (Package)', () => {
 
       await expect.soft(apiChangesTab.table.getOperationRow(UPDATE_USER_V1).changesCell.deprecatedChanges).toHaveText('1')
 
-      await expect.soft(apiChangesTab.table.getOperationRow(DEL_ORDER_V1).changesCell.semiBreakingChanges).toHaveText('1')
+      await expect.soft(apiChangesTab.table.getOperationRow(DEL_ORDER_V1).changesCell.riskyChanges).toHaveText('1')
 
       await expect.soft(apiChangesTab.table.getOperationRow(GET_USER_BY_NAME_V1).changesCell.nonBreakingChanges).toHaveText('1')
     })
@@ -389,7 +373,7 @@ test.describe('6.1 API Changes (Package)', () => {
       await expect.soft(apiChangesTab.table.getChangeDescriptionCell(CREATE_LIST_OF_USERS_V1_UPDATED.changes!.annotation!.description).changeSeverityIndicator).toHaveText('annotation')
       await expect.soft(apiChangesTab.table.getChangeDescriptionCell(CREATE_LIST_OF_USERS_V1_UPDATED.changes!.unclassified!.description).changeSeverityIndicator).toHaveText('unclassified')
       await expect.soft(apiChangesTab.table.getChangeDescriptionCell(CREATE_LIST_OF_USERS_V1_UPDATED.changes!.deprecated!.description).changeSeverityIndicator).toHaveText('deprecated')
-      await expect.soft(apiChangesTab.table.getChangeDescriptionCell(CREATE_LIST_OF_USERS_V1_UPDATED.changes!.semiBreaking!.description).changeSeverityIndicator).toHaveText('semi-breaking')
+      await expect.soft(apiChangesTab.table.getChangeDescriptionCell(CREATE_LIST_OF_USERS_V1_UPDATED.changes!.risky!.description).changeSeverityIndicator).toHaveText('requires attention')
       await expect.soft(apiChangesTab.table.getChangeDescriptionCell(CREATE_LIST_OF_USERS_V1_UPDATED.changes!.nonBreaking!.description).changeSeverityIndicator).toHaveText('non-breaking')
       await expect.soft(apiChangesTab.table.getChangeDescriptionCell(CREATE_LIST_OF_USERS_V1_UPDATED.changes!.breaking!.description).changeSeverityIndicator).toHaveText('breaking')
 
@@ -399,7 +383,7 @@ test.describe('6.1 API Changes (Package)', () => {
 
       await apiChangesTab.table.getOperationRow(DEL_ORDER_V1).expandBtn.click()
 
-      await expect.soft(apiChangesTab.table.getChangeDescriptionCell(DEL_ORDER_V1.changes!.semiBreaking!.description).changeSeverityIndicator).toHaveText('semi-breaking')
+      await expect.soft(apiChangesTab.table.getChangeDescriptionCell(DEL_ORDER_V1.changes!.risky!.description).changeSeverityIndicator).toHaveText('requires attention')
     })
 
   test('[P-CHPVW-5] Navigation to the Operation Compare page',
@@ -464,7 +448,7 @@ test.describe('6.1 API Changes (Package)', () => {
 
       await test.step('Check changes quantity on the filter buttons', async () => {
         await expect.soft(apiChangesTab.toolbar.breakingChangesFilterBtn).toHaveText('2')
-        await expect.soft(apiChangesTab.toolbar.semiBreakingChangesFilterBtn).toHaveText('2')
+        await expect.soft(apiChangesTab.toolbar.riskyChangesFilterBtn).toHaveText('2')
         await expect.soft(apiChangesTab.toolbar.deprecatedChangesFilterBtn).toHaveText('2')
         await expect.soft(apiChangesTab.toolbar.nonBreakingChangesFilterBtn).toHaveText('2')
         await expect.soft(apiChangesTab.toolbar.annotationChangesFilterBtn).toHaveText('1')
@@ -476,10 +460,10 @@ test.describe('6.1 API Changes (Package)', () => {
 
         await expect.soft(portalPage.tooltip).toContainText(TOOLTIP_SEVERITY_MSG.breaking)
 
-        await apiChangesTab.toolbar.semiBreakingChangesFilterBtn.hover()
+        await apiChangesTab.toolbar.riskyChangesFilterBtn.hover()
 
         await expect(portalPage.tooltip).toHaveCount(1)
-        for (const msg of TOOLTIP_SEVERITY_MSG.semiBreaking) {
+        for (const msg of TOOLTIP_SEVERITY_MSG.risky) {
           await expect.soft(portalPage.tooltip).toContainText(msg)
         }
 
@@ -510,10 +494,10 @@ test.describe('6.1 API Changes (Package)', () => {
         await expect(portalPage.tooltip).toHaveCount(1)
         await expect.soft(portalPage.tooltip).toContainText(TOOLTIP_SEVERITY_MSG.breaking)
 
-        await operationRow.changesCell.semiBreakingChanges.hover()
+        await operationRow.changesCell.riskyChanges.hover()
 
         await expect(portalPage.tooltip).toHaveCount(1)
-        for (const msg of TOOLTIP_SEVERITY_MSG.semiBreaking) {
+        for (const msg of TOOLTIP_SEVERITY_MSG.risky) {
           await expect.soft(portalPage.tooltip).toContainText(msg)
         }
 
@@ -543,7 +527,7 @@ test.describe('6.1 API Changes (Package)', () => {
 
         await expect.soft(apiChangesTab.table.getOperationRow()).toHaveCount(2)
 
-        await apiChangesTab.toolbar.semiBreakingChangesFilterBtn.click()
+        await apiChangesTab.toolbar.riskyChangesFilterBtn.click()
 
         await expect.soft(apiChangesTab.table.getOperationRow()).toHaveCount(3)
 
@@ -567,7 +551,7 @@ test.describe('6.1 API Changes (Package)', () => {
 
         await expect.soft(apiChangesTab.table.getOperationRow()).toHaveCount(4)
 
-        await apiChangesTab.toolbar.semiBreakingChangesFilterBtn.click()
+        await apiChangesTab.toolbar.riskyChangesFilterBtn.click()
 
         await expect.soft(apiChangesTab.table.getOperationRow()).toHaveCount(3)
 
@@ -676,14 +660,14 @@ test.describe('6.1 API Changes (Package)', () => {
 
       await portalPage.gotoVersion(versionChangedRest, VERSION_CHANGES_TAB_REST)
 
-      await test.step('Download all changes', async () => {
+      await test.step('Export all changes', async () => {
 
         const file = await apiChangesTab.toolbar.exportMenu.downloadAll()
 
         await expectFile.soft(file).toHaveName(`APIChanges_${PK11.packageId}_${V_P_PKG_CHANGELOG_REST_CHANGED_R.version}.xlsx`)
       })
 
-      await test.step('Download filtered changes', async () => {
+      await test.step('Export filtered changes', async () => {
 
         await apiChangesTab.toolbar.nonBreakingChangesFilterBtn.click()
 

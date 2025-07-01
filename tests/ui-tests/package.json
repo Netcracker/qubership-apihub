@@ -2,6 +2,7 @@
   "name": "@netcracker/qubership-apihub-ui-tests",
   "version": "2.36.1-dev.0",
   "license": "Apache-2.0",
+  "type": "module",
   "scripts": {
     "html-report": "playwright show-report reports/playwright",
     "debug": "playwright test --project=Portal --debug",

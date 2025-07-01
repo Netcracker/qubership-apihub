@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { Fixtures } from '@fixtures'
 import { defineConfig, devices } from '@playwright/test'
 import 'dotenv/config'
@@ -23,7 +7,6 @@ import process from 'node:process'
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-// require('dotenv').config();
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -61,7 +44,7 @@ export default defineConfig<Fixtures>({
     ['list'],
     ['./src/services/custom-reporter/CustomReporter.ts', { reportType: 'apihub-styled-html' }],
   ],
-  globalSetup: require.resolve('./src/tests/global-setup'),
+  globalSetup: './src/tests/global-setup.ts',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */

@@ -1,32 +1,9 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { type APIResponse, expect, test } from '@playwright/test'
-import { getAuthDataFromStorageStateFile } from '@services/auth'
 import type { RestPublishConfig, RestPublishFile } from '@services/rest/rest.types'
-import type { PackageApiKey, TestFile, VersionStatuses } from '@shared/entities'
-import type {
-  TdmOperationGroup,
-  TdmPackageCreate,
-  TdmPackageUpdate,
-  TdmPublishFile,
-  TdmPublishVersion,
-} from './tdm.entities'
+import type { Credentials, PackageApiKey, TestFile, VersionStatuses } from '@shared/entities'
+import type { TdmOperationGroup, TdmPackageCreate, TdmPackageUpdate, TdmPublishFile, TdmPublishVersion } from './tdm.entities'
 import {
-  createRest,
+  createRestWithToken,
   getRootGroupsList,
   rAddMembersToPackage,
   rAddSysadmin,
@@ -50,14 +27,15 @@ import {
   rUpdatePackage,
   rUpdatePackageVersion,
 } from '@services/rest'
-import { BASE_ORIGIN } from '@test-setup'
+import { BASE_URL } from '@test-setup'
 import { TEST_PREFIX } from '@test-data'
 import { packToZip } from '@services/utils/files'
 import { asyncTimeout, getResponseDebugMsg, getRestFailMsg, getTestIdFromName } from '@services/utils'
+import { getAuthDataFromApi } from '@services/auth'
 
-export async function createApihubTDM(ssPath: string, requestTimeout?: number): Promise<ApihubTestDataManager> {
-  const authData = await getAuthDataFromStorageStateFile(ssPath)
-  const rest = await createRest(BASE_ORIGIN, authData.token, requestTimeout)
+export const createApihubTDM = async (credentials: Credentials, requestTimeout?: number): Promise<ApihubTestDataManager> => {
+  const { token } = await getAuthDataFromApi(BASE_URL, credentials)
+  const rest = await createRestWithToken(BASE_URL, token, requestTimeout)
   return new ApihubTestDataManager(rest)
 }
 

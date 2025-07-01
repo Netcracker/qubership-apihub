@@ -1,73 +1,45 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+import { test } from '@fixtures'
+import { createRestWithCredentials, rGetPackageVersion } from '@services/rest'
+import { BASE_URL } from '@test-setup'
+import { BaseExpect } from './BaseExpect'
+import { SYSADMIN } from '@test-data'
 
-import { expect as expectPw, test } from '@fixtures'
-import { getAuthDataFromStorageStateFile } from '@services/auth'
-import { SS_SYSADMIN_PATH } from '@services/storage-state'
-import { createRest, rGetPackageVersion } from '@services/rest'
-import { BASE_ORIGIN } from '@test-setup'
-
-class BaseExpectApiVersion {
-  protected readonly notStr: string
-
-  constructor(
-    protected readonly actual: { packageId: string; version: string },
-    protected readonly isNot: boolean,
-    protected readonly isSoft: boolean,
-    protected readonly message?: string,
-  ) {
-    if (isNot) {
-      this.notStr = 'not '
-    } else {
-      this.notStr = ''
-    }
-  }
-
-  async toBeCreated(): Promise<void> {
-    await test.step(`Expect version "${this.actual.version}" ${this.notStr}to be created `, async () => {
-      const authData = await getAuthDataFromStorageStateFile(SS_SYSADMIN_PATH)
-      const rest = await createRest(BASE_ORIGIN, authData.token)
-      const response = await rest.send(rGetPackageVersion, [200, 404], this.actual)
-
-      if (!this.isNot) {
-        if (!this.isSoft) {
-          expectPw(response.status(), this.message || undefined).toEqual(200)
-        } else {
-          expectPw.soft(response.status(), this.message || undefined).toEqual(200)
-        }
-      } else {
-        if (!this.isSoft) {
-          expectPw(response.status(), this.message || undefined).toEqual(404)
-        } else {
-          expectPw.soft(response.status(), this.message || undefined).toEqual(404)
-        }
-      }
-    }, { box: true })
-  }
+export interface VersionInput {
+  packageId: string
+  version: string
 }
 
-export class ExpectApiVersion extends BaseExpectApiVersion {
-  readonly not = new BaseExpectApiVersion(this.actual, true, this.isSoft, this.message)
+export class ExpectApiVersion extends BaseExpect<VersionInput> {
 
   constructor(
-    protected readonly actual: { packageId: string; version: string },
-    protected readonly isNot: boolean,
-    protected readonly isSoft: boolean,
-    protected readonly message?: string,
+    actual: VersionInput,
+    isNot = false,
+    isSoft = false,
+    message?: string,
   ) {
     super(actual, isNot, isSoft, message)
+  }
+
+  get not(): ExpectApiVersion {
+    return new ExpectApiVersion(this.actual, !this.isNot, this.isSoft, this.message)
+  }
+
+  async toBePublished(): Promise<void> {
+    await test.step(this.formatStepMessage('to be created'), async () => {
+      const rest = await createRestWithCredentials(BASE_URL, SYSADMIN)
+      const response = await rest.send(rGetPackageVersion, [200, 404], this.actual)
+      const expectedStatus = 200
+
+      await this.executeExpectation(
+        'to be created',
+        'toEqual',
+        [expectedStatus],
+        response.status(),
+      )
+    }, { box: true })
+  }
+
+  protected override formatStepMessage(assertionDescription: string): string {
+    return `API: Expect version "${this.actual.version}" ${this.notIndicator}${assertionDescription}`
   }
 }

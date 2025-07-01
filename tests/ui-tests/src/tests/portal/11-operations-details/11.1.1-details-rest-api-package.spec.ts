@@ -1,39 +1,14 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { VERSION_OPERATIONS_TAB_REST } from '@portal/entities'
 import { PortalPage } from '@portal/pages/PortalPage'
 import { OperationPage } from '@portal/pages/PortalPage/OperationPage'
-import { getAuthDataFromPage } from '@services/auth'
 import { expect } from '@services/expect-decorator'
 import { JsonSchemaView } from '@shared/components/custom'
-import {
-  GET_PET_BY_TAG_V1,
-  GET_SYSTEM_INFO,
-  IMM_GR,
-  P_PK_PGND,
-  P_WS_MAIN_R,
-  PK11,
-  UPDATE_PET_V1,
-  V_P_PKG_OPERATIONS_REST_R,
-  V_P_PKG_PLAYGROUND_R,
-} from '@test-data/portal'
-import { SEARCH_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
+import { GET_PET_BY_TAG_V1, GET_SYSTEM_INFO, IMM_GR, P_PK_PGND, P_WS_MAIN_R, PK11, UPDATE_PET_V1, V_P_PKG_OPERATIONS_REST_R, V_P_PKG_PLAYGROUND_R } from '@test-data/portal'
+import { BASE_URL, SEARCH_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
 import { getPlaygroundCustomServer } from '@services/utils'
+import { SYSADMIN } from '@test-data'
+import { getAuthDataFromApi } from '@services/auth'
 
 test.describe('11.1.1 Operations details REST API (Package)', () => {
 
@@ -260,7 +235,7 @@ test.describe('11.1.1 Operations details REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { operationPage } = portalPage
-      const accessToken = (await getAuthDataFromPage(page)).token
+      const { token } = await getAuthDataFromApi(BASE_URL, SYSADMIN)
       const testPackage = P_PK_PGND
 
       await portalPage.gotoOperation(versionPlayground, GET_SYSTEM_INFO)
@@ -319,7 +294,7 @@ test.describe('11.1.1 Operations details REST API (Package)', () => {
       })
 
       await test.step('Send request with token', async () => {
-        await operationPage.playgroundPanel.tokenTxtFld.fill(accessToken)
+        await operationPage.playgroundPanel.tokenTxtFld.fill(token)
 
         await operationPage.playgroundPanel.sendBtn.click()
 

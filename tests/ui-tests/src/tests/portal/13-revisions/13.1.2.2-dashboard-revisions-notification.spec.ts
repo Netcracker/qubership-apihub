@@ -1,23 +1,7 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { test } from '@fixtures'
 import { expect } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
-import { SHORT_EXPECT, SHORT_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
+import { OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION, SHORT_EXPECT, SHORT_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
 import { VERSION_OPERATIONS_TAB_REST } from '@portal/entities'
 import { D_REV_VAR, V_P_DSH_REV_1_N } from '@test-data/portal'
 
@@ -28,8 +12,11 @@ test.describe('13.1.2.2 Dashboard revisions (Outdated revision notification)', (
 
   test('[P-CODR-3.1] Outdated revision notification on the "Operations" tab',
     {
-      tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8423` },
+      tag: ['@smoke', '@flaky'],
+      annotation: [
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8423` },
+        { type: 'Flaky', description: OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION },
+      ],
     },
     async ({ sysadminPage: page, apihubTDM }) => {
 
@@ -72,9 +59,12 @@ test.describe('13.1.2.2 Dashboard revisions (Outdated revision notification)', (
 
   test.skip('[P-CODR-3.2] Outdated revision notification on the "API Changes" tab',
     {
+      tag: ['@flaky'],
       annotation: [
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8423` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-977` }],
+        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-977` },
+        { type: 'Flaky', description: OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION },
+      ],
     },
     async ({ sysadminPage: page, apihubTDM }) => {
 
@@ -117,9 +107,12 @@ test.describe('13.1.2.2 Dashboard revisions (Outdated revision notification)', (
 
   test.skip('[P-CODR-3.3] Outdated revision notification on the "Deprecated" tab',
     {
+      tag: ['@flaky'],
       annotation: [
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8423` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-976` }],
+        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-976` },
+        { type: 'Flaky', description: OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION },
+      ],
     },
     async ({ sysadminPage: page, apihubTDM }) => {
 
@@ -162,7 +155,11 @@ test.describe('13.1.2.2 Dashboard revisions (Outdated revision notification)', (
 
   test('[P-CODR-3.4] Outdated revision notification on the "Documents" tab',
     {
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8423` },
+      tag: ['@flaky'],
+      annotation: [
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8423` },
+        { type: 'Flaky', description: OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION },
+      ],
     },
     async ({ sysadminPage: page, apihubTDM }) => {
 
@@ -205,7 +202,11 @@ test.describe('13.1.2.2 Dashboard revisions (Outdated revision notification)', (
 
   test('[P-CODR-3.5] Outdated revision notification on the "Overview" tab',
     {
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8423` },
+      tag: ['@flaky'],
+      annotation: [
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8423` },
+        { type: 'Flaky', description: OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION },
+      ],
     },
     async ({ sysadminPage: page, apihubTDM }) => {
 
@@ -258,8 +259,11 @@ test.describe('13.1.2.2 Dashboard revisions (Outdated revision notification)', (
 
   test('[P-CODR-3.6] Outdated revision notification on the "Settings" page',
     {
-      tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8423` },
+      tag: ['@smoke', '@flaky'],
+      annotation: [
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8423` },
+        { type: 'Flaky', description: OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION },
+      ],
     },
     async ({ sysadminPage: page, apihubTDM }) => {
 
@@ -284,8 +288,11 @@ test.describe('13.1.2.2 Dashboard revisions (Outdated revision notification)', (
 
   test('[P-CODR-3.7] Outdated revision notification on the "Comparison" page',
     {
-      tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8423` },
+      tag: ['@smoke', '@flaky'],
+      annotation: [
+        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8423` },
+        { type: 'Flaky', description: OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION },
+      ],
     },
     async ({ sysadminPage: page, apihubTDM }) => {
 
