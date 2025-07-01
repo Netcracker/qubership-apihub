@@ -684,8 +684,8 @@ describe('e2e', () => {
     const result = normalize(source, opt)
     const any: Record<PropertyKey, unknown> = {
       anyOf: [
-        { nullable: false, readOnly: false, writeOnly: false, deprecated: false, type: 'boolean' },
-        { nullable: false, readOnly: false, writeOnly: false, deprecated: false, type: 'string', minLength: 0 },
+        { nullable: false, readOnly: false, writeOnly: false, deprecated: false, type: 'boolean', xml: {attribute: false} },
+        { nullable: false, readOnly: false, writeOnly: false, deprecated: false, type: 'string', minLength: 0, xml: {attribute: false} },
         {
           nullable: false,
           readOnly: false,
@@ -694,6 +694,7 @@ describe('e2e', () => {
           exclusiveMaximum: false,
           exclusiveMinimum: false,
           type: 'number',
+          xml: {attribute: false}
         },
         {
           nullable: false,
@@ -703,6 +704,7 @@ describe('e2e', () => {
           exclusiveMaximum: false,
           exclusiveMinimum: false,
           type: 'integer',
+          xml: {attribute: false}
         },
         {
           nullable: false,
@@ -714,6 +716,7 @@ describe('e2e', () => {
           properties: {},
           required: [],
           get additionalProperties() { return any },
+          xml: {attribute: false}
         },
         {
           nullable: false,
@@ -724,6 +727,7 @@ describe('e2e', () => {
           uniqueItems: false,
           type: 'array',
           get items() { return any },
+          xml: {attribute: false}
         },
       ],
     }
@@ -741,8 +745,8 @@ describe('e2e', () => {
         schemas: {
           null: {
             anyOf: [
-              { nullable: true, readOnly: false, writeOnly: false, deprecated: false, type: 'boolean' },
-              { nullable: true, readOnly: false, writeOnly: false, deprecated: false, type: 'string', minLength: 0 },
+              { nullable: true, readOnly: false, writeOnly: false, deprecated: false, type: 'boolean', xml: {attribute: false} },
+              { nullable: true, readOnly: false, writeOnly: false, deprecated: false, type: 'string', minLength: 0, xml: {attribute: false} },
               {
                 nullable: true,
                 readOnly: false,
@@ -751,6 +755,7 @@ describe('e2e', () => {
                 exclusiveMaximum: false,
                 exclusiveMinimum: false,
                 type: 'number',
+                xml: {attribute: false}
               },
               {
                 nullable: true,
@@ -760,6 +765,7 @@ describe('e2e', () => {
                 exclusiveMaximum: false,
                 exclusiveMinimum: false,
                 type: 'integer',
+                xml: {attribute: false}
               },
               {
                 nullable: true,
@@ -771,6 +777,7 @@ describe('e2e', () => {
                 properties: {},
                 required: [],
                 additionalProperties: any,
+                xml: {attribute: false}
               },
               {
                 nullable: true,
@@ -781,6 +788,7 @@ describe('e2e', () => {
                 uniqueItems: false,
                 type: 'array',
                 items: any,
+                xml: {attribute: false}
               },
             ],
           },
@@ -844,6 +852,13 @@ describe('e2e', () => {
             parameters: [
               { name: 'parameter', in: 'path' },
             ],
+            requestBody: {
+              content: {
+                'application/json': {
+                  schema: {}
+                }
+              }
+            },
             responses: {
               200: {
                 description: '',
@@ -867,6 +882,7 @@ describe('e2e', () => {
     expect(result).toHaveProperty(['paths', 'test', 'get', 'parameters', 0, 'allowEmptyValue'], false)
     expect(result).toHaveProperty(['paths', 'test', 'get', 'parameters', 0, 'allowReserved'], false)
     expect(result).toHaveProperty(['paths', 'test', 'get', 'tags'], [])
+    expect(result).toHaveProperty(['paths', 'test', 'get', 'requestBody', 'required'], false)
     expect(result).toHaveProperty(['paths', 'test', 'get', 'responses', 200, 'headers', 'hhh', 'deprecated'], false)
     expect(result).toHaveProperty(['paths', 'test', 'get', 'responses', 200, 'headers', 'hhh', 'required'], false)
     expect(result).toHaveProperty(['paths', 'test', 'get', 'responses', 200, 'headers', 'hhh', 'allowEmptyValue'], false)

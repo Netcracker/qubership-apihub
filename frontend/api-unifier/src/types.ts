@@ -142,6 +142,7 @@ export interface UnifyContext<Options> {
   readonly origins: OriginLeafs | undefined
   readonly path: JsonPath
   readonly options: Options
+  readonly parentValue: unknown
 }
 
 export type TransformFunction = (value: unknown, ctx: UnifyContext<InternalUnifyOptions>) => unknown
@@ -178,6 +179,10 @@ export interface HasIgnoreTreeUnderSymbols {
   ignoreTreeUnderSymbols: boolean
 }
 
+export interface HasParentValue {
+  parentValue: unknown
+}
+
 export type HasSelfOriginsResolver = HasSelfMetaResolver<'selfOriginResolver', OriginLeafs>
 export type HasSelfDefaultsResolver = HasSelfMetaResolver<'selfDefaultsResolver', DefaultTypeFlag>
 
@@ -204,7 +209,7 @@ export interface ValidateState extends HasIgnoreTreeUnderSymbols {
   propertiesToCleanup: PropertyKey[]
 }
 
-export interface UnifyState extends HasIgnoreTreeUnderSymbols, HasSelfOriginsResolver {
+export interface UnifyState extends HasIgnoreTreeUnderSymbols, HasSelfOriginsResolver, HasParentValue {
 }
 
 export const CURRENT_DATA_LEVEL = 'current-data-level'

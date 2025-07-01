@@ -49,7 +49,7 @@ import {
   cleanUpSyntheticJsonSchemaTypes,
   forwardOnlyCleanUpSyntheticJsonSchemaTypes,
 } from '../unifies/cleanup-sythetic-types'
-import { JsonPrimitiveValue, valueDefaults } from '../unifies/defaults'
+import { DefaultValueMapping, valueDefaults } from '../unifies/defaults'
 import { deepEqualsMatcher, ReplaceMapping, ReverseMatcherFunction, valueReplaces } from '../unifies/replaces'
 import { ANY_VALUE, CompareMeta, deepCircularEqualsWithPropertyFilter } from '../unifies/deep-equals'
 import { createEvaluationCacheService } from '../cache'
@@ -58,7 +58,7 @@ import { JSON_SCHEMA_DEPRECATION_RESOLVER } from './jsonschema.deprecated'
 
 const EMPTY_MARKER = Symbol('empty-items')
 
-const JSON_SCHEMA_DEFAULTS_COMMON: Record<string, JsonPrimitiveValue> = {
+const JSON_SCHEMA_DEFAULTS_COMMON: DefaultValueMapping = {
   [JSON_SCHEMA_PROPERTY_ADDITIONAL_PROPERTIES]: true,
   [JSON_SCHEMA_PROPERTY_MIN_LENGTH]: 0,
   [JSON_SCHEMA_PROPERTY_MIN_PROPERTIES]: 0,
@@ -68,7 +68,7 @@ const JSON_SCHEMA_DEFAULTS_COMMON: Record<string, JsonPrimitiveValue> = {
   [JSON_SCHEMA_PROPERTY_PROPERTIES]: EMPTY_MARKER,
   [JSON_SCHEMA_PROPERTY_PATTERN_PROPERTIES]: EMPTY_MARKER,
 }
-export const JSON_SCHEMA_DEFAULTS: Record<JsonSchemaSpecVersion, Record<string, JsonPrimitiveValue>> = {
+export const JSON_SCHEMA_DEFAULTS: Record<JsonSchemaSpecVersion, DefaultValueMapping> = {
   [SPEC_TYPE_JSON_SCHEMA_04]: {
     ...JSON_SCHEMA_DEFAULTS_COMMON,
     //not extends to next version
