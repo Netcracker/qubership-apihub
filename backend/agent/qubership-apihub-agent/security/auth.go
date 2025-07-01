@@ -69,10 +69,12 @@ func SetupGoGuardian(apihubClient client.ApihubClient) error {
 
 	jwtStrategy := jwt.New(cache, keeper)
 	apihubApiKeyStrategy := NewApihubApiKeyStrategy(apihubClient)
-	strategy = union.New(jwtStrategy, apihubApiKeyStrategy)
+	cookieTokenStrategy := NewCookieTokenStrategy(apihubClient)
+
+	strategy = union.New(jwtStrategy, apihubApiKeyStrategy, cookieTokenStrategy)
 
 	customApihubApiKeyStrategy := NewCustomApihubApiKeyStrategy(apihubClient, controller.CustomApiKeyHeader)
 	customJwtStrategy = jwt.New(cache, keeper, token.SetParser(token.XHeaderParser(controller.CustomJwtAuthHeader)))
-	proxyAuthStrategy = union.New(customJwtStrategy, customApihubApiKeyStrategy)
+	proxyAuthStrategy = union.New(customJwtStrategy, customApihubApiKeyStrategy, cookieTokenStrategy)
 	return nil
 }

@@ -17,6 +17,7 @@ package controller
 import (
 	"crypto/tls"
 	"fmt"
+	"github.com/Netcracker/qubership-apihub-agent/view"
 	"io"
 	"net/http"
 	"net/url"
@@ -64,6 +65,14 @@ func (s *serviceProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Reques
 	r.Header.Del(CustomJwtAuthHeader)
 	r.Header.Del(CustomApiKeyHeader)
 
+	cookies := r.Cookies()
+	r.Header.Del("Cookie")
+	for _, cookieValue := range cookies {
+		if cookieValue.Name != view.AccessTokenCookieName {
+			r.AddCookie(cookieValue)
+		}
+	}
+
 	fullTargetUrl := makeFullTargetUrl(customServerUrl, r.URL.EscapedPath())
 
 	proxyURL, err := url.Parse(fullTargetUrl)
@@ -97,7 +106,10 @@ func (s *serviceProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	defer resp.Body.Close()
-	copyHeader(w.Header(), resp.Header)
+	if err := copyHeader(w.Header(), resp.Header); err != nil {
+		RespondWithCustomError(w, err)
+		return
+	}
 	w.WriteHeader(resp.StatusCode)
 	io.Copy(w, resp.Body)
 }

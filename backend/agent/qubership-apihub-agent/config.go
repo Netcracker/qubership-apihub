@@ -17,6 +17,7 @@ package main
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -66,9 +67,31 @@ func loadAgentConfig() AgentConfig {
 		result.AgentNamespace = "unknown"
 	}
 
-	result.ExcludeLabels = []string{"facadeGateway"} // TODO: get from env
+	excludeLablesStr := os.Getenv("DISCOVERY_EXCLUDE_LABELS")
+	if excludeLablesStr != "" {
+		labels := strings.Split(excludeLablesStr, ",")
+		var cleanedExcludeLabels []string
+		for _, label := range labels {
+			cleanedLabel := strings.TrimSpace(label)
+			if cleanedLabel != "" {
+				cleanedExcludeLabels = append(cleanedExcludeLabels, cleanedLabel)
+			}
+		}
+		result.ExcludeLabels = cleanedExcludeLabels
+	}
 
-	result.GroupingLabels = []string{"app.kubernetes.io/part-of", "app_name", "application", "nrm.netcracker.com/application", "app.kubernetes.io/version", "version"} // TODO: get from env
+	groupingLablesStr := os.Getenv("DISCOVERY_GROUPING_LABELS")
+	if groupingLablesStr != "" {
+		labels := strings.Split(groupingLablesStr, ",")
+		var cleanedGroupingLabels []string
+		for _, label := range labels {
+			cleanedLabel := strings.TrimSpace(label)
+			if cleanedLabel != "" {
+				cleanedGroupingLabels = append(cleanedGroupingLabels, cleanedLabel)
+			}
+		}
+		result.GroupingLabels = cleanedGroupingLabels
+	}
 
 	result.AgentName = os.Getenv("AGENT_NAME")
 

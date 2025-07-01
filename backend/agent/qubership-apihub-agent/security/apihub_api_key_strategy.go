@@ -45,6 +45,6 @@ func (a apihubApiKeyStrategyImpl) Authenticate(ctx context.Context, r *http.Requ
 	if valid {
 		return auth.NewDefaultUser("", "api-key", []string{}, auth.Extensions{}), nil
 	} else {
-		return nil, nil
+		return nil, fmt.Errorf("authentication failed: %v is invalid", "api-key")
 	}
 }

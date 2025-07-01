@@ -51,3 +51,9 @@ const PaasOperationFailedForbidenMsg = "Paas operation forbiden"
 
 const AgentVersionMismatch = "700"
 const AgentVersionMismatchMsg = "Current version $version of Agent not supported by APIHUB. Please, update this instance to version $recommended."
+
+const HeadersLimitExceeded = "7401"
+const HeadersLimitExceededMsg = "HTTP headers limit exceeded. Maximum allowed number of headers is $maxHeaders"
+
+const HeaderValuesLimitExceeded = "7402"
+const HeaderValuesLimitExceededMsg = "HTTP header values limit exceeded for key '$key'. Maximum allowed number of values is $maxValues"
