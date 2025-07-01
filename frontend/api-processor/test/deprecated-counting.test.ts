@@ -15,7 +15,7 @@
  */
 
 import { Editor, LocalRegistry } from './helpers'
-import { VERSION_STATUS } from '../src'
+import { BUILD_TYPE, VERSION_STATUS } from '../src'
 
 const portal = new LocalRegistry('new-deprecated')
 
@@ -45,6 +45,7 @@ describe('Deprecated counting test', () => {
       version: 'v1',
       status: VERSION_STATUS.RELEASE,
       files: [{ fileId: 'properties-inline-same-schema.yaml' }],
+      buildType: BUILD_TYPE.BUILD,
     }, {}, portal)
 
     const result = await editor.run()
@@ -60,6 +61,7 @@ describe('Deprecated counting test', () => {
       version: 'v2',
       status: VERSION_STATUS.RELEASE,
       files: [{ fileId: 'properties-components-same-schema.yaml' }],
+      buildType: BUILD_TYPE.BUILD,
     }, {}, portal)
 
     const result = await editor.run()
@@ -75,6 +77,7 @@ describe('Deprecated counting test', () => {
       version: 'v3',
       status: VERSION_STATUS.RELEASE,
       files: [{ fileId: 'deprecated-in-allof-1.yaml' }],
+      buildType: BUILD_TYPE.BUILD,
     }, {}, portal)
 
     const result = await editor.run()

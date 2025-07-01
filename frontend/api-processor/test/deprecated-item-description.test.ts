@@ -15,7 +15,7 @@
  */
 
 import { deprecatedItemDescriptionMatcher, Editor, LocalRegistry } from './helpers'
-import { VERSION_STATUS } from '../src'
+import { BUILD_TYPE, VERSION_STATUS } from '../src'
 
 const packageRegistry = LocalRegistry.openPackage('deprecated-item-description')
 
@@ -28,6 +28,7 @@ describe('Description for deprecated items test', () => {
       version: 'v1',
       status: VERSION_STATUS.RELEASE,
       files: [{ fileId: 'deprecated-schema.yaml' }],
+      buildType: BUILD_TYPE.BUILD,
     }, {}, packageRegistry)
 
     const result = await editor.run()

@@ -16,6 +16,7 @@
 
 import fs from 'fs/promises'
 import path from 'path'
+import mime from 'mime-types'
 
 import {
   BUILD_TYPE,
@@ -29,22 +30,31 @@ import {
 import { buildSchema, introspectionFromSchema } from 'graphql/utilities'
 import { LocalRegistry } from './registry'
 import { Editor } from './editor'
+import { getFileExtension } from '../../src/utils'
 
 export const loadFileAsString = async (filePath: string, folder: string, fileName: string): Promise<string | null> => {
   return (await loadFile(filePath, folder, fileName))?.text() ?? null
 }
 
-export const loadFile = async (filePath: string, folder: string, fileName: string): Promise<Blob | null> => {
+export const loadFile = async (filePath: string, folder: string, fileName: string): Promise<File | null> => {
   try {
     const filepath = path.join(process.cwd(), filePath, folder, fileName)
-    return new Blob([await fs.readFile(filepath)])
+    const mediaType = mime.lookup(fileName) || (['graphql', 'gql'].includes(getFileExtension(fileName)) ? 'text/plain' : false)
+    if (!mediaType) {
+      console.error('Can\'t lookup the media type')
+    }
+    return new File([await fs.readFile(filepath)], fileName, { type: mediaType || '' })
   } catch (error) {
     //throw new Error(`Error while reading file: ${error}`)
     return null
   }
 }
 
-export const loadConfig = async (filePath: string, folder: string, filename?: string): Promise<BuildConfig | null> => {
+export interface PackageInfo {
+  packageName: string
+}
+
+export const loadConfig = async (filePath: string, folder: string, filename?: string): Promise<BuildConfig & PackageInfo | null> => {
   try {
     const filepath = path.join(process.cwd(), filePath, folder, filename ?? 'config.json')
     const file = await fs.readFile(filepath, 'utf8')

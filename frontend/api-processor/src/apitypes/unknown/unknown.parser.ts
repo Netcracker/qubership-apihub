@@ -17,7 +17,7 @@
 import YAML from 'js-yaml'
 
 import { DOCUMENT_TYPE, FILE_FORMAT, SUPPORTED_FILE_FORMATS } from '../../consts'
-import { BinaryFile, FILE_KIND, TextFile } from '../../types/internal'
+import { BinaryFile, FILE_KIND, FileFormat, TextFile } from '../../types/internal'
 import { getFileExtension } from '../../utils'
 
 export const parseUnknownFile = async (fileId: string, source: Blob): Promise<TextFile | undefined> => {
@@ -47,6 +47,6 @@ export const parseUnknownFile = async (fileId: string, source: Blob): Promise<Te
 
 export const unknownParsedFile = (fileId: string, source: Blob): BinaryFile => {
   const extension = getFileExtension(fileId)
-  const format = SUPPORTED_FILE_FORMATS.includes(extension) ? extension : FILE_FORMAT.UNKNOWN
+  const format = (SUPPORTED_FILE_FORMATS as string[]).includes(extension) ? extension as FileFormat : FILE_FORMAT.UNKNOWN
   return { fileId, type: DOCUMENT_TYPE.UNKNOWN, format: format, source, kind: FILE_KIND.BINARY }
 }

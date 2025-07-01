@@ -15,7 +15,7 @@
  */
 
 import { Editor, LocalRegistry } from './helpers'
-import { VERSION_STATUS } from '../src'
+import { BUILD_TYPE, VERSION_STATUS } from '../src'
 
 const portal = LocalRegistry.openPackage('new-deprecated')
 
@@ -27,6 +27,7 @@ describe('GraphQL Deprecated Items test', () => {
       version: 'v2',
       status: VERSION_STATUS.RELEASE,
       files: [{ fileId: 'simple-graphQL-2.gql' }],
+      buildType: BUILD_TYPE.BUILD,
     }, {}, portal)
 
     const result = await editor.run()

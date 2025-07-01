@@ -20,31 +20,28 @@ import {
   ApiOperation,
   BuilderContext,
   BuildResult,
+  ExportFormat,
   FILE_KIND,
   FileFormat,
   FileId,
-  HTML_EXPORT_GROUP_FORMAT,
-  JSON_EXPORT_GROUP_FORMAT,
-  OperationsGroupExportFormat,
   PackageDocument,
-  ResolvedDocument,
+  ResolvedGroupDocument,
   VALIDATION_RULES_SEVERITY_LEVEL_ERROR,
   VersionDocument,
-  YAML_EXPORT_GROUP_FORMAT,
 } from '../types'
 import { bundle, Resolver } from 'api-ref-bundler'
-import { FILE_FORMAT_JSON, FILE_FORMAT_YAML, MESSAGE_SEVERITY } from '../consts'
+import { FILE_FORMAT_HTML, FILE_FORMAT_JSON, FILE_FORMAT_YAML, MESSAGE_SEVERITY } from '../consts'
 import { isNotEmpty } from './arrays'
 import { PATH_PARAM_UNIFIED_PLACEHOLDER } from './builder'
 import { RefErrorType, RefErrorTypes } from '@netcracker/qubership-apihub-api-unifier'
 
-export const EXPORT_FORMAT_TO_FILE_FORMAT = new Map<OperationsGroupExportFormat, FileFormat>([
-  [YAML_EXPORT_GROUP_FORMAT, FILE_FORMAT_YAML],
-  [JSON_EXPORT_GROUP_FORMAT, FILE_FORMAT_JSON],
-  [HTML_EXPORT_GROUP_FORMAT, FILE_FORMAT_JSON],
+export const EXPORT_FORMAT_TO_FILE_FORMAT = new Map<ExportFormat, typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON>([
+  [FILE_FORMAT_YAML, FILE_FORMAT_YAML],
+  [FILE_FORMAT_JSON, FILE_FORMAT_JSON],
+  [FILE_FORMAT_HTML, FILE_FORMAT_JSON],
 ])
 
-export function toVersionDocument(document: ResolvedDocument, fileFormat: FileFormat): VersionDocument {
+export function toVersionDocument(document: ResolvedGroupDocument, fileFormat: FileFormat): VersionDocument {
   return {
     data: document.data,
     version: document.version,

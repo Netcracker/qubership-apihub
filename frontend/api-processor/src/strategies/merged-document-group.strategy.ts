@@ -15,27 +15,21 @@
  */
 
 import {
-  BuildConfig,
+  BuilderStrategy,
   BuildResult,
   BuildTypeContexts,
-  JSON_EXPORT_GROUP_FORMAT,
-  YAML_EXPORT_GROUP_FORMAT,
+  MergedSpecificationBuildConfig,
 } from '../types'
 import { ExportTemplate, getSplittedVersionKey, isJson, isYaml, mergeOpenapiDocuments } from '../utils'
 import { DocumentGroupStrategy } from './document-group.strategy'
 import { OpenAPIV3 } from 'openapi-types'
 import { REST_API_TYPE } from '../apitypes'
 import YAML from 'js-yaml'
-import { BUILD_TYPE } from '../consts'
+import { BUILD_TYPE, FILE_FORMAT_JSON } from '../consts'
 
-export const MERGED_OPERATIONS_GROUP_EXPORT_FORMAT = [
-  YAML_EXPORT_GROUP_FORMAT,
-  JSON_EXPORT_GROUP_FORMAT,
-]
-
-export class MergedDocumentGroupStrategy extends DocumentGroupStrategy {
-  async execute(config: BuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
-    const { packageId, version, groupName, apiType, format = JSON_EXPORT_GROUP_FORMAT } = config
+export class MergedDocumentGroupStrategy implements BuilderStrategy {
+  async execute(config: MergedSpecificationBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
+    const { packageId, version, groupName, apiType, format = FILE_FORMAT_JSON } = config
 
     if (!groupName) {
       throw new Error('No group to transform documents for provided')
@@ -45,18 +39,21 @@ export class MergedDocumentGroupStrategy extends DocumentGroupStrategy {
       throw new Error(`API type is not supported: ${apiType}`)
     }
 
-    if (!MERGED_OPERATIONS_GROUP_EXPORT_FORMAT.includes(format)) {
-      throw new Error(`Export format ${format} is not supported for build type ${BUILD_TYPE.MERGED_SPECIFICATION}`)
-    }
-
-    const { documents: documentsMap } = await super.execute(config, buildResult, contexts)
+    const { documents: documentsMap } = await new DocumentGroupStrategy().execute(
+      {
+        ...config,
+        buildType: BUILD_TYPE.REDUCED_SOURCE_SPECIFICATIONS,
+      },
+      buildResult,
+      contexts,
+    )
     const documents = [...documentsMap.values()]
     const specs = documents.map(doc => doc.data) as OpenAPIV3.Document[]
 
     const { builderContext } = contexts
     const builderContextObject = builderContext(config)
 
-    const template = await builderContextObject.templateResolver?.(
+    const template = await builderContextObject.groupExportTemplateResolver?.(
       apiType,
       version,
       packageId,

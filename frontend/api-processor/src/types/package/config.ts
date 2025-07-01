@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BuildConfigRef, BuildType, PackageId, VersionId } from '../external'
+import { BuildConfigRef, BuildType, ExportFormat, PackageId, VersionId } from '../external'
 
 export interface PackageConfig {
   packageId: PackageId
@@ -27,4 +27,5 @@ export interface PackageConfig {
   refs?: BuildConfigRef[]
 
   metadata?: Record<string, unknown>
+  format?: ExportFormat
 }

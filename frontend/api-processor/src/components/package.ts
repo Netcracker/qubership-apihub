@@ -20,7 +20,9 @@ import { version } from '../../package.json'
 import {
   ApiOperation,
   BuilderContext,
+  BuildResult,
   BuildResultDto,
+  ExportDocument,
   PackageComparison,
   PackageComparisonOperations,
   PackageComparisons,
@@ -30,11 +32,11 @@ import {
   PackageOperation,
   PackageOperations,
   VersionDocument,
-  BuildResult,
+  ZippableDocument,
 } from '../types'
 import { unknownApiBuilder } from '../apitypes'
-import { MESSAGE_SEVERITY, PACKAGE } from '../consts'
-import { takeIf, toPackageDocument } from '../utils'
+import { BUILD_TYPE, MESSAGE_SEVERITY, PACKAGE } from '../consts'
+import { EXPORT_FORMAT_TO_FILE_FORMAT, takeIf, toPackageDocument } from '../utils'
 import { toVersionsComparisonDto } from '../utils/transformToDto'
 
 export interface ZipTool {
@@ -61,12 +63,22 @@ export const createVersionPackage = async (
     comparisons: buildResult.comparisons.map(comparison => toVersionsComparisonDto(comparison, logError)),
   }
 
-  await createInfoFile(zip, buildResultDto.config)
-
   const documents = buildResultDto.merged ? [buildResultDto.merged] : [...buildResultDto.documents.values()]
+
+  switch (buildResult.config.buildType) {
+    case BUILD_TYPE.EXPORT_VERSION:
+    case BUILD_TYPE.EXPORT_REST_DOCUMENT:
+    case BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP:
+      if (buildResult.exportDocuments.length === 1) {
+        return Buffer.from(await buildResultDto.exportDocuments[0].data.arrayBuffer())
+      }
+      await createExportDocumentDataFiles(zip, buildResultDto.exportDocuments)
+      return await zip.buildResult(options)
+  }
 
   createDocumentsFile(zip, documents)
   await createDocumentDataFiles(zip, documents, ctx)
+  await createInfoFile(zip, buildResultDto.config)
 
   createOperationsFile(zip, buildResultDto.operations)
   const operationsDir = zip.folder(PACKAGE.OPERATIONS_DIR_NAME)!
@@ -109,9 +121,7 @@ const createDocumentsFile = (zip: ZipTool, documents: VersionDocument[]): void =
   zip.file(PACKAGE.DOCUMENTS_FILE_NAME, result)
 }
 
-const createDocumentDataFiles = async (zip: ZipTool, documents: VersionDocument[], ctx: BuilderContext): Promise<void> => {
-  const documentsDir = zip.folder(PACKAGE.DOCUMENTS_DIR_NAME)
-
+const writeDocumentsToZip = async (zip: ZipTool, documents: ZippableDocument[], ctx: BuilderContext): Promise<void> => {
   const { apiBuilders, config: { format } } = ctx
 
   for (const document of documents) {
@@ -120,8 +130,20 @@ const createDocumentDataFiles = async (zip: ZipTool, documents: VersionDocument[
 
     const apiBuilder =
       apiBuilders.find(({ types }) => types.includes(document.type)) || unknownApiBuilder
-    const data = apiBuilder.dumpDocument(document, format)
-    await documentsDir?.file(document.filename, data)
+    const documentFormat = EXPORT_FORMAT_TO_FILE_FORMAT.get(format!)
+    const data = apiBuilder.dumpDocument(document, documentFormat)
+    await zip.file(document.filename, data)
+  }
+}
+
+const createDocumentDataFiles = async (zip: ZipTool, documents: VersionDocument[], ctx: BuilderContext): Promise<void> => {
+  const documentsDir = zip.folder(PACKAGE.DOCUMENTS_DIR_NAME)
+  await writeDocumentsToZip(documentsDir, documents, ctx)
+}
+
+const createExportDocumentDataFiles = async (zip: ZipTool, documents: ExportDocument[]): Promise<void> => {
+  for (const document of documents) {
+    await zip.file(document.filename, document.data)
   }
 }
 

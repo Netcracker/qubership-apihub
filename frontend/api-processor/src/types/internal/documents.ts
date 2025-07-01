@@ -21,18 +21,31 @@ export interface VersionDocuments {
   documents: VersionDocument[]
 }
 
-export interface VersionDocument<T = any> {
+
+export interface ExportDocument {
+  data: Blob
+  filename: string
+}
+
+export interface ZippableDocument<T = any> {
   fileId: FileId
   type: string
-  format: string
   data: T
+  description: string
+  source?: Blob
+
+  filename: string
+  publish?: boolean
+}
+
+export interface VersionDocument<T = any> extends ZippableDocument<T> {
+  format: FileFormat
   slug: string
   title: string
   description: string
   version?: string
   filename: string
   dependencies: string[]
-  //TODO: Rename to operationIds in future
   operationIds: OperationId[]
   metadata: Record<string, unknown>
   errors?: number

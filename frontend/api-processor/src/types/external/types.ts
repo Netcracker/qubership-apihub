@@ -19,5 +19,6 @@ export type KeyOfConstType<T> = T[keyof T]
 export type OperationsApiType = 'rest' | 'graphql'
 export type PackageId = string
 export type FileId = string
+export type TemplatePath = string
 export type VersionId = string | `${string}@${number}`
 export type OperationId = string

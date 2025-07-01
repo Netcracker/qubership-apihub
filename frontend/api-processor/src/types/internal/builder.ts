@@ -18,8 +18,8 @@ import { BuildConfig, BuilderResolvers, FileId, PackageId, ResolvedVersion, Vers
 import { VersionsComparison, VersionsComparisonDto } from './compare'
 import { PackageConfig } from '../package/config'
 import { NotificationMessage } from '../package/notifications'
-import { VersionDocument } from './documents'
-import { File } from './internal'
+import { ExportDocument, VersionDocument } from './documents'
+import { SourceFile } from './internal'
 import { ApiOperation } from './operation'
 
 export type VersionCache = ResolvedVersion & {
@@ -32,6 +32,7 @@ export interface BuildResultDto {
   comparisons: VersionsComparisonDto[]
   notifications: NotificationMessage[]
   documents: Map<string, VersionDocument>
+  exportDocuments: ExportDocument[]
   operations: Map<string, ApiOperation>
   merged?: VersionDocument
 }
@@ -41,6 +42,8 @@ export interface BuildResult {
   comparisons: VersionsComparison[]
   notifications: NotificationMessage[]
   documents: Map<string, VersionDocument>
+  exportDocuments: ExportDocument[]
+  exportFileName?: string
   operations: Map<string, ApiOperation>
   merged?: VersionDocument
 }
@@ -59,7 +62,7 @@ export interface IPackageVersionBuilder {
   readonly config: BuildConfig
   readonly params: BuilderParams
 
-  readonly parsedFiles: Map<FileId, File>
+  readonly parsedFiles: Map<FileId, SourceFile>
   readonly versionsCache: Map<string, VersionCache>
 
   run: (options?: BuilderRunOptions) => Promise<BuildResult>

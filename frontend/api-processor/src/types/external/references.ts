@@ -15,6 +15,7 @@
  */
 
 import { PackageId, VersionId } from './types'
+import { VersionStatus } from './config'
 
 export type VersionReferencesResolver = (
   version: VersionId,
@@ -32,22 +33,23 @@ export interface ResolvedReferences {
   packages: ResolvedReferenceMap
 }
 
-export type ResolvedReferenceMap = Record<string, ResolvedReference>
+export type ResolvedReferenceMap = Record<string, ReferencedPackage>
 
-export interface ResolvedReference {
+export interface ReferencedPackage {
   refId: string
+  kind: ReferencedPackageKind
+  name: string
   version: string
-  versionRevision: number
-  parentRefId?: string
-  parentRefVersion?: string
-  excluded?: boolean
+  status: VersionStatus
+  parentPackages?: string[]
   deletedAt?: string
-
-  // other params
-  // [key: string]: unknown
-
-  // name: string
-  // status: 'draft' | 'release' | 'release candidate' | 'deprecated' | 'archived'
-  // kind?: 'package' | 'dashboard'
-  // parents?: unknown[]
+  deletedBy?: string
+  notLatestRevision?: string
 }
+
+export const KIND_PACKAGE = 'package'
+export const KIND_DASHBOARD = 'dashboard'
+
+export type ReferencedPackageKind =
+  | typeof KIND_PACKAGE
+  | typeof KIND_DASHBOARD

@@ -21,7 +21,8 @@ import {
   ChangeSummary,
   DEPRECATED_CHANGE_TYPE,
   NON_BREAKING_CHANGE_TYPE,
-  RISKY_CHANGE_TYPE, SEMI_BREAKING_CHANGE_TYPE,
+  RISKY_CHANGE_TYPE,
+  SEMI_BREAKING_CHANGE_TYPE,
   UNCLASSIFIED_CHANGE_TYPE,
   VALIDATION_RULES_SEVERITY_LEVEL_WARNING,
   ValidationRulesSeverity,
@@ -77,10 +78,19 @@ export const BUILD_TYPE = {
   BUILD: 'build',
   CHANGELOG: 'changelog',
   PREFIX_GROUPS_CHANGELOG: 'prefix-groups-changelog',
-  DOCUMENT_GROUP: 'documentGroup',
-  REDUCED_SOURCE_SPECIFICATIONS: 'reducedSourceSpecifications',
-  MERGED_SPECIFICATION: 'mergedSpecification',
+  DOCUMENT_GROUP: 'documentGroup', // deprecated
+  REDUCED_SOURCE_SPECIFICATIONS: 'reducedSourceSpecifications', // deprecated
+  MERGED_SPECIFICATION: 'mergedSpecification', // deprecated
+  EXPORT_VERSION: 'exportVersion',
+  EXPORT_REST_DOCUMENT: 'exportRestDocument',
+  EXPORT_REST_OPERATIONS_GROUP: 'exportRestOperationsGroup',
 } as const
+
+export const EXPORT_BUILD_TYPES = [
+  BUILD_TYPE.EXPORT_VERSION,
+  BUILD_TYPE.EXPORT_REST_DOCUMENT,
+  BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP,
+]
 
 export const VERSION_STATUS = {
   RELEASE: 'release',
@@ -111,6 +121,8 @@ export const FILE_FORMAT_UNKNOWN = 'unknown'
 export const FILE_FORMAT_GRAPHQL = 'graphql'
 export const FILE_FORMAT_GQL = 'gql'
 export const FILE_FORMAT_MD = 'md'
+export const FILE_FORMAT_PROTO = 'proto'
+export const FILE_FORMAT_HTML = 'html'
 
 export const FILE_FORMAT = {
   JSON: FILE_FORMAT_JSON,
@@ -120,7 +132,8 @@ export const FILE_FORMAT = {
   GRAPHQL: FILE_FORMAT_GRAPHQL,
   GQL: FILE_FORMAT_GQL,
   MD: FILE_FORMAT_MD,
-}
+  PROTO: FILE_FORMAT_PROTO,
+} as const
 
 export const SUPPORTED_FILE_FORMATS = Object.values(FILE_FORMAT)
 
