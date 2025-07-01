@@ -3,6 +3,7 @@ import source30x from '../resources/openapi30x.json'
 import source31x from '../resources/openapi31x.json'
 import { validate } from '../../src/validate'
 import { OpenAPIV3 } from 'openapi-types'
+import { normalize } from '../../src'
 
 const JSON_SCHEMA_FULLY_CYCLED: Record<PropertyKey, unknown> = {
   type: 'object',
@@ -545,5 +546,108 @@ describe('validate', () => {
         title: 'Ignore Title',
       },
     })
+  })
+})
+
+const schemaPath = ['paths', '/example', 'post', 'responses', '200', 'content', 'application/json', 'schema']
+
+const defaultNormalize = (value: unknown) => normalize(value, {
+  validate: true,
+  unify: true,
+  liftCombiners: true,
+})
+
+describe('OAS 3.1 Type validations: array of types', () => {
+  it('array of type must contain one of primitive types or integer', () => {
+    const data = {
+      "openapi": "3.1.0",
+      "paths": {
+        "/example": {
+          "post": {
+            "responses": {
+              "200": {
+                "description": "OK",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": [
+                        "string",
+                        "my_type"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const result = defaultNormalize(data)
+
+    expect(result).toHaveProperty([...schemaPath, 'type'], 'string')
+  })
+
+  it('ignores non-valid null literal in array of types', () => {
+    const data = {
+      "openapi": "3.1.0",
+      "paths": {
+        "/example": {
+          "post": {
+            "responses": {
+              "200": {
+                "description": "OK",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": [
+                        "string",
+                        null
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const result = defaultNormalize(data)
+
+    expect(result).toHaveProperty([...schemaPath, 'type'], 'string')
+  })
+
+  it('types in array are unique', () => {
+    const data = {
+      "openapi": "3.1.0",
+      "paths": {
+        "/example": {
+          "post": {
+            "responses": {
+              "200": {
+                "description": "OK",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": [
+                        "string",
+                        "string"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const result = defaultNormalize(data)
+
+    expect(result).toHaveProperty([...schemaPath, 'type'], 'string')
   })
 })

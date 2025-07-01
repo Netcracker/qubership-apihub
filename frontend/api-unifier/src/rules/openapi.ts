@@ -536,7 +536,7 @@ const openApiParametersRules = (version: OpenApiSpecVersion): NormalizationRules
     ...openApiExampleRules,
     ...openApiExamplesRules,
     '/schema': () => ({
-      ...customFor30JsonSchemaRules,
+      ...openApiJsonSchemaRules(version),
       newDataLayer: true,
     }),
     ...openApiExtensionRules,

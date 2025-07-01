@@ -884,4 +884,38 @@ describe('unify', () => {
       },
     })
   })
+
+  it('OAS 3.1. Empty schema must match all types, include null type', () => {
+    const result: any = unify({
+      'openapi': '3.1.0',
+      'paths': {
+        '/example': {
+          'post': {
+            'responses': {
+              '200': {
+                'description': 'OK',
+                'content': {
+                  'application/json': {
+                    'schema': {},
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, { liftCombiners: true })
+
+    expect(result).toHaveProperty(['paths', '/example', 'post', 'responses', '200', 'content', 'application/json', 'schema'], {
+      anyOf: expect.arrayContaining([
+        expect.objectContaining({ type: 'boolean' }),
+        expect.objectContaining({ type: 'string' }),
+        expect.objectContaining({ type: 'number' }),
+        expect.objectContaining({ type: 'integer' }),
+        expect.objectContaining({ type: 'object' }),
+        expect.objectContaining({ type: 'array' }),
+        expect.objectContaining({ type: 'null' }),
+      ]),
+    })
+  })
 })

@@ -55,7 +55,7 @@ import {
   JsonSchemaNodeType,
 } from '../rules/jsonschema.const'
 import { isArray, isObject } from '@netcracker/qubership-apihub-json-crawl'
-import { singleOrArrayToArray, uniqueItems } from '../utils'
+import { removeDuplicatesWithMergeOrigins, singleOrArrayToArray, uniqueItems } from '../utils'
 import { mergeProhibitLiftCombiners } from '../lift-combiners'
 import { combineJsonSchemaWithMetaJso } from './empty-schema'
 import {
@@ -66,6 +66,7 @@ import {
   setOrigins,
   setOriginsForArray,
 } from '../origins'
+import { deepEqual } from 'fast-equals'
 
 //version dependable?
 const JSON_SCHEMA_TYPE_TO_DISCRIMINATOR_PROPS: Record<JsonSchemaNodeType, readonly string[]> = {
@@ -257,24 +258,26 @@ export const splitJsonSchemaTypeArray: UnifyFunction = (jso, { origins, options 
   if (types.length === 0) {
     return combineJsonSchemaWithMetaJso(jso, options.syntheticMetaDefinitions.invertedEmptyJsonSchema(origins), options)
   }
-  if (types.length === 1) {
+  const originsFlag = options.originsFlag
+  const uniqueTypes = removeDuplicatesWithMergeOrigins(types, originsFlag, deepEqual)
+  if (uniqueTypes.length === 1) {
     const result = {
       ...jso,
-      [JSON_SCHEMA_PROPERTY_TYPE]: types[0],
+      [JSON_SCHEMA_PROPERTY_TYPE]: uniqueTypes[0],
     }
-    setOrigins(result, JSON_SCHEMA_PROPERTY_TYPE, options.originsFlag, resolveOrigins(types, 0, options.originsFlag))
+    setOrigins(result, JSON_SCHEMA_PROPERTY_TYPE, originsFlag, resolveOrigins(uniqueTypes, 0, originsFlag))
     return result
   }
-  const typesOrigins = resolveOriginsMetaRecord(types, options.originsFlag) ?? {}
+  const typesOrigins = resolveOriginsMetaRecord(uniqueTypes, originsFlag) ?? {}
   const { type, ...result } = jso
-  result[JSON_SCHEMA_PROPERTY_ANY_OF] = types.map((type, index) => {
+  result[JSON_SCHEMA_PROPERTY_ANY_OF] = uniqueTypes.map((type, index) => {
     const schemaType = { [JSON_SCHEMA_PROPERTY_TYPE]: type }
-    copyOrigins(types, schemaType, index, JSON_SCHEMA_PROPERTY_TYPE, options.originsFlag)
+    copyOrigins(uniqueTypes, schemaType, index, JSON_SCHEMA_PROPERTY_TYPE, originsFlag)
     return schemaType
   })
-  copyOrigins(result, result, JSON_SCHEMA_PROPERTY_TYPE, JSON_SCHEMA_PROPERTY_ANY_OF, options.originsFlag)
-  setOriginsForArray(result[JSON_SCHEMA_PROPERTY_ANY_OF], options.originsFlag, types.map((_, index) => typesOrigins[index]))
-  cleanOrigins(result, JSON_SCHEMA_PROPERTY_TYPE, options.originsFlag)
+  copyOrigins(result, result, JSON_SCHEMA_PROPERTY_TYPE, JSON_SCHEMA_PROPERTY_ANY_OF, originsFlag)
+  setOriginsForArray(result[JSON_SCHEMA_PROPERTY_ANY_OF], originsFlag, uniqueTypes.map((_, index) => typesOrigins[index]))
+  cleanOrigins(result, JSON_SCHEMA_PROPERTY_TYPE, originsFlag)
   return mergeProhibitLiftCombiners(result, options)
 }
 
