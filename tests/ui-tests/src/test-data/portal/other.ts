@@ -3,8 +3,6 @@ export const REV_METADATA = {
   repositoryUrl: 'https://git.metagit.com/repository.git',
 }
 
-export const PORTAL_TEST_ZIP_PATH = 'resources/portal/zip/'
-
 export const RV_PATTERN_DEF = '^[0-9]{4}[.]{1}[1-4]{1}$'
 export const RV_PATTERN_NEW = '^[0-9]{2}[.]{1}[A-z]{4}$'
 

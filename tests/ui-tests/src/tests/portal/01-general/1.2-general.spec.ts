@@ -5,10 +5,12 @@ import { AgentPage } from '@agent/pages'
 import { PortalPage } from '@portal/pages'
 import { MIDDLE_EXPECT, TICKET_BASE_URL } from '@test-setup'
 import { isDevProxyMode } from '@services/utils'
+import { VS_CODE_EXTENSION_TOOLTIP } from '@test-data/portal'
+import { SYSADMIN } from '@test-data'
 
 test.describe('General', () => {
 
-  test('[P-GEN-1] Opening Portal page',
+  test('[P-GEN-1.1] Opening Portal page',
     {
       tag: '@smoke',
       annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-4277` },
@@ -22,6 +24,8 @@ test.describe('General', () => {
       await expect(portalPage.header.userMenu).toBeVisible()
       await expect.soft(portalPage.header.portalBtn).toBeVisible()
       await expect.soft(portalPage.header.agentBtn).toBeVisible()
+      await expect.soft(portalPage.header.vsCodeExtensionBtn).toBeVisible()
+      await expect.soft(portalPage.header.appHeaderDivider).toBeVisible()
       await expect.soft(portalPage.header.globalSearchBtn).toBeVisible()
       await expect.soft(portalPage.header.sysInfoBtn).toBeVisible()
       await expect.soft(portalPage.header.userAvatar).toBeVisible()
@@ -31,7 +35,27 @@ test.describe('General', () => {
       await expect.soft(portalPage.sidebar.workspacesBtn).toBeVisible()
     })
 
-  test('[P-GEN-3] Navigation to the Agent page',
+  test('[P-GEN-1.2] Check tooltips on the Portal page header',
+    {
+      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-4277` },
+    },
+    async ({ sysadminPage: page }) => {
+
+      const portalPage = new PortalPage(page)
+
+      await portalPage.goto()
+      await portalPage.header.vsCodeExtensionBtn.hover()
+
+      await expect(portalPage.tooltip).toHaveCount(1)
+      await expect(portalPage.tooltip).toHaveText(VS_CODE_EXTENSION_TOOLTIP)
+
+      await portalPage.header.userAvatar.hover()
+
+      await expect(portalPage.tooltip).toHaveCount(1)
+      await expect(portalPage.tooltip).toHaveText(SYSADMIN.name)
+    })
+
+  test('[P-GEN-2] Navigation to the Agent page',
     {
       tag: '@smoke',
       annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-4279` },
