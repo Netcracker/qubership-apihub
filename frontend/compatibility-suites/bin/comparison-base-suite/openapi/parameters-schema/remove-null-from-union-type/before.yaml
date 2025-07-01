@@ -1,0 +1,16 @@
+openapi: 3.1.0
+info:
+  title: Remove Type from Union
+  version: 1.0.0
+paths:
+  /path1:
+    post:
+      parameters:
+        - name: data
+          in: query
+          required: false
+          schema:
+            type: [string, integer, "null"]  # Union of three types
+      responses:
+        '200':
+          description: OK
