@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-rest-playground",
-  "version": "1.0.10-feature-saml-oidc.0",
+  "version": "1.1.0",
   "description": "Web Component for Try It",
   "sideEffects": [
     "./dist/index.js"
