@@ -17,6 +17,7 @@ import { Description } from '@stoplight/diff-elements-core/components/Docs/HttpO
 import { useChangeSeverityFilters } from '@stoplight/elements/containers/ChangeSeverityFiltersContext'
 import { useDiffMetaKey } from '@stoplight/elements/containers/DIffMetaKeyContext'
 import { isObject } from '@stoplight/diff-elements-core/utils/guards'
+import { isDiffRename } from '@netcracker/qubership-apihub-api-diff'
 
 interface ResponseCodeItemProps {
   response: IHttpOperationResponse;
@@ -204,8 +205,12 @@ const Response = ({ response, onMediaTypeChange, extensions, extensionsMeta }: R
         if ('schema' in responseContent[diffMetaKey]) {
           wholeContentDiff = responseContent[diffMetaKey].schema
         } else if (isDiff(responseContent[diffMetaKey])) {
-          // when whole media type was removed from response body
-          wholeContentDiff = responseContent[diffMetaKey]
+          const diff = responseContent[diffMetaKey]
+          // todo temporarily disregard rename change in order to show deeper changes
+          if (!isDiffRename(diff)) {
+            // when whole media type was removed from response body
+            wholeContentDiff = responseContent[diffMetaKey]
+          }
         }
       }
       if (wholeContentDiff) {

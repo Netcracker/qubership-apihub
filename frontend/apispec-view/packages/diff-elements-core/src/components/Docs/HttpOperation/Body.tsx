@@ -10,6 +10,7 @@ import { Description } from '@stoplight/diff-elements-core/components/Docs/HttpO
 import { useChangeSeverityFilters } from '@stoplight/elements/containers/ChangeSeverityFiltersContext'
 import { useDiffMetaKey } from '@stoplight/elements/containers/DIffMetaKeyContext'
 import { SectionSubtitle } from '../Sections'
+import { isDiffRename } from '@netcracker/qubership-apihub-api-diff'
 
 export type DiffBodyProps = {
   body: IHttpOperationRequestBody;
@@ -57,8 +58,12 @@ export const Body = ({ body, onChange }: DiffBodyProps) => {
         if ('schema' in bodyContent[diffMetaKey]) {
           wholeContentDiff = bodyContent[diffMetaKey].schema
         } else if (isDiff(bodyContent[diffMetaKey])) {
-          // when whole media type was removed from body
-          wholeContentDiff = bodyContent[diffMetaKey]
+          const diff = bodyContent[diffMetaKey]
+          // todo temporarily disregard rename change in order to show deeper changes
+          if (!isDiffRename(diff)) {
+            // when whole media type was removed from body
+            wholeContentDiff = bodyContent[diffMetaKey]
+          }
         }
       }
       if (wholeContentDiff) {

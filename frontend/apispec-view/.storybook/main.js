@@ -58,6 +58,11 @@ module.exports = {
       },
     })
 
+    config.module.rules.push({
+      test: /\.ya?ml$/,
+      use: 'yaml-loader',
+    })
+
     config.plugins.push(
       new ProvidePlugin({
         process: require.resolve('process/browser'),
