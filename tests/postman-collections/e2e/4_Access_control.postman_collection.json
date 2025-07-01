@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "4_Access_control",
-        "_postman_id": "65f000ad-ff96-46e6-a5c1-e0ceece421c4",
+        "_postman_id": "2a7a15c4-9ec8-445a-b5c5-890b9576f9a2",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -864,7 +864,7 @@
                                             "});\r",
                                             "\r",
                                             "var data = JSON.parse(responseBody);\r",
-                                            "pm.environment.set(\"static_root_group_1\", data.groupId)"
+                                            "pm.environment.set(\"static_root_group_1\", data.packageId)"
                                         ]
                                     }
                                 },
@@ -880,16 +880,16 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v1/groups",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v1",
-                                        "groups"
-                                    ]
-                                },
+									"raw": "{{SERVER_HOST}}/api/v2/packages",
+									"host": [
+										"{{SERVER_HOST}}"
+									],
+									"path": [
+										"api",
+										"v2",
+										"packages"
+									]
+								},
                                 "method": "POST",
                                 "header": [
                                     {
@@ -899,14 +899,14 @@
                                     }
                                 ],
                                 "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"name\": \"AT_BE_AC\",\r\n    \"Alias\" :\"QS-AC-TEST-2\",\r\n    \"parentId\": \"\",\r\n    \"description\": \"Required for to upload hardcoded packages\",\r\n    \"imageUrl\": \"\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                },
+									"mode": "raw",
+									"raw": "{\r\n    \"id\": \"QS-AC-TEST-2\",\r\n    \"Alias\" :\"QS-AC-TEST-2\",\r\n    \"name\": \"AT_BE_AC\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
                                 "auth": {
                                     "type": "noauth"
                                 }
@@ -4141,84 +4141,6 @@
                                         }
                                     }
                                 },
-                                "auth": {
-                                    "type": "noauth"
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "1.4.8 Retrieve and delete list of PATs",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "let responseData = pm.response.json();",
-                                            "let serverHost = pm.environment.get(\"SERVER_HOST\");",
-                                            "let userToken = pm.environment.get(\"TOKEN\");",
-                                            "",
-                                            "// Check if the response contains any items",
-                                            "if (responseData.length > 0) {",
-                                            "    console.log(\"IDs found:\", responseData.map(item => item.id));",
-                                            "",
-                                            "    // Loop through each item and send a \"DELETE PAT\" requests",
-                                            "    responseData.forEach(item => {",
-                                            "        let deleteUrl = `${serverHost}/api/v1/personalAccessToken/${item.id}`;",
-                                            "",
-                                            "        pm.sendRequest({",
-                                            "            url: deleteUrl,",
-                                            "            method: 'DELETE',",
-                                            "            header: {",
-                                            "                'Authorization': `Bearer ${userToken}`",
-                                            "            }",
-                                            "        }, function (err, res) {",
-                                            "            if (err) {",
-                                            "                console.log(`Error deleting ${item.id}:`, err);",
-                                            "            } else {",
-                                            "                console.log(`Deleted ${item.id}:`, res.status);",
-                                            "            }",
-                                            "        });",
-                                            "    });",
-                                            "} else {",
-                                            "    console.log(\"No IDs found, skipping DELETE requests.\");",
-                                            "}",
-                                            ""
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v1/personalAccessToken",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v1",
-                                        "personalAccessToken"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{TOKEN}}",
-                                        "type": "default"
-                                    }
-                                ],
                                 "auth": {
                                     "type": "noauth"
                                 }
@@ -32223,7 +32145,7 @@
                                             "if(pm.response.code === 400){\r",
                                             "        pm.environment.set(\"static_root_group_1\", pm.variables.replaceIn('{{user_5_id}}') + \".\" + data.params.alias);\r",
                                             "} else {\r",
-                                            "        pm.environment.set(\"static_root_group_1\", data.groupId);\r",
+                                            "        pm.environment.set(\"static_root_group_1\", data.packageId);\r",
                                             "        postman.setNextRequest(\"7.1.4 Create package\");\r",
                                             "}});\r",
                                             ""
@@ -32242,16 +32164,16 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v1/groups",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v1",
-                                        "groups"
-                                    ]
-                                },
+									"raw": "{{SERVER_HOST}}/api/v2/packages",
+									"host": [
+										"{{SERVER_HOST}}"
+									],
+									"path": [
+										"api",
+										"v2",
+										"packages"
+									]
+								},
                                 "method": "POST",
                                 "header": [
                                     {
@@ -32261,14 +32183,14 @@
                                     }
                                 ],
                                 "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"name\": \"AT_BE_AC_1\",\r\n    \"Alias\" :\"QS-AC-TEST-3\",\r\n    \"parentId\": \"{{pr_workspace}}\",\r\n    \"description\": \"Required for to upload hardcoded packages\",\r\n    \"imageUrl\": \"\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
+									"mode": "raw",
+									"raw": "{\r\n    \"id\": \"QS-AC-TEST-3\",\r\n    \"Alias\" :\"QS-AC-TEST-3\",\r\n    \"name\": \"AT_BE_AC_1\",\r\n    \"parentId\": \"{{pr_workspace}}\",\r\n    \"kind\":\"group\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
                             },
                             "response": [],
                             "protocolProfileBehavior": {}

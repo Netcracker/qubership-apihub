@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_1_Smoke_Portal",
-        "_postman_id": "3a5431ed-a500-4ade-b677-7c8e671b0325",
+        "_postman_id": "785ce50e-ce48-4c78-8864-d9b4200e2b21",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -683,7 +683,7 @@
                                             "});\r",
                                             "\r",
                                             "var data = JSON.parse(responseBody);\r",
-                                            "pm.environment.set(\"static_root_group_2\", data.groupId)"
+                                            "pm.environment.set(\"static_root_group_2\", data.packageId)"
                                         ]
                                     }
                                 },
@@ -699,16 +699,16 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v1/groups",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v1",
-                                        "groups"
-                                    ]
-                                },
+									"raw": "{{SERVER_HOST}}/api/v2/packages",
+									"host": [
+										"{{SERVER_HOST}}"
+									],
+									"path": [
+										"api",
+										"v2",
+										"packages"
+									]
+								},
                                 "method": "POST",
                                 "header": [
                                     {
@@ -718,14 +718,14 @@
                                     }
                                 ],
                                 "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"name\": \"Test Workspace\",\r\n    \"Alias\" :\"QS-STATIC-TEST-1\",\r\n    \"parentId\": \"\",\r\n    \"description\": \"Required for to upload hardcoded packages\",\r\n    \"imageUrl\": \"\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
+									"mode": "raw",
+									"raw": "{\r\n    \"id\": \"QS-STATIC-TEST-1\",\r\n    \"Alias\" :\"QS-STATIC-TEST-1\",\r\n    \"name\": \"Test Workspace\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
@@ -4456,7 +4456,7 @@
                                             "});\r",
                                             "\r",
                                             "var data = JSON.parse(responseBody);\r",
-                                            "pm.environment.set(\"static_root_group_1\", data.groupId)"
+                                            "pm.environment.set(\"static_root_group_1\", data.packageId)"
                                         ]
                                     }
                                 },
@@ -4472,16 +4472,16 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v1/groups",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v1",
-                                        "groups"
-                                    ]
-                                },
+									"raw": "{{SERVER_HOST}}/api/v2/packages",
+									"host": [
+										"{{SERVER_HOST}}"
+									],
+									"path": [
+										"api",
+										"v2",
+										"packages"
+									]
+								},
                                 "method": "POST",
                                 "header": [
                                     {
@@ -4491,14 +4491,14 @@
                                     }
                                 ],
                                 "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"name\": \"Test Workspace 2\",\r\n    \"Alias\" :\"QS-STATIC-TEST-2\",\r\n    \"parentId\": \"\",\r\n    \"description\": \"Required for to upload hardcoded packages\",\r\n    \"imageUrl\": \"\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
+									"mode": "raw",
+									"raw": "{\r\n    \"id\": \"QS-STATIC-TEST-2\",\r\n    \"Alias\" :\"QS-STATIC-TEST-2\",\r\n    \"name\": \"Test Workspace 2\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
@@ -7741,13 +7741,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2}}/rest/changes?textFilter=post&apiKind=bwc&tag=pet&severity=breaking",
+                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_1}}/versions/{{version_2}}/rest/changes?textFilter=post&apiKind=bwc&tag=pet&severity=breaking",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v3",
+                                        "v4",
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
@@ -8613,14 +8613,21 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
+                                            "// Check that the response status code is 200\r",
                                             "pm.test(\"Status code is 200\", function () {\r",
                                             "    pm.response.to.have.status(200);\r",
                                             "});\r",
                                             "\r",
                                             "var data = JSON.parse(responseBody);\r",
                                             "\r",
-                                            "pm.test(\"Found chages have specified path\", () => {\r",
-                                            "    pm.expect(data.operations[0].path).to.include('/api/v1/pet')\r",
+                                            "pm.test(\"All currentOperation paths include /api/v1/pet\", function () {\r",
+                                            "    pm.expect(data.operations).to.be.an('array').that.is.not.empty;\r",
+                                            "\r",
+                                            "    const invalidPaths = data.operations\r",
+                                            "        .map((op, index) => ({ path: op.currentOperation.path, index }))\r",
+                                            "        .filter(item => !item.path.includes('/api/v1/pet'));\r",
+                                            "\r",
+                                            "    pm.expect(invalidPaths.length, `Invalid paths found at indices: ${invalidPaths.map(i => i.index).join(', ')}`).to.equal(0);\r",
                                             "});"
                                         ]
                                     }
@@ -8637,13 +8644,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2_2}}/rest/changes?textFilter=/api/v1/pet&refPackageId={{package_1}}",
+                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_1}}/versions/{{version_2_2}}/rest/changes?textFilter=/api/v1/pet&refPackageId={{package_1}}",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v3",
+                                        "v4",
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
@@ -8712,13 +8719,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_2_2}}/rest/changes?textFilter=pet",
+                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_1}}/versions/{{version_2_2}}/rest/changes?textFilter=pet",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v3",
+                                        "v4",
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
@@ -10767,7 +10774,7 @@
                                             "});\r",
                                             "\r",
                                             "var data = JSON.parse(responseBody);\r",
-                                            "pm.environment.set(\"static_root_group_1\", data.groupId)"
+                                            "pm.environment.set(\"static_root_group_1\", data.packageId)"
                                         ]
                                     }
                                 },
@@ -10783,16 +10790,16 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v1/groups",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v1",
-                                        "groups"
-                                    ]
-                                },
+									"raw": "{{SERVER_HOST}}/api/v2/packages",
+									"host": [
+										"{{SERVER_HOST}}"
+									],
+									"path": [
+										"api",
+										"v2",
+										"packages"
+									]
+								},
                                 "method": "POST",
                                 "header": [
                                     {
@@ -10802,14 +10809,14 @@
                                     }
                                 ],
                                 "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"name\": \"Test Workspace 3\",\r\n    \"Alias\" :\"QS-STATIC-TEST-3\",\r\n    \"parentId\": \"\",\r\n    \"description\": \"Required for to upload hardcoded packages\",\r\n    \"imageUrl\": \"\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
+									"mode": "raw",
+									"raw": "{\r\n    \"id\": \"QS-STATIC-TEST-3\",\r\n    \"Alias\" :\"QS-STATIC-TEST-3\",\r\n    \"name\": \"Test Workspace 3\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
@@ -13461,7 +13468,7 @@
                                             "});\r",
                                             "\r",
                                             "var data = JSON.parse(responseBody);\r",
-                                            "pm.environment.set(\"static_root_group_1\", data.groupId)"
+                                            "pm.environment.set(\"static_root_group_1\", data.packageId)"
                                         ]
                                     }
                                 },
@@ -13477,16 +13484,16 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v1/groups",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v1",
-                                        "groups"
-                                    ]
-                                },
+									"raw": "{{SERVER_HOST}}/api/v2/packages",
+									"host": [
+										"{{SERVER_HOST}}"
+									],
+									"path": [
+										"api",
+										"v2",
+										"packages"
+									]
+								},
                                 "method": "POST",
                                 "header": [
                                     {
@@ -13496,14 +13503,14 @@
                                     }
                                 ],
                                 "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"name\": \"Test Workspace 2\",\r\n    \"Alias\" :\"QS-STATIC-TEST-2\",\r\n    \"parentId\": \"\",\r\n    \"description\": \"Required for to upload hardcoded packages\",\r\n    \"imageUrl\": \"\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
+									"mode": "raw",
+									"raw": "{\r\n    \"id\": \"QS-STATIC-TEST-2\",\r\n    \"Alias\" :\"QS-STATIC-TEST-2\",\r\n    \"name\": \"Test Workspace 2\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								}
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
