@@ -14,6 +14,7 @@ import { validate } from './validate'
 import { merge } from './merge'
 import { cleanUpSynthetic, deCleanUpSynthetic, deUnify, unify } from './unify'
 import { deHash, hash } from './hash'
+import { removeOasExtensions } from './remove-oas-extensions'
 
 export const normalize = (value: unknown, options: NormalizeOptions = {}) => {
   const optionsWithDefaults = createOptionsWithDefaults(options)
@@ -23,6 +24,7 @@ export const normalize = (value: unknown, options: NormalizeOptions = {}) => {
   if (optionsWithDefaults.mergeAllOf) { spec = merge(spec, optionsWithDefaults) }
   if (optionsWithDefaults.unify) { spec = unify(spec, optionsWithDefaults) }
   if (optionsWithDefaults.mergeAllOf && !optionsWithDefaults.unify && !optionsWithDefaults.allowNotValidSyntheticChanges) { spec = cleanUpSynthetic(spec, optionsWithDefaults) }
+  if (optionsWithDefaults.removeOasExtensions) { spec = removeOasExtensions(spec, optionsWithDefaults) }
   if (optionsWithDefaults.hashFlag) { spec = hash(spec, optionsWithDefaults) }
   return spec
 }

@@ -66,7 +66,7 @@ import {
   calculateHeaderName,
   calculateHeaderPlace,
   calculateParameterName,
-  nonEmptyString
+  nonEmptyString,
 } from '../deprecated-item-description'
 import { OPEN_API_DEPRECATION_RESOLVER } from './openapi.deprecated'
 
@@ -84,13 +84,13 @@ const TO_EMPTY_OBJECT_MAPPING: ReplaceMapping = {
   mapping: new Map([[EMPTY_MARKER, {
     value: () => ({}),
     reverseMatcher: deepEqualsMatcher({}),
-  }]])
+  }]]),
 }
 const TO_EMPTY_ARRAY_MAPPING: ReplaceMapping = {
   mapping: new Map([[EMPTY_MARKER, {
     value: () => ([]),
     reverseMatcher: deepEqualsMatcher([]),
-  }]])
+  }]]),
 }
 
 const OPEN_API_30_JSON_SCHEMA_DEFAULTS: Record<string, JsonPrimitiveValue> = {
@@ -206,16 +206,18 @@ const OPEN_API_COMPONENTS_REPLACES: Record<string, ReplaceMapping> = {
   [OPEN_API_PROPERTY_EXAMPLES]: TO_EMPTY_OBJECT_MAPPING,
 }
 
-const openApiExtensionRulesFunction: (elseRules: NormalizationRules) => NormalizationRules = (elseRules) => ({
-  '/*': ({ key }) => (
-    typeof key === 'string' && key.startsWith('x-')
+const openApiExtensionRulesFunction: (elseRules: NormalizationRules | (() => NormalizationRules)) => NormalizationRules = (elseRules) => ({
+  '/*': (ctx) => {
+    const { key } = ctx
+    return typeof key === 'string' && key.startsWith('x-')
       ? {
+        isExtension: true,
         validate: checkType(...TYPE_JSON_ANY),
         merge: resolvers.last,
         '/**': { validate: checkType(...TYPE_JSON_ANY) },
-      } as NormalizationRules
-      : elseRules
-  ),
+      }
+      : typeof elseRules === 'function' ? elseRules() : elseRules
+  },
 })
 
 const openApiExtensionRules: NormalizationRules = openApiExtensionRulesFunction({ validate: () => false })
@@ -226,6 +228,7 @@ const openApiExternalDocsRules: NormalizationRules = {
     merge: resolvers.last,
     '/description': { validate: checkType(TYPE_STRING) },
     '/url': { validate: checkType(TYPE_STRING) },
+    ...openApiExtensionRules,
   },
 }
 
@@ -240,6 +243,11 @@ const openApiExamplesRules: NormalizationRules = {
   '/examples': {
     validate: checkType(TYPE_OBJECT),
     merge: resolvers.last,
+    '/*': {
+      ...openApiExtensionRulesFunction({
+        validate: checkType(...TYPE_JSON_ANY),
+      }),
+    },
     '/**': { validate: checkType(...TYPE_JSON_ANY) },
   },
 }
@@ -278,12 +286,12 @@ const openApiServersRules: NormalizationRules = {
 const openApiSecurityRules: NormalizationRules = {
   '/security': {
     '/*': {
-      ...openApiExtensionRulesFunction({
+      '/*': {
         '/*': {
           validate: checkType(TYPE_STRING),
         },
         validate: checkType(TYPE_ARRAY),
-      }),
+      },
       validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_ARRAY),
@@ -314,6 +322,7 @@ const openApiJsonSchemaExtensionRules = (): NormalizationRules => ({
   '/xml': {
     validate: checkType(...TYPE_JSON_ANY),
     merge: resolvers.mergeObjects,
+    ...openApiExtensionRulesFunction({ validate: checkType(...TYPE_JSON_ANY) }),
     '/**': { validate: checkType(...TYPE_JSON_ANY) },
   },
   '/discriminator': {
@@ -554,7 +563,7 @@ const openApiRequestRules = (version: OpenApiSpecVersion): NormalizationRules =>
 })
 
 const openApiResponsesRules = (version: OpenApiSpecVersion): NormalizationRules => ({
-  '/*': {
+  ...openApiExtensionRulesFunction({
     '/description': { validate: checkType(TYPE_STRING) },
     '/headers': openApiHeadersRules(version),
     '/content': openApiMediaTypesRules(version),
@@ -568,9 +577,53 @@ const openApiResponsesRules = (version: OpenApiSpecVersion): NormalizationRules 
     deprecation: {
       inlineDescriptionSuffixCalculator: ctx => `${ctx.suffix} '${ctx.key.toString()}'`,
     },
-  },
+  }),
   deprecation: { inlineDescriptionSuffixCalculator: () => 'in response' },
   validate: checkType(TYPE_OBJECT),
+})
+
+const openApiPathItemRules = (version: OpenApiSpecVersion): NormalizationRules => ({
+  deprecation: { inlineDescriptionSuffixCalculator: ctx => `${ctx.key.toString()}` },
+  '/summary': { validate: checkType(TYPE_STRING) },
+  '/description': { validate: checkType(TYPE_STRING) },
+  '/servers': {
+    '/*': openApiServerRules,
+    validate: checkType(TYPE_ARRAY),
+  },
+  ...openApiExtensionRulesFunction({
+    deprecation: {
+      deprecationResolver: (ctx) => OPEN_API_DEPRECATION_RESOLVER(ctx),
+      descriptionCalculator: ctx => `[Deprecated] operation ${ctx.key.toString().toUpperCase()} ${ctx.suffix}`,
+    },
+    '/tags': {
+      '/*': { validate: checkType(TYPE_STRING) },
+      validate: checkType(TYPE_ARRAY),
+    },
+    '/summary': { validate: checkType(TYPE_STRING) },
+    '/description': { validate: checkType(TYPE_STRING) },
+    ...openApiExternalDocsRules,
+    '/operationId': { validate: checkType(TYPE_STRING) },
+    '/callbacks': {
+      '/*': {
+        ...openApiExtensionRulesFunction(() => openApiPathItemRules(version)),
+      },
+    },
+    '/deprecated': { validate: checkType(TYPE_BOOLEAN) },
+    ...openApiSecurityRules,
+    ...openApiServersRules,
+    '/parameters': openApiParametersRules(version),
+    '/requestBody': openApiRequestRules(version),
+    '/responses': openApiResponsesRules(version),
+    ...openApiExtensionRules,
+    unify: [
+      valueDefaults(OPEN_API_OPERATION_DEFAULTS),
+      valueReplaces(OPEN_API_OPERATION_REPLACES),
+    ],
+    validate: checkType(TYPE_OBJECT),
+  }),
+  '/parameters': openApiParametersRules(version),
+  validate: checkType(TYPE_OBJECT),
+  unify: pathItemsUnification,
 })
 
 //TODO no 3.1 specific. Add it when need
@@ -611,45 +664,7 @@ export const openApiRules = (version: OpenApiSpecVersion): NormalizationRules =>
     validate: checkType(TYPE_ARRAY),
   },
   '/paths': {
-    '/*': {
-      deprecation: { inlineDescriptionSuffixCalculator: ctx => `${ctx.key.toString()}` },
-      '/summary': { validate: checkType(TYPE_STRING) },
-      '/description': { validate: checkType(TYPE_STRING) },
-      '/servers': {
-        '/*': openApiServerRules,
-        validate: checkType(TYPE_ARRAY),
-      },
-      '/*': {
-        deprecation: {
-          deprecationResolver: (ctx) => OPEN_API_DEPRECATION_RESOLVER(ctx),
-          descriptionCalculator: ctx => `[Deprecated] operation ${ctx.key.toString().toUpperCase()} ${ctx.suffix}`
-        },
-        '/tags': {
-          '/*': { validate: checkType(TYPE_STRING) },
-          validate: checkType(TYPE_ARRAY),
-        },
-        '/summary': { validate: checkType(TYPE_STRING) },
-        '/description': { validate: checkType(TYPE_STRING) },
-        ...openApiExternalDocsRules,
-        '/operationId': { validate: checkType(TYPE_STRING) },
-        // '/callbacks': not supported
-        '/deprecated': { validate: checkType(TYPE_BOOLEAN) },
-        ...openApiSecurityRules,
-        ...openApiServersRules,
-        '/parameters': openApiParametersRules(version),
-        '/requestBody': openApiRequestRules(version),
-        '/responses': openApiResponsesRules(version),
-        ...openApiExtensionRules,
-        unify: [
-          valueDefaults(OPEN_API_OPERATION_DEFAULTS),
-          valueReplaces(OPEN_API_OPERATION_REPLACES),
-        ],
-        validate: checkType(TYPE_OBJECT),
-      },
-      '/parameters': openApiParametersRules(version),
-      validate: checkType(TYPE_OBJECT),
-      unify: pathItemsUnification,
-    },
+    ...openApiExtensionRulesFunction(openApiPathItemRules(version)),
     validate: checkType(TYPE_OBJECT),
   },
   '/components': {
@@ -715,7 +730,11 @@ export const openApiRules = (version: OpenApiSpecVersion): NormalizationRules =>
       validate: checkType(TYPE_OBJECT),
     },
     '/headers': openApiHeadersRules(version),
-    // '/callbacks': not supported
+    '/callbacks': {
+      '/*': {
+        ...openApiExtensionRulesFunction(() => openApiPathItemRules(version)),
+      },
+    },
     ...openApiExamplesRules,
     ...openApiExtensionRules,
     validate: checkType(TYPE_OBJECT),
@@ -724,6 +743,7 @@ export const openApiRules = (version: OpenApiSpecVersion): NormalizationRules =>
       valueReplaces(OPEN_API_COMPONENTS_REPLACES),
     ],
   },
+  ...openApiExtensionRules,
   unify: [
     valueDefaults(OPEN_API_ROOT_DEFAULTS),
     valueReplaces(OPEN_API_ROOT_REPLACES),
