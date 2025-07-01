@@ -210,6 +210,8 @@ func (o operationRepositoryImpl) GetOperations(packageId string, version string,
 
 	if searchReq.CustomTagKey != "" && searchReq.CustomTagValue != "" {
 		query.Where("exists(select 1 from jsonb_each_text(operation.custom_tags) where key = ? and value = ?)", searchReq.CustomTagKey, searchReq.CustomTagValue)
+	} else if searchReq.CustomTagKey != "" {
+		query.Where("exists(select 1 from jsonb_each_text(operation.custom_tags) where key = ?)", searchReq.CustomTagKey)
 	} else if searchReq.TextFilter != "" {
 		searchReq.TextFilter = "%" + utils.LikeEscaped(searchReq.TextFilter) + "%"
 		query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
@@ -1684,6 +1686,8 @@ func (o operationRepositoryImpl) GetGroupedOperations(packageId string, version 
 
 	if searchReq.CustomTagKey != "" && searchReq.CustomTagValue != "" {
 		query.Where("exists(select 1 from jsonb_each_text(operation.custom_tags) where key = ? and value = ?)", searchReq.CustomTagKey, searchReq.CustomTagValue)
+	} else if searchReq.CustomTagKey != "" {
+		query.Where("exists(select 1 from jsonb_each_text(operation.custom_tags) where key = ?)", searchReq.CustomTagKey)
 	} else if searchReq.TextFilter != "" {
 		searchReq.TextFilter = "%" + utils.LikeEscaped(searchReq.TextFilter) + "%"
 		query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {

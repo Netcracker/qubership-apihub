@@ -16,6 +16,7 @@ package controller
 
 import (
 	"encoding/json"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"io/ioutil"
 	"net/http"
 
@@ -47,9 +48,9 @@ func (c integrationsControllerImpl) GetUserApiKeyStatus(w http.ResponseWriter, r
 	if err != nil {
 		log.Error("Failed to read integration type: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get user api key status",
 				Debug:   err.Error()})
@@ -60,7 +61,7 @@ func (c integrationsControllerImpl) GetUserApiKeyStatus(w http.ResponseWriter, r
 	user := auth.User(r)
 	userId := user.GetID()
 	if userId == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.UserIdNotFound,
 			Message: exception.UserIdNotFoundMsg,
@@ -72,9 +73,9 @@ func (c integrationsControllerImpl) GetUserApiKeyStatus(w http.ResponseWriter, r
 	if err != nil {
 		log.Error("Failed to get user api key status: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get user api key status",
 				Debug:   err.Error()})
@@ -82,7 +83,7 @@ func (c integrationsControllerImpl) GetUserApiKeyStatus(w http.ResponseWriter, r
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, status)
+	utils.RespondWithJson(w, http.StatusOK, status)
 }
 
 func (c integrationsControllerImpl) SetUserApiKey(w http.ResponseWriter, r *http.Request) {
@@ -90,9 +91,9 @@ func (c integrationsControllerImpl) SetUserApiKey(w http.ResponseWriter, r *http
 	if err != nil {
 		log.Error("Failed to read integration type: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to set user api key",
 				Debug:   err.Error()})
@@ -103,7 +104,7 @@ func (c integrationsControllerImpl) SetUserApiKey(w http.ResponseWriter, r *http
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -114,7 +115,7 @@ func (c integrationsControllerImpl) SetUserApiKey(w http.ResponseWriter, r *http
 	var request view.ApiKeyRequest
 	err = json.Unmarshal(body, &request)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -124,7 +125,7 @@ func (c integrationsControllerImpl) SetUserApiKey(w http.ResponseWriter, r *http
 	}
 
 	if request.ApiKey == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.EmptyParameter,
 			Message: exception.EmptyParameterMsg,
@@ -136,7 +137,7 @@ func (c integrationsControllerImpl) SetUserApiKey(w http.ResponseWriter, r *http
 	user := auth.User(r)
 	userId := user.GetID()
 	if userId == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.UserIdNotFound,
 			Message: exception.UserIdNotFoundMsg,
@@ -148,9 +149,9 @@ func (c integrationsControllerImpl) SetUserApiKey(w http.ResponseWriter, r *http
 	if err != nil {
 		log.Error("Failed to set api key: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to set api key",
 				Debug:   err.Error()})
@@ -162,9 +163,9 @@ func (c integrationsControllerImpl) SetUserApiKey(w http.ResponseWriter, r *http
 	if err != nil {
 		log.Error("Failed to get user api key status: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to set api key",
 				Debug:   err.Error()})
@@ -172,7 +173,7 @@ func (c integrationsControllerImpl) SetUserApiKey(w http.ResponseWriter, r *http
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, status)
+	utils.RespondWithJson(w, http.StatusOK, status)
 }
 
 func (c integrationsControllerImpl) ListRepositories(w http.ResponseWriter, r *http.Request) {
@@ -180,9 +181,9 @@ func (c integrationsControllerImpl) ListRepositories(w http.ResponseWriter, r *h
 	if err != nil {
 		log.Error("Failed to read integration type: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to list repositories",
 				Debug:   err.Error()})
@@ -196,9 +197,9 @@ func (c integrationsControllerImpl) ListRepositories(w http.ResponseWriter, r *h
 	if err != nil {
 		log.Error("Failed to list repositories: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to list repositories",
 				Debug:   err.Error()})
@@ -206,7 +207,7 @@ func (c integrationsControllerImpl) ListRepositories(w http.ResponseWriter, r *h
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, view.RepositoriesList{Repositories: repos, Groups: groups})
+	utils.RespondWithJson(w, http.StatusOK, view.RepositoriesList{Repositories: repos, Groups: groups})
 }
 
 func (c integrationsControllerImpl) ListBranchesAndTags(w http.ResponseWriter, r *http.Request) {
@@ -215,9 +216,9 @@ func (c integrationsControllerImpl) ListBranchesAndTags(w http.ResponseWriter, r
 	if err != nil {
 		log.Error("Failed to read integration type: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to list branches",
 				Debug:   err.Error()})
@@ -231,9 +232,9 @@ func (c integrationsControllerImpl) ListBranchesAndTags(w http.ResponseWriter, r
 	if err != nil {
 		log.Error("Failed to list branches: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to list branches",
 				Debug:   err.Error()})
@@ -241,5 +242,5 @@ func (c integrationsControllerImpl) ListBranchesAndTags(w http.ResponseWriter, r
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, branches)
+	utils.RespondWithJson(w, http.StatusOK, branches)
 }

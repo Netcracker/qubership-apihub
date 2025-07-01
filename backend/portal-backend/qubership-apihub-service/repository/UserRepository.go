@@ -29,10 +29,10 @@ type UserRepository interface {
 	GetUsersByEmails(emails []string) ([]entity.UserEntity, error)
 	GetUserAvatar(userId string) (*entity.UserAvatarEntity, error)
 	SaveUserAvatar(entity *entity.UserAvatarEntity) error
-	GetUserExternalIdentity(provider string, externalId string) (*entity.ExternalIdentityEntity, error)
+	GetUserExternalIdentity(providerType string, providerId string, externalId string) (*entity.ExternalIdentityEntity, error)
 	UpdateUserInfo(user *entity.UserEntity) error
 	UpdateUserPassword(userId string, passwordHash []byte) error
 	ClearUserPassword(userId string) error
-	UpdateUserExternalIdentity(provider string, externalId string, internalId string) error
+	UpdateUserExternalIdentity(providerType string, providerId string, externalId string, internalId string) error
 	PrivatePackageIdExists(privatePackageId string) (bool, error)
 }

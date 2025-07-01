@@ -36,6 +36,7 @@ type UserController interface {
 	CreatePrivatePackageForUser(w http.ResponseWriter, r *http.Request)
 	CreatePrivateUserPackage(w http.ResponseWriter, r *http.Request)
 	GetPrivateUserPackage(w http.ResponseWriter, r *http.Request)
+	GetExtendedUser(w http.ResponseWriter, r *http.Request)
 }
 
 func NewUserController(service service.UserService, privateUserPackageService service.PrivateUserPackageService, isSysadm func(context.SecurityContext) bool) UserController {
@@ -55,7 +56,7 @@ type userControllerImpl struct {
 func (u userControllerImpl) GetUserAvatar(w http.ResponseWriter, r *http.Request) {
 	userId := getStringParam(r, "userId")
 	if userId == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.EmptyParameter,
 			Message: exception.EmptyParameterMsg,
@@ -64,11 +65,11 @@ func (u userControllerImpl) GetUserAvatar(w http.ResponseWriter, r *http.Request
 	}
 	userAvatar, err := u.service.GetUserAvatar(userId)
 	if err != nil {
-		RespondWithError(w, "Failed to get user avatar", err)
+		utils.RespondWithError(w, "Failed to get user avatar", err)
 		return
 	}
 	if userAvatar == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.UserAvatarNotFound,
 			Message: exception.UserAvatarNotFoundMsg,
@@ -87,7 +88,7 @@ func (u userControllerImpl) GetUsers(w http.ResponseWriter, r *http.Request) {
 	var err error
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		RespondWithCustomError(w, customError)
+		utils.RespondWithCustomError(w, customError)
 		return
 	}
 
@@ -95,7 +96,7 @@ func (u userControllerImpl) GetUsers(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -107,7 +108,7 @@ func (u userControllerImpl) GetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	filter, err := url.QueryUnescape(r.URL.Query().Get("filter"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -124,10 +125,10 @@ func (u userControllerImpl) GetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	users, err := u.service.GetUsers(usersListReq)
 	if err != nil {
-		RespondWithError(w, "Failed to get users", err)
+		utils.RespondWithError(w, "Failed to get users", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, users)
+	utils.RespondWithJson(w, http.StatusOK, users)
 }
 
 func (u userControllerImpl) GetUserById(w http.ResponseWriter, r *http.Request) {
@@ -135,11 +136,11 @@ func (u userControllerImpl) GetUserById(w http.ResponseWriter, r *http.Request) 
 
 	user, err := u.service.GetUserFromDB(userId)
 	if err != nil {
-		RespondWithError(w, "Failed to get user", err)
+		utils.RespondWithError(w, "Failed to get user", err)
 		return
 	}
 	if user == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.UserNotFound,
 			Message: exception.UserNotFoundMsg,
@@ -147,14 +148,14 @@ func (u userControllerImpl) GetUserById(w http.ResponseWriter, r *http.Request) 
 		})
 		return
 	}
-	RespondWithJson(w, http.StatusOK, user)
+	utils.RespondWithJson(w, http.StatusOK, user)
 }
 
 func (u userControllerImpl) CreateInternalUser(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -165,7 +166,7 @@ func (u userControllerImpl) CreateInternalUser(w http.ResponseWriter, r *http.Re
 	var internalUser view.InternalUser
 	err = json.Unmarshal(body, &internalUser)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -176,17 +177,17 @@ func (u userControllerImpl) CreateInternalUser(w http.ResponseWriter, r *http.Re
 	validationErr := utils.ValidateObject(internalUser)
 	if validationErr != nil {
 		if customError, ok := validationErr.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 			return
 		}
 	}
 
 	user, err := u.service.CreateInternalUser(&internalUser)
 	if err != nil {
-		RespondWithError(w, "Failed to create internal user", err)
+		utils.RespondWithError(w, "Failed to create internal user", err)
 		return
 	}
-	RespondWithJson(w, http.StatusCreated, user)
+	utils.RespondWithJson(w, http.StatusCreated, user)
 }
 
 func (u userControllerImpl) CreatePrivatePackageForUser(w http.ResponseWriter, r *http.Request) {
@@ -194,7 +195,7 @@ func (u userControllerImpl) CreatePrivatePackageForUser(w http.ResponseWriter, r
 	ctx := context.Create(r)
 	if userId != ctx.GetUserId() {
 		if !u.isSysadm(ctx) {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusForbidden,
 				Code:    exception.InsufficientPrivileges,
 				Message: exception.InsufficientPrivilegesMsg,
@@ -205,20 +206,20 @@ func (u userControllerImpl) CreatePrivatePackageForUser(w http.ResponseWriter, r
 	}
 	packageView, err := u.privateUserPackageService.CreatePrivateUserPackage(ctx, userId)
 	if err != nil {
-		RespondWithError(w, "Failed to create private package for user", err)
+		utils.RespondWithError(w, "Failed to create private package for user", err)
 		return
 	}
-	RespondWithJson(w, http.StatusCreated, packageView)
+	utils.RespondWithJson(w, http.StatusCreated, packageView)
 }
 
 func (u userControllerImpl) CreatePrivateUserPackage(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Create(r)
 	packageView, err := u.privateUserPackageService.CreatePrivateUserPackage(ctx, ctx.GetUserId())
 	if err != nil {
-		RespondWithError(w, "Failed to create private user package", err)
+		utils.RespondWithError(w, "Failed to create private user package", err)
 		return
 	}
-	RespondWithJson(w, http.StatusCreated, packageView)
+	utils.RespondWithJson(w, http.StatusCreated, packageView)
 }
 
 func (u userControllerImpl) GetPrivateUserPackage(w http.ResponseWriter, r *http.Request) {
@@ -227,12 +228,31 @@ func (u userControllerImpl) GetPrivateUserPackage(w http.ResponseWriter, r *http
 		if customError, ok := err.(*exception.CustomError); ok {
 			if customError.Code == exception.PrivateWorkspaceIdDoesntExist {
 				// do not use respondWithError because it prints annoying(and useless in this case) logs
-				RespondWithCustomError(w, customError)
+				utils.RespondWithCustomError(w, customError)
 				return
 			}
 		}
-		RespondWithError(w, "Failed to get private user package", err)
+		utils.RespondWithError(w, "Failed to get private user package", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, packageView)
+	utils.RespondWithJson(w, http.StatusOK, packageView)
+}
+
+func (u userControllerImpl) GetExtendedUser(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Create(r)
+	extendedUser, err := u.service.GetExtendedUser(ctx)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to get user", err)
+		return
+	}
+	if extendedUser == nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.UserNotFound,
+			Message: exception.UserNotFoundMsg,
+			Params:  map[string]interface{}{"userId": ctx.GetUserId()},
+		})
+		return
+	}
+	utils.RespondWithJson(w, http.StatusOK, extendedUser)
 }

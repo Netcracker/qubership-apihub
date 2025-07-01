@@ -83,7 +83,7 @@ func (v versionControllerImpl) SharePublishedFile(w http.ResponseWriter, r *http
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -94,7 +94,7 @@ func (v versionControllerImpl) SharePublishedFile(w http.ResponseWriter, r *http
 	var sharedFilesReq view.SharedFilesReq
 	err = json.Unmarshal(body, &sharedFilesReq)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -105,18 +105,18 @@ func (v versionControllerImpl) SharePublishedFile(w http.ResponseWriter, r *http
 	validationErr := utils.ValidateObject(sharedFilesReq)
 	if validationErr != nil {
 		if customError, ok := validationErr.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 			return
 		}
 	}
 	ctx := context.Create(r)
 	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, sharedFilesReq.PackageId, view.ReadPermission)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -125,10 +125,10 @@ func (v versionControllerImpl) SharePublishedFile(w http.ResponseWriter, r *http
 	}
 	sharedUrlInfo, err := v.versionService.SharePublishedFile(sharedFilesReq.PackageId, sharedFilesReq.Version, sharedFilesReq.Slug)
 	if err != nil {
-		RespondWithError(w, "Failed to create shared URL for content", err)
+		utils.RespondWithError(w, "Failed to create shared URL for content", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, sharedUrlInfo)
+	utils.RespondWithJson(w, http.StatusOK, sharedUrlInfo)
 }
 
 func (v versionControllerImpl) GetSharedContentFile(w http.ResponseWriter, r *http.Request) {
@@ -136,7 +136,7 @@ func (v versionControllerImpl) GetSharedContentFile(w http.ResponseWriter, r *ht
 
 	contentData, attachmentFileName, err := v.versionService.GetSharedFile(sharedFileId)
 	if err != nil {
-		RespondWithError(w, "Failed to get published content by shared ID", err)
+		utils.RespondWithError(w, "Failed to get published content by shared ID", err)
 		return
 	}
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", attachmentFileName))
@@ -155,7 +155,7 @@ func (v versionControllerImpl) GetVersionedDocument_deprecated(w http.ResponseWr
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -164,7 +164,7 @@ func (v versionControllerImpl) GetVersionedDocument_deprecated(w http.ResponseWr
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -183,7 +183,7 @@ func (v versionControllerImpl) GetVersionedDocument_deprecated(w http.ResponseWr
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get versioned document", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, document)
+	utils.RespondWithJson(w, http.StatusOK, document)
 }
 
 func (v versionControllerImpl) GetVersionedDocument(w http.ResponseWriter, r *http.Request) {
@@ -195,7 +195,7 @@ func (v versionControllerImpl) GetVersionedDocument(w http.ResponseWriter, r *ht
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -204,7 +204,7 @@ func (v versionControllerImpl) GetVersionedDocument(w http.ResponseWriter, r *ht
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -223,7 +223,7 @@ func (v versionControllerImpl) GetVersionedDocument(w http.ResponseWriter, r *ht
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get versioned document", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, document)
+	utils.RespondWithJson(w, http.StatusOK, document)
 }
 
 func (v versionControllerImpl) GetVersionDocuments(w http.ResponseWriter, r *http.Request) {
@@ -235,7 +235,7 @@ func (v versionControllerImpl) GetVersionDocuments(w http.ResponseWriter, r *htt
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -244,7 +244,7 @@ func (v versionControllerImpl) GetVersionDocuments(w http.ResponseWriter, r *htt
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -255,14 +255,14 @@ func (v versionControllerImpl) GetVersionDocuments(w http.ResponseWriter, r *htt
 	}
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		RespondWithCustomError(w, customError)
+		utils.RespondWithCustomError(w, customError)
 		return
 	}
 	page := 0
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -274,7 +274,7 @@ func (v versionControllerImpl) GetVersionDocuments(w http.ResponseWriter, r *htt
 	}
 	textFilter, err := url.QueryUnescape(r.URL.Query().Get("textFilter"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -288,7 +288,7 @@ func (v versionControllerImpl) GetVersionDocuments(w http.ResponseWriter, r *htt
 	if apiType != "" {
 		_, err = view.ParseApiType(apiType)
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidParameterValue,
 				Message: exception.InvalidParameterValueMsg,
@@ -303,7 +303,7 @@ func (v versionControllerImpl) GetVersionDocuments(w http.ResponseWriter, r *htt
 	if r.URL.Query().Get("skipRefs") != "" {
 		skipRefs, err = strconv.ParseBool(r.URL.Query().Get("skipRefs"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -326,7 +326,7 @@ func (v versionControllerImpl) GetVersionDocuments(w http.ResponseWriter, r *htt
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get version documents", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, documents)
+	utils.RespondWithJson(w, http.StatusOK, documents)
 }
 
 func (v versionControllerImpl) DeleteVersion(w http.ResponseWriter, r *http.Request) {
@@ -334,7 +334,7 @@ func (v versionControllerImpl) DeleteVersion(w http.ResponseWriter, r *http.Requ
 	ctx := context.Create(r)
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -354,7 +354,7 @@ func (v versionControllerImpl) DeleteVersion(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -374,7 +374,7 @@ func (v versionControllerImpl) PatchVersion(w http.ResponseWriter, r *http.Reque
 	ctx := context.Create(r)
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -387,7 +387,7 @@ func (v versionControllerImpl) PatchVersion(w http.ResponseWriter, r *http.Reque
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -398,7 +398,7 @@ func (v versionControllerImpl) PatchVersion(w http.ResponseWriter, r *http.Reque
 	var req view.VersionPatchRequest
 	err = json.Unmarshal(body, &req)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -408,7 +408,7 @@ func (v versionControllerImpl) PatchVersion(w http.ResponseWriter, r *http.Reque
 	}
 
 	if req.Status == nil && req.VersionLabels == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: "All patch parameters are null which is not allowed",
@@ -420,7 +420,7 @@ func (v versionControllerImpl) PatchVersion(w http.ResponseWriter, r *http.Reque
 	if req.Status != nil {
 		_, err := view.ParseVersionStatus(*req.Status)
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidParameter,
 				Message: err.Error(),
@@ -444,7 +444,7 @@ func (v versionControllerImpl) PatchVersion(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -458,7 +458,7 @@ func (v versionControllerImpl) PatchVersion(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, content)
+	utils.RespondWithJson(w, http.StatusOK, content)
 }
 
 func (v versionControllerImpl) GetPackageVersionsList_deprecated(w http.ResponseWriter, r *http.Request) {
@@ -472,7 +472,7 @@ func (v versionControllerImpl) GetPackageVersionsList_deprecated(w http.Response
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -481,7 +481,7 @@ func (v versionControllerImpl) GetPackageVersionsList_deprecated(w http.Response
 	}
 	status, err := url.QueryUnescape(r.URL.Query().Get("status"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -493,7 +493,7 @@ func (v versionControllerImpl) GetPackageVersionsList_deprecated(w http.Response
 
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		RespondWithCustomError(w, customError)
+		utils.RespondWithCustomError(w, customError)
 		return
 	}
 
@@ -501,7 +501,7 @@ func (v versionControllerImpl) GetPackageVersionsList_deprecated(w http.Response
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -514,7 +514,7 @@ func (v versionControllerImpl) GetPackageVersionsList_deprecated(w http.Response
 
 	textFilter, err := url.QueryUnescape(r.URL.Query().Get("textFilter"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -526,7 +526,7 @@ func (v versionControllerImpl) GetPackageVersionsList_deprecated(w http.Response
 
 	versionLabel, err := url.QueryUnescape(r.URL.Query().Get("versionLabel"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -540,7 +540,7 @@ func (v versionControllerImpl) GetPackageVersionsList_deprecated(w http.Response
 	if r.URL.Query().Get("checkRevisions") != "" {
 		checkRevisions, err = strconv.ParseBool(r.URL.Query().Get("checkRevisions"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -576,7 +576,7 @@ func (v versionControllerImpl) GetPackageVersionsList_deprecated(w http.Response
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get package versions", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, versions)
+	utils.RespondWithJson(w, http.StatusOK, versions)
 }
 func (v versionControllerImpl) GetPackageVersionsList(w http.ResponseWriter, r *http.Request) {
 	var err error
@@ -589,7 +589,7 @@ func (v versionControllerImpl) GetPackageVersionsList(w http.ResponseWriter, r *
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -600,7 +600,7 @@ func (v versionControllerImpl) GetPackageVersionsList(w http.ResponseWriter, r *
 
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		RespondWithCustomError(w, customError)
+		utils.RespondWithCustomError(w, customError)
 		return
 	}
 
@@ -608,7 +608,7 @@ func (v versionControllerImpl) GetPackageVersionsList(w http.ResponseWriter, r *
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -634,7 +634,7 @@ func (v versionControllerImpl) GetPackageVersionsList(w http.ResponseWriter, r *
 	if r.URL.Query().Get("checkRevisions") != "" {
 		checkRevisions, err = strconv.ParseBool(r.URL.Query().Get("checkRevisions"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -662,7 +662,7 @@ func (v versionControllerImpl) GetPackageVersionsList(w http.ResponseWriter, r *
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get package versions", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, versions)
+	utils.RespondWithJson(w, http.StatusOK, versions)
 }
 
 func (v versionControllerImpl) GetPackageVersionContent_deprecated(w http.ResponseWriter, r *http.Request) {
@@ -675,7 +675,7 @@ func (v versionControllerImpl) GetPackageVersionContent_deprecated(w http.Respon
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -685,7 +685,7 @@ func (v versionControllerImpl) GetPackageVersionContent_deprecated(w http.Respon
 
 	version, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -699,7 +699,7 @@ func (v versionControllerImpl) GetPackageVersionContent_deprecated(w http.Respon
 	if r.URL.Query().Get("includeSummary") != "" {
 		includeSummary, err = strconv.ParseBool(r.URL.Query().Get("includeSummary"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -714,7 +714,7 @@ func (v versionControllerImpl) GetPackageVersionContent_deprecated(w http.Respon
 	if r.URL.Query().Get("includeOperations") != "" {
 		includeOperations, err = strconv.ParseBool(r.URL.Query().Get("includeOperations"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -729,7 +729,7 @@ func (v versionControllerImpl) GetPackageVersionContent_deprecated(w http.Respon
 	if r.URL.Query().Get("includeGroups") != "" {
 		includeGroups, err = strconv.ParseBool(r.URL.Query().Get("includeGroups"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -747,7 +747,7 @@ func (v versionControllerImpl) GetPackageVersionContent_deprecated(w http.Respon
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, content)
+	utils.RespondWithJson(w, http.StatusOK, content)
 }
 
 func (v versionControllerImpl) GetPackageVersionContent(w http.ResponseWriter, r *http.Request) {
@@ -760,7 +760,7 @@ func (v versionControllerImpl) GetPackageVersionContent(w http.ResponseWriter, r
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -770,7 +770,7 @@ func (v versionControllerImpl) GetPackageVersionContent(w http.ResponseWriter, r
 
 	version, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -784,7 +784,7 @@ func (v versionControllerImpl) GetPackageVersionContent(w http.ResponseWriter, r
 	if r.URL.Query().Get("includeSummary") != "" {
 		includeSummary, err = strconv.ParseBool(r.URL.Query().Get("includeSummary"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -799,7 +799,7 @@ func (v versionControllerImpl) GetPackageVersionContent(w http.ResponseWriter, r
 	if r.URL.Query().Get("includeOperations") != "" {
 		includeOperations, err = strconv.ParseBool(r.URL.Query().Get("includeOperations"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -814,7 +814,7 @@ func (v versionControllerImpl) GetPackageVersionContent(w http.ResponseWriter, r
 	if r.URL.Query().Get("includeGroups") != "" {
 		includeGroups, err = strconv.ParseBool(r.URL.Query().Get("includeGroups"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -832,7 +832,7 @@ func (v versionControllerImpl) GetPackageVersionContent(w http.ResponseWriter, r
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, content)
+	utils.RespondWithJson(w, http.StatusOK, content)
 }
 
 func (v versionControllerImpl) GetVersionedContentFileRaw(w http.ResponseWriter, r *http.Request) {
@@ -844,7 +844,7 @@ func (v versionControllerImpl) GetVersionedContentFileRaw(w http.ResponseWriter,
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -853,7 +853,7 @@ func (v versionControllerImpl) GetVersionedContentFileRaw(w http.ResponseWriter,
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -867,12 +867,13 @@ func (v versionControllerImpl) GetVersionedContentFileRaw(w http.ResponseWriter,
 	v.monitoringService.AddDocumentOpenCount(packageId, versionName, slug)
 	v.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.DocumentsCalled, packageId)
 
-	_, contentData, err := v.versionService.GetLatestContentDataBySlug(packageId, versionName, slug)
+	content, contentData, err := v.versionService.GetLatestContentDataBySlug(packageId, versionName, slug)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get published content", err)
 		return
 	}
 	w.Header().Set("Content-Type", contentData.DataType)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", content.Name))
 	w.WriteHeader(http.StatusOK)
 	w.Write(contentData.Data)
 }
@@ -886,7 +887,7 @@ func (v versionControllerImpl) GetVersionChanges(w http.ResponseWriter, r *http.
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -895,7 +896,7 @@ func (v versionControllerImpl) GetVersionChanges(w http.ResponseWriter, r *http.
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -910,7 +911,7 @@ func (v versionControllerImpl) GetVersionChanges(w http.ResponseWriter, r *http.
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, changes)
+	utils.RespondWithJson(w, http.StatusOK, changes)
 }
 
 func (v versionControllerImpl) GetVersionProblems(w http.ResponseWriter, r *http.Request) {
@@ -922,7 +923,7 @@ func (v versionControllerImpl) GetVersionProblems(w http.ResponseWriter, r *http
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -931,7 +932,7 @@ func (v versionControllerImpl) GetVersionProblems(w http.ResponseWriter, r *http
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -946,7 +947,7 @@ func (v versionControllerImpl) GetVersionProblems(w http.ResponseWriter, r *http
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, problems)
+	utils.RespondWithJson(w, http.StatusOK, problems)
 }
 
 // deprecated
@@ -959,7 +960,7 @@ func (v versionControllerImpl) GetVersionReferences(w http.ResponseWriter, r *ht
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -968,7 +969,7 @@ func (v versionControllerImpl) GetVersionReferences(w http.ResponseWriter, r *ht
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -979,14 +980,14 @@ func (v versionControllerImpl) GetVersionReferences(w http.ResponseWriter, r *ht
 	}
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		RespondWithCustomError(w, customError)
+		utils.RespondWithCustomError(w, customError)
 		return
 	}
 	page := 0
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -998,7 +999,7 @@ func (v versionControllerImpl) GetVersionReferences(w http.ResponseWriter, r *ht
 	}
 	textFilter, err := url.QueryUnescape(r.URL.Query().Get("textFilter"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -1009,7 +1010,7 @@ func (v versionControllerImpl) GetVersionReferences(w http.ResponseWriter, r *ht
 	}
 	kind, err := url.QueryUnescape(r.URL.Query().Get("kind"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -1022,7 +1023,7 @@ func (v versionControllerImpl) GetVersionReferences(w http.ResponseWriter, r *ht
 	if r.URL.Query().Get("showAllDescendants") != "" {
 		showAllDescendants, err = strconv.ParseBool(r.URL.Query().Get("showAllDescendants"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -1046,7 +1047,7 @@ func (v versionControllerImpl) GetVersionReferences(w http.ResponseWriter, r *ht
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get version references", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, references)
+	utils.RespondWithJson(w, http.StatusOK, references)
 }
 
 func (v versionControllerImpl) GetVersionReferencesV3(w http.ResponseWriter, r *http.Request) {
@@ -1058,7 +1059,7 @@ func (v versionControllerImpl) GetVersionReferencesV3(w http.ResponseWriter, r *
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -1067,7 +1068,7 @@ func (v versionControllerImpl) GetVersionReferencesV3(w http.ResponseWriter, r *
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -1082,7 +1083,7 @@ func (v versionControllerImpl) GetVersionReferencesV3(w http.ResponseWriter, r *
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get version references", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, references)
+	utils.RespondWithJson(w, http.StatusOK, references)
 }
 
 func (v versionControllerImpl) GetVersionRevisionsList_deprecated(w http.ResponseWriter, r *http.Request) {
@@ -1094,7 +1095,7 @@ func (v versionControllerImpl) GetVersionRevisionsList_deprecated(w http.Respons
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -1103,7 +1104,7 @@ func (v versionControllerImpl) GetVersionRevisionsList_deprecated(w http.Respons
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -1114,14 +1115,14 @@ func (v versionControllerImpl) GetVersionRevisionsList_deprecated(w http.Respons
 	}
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		RespondWithCustomError(w, customError)
+		utils.RespondWithCustomError(w, customError)
 		return
 	}
 	page := 0
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -1133,7 +1134,7 @@ func (v versionControllerImpl) GetVersionRevisionsList_deprecated(w http.Respons
 	}
 	textFilter, err := url.QueryUnescape(r.URL.Query().Get("textFilter"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -1153,7 +1154,7 @@ func (v versionControllerImpl) GetVersionRevisionsList_deprecated(w http.Respons
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get version revisions list", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, versionRevisionsList)
+	utils.RespondWithJson(w, http.StatusOK, versionRevisionsList)
 }
 func (v versionControllerImpl) GetVersionRevisionsList(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
@@ -1164,7 +1165,7 @@ func (v versionControllerImpl) GetVersionRevisionsList(w http.ResponseWriter, r 
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -1173,7 +1174,7 @@ func (v versionControllerImpl) GetVersionRevisionsList(w http.ResponseWriter, r 
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -1184,14 +1185,14 @@ func (v versionControllerImpl) GetVersionRevisionsList(w http.ResponseWriter, r 
 	}
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		RespondWithCustomError(w, customError)
+		utils.RespondWithCustomError(w, customError)
 		return
 	}
 	page := 0
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -1203,7 +1204,7 @@ func (v versionControllerImpl) GetVersionRevisionsList(w http.ResponseWriter, r 
 	}
 	textFilter, err := url.QueryUnescape(r.URL.Query().Get("textFilter"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -1223,7 +1224,7 @@ func (v versionControllerImpl) GetVersionRevisionsList(w http.ResponseWriter, r 
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get version revisions list", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, versionRevisionsList)
+	utils.RespondWithJson(w, http.StatusOK, versionRevisionsList)
 }
 
 func (v versionControllerImpl) DeleteVersionsRecursively(w http.ResponseWriter, r *http.Request) {
@@ -1235,7 +1236,7 @@ func (v versionControllerImpl) DeleteVersionsRecursively(w http.ResponseWriter, 
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -1246,7 +1247,7 @@ func (v versionControllerImpl) DeleteVersionsRecursively(w http.ResponseWriter, 
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -1257,7 +1258,7 @@ func (v versionControllerImpl) DeleteVersionsRecursively(w http.ResponseWriter, 
 	var req view.DeleteVersionsRecursivelyReq
 	err = json.Unmarshal(body, &req)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -1268,17 +1269,17 @@ func (v versionControllerImpl) DeleteVersionsRecursively(w http.ResponseWriter, 
 
 	id, err := v.versionService.DeleteVersionsRecursively(ctx, packageId, req.OlderThanDate)
 	if err != nil {
-		RespondWithError(w, "failed to cleanup old versions", err)
+		utils.RespondWithError(w, "failed to cleanup old versions", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, map[string]string{"jobId": id})
+	utils.RespondWithJson(w, http.StatusOK, map[string]string{"jobId": id})
 }
 
 func (v versionControllerImpl) CopyVersion(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
 	version, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -1294,7 +1295,7 @@ func (v versionControllerImpl) CopyVersion(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -1305,7 +1306,7 @@ func (v versionControllerImpl) CopyVersion(w http.ResponseWriter, r *http.Reques
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -1316,7 +1317,7 @@ func (v versionControllerImpl) CopyVersion(w http.ResponseWriter, r *http.Reques
 	var req view.CopyVersionReq
 	err = json.Unmarshal(body, &req)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -1327,13 +1328,13 @@ func (v versionControllerImpl) CopyVersion(w http.ResponseWriter, r *http.Reques
 	validationErr := utils.ValidateObject(req)
 	if validationErr != nil {
 		if customError, ok := validationErr.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 			return
 		}
 	}
 	_, err = view.ParseVersionStatus(req.TargetStatus)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameter,
 			Message: err.Error(),
@@ -1342,11 +1343,11 @@ func (v versionControllerImpl) CopyVersion(w http.ResponseWriter, r *http.Reques
 	}
 	sufficientPrivileges, err = v.roleService.HasManageVersionPermission(ctx, req.TargetPackageId, req.TargetStatus)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -1356,16 +1357,16 @@ func (v versionControllerImpl) CopyVersion(w http.ResponseWriter, r *http.Reques
 
 	publishId, err := v.versionService.CopyVersion(ctx, packageId, version, req)
 	if err != nil {
-		RespondWithError(w, "Failed to copy published version", err)
+		utils.RespondWithError(w, "Failed to copy published version", err)
 		return
 	}
-	RespondWithJson(w, http.StatusAccepted, view.CopyVersionResp{PublishId: publishId})
+	utils.RespondWithJson(w, http.StatusAccepted, view.CopyVersionResp{PublishId: publishId})
 }
 
 func (v versionControllerImpl) GetPublishedVersionsHistory(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Create(r)
 	if !v.isSysadm(ctx) {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -1375,14 +1376,14 @@ func (v versionControllerImpl) GetPublishedVersionsHistory(w http.ResponseWriter
 	var err error
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		RespondWithCustomError(w, customError)
+		utils.RespondWithCustomError(w, customError)
 		return
 	}
 	page := 0
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -1399,7 +1400,7 @@ func (v versionControllerImpl) GetPublishedVersionsHistory(w http.ResponseWriter
 	if r.URL.Query().Get("publishedBefore") != "" {
 		publishedBefore, err := time.Parse(time.RFC3339, r.URL.Query().Get("publishedBefore"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -1413,7 +1414,7 @@ func (v versionControllerImpl) GetPublishedVersionsHistory(w http.ResponseWriter
 	if r.URL.Query().Get("publishedAfter") != "" {
 		publishedAfter, err := time.Parse(time.RFC3339, r.URL.Query().Get("publishedAfter"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -1431,10 +1432,10 @@ func (v versionControllerImpl) GetPublishedVersionsHistory(w http.ResponseWriter
 
 	history, err := v.versionService.GetPublishedVersionsHistory(filter)
 	if err != nil {
-		RespondWithError(w, "Failed to get published versions history", err)
+		utils.RespondWithError(w, "Failed to get published versions history", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, history)
+	utils.RespondWithJson(w, http.StatusOK, history)
 }
 
 func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Request) {
@@ -1446,7 +1447,7 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -1456,7 +1457,7 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 
 	err = r.ParseMultipartForm(0)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -1481,7 +1482,7 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 	if versionLabelsArrStr != "" {
 		err = json.Unmarshal([]byte(versionLabelsArrStr), &csvPublishReq.VersionLabels)
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.BadRequestBody,
 				Message: exception.BadRequestBodyMsg,
@@ -1493,7 +1494,7 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 	csvFile, _, err := r.FormFile("csvFile")
 	if err != http.ErrMissingFile {
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectMultipartFile,
 				Message: exception.IncorrectMultipartFileMsg,
@@ -1506,7 +1507,7 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 			log.Errorf("failed to close temporary file: %+v", err)
 		}
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectMultipartFile,
 				Message: exception.IncorrectMultipartFileMsg,
@@ -1515,7 +1516,7 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 		}
 		csvPublishReq.CSVData = csvData
 	} else if r.FormValue("csvFile") != "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidMultipartFileType,
 			Message: exception.InvalidMultipartFileTypeMsg,
@@ -1526,14 +1527,14 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 	validationErr := utils.ValidateObject(csvPublishReq)
 	if validationErr != nil {
 		if customError, ok := validationErr.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 			return
 		}
 	}
 
 	_, err = view.ParseVersionStatus(csvPublishReq.Status)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameter,
 			Message: err.Error(),
@@ -1542,11 +1543,11 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 	}
 	sufficientPrivileges, err = v.roleService.HasManageVersionPermission(ctx, csvPublishReq.PackageId, csvPublishReq.Status)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -1556,10 +1557,10 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 
 	publishId, err := v.versionService.StartPublishFromCSV(ctx, csvPublishReq)
 	if err != nil {
-		RespondWithError(w, "Failed to start dashboard publish from csv", err)
+		utils.RespondWithError(w, "Failed to start dashboard publish from csv", err)
 		return
 	}
-	RespondWithJson(w, http.StatusAccepted, view.PublishFromCSVResp{PublishId: publishId})
+	utils.RespondWithJson(w, http.StatusAccepted, view.PublishFromCSVResp{PublishId: publishId})
 }
 
 func (v versionControllerImpl) GetCSVDashboardPublishStatus(w http.ResponseWriter, r *http.Request) {
@@ -1568,11 +1569,11 @@ func (v versionControllerImpl) GetCSVDashboardPublishStatus(w http.ResponseWrite
 	ctx := context.Create(r)
 	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -1582,10 +1583,10 @@ func (v versionControllerImpl) GetCSVDashboardPublishStatus(w http.ResponseWrite
 
 	publishStatus, err := v.versionService.GetCSVDashboardPublishStatus(publishId)
 	if err != nil {
-		RespondWithError(w, "Failed to get publish status", err)
+		utils.RespondWithError(w, "Failed to get publish status", err)
 		return
 	}
-	RespondWithJson(w, http.StatusOK, publishStatus)
+	utils.RespondWithJson(w, http.StatusOK, publishStatus)
 }
 
 func (v versionControllerImpl) GetCSVDashboardPublishReport(w http.ResponseWriter, r *http.Request) {
@@ -1594,11 +1595,11 @@ func (v versionControllerImpl) GetCSVDashboardPublishReport(w http.ResponseWrite
 	ctx := context.Create(r)
 	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -1608,7 +1609,7 @@ func (v versionControllerImpl) GetCSVDashboardPublishReport(w http.ResponseWrite
 
 	publishReport, err := v.versionService.GetCSVDashboardPublishReport(publishId)
 	if err != nil {
-		RespondWithError(w, "Failed to get publish report", err)
+		utils.RespondWithError(w, "Failed to get publish report", err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/csv")

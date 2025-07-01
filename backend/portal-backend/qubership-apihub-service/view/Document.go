@@ -55,7 +55,9 @@ func ValidateTransformedDocumentsFormat(format string) error {
 }
 
 func ValidateFormatForBuildType(buildType string, format string) error {
-	err := ValidateGroupBuildType(buildType)
+	bt := BuildType(buildType)
+
+	err := ValidateGroupBuildType(bt)
 	if err != nil {
 		return err
 	}
@@ -63,7 +65,7 @@ func ValidateFormatForBuildType(buildType string, format string) error {
 	if err != nil {
 		return err
 	}
-	if buildType == MergedSpecificationType && format == string(HtmlDocumentFormat) {
+	if bt == MergedSpecificationType_deprecated && format == string(HtmlDocumentFormat) {
 		return &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.FormatNotSupportedForBuildType,

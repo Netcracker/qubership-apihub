@@ -49,6 +49,8 @@ type BuildService interface {
 
 	CreateBuildWithoutDependencies(config view.BuildConfig, isExternal bool, builderId string) (string, view.BuildConfig, error)
 	AwaitBuildCompletion(buildId string) error
+
+	GetBuild(buildId string) (*view.BuildView, error)
 }
 
 func NewBuildService(
@@ -572,4 +574,16 @@ func (b *buildServiceImpl) AwaitBuildCompletion(buildId string) error {
 		}
 		time.Sleep(time.Second * 5)
 	}
+}
+
+func (b *buildServiceImpl) GetBuild(buildId string) (*view.BuildView, error) {
+	build, err := b.buildRepository.GetBuild(buildId)
+	if err != nil {
+		return nil, err
+	}
+	if build == nil {
+		return nil, nil
+	}
+	result := entity.MakeBuildView(build)
+	return result, nil
 }

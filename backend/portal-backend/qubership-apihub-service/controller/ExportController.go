@@ -15,7 +15,11 @@
 package controller
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -30,14 +34,17 @@ import (
 )
 
 type ExportController interface {
-	GenerateVersionDoc(w http.ResponseWriter, r *http.Request)
-	GenerateFileDoc(w http.ResponseWriter, r *http.Request)
+	GenerateVersionDoc(w http.ResponseWriter, r *http.Request) //deprecated
+	GenerateFileDoc(w http.ResponseWriter, r *http.Request)    //deprecated
 	GenerateApiChangesExcelReportV3(w http.ResponseWriter, r *http.Request)
 	GenerateApiChangesExcelReport(w http.ResponseWriter, r *http.Request) //deprecated
 	GenerateOperationsExcelReport(w http.ResponseWriter, r *http.Request)
 	GenerateDeprecatedOperationsExcelReport(w http.ResponseWriter, r *http.Request)
-	ExportOperationGroupAsOpenAPIDocuments_deprecated(w http.ResponseWriter, r *http.Request)
-	ExportOperationGroupAsOpenAPIDocuments(w http.ResponseWriter, r *http.Request)
+	ExportOperationGroupAsOpenAPIDocuments_deprecated(w http.ResponseWriter, r *http.Request)   //deprecated
+	ExportOperationGroupAsOpenAPIDocuments_deprecated_2(w http.ResponseWriter, r *http.Request) //deprecated
+
+	StartAsyncExport(w http.ResponseWriter, r *http.Request)
+	GetAsyncExportStatus(w http.ResponseWriter, r *http.Request)
 }
 
 func NewExportController(publishedService service.PublishedService,
@@ -46,7 +53,9 @@ func NewExportController(publishedService service.PublishedService,
 	roleService service.RoleService,
 	excelService service.ExcelService,
 	versionService service.VersionService,
-	monitoringService service.MonitoringService) ExportController {
+	monitoringService service.MonitoringService,
+	exportService service.ExportService,
+	packageService service.PackageService) ExportController {
 	return &exportControllerImpl{
 		publishedService:  publishedService,
 		portalService:     portalService,
@@ -55,6 +64,8 @@ func NewExportController(publishedService service.PublishedService,
 		excelService:      excelService,
 		versionService:    versionService,
 		monitoringService: monitoringService,
+		exportService:     exportService,
+		packageService:    packageService,
 	}
 }
 
@@ -66,6 +77,8 @@ type exportControllerImpl struct {
 	excelService      service.ExcelService
 	versionService    service.VersionService
 	monitoringService service.MonitoringService
+	exportService     service.ExportService
+	packageService    service.PackageService
 }
 
 func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments_deprecated(w http.ResponseWriter, r *http.Request) {
@@ -73,11 +86,11 @@ func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments_deprecated(
 	ctx := context.Create(r)
 	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -86,7 +99,7 @@ func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments_deprecated(
 	}
 	version, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -97,7 +110,7 @@ func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments_deprecated(
 	}
 	apiType, err := getUnescapedStringParam(r, "apiType")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -108,7 +121,7 @@ func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments_deprecated(
 	}
 	_, err = view.ParseApiType(apiType)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,
@@ -119,7 +132,7 @@ func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments_deprecated(
 	}
 	groupName, err := getUnescapedStringParam(r, "groupName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -130,7 +143,7 @@ func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments_deprecated(
 	}
 	format, err := url.QueryUnescape(r.URL.Query().Get("format"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -145,11 +158,11 @@ func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments_deprecated(
 	content, err := e.versionService.GetTransformedDocuments_deprecated(packageId, version, apiType, groupName, format)
 	if err != nil {
 		log.Errorf("Failed to export api changes error - %s", err.Error())
-		RespondWithError(w, "Failed to export group name openAPI", err)
+		utils.RespondWithError(w, "Failed to export group name openAPI", err)
 		return
 	}
 	if content == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.TransformedDocumentsNotFound,
 			Message: exception.TransformedDocumentsNotFoundMsg,
@@ -165,16 +178,16 @@ func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments_deprecated(
 	w.Write(content)
 }
 
-func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments(w http.ResponseWriter, r *http.Request) {
+func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments_deprecated_2(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
 	ctx := context.Create(r)
 	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -183,7 +196,7 @@ func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments(w http.Resp
 	}
 	version, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -194,7 +207,7 @@ func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments(w http.Resp
 	}
 	apiType, err := getUnescapedStringParam(r, "apiType")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -205,7 +218,7 @@ func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments(w http.Resp
 	}
 	_, err = view.ParseApiType(apiType)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,
@@ -216,7 +229,7 @@ func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments(w http.Resp
 	}
 	groupName, err := getUnescapedStringParam(r, "groupName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -227,7 +240,7 @@ func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments(w http.Resp
 	}
 	buildType, err := getUnescapedStringParam(r, "buildType")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -240,18 +253,18 @@ func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments(w http.Resp
 
 	err = view.ValidateFormatForBuildType(buildType, format)
 	if err != nil {
-		RespondWithError(w, "buildType format validation failed", err)
+		utils.RespondWithError(w, "buildType format validation failed", err)
 		return
 	}
 	e.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.ExportsCalled, packageId)
 
 	content, err := e.versionService.GetTransformedDocuments(packageId, version, apiType, groupName, buildType, format)
 	if err != nil {
-		RespondWithError(w, "Failed to export operations group", err)
+		utils.RespondWithError(w, "Failed to export operations group", err)
 		return
 	}
 	if content == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.TransformedDocumentsNotFound,
 			Message: exception.TransformedDocumentsNotFoundMsg,
@@ -259,12 +272,12 @@ func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments(w http.Resp
 		})
 		return
 	}
-	switch buildType {
-	case view.ReducedSourceSpecificationsType:
+	switch view.BuildType(buildType) {
+	case view.ReducedSourceSpecificationsType_deprecated:
 		w.Header().Set("Content-Type", "application/zip")
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s_%s_%s.zip", groupName, packageId, version))
 		w.Header().Set("Content-Transfer-Encoding", "binary")
-	case view.MergedSpecificationType:
+	case view.MergedSpecificationType_deprecated:
 		switch format {
 		// html format for mergedSpecification not supported yet
 		// case string(view.HtmlDocumentFormat):
@@ -291,11 +304,11 @@ func (e exportControllerImpl) GenerateVersionDoc(w http.ResponseWriter, r *http.
 	ctx := context.Create(r)
 	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -304,7 +317,7 @@ func (e exportControllerImpl) GenerateVersionDoc(w http.ResponseWriter, r *http.
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -325,7 +338,7 @@ func (e exportControllerImpl) GenerateVersionDoc(w http.ResponseWriter, r *http.
 		data, filename, err = e.portalService.GenerateInteractivePageForPublishedVersion(packageId, versionName)
 
 		if err != nil {
-			RespondWithError(w, fmt.Sprintf("Failed to generate interactive HTML page for version %s:%s", packageId, versionName), err)
+			utils.RespondWithError(w, fmt.Sprintf("Failed to generate interactive HTML page for version %s:%s", packageId, versionName), err)
 			return
 		}
 
@@ -333,18 +346,18 @@ func (e exportControllerImpl) GenerateVersionDoc(w http.ResponseWriter, r *http.
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%v", filename))
 
 	case view.DTRaw:
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Message: "Document type " + string(docType) + " is not applicable for version"})
 		return
 
 	case view.DTPdf, view.DTStatic:
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotImplemented,
 			Message: "Document type " + string(docType) + " is not supported yet"})
 		return
 	default:
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Message: "Document type " + string(docType) + " is invalid"})
 		return
@@ -359,11 +372,11 @@ func (e exportControllerImpl) GenerateFileDoc(w http.ResponseWriter, r *http.Req
 	ctx := context.Create(r)
 	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -372,7 +385,7 @@ func (e exportControllerImpl) GenerateFileDoc(w http.ResponseWriter, r *http.Req
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -393,7 +406,7 @@ func (e exportControllerImpl) GenerateFileDoc(w http.ResponseWriter, r *http.Req
 		var filename string
 		data, filename, err = e.portalService.GenerateInteractivePageForPublishedFile(packageId, versionName, slug)
 		if err != nil {
-			RespondWithError(w, fmt.Sprintf("Failed to generate interactive HTML page for file %s:%s:%s", packageId, versionName, slug), err)
+			utils.RespondWithError(w, fmt.Sprintf("Failed to generate interactive HTML page for file %s:%s:%s", packageId, versionName, slug), err)
 			return
 		}
 		w.Header().Set("Content-Type", "application/octet-stream")
@@ -402,7 +415,7 @@ func (e exportControllerImpl) GenerateFileDoc(w http.ResponseWriter, r *http.Req
 	case view.DTRaw:
 		content, cd, err := e.publishedService.GetLatestContentDataBySlug(packageId, versionName, slug)
 		if err != nil {
-			RespondWithError(w, "Failed to get published content as file", err)
+			utils.RespondWithError(w, "Failed to get published content as file", err)
 			return
 		}
 		data = cd.Data
@@ -410,12 +423,12 @@ func (e exportControllerImpl) GenerateFileDoc(w http.ResponseWriter, r *http.Req
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%v", content.Name))
 
 	case view.DTPdf, view.DTStatic:
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotImplemented,
 			Message: "Document type " + string(docType) + " is not supported yet"})
 		return
 	default:
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Message: "Document type " + string(docType) + " is invalid"})
 		return
@@ -431,11 +444,11 @@ func (e exportControllerImpl) GenerateApiChangesExcelReport(w http.ResponseWrite
 	ctx := context.Create(r)
 	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -444,7 +457,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReport(w http.ResponseWrite
 	}
 	version, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -456,7 +469,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReport(w http.ResponseWrite
 
 	format, err := url.QueryUnescape(r.URL.Query().Get("format"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -470,7 +483,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReport(w http.ResponseWrite
 	} else {
 		supportedFormat := view.ValidateApiChangesExportFormat(format)
 		if !supportedFormat {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.UnsupportedFormat,
 				Message: exception.UnsupportedFormatMsg,
@@ -481,7 +494,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReport(w http.ResponseWrite
 	}
 	previousVersion, err := url.QueryUnescape(r.URL.Query().Get("previousVersion"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -492,7 +505,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReport(w http.ResponseWrite
 	}
 	previousVersionPackageId, err := url.QueryUnescape(r.URL.Query().Get("previousVersionPackageId"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -511,12 +524,12 @@ func (e exportControllerImpl) GenerateApiChangesExcelReport(w http.ResponseWrite
 	apiChangesReport, versionName, err := e.excelService.ExportApiChanges(packageId, version, "", []string{}, exportApiChangesRequestView)
 	if err != nil {
 		log.Errorf("Failed to export api changes error - %s", err.Error())
-		RespondWithError(w, "Failed to export api changes", err)
+		utils.RespondWithError(w, "Failed to export api changes", err)
 		return
 	}
 	if apiChangesReport == nil {
 		log.Info("ApiChangeReport is empty")
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.ChangesAreEmpty,
 			Message: exception.ChangesAreEmptyMsg,
@@ -535,11 +548,11 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 	ctx := context.Create(r)
 	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -548,7 +561,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 	}
 	version, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -559,7 +572,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 	}
 	apiType, err := getUnescapedStringParam(r, "apiType")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -570,7 +583,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 	}
 	previousVersion, err := url.QueryUnescape(r.URL.Query().Get("previousVersion"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -581,7 +594,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 	}
 	previousVersionPackageId, err := url.QueryUnescape(r.URL.Query().Get("previousVersionPackageId"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -592,7 +605,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 	}
 	textFilter, err := url.QueryUnescape(r.URL.Query().Get("textFilter"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -608,7 +621,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 		apiAudience = ""
 	}
 	if apiAudience != "" && !view.ValidApiAudience(apiAudience) {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,
@@ -623,7 +636,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 	if emptyTagStr != "" {
 		emptyTag, err = strconv.ParseBool(emptyTagStr)
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -638,7 +651,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 	if !emptyTag {
 		tags, customErr = getListFromParam(r, "tag")
 		if customErr != nil {
-			RespondWithCustomError(w, customErr)
+			utils.RespondWithCustomError(w, customErr)
 			return
 		}
 	}
@@ -647,7 +660,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 	if r.URL.Query().Get("emptyGroup") != "" {
 		emptyGroup, err = strconv.ParseBool(r.URL.Query().Get("emptyGroup"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -659,7 +672,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 	}
 	group := r.URL.Query().Get("group")
 	if emptyGroup && group != "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.OverlappingQueryParameter,
 			Message: exception.OverlappingQueryParameterMsg,
@@ -670,12 +683,12 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 
 	severities, customErr := getListFromParam(r, "severity")
 	if customErr != nil {
-		RespondWithCustomError(w, customErr)
+		utils.RespondWithCustomError(w, customErr)
 		return
 	}
 	for _, severity := range severities {
 		if !view.ValidSeverity(severity) {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidParameterValue,
 				Message: exception.InvalidParameterValueMsg,
@@ -702,12 +715,12 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 	apiChangesReport, versionName, err := e.excelService.ExportApiChanges(packageId, version, apiType, severities, exportApiChangesRequestView)
 	if err != nil {
 		log.Errorf("Failed to export api changes error - %s", err.Error())
-		RespondWithError(w, "Failed to export api changes", err)
+		utils.RespondWithError(w, "Failed to export api changes", err)
 		return
 	}
 	if apiChangesReport == nil {
 		log.Info("ApiChangeReport is empty")
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.ChangesAreEmpty,
 			Message: exception.ChangesAreEmptyMsg,
@@ -726,11 +739,11 @@ func (e exportControllerImpl) GenerateOperationsExcelReport(w http.ResponseWrite
 	ctx := context.Create(r)
 	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -739,7 +752,7 @@ func (e exportControllerImpl) GenerateOperationsExcelReport(w http.ResponseWrite
 	}
 	version, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -750,7 +763,7 @@ func (e exportControllerImpl) GenerateOperationsExcelReport(w http.ResponseWrite
 	}
 	apiType, err := getUnescapedStringParam(r, "apiType")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -761,7 +774,7 @@ func (e exportControllerImpl) GenerateOperationsExcelReport(w http.ResponseWrite
 	}
 	textFilter, err := url.QueryUnescape(r.URL.Query().Get("textFilter"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -773,7 +786,7 @@ func (e exportControllerImpl) GenerateOperationsExcelReport(w http.ResponseWrite
 
 	kind, err := url.QueryUnescape(r.URL.Query().Get("kind"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -788,7 +801,7 @@ func (e exportControllerImpl) GenerateOperationsExcelReport(w http.ResponseWrite
 		apiAudience = ""
 	}
 	if apiAudience != "" && !view.ValidApiAudience(apiAudience) {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,
@@ -799,7 +812,7 @@ func (e exportControllerImpl) GenerateOperationsExcelReport(w http.ResponseWrite
 
 	tag, err := url.QueryUnescape(r.URL.Query().Get("tag"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -813,7 +826,7 @@ func (e exportControllerImpl) GenerateOperationsExcelReport(w http.ResponseWrite
 	if r.URL.Query().Get("emptyTag") != "" {
 		emptyTag, err = strconv.ParseBool(r.URL.Query().Get("emptyTag"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -830,7 +843,7 @@ func (e exportControllerImpl) GenerateOperationsExcelReport(w http.ResponseWrite
 
 	refPackageId, err := url.QueryUnescape(r.URL.Query().Get("refPackageId"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -844,7 +857,7 @@ func (e exportControllerImpl) GenerateOperationsExcelReport(w http.ResponseWrite
 	if r.URL.Query().Get("emptyGroup") != "" {
 		emptyGroup, err = strconv.ParseBool(r.URL.Query().Get("emptyGroup"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -856,7 +869,7 @@ func (e exportControllerImpl) GenerateOperationsExcelReport(w http.ResponseWrite
 	}
 	group := r.URL.Query().Get("group")
 	if emptyGroup && group != "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.OverlappingQueryParameter,
 			Message: exception.OverlappingQueryParameterMsg,
@@ -880,12 +893,12 @@ func (e exportControllerImpl) GenerateOperationsExcelReport(w http.ResponseWrite
 	operationsReport, versionName, err := e.excelService.ExportOperations(packageId, version, apiType, exportOperationsRequestView)
 	if err != nil {
 		log.Errorf("Excel error - %s", err.Error())
-		RespondWithError(w, "Failed to export operations", err)
+		utils.RespondWithError(w, "Failed to export operations", err)
 		return
 	}
 	if operationsReport == nil {
 		log.Info("Operations are empty")
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.OperationsAreEmpty,
 			Message: exception.OperationsAreEmptyMsg,
@@ -904,11 +917,11 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 	ctx := context.Create(r)
 	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -917,7 +930,7 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 	}
 	version, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -928,7 +941,7 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 	}
 	apiType, err := getUnescapedStringParam(r, "apiType")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -939,7 +952,7 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 	}
 	textFilter, err := url.QueryUnescape(r.URL.Query().Get("textFilter"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -951,7 +964,7 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 
 	kind, err := url.QueryUnescape(r.URL.Query().Get("kind"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -965,7 +978,7 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 		apiAudience = ""
 	}
 	if apiAudience != "" && !view.ValidApiAudience(apiAudience) {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,
@@ -975,7 +988,7 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 	}
 	refPackageId, err := url.QueryUnescape(r.URL.Query().Get("refPackageId"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -990,7 +1003,7 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 	if r.URL.Query().Get("emptyTag") != "" {
 		emptyTag, err = strconv.ParseBool(r.URL.Query().Get("emptyTag"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -1004,7 +1017,7 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 		var customErr *exception.CustomError
 		tags, customErr = getListFromParam(r, "tag")
 		if customErr != nil {
-			RespondWithCustomError(w, customErr)
+			utils.RespondWithCustomError(w, customErr)
 			return
 		}
 	}
@@ -1013,7 +1026,7 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 	if r.URL.Query().Get("emptyGroup") != "" {
 		emptyGroup, err = strconv.ParseBool(r.URL.Query().Get("emptyGroup"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -1025,7 +1038,7 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 	}
 	group := r.URL.Query().Get("group")
 	if emptyGroup && group != "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.OverlappingQueryParameter,
 			Message: exception.OverlappingQueryParameterMsg,
@@ -1049,12 +1062,12 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 	deprecatedOperationsReport, versionName, err := e.excelService.ExportDeprecatedOperations(packageId, version, apiType, exportOperationsRequestView)
 	if err != nil {
 		log.Errorf("Excel error - %s", err.Error())
-		RespondWithError(w, "Failed to export operations", err)
+		utils.RespondWithError(w, "Failed to export operations", err)
 		return
 	}
 	if deprecatedOperationsReport == nil {
 		log.Info("Deprecated operations are empty")
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.OperationsAreEmpty,
 			Message: exception.OperationsAreEmptyMsg,
@@ -1066,4 +1079,182 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 	w.Header().Set("Content-Transfer-Encoding", "binary")
 	w.Header().Set("Expires", "0")
 	deprecatedOperationsReport.Write(w)
+}
+
+func (e exportControllerImpl) StartAsyncExport(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	var discriminator view.ExportRequestDiscriminator
+
+	err = json.Unmarshal(body, &discriminator)
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	var exportRequest interface{}
+	switch discriminator.ExportedEntity {
+	case view.ExportEntityVersion:
+		exportRequest = &view.ExportVersionReq{}
+	case view.ExportEntityRestDocument:
+		exportRequest = &view.ExportOASDocumentReq{}
+	case view.ExportEntityRestOperationsGroup:
+		exportRequest = &view.ExportRestOperationsGroupReq{}
+	default:
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: "Invalid exportedEntity value",
+			Params:  map[string]interface{}{"param": "exportedEntity"},
+		})
+		return
+	}
+
+	err = json.Unmarshal(body, &exportRequest)
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	validationErr := utils.ValidateObject(exportRequest)
+	if validationErr != nil {
+		var customError *exception.CustomError
+		if errors.As(validationErr, &customError) {
+			utils.RespondWithCustomError(w, customError)
+			return
+		}
+	}
+
+	err = e.validatePackageAndVersion(discriminator)
+	if err != nil {
+		utils.RespondWithError(w, "request validation failed", err)
+	}
+
+	ctx := context.Create(r)
+
+	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, discriminator.PackageId, view.ReadPermission)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+
+	var exportID string
+	switch discriminator.ExportedEntity {
+	case view.ExportEntityVersion:
+		exportID, err = e.exportService.StartVersionExport(ctx, *exportRequest.(*view.ExportVersionReq))
+	case view.ExportEntityRestDocument:
+		exportID, err = e.exportService.StartOASDocExport(ctx, *exportRequest.(*view.ExportOASDocumentReq))
+	case view.ExportEntityRestOperationsGroup:
+		exportID, err = e.exportService.StartRESTOpGroupExport(ctx, *exportRequest.(*view.ExportRestOperationsGroupReq))
+	}
+	if err != nil {
+		utils.RespondWithError(w, "Failed to start export process", err)
+		return
+	}
+	utils.RespondWithJson(w, http.StatusAccepted, view.ExportResponse{
+		ExportID: exportID,
+	})
+}
+
+func (e exportControllerImpl) validatePackageAndVersion(req view.ExportRequestDiscriminator) error {
+	pkgExists, err := e.packageService.PackageExists(req.PackageId)
+	if err != nil {
+		return fmt.Errorf("failed to check if package %s exists: %s", req.PackageId, err)
+	}
+	if !pkgExists {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.PackageNotFound,
+			Message: exception.PackageNotFoundMsg,
+			Params:  map[string]interface{}{"packageId": req.PackageId},
+		}
+	}
+	verExists, err := e.publishedService.VersionPublished(req.PackageId, req.Version)
+	if err != nil {
+		return fmt.Errorf("failed to check if version %s exists for package %s: %s", req.Version, req.PackageId, err)
+	}
+	if !verExists {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.PublishedPackageVersionNotFound,
+			Message: exception.PublishedPackageVersionNotFoundMsg,
+			Params:  map[string]interface{}{"version": req.Version, "packageId": req.PackageId},
+		}
+	}
+	return nil
+}
+
+func (e exportControllerImpl) GetAsyncExportStatus(w http.ResponseWriter, r *http.Request) {
+	exportId := getStringParam(r, "exportId")
+
+	status, result, packageId, err := e.exportService.GetAsyncExportStatus(exportId)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to get publish status", err)
+		return
+	}
+
+	if status == nil && result == nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.ExportProcessNotFound,
+			Message: exception.ExportProcessNotFoundMsg,
+			Params:  map[string]interface{}{"exportId": exportId},
+		})
+		return
+	}
+
+	if status != nil {
+		utils.RespondWithJson(w, http.StatusOK, status)
+		return
+	}
+
+	if packageId != "" { // do permissions check for sensitive data like export content. Export status is considered as non-sensitive.
+		ctx := context.Create(r)
+		sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+		if err != nil {
+			utils.RespondWithError(w, "Failed to check user privileges", err)
+			return
+		}
+		if !sufficientPrivileges {
+			utils.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusForbidden,
+				Code:    exception.InsufficientPrivileges,
+				Message: exception.InsufficientPrivilegesMsg,
+			})
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%v", result.FileName))
+	w.WriteHeader(http.StatusOK)
+	w.Write(result.Data)
 }

@@ -110,7 +110,7 @@ func (d dbMigrationServiceImpl) addTaskToRebuild(migrationId string, versionEnt 
 		RestartCount: 0,
 		Priority:     MigrationBuildPriority,
 		Metadata: map[string]interface{}{
-			"build_type":                  view.BuildType,
+			"build_type":                  view.PublishType,
 			"previous_version":            versionEnt.PreviousVersion,
 			"previous_version_package_id": versionEnt.PreviousVersionPackageId,
 		},
@@ -121,7 +121,7 @@ func (d dbMigrationServiceImpl) addTaskToRebuild(migrationId string, versionEnt 
 	if d.systemInfoService.IsMinioStorageActive() && !d.systemInfoService.IsMinioStoreOnlyBuildResult() {
 		savedSourcesQuery := `
 		select config, archive_checksum
-		from published_sources 
+		from published_sources
 		where package_id = ?
 		and version = ?
 		and revision = ?
@@ -309,7 +309,7 @@ func (d dbMigrationServiceImpl) makeBuildSourceEntityFromPublishedFiles(migratio
 	config := view.BuildConfig{
 		PackageId:                versionEnt.PackageId,
 		Version:                  fmt.Sprintf("%s@%v", versionEnt.Version, versionEnt.Revision),
-		BuildType:                view.BuildType,
+		BuildType:                view.PublishType,
 		PreviousVersion:          versionEnt.PreviousVersion,
 		PreviousVersionPackageId: versionEnt.PreviousVersionPackageId,
 		Status:                   versionEnt.Status,
@@ -392,7 +392,7 @@ func (d dbMigrationServiceImpl) makeBuildSourceEntityFromSources(migrationId str
 	config := view.BuildConfig{
 		PackageId:                versionEnt.PackageId,
 		Version:                  view.MakeVersionRefKey(versionEnt.Version, versionEnt.Revision),
-		BuildType:                view.BuildType,
+		BuildType:                view.PublishType,
 		PreviousVersion:          versionEnt.PreviousVersion,
 		PreviousVersionPackageId: versionEnt.PreviousVersionPackageId,
 		Status:                   versionEnt.Status,
@@ -514,7 +514,7 @@ func (d dbMigrationServiceImpl) cleanupEmptyVersions() error {
 	return nil
 }
 
-func (d dbMigrationServiceImpl) cleanForRebuild(packageIds []string, versions []string, buildType string) error {
+func (d dbMigrationServiceImpl) cleanForRebuild(packageIds []string, versions []string, buildType view.BuildType) error {
 	deleteQuery := "delete from migrated_version where 1=1 "
 
 	if len(packageIds) > 0 {

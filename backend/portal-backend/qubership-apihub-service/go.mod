@@ -7,6 +7,7 @@ toolchain go1.23.6
 require (
 	github.com/buraksezer/olric v0.4.7
 	github.com/buraksezer/olric-cloud-plugin v0.3.0-beta.4
+	github.com/coreos/go-oidc/v3 v3.14.1
 	github.com/crewjam/saml v0.4.13
 	github.com/go-ldap/ldap v3.0.3+incompatible
 	github.com/go-pg/pg/v10 v10.10.6
@@ -31,12 +32,14 @@ require (
 	github.com/xanzy/go-gitlab v0.53.0
 	github.com/xuri/excelize/v2 v2.7.1
 	golang.org/x/crypto v0.36.0
-	golang.org/x/net v0.36.0
+	golang.org/x/net v0.37.0
 	golang.org/x/sync v0.12.0
 	golang.org/x/time v0.7.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/resty.v1 v1.12.0
 )
+
+require github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 
 require (
 	cloud.google.com/go v0.67.0 // indirect
@@ -151,7 +154,7 @@ require (
 	github.com/xuri/efp v0.0.0-20220603152613-6918739fd470 // indirect
 	github.com/xuri/nfp v0.0.0-20220409054826-5e722a1d9e22 // indirect
 	go.opencensus.io v0.22.4 // indirect
-	golang.org/x/oauth2 v0.25.0 // indirect
+	golang.org/x/oauth2 v0.28.0
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/term v0.30.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
@@ -164,6 +167,7 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
+	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.32.3 // indirect

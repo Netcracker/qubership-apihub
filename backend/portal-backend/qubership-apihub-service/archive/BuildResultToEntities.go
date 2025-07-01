@@ -134,7 +134,7 @@ func (a *BuildResultToEntitiesReader) ReadDocumentsToEntities() ([]*entity.Publi
 
 func (a *BuildResultToEntitiesReader) ReadTransformedDocumentsToEntity() (*entity.TransformedContentDataEntity, error) {
 	var data []byte
-	if a.PackageInfo.BuildType == view.MergedSpecificationType {
+	if a.PackageInfo.BuildType == view.MergedSpecificationType_deprecated {
 		if len(a.PackageDocuments.Documents) != 1 {
 			return nil, &exception.CustomError{
 				Status:  http.StatusBadRequest,

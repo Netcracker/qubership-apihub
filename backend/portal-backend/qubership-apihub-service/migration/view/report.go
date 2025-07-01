@@ -14,7 +14,10 @@
 
 package view
 
-import "time"
+import (
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
+	"time"
+)
 
 type MigrationReport struct {
 	Status                string            `json:"status"`
@@ -29,14 +32,14 @@ type MigrationReport struct {
 }
 
 type MigrationError struct {
-	PackageId                string `json:"packageId,omitempty"`
-	Version                  string `json:"version,omitempty"`
-	Revision                 int    `json:"revision,omitempty"`
-	Error                    string `json:"error,omitempty"`
-	BuildId                  string `json:"buildId"`
-	BuildType                string `json:"buildType,omitempty"`
-	PreviousVersion          string `json:"previousVersion,omitempty"`
-	PreviousVersionPackageId string `json:"previousVersionPackageId,omitempty"`
+	PackageId                string         `json:"packageId,omitempty"`
+	Version                  string         `json:"version,omitempty"`
+	Revision                 int            `json:"revision,omitempty"`
+	Error                    string         `json:"error,omitempty"`
+	BuildId                  string         `json:"buildId"`
+	BuildType                view.BuildType `json:"buildType,omitempty"`
+	PreviousVersion          string         `json:"previousVersion,omitempty"`
+	PreviousVersionPackageId string         `json:"previousVersionPackageId,omitempty"`
 }
 
 type MigrationChange struct {

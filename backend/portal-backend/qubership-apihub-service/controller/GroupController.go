@@ -52,7 +52,7 @@ func (g groupControllerImpl) AddGroup(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -63,7 +63,7 @@ func (g groupControllerImpl) AddGroup(w http.ResponseWriter, r *http.Request) {
 	var group view.Group
 	err = json.Unmarshal(body, &group)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -79,12 +79,12 @@ func (g groupControllerImpl) AddGroup(w http.ResponseWriter, r *http.Request) {
 	} else {
 		sufficientPrivileges, err = g.roleService.HasRequiredPermissions(ctx, group.ParentId, view.CreateAndUpdatePackagePermission)
 		if err != nil {
-			RespondWithError(w, "Failed to check user privileges", err)
+			utils.RespondWithError(w, "Failed to check user privileges", err)
 			return
 		}
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -95,13 +95,13 @@ func (g groupControllerImpl) AddGroup(w http.ResponseWriter, r *http.Request) {
 	validationErr := utils.ValidateObject(group)
 	if validationErr != nil {
 		if customError, ok := validationErr.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 			return
 		}
 	}
 
 	if !IsAcceptableAlias(group.Alias) {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.AliasContainsForbiddenChars,
 			Message: exception.AliasContainsForbiddenCharsMsg,
@@ -110,7 +110,7 @@ func (g groupControllerImpl) AddGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !strings.Contains(group.ParentId, ".") && strings.ToLower(group.Alias) == "runenv" && !g.roleService.IsSysadm(ctx) {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.AliasContainsRunenvChars,
 			Message: exception.AliasContainsRunenvCharsMsg,
@@ -122,16 +122,16 @@ func (g groupControllerImpl) AddGroup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error("Failed to add group: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to add group",
 				Debug:   err.Error()})
 		}
 		return
 	}
-	RespondWithJson(w, http.StatusCreated, newGroup)
+	utils.RespondWithJson(w, http.StatusCreated, newGroup)
 }
 
 func (g groupControllerImpl) GetAllGroups(w http.ResponseWriter, r *http.Request) {
@@ -140,7 +140,7 @@ func (g groupControllerImpl) GetAllGroups(w http.ResponseWriter, r *http.Request
 	if r.URL.Query().Get("depth") != "" {
 		depth, err = strconv.Atoi(r.URL.Query().Get("depth"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -155,7 +155,7 @@ func (g groupControllerImpl) GetAllGroups(w http.ResponseWriter, r *http.Request
 	if onlyFavoriteStr != "" {
 		onlyFavorite, err = strconv.ParseBool(onlyFavoriteStr)
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -173,16 +173,16 @@ func (g groupControllerImpl) GetAllGroups(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		log.Error("Failed to get all groups: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get all groups",
 				Debug:   err.Error()})
 		}
 		return
 	}
-	RespondWithJson(w, http.StatusOK, groups)
+	utils.RespondWithJson(w, http.StatusOK, groups)
 }
 
 func (g groupControllerImpl) GetGroupInfo(w http.ResponseWriter, r *http.Request) {
@@ -192,16 +192,16 @@ func (g groupControllerImpl) GetGroupInfo(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		log.Error("Failed to get group info: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get group info",
 				Debug:   err.Error()})
 		}
 		return
 	}
-	RespondWithJson(w, http.StatusOK, groupInfo)
+	utils.RespondWithJson(w, http.StatusOK, groupInfo)
 }
 
 func (g groupControllerImpl) FavorGroup(w http.ResponseWriter, r *http.Request) {
@@ -211,9 +211,9 @@ func (g groupControllerImpl) FavorGroup(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		log.Error("Failed to add group to favorites: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to add group to favorites",
 				Debug:   err.Error()})
@@ -230,9 +230,9 @@ func (g groupControllerImpl) DisfavorGroup(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		log.Error("Failed to remove group from favorites: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to remove group from favorites",
 				Debug:   err.Error()})

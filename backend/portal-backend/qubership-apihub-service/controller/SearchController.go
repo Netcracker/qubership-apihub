@@ -53,7 +53,7 @@ func (s searchControllerImpl) Search_deprecated(w http.ResponseWriter, r *http.R
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -65,7 +65,7 @@ func (s searchControllerImpl) Search_deprecated(w http.ResponseWriter, r *http.R
 
 	err = json.Unmarshal(body, &searchQuery)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -76,20 +76,20 @@ func (s searchControllerImpl) Search_deprecated(w http.ResponseWriter, r *http.R
 	validationErr := utils.ValidateObject(searchQuery)
 	if validationErr != nil {
 		if customError, ok := validationErr.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 			return
 		}
 	}
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		RespondWithCustomError(w, customError)
+		utils.RespondWithCustomError(w, customError)
 		return
 	}
 	page := 0
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -107,31 +107,31 @@ func (s searchControllerImpl) Search_deprecated(w http.ResponseWriter, r *http.R
 		{
 			result, err := s.operationService.SearchForOperations_deprecated(searchQuery)
 			if err != nil {
-				RespondWithError(w, "Failed to perform search for operations", err)
+				utils.RespondWithError(w, "Failed to perform search for operations", err)
 				return
 			}
-			RespondWithJson(w, http.StatusOK, result)
+			utils.RespondWithJson(w, http.StatusOK, result)
 		}
 	case view.SearchLevelPackages:
 		{
 			result, err := s.versionService.SearchForPackages(searchQuery)
 			if err != nil {
-				RespondWithError(w, "Failed to perform search for packages", err)
+				utils.RespondWithError(w, "Failed to perform search for packages", err)
 				return
 			}
-			RespondWithJson(w, http.StatusOK, result)
+			utils.RespondWithJson(w, http.StatusOK, result)
 		}
 	case view.SearchLevelDocuments:
 		{
 			result, err := s.versionService.SearchForDocuments(searchQuery)
 			if err != nil {
-				RespondWithError(w, "Failed to perform search for documents", err)
+				utils.RespondWithError(w, "Failed to perform search for documents", err)
 				return
 			}
-			RespondWithJson(w, http.StatusOK, result)
+			utils.RespondWithJson(w, http.StatusOK, result)
 		}
 	default:
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,
@@ -145,7 +145,7 @@ func (s searchControllerImpl) Search(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -157,7 +157,7 @@ func (s searchControllerImpl) Search(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(body, &searchQuery)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -168,20 +168,20 @@ func (s searchControllerImpl) Search(w http.ResponseWriter, r *http.Request) {
 	validationErr := utils.ValidateObject(searchQuery)
 	if validationErr != nil {
 		if customError, ok := validationErr.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 			return
 		}
 	}
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		RespondWithCustomError(w, customError)
+		utils.RespondWithCustomError(w, customError)
 		return
 	}
 	page := 0
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -223,31 +223,31 @@ func (s searchControllerImpl) Search(w http.ResponseWriter, r *http.Request) {
 		{
 			result, err := s.operationService.SearchForOperations(searchQuery)
 			if err != nil {
-				RespondWithError(w, "Failed to perform search for operations", err)
+				utils.RespondWithError(w, "Failed to perform search for operations", err)
 				return
 			}
-			RespondWithJson(w, http.StatusOK, result)
+			utils.RespondWithJson(w, http.StatusOK, result)
 		}
 	case view.SearchLevelPackages:
 		{
 			result, err := s.versionService.SearchForPackages(searchQuery)
 			if err != nil {
-				RespondWithError(w, "Failed to perform search for packages", err)
+				utils.RespondWithError(w, "Failed to perform search for packages", err)
 				return
 			}
-			RespondWithJson(w, http.StatusOK, result)
+			utils.RespondWithJson(w, http.StatusOK, result)
 		}
 	case view.SearchLevelDocuments:
 		{
 			result, err := s.versionService.SearchForDocuments(searchQuery)
 			if err != nil {
-				RespondWithError(w, "Failed to perform search for documents", err)
+				utils.RespondWithError(w, "Failed to perform search for documents", err)
 				return
 			}
-			RespondWithJson(w, http.StatusOK, result)
+			utils.RespondWithJson(w, http.StatusOK, result)
 		}
 	default:
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,

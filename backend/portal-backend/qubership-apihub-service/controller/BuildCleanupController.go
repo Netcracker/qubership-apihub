@@ -15,6 +15,7 @@
 package controller
 
 import (
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"net/http"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
@@ -44,7 +45,7 @@ func (b buildCleanupControllerImpl) StartMigrationBuildCleanup(w http.ResponseWr
 	ctx := context.Create(r)
 	sufficientPrivileges := b.isSysadm(ctx)
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -54,20 +55,20 @@ func (b buildCleanupControllerImpl) StartMigrationBuildCleanup(w http.ResponseWr
 
 	id, err := b.buildCleanupService.StartMigrationBuildDataCleanup()
 	if err != nil {
-		RespondWithError(w, "Failed to cleanup migration builds", err)
+		utils.RespondWithError(w, "Failed to cleanup migration builds", err)
 	}
 
 	result := map[string]interface{}{}
 	result["id"] = id
 
-	RespondWithJson(w, http.StatusOK, result)
+	utils.RespondWithJson(w, http.StatusOK, result)
 }
 
 func (b buildCleanupControllerImpl) GetMigrationBuildCleanupResult(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Create(r)
 	sufficientPrivileges := b.isSysadm(ctx)
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -80,8 +81,8 @@ func (b buildCleanupControllerImpl) GetMigrationBuildCleanupResult(w http.Respon
 
 	result, err := b.buildCleanupService.GetMigrationBuildDataCleanupResult(id)
 	if err != nil {
-		RespondWithError(w, "Failed to get remove migration build data", err)
+		utils.RespondWithError(w, "Failed to get remove migration build data", err)
 	}
 
-	RespondWithJson(w, http.StatusOK, result)
+	utils.RespondWithJson(w, http.StatusOK, result)
 }

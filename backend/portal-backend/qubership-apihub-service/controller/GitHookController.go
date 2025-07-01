@@ -50,7 +50,7 @@ func (c gitHookController) SetGitLabToken(w http.ResponseWriter, r *http.Request
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -61,7 +61,7 @@ func (c gitHookController) SetGitLabToken(w http.ResponseWriter, r *http.Request
 	var webhookIntegration view.GitLabWebhookIntegration
 	err = json.Unmarshal(body, &webhookIntegration)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -72,14 +72,14 @@ func (c gitHookController) SetGitLabToken(w http.ResponseWriter, r *http.Request
 	validationErr := utils.ValidateObject(webhookIntegration)
 	if validationErr != nil {
 		if customError, ok := validationErr.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 			return
 		}
 	}
 
 	err = c.gitHookService.SetGitLabToken(ctx, projectId, webhookIntegration.SecretToken)
 	if err != nil {
-		RespondWithError(w, "SetGitLabToken failed", err)
+		utils.RespondWithError(w, "SetGitLabToken failed", err)
 	} else {
 		w.WriteHeader(http.StatusOK)
 	}
@@ -88,7 +88,7 @@ func (c gitHookController) SetGitLabToken(w http.ResponseWriter, r *http.Request
 func (c gitHookController) HandleEvent(w http.ResponseWriter, r *http.Request) {
 	payload, err := io.ReadAll(r.Body)
 	if err != nil || len(payload) == 0 {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -101,7 +101,7 @@ func (c gitHookController) HandleEvent(w http.ResponseWriter, r *http.Request) {
 	eventType := gitlab.HookEventType(r)
 	event, err := gitlab.ParseWebhook(eventType, payload)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -112,7 +112,7 @@ func (c gitHookController) HandleEvent(w http.ResponseWriter, r *http.Request) {
 
 	secretToken := r.Header.Get("X-Gitlab-Token")
 	if len(secretToken) == 0 {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusUnauthorized,
 			Message: http.StatusText(http.StatusUnauthorized),
 		})
@@ -120,8 +120,8 @@ func (c gitHookController) HandleEvent(w http.ResponseWriter, r *http.Request) {
 
 	result, err := c.gitHookService.HandleGitLabEvent(eventType, event, secretToken)
 	if err != nil {
-		RespondWithError(w, "Handle event failed", err)
+		utils.RespondWithError(w, "Handle event failed", err)
 	} else {
-		RespondWithJson(w, http.StatusOK, result)
+		utils.RespondWithJson(w, http.StatusOK, result)
 	}
 }

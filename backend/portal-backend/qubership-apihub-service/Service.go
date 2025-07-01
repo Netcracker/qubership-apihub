@@ -26,6 +26,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security/idp/providers"
+
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
@@ -61,10 +63,19 @@ func init() {
 	if basePath == "" {
 		basePath = "."
 	}
-	mw := io.MultiWriter(os.Stderr, &lumberjack.Logger{
-		Filename: basePath + "/logs/apihub.log",
-		MaxSize:  10, // megabytes
-	})
+	logFilePath := os.Getenv("LOG_FILE_PATH") //Example: /logs/apihub.log
+	var mw io.Writer
+	if logFilePath != "" {
+		mw = io.MultiWriter(
+			os.Stdout,
+			&lumberjack.Logger{
+				Filename: logFilePath,
+				MaxSize:  10, // megabytes
+			},
+		)
+	} else {
+		mw = os.Stdout
+	}
 	log.SetFormatter(&prefixed.TextFormatter{
 		DisableColors:   true,
 		TimestampFormat: "2006-01-02 15:04:05",
@@ -229,6 +240,8 @@ func main() {
 
 	packageExportConfigRepository := repository.NewPackageExportConfigRepository(cp)
 
+	exportRepository := repository.NewExportRepository(cp)
+
 	olricProvider, err := cache.NewOlricProvider()
 	if err != nil {
 		log.Error("Failed to create olricProvider: " + err.Error())
@@ -245,7 +258,7 @@ func main() {
 	}
 	privateUserPackageService := service.NewPrivateUserPackageService(publishedRepository, usersRepository, roleRepository, favoritesRepository)
 	integrationsService := service.NewIntegrationsService(gitIntegrationRepository, gitClientProvider)
-	userService := service.NewUserService(usersRepository, gitClientProvider, systemInfoService, privateUserPackageService)
+	userService := service.NewUserService(usersRepository, gitClientProvider, systemInfoService, privateUserPackageService, integrationsService)
 
 	projectService := service.NewProjectService(gitClientProvider, projectRepository, favoritesRepository, publishedRepository)
 	groupService := service.NewGroupService(projectRepository, projectService, favoritesRepository, publishedRepository, usersRepository)
@@ -274,8 +287,9 @@ func main() {
 	refService := service.NewRefService(draftRepository, projectService, branchService, publishedRepository, wsBranchService)
 	wsFileEditService := service.NewWsFileEditService(userService, contentService, branchEditorsService, wsLoadBalancer)
 	portalService := service.NewPortalService(basePath, publishedService, publishedRepository, projectRepository)
-	operationGroupService := service.NewOperationGroupService(operationRepository, publishedRepository, packageVersionEnrichmentService, activityTrackingService)
-	versionService := service.NewVersionService(gitClientProvider, projectRepository, favoritesRepository, publishedRepository, publishedService, operationRepository, operationService, activityTrackingService, systemInfoService, packageVersionEnrichmentService, portalService, versionCleanupRepository, operationGroupService)
+
+	operationGroupService := service.NewOperationGroupService(operationRepository, publishedRepository, exportRepository, packageVersionEnrichmentService, activityTrackingService)
+	versionService := service.NewVersionService(gitClientProvider, projectRepository, favoritesRepository, publishedRepository, publishedService, operationRepository, exportRepository, operationService, activityTrackingService, systemInfoService, packageVersionEnrichmentService, portalService, versionCleanupRepository, operationGroupService)
 	packageService := service.NewPackageService(gitClientProvider, projectRepository, favoritesRepository, publishedRepository, versionService, roleService, activityTrackingService, operationGroupService, usersRepository, ptHandler, systemInfoService)
 
 	logsService := service.NewLogsService()
@@ -287,7 +301,12 @@ func main() {
 	refResolverService := service.NewRefResolverService(publishedRepository)
 	buildProcessorService := service.NewBuildProcessorService(buildRepository, refResolverService)
 	buildService := service.NewBuildService(buildRepository, buildProcessorService, publishedService, systemInfoService, packageService, refResolverService)
-	buildResultService := service.NewBuildResultService(buildResultRepository, systemInfoService, minioStorageService)
+
+	packageExportConfigService := service.NewPackageExportConfigService(packageExportConfigRepository, packageService)
+
+	exportService := service.NewExportService(exportRepository, buildService, packageExportConfigService)
+
+	buildResultService := service.NewBuildResultService(buildResultRepository, buildRepository, publishedRepository, systemInfoService, minioStorageService, publishedService, exportService)
 	versionService.SetBuildService(buildService)
 	operationGroupService.SetBuildService(buildService)
 
@@ -302,14 +321,21 @@ func main() {
 	}
 
 	transitionService := service.NewTransitionService(transitionRepository, publishedRepository)
-	transformationService := service.NewTransformationService(publishedRepository, operationRepository)
+	transformationService := service.NewTransformationService(publishedRepository, operationRepository, packageVersionEnrichmentService)
 
 	gitHookService := service.NewGitHookService(projectRepository, branchService, buildService, userService)
 
 	zeroDayAdminService := service.NewZeroDayAdminService(userService, roleService, usersRepository, systemInfoService)
 
 	personalAccessTokenService := service.NewPersonalAccessTokenService(personalAccessTokenRepository, userService, roleService)
-	packageExportConfigService := service.NewPackageExportConfigService(packageExportConfigRepository, packageService)
+
+	tokenRevocationService := service.NewTokenRevocationService(olricProvider, systemInfoService.GetRefreshTokenDurationSec())
+
+	idpManager, err := providers.NewIDPManager(systemInfoService.GetAuthConfig(), systemInfoService.GetAllowedHosts(), systemInfoService.IsProductionMode(), userService)
+	if err != nil {
+		log.Error("Failed to initialize external IDP: " + err.Error())
+		panic("Failed to initialize external IDP: " + err.Error())
+	}
 
 	integrationsController := controller.NewIntegrationsController(integrationsService)
 	projectController := controller.NewProjectController(projectService, groupService, searchService)
@@ -332,15 +358,17 @@ func main() {
 	agentProxyController := controller.NewAgentProxyController(agentService, systemInfoService)
 	playgroundProxyController := controller.NewPlaygroundProxyController(systemInfoService)
 	publishV2Controller := controller.NewPublishV2Controller(buildService, publishedService, buildResultService, roleService, systemInfoService)
-	exportController := controller.NewExportController(publishedService, portalService, searchService, roleService, excelService, versionService, monitoringService)
+	exportController := controller.NewExportController(publishedService, portalService, searchService, roleService, excelService, versionService, monitoringService, exportService, packageService)
 
 	packageController := controller.NewPackageController(packageService, publishedService, portalService, searchService, roleService, monitoringService, ptHandler)
 	versionController := controller.NewVersionController(versionService, roleService, monitoringService, ptHandler, roleService.IsSysadm)
 	roleController := controller.NewRoleController(roleService)
-	samlAuthController := security.NewSamlAuthController(userService, systemInfoService)
+	samlAuthController := controller.NewSamlAuthController(userService, systemInfoService, idpManager) //deprecated
+	authController := controller.NewAuthController(systemInfoService, idpManager)
 	userController := controller.NewUserController(userService, privateUserPackageService, roleService.IsSysadm)
-	jwtPubKeyController := security.NewJwtPubKeyController()
-	oauthController := security.NewOauth20Controller(integrationsService, userService, systemInfoService)
+	jwtPubKeyController := controller.NewJwtPubKeyController()
+	oauthController := controller.NewOauth20Controller(integrationsService, userService, systemInfoService)
+	logoutController := controller.NewLogoutController(tokenRevocationService, systemInfoService)
 	operationController := controller.NewOperationController(roleService, operationService, buildService, monitoringService, ptHandler)
 	operationGroupController := controller.NewOperationGroupController(roleService, operationGroupService, versionService)
 	searchController := controller.NewSearchController(operationService, versionService, monitoringService)
@@ -427,7 +455,8 @@ func main() {
 	}
 
 	r.HandleFunc("/api/v1/system/info", security.Secure(systemInfoController.GetSystemInfo)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/system/configuration", samlAuthController.GetSystemSSOInfo).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/system/configuration", samlAuthController.GetSystemSSOInfo_deprecated).Methods(http.MethodGet) //deprecated
+	r.HandleFunc("/api/v2/system/configuration", security.NoSecure(authController.GetSystemConfigurationInfo)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v1/debug/logs", security.Secure(logsController.StoreLogs)).Methods(http.MethodPut)
 	r.HandleFunc("/api/v1/debug/logs/setLevel", security.Secure(logsController.SetLogLevel)).Methods(http.MethodPost)
@@ -491,26 +520,36 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/problems", security.Secure(versionController.GetVersionProblems)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/sharedFiles", security.Secure(versionController.SharePublishedFile)).Methods(http.MethodPost)
 
-	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/doc", security.Secure(exportController.GenerateVersionDoc)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/files/{slug}/doc", security.Secure(exportController.GenerateFileDoc)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/doc", security.Secure(exportController.GenerateVersionDoc)).Methods(http.MethodGet)           // deprecated
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/files/{slug}/doc", security.Secure(exportController.GenerateFileDoc)).Methods(http.MethodGet) // deprecated
 
-	r.HandleFunc("/api/v2/auth/saml", security.NoSecure(samlAuthController.StartSamlAuthentication)).Methods(http.MethodGet) // deprecated.
-	r.HandleFunc("/login/sso/saml", security.NoSecure(samlAuthController.StartSamlAuthentication)).Methods(http.MethodGet)
-	r.HandleFunc("/saml/acs", security.NoSecure(samlAuthController.AssertionConsumerHandler)).Methods(http.MethodPost)
-	r.HandleFunc("/saml/metadata", security.NoSecure(samlAuthController.ServeMetadata)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/auth/saml", security.NoSecure(samlAuthController.StartSamlAuthentication_deprecated)).Methods(http.MethodGet) // deprecated.
+	r.HandleFunc("/login/sso/saml", security.RefreshToken(samlAuthController.StartSamlAuthentication_deprecated)).Methods(http.MethodGet)
+	r.HandleFunc("/saml/acs", security.NoSecure(samlAuthController.AssertionConsumerHandler_deprecated)).Methods(http.MethodPost)
+	r.HandleFunc("/saml/metadata", security.NoSecure(samlAuthController.ServeMetadata_deprecated)).Methods(http.MethodGet)
+
+	r.HandleFunc("/api/v1/login/sso/{idpId}", security.RefreshToken(authController.StartAuthentication)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/saml/{idpId}/acs", security.NoSecure(authController.SAMLAssertionConsumerHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/saml/{idpId}/metadata", security.NoSecure(authController.ServeMetadata)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/oidc/{idpId}/callback", authController.OIDCCallbackHandler).Methods(http.MethodGet)
+
+	r.HandleFunc("/api/v1/logout", security.SecureJWT(logoutController.Logout)).Methods(http.MethodPost)
 
 	// Required for agent to verify apihub tokens
 	r.HandleFunc("/api/v2/auth/publicKey", security.NoSecure(jwtPubKeyController.GetRsaPublicKey)).Methods(http.MethodGet)
 	// Required to verify api key for external authorization
 	r.HandleFunc("/api/v2/auth/apiKey", security.NoSecure(apihubApiKeyController.GetApiKeyByKey)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/auth/apiKey/{apiKeyId}", security.Secure(apihubApiKeyController.GetApiKeyById)).Methods(http.MethodGet)
+	// Required for extensions to check Apihub auth. Just return 200 OK if authentication is passed.
+	r.HandleFunc("/api/v1/auth/token", security.SecureJWT(func(writer http.ResponseWriter, request *http.Request) {})).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v2/users/{userId}/profile/avatar", security.NoSecure(userController.GetUserAvatar)).Methods(http.MethodGet) // Should not be secured! FE renders avatar as <img src='avatarUrl' and it couldn't include auth header
 	r.HandleFunc("/api/v2/users", security.Secure(userController.GetUsers)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/users/{userId}", security.Secure(userController.GetUserById)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/users/{userId}/space", security.Secure(userController.CreatePrivatePackageForUser)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v2/space", security.SecureJWT(userController.CreatePrivateUserPackage)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v2/space", security.SecureJWT(userController.GetPrivateUserPackage)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/space", security.SecureUser(userController.CreatePrivateUserPackage)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v2/space", security.SecureUser(userController.GetPrivateUserPackage)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/user", security.SecureUser(userController.GetExtendedUser)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/changes/summary", security.Secure(comparisonController.GetComparisonChangesSummary)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations", security.Secure(operationController.GetOperationList)).Methods(http.MethodGet)
@@ -603,11 +642,12 @@ func main() {
 
 	r.Path("/metrics").Handler(promhttp.Handler())
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/transform", security.Secure(transformationController.TransformDocuments_deprecated)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/export/groups/{groupName}", security.Secure(exportController.ExportOperationGroupAsOpenAPIDocuments_deprecated)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/transformation/documents", security.Secure(transformationController.GetDataForDocumentsTransformation)).Methods(http.MethodGet) //deprecated
-	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/build/groups/{groupName}/buildType/{buildType}", security.Secure(transformationController.TransformDocuments)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/export/groups/{groupName}/buildType/{buildType}", security.Secure(exportController.ExportOperationGroupAsOpenAPIDocuments)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/export/groups/{groupName}", security.Secure(exportController.ExportOperationGroupAsOpenAPIDocuments_deprecated)).Methods(http.MethodGet)                         //deprecated
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/transformation/documents", security.Secure(transformationController.GetDataForDocumentsTransformation)).Methods(http.MethodGet)               //deprecated
+	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/build/groups/{groupName}/buildType/{buildType}", security.Secure(transformationController.TransformDocuments_deprecated_2)).Methods(http.MethodPost)             //deprecated
+	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/export/groups/{groupName}/buildType/{buildType}", security.Secure(exportController.ExportOperationGroupAsOpenAPIDocuments_deprecated_2)).Methods(http.MethodGet) //deprecated
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/documents", security.Secure(transformationController.GetDataForDocumentsTransformation)).Methods(http.MethodGet)
+
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/publish", security.Secure(operationGroupController.StartOperationGroupPublish)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/publish/{publishId}/status", security.Secure(operationGroupController.GetOperationGroupPublishStatus)).Methods(http.MethodGet)
 
@@ -622,6 +662,9 @@ func main() {
 	r.HandleFunc("/api/v1/packages/{packageId}/exportConfig", security.Secure(packageExportConfigController.GetConfig)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/exportConfig", security.Secure(packageExportConfigController.SetConfig)).Methods(http.MethodPatch)
 
+	r.HandleFunc("/api/v1/export", security.Secure(exportController.StartAsyncExport)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/export/{exportId}/status", security.Secure(exportController.GetAsyncExportStatus)).Methods(http.MethodGet)
+
 	//debug + cleanup
 	if !systemInfoService.GetSystemInfo().ProductionMode {
 		if !systemInfoService.GetEditorDisabled() {
@@ -633,8 +676,10 @@ func main() {
 			r.HandleFunc("/api/internal/websocket/loadbalancer", security.Secure(branchWSController.DebugSessionsLoadBalance)).Methods(http.MethodGet)
 		}
 		r.HandleFunc("/api/internal/users/{userId}/systemRole", security.Secure(roleController.TestSetUserSystemRole)).Methods(http.MethodPost)
-		r.HandleFunc("/api/internal/users", security.NoSecure(userController.CreateInternalUser)).Methods("POST")
-		r.HandleFunc("/api/v2/auth/local", security.NoSecure(security.CreateLocalUserToken)).Methods("POST")
+		r.HandleFunc("/api/internal/users", security.NoSecure(userController.CreateInternalUser)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v2/auth/local", security.NoSecure(security.CreateLocalUserToken_deprecated)).Methods(http.MethodPost) //deprecated
+		r.HandleFunc("/api/v3/auth/local", security.NoSecure(security.CreateLocalUserToken)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v3/auth/local/refresh", security.RefreshToken(utils.RedirectHandler(systemInfoService.GetAPIHubUrl()))).Methods(http.MethodGet)
 
 		r.HandleFunc("/api/internal/clear/{testId}", security.Secure(cleanupController.ClearTestData)).Methods(http.MethodDelete)
 
@@ -664,7 +709,7 @@ func main() {
 		//add routing for unknown paths with known path prefixes
 		r.PathPrefix(prefix).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			log.Warnf("Requested unknown endpoint: %v %v", r.Method, r.RequestURI)
-			controller.RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusMisdirectedRequest,
 				Message: "Requested unknown endpoint",
 			})
@@ -696,7 +741,7 @@ func main() {
 		}
 	})
 
-	err = security.SetupGoGuardian(integrationsService, userService, roleService, apihubApiKeyService, personalAccessTokenService, systemInfoService)
+	err = security.SetupGoGuardian(integrationsService, userService, roleService, apihubApiKeyService, personalAccessTokenService, systemInfoService, tokenRevocationService)
 	if err != nil {
 		log.Fatalf("Can't setup go_guardian. Error - %s", err.Error())
 	}
@@ -728,6 +773,11 @@ func main() {
 			}
 		})
 	}
+
+	utils.SafeAsync(func() {
+		exportService.StartCleanupOldResultsJob()
+	})
+
 	log.Fatalf("Http server returned error: %v", srv.ListenAndServe())
 }
 

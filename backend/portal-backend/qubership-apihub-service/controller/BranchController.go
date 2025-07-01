@@ -16,6 +16,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -79,23 +80,23 @@ func (b branchControllerImpl) GetProjectBranches(w http.ResponseWriter, r *http.
 	if err != nil {
 		log.Error("Failed to get project branches: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get project branches",
 				Debug:   err.Error()})
 		}
 		return
 	}
-	RespondWithJson(w, http.StatusOK, branches)
+	utils.RespondWithJson(w, http.StatusOK, branches)
 }
 
 func (b branchControllerImpl) GetProjectBranchDetails(w http.ResponseWriter, r *http.Request) {
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -112,9 +113,9 @@ func (b branchControllerImpl) GetProjectBranchDetails(w http.ResponseWriter, r *
 	if err != nil {
 		log.Error("Failed to get branch details: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get branch details",
 				Debug:   err.Error()})
@@ -122,14 +123,14 @@ func (b branchControllerImpl) GetProjectBranchDetails(w http.ResponseWriter, r *
 		return
 	}
 	branch.RemoveFolders()
-	RespondWithJson(w, http.StatusOK, branch)
+	utils.RespondWithJson(w, http.StatusOK, branch)
 }
 
 func (b branchControllerImpl) GetProjectBranchConfigRaw(w http.ResponseWriter, r *http.Request) {
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -143,7 +144,7 @@ func (b branchControllerImpl) GetProjectBranchConfigRaw(w http.ResponseWriter, r
 	if originalStr != "" {
 		original, err = strconv.ParseBool(originalStr)
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -166,9 +167,9 @@ func (b branchControllerImpl) GetProjectBranchConfigRaw(w http.ResponseWriter, r
 	if err != nil {
 		log.Error("Failed to get branch config: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get branch config",
 				Debug:   err.Error()})
@@ -184,7 +185,7 @@ func (b branchControllerImpl) CommitBranchDraftChanges(w http.ResponseWriter, r 
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -196,7 +197,7 @@ func (b branchControllerImpl) CommitBranchDraftChanges(w http.ResponseWriter, r 
 	defer r.Body.Close()
 	params, err := getParamsFromBody(r)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -207,7 +208,7 @@ func (b branchControllerImpl) CommitBranchDraftChanges(w http.ResponseWriter, r 
 
 	commitMessage, err := getBodyStringParam(params, "comment")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameter,
 			Message: exception.InvalidParameterMsg,
@@ -217,7 +218,7 @@ func (b branchControllerImpl) CommitBranchDraftChanges(w http.ResponseWriter, r 
 		return
 	}
 	if commitMessage == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.EmptyParameter,
 			Message: exception.EmptyParameterMsg,
@@ -227,7 +228,7 @@ func (b branchControllerImpl) CommitBranchDraftChanges(w http.ResponseWriter, r 
 	}
 	newBranchName, err := getBodyStringParam(params, "branch")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameter,
 			Message: exception.InvalidParameterMsg,
@@ -238,7 +239,7 @@ func (b branchControllerImpl) CommitBranchDraftChanges(w http.ResponseWriter, r 
 	}
 	createMergeRequestParam, err := getBodyBoolParam(params, "createMergeRequest")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.IncorrectParamType,
 			Message: exception.IncorrectParamTypeMsg,
@@ -256,10 +257,10 @@ func (b branchControllerImpl) CommitBranchDraftChanges(w http.ResponseWriter, r 
 	if err != nil {
 		log.Error("Failed to commit branch draft: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
 			b.wsBranchService.DisconnectClients(projectId, branchName)
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to commit branch draft",
 				Debug:   err.Error()})
@@ -271,7 +272,7 @@ func (b branchControllerImpl) CommitBranchDraftChanges(w http.ResponseWriter, r 
 }
 
 func (b branchControllerImpl) GetProjectBranchContentZip(w http.ResponseWriter, r *http.Request) {
-	RespondWithCustomError(w, &exception.CustomError{
+	utils.RespondWithCustomError(w, &exception.CustomError{
 		Status:  http.StatusNotImplemented,
 		Message: "Not implemented"})
 }
@@ -280,7 +281,7 @@ func (b branchControllerImpl) GetProjectBranchFiles(w http.ResponseWriter, r *ht
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -292,7 +293,7 @@ func (b branchControllerImpl) GetProjectBranchFiles(w http.ResponseWriter, r *ht
 
 	path, err := url.QueryUnescape(r.URL.Query().Get("path"))
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -307,7 +308,7 @@ func (b branchControllerImpl) GetProjectBranchFiles(w http.ResponseWriter, r *ht
 	if onlyAddableStr != "" {
 		onlyAddable, err = strconv.ParseBool(onlyAddableStr)
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidParameter,
 				Message: exception.InvalidParameterMsg,
@@ -322,7 +323,7 @@ func (b branchControllerImpl) GetProjectBranchFiles(w http.ResponseWriter, r *ht
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -335,7 +336,7 @@ func (b branchControllerImpl) GetProjectBranchFiles(w http.ResponseWriter, r *ht
 
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		RespondWithCustomError(w, customError)
+		utils.RespondWithCustomError(w, customError)
 		return
 	}
 
@@ -343,9 +344,9 @@ func (b branchControllerImpl) GetProjectBranchFiles(w http.ResponseWriter, r *ht
 	if err != nil {
 		log.Error("Failed to list files: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to list files",
 				Debug:   err.Error()})
@@ -353,14 +354,14 @@ func (b branchControllerImpl) GetProjectBranchFiles(w http.ResponseWriter, r *ht
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, view.ListFilesView{Files: result})
+	utils.RespondWithJson(w, http.StatusOK, view.ListFilesView{Files: result})
 }
 
 func (b branchControllerImpl) GetProjectBranchCommitHistory_deprecated(w http.ResponseWriter, r *http.Request) {
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -371,14 +372,14 @@ func (b branchControllerImpl) GetProjectBranchCommitHistory_deprecated(w http.Re
 	}
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		RespondWithCustomError(w, customError)
+		utils.RespondWithCustomError(w, customError)
 		return
 	}
 	page := 0
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -391,9 +392,9 @@ func (b branchControllerImpl) GetProjectBranchCommitHistory_deprecated(w http.Re
 	if err != nil {
 		log.Error("Failed to get project branch commit history: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get project branch commit history",
 				Debug:   err.Error()})
@@ -401,14 +402,14 @@ func (b branchControllerImpl) GetProjectBranchCommitHistory_deprecated(w http.Re
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, changes)
+	utils.RespondWithJson(w, http.StatusOK, changes)
 }
 
 func (b branchControllerImpl) CloneBranch(w http.ResponseWriter, r *http.Request) {
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -420,7 +421,7 @@ func (b branchControllerImpl) CloneBranch(w http.ResponseWriter, r *http.Request
 	defer r.Body.Close()
 	params, err := getParamsFromBody(r)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -430,7 +431,7 @@ func (b branchControllerImpl) CloneBranch(w http.ResponseWriter, r *http.Request
 	}
 	newBranchName, err := getBodyStringParam(params, "branch")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameter,
 			Message: exception.InvalidParameterMsg,
@@ -440,7 +441,7 @@ func (b branchControllerImpl) CloneBranch(w http.ResponseWriter, r *http.Request
 		return
 	}
 	if newBranchName == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.EmptyParameter,
 			Message: exception.EmptyParameterMsg,
@@ -456,9 +457,9 @@ func (b branchControllerImpl) CloneBranch(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		log.Error("Failed to clone branch: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to clone branch",
 				Debug:   err.Error()})
@@ -466,14 +467,14 @@ func (b branchControllerImpl) CloneBranch(w http.ResponseWriter, r *http.Request
 		return
 	}
 	//todo maybe put it in service
-	RespondWithJson(w, http.StatusOK, map[string]string{"cloned_branch": newBranchName})
+	utils.RespondWithJson(w, http.StatusOK, map[string]string{"cloned_branch": newBranchName})
 }
 
 func (b branchControllerImpl) DeleteBranch(w http.ResponseWriter, r *http.Request) {
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -490,9 +491,9 @@ func (b branchControllerImpl) DeleteBranch(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		log.Error("Failed to delete branch: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to delete branch",
 				Debug:   err.Error()})
@@ -506,7 +507,7 @@ func (b branchControllerImpl) DeleteBranchDraft(w http.ResponseWriter, r *http.R
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -523,10 +524,10 @@ func (b branchControllerImpl) DeleteBranchDraft(w http.ResponseWriter, r *http.R
 	if err != nil {
 		log.Error("Failed to delete branch draft: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
 			b.wsBranchService.DisconnectClients(projectId, branchName)
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to delete branch draft",
 				Debug:   err.Error()})
@@ -540,7 +541,7 @@ func (b branchControllerImpl) GetBranchConflicts(w http.ResponseWriter, r *http.
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -557,24 +558,24 @@ func (b branchControllerImpl) GetBranchConflicts(w http.ResponseWriter, r *http.
 	if err != nil {
 		log.Error("Failed to get branch conflicts: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
 			b.wsBranchService.DisconnectClients(projectId, branchName) //todo maybe not needed here
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get branch conflicts",
 				Debug:   err.Error()})
 		}
 		return
 	}
-	RespondWithJson(w, http.StatusOK, branchConflicts)
+	utils.RespondWithJson(w, http.StatusOK, branchConflicts)
 }
 
 func (b branchControllerImpl) AddBranchEditor(w http.ResponseWriter, r *http.Request) {
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -588,9 +589,9 @@ func (b branchControllerImpl) AddBranchEditor(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		log.Error("Failed to add editor: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to add editor",
 				Debug:   err.Error()})
@@ -605,7 +606,7 @@ func (b branchControllerImpl) RemoveBranchEditor(w http.ResponseWriter, r *http.
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -619,9 +620,9 @@ func (b branchControllerImpl) RemoveBranchEditor(w http.ResponseWriter, r *http.
 	if err != nil {
 		log.Error("Failed to remove editor: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to remove editor",
 				Debug:   err.Error()})

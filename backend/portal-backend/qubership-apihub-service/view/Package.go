@@ -164,7 +164,7 @@ type PatchPackageReq struct {
 type PackageInfoFile struct {
 	PackageId                string                 `json:"packageId" validate:"required"`
 	Kind                     string                 `json:"-"`
-	BuildType                string                 `json:"buildType"`
+	BuildType                BuildType              `json:"buildType"`
 	Version                  string                 `json:"version" validate:"required"`
 	Status                   string                 `json:"status" validate:"required"`
 	PreviousVersion          string                 `json:"previousVersion"`
@@ -186,7 +186,7 @@ type PackageInfoFile struct {
 }
 
 type ChangelogInfoFile struct {
-	BuildType                string                 `json:"buildType"`
+	BuildType                BuildType              `json:"buildType"`
 	PackageId                string                 `json:"packageId" validate:"required"`
 	Version                  string                 `json:"version" validate:"required"`
 	PreviousVersionPackageId string                 `json:"previousVersionPackageId" validate:"required"`

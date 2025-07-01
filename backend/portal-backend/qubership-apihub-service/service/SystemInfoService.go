@@ -17,6 +17,8 @@ package service
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security/idp"
+	"github.com/coreos/go-oidc/v3/oidc"
 	"os"
 	"strconv"
 	"strings"
@@ -78,10 +80,25 @@ const (
 	APIHUB_SYSTEM_API_KEY                  = "APIHUB_ACCESS_TOKEN"
 	EDITOR_DISABLED                        = "EDITOR_DISABLED"
 	FAIL_BUILDS_ON_BROKEN_REFS             = "FAIL_BUILDS_ON_BROKEN_REFS"
+	ACCESS_TOKEN_DURATION_SEC              = "JWT_ACCESS_TOKEN_DURATION_SEC"
+	REFRESH_TOKEN_DURATION_SEC             = "JWT_REFRESH_TOKEN_DURATION_SEC"
+	EXTERNAL_SAML_IDP_DISPLAY_NAME         = "EXTERNAL_SAML_IDP_DISPLAY_NAME"
+	EXTERNAL_SAML_IDP_IMAGE_SVG            = "EXTERNAL_SAML_IDP_IMAGE_SVG"
+	AUTO_LOGIN                             = "AUTO_LOGIN"
+	AUTH_CONFIG                            = "AUTH_CONFIG"
+	OIDC_PROVIDER_URL                      = "OIDC_PROVIDER_URL"
+	OIDC_CLIENT_ID                         = "OIDC_CLIENT_ID"
+	OIDC_CLIENT_SECRET                     = "OIDC_CLIENT_SECRET"
+	EXTERNAL_OIDC_IDP_DISPLAY_NAME         = "EXTERNAL_OIDC_IDP_DISPLAY_NAME"
+	EXTERNAL_OIDC_IDP_IMAGE_SVG            = "EXTERNAL_OIDC_IDP_IMAGE_SVG"
 	GIT_BRANCH                             = "GIT_BRANCH"
 	GIT_HASH                               = "GIT_HASH"
+	LEGACY_SAML                            = "LEGACY_SAML"
 
-	maxMB = 8796093022207 // 8796093022207 * 1048576 is safely below MaxInt64
+	LocalIDPId             = "local-idp"
+	ExternalSAMLProviderId = "external-saml-idp"
+	ExternalOIDCProviderId = "external-oidc-idp"
+	maxMB                  = 8796093022207 // 8796093022207 * 1048576 is safely below MaxInt64
 )
 
 type SystemInfoService interface {
@@ -110,9 +127,6 @@ type SystemInfoService interface {
 	GetBranchContentSizeLimitMB() int64
 	GetReleaseVersionPattern() string
 	GetCredsFromEnv() *view.DbCredentials
-	GetSamlCrt() string
-	GetSamlKey() string
-	GetADFSMetadataUrl() string
 	GetLdapServer() string
 	GetLdapUser() string
 	GetLdapUserPassword() string
@@ -139,6 +153,10 @@ type SystemInfoService interface {
 	GetSystemApiKey() (string, error)
 	GetEditorDisabled() bool
 	FailBuildOnBrokenRefs() bool
+	GetAccessTokenDurationSec() int
+	GetRefreshTokenDurationSec() int
+	IsLegacySAML() bool
+	GetAuthConfig() idp.AuthConfig
 }
 
 func (g systemInfoServiceImpl) GetCredsFromEnv() *view.DbCredentials {
@@ -217,9 +235,6 @@ func (g systemInfoServiceImpl) Init() error {
 	g.setPublishFileSizeLimitMB()
 	g.setBranchContentSizeLimitMB()
 	g.setReleaseVersionPattern()
-	g.setSamlCrt()
-	g.setSamlKey()
-	g.setADFSMetadataUrl()
 	g.setLdapServer()
 	g.setLdapUser()
 	g.setLdapUserPassword()
@@ -244,6 +259,12 @@ func (g systemInfoServiceImpl) Init() error {
 	g.setAllowedHosts()
 	g.setEditorDisabled()
 	g.setFailBuildOnBrokenRefs()
+	g.setAccessTokenDurationSec()
+	g.setRefreshTokenDurationSec()
+	g.setLegacySAML()
+	if err = g.setAuthConfig(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -534,30 +555,6 @@ func (g systemInfoServiceImpl) GetReleaseVersionPattern() string {
 	return g.systemInfoMap[RELEASE_VERSION_PATTERN].(string)
 }
 
-func (g systemInfoServiceImpl) setSamlCrt() {
-	g.systemInfoMap[SAML_CRT] = os.Getenv(SAML_CRT)
-}
-
-func (g systemInfoServiceImpl) GetSamlCrt() string {
-	return g.systemInfoMap[SAML_CRT].(string)
-}
-
-func (g systemInfoServiceImpl) setSamlKey() {
-	g.systemInfoMap[SAML_KEY] = os.Getenv(SAML_KEY)
-}
-
-func (g systemInfoServiceImpl) GetSamlKey() string {
-	return g.systemInfoMap[SAML_KEY].(string)
-}
-
-func (g systemInfoServiceImpl) setADFSMetadataUrl() {
-	g.systemInfoMap[ADFS_METADATA_URL] = os.Getenv(ADFS_METADATA_URL)
-}
-
-func (g systemInfoServiceImpl) GetADFSMetadataUrl() string {
-	return g.systemInfoMap[ADFS_METADATA_URL].(string)
-}
-
 func (g systemInfoServiceImpl) setLdapServer() {
 	ldapServerUrl := os.Getenv(LDAP_SERVER)
 	if ldapServerUrl == "" {
@@ -798,7 +795,13 @@ func (g systemInfoServiceImpl) setAllowedHosts() {
 	hosts := make([]string, 0)
 	hostsStr := os.Getenv(ALLOWED_HOSTS)
 	if hostsStr != "" {
-		hosts = strings.Split(hostsStr, ",")
+		rawHosts := strings.Split(hostsStr, ",")
+		for _, host := range rawHosts {
+			trimmedHost := strings.TrimSpace(host)
+			if trimmedHost != "" {
+				hosts = append(hosts, strings.ToLower(trimmedHost))
+			}
+		}
 	}
 	g.systemInfoMap[ALLOWED_HOSTS] = hosts
 }
@@ -852,4 +855,204 @@ func (g systemInfoServiceImpl) setFailBuildOnBrokenRefs() {
 
 func (g systemInfoServiceImpl) FailBuildOnBrokenRefs() bool {
 	return g.systemInfoMap[FAIL_BUILDS_ON_BROKEN_REFS].(bool)
+}
+
+func (g systemInfoServiceImpl) setAccessTokenDurationSec() {
+	envVal := os.Getenv(ACCESS_TOKEN_DURATION_SEC)
+	if envVal == "" {
+		g.systemInfoMap[ACCESS_TOKEN_DURATION_SEC] = 1800 //30 minutes
+		return
+	}
+	val, err := strconv.Atoi(envVal)
+	if err != nil {
+		log.Errorf("failed to parse %v env value: %v. Value by default - 1800", ACCESS_TOKEN_DURATION_SEC, err.Error())
+		g.systemInfoMap[ACCESS_TOKEN_DURATION_SEC] = 1800
+		return
+	}
+
+	if val < 600 {
+		err = fmt.Errorf("env %v has incorrect value, value must be greater than 600. Value by default - 1800", ACCESS_TOKEN_DURATION_SEC)
+		g.systemInfoMap[ACCESS_TOKEN_DURATION_SEC] = 1800
+		return
+	}
+	g.systemInfoMap[ACCESS_TOKEN_DURATION_SEC] = val
+}
+
+func (g systemInfoServiceImpl) GetAccessTokenDurationSec() int {
+	return g.systemInfoMap[ACCESS_TOKEN_DURATION_SEC].(int)
+}
+
+func (g systemInfoServiceImpl) setRefreshTokenDurationSec() {
+	envVal := os.Getenv(REFRESH_TOKEN_DURATION_SEC)
+	if envVal == "" {
+		g.systemInfoMap[REFRESH_TOKEN_DURATION_SEC] = 43200 //12 hours
+		return
+	}
+	val, err := strconv.Atoi(envVal)
+	if err != nil {
+		log.Errorf("failed to parse %v env value: %v. Value by default - 43200", REFRESH_TOKEN_DURATION_SEC, err.Error())
+		g.systemInfoMap[REFRESH_TOKEN_DURATION_SEC] = 43200
+		return
+	}
+	if val < g.GetAccessTokenDurationSec() {
+		err = fmt.Errorf("env %v has incorrect value, value must be equal or greater than %v. Value by default - 43200", REFRESH_TOKEN_DURATION_SEC, ACCESS_TOKEN_DURATION_SEC)
+		g.systemInfoMap[REFRESH_TOKEN_DURATION_SEC] = 43200
+		return
+	}
+
+	g.systemInfoMap[REFRESH_TOKEN_DURATION_SEC] = val
+}
+
+func (g systemInfoServiceImpl) GetRefreshTokenDurationSec() int {
+	return g.systemInfoMap[REFRESH_TOKEN_DURATION_SEC].(int)
+}
+
+func (g systemInfoServiceImpl) setLegacySAML() {
+	envVal := os.Getenv(LEGACY_SAML)
+	legacySAML, err := strconv.ParseBool(envVal)
+	if err != nil {
+		log.Infof("environment variable %v has invalid value, using true value instead", LEGACY_SAML)
+		legacySAML = true
+	}
+	g.systemInfoMap[LEGACY_SAML] = legacySAML
+}
+
+func (g systemInfoServiceImpl) IsLegacySAML() bool {
+	return g.systemInfoMap[LEGACY_SAML].(bool)
+}
+
+// all IDP initialization should be done in this method only
+func (g systemInfoServiceImpl) setAuthConfig() error {
+	var authConfig idp.AuthConfig
+
+	if !g.IsProductionMode() {
+		localIDP := idp.IDP{
+			Id:                   LocalIDPId,
+			IdpType:              idp.IDPTypeInternal,
+			DisplayName:          "Local IDP",
+			ImageSvg:             "",
+			LoginStartEndpoint:   "/api/v3/auth/local",
+			RefreshTokenEndpoint: "/api/v3/auth/local/refresh",
+		}
+		authConfig.Providers = append(authConfig.Providers, localIDP)
+	}
+
+	samlConfig, err := g.createSAMLConfig()
+	if err != nil {
+		return err
+	}
+	if samlConfig != nil {
+		loginStartEndpoint := "/api/v1/login/sso/" + ExternalSAMLProviderId
+		//TODO: remove after IDP reconfiguration
+		if g.IsLegacySAML() {
+			loginStartEndpoint = "/login/sso/saml"
+		}
+		externalIDP := idp.IDP{
+			Id:                 ExternalSAMLProviderId,
+			IdpType:            idp.IDPTypeExternal,
+			DisplayName:        os.Getenv(EXTERNAL_SAML_IDP_DISPLAY_NAME),
+			ImageSvg:           os.Getenv(EXTERNAL_SAML_IDP_IMAGE_SVG),
+			LoginStartEndpoint: loginStartEndpoint,
+			Protocol:           idp.AuthProtocolSAML,
+			SAMLConfiguration:  samlConfig,
+		}
+		authConfig.Providers = append(authConfig.Providers, externalIDP)
+	}
+
+	oidcConfig, err := g.createOIDCConfig()
+	if err != nil {
+		return err
+	}
+	if oidcConfig != nil {
+		externalIDP := idp.IDP{
+			Id:                 ExternalOIDCProviderId,
+			IdpType:            idp.IDPTypeExternal,
+			DisplayName:        os.Getenv(EXTERNAL_OIDC_IDP_DISPLAY_NAME),
+			ImageSvg:           os.Getenv(EXTERNAL_OIDC_IDP_IMAGE_SVG),
+			LoginStartEndpoint: "/api/v1/login/sso/" + ExternalOIDCProviderId,
+			Protocol:           idp.AuthProtocolOIDC,
+			OIDCConfiguration:  oidcConfig,
+		}
+		authConfig.Providers = append(authConfig.Providers, externalIDP)
+	}
+
+	if len(authConfig.Providers) == 0 {
+		return fmt.Errorf("no identity providers configured, at least one provider must exist")
+	}
+
+	g.setAutoLogin(&authConfig)
+
+	if authConfig.AutoLogin {
+		if len(authConfig.Providers) > 1 {
+			return fmt.Errorf("auto-login cannot be enabled when multiple identity providers are configured")
+		}
+
+		if len(authConfig.Providers) == 1 && authConfig.Providers[0].IdpType == idp.IDPTypeInternal {
+			return fmt.Errorf("auto-login cannot be enabled when only internal identity provider is configured")
+		}
+	}
+
+	g.systemInfoMap[AUTH_CONFIG] = authConfig
+
+	return nil
+}
+
+func (g systemInfoServiceImpl) createSAMLConfig() (*idp.SAMLConfiguration, error) {
+	samlCrt := os.Getenv(SAML_CRT)
+	samlKey := os.Getenv(SAML_KEY)
+	metadataURL := os.Getenv(ADFS_METADATA_URL)
+	rootURL := os.Getenv(APIHUB_URL)
+	if samlCrt == "" && samlKey == "" && metadataURL == "" {
+		log.Warn("SAML configuration environment variables are not provided. External IDP will not be available")
+		return nil, nil
+	}
+
+	if samlCrt == "" || samlKey == "" || metadataURL == "" || rootURL == "" {
+		return nil, fmt.Errorf("incomplete SAML configuration, all environment variables SAML_CRT, SAML_KEY, ADFS_METADATA_URL and APIHUB_URL must be set")
+	}
+
+	return &idp.SAMLConfiguration{
+		Certificate:    samlCrt,
+		PrivateKey:     samlKey,
+		IDPMetadataURL: metadataURL,
+		RootURL:        rootURL,
+	}, nil
+}
+
+func (g systemInfoServiceImpl) createOIDCConfig() (*idp.OIDCConfiguration, error) {
+	clientId := os.Getenv(OIDC_CLIENT_ID)
+	clientSecret := os.Getenv(OIDC_CLIENT_SECRET)
+	providerURL := os.Getenv(OIDC_PROVIDER_URL)
+	rootURL := os.Getenv(APIHUB_URL)
+	if clientId == "" && clientSecret == "" && providerURL == "" {
+		log.Warn("OIDC configuration environment variables are not provided. External IDP will not be available")
+		return nil, nil
+	}
+
+	if clientId == "" || clientSecret == "" || providerURL == "" || rootURL == "" {
+		return nil, fmt.Errorf("incomplete OIDC configuration, all environment variables OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_PROVIDER_URL and APIHUB_URL must be set")
+	}
+
+	return &idp.OIDCConfiguration{
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
+		RootURL:      rootURL,
+		RedirectPath: "/api/v1/oidc/" + ExternalOIDCProviderId + "/callback",
+		ProviderURL:  providerURL,
+		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
+	}, nil
+}
+
+func (g systemInfoServiceImpl) setAutoLogin(authConfig *idp.AuthConfig) {
+	envVal := os.Getenv(AUTO_LOGIN)
+	autoLogin, err := strconv.ParseBool(envVal)
+	if err != nil {
+		log.Errorf("failed to parse %v env value: %v. Value by default - false", AUTO_LOGIN, err.Error())
+		autoLogin = false
+	}
+	authConfig.AutoLogin = autoLogin
+}
+
+func (g systemInfoServiceImpl) GetAuthConfig() idp.AuthConfig {
+	return g.systemInfoMap[AUTH_CONFIG].(idp.AuthConfig)
 }

@@ -15,6 +15,7 @@
 package entity
 
 import (
+	view2 "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
@@ -49,14 +50,14 @@ type MigrationRunEntity struct {
 type MigratedVersionEntity struct {
 	tableName struct{} `pg:"migrated_version, alias:migrated_version"`
 
-	PackageId   string `pg:"package_id, type:varchar"`
-	Version     string `pg:"version, type:varchar"`
-	Revision    int    `pg:"revision, type:integer"`
-	Error       string `pg:"error, type:varchar"`
-	BuildId     string `pg:"build_id, type:varchar"`
-	MigrationId string `pg:"migration_id, type:varchar"`
-	BuildType   string `pg:"build_type, type:varchar"`
-	NoChangelog bool   `pg:"no_changelog, type:bool"`
+	PackageId   string          `pg:"package_id, type:varchar"`
+	Version     string          `pg:"version, type:varchar"`
+	Revision    int             `pg:"revision, type:integer"`
+	Error       string          `pg:"error, type:varchar"`
+	BuildId     string          `pg:"build_id, type:varchar"`
+	MigrationId string          `pg:"migration_id, type:varchar"`
+	BuildType   view2.BuildType `pg:"build_type, type:varchar"`
+	NoChangelog bool            `pg:"no_changelog, type:bool"`
 }
 
 type MigratedVersionResultEntity struct {

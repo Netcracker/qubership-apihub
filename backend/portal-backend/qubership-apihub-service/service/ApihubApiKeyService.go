@@ -512,7 +512,7 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.SecurityContext, packa
 				Email:     user.Email,
 				AvatarUrl: fmt.Sprintf("/api/v2/users/%s/profile/avatar", user.Id),
 			}
-			createdForUser, err = t.userService.GetOrCreateUserForIntegration(externalUser, view.ExternalLdapIntegration)
+			createdForUser, err = t.userService.GetOrCreateUserForIntegration(externalUser, view.ExternalLdapIntegration, "")
 			if err != nil {
 				return nil, err
 			}

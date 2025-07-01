@@ -17,6 +17,7 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -75,7 +76,7 @@ type contentControllerImpl struct {
 func (c contentControllerImpl) GetContent(w http.ResponseWriter, r *http.Request) {
 	contentId, err := getUnescapedStringParam(r, "fileId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -87,7 +88,7 @@ func (c contentControllerImpl) GetContent(w http.ResponseWriter, r *http.Request
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -101,9 +102,9 @@ func (c contentControllerImpl) GetContent(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		log.Error("Failed to get content: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get content",
 				Debug:   err.Error()})
@@ -118,7 +119,7 @@ func (c contentControllerImpl) GetContent(w http.ResponseWriter, r *http.Request
 func (c contentControllerImpl) GetContentAsFile(w http.ResponseWriter, r *http.Request) {
 	contentId, err := getUnescapedStringParam(r, "fileId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -130,7 +131,7 @@ func (c contentControllerImpl) GetContentAsFile(w http.ResponseWriter, r *http.R
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -147,9 +148,9 @@ func (c contentControllerImpl) GetContentAsFile(w http.ResponseWriter, r *http.R
 	if err != nil {
 		log.Error("Failed to get content as file: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get content as file",
 				Debug:   err.Error()})
@@ -164,9 +165,9 @@ func (c contentControllerImpl) GetContentAsFile(w http.ResponseWriter, r *http.R
 	if err != nil {
 		log.Error("Failed to get content as file: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get content as file",
 				Debug:   err.Error()})
@@ -185,7 +186,7 @@ func (c contentControllerImpl) GetContentAsFile(w http.ResponseWriter, r *http.R
 func (c contentControllerImpl) UpdateContent(w http.ResponseWriter, r *http.Request) {
 	contentId, err := getUnescapedStringParam(r, "fileId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -197,7 +198,7 @@ func (c contentControllerImpl) UpdateContent(w http.ResponseWriter, r *http.Requ
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -209,7 +210,7 @@ func (c contentControllerImpl) UpdateContent(w http.ResponseWriter, r *http.Requ
 	defer r.Body.Close()
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -222,10 +223,10 @@ func (c contentControllerImpl) UpdateContent(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		log.Error("Failed to update content: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
 			c.wsBranchService.DisconnectClients(projectId, branchName)
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to update content",
 				Debug:   err.Error()})
@@ -242,7 +243,7 @@ func (c contentControllerImpl) UploadContent(w http.ResponseWriter, r *http.Requ
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -253,7 +254,7 @@ func (c contentControllerImpl) UploadContent(w http.ResponseWriter, r *http.Requ
 	}
 
 	if r.ContentLength > c.systemInfoService.GetBranchContentSizeLimitMB() {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BranchContentSizeExceeded,
 			Message: exception.BranchContentSizeExceededMsg,
@@ -265,14 +266,14 @@ func (c contentControllerImpl) UploadContent(w http.ResponseWriter, r *http.Requ
 	err = r.ParseMultipartForm(0)
 	if err != nil {
 		if strings.Contains(err.Error(), "http: request body too large") {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.BranchContentSizeExceeded,
 				Message: exception.BranchContentSizeExceededMsg,
 				Params:  map[string]interface{}{"size": c.systemInfoService.GetBranchContentSizeLimitMB()},
 			})
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.BadRequestBody,
 				Message: exception.BadRequestBodyMsg,
@@ -292,7 +293,7 @@ func (c contentControllerImpl) UploadContent(w http.ResponseWriter, r *http.Requ
 	if publishStr != "" {
 		publish, err = strconv.ParseBool(publishStr)
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -311,7 +312,7 @@ func (c contentControllerImpl) UploadContent(w http.ResponseWriter, r *http.Requ
 			file, err := f.Open()
 			if err != nil {
 				log.Error("Failed to upload content:", err.Error())
-				RespondWithCustomError(w, &exception.CustomError{
+				utils.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusInternalServerError,
 					Message: "Failed to upload content",
 					Debug:   err.Error()})
@@ -324,7 +325,7 @@ func (c contentControllerImpl) UploadContent(w http.ResponseWriter, r *http.Requ
 			}
 			if err != nil {
 				log.Error("Failed to upload content:", err.Error())
-				RespondWithCustomError(w, &exception.CustomError{
+				utils.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusInternalServerError,
 					Message: "Failed to upload content",
 					Debug:   err.Error()})
@@ -335,7 +336,7 @@ func (c contentControllerImpl) UploadContent(w http.ResponseWriter, r *http.Requ
 		}
 	}
 	if len(contentToSave) == 0 {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.NoFilesSent,
 			Message: exception.NoFilesSentMsg,
@@ -347,9 +348,9 @@ func (c contentControllerImpl) UploadContent(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		log.Error("Failed to upload content: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to upload content",
 				Debug:   err.Error()})
@@ -357,14 +358,14 @@ func (c contentControllerImpl) UploadContent(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, view.ContentAddResponse{FileIds: resultFileIds})
+	utils.RespondWithJson(w, http.StatusOK, view.ContentAddResponse{FileIds: resultFileIds})
 }
 
 func (c contentControllerImpl) GetContentHistory(w http.ResponseWriter, r *http.Request) {
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -375,7 +376,7 @@ func (c contentControllerImpl) GetContentHistory(w http.ResponseWriter, r *http.
 	}
 	fileId, err := getUnescapedStringParam(r, "fileId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -386,14 +387,14 @@ func (c contentControllerImpl) GetContentHistory(w http.ResponseWriter, r *http.
 	}
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		RespondWithCustomError(w, customError)
+		utils.RespondWithCustomError(w, customError)
 		return
 	}
 	page := 0
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -406,23 +407,23 @@ func (c contentControllerImpl) GetContentHistory(w http.ResponseWriter, r *http.
 	if err != nil {
 		log.Error("Failed to get content changes: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get content changes",
 				Debug:   err.Error()})
 		}
 		return
 	}
-	RespondWithJson(w, http.StatusOK, fileHistory)
+	utils.RespondWithJson(w, http.StatusOK, fileHistory)
 }
 
 func (c contentControllerImpl) MoveFile(w http.ResponseWriter, r *http.Request) {
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -433,7 +434,7 @@ func (c contentControllerImpl) MoveFile(w http.ResponseWriter, r *http.Request) 
 	}
 	fileId, err := getUnescapedStringParam(r, "fileId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -445,7 +446,7 @@ func (c contentControllerImpl) MoveFile(w http.ResponseWriter, r *http.Request) 
 	defer r.Body.Close()
 	params, err := getParamsFromBody(r)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -456,7 +457,7 @@ func (c contentControllerImpl) MoveFile(w http.ResponseWriter, r *http.Request) 
 
 	newFileId, err := getBodyStringParam(params, "newFileId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameter,
 			Message: exception.InvalidParameterMsg,
@@ -466,7 +467,7 @@ func (c contentControllerImpl) MoveFile(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if newFileId == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.EmptyParameter,
 			Message: exception.EmptyParameterMsg,
@@ -478,10 +479,10 @@ func (c contentControllerImpl) MoveFile(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		log.Error("Failed to change fileId: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
 			c.wsBranchService.DisconnectClients(projectId, branchName)
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to change fileId",
 				Debug:   err.Error()})
@@ -495,7 +496,7 @@ func (c contentControllerImpl) DeleteFile(w http.ResponseWriter, r *http.Request
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -506,7 +507,7 @@ func (c contentControllerImpl) DeleteFile(w http.ResponseWriter, r *http.Request
 	}
 	fileId, err := getUnescapedStringParam(r, "fileId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -520,7 +521,7 @@ func (c contentControllerImpl) DeleteFile(w http.ResponseWriter, r *http.Request
 	if deleteStr != "" {
 		deleteFromGit, err = strconv.ParseBool(deleteStr)
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -539,10 +540,10 @@ func (c contentControllerImpl) DeleteFile(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		log.Error("Failed to delete file: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
 			c.wsBranchService.DisconnectClients(projectId, branchName)
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to delete file",
 				Debug:   err.Error()})
@@ -557,7 +558,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -569,7 +570,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	params, err := getParamsFromBody(r)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -580,7 +581,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 
 	source, err := getBodyStringParam(params, "source")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameter,
 			Message: exception.InvalidParameterMsg,
@@ -590,7 +591,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if source == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.EmptyParameter,
 			Message: exception.EmptyParameterMsg,
@@ -600,7 +601,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 	}
 	publishParam, err := getBodyBoolParam(params, "publish")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameter,
 			Message: exception.InvalidParameterMsg,
@@ -615,7 +616,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 	}
 	dataObj, err := getBodyObjectParam(params, "data")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameter,
 			Message: exception.InvalidParameterMsg,
@@ -631,7 +632,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 		{
 			paths, parseErr := getBodyStrArrayParam(dataObj, "paths")
 			if len(paths) == 0 {
-				RespondWithCustomError(w, &exception.CustomError{
+				utils.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.EmptyParameter,
 					Message: exception.EmptyParameterMsg,
@@ -640,7 +641,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if parseErr != nil {
-				RespondWithCustomError(w, &exception.CustomError{
+				utils.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.InvalidParameter,
 					Message: exception.InvalidParameterMsg,
@@ -655,7 +656,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 		{
 			url, parseErr := getBodyStringParam(dataObj, "url")
 			if parseErr != nil {
-				RespondWithCustomError(w, &exception.CustomError{
+				utils.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.InvalidParameter,
 					Message: exception.InvalidParameterMsg,
@@ -665,7 +666,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if url == "" {
-				RespondWithCustomError(w, &exception.CustomError{
+				utils.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.EmptyParameter,
 					Message: exception.EmptyParameterMsg,
@@ -675,7 +676,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 			}
 			path, parseErr := getBodyStringParam(dataObj, "path")
 			if parseErr != nil {
-				RespondWithCustomError(w, &exception.CustomError{
+				utils.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.InvalidParameter,
 					Message: exception.InvalidParameterMsg,
@@ -690,7 +691,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 		{
 			fileName, parseErr := getBodyStringParam(dataObj, "name")
 			if parseErr != nil {
-				RespondWithCustomError(w, &exception.CustomError{
+				utils.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.InvalidParameter,
 					Message: exception.InvalidParameterMsg,
@@ -700,7 +701,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if fileName == "" {
-				RespondWithCustomError(w, &exception.CustomError{
+				utils.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.EmptyParameter,
 					Message: exception.EmptyParameterMsg,
@@ -710,7 +711,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 			}
 			filePath, parseErr := getBodyStringParam(dataObj, "path")
 			if parseErr != nil {
-				RespondWithCustomError(w, &exception.CustomError{
+				utils.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.InvalidParameter,
 					Message: exception.InvalidParameterMsg,
@@ -721,7 +722,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 			}
 			fileTypeStr, parseErr := getBodyStringParam(dataObj, "type")
 			if parseErr != nil {
-				RespondWithCustomError(w, &exception.CustomError{
+				utils.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.InvalidParameter,
 					Message: exception.InvalidParameterMsg,
@@ -745,7 +746,7 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 		}
 	default:
 		{
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.UnsupportedSourceType,
 				Message: exception.UnsupportedSourceTypeMsg,
@@ -758,10 +759,10 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error("Failed to add new file: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
 			c.wsBranchService.DisconnectClients(projectId, branchName)
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to add new file",
 				Debug:   err.Error()})
@@ -769,14 +770,14 @@ func (c contentControllerImpl) AddFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondWithJson(w, http.StatusOK, view.ContentAddResponse{FileIds: resultFileIds})
+	utils.RespondWithJson(w, http.StatusOK, view.ContentAddResponse{FileIds: resultFileIds})
 }
 
 func (c contentControllerImpl) GetContentFromCommit(w http.ResponseWriter, r *http.Request) {
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -787,7 +788,7 @@ func (c contentControllerImpl) GetContentFromCommit(w http.ResponseWriter, r *ht
 	}
 	fileId, err := getUnescapedStringParam(r, "fileId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -802,9 +803,9 @@ func (c contentControllerImpl) GetContentFromCommit(w http.ResponseWriter, r *ht
 	if err != nil {
 		log.Error("Failed to get content: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get content",
 				Debug:   err.Error()})
@@ -824,9 +825,9 @@ func (c contentControllerImpl) GetContentFromBlobId(w http.ResponseWriter, r *ht
 	if err != nil {
 		log.Error("Failed to get content: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get content",
 				Debug:   err.Error()})
@@ -842,7 +843,7 @@ func (c contentControllerImpl) UpdateMetadata(w http.ResponseWriter, r *http.Req
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -854,7 +855,7 @@ func (c contentControllerImpl) UpdateMetadata(w http.ResponseWriter, r *http.Req
 	//fileId from request can be either path to folder or path to file (depends on 'bulk' query parameter)
 	path, err := getUnescapedStringParam(r, "fileId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -869,7 +870,7 @@ func (c contentControllerImpl) UpdateMetadata(w http.ResponseWriter, r *http.Req
 	if bulkStr != "" {
 		bulk, err = strconv.ParseBool(bulkStr)
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -883,7 +884,7 @@ func (c contentControllerImpl) UpdateMetadata(w http.ResponseWriter, r *http.Req
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -894,7 +895,7 @@ func (c contentControllerImpl) UpdateMetadata(w http.ResponseWriter, r *http.Req
 	var metaPatch view.ContentMetaPatch
 	err = json.Unmarshal(body, &metaPatch)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -907,10 +908,10 @@ func (c contentControllerImpl) UpdateMetadata(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		log.Error("Failed to update content metadata: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
 			c.wsBranchService.DisconnectClients(projectId, branchName)
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to update content metadata",
 				Debug:   err.Error()})
@@ -924,7 +925,7 @@ func (c contentControllerImpl) ResetFile(w http.ResponseWriter, r *http.Request)
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -935,7 +936,7 @@ func (c contentControllerImpl) ResetFile(w http.ResponseWriter, r *http.Request)
 	}
 	fileId, err := getUnescapedStringParam(r, "fileId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -949,10 +950,10 @@ func (c contentControllerImpl) ResetFile(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		log.Error("Failed to reset file to last commit: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
 			c.wsBranchService.DisconnectClients(projectId, branchName)
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to reset file to last commit",
 				Debug:   err.Error()})
@@ -967,7 +968,7 @@ func (c contentControllerImpl) RestoreFile(w http.ResponseWriter, r *http.Reques
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -978,7 +979,7 @@ func (c contentControllerImpl) RestoreFile(w http.ResponseWriter, r *http.Reques
 	}
 	fileId, err := getUnescapedStringParam(r, "fileId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -992,10 +993,10 @@ func (c contentControllerImpl) RestoreFile(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		log.Error("Failed to restore file: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
 			c.wsBranchService.DisconnectClients(projectId, branchName)
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to restore file",
 				Debug:   err.Error()})
@@ -1010,7 +1011,7 @@ func (c contentControllerImpl) GetAllContent(w http.ResponseWriter, r *http.Requ
 	projectId := getStringParam(r, "projectId")
 	branchName, err := getUnescapedStringParam(r, "branchName")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -1024,9 +1025,9 @@ func (c contentControllerImpl) GetAllContent(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		log.Error("Failed to get content: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			utils.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get content",
 				Debug:   err.Error()})

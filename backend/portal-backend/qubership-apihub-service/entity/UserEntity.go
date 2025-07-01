@@ -49,6 +49,20 @@ func MakeUserV2View(userEntity *UserEntity) *view.User {
 	}
 }
 
+func MakeExtendedUserView(userEntity *UserEntity, gitIntegrationStatus bool, systemRole string, ttlSeconds *int) *view.ExtendedUser {
+	return &view.ExtendedUser{
+		User: view.User{
+			Id:        userEntity.Id,
+			Name:      userEntity.Username,
+			Email:     userEntity.Email,
+			AvatarUrl: userEntity.AvatarUrl,
+		},
+		GitIntegrationStatus:  gitIntegrationStatus,
+		SystemRole:            systemRole,
+		AccessTokenTTLSeconds: ttlSeconds,
+	}
+}
+
 func MakeExternalUserEntity(userView *view.User, privatePackageId string) *UserEntity {
 	return &UserEntity{
 		Id:               userView.Id,

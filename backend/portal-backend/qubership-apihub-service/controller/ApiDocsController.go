@@ -17,6 +17,7 @@ package controller
 import (
 	"errors"
 	"fmt"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -50,7 +51,7 @@ func (a apiDocsControllerImpl) GetSpecsUrls(w http.ResponseWriter, r *http.Reque
 		ConfigUrl: "/v3/api-docs/swagger-config",
 		Urls:      a.urls,
 	}
-	RespondWithJson(w, http.StatusOK, configUrl)
+	utils.RespondWithJson(w, http.StatusOK, configUrl)
 }
 
 func (a apiDocsControllerImpl) GetSpec(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +85,7 @@ func (a apiDocsControllerImpl) GetSpec(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		RespondWithError(w, "Failed to read API spec", err)
+		utils.RespondWithError(w, "Failed to read API spec", err)
 		return
 	}
 }

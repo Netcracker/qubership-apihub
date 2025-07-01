@@ -142,7 +142,7 @@ func (r roleServiceImpl) AddPackageMembers(ctx context.SecurityContext, packageI
 			Email:     user.Email,
 			AvatarUrl: fmt.Sprintf("/api/v2/users/%s/profile/avatar", user.Id),
 		}
-		createdUser, err := r.userService.GetOrCreateUserForIntegration(externalUser, view.ExternalLdapIntegration)
+		createdUser, err := r.userService.GetOrCreateUserForIntegration(externalUser, view.ExternalLdapIntegration, "")
 		if err != nil {
 			return nil, err
 		}

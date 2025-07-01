@@ -17,11 +17,10 @@ package security
 import (
 	goctx "context"
 	"fmt"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
+	"github.com/gorilla/mux"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/shaj13/go-guardian/v2/auth"
 )

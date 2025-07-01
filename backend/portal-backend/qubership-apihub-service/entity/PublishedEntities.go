@@ -193,6 +193,8 @@ type PublishedContentEntity struct {
 
 type PublishedContentWithDataEntity struct {
 	tableName struct{} `pg:"published_version_revision_content, alias:published_version_revision_content"`
+	// both PublishedContentEntity and PublishedContentDataEntity have PackageId field, so go-pg mapping works incorrect(randomly). ContentPackageId is required to fix the issue.
+	ContentPackageId string `pg:"content_package_id, type:varchar"`
 	PublishedContentEntity
 	PublishedContentDataEntity
 }
@@ -214,7 +216,7 @@ type TransformedContentDataEntity struct {
 	Revision      int                    `pg:"revision, pk, type:integer"`
 	ApiType       string                 `pg:"api_type, pk, type:varchar"`
 	GroupId       string                 `pg:"group_id, pk, type:varchar"`
-	BuildType     string                 `pg:"build_type, pk, type:varchar"`
+	BuildType     view.BuildType         `pg:"build_type, pk, type:varchar"`
 	Format        string                 `pg:"format, pk, type:varchar"`
 	Data          []byte                 `pg:"data, type:bytea"`
 	DocumentsInfo []view.PackageDocument `pg:"documents_info, type:jsonb"`
@@ -467,6 +469,7 @@ func MakeDocumentForTransformationView(ent *PublishedContentWithDataEntity) *vie
 		Filename:             ent.Filename,
 		IncludedOperationIds: ent.OperationIds,
 		Data:                 ent.Data,
+		PackageRef:           view.MakePackageRefKey(ent.ContentPackageId, ent.Version, ent.Revision),
 	}
 }
 

@@ -1121,9 +1121,22 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 			}
 			utils.PerfLog(time.Since(start).Milliseconds(), 50, "CreateVersionWithData: operationsData insert")
 		}
+
+		var existingGroupedOperations []entity.GroupedOperationEntity
+
 		if packageInfo.MigrationBuild {
 			// In case of migration list of operations may change due to new builder implementation, so need to cleanup existing list before insert
+
 			start = time.Now()
+			// Need to preserve grouped operations, since it will be deleted along with operations
+			err = tx.Model(&existingGroupedOperations).
+				Where("package_id = ?", version.PackageId).
+				Where("version = ?", version.Version).
+				Where("revision = ?", version.Revision).Select()
+			if err != nil {
+				return fmt.Errorf("failed to fetch grouped operations before operations cleanup: %w", err)
+			}
+
 			_, err := tx.Model(&entity.OperationEntity{}).
 				Where("package_id=?", version.PackageId).
 				Where("version=?", version.Version).
@@ -1226,6 +1239,33 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 			}
 			utils.PerfLog(time.Since(start).Milliseconds(), 50, "CreateVersionWithData: builderNotifications insert")
 		}
+
+		if len(existingGroupedOperations) > 0 {
+			// Restore grouped operations
+			start = time.Now()
+
+			// Check that every grouped operation still exists in the new list
+			opMap := make(map[string]struct{})
+			for _, op := range operations {
+				opMap[op.OperationId] = struct{}{}
+			}
+			var groupedOperationsToRestore []entity.GroupedOperationEntity
+			for _, groupedOperation := range existingGroupedOperations {
+				if _, ok := opMap[groupedOperation.OperationId]; ok {
+					groupedOperationsToRestore = append(groupedOperationsToRestore, groupedOperation)
+				} else {
+					log.Warnf("Grouped operation with id %s is not found in the operations list and will not be restored. PackageId=%s, version=%s, revision=%d",
+						groupedOperation.OperationId, version.PackageId, version.Version, version.Revision)
+				}
+			}
+
+			_, err = tx.Model(&groupedOperationsToRestore).Insert()
+			if err != nil {
+				return fmt.Errorf("failed to restore grouped operations: %w", err)
+			}
+			utils.PerfLog(time.Since(start).Milliseconds(), 50, "CreateVersionWithData: restore grouped operations")
+		}
+
 		if !packageInfo.MigrationBuild {
 			start = time.Now()
 			err = p.propagatePreviousOperationGroups(tx, version)
@@ -3420,83 +3460,10 @@ func (p publishedRepositoryImpl) GetVersionRefsComparisons(comparisonId string) 
 	return comparisons, nil
 }
 
-func (p publishedRepositoryImpl) SaveTransformedDocument(data *entity.TransformedContentDataEntity, publishId string) error {
-	ctx := context.Background()
-	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
-		var ents []entity.BuildEntity
-		_, err := tx.Query(&ents, getBuildWithLock, publishId)
-		if err != nil {
-			return fmt.Errorf("SaveTransformedDocument: failed to get build %s: %w", publishId, err)
-		}
-		if len(ents) == 0 {
-			return fmt.Errorf("SaveTransformedDocument: failed to start doc transformation publish. Build with buildId='%s' is not found", publishId)
-		}
-		build := &ents[0]
-
-		//do not allow publish for "complete" builds and builds that are not failed with "Restart count exceeded limit"
-		if build.Status == string(view.StatusComplete) ||
-			(build.Status == string(view.StatusError) && build.RestartCount < 2) {
-			return fmt.Errorf("failed to start document transformation. Build with buildId='%v' is already published or failed", publishId)
-		}
-
-		_, err = tx.Model(data).OnConflict("(package_id, version, revision, api_type, group_id, build_type, format) DO UPDATE").Insert()
-		if err != nil {
-			return fmt.Errorf("failed to insert published_data %+v: %w", data, err)
-		}
-		var ent entity.BuildEntity
-		query := tx.Model(&ent).
-			Where("build_id = ?", publishId).
-			Set("status = ?", view.StatusComplete).
-			Set("details = ?", "").
-			Set("last_active = now()")
-		_, err = query.Update()
-		if err != nil {
-			return fmt.Errorf("failed to update build entity: %w", err)
-		}
-		return nil
-	})
-	return err
-}
-
-func (p publishedRepositoryImpl) GetTransformedDocuments(packageId string, version string, apiType string, groupId string, buildType string, format string) (*entity.TransformedContentDataEntity, error) {
-	result := new(entity.TransformedContentDataEntity)
-	version, revision, err := SplitVersionRevision(version)
-	if err != nil {
-		return nil, err
-	}
-	err = p.cp.GetConnection().Model(result).
-		Where("package_id = ?", packageId).
-		Where("version = ?", version).
-		Where("revision = ?", revision).
-		Where("api_type = ?", apiType).
-		Where("group_id = ?", groupId).
-		Where("build_type = ?", buildType).
-		Where("format = ?", format).
-		First()
-	if err != nil {
-		if err == pg.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return result, err
-}
-
-func (p publishedRepositoryImpl) DeleteTransformedDocuments(packageId string, version string, revision int, apiType string, groupId string) error {
-	ctx := context.Background()
-	return p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
-		query := `
-		delete from transformed_content_data
-		where package_id = ? and version = ? and revision = ? and api_type = ? and group_id = ?`
-		_, err := tx.Exec(query, packageId, version, revision, apiType, groupId)
-		return err
-	})
-}
-
 func (p publishedRepositoryImpl) GetVersionRevisionContentForDocumentsTransformation(packageId string, versionName string, revision int, searchQuery entity.ContentForDocumentsTransformationSearchQueryEntity) ([]entity.PublishedContentWithDataEntity, error) {
 	var ents []entity.PublishedContentWithDataEntity
 	query := p.cp.GetConnection().Model(&ents).Distinct().
-		ColumnExpr("published_version_revision_content.*").ColumnExpr("pd.*")
+		ColumnExpr("published_version_revision_content.*").ColumnExpr("pd.*").ColumnExpr("published_version_revision_content.package_id as content_package_id")
 	query.Join(`inner join
 			(with refs as(
 				select s.reference_id as package_id, s.reference_version as version, s.reference_revision as revision

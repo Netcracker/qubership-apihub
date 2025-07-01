@@ -16,13 +16,12 @@ package controller
 
 import (
 	"crypto/tls"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
-
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 )
 
 func NewPlaygroundProxyController(systemInfoService service.SystemInfoService) ProxyController {
@@ -41,7 +40,7 @@ const CustomProxyUrlHeader = "X-Apihub-Proxy-Url"
 func (p *playgroundProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Request) {
 	proxyUrlStr := r.Header.Get(CustomProxyUrlHeader)
 	if proxyUrlStr == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.RequiredParamsMissing,
 			Message: exception.RequiredParamsMissingMsg,
@@ -52,7 +51,7 @@ func (p *playgroundProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Req
 	r.Header.Del(CustomProxyUrlHeader)
 	proxyURL, err := url.Parse(proxyUrlStr)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURL,
 			Message: exception.InvalidURLMsg,
@@ -61,27 +60,15 @@ func (p *playgroundProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Req
 		})
 		return
 	}
-	var validHost bool
-	for _, host := range p.systemInfoService.GetAllowedHosts() {
-		if strings.Contains(proxyURL.Host, host) {
-			validHost = true
-			break
-		}
-	}
-	if !validHost {
-		RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.HostNotAllowed,
-			Message: exception.HostNotAllowedMsg,
-			Params:  map[string]interface{}{"host": proxyUrlStr},
-		})
+	if err := utils.IsHostValid(proxyURL, p.systemInfoService.GetAllowedHosts()); err != nil {
+		utils.RespondWithCustomError(w, err)
 		return
 	}
 	r.URL = proxyURL
 	r.Host = proxyURL.Host
 	resp, err := p.tr.RoundTrip(r)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusFailedDependency,
 			Code:    exception.ProxyFailed,
 			Message: exception.ProxyFailedMsg,
@@ -92,7 +79,7 @@ func (p *playgroundProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Req
 	}
 	defer resp.Body.Close()
 	if err := copyHeader(w.Header(), resp.Header); err != nil {
-		RespondWithCustomError(w, err)
+		utils.RespondWithCustomError(w, err)
 		return
 	}
 	w.WriteHeader(resp.StatusCode)

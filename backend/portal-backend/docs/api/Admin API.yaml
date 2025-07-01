@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: APIHUB system administrators API
   description: |
-    The API is for system administrators only. 
+    The API is for system administrators only.
   license:
     name: qubership
     url: https://qubership.org
@@ -24,6 +24,7 @@ servers:
         default: apihub
 security:
   - BearerAuth: []
+  - CookieAuth: []
 tags:
   - name: Transition
     description: Operations to move packages
@@ -38,6 +39,7 @@ paths:
       operationId: movePackage
       security:
         - BearerAuth: []
+        - CookieAuth: []
         - api-key: []
       requestBody:
         description: Package coordinates
@@ -46,10 +48,10 @@ paths:
             schema:
               type: object
               properties:
-                from: 
+                from:
                   type: string
                   description: package id that needs to be moved
-                to: 
+                to:
                   type: string
                   description: destination package id
                 overwriteHistory:
@@ -119,6 +121,7 @@ paths:
       operationId: getMoveStatus
       security:
         - BearerAuth: []
+        - CookieAuth: []
         - api-key: []
       parameters:
         - name: id
@@ -174,6 +177,7 @@ paths:
       operationId: listActivities
       security:
         - BearerAuth: []
+        - CookieAuth: []
         - api-key: []
       parameters:
         - name: offset
@@ -236,6 +240,7 @@ paths:
       operationId: listPackageTransitions
       security:
         - BearerAuth: []
+        - CookieAuth: []
         - api-key: []
       responses:
         "200":
@@ -311,39 +316,39 @@ components:
     TransitionStatus:
       type: object
       properties:
-        id: 
+        id:
           type: string
           description: Move operation id
-        trType: 
+        trType:
           type: string
           description: Transition type
-        fromId: 
+        fromId:
           type: string
           description: Source package id
-        toId: 
+        toId:
           type: string
           description: Destination package id
-        status: 
+        status:
           type: string
           description: Operation status
-        startedBy: 
+        startedBy:
           type: string
           description: User who started the operation
-        startedAt: 
+        startedAt:
           type: string
           description: Time when the operation was started
-        finishedAt: 
+        finishedAt:
           type: string
           description: Time when the operation was finished
-        progressPercent: 
+        progressPercent:
           type: integer
           format: int32
           description: Percent of complete. Values 0-100
-        affectedObjects: 
+        affectedObjects:
           type: integer
           format: int32
           description: Number of affected rows in DB
-        completedSerialNumber: 
+        completedSerialNumber:
           type: integer
           format: int32
           description: Serial number of completed transition
@@ -367,6 +372,11 @@ components:
       description: Bearer token authentication. Default secutity scheme for API usage.
       scheme: bearer
       bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: apihub-access-token
+      description: Authentication via the `apihub-access-token` cookie.
     api-key:
       type: apiKey
       description: Api-key authentication.

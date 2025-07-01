@@ -25,3 +25,5 @@ jwt_private_key
 
 *.bak
 *.patch
+
+.DS_Store
