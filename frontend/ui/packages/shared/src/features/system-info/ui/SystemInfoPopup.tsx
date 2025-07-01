@@ -22,6 +22,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import { useSystemInfo } from '../api/useSystemInfo'
 import { isNotEmpty } from '../../../utils/arrays'
 import InfoIcon from '@mui/icons-material/Info'
+import { InfoContextIcon } from '../../../icons/InfoContextIcon'
 
 type SystemInfoPopupProps = {
   frontendVersionKey: string
@@ -70,10 +71,12 @@ export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
             rowGap: 1,
           }}>
             {migrationInProgress &&
-              (<Typography variant="subtitle2">
-                Data migration is in progress
-                <InfoIcon color="info" data-testid="InfoIcon"/>
-              </Typography>)
+              (<Box alignItems="center" display="flex">
+                <Typography  marginRight="4px" variant="subtitle2">
+                  Data migration is in progress
+                </Typography>
+                <InfoContextIcon />
+              </Box>)
             }
 
             <Typography variant="subtitle2">

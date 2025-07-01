@@ -3,12 +3,11 @@ import path from 'path'
 import type { Plugin } from 'vite'
 
 export default function createVersionJsonFilePlugin(): Plugin {
-
   return {
     name: 'create-version-json-file',
     async closeBundle() {
       const lernaPath = path.resolve(__dirname, 'lerna.json')
-      const packagePath = path.resolve(__dirname, 'package.json')
+      const lockPath = path.resolve(__dirname, 'package-lock.json')
       const outputPathPortal = path.resolve(__dirname, 'packages/portal/dist/version.json')
       const outputPathAgent = path.resolve(__dirname, 'packages/agents/dist/version.json')
 
@@ -20,14 +19,16 @@ export default function createVersionJsonFilePlugin(): Plugin {
         lernaVersion = lerna.version
       }
 
-      if (fs.existsSync(packagePath)) {
-        const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf-8'))
-        libraryVersion =
-          pkg.dependencies?.['@netcracker/qubership-apihub-api-processor']
+      if (fs.existsSync(lockPath)) {
+        const lock = JSON.parse(fs.readFileSync(lockPath, 'utf-8'))
+        const pkgNode = lock.packages?.['node_modules/@netcracker/qubership-apihub-api-processor']
+        if (pkgNode?.version) {
+          libraryVersion = pkgNode.version
+        }
       }
 
-      if (!libraryVersion || !lernaVersion) {
-        this.error('Version not found: @netcracker/qubership-apihub-api-processor or lerna.json')
+      if (!lernaVersion || !libraryVersion) {
+        this.error('Version not found: either lerna.json or package-lock.json does not contain required info')
       }
 
       const versionData = {

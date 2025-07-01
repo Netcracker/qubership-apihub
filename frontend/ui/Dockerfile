@@ -21,6 +21,9 @@ COPY --from=builder /workspace/qubership-apihub-ui-portal.tgz qubership-apihub-u
 RUN tar zxvf ./qubership-apihub-ui-agents.tgz && mv ./package/dist/* /usr/share/nginx/html/agents && rm -rf ./package
 RUN tar zxvf ./qubership-apihub-ui-portal.tgz && mv ./package/dist/* /usr/share/nginx/html/portal && rm -rf ./package
 
+# Sets the correct file creation time. For more information, see here https://github.com/Netcracker/qubership-apihub/issues/238#issuecomment-3019713963
+RUN find /usr/share/nginx/html -type f -exec touch {} +
+
 # giving permissions to nginx
 RUN chmod -R 777 /var/log/nginx /var/cache/nginx/ /var/run/ /usr/share/nginx/html/ /etc/nginx/ && \
     chmod -R +x /tmp/
