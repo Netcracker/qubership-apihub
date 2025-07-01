@@ -22,7 +22,6 @@ import {
   deleteApiKey,
   deletePackage,
   deletePackageMember,
-  deleteProject,
   deleteVersion,
   disfavorPackage,
   favorPackage,
@@ -48,17 +47,14 @@ import {
   getVersion,
   getVersionReferences,
   getVersions,
-  publishProjectVersion,
   recalculatePackageVersionGroups,
   updatePackage,
-  updateProject,
 } from './packages'
-import type { Server } from 'ws'
 
 export type PackagesRouter = Router & WithWebsocketMethod
 export type PackageTokensRouter = Router & WithWebsocketMethod
 
-export function PackagesRouter(wss: Server): PackagesRouter {
+export function PackagesRouter(): PackagesRouter {
   const router = Router() as PackagesRouter
 
   updatePackage(router)
@@ -102,9 +98,6 @@ export function PackagesRouter(wss: Server): PackagesRouter {
 
   // TODO: Moved from projects. Need to investigate
   deleteVersion(router)
-  publishProjectVersion(router, wss)
-  deleteProject(router)
-  updateProject(router)
 
   return router
 }

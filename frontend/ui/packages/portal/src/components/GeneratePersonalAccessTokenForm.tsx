@@ -150,7 +150,7 @@ export const GeneratePersonalAccessTokenForm: FC<GeneratePersonalAccessTokenForm
           isLoading={isLoading}
           title="Generate"
           type="submit"
-          testId="GenerateButton"
+          data-testid="GenerateButton"
         />
       </Box>
     </Box>

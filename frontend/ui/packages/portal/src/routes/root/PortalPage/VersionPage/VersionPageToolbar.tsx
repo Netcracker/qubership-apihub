@@ -139,7 +139,7 @@ export const VersionPageToolbar: FC = memo(() => {
               startIcon={<AddIcon color="#0068FF" />}
               tooltipMaxWidth="unset"
               onClick={handleCreateVersionClick}
-              testId="AddNewVersionButton"
+              data-testid="AddNewVersionButton"
             />}
           </>
         }

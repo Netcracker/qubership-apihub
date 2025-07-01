@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import { Box, Button, DialogActions, DialogContent, DialogTitle, Divider, Typography } from '@mui/material'
 import type { FC } from 'react'
 import React, { memo, useCallback } from 'react'
-import { Box, Button, DialogActions, DialogContent, DialogTitle, Divider, Typography } from '@mui/material'
+import { DialogForm } from './DialogForm'
 import type { PopupProps } from './PopupDelegate'
 import { PopupDelegate } from './PopupDelegate'
-import { DialogForm } from './DialogForm'
-import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import type { TestableProps } from './Testable'
 
 export const EmptyPackageDialog: FC = memo(() => {
   return (
     <PopupDelegate
       type={SHOW_EMPTY_PACKAGE_DIALOG}
-      render={props => <EmptyPackagePopup {...props}/>}
+      render={props => <EmptyPackagePopup {...props} />}
     />
   )
 })
@@ -60,11 +60,13 @@ export const EmptyPackagePopup: FC<PopupProps> = memo<PopupProps>(({ open, setOp
       <DialogTitle>
         Methods for API Documentation Upload
       </DialogTitle>
-      <DialogContent sx={{
-        width: 'auto',
-        minWidth: 'unset',
-      }}>
-        {emptyPackageData.map(({ label, navigate, description, testId }, index) => (
+      <DialogContent
+        sx={{
+          width: 'auto',
+          minWidth: 'unset',
+        }}
+      >
+        {emptyPackageData.map(({ label, navigate, description, ['data-testid']: testId }, index) => (
           <React.Fragment key={index}>
             <Box
               sx={{ cursor: 'pointer' }}
@@ -78,13 +80,13 @@ export const EmptyPackagePopup: FC<PopupProps> = memo<PopupProps>(({ open, setOp
                 <Typography variant="subtitle1" fontSize={13}>
                   {label}
                 </Typography>
-                <ChevronRightIcon/>
+                <ChevronRightIcon />
               </Box>
               <Typography variant="body2" fontSize={13} maxWidth="352px">
                 {description}
               </Typography>
             </Box>
-            <Divider orientation="horizontal" sx={DIVIDER_STYLES}/>
+            <Divider orientation="horizontal" sx={DIVIDER_STYLES} />
           </React.Fragment>
         ))}
       </DialogContent>

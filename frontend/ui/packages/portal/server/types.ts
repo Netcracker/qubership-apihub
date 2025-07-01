@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-import type { WebSocket } from 'ws'
-import type { IClientState } from './routers/websockets/websockets'
-
 export type Writeable<T> = {
   -readonly [P in keyof T]: T[P]
 }
@@ -24,8 +21,3 @@ export type Writeable<T> = {
 export type DeepWriteable<T> = {
   -readonly [P in keyof T]: DeepWriteable<T[P]>
 }
-
-export type Socket = {
-  id?: string
-  state?: IClientState
-} & WebSocket

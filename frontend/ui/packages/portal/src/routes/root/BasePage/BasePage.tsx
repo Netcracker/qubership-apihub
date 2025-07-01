@@ -46,6 +46,12 @@ import { useVersionInfo } from '@netcracker/qubership-apihub-ui-shared/hooks/fro
 import {
   ModuleFetchingErrorBoundary,
 } from '@netcracker/qubership-apihub-ui-shared/components/ModuleFetchingErrorBoundary/ModuleFetchingErrorBoundary'
+import {
+  VsCodeExtensionButton,
+} from '@netcracker/qubership-apihub-ui-shared/components/Buttons/VsCodeExtensionButton/VsCodeExtensionButton'
+import {
+  AppHeaderDivider,
+} from '@netcracker/qubership-apihub-ui-shared/components/Dividers/AppHeaderDivider/AppHeaderDivider'
 
 export const BasePage: FC = memo(() => {
   const { notification: systemNotification } = useSystemInfo()
@@ -69,20 +75,25 @@ export const BasePage: FC = memo(() => {
           height="100vh"
         >
           <AppHeader
-            logo={<LogoIcon/>}
+            logo={<LogoIcon />}
             title="APIHUB"
             links={[
               { name: 'Portal', pathname: '/portal', active: true, testId: 'PortalHeaderButton' },
-              { name: 'API Editor', pathname: '/editor', testId: 'EditorHeaderButton' },
               { name: 'Agent', pathname: '/agents', testId: 'AgentHeaderButton' },
             ]}
-            action={<>
-              <SearchButton/>
-              {isSuperAdmin && <PortalSettingsButton/>}
-              <SystemInfoPopup frontendVersionKey={frontendVersion}
-                               apiProcessorVersion={apiProcessorVersion}/>
-              <UserPanel/>
-            </>}
+            action={
+              <>
+                <VsCodeExtensionButton />
+                <AppHeaderDivider />
+                <SearchButton />
+                {isSuperAdmin && <PortalSettingsButton />}
+                <SystemInfoPopup
+                  frontendVersionKey={frontendVersion}
+                  apiProcessorVersion={apiProcessorVersion}
+                />
+                <UserPanel />
+              </>
+            }
           />
           <Box sx={viewPortStyleCalculator}>
             <ExceptionSituationHandler
@@ -90,14 +101,12 @@ export const BasePage: FC = memo(() => {
               showErrorNotification={showErrorNotification}
               redirectUrlFactory={replacePackageId}
             >
-              <Outlet/>
+              <Outlet />
             </ExceptionSituationHandler>
           </Box>
-          <Notification/>
-          <GlobalSearchPanel/>
-          {systemNotification && (
-            <MaintenanceNotification value={systemNotification}/>
-          )}
+          <Notification />
+          <GlobalSearchPanel />
+          {systemNotification && <MaintenanceNotification value={systemNotification} />}
         </Box>
       </ModuleFetchingErrorBoundary>
     </MainPageProvider>
@@ -113,7 +122,7 @@ const SearchButton: FC = memo(() => {
       color="inherit"
       onClick={showGlobalSearchPanel}
     >
-      <SearchOutlinedIcon/>
+      <SearchOutlinedIcon />
     </IconButton>
   )
 })

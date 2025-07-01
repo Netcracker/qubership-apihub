@@ -107,7 +107,7 @@ export const UserPackageAccessControlSettingsTab: FC<PackageSettingsTabProps> = 
               startIcon={<AddIcon />}
               title="Add User"
               onClick={showAddUserDialog}
-              testId="AddUserButton"
+              data-testid="AddUserButton"
             />
             <Box sx={{ flex: 1, maxWidth: 240 }}>
               <SearchBar

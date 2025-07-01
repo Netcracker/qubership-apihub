@@ -88,7 +88,7 @@ export const PackageVersionPageToolbar: FC = memo(() => {
             onClick={showPublishPackageVersionDialog}
             title="Publish"
             tooltipMaxWidth="unset"
-            testId="PublishButton"
+            data-testid="PublishButton"
           />
           <Button
             startIcon={<ExitIcon/>}

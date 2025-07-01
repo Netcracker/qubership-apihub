@@ -14,7 +14,6 @@
     "development:link": "npm link @netcracker/qubership-apihub-api-processor",
     "development:unlink": "npm unlink @netcracker/qubership-apihub-api-processor",
     "dev:agents": "npx lerna run dev:backend,dev:frontend --stream --scope=@netcracker/qubership-apihub-ui-agents",
-    "dev:editor": "npx lerna run dev:backend,dev:frontend --stream --scope=@netcracker/qubership-apihub-ui-editor",
     "dev:portal": "npx lerna run dev:backend,dev:frontend --stream --scope=@netcracker/qubership-apihub-ui-portal",
     "update-lock-file": "update-lock-file @netcracker"
   },

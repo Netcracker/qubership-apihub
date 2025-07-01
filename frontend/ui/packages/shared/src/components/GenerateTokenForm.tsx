@@ -192,7 +192,7 @@ export const GenerateTokenForm: FC<GenerateTokenFormProps> = memo(({
           isLoading={isLoading}
           title="Generate"
           type="submit"
-          testId="GenerateButton"
+          data-testid="GenerateButton"
         />
       </Box>
     </Box>

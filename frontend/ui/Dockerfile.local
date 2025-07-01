@@ -4,7 +4,6 @@ COPY nginx/errors                        /var/www/error
 COPY nginx/nginx.conf.template           /etc/nginx/nginx.conf.template
 COPY nginx/entrypoint.sh                 /tmp
 
-COPY packages/editor/dist                /usr/share/nginx/html/editor
 COPY packages/agents/dist                /usr/share/nginx/html/agents
 COPY packages/portal/dist                /usr/share/nginx/html/portal
 

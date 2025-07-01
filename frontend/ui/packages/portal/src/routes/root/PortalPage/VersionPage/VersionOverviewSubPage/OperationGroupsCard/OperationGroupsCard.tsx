@@ -135,7 +135,7 @@ export const OperationGroupsCard: FC = memo(() => {
           disableHint={hasCreatePermissions}
           hint="You don't have permission to create a group"
           onClick={onCreateButton}
-          testId="CreateGroupButton"
+          data-testid="CreateGroupButton"
         />
       }
       body={

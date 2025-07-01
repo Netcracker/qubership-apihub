@@ -17,7 +17,7 @@
 import type { Router } from 'express'
 import { ACCESS_TOKENS_LIST } from '../../mocks/packages/access-tokens'
 import { PACKAGE_MEMBERS, PACKAGES } from '../../mocks/packages/packages'
-import { VERSIONS } from '../../mocks/projects/versions'
+import { VERSIONS } from '../../mocks/packages/versions'
 import { DEPRECATED_ITEMS, DEPRECATED_OPERATIONS, OPERATIONS, TAGS } from '../../mocks/packages/operations'
 import { PUBLISHED_VERSION_CONTENTS } from '../../mocks/packages/version-contents'
 import { VERSION_DOCUMENTS } from '../../mocks/packages/documents'
@@ -31,10 +31,6 @@ import {
 } from '../../mocks/packages/document-contents'
 import fs from 'fs'
 import path from 'path'
-import type { WithWebsocketMethod } from 'express-ws'
-import type { Server } from 'ws'
-import type { Socket } from '../../types'
-import { PROJECTS } from '../../mocks/projects/projects'
 import { GRAPHQLAPI_SPEC_RAW } from '../../mocks/packages/graphql'
 import { VERSION_REFERENCES } from '../../mocks/packages/references'
 import { ACTIVITIES_LIST } from '../../mocks/packages/activities'
@@ -380,22 +376,6 @@ export function deleteVersion(router: Router): void {
   })
 }
 
-export function publishProjectVersion(router: Router & WithWebsocketMethod, wss: Server): void {
-  router.post('/:id/branches/:branchId/publish/', (req, res) => {
-    const { version, status } = req.body
-
-    wss.clients.forEach((s: Socket) => {
-      s.send(JSON.stringify({
-        type: 'branch:published',
-        userId: s.id,
-        version: version,
-        status: status,
-      }))
-    })
-    res.status(200).json()
-  })
-}
-
 export function createPackage(router: Router): void {
   router.post('/', (req, res) => {
     const packages = [...PACKAGES.packages]
@@ -406,27 +386,6 @@ export function createPackage(router: Router): void {
     packages.push(newPackage)
     PACKAGES.packages = packages
     res.status(200).json(newPackage)
-  })
-}
-
-export function deleteProject(router: Router): void {
-  router.delete('/:id/', (req, res) => {
-    const projects = [...PROJECTS.projects]
-    PROJECTS.projects = projects.filter(({ projectId }) => projectId !== req.params.id)
-    res.status(200).json()
-  })
-}
-
-export function updateProject(router: Router): void {
-  router.put('/:id/', (req, res) => {
-    const projects = [...PROJECTS.projects]
-    PROJECTS.projects = projects.map(project => {
-      if (project.projectId === req.params.id) {
-        project = { ...req.body }
-      }
-      return project
-    })
-    res.status(200).json()
   })
 }
 
