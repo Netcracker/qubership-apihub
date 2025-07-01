@@ -326,18 +326,6 @@ describe('Openapi3 Operation Parameters', () => {
     ))
   })
 
-  test('Add style simple for path parameter', async () => {
-    const testId = 'add-style-simple-for-path-parameter'
-    const result = await compareFiles(SUITE_ID, testId)
-    expect(result).toEqual(diffsMatcher([
-      expect.objectContaining({
-        action: DiffAction.add,
-        afterDeclarationPaths: [['paths', '/path1/{param1}', 'get', 'parameters', 0, 'style']],
-        type: nonBreaking,
-      }),
-    ]))
-  })
-
   test('Update style for path parameter', async () => {
     const testId = 'update-style-for-path-parameter'
     const result = await compareFiles(SUITE_ID, testId)
@@ -350,42 +338,7 @@ describe('Openapi3 Operation Parameters', () => {
       }),
     ]))
   })
-
-  test('Add style form for query parameter', async () => {
-    const testId = 'add-style-form-for-query-parameter'
-    const result = await compareFiles(SUITE_ID, testId)
-    expect(result).toEqual(diffsMatcher([
-      expect.objectContaining({
-        action: DiffAction.add,
-        afterDeclarationPaths: [[...OPERATION_PARAMETERS_PATH, 0, 'style']],
-        type: nonBreaking,
-      }),
-    ]))
-  })
-
-  test('Add style simple for header parameter', async () => {
-    const testId = 'add-style-simple-for-header-parameter'
-    const result = await compareFiles(SUITE_ID, testId)
-    expect(result).toEqual(diffsMatcher([
-      expect.objectContaining({
-        action: DiffAction.add,
-        afterDeclarationPaths: [[...OPERATION_PARAMETERS_PATH, 0, 'style']],
-        type: nonBreaking,
-      }),
-    ]))
-  })
-
-  test('Add style form for cookie parameter', async () => {
-    const testId = 'add-style-form-for-cookie-parameter'
-    const result = await compareFiles(SUITE_ID, testId)
-    expect(result).toEqual(diffsMatcher([
-      expect.objectContaining({
-        action: DiffAction.add,
-        afterDeclarationPaths: [[...OPERATION_PARAMETERS_PATH, 0, 'style']],
-        type: nonBreaking,
-      }),
-    ]))
-  })
+  
 
   // TODO: fixme
   test.skip('Mark primitive parameter as exploded', async () => {
@@ -553,12 +506,6 @@ describe('Openapi3 Operation Parameters', () => {
     ))
   })
 
-  test('Explicitly prohibit reserved characters for query', async () => {
-    const testId = 'explicitly-prohibit-reserved-characters-for-query'
-    const result = await compareFiles(SUITE_ID, testId)
-    expect(result).toEqual([])
-  })
-
   test('Allow reserved characters for not query', async () => {
     const testId = 'allow-reserved-characters-for-not-query'
     const result = await compareFiles(SUITE_ID, testId)
@@ -676,5 +623,104 @@ describe('Openapi3 Operation Parameters', () => {
         type: nonBreaking,
       }),
     ]))
+  })
+
+  describe('Add/remove default values', () => {
+
+    test('Add required attribute with default value for parameter', async () => {
+      const testId = 'add-required-attribute-with-default-value-for-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove required attribute with default value from parameter', async () => {
+      const testId = 'remove-required-attribute-with-default-value-from-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add deprecated attribute with default value for parameter', async () => {
+      const testId = 'add-deprecated-attribute-with-default-value-for-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove deprecated attribute with default value from parameter', async () => {
+      const testId = 'remove-deprecated-attribute-with-default-value-from-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add allowEmptyValue attribute with default value for parameter', async () => {
+      const testId = 'add-allowEmptyValue-attribute-with-default-value-for-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove allowEmptyValue attribute with default value from parameter', async () => {
+      const testId = 'remove-allowEmptyValue-attribute-with-default-value-from-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add default style for path parameter', async () => {
+      const testId = 'add-default-style-for-path-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove default style from path parameter', async () => {
+      const testId = 'remove-default-style-from-path-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add default style for query parameter', async () => {
+      const testId = 'add-default-style-for-query-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove default style from query parameter', async () => {
+      const testId = 'remove-default-style-from-query-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add default style for header parameter', async () => {
+      const testId = 'add-default-style-for-header-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove default style from header parameter', async () => {
+      const testId = 'remove-default-style-from-header-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add default style for cookie parameter', async () => {
+      const testId = 'add-default-style-for-cookie-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove default style from cookie parameter', async () => {
+      const testId = 'remove-default-style-from-cookie-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add allowReserved attribute with default value for query parameter', async () => {
+      const testId = 'add-allowReserved-attribute-with-default-value-for-query-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove allowReserved attribute with default value from query parameter', async () => {
+      const testId = 'remove-allowReserved-attribute-with-default-value-from-query-parameter'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
   })
 })

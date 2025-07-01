@@ -1609,3 +1609,68 @@ export function runCommonSchemaTests(suiteId: string, commonPath: JsonPath): voi
     })
   })
 }
+
+export function runAddRemoveDefaultValuesSchemaTests(suiteId: string): void {
+  describe('Add/remove default values', () => {
+
+    test('Add minItems with default value for array property', async () => {
+      const testId = 'add-minItems-with-default-value-for-array-property'
+      const result = await compareFiles(suiteId, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove minItems with default value for array property', async () => {
+      const testId = 'remove-minItems-with-default-value-for-array-property'
+      const result = await compareFiles(suiteId, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add uniqueItems with default value for array property', async () => {
+      const testId = 'add-uniqueItems-with-default-value-for-array-property'
+      const result = await compareFiles(suiteId, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove uniqueItems with default value for array property', async () => {
+      const testId = 'remove-uniqueItems-with-default-value-for-array-property'
+      const result = await compareFiles(suiteId, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add minProperties with default value for object property', async () => {
+      const testId = 'add-minProperties-with-default-value-for-object-property'
+      const result = await compareFiles(suiteId, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove minProperties with default value for object property', async () => {
+      const testId = 'remove-minProperties-with-default-value-for-object-property'
+      const result = await compareFiles(suiteId, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add attribute with default value for xml', async () => {
+      const testId = 'add-attribute-with-default-value-for-xml'
+      const result = await compareFiles(suiteId, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove attribute with default value for xml', async () => {
+      const testId = 'remove-attribute-with-default-value-for-xml'
+      const result = await compareFiles(suiteId, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add xml:wrapped with default value for array property', async () => {
+      const testId = 'add-xml-wrapped-with-default-value-for-array-property'
+      const result = await compareFiles(suiteId, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove xml:wrapped with default value for array property', async () => {
+      const testId = 'remove-xml-wrapped-with-default-value-for-array-property'
+      const result = await compareFiles(suiteId, testId)
+      expect(result).toEqual([])
+    })
+  })  
+}

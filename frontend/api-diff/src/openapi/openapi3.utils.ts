@@ -57,19 +57,6 @@ export const mapPathParams = (ctx: CompareContext, jumpsToPathLevel: number): Re
   return result
 }
 
-export const getDefaultStyle = (type: unknown) => {
-  switch (type) {
-    case 'query':
-      return 'form'
-    case 'cookie':
-      return 'form'
-    case 'path':
-      return 'simple'
-    case 'header':
-      return 'simple'
-  }
-}
-
 export const isResponseSchema = (path: JsonPath) => {
   return path[3] === 'responses' && path[7] === 'schema'
 }

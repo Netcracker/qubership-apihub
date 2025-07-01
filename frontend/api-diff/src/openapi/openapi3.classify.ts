@@ -11,7 +11,7 @@ import {
   unclassified,
 } from '../core'
 import { getKeyValue, isExist, isNotEmptyArray } from '../utils'
-import { emptySecurity, getDefaultStyle, includeSecurity } from './openapi3.utils'
+import { emptySecurity, includeSecurity } from './openapi3.utils'
 import type { ClassifyRule, CompareContext } from '../types'
 import { DiffType } from '../types'
 import { hidePathParamNames } from './openapi3.mapping'
@@ -46,12 +46,6 @@ export const apihubParametersRemovalClassifyRule = (ctx: CompareContext): DiffTy
     ? nonBreaking
     : breaking
 }
-
-export const parameterStyleClassifyRule: ClassifyRule = [
-  ({ after }) => (after.value === getDefaultStyle(getKeyValue(after.parent, 'in')) ? nonBreaking : breaking),
-  ({ before }) => (before.value === getDefaultStyle(getKeyValue(before.parent, 'in')) ? nonBreaking : breaking),
-  breaking,
-]
 
 export const parameterExplodeClassifyRule: ClassifyRule = [
   ({ after }) => ((after.value && getKeyValue(after.parent, 'style') === 'form') || (!after.value && getKeyValue(after.parent, 'style') !== 'form') ? annotation : breaking),

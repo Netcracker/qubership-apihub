@@ -49,8 +49,7 @@ import {
   parameterAllowReservedClassifyRule,
   parameterExplodeClassifyRule,
   parameterNameClassifyRule,
-  parameterRequiredClassifyRule,
-  parameterStyleClassifyRule,
+  parameterRequiredClassifyRule,  
   pathChangeClassifyRule,
 } from './openapi3.classify'
 import {
@@ -157,7 +156,7 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
         description: diffDescription(resolveParameterDescriptionTemplates('deprecated status'))
       },
       '/style': {
-        $: parameterStyleClassifyRule,
+        $: allBreaking,
         description: diffDescription(resolveParameterDescriptionTemplates('delimited style'))
       },
       '/explode': {
