@@ -16,22 +16,22 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import type { BranchConfig } from '@apihub/entities/branches'
+import type { FileData } from '@apihub/entities/project-files'
+import { fetchAllFiles } from '@apihub/entities/publish-details'
+import type { FileSourceMap } from '@netcracker/qubership-apihub-api-processor'
+import type { FileKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import type { IsLoading, RefetchQuery } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import { scheduleInBackground } from '@netcracker/qubership-apihub-ui-shared/utils/scheduler'
+import { onMutationUnauthorized } from '@netcracker/qubership-apihub-ui-shared/utils/security'
 import { useParams } from 'react-router-dom'
-import { useInvalidateValidationMessages } from './useFileProblems'
-import { useInvalidateDereferencedSpec } from './useDereferencedSpec'
 import { useBranchSearchParam } from '../../useBranchSearchParam'
-import { BRANCH_CONFIG_QUERY_KEY, useBranchConfig } from './useBranchConfig'
+import { VERSION_CANDIDATE } from './consts'
 import type { BuilderOptions } from './package-version-builder'
 import { PackageVersionBuilder } from './package-version-builder'
-import { VERSION_CANDIDATE } from './consts'
-import type { IsLoading, RefetchQuery } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { getAuthorization } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
-import { fetchAllFiles } from '@apihub/entities/publish-details'
-import type { FileData } from '@apihub/entities/project-files'
-import type { BranchConfig } from '@apihub/entities/branches'
-import type { FileKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { scheduleInBackground } from '@netcracker/qubership-apihub-ui-shared/utils/scheduler'
-import type { FileSourceMap } from '@netcracker/qubership-apihub-api-processor'
+import { BRANCH_CONFIG_QUERY_KEY, useBranchConfig } from './useBranchConfig'
+import { useInvalidateDereferencedSpec } from './useDereferencedSpec'
+import { useInvalidateValidationMessages } from './useFileProblems'
 
 export const BRANCH_CACHE_QUERY_KEY = 'branch-cache'
 
@@ -48,7 +48,6 @@ export function useBranchCache(): [BranchCache, IsLoading, RefetchQuery<BranchCa
       versionKey: VERSION_CANDIDATE,
       previousVersionKey: '',
       previousPackageKey: projectId!,
-      authorization: getAuthorization(),
       branchName: branchName!,
       files: branchConfig?.files ?? [],
       // branchFiles serialization is an expensive operation, so it is not suitable for use as part of a queryKey, so
@@ -72,7 +71,7 @@ export function useAllBranchFiles(): [FileSourceMap, IsLoading, RefetchQuery<Fil
 
   const { data, isLoading, refetch } = useQuery<FileSourceMap, Error>({
     queryKey: [ALL_BRANCH_FILES_QUERY_KEY, projectId, branchName],
-    queryFn: () => fetchAllFiles(projectId!, branchName!, getAuthorization()),
+    queryFn: () => fetchAllFiles(projectId!, branchName!),
     enabled: !!projectId && !!branchName,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -106,7 +105,6 @@ export function useUpdateBranchCache(): [UpdateFileInBranchCache, IsLoading] {
         versionKey: VERSION_CANDIDATE,
         previousVersionKey: '',
         previousPackageKey: projectId!,
-        authorization: getAuthorization(),
         branchName: branchName!,
         files: branchConfig?.files ?? [],
         sources: branchFiles,
@@ -148,14 +146,12 @@ export function useUpdateExistingFileInBranchCache(): [UpdateFileInBranchCache, 
         versionKey: VERSION_CANDIDATE,
         previousVersionKey: '',
         previousPackageKey: projectId!,
-        authorization: getAuthorization(),
         branchName: branchName!,
         files: branchConfig?.files ?? [],
         sources: branchFiles,
       })
     },
     onSuccess: async (fileData, fileKey) => {
-
       client.setQueryData<BranchCache>(
         [BRANCH_CACHE_QUERY_KEY, projectId, branchName],
         (oldBranchCache) => {
@@ -167,6 +163,9 @@ export function useUpdateExistingFileInBranchCache(): [UpdateFileInBranchCache, 
 
       invalidateValidationMessages(fileKey)
       invalidateDereferencedSpec(fileKey)
+    },
+    onError: (error, vars, context): void => {
+      onMutationUnauthorized<FileData, Error, FileKey>(mutate)(error, vars, context)
     },
   })
 

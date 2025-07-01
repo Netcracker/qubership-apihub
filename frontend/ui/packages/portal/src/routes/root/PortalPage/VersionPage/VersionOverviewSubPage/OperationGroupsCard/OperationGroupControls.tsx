@@ -14,40 +14,23 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo, useCallback, useMemo, useState } from 'react'
-import { Box, Tooltip } from '@mui/material'
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import { useParams } from 'react-router-dom'
-import { useFullMainVersion } from '../../../FullMainVersionProvider'
-import type { BuildType, OperationsGroupExportFormat } from '@netcracker/qubership-apihub-api-processor'
-import {
-  BUILD_TYPE,
-  HTML_EXPORT_GROUP_FORMAT,
-  JSON_EXPORT_GROUP_FORMAT,
-  YAML_EXPORT_GROUP_FORMAT,
-} from '@netcracker/qubership-apihub-api-processor'
+import { Box } from '@mui/material'
+import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { OperationGroup } from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'
 import {
   DISABLED_BUTTON_COLOR,
   ENABLED_BUTTON_COLOR,
   GROUP_TYPE_REST_PATH_PREFIX,
 } from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'
-import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
 import { AddSquareIcon } from '@netcracker/qubership-apihub-ui-shared/icons/AddSquareIcon'
 import { DeleteIcon } from '@netcracker/qubership-apihub-ui-shared/icons/DeleteIcon'
-import { MenuButton } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
 import { DownloadIcon } from '@netcracker/qubership-apihub-ui-shared/icons/DownloadIcon'
+import { EditIcon } from '@netcracker/qubership-apihub-ui-shared/icons/EditIcon'
 import { PublishIcon } from '@netcracker/qubership-apihub-ui-shared/icons/PublishIcon'
-import {
-  MenuButtonContentWithSections,
-} from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButtonContentWithSections'
-import {
-  useOperationsExport,
-} from '@apihub/routes/root/PortalPage/VersionPage/VersionOverviewSubPage/OperationGroupsCard/useOperationsExport'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { FC } from 'react'
+import { memo, useMemo } from 'react'
 
 export type OperationGroupControlsProps = {
   operationGroup: OperationGroup
@@ -55,6 +38,7 @@ export type OperationGroupControlsProps = {
   onEdit: (group: OperationGroup) => void
   onDelete: (group: OperationGroup) => void
   onPublish: (group: OperationGroup) => void
+  onExport: (group: OperationGroup) => void
 }
 
 export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<OperationGroupControlsProps>(({
@@ -63,38 +47,23 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
   onEdit,
   onDelete,
   onPublish,
+  onExport,
 }) => {
   const { isPrefixGroup, apiType, operationsCount } = operationGroup
-  const [actionMenuOpen, setActionMenuOpen] = useState(false)
-
-  const { packageId: packageKey } = useParams()
-  const [exportOperations, isExporting] = useOperationsExport()
-  const fullVersion = useFullMainVersion()
-
-  const onExportButton = useCallback((group: OperationGroup, format: OperationsGroupExportFormat, buildType: BuildType) => {
-    exportOperations({
-      packageKey: packageKey!,
-      versionKey: fullVersion!,
-      groupName: group.groupName,
-      apiType: group.apiType ?? DEFAULT_API_TYPE,
-      format: format,
-      buildType: buildType,
-    })
-  }, [exportOperations, fullVersion, packageKey])
 
   const isGraphQlGroup = apiType && API_TYPE_DISABLE_ACTION_MAP[apiType]
-  const isDownloadButtonDisabled = isExporting || isGraphQlGroup || !operationsCount
+  const isDownloadButtonDisabled = /* isExporting || */ isGraphQlGroup || !operationsCount
   const isPublishButtonDisabled = isGraphQlGroup || !operationsCount
 
   const downloadButtonTitle = useMemo(
     () => {
       if (isGraphQlGroup) {
-        return 'Downloading is not available for groups with GraphQL operations'
+        return 'Export is not available for groups with GraphQL operations'
       }
       if (!operationsCount) {
-        return 'Downloading is not available because there are no operations in the group'
+        return 'Export is not available because there are no operations in the group'
       }
-      return 'Download operations from the group'
+      return 'Export operations from the group'
     },
     [isGraphQlGroup, operationsCount],
   )
@@ -118,7 +87,7 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
         disabled={isPrefixGroup}
         disableHint={false}
         hint={isPrefixGroup ? `Operations cannot be changed in the ${GROUP_TYPE_REST_PATH_PREFIX} group` : 'Change operations in the group'}
-        startIcon={<AddSquareIcon />}
+        startIcon={<AddSquareIcon color={ENABLED_BUTTON_COLOR} />}
         sx={{ visibility: 'hidden', height: '20px' }}
         onClick={() => onEditContent(operationGroup)}
         testId="AddButton"
@@ -129,7 +98,7 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
         className="hoverable"
         disableHint={false}
         hint="Edit group"
-        startIcon={<EditOutlinedIcon />}
+        startIcon={<EditIcon color={ENABLED_BUTTON_COLOR} />}
         sx={{ visibility: 'hidden', height: '20px' }}
         onClick={() => onEdit(operationGroup)}
         testId="EditButton"
@@ -146,72 +115,17 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
         onClick={() => onPublish(operationGroup)}
         testId="PublishButton"
       />
-      <Tooltip
-        title={downloadButtonTitle}
-        disableHoverListener={actionMenuOpen}
-      >
-        <Box sx={{ display: 'inline' }}>
-          <MenuButton
-            sx={{
-              display: 'inline',
-              ml: 1,
-              visibility: actionMenuOpen || isExporting ? 'visible' : 'hidden',
-              minWidth: 20,
-              width: 20,
-              height: 20,
-              padding: 0,
-              marginLeft: 0,
-              '&:focus': {
-                outline: isExporting ? 'none' : '',
-              },
-            }}
-            className="hoverable"
-            disabled={isDownloadButtonDisabled}
-            size="small"
-            isLoading={isExporting}
-            icon={<DownloadIcon
-              color={isDownloadButtonDisabled ? DISABLED_BUTTON_COLOR : ENABLED_BUTTON_COLOR} />}
-            onClick={() => setActionMenuOpen(true)}
-            onItemClick={event => event.stopPropagation()}
-            onClose={() => setActionMenuOpen(false)}
-            data-testid="DownloadMenuButton"
-          >
-            <MenuButtonContentWithSections
-              content={{
-                'Download combined specification ': [
-                  {
-                    onClick: () => onExportButton(operationGroup, YAML_EXPORT_GROUP_FORMAT, BUILD_TYPE.MERGED_SPECIFICATION),
-                    title: 'Download as YAML',
-                    testId: 'DownloadCombinedYamlMenuItem',
-                  },
-                  {
-                    onClick: () => onExportButton(operationGroup, JSON_EXPORT_GROUP_FORMAT, BUILD_TYPE.MERGED_SPECIFICATION),
-                    title: 'Download as JSON',
-                    testId: 'DownloadCombinedJsonMenuItem',
-                  },
-                ],
-                'Download reduced source specifications': [
-                  {
-                    onClick: () => onExportButton(operationGroup, YAML_EXPORT_GROUP_FORMAT, BUILD_TYPE.REDUCED_SOURCE_SPECIFICATIONS),
-                    title: 'Download as YAML',
-                    testId: 'DownloadReducedYamlMenuItem',
-                  },
-                  {
-                    onClick: () => onExportButton(operationGroup, JSON_EXPORT_GROUP_FORMAT, BUILD_TYPE.REDUCED_SOURCE_SPECIFICATIONS),
-                    title: 'Download as JSON',
-                    testId: 'DownloadReducedJsonMenuItem',
-                  },
-                  {
-                    onClick: () => onExportButton(operationGroup, HTML_EXPORT_GROUP_FORMAT, BUILD_TYPE.REDUCED_SOURCE_SPECIFICATIONS),
-                    title: 'Download as HTML',
-                    testId: 'DownloadReducedHtmlMenuItem',
-                  },
-                ],
-              }}
-            />
-          </MenuButton>
-        </Box>
-      </Tooltip>
+      <ButtonWithHint
+        size="small"
+        area-label="export"
+        className="hoverable"
+        disabled={isDownloadButtonDisabled}
+        hint={downloadButtonTitle}
+        startIcon={<DownloadIcon color={isDownloadButtonDisabled ? DISABLED_BUTTON_COLOR : ENABLED_BUTTON_COLOR} />}
+        sx={{ visibility: 'hidden', height: '20px' }}
+        onClick={() => onExport(operationGroup)}
+        testId="ExportButton"
+      />
       <ButtonWithHint
         size="small"
         area-label="delete"
@@ -219,7 +133,7 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
         disabled={isPrefixGroup}
         disableHint={false}
         hint={isPrefixGroup ? `Deletion is not available for the ${GROUP_TYPE_REST_PATH_PREFIX} group` : 'Delete group'}
-        startIcon={<DeleteIcon color="#626D82" />}
+        startIcon={<DeleteIcon color={ENABLED_BUTTON_COLOR} />}
         sx={{ visibility: 'hidden', height: '20px' }}
         onClick={() => onDelete(operationGroup)}
         testId="DeleteButton"

@@ -16,26 +16,21 @@
 
 import {
   fetchDeprecatedItems,
-  fetchExportTemplate,
   fetchOperations,
-  fetchVersionDocuments,
   getPackageVersionContent,
   getVersionReferences,
   toVersionOperation,
 } from './packages-builder'
 import type {
-  TemplateResolver,
   VersionDeprecatedResolver,
-  VersionDocumentsResolver,
   VersionOperationsResolver,
   VersionReferencesResolver,
   VersionResolver,
 } from '@netcracker/qubership-apihub-api-processor'
-import { NotFoundError } from './requests'
 
-export async function packageVersionResolver(authorization: string): Promise<VersionResolver> {
+export async function packageVersionResolver(): Promise<VersionResolver> {
   return async (packageId, version, includeOperations = false) => {
-    const versionConfig = await getPackageVersionContent(packageId, version, includeOperations, authorization)
+    const versionConfig = await getPackageVersionContent(packageId, version, includeOperations)
     if (!versionConfig) {
       return null
     }
@@ -47,9 +42,9 @@ export async function packageVersionResolver(authorization: string): Promise<Ver
   }
 }
 
-export async function versionReferencesResolver(authorization: string): Promise<VersionReferencesResolver> {
+export async function versionReferencesResolver(): Promise<VersionReferencesResolver> {
   return async (version, packageId) => {
-    const references = await getVersionReferences(packageId, version, authorization)
+    const references = await getVersionReferences(packageId, version)
 
     if (!references) {
       return null
@@ -59,7 +54,7 @@ export async function versionReferencesResolver(authorization: string): Promise<
   }
 }
 
-export async function versionOperationsResolver(authorization: string): Promise<VersionOperationsResolver> {
+export async function versionOperationsResolver(): Promise<VersionOperationsResolver> {
   return async (apiType, version, packageId, operationsIds, includeData) => {
     const EMPTY_OPERATIONS = { operations: [] }
     const limit = includeData ? 100 : 1000
@@ -75,7 +70,6 @@ export async function versionOperationsResolver(authorization: string): Promise<
           version,
           operationsIds,
           includeData,
-          authorization,
           page,
           limit,
         ) ?? EMPTY_OPERATIONS
@@ -91,66 +85,8 @@ export async function versionOperationsResolver(authorization: string): Promise<
   }
 }
 
-export async function versionDeprecatedResolver(authorization: string): Promise<VersionDeprecatedResolver> {
+export async function versionDeprecatedResolver(): Promise<VersionDeprecatedResolver> {
   return async (apiType, version, packageId, operationsIds) => {
-    return await fetchDeprecatedItems(apiType, packageId, version, operationsIds, authorization)
-  }
-}
-
-// TODO: Use for documentGroup buildType transformation. Provide to builder
-export async function versionDocumentsResolver(authorization: string): Promise<VersionDocumentsResolver> {
-  return async (apiType, version, packageId, filterByOperationGroup) => {
-    const EMPTY_DOCUMENTS = { documents: [] }
-    const LIMIT = 100
-    let page = 0
-
-    const response = await fetchVersionDocuments(
-      apiType,
-      packageId,
-      version,
-      filterByOperationGroup,
-      authorization,
-      page,
-      LIMIT,
-    )
-
-    if (!response) {
-      return EMPTY_DOCUMENTS
-    }
-
-    let documentsCount = response.documents.length
-    while (documentsCount === LIMIT) {
-      page += 1
-
-      const { documents } = await fetchVersionDocuments(
-        apiType,
-        packageId,
-        version,
-        filterByOperationGroup,
-        authorization,
-        page,
-        LIMIT,
-      ) ?? EMPTY_DOCUMENTS
-
-      response.documents = [...response.documents, ...documents]
-
-      documentsCount = documents.length
-    }
-
-    return response
-  }
-}
-
-export async function templateResolver(authorization: string): Promise<TemplateResolver> {
-  return async (apiType, version, packageId, filterByOperationGroup) => {
-    try {
-      const [content] = await fetchExportTemplate(packageId, version, apiType, filterByOperationGroup, authorization)
-      return content
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        return ''
-      }
-      throw error
-    }
+    return await fetchDeprecatedItems(apiType, packageId, version, operationsIds)
   }
 }

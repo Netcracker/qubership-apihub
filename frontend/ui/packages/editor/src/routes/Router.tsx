@@ -14,32 +14,25 @@
  * limitations under the License.
  */
 
+import { ErrorPage, NOT_FOUND_TITLE } from '@netcracker/qubership-apihub-ui-shared/components/ErrorPage'
+import { LoginPage } from '@netcracker/qubership-apihub-ui-shared/pages/login'
 import type { FC } from 'react'
-import { memo, useState } from 'react'
+import { memo } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { EventBusProvider } from './EventBusProvider'
 import { NavigationProvider } from './NavigationProvider'
-import { isTokenExpired } from '@netcracker/qubership-apihub-ui-shared/entities/token-payload'
-import { getToken } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
-import { useAuthorization } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
-import { LoginPage } from '@netcracker/qubership-apihub-ui-shared/pages/login'
 import { BasePage } from './root/BasePage/BasePage'
-import { AuthPage } from '@netcracker/qubership-apihub-ui-shared/pages/AuthPage'
-import { MainPage } from './root/MainPage/MainPage'
 import { ProjectEditorPage } from './root/EditorPage/ProjectEditorPage/ProjectEditorPage'
-import { ErrorPage, NOT_FOUND_TITLE } from '@netcracker/qubership-apihub-ui-shared/components/ErrorPage'
+import { MainPage } from './root/MainPage/MainPage'
 
 export const Router: FC = memo(() => {
-  const [auth, setAuth] = useState<boolean>(!isTokenExpired(getToken()))
-  useAuthorization({ setLogin: setAuth })
-
   return (
     <EventBusProvider>
       <BrowserRouter>
         <NavigationProvider>
           <Routes>
-            <Route path="/login" element={<LoginPage applicationName={'APIHUB Editor'}/>}/>
-            <Route path="/" element={auth ? <BasePage/> : <AuthPage/>}>
+            <Route path="/login" element={<LoginPage applicationName='APIHUB Editor'/>}/>
+            <Route path="/" element={<BasePage/>}>
               <Route index element={<Navigate to="editor" replace/>}/>
               <Route path="editor">
                 <Route index element={<MainPage/>}/>

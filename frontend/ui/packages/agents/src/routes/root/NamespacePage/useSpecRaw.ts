@@ -22,7 +22,6 @@ import type { ServiceKey, SpecKey } from '@netcracker/qubership-apihub-ui-shared
 import type { SpecRaw } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { toFormattedJsonString } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
-import { getAuthorization } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
 import type { AgentKey, NamespaceKey, WorkspaceKey } from '@apihub/entities/keys'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
@@ -44,7 +43,7 @@ export function useSpecRaw(options?: Partial<{
 
   const { data, isInitialLoading } = useQuery<SpecRaw, Error, SpecRaw>({
     queryKey: [SPEC_RAW_QUERY_KEY, namespaceKey, serviceKey, specKey],
-    queryFn: () => getSpecRaw(agentId!, namespaceKey!, workspaceKey!, serviceKey!, specKey!, getAuthorization(), true),
+    queryFn: () => getSpecRaw(agentId!, namespaceKey!, workspaceKey!, serviceKey!, specKey!, true),
     enabled: enabled && !!namespaceKey && !!serviceKey && !!specKey,
     select: toFormattedJsonString,
   })
@@ -68,7 +67,7 @@ export function useSpecsRaw(options: {
     queries: specKeys.map<UseQueryOptions<SpecRaw, Error, [SpecKey, SpecRaw]>>((specKey) => {
       return {
         queryKey: [SPEC_RAW_QUERY_KEY, namespaceKey, serviceKey, specKey],
-        queryFn: () => getSpecRaw(agentId!, namespaceKey!, workspaceKey!, serviceKey, specKey, getAuthorization()),
+        queryFn: () => getSpecRaw(agentId!, namespaceKey!, workspaceKey!, serviceKey, specKey),
         enabled: enabled && !!namespaceKey && !!serviceKey && !!specKey,
         select: (specRaw => [specKey, specRaw]),
       }
@@ -111,11 +110,10 @@ export async function getSpecRaw(
   workspaceKey: WorkspaceKey,
   serviceKey: ServiceKey,
   specKey: SpecKey,
-  authorization: string,
   ignoreErrors?: boolean,
 ): Promise<SpecRaw> {
   return (
-    await getSpecBlob(agentId, namespaceKey, workspaceKey, serviceKey, specKey, authorization, ignoreErrors)
+    await getSpecBlob(agentId, namespaceKey, workspaceKey, serviceKey, specKey, ignoreErrors)
   ).text()
 }
 
@@ -125,16 +123,14 @@ export async function getSpecBlob(
   workspaceKey: WorkspaceKey,
   serviceKey: ServiceKey,
   specKey: SpecKey,
-  authorization: string,
   ignoreErrors?: boolean,
 ): Promise<Blob> {
-  return (await ncCustomAgentsRequestBlob(`/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/services/${serviceKey}/specs/${encodeURIComponent(specKey)}`, {
-      method: 'get',
-      headers: { authorization },
-    },
+  return (await ncCustomAgentsRequestBlob(
+    `/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/services/${serviceKey}/specs/${encodeURIComponent(specKey)}`,
+    { method: 'get' },
     {
       basePath: `${APIHUB_NC_BASE_PATH}${API_V2}`,
-      customErrorHandler: ignoreErrors ? () => {/*do nothing*/} : undefined,
+      customErrorHandler: ignoreErrors ? () => {/*do nothing*/ } : undefined,
     },
   )).blob()
 }

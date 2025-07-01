@@ -21,7 +21,6 @@ import { Box, Skeleton, TableCell, TableRow } from '@mui/material'
 export const OpenApiTableTreeSkeleton: FC = memo(() => {
   return (
     <>
-      {/* eslint-disable-next-line @typescript-eslint/no-unused-vars */}
       {Array(2).fill(0).map((_, index) => {
         return (
           <TableRow key={index}>

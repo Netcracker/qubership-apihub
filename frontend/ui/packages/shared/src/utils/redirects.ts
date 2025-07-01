@@ -14,25 +14,34 @@
  * limitations under the License.
  */
 
-import { format } from './strings'
+import type { PathMatch } from 'react-router'
+import { matchPath } from 'react-router-dom'
+import { SEARCH_PARAM_NO_AUTO_LOGIN, SEARCH_PARAM_REDIRECT_URI } from './constants'
 import type { FetchRedirectDetails } from './requests'
 import { API_BASE_PATH_PATTERN, FETCH_REDIRECT_TYPE_PACKAGE } from './requests'
-import { matchPath } from 'react-router-dom'
-import type { PathMatch } from 'react-router'
-
-export function redirectToSaml(): void {
-  redirectTo('/api/v2/auth/saml')
-}
+import { optionalSearchParams } from './search-params'
 
 export function redirectToGitlab(): void {
   redirectTo('/login/gitlab')
 }
 
-function redirectTo(path: string, redirectUri?: string): void {
-  const url = format(
-    '{}{}?redirectUri={}',
-    location.origin, path, encodeURIComponent(redirectUri ?? location.href),
-  );
+export function redirectToLogin(): void {
+  redirectTo('/login', optionalSearchParams({
+    [SEARCH_PARAM_NO_AUTO_LOGIN]: { value: true },
+    redirectUri: { value: location.href },
+  }))
+}
+
+export function redirectTo(path: string, searchParams: URLSearchParams = new URLSearchParams()): void {
+  const redirectUri = searchParams.get('redirectUri') ?? location.href
+  searchParams.set('redirectUri', redirectUri)
+
+  let url = location.origin
+  if (path.includes('?')) {
+    url = `${url}${path}&${searchParams}`
+  } else {
+    url = `${url}${path}?${searchParams}`
+  }
 
   (() => {
     window.stop()
@@ -55,4 +64,16 @@ export function getPackageRedirectDetails<P extends PackagePathPattern>(
       id: match.params.packageId,
     }
     : null
+}
+
+export function getRedirectUri(): string {
+  const url = new URL(location.href)
+  const redirectUri = url.searchParams.get(SEARCH_PARAM_REDIRECT_URI)
+  if (redirectUri) {
+    return redirectUri
+  }
+  if (location.pathname === '/login') {
+    return location.origin
+  }
+  return location.href
 }

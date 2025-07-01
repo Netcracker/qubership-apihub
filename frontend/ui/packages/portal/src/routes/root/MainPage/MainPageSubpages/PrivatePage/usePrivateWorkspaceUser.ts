@@ -21,10 +21,14 @@ import { portalRequestJson } from '@apihub/utils/requests'
 
 export const SPACE_QUERY_KEY = 'space-query-key'
 
-export function usePrivateWorkspace(): [Key, IsLoading] {
+export function usePrivateWorkspace(options?: Partial<{
+  cacheTime?: number
+}>): [Key, IsLoading] {
+  const { cacheTime } = options ?? {}
   const { data, isLoading } = useQuery<Key, Error, Key>({
     queryKey: [SPACE_QUERY_KEY],
     queryFn: () => getPrivateWorkspaceUser(),
+    cacheTime: cacheTime,
   })
 
   return [

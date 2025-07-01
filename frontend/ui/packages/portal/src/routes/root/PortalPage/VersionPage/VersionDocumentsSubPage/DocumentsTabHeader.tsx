@@ -32,6 +32,7 @@ import {
 } from '@apihub/routes/root/PortalPage/VersionPage/OpenApiViewer/OpenApiViewer'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
 
 export type DocumentsTabHeaderProps = {
   title: string
@@ -145,9 +146,10 @@ export const DocumentsTabHeader: FC<DocumentsTabHeaderProps> = (props) => {
             docType={type}
             format={format}
             customProps={{
-              title: 'Download',
+              title: 'More',
               variant: 'outlined',
             }}
+            startIcon={<MoreVertIcon sx={{ color: '#626D82' }} fontSize="small"/>}
           />
         </Box>
       )}

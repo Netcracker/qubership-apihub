@@ -97,6 +97,7 @@ export const ErrorModelItem: FC<ErrorModelItemProps> = memo<ErrorModelItemProps>
 }) => {
   return (
     <TreeItem
+      key={`${title}-error-item`}
       nodeId={`${title}-error-item`}
       label={label}
       sx={ERROR_TREE_ITEM_CHILD_LABEL_STYLES}

@@ -37,7 +37,7 @@ import { isBoolean } from '@netcracker/qubership-apihub-ui-shared/utils/types'
 export const GroupPage: FC = memo(() => {
   const { groupId: groupKey = '' } = useParams()
 
-  const [groupPackage] = usePackage({ packageKey: groupKey, showParents: true })
+  const [groupPackage] = usePackage({ packageKey: groupKey, showParents: true, cacheTime: 1000 })
 
   const [favorPackage] = useFavorPackage(groupKey)
   const [disfavorPackage] = useDisfavorPackage(groupKey)

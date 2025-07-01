@@ -67,7 +67,11 @@ import { ProfilePage } from './root/ProfilePage/ProfilePage'
 
 export const router = createBrowserRouter(
   createRoutes([
-    <Route path="/" element={<NavigationProvider><BasePage/></NavigationProvider>}>
+    <Route path="/" element={
+      <NavigationProvider>
+          <BasePage/>
+      </NavigationProvider>
+    }>
       <Route index element={<Navigate to="portal" replace/>}/>
       <Route path="portal">
         <Route element={<MainPage/>}>

@@ -14,38 +14,39 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import * as React from 'react'
-import { memo, useCallback, useEffect, useMemo } from 'react'
-import { Box, Button, Divider, Typography } from '@mui/material'
-import { useParams } from 'react-router-dom'
-import { PackageBreadcrumbs } from '../../PackageBreadcrumbs'
-import { useDownloadVersionDocumentation } from './useDownloadVersionDocumentation'
-import { EditButton } from './EditButton'
-import { VersionSelector } from '../VersionSelector'
-import { usePackageVersionContent } from '../../usePackageVersionContent'
-import { useSetFullMainVersion, useSetIsLatestRevision } from '../FullMainVersionProvider'
-import { useEffectiveApiType } from '../../useEffectiveApiType'
-import { ComparisonSelectorButton } from './ComparisonSelectorButton'
-import { useNavigation } from '../../../NavigationProvider'
-import { useBackwardLocation } from '../../useBackwardLocation'
 import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
-import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
-import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
-import { CREATE_VERSION_PERMISSIONS } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
-import { VERSION_STATUS_MANAGE_PERMISSIONS } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
-import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
-import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
-import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
+import { ExportedEntityKind } from '@apihub/components/ExportSettingsDialog/api/useExport'
 import { PackageSettingsButton } from '@apihub/components/PackageSettingsButton'
-import { AddIcon } from '@netcracker/qubership-apihub-ui-shared/icons/AddIcon'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { CreateDashboardVersionButton } from '@apihub/routes/root/PortalPage/DashboardPage/CreateDashboardVersionButton'
 import { usePackageVersionConfig } from '@apihub/routes/root/PortalPage/usePackageVersionConfig'
 import { CopyPackageVersionButton } from '@apihub/routes/root/PortalPage/VersionPage/CopyPackageVersionButton'
+import { Box, Button, Divider, Typography } from '@mui/material'
+import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
+import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
+import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { CreateDashboardVersionButton } from '@apihub/routes/root/PortalPage/DashboardPage/CreateDashboardVersionButton'
+import { CREATE_VERSION_PERMISSIONS } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
+import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { VERSION_STATUS_MANAGE_PERMISSIONS } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
+import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
+import { AddIcon } from '@netcracker/qubership-apihub-ui-shared/icons/AddIcon'
+import type { FC } from 'react'
+import { memo, useCallback, useEffect, useMemo } from 'react'
+import { useParams } from 'react-router-dom'
+import { useNavigation } from '../../../NavigationProvider'
+import { PackageBreadcrumbs } from '../../PackageBreadcrumbs'
+import { useBackwardLocation } from '../../useBackwardLocation'
+import { useEffectiveApiType } from '../../useEffectiveApiType'
+import { usePackageVersionContent } from '../../usePackageVersionContent'
+import { useSetFullMainVersion, useSetIsLatestRevision } from '../FullMainVersionProvider'
+import { VersionSelector } from '../VersionSelector'
+import { ComparisonSelectorButton } from './ComparisonSelectorButton'
+import { EditButton } from './EditButton'
+import { useDownloadVersionDocumentation } from './useDownloadVersionDocumentation'
 
 export const VersionPageToolbar: FC = memo(() => {
   const { packageId, versionId } = useParams()
@@ -56,18 +57,20 @@ export const VersionPageToolbar: FC = memo(() => {
   const setBackwardLocation = useSetBackwardLocationContext()
   const { navigateToVersion } = useNavigation()
 
+  const { showExportSettingsDialog } = useEventBus()
+
   const [downloadVersionDocumentation] = useDownloadVersionDocumentation()
 
   const currentPackage = useCurrentPackage()
-  const isDashboard: boolean | null = useMemo(() => currentPackage?.kind === DASHBOARD_KIND ?? null, [currentPackage?.kind])
-  const isPackage: boolean | null = useMemo(() => currentPackage?.kind === PACKAGE_KIND ?? null, [currentPackage?.kind])
+  const isDashboard: boolean = useMemo(() => currentPackage?.kind === DASHBOARD_KIND, [currentPackage?.kind])
+  const isPackage: boolean = useMemo(() => currentPackage?.kind === PACKAGE_KIND, [currentPackage?.kind])
 
   const { versionContent } = usePackageVersionContent({
     packageKey: packageId,
     versionKey: versionId,
     includeSummary: true,
   })
-  const { version, status, latestRevision, operationTypes } = versionContent ?? {}
+  const { version: fullVersion, status, latestRevision, operationTypes } = versionContent ?? {}
   const { restGroupingPrefix, permissions } = currentPackage ?? {}
   const defaultApiType = useEffectiveApiType(operationTypes)
 
@@ -79,9 +82,9 @@ export const VersionPageToolbar: FC = memo(() => {
   }, [config?.files, isConfigLoading])
 
   useEffect(() => {
-    setFullMainVersion(version)
+    setFullMainVersion(fullVersion)
     setIsLatestRevision(latestRevision)
-  }, [latestRevision, setBackwardLocation, setFullMainVersion, setIsLatestRevision, version])
+  }, [latestRevision, setBackwardLocation, setFullMainVersion, setIsLatestRevision, fullVersion])
 
   const showCompareGroups = useMemo(
     () => (
@@ -113,17 +116,17 @@ export const VersionPageToolbar: FC = memo(() => {
   return (
     <>
       <Toolbar
-        breadcrumbs={<PackageBreadcrumbs packageObject={currentPackage}/>}
+        breadcrumbs={<PackageBreadcrumbs packageObject={currentPackage} />}
         header={
           <>
-            <ToolbarTitle value={currentPackage?.name}/>
+            <ToolbarTitle value={currentPackage?.name} />
             <Typography sx={{ ml: 2 }} variant="subtitle3">
               Version
             </Typography>
-            <VersionSelector/>
+            <VersionSelector />
             {versionContent &&
-              <CustomChip value={versionContent!.status} sx={{ height: 20 }} data-testid="VersionStatusChip"/>}
-            <Divider orientation="vertical" sx={{ height: '20px', mt: '6px' }}/>
+              <CustomChip value={versionContent!.status} sx={{ height: 20 }} data-testid="VersionStatusChip" />}
+            <Divider orientation="vertical" sx={{ height: '20px', mt: '6px' }} />
             {isDashboard && <CreateDashboardVersionButton
               variant="text"
               disabled={!hasCreateVersionPermissions}
@@ -133,7 +136,7 @@ export const VersionPageToolbar: FC = memo(() => {
               disabled={!hasCreateVersionPermissions}
               disableHint={hasCreateVersionPermissions}
               hint="You do not have permission to edit the version"
-              startIcon={<AddIcon color="#0068FF"/>}
+              startIcon={<AddIcon color="#0068FF" />}
               tooltipMaxWidth="unset"
               onClick={handleCreateVersionClick}
               testId="AddNewVersionButton"
@@ -142,26 +145,36 @@ export const VersionPageToolbar: FC = memo(() => {
         }
         action={
           <Box display="flex" gap={2}>
-            <CopyPackageVersionButton/>
-
-            {!isDashboard && version && (
+            <CopyPackageVersionButton />
+            {!isDashboard && fullVersion && (
               <Button
                 variant="outlined"
-                onClick={() => downloadVersionDocumentation({ packageKey: packageId!, version: version })}
+                onClick={() => {
+                  const hasRestApi = !!versionContent?.operationTypes?.[API_TYPE_REST]
+                  if (hasRestApi) {
+                    showExportSettingsDialog({
+                      exportedEntity: ExportedEntityKind.VERSION,
+                      packageId: packageId!,
+                      version: fullVersion,
+                    })
+                  } else {
+                    downloadVersionDocumentation({ packageKey: packageId!, version: fullVersion })
+                  }
+                }}
                 data-testid="ExportVersionButton"
               >
                 Export
               </Button>
             )}
 
-            <ComparisonSelectorButton showCompareGroups={showCompareGroups}/>
+            <ComparisonSelectorButton showCompareGroups={showCompareGroups} />
 
             <EditButton
               disabled={!hasEditPermission || filesHaveFolders}
               hint={getEditButtonHint(hasEditPermission, filesHaveFolders, latestRevision)}
               isDashboard={isDashboard}
             />
-            <PackageSettingsButton packageKey={packageId!}/>
+            <PackageSettingsButton packageKey={packageId!} />
           </Box>
         }
       />

@@ -20,6 +20,7 @@ import { ModuleFetchingErrorPopup } from './ModuleFetchingErrorDialog'
 
 type Props = {
   children: ReactNode
+  showReloadPopup?: boolean
 }
 
 type State = {
@@ -46,7 +47,7 @@ export class ModuleFetchingErrorBoundary extends Component<Props, State> {
   }
 
   render(): ReactNode {
-    if (isFailedFetchDynamicImport(this.state)) {
+    if (isFailedFetchDynamicImport(this.state) || this.props.showReloadPopup) {
       return <ModuleFetchingErrorPopup />
     }
 

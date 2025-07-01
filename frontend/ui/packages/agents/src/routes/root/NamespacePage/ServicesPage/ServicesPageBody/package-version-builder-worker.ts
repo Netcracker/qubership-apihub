@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-import { expose } from 'comlink'
-import { PackageVersionBuilder } from '@netcracker/qubership-apihub-api-processor'
+import type { AgentKey, NamespaceKey, WorkspaceKey } from '@apihub/entities/keys'
+import type { ServiceConfig } from '@apihub/entities/publish-config'
+import type { PublishDetails } from '@apihub/entities/publish-details'
+import { setPublicationDetails } from '@apihub/entities/publish-details'
+import type { PublishStatus } from '@apihub/entities/statuses'
+import { COMPLETE_PUBLISH_STATUS, ERROR_PUBLISH_STATUS } from '@apihub/entities/statuses'
+import { BUILD_TYPE, PackageVersionBuilder } from '@netcracker/qubership-apihub-api-processor'
 import {
   packageVersionResolver,
   versionDeprecatedResolver,
   versionOperationsResolver,
   versionReferencesResolver,
 } from '@netcracker/qubership-apihub-ui-shared/utils/builder-resolvers'
-import { getSpecBlob } from '../../useSpecRaw'
 import { NONE_PUBLISH_STATUS, RUNNING_PUBLISH_STATUS } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
-import type { PublishStatus } from '@apihub/entities/statuses'
-import { COMPLETE_PUBLISH_STATUS, ERROR_PUBLISH_STATUS } from '@apihub/entities/statuses'
-import type { PublishDetails } from '@apihub/entities/publish-details'
-import { setPublicationDetails } from '@apihub/entities/publish-details'
-import type { AgentKey, NamespaceKey, WorkspaceKey } from '@apihub/entities/keys'
-import type { ServiceConfig } from '@apihub/entities/publish-config'
+import { expose } from 'comlink'
+import { getSpecBlob } from '../../useSpecRaw'
 
 /*
 For using worker in proxy mode you need to change common apihub-shared import
@@ -40,7 +40,6 @@ export type PublishServiceOptions = {
   namespaceKey: NamespaceKey
   workspaceKey: WorkspaceKey
   serviceConfig: ServiceConfig
-  authorization: string
   builderId?: string
 }
 
@@ -49,30 +48,32 @@ export type PackageVersionBuilderWorker = {
 }
 
 const worker: PackageVersionBuilderWorker = {
-  publishService: async ({ agentId, namespaceKey, workspaceKey, serviceConfig, authorization, builderId }) => {
+  publishService: async ({ agentId, namespaceKey, workspaceKey, serviceConfig, builderId }) => {
     const abortController = new AbortController()
     const intervalId = setInterval(() => {
       setPublicationDetails({
         packageKey: serviceConfig.packageId,
         publishKey: serviceConfig.publishId,
         status: RUNNING_PUBLISH_STATUS,
-        authorization: authorization,
         abortController: abortController,
         builderId: builderId,
       })
     }, 15000)
 
-    const builder = new PackageVersionBuilder({
-      ...serviceConfig,
-    }, {
-      resolvers: {
-        fileResolver: fileId => getSpecBlob(agentId, namespaceKey, workspaceKey, serviceConfig.serviceId, fileId, authorization),
-        versionResolver: await packageVersionResolver(authorization),
-        versionReferencesResolver: await versionReferencesResolver(authorization),
-        versionOperationsResolver: await versionOperationsResolver(authorization),
-        versionDeprecatedResolver: await versionDeprecatedResolver(authorization),
+    const builder = new PackageVersionBuilder(
+      {
+        ...serviceConfig,
+        buildType: BUILD_TYPE.BUILD,
       },
-    })
+      {
+        resolvers: {
+          fileResolver: fileId => getSpecBlob(agentId, namespaceKey, workspaceKey, serviceConfig.serviceId, fileId),
+          versionResolver: await packageVersionResolver(),
+          versionReferencesResolver: await versionReferencesResolver(),
+          versionOperationsResolver: await versionOperationsResolver(),
+          versionDeprecatedResolver: await versionDeprecatedResolver(),
+        },
+      })
 
     await builder.run()
 
@@ -88,7 +89,6 @@ const worker: PackageVersionBuilderWorker = {
         packageKey: serviceConfig.packageId,
         publishKey: serviceConfig.publishId,
         status: status,
-        authorization: authorization,
         abortController: null,
         builderId: builderId,
         data: data,
@@ -101,7 +101,6 @@ const worker: PackageVersionBuilderWorker = {
         packageKey: serviceConfig.packageId,
         publishKey: serviceConfig.publishId,
         status: status,
-        authorization: authorization,
         abortController: null,
         builderId: builderId,
         errors: `${error}`,

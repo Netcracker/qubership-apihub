@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query'
 import type { VersionsComparison } from '@netcracker/qubership-apihub-api-processor'
-import { PackageVersionBuilder } from '../package-version-builder'
-import { usePackage } from '../../usePackage'
 import type { Key, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { getAuthorization } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
+import { onQueryUnauthorized } from '@netcracker/qubership-apihub-ui-shared/utils/security'
+import { useQuery } from '@tanstack/react-query'
+import { usePackage } from '../../usePackage'
+import { PackageVersionBuilder } from '../package-version-builder'
 
 const GROUPS_CHANGES_QUERY_KEY = 'groups-changes-query-key'
 
@@ -42,7 +42,7 @@ export function useGroupComparisons(options?: {
 
   const allComparisonParamsProvided = packageKey !== NO_GROUP_TO_COMPARE && versionKey !== NO_GROUP_TO_COMPARE
 
-  const { data, isLoading } = useQuery<VersionsComparison[] | undefined, Error>({
+  const { data, isLoading, refetch } = useQuery<VersionsComparison[] | undefined, Error>({
     queryKey: [GROUPS_CHANGES_QUERY_KEY, packageKey!, versionKey, currentGroup, previousGroup],
     enabled: allComparisonParamsProvided && !!restGroupingPrefix,
     retry: false,
@@ -52,10 +52,12 @@ export function useGroupComparisons(options?: {
         versionKey: versionKey!,
         currentGroup: currentGroup!,
         previousGroup: previousGroup!,
-        authorization: getAuthorization(),
       })
 
       return groupsComparisons
+    },
+    onError: (error: Error) => {
+      onQueryUnauthorized<VersionsComparison[] | undefined, Error>(refetch)(error)
     },
   })
 

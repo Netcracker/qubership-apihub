@@ -14,25 +14,18 @@
  * limitations under the License.
  */
 
-import { expose } from 'comlink'
 import type {
   BuildConfig,
   BuildResult,
   VersionsComparison,
 } from '@netcracker/qubership-apihub-api-processor'
-import { PackageVersionBuilder } from '@netcracker/qubership-apihub-api-processor'
+import { BUILD_TYPE, PackageVersionBuilder } from '@netcracker/qubership-apihub-api-processor'
 
-import type { BuilderOptions } from './package-version-builder'
-import { safeStringify } from '@stoplight/yaml'
 import { VersionDocumentsCachingService } from '@apihub/services/VersionDocumentsCachingService'
+import { safeStringify } from '@stoplight/yaml'
+import type { BuilderOptions } from './package-version-builder'
 
-import {
-  packageVersionResolver,
-  versionDeprecatedResolver,
-  versionOperationsResolver,
-  versionReferencesResolver,
-} from '@netcracker/qubership-apihub-ui-shared/utils/builder-resolvers'
-import type { FileKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import { NONE_CHANGE_TYPE } from '@apihub/entities/branches'
 import type { FileData } from '@apihub/entities/project-files'
 import type { PublishDetails, PublishOptions, PublishStatus } from '@apihub/entities/publish-details'
 import {
@@ -41,16 +34,23 @@ import {
   fetchAllFilesBlob,
   NONE_PUBLISH_STATUS,
 } from '@apihub/entities/publish-details'
+import { fetchFileContent } from '@apihub/utils/resolvers'
+import type { FileKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import {
+  packageVersionResolver,
+  versionDeprecatedResolver,
+  versionOperationsResolver,
+  versionReferencesResolver,
+} from '@netcracker/qubership-apihub-ui-shared/utils/builder-resolvers'
 import { getFileFormat } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import {
   RUNNING_PUBLISH_STATUS,
   setPublicationDetails,
   startPackageVersionPublication,
 } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
-import { NONE_CHANGE_TYPE } from '@apihub/entities/branches'
-import { fetchFileContent } from '@apihub/utils/resolvers'
+import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import { expose } from 'comlink'
 import { v4 as uuidv4 } from 'uuid'
 
 /*
@@ -71,7 +71,6 @@ export type PackageVersionBuilderWorker = {
   ) => Promise<BranchCache>
   publishPackage: (
     options: PublishOptions,
-    authorization: string,
   ) => Promise<PublishDetails>
 }
 
@@ -176,14 +175,14 @@ const worker: PackageVersionBuilderWorker = {
     updatedFileBranchCache[fileKey] = getFileDataFromCache(fileKey)
     return updatedFileBranchCache
   },
-  publishPackage: async (options, authorization): Promise<PublishDetails> => {
+  publishPackage: async (options): Promise<PublishDetails> => {
     const { packageId: packageKey } = options
     const builderId = uuidv4()
-    const sources = await fetchAllFilesBlob(options.projectId, options.metadata.branchName, authorization)
+    const sources = await fetchAllFilesBlob(options.projectId, options.metadata.branchName)
     const {
       publishId,
       config: buildConfig,
-    } = await startPackageVersionPublication(options, authorization, builderId, sources)
+    } = await startPackageVersionPublication({ ...options, buildType: BUILD_TYPE.BUILD }, builderId, sources)
 
     const abortController = new AbortController()
     const intervalId = setInterval(() => {
@@ -191,7 +190,6 @@ const worker: PackageVersionBuilderWorker = {
         packageKey: packageKey,
         publishKey: publishId,
         status: RUNNING_PUBLISH_STATUS,
-        authorization: authorization,
         builderId: builderId,
         abortController: abortController,
       })
@@ -210,7 +208,6 @@ const worker: PackageVersionBuilderWorker = {
         packageKey: packageKey,
         publishKey: publishId,
         status: publicationStatus,
-        authorization: authorization,
         builderId: builderId,
         abortController: null,
         data: data,
@@ -222,7 +219,6 @@ const worker: PackageVersionBuilderWorker = {
         packageKey: packageKey,
         publishKey: publishId,
         status: publicationStatus,
-        authorization: authorization,
         builderId: builderId,
         abortController: null,
         errors: `${error}`,
@@ -241,7 +237,7 @@ const worker: PackageVersionBuilderWorker = {
 }
 
 async function initializeBuilder(options: BuilderOptions): Promise<BuildResult> {
-  const { packageKey, authorization, branchName } = options
+  const { packageKey, branchName } = options
   const { files, sources: fileSources } = options
 
   if (files && fileSources) {
@@ -257,17 +253,11 @@ async function initializeBuilder(options: BuilderOptions): Promise<BuildResult> 
       bundleComponents: true,
     },
     resolvers: {
-      fileResolver: async (fileId) =>
-        await fetchFileContent(
-          packageKey,
-          branchName!,
-          fileId,
-          authorization,
-        ),
-      versionResolver: await packageVersionResolver(authorization),
-      versionReferencesResolver: await versionReferencesResolver(authorization),
-      versionOperationsResolver: await versionOperationsResolver(authorization),
-      versionDeprecatedResolver: await versionDeprecatedResolver(authorization),
+      fileResolver: async (fileId) => await fetchFileContent(packageKey, branchName!, fileId),
+      versionResolver: await packageVersionResolver(),
+      versionReferencesResolver: await versionReferencesResolver(),
+      versionOperationsResolver: await versionOperationsResolver(),
+      versionDeprecatedResolver: await versionDeprecatedResolver(),
     },
   }, fileSources)
 
@@ -283,7 +273,8 @@ function toPackageVersionBuilderConfig(
     previousPackageKey,
     previousVersionKey,
     versionKey,
-  }: BuilderOptions): BuildConfig {
+  }: BuilderOptions,
+): BuildConfig {
   return {
     packageId: packageKey,
     version: versionKey,
@@ -296,6 +287,7 @@ function toPackageVersionBuilderConfig(
       blobId: blobKey,
       labels: labels,
     })) ?? [],
+    buildType: BUILD_TYPE.BUILD,
   }
 }
 

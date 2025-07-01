@@ -21,15 +21,11 @@ export async function fetchFileContent(
   projectKey: Key,
   branchKey: Key,
   fileKey: Key,
-  authorization: string,
 ): Promise<Blob | null> {
   try {
     return await (await requestBlob(
       `/api/v1/projects/${encodeURIComponent(projectKey)}/branches/${encodeURIComponent(branchKey)}/files/${encodeURIComponent(fileKey)}`,
-      {
-        headers: { authorization },
-        method: 'get',
-      },
+      { method: 'get' },
     )).blob()
   } catch (error) {
     return null

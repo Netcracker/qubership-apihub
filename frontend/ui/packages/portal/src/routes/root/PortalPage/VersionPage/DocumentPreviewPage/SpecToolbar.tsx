@@ -14,29 +14,36 @@
  * limitations under the License.
  */
 
+import { useBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { useShowSuccessNotification } from '@apihub/routes/root/BasePage/Notification'
+import { usePackageVersionContent } from '@apihub/routes/root/usePackageVersionContent'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
+import { Box, IconButton, MenuItem } from '@mui/material'
+import { MenuButton } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
+import { SpecViewToggler } from '@netcracker/qubership-apihub-ui-shared/components/SpecViewToggler'
+import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
+import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
+import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
+import { DETAILED_SCHEMA_VIEW_MODE, SCHEMA_VIEW_MODES } from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
+import { MD_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/utils/files'
+import { isOpenApiSpecType, UNKNOWN_SPEC_TYPE } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import type { FC } from 'react'
 import { memo, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Box, IconButton, MenuItem } from '@mui/material'
-import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
-import { INTERACTIVE_DOC_TYPE, RAW_DOC_TYPE, useDownloadPublishedDocument } from '../useDownloadPublishedDocument'
-import { useDocument } from '../useDocument'
+import { useCopyToClipboard, useLocation } from 'react-use'
+import { useNavigation } from '../../../../NavigationProvider'
 import { PackageBreadcrumbs } from '../../../PackageBreadcrumbs'
 import { usePackage } from '../../../usePackage'
 import { usePackageParamsWithRef } from '../../usePackageParamsWithRef'
-import { useNavigation } from '../../../../NavigationProvider'
-import { useSpecViewMode } from './useSpecViewMode'
+import type { DocumentActionParams } from '../document-actions'
+import { DOCUMENT_MENU_CONFIG_ON_PREVIEW_PAGE, useCreateTemplate } from '../document-actions'
+import { useDocument } from '../useDocument'
+import { useDownloadPublishedDocument } from '../useDownloadPublishedDocument'
+import { useGetSharedKey } from '../VersionDocumentsSubPage/useGetSharedKey'
 import { useSchemaViewMode } from './useSchemaViewMode'
-import { DETAILED_SCHEMA_VIEW_MODE, SCHEMA_VIEW_MODES } from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
-import { useBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
-import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
-import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
-import { isOpenApiSpecType, UNKNOWN_SPEC_TYPE } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
-import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
-import { SpecViewToggler } from '@netcracker/qubership-apihub-ui-shared/components/SpecViewToggler'
-import { MenuButton } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
-import { JSON_FILE_EXTENSION, YAML_FILE_EXTENSION } from '@netcracker/qubership-apihub-ui-shared/utils/files'
+import { useSpecViewMode } from './useSpecViewMode'
 
 export const DOC_SPEC_VIEW_MODE = 'doc'
 export const RAW_SPEC_VIEW_MODE = 'raw'
@@ -49,8 +56,8 @@ export const SpecToolbar: FC = memo(() => {
   const { packageId, versionId, documentId } = useParams()
   const [docPackageKey, docPackageVersionKey] = usePackageParamsWithRef()
   const [packageObject] = usePackage({ packageKey: packageId, showParents: true })
-  const [{ title, type }] = useDocument(docPackageKey, docPackageVersionKey, documentId)
-  const [downloadPublishedFileDoc] = useDownloadPublishedDocument({
+  const [{ title, slug, type, format }] = useDocument(docPackageKey, docPackageVersionKey, documentId)
+  const [downloadPublishedDocument] = useDownloadPublishedDocument({
     slug: documentId!,
     packageKey: docPackageKey,
     versionKey: docPackageVersionKey,
@@ -69,6 +76,40 @@ export const SpecToolbar: FC = memo(() => {
     })
   }, [navigate, backwardLocation, navigateToVersion, packageId, versionId])
 
+  // Action Menu
+
+  const { versionContent } = usePackageVersionContent({ packageKey: packageId, versionKey: versionId })
+
+  const isSharingAvailable = type !== UNKNOWN_SPEC_TYPE || format === MD_FILE_FORMAT
+  const isOpenApiSpecification = isOpenApiSpecType(type)
+
+  const { showExportSettingsDialog } = useEventBus()
+
+  const getSharedKey = useGetSharedKey(slug, docPackageKey, docPackageVersionKey)
+
+  const [, copyToClipboard] = useCopyToClipboard()
+  const showNotification = useShowSuccessNotification()
+
+  const { host, protocol } = useLocation()
+  const createTemplate = useCreateTemplate(protocol, host)
+
+  const actionParams: DocumentActionParams = {
+    packageKey: packageId!,
+    fullVersion: (versionContent ?? {}).version!,
+    refPackageKey: docPackageKey,
+    refFullVersion: docPackageVersionKey,
+    slug: slug,
+    protocol: protocol,
+    host: host,
+    navigateToDocumentPreview: null, // We already on the preview page
+    downloadPublishedDocument: downloadPublishedDocument,
+    showExportSettingsDialog: showExportSettingsDialog,
+    getSharedKey: getSharedKey,
+    copyToClipboard: copyToClipboard,
+    showNotification: showNotification,
+    createTemplate: createTemplate,
+  }
+
   return (
     <Toolbar
       breadcrumbs={
@@ -81,22 +122,22 @@ export const SpecToolbar: FC = memo(() => {
       header={
         <Box sx={{ alignItems: 'center', display: 'flex', gap: '8px' }}>
           <IconButton color="primary" onClick={handleBackClick} data-testid="BackButton">
-            <ArrowBackIcon/>
+            <ArrowBackIcon />
           </IconButton>
-          <ToolbarTitle value={title}/>
+          <ToolbarTitle value={title} />
         </Box>
       }
       action={
         type !== UNKNOWN_SPEC_TYPE && <>
           {specViewMode === DOC_SPEC_VIEW_MODE && (<>
-              {DOC_VIEW_COMPATIBLE_TYPES.includes(type ?? '') && (
-                <Toggler
-                  modes={SCHEMA_VIEW_MODES}
-                  mode={schemaViewMode}
-                  onChange={setSchemaViewMode}
-                />
-              )}
-            </>
+            {DOC_VIEW_COMPATIBLE_TYPES.includes(type ?? '') && (
+              <Toggler
+                modes={SCHEMA_VIEW_MODES}
+                mode={schemaViewMode}
+                onChange={setSchemaViewMode}
+              />
+            )}
+          </>
           )}
           <SpecViewToggler
             mode={specViewMode as SpecViewMode}
@@ -109,61 +150,19 @@ export const SpecToolbar: FC = memo(() => {
           <MenuButton
             variant="outlined"
             title="Export"
-            icon={<KeyboardArrowDownOutlinedIcon/>}
+            icon={<KeyboardArrowDownOutlinedIcon />}
             data-testid="ExportDocumentMenuButton"
           >
-            {isOpenApiSpecType(type) ? (
-              <Box component="div">
-                <MenuItem
-                  onClick={() => downloadPublishedFileDoc({
-                    docType: RAW_DOC_TYPE,
-                    rawOptions: { resultFileExtension: YAML_FILE_EXTENSION, inlineRefs: false },
-                  })}
-                  data-testid="DownloadYamlMenuItem"
-                >
-                  Download as YAML
-                </MenuItem>
-                <MenuItem
-                  onClick={() => downloadPublishedFileDoc({
-                    docType: RAW_DOC_TYPE,
-                    rawOptions: { resultFileExtension: JSON_FILE_EXTENSION, inlineRefs: false },
-                  })}
-                  data-testid="DownloadJsonMenuItem"
-                >
-                  Download as JSON
-                </MenuItem>
-                <MenuItem
-                  onClick={() => downloadPublishedFileDoc({
-                    docType: RAW_DOC_TYPE,
-                    rawOptions: { resultFileExtension: YAML_FILE_EXTENSION, inlineRefs: true },
-                  })}
-                  data-testid="DownloadYamlInlineRefsMenuItem"
-                >
-                  Download as YAML (inline refs)
-                </MenuItem>
-                <MenuItem
-                  onClick={() => downloadPublishedFileDoc({
-                    docType: RAW_DOC_TYPE,
-                    rawOptions: { resultFileExtension: JSON_FILE_EXTENSION, inlineRefs: true },
-                  })}
-                  data-testid="DownloadJsonInlineRefsMenuItem"
-                >
-                  Download as JSON (inline refs)
-                </MenuItem>
-                <MenuItem
-                  onClick={() => downloadPublishedFileDoc({ docType: INTERACTIVE_DOC_TYPE })}
-                  data-testid="InteractiveHtmlMenuItem"
-                >
-                  HTML interactive
-                </MenuItem>
-              </Box>
-            ) : (
+            {DOCUMENT_MENU_CONFIG_ON_PREVIEW_PAGE.map((menuItem) => (
+              menuItem.condition(isOpenApiSpecification, isSharingAvailable) &&
               <MenuItem
-                onClick={() => downloadPublishedFileDoc()}
+                key={menuItem.id}
+                onClick={() => menuItem.action(actionParams)}
+                data-testid={menuItem['data-testid']}
               >
-                Download
+                {menuItem.label}
               </MenuItem>
-            )}
+            ))}
           </MenuButton>
         </>
       }

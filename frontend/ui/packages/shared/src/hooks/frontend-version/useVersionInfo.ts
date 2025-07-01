@@ -15,18 +15,17 @@
  */
 
 import { useQuery } from '@tanstack/react-query'
-import type {
-  SystemInfo,
-  SystemInfoDto} from '@netcracker/qubership-apihub-ui-shared/utils/system-info'
-import {
-  EMPTY_SYSTEM_INFO,
-  getSystemInfoOptions,
-} from '@netcracker/qubership-apihub-ui-shared/utils/system-info'
+import type { AppTypeApiHub, VersionInfo, VersionInfoDto } from '../../utils/version-info'
+import { portal } from '../../utils/version-info'
+import { getVersionInfoOptions } from '../../utils/version-info'
+import * as packageJson from '../../../../portal/package.json'
 
-export function useSystemInfo(): SystemInfo {
-  const { data } = useQuery<SystemInfoDto, Error, SystemInfo>(
-    getSystemInfoOptions(),
+const emptyVersion: VersionInfo = { frontendVersion: packageJson.version, apiProcessorVersion: 'unknown' }
+
+export function useVersionInfo(appType: AppTypeApiHub = portal): VersionInfo {
+  const { data } = useQuery<VersionInfoDto, Error, VersionInfo>(
+    getVersionInfoOptions(appType),
   )
 
-  return data ?? EMPTY_SYSTEM_INFO
+  return data ?? emptyVersion
 }

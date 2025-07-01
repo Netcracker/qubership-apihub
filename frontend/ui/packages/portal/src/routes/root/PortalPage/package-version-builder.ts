@@ -23,7 +23,6 @@ import type { ProjectFile } from '@apihub/entities/project-files'
 export type BuilderOptions = {
   packageKey: Key
   versionKey: Key
-  authorization: string
   previousPackageKey?: Key
   previousVersionKey?: Key
   currentGroup?: Key

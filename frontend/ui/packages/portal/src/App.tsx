@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo, StrictMode, useState } from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { CssBaseline, ThemeProvider } from '@mui/material'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { RouterProvider } from 'react-router-dom'
-import { useLocation } from 'react-use'
-import { isTokenExpired } from '@netcracker/qubership-apihub-ui-shared/entities/token-payload'
-import { getToken } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
-import { useAuthorization } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
-import { theme } from '@netcracker/qubership-apihub-ui-shared/themes/theme'
 import { ErrorHandler } from '@apihub/components/ErrorHandler'
 import { EventBusProvider } from '@apihub/routes/EventBusProvider'
 import { router } from '@apihub/routes/Router'
-import { AuthPage } from '@netcracker/qubership-apihub-ui-shared/pages/AuthPage'
+import { CssBaseline, ThemeProvider } from '@mui/material'
+import { AppPlaceholder } from '@netcracker/qubership-apihub-ui-shared/components/AppPlaceholder'
+import { useUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
+import { useSystemConfiguration } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useSystemConfiguration'
+import { theme } from '@netcracker/qubership-apihub-ui-shared/themes/theme'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import type { FC } from 'react'
+import { memo, StrictMode } from 'react'
+import { RouterProvider } from 'react-router-dom'
 
 const client = new QueryClient({
   defaultOptions: {
@@ -41,24 +39,31 @@ const client = new QueryClient({
   },
 })
 
-export const App: FC = memo(() => {
-  const [auth, setAuth] = useState<boolean>(!isTokenExpired(getToken()))
-  useAuthorization({ setLogin: setAuth })
-  const location = useLocation()
-  const isLoginPage = location.pathname?.startsWith('/login') // This is done for new routing approach, refactor it
+const AppInner: FC = memo(() => {
+  const [systemConfiguration] = useSystemConfiguration()
+  const isLoginPage = location.pathname === '/login'
+  const [user] = useUser(!!systemConfiguration)
 
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <ErrorHandler>
+        <EventBusProvider>
+          {systemConfiguration && (isLoginPage || user)
+            ? <RouterProvider router={router} />
+            : <AppPlaceholder />}
+        </EventBusProvider>
+      </ErrorHandler>
+    </ThemeProvider>
+  )
+})
+
+export const App: FC = memo(() => {
   return (
     <StrictMode>
       <QueryClientProvider client={client}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline/>
-          <ErrorHandler>
-            <EventBusProvider>
-              {auth || isLoginPage ? <RouterProvider router={router}/> : <AuthPage/>}
-            </EventBusProvider>
-          </ErrorHandler>
-        </ThemeProvider>
-        <ReactQueryDevtools initialIsOpen={false}/>
+        <AppInner />
+        <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </StrictMode>
   )

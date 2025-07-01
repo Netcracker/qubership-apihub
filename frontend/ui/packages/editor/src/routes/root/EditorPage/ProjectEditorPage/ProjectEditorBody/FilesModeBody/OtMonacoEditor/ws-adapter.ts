@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-import type { Emitter, Handler } from 'mitt'
-import mitt from 'mitt'
-import type { IPlainTextOperation } from '@otjs/plaintext'
-import { PlainTextOperation } from '@otjs/plaintext'
-import type { ICursor, IDatabaseAdapter, TDatabaseAdapterEventArgs } from '@otjs/plaintext-editor'
-import { DatabaseAdapterEvent } from '@otjs/plaintext-editor'
+import type { UserConnectedEventData } from '@apihub/entities/ws-branch-events'
+import { isUserConnectedEventData, isUserDisconnectedEventData } from '@apihub/entities/ws-branch-events'
 import type {
   DocumentSnapshotEventData,
   UserCursorEventData,
   UserOperationEventData,
 } from '@apihub/entities/ws-file-events'
 import { isUserCursorEventData, isUserOperationEventData } from '@apihub/entities/ws-file-events'
-import type { UserConnectedEventData } from '@apihub/entities/ws-branch-events'
-import { isUserConnectedEventData, isUserDisconnectedEventData } from '@apihub/entities/ws-branch-events'
+import { DEFAULT_USER_NAME } from '@netcracker/qubership-apihub-ui-shared/types/user'
+import type { IPlainTextOperation } from '@otjs/plaintext'
+import { PlainTextOperation } from '@otjs/plaintext'
+import type { ICursor, IDatabaseAdapter, TDatabaseAdapterEventArgs } from '@otjs/plaintext-editor'
+import { DatabaseAdapterEvent } from '@otjs/plaintext-editor'
+import type { Emitter, Handler } from 'mitt'
+import mitt from 'mitt'
 
 export type TWSAdapterConstructionOptions = {
   /** Firebase Database Reference. */
@@ -284,7 +285,7 @@ export class WSAdapter implements IDatabaseAdapter {
   }
 
   protected _handleConnectedUser(parsedData: UserConnectedEventData): void {
-    this._users.set(parsedData.sessionId, { userColor: parsedData.userColor, userName: parsedData.user.name })
+    this._users.set(parsedData.sessionId, { userColor: parsedData.userColor, userName: parsedData.user.name ?? DEFAULT_USER_NAME })
     this._trigger(DatabaseAdapterEvent.CursorChange, {
       clientId: parsedData.sessionId,
       cursor: null,

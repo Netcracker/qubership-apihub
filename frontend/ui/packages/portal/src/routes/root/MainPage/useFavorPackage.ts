@@ -16,12 +16,11 @@
 
 import { useMutation } from '@tanstack/react-query'
 import { useShowErrorNotification, useShowSuccessNotification } from '../BasePage/Notification'
-import { useRefetchPackages } from '../usePackages'
+import { useRefetchAllPackages } from '../usePackages'
 import { useInvalidatePackage } from '../usePackage'
 import { generatePath } from 'react-router-dom'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { MAIN_PAGE_REFERER } from '@netcracker/qubership-apihub-ui-shared/entities/referer-pages-names'
 import { portalRequestVoid } from '@apihub/utils/requests'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 
@@ -30,13 +29,13 @@ type FavorPackage = (packageKey: Key) => void
 export function useFavorPackage(packageKey?: Key, refererPageName?: string, isWorkspace: boolean = false): [FavorPackage, IsLoading, IsSuccess] {
   const showErrorNotification = useShowErrorNotification()
   const showNotification = useShowSuccessNotification()
-  const refetchPackages = useRefetchPackages({ refererPageName: refererPageName ?? MAIN_PAGE_REFERER })
   const invalidatePackage = useInvalidatePackage()
+  const refetchAllPackages = useRefetchAllPackages()
 
   const { mutate, isLoading, isSuccess } = useMutation<void, Error, Key>({
     mutationFn: packageKey => favorPackage(packageKey),
     onSuccess: () => {
-      refetchPackages()
+      refetchAllPackages()
       packageKey && invalidatePackage(packageKey)
       isWorkspace && showNotification({ message: 'List of workspaces successfully updated' })
     },

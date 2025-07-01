@@ -16,18 +16,18 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
+import type { BranchConfig } from '@apihub/entities/branches'
+import { editorRequestVoid } from '@apihub/utils/requests'
+import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
+import { onMutationUnauthorized } from '@netcracker/qubership-apihub-ui-shared/utils/security'
 import { useParams } from 'react-router-dom'
 import { useBranchSearchParam } from '../../useBranchSearchParam'
+import { VERSION_CANDIDATE } from './consts'
 import { PackageVersionBuilder } from './package-version-builder'
 import { useAllBranchFiles } from './useBranchCache'
 import { BRANCH_CONFIG_QUERY_KEY } from './useBranchConfig'
-import { VERSION_CANDIDATE } from './consts'
-import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import type { BranchConfig } from '@apihub/entities/branches'
-import { getAuthorization } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
-import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
-import { editorRequestVoid } from '@apihub/utils/requests'
-import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 
 export function useUpdateProjectFileMeta(): [UpdateProjectFileMeta, IsLoading] {
   const { projectId } = useParams()
@@ -47,11 +47,13 @@ export function useUpdateProjectFileMeta(): [UpdateProjectFileMeta, IsLoading] {
         versionKey: VERSION_CANDIDATE,
         previousVersionKey: '',
         previousPackageKey: projectId!,
-        authorization: getAuthorization(),
         branchName: branchName!,
         files: files,
         sources: branchFiles,
       }, meta.key)
+    },
+    onError: (error: Error, variables: FileMeta, context: unknown) => {
+      onMutationUnauthorized<void, Error, FileMeta>(mutate)(error, variables, context)
     },
   })
 

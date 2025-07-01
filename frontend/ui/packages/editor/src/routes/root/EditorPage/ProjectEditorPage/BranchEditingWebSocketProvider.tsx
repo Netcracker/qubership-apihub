@@ -18,20 +18,14 @@ import type { FC, PropsWithChildren } from 'react'
 import { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useEffectOnce, useInterval, useLocation } from 'react-use'
 
-import { useParams } from 'react-router-dom'
+import type { ChangeType } from '@apihub/entities/branches'
 import {
-  toBranchConfig,
-  useUpdateBranchConfig,
-  useUpdateChangeStatusInBranchConfig,
-  useUpdateEditorsInBranchConfig,
-  useUpdateFilesInBranchConfig,
-  useUpdateRefsInBranchConfig,
-} from './useBranchConfig'
-import { useBranchSearchParam } from '../../useBranchSearchParam'
-import { useShowInfoNotification } from '../../BasePage/Notification'
-import { useBranchConflicts } from './useBranchConflicts'
-import { useUpdateBranchCache, useUpdateExistingFileInBranchCache } from './useBranchCache'
-import { useAuthorization } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
+  ADDED_CHANGE_TYPE,
+  DELETED_CHANGE_TYPE,
+  NONE_CHANGE_TYPE,
+  UPDATED_CHANGE_TYPE,
+} from '@apihub/entities/branches'
+import { ADD_OPERATION, PATCH_OPERATION, REMOVE_OPERATION } from '@apihub/entities/operations'
 import type {
   BranchConfigSnapshotEventData,
   BranchConfigUpdatedEventData,
@@ -57,15 +51,6 @@ import {
   isUserConnectedEventData,
   isUserDisconnectedEventData,
 } from '@apihub/entities/ws-branch-events'
-import { toUser } from '@netcracker/qubership-apihub-ui-shared/types/user'
-import type { ChangeType } from '@apihub/entities/branches'
-import {
-  ADDED_CHANGE_TYPE,
-  DELETED_CHANGE_TYPE,
-  NONE_CHANGE_TYPE,
-  UPDATED_CHANGE_TYPE,
-} from '@apihub/entities/branches'
-import { ADD_OPERATION, PATCH_OPERATION, REMOVE_OPERATION } from '@apihub/entities/operations'
 import type { ChangeStatus } from '@netcracker/qubership-apihub-ui-shared/entities/change-statuses'
 import {
   ADDED_CHANGE_STATUS,
@@ -76,18 +61,32 @@ import {
   MOVED_CHANGE_STATUS,
   UNMODIFIED_CHANGE_STATUS,
 } from '@netcracker/qubership-apihub-ui-shared/entities/change-statuses'
+import { useUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useUser'
+import { toUser } from '@netcracker/qubership-apihub-ui-shared/types/user'
 import {
   DEFAULT_RECONNECT_INTERVAL,
   isSocketClosed,
   NORMAL_CLOSURE_CODE,
 } from '@netcracker/qubership-apihub-ui-shared/utils/sockets'
-import { getToken } from '@netcracker/qubership-apihub-ui-shared/utils/storages'
+import { useParams } from 'react-router-dom'
+import { useShowInfoNotification } from '../../BasePage/Notification'
+import { useBranchSearchParam } from '../../useBranchSearchParam'
+import { useUpdateBranchCache, useUpdateExistingFileInBranchCache } from './useBranchCache'
+import {
+  toBranchConfig,
+  useUpdateBranchConfig,
+  useUpdateChangeStatusInBranchConfig,
+  useUpdateEditorsInBranchConfig,
+  useUpdateFilesInBranchConfig,
+  useUpdateRefsInBranchConfig,
+} from './useBranchConfig'
+import { useBranchConflicts } from './useBranchConflicts'
 
 export const BranchEditingWebSocketProvider: FC<PropsWithChildren> = memo<PropsWithChildren>(({ children }) => {
   const { projectId } = useParams()
   const [branch] = useBranchSearchParam()
   const { host, protocol } = useLocation()
-  const [authorization] = useAuthorization()
+  const [user] = useUser()
 
   const [connectedUsersData, setConnectedUsersData] = useState<UserConnectedEventData[]>([])
 
@@ -117,7 +116,7 @@ export const BranchEditingWebSocketProvider: FC<PropsWithChildren> = memo<PropsW
       const eventData = JSON.parse(data)
       const { userId } = eventData
       const username = userId ? connectedUsers.find(({ key }) => key === userId)?.name : ''
-      const isNotCurrentUser = authorization?.user.key !== userId
+      const isNotCurrentUser = user?.key !== userId
 
       if (isUserConnectedEventData(eventData)) {
         setConnectedUsersData(prevState => [...prevState, eventData])
@@ -192,15 +191,16 @@ export const BranchEditingWebSocketProvider: FC<PropsWithChildren> = memo<PropsW
         getBranchConflicts()
       }
     }
-  }, [connectedUsers, authorization?.user.key, updateEditorsInBranchConfig, showNotification, getBranchConflicts, updateBranchConfig, updateChangeTypeInBranchConfig, updateFilesInBranchConfig, updateBranchCache, updateExistingFileInBranchCache, updateRefsInBranchConfig, branch])
+  }, [connectedUsers, user?.key, updateEditorsInBranchConfig, showNotification, getBranchConflicts, updateBranchConfig, updateChangeTypeInBranchConfig, updateFilesInBranchConfig, updateBranchCache, updateExistingFileInBranchCache, updateRefsInBranchConfig, branch])
 
   const openWebsocket = useCallback(
     () => {
       if (isSocketClosed(websocket.current)) {
         setConnecting(true)
 
+        // TODO 05.05.2025 // Token in WebSocket URI
         websocket.current = new WebSocket(
-          `${protocol === 'https:' ? 'wss:' : 'ws:'}//${host}/ws/v1/projects/${encodeURIComponent(projectId!)}/branches/${encodeURIComponent(branch!)}?token=${getToken()}`,
+          `${protocol === 'https:' ? 'wss:' : 'ws:'}//${host}/ws/v1/projects/${encodeURIComponent(projectId!)}/branches/${encodeURIComponent(branch!)}`,
         )
 
         websocket.current.onopen = () => {

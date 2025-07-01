@@ -15,7 +15,6 @@
  */
 
 import type { FC, MouseEvent, ReactNode } from 'react'
-import * as React from 'react'
 import { memo, useRef, useState } from 'react'
 import type { ButtonProps, MenuProps } from '@mui/material'
 import { Button, CircularProgress, Menu } from '@mui/material'

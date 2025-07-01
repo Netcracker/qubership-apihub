@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 // eslint-disable-next-line filenames/no-index
-export type { AuthorizationOptions, Credentials, LoginUser } from './useAuthorization'
-export { DEFAULT_AUTHORIZATION_DEBOUNCE, useAuthorization } from './useAuthorization'
+export { useLogoutUser } from './useLogoutUser'
+export { useUser } from './useUser'

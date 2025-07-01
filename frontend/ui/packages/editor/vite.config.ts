@@ -26,9 +26,8 @@ import { VitePluginFonts } from 'vite-plugin-fonts'
 import { visualizer as bundleVisualizer } from 'rollup-plugin-visualizer'
 import monacoWorkerHashPlugin from '../../vite-monaco-worker-hash'
 
-const proxyServer = ''
+const proxyServer = 'http://host.docker.internal:8081'
 const devServer = 'http://localhost:3004'
-const userView = ''
 
 export default defineConfig(({ mode }) => {
   const isProxyMode = mode === 'proxy'
@@ -118,9 +117,14 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      port: 8000,
-      open: `/login?userView=${userView}`,
+      open: '/login',
       proxy: {
+        '/login/gitlab': {
+          target: isProxyMode ? `${proxyServer}/login/gitlab` : devServer,
+          rewrite: isProxyMode ? path => path.replace(/^\/login\/gitlab/, '') : undefined,
+          changeOrigin: true,
+          secure: false,
+        },
         '/api': {
           target: isProxyMode ? `${proxyServer}/api` : devServer,
           rewrite: isProxyMode ? path => path.replace(/^\/api/, '') : undefined,

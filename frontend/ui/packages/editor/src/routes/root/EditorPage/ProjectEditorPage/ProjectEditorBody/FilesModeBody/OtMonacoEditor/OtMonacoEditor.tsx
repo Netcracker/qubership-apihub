@@ -27,7 +27,6 @@ import { useOtMonaco } from './useOtMonaco'
 import { WSMonacoEditor } from './ws-monaco'
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import type { SpecItemUri } from '@netcracker/qubership-apihub-ui-shared/utils/specifications'
-import { useAuthorization } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
 import type { DocumentSnapshotEventData } from '@apihub/entities/ws-file-events'
 import type { FileProblem } from '@apihub/entities/file-problems'
 import {
@@ -38,6 +37,7 @@ import {
 } from '../../../FileEditingWebSocketProvider'
 import { useFileSearchParam } from '../../../../../useFileSearchParam'
 import type { LanguageType } from '@netcracker/qubership-apihub-ui-shared/types/languages'
+import { useUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useUser'
 
 export type OtMonacoEditorProps = {
   initialDocument: DocumentSnapshotEventData
@@ -72,7 +72,7 @@ const OtMonacoEditor: FC<OtMonacoEditorProps> = memo<OtMonacoEditorProps>(({
   const cursors = useUserCursors()
   const connectedUsers = useConnectedUsers()
 
-  const [authorization] = useAuthorization()
+  const [user] = useUser()
 
   const websocket = useFileEditingWebSocket()
 
@@ -80,7 +80,7 @@ const OtMonacoEditor: FC<OtMonacoEditorProps> = memo<OtMonacoEditorProps>(({
 
   useEffect(() => {
     if (editor && fileId && websocket) {
-      const { key = '', name = '' } = authorization?.user ?? {}
+      const { key = '', name = '' } = user ?? {}
 
       const wsMonacoEditor = new WSMonacoEditor(
         {
@@ -101,7 +101,7 @@ const OtMonacoEditor: FC<OtMonacoEditorProps> = memo<OtMonacoEditorProps>(({
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authorization?.user, editor, readonly, initialDocument, websocket])
+  }, [user, editor, readonly, initialDocument, websocket])
 
   useEffect(() => {
     editor?.updateOptions({ readOnly: readonly || connecting })

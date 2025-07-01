@@ -22,14 +22,12 @@ import React from 'react'
 class PlaygroundHTMLElement extends HTMLElement {
   document?: string
   customServers?: string
-  token?: string
   origin?: string
 }
 
 export type PlaygroundElementProps = Partial<{
   document: string
   customServers: string
-  token: string
   origin: string
 }>
 

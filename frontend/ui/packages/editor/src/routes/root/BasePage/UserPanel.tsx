@@ -14,24 +14,27 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo } from 'react'
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import { Avatar, IconButton, MenuItem } from '@mui/material'
-import { useAuthorization } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
-import { UserAvatar } from '@netcracker/qubership-apihub-ui-shared/components/Users/UserAvatar'
 import { MenuButton } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
+import { UserAvatar } from '@netcracker/qubership-apihub-ui-shared/components/Users/UserAvatar'
+import { useLogoutUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
+import { useUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useUser'
+import { redirectToLogin } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
+import type { FC } from 'react'
+import { memo } from 'react'
 
 export const UserPanel: FC = memo(() => {
-  const [authorization, , removeAuthorization] = useAuthorization()
+  const [user] = useUser()
+  const [logout] = useLogoutUser()
 
   return (
     <>
       <IconButton data-testid="AppUserAvatar" size="large" color="inherit">
         {
-          authorization?.user.avatarUrl
-            ? <Avatar src={authorization.user.avatarUrl}/>
-            : <UserAvatar size="medium" name={authorization?.user.name ?? ''}/>
+          user?.avatarUrl
+            ? <Avatar src={user.avatarUrl} />
+            : <UserAvatar size="medium" name={user?.name ?? ''} />
         }
       </IconButton>
 
@@ -39,15 +42,15 @@ export const UserPanel: FC = memo(() => {
         sx={{ p: 0 }}
         variant="text"
         color="inherit"
-        title={authorization?.user.name ?? ''}
-        icon={<KeyboardArrowDownOutlinedIcon/>}
+        title={user?.name ?? ''}
+        icon={<KeyboardArrowDownOutlinedIcon />}
         data-testid="UserMenuButton"
       >
         <MenuItem
           data-testid="LogoutMenuItem"
           onClick={() => {
-            removeAuthorization()
-            location.replace(`${location.origin}/login?redirectUri=${encodeURIComponent(location.href)}`)
+            logout()
+            redirectToLogin()
           }}
         >
           Logout
