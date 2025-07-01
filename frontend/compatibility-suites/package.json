@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "postinstall": "node bin/generate-suite-service.js",
-    "build": "vite build",
+    "build": "node bin/generate-suite-service.js && vite build",
     "development:link": "npm link",
     "development:unlink": "npm unlink",
     "feature-start": "feature-start --featureName",
