@@ -1,5 +1,8 @@
 # IDEs
 /.vscode/
+/.cursor/
+/.trae/
+/.junie/
 /.idea/
 !/.idea/icon.png
 *.iml
