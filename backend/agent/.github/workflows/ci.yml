@@ -25,6 +25,10 @@ on:
       - 'docs/**'
     types: [opened, reopened, synchronize]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build-docker-image:
     uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@main
