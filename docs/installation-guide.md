@@ -112,6 +112,7 @@ APIHUB_ACCESS_TOKEN=${any string}
 | REVISIONS\_TTL\_DAYS | No | 365 | 180 | Number of days to keep revisions before cleanup. |
 | REVISIONS\_CLEANUP\_DELETE\_LAST\_REVISION | No | false | true | If set to true, the revisions cleanup job will delete the last revision of the version. Otherwise, such revisions are skipped. |
 | REVISIONS\_CLEANUP\_DELETE\_RELEASE\_REVISIONS | No | false | true | If set to true, the revisions cleanup job will delete revisions with a 'release' status. Otherwise, such revisions are skipped. |
+| COMPARISONS\_TTL\_DAYS | No | 30 | 180 | umber of days to keep ad-hoc comparisons before cleanup. |
 
 | Deploy Parameter name | Mandatory | Default Value | Example | Description |
 | --- | --- | --- | --- | --- |
