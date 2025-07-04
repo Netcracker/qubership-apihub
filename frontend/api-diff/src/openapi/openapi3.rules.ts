@@ -73,15 +73,25 @@ import { encodingParamsCalculator } from './openapi3.description.encoding'
 const documentAnnotationRule: CompareRules = { $: allAnnotation }
 const operationAnnotationRule: CompareRules = { $: allAnnotation }
 
+
+/***
+ * Keep consistent ordering for the rules:
+ * - classify rule ($) for the node itself first
+ * - other rules for the node itself in rule-key alphabetical order
+ * - rules for children
+ *   - for specific child keys (in alphabetical order)
+ *   - prefix rules
+ *   - local rules ('/*')
+ *   - global rules ('/**')
+ * The only exception is top-level structure of OpenAPI Object where specific key are in the natural order from the specification.
+***/
+
 export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
   const requestSchemaRules = openApiSchemaRules(options)
   const responseSchemaRules = openApiSchemaRules({ ...options, response: true })
 
   const serversRules: CompareRules = {
     $: allAnnotation,
-    '/**': {
-      $: allAnnotation,
-    },
     '/*': {
       '/variables': {
         '/*': {
@@ -92,6 +102,9 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
         },
       },
     },
+    '/**': {
+      $: allAnnotation,
+    },
   }
 
   const examplesRules: CompareRules = {
@@ -100,15 +113,15 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
       $: allAnnotation,
       description: diffDescription(`[{{${TEMPLATE_PARAM_ACTION}}}] example '{{${GREP_TEMPLATE_PARAM_EXAMPLE_NAME}}}'`),
       descriptionParamCalculator: examplesParamsCalculator,
-      '/summary': {
-        $: allAnnotation,
-        description: diffDescription(resolveExamplesDescriptionTemplates()),
-      },
       '/description': {
         $: allAnnotation,
         description: diffDescription(resolveExamplesDescriptionTemplates()),
       },
       '/externalValue': {
+        $: allAnnotation,
+        description: diffDescription(resolveExamplesDescriptionTemplates()),
+      },
+      '/summary': {
         $: allAnnotation,
         description: diffDescription(resolveExamplesDescriptionTemplates()),
       },
@@ -126,50 +139,26 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
 
   const parametersRules: CompareRules = {
     '/*': {
-      [START_NEW_COMPARE_SCOPE_RULE]: COMPARE_SCOPE_REQUEST,
-      [IGNORE_DIFFERENCE_IN_KEYS_RULE]: true,
+      $: paramClassifyRule,
       description: diffDescription([`[{{${TEMPLATE_PARAM_ACTION}}}] {{${TEMPLATE_PARAM_PARAMETER_LOCATION}}} parameter '{{${GREP_TEMPLATE_PARAM_PARAMETER_NAME}}}'`]),
       descriptionParamCalculator: parameterParamsCalculator,
-      $: paramClassifyRule,
-      '/name': {
-        $: parameterNameClassifyRule,
-        description: diffDescription(`[{{${TEMPLATE_PARAM_ACTION}}}] {{${TEMPLATE_PARAM_PARAMETER_LOCATION}}} parameter '{{${GREP_TEMPLATE_PARAM_PARAMETER_NAME}}}'`),
-      },
-      '/in': {
-        $: [nonBreaking, breaking, breaking],
-        description: diffDescription(`[{{${TEMPLATE_PARAM_ACTION}}}] {{${TEMPLATE_PARAM_PARAMETER_LOCATION}}} parameter '{{${GREP_TEMPLATE_PARAM_PARAMETER_NAME}}}'`),
-      },
-      '/schema': () => ({
-        ...requestSchemaRules,
-        $: allBreaking,
-      }),
-      '/description': {
-        $: allAnnotation,
-        description: diffDescription(resolveParameterDescriptionTemplates('description'))
-      },
-      '/required': {
-        $: parameterRequiredClassifyRule,
-        description: diffDescription(resolveParameterDescriptionTemplates('required status'))
-      },
-      '/deprecated': {
-        $: allDeprecated,
-        description: diffDescription(resolveParameterDescriptionTemplates('deprecated status'))
-      },
-      '/style': {
-        $: allBreaking,
-        description: diffDescription(resolveParameterDescriptionTemplates('delimited style'))
-      },
-      '/explode': {
-        $: parameterExplodeClassifyRule,
-        description: diffDescription(resolveParameterDescriptionTemplates('explode status'))
+      [IGNORE_DIFFERENCE_IN_KEYS_RULE]: true,
+      [START_NEW_COMPARE_SCOPE_RULE]: COMPARE_SCOPE_REQUEST,
+      '/allowEmptyValue': {
+        $: apihubAllowEmptyValueParameterClassifyRule,
+        description: diffDescription(resolveParameterDescriptionTemplates('allowEmptyValue status'))
       },
       '/allowReserved': {
         $: parameterAllowReservedClassifyRule,
         description: diffDescription(resolveParameterDescriptionTemplates('allowReserved status'))
       },
-      '/allowEmptyValue': {
-        $: apihubAllowEmptyValueParameterClassifyRule,
-        description: diffDescription(resolveParameterDescriptionTemplates('allowEmptyValue status'))
+      '/deprecated': {
+        $: allDeprecated,
+        description: diffDescription(resolveParameterDescriptionTemplates('deprecated status'))
+      },
+      '/description': {
+        $: allAnnotation,
+        description: diffDescription(resolveParameterDescriptionTemplates('description'))
       },
       '/example': {
         $: allAnnotation,
@@ -179,7 +168,31 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
           description: diffDescription(resolveParameterDescriptionTemplates())
         }
       },
-      '/examples': examplesRules
+      '/examples': examplesRules,
+      '/explode': {
+        $: parameterExplodeClassifyRule,
+        description: diffDescription(resolveParameterDescriptionTemplates('explode status'))
+      },
+      '/in': {
+        $: [nonBreaking, breaking, breaking],
+        description: diffDescription(`[{{${TEMPLATE_PARAM_ACTION}}}] {{${TEMPLATE_PARAM_PARAMETER_LOCATION}}} parameter '{{${GREP_TEMPLATE_PARAM_PARAMETER_NAME}}}'`),
+      },
+      '/name': {
+        $: parameterNameClassifyRule,
+        description: diffDescription(`[{{${TEMPLATE_PARAM_ACTION}}}] {{${TEMPLATE_PARAM_PARAMETER_LOCATION}}} parameter '{{${GREP_TEMPLATE_PARAM_PARAMETER_NAME}}}'`),
+      },      
+      '/required': {
+        $: parameterRequiredClassifyRule,
+        description: diffDescription(resolveParameterDescriptionTemplates('required status'))
+      },
+      '/schema': () => ({
+        $: allBreaking,
+        ...requestSchemaRules,        
+      }),
+      '/style': {
+        $: allBreaking,
+        description: diffDescription(resolveParameterDescriptionTemplates('delimited style'))
+      },
     },
   }
 
@@ -189,33 +202,21 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
       $: [nonBreaking, breaking, breaking],
       description: diffDescription(`[{{${TEMPLATE_PARAM_ACTION}}}] header '{{${GREP_TEMPLATE_PARAM_HEADER_NAME}}}'`),
       descriptionParamCalculator: headerParamsCalculator,
-      '/description': {
-        $: allAnnotation,
-        description: diffDescription(resolveHeaderDescriptionTemplates('description')),
+      '/allowEmptyValue': {
+        $: allUnclassified,
+        description: diffDescription(resolveHeaderDescriptionTemplates('allowEmptyValue status')),
       },
-      '/required': {
-        $: [breaking, nonBreaking, breakingIfAfterTrue],
-        description: diffDescription(resolveHeaderDescriptionTemplates('required status')),
+      '/allowReserved': {
+        $: allUnclassified,
+        description: diffDescription(resolveHeaderDescriptionTemplates('allowReserved status')),
       },
       '/deprecated': {
         $: allDeprecated,
         description: diffDescription(resolveHeaderDescriptionTemplates('deprecated status')),
       },
-      '/allowEmptyValue': {
-        $: allUnclassified,
-        description: diffDescription(resolveHeaderDescriptionTemplates('allowEmptyValue status')),
-      },
-      '/style': {
-        $: allUnclassified,
-        description: diffDescription(resolveHeaderDescriptionTemplates('delimited style')),
-      },
-      '/explode': {
-        $: allUnclassified,
-        description: diffDescription(resolveHeaderDescriptionTemplates('explode status')),
-      },
-      '/allowReserved': {
-        $: allUnclassified,
-        description: diffDescription(resolveHeaderDescriptionTemplates('allowReserved status')),
+      '/description': {
+        $: allAnnotation,
+        description: diffDescription(resolveHeaderDescriptionTemplates('description')),
       },
       '/example': {
         $: allUnclassified,
@@ -226,10 +227,22 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
         }
       },
       '/examples': examplesRules,
+      '/explode': {
+        $: allUnclassified,
+        description: diffDescription(resolveHeaderDescriptionTemplates('explode status')),
+      },      
+      '/required': {
+        $: [breaking, nonBreaking, breakingIfAfterTrue],
+        description: diffDescription(resolveHeaderDescriptionTemplates('required status')),
+      },      
       '/schema': ({ path }) => ({
         $: allBreaking,
         ...isResponseSchema(path) ? responseSchemaRules : requestSchemaRules,
       }),
+      '/style': {
+        $: allUnclassified,
+        description: diffDescription(resolveHeaderDescriptionTemplates('delimited style')),
+      },
     },
   }
 
@@ -238,12 +251,11 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
     descriptionParamCalculator: encodingParamsCalculator,
     '/*': {
       description: diffDescription(resolveEncodingDescriptionTemplates()),
-      '/contentType': {
+      '/allowReserved': {
         $: [nonBreaking, breaking, breaking],
         description: diffDescription(resolveEncodingDescriptionTemplates())
       },
-      '/headers': headersRules,
-      '/style': {
+      '/contentType': {
         $: [nonBreaking, breaking, breaking],
         description: diffDescription(resolveEncodingDescriptionTemplates())
       },
@@ -251,7 +263,8 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
         $: [nonBreaking, breaking, breaking],
         description: diffDescription(resolveEncodingDescriptionTemplates())
       },
-      '/allowReserved': {
+      '/headers': headersRules,
+      '/style': {
         $: [nonBreaking, breaking, breaking],
         description: diffDescription(resolveEncodingDescriptionTemplates())
       },
@@ -269,10 +282,7 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
         `[{{${TEMPLATE_PARAM_ACTION}}}] '{{${GREP_TEMPLATE_PARAM_MEDIA_TYPE}}}' media type {{${TEMPLATE_PARAM_PREPOSITION}}} {{${TEMPLATE_PARAM_SCOPE}}}`,
       ]),
       descriptionParamCalculator: contentParamsCalculator,
-      '/schema': ({ path }) => ({
-        $: allBreaking,
-        ...isResponseSchema(path) ? responseSchemaRules : requestSchemaRules,
-      }),
+      '/encoding': encodingRules,
       '/example': {
         $: allAnnotation,
         description: diffDescription([
@@ -290,15 +300,19 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
         }
       },
       '/examples': examplesRules,
-      '/encoding': encodingRules,
+      '/schema': ({ path }) => ({
+        $: allBreaking,
+        ...isResponseSchema(path) ? responseSchemaRules : requestSchemaRules,
+      }),
     },
   }
 
   const requestBodiesRules: CompareRules = {
-    [START_NEW_COMPARE_SCOPE_RULE]: COMPARE_SCOPE_REQUEST,
     $: [nonBreaking, breaking, breaking],
     description: diffDescription(`[{{${TEMPLATE_PARAM_ACTION}}}] request body`),
     descriptionParamCalculator: requestParamsCalculator,
+    [START_NEW_COMPARE_SCOPE_RULE]: COMPARE_SCOPE_REQUEST,    
+    '/content': contentRules,
     '/description': {
       $: allAnnotation,
       description: diffDescription(resolveRequestDescriptionTemplates('description'))
@@ -307,7 +321,6 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
       $: [breaking, nonBreaking, breakingIfAfterTrue],
       description: diffDescription(resolveRequestDescriptionTemplates('required status'))
     },
-    '/content': contentRules,
   }
 
   const responsesRules: CompareRules = {
@@ -315,9 +328,10 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
     [START_NEW_COMPARE_SCOPE_RULE]: COMPARE_SCOPE_RESPONSE,
     mapping: apihubCaseInsensitiveKeyMappingResolver,
     '/*': {
-      description: diffDescription(`[{{${TEMPLATE_PARAM_ACTION}}}] response '{{${GREP_TEMPLATE_PARAM_RESPONSE_NAME}}}'`),
-      descriptionParamCalculator: responseParamsCalculator,
       $: [nonBreaking, breaking, (ctx) => nonBreakingIf(ctx.before.key.toString().toLocaleLowerCase() === ctx.after.key.toString().toLocaleLowerCase())],
+      description: diffDescription(`[{{${TEMPLATE_PARAM_ACTION}}}] response '{{${GREP_TEMPLATE_PARAM_RESPONSE_NAME}}}'`),
+      descriptionParamCalculator: responseParamsCalculator,      
+      '/content': contentRules,
       '/description': {
         $: allAnnotation,
         description: diffDescription([
@@ -325,8 +339,92 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
           `[{{${TEMPLATE_PARAM_ACTION}}}] description {{${TEMPLATE_PARAM_PREPOSITION}}} response '{{${GREP_TEMPLATE_PARAM_RESPONSE_NAME}}}'`
         ]),
       },
-      '/headers': headersRules,
-      '/content': contentRules,
+      '/headers': headersRules,      
+    },
+  }
+
+  const operationRule: CompareRules = {
+    $: [nonBreaking, breaking, unclassified],
+    '/callbacks': {
+      '/*': {
+        //no support?
+      },
+    },
+    '/externalDocs': {
+      $: allAnnotation,
+      '/*': { $: allAnnotation },
+    },
+    '/deprecated': { $: allDeprecated },
+    '/parameters': {
+      $: [nonBreaking, apihubParametersRemovalClassifyRule, breaking],
+      mapping: paramMappingResolver(2),
+      ...parametersRules,
+    },
+    '/requestBody': requestBodiesRules,    
+    '/responses': responsesRules,    
+    '/security': {
+      $: operationSecurityClassifyRule,
+      '/*': {
+        $: operationSecurityItemClassifyRule,
+        '/*': {
+          $: allBreaking,
+          mapping: deepEqualsUniqueItemsArrayMappingResolver,
+          '/*': {
+            $: [breaking, nonBreaking, breaking],
+            ignoreKeyDifference: true,
+          },
+        },
+      },
+    },
+    '/servers': serversRules,
+    '/tags': {
+      ...operationAnnotationRule,
+      mapping: deepEqualsUniqueItemsArrayMappingResolver,
+      '/*': {
+        ...operationAnnotationRule,
+        [IGNORE_DIFFERENCE_IN_KEYS_RULE]: true,
+      },
+    },
+    '/*': operationAnnotationRule,
+  }
+
+  const componentsRule: CompareRules = {
+    $: allNonBreaking,
+    [START_NEW_COMPARE_SCOPE_RULE]: COMPARE_SCOPE_COMPONENTS,
+    '/examples': examplesRules,
+    '/headers': headersRules,
+    '/parameters': {
+      $: [nonBreaking, breaking, breaking],
+      '/*': parametersRules,
+    },    
+    '/requestBodies': {
+      $: [nonBreaking, breaking, breaking],
+      '/*': requestBodiesRules,
+    },
+    '/responses': {
+      $: [nonBreaking, breaking, breaking],
+      '/*': responsesRules,
+    },
+    '/schemas': {
+      $: [nonBreaking, breaking, breaking],
+      '/*': () => ({
+        $: allUnclassified,/*for mode One operation*/
+        ...requestSchemaRules,
+      }),
+    },
+    '/securitySchemes': {
+      $: [breaking, nonBreaking, breaking],
+      '/*': {
+        $: [breaking, nonBreaking, breaking],
+        '/bearerFormat': { $: allAnnotation },
+        '/description': { $: allAnnotation },
+        '/flows': { $: [breaking, nonBreaking, breaking] },
+        '/in': { $: [breaking, nonBreaking, breaking] },
+        '/name': { $: [breaking, nonBreaking, breaking] },
+        '/openIdConnectUrl': { $: allAnnotation },
+        '/scheme': { $: [breaking, nonBreaking, breaking] },
+        '/type': { $: [breaking, nonBreaking, breaking] },
+      },
     },
   }
 
@@ -343,99 +441,18 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
       '/*': {
         $: pathChangeClassifyRule,
         mapping: options.mode === COMPARE_MODE_OPERATION ? singleOperationPathMappingResolver : pathMappingResolver,
-        '/summary': { $: allAnnotation },
         '/description': { $: allAnnotation },
-        '/*': {
-          $: [nonBreaking, breaking, unclassified],
-          '/*': operationAnnotationRule,
-          '/tags': {
-            ...operationAnnotationRule,
-            mapping: deepEqualsUniqueItemsArrayMappingResolver,
-            '/*': {
-              ...operationAnnotationRule,
-              [IGNORE_DIFFERENCE_IN_KEYS_RULE]: true,
-            },
-          },
-          '/parameters': {
-            ...parametersRules,
-            $: [nonBreaking, apihubParametersRemovalClassifyRule, breaking],
-            mapping: paramMappingResolver(2),
-          },
-          '/requestBody': requestBodiesRules,
-          '/callbacks': {
-            '/*': {
-              //no support?
-            },
-          },
-          '/responses': responsesRules,
-          '/deprecated': { $: allDeprecated },
-          '/security': {
-            $: operationSecurityClassifyRule,
-            '/*': {
-              $: operationSecurityItemClassifyRule,
-              '/*': {
-                $: allBreaking,
-                mapping: deepEqualsUniqueItemsArrayMappingResolver,
-                '/*': {
-                  $: [breaking, nonBreaking, breaking],
-                  ignoreKeyDifference: true,
-                },
-              },
-            },
-          },
-          '/servers': serversRules,
-          '/externalDocs': {
-            $: allAnnotation,
-            '/*': { $: allAnnotation },
-          },
-        },
-        '/servers': serversRules,
         '/parameters': {
-          ...parametersRules,
           $: [nonBreaking, breaking, breaking],
           mapping: paramMappingResolver(1),
+          ...parametersRules,          
         },
+        '/servers': serversRules,
+        '/summary': { $: allAnnotation },        
+        '/*': operationRule,
       },
     },
-    '/components': {
-      $: allNonBreaking,
-      [START_NEW_COMPARE_SCOPE_RULE]: COMPARE_SCOPE_COMPONENTS,
-      '/schemas': {
-        $: [nonBreaking, breaking, breaking],
-        '/*': () => ({
-          ...requestSchemaRules,
-          $: allUnclassified,/*for mode One operation*/
-        }),
-      },
-      '/responses': {
-        $: [nonBreaking, breaking, breaking],
-        '/*': responsesRules,
-      },
-      '/parameters': {
-        $: [nonBreaking, breaking, breaking],
-        '/*': parametersRules,
-      },
-      '/examples': examplesRules,
-      '/requestBodies': {
-        $: [nonBreaking, breaking, breaking],
-        '/*': requestBodiesRules,
-      },
-      '/headers': headersRules,
-      '/securitySchemes': {
-        $: [breaking, nonBreaking, breaking],
-        '/*': {
-          $: [breaking, nonBreaking, breaking],
-          '/type': { $: [breaking, nonBreaking, breaking] },
-          '/description': { $: allAnnotation },
-          '/name': { $: [breaking, nonBreaking, breaking] },
-          '/in': { $: [breaking, nonBreaking, breaking] },
-          '/scheme': { $: [breaking, nonBreaking, breaking] },
-          '/bearerFormat': { $: allAnnotation },
-          '/flows': { $: [breaking, nonBreaking, breaking] },
-          '/openIdConnectUrl': { $: allAnnotation },
-        },
-      },
-    },
+    '/components': componentsRule,
     '/security': {
       $: globalSecurityClassifyRule,
       '/*': { $: globalSecurityItemClassifyRule },
