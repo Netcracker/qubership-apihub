@@ -10,7 +10,7 @@ require (
 	github.com/coreos/go-oidc/v3 v3.14.1
 	github.com/crewjam/saml v0.4.13
 	github.com/go-ldap/ldap v3.0.3+incompatible
-	github.com/go-pg/pg/v10 v10.10.6
+	github.com/go-pg/pg/v10 v10.14.0
 	github.com/go-playground/validator/v10 v10.10.0
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/google/uuid v1.6.0
