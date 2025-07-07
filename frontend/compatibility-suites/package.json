@@ -23,14 +23,11 @@
     "build": "node bin/generate-suite-service.js && vite build",
     "development:link": "npm link",
     "development:unlink": "npm unlink",
-    "feature-start": "feature-start --featureName",
-    "feature-finish": "feature-finish",
-    "release-start": "release-start",
-    "release-finish": "release-finish"
+    "update-lock-file": "update-lock-file @netcracker"
   },
   "devDependencies": {
     "tslib": "2.6.3",
-    "@netcracker/qubership-apihub-npm-gitflow": "2.2.2",
+    "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
     "@types/node": "^18.0.0",
     "vite": "4.5.0",
     "vite-plugin-dts": "3.6.4",
