@@ -665,21 +665,31 @@ func MakeOperationComparisonChangelogView_deprecated_2(entity OperationCompariso
 	return operationComparisonChangelogView
 }
 
-// todo use current (not deprecated entity)
-func MakeOperationComparisonChangesView(entity OperationComparisonChangelogEntity_deprecated) interface{} {
-	var action string
-	if entity.DataHash == "" {
+func MakeOperationComparisonChangesView(entity OperationComparisonChangelogEntity) interface{} {
+	var action, operationId, title, apiKind string
+	if entity.OperationId == "" {
 		action = view.ChangelogActionRemove
-	} else if entity.PreviousDataHash == "" {
+	} else if entity.PreviousOperationId == "" {
 		action = view.ChangelogActionAdd
 	} else {
 		action = view.ChangelogActionChange
 	}
+
+	if action == view.ChangelogActionRemove {
+		operationId = entity.PreviousOperationId
+		title = entity.PreviousTitle
+		apiKind = entity.PreviousApiKind
+	} else {
+		operationId = entity.OperationId
+		title = entity.Title
+		apiKind = entity.ApiKind
+	}
+
 	operationComparisonChangelogView := view.OperationComparisonChangesView{
-		OperationId:               entity.OperationId,
-		Title:                     entity.Title,
+		OperationId:               operationId,
+		Title:                     title,
 		ChangeSummary:             entity.ChangesSummary,
-		ApiKind:                   entity.ApiKind,
+		ApiKind:                   apiKind,
 		DataHash:                  entity.DataHash,
 		PreviousDataHash:          entity.PreviousDataHash,
 		PackageRef:                view.MakePackageRefKey(entity.PackageId, entity.Version, entity.Revision),
@@ -689,30 +699,62 @@ func MakeOperationComparisonChangesView(entity OperationComparisonChangelogEntit
 	}
 	switch entity.ApiType {
 	case string(view.RestApiType):
-		return view.RestOperationComparisonChangesView{
-			OperationComparisonChangesView: operationComparisonChangelogView,
-			RestOperationMetadata: view.RestOperationMetadata{
-				Path:   entity.Metadata.GetPath(),
-				Method: entity.Metadata.GetMethod(),
-				Tags:   entity.Metadata.GetTags(),
-			},
+		if action == view.ChangelogActionRemove {
+			return view.RestOperationComparisonChangesView{
+				OperationComparisonChangesView: operationComparisonChangelogView,
+				RestOperationMetadata: view.RestOperationMetadata{
+					Path:   entity.PreviousMetadata.GetPath(),
+					Method: entity.PreviousMetadata.GetMethod(),
+					Tags:   entity.PreviousMetadata.GetTags(),
+				},
+			}
+		} else {
+			return view.RestOperationComparisonChangesView{
+				OperationComparisonChangesView: operationComparisonChangelogView,
+				RestOperationMetadata: view.RestOperationMetadata{
+					Path:   entity.Metadata.GetPath(),
+					Method: entity.Metadata.GetMethod(),
+					Tags:   entity.Metadata.GetTags(),
+				},
+			}
 		}
 	case string(view.GraphqlApiType):
-		return view.GraphQLOperationComparisonChangesView{
-			OperationComparisonChangesView: operationComparisonChangelogView,
-			GraphQLOperationMetadata: view.GraphQLOperationMetadata{
-				Type:   entity.Metadata.GetType(),
-				Method: entity.Metadata.GetMethod(),
-				Tags:   entity.Metadata.GetTags(),
-			},
+		if action == view.ChangelogActionRemove {
+			return view.GraphQLOperationComparisonChangesView{
+				OperationComparisonChangesView: operationComparisonChangelogView,
+				GraphQLOperationMetadata: view.GraphQLOperationMetadata{
+					Type:   entity.PreviousMetadata.GetType(),
+					Method: entity.PreviousMetadata.GetMethod(),
+					Tags:   entity.PreviousMetadata.GetTags(),
+				},
+			}
+		} else {
+			return view.GraphQLOperationComparisonChangesView{
+				OperationComparisonChangesView: operationComparisonChangelogView,
+				GraphQLOperationMetadata: view.GraphQLOperationMetadata{
+					Type:   entity.Metadata.GetType(),
+					Method: entity.Metadata.GetMethod(),
+					Tags:   entity.Metadata.GetTags(),
+				},
+			}
 		}
 	case string(view.ProtobufApiType):
-		return view.ProtobufOperationComparisonChangesView{
-			OperationComparisonChangesView: operationComparisonChangelogView,
-			ProtobufOperationMetadata: view.ProtobufOperationMetadata{
-				Type:   entity.Metadata.GetType(),
-				Method: entity.Metadata.GetMethod(),
-			},
+		if action == view.ChangelogActionRemove {
+			return view.ProtobufOperationComparisonChangesView{
+				OperationComparisonChangesView: operationComparisonChangelogView,
+				ProtobufOperationMetadata: view.ProtobufOperationMetadata{
+					Type:   entity.PreviousMetadata.GetType(),
+					Method: entity.PreviousMetadata.GetMethod(),
+				},
+			}
+		} else {
+			return view.ProtobufOperationComparisonChangesView{
+				OperationComparisonChangesView: operationComparisonChangelogView,
+				ProtobufOperationMetadata: view.ProtobufOperationMetadata{
+					Type:   entity.Metadata.GetType(),
+					Method: entity.Metadata.GetMethod(),
+				},
+			}
 		}
 	}
 	return operationComparisonChangelogView

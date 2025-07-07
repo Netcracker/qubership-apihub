@@ -1644,7 +1644,7 @@ func (v versionServiceImpl) GetVersionChanges(packageId, version, apiType string
 		Severities:     severities,
 	}
 	operationComparisons := make([]interface{}, 0)
-	changelogOperationEnts, err := v.operationRepo.GetChangelog_deprecated(searchQuery)
+	changelogOperationEnts, err := v.operationRepo.GetChangelog(searchQuery)
 	if err != nil {
 		return nil, err
 	}
