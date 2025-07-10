@@ -788,6 +788,7 @@ export const openApiRules = (version: OpenApiSpecVersion): NormalizationRules =>
     ],
   },
   ...openApiExtensionRules,
+  validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(OPEN_API_ROOT_DEFAULTS),
     valueReplaces(OPEN_API_ROOT_REPLACES),

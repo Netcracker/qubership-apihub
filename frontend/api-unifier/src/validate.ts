@@ -26,7 +26,7 @@ const createValidationHook: (options: InternalValidationOptions) => ValidateSync
       state.propertiesToCleanup.push(key)
       return { done: true }
     }
-    const { validate = [] } = rules
+    const { validate } = rules
     if (!validate) {
       options.onValidateError?.(`Key '${safeKey.toString()}' unexpected here`, path, value)
       state.propertiesToCleanup.push(key)

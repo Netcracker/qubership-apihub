@@ -197,9 +197,11 @@ const directivesUsagesRules: NormalizationRules = {
         valueReplaces(DIRECTIVE_USAGE_REPLACES),
         directiveMetaUnification,
       ],
+      validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_OBJECT),
   },
+  validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(DIRECTIVE_HOLDER_DEFAULTS),
     valueReplaces(DIRECTIVE_HOLDER_REPLACES)
@@ -452,6 +454,7 @@ export const graphApiRules: () => NormalizationRules = () => ({
       valueReplaces(COMPONENTS_REPLACES)
     ],
   },
+  validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(GRAPH_API_DEFAULTS),
     valueReplaces(GRAPH_API_REPLACES)
