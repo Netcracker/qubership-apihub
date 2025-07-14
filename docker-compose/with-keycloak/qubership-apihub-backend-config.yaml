@@ -1,0 +1,48 @@
+database:
+  host: 'host.docker.internal'
+  port: 5432
+  name: 'apihub_backend'
+  username: 'apihub_backend_user'
+  password: 'apihub_backend_password'
+security:
+  productionMode: false
+  jwt:
+    # <put_your_key_here - ssh private key base64 encoded>
+    privateKey: ${JWT_PRIVATE_KEY}
+    accessTokenDurationSec: 1800
+    refreshTokenDurationSec: 43200
+  apihubExternalUrl: 'http://host.docker.internal:8081'
+  allowedHostsForProxy:
+    - 'host.docker.internal'
+    - 'localhost'
+  # Enables auto-login with the only EXTERNAL identity provider. If there are more than 2 provider OR the only provider is INERNAL, backend won't raise up
+  autoLogin: false
+  # TODO: temporary, will be removed
+  legacySaml: false
+  externalIdentityProviders:
+    - id: 'external-saml-idp'
+      displayName: 'SAML'
+      imageSvg: ''
+      protocol: 'SAML'
+      samlConfiguration:
+        # <Keycloak SAML metadata endpoint. Default value is fine as soon as Keycloak with 0-Day configuration is set up within current compose file>
+        metadataUrl: 'http://host.docker.internal:8082/realms/apihub-1/protocol/saml/descriptor'
+        # <Keycloak SAML certificate. Must be manually generated. Or provided by startup script>
+        certificate: ${SAML_CRT} 
+        # <Keycloak SAML certificate private key. Must be manually generated. Or provided by startup script>
+        privateKey: ${SAML_KEY}
+    - id: 'external-oidc-idp'
+      displayName: 'OpenID Connect'
+      imageSvg: ''
+      protocol: 'OIDC'
+      oidcConfiguration:
+        providerUrl: 'http://host.docker.internal:8082/realms/apihub-2'
+        clientId: 'apihub-oidc'
+        clientSecret: ${OIDC_CLIENT_SECRET}
+zeroDayConfiguration:
+  # <access_token, example: 1RnECckUUB>
+  accessToken: ${APIHUB_ACCESS_TOKEN}
+  # <admin_login, example: apihub>
+  adminEmail: ${APIHUB_ADMIN_EMAIL}
+  # <admin_password, example: password>
+  adminPassword: ${APIHUB_ADMIN_PASSWORD}

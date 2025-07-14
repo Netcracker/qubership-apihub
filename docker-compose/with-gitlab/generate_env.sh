@@ -29,3 +29,7 @@ for file in *.env; do
     echo "Templating $file"
   fi
 done
+
+envsubst < qubership-apihub-backend-config.yaml > qubership-apihub-backend-config.yaml.tmp
+mv qubership-apihub-backend-config.yaml.tmp qubership-apihub-backend-config.yaml
+echo "Templating qubership-apihub-backend-config.yaml"
