@@ -125,7 +125,7 @@ export const TokensTable: FC<TokensTableTableProps> = memo(({
                 key: key,
                 packageKey: packageKey,
               })}
-              testId="DeleteButton"
+              data-testid="DeleteButton"
             />
           ),
         },

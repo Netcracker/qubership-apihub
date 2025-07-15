@@ -231,7 +231,7 @@ export const UserAccessControlTable: FC<UserAccessControlTableProps> = (props) =
             setDeleteConfirmationData(item)
             setDeleteConfirmationOpen(true)
           }}
-          testId="DeleteButton"
+          data-testid="DeleteButton"
         />
       </TableCell>
     )

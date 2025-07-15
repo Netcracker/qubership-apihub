@@ -10,10 +10,6 @@
                         "message": "You are not allowed to import APIHUB Agents components in APIHUB Shared."
                     },
                     {
-                        "name": "@netcracker/qubership-apihub-ui-editor",
-                        "message": "You are not allowed to import APIHUB Editor components in APIHUB Shared."
-                    },
-                    {
                         "name": "@netcracker/qubership-apihub-ui-portal",
                         "message": "You are not allowed to import APIHUB Portal components in APIHUB Shared."
                     }
@@ -22,10 +18,6 @@
                     {
                         "group": ["@netcracker/qubership-apihub-ui-agents/*"],
                         "message": "You are not allowed to import APIHUB Agents components in APIHUB Shared."
-                    },
-                    {
-                        "group": ["@netcracker/qubership-apihub-ui-editor/*"],
-                        "message": "You are not allowed to import APIHUB Editor components in APIHUB Shared."
                     },
                     {
                         "group": ["@netcracker/qubership-apihub-ui-portal/*"],

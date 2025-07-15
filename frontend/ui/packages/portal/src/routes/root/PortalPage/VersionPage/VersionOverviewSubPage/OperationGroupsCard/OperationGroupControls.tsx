@@ -90,7 +90,7 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
         startIcon={<AddSquareIcon color={ENABLED_BUTTON_COLOR} />}
         sx={{ visibility: 'hidden', height: '20px' }}
         onClick={() => onEditContent(operationGroup)}
-        testId="AddButton"
+        data-testid="AddButton"
       />
       <ButtonWithHint
         size="small"
@@ -101,7 +101,7 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
         startIcon={<EditIcon color={ENABLED_BUTTON_COLOR} />}
         sx={{ visibility: 'hidden', height: '20px' }}
         onClick={() => onEdit(operationGroup)}
-        testId="EditButton"
+        data-testid="EditButton"
       />
       <ButtonWithHint
         size="small"
@@ -113,7 +113,7 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
         startIcon={<PublishIcon color={isPublishButtonDisabled ? DISABLED_BUTTON_COLOR : ENABLED_BUTTON_COLOR} />}
         sx={{ visibility: 'hidden', height: '20px' }}
         onClick={() => onPublish(operationGroup)}
-        testId="PublishButton"
+        data-testid="PublishButton"
       />
       <ButtonWithHint
         size="small"
@@ -124,7 +124,7 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
         startIcon={<DownloadIcon color={isDownloadButtonDisabled ? DISABLED_BUTTON_COLOR : ENABLED_BUTTON_COLOR} />}
         sx={{ visibility: 'hidden', height: '20px' }}
         onClick={() => onExport(operationGroup)}
-        testId="ExportButton"
+        data-testid="ExportButton"
       />
       <ButtonWithHint
         size="small"
@@ -136,7 +136,7 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
         startIcon={<DeleteIcon color={ENABLED_BUTTON_COLOR} />}
         sx={{ visibility: 'hidden', height: '20px' }}
         onClick={() => onDelete(operationGroup)}
-        testId="DeleteButton"
+        data-testid="DeleteButton"
       />
     </Box>
   )

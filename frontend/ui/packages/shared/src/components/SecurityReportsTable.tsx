@@ -343,7 +343,7 @@ const DownloadButton: FC<DownloadButtonProps> = memo<DownloadButtonProps>(({
       className="hoverable"
       startIcon={<DownloadIcon color="#626D82"/>}
       onClick={onButtonCLick}
-      testId="DownloadReportButton"
+      data-testid="DownloadReportButton"
     />)
 })
 

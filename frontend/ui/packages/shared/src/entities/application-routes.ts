@@ -14,5 +14,4 @@
  * limitations under the License.
  */
 
-export const EDITOR_ROUTE = 'editor'
 export const AGENT_ROUTE = 'agents'

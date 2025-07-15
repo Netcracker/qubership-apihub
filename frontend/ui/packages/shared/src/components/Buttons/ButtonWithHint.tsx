@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
+import { LoadingButton } from '@mui/lab'
+import { Button, IconButton } from '@mui/material'
+import Box from '@mui/material/Box'
+import type { ButtonProps } from '@mui/material/Button/Button'
+import Tooltip from '@mui/material/Tooltip'
 import type { FC, ReactElement, ReactNode } from 'react'
 import * as React from 'react'
 import { memo, useMemo } from 'react'
-import Tooltip from '@mui/material/Tooltip'
-import Box from '@mui/material/Box'
-import { LoadingButton } from '@mui/lab'
-import { Button, IconButton } from '@mui/material'
-import type { ButtonProps } from '@mui/material/Button/Button'
 import type { TooltipPlacement } from '../../types/tooltip'
-import type { TestableProps } from '../Testable'
 
 export type ButtonWithHintProps = {
   disabled?: boolean
@@ -37,7 +36,7 @@ export type ButtonWithHintProps = {
   tooltipPlacement?: TooltipPlacement
   handleClose?: (event: React.SyntheticEvent | Event) => void
   handleOpen?: (event: React.SyntheticEvent | Event) => void
-} & ButtonProps & TestableProps
+} & ButtonProps
 
 const DISABLED_COLOR = '#00000026'
 
@@ -53,10 +52,9 @@ export const ButtonWithHint: FC<ButtonWithHintProps> = memo<ButtonWithHintProps>
     tooltipPlacement,
     handleClose,
     handleOpen,
-    testId,
     ...buttonProps
-  }) => {
-
+  },
+) => {
   const disabledIcon = useMemo(
     () => startIcon && React.cloneElement(startIcon, { color: DISABLED_COLOR }),
     [startIcon],
@@ -75,7 +73,6 @@ export const ButtonWithHint: FC<ButtonWithHintProps> = memo<ButtonWithHintProps>
           startIcon={icon}
           disabled={disabled}
           {...buttonProps}
-          data-testid={testId}
         >
           {title}
         </LoadingButton>
@@ -88,7 +85,6 @@ export const ButtonWithHint: FC<ButtonWithHintProps> = memo<ButtonWithHintProps>
           aria-label="delete-icon"
           disabled={disabled}
           {...buttonProps}
-          data-testid={testId}
         >
           {icon}
         </IconButton>
@@ -100,13 +96,11 @@ export const ButtonWithHint: FC<ButtonWithHintProps> = memo<ButtonWithHintProps>
         startIcon={icon}
         disabled={disabled}
         {...buttonProps}
-        data-testid={testId}
       >
         {title}
       </Button>
     )
-
-  }, [buttonProps, disabled, icon, isLoading, title, testId])
+  }, [buttonProps, disabled, icon, isLoading, title])
 
   return (
     <Tooltip

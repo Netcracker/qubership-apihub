@@ -18,11 +18,8 @@
 import express from 'express'
 import bodyParser from 'body-parser'
 import cors from 'cors'
-import { ProjectsWsRouter } from './routers/websockets/websockets'
-import ws from 'ws'
 import http from 'http'
 import { AuthRouter } from './routers/auth/router'
-import { IntegrationsRouter } from './routers/integrations/router'
 import { SystemRouter } from './routers/system/router'
 import { GlobalSearchRouter } from './routers/global-search/router'
 import { UsersRouter } from './routers/users/router'
@@ -36,9 +33,6 @@ const app = express()
 const port = process.env.NODEJS_PORT || 3003
 const server = http.createServer(app)
 
-const branchWss = new ws.Server({ noServer: true })
-const fileWss = new ws.Server({ noServer: true })
-
 const routersMap = new Map([
   ['/api/v2/auth/', AuthRouter()],
   ['/api/v2/users/', UsersRouter()],
@@ -46,12 +40,10 @@ const routersMap = new Map([
   ['/api/v2/permissions/', PermissionsRouter()],
   // ['/api/v2/debug/', DebugRouter()], // TODO: What is this?
   ['/api/v1/system/', SystemRouter()],
-  ['/api/v1/integrations/', IntegrationsRouter()],
-  ['/api/:v/packages/', PackagesRouter(branchWss)],
+  ['/api/:v/packages/', PackagesRouter()],
   ['/api/v3/packages/', PackageTokensRouter()],
   ['/api/v2/search/', GlobalSearchRouter()],
   ['/api/v2/activity/', ActivityRouter()],
-  ['/ws/v2/packages/', ProjectsWsRouter(server, branchWss, fileWss)],
   ['/api/v2/admins/', SystemAdminsRouter()],
 ])
 

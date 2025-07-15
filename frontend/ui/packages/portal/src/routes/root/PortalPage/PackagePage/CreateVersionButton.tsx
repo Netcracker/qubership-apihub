@@ -66,7 +66,7 @@ export const CreateVersionButton: FC<CreateVersionButtonProps> = memo(({
       hint="You do not have permission to create the version"
       onClick={handleClick}
       title="Create Version"
-      testId="CreateVersionButton"
+      data-testid="CreateVersionButton"
       tooltipMaxWidth="unset"
     />
   )

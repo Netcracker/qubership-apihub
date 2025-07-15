@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { Box, Button, capitalize, Link } from '@mui/material'
+import { EmptyPackageDialog } from '@netcracker/qubership-apihub-ui-shared/components/EmptyPackageDialog'
+import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+import {
+  navigateToExternalPage,
+  VS_CODE_EXTENSION_URL,
+} from '@netcracker/qubership-apihub-ui-shared/entities/external-navigation'
+import type { PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import type { FC } from 'react'
 import { memo, useCallback, useMemo } from 'react'
-import { Box, Button, capitalize, Link } from '@mui/material'
 import { NavLink, useParams } from 'react-router-dom'
 import { getVersionPath, useNavigation } from '../../../NavigationProvider'
 import { useBackwardLocation } from '../../useBackwardLocation'
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
-import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import type { PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
-import { EmptyPackageDialog } from '@netcracker/qubership-apihub-ui-shared/components/EmptyPackageDialog'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
-import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 
 export type PackagePagePlaceholderProps = {
   kind: PackageKind
@@ -38,7 +42,8 @@ export const PackagePagePlaceholder: FC<PackagePagePlaceholderProps> = memo<Pack
   const setBackwardLocation = useSetBackwardLocationContext()
 
   const { showEmptyPackageDialog } = useEventBus()
-  const { navigateToVersion, navigateToAgent, navigateToEditor } = useNavigation()
+  const { navigateToVersion, navigateToAgent } = useNavigation()
+  const navigateToVsCodeExtension = useCallback(() => navigateToExternalPage(VS_CODE_EXTENSION_URL), [])
 
   const handleClick = useCallback(
     () => setBackwardLocation({ ...backwardLocation, fromPackage: location }),
@@ -58,25 +63,26 @@ export const PackagePagePlaceholder: FC<PackagePagePlaceholderProps> = memo<Pack
       label: 'Create a new version in the Portal',
       navigate: handleNavigateToEdit,
       description: 'Upload files from your local file system, and publish the version.',
-      testId: 'ToPortalButton',
+      'data-testid': 'ToPortalButton',
     },
     {
       label: 'Go to Agent',
       navigate: navigateToAgent,
       description: 'Discover the API documentation in your environment, and promote it to the package in Portal.',
-      testId: 'ToAgentButton',
+      'data-testid': 'ToAgentButton',
     },
     {
-      label: 'Go to the Editor',
-      navigate: navigateToEditor,
-      description: 'Publish a version from the Editor project connected to the Git repository.',
-      testId: 'ToEditorButton',
+      label: 'Use APIHUB VS Code Extension ↗',
+      navigate: navigateToVsCodeExtension,
+      description: 'Open files in VS Code and publish them using the APIHUB extension.',
+      'data-testid': 'ToVsCodeExtensionButton',
     },
-  ], [handleNavigateToEdit, navigateToAgent, navigateToEditor])
+  ], [handleNavigateToEdit, navigateToAgent, navigateToVsCodeExtension])
 
-  const handleShowEmptyPackageDialog = useCallback(() => showEmptyPackageDialog({
-    emptyPackageData,
-  }), [emptyPackageData, showEmptyPackageDialog])
+  const handleShowEmptyPackageDialog = useCallback(() =>
+    showEmptyPackageDialog({
+      emptyPackageData,
+    }), [emptyPackageData, showEmptyPackageDialog])
 
   return (
     <Placeholder
@@ -85,28 +91,33 @@ export const PackagePagePlaceholder: FC<PackagePagePlaceholderProps> = memo<Pack
       message={
         <Box>
           {capitalize(kind)} is empty.&nbsp;
-          {kind === PACKAGE_KIND ? (
-            <Box>
-              <Button
-                sx={{ '&:hover': { backgroundColor: '#2E3A5217' } }}
-                onClick={handleShowEmptyPackageDialog}
-                data-testid="HowToUploadButton"
-              >
-                How to Upload API documentation?
-              </Button>
-              <EmptyPackageDialog/>
-            </Box>
-          ) : (
-            <>
-              <Link component={NavLink}
-                    to={getVersionPath({ packageKey: packageId!, versionKey: SPECIAL_VERSION_KEY, edit: true })}
-                    onClick={handleClick}
-                    data-testid="CreateVersionLink">
-                Create
-              </Link>
-              &nbsp;new<br/>{kind} version.
-            </>
-          )}
+          {kind === PACKAGE_KIND
+            ? (
+              <Box>
+                <Button
+                  sx={{ '&:hover': { backgroundColor: '#2E3A5217' } }}
+                  onClick={handleShowEmptyPackageDialog}
+                  data-testid="HowToUploadButton"
+                >
+                  How to Upload API documentation?
+                </Button>
+                <EmptyPackageDialog />
+              </Box>
+            )
+            : (
+              <>
+                <Link
+                  component={NavLink}
+                  to={getVersionPath({ packageKey: packageId!, versionKey: SPECIAL_VERSION_KEY, edit: true })}
+                  onClick={handleClick}
+                  data-testid="CreateVersionLink"
+                >
+                  Create
+                </Link>
+                &nbsp;new<br />
+                {kind} version.
+              </>
+            )}
         </Box>
       }
     />

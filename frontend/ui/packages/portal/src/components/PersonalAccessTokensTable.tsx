@@ -8,9 +8,16 @@ import { TableCellSkeleton } from '@netcracker/qubership-apihub-ui-shared/compon
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import { useResizeObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useResizeObserver'
 import type { ColumnModel } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
-import { DEFAULT_CONTAINER_WIDTH, useColumnsSizing } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
+import {
+  DEFAULT_CONTAINER_WIDTH,
+  useColumnsSizing,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
 import { DeleteIcon } from '@netcracker/qubership-apihub-ui-shared/icons/DeleteIcon'
-import type { DeletePersonalAccessTokenCallback, PersonalAccessToken, PersonalAccessTokens } from '@netcracker/qubership-apihub-ui-shared/types/tokens'
+import type {
+  DeletePersonalAccessTokenCallback,
+  PersonalAccessToken,
+  PersonalAccessTokens,
+} from '@netcracker/qubership-apihub-ui-shared/types/tokens'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { createComponents } from '@netcracker/qubership-apihub-ui-shared/utils/components'
@@ -142,7 +149,7 @@ export const PersonalAccessTokensTable: FC<TokensTableTableProps> = memo(props =
                 setDeletingTokenData(tokenData)
                 setDeletionConfirmationDialog(true)
               }}
-              testId="DeleteButton"
+              data-testid="DeleteButton"
             />
           ),
         },

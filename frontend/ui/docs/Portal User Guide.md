@@ -13,7 +13,7 @@ Currently Portal allows working with the following API specifications:
 - **OpenAPI specification** with versions 2.0 and 3.0.
   - The system does not support Swagger 2.0 in its pure form, when publishing Swagger 2.0 the system converts the document to version 3.0 and all further work performed as with OpenAPI 3.0.
   - You can publish OpenAPI 3.1 in Portal but with reduced functionality: 3.1 version specific feature are not supported in APIHUB.
-  - You cannot compare OpenAPI 3.0 with 3.1 and vice versa. 
+  - You cannot compare OpenAPI 3.0 with 3.1 and vice versa.
 - **GraphQL specifications and introspections** of release October 2021.
 
 You can also upload markdown files and Portal will render content of the files. All other files can be uploaded to Portal (and downloaded after that), but Portal does not allow viewing the content of these files or performing any other operations on them.
@@ -22,10 +22,10 @@ You can also upload markdown files and Portal will render content of the files. 
 
 The home page is displayed as you log into the application. The home page of the Portal contains 4 spaces in the left panel:
 
-- **Favorite** - shows the list of favorite packages, dashboards and groups. See more in *Favorite* section.
-- **Shared** - shows the list of packages and dashboards for which you have directly assigned role. See more in *Shared* section.
-- **Private** - your personal workspace to which by default only you have access. See more in *Private* section.
-- **Workspaces** - shows the list of all workspaces. Workspaces provide a logical separation for different projects, teams, or departments within the organization. See more in *Workspaces* section.
+- **Favorite** - shows the list of favorite packages, dashboards and groups. See more in _Favorite_ section.
+- **Shared** - shows the list of packages and dashboards for which you have directly assigned role. See more in _Shared_ section.
+- **Private** - your personal workspace to which by default only you have access. See more in _Private_ section.
+- **Workspaces** - shows the list of all workspaces. Workspaces provide a logical separation for different projects, teams, or departments within the organization. See more in _Workspaces_ section.
 - **Favorite workspaces** - shows the list of favorite workspaces for quick navigation.
 
 ## Favorite
@@ -75,7 +75,7 @@ The Private menu is a personal private workspace to which only you have access.
 1. Click **Private** menu in the left panel. The system opens the page with **Create Private Workspace** button, if you do not have private workspace.
 2. Click **Create Private Workspace** button.
 
-Other users do not have read access to the workspace and all groups/package/dashboard inside your private workspace. However, you can give permissions to work with groups/packages/dashboards for other users (see the *User Access Control* section below), but permission cannot be given to the entire workspace.
+Other users do not have read access to the workspace and all groups/package/dashboard inside your private workspace. However, you can give permissions to work with groups/packages/dashboards for other users (see the _User Access Control_ section below), but permission cannot be given to the entire workspace.
 
 Only one private workspace can exist per user and you have an Admin role for this space.
 
@@ -106,7 +106,7 @@ You can reduce search scope using filters. There are two sections with filters:
   - Method (available for REST operations only) - allows selecting required HTTP method(s): GET, POST, PUT, PATCH, DELETE.
   - Operations type (available for GraphQL operations only) - allows selecting required operation type(s): query, mutation, subscription.
 
-Global search does not search API operations and documents in dashboards, because dashboards do not have their own files and operations. Dashboard also cannot be selected in the filtering panel. 
+Global search does not search API operations and documents in dashboards, because dashboards do not have their own files and operations. Dashboard also cannot be selected in the filtering panel.
 However, you can search for dashboard itself in Packages tab.
 
 # Activity History
@@ -137,9 +137,10 @@ A Package is a versioned entity where you can publish API documentation. Package
 
 You can publish package version with API documents to the Portal in several ways:
 
-- Publish via Portal, please see more about it in *Create Package Version* section.
+- Publish via Portal, please see more about it in _Create Package Version_ section.
 - Publish to Portal via APIHUB Agent.
-- Publish to Portal via APIHUB Editor.
+- Publish to Portal using [APIHUB VS Code Extension](https://marketplace.visualstudio.com/items?itemName=Netcracker.qubership-apihub-vscode).
+
 ## Create Package Version
 
 After package creation, the system automatically opens an empty package. You can read about available options to upload documentation by clicking **How to upload API documentation**.
@@ -158,7 +159,7 @@ After all required files are added in the package, you can publish package versi
    - Version - name of the version to publish, in case of the release status, the version must match the mask, which is defined in the package settings.
    - Status - status for version to publish, available values are draft, release and archived.
    - Labels - multiple value can be specified in the field. You need to click **Enter** to finish adding label.
-   - Previous release version - name of the previous release version.  
+   - Previous release version - name of the previous release version.\
      If previous release version is specified, then APIHUB automatically compares two versions. The result of comparison will be displayed on the summary page of the published package version and in API Changes page. See more in **API Changes of Package Version** section and XXX.
 2. Click **Publish** button. The system publishes package version and opens package version view.
 
@@ -168,7 +169,7 @@ For the already existing package version, you can change list of files in this v
 
 1. Open package version and click **Edit**. The system opens **Edit Package Version** page.
 2. Add new documents or remove extra documents.
-3. Click Publish (see *Publish Package Version* section).
+3. Click Publish (see _Publish Package Version_ section).
 
 ## Copy Package Version
 
@@ -181,7 +182,7 @@ To copy a package version:
 3. In the opened **Copy Package Version** popup fill the following fields:
    - Workspace - target workspace. By default, the current workspace is selected.
    - Package - target package where you need to copy. You can select any package from the list of packages within the selected workspace.
-   - Version, Status, Labels and Previous release version - target version info, for details see *Publish Package Version* section.
+   - Version, Status, Labels and Previous release version - target version info, for details see _Publish Package Version_ section.
      - Version, status and labels are predefined with information of current (to be copied) package version.
 4. Click **Copy**. Once package will copied, the system shows notification with a link to a target package version.
 
@@ -197,11 +198,11 @@ You can click on the required version to navigate to it.
 
 Package version has left sidebar with the following tabs:
 
-- Overview. See more in *Package Version Overview* section.
-- API Operations. See more in *API Operations* section.
-- API Changes. See more in *API Changes* section.
-- Deprecated. See more in *Deprecated Operations in Package Version* section.
-- Documents. See more in *Documents of Package Version* section.
+- Overview. See more in _Package Version Overview_ section.
+- API Operations. See more in _API Operations_ section.
+- API Changes. See more in _API Changes_ section.
+- Deprecated. See more in _Deprecated Operations in Package Version_ section.
+- Documents. See more in _Documents of Package Version_ section.
 
 ## Package Version Overview
 
@@ -238,7 +239,7 @@ REST API API Validation and GraphQL API Validation sections are displayed only i
 
 ### Activity History
 
-Activity history section displays list of actions that are made by the users in the current package. In general, it is the same activity history which is displayed on the home page (see more in *Activity History* section). The only difference is that activity history in the package version shows only events that were performed in this package.
+Activity history section displays list of actions that are made by the users in the current package. In general, it is the same activity history which is displayed on the home page (see more in _Activity History_ section). The only difference is that activity history in the package version shows only events that were performed in this package.
 
 ### Revision History
 
@@ -258,7 +259,7 @@ If you click on any revision (except latest), the system opens this revision. Th
 
 The system allows grouping operations from package version into groups. There are two type of groups - manual and REST path prefix groups.
 
-- Manual groups: This type of group allows you to create group by any criteria that you needed. For example, for product API it can be useful to divide operations by consumers of this API. See more in *Manual Groups* section.
+- Manual groups: This type of group allows you to create group by any criteria that you needed. For example, for product API it can be useful to divide operations by consumers of this API. See more in _Manual Groups_ section.
 - REST path prefix groups: This type of group is applicable to REST operations only. Groups are created automatically based on a specified pattern applied to the paths of operations from the current package version. For example, in one package version, you may have APIs with different versions like `/api/v1/...`, `/api/v2/...`, etc., and you want to have a separate group for each API version. REST path prefix groups can be used for this purpose.
 
 All existing groups are listed in Groups menu.
@@ -283,10 +284,10 @@ You can publish operations group which contains REST API operations as a package
 2. Fill the required fields in the opened popup:
    - Workspace - allows you to select workspace where target package is located. By default, the current workspace is selected.
    - Package - allows you to select target package (package where you need to publish the selected operations group) within the selected workspace.
-   - Version, Status, Labels, and Previous Release Version - target version info, for details see *Publish Package Version* setion.
+   - Version, Status, Labels, and Previous Release Version - target version info, for details see _Publish Package Version_ setion.
 3. Click the **Publish** button. The system publishes version and will display the notification once version will be published.
 
-The published package version will contain reduced source specifications for operations from the selected operations group. See details about reduced source specifications in *Download operations group* section.
+The published package version will contain reduced source specifications for operations from the selected operations group. See details about reduced source specifications in _Download operations group_ section.
 
 #### Manual Groups
 
@@ -299,8 +300,8 @@ To create manual group:
    - Group Name - name must be unique within one API type.
    - API Type - type of the API of operations which will be included into the group.
    - Description
-   - OpenAPI Specification Template - field is available only if REST API is selected in API Type field. Otherwise, entire Additional Options section is disabled.  
-     Template is useful if you export group as combined source specification (see more about this in *Download operations group* section).
+   - OpenAPI Specification Template - field is available only if REST API is selected in API Type field. Otherwise, entire Additional Options section is disabled.\
+     Template is useful if you export group as combined source specification (see more about this in _Download operations group_ section).
 3. Once you fill the required fields, click **Create**. The system creates the group and opens popup to add operations in the group.
 4. In the opened popup, add the required operations to the group by moving operations from the left side of the popup to the right side. To find the required operation(s), you can use filters from the filtering panel or search. Filters and search are applied to the both sides of operations - operation that are not added to the group and operations that are already added in the group.
 5. Once you have added the required operations to the group, click **Save**.
@@ -312,6 +313,7 @@ To edit manual group parameters:
 3. Once the changes are made, click Update to save the changes.
 
 To update the list of operations in an existing manual group:
+
 1. Hover over the row with the required group and click the Change operations in the group button.
 2. In the opened popup, you can add or remove operations as needed. To add operations, move them from the left panel to the right. To remove operations, move them back from the right panel to the left.
 3. Once you have updated the operations list, click **Save** to apply the changes.
@@ -666,9 +668,9 @@ The system shows the following information in the table for GraphQL operations:
 
 You can filter operations using the left filtering panel. If at least one filter is applied to the list of operations, then the filter button will highlight it. You can hide the filter panel by clicking the filter button.
 
-- Filter by Group – If at least one (manual or REST path prefix) operations group exists, then you can select an operations group as filtering criteria. See more about operation groups in *Operation Groups* section.
+- Filter by Group – If at least one (manual or REST path prefix) operations group exists, then you can select an operations group as filtering criteria. See more about operation groups in _Operation Groups_ section.
 - Filter by API Kind
-- Filters by Tag – section shows a list of all tags from all operations of the current API type. If there is at least one operation without a tag, then the tag list will contain `"default"` value.  
+- Filters by Tag – section shows a list of all tags from all operations of the current API type. If there is at least one operation without a tag, then the tag list will contain `"default"` value.\
   The system allows searching tags by their name (`'contains'` criterion, case insensitive).
 
 You can search operations (for REST operations) by title, path and method; and (for GraphQL operations) by title and method.
@@ -695,13 +697,13 @@ You can export a list of API operations to an Excel file:
 
 If during package version publication, you specified a previous release version, then the system automatically compares this version and calculates changes. APIHUB classifies all changes by severity:
 
-- Breaking – Breaking change is a change that breaks backward compatibility with the previous version of API.  
+- Breaking – Breaking change is a change that breaks backward compatibility with the previous version of API.\
   For example, deleting an operation, adding a required parameter or changing the type of a parameter are breaking changes.
 - Requires Attention – A change requiring attention is a change that potentially may break backward compatibility with the previous version of API, depending on the particular implementation of a client code. This category also includes breaking changes in operations annotated as no-BWC.
 - Deprecated – Deprecating change is a change that annotates an operation, parameter or schema as deprecated. Removing a "deprecated" annotation is also considered a deprecating change.
-- Non-breaking – Non-breaking change is a change that does not break backward compatibility with the previous version of API.  
+- Non-breaking – Non-breaking change is a change that does not break backward compatibility with the previous version of API.\
   For example, adding a new operation or an optional parameter is a non-breaking change.
-- Annotation – An annotation change is a change to enrich the API documentation with information that does not affect the functionality of the API.  
+- Annotation – An annotation change is a change to enrich the API documentation with information that does not affect the functionality of the API.\
   For example, adding/changing/deleting descriptions or examples is an annotation change.
 - Unclassified – An unclassified change is a change that cannot be classified as any of the other types.
 
@@ -723,7 +725,7 @@ For each operation, the system calculates the number of changes of each severity
 
 The system also displays the total number of operations affected by each severity type. You can filter out operations to see only those operations which contain some severity type(s). To do this, click on the required severity type in the "traffic light" filter.
 
-You can also filter operations by other criteria using the left filtering panel or search. These functionalities are the same as in the *API Operations* page.
+You can also filter operations by other criteria using the left filtering panel or search. These functionalities are the same as in the _API Operations_ page.
 
 **Export API Changes to Excel file**
 
@@ -756,9 +758,9 @@ The unsupported files (docx, pdf, images, etc.) cannot be rendered in the UI, so
 
 APIHUB can compare API operations and classify all found changes according to the severity of change. There are following comparison options in the Portal:
 
-- Compare package versions – compare all operations from two versions of any packages. This comparison option helps you find changes between two service versions (if, for example, a package represents a service), which can be useful during an upgrade from one service version to another. See more information in *Compare Package Versions* section.
-- Compare revisions – compare all operations from two revisions of the same package version. This comparison option helps you track the history of changes of the current version. See more information in *Compare Package Revisions* section.
-- Compare operations – compare any two operations from one package version. It can be useful if, for example, you have multiple versions of the same operation in one package version (e.g., `GET /api/v1/users` and `GET /api/v2/users` in one package version) and you want to compare this specific pair of operations. See more in *Compare Operations* section.
+- Compare package versions – compare all operations from two versions of any packages. This comparison option helps you find changes between two service versions (if, for example, a package represents a service), which can be useful during an upgrade from one service version to another. See more information in _Compare Package Versions_ section.
+- Compare revisions – compare all operations from two revisions of the same package version. This comparison option helps you track the history of changes of the current version. See more information in _Compare Package Revisions_ section.
+- Compare operations – compare any two operations from one package version. It can be useful if, for example, you have multiple versions of the same operation in one package version (e.g., `GET /api/v1/users` and `GET /api/v2/users` in one package version) and you want to compare this specific pair of operations. See more in _Compare Operations_ section.
 
 The same comparison options are available for dashboards.
 
@@ -768,8 +770,8 @@ You can compare two versions of any package. During this comparison, the system 
 
 Pay attention that this is the comparison of package versions, **not** operation versions. For example, if you have two package versions with the following list of operations:
 
-- *package version R24.1*: `GET /api/v1/users`, `POST /api/v1/users`, `GET /api/v1/users/{userId}`
-- *package version R24.2*: `GET /api/v1/users`, `POST /api/v1/users`, `GET /api/v1/users/{userId}`, `GET /api/v2/users/{userId}`
+- _package version R24.1_: `GET /api/v1/users`, `POST /api/v1/users`, `GET /api/v1/users/{userId}`
+- _package version R24.2_: `GET /api/v1/users`, `POST /api/v1/users`, `GET /api/v1/users/{userId}`, `GET /api/v2/users/{userId}`
 
 If you compare R24.1 and R24.2, you will see changes (if any) in `GET /api/v1/users`, `POST /api/v1/users`, `GET /api/v1/users/{userId}`, and you will see that `GET /api/v2/users/{userId}` is a new operation. You **will not** see a comparison between `GET /api/v1/users/{userId}` and `GET /api/v2/users/{userId}`.
 
@@ -777,14 +779,14 @@ If you compare R24.1 and R24.2, you will see changes (if any) in `GET /api/v1/us
 
 1. Navigate to the package version you need to compare.
 2. Click **Compare** and select Versions in the dropdown menu.
-3. In the opened popup, select the required versions you need to compare.  
- By default, you select versions of the same (current) package. If you need to compare versions of different packages, then click **Change Packages**, and the system will let you select the required packages.
-4. Click **Compare** button.  
+3. In the opened popup, select the required versions you need to compare.\
+   By default, you select versions of the same (current) package. If you need to compare versions of different packages, then click **Change Packages**, and the system will let you select the required packages.
+4. Click **Compare** button.\
    The system opens a page with the comparison of the selected versions. On this page, you can see a side-by-side comparison of all changed operations from the selected versions. For each line (which represents a pair of compared operations, or only one operation if it is new or deleted), you can see the number of changes of each severity type for that specific operation.
    Each line has its own color showing the change type of the operation: **yellow** – operation was updated, **red** – operation was deleted, **green** – operation was added.
-   In the subheader of the page, the system shows the summary of version comparison (the number of operations that have a specific severity type).  
+   In the subheader of the page, the system shows the summary of version comparison (the number of operations that have a specific severity type).\
    Operations that were not changed between compared versions are not displayed on this page.
-5. To see details of changes in a specific operation, click on the required operation. The system opens a page with user-friendly rendered content of the operation in a side-by-side view.  
+5. To see details of changes in a specific operation, click on the required operation. The system opens a page with user-friendly rendered content of the operation in a side-by-side view.\
    On this page, you can see what exactly was changed in the API operation. For each change, the system shows (on the left) the severity of this change.
    In the subheader of the page, you can also see a summary of changes for the current operation.
    You can switch the view of comparison to Raw to see a side-by-side comparison in YAML or JSON format.
@@ -799,7 +801,7 @@ You can compare two revisions of one package version. This comparison will help 
 2. Click **Compare** button and select Revisions in the dropdown menu.
 3. In the opened popup, select revisions for comparison and click **Compare**.
 
-All other functionality of revisions comparison is the same as for *package versions comparison*
+All other functionality of revisions comparison is the same as for _package versions comparison_
 
 ## Compare Operations
 
@@ -815,7 +817,7 @@ This section will help you understand the mechanism of comparison in the Portal 
 
 ### Compare operations, not specifications
 
-APIHUB Portal provides the ability to compare two package versions/revisions. During comparison, the Portal compares **operations**, not entire OpenAPI specifications. In APIHUB, one operation document is a self-contained specification containing information only about the current operation. (See more about single operations and how they are obtained in *API Operations In Package Version* section)
+APIHUB Portal provides the ability to compare two package versions/revisions. During comparison, the Portal compares **operations**, not entire OpenAPI specifications. In APIHUB, one operation document is a self-contained specification containing information only about the current operation. (See more about single operations and how they are obtained in _API Operations In Package Version_ section)
 
 ### Resolve internal references
 
@@ -917,7 +919,7 @@ components:
 ### Declarative approach in calculation of changes
 
 APIHUB calculates the number of changes using the declarative approach. If an OAS has a shared object (schema/parameters/header in the `components` object), and this shared object is used in one operation multiple times (via $ref), then one change in this object will be counted only one time for this operation. However, when comparing in the system there is such a concept as scope. Scope for REST operations is request and response. If a shared object has one change, but this object is used both in the request and in the response, then this change will be considered twice. This was done because the same change made in the request and in the response can be classified differently. For example, deleting a property in a request is a change that breaks backward compatibility, but deleting a property in a response does not break backward compatibility.
- 
+
 In the example below, shared `Order` schema is used twice in the "Place an order for a pet" operation (in request and in response). In `v2`, the `petId` parameter in the `Order` schema gets a new `format`. Thus, comparing versions `v1` and `v2`, the number of changes will be two.
 
 v1:
@@ -1148,48 +1150,57 @@ components:
 ```
 
 # Dashboards
+
 Dashboard is a virtual package that provides links to already published package versions or other dashboard versions. Dashboards and packages have almost the same functionality, with the one major difference is that dashboards do not have their own API documents, they only accumulates API documents from linked package versions.
 
 To create dashboards:
+
 1. Open workspace or group.
 2. Click the **Create** button and then select Dashboard.
 3. In the opened popup, specify all the required parameters. The parameters are the same as for group creation.
 
-## Create Dashboard Version 
-A dashboard as a package is a versioned entity. The difference is that version of a package contains a list of files, while a version of a dashboard contains references to packages or other dashboards.
-1. After dashboard creation, the system automatically opens an empty dashboard. Click Create version. The system opens Create New Version page.
-If dashboard already have some existing versions, then click "**+**" from any dashboard version. 
-2. Click **Add Package**. In the opened Add Package popup specify the following information:
-Workspace - select workspace of the package version that you want to add to your dashboard version.
-Package / Dashboard - package or dashboard from the specified workspace that you want to add to your dashboard version.
-Version - specific version of the selected package/dashboard.
-3. Click **Add**. The system displays list of all included packages/dashboards in hierarchical view.
-Repeat step 2 if you need to add another package/dashboard version.
+## Create Dashboard Version
 
-You cannot add the same package more than one time, i.e. as soon as you add any package/dashboard version to the dashboard, this package/dashboard will not be available for the selection. However, there can be situation, when you can indirectly add the same packages/dashboard more than one time. For example, there is some dashboard D1 with version v1. The v1 version of dashboard D1 contains link to package P1 with version v1. Also you have another dashboard D2 and you configure version v1 of this dashboard: you add package P1 (with any version) and then you add D1 with version v1 to your dashboard D2. Thus, you Dashboard 2 version v1 contains links to the the same package Package P1 twice (if does not matter whether the same version of P1 is included into dashboard several time or different versions of the same package). 
+A dashboard as a package is a versioned entity. The difference is that version of a package contains a list of files, while a version of a dashboard contains references to packages or other dashboards.
+
+1. After dashboard creation, the system automatically opens an empty dashboard. Click Create version. The system opens Create New Version page.
+   If dashboard already have some existing versions, then click "**+**" from any dashboard version.
+2. Click **Add Package**. In the opened Add Package popup specify the following information:
+   Workspace - select workspace of the package version that you want to add to your dashboard version.
+   Package / Dashboard - package or dashboard from the specified workspace that you want to add to your dashboard version.
+   Version - specific version of the selected package/dashboard.
+3. Click **Add**. The system displays list of all included packages/dashboards in hierarchical view.
+   Repeat step 2 if you need to add another package/dashboard version.
+
+You cannot add the same package more than one time, i.e. as soon as you add any package/dashboard version to the dashboard, this package/dashboard will not be available for the selection. However, there can be situation, when you can indirectly add the same packages/dashboard more than one time. For example, there is some dashboard D1 with version v1. The v1 version of dashboard D1 contains link to package P1 with version v1. Also you have another dashboard D2 and you configure version v1 of this dashboard: you add package P1 (with any version) and then you add D1 with version v1 to your dashboard D2. Thus, you Dashboard 2 version v1 contains links to the the same package Package P1 twice (if does not matter whether the same version of P1 is included into dashboard several time or different versions of the same package).
 
 If such situation occurs during configuration of dashboard version, the system highlights all conflicted packages. If you do not resolve conflicts manually and publish such dashboard version, the system will automatically resolve conflicts and will skip some link(s) to the conflicted package. After publication of dashboard version, you can see in Packages menu if some link(s) to package version(s) were automatically skipped.
 
 ## Publish Dashboard Version
-After you configured your dashboard version, you can publish it by clicking **Publish**. The publication process for dashboard version is the same as for package version, see more details in *publish package version* section.
+
+After you configured your dashboard version, you can publish it by clicking **Publish**. The publication process for dashboard version is the same as for package version, see more details in _publish package version_ section.
 
 ## Edit Dashboard Version
+
 You can edit content of already published version. To do this:
 
 1. Navigate to required dashboard version and click **Edit**.
 2. Add or remove dashboard/package version and click **Publish**.
 
 ## Copy Dashboard Version
-You can copy content of dashboard version (i.e. links to package/dashboard versions) to another version within the same or another dashboard. The flow is the same as for packages, see more information in *Copy Package Version* section.
+
+You can copy content of dashboard version (i.e. links to package/dashboard versions) to another version within the same or another dashboard. The flow is the same as for packages, see more information in _Copy Package Version_ section.
 
 ## Dashboard versions
+
 All the features for dashboard are almost the same as for package version. This section only covers those features that are different or missing in the package version.
 
 **Package menu**. Dashboard version has page with its configuration, i.e. page with the list of all package/dashboard versions included into current dashboard version. There situation may occur when your dashboard version has reference to the package/dashboard version which was deleted after you published you dashboard version. In this case the system will warn you with a special icon. On the current page you can also see if some of the package/dashboard version was not included in the dashboard version due to conflict. This case was described in details in Create Dashboard Version section.
 
-**Compare dashboard versions**. When you compare package versions, initially you see list of all changed operation compared side-by-side. In dashboard versions comparison, before mapping of operations between versions and comparing them, there is one more step - mapping of packages included into compared dashboard versions. So initially the system takes all packages included into compared dashboard versions and maps them by package identifier. If any package was missing from the previous version of the dashboard but was added to the current one, then that package is considered an added package and all operations from that package version are also considered as added operations. The same thing if package was present in the previous dashboard version but was removed from the current one, then that package is considered an deleted package and all operations from that package version are also considered as deleted operations. If package exists in both compared dashboard versions, the system compares operation between these package versions. 
+**Compare dashboard versions**. When you compare package versions, initially you see list of all changed operation compared side-by-side. In dashboard versions comparison, before mapping of operations between versions and comparing them, there is one more step - mapping of packages included into compared dashboard versions. So initially the system takes all packages included into compared dashboard versions and maps them by package identifier. If any package was missing from the previous version of the dashboard but was added to the current one, then that package is considered an added package and all operations from that package version are also considered as added operations. The same thing if package was present in the previous dashboard version but was removed from the current one, then that package is considered an deleted package and all operations from that package version are also considered as deleted operations. If package exists in both compared dashboard versions, the system compares operation between these package versions.
 
 # Operation Content View
+
 APIHUB Portal can render content of API operation in different views:
 
 - Doc view - user friendly interactive view of operation content. This view helps to understand content of operation for the user without knowledge of API specification notation or specific format of specification.
@@ -1200,6 +1211,7 @@ APIHUB Portal can render content of API operation in different views:
 ![](/docs/img/operation_graph_view.png)
 
 ## Examples for Request and Response Body of REST operations
+
 Portal can automatically generate an example for the request and response body. The examples are generated in JSON format based on the request/response schema specified in the API specification. The values for example generation are also taken from the specification. E.g. if your property has an example parameter, it will be taken as the value; if there is no example, the default value will be taken; if there is no default value, one of the enumeration values ​​will be taken; and if you do not have any additional information for the property except the type, its type will be used as the value for the example.
 
 If your request/response schema specifies an "examples" object, you will see those example(s) from the specification.
@@ -1209,6 +1221,7 @@ If your request/response schema specifies an "examples" object, you will see tho
 3. Select Request Example or Response Example tab to see appropriate examples. In Response Example tab you can also select response code for which you want to see examples.
 
 ## REST API Playground
+
 Playground is a tool that allows you send a REST request to a server, so you can easily test APIs on your real data. To send a request, you do not need to configure the parameters manually, all the request parameters will be taken directly from the API specification. Therefore, you only need to specify the parameter values. The server URL will also be automatically selected from the specification, if any. However, if the specification does not contain any server information, then you can manually specify any URL in the playground.
 
 Pay attention, that since request parameters are taken from specification, you cannot add or remove parameters in the playground itself.
@@ -1230,7 +1243,8 @@ The below tabs are available in the group, package and dashboard settings:
 - Access Tokens - allows you to generate API key to work with appropriate group/package/dashboard via integrations.
 - User Access Control - allows you to manage members of group/package/dashboard and their roles.
 
-## General 
+## General
+
 The General tab contains general information about group/package/dashboard. You can edit some information by clicking **Edit** button:
 
 - Name - short name of the package.
@@ -1243,19 +1257,22 @@ The General tab contains general information about group/package/dashboard. You 
 On **General** tab you can also delete current entity by clicking **Delete** button.
 
 ## API Specific Configuration
+
 The API Specific Configuration tab allows you to configure some features related to API operations. This tab is available only for packages, since it is the only entity that can contain its own API specifications.
 
-**REST Path Prefix for Grouping by Version**. This parameter will allow you to automatically group operations into operations groups; see more about operation groups in *Operation Groups* section.
+**REST Path Prefix for Grouping by Version**. This parameter will allow you to automatically group operations into operations groups; see more about operation groups in _Operation Groups_ section.
 
-The parameter allows you to define custom regular expression, which will be applied to the paths of REST operations. This expression must begin and end with a slash (/) character and contain the {group} keyword. For example: /api/{group}/.  The system will look for the {group} entry in the REST operation paths during the publication of the package version. All found matches will form a list of groups that will include the corresponding operations.
+The parameter allows you to define custom regular expression, which will be applied to the paths of REST operations. This expression must begin and end with a slash (/) character and contain the {group} keyword. For example: /api/{group}/. The system will look for the {group} entry in the REST operation paths during the publication of the package version. All found matches will form a list of groups that will include the corresponding operations.
 
 For example, you have 3 operations - GET /api/v1/packages, GET /api/v1/package/{packageId} and POST /api/v2/packages. If you specify REST Path Prefix for Grouping by Version as /api/{group}/, then the system creates two groups v1 and v2:
+
 - v1 group contains GET /api/v1/packages and GET /api/v1/package/{packageId} operations.
 - v2 group contains POST /api/v2/packages operation.
 
 When you specify value of the parameter, there is an option "Recalculate groups in all published versions". If you select it, then after saving the value of the parameter, the system re-calculates groups for all existing versions of current package. If you do not select recalculate option, then configuration will be applied only for the newly published versions.
 
 ## Versions
+
 The Versions tab contains a list of all versions published in the current package or dashboard. You can edit status and/or labels of the version, to do this, hover over the row with the required version and click **Edit**.
 
 On the current page you can also delete version (with all its revisions). To do this, hover over the row with the required version and click **Delete**.
@@ -1266,32 +1283,36 @@ API key allows you to authenticate to APIHUB when using APIHUB API. Unlike a Bea
 API key is associated with a specific workspace, group, package, or dashboard, limiting its scope. API key does not have a period of life and it must be stored on a client side because it shows only once after generation.
 
 To generate an API key, fill the following fields:
+
 - Name - unique API key name.
 - Roles - optional field. This field defines the role(s) (i.e. set of permissions) associated with the API key. Multiple values are allowed. If you do not specify a role, the roles of the user who generated the token will be used by default.
-- Created For - owner of the API key. By default, owner of key is current user.  
+- Created For - owner of the API key. By default, owner of key is current user.
 
 Once you fill in the required fields, click the **Generate** button. The system generates the token and displays it. If you leave the page or reload it, the token is not shown again.
 
 To delete API key, hover over the API key and click **Revoke**.
 
+## User Access Control
 
-## User Access Control 
-User Access Control tab allows you to manage members of group/package/dashboard and their roles. 
+User Access Control tab allows you to manage members of group/package/dashboard and their roles.
 
 - User **role** is an entity with a specific set of permissions. You can always see list of available roles and their permissions if you click on question mark on User Access Control page. Roles have hierarchical structure, so even if you have permission to assign roles to the users, you cannot assign the role which is higher than your own role.
 - **Member** is a user which is added to the package/dashboard/group with some role(s). One member can have multiple roles in this case, the list of permissions from each specified role will be combined for the current user.
-Member's roles are inherited from parent groups and workspaces. If some role was assigned to the user, for example, in the group, then it is impossible to remove this role on the child package/package/dashboard. However, you can add additional role on the child package/package/dashboard.
+  Member's roles are inherited from parent groups and workspaces. If some role was assigned to the user, for example, in the group, then it is impossible to remove this role on the child package/package/dashboard. However, you can add additional role on the child package/package/dashboard.
 
 To add a new member to the package:
+
 1. Click **Add User**.
-2. In the opened popup, specify the required user and role. You can selecting one or multiple users and roles. 
-You cannot assign roles that are higher than your own role in the current group/package/dashboard.
+2. In the opened popup, specify the required user and role. You can selecting one or multiple users and roles.
+   You cannot assign roles that are higher than your own role in the current group/package/dashboard.
 3. Click **Add**.
 
 To update the role of an existing member:
+
 1. Check or uncheck checkbox at the intersection of the desired user and role. You can alway undo the current action by clicking **Undo** button in the notification.
 
 To remove a member from the package/dashboard/group:
+
 1. Hover over the row of the required member and click **Delete**.
 2. You cannot remove a member from the package the member has at least one inherited role or if member have at least one role that is higher than your own role in the current package/dashboard/group.
 
@@ -1308,6 +1329,7 @@ The following tabs are available in the My Profile page:
 Personal access tokens are an alternative to using API key or Bearer token for authentication to APIHUB when using APIHUB API. Personal access tokens are designed to access APIHUB resources on your behalf.
 
 To generate a personal access token:
+
 1. Open Personal Access Tokens tab in My Profile page.
 2. Enter a unique token name and select the expiration date.
 3. Click **Generate** button. The system generates the token and displays it. Copy and store the token securely, as it will only be displayed once. If you leave the page or reload it, the token will no longer be shown.

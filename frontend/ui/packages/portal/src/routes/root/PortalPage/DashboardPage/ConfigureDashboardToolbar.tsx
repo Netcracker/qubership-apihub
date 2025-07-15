@@ -105,7 +105,7 @@ export const ConfigureDashboardToolbar: FC<ConfigureDashboardToolbarProps> = mem
               hint={publishButtonHint}
               onClick={showPublishPackageVersionDialog}
               title="Publish"
-              testId="PublishButton"
+              data-testid="PublishButton"
             />
             <Button
               startIcon={<ExitIcon/>}

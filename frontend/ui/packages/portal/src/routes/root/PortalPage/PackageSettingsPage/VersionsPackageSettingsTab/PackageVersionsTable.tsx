@@ -113,7 +113,7 @@ export const VersionHistoryActions: FC<VersionHistoryActionsProps> = memo<Versio
         className="hoverable"
         startIcon={<EditOutlinedIcon sx={{ color: actionsDisabled ? '#00000026' : '#626D82' }}/>}
         onClick={() => onEdit(version)}
-        testId="EditButton"
+        data-testid="EditButton"
       />
       <ButtonWithHint
         area-label="delete"
@@ -125,7 +125,7 @@ export const VersionHistoryActions: FC<VersionHistoryActionsProps> = memo<Versio
         className="hoverable"
         startIcon={<DeleteIcon color="#626D82"/>}
         onClick={() => onDelete(version)}
-        testId="DeleteButton"
+        data-testid="DeleteButton"
       />
     </Box>
   )

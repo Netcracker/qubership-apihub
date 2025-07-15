@@ -275,6 +275,30 @@ export type OperationTagsDto = Readonly<{
   tags: Readonly<string[]>
 }>
 
+export type PackageVersionSummary = Readonly<{
+  breaking?: number
+  semiBreaking?: number
+  deprecated?: number
+  nonBreaking?: number
+  annotation?: number
+  unclassified?: number
+}>
+
+export type PackageVersionsDto = Readonly<{
+  versions: ReadonlyArray<PackageVersionDto>
+}>
+
+export type PackageVersionDto = Readonly<{
+  version: string
+  status: VersionStatus
+  createdBy: Principal
+  createdAt?: string
+  versionLabels?: string[]
+  previousVersion?: string
+  summary?: PackageVersionSummary
+  notLatestRevision?: boolean
+}>
+
 export type PackageVersionContentDto = Readonly<{
   version: string
   packageId: string
