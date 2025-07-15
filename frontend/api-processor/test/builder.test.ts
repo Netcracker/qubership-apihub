@@ -107,7 +107,7 @@ describe('Editor scenarios', () => {
   })
 
   describe('api audience test', () => {
-    test('сomparison must have two type of api audience transition with 3 operations', async () => {
+    test('comparison must have two type of api audience transition with 3 operations', async () => {
       await apiAudiencePackage.publish('api-audience', {
         packageId: 'api-audience',
         version: 'v1',
