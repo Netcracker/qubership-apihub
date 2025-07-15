@@ -1,0 +1,15 @@
+openapi: 3.1.0
+info:
+  title: Add type to union
+  version: 1.0.0
+paths:
+  /path1:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: [string, integer]
+      responses:
+        '200':
+          description: OK

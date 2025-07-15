@@ -1,0 +1,22 @@
+openapi: 3.0.0
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /pets:
+    get:
+      responses:
+        '200':
+          description: some value
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  historyMetadata:
+                    type: object
+                    properties: {}
+              encoding:
+                historyMetadata:
+                  contentType: application/xml; charset=utf-8
+                  allowReserved: false

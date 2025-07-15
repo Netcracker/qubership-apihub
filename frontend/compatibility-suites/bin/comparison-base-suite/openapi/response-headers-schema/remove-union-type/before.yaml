@@ -1,0 +1,14 @@
+openapi: 3.1.0
+info:
+  title: Union to single type
+  version: 1.0.0
+paths:
+  /path1:
+    post:
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Header-1:
+              schema:
+                type: [string, integer]
