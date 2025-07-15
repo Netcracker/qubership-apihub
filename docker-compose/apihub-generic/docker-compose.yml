@@ -1,7 +1,8 @@
 version: '3.9'
 services:
     qubership-apihub-backend:
-        image: ghcr.io/netcracker/qubership-apihub-backend:dev
+        #TODO: change to dev after testing
+        image: ghcr.io/netcracker/qubership-apihub-backend:app_parameters_rework
         #image: localhost/netcracker/qubership-apihub-backend:latest
         container_name: qubership-apihub-backend
         ports:
