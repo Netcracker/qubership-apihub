@@ -6,7 +6,6 @@ metadata:
     labels:
         name: 'qubership-apihub-build-task-consumer'
         app.kubernetes.io/name: 'qubership-apihub-build-task-consumer'
-        app.kubernetes.io/version: '{{ .Values.qubershipApihub.version }}'
         app.kubernetes.io/component: 'job'
         app.kubernetes.io/part-of: qubership-apihub
         app.kubernetes.io/managed-by: helm
@@ -23,7 +22,6 @@ spec:
             labels:
                 name: 'qubership-apihub-build-task-consumer'
                 app.kubernetes.io/name: 'qubership-apihub-build-task-consumer'
-                app.kubernetes.io/version: '{{ .Values.qubershipApihub.version }}'
                 app.kubernetes.io/component: 'backend'
                 app.kubernetes.io/part-of: qubership-apihub
                 app.kubernetes.io/managed-by: helm

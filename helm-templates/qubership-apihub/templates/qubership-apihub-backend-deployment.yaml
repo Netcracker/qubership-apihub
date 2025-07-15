@@ -6,7 +6,6 @@ metadata:
     labels:
         name: 'qubership-apihub-backend'
         app.kubernetes.io/name: 'qubership-apihub-backend'
-        app.kubernetes.io/version: '{{ .Values.qubershipApihub.version }}'
         app.kubernetes.io/component: 'backend'
         app.kubernetes.io/part-of: qubership-apihub
         app.kubernetes.io/managed-by: helm
@@ -23,7 +22,6 @@ spec:
             labels:
                 name: 'qubership-apihub-backend'
                 app.kubernetes.io/name: 'qubership-apihub-backend'
-                app.kubernetes.io/version: '{{ .Values.qubershipApihub.version }}'
                 app.kubernetes.io/component: 'backend'
                 app.kubernetes.io/part-of: qubership-apihub
                 app.kubernetes.io/managed-by: helm
@@ -33,17 +31,17 @@ spec:
             hostPID: false
             hostIPC: false
             volumes:
-            -   secret:
+            -   name: qubership-apihub-backend-config
+                secret:
                     defaultMode: 420
-                    name: qubership-apihub-config-secret
-                name: qubership-apihub-config
+                    secretName: qubership-apihub-backend-config-secret
             -   name: tmp-volume
                 emptyDir: {}
             containers:
             -   name: 'qubership-apihub-backend'
                 image: '{{ .Values.qubershipApihubBackend.image.repository }}:{{ .Values.qubershipApihubBackend.image.tag }}'
                 volumeMounts:
-                -   name: qubership-apihub-config
+                -   name: qubership-apihub-backend-config
                     mountPath: /app/qubership-apihub-service/etc/
                     readOnly: true
                 -   name: tmp-volume

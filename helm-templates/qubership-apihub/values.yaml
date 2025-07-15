@@ -117,11 +117,6 @@ qubershipApihubBackend:
       # Optional; Default local admin user password; If not set, default value: ""; Example: admin-password
       adminPassword: ''
 
-    # Section with technical parameters
-    technicalParameters:
-      # Optional; Backend version; If not set, default value: unknown; Example: 0.0.0
-      backendVersion: ''
-
     # Section with various parameters related to APIHUB business logic
     businessParameters:
       # Optional; Links to be shown under (i) button in UI; If not set, default value: []; Example: [https://example.com]
