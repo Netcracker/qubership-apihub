@@ -11195,11 +11195,6 @@
                                             "    pm.expect(data.events[0].principal.name).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_name}}\"));\r",
                                             "    pm.expect(data.events[0].principal.id).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_id}}\"));\r",
                                             "    pm.expect(data.events[0].principal.type).to.eql('apiKey');\r",
-                                            "});\r",
-                                            "\r",
-                                            "\r",
-                                            "pm.test(\"'userId' is correct\", function () {\r",
-                                            "    pm.expect(data.events[0].userId).to.eql(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "});"
                                         ]
                                     }
@@ -11417,11 +11412,6 @@
                                             "    pm.expect(data.events[0].principal.name).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_name}}\"));\r",
                                             "    pm.expect(data.events[0].principal.id).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_id}}\"));\r",
                                             "    pm.expect(data.events[0].principal.type).to.eql('apiKey');\r",
-                                            "});\r",
-                                            "\r",
-                                            "\r",
-                                            "pm.test(\"'userId' is correct\", function () {\r",
-                                            "    pm.expect(data.events[0].userId).to.eql(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "});"
                                         ]
                                     }
@@ -11639,11 +11629,6 @@
                                             "    pm.expect(data.events[0].principal.name).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_name}}\"));\r",
                                             "    pm.expect(data.events[0].principal.id).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_id}}\"));\r",
                                             "    pm.expect(data.events[0].principal.type).to.eql('apiKey');\r",
-                                            "});\r",
-                                            "\r",
-                                            "\r",
-                                            "pm.test(\"'userId' is correct\", function () {\r",
-                                            "    pm.expect(data.events[0].userId).to.eql(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "});"
                                         ]
                                     }
@@ -11772,11 +11757,6 @@
                                             "    pm.expect(data.events[0].principal.name).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_name}}\"));\r",
                                             "    pm.expect(data.events[0].principal.id).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_id}}\"));\r",
                                             "    pm.expect(data.events[0].principal.type).to.eql('apiKey');\r",
-                                            "});\r",
-                                            "\r",
-                                            "\r",
-                                            "pm.test(\"'userId' is correct\", function () {\r",
-                                            "    pm.expect(data.events[0].userId).to.eql(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "});"
                                         ]
                                     }
@@ -11837,7 +11817,6 @@
                                             "            pm.expect(data.events[i].principal.id).to.include(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "            pm.expect(data.events[i].principal.name).to.eql(pm.variables.replaceIn('{{apihub_api_key_name}}'));\r",
                                             "            pm.expect(data.events[i].principal.type).to.eql(\"apiKey\");\r",
-                                            "            pm.expect(data.events[i].userId).to.eql(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "        }\r",
                                             "    }\r",
                                             "});"
