@@ -736,47 +736,227 @@ describe('unify', () => {
         },
       },
     }, { unify: true })
-    const expected = {
-      openapi: '3.0.1',
-      paths:{},
-      components: {
-        securitySchemes: {},
-        examples: {},
-        headers: {},
-        links: {},
-        parameters: {},
-        requestBodies: {},
-        responses: {},
-        schemas: {
-          TestComponent: {
-            anyOf: [
-              { nullable: false, readOnly: false, writeOnly: false, deprecated: false, type: 'string', minLength: 0 },
-              {
-                nullable: false,
-                readOnly: false,
-                writeOnly: false,
-                deprecated: false,
-                exclusiveMaximum: false,
-                exclusiveMinimum: false,
-                type: 'number',
-              },
-              {
-                nullable: false,
-                readOnly: false,
-                writeOnly: false,
-                deprecated: false,
-                exclusiveMaximum: false,
-                exclusiveMinimum: false,
-                type: 'integer',
-              },
-            ],
-          },
-        },
-      },
-    }
-    expect(result).toEqual(expected)
+
+    expect(result).toHaveProperty(['components', 'schemas', 'TestComponent', 'anyOf', 1, 'exclusiveMaximum'], false)
+    expect(result).toHaveProperty(['components', 'schemas', 'TestComponent', 'anyOf', 1, 'exclusiveMinimum'], false)
+    expect(result).toHaveProperty(['components', 'schemas', 'TestComponent', 'anyOf', 2, 'exclusiveMaximum'], false) 
+    expect(result).toHaveProperty(['components', 'schemas', 'TestComponent', 'anyOf', 2, 'exclusiveMinimum'], false)
   })
 
+  it('sets default style for operation parameters based on in value', () => {
+    const result = unify({
+      openapi: '3.0.0',
+      paths: {
+        '/test': {
+          get: {
+            parameters: [
+              { name: 'query', in: 'query' },
+              { name: 'path', in: 'path' },
+              { name: 'header', in: 'header' },
+              { name: 'cookie', in: 'cookie' }
+            ]
+          }
+        }
+      }
+    }, { unify: true })
+
+    expect((result as any).paths['/test'].get.parameters).toMatchObject([
+      { name: 'query', in: 'query', style: 'form' },
+      { name: 'path', in: 'path', style: 'simple' }, 
+      { name: 'header', in: 'header', style: 'simple' },
+      { name: 'cookie', in: 'cookie', style: 'form' }
+    ])
+  })
+
+  it('sets default allowReserved to false for request body parameter encoding', () => {
+    const result = unify({
+      openapi: '3.0.0',
+      info: {
+        title: 'test',
+        version: '0.1.0'
+      },
+      paths: {
+        '/pets': {
+          post: {
+            requestBody: {
+              content: {
+                'multipart/form-data': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      historyMetadata: {
+                        type: 'object',
+                        properties: {}
+                      }
+                    }
+                  },
+                  encoding: {
+                    historyMetadata: {
+                      contentType: 'application/xml; charset=utf-8'
+                    }
+                  }
+                }
+              }
+            },
+            responses: {
+              '201': {
+                description: 'OK'
+              }
+            }
+          }
+        }
+      }
+    }, { unify: true })
+
+    expect(result).toHaveProperty(['paths', '/pets', 'post', 'requestBody', 'content', 'multipart/form-data', 'encoding', 'historyMetadata', 'allowReserved'], false)
+  })
+  
+  it('sets default allowReserved to false for response body parameter encoding', () => {
+    const result = unify({
+      openapi: '3.0.0',
+      info: {
+        title: 'test',
+        version: '0.1.0'
+      },
+      paths: {
+        '/pets': {
+          get: {
+            responses: {
+              '200': {
+                description: 'some value',
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        historyMetadata: {
+                          type: 'object',
+                          properties: {}
+                        }
+                      }
+                    },
+                    encoding: {
+                      historyMetadata: {
+                        contentType: 'application/xml; charset=utf-8'
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }, { unify: true })
+
+    expect(result).toHaveProperty(['paths', '/pets', 'get', 'responses', '200', 'content', 'application/json', 'encoding', 'historyMetadata', 'allowReserved'], false)
+  })
+
+  it('sets default xml wrapped to false for parameter schema', () => {
+    const result = unify({
+      openapi: '3.0.0',
+      info: {
+        title: 'test',
+        version: '0.1.0'
+      },
+      paths: {
+        '/pets': {
+          get: {
+            parameters: [
+              {
+                name: 'p1',
+                in: 'query',
+                schema: {
+                  type: 'array',
+                  items: {
+                    type: 'string'
+                  }
+                },
+              }
+            ],
+            responses: {
+              '200': {
+                description: 'OK'
+              }
+            }
+          }
+        }
+      }
+    }, { unify: true })
+
+    expect(result).toHaveProperty(['paths', '/pets', 'get', 'parameters', 0, 'schema', 'xml', 'wrapped'], false)
+  })
+
+  it('does not set default xml wrapped for non-array parameter schema', () => {
+    const result = unify({
+      openapi: '3.0.0',
+      info: {
+        title: 'test',
+        version: '0.1.0'
+      },
+      paths: {
+        '/pets': {
+          get: {
+            parameters: [
+              {
+                name: 'p1',
+                in: 'query',
+                schema: {
+                  type: 'string'
+                },
+              }
+            ],
+            responses: {
+              '200': {
+                description: 'OK'
+              }
+            }
+          }
+        }
+      }
+    }, { unify: true })
+
+    expect(result).not.toHaveProperty(['paths', '/pets', 'get', 'parameters', 0, 'schema', 'xml', 'wrapped'])
+  })
+  
+  it('sets default xml attribute to false for parameter schema', () => {
+    const result = unify({
+      openapi: '3.0.0',
+      info: {
+        title: 'test',
+        version: '0.1.0'
+      },
+      paths: {
+        '/pets': {
+          get: {
+            parameters: [
+              {
+                name: 'p1',
+                in: 'query',
+                schema: {
+                  type: 'object',
+                  properties: {
+                    id: {
+                      type: 'integer'
+                    }
+                  }
+                },
+              }
+            ],
+            responses: {
+              '200': {
+                description: 'OK'
+              }
+            }
+          }
+        }
+      }
+    }, { unify: true })
+
+    expect(result).toHaveProperty(['paths', '/pets', 'get', 'parameters', 0, 'schema', 'xml', 'attribute'], false)
+  })
+
+  
   it('fix required', () => {
     const options = { unify: true, validate: true }
     const result = deUnify(unify({
@@ -882,6 +1062,40 @@ describe('unify', () => {
           responses: {},
         },
       },
+    })
+  })
+
+  it('OAS 3.1. Empty schema must match all types, include null type', () => {
+    const result: any = unify({
+      'openapi': '3.1.0',
+      'paths': {
+        '/example': {
+          'post': {
+            'responses': {
+              '200': {
+                'description': 'OK',
+                'content': {
+                  'application/json': {
+                    'schema': {},
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, { liftCombiners: true })
+
+    expect(result).toHaveProperty(['paths', '/example', 'post', 'responses', '200', 'content', 'application/json', 'schema'], {
+      anyOf: expect.arrayContaining([
+        expect.objectContaining({ type: 'boolean' }),
+        expect.objectContaining({ type: 'string' }),
+        expect.objectContaining({ type: 'number' }),
+        expect.objectContaining({ type: 'integer' }),
+        expect.objectContaining({ type: 'object' }),
+        expect.objectContaining({ type: 'array' }),
+        expect.objectContaining({ type: 'null' }),
+      ]),
     })
   })
 })

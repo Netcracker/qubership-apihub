@@ -5,13 +5,14 @@ import {
   DEFAULT_TYPE_FLAG_PURE,
   DEFAULT_TYPE_FLAG_SYNTHETIC,
   DefaultMetaRecord,
-  Jso,
+  Jso, OriginLeafs,
   PureRefNode,
   type RawJsonSchema,
   RefNode,
   RichReference,
 } from './types'
 import { JSON_SCHEMA_PROPERTY_REF } from './rules/jsonschema.const'
+import { resolveOrigins, setOriginsForArray } from './origins'
 
 export class MapArray<K, V> extends Map<K, Array<V>> {
   public add(key: K, value: V): this {
@@ -353,4 +354,33 @@ export function createSelfMetaCloneHook<Meta, StateProperty extends PropertyKey,
 
 export function createSelfMetaCrawlHook<Meta, StateProperty extends PropertyKey, State extends HasSelfMetaResolver<StateProperty, Meta>, Rules extends {}>(stateProperty: PropertyKey, metaFlag: symbol | undefined, defaultMeta: Meta = undefined as Meta): SyncCrawlHook<State, Rules> {
   return createSelfMetaCloneHook(stateProperty, metaFlag, defaultMeta) as SyncCrawlHook<State, Rules>
+}
+
+export const removeDuplicatesWithMergeOrigins = <T>(array: T[], originFlag: symbol | undefined, equals: (a: T, b: T) => boolean): T[] => {
+
+  const findItemWithOrigins = (map: Map<T, OriginLeafs>, item: T): [T, OriginLeafs] | undefined => {
+    if (map.get(item)) {
+      return [item, map.get(item)!]
+    }
+    return Array.from(map.entries()).find(([otherItem]) => equals(item, otherItem))
+  }
+
+  const itemOriginsMap = new Map<T, OriginLeafs>()
+
+  const uniqueItems = array.filter((item, index) => {
+    const origins = resolveOrigins(array, index, originFlag) ?? []
+    const existedItemWithOrigins = findItemWithOrigins(itemOriginsMap, item)
+    if (existedItemWithOrigins) {
+      const [existedItem, existedOrigins] = existedItemWithOrigins
+      itemOriginsMap.set(existedItem, [...existedOrigins, ...origins])
+      return false
+    }
+
+    return itemOriginsMap.set(item, origins)
+  })
+
+  const itemOrigins = uniqueItems.map(item => itemOriginsMap.get(item))
+  setOriginsForArray(uniqueItems, originFlag, itemOrigins)
+
+  return uniqueItems
 }
