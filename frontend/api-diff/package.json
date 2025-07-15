@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-diff",
-  "version": "2.0.3",
+  "version": "2.1.2",
   "module": "./dist/index.es.js",
   "main": "./dist/index.cjs.js",
   "types": "./dist/index.d.ts",
@@ -27,12 +27,12 @@
     "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-unifier": "dev",
+    "@netcracker/qubership-apihub-api-unifier": "2.2.0",
     "@netcracker/qubership-apihub-json-crawl": "1.0.4",
     "fast-equals": "4.0.3"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-compatibility-suites": "dev",
+    "@netcracker/qubership-apihub-compatibility-suites": "2.1.3",
     "@netcracker/qubership-apihub-graphapi": "1.0.8",
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
     "@types/jest": "29.5.11",
