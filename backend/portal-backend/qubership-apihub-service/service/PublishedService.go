@@ -1265,11 +1265,15 @@ func (p publishedServiceImpl) reCalculateChangelogs(packageInfo view.PackageInfo
 	}
 	var buildConfig view.BuildConfig
 	for _, version := range versions {
+		previousVersionPackageId := version.PreviousVersionPackageId
+		if previousVersionPackageId == "" {
+			previousVersionPackageId = version.PackageId
+		}
 		buildConfig = view.BuildConfig{
 			PackageId:                version.PackageId,
-			Version:                  version.Version,
-			PreviousVersion:          version.PreviousVersion,
-			PreviousVersionPackageId: version.PreviousVersionPackageId,
+			Version:                  fmt.Sprintf("%v@%v", version.Version, version.Revision),
+			PreviousVersion:          fmt.Sprintf("%v@%v", packageInfo.Version, packageInfo.Revision),
+			PreviousVersionPackageId: previousVersionPackageId,
 			BuildType:                view.ChangelogType,
 			CreatedBy:                packageInfo.CreatedBy,
 			PublishedAt:              time.Now(),

@@ -832,7 +832,7 @@ func (g systemInfoServiceImpl) setEditorDisabled() {
 	editorDisabled, err := strconv.ParseBool(envVal)
 	if err != nil {
 		log.Infof("environment variable %v has invalid value, using false value instead", EDITOR_DISABLED)
-		editorDisabled = false
+		editorDisabled = true
 	}
 	g.systemInfoMap[EDITOR_DISABLED] = editorDisabled
 }
