@@ -188,4 +188,67 @@ describe('Openapi3 Response', () => {
       }),
     ]))
   })
+
+  describe('Add/remove default values', () => {
+
+    test('Add allowReserved attribute with default value for response parameter encoding', async () => {
+      const testId = 'add-allowReserved-attribute-with-default-value-for-response-parameter-encoding'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove allowReserved attribute with default value from response parameter encoding', async () => {
+      const testId = 'remove-allowReserved-attribute-with-default-value-from-response-parameter-encoding'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add required attribute with default value for header', async () => {
+      const testId = 'add-required-attribute-with-default-value-for-header'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove required attribute with default value from header', async () => {
+      const testId = 'remove-required-attribute-with-default-value-from-header'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add deprecated attribute with default value for header', async () => {
+      const testId = 'add-deprecated-attribute-with-default-value-for-header'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove deprecated attribute with default value from header', async () => {
+      const testId = 'remove-deprecated-attribute-with-default-value-from-header'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add allowEmptyValue attribute with default value for header', async () => {
+      const testId = 'add-allowEmptyValue-attribute-with-default-value-for-header'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove allowEmptyValue attribute with default value from header', async () => {
+      const testId = 'remove-allowEmptyValue-attribute-with-default-value-from-header'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add allowReserved attribute with default value for header', async () => {
+      const testId = 'add-allowReserved-attribute-with-default-value-for-header'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove allowReserved attribute with default value from header', async () => {
+      const testId = 'remove-allowReserved-attribute-with-default-value-from-header'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+  })
 })

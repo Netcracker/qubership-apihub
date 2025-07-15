@@ -31,13 +31,13 @@ describe('Request Body Object', () => {
   test('Required  Ref', async () => {
     const testId = 'request-body-object-required-ref'
     const result = await compareFiles(SUITE_ID, testId)
-    expect(result).toEqual(diffDescriptionMatcher('[Added] required status to \'components.requestBodies.PetBody\''))
+    expect(result).toEqual(diffDescriptionMatcher('[Changed] required status for \'components.requestBodies.PetBody\''))
   })
 
   test('Required  Inline', async () => {
     const testId = 'request-body-object-required-inline'
     const result = await compareFiles(SUITE_ID, testId)
-    expect(result).toEqual(diffDescriptionMatcher('[Added] required status to request body'))
+    expect(result).toEqual(diffDescriptionMatcher('[Changed] required status for request body'))
   })
 
   test('Content Media Type Ref', async () => {

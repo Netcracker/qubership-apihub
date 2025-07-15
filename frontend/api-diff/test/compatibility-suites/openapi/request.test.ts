@@ -55,7 +55,7 @@ describe('Openapi3 Request', () => {
     const result = await compareFiles(SUITE_ID, testId)
     expect(result).toEqual(diffsMatcher([
       expect.objectContaining({
-        action: DiffAction.add,
+        action: DiffAction.replace,
         afterDeclarationPaths: [[...REQUEST_BODY_PATH, 'required']],
         type: breaking,
       }),
@@ -80,7 +80,7 @@ describe('Openapi3 Request', () => {
     const result = await compareFiles(SUITE_ID, testId)
     expect(result).toEqual(diffsMatcher([
       expect.objectContaining({
-        action: DiffAction.remove,
+        action: DiffAction.replace,
         beforeDeclarationPaths: [[...REQUEST_BODY_PATH, 'required']],
         type: nonBreaking,
       }),
@@ -152,5 +152,32 @@ describe('Openapi3 Request', () => {
         type: annotation,
       }),
     ]))
+  })
+
+  describe('Add/remove default values', () => {
+
+    test('Add required attribute with default value for request body', async () => {
+      const testId = 'add-required-attribute-with-default-value-for-requestBody'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove required attribute with default value from request body', async () => {
+      const testId = 'remove-required-attribute-with-default-value-from-requestBody'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Add allowReserved attribute with default value for request body parameter encoding', async () => {
+      const testId = 'add-allowReserved-with-default-value-for-requestBody-parameter-encoding'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
+
+    test('Remove allowReserved attribute with default value from request body parameter encoding', async () => {
+      const testId = 'remove-allowReserved-with-default-value-from-requestBody-parameter-encoding'
+      const result = await compareFiles(SUITE_ID, testId)
+      expect(result).toEqual([])
+    })
   })
 })
