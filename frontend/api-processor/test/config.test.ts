@@ -37,10 +37,11 @@ describe('Config validation', () => {
 
       expect(result.operations.get('api-pets-get')?.tags.join()).toEqual(tags.join())
 
-      expect([...result.operations.values()].map(({metadata}) => metadata)).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({path: '/api/pets', method: 'get'}),
-          expect.objectContaining({path: '/api/pets', method: 'post'}),
+      expect(Array.from(result.operations.values()).map(({ metadata }) => metadata)).toEqual(
+        expect.toIncludeSameMembers([
+          expect.objectContaining({ path: '/api/pets', originalPath: '/api/pets', method: 'get' }),
+          expect.objectContaining({ path: '/api/pets', originalPath: '/api/pets', method: 'post' }),
+          expect.objectContaining({ path: '/api/pets/*', originalPath: '/api/pets/{id}', method: 'delete' }),
         ]),
       )
     })
