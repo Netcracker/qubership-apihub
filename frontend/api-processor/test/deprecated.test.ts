@@ -75,14 +75,14 @@ describe('Deprecated Items test', () => {
     const result = await editor.run()
 
     const deprecatedItems = Array.from(result.operations.values()).flatMap(operation => operation.deprecatedItems)
+
+    expect(deprecatedItems.every(item => item?.description?.startsWith('[Deprecated]'))).toBeTruthy()
+    expect(result.operations.get('auth-saml-post')?.deprecatedItems?.[0].deprecatedInPreviousVersions.length).toBe(2)
     expect(Array.from(result.operations.values())).toEqual(expect.toIncludeSameMembers([
       expect.objectContaining({ deprecated: true }),
       expect.objectContaining({ deprecated: false }),
       expect.objectContaining({ deprecated: false }),
     ]))
-
-    expect(deprecatedItems.every(item => item?.description?.startsWith('[Deprecated]'))).toBeTruthy()
-    expect(result.operations.get('auth-saml-post')?.deprecatedItems?.[0].deprecatedInPreviousVersions.length).toBe(2)
   })
 
   test('should have 1 semi-breaking changes for removed operation and property according to rules', async () => {
