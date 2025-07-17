@@ -65,6 +65,7 @@ paths:
         - Auth
       summary: SAML authentication
       deprecated: true
+      x-deprecated-meta: 'deprecated reason'
       description: |
         Starts the SAML authentication process in APIHUB.
         

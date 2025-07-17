@@ -77,9 +77,9 @@ describe('Deprecated Items test', () => {
     const deprecatedItems = Array.from(result.operations.values()).flatMap(operation => operation.deprecatedItems)
 
     expect(deprecatedItems.every(item => item?.description?.startsWith('[Deprecated]'))).toBeTruthy()
-    expect(result.operations.get('auth-saml-post')?.deprecatedItems?.[0].deprecatedInPreviousVersions.length).toBe(2)
+    expect(result.operations.get('auth-saml-post')?.deprecatedItems?.[0].deprecatedInPreviousVersions).toEqual(['v1', 'v2'])
     expect(Array.from(result.operations.values())).toEqual(expect.toIncludeSameMembers([
-      expect.objectContaining({ deprecated: true }),
+      expect.objectContaining({ deprecated: true, deprecatedInfo: 'deprecated reason', deprecatedInPreviousVersions: ['v1', 'v2'] }),
       expect.objectContaining({ deprecated: false }),
       expect.objectContaining({ deprecated: false }),
     ]))
