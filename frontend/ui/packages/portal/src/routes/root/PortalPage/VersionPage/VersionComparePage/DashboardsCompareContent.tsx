@@ -66,6 +66,7 @@ import { ComparisonSwapper } from '../ComparisonSwapper'
 import { useVersionsComparisonGlobalParams } from '../VersionsComparisonGlobalParams'
 import { VERSION_SWAPPER_HEIGHT } from '../shared-styles'
 import { useFilteredDashboardChanges } from './useFilteredDashboardChanges'
+import { WarningApiProcessorVersion } from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
 
 export const DashboardsCompareContent: FC = memo(() => {
   const location = useBackwardLocation()
@@ -135,6 +136,8 @@ export const DashboardsCompareContent: FC = memo(() => {
         breadcrumbsData={breadcrumbsData}
         handleSwap={handleSwap}
         showCompareDialog={showCompareDialog}
+        customComponentBeforeSwapperBreadcrumbs={<WarningApiProcessorVersion packageKey={originPackageKey} versionKey={originVersionKey} />}
+        customComponentAfterSwapperBreadcrumbs={<WarningApiProcessorVersion packageKey={changedPackageKey} versionKey={changedVersionKey} />}
       />
       <Placeholder
         invisible={isNotEmpty(filteredDashboardChanges)}

@@ -20,7 +20,7 @@ import { portal } from '../../utils/version-info'
 import { getVersionInfoOptions } from '../../utils/version-info'
 import * as packageJson from '../../../../portal/package.json'
 
-const emptyVersion: VersionInfo = { frontendVersion: packageJson.version, apiProcessorVersion: 'unknown' }
+const emptyVersion: VersionInfo = { frontendVersion: packageJson.version, apiProcessorVersion: '0.0.0-unknown' }
 
 export function useVersionInfo(appType: AppTypeApiHub = portal): VersionInfo {
   const { data } = useQuery<VersionInfoDto, Error, VersionInfo>(

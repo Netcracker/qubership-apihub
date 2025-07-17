@@ -51,7 +51,7 @@ import {
 import type { FC } from 'react'
 import { memo, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { usePackageSearchParam } from '../../../usePackageSearchParam'
+import { usePackageSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
 import { useTextSearchParam } from '../../../useTextSearchParam'
 import { useVersionSearchParam } from '../../../useVersionSearchParam'
 import { useCompareVersions } from '../../useCompareVersions'

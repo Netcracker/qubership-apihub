@@ -54,6 +54,7 @@
     "@types/lodash-es": "4.17.0",
     "api-ref-bundler": "0.1.2",
     "comlink": "4.4.1",
+    "compare-versions": "^6.1.1",
     "dayjs": "1.11.7",
     "docker-chromium": "1.4.2",
     "fast-equals": "5.0.1",

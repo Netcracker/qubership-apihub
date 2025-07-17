@@ -47,6 +47,7 @@ import { VersionSelector } from '../VersionSelector'
 import { ComparisonSelectorButton } from './ComparisonSelectorButton'
 import { EditButton } from './EditButton'
 import { useDownloadVersionDocumentation } from './useDownloadVersionDocumentation'
+import { WarningApiProcessorVersion } from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
 
 export const VersionPageToolbar: FC = memo(() => {
   const { packageId, versionId } = useParams()
@@ -125,8 +126,9 @@ export const VersionPageToolbar: FC = memo(() => {
             </Typography>
             <VersionSelector />
             {versionContent &&
-              <CustomChip value={versionContent!.status} sx={{ height: 20 }} data-testid="VersionStatusChip" />}
-            <Divider orientation="vertical" sx={{ height: '20px', mt: '6px' }} />
+              <CustomChip value={versionContent!.status} sx={{ height: 20 }} data-testid="VersionStatusChip"/>}
+            <WarningApiProcessorVersion packageKey={packageId} versionKey={versionId} />
+            <Divider orientation="vertical" sx={{ height: '20px', mt: '6px' }}/>
             {isDashboard && <CreateDashboardVersionButton
               variant="text"
               disabled={!hasCreateVersionPermissions}

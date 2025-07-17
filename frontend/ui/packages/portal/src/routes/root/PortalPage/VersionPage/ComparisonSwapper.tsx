@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
+import type { FC, ReactElement } from 'react'
 import React, { memo } from 'react'
 import { Box, IconButton } from '@mui/material'
 import { SwapperBreadcrumbs } from './SwapperBreadcrumbs'
@@ -27,17 +27,23 @@ export type ComparisonSwapper = {
   breadcrumbsData: ComparedPackagesBreadcrumbsData | null
   handleSwap: () => void
   showCompareDialog: () => void
+  customComponentBeforeSwapperBreadcrumbs?: ReactElement
+  customComponentAfterSwapperBreadcrumbs?: ReactElement
 }
 
 export const ComparisonSwapper: FC<ComparisonSwapper> = memo<ComparisonSwapper>(({
   breadcrumbsData,
   handleSwap,
   showCompareDialog,
+  customComponentBeforeSwapperBreadcrumbs,
+  customComponentAfterSwapperBreadcrumbs,
 }) => {
   return (
     <Box sx={SWAPPER_STYLES}>
       <Box sx={SWAPPER_HEADER_STYLES} data-testid="LeftSwapperHeader">
-        <SwapperBreadcrumbs side="before" data={breadcrumbsData}/>
+        <SwapperBreadcrumbs side="before"
+                            customComponentAfterContent={customComponentBeforeSwapperBreadcrumbs}
+                            data={breadcrumbsData}/>
       </Box>
       <Box sx={SWAPPER_DELIMITER_STYLES}>
         <Box sx={SWAPPER_ARROW_STYLES}>
@@ -46,7 +52,9 @@ export const ComparisonSwapper: FC<ComparisonSwapper> = memo<ComparisonSwapper>(
       </Box>
       <Box sx={SECOND_SWAPPER_HEADER_STYLES}>
         <Box gridArea="data" data-testid="RightSwapperHeader">
-          <SwapperBreadcrumbs side="after" data={breadcrumbsData}/>
+          <SwapperBreadcrumbs side="after"
+                              customComponentAfterContent={customComponentAfterSwapperBreadcrumbs}
+                              data={breadcrumbsData}/>
         </Box>
         <IconButton
           sx={{ gridArea: 'action', marginLeft: 'auto', alignItems: 'center' }}

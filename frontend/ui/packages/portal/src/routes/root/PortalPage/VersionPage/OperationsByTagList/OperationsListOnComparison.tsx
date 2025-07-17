@@ -38,7 +38,7 @@ import React, { memo, useCallback, useLayoutEffect, useMemo, useState } from 're
 import { useParams } from 'react-router-dom'
 import type { GroupsOperationsComparisonSearchParams, OperationsComparisonSearchParams } from '../../../../NavigationProvider'
 import { useNavigation } from '../../../../NavigationProvider'
-import { usePackageSearchParam } from '../../../usePackageSearchParam'
+import { usePackageSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
 import { useTextSearchParam } from '../../../useTextSearchParam'
 import { useVersionSearchParam } from '../../../useVersionSearchParam'
 import { useIsPackageFromDashboard } from '../../useIsPackageFromDashboard'

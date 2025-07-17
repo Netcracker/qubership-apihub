@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FC, ReactNode } from 'react'
+import type { FC, ReactElement, ReactNode } from 'react'
 import React, { memo, useCallback, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { Box, IconButton } from '@mui/material'
@@ -56,12 +56,16 @@ export type OperationsSwapperProps = {
   displayMode: OperationDisplayMode
   breadcrumbsData: ComparedPackagesBreadcrumbsData | null
   actions: ReactNode
+  swapperBreadcrumbsBeforeComponent?: ReactElement
+  swapperBreadcrumbsAfterComponent?: ReactElement
 }
 
 export const OperationsSwapper: FC<OperationsSwapperProps> = memo<OperationsSwapperProps>(({
   displayMode,
   breadcrumbsData,
   actions,
+  swapperBreadcrumbsBeforeComponent,
+  swapperBreadcrumbsAfterComponent,
 }) => {
   const { operationId: changedOperationKey, group, apiType } = useParams()
   const { operationKey: operationKeyParam } = useOperationLocation()
@@ -129,6 +133,7 @@ export const OperationsSwapper: FC<OperationsSwapperProps> = memo<OperationsSwap
         {<SwapperBreadcrumbs
           side="before"
           data={breadcrumbsData}
+          customComponentAfterContent={swapperBreadcrumbsBeforeComponent}
         />}
       </Box>
       <Box sx={OPERATION_SWAPPER_DELIMITER_STYLES}>
@@ -141,6 +146,7 @@ export const OperationsSwapper: FC<OperationsSwapperProps> = memo<OperationsSwap
           {<SwapperBreadcrumbs
             side="after"
             data={breadcrumbsData}
+            customComponentAfterContent={swapperBreadcrumbsAfterComponent}
           />}
         </Box>
         <Box display="flex" flexDirection="row" gap={1} sx={OPERATION_ACTION_STYLES}>
