@@ -19,11 +19,17 @@ import type { Url } from '../types/url'
 
 export const USER = 'user'
 export const API_KEY = 'apiKey'
-
-export type Principal = User | Token
+export const JOB = 'job'
+export type Principal = User | Token | Job
 
 type Token = Readonly<{
   type: typeof API_KEY
+  id: Key
+  name: string
+}>
+
+type Job = Readonly<{
+  type: typeof JOB
   id: Key
   name: string
 }>

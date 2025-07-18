@@ -227,7 +227,7 @@ class PublishAndDeleteVersionActivityMessageService extends BasicActivityMessage
   }
 }
 
-class PublishNewRevisionActivityMessageService extends BasicActivityMessageService {
+class PublishAndDeleteRevisionActivityMessageService extends BasicActivityMessageService {
   mapActivityToMessage(): ActivityMessage {
     const { activityType, packageId, packageName, kind } = this.activity
     const { version, status, notLatestRevision } = this.activity.details as PublishNewRevisionActivityDetails
@@ -236,8 +236,16 @@ class PublishNewRevisionActivityMessageService extends BasicActivityMessageServi
     switch (activityType) {
       case ActivityType.PUBLISH_NEW_REVISION_EVENT:
         return {
-          messageTemplate: `Published ${LINK_PLACEHOLDER} revision of ${versionKey} version in ${status} status in the ${packageName} ${kind}`,
-          links: [this.getPackageVersionLink(packageId, `@${revisionKey}`, notLatestRevision ? version : versionKey)],
+          messageTemplate: `Published ${LINK_PLACEHOLDER} revision of ${versionKey} version in ${status} status in the ${LINK_PLACEHOLDER} ${kind}`,
+          links: [this.getPackageVersionLink(packageId, `@${revisionKey}`, notLatestRevision ? version : versionKey),
+            this.getPackageVersionLink(packageId, packageName)],
+        }
+      case ActivityType.DELETE_REVISION_EVENT:
+        return {
+          messageTemplate: `Deleted ${LINK_PLACEHOLDER} revision of ${versionKey} version in ${status} status in the ${LINK_PLACEHOLDER} ${kind}`,
+          links: [
+            this.getPackageVersionLink(packageId, `@${revisionKey}`, notLatestRevision ? version : versionKey),
+            this.getPackageVersionLink(packageId, packageName)],
         }
     }
 
@@ -363,7 +371,8 @@ export function getActivityMessageServiceInstance(activity: Activity): ActivityM
     case ActivityType.DELETE_VERSION_EVENT:
       return new PublishAndDeleteVersionActivityMessageService(activity)
     case ActivityType.PUBLISH_NEW_REVISION_EVENT:
-      return new PublishNewRevisionActivityMessageService(activity)
+    case ActivityType.DELETE_REVISION_EVENT:
+      return new PublishAndDeleteRevisionActivityMessageService(activity)
     case ActivityType.PATCH_VERSION_META_EVENT:
       return new PatchVersionMetaActivityMessageService(activity)
     case ActivityType.PATCH_PACKAGE_META_EVENT:
