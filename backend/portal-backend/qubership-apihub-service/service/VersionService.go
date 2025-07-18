@@ -17,6 +17,7 @@ package service
 import (
 	"bufio"
 	"bytes"
+	stdctx "context"
 	"encoding/csv"
 	"fmt"
 	"net/http"
@@ -1822,11 +1823,13 @@ func (v versionServiceImpl) DeleteVersionsRecursively(ctx context.SecurityContex
 	jobId := uuid.New().String()
 	ent := entity.VersionCleanupEntity{
 		RunId:        jobId,
-		PackageId:    packageId,
+		InstanceId:   v.systemInfoService.GetInstanceId(),
+		PackageId:    &packageId,
 		DeleteBefore: deleteBefore,
 		Status:       string(view.StatusRunning),
 	}
-	err = v.versionCleanupRepository.StoreVersionCleanupRun(ent)
+	context := stdctx.Background()
+	err = v.versionCleanupRepository.StoreVersionCleanupRun(context, ent)
 	if err != nil {
 		return jobId, err
 	}
@@ -1844,10 +1847,10 @@ func (v versionServiceImpl) DeleteVersionsRecursively(ctx context.SecurityContex
 				ParentId:           packageId,
 				ShowAllDescendants: true,
 			}
-			packages, err := v.publishedRepo.GetFilteredPackagesWithOffset(getPackageListReq, ctx.GetUserId())
+			packages, err := v.publishedRepo.GetFilteredPackagesWithOffset(context, getPackageListReq, ctx.GetUserId())
 			if err != nil {
 				log.Errorf("failed to get child packages for versions cleanup %s: %s", jobId, err.Error())
-				err = v.versionCleanupRepository.UpdateVersionCleanupRun(jobId, string(view.StatusError), err.Error(), deletedItems)
+				err = v.versionCleanupRepository.UpdateVersionCleanupRun(context, jobId, string(view.StatusError), err.Error(), deletedItems)
 				if err != nil {
 					log.Errorf("failed to set '%s' status for cleanup job id %s: %s", "error", jobId, err.Error())
 					return
@@ -1856,10 +1859,10 @@ func (v versionServiceImpl) DeleteVersionsRecursively(ctx context.SecurityContex
 			}
 			if len(packages) == 0 {
 				if rootPackage.Kind == entity.KIND_PACKAGE || rootPackage.Kind == entity.KIND_DASHBOARD {
-					deleted, err := v.publishedRepo.DeleteDraftVersionsBeforeDate(rootPackage.Id, deleteBefore, "cleanup_job_"+jobId)
+					deleted, err := v.publishedRepo.DeletePackageRevisionsBeforeDate(context, rootPackage.Id, deleteBefore, true, false, "cleanup_job_"+jobId)
 					if err != nil {
 						log.Errorf("failed to delete versions of package %s during versions cleanup %s: %s", rootPackage.Id, jobId, err.Error())
-						err = v.versionCleanupRepository.UpdateVersionCleanupRun(jobId, string(view.StatusError), err.Error(), deletedItems)
+						err = v.versionCleanupRepository.UpdateVersionCleanupRun(context, jobId, string(view.StatusError), err.Error(), deletedItems)
 						if err != nil {
 							log.Errorf("failed to set '%s' status for cleanup job id %s: %s", "error", jobId, err.Error())
 							return
@@ -1868,7 +1871,7 @@ func (v versionServiceImpl) DeleteVersionsRecursively(ctx context.SecurityContex
 					}
 					deletedItems += deleted
 				}
-				err = v.versionCleanupRepository.UpdateVersionCleanupRun(jobId, string(view.StatusComplete), "", deletedItems)
+				err = v.versionCleanupRepository.UpdateVersionCleanupRun(context, jobId, string(view.StatusComplete), "", deletedItems)
 				if err != nil {
 					log.Errorf("failed to set '%s' status for cleanup job id %s: %s", "complete", jobId, err.Error())
 					return
@@ -1877,10 +1880,10 @@ func (v versionServiceImpl) DeleteVersionsRecursively(ctx context.SecurityContex
 				return
 			}
 			for _, pkg := range packages {
-				deleted, err := v.publishedRepo.DeleteDraftVersionsBeforeDate(pkg.Id, deleteBefore, "cleanup_job_"+jobId)
+				deleted, err := v.publishedRepo.DeletePackageRevisionsBeforeDate(context, pkg.Id, deleteBefore, true, false, "cleanup_job_"+jobId)
 				if err != nil {
 					log.Errorf("failed to delete versions of package %s during versions cleanup %s: %s", pkg.Id, jobId, err.Error())
-					err = v.versionCleanupRepository.UpdateVersionCleanupRun(jobId, string(view.StatusError), err.Error(), deletedItems)
+					err = v.versionCleanupRepository.UpdateVersionCleanupRun(context, jobId, string(view.StatusError), err.Error(), deletedItems)
 					if err != nil {
 						log.Errorf("failed to set '%s' status for cleanup job id %s: %s", "error", jobId, err.Error())
 						return

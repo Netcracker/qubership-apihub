@@ -23,13 +23,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	mEntity "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
@@ -78,25 +78,12 @@ func (p publishedRepositoryImpl) MarkVersionDeleted(packageId string, versionNam
 				return err
 			}
 		}
-
-		clearDefaultReleaseVersionForProjectQuery := `
-			UPDATE package_group
-			SET default_released_version = null
-			WHERE default_released_version = ? AND id = ?`
-		_, err = tx.Exec(clearDefaultReleaseVersionForProjectQuery, versionName, packageId)
-		if err != nil {
-			return err
-		}
-		_, err = tx.Exec(`delete from grouped_operation where package_id = ? and version = ?`, packageId, versionName)
+		err = p.clearDefaultReleaseVersion(tx, packageId, versionName)
 		if err != nil {
 			return err
 		}
 
-		clearPreviousVersionQuery := `
-			UPDATE published_version
-			SET previous_version = null, previous_version_package_id = null
-			WHERE previous_version = ? AND (previous_version_package_id = ? OR ((previous_version_package_id = '' or previous_version_package_id is null) and package_id = ?))`
-		_, err = tx.Exec(clearPreviousVersionQuery, versionName, packageId, packageId)
+		err = p.clearPreviousVersion(tx, packageId, versionName)
 		if err != nil {
 			return err
 		}
@@ -104,6 +91,25 @@ func (p publishedRepositoryImpl) MarkVersionDeleted(packageId string, versionNam
 		return nil
 	})
 
+	return err
+}
+
+func (p publishedRepositoryImpl) clearDefaultReleaseVersion(tx *pg.Tx, packageId string, version string) error {
+	_, err := tx.Exec(`
+		UPDATE package_group
+		SET default_released_version = null
+		WHERE default_released_version = ? AND id = ?`, version, packageId)
+	return err
+}
+
+func (p publishedRepositoryImpl) clearPreviousVersion(tx *pg.Tx, packageId string, version string) error {
+	_, err := tx.Exec(`
+		UPDATE published_version
+		SET metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('deleted_previous_version', previous_version, 'deleted_previous_version_package_id', previous_version_package_id),
+			previous_version = null,
+			previous_version_package_id = null
+		WHERE previous_version = ? AND (previous_version_package_id = ? OR ((previous_version_package_id = '' or previous_version_package_id is null) and package_id = ?))`,
+		version, packageId, packageId)
 	return err
 }
 
@@ -2929,9 +2935,9 @@ func (p publishedRepositoryImpl) GetFilteredPackages(filter string, parentId str
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetFilteredPackagesWithOffset(searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error) {
+func (p publishedRepositoryImpl) GetFilteredPackagesWithOffset(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error) {
 	var result []entity.PackageEntity
-	query := p.cp.GetConnection().Model(&result).
+	query := p.cp.GetConnection().ModelContext(ctx, &result).
 		Where("deleted_at is ?", nil)
 	if searchReq.OnlyFavorite {
 		query.Join("INNER JOIN favorite_packages as fav").
@@ -2954,7 +2960,7 @@ func (p publishedRepositoryImpl) GetFilteredPackagesWithOffset(searchReq view.Pa
 			return q, nil
 		})
 	}
-	if searchReq.ParentId != "" {
+	if searchReq.ParentId != "" && searchReq.ParentId != "*" {
 		if searchReq.ShowAllDescendants {
 			query.Where("package_group.id ilike ?", searchReq.ParentId+".%")
 		} else {
@@ -3570,64 +3576,6 @@ func (p publishedRepositoryImpl) SavePublishedSourcesArchive(ent *entity.Publish
 	return err
 }
 
-func (p publishedRepositoryImpl) DeleteDraftVersionsBeforeDate_deprecated(packageId string, date time.Time, userId string) (int, error) {
-	limit, page, deletedItems := 100, 0, 0
-	for {
-		ents, err := p.GetReadonlyPackageVersionsWithLimit_deprecated(entity.PublishedVersionSearchQueryEntity{
-			PackageId: packageId,
-			Status:    string(view.Draft),
-			Limit:     limit,
-			Offset:    limit * page,
-		}, false)
-		if err != nil {
-			return 0, err
-		}
-		if len(ents) == 0 {
-			return deletedItems, nil
-		}
-
-		for _, v := range ents {
-			if v.PublishedAt.Before(date) { // set id of clean up job in deleted_by column
-				err = p.MarkVersionDeleted(packageId, v.Version, userId)
-				if err != nil {
-					return deletedItems, err
-				}
-				deletedItems++
-			}
-		}
-		page++
-	}
-}
-
-func (p publishedRepositoryImpl) DeleteDraftVersionsBeforeDate(packageId string, date time.Time, userId string) (int, error) {
-	limit, page, deletedItems := 100, 0, 0
-	for {
-		ents, err := p.GetReadonlyPackageVersionsWithLimit(entity.PublishedVersionSearchQueryEntity{
-			PackageId: packageId,
-			Status:    string(view.Draft),
-			Limit:     limit,
-			Offset:    limit * page,
-		}, false)
-		if err != nil {
-			return 0, err
-		}
-		if len(ents) == 0 {
-			return deletedItems, nil
-		}
-
-		for _, v := range ents {
-			if v.PublishedAt.Before(date) { // set id of clean up job in deleted_by column
-				err = p.MarkVersionDeleted(packageId, v.Version, userId)
-				if err != nil {
-					return deletedItems, err
-				}
-				deletedItems++
-			}
-		}
-		page++
-	}
-}
-
 type PublishedBuildChangesOverview map[string]int
 
 func (p PublishedBuildChangesOverview) setUnexpectedEntry(table string) {
@@ -3805,4 +3753,330 @@ func (p publishedRepositoryImpl) GetCSVDashboardPublishReport(publishId string) 
 		return nil, err
 	}
 	return result, nil
+}
+
+func (p publishedRepositoryImpl) DeletePackageRevisionsBeforeDate(ctx context.Context, packageId string, deleteBefore time.Time, deleteLastRevision bool, deleteReleaseRevisions bool, deletedBy string) (int, error) {
+	var totalDeletedCount int
+	var processingErrors []error
+
+	var versions []string
+	err := p.cp.GetConnection().ModelContext(ctx, (*entity.PublishedVersionEntity)(nil)).
+		Column("version").
+		Where("package_id = ? AND deleted_at is null", packageId).
+		Order("version ASC").
+		Distinct().
+		Select(&versions)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get versions: %w", err)
+	}
+
+	for idx, version := range versions {
+		log.Tracef("[revisions cleanup] Processing version %d/%d: %s", idx+1, len(versions), version)
+		deletedCount, err := p.deleteVersionRevisions(ctx, packageId, version, deleteBefore, deleteLastRevision, deleteReleaseRevisions, deletedBy)
+		if err != nil {
+			if ctx.Err() != nil {
+				return totalDeletedCount, ctx.Err()
+			}
+			processingErrors = append(processingErrors, fmt.Errorf("failed to process version %s: %w", version, err))
+			continue
+		}
+		totalDeletedCount += deletedCount
+	}
+
+	if len(processingErrors) > 0 {
+		var combinedErr error
+		for _, err := range processingErrors {
+			if combinedErr == nil {
+				combinedErr = err
+			} else {
+				combinedErr = fmt.Errorf("%v; %v", combinedErr, err)
+			}
+		}
+		log.Debugf("[revisions cleanup] Package %s revisions cleanup completed with %d errors. Total deleted: %d", packageId, len(processingErrors), totalDeletedCount)
+		return totalDeletedCount, fmt.Errorf("cleanup completed with errors (deleted %d items): %w", totalDeletedCount, combinedErr)
+	}
+
+	log.Debugf("[revisions cleanup] Package %s revisions cleanup completed. Total deleted: %d", packageId, totalDeletedCount)
+	return totalDeletedCount, nil
+}
+
+func (p publishedRepositoryImpl) deleteVersionRevisions(ctx context.Context, packageId string, version string, deleteBefore time.Time, deleteLastRevision bool, deleteReleaseRevisions bool, deletedBy string) (int, error) {
+	var deletedCount int
+	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		var revisions []entity.PublishedVersionEntity
+		err := tx.Model(&revisions).
+			Where("package_id = ? AND version = ? AND deleted_at is null", packageId, version).
+			Order("revision ASC").
+			Select()
+		if err != nil {
+			return fmt.Errorf("failed to get revisions: %w", err)
+		}
+
+		var candidates []*entity.PublishedVersionEntity
+		lastRevisionIndex := len(revisions) - 1
+		for i, revision := range revisions {
+			if !revision.PublishedAt.Before(deleteBefore) {
+				log.Tracef("[revisions cleanup] package %s, version %s, revision %d is not before delete threshold %s, skipping", packageId, version, revision.Revision, deleteBefore)
+				break
+			}
+			if i == lastRevisionIndex && !deleteLastRevision {
+				log.Tracef("[revisions cleanup] package %s, version %s, last revision %d, skipping because deleteLastRevision=false", packageId, version, revision.Revision)
+				break
+			}
+			if revision.Status == string(view.Release) && !deleteReleaseRevisions {
+				log.Tracef("[revisions cleanup] package %s, version %s, release revision %d, skipping because deleteReleaseRevisions=false", packageId, version, revision.Revision)
+				break
+			}
+			candidates = append(candidates, &revision)
+		}
+
+		if len(candidates) > 0 {
+			for _, revision := range candidates {
+				// check for references and update in a single atomic operation
+				result, err := tx.Exec(`
+					UPDATE published_version 
+					SET deleted_at = ?, deleted_by = ?
+					WHERE package_id = ? AND version = ? AND revision = ? AND deleted_at IS NULL
+					AND NOT EXISTS (
+						SELECT 1 FROM published_version_reference ref
+						INNER JOIN published_version pv ON 
+								pv.package_id = ref.package_id AND
+								pv.version = ref.version AND
+								pv.revision = ref.revision
+						WHERE ref.reference_id = ? AND ref.reference_version = ? AND ref.reference_revision = ?
+						AND pv.deleted_at IS NULL
+					)
+				`, time.Now(), deletedBy,
+					revision.PackageId, revision.Version, revision.Revision,
+					revision.PackageId, revision.Version, revision.Revision)
+
+				if err != nil {
+					return fmt.Errorf("failed to mark revision %d as deleted: %w", revision.Revision, err)
+				}
+
+				if result.RowsAffected() == 0 {
+					log.Tracef("[revisions cleanup] package %s, version %s, revision %d has references or was already deleted, skipping", packageId, version, revision.Revision)
+					break
+				}
+
+				err = p.trackDeletion(tx, packageId, version, revision.Revision, revision.Status, string(view.ATETDeleteRevision), deletedBy)
+				if err != nil {
+					return fmt.Errorf("failed to track revision deletion: %w", err)
+				}
+
+				err = p.clearAdHocComparisons(tx, packageId, version, revision.Revision)
+				if err != nil {
+					return fmt.Errorf("failed to clear ad-hoc comparisons for revision %d: %w", revision.Revision, err)
+				}
+
+				deletedCount++
+			}
+
+			if deletedCount == len(revisions) {
+				log.Tracef("[revisions cleanup] All revisions for version %s were deleted, cleaning up related data", version)
+				err = p.clearDefaultReleaseVersion(tx, packageId, version)
+				if err != nil {
+					return fmt.Errorf("failed to clear default release version: %w", err)
+				}
+
+				err = p.clearPreviousVersion(tx, packageId, version)
+				if err != nil {
+					return fmt.Errorf("failed to clear %s version as a previous version: %w", version, err)
+				}
+
+				lastRevision := revisions[lastRevisionIndex]
+				err = p.trackDeletion(tx, packageId, version, lastRevision.Revision, lastRevision.Status, string(view.ATETDeleteVersion), deletedBy)
+				if err != nil {
+					return fmt.Errorf("failed to track version deletion: %w", err)
+				}
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	log.Tracef("[revisions cleanup] Successfully processed version %s, deleted %d revisions", version, deletedCount)
+	return deletedCount, nil
+}
+
+func (p publishedRepositoryImpl) trackDeletion(tx *pg.Tx, packageId string, version string, revision int, status string, eventType string, deletedBy string) error {
+	dataMap := map[string]interface{}{}
+	dataMap["version"] = version
+	dataMap["revision"] = revision
+	dataMap["status"] = status
+	ent := entity.ActivityTrackingEntity{
+		Id:        uuid.New().String(),
+		Type:      eventType,
+		Data:      dataMap,
+		PackageId: packageId,
+		Date:      time.Now(),
+		UserId:    deletedBy,
+	}
+	_, err := tx.Model(&ent).Insert()
+	if err != nil {
+		return fmt.Errorf("failed to track deletion: %w", err)
+	}
+	return nil
+}
+
+func (p publishedRepositoryImpl) clearAdHocComparisons(tx *pg.Tx, packageId string, version string, revision int) error {
+	log.Tracef("[revisions cleanup] Clearing ad-hoc comparisons for %s/%s@%d", packageId, version, revision)
+
+	var deletedCount int
+	page, limit := 0, 100
+
+	for {
+		var candidateIds []string
+		_, err := tx.Query(&candidateIds, `
+			WITH candidate_comparisons AS (
+				SELECT 
+					vc.comparison_id,
+					vc.package_id,
+					vc.version,
+					vc.revision,
+					vc.previous_package_id,
+					vc.previous_version,
+					vc.previous_revision,
+					pv.previous_version AS actual_previous_version,
+					COALESCE(pv.previous_version_package_id, pv.package_id) AS actual_previous_package_id
+				FROM version_comparison vc
+				LEFT JOIN published_version pv ON 
+					pv.package_id = vc.package_id AND 
+					pv.version = vc.version AND 
+					pv.revision = vc.revision
+				WHERE 
+					(vc.package_id = ? AND vc.version = ? AND vc.revision = ?) OR
+					(vc.previous_package_id = ? AND vc.previous_version = ? AND vc.previous_revision = ?)
+				ORDER BY vc.comparison_id
+				LIMIT ?
+				OFFSET ?
+			)
+			SELECT comparison_id FROM candidate_comparisons cc
+			WHERE 
+				cc.actual_previous_version IS NULL OR
+				(cc.previous_version != cc.actual_previous_version OR 
+				cc.previous_package_id != cc.actual_previous_package_id)
+		`, packageId, version, revision, packageId, version, revision, limit, page*limit)
+		if err != nil {
+			if err == pg.ErrNoRows {
+				break
+			}
+			return fmt.Errorf("failed to get ad-hoc comparison candidates: %w", err)
+		}
+
+		if len(candidateIds) == 0 {
+			break
+		}
+
+		for _, comparisonId := range candidateIds {
+			// check for references and delete in a single atomic operation
+			result, err := tx.Exec(`
+				DELETE FROM version_comparison
+				WHERE comparison_id = ?
+				AND NOT EXISTS (
+    				SELECT 1 
+    				FROM version_comparison
+    				WHERE ? = ANY(refs)
+				)
+			`, comparisonId, comparisonId)
+			if err != nil {
+				return fmt.Errorf("failed to check and delete ad-hoc comparison %s: %w", comparisonId, err)
+			}
+
+			if result.RowsAffected() > 0 {
+				log.Tracef("[revisions cleanup] Deleted ad-hoc comparison %s", comparisonId)
+				deletedCount++
+			} else {
+				log.Tracef("[revisions cleanup] Skipped ad-hoc comparison %s (referenced or already deleted)", comparisonId)
+			}
+		}
+
+		if len(candidateIds) < limit {
+			break
+		}
+		page++
+	}
+
+	if deletedCount > 0 {
+		log.Tracef("[revisions cleanup] Deleted %d ad-hoc comparisons for %s/%s@%d",
+			deletedCount, packageId, version, revision)
+	}
+
+	return nil
+}
+
+func (p publishedRepositoryImpl) GetVersionComparisonsCleanupCandidates(ctx context.Context, limit int, offset int) ([]entity.VersionComparisonCleanupCandidateEntity, error) {
+	var candidates []entity.VersionComparisonCleanupCandidateEntity
+
+	_, err := p.cp.GetConnection().QueryContext(ctx, &candidates, `
+			SELECT 
+				vc.comparison_id,
+				vc.package_id,
+				vc.version,
+				vc.revision,
+				vc.previous_package_id,
+				vc.previous_version,
+				vc.previous_revision,
+				vc.last_active,
+				pv.package_id IS NULL AS revision_not_published,
+				pv.previous_version AS actual_previous_version,
+				COALESCE(pv.previous_version_package_id, pv.package_id) AS actual_previous_package_id,
+				(SELECT MAX(revision) 
+					FROM published_version 
+					WHERE package_id = vc.previous_package_id 
+					AND version = vc.previous_version) AS previous_max_revision
+			FROM version_comparison vc
+			LEFT JOIN published_version pv ON 
+				pv.package_id = vc.package_id AND 
+				pv.version = vc.version AND
+				pv.revision = vc.revision
+			ORDER BY vc.last_active ASC
+			LIMIT ?
+			OFFSET ?
+	`, limit, offset)
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return []entity.VersionComparisonCleanupCandidateEntity{}, nil
+		}	
+		return nil, fmt.Errorf("failed to get cleanup candidates: %w", err)
+	}
+
+	return candidates, nil
+}
+
+func (p publishedRepositoryImpl) DeleteVersionComparison(ctx context.Context, comparisonId string) (bool, error) {
+	var deleted bool
+
+	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		result, err := tx.ExecContext(ctx, `
+			DELETE FROM version_comparison
+			WHERE comparison_id = ?
+			AND NOT EXISTS (
+    			SELECT 1 
+    			FROM version_comparison
+    			WHERE ? = ANY(refs)
+			)
+		`, comparisonId, comparisonId)
+		if err != nil {
+			return fmt.Errorf("failed to check and delete comparison %s: %w", comparisonId, err)
+		}
+
+		if result.RowsAffected() > 0 {
+			log.Tracef("[comparisons cleanup] Deleted comparison %s", comparisonId)
+			deleted = true
+		} else {
+			log.Tracef("[comparisons cleanup] Skipped comparison %s (referenced or already deleted)", comparisonId)
+			deleted = false
+		}
+
+		return nil
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return deleted, nil
 }

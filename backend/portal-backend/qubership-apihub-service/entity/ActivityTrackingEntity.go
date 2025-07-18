@@ -78,7 +78,8 @@ func MakeActivityTrackingEventView_depracated(ent EnrichedActivityTrackingEntity
 	}
 
 }
-func MakeActivityTrackingEventView(ent EnrichedActivityTrackingEntity) view.PkgActivityResponseItem {
+
+func MakeActivityTrackingEventView_deprecated_2(ent EnrichedActivityTrackingEntity) view.PkgActivityResponseItem {
 	return view.PkgActivityResponseItem{
 		PackageName: ent.PackageName,
 		PackageKind: ent.PackageKind,
@@ -88,7 +89,20 @@ func MakeActivityTrackingEventView(ent EnrichedActivityTrackingEntity) view.PkgA
 			Data:      ent.Data,
 			PackageId: ent.PackageId,
 			Date:      ent.Date,
-			UserId:    ent.UserId,
+		},
+	}
+}
+
+func MakeActivityTrackingEventView(ent EnrichedActivityTrackingEntity) view.PkgActivityResponseItem {
+	return view.PkgActivityResponseItem{
+		PackageName: ent.PackageName,
+		PackageKind: ent.PackageKind,
+		Principal:   *MakeActivityHistoryPrincipalView(&ent.PrincipalEntity),
+		ActivityTrackingEvent: view.ActivityTrackingEvent{
+			Type:      view.ATEventType(ent.Type),
+			Data:      ent.Data,
+			PackageId: ent.PackageId,
+			Date:      ent.Date,
 		},
 	}
 }
