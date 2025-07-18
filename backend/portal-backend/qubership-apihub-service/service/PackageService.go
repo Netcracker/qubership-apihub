@@ -15,6 +15,7 @@
 package service
 
 import (
+	stdctx "context"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -358,7 +359,7 @@ func (p packageServiceImpl) GetPackagesList(ctx context.SecurityContext, searchR
 	if len(searchReq.Kind) == 0 {
 		searchReq.Kind = []string{entity.KIND_WORKSPACE}
 	}
-	entities, err = p.publishedRepo.GetFilteredPackagesWithOffset(searchReq, ctx.GetUserId())
+	entities, err = p.publishedRepo.GetFilteredPackagesWithOffset(stdctx.Background(), searchReq, ctx.GetUserId())
 	if err != nil {
 		return nil, err
 	}

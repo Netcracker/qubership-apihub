@@ -118,6 +118,21 @@ type VersionComparisonEntity struct {
 	BuilderVersion    string               `pg:"builder_version, type:varchar"`
 }
 
+type VersionComparisonCleanupCandidateEntity struct {
+	ComparisonId            string    `pg:"comparison_id"`
+	PackageId               string    `pg:"package_id"`
+	Version                 string    `pg:"version"`
+	Revision                int       `pg:"revision"`
+	PreviousPackageId       string    `pg:"previous_package_id"`
+	PreviousVersion         string    `pg:"previous_version"`
+	PreviousRevision        int       `pg:"previous_revision"`
+	LastActive              time.Time `pg:"last_active"`
+	RevisionNotPublished    bool      `pg:"revision_not_published"`
+	ActualPreviousVersion   *string   `pg:"actual_previous_version"`
+	ActualPreviousPackageId *string   `pg:"actual_previous_package_id"`
+	PreviousMaxRevision     int       `pg:"previous_max_revision"`
+}
+
 func MakeRefComparisonView(entity VersionComparisonEntity) *view.RefComparison {
 	refComparisonView := &view.RefComparison{
 		OperationTypes:     entity.OperationTypes,
