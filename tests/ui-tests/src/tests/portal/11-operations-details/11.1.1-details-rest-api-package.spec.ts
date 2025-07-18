@@ -329,15 +329,15 @@ test.describe('11.1.1 Operations details REST API (Package)', () => {
       await examplesPanel.responseTabBtn.click()
 
       await expect.soft(examplesPanel.getCodeButton(200)).toBeVisible()
-      // await expect.soft(examplesPanel).toContainText(UPDATE_PET_V1.testExampleString!) //TODO monaco initializing error for CI
+      await expect.soft(examplesPanel).toContainText(UPDATE_PET_V1.testExampleString!)
 
       await examplesPanel.getCodeButton(404).click()
 
-      await expect.soft(examplesPanel).not.toContainText(UPDATE_PET_V1.testExampleString!) //TODO monaco initializing error for CI
+      await expect.soft(examplesPanel).not.toContainText(UPDATE_PET_V1.testExampleString!)
 
       await examplesPanel.requestTabBtn.click()
 
-      // await expect.soft(examplesPanel).toContainText(UPDATE_PET_V1.testExampleString!) //TODO monaco initializing error for CI
+      await expect.soft(examplesPanel).toContainText(UPDATE_PET_V1.testExampleString!)
 
       await examplesPanel.fullScreenBtn.click()
       await examplesPanel.closeFullScreenBtn.click({ position: { x: 1, y: 1 } }) //TODO TestCase-B-1115
