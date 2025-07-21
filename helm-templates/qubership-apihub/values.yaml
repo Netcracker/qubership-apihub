@@ -175,14 +175,18 @@ qubershipApihubBackend:
       # Optional; Namespace for Olric discovery. If not set, default value: ""; Example: apihub
       namespace: ''
     
-    # Section with revisions cleanup job configuration
-    revisionsCleanup:
-      # Optional; If set to true, the revisions cleanup job will delete the last revision of the version. Otherwise, such revisions are skipped; If not set, default value: false; Example: true
-      deleteLastRevision: 'false'
-      # Optional; If set to true, the revisions cleanup job will delete revisions with a 'release' status. Otherwise, such revisions are skipped; If not set, default value: false; Example: true
-      deleteReleaseRevisions: 'false'
-      # Optional; Number of days to keep revisions before cleanup; If not set, default value: 365; Example: 180
-      ttlDays: '365'
+    # Section with cleanup jobs configuration
+    cleanup:
+      revisions:
+        # Optional; If set to true, the revisions cleanup job will delete the last revision of the version. Otherwise, such revisions are skipped; If not set, default value: false; Example: true
+        deleteLastRevision: 'false'
+        # Optional; If set to true, the revisions cleanup job will delete revisions with a 'release' status. Otherwise, such revisions are skipped; If not set, default value: false; Example: true
+        deleteReleaseRevisions: 'false'
+        # Optional; Number of days to keep revisions before cleanup; If not set, default value: 365; Example: 180
+        ttlDays: '365'
+      comparisons:
+        # Optional; Number of days to keep ad-hoc comparisons before cleanup; If not set, default value: 30; Example: 180
+        ttlDays: '30'
 
 # Section with APIHUB Build Task Consumer configuration
 qubershipApihubBuildTaskConsumer:
