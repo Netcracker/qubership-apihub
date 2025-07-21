@@ -19,7 +19,7 @@ generate_saml_private_cert_and_key
 
 export APIHUB_ADMIN_EMAIL=x_apihub_$(generate_random_string 6)@qubership.org
 export APIHUB_ADMIN_PASSWORD=$(generate_random_string 8)
-export APIHUB_ACCESS_TOKEN=$(generate_random_string 10)
+export APIHUB_ACCESS_TOKEN=$(generate_random_string 30)
 export JWT_PRIVATE_KEY=$(cat ./jwt_private_key)
 export SAML_CRT_ORIG=$(cat certificate.pem)
 export SAML_KEY_ORIG=$(cat private_key.pem)
