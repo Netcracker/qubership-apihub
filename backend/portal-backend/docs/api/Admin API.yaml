@@ -28,6 +28,8 @@ security:
 tags:
   - name: Transition
     description: Operations to move packages
+  - name: System
+    description: System operations
 
 paths:
   "/api/v2/admin/transition/move":
@@ -285,6 +287,48 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+  /api/v2/admin/system/stats:
+    get:
+      tags:
+        - System
+      summary: Get system statistics
+      description: |
+        Retrieves system-wide statistics including business entities count, build statistics, and database size information.
+      operationId: getSystemStats
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - api-key: []
+      responses:
+        "200":
+          description: System statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemStats"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
 components:
   schemas:
     ErrorResponse:
@@ -352,6 +396,122 @@ components:
           type: integer
           format: int32
           description: Serial number of completed transition
+    BuildsCount:
+      type: object
+      description: Statistics for a specific build type
+      properties:
+        notStarted:
+          type: integer
+          description: Number of builds not started
+        running:
+          type: integer
+          description: Number of builds currently running
+        failedLastWeek:
+          type: integer
+          description: Number of builds that failed in the last week
+        succeedLastWeek:
+          type: integer
+          description: Number of builds that succeeded in the last week
+        restartsLastWeek:
+          type: integer
+          description: Number of builds that were restarted in the last week
+    SystemStats:
+      type: object
+      description: System-wide statistics
+      properties:
+        businessEntities:
+          type: object
+          description: Counts of various business entities in the system
+          properties:
+            workspaces:
+              type: integer
+              description: Number of workspaces
+            deletedWorkspaces:
+              type: integer
+              description: Number of deleted workspaces
+            groups:
+              type: integer
+              description: Number of groups
+            deletedGroups:
+              type: integer
+              description: Number of deleted groups
+            packages:
+              type: integer
+              description: Number of packages
+            deletedPackages:
+              type: integer
+              description: Number of deleted packages
+            dashboards:
+              type: integer
+              description: Number of dashboards
+            deletedDashboards:
+              type: integer
+              description: Number of deleted dashboards
+            revisions:
+              type: integer
+              description: Number of revisions
+            deletedRevisions:
+              type: integer
+              description: Number of deleted revisions
+            documents:
+              type: integer
+              description: Number of documents
+            operations:
+              type: integer
+              description: Number of operations
+            versionComparisons:
+              type: integer
+              description: Number of version comparisons
+        builds:
+          type: object
+          description: |
+            Statistics about builds by build type.
+          properties:
+            build:
+              $ref: "#/components/schemas/BuildsCount"
+            changelog:
+              $ref: "#/components/schemas/BuildsCount"
+            documentGroup:
+              $ref: "#/components/schemas/BuildsCount"
+            exportRestDocument:
+              $ref: "#/components/schemas/BuildsCount"
+            exportRestOperationsGroup:
+              $ref: "#/components/schemas/BuildsCount"
+            exportVersion:
+              $ref: "#/components/schemas/BuildsCount"
+            mergedSpecification:
+              $ref: "#/components/schemas/BuildsCount"
+            reducedSourceSpecifications:
+              $ref: "#/components/schemas/BuildsCount"
+        databaseSize:
+          type: array
+          description: Information about database table sizes
+          items:
+            type: object
+            properties:
+              tableName:
+                type: string
+                description: Name of the database table
+              rowEstimate:
+                type: number
+                format: float
+                description: Estimated number of rows in the table
+              totalSize:
+                type: string
+                description: Total size of the table including all related data
+              indexSize:
+                type: string
+                description: Size of the table's indexes
+              toastSize:
+                type: string
+                description: Size of the table's TOAST data
+              tableSize:
+                type: string
+                description: Size of the actual table data
+              totalSizeShare:
+                type: number
+                format: float
+                description: Proportion of the total database size that this table uses
   examples:
     IncorrectInputParameters:
       description: Incorrect input parameters
