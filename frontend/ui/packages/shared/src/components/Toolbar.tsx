@@ -26,6 +26,7 @@ export type ToolbarProps = {
   header?: ReactNode
   action?: ReactNode
   size?: ToolbarSize
+  maxWidthHeaderToolbar?: number
 } & TestableProps
 
 export const Toolbar: FC<ToolbarProps> = memo<ToolbarProps>(({
@@ -34,11 +35,12 @@ export const Toolbar: FC<ToolbarProps> = memo<ToolbarProps>(({
   action,
   size = SMALL_TOOLBAR_SIZE,
   testId,
+  maxWidthHeaderToolbar,
 }) => {
   return (
     <Card>
       <CardHeader
-        sx={{ height: TOOLBAR_HEIGHT[breadcrumbs ? LARGE_TOOLBAR_SIZE : size], px: 4 }}
+        sx={{ height: TOOLBAR_HEIGHT[breadcrumbs ? LARGE_TOOLBAR_SIZE : size], px: 4, maxWidth: maxWidthHeaderToolbar }}
         title={breadcrumbs}
         subheader={
           <Box

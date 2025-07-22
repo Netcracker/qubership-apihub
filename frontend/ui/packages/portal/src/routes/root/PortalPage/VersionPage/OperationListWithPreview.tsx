@@ -136,6 +136,7 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
           apiType={apiType}
           isLoading={isInitialLoading}
           mode={mode}
+          maxWidthHeaderToolbar={initialSize}
           schemaViewMode={schemaViewMode}
           productionMode={productionMode}
         />
