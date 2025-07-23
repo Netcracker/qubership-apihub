@@ -169,7 +169,7 @@ qubershipApihubBackend:
     # Section with Olric configuration.
     olric:
       # Optional; Discovery mode for Olric. If not set, default value: local; Example: local
-      discoveryMode: 'local'
+      discoveryMode: 'lan'
       # Optional; Replica count for Olric. If not set, default value: 1; Example: 1
       replicaCount: 1
       # Optional; Namespace for Olric discovery. If not set, default value: ""; Example: apihub
