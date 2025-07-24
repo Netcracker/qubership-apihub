@@ -20,6 +20,7 @@ export interface BasePackageParams {
 export interface WorkspaceParams extends BasePackageParams {
   readonly defaultRole?: string
   readonly apiKeys?: PackageApiKey[]
+  releaseVersionPattern?: string
 }
 
 export interface GroupParams extends WorkspaceParams {
@@ -28,7 +29,6 @@ export interface GroupParams extends WorkspaceParams {
 
 export interface PackageParams extends GroupParams {
   serviceName?: string
-  releaseVersionPattern?: string
   restGroupingPrefix?: string
 }
 

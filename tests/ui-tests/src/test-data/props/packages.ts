@@ -1,11 +1,4 @@
-import type {
-  BasePackageParams,
-  GroupParams,
-  PackageKind,
-  PackageParams,
-  TestMetaBasePackage,
-  WorkspaceParams,
-} from './params'
+import type { BasePackageParams, GroupParams, PackageKind, PackageParams, TestMetaBasePackage, WorkspaceParams } from './params'
 import type { PackageApiKey } from '@shared/entities'
 import { TEST_PREFIX } from '@test-data'
 import process from 'node:process'
@@ -29,12 +22,14 @@ export class Workspace extends BasePackage {
   readonly packageId = this.alias
   readonly defaultRole?: string
   readonly apiKeys?: PackageApiKey[]
+  readonly releaseVersionPattern?: string
 
   constructor(params: WorkspaceParams, nameOptions?: NameOptions) {
     const _name = setName(params.name, 'WSP', nameOptions)
     super({ ...params, name: _name })
     this.defaultRole = params.defaultRole
     this.apiKeys = params.apiKeys
+    this.releaseVersionPattern = params.releaseVersionPattern
   }
 }
 
@@ -66,14 +61,12 @@ export class Group extends Workspace {
 export class Package extends Group {
   readonly kind: PackageKind = 'package'
   readonly serviceName?: string
-  readonly releaseVersionPattern?: string
   readonly restGroupingPrefix?: string
 
   constructor(params: PackageParams, nameOptions?: NameOptions) {
     const _name = setName(params.name, 'PKG', nameOptions)
     super({ ...params, name: _name })
     this.serviceName = params.serviceName
-    this.releaseVersionPattern = params.releaseVersionPattern
     this.restGroupingPrefix = params.restGroupingPrefix
   }
 
