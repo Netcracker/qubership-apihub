@@ -6,7 +6,6 @@ metadata:
     labels:
         name: qubership-apihub-ui
         app.kubernetes.io/name: 'qubership-apihub-ui'
-        app.kubernetes.io/version: '{{ .Values.qubershipApihub.version }}'
         app.kubernetes.io/part-of: qubership-apihub
         app.kubernetes.io/managed-by: helm
 spec:

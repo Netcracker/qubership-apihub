@@ -14,28 +14,44 @@ Optional: For PostgreSQL access install PGADmin or any other similar tool.
 
 ## Parameters setup
 
-Review *.env files in this folder and fill values for the following ones:
+Review *.env and *config.yaml files in this folder and fill values for the following ones:
 
 ```
-qubership-apihub-backend.env --->
+qubership-apihub-backend-config.yaml --->
 
-# <put_your_key_here - ssh private key base64 encoded>
-JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
-
-# <admin_login, example: apihub>
-APIHUB_ADMIN_EMAIL=${APIHUB_ADMIN_EMAIL}
-
-# <admin_password, example: password>
-APIHUB_ADMIN_PASSWORD=${APIHUB_ADMIN_PASSWORD}
-
-# <put_your_key_here - any random string>
-APIHUB_ACCESS_TOKEN=${APIHUB_ACCESS_TOKEN}
-
-# <put_your_cert_here - SAML provider's PEM certificate base64 encoded>
-SAML_CRT=${SAML_CRT}
-
-# <put_your_key_here - SAML provider's PEM certificate's private key base64 encoded>
-SAML_KEY=${SAML_KEY}
+security:
+...
+  jwt:
+    # <put_your_key_here - ssh private key base64 encoded>
+    privateKey: ${JWT_PRIVATE_KEY}
+...
+  externalIdentityProviders:
+    - id: 'external-saml-idp'
+      displayName: 'SAML'
+      imageSvg: ''
+      protocol: 'SAML'
+      samlConfiguration:
+        # <Keycloak SAML metadata endpoint. Default value is fine as soon as Keycloak with 0-Day configuration is set up within current compose file>
+        metadataUrl: 'http://host.docker.internal:8082/realms/apihub-1/protocol/saml/descriptor'
+        # <Keycloak SAML certificate. Must be manually generated. Or provided by startup script>
+        certificate: ${SAML_CRT} 
+        # <Keycloak SAML certificate private key. Must be manually generated. Or provided by startup script>
+        privateKey: ${SAML_KEY}
+    - id: 'external-oidc-idp'
+      displayName: 'OpenID Connect'
+      imageSvg: ''
+      protocol: 'OIDC'
+      oidcConfiguration:
+        providerUrl: 'http://host.docker.internal:8082/realms/apihub-2'
+        clientId: 'apihub-oidc'
+        clientSecret: ${OIDC_CLIENT_SECRET}
+zeroDayConfiguration:
+  # <access_token, example: 1RnECckUUB>
+  accessToken: ${APIHUB_ACCESS_TOKEN}
+  # <admin_login, example: apihub>
+  adminEmail: ${APIHUB_ADMIN_EMAIL}
+  # <admin_password, example: password>
+  adminPassword: ${APIHUB_ADMIN_PASSWORD}
 ```
 
 ```

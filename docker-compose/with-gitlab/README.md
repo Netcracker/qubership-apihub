@@ -27,6 +27,6 @@ Some manual action required:
 - Confidential = true
 - Scopes = api, read_api, read_user, read_repository, write_repository
 5. You will get `Application ID` and `Secret` values
-6. Paste them to `qubership-apihub-backend.env` file to `GITLAB_CLIENT_ID` and `GITLAB_CLIENT_SECRET` envs
+6. Paste them to `qubership-apihub-backend-config.yaml` file to `editor.clientId` and `editor.clientSecret` properties
 7. Re-run compose (`podman compose down && podman compose up`)
 8. Editor will work now

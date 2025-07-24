@@ -1,4 +1,4 @@
-{{ if .Values.qubershipApihubBackend.monitoring.enabled }}
+{{ if .Values.qubershipApihubBackend.env.monitoring.enabled }}
 ---
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDashboard

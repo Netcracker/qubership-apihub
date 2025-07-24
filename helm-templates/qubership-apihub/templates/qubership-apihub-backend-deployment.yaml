@@ -6,7 +6,6 @@ metadata:
     labels:
         name: 'qubership-apihub-backend'
         app.kubernetes.io/name: 'qubership-apihub-backend'
-        app.kubernetes.io/version: '{{ .Values.qubershipApihub.version }}'
         app.kubernetes.io/component: 'backend'
         app.kubernetes.io/part-of: qubership-apihub
         app.kubernetes.io/managed-by: helm
@@ -23,7 +22,6 @@ spec:
             labels:
                 name: 'qubership-apihub-backend'
                 app.kubernetes.io/name: 'qubership-apihub-backend'
-                app.kubernetes.io/version: '{{ .Values.qubershipApihub.version }}'
                 app.kubernetes.io/component: 'backend'
                 app.kubernetes.io/part-of: qubership-apihub
                 app.kubernetes.io/managed-by: helm
@@ -33,17 +31,17 @@ spec:
             hostPID: false
             hostIPC: false
             volumes:
-            -   configMap:
+            -   name: qubership-apihub-backend-config
+                secret:
                     defaultMode: 420
-                    name: qubership-apihub-config
-                name: qubership-apihub-config
+                    secretName: qubership-apihub-backend-config-secret
             -   name: tmp-volume
                 emptyDir: {}
             containers:
             -   name: 'qubership-apihub-backend'
                 image: '{{ .Values.qubershipApihubBackend.image.repository }}:{{ .Values.qubershipApihubBackend.image.tag }}'
                 volumeMounts:
-                -   name: qubership-apihub-config
+                -   name: qubership-apihub-backend-config
                     mountPath: /app/qubership-apihub-service/etc/
                     readOnly: true
                 -   name: tmp-volume
@@ -59,191 +57,10 @@ spec:
                     containerPort: 3322
                     protocol: TCP
                 env:
-                -   name: PRODUCTION_MODE
-                    value: '{{ .Values.qubershipApihubBackend.env.productionMode  }}'
                 -   name: LOG_LEVEL
-                    value: '{{ .Values.qubershipApihub.logLevel }}'
-                -   name: GITLAB_URL
-                    value: '{{ .Values.qubershipApihubBackend.env.editor.gitlabUrl }}'
-                -   name: APIHUB_POSTGRESQL_HOST
-                    value: '{{ .Values.qubershipApihubBackend.env.database.dbHost }}'
-                -   name: APIHUB_POSTGRESQL_PORT
-                    value: '{{ .Values.qubershipApihubBackend.env.database.dbPort }}'
-                -   name: APIHUB_POSTGRESQL_DB_NAME
-                    value: '{{ .Values.qubershipApihubBackend.env.database.dbName }}'
-                -   name: APIHUB_POSTGRESQL_USERNAME
-                    valueFrom:
-                      secretKeyRef:
-                         name: 'qubership-apihub-backend-db-secret'
-                         key: apihub_postgresql_username
-                -   name: APIHUB_POSTGRESQL_PASSWORD
-                    valueFrom:
-                      secretKeyRef:
-                         name: 'qubership-apihub-backend-db-secret'
-                         key: apihub_postgresql_password
-                -   name: NAMESPACE
-                    valueFrom:
-                        fieldRef:
-                            fieldPath: metadata.namespace
-                -   name: OLRIC_DISCOVERY_MODE
-                    value: 'lan'
-                -   name: OLRIC_REPLICA_COUNT
-                    value: '{{ .Values.qubershipApihubBackend.replicas }}'
-                -   name: LEGACY_SAML
-                    value: '{{ .Values.qubershipApihubBackend.env.auth.legacySaml }}'
-                -   name: AUTO_LOGIN
-                    value: '{{ .Values.qubershipApihubBackend.env.auth.autoLogin }}'
-                -   name: EXTERNAL_SAML_IDP_DISPLAY_NAME
-                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.saml.displayName }}'
-                -   name: EXTERNAL_SAML_IDP_IMAGE_SVG
-                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.saml.imageSvg }}'
-                -   name: ADFS_METADATA_URL  
-                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.saml.metadataUrl }}'
-                -   name: APIHUB_URL  
-                    value: 'https://{{ .Values.qubershipApihub.apihubUrl }}'
-                -   name: SAML_CRT
-                    valueFrom:
-                      secretKeyRef:
-                         name: 'qubership-apihub-backend-saml-secret'
-                         key: saml_crt
-                -   name: SAML_KEY
-                    valueFrom:
-                      secretKeyRef:
-                         name: 'qubership-apihub-backend-saml-secret'
-                         key: saml_key
-                -   name: EXTERNAL_OIDC_IDP_DISPLAY_NAME
-                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.oidc.displayName }}'
-                -   name: EXTERNAL_OIDC_IDP_IMAGE_SVG
-                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.oidc.imageSvg }}'
-                -   name: OIDC_PROVIDER_URL
-                    value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.oidc.providerUrl }}'
-                -   name: OIDC_CLIENT_ID
-                    valueFrom:
-                      secretKeyRef:
-                        name: 'qubership-apihub-backend-oidc-secret'
-                        key: oidc_client_id
-                -   name: OIDC_CLIENT_SECRET
-                    valueFrom:
-                      secretKeyRef:
-                        name: 'qubership-apihub-backend-oidc-secret'
-                        key: oidc_client_secret
-                -   name: JWT_PRIVATE_KEY
-                    valueFrom:
-                      secretKeyRef:
-                         name: 'qubership-apihub-backend-jwt-secret'
-                         key: jwt_private_key
-                -   name: JWT_ACCESS_TOKEN_DURATION_SEC
-                    value: '{{ .Values.qubershipApihubBackend.env.jwt.accessTokenDurationSec }}'
-                -   name: JWT_REFRESH_TOKEN_DURATION_SEC
-                    value: '{{ .Values.qubershipApihubBackend.env.jwt.refreshTokenDurationSec }}'
-                -   name: CLIENT_ID
-                    valueFrom:
-                      secretKeyRef:
-                         name: 'qubership-apihub-backend-gitlab-secret'
-                         key: client_id
-                -   name: CLIENT_SECRET
-                    valueFrom:
-                      secretKeyRef:
-                         name: 'qubership-apihub-backend-gitlab-secret'
-                         key: client_secret
-                -   name: EXTERNAL_LINKS
-                    value: '{{ .Values.qubershipApihubBackend.env.businessParameters.externalLinks }}'
-                -   name: DEFAULT_WORKSPACE_ID
-                    value: '{{ .Values.qubershipApihubBackend.env.businessParameters.defaultWorkspaceId }}'
-                -   name: RELEASE_VERSION_PATTERN
-                    value: '{{ .Values.qubershipApihubBackend.env.businessParameters.releaseVersionPattern }}'
-                -   name: PUBLISH_FILE_SIZE_LIMIT_MB
-                    value: '{{ .Values.qubershipApihubBackend.env.businessParameters.publishFileSizeLimitMb }}'
-                -   name: PUBLISH_ARCHIVE_SIZE_LIMIT_MB
-                    value: '{{ .Values.qubershipApihubBackend.env.businessParameters.publishArchiveSizeLimitMb }}'
-                -   name: SYSTEM_NOTIFICATION
-                    value: '{{ .Values.qubershipApihubBackend.env.businessParameters.systemNotification }}'
-                -   name: INSECURE_PROXY
-                    value: '{{ .Values.qubershipApihubBackend.env.businessParameters.insecureProxy }}'
-                -   name: ORIGIN_ALLOWED
-                    value: '{{ .Values.qubershipApihubBackend.env.technicalParameters.originAllowed }}'
-                -   name: LDAP_SERVER  
-                    value: '{{ .Values.qubershipApihubBackend.env.ldap.ldapServer }}'
-                -   name: LDAP_USER
-                    valueFrom:
-                      secretKeyRef:
-                         name: 'qubership-apihub-backend-ldap-user-secret'
-                         key: ldap_user
-                -   name: LDAP_USER_PASSWORD
-                    valueFrom:
-                      secretKeyRef:
-                         name: 'qubership-apihub-backend-ldap-user-secret'
-                         key: ldap_user_password
-                -   name: LDAP_BASE_DN
-                    value: '{{ .Values.qubershipApihubBackend.env.ldap.baseDN }}'
-                -   name: LDAP_ORGANIZATION_UNIT  
-                    value: '{{ .Values.qubershipApihubBackend.env.ldap.organizationUnit }}'
-                -   name: LDAP_SEARCH_BASE  
-                    value: '{{ .Values.qubershipApihubBackend.env.ldap.searchBase }}'
-                -   name: MONITORING_ENABLED
-                    value: '{{ .Values.qubershipApihubBackend.monitoring.enabled }}'
-                -   name: STORAGE_SERVER_USERNAME
-                    valueFrom:
-                      secretKeyRef:
-                        name: 'qubership-apihub-backend-storage-secret'
-                        key: storage_server_access_key_id
-                -   name: STORAGE_SERVER_PASSWORD
-                    valueFrom:
-                      secretKeyRef:
-                        name: 'qubership-apihub-backend-storage-secret'
-                        key: storage_server_secret_access_key
-                -   name: STORAGE_SERVER_CRT
-                    valueFrom:
-                      secretKeyRef:
-                        name: 'qubership-apihub-backend-storage-secret'
-                        key: storage_server_crt
-                -   name: STORAGE_SERVER_URL
-                    valueFrom:
-                      secretKeyRef:
-                        name: 'qubership-apihub-backend-storage-secret'
-                        key: storage_server_endpoint
-                -   name: STORAGE_SERVER_BUCKET_NAME
-                    valueFrom:
-                      secretKeyRef:
-                        name: 'qubership-apihub-backend-storage-secret'
-                        key: storage_server_bucket_name
-                -   name: STORAGE_SERVER_ACTIVE
-                    valueFrom:
-                      secretKeyRef:
-                        name: 'qubership-apihub-backend-storage-secret'
-                        key: storage_server_active
-                -   name: STORAGE_SERVER_STORE_ONLY_BUILD_RESULT
-                    valueFrom:
-                      secretKeyRef:
-                        name: 'qubership-apihub-backend-storage-secret'
-                        key: storage_server_store_only_build_result
-                -   name: APIHUB_ADMIN_EMAIL
-                    valueFrom:
-                      secretKeyRef:
-                        name: 'qubership-apihub-backend-zero-day-admin-secret'
-                        key: apihub_admin_email
-                -   name: APIHUB_ADMIN_PASSWORD
-                    valueFrom:
-                      secretKeyRef:
-                        name: 'qubership-apihub-backend-zero-day-admin-secret'
-                        key: apihub_admin_password
-                -   name: APIHUB_ACCESS_TOKEN
-                    valueFrom:
-                      secretKeyRef:
-                        name: 'qubership-apihub-backend-access-token-secret'
-                        key: token
-                -   name: CUSTOM_PATH_PREFIXES
-                    value: '{{ .Values.qubershipApihubBackend.env.technicalParameters.customPathPrefixes }}'
-                -   name: ALLOWED_HOSTS
-                    value: '{{ .Values.qubershipApihubBackend.env.businessParameters.allowedHosts }}'
-                -   name: REVISIONS_TTL_DAYS
-                    value: '{{ .Values.qubershipApihubBackend.env.cleanup.revisions.ttlDays }}'
-                -   name: REVISIONS_CLEANUP_DELETE_LAST_REVISION
-                    value: '{{ .Values.qubershipApihubBackend.env.cleanup.revisions.deleteLastRevision }}'
-                -   name: REVISIONS_CLEANUP_DELETE_RELEASE_REVISIONS
-                    value: '{{ .Values.qubershipApihubBackend.env.cleanup.revisions.deleteReleaseRevisions }}'
-                -   name: COMPARISONS_TTL_DAYS
-                    value: '{{ .Values.qubershipApihubBackend.env.cleanup.comparisons.ttlDays }}'
+                    value: '{{ .Values.qubershipApihubBackend.env.logLevel }}'
+                -   name: APIHUB_CONFIG_FOLDER
+                    value: '/app/qubership-apihub-service/etc/'
                 resources:
                     requests:
                         cpu: {{ .Values.qubershipApihubBackend.resource.cpu.request }}
