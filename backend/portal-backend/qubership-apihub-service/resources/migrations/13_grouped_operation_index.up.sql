@@ -1,0 +1,1 @@
+CREATE INDEX grouped_operation_idx ON public.grouped_operation USING btree (package_id, version, revision, operation_id);
