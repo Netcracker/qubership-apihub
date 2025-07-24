@@ -1850,7 +1850,8 @@ func (v versionServiceImpl) DeleteVersionsRecursively(ctx context.SecurityContex
 			packages, err := v.publishedRepo.GetFilteredPackagesWithOffset(context, getPackageListReq, ctx.GetUserId())
 			if err != nil {
 				log.Errorf("failed to get child packages for versions cleanup %s: %s", jobId, err.Error())
-				err = v.versionCleanupRepository.UpdateVersionCleanupRun(context, jobId, string(view.StatusError), err.Error(), deletedItems)
+				finishedAt := time.Now()
+				err = v.versionCleanupRepository.UpdateVersionCleanupRun(context, jobId, string(view.StatusError), err.Error(), deletedItems, &finishedAt)
 				if err != nil {
 					log.Errorf("failed to set '%s' status for cleanup job id %s: %s", "error", jobId, err.Error())
 					return
@@ -1862,7 +1863,8 @@ func (v versionServiceImpl) DeleteVersionsRecursively(ctx context.SecurityContex
 					deleted, err := v.publishedRepo.DeletePackageRevisionsBeforeDate(context, rootPackage.Id, deleteBefore, true, false, "cleanup_job_"+jobId)
 					if err != nil {
 						log.Errorf("failed to delete versions of package %s during versions cleanup %s: %s", rootPackage.Id, jobId, err.Error())
-						err = v.versionCleanupRepository.UpdateVersionCleanupRun(context, jobId, string(view.StatusError), err.Error(), deletedItems)
+						finishedAt := time.Now()
+						err = v.versionCleanupRepository.UpdateVersionCleanupRun(context, jobId, string(view.StatusError), err.Error(), deletedItems, &finishedAt)
 						if err != nil {
 							log.Errorf("failed to set '%s' status for cleanup job id %s: %s", "error", jobId, err.Error())
 							return
@@ -1871,7 +1873,8 @@ func (v versionServiceImpl) DeleteVersionsRecursively(ctx context.SecurityContex
 					}
 					deletedItems += deleted
 				}
-				err = v.versionCleanupRepository.UpdateVersionCleanupRun(context, jobId, string(view.StatusComplete), "", deletedItems)
+				finishedAt := time.Now()
+				err = v.versionCleanupRepository.UpdateVersionCleanupRun(context, jobId, string(view.StatusComplete), "", deletedItems, &finishedAt)
 				if err != nil {
 					log.Errorf("failed to set '%s' status for cleanup job id %s: %s", "complete", jobId, err.Error())
 					return
@@ -1883,7 +1886,8 @@ func (v versionServiceImpl) DeleteVersionsRecursively(ctx context.SecurityContex
 				deleted, err := v.publishedRepo.DeletePackageRevisionsBeforeDate(context, pkg.Id, deleteBefore, true, false, "cleanup_job_"+jobId)
 				if err != nil {
 					log.Errorf("failed to delete versions of package %s during versions cleanup %s: %s", pkg.Id, jobId, err.Error())
-					err = v.versionCleanupRepository.UpdateVersionCleanupRun(context, jobId, string(view.StatusError), err.Error(), deletedItems)
+					finishedAt := time.Now()
+					err = v.versionCleanupRepository.UpdateVersionCleanupRun(context, jobId, string(view.StatusError), err.Error(), deletedItems, &finishedAt)
 					if err != nil {
 						log.Errorf("failed to set '%s' status for cleanup job id %s: %s", "error", jobId, err.Error())
 						return
