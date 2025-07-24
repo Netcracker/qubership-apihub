@@ -16,6 +16,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
@@ -25,7 +26,7 @@ import (
 type VersionCleanupRepository interface {
 	GetVersionCleanupRun(id string) (*entity.VersionCleanupEntity, error)
 	StoreVersionCleanupRun(ctx context.Context, entity entity.VersionCleanupEntity) error
-	UpdateVersionCleanupRun(ctx context.Context, runId string, status string, details string, deletedItems int) error
+	UpdateVersionCleanupRun(ctx context.Context, runId string, status string, details string, deletedItems int, finishedAt *time.Time) error
 }
 
 func NewVersionCleanupRepository(cp db.ConnectionProvider) VersionCleanupRepository {
@@ -53,11 +54,22 @@ func (v versionCleanupRepositoryImpl) StoreVersionCleanupRun(ctx context.Context
 	return err
 }
 
-func (v versionCleanupRepositoryImpl) UpdateVersionCleanupRun(ctx context.Context, runId string, status string, details string, deletedItems int) error {
-	_, err := v.cp.GetConnection().ModelContext(ctx, &entity.VersionCleanupEntity{}).
-		Set("status=?", status).
-		Set("details=?", details).
-		Set("deleted_items=?", deletedItems).
-		Where("run_id = ?", runId).Update()
+func (v versionCleanupRepositoryImpl) UpdateVersionCleanupRun(ctx context.Context, runId string, status string, details string, deletedItems int, finishedAt *time.Time) error {
+	query := v.cp.GetConnection().ModelContext(ctx, &entity.VersionCleanupEntity{}).
+		Set("deleted_items=?", deletedItems)
+	
+	if status != "" {
+		query = query.Set("status=?", status)
+	}
+	
+	if details != "" {
+		query = query.Set("details=?", details)
+	}
+
+	if finishedAt != nil {
+		query = query.Set("finished_at=?", finishedAt)
+	}
+
+	_, err := query.Where("run_id = ?", runId).Update()
 	return err
 }

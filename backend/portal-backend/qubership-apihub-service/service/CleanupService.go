@@ -34,10 +34,10 @@ import (
 type jobType string
 
 const (
-	//TODO: what is the appropriate timeout?
-	cleanupJobTimeout     = 48 * time.Hour
-	maxErrorMessageLength = 1000
-	sharedLockName        = "cleanup_job_lock"
+	defaultCleanupJobTimeout = 48 * time.Hour
+	cleanupJobTimeoutBuffer  = 1 * time.Hour
+	maxErrorMessageLength    = 1000
+	sharedLockName           = "cleanup_job_lock"
 
 	jobTypeRevisions   jobType = "revisions"
 	jobTypeComparisons jobType = "comparisons"
@@ -166,7 +166,35 @@ func (c cleanupServiceImpl) ClearTestData(testId string) error {
 	return nil
 }
 
+func (c cleanupServiceImpl) calculateCleanupJobTimeout(schedule string, jobType jobType) time.Duration {
+	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+
+	sched, err := parser.Parse(schedule)
+	if err != nil {
+		log.Warnf("Failed to parse cron schedule '%s' for %s cleanup job: %v. Using default timeout.", schedule, jobType, err)
+		return defaultCleanupJobTimeout
+	}
+
+	now := time.Now()
+	next1 := sched.Next(now)
+	next2 := sched.Next(next1)
+
+	interval := next2.Sub(next1)
+	if interval <= cleanupJobTimeoutBuffer {
+		timeout := time.Duration(float64(interval) * 0.9)
+		log.Warnf("Calculated interval from cron schedule '%s' for %s cleanup job is very short: %v. Using %v as timeout.",
+			schedule, jobType, interval, timeout)
+		return timeout
+	}
+
+	timeout := interval - cleanupJobTimeoutBuffer
+	log.Infof("Calculated cleanup job timeout for %s cleanup job with schedule '%s': %v (interval: %v)",
+		jobType, schedule, timeout, interval)
+	return timeout
+}
+
 func (c cleanupServiceImpl) CreateRevisionsCleanupJob(publishedRepository repository.PublishedRepository, migrationRepository mRepository.MigrationRunRepository, versionCleanupRepository repository.VersionCleanupRepository, lockService LockService, instanceId string, schedule string, deleteLastRevision bool, deleteReleaseRevision bool, ttl int) error {
+	timeout := c.calculateCleanupJobTimeout(schedule, jobTypeRevisions)
 	job := &revisionsCleanupJob{
 		baseCleanupJob: baseCleanupJob{
 			cp:                  c.cp,
@@ -176,6 +204,7 @@ func (c cleanupServiceImpl) CreateRevisionsCleanupJob(publishedRepository reposi
 			instanceId:          instanceId,
 			ttl:                 ttl,
 			jobType:             jobTypeRevisions,
+			timeout:             timeout,
 		},
 		versionCleanupRepository: versionCleanupRepository,
 		deleteLastRevision:       deleteLastRevision,
@@ -185,6 +214,7 @@ func (c cleanupServiceImpl) CreateRevisionsCleanupJob(publishedRepository reposi
 }
 
 func (c cleanupServiceImpl) CreateComparisonsCleanupJob(publishedRepo repository.PublishedRepository, migrationRepository mRepository.MigrationRunRepository, comparisonCleanupRepo repository.ComparisonCleanupRepository, lockService LockService, instanceId string, schedule string, ttl int) error {
+	timeout := c.calculateCleanupJobTimeout(schedule, jobTypeComparisons)
 	job := &comparisonsCleanupJob{
 		baseCleanupJob: baseCleanupJob{
 			cp:                  c.cp,
@@ -194,6 +224,7 @@ func (c cleanupServiceImpl) CreateComparisonsCleanupJob(publishedRepo repository
 			instanceId:          instanceId,
 			ttl:                 ttl,
 			jobType:             jobTypeComparisons,
+			timeout:             timeout,
 		},
 		comparisonCleanupRepo: comparisonCleanupRepo,
 	}
@@ -228,6 +259,7 @@ type baseCleanupJob struct {
 	instanceId          string
 	ttl                 int
 	jobType             jobType
+	timeout             time.Duration
 }
 
 func (j *baseCleanupJob) isMigrationRunning() bool {
@@ -315,14 +347,15 @@ func (j *revisionsCleanupJob) Run() {
 	jobId := uuid.New().String()
 	deletedItems := 0
 
-	ctx, cancel := context.WithTimeout(context.Background(), cleanupJobTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), j.timeout)
 	defer cancel()
 
 	defer func() {
 		if err := recover(); err != nil {
 			errorMsg := fmt.Sprintf("Revisions cleanup job %s failed with panic: %v", jobId, err)
 			log.Errorf("%s", errorMsg)
-			_ = j.updateCleanupRun(ctx, jobId, string(view.StatusError), errorMsg, deletedItems)
+			finishedAt := time.Now()
+			_ = j.updateCleanupRun(ctx, jobId, string(view.StatusError), errorMsg, deletedItems, &finishedAt)
 		}
 	}()
 
@@ -343,9 +376,10 @@ func (j *revisionsCleanupJob) Run() {
 		return
 	}
 
-	deletedItems, processingErrors, err := j.processPackages(ctx, jobId, deleteBefore, deletedItems)
+	processingErrors, err := j.processPackages(ctx, jobId, deleteBefore, &deletedItems)
 	if err != nil {
-		_ = j.updateCleanupRun(ctx, jobId, string(view.StatusError), err.Error(), deletedItems)
+		finishedAt := time.Now()
+		_ = j.updateCleanupRun(ctx, jobId, string(view.StatusError), err.Error(), deletedItems, &finishedAt)
 		return
 	}
 
@@ -368,9 +402,11 @@ func (j *revisionsCleanupJob) initializeCleanupRun(ctx context.Context, jobId st
 	return nil
 }
 
-func (j *revisionsCleanupJob) processPackages(ctx context.Context, jobId string, deleteBefore time.Time, deletedItems int) (int, []string, error) {
+func (j *revisionsCleanupJob) processPackages(ctx context.Context, jobId string, deleteBefore time.Time, deletedItems *int) ([]string, error) {
 	page, limit := 0, 100
 	processingErrors := []string{}
+	packageCount := 0
+	lastUpdateCount := *deletedItems
 
 	for {
 		select {
@@ -380,7 +416,7 @@ func (j *revisionsCleanupJob) processPackages(ctx context.Context, jobId string,
 				errorMessage = "timeout"
 			}
 			log.Warnf("Revisions cleanup job %s interrupted - %s", jobId, errorMessage)
-			return deletedItems, processingErrors, fmt.Errorf("job interrupted - %s", errorMessage)
+			return nil, fmt.Errorf("job interrupted - %s", errorMessage)
 		default:
 		}
 
@@ -396,7 +432,7 @@ func (j *revisionsCleanupJob) processPackages(ctx context.Context, jobId string,
 		packages, err := j.publishedRepository.GetFilteredPackagesWithOffset(ctx, getPackageListReq, "")
 		if err != nil {
 			log.Errorf("Failed to get packages for revisions cleanup %s: %s", jobId, err.Error())
-			return deletedItems, processingErrors, fmt.Errorf("failed to get packages: %s", err.Error())
+			return nil, fmt.Errorf("failed to get packages: %s", err.Error())
 		}
 
 		if len(packages) == 0 {
@@ -413,7 +449,7 @@ func (j *revisionsCleanupJob) processPackages(ctx context.Context, jobId string,
 					errorMessage = "timeout"
 				}
 				log.Warnf("Revisions cleanup job %s interrupted during package processing - %s", jobId, errorMessage)
-				return deletedItems, processingErrors, fmt.Errorf("job interrupted - %s", errorMessage)
+				return nil, fmt.Errorf("job interrupted - %s", errorMessage)
 			default:
 			}
 
@@ -423,14 +459,25 @@ func (j *revisionsCleanupJob) processPackages(ctx context.Context, jobId string,
 				log.Warnf("Failed to delete revisions of package %s during revisions cleanup %s: %v", pkg.Id, jobId, err)
 				processingErrors = append(processingErrors, fmt.Sprintf("package %s: %s", pkg.Id, err.Error()))
 			}
-			deletedItems += count
+			*deletedItems += count
+			packageCount++
 		}
 
-		log.Debugf("[revisions cleanup] Completed processing page %d, total deleted items so far: %d", page+1, deletedItems)
+		log.Debugf("[revisions cleanup] Completed processing page %d, total deleted items so far: %d", page+1, *deletedItems)
+
+		if packageCount >= 1000 && *deletedItems > lastUpdateCount {
+			if err := j.updateCleanupRun(ctx, jobId, "", "", *deletedItems, nil); err != nil {
+				log.Warnf("Failed to update progress for revisions cleanup %s: %v", jobId, err)
+			} else {
+				lastUpdateCount = *deletedItems
+			}
+			packageCount = 0
+		}
+
 		page++
 	}
 
-	return deletedItems, processingErrors, nil
+	return processingErrors, nil
 }
 
 func (j *revisionsCleanupJob) finishCleanupRun(ctx context.Context, jobId string, errors []string, deletedItems int) {
@@ -441,7 +488,8 @@ func (j *revisionsCleanupJob) finishCleanupRun(ctx context.Context, jobId string
 		errorMessage = fmt.Sprintf("Failed packages: %s", strings.Join(errors, "; "))
 	}
 
-	if err := j.updateCleanupRun(ctx, jobId, status, errorMessage, deletedItems); err != nil {
+	finishedAt := time.Now()
+	if err := j.updateCleanupRun(ctx, jobId, status, errorMessage, deletedItems, &finishedAt); err != nil {
 		logErrorMessage := errorMessage
 		runes := []rune(logErrorMessage)
 		if len(runes) > maxErrorMessageLength {
@@ -454,11 +502,11 @@ func (j *revisionsCleanupJob) finishCleanupRun(ctx context.Context, jobId string
 	log.Infof("Revisions cleanup job %s finished with status '%s'. Deleted %d revisions.", jobId, status, deletedItems)
 }
 
-func (j *revisionsCleanupJob) updateCleanupRun(ctx context.Context, jobId string, status string, errorMessage string, deletedItems int) error {
+func (j *revisionsCleanupJob) updateCleanupRun(ctx context.Context, jobId string, status string, errorMessage string, deletedItems int, finishedAt *time.Time) error {
 	updateCtx, cancel := j.createUpdateContext(ctx)
 	defer cancel()
 
-	err := j.versionCleanupRepository.UpdateVersionCleanupRun(updateCtx, jobId, status, errorMessage, deletedItems)
+	err := j.versionCleanupRepository.UpdateVersionCleanupRun(updateCtx, jobId, status, errorMessage, deletedItems, finishedAt)
 	if err != nil {
 		log.Errorf("failed to set '%s' status for cleanup job id %s: %s", status, jobId, err.Error())
 		return err
@@ -479,7 +527,8 @@ func (j *comparisonsCleanupJob) Run() {
 		if err := recover(); err != nil {
 			errorMsg := fmt.Sprintf("Comparison cleanup job %s failed with panic: %v", jobId, err)
 			log.Errorf("%s", errorMsg)
-			_ = j.updateCleanupRun(context.Background(), jobId, string(view.StatusError), errorMsg, deletedItems)
+			finishedAt := time.Now()
+			_ = j.updateCleanupRun(context.Background(), jobId, string(view.StatusError), errorMsg, deletedItems, &finishedAt)
 		}
 	}()
 
@@ -487,7 +536,7 @@ func (j *comparisonsCleanupJob) Run() {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), cleanupJobTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), j.timeout)
 	defer cancel()
 
 	if !j.acquireLock(ctx, jobId, cancel) {
@@ -501,9 +550,10 @@ func (j *comparisonsCleanupJob) Run() {
 		return
 	}
 
-	deletedItems, processingErrors, err := j.processComparisons(ctx, jobId, deleteBefore, deletedItems)
+	processingErrors, err := j.processComparisons(ctx, jobId, deleteBefore, &deletedItems)
 	if err != nil {
-		_ = j.updateCleanupRun(ctx, jobId, string(view.StatusError), err.Error(), deletedItems)
+		finishedAt := time.Now()
+		_ = j.updateCleanupRun(ctx, jobId, string(view.StatusError), err.Error(), deletedItems, &finishedAt)
 		return
 	}
 
@@ -526,9 +576,11 @@ func (j *comparisonsCleanupJob) initializeCleanupRun(ctx context.Context, jobId 
 	return nil
 }
 
-func (j *comparisonsCleanupJob) processComparisons(ctx context.Context, jobId string, deleteBefore time.Time, deletedItems int) (int, []string, error) {
+func (j *comparisonsCleanupJob) processComparisons(ctx context.Context, jobId string, deleteBefore time.Time, deletedItems *int) ([]string, error) {
 	page, limit := 0, 100
 	var errors []string
+	comparisonCount := 0
+	lastUpdateCount := *deletedItems
 
 	for {
 		select {
@@ -538,7 +590,7 @@ func (j *comparisonsCleanupJob) processComparisons(ctx context.Context, jobId st
 				errorMessage = "timeout"
 			}
 			log.Warnf("Comparisons cleanup job %s interrupted - %s", jobId, errorMessage)
-			return deletedItems, errors, fmt.Errorf("job interrupted - %s", errorMessage)
+			return nil, fmt.Errorf("job interrupted - %s", errorMessage)
 		default:
 		}
 
@@ -562,7 +614,7 @@ func (j *comparisonsCleanupJob) processComparisons(ctx context.Context, jobId st
 					errorMessage = "timeout"
 				}
 				log.Warnf("Comparison cleanup job %s interrupted - %s", jobId, errorMessage)
-				return deletedItems, errors, fmt.Errorf("job interrupted - %s", errorMessage)
+				return nil, fmt.Errorf("job interrupted - %s", errorMessage)
 			default:
 			}
 
@@ -590,18 +642,29 @@ func (j *comparisonsCleanupJob) processComparisons(ctx context.Context, jobId st
 				} else if deleted {
 					log.Debugf("[comparisons cleanup] Deleted version comparison %s, packageId: %s, version: %s, revision: %d, previousPackageId: %s, previousVersion: %s, previousRevision: %d",
 						candidate.ComparisonId, candidate.PackageId, candidate.Version, candidate.Revision, candidate.PreviousPackageId, candidate.PreviousVersion, candidate.PreviousRevision)
-					deletedItems++
+					*deletedItems++
 				} else {
 					log.Tracef("[comparisons cleanup] Comparison %s was not deleted (referenced by another comparison or already deleted)", candidate.ComparisonId)
 				}
 			}
-
+			comparisonCount++
 		}
-		log.Debugf("[comparisons cleanup] Completed processing page %d, total deleted items so far: %d", page+1, deletedItems)
+
+		log.Debugf("[comparisons cleanup] Completed processing page %d, total deleted items so far: %d", page+1, *deletedItems)
+
+		if comparisonCount >= 1000 && *deletedItems > lastUpdateCount {
+			if err := j.updateCleanupRun(ctx, jobId, "", "", *deletedItems, nil); err != nil {
+				log.Warnf("Failed to update progress for comparisons cleanup %s: %v", jobId, err)
+			} else {
+				lastUpdateCount = *deletedItems
+			}
+			comparisonCount = 0
+		}
+
 		page++
 	}
 
-	return deletedItems, errors, nil
+	return errors, nil
 }
 
 func (j *comparisonsCleanupJob) finishCleanupRun(ctx context.Context, jobId string, errors []string, deletedItems int) {
@@ -612,7 +675,8 @@ func (j *comparisonsCleanupJob) finishCleanupRun(ctx context.Context, jobId stri
 		errorMessage = fmt.Sprintf("Failed version comparisons: %s", strings.Join(errors, "; "))
 	}
 
-	if err := j.updateCleanupRun(ctx, jobId, status, errorMessage, deletedItems); err != nil {
+	finishedAt := time.Now()
+	if err := j.updateCleanupRun(ctx, jobId, status, errorMessage, deletedItems, &finishedAt); err != nil {
 		logErrorMessage := errorMessage
 		runes := []rune(logErrorMessage)
 		if len(runes) > maxErrorMessageLength {
@@ -625,11 +689,11 @@ func (j *comparisonsCleanupJob) finishCleanupRun(ctx context.Context, jobId stri
 	log.Infof("Comparison cleanup job %s finished with status '%s'. Deleted %d comparisons.", jobId, status, deletedItems)
 }
 
-func (j *comparisonsCleanupJob) updateCleanupRun(ctx context.Context, jobId string, status string, errorMessage string, deletedItems int) error {
+func (j *comparisonsCleanupJob) updateCleanupRun(ctx context.Context, jobId string, status string, errorMessage string, deletedItems int, finishedAt *time.Time) error {
 	updateCtx, cancel := j.createUpdateContext(ctx)
 	defer cancel()
 
-	err := j.comparisonCleanupRepo.UpdateComparisonCleanupRun(updateCtx, jobId, status, errorMessage, deletedItems)
+	err := j.comparisonCleanupRepo.UpdateComparisonCleanupRun(updateCtx, jobId, status, errorMessage, deletedItems, finishedAt)
 	if err != nil {
 		log.Errorf("failed to set '%s' status for cleanup job id %s: %s", status, jobId, err.Error())
 		return err

@@ -22,6 +22,7 @@ type VersionCleanupEntity struct {
 	RunId        string    `pg:"run_id, pk, type:uuid"`
 	InstanceId   string    `pg:"instance_id, type:uuid"`
 	StartedAt    time.Time `pg:"started_at, type:timestamp without time zone"`
+	FinishedAt   time.Time `pg:"finished_at, type:timestamp without time zone"`
 	Status       string    `pg:"status, type:varchar"`
 	Details      string    `pg:"details, type:varchar"`
 	PackageId    *string   `pg:"package_id, type:varchar"`
