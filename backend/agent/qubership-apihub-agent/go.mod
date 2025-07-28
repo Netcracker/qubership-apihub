@@ -6,7 +6,7 @@ toolchain go1.23.6
 
 require (
 	github.com/golang/mock v1.6.0
-	github.com/gorilla/handlers v1.5.1
+	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/netcracker/qubership-core-lib-go-paas-mediation-client/v8 v8.0.0-20250410143905-3d0ae9284c45
 	github.com/netcracker/qubership-core-lib-go/v3 v3.0.0-20250410090100-eded4c69a462

@@ -332,7 +332,7 @@ func buildBaseurl(srv entity.Service) string {
 	// TODO: https support
 	baseUrl := "http://" + srv.Name + "." + srv.Namespace + ".svc.cluster.local" + ":"
 	for _, port := range srv.Spec.Ports {
-		if port.Name == "web" || port.Port == 8080 || port.Port == 80 || port.Port == 443 || port.Port == 8443 {
+		if port.Name == "web" || port.Name == "http" || port.Port == 8080 || port.Port == 80 || port.Port == 443 || port.Port == 8443 {
 			baseUrl += strconv.Itoa(int(port.Port))
 			break
 		}
