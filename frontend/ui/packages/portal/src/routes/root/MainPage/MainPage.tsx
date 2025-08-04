@@ -15,12 +15,18 @@
  */
 
 import type { FC } from 'react'
-import { memo } from 'react'
+import { memo, useEffect } from 'react'
 import { Box } from '@mui/material'
 import { Outlet } from 'react-router-dom'
 import { DEFAULT_PAPER_SHADOW } from '@netcracker/qubership-apihub-ui-shared/themes/palette'
 import { DEFAULT_PAGE_LAYOUT_GAP } from '@netcracker/qubership-apihub-ui-shared/utils/page-layouts'
 import { MainPageNavigation } from '@apihub/routes/root/MainPage/MainPageNavigation/MainPageNavigation'
+import { DASHBOARD_KIND, GROUP_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { useNavigation } from '@apihub/routes/NavigationProvider'
+import { FAVORITE_PAGE_REFERER } from '@apihub/entities/referer-pages-names'
+import { usePackages } from '@apihub/routes/root/usePackages'
+import { useLocation } from 'react-use'
+import { FAVORITE_PAGE } from '../../../routes'
 
 export const MAIN_CARD_STYLES = {
   display: 'grid',
@@ -30,6 +36,20 @@ export const MAIN_CARD_STYLES = {
 }
 
 export const MainPage: FC = memo(() => {
+
+  const [packages, isLoading] = usePackages({
+    kind: [PACKAGE_KIND, GROUP_KIND, DASHBOARD_KIND],
+    onlyFavorite: true,
+    refererPageKey: FAVORITE_PAGE_REFERER,
+  })
+  const { navigateToWorkspace } = useNavigation()
+  const location = useLocation()
+
+  useEffect(() => {
+    if (!packages.length && !isLoading && location.pathname?.includes(FAVORITE_PAGE)) {
+      navigateToWorkspace({ workspaceKey: '' })
+    }
+  }, [isLoading])
 
   return (
     <Box sx={{
