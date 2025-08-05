@@ -109,10 +109,16 @@ APIHUB_ACCESS_TOKEN=${any string}
 | DEFAULT\_WORKSPACE\_ID | No | "" | QS | Default workspace ID for Agent UI |
 | CUSTOM\_PATH\_PREFIXES | No | "" |  | Allows to specify custom paths for extension (plug-in) backend services |
 | ALLOWED\_HOSTS | No | "" | \*.example.com | Allowed list of hosts that are accepted for proxy(playground) requests. |
+| REVISIONS\_CLEANUP\_SCHEDULE | No | 0 21 * * 0 | 0 2 * * * | Cron schedule for revisions cleanup job. |
 | REVISIONS\_TTL\_DAYS | No | 365 | 180 | Number of days to keep revisions before cleanup. |
 | REVISIONS\_CLEANUP\_DELETE\_LAST\_REVISION | No | false | true | If set to true, the revisions cleanup job will delete the last revision of the version. Otherwise, such revisions are skipped. |
 | REVISIONS\_CLEANUP\_DELETE\_RELEASE\_REVISIONS | No | false | true | If set to true, the revisions cleanup job will delete revisions with a 'release' status. Otherwise, such revisions are skipped. |
+| COMPARISONS\_CLEANUP\_SCHEDULE | No | 0 5 * * 0 | 0 3 * * * | Cron schedule for comparisons cleanup job. |
+| COMPARISONS\_CLEANUP\_TIMEOUT_MIN | No | 720 | 60 | Timeout in minutes for comparisons cleanup. After the timeout, 'VACUUM FULL' will be performed on the affected tables. |
 | COMPARISONS\_TTL\_DAYS | No | 30 | 180 | Number of days to keep ad-hoc comparisons before cleanup. |
+| SOFT\_DELETED\_DATA\_CLEANUP\_SCHEDULE | No | 0 22 * * 5 | 0 4 * * * | Cron schedule for soft deleted data cleanup job. |
+| SOFT\_DELETED\_DATA\_CLEANUP\_TIMEOUT\_MIN | No | 1200 | 120 | Timeout in minutes for soft deleted data cleanup. After the timeout, 'VACUUM FULL' will be performed on the affected tables. |
+| SOFT\_DELETED\_DATA\_TTL\_DAYS | No | 730 | 700 | Number of days to keep soft deleted data before cleanup. |
 
 | Deploy Parameter name | Mandatory | Default Value | Example | Description |
 | --- | --- | --- | --- | --- |
