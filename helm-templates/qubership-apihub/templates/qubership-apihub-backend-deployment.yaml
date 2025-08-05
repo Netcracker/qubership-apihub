@@ -97,9 +97,9 @@ spec:
                     value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.saml.displayName }}'
                 -   name: EXTERNAL_SAML_IDP_IMAGE_SVG
                     value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.saml.imageSvg }}'
-                -   name: ADFS_METADATA_URL  
+                -   name: ADFS_METADATA_URL
                     value: '{{ .Values.qubershipApihubBackend.env.auth.externalIdentityProviders.saml.metadataUrl }}'
-                -   name: APIHUB_URL  
+                -   name: APIHUB_URL
                     value: 'https://{{ .Values.qubershipApihub.apihubUrl }}'
                 -   name: SAML_CRT
                     valueFrom:
@@ -162,7 +162,7 @@ spec:
                     value: '{{ .Values.qubershipApihubBackend.env.businessParameters.insecureProxy }}'
                 -   name: ORIGIN_ALLOWED
                     value: '{{ .Values.qubershipApihubBackend.env.technicalParameters.originAllowed }}'
-                -   name: LDAP_SERVER  
+                -   name: LDAP_SERVER
                     value: '{{ .Values.qubershipApihubBackend.env.ldap.ldapServer }}'
                 -   name: LDAP_USER
                     valueFrom:
@@ -176,9 +176,9 @@ spec:
                          key: ldap_user_password
                 -   name: LDAP_BASE_DN
                     value: '{{ .Values.qubershipApihubBackend.env.ldap.baseDN }}'
-                -   name: LDAP_ORGANIZATION_UNIT  
+                -   name: LDAP_ORGANIZATION_UNIT
                     value: '{{ .Values.qubershipApihubBackend.env.ldap.organizationUnit }}'
-                -   name: LDAP_SEARCH_BASE  
+                -   name: LDAP_SEARCH_BASE
                     value: '{{ .Values.qubershipApihubBackend.env.ldap.searchBase }}'
                 -   name: MONITORING_ENABLED
                     value: '{{ .Values.qubershipApihubBackend.monitoring.enabled }}'
@@ -236,14 +236,26 @@ spec:
                     value: '{{ .Values.qubershipApihubBackend.env.technicalParameters.customPathPrefixes }}'
                 -   name: ALLOWED_HOSTS
                     value: '{{ .Values.qubershipApihubBackend.env.businessParameters.allowedHosts }}'
+                -   name: REVISIONS_CLEANUP_SCHEDULE
+                    value: '{{ .Values.qubershipApihubBackend.env.cleanup.revisions.schedule }}'
                 -   name: REVISIONS_TTL_DAYS
                     value: '{{ .Values.qubershipApihubBackend.env.cleanup.revisions.ttlDays }}'
                 -   name: REVISIONS_CLEANUP_DELETE_LAST_REVISION
                     value: '{{ .Values.qubershipApihubBackend.env.cleanup.revisions.deleteLastRevision }}'
                 -   name: REVISIONS_CLEANUP_DELETE_RELEASE_REVISIONS
                     value: '{{ .Values.qubershipApihubBackend.env.cleanup.revisions.deleteReleaseRevisions }}'
+                -   name: COMPARISONS_CLEANUP_SCHEDULE
+                    value: '{{ .Values.qubershipApihubBackend.env.cleanup.comparisons.schedule }}'
+                -   name: COMPARISONS_CLEANUP_TIMEOUT_MIN
+                    value: '{{ .Values.qubershipApihubBackend.env.cleanup.comparisons.timeoutMin }}'
                 -   name: COMPARISONS_TTL_DAYS
                     value: '{{ .Values.qubershipApihubBackend.env.cleanup.comparisons.ttlDays }}'
+                -   name: SOFT_DELETED_DATA_CLEANUP_SCHEDULE
+                    value: '{{ .Values.qubershipApihubBackend.env.cleanup.softDeletedData.schedule }}'
+                -   name: SOFT_DELETED_DATA_CLEANUP_TIMEOUT_MIN
+                    value: '{{ .Values.qubershipApihubBackend.env.cleanup.softDeletedData.timeoutMin }}'
+                -   name: SOFT_DELETED_DATA_TTL_DAYS
+                    value: '{{ .Values.qubershipApihubBackend.env.cleanup.softDeletedData.ttlDays }}'
                 resources:
                     requests:
                         cpu: {{ .Values.qubershipApihubBackend.resource.cpu.request }}
