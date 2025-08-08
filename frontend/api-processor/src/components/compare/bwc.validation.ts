@@ -14,23 +14,29 @@
  * limitations under the License.
  */
 
-import { BREAKING_CHANGE_TYPE, OperationChanges } from '../../types'
+import { BREAKING_CHANGE_TYPE, OperationChanges, RISKY_CHANGE_TYPE } from '../../types'
 import { API_KIND } from '../../consts'
-import { markChangeAsRisky } from '../../utils/changes'
 
 export function validateBwcBreakingChanges(
   operationChanges: OperationChanges,
 ): void {
-  if (!operationChanges?.changeSummary?.breaking) {
+  if (!operationChanges.changeSummary?.breaking) {
     return
   }
-  if (operationChanges?.apiKind !== API_KIND.NO_BWC && operationChanges?.previousApiKind !== API_KIND.NO_BWC) {
+  if (operationChanges.apiKind !== API_KIND.NO_BWC && operationChanges.previousApiKind !== API_KIND.NO_BWC) {
     return
   }
-  for (const diff of operationChanges?.diffs ?? []) {
+
+  operationChanges.changeSummary[RISKY_CHANGE_TYPE] = operationChanges.changeSummary[BREAKING_CHANGE_TYPE]
+  operationChanges.changeSummary[BREAKING_CHANGE_TYPE] = 0
+
+  operationChanges.impactedSummary[BREAKING_CHANGE_TYPE] = false
+  operationChanges.impactedSummary[RISKY_CHANGE_TYPE] = true
+
+  operationChanges.diffs = operationChanges.diffs?.map((diff) => {
     if (diff.type !== BREAKING_CHANGE_TYPE) {
-      continue
+      return { ...diff }
     }
-    markChangeAsRisky(diff, operationChanges)
-  }
+    return { ...diff, type: RISKY_CHANGE_TYPE }
+  })
 }

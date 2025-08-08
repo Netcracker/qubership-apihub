@@ -144,8 +144,7 @@ export interface ChangelogBuildConfig extends BuildConfigBase {
   buildType: typeof BUILD_TYPE.CHANGELOG
   packageId: PackageId
   version: VersionId
-  status: VersionStatus
-  previousVersion?: VersionId
+  previousVersion: VersionId
   previousVersionPackageId?: PackageId
 
   format: ExportFormat

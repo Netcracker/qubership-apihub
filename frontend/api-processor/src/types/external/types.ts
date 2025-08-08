@@ -14,6 +14,13 @@
  * limitations under the License.
  */
 
+import {
+  DEFAULT_DIFFS_AGGREGATED_META_KEY,
+  Diff,
+  DIFF_META_KEY,
+  DiffMetaRecord,
+} from '@netcracker/qubership-apihub-api-diff'
+
 export type KeyOfConstType<T> = T[keyof T]
 
 export type OperationsApiType = 'rest' | 'graphql'
@@ -22,3 +29,6 @@ export type FileId = string
 export type TemplatePath = string
 export type VersionId = string | `${string}@${number}`
 export type OperationId = string
+
+export type WithDiffMetaRecord<T> = T & {[DIFF_META_KEY]?: DiffMetaRecord}
+export type WithAggregatedDiffs<T> = T & {[DEFAULT_DIFFS_AGGREGATED_META_KEY]: Diff[]}

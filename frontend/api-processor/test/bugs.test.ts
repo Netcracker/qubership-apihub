@@ -97,14 +97,21 @@ describe('Operation Bugs', () => {
       ],
     })
 
+    await bugsPackage.publish('bugs', {
+      packageId: 'config_bug',
+      version: '3.0',
+      refs: [],
+      files: [{
+        fileId: 'petstore(publish_2).yaml',
+        publish: true,
+      },
+      ],
+    })
+
     const result = await editor.run({
       packageId: 'config_bug',
       version: '3.0',
       previousVersion: '1.0',
-      files: [{
-        fileId: 'petstore(publish_2).yaml',
-        publish: true,
-      }],
     })
 
     expect(result.notifications.length).toEqual(0)

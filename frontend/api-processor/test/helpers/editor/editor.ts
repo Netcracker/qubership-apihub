@@ -118,7 +118,7 @@ export class Editor {
   async run(config: Partial<BuildConfigAggregator> = {}): Promise<BuildResult> {
     this.builder.config = { ...this.builder.config, ...config }
     this.config = this.builder.config
-    return this.builder.run()
+    return await this.builder.run()
   }
 
   async createVersionPackage(): Promise<any> {

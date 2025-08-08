@@ -25,8 +25,9 @@ import {
   ChangeSummary,
   EMPTY_CHANGE_SUMMARY,
   FILE_FORMAT,
-  GRAPHQL_API_TYPE,
   graphqlApiBuilder,
+  isGraphqlDocument,
+  isRestDocument,
   KIND_PACKAGE,
   MESSAGE_SEVERITY,
   NotificationMessage,
@@ -48,8 +49,8 @@ import {
   ResolvedReferenceMap,
   ResolvedReferences,
   ResolvedVersion,
+  ResolvedVersionDocument,
   ResolvedVersionDocuments,
-  REST_API_TYPE,
   restApiBuilder,
   REVISION_DELIMITER,
   textApiBuilder,
@@ -59,6 +60,7 @@ import {
   VersionDocuments,
   VersionId,
   VersionsComparison,
+  ZippableDocument,
 } from '../../../src'
 import {
   getOperationsFileContent,
@@ -71,7 +73,14 @@ import {
   saveNotifications,
   saveOperationsArray,
 } from './utils'
-import { getCompositeKey, getDocumentTitle, getSplittedVersionKey, isNotEmpty, takeIfDefined, toBase64 } from '../../../src/utils'
+import {
+  getCompositeKey,
+  getDocumentTitle,
+  getSplittedVersionKey,
+  isNotEmpty,
+  takeIfDefined,
+  toBase64,
+} from '../../../src/utils'
 import { IRegistry } from './types'
 import { calculateTotalChangeSummary } from '../../../src/components/compare'
 import { toVersionsComparisonDto } from '../../../src/utils/transformToDto'
@@ -148,6 +157,8 @@ export class LocalRegistry implements IRegistry {
       return null
     }
 
+    const apiTypes = Array.from(operations.values()).map(({ apiType }) => apiType)
+
     const getChangesSummary = (apiType: OperationsApiType): ChangeSummary => {
       return calculateTotalChangeSummary(
         comparisons.map(
@@ -158,21 +169,12 @@ export class LocalRegistry implements IRegistry {
 
     return {
       ...config,
-      apiTypes: [REST_API_TYPE, GRAPHQL_API_TYPE],
+      apiTypes: apiTypes,
       createdAt: 'unknown',
       createdBy: 'builder',
       versionLabels: [],
       revision: 0,
-      operationTypes: [
-        {
-          apiType: REST_API_TYPE,
-          changesSummary: getChangesSummary(REST_API_TYPE),
-        },
-        {
-          apiType: GRAPHQL_API_TYPE,
-          changesSummary: getChangesSummary(GRAPHQL_API_TYPE),
-        },
-      ],
+      operationTypes: apiTypes.map(apiType => ({ apiType: apiType, changesSummary: getChangesSummary(apiType) })),
     }
   }
 
@@ -250,7 +252,7 @@ export class LocalRegistry implements IRegistry {
 
     if (isNotEmpty(documentsFromVersion)) {
       return {
-        documents: this.resolveDocuments(documentsFromVersion),
+        documents: this.resolveDocuments(documentsFromVersion, undefined, undefined, apiType),
         packages: {},
       }
     }
@@ -301,8 +303,9 @@ export class LocalRegistry implements IRegistry {
     return (id: string): boolean => this.groupToOperationIdsMap[filterByOperationGroup]?.includes(id)
   }
 
-  private resolveDocuments(documents: VersionDocument[], filterOperationIdsByGroup?: (id: string) => boolean, refId?: string): ResolvedGroupDocument[] {
+  private resolveDocuments(documents: VersionDocument[], filterOperationIdsByGroup?: (id: string) => boolean, refId?: string, apiType?: OperationsApiType): ResolvedGroupDocument[] {
     return documents
+      .filter(versionDocument => (apiType ? this.getDocApiTypeGuard(apiType)(versionDocument) : true))
       .filter(versionDocument => (filterOperationIdsByGroup ? versionDocument.operationIds.some(filterOperationIdsByGroup) : true))
       .map(document => ({
         version: document.version,
@@ -313,11 +316,20 @@ export class LocalRegistry implements IRegistry {
         filename: document.filename,
         labels: [],
         title: document.title,
-        ...(filterOperationIdsByGroup ? { includedOperationIds: document.operationIds.filter(filterOperationIdsByGroup!) } : {}),
+        includedOperationIds: filterOperationIdsByGroup ? document.operationIds.filter(filterOperationIdsByGroup!) : document.operationIds,
         description: document.description,
         data: toBase64(JSON.stringify(document.data)),
         ...takeIfDefined({ packageRef: refId }),
       }))
+  }
+
+  private getDocApiTypeGuard(apiType: OperationsApiType): (document: ZippableDocument | ResolvedVersionDocument) => void {
+    switch (apiType) {
+      case 'rest':
+        return isRestDocument
+      case 'graphql':
+        return isGraphqlDocument
+    }
   }
 
   async versionDeprecatedResolver(

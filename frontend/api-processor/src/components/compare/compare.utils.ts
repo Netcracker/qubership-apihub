@@ -21,6 +21,7 @@ import {
   DIFF_TYPES,
   ImpactedOperationSummary,
   NormalizedOperationId,
+  OperationChanges,
   OperationChangesMetadata,
   OperationId,
   OperationsApiType,
@@ -31,14 +32,14 @@ import {
 } from '../../types'
 import { BUILD_TYPE, EMPTY_CHANGE_SUMMARY, MESSAGE_SEVERITY } from '../../consts'
 import {
+  calculateChangeSummary,
+  calculateImpactedSummary,
   convertToSlug,
-  IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER,
-  NormalizedPath,
-  slugify,
+  removeFirstSlash,
   takeIfDefined,
 } from '../../utils'
-import { REST_API_TYPE } from '../../apitypes'
-import { OpenAPIV3 } from 'openapi-types'
+import { validateBwcBreakingChanges } from './bwc.validation'
+import { Diff } from '@netcracker/qubership-apihub-api-diff'
 
 export const totalChanges = (changeSummary?: ChangeSummary): number => {
   return changeSummary
@@ -68,7 +69,7 @@ export function calculateTotalImpactedSummary(
   }, { ...EMPTY_CHANGE_SUMMARY })
 }
 
-export function getOperationTags(operation: ResolvedOperation): string[] {
+export function getOperationTags(operation?: ResolvedOperation): string[] {
   return operation?.tags || operation?.metadata?.tags || []
 }
 
@@ -160,4 +161,68 @@ export function takeSubstringIf(condition: boolean, value: string, startIndex: n
   }
 
   return value.substring(startIndex)
+}
+
+export const createPairOperationsMap = (
+  currGroupSlug: string,
+  prevGroupSlug: string,
+  currentOperations: ResolvedOperation[],
+  previousOperations: ResolvedOperation[],
+  apiBuilder: ApiBuilder,
+): Record<NormalizedOperationId, {
+  previous?: ResolvedOperation
+  current?: ResolvedOperation
+}> => {
+
+  const operationsMap: Record<NormalizedOperationId, {
+    previous?: ResolvedOperation
+    current?: ResolvedOperation
+  }> = {}
+
+  for (const currentOperation of currentOperations) {
+    const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(currentOperation) ?? currentOperation.operationId
+    operationsMap[takeSubstringIf(!!currGroupSlug, normalizedOperationId, currGroupSlug.length)] = { current: currentOperation }
+  }
+
+  for (const previousOperation of previousOperations) {
+    const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(previousOperation) ?? previousOperation.operationId
+    const prevOperationId = takeSubstringIf(!!prevGroupSlug, normalizedOperationId, prevGroupSlug.length)
+    // todo it won't work if groups have different length (add test with /api/v1/ and /api/abc/)
+    const operationsMappingElement = operationsMap[prevOperationId]
+    operationsMap[prevOperationId] = {
+      ...takeIfDefined({ ...operationsMappingElement }),
+      previous: previousOperation,
+    }
+  }
+
+  return operationsMap
+}
+
+export function createOperationChange(apiType: OperationsApiType, operationDiffs: Diff[], previous?: ResolvedOperation, current?: ResolvedOperation, currGroupSlug?: string, prevGroupSlug?: string, currentGroup?: string, previousGroup?: string): OperationChanges {
+  const changeSummary = calculateChangeSummary(operationDiffs)
+  const impactedSummary = calculateImpactedSummary([changeSummary])
+
+  const currentOperationFields = current && {
+    operationId: takeSubstringIf(!!currGroupSlug, current.operationId, removeFirstSlash(currentGroup ?? '').length),
+    apiKind: current.apiKind,
+    metadata: getOperationMetadata(current),
+  }
+
+  const previousOperationFields = previous && {
+    previousOperationId: takeSubstringIf(!!prevGroupSlug, previous.operationId, removeFirstSlash(previousGroup ?? '').length),
+    previousApiKind: previous.apiKind,
+    previousMetadata: getOperationMetadata(previous),
+  }
+
+  const operationChange = {
+    apiType,
+    diffs: operationDiffs,
+    changeSummary: changeSummary,
+    impactedSummary: impactedSummary,
+    ...currentOperationFields,
+    ...previousOperationFields,
+  }
+  validateBwcBreakingChanges(operationChange)
+
+  return operationChange
 }

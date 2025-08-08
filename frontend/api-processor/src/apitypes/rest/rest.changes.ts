@@ -15,28 +15,148 @@
  */
 
 import { RestOperationData, VersionRestOperation } from './rest.types'
-import { areDeprecatedOriginsNotEmpty, isOperationRemove, removeComponents } from '../../utils'
+import {
+  areDeprecatedOriginsNotEmpty,
+  IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER,
+  isEmpty,
+  isOperationRemove,
+  normalizePath,
+  removeComponents,
+  removeFirstSlash,
+  slugify,
+} from '../../utils'
 import {
   apiDiff,
   breaking,
   COMPARE_MODE_OPERATION,
+  DEFAULT_DIFFS_AGGREGATED_META_KEY,
   Diff,
+  DIFF_META_KEY,
   DiffAction,
   risky,
 } from '@netcracker/qubership-apihub-api-diff'
 import { MESSAGE_SEVERITY, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
 import {
   BREAKING_CHANGE_TYPE,
+  CompareContext,
   CompareOperationsPairContext,
+  NormalizedOperationId,
+  OperationChanges,
+  OperationsApiType,
+  ResolvedOperation,
+  ResolvedVersionDocument,
   RISKY_CHANGE_TYPE,
+  WithAggregatedDiffs,
+  WithDiffMetaRecord,
 } from '../../types'
 import { isObject } from '@netcracker/qubership-apihub-json-crawl'
 import { areDeclarationPathsEqual } from '../../utils/path'
-import { JSON_SCHEMA_PROPERTY_DEPRECATED, pathItemToFullPath, resolveOrigins } from '@netcracker/qubership-apihub-api-unifier'
+import {
+  JSON_SCHEMA_PROPERTY_DEPRECATED,
+  pathItemToFullPath,
+  resolveOrigins,
+} from '@netcracker/qubership-apihub-api-unifier'
 import { findRequiredRemovedProperties } from './rest.required'
 import { calculateObjectHash } from '../../utils/hashes'
 import { REST_API_TYPE } from './rest.consts'
+import { OpenAPIV3 } from 'openapi-types'
+import { extractServersDiffs, getOperationBasePath } from './rest.utils'
+import { createOperationChange, getOperationTags, takeSubstringIf } from '../../components'
 
+export const compareDocuments = async (apiType: OperationsApiType, operationsMap: Record<NormalizedOperationId, {
+  previous?: ResolvedOperation
+  current?: ResolvedOperation
+}>, prevFile: File, currFile: File, currDoc: ResolvedVersionDocument, prevDoc: ResolvedVersionDocument, ctx: CompareContext): Promise<{
+  operationChanges: OperationChanges[]
+  tags: string[]
+}> => {
+  const prevDocData = JSON.parse(await prevFile.text())
+  const currDocData = JSON.parse(await currFile.text())
+
+  const { merged, diffs } = apiDiff(
+    prevDocData,
+    currDocData,
+    {
+      ...NORMALIZE_OPTIONS,
+      metaKey: DIFF_META_KEY,
+      originsFlag: ORIGINS_SYMBOL,
+      diffsAggregatedFlag: DEFAULT_DIFFS_AGGREGATED_META_KEY,
+      // mode: COMPARE_MODE_OPERATION,
+      normalizedResult: true,
+    },
+  ) as { merged: OpenAPIV3.Document; diffs: Diff[] }
+
+  if (isEmpty(diffs)) {
+    return { operationChanges: [], tags: [] }
+  }
+
+  // todo reclassify
+  // const olnyBreaking = diffs.filter((diff) => diff.type === breaking)
+  // if (olnyBreaking.length > 0 && previous?.operationId) {
+  //   await reclassifyBreakingChanges(previous.operationId, diffResult.merged, olnyBreaking, ctx)
+  // }
+
+  const { currentGroup, previousGroup } = ctx.config
+  const currGroupSlug = slugify(removeFirstSlash(currentGroup || ''))
+  const prevGroupSlug = slugify(removeFirstSlash(previousGroup || ''))
+
+  const tags = new Set<string>()
+  const changedOperations: OperationChanges[] = []
+
+  for (const path of Object.keys((merged as OpenAPIV3.Document).paths)) {
+    const pathData = (merged as OpenAPIV3.Document).paths[path]
+    if (typeof pathData !== 'object' || !pathData) { continue }
+
+    for (const key of Object.keys(pathData)) {
+      const inferredMethod = key as OpenAPIV3.HttpMethods
+
+      // check if field is a valid openapi http method defined in OpenAPIV3.HttpMethods
+      if (!Object.values(OpenAPIV3.HttpMethods).includes(inferredMethod)) {
+        continue
+      }
+
+      const methodData = pathData[inferredMethod]
+      const basePath = getOperationBasePath(methodData?.servers || pathData?.servers || merged.servers || [])
+      const operationPath = basePath + path
+      const operationId = slugify(`${removeFirstSlash(operationPath)}-${inferredMethod}`)
+      const normalizedOperationId = slugify(`${normalizePath(basePath + path)}-${inferredMethod}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
+      // todo what's with prevslug? which tests affected? which slug to slice prev or curr?
+      const qwe = takeSubstringIf(!!currGroupSlug, normalizedOperationId, currGroupSlug.length)
+
+      const { current, previous } = operationsMap[qwe] ?? operationsMap[operationId] ?? {}
+
+      let operationDiffs: Diff[] = []
+      if (current && previous) {
+        operationDiffs = [
+          ...(methodData as WithAggregatedDiffs<OpenAPIV3.OperationObject>)[DEFAULT_DIFFS_AGGREGATED_META_KEY],
+          // todo what about security? add test
+          ...extractServersDiffs(merged),
+        ]
+
+        const pathParamRenameDiff = (merged.paths as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[path]
+        pathParamRenameDiff && operationDiffs.push(pathParamRenameDiff)
+      } else if (current || previous) {
+        const operationDiff = (merged.paths as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[path]
+        if (!operationDiff) {
+          throw new Error('should not happen')
+        }
+        operationDiffs.push(operationDiff)
+      }
+
+      if (isEmpty(operationDiffs)) {
+        continue
+      }
+
+      // todo operationDiffs can be [undefined] in 'type error must not appear during build'
+      changedOperations.push(createOperationChange(apiType, operationDiffs, previous, current, currGroupSlug, prevGroupSlug, currentGroup, previousGroup))
+      getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
+    }
+  }
+
+  return { operationChanges: changedOperations, tags: [...tags.values()] }
+}
+
+/** @deprecated */
 export const compareRestOperationsData = async (current: VersionRestOperation | undefined, previous: VersionRestOperation | undefined, ctx: CompareOperationsPairContext): Promise<Diff[]> => {
 
   let previousOperation = removeComponents(previous?.data)

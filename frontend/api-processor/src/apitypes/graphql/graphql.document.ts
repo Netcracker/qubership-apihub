@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-import { buildFromIntrospection, buildFromSchema, GraphApiSchema, printGraphApi } from '@netcracker/qubership-apihub-graphapi'
+import {
+  buildFromIntrospection,
+  buildFromSchema,
+  GraphApiSchema,
+  printGraphApi,
+} from '@netcracker/qubership-apihub-graphapi'
 import type { GraphQLSchema, IntrospectionQuery } from 'graphql'
 
-import type { DocumentBuilder, DocumentDumper } from '../../types'
+import { BuildConfigFile, DocumentDumper, TextFile, VersionDocument } from '../../types'
 import { GRAPHQL_DOCUMENT_TYPE } from './graphql.consts'
 
-export const buildGraphQLDocument: DocumentBuilder<GraphApiSchema> = async (parsedFile, file) => {
+export const buildGraphQLDocument: (parsedFile: TextFile, file: BuildConfigFile) => Promise<VersionDocument<GraphApiSchema>> = async (parsedFile, file) => {
   let graphapi: GraphApiSchema
   if (parsedFile.type === GRAPHQL_DOCUMENT_TYPE.INTROSPECTION) {
     const introspection = (parsedFile?.data && '__schema' in parsedFile.data ? parsedFile?.data : parsedFile.data?.data) as IntrospectionQuery

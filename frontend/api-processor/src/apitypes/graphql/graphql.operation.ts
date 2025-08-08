@@ -88,18 +88,13 @@ export const buildGraphQLOperation = (
 
   const apiKind = document.apiKind || API_KIND.BWC
 
-
-  const dataHash = syncDebugPerformance('[ModelsAndOperationHashing]', () => {
+  syncDebugPerformance('[ModelsAndOperationHashing]', () => {
     calculateSpecRefs(document.data, singleOperationRefsOnlySpec, singleOperationSpec)
-    const dataHash = calculateObjectHash(singleOperationSpec)
-    return dataHash
   }, debugCtx)
-
-
 
   return {
     operationId,
-    dataHash,
+    dataHash: 'dataHash is to be removed',
     apiType: GRAPHQL_API_TYPE,
     apiKind: rawToApiKind(apiKind),
     deprecated: !!singleOperationEffectiveSpec[type]?.[method]?.directives?.deprecated,

@@ -210,6 +210,8 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       versionReferencesResolver: this.versionReferencesResolver.bind(this),
       versionComparisonResolver: this.versionComparisonResolver.bind(this),
       versionDeprecatedResolver: this.versionDeprecatedResolver.bind(this),
+      versionDocumentsResolver: this.versionDocumentsResolver.bind(this),
+      rawDocumentResolver: this.rawDocumentResolver.bind(this),
     }
   }
 
