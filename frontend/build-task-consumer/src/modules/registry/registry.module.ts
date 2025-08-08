@@ -18,11 +18,11 @@ import { Module } from '@nestjs/common'
 import { RegistryService } from './registry.service'
 import { HttpModule } from '@nestjs/axios'
 import https from 'https'
-import crypto from 'crypto'
+import { v4 as uuidv4 } from 'uuid'
 
 const BuilderIdProvider = {
   provide: 'builderId',
-  useValue: crypto.randomUUID(),
+  useValue: uuidv4(),
 }
 
 @Module({
