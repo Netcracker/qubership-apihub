@@ -23,7 +23,6 @@ import { DEFAULT_DISPLAY_MODE, isComparisonMode } from './OperationView/Operatio
 import { useOperationViewMode } from '../useOperationViewMode'
 import { useSetChangesLoadingStatus } from '../ChangesLoadingStatusProvider'
 import { useBreadcrumbsData } from '../ComparedPackagesBreadcrumbsProvider'
-import { useParams } from 'react-router-dom'
 import { OperationWithPlayground } from './OperationWithPlayground'
 import { useSelectOperationTags } from './useSelectOperationTags'
 import { useFileViewMode } from '../useFileViewMode'
@@ -66,10 +65,15 @@ import { normalizeOpenApiDocument } from '@netcracker/qubership-apihub-ui-shared
 import {
   useApiDiffResult,
   useIsApiDiffResultLoading, useSetApiDiffResult,
-} from '@apihub/routes/root/ApiDiffResultProvider'
+} from '../../../ApiDiffResultProvider'
 import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
 import { RawSpecDiffView } from '@netcracker/qubership-apihub-ui-shared/components/RawSpecDiffView'
 import { removeComponents } from '@netcracker/qubership-apihub-api-processor'
+import {
+  WarningApiProcessorVersion,
+} from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
+import { useVersionsComparisonGlobalParams } from '../../..//PortalPage/VersionPage/VersionsComparisonGlobalParams'
+import { useParams } from 'react-router-dom'
 
 export type OperationContentProps = {
   changedOperation?: OperationData
@@ -92,6 +96,13 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
     operationModels,
   } = props
   const { packageId = '', apiType = DEFAULT_API_TYPE } = useParams<{ packageId: string; apiType: ApiType }>()
+  const {
+    originPackageKey,
+    changedPackageKey,
+    changedVersionKey,
+    originVersionKey,
+  } = useVersionsComparisonGlobalParams()
+
   const { productionMode } = useSystemInfo()
 
   const setChangesLoadingStatus = useSetChangesLoadingStatus()
@@ -111,7 +122,6 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
   const [navigationDetails] = useOperationNavigationDetails()
 
   const breadcrumbsData = useBreadcrumbsData()
-
   let operationContentElement
   const isDocViewMode = useIsDocOperationViewMode(mode)
   const isRawViewMode = useIsRawOperationViewMode(mode)
@@ -198,6 +208,10 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
             displayMode={displayMode}
             breadcrumbsData={breadcrumbsData}
             actions={isRawViewMode && rawViewActions}
+            swapperBreadcrumbsBeforeComponent={<WarningApiProcessorVersion packageKey={originPackageKey}
+                                                                           versionKey={originVersionKey}/>}
+            swapperBreadcrumbsAfterComponent={<WarningApiProcessorVersion packageKey={changedPackageKey}
+                                                                          versionKey={changedVersionKey}/>}
           />
           {isDocViewMode && !!mergedDocument && (
             <OperationView

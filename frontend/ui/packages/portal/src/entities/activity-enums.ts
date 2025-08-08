@@ -21,6 +21,7 @@ export enum EventType {
   GENERATE_API_KEY_EVENT = 'generate_api_key',
   REVOKE_API_KEY_EVENT = 'revoke_api_key',
   PUBLISH_NEW_VERSION_EVENT = 'publish_new_version',
+  DELETE_REVISION_EVENT = 'delete_revision',
   PUBLISH_NEW_REVISION_EVENT = 'publish_new_revision',
   PATCH_VERSION_META_EVENT = 'patch_version_meta',
   DELETE_VERSION_EVENT = 'delete_version',

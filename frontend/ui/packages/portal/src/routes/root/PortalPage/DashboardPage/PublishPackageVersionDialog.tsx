@@ -158,6 +158,7 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
       hideSaveMessageField
       publishButtonDisabled={isPackageLoading}
       publishFieldsDisabled={isPackageLoading || isCurrentVersionLoading}
+      currentPackageKey={currentPackage?.key}
     />
   )
 })

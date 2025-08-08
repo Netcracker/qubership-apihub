@@ -32,7 +32,9 @@ import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/compone
 import { NAVIGATION_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
 import { SMALL_TOOLBAR_SIZE, Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
-import { OperationTitleWithMeta } from '@netcracker/qubership-apihub-ui-shared/components/Operations/OperationTitleWithMeta'
+import {
+  OperationTitleWithMeta,
+} from '@netcracker/qubership-apihub-ui-shared/components/Operations/OperationTitleWithMeta'
 import { RawSpecView } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/RawSpecView'
 import { normalizeOpenApiDocument } from '@netcracker/qubership-apihub-ui-shared/utils/normalize'
 import { YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
@@ -47,13 +49,14 @@ export type OperationPreviewProps = {
   mode: OperationViewMode
   schemaViewMode: SchemaViewMode | undefined
   productionMode?: boolean
+  maxWidthHeaderToolbar?: number
 }
 
 // First Order Component //
 export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreviewProps>((props) => {
   const {
     apiType, changedOperation, changedOperationContent,
-    isLoading, mode, schemaViewMode, productionMode,
+    isLoading, mode, schemaViewMode, productionMode, maxWidthHeaderToolbar,
   } = props
 
   const isDocViewMode = useIsDocOperationViewMode(mode)
@@ -91,6 +94,7 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
     <Box height="inherit" display="grid" gridTemplateRows="auto 1fr" data-testid="OperationPreview">
       <Box>
         <Toolbar
+          maxWidthHeaderToolbar={maxWidthHeaderToolbar}
           size={SMALL_TOOLBAR_SIZE}
           header={
             <ToolbarTitle

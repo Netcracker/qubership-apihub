@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
+import type { FC, ReactElement } from 'react'
 import React, { memo } from 'react'
 import { ComparedPackagesBreadcrumbs } from '../../ComparedPackagesBreadcrumbs'
 import { Box, Typography } from '@mui/material'
@@ -25,6 +25,7 @@ import { isLinkedComparedBreadcrumbPathItem } from './breadcrumbs'
 type SwapperBreadcrumbsProps = {
   side: 'before' | 'after'
   data: ComparedPackagesBreadcrumbsData | null
+  customComponentAfterContent?: ReactElement
 }
 
 const SWAPPER_TEXT_STYLES = {
@@ -34,7 +35,7 @@ const SWAPPER_TEXT_STYLES = {
   gap: 0.5,
 }
 
-export const SwapperBreadcrumbs: FC<SwapperBreadcrumbsProps> = memo<SwapperBreadcrumbsProps>(({ side, data }) => {
+export const SwapperBreadcrumbs: FC<SwapperBreadcrumbsProps> = memo<SwapperBreadcrumbsProps>(({ side, data, customComponentAfterContent }) => {
   const breadcrumbsList = (side === 'before' ? data?.origin : side === 'after' ? data?.changed : null) ?? []
   const linkedBreadcrumbs = breadcrumbsList.slice(0, -1).filter(isLinkedComparedBreadcrumbPathItem)
   const textBreadcrumb = breadcrumbsList.at(-1)
@@ -46,6 +47,7 @@ export const SwapperBreadcrumbs: FC<SwapperBreadcrumbsProps> = memo<SwapperBread
         <Box sx={SWAPPER_TEXT_STYLES} data-testid="SwapperTitle">
           <Typography fontWeight="600">{textBreadcrumb?.name}</Typography>
           <Typography variant="subtitle2" fontSize={13}>{textBreadcrumb?.description}</Typography>
+          {customComponentAfterContent}
         </Box>
       </OverflowTooltip>
     </>

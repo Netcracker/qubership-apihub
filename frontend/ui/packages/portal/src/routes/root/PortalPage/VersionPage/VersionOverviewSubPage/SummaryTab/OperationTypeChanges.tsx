@@ -25,10 +25,14 @@ import {
 import { Changes } from '@netcracker/qubership-apihub-ui-shared/components/Changes'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { API_TYPE_TITLE_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import type { NumberOfImpactedOperations } from '@netcracker/qubership-apihub-ui-shared/entities/version-contents'
 import { CATEGORY_OPERATION } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import { DefaultWarningIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIcon'
-import { API_AUDIENCE_EXTERNAL, API_AUDIENCE_INTERNAL, API_AUDIENCE_UNKNOWN, type ApiAudienceTransition } from '@netcracker/qubership-apihub-api-processor'
+import {
+  API_AUDIENCE_EXTERNAL,
+  API_AUDIENCE_INTERNAL,
+  API_AUDIENCE_UNKNOWN,
+  type ApiAudienceTransition,
+} from '@netcracker/qubership-apihub-api-processor'
 
 export type OperationTypeChangesProps = Readonly<{
   apiType: ApiType
@@ -36,7 +40,7 @@ export type OperationTypeChangesProps = Readonly<{
   deprecatedOperationsCount: number
   noBwcOperationsCount: number
   changesSummary: ChangesSummary
-  numberOfImpactedOperations: NumberOfImpactedOperations
+  numberOfImpactedOperations: ChangesSummary
   internalAudienceOperationsCount: number
   unknownAudienceOperationsCount: number
   apiAudienceTransitions: ApiAudienceTransition[]

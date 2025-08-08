@@ -57,6 +57,10 @@ import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import { DialogForm } from '@netcracker/qubership-apihub-ui-shared/components/DialogForm'
 import { usePagedPackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
+import {
+  WARNING_API_PROCESSOR_TEXT,
+  WarningApiProcessorVersion,
+} from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
 
 const WORKSPACE_KEY = 'workspaceKey'
 const PACKAGE_KEY = 'packageKey'
@@ -106,6 +110,7 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
   const [selectedWorkspace, setSelectedWorkspace] = useState<Package | null>(null)
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
   const [selectedVersion, setSelectedVersion] = useState<PackageVersion | null>(null)
+  const [warningApiProcessorState, setWarningApiProcessorState] = useState(false)
 
   const [selectedPackageInput, setSelectedPackageInput] = useState('')
   const onSelectedPackageInputValueChange = useCallback((_: SyntheticEvent, value: string) => setSelectedPackageInput(value), [])
@@ -194,6 +199,7 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
         setSelectedWorkspace(value)
         setSelectedPackage(null)
         setSelectedVersion(null)
+        setWarningApiProcessorState(false)
       }}
       data-testid="WorkspaceAutocomplete"
     />
@@ -219,6 +225,7 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
         setValue(PACKAGE_KEY, value?.key ?? '')
         setSelectedPackage(value)
         setSelectedVersion(null)
+        setWarningApiProcessorState(false)
       }}
       data-testid="PackageAutocomplete"
     />
@@ -245,6 +252,9 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
         onChange={(_, value) => {
           setValue(VERSION_KEY, value?.key ?? '')
           setSelectedVersion(value)
+          if (!value) {
+            setWarningApiProcessorState(false)
+          }
         }}
         data-testid="VersionAutocomplete"
       />
@@ -279,10 +289,20 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
           control={control}
           render={renderSelectVersion}
         />
+        <WarningApiProcessorVersion
+          versionKey={selectedVersion?.key}
+          packageKey={selectedPackage?.key}
+          type={WARNING_API_PROCESSOR_TEXT}
+          onWarningTextChange={(value) => setWarningApiProcessorState(!!value)}/>
       </DialogContent>
 
+
       <DialogActions>
-        <LoadingButton variant="contained" type="submit" loading={false} data-testid="AddButton">
+        <LoadingButton variant="contained"
+                       type="submit"
+                       loading={false}
+                       data-testid="AddButton"
+                       disabled={warningApiProcessorState}>
           Add
         </LoadingButton>
         <Button variant="outlined" onClick={() => setOpen(false)} data-testid="CancelButton">

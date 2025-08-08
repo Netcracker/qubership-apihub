@@ -16,24 +16,18 @@
 
 import type { QueryKey, UseQueryOptions } from '@tanstack/react-query'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { generatePath } from 'react-router-dom'
 import type { Key, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type {
-  OperationTypeSummary,
-  OperationTypeSummaryDto,
   PackageVersionContent,
   PackageVersionContentDto,
 } from '@netcracker/qubership-apihub-ui-shared/entities/version-contents'
 import type { InvalidateQuery, IsLoading, RefetchQuery } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
-import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
-import { portalRequestJson } from '@apihub/utils/requests'
-import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
-import { API_V3, DEFAULT_REFETCH_INTERVAL } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
-import { toApiTypeMap } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { replacePropertyInChangesSummary } from '@netcracker/qubership-apihub-api-processor'
-
-export const PACKAGE_VERSION_CONTENT_QUERY_KEY = 'package-version-content-query-key'
+import { DEFAULT_REFETCH_INTERVAL } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import {
+  getPackageVersionContent, PACKAGE_VERSION_CONTENT_QUERY_KEY,
+  toPackageVersionContent,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/package-version-content/usePackageVersionContent'
 
 type InvalidateVersion = {
   packageKey: Key
@@ -90,37 +84,6 @@ export function usePackageVersionContent(options: {
   }
 }
 
-export async function getPackageVersionContent(
-  packageKey: Key,
-  versionKey: Key,
-  signal?: AbortSignal,
-  includeSummary: boolean = false,
-  includeOperations: boolean = false,
-  includeGroups: boolean = false,
-): Promise<PackageVersionContentDto> {
-  const packageId = encodeURIComponent(packageKey)
-  const versionId = encodeURIComponent(versionKey)
-
-  const queryParams = optionalSearchParams({
-    includeSummary: { value: includeSummary },
-    includeOperations: { value: includeOperations },
-    includeGroups: { value: includeGroups },
-  })
-
-  const pathPattern = '/packages/:packageId/versions/:versionId'
-  return await portalRequestJson<PackageVersionContentDto>(
-    `${generatePath(pathPattern, { packageId, versionId })}?${queryParams}`,
-    {
-      method: 'get',
-    },
-    {
-      customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
-      basePath: API_V3,
-    },
-    signal,
-  )
-}
-
 export function useAsyncInvalidateVersionContent(): (version: InvalidateVersion) => Promise<void> {
   const client = useQueryClient()
   return (invalidateVersion: InvalidateVersion) =>
@@ -175,31 +138,4 @@ export function getCurrentPackageVersionContent(
     enabled: !!packageKey && !!versionKey && versionKey !== SPECIAL_VERSION_KEY,
     refetchInterval: DEFAULT_REFETCH_INTERVAL,
   }
-}
-
-function toPackageVersionContent(value: PackageVersionContentDto): PackageVersionContent {
-  return {
-    ...value,
-    packageKey: value.packageId,
-    createdAt: new Date(value.createdAt).toDateString(),
-    operationTypes: toApiTypeMap(convertDtoFieldOperationTypesWithApiType(value.operationTypes)),
-    latestRevision: !value?.notLatestRevision,
-    revisionsCount: value.revisionsCount ?? 0,
-    operationGroups: value.operationGroups?.map(groupDto => ({
-      ...groupDto,
-      description: groupDto?.description ?? '',
-      operationsCount: groupDto?.operationsCount ?? 0,
-    })) ?? [],
-  }
-}
-
-function convertDtoFieldOperationTypesWithApiType(operationTypes: ReadonlyArray<OperationTypeSummaryDto> | undefined): ReadonlyArray<OperationTypeSummary> {
-  return operationTypes?.map((type) => {
-    if (!type.changesSummary || !type.numberOfImpactedOperations) return { ...type }
-    return {
-      ...type,
-      changesSummary: replacePropertyInChangesSummary(type.changesSummary),
-      numberOfImpactedOperations: replacePropertyInChangesSummary(type.numberOfImpactedOperations),
-    }
-  }) as ReadonlyArray<OperationTypeSummary>
 }

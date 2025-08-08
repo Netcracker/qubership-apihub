@@ -24,8 +24,6 @@ import type { ApiType } from './api-types'
 import type { ApiAudienceTransition, DiffTypeDto } from '@netcracker/qubership-apihub-api-processor'
 import type { DiffType } from '@netcracker/qubership-apihub-api-diff'
 
-export type NumberOfImpactedOperations = ChangesSummary
-
 export type PackageVersionContent = Readonly<{
   version: Key
   packageKey: Key
@@ -39,6 +37,7 @@ export type PackageVersionContent = Readonly<{
   versionLabels?: string[]
   operationTypes?: Record<ApiType, OperationTypeSummary>
   revisionsCount: number
+  apiProcessorVersion: string
 }>
 
 export type PackageVersionContentDto = Readonly<{
@@ -54,12 +53,13 @@ export type PackageVersionContentDto = Readonly<{
   operationTypes?: ReadonlyArray<OperationTypeSummaryDto>
   notLatestRevision?: boolean
   revisionsCount?: number
+  apiProcessorVersion: string
 }>
 
 export type OperationTypeSummary<T extends DiffType | DiffTypeDto = DiffType> = Readonly<{
   apiType: ApiType
   changesSummary: ChangesSummary<T>
-  numberOfImpactedOperations: NumberOfImpactedOperations
+  numberOfImpactedOperations: ChangesSummary<T>
   operationsCount: number
   deprecatedCount: number
   noBwcOperationsCount: number

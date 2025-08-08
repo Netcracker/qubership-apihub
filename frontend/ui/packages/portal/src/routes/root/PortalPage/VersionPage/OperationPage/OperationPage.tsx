@@ -54,13 +54,17 @@ import { OPEN_API_SECTION_PARAMETERS } from '@apihub/entities/operation-structur
 import { GRAPH_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import {
   CustomServersProvider,
-} from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/CustomServersProvider'
+} from '../../../PortalPage/VersionPage/OperationContent/Playground/CustomServersProvider'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
 import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import { SidebarPanel } from '@netcracker/qubership-apihub-ui-shared/components/Panels/SidebarPanel'
 import { OperationContent } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationContent'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { API_TYPE_GRAPHQL, API_TYPE_REST, API_TYPE_TITLE_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  WarningApiProcessorVersion,
+} from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
+import { Box } from '@mui/material'
 
 // High Order Component //
 export const OperationPage: FC = memo(() => {
@@ -186,6 +190,7 @@ export const OperationPage: FC = memo(() => {
                 />
               }
               header={
+              <Box display="flex" alignItems="center">
                 <OperationToolbarHeader
                   title={toolbarTitle}
                   handleBackClick={handleBackClick}
@@ -196,6 +201,8 @@ export const OperationPage: FC = memo(() => {
                   isRelatedOperationsLoading={areOperationsLoading || isOperationLoading}
                   prepareLinkFn={prepareLinkFn}
                 />
+                <WarningApiProcessorVersion versionKey={versionId} packageKey={packageId} />
+              </Box>
               }
               action={
                 <OperationToolbarActions

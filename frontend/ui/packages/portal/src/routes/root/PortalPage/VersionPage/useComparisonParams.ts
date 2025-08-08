@@ -16,7 +16,7 @@
 
 import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
-import { usePackageSearchParam } from '../../usePackageSearchParam'
+import { usePackageSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
 import { useVersionSearchParam } from '../../useVersionSearchParam'
 import { usePackage } from '../../usePackage'
 import { useApiTypeSearchParam } from './useApiTypeSearchParam'
