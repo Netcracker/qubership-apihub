@@ -1,7 +1,7 @@
 import { Package } from '@test-data/props'
 import { GRP_P_OWNER_CRUD_N, GRP_P_OWNER_ROOT_N } from './groups'
 import { TOKEN_OWNER_PACKAGE } from './tokens'
-import { DEF_PREFIX_GROUP } from '@test-data/portal'
+import { DEF_PREFIX_GROUP, RV_PATTERN_DEF } from '@test-data/portal'
 
 export const PKG_P_OWNER_N = new Package({
   name: 'Owner',
@@ -15,6 +15,7 @@ export const PKG_P_OWNER_EDITING_N = new Package({
   name: 'Owner-editing',
   alias: 'POWNERE',
   parent: GRP_P_OWNER_CRUD_N,
+  releaseVersionPattern: RV_PATTERN_DEF,
 }, { kindPrefix: true })
 
 export const PKG_P_OWNER_DELETING_N = new Package({

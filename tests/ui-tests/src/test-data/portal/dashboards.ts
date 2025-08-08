@@ -2,6 +2,7 @@ import { DASHBOARD_PREFIX } from '@test-data'
 import { Dashboard } from '@test-data/props'
 import { G_REV_IMM, G_REV_VAR, P_GR_CRUD, VAR_GR } from './groups'
 import { P_WS_MAIN_R } from './workspaces'
+import { RV_PATTERN_DEF } from '@test-data/portal/other'
 
 export const D11 = new Dashboard({
   name: `${DASHBOARD_PREFIX}-11`,
@@ -50,6 +51,7 @@ export const P_DSH_UPDATE = new Dashboard({
   alias: 'DUPDT',
   parent: P_GR_CRUD,
   description: 'For update',
+  releaseVersionPattern: RV_PATTERN_DEF,
   testMeta: {
     updatedName: 'Updated',
     updatedServiceName: `dash-crud-${process.env.TEST_ID_N}`,

@@ -9,7 +9,6 @@ export class LoginPage extends BasePage {
   readonly loginTxtFld = new TextField(this.page.getByTestId('LoginTextInput'), 'Login')
   readonly passwordTxtFld = new TextField(this.page.getByTestId('PasswordTextInput'), 'Password')
   readonly signInBtn = new Button(this.page.getByTestId('SignInButton'), 'Log in')
-  readonly ssoSignInBtn = new Button(this.page.getByTestId('SSOSignInButton'), 'SSO Log in')
   readonly errorAlert = this.page.getByRole('alert')
   readonly errorIcon = this.page.getByTestId('ErrorOutlineIcon')
 

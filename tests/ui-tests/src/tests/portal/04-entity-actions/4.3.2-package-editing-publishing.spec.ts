@@ -61,6 +61,13 @@ test.describe('4.3.2 Package publishing via Portal', () => {
         })
       }
 
+      await test.step('VS Code Extension option', async () => {
+        await portalPage.gotoPackage(testPackage)
+        await versionPage.howToUploadBtn.click()
+
+        await expect(methodsForUploadDialog.toVsCodeExtensionBtn).toBeVisible()
+      })
+
       await test.step('Got it', async () => {
         await portalPage.gotoPackage(testPackage)
         await versionPage.howToUploadBtn.click()

@@ -1,16 +1,7 @@
 import { PACKAGE_PREFIX } from '@test-data'
 import { Package } from '@test-data/props'
-import {
-  G_PUBLISH_IMM,
-  G_PUBLISH_VAR,
-  G_REV_IMM,
-  G_REV_VAR,
-  G_SETTINGS_VAR,
-  IMM_GR,
-  P_GR_CRUD,
-  VAR_GR,
-} from './groups'
-import { RV_PATTERN_NEW } from './other'
+import { G_PUBLISH_IMM, G_PUBLISH_VAR, G_REV_IMM, G_REV_VAR, G_SETTINGS_VAR, IMM_GR, P_GR_CRUD, VAR_GR } from './groups'
+import { RV_PATTERN_DEF, RV_PATTERN_NEW } from './other'
 import { P_WS_MAIN_R } from './workspaces'
 
 export const PK11 = new Package({
@@ -60,6 +51,7 @@ export const PK_PUB_IMM_1 = new Package({
   name: 'Publish-reusable-1',
   alias: 'PKPUBIMM1',
   parent: G_PUBLISH_IMM,
+  releaseVersionPattern: RV_PATTERN_DEF,
 }, { kindPrefix: true })
 export const PK_PUB_IMM_2 = new Package({
   name: 'Publish-reusable-2',
