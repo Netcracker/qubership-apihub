@@ -29,9 +29,9 @@ qubershipApihubBackend:
       port:
       # Mandatory; Logical database in PostgreSQL cluster for APIHUB. Manual pre-creation required; If not set, default value: apihub; Example: apihub_backend_prod_db
       name: ''
-      # Mandatory; User for APIHUB_POSTGRESQL_DB_NAME database; If not set, default value: apihub; Example: apihub_backend_prod_admin
+      # Mandatory; User for database.name database; If not set, default value: apihub; Example: apihub_backend_prod_admin
       username: ''
-      # Mandatory; Password for APIHUB_POSTGRESQL_USERNAME user.; If not set, default value: apihub; Example: apihub_backend_prod_password
+      # Mandatory; Password for database.user.; If not set, default value: apihub; Example: apihub_backend_prod_password
       password: ''
 
     # Section with all security (authentication and authorization) parameters
@@ -248,7 +248,7 @@ qubershipApihubUi:
   tlsIngress:
     enabled: true
     tlsSecret:
-      # Certificate used for TLS termination in https ingress
+      # Certificate used for TLS termination in https ingress, base64 encoded. If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
       certificate: ''
-      # Private key for certificate above
+      # Private key for certificate above, base64 encoded. If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
       certificateKey: ''
