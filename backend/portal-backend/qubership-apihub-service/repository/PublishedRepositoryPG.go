@@ -252,6 +252,29 @@ func (p publishedRepositoryImpl) GetLatestRevision(packageId, versionName string
 
 	return result.Revision, nil
 }
+
+func (p publishedRepositoryImpl) GetDeletedPackageLatestRevision(packageId, versionName string) (int, error) {
+	result := new(entity.PublishedVersionEntity)
+	version, _, err := SplitVersionRevision(versionName)
+	if err != nil {
+		return -1, err
+	}
+	query := p.cp.GetConnection().Model(result).
+		Where("package_id = ?", packageId).
+		Where("deleted_at is not ?", nil).
+		Where("version = ?", version).
+		Order("revision DESC")
+	err = query.First()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return 0, nil
+		}
+		return -1, err
+	}
+
+	return result.Revision, nil
+}
+
 func (p publishedRepositoryImpl) GetReadonlyVersion_deprecated(packageId string, versionName string) (*entity.ReadonlyPublishedVersionEntity_deprecated, error) {
 	getPackage, errGetPackage := p.GetPackage(packageId)
 	if errGetPackage != nil {
@@ -283,14 +306,26 @@ func (p publishedRepositoryImpl) GetReadonlyVersion_deprecated(packageId string,
 	}
 	return result, nil
 }
-func (p publishedRepositoryImpl) GetReadonlyVersion(packageId string, versionName string) (*entity.PackageVersionRevisionEntity, error) {
-	getPackage, errGetPackage := p.GetPackage(packageId)
+
+func (p publishedRepositoryImpl) GetReadonlyVersion(packageId string, versionName string, showOnlyDeleted bool) (*entity.PackageVersionRevisionEntity, error) {
+	var getPackage *entity.PackageEntity
+	var errGetPackage error
+	notCondition := ""
+
+	if showOnlyDeleted {
+		getPackage, errGetPackage = p.GetPackageIncludingDeleted(packageId)
+		notCondition = "not"
+	} else {
+		getPackage, errGetPackage = p.GetPackage(packageId)
+	}
+
 	if errGetPackage != nil {
 		return nil, errGetPackage
 	}
 	if getPackage == nil {
 		return nil, nil
 	}
+
 	result := new(entity.PackageVersionRevisionEntity)
 	version, revision, err := SplitVersionRevision(versionName)
 	if err != nil {
@@ -308,10 +343,10 @@ func (p publishedRepositoryImpl) GetReadonlyVersion(packageId string, versionNam
 	  and pv.version = ?
 	  and ((? = 0 and pv.revision = get_latest_revision(?,?)) or
 		   (? != 0 and pv.revision = ?))
-	  and pv.deleted_at is null
+	  and pv.deleted_at is %s null
 	limit 1
 	`
-	_, err = p.cp.GetConnection().QueryOne(result, query, packageId, version, revision, packageId, version, revision, revision)
+	_, err = p.cp.GetConnection().QueryOne(result, fmt.Sprintf(query, notCondition), packageId, version, revision, packageId, version, revision, revision)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
@@ -2069,7 +2104,8 @@ func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit_deprecated(
 
 	return ents, nil
 }
-func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(searchQuery entity.PublishedVersionSearchQueryEntity, checkRevisions bool) ([]entity.PackageVersionRevisionEntity, error) {
+
+func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(searchQuery entity.PublishedVersionSearchQueryEntity, checkRevisions bool, showOnlyDeleted bool) ([]entity.PackageVersionRevisionEntity, error) {
 	var ents []entity.PackageVersionRevisionEntity
 	if searchQuery.TextFilter != "" {
 		searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
@@ -2083,6 +2119,12 @@ func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(searchQuery
 	if searchQuery.SortOrder == "" {
 		searchQuery.SortOrder = entity.GetVersionSortOrderPG(view.VersionSortOrderDesc)
 	}
+
+	notCondition := ""
+	if showOnlyDeleted {
+		notCondition = "not"
+	}
+
 	if checkRevisions {
 		query := `
 		select pv.*, get_latest_revision(coalesce(pv.previous_version_package_id,pv.package_id), pv.previous_version) as previous_version_revision,
@@ -2174,13 +2216,13 @@ func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(searchQuery
 			where (?text_filter = '' or pv.version ilike ?text_filter OR EXISTS(SELECT 1 FROM unnest(pv.labels) as label WHERE label ILIKE ?text_filter))
 			and (?status = '' or pv.status ilike ?status)
 			and (?label = '' or ?label = any(pv.labels))
-			and pv.deleted_at is null
+			and pv.deleted_at is %s null
 			order by pv.%s %s
 			limit ?limit
 			offset ?offset
  `
 		_, err := p.cp.GetConnection().Model(&searchQuery).
-			Query(&ents, fmt.Sprintf(query, searchQuery.SortBy, searchQuery.SortOrder))
+			Query(&ents, fmt.Sprintf(query, notCondition, searchQuery.SortBy, searchQuery.SortOrder))
 		if err != nil {
 			if err == pg.ErrNoRows {
 				return nil, nil
@@ -2726,7 +2768,7 @@ func (p publishedRepositoryImpl) GetParentPackageGroups(id string) ([]entity.Pac
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetParentsForPackage(id string) ([]entity.PackageEntity, error) {
+func (p publishedRepositoryImpl) GetParentsForPackage(id string, includeDeleted bool) ([]entity.PackageEntity, error) {
 	var parentIds []string
 	var result []entity.PackageEntity
 
@@ -2735,15 +2777,20 @@ func (p publishedRepositoryImpl) GetParentsForPackage(id string) ([]entity.Packa
 		return result, nil
 	}
 
-	err := p.cp.GetConnection().Model(&result).
-		Where("deleted_at is ?", nil).
-		ColumnExpr("package_group.*").
+	query := p.cp.GetConnection().Model(&result)
+	if !includeDeleted {
+		query.Where("deleted_at is ?", nil)
+	}
+
+	query.ColumnExpr("package_group.*").
 		Join("JOIN UNNEST(?::text[]) WITH ORDINALITY t(id, ord) USING (id)", pg.Array(parentIds)).
-		Order("t.ord").
-		Select()
+		Order("t.ord")
+
+	err := query.Select()
 	if err != nil {
 		return nil, err
 	}
+
 	return result, nil
 }
 
@@ -2939,6 +2986,7 @@ func (p publishedRepositoryImpl) GetFilteredPackagesWithOffset(ctx context.Conte
 	var result []entity.PackageEntity
 	query := p.cp.GetConnection().ModelContext(ctx, &result).
 		Where("deleted_at is ?", nil)
+
 	if searchReq.OnlyFavorite {
 		query.Join("INNER JOIN favorite_packages as fav").
 			JoinOn("package_group.id = fav.package_id").
@@ -2976,6 +3024,35 @@ func (p publishedRepositoryImpl) GetFilteredPackagesWithOffset(ctx context.Conte
 	}
 	if len(searchReq.Ids) > 0 {
 		query.Where("id in (?)", pg.In(searchReq.Ids))
+	}
+
+	err := query.Select()
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (p publishedRepositoryImpl) GetFilteredDeletedPackages(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error) {
+	var result []entity.PackageEntity
+
+	query := p.cp.GetConnection().ModelContext(ctx, &result).
+		Where("deleted_at is not ?", nil)
+
+	query.Order("name ASC").
+		Offset(searchReq.Offset).
+		Limit(searchReq.Limit)
+
+	if searchReq.ParentId != "" && searchReq.ParentId != "*" {
+		if searchReq.ShowAllDescendants {
+			query.Where("package_group.id ilike ?", searchReq.ParentId+".%")
+		} else {
+			query.Where("parent_id = ?", searchReq.ParentId)
+		}
+	}
+
+	if len(searchReq.Kind) != 0 {
+		query.Where("kind in (?)", pg.In(searchReq.Kind))
 	}
 
 	err := query.Select()
@@ -4040,7 +4117,7 @@ func (p publishedRepositoryImpl) GetVersionComparisonsCleanupCandidates(ctx cont
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return []entity.VersionComparisonCleanupCandidateEntity{}, nil
-		}	
+		}
 		return nil, fmt.Errorf("failed to get cleanup candidates: %w", err)
 	}
 

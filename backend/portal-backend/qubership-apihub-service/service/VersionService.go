@@ -42,9 +42,9 @@ type VersionService interface {
 	SetBuildService(buildService BuildService)
 
 	GetPackageVersionContent_deprecated(packageId string, versionName string, includeSummary bool, includeOperations bool, includeGroups bool) (*view.VersionContent_deprecated, error)
-	GetPackageVersionContent(packageId string, versionName string, includeSummary bool, includeOperations bool, includeGroups bool) (*view.VersionContent, error)
+	GetPackageVersionContent(packageId string, versionName string, includeSummary bool, includeOperations bool, includeGroups bool, showOnlyDeleted bool) (*view.VersionContent, error)
 	GetPackageVersionsView_deprecated(req view.VersionListReq) (*view.PublishedVersionsView_deprecated_v2, error)
-	GetPackageVersionsView(req view.VersionListReq) (*view.PublishedVersionsView, error)
+	GetPackageVersionsView(req view.VersionListReq, showOnlyDeleted bool) (*view.PublishedVersionsView, error)
 	DeleteVersion(ctx context.SecurityContext, packageId string, versionName string) error
 	PatchVersion(ctx context.SecurityContext, packageId string, versionName string, status *string, versionLabels *[]string) (*view.VersionContent, error)
 	GetLatestContentDataBySlug(packageId string, versionName string, slug string) (*view.PublishedContent, *view.ContentData, error)
@@ -457,7 +457,7 @@ func (v versionServiceImpl) GetVersionReferencesV3(packageId string, versionName
 }
 
 func (v versionServiceImpl) getParents(packageId string) ([]view.ParentPackageInfo, error) {
-	parents, err := v.publishedRepo.GetParentsForPackage(packageId)
+	parents, err := v.publishedRepo.GetParentsForPackage(packageId, false)
 	if err != nil {
 		return nil, err
 	}
@@ -614,7 +614,7 @@ func (v versionServiceImpl) PatchVersion(ctx context.SecurityContext, packageId 
 		return nil, err
 	}
 
-	result, err := v.GetPackageVersionContent(packageId, versionEnt.Version, true, false, false)
+	result, err := v.GetPackageVersionContent(packageId, versionEnt.Version, true, false, false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -685,12 +685,21 @@ func (v versionServiceImpl) GetPackageVersionsView_deprecated(req view.VersionLi
 	return &view.PublishedVersionsView_deprecated_v2{Versions: versions}, nil
 }
 
-func (v versionServiceImpl) GetPackageVersionsView(req view.VersionListReq) (*view.PublishedVersionsView, error) {
-	packageEnt, err := v.publishedRepo.GetPackage(req.PackageId)
+func (v versionServiceImpl) GetPackageVersionsView(req view.VersionListReq, showOnlyDeleted bool) (*view.PublishedVersionsView, error) {
+	var packageEnt *entity.PackageEntity
+	var err error
+	if showOnlyDeleted {
+		packageEnt, err = v.publishedRepo.GetPackageIncludingDeleted(req.PackageId)
+	} else {
+		packageEnt, err = v.publishedRepo.GetPackage(req.PackageId)
+	}
 	if err != nil {
 		return nil, err
 	}
-	if packageEnt == nil {
+
+	// When invoked from ListDeletedPackageVersions API -
+	// If package deletedAt field is nil, then "package not found" error is returned
+	if packageEnt == nil || (showOnlyDeleted && packageEnt.DeletedAt == nil) {
 		return nil, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.PackageNotFound,
@@ -698,9 +707,13 @@ func (v versionServiceImpl) GetPackageVersionsView(req view.VersionListReq) (*vi
 			Params:  map[string]interface{}{"packageId": req.PackageId},
 		}
 	}
+
 	versions := make([]view.PublishedVersionListView, 0)
 	versionSortByPG := entity.GetVersionSortByPG(req.SortBy)
-	if versionSortByPG == "" {
+	
+	// sortBy and sortOrder are not request params for GetDeletedPackageVersions API -
+	// Hence, they needs not be validated when the GetDeletedPackageVersions API is invoked.
+	if versionSortByPG == "" && !showOnlyDeleted {
 		return nil, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
@@ -709,7 +722,7 @@ func (v versionServiceImpl) GetPackageVersionsView(req view.VersionListReq) (*vi
 		}
 	}
 	versionSortOrderPG := entity.GetVersionSortOrderPG(req.SortOrder)
-	if versionSortOrderPG == "" {
+	if versionSortOrderPG == "" && !showOnlyDeleted {
 		return nil, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
@@ -728,7 +741,7 @@ func (v versionServiceImpl) GetPackageVersionsView(req view.VersionListReq) (*vi
 		Limit:      req.Limit,
 		Offset:     req.Page * req.Limit,
 	}
-	ents, err := v.publishedRepo.GetReadonlyPackageVersionsWithLimit(searchQueryReq, req.CheckRevisions)
+	ents, err := v.publishedRepo.GetReadonlyPackageVersionsWithLimit(searchQueryReq, req.CheckRevisions, showOnlyDeleted)
 	if err != nil {
 		return nil, err
 	}
@@ -738,6 +751,7 @@ func (v versionServiceImpl) GetPackageVersionsView(req view.VersionListReq) (*vi
 	}
 	return &view.PublishedVersionsView{Versions: versions}, nil
 }
+
 func (v versionServiceImpl) GetPackageVersionContent_deprecated(packageId string, version string, includeSummary bool, includeOperations bool, includeGroups bool) (*view.VersionContent_deprecated, error) {
 	versionEnt, err := v.publishedRepo.GetReadonlyVersion_deprecated(packageId, version)
 	if err != nil {
@@ -792,8 +806,9 @@ func (v versionServiceImpl) GetPackageVersionContent_deprecated(packageId string
 
 	return versionContent, nil
 }
-func (v versionServiceImpl) GetPackageVersionContent(packageId string, version string, includeSummary bool, includeOperations bool, includeGroups bool) (*view.VersionContent, error) {
-	versionEnt, err := v.publishedRepo.GetReadonlyVersion(packageId, version)
+
+func (v versionServiceImpl) GetPackageVersionContent(packageId string, version string, includeSummary bool, includeOperations bool, includeGroups bool, showOnlyDeleted bool) (*view.VersionContent, error) {
+	versionEnt, err := v.publishedRepo.GetReadonlyVersion(packageId, version, showOnlyDeleted)
 	if err != nil {
 		return nil, err
 	}
@@ -806,7 +821,13 @@ func (v versionServiceImpl) GetPackageVersionContent(packageId string, version s
 		}
 	}
 
-	latestRevision, err := v.publishedRepo.GetLatestRevision(versionEnt.PackageId, versionEnt.Version)
+	var latestRevision int
+	if showOnlyDeleted {
+		latestRevision, err = v.publishedRepo.GetDeletedPackageLatestRevision(versionEnt.PackageId, versionEnt.Version)
+	} else {
+		latestRevision, err = v.publishedRepo.GetLatestRevision(versionEnt.PackageId, versionEnt.Version)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -818,6 +839,7 @@ func (v versionServiceImpl) GetPackageVersionContent(packageId string, version s
 			Params:  map[string]interface{}{"version": version, "packageId": packageId},
 		}
 	}
+
 	versionContent := &view.VersionContent{
 		PublishedAt:              versionEnt.PublishedAt,
 		PublishedBy:              *entity.MakePrincipalView(&versionEnt.PrincipalEntity),
@@ -832,7 +854,7 @@ func (v versionServiceImpl) GetPackageVersionContent(packageId string, version s
 		ApiProcessorVersion:      versionEnt.Metadata.GetBuilderVersion(),
 	}
 
-	versionOperationTypes, err := v.getVersionOperationTypes(versionEnt, includeSummary, includeOperations)
+	versionOperationTypes, err := v.getVersionOperationTypes(versionEnt, includeSummary, includeOperations, showOnlyDeleted)
 	if err != nil {
 		return nil, err
 	}
@@ -854,7 +876,7 @@ func (v versionServiceImpl) getVersionOperationTypes_deprecated(versionEnt *enti
 	}
 	versionSummaryMap := make(map[string]*view.VersionOperationType, 0)
 	if includeSummary {
-		operationsCountEnts, err := v.operationRepo.GetOperationsTypeCount(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
+		operationsCountEnts, err := v.operationRepo.GetOperationsTypeCount(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, false)
 		if err != nil {
 			return nil, err
 		}
@@ -976,14 +998,14 @@ func (v versionServiceImpl) getVersionOperationTypes_deprecated(versionEnt *enti
 	return versionOperationTypes, nil
 }
 
-func (v versionServiceImpl) getVersionOperationTypes(versionEnt *entity.PackageVersionRevisionEntity, includeSummary bool, includeOperations bool) ([]view.VersionOperationType, error) {
+func (v versionServiceImpl) getVersionOperationTypes(versionEnt *entity.PackageVersionRevisionEntity, includeSummary bool, includeOperations bool, showOnlyDeleted bool) ([]view.VersionOperationType, error) {
 	if !includeSummary && !includeOperations {
 		return nil, nil
 	}
 	zeroInt := 0
 	versionSummaryMap := make(map[string]*view.VersionOperationType, 0)
 	if includeSummary {
-		operationsCountEnts, err := v.operationRepo.GetOperationsTypeCount(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
+		operationsCountEnts, err := v.operationRepo.GetOperationsTypeCount(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, showOnlyDeleted)
 		if err != nil {
 			return nil, err
 		}
@@ -1020,7 +1042,14 @@ func (v versionServiceImpl) getVersionOperationTypes(versionEnt *entity.PackageV
 			if previousPackageId == "" {
 				previousPackageId = versionEnt.PackageId
 			}
-			previousVersionEnt, err := v.publishedRepo.GetVersion(previousPackageId, versionEnt.PreviousVersion)
+
+			var previousVersionEnt *entity.PublishedVersionEntity
+			if showOnlyDeleted {
+				previousVersionEnt, err = v.publishedRepo.GetVersionIncludingDeleted(previousPackageId, versionEnt.PreviousVersion)
+			} else {
+				previousVersionEnt, err = v.publishedRepo.GetVersion(previousPackageId, versionEnt.PreviousVersion)
+			}
+
 			if err != nil {
 				return nil, err
 			}
@@ -1175,7 +1204,20 @@ func (v versionServiceImpl) getVersionOperationTypes(versionEnt *entity.PackageV
 	}
 	versionOperationTypes := make([]view.VersionOperationType, 0)
 	for _, v := range versionSummaryMap {
-		versionOperationTypes = append(versionOperationTypes, *v)
+		newOpType := view.VersionOperationType{
+			ApiType:                         v.ApiType,
+			ChangesSummary:                  v.ChangesSummary,
+			OperationsCount:                 v.OperationsCount,
+			DeprecatedCount:                 v.DeprecatedCount,
+			NoBwcOperationsCount:            v.NoBwcOperationsCount,
+			InternalAudienceOperationsCount: v.InternalAudienceOperationsCount,
+			UnknownAudienceOperationsCount:  v.UnknownAudienceOperationsCount,
+		}
+		if !showOnlyDeleted {
+			newOpType.ApiAudienceTransitions = v.ApiAudienceTransitions
+			newOpType.NumberOfImpactedOperations = v.NumberOfImpactedOperations
+		}
+		versionOperationTypes = append(versionOperationTypes, newOpType)
 	}
 	return versionOperationTypes, nil
 }
