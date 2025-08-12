@@ -10,7 +10,6 @@ module.exports = {
     plugins: [new TsconfigPathsPlugin()],
     fallback: {
       stream: false,
-      path: false,
       process: require.resolve('process/browser'),
       querystring: require.resolve('querystring-es3'),
     },
@@ -22,7 +21,12 @@ module.exports = {
   },
   output: {
     filename: 'index.js',
-    path: path.join(process.cwd(), 'dist'),
+    path: path.resolve(__dirname, "dist"),
+    publicPath: 'auto',
+    library: {
+      name: 'qubership-apihub-rest-playground',
+      type: 'umd',
+    },
   },
   module: {
     rules: [
@@ -41,9 +45,26 @@ module.exports = {
           transpileOnly: true,
         },
       },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader'],
+        include: [
+          path.resolve(__dirname, "node_modules/monaco-editor")
+        ],
+      },
+      {
+        test: /\.(ttf|woff|woff2|eot|otf)$/i,
+        type: 'asset/inline',
+        include: [
+          path.resolve(__dirname, "node_modules/monaco-editor")
+        ],
+      }
     ],
   },
   plugins: [
+    new webpack.optimize.LimitChunkCountPlugin({
+      maxChunks: 1,
+    }),
     new webpack.ProvidePlugin({
       process: require.resolve('process/browser'),
     }),

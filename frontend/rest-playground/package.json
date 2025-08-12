@@ -30,6 +30,10 @@
       "@fortawesome/free-solid-svg-icons"
     ]
   },
+  "dependencies": {
+    "@monaco-editor/react": "4.7.0",
+    "monaco-editor": "0.52.2"
+  },
   "devDependencies": {
     "@babel/core": "^7.17.9",
     "@babel/preset-env": "^7.16.11",
@@ -38,7 +42,6 @@
     "@emotion/react": "11.10.6",
     "@emotion/styled": "11.10.6",
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
-    "@monaco-editor/react": "4.5.2",
     "@mui/icons-material": "5.11.9",
     "@mui/lab": "5.0.0-alpha.120",
     "@mui/material": "5.11.10",
