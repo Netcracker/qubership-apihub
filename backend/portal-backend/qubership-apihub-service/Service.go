@@ -59,10 +59,6 @@ import (
 )
 
 func init() {
-	basePath := os.Getenv("BASE_PATH")
-	if basePath == "" {
-		basePath = "."
-	}
 	logFilePath := os.Getenv("LOG_FILE_PATH") //Example: /logs/apihub.log
 	var mw io.Writer
 	if logFilePath != "" {
@@ -247,7 +243,7 @@ func main() {
 	
 	lockRepo := repository.NewLockRepository(cp)
 
-	olricProvider, err := cache.NewOlricProvider()
+	olricProvider, err := cache.NewOlricProvider(systemInfoService.GetOlricConfig())
 	if err != nil {
 		log.Error("Failed to create olricProvider: " + err.Error())
 		panic("Failed to create olricProvider: " + err.Error())
@@ -726,7 +722,6 @@ func main() {
 		"/ws/",
 		"/metrics",
 	}
-	knownPathPrefixes = append(knownPathPrefixes, systemInfoService.GetCustomPathPrefixes()...)
 	for _, prefix := range knownPathPrefixes {
 		//add routing for unknown paths with known path prefixes
 		r.PathPrefix(prefix).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -812,9 +807,9 @@ func makeServer(systemInfoService service.SystemInfoService, r *mux.Router) *htt
 
 	corsOptions = append(corsOptions, handlers.AllowedHeaders([]string{"Connection", "Accept-Encoding", "Content-Encoding", "X-Requested-With", "Content-Type", "Authorization"}))
 
-	allowedOrigin := systemInfoService.GetOriginAllowed()
-	if allowedOrigin != "" {
-		corsOptions = append(corsOptions, handlers.AllowedOrigins([]string{allowedOrigin}))
+	allowedOrigins := systemInfoService.GetAllowedOrigins()
+	if len(allowedOrigins) > 0 {
+		corsOptions = append(corsOptions, handlers.AllowedOrigins(allowedOrigins))
 	}
 	corsOptions = append(corsOptions, handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"}))
 

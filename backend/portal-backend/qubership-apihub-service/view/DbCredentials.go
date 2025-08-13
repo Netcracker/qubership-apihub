@@ -20,5 +20,4 @@ type DbCredentials struct {
 	Database string
 	Username string
 	Password string
-	SSLMode  string
 }

@@ -16,13 +16,14 @@ package service
 
 import (
 	"errors"
+	"sync"
+	"time"
+
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/cache"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/buraksezer/olric"
 	"github.com/shaj13/go-guardian/v2/auth/claims"
 	log "github.com/sirupsen/logrus"
-	"sync"
-	"time"
 )
 
 type TokenRevocationService interface {

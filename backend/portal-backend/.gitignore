@@ -12,6 +12,7 @@ logs
 qubership-apihub-service/logs
 qubership-apihub-service/tmp/**
 qubership-apihub-service/bin/**
+qubership-apihub-service/config.yaml
 
 docs/local_development/jwt_private_key
 *.patch

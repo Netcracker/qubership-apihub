@@ -19,11 +19,11 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
-	"os"
 	"strconv"
 	"sync"
 	"time"
 
+	sysconfig "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/config"
 	"github.com/buraksezer/olric"
 	discovery "github.com/buraksezer/olric-cloud-plugin/lib"
 	"github.com/buraksezer/olric/config"
@@ -41,12 +41,12 @@ type olricProviderImpl struct {
 	olricC *olric.Olric
 }
 
-func NewOlricProvider() (OlricProvider, error) {
+func NewOlricProvider(olricConfig sysconfig.OlricConfig) (OlricProvider, error) {
 	prov := &olricProviderImpl{wg: sync.WaitGroup{}}
 
 	var err error
 	gob.Register(map[string]interface{}{})
-	prov.cfg, err = getConfig()
+	prov.cfg, err = getConfig(olricConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -84,8 +84,8 @@ func (op *olricProviderImpl) GetBindAddr() string {
 	return op.cfg.BindAddr
 }
 
-func getConfig() (*config.Config, error) {
-	mode := getMode()
+func getConfig(olricConfig sysconfig.OlricConfig) (*config.Config, error) {
+	mode := olricConfig.DiscoveryMode
 	switch mode {
 	case "lan":
 		log.Info("Olric run in cloud mode")
@@ -94,9 +94,9 @@ func getConfig() (*config.Config, error) {
 		cfg.LogLevel = "WARN"
 		cfg.LogVerbosity = 2
 
-		namespace, err := getNamespace()
-		if err != nil {
-			return nil, err
+		namespace := olricConfig.Namespace
+		if namespace == "" {
+			return nil, fmt.Errorf("namespace is not set")
 		}
 
 		cloudDiscovery := &discovery.CloudDiscovery{}
@@ -108,7 +108,7 @@ func getConfig() (*config.Config, error) {
 		}
 
 		// TODO: try to get from replica set via kube client
-		replicaCount := getReplicaCount()
+		replicaCount := olricConfig.ReplicaCount
 		log.Infof("replicaCount is set to %d", replicaCount)
 
 		cfg.PartitionCount = uint64(replicaCount * 4)
@@ -157,36 +157,6 @@ func isPortFree(address string, port int) bool {
 
 	_ = ln.Close()
 	return true
-}
-
-func getMode() string {
-	olricCacheMode, exists := os.LookupEnv("OLRIC_DISCOVERY_MODE")
-	if exists {
-		return olricCacheMode
-	}
-
-	return "local"
-}
-
-func getReplicaCount() int {
-	replicaCountStr, exists := os.LookupEnv("OLRIC_REPLICA_COUNT")
-	if exists {
-		rc, err := strconv.Atoi(replicaCountStr)
-		if err != nil {
-			log.Errorf("Invalid OLRIC_REPLICA_COUNT env value, expecting int. Replica count set to 1.")
-			return 1
-		}
-		return rc
-	}
-	return 1
-}
-
-func getNamespace() (string, error) {
-	ns, exists := os.LookupEnv("NAMESPACE")
-	if !exists {
-		return "", fmt.Errorf("NAMESPACE env is not set")
-	}
-	return ns, nil
 }
 
 func getServiceName() string {
