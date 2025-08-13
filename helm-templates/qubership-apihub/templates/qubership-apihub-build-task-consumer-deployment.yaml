@@ -6,7 +6,6 @@ metadata:
     labels:
         name: 'qubership-apihub-build-task-consumer'
         app.kubernetes.io/name: 'qubership-apihub-build-task-consumer'
-        app.kubernetes.io/version: '{{ .Values.qubershipApihub.version }}'
         app.kubernetes.io/component: 'job'
         app.kubernetes.io/part-of: qubership-apihub
         app.kubernetes.io/managed-by: helm
@@ -23,7 +22,6 @@ spec:
             labels:
                 name: 'qubership-apihub-build-task-consumer'
                 app.kubernetes.io/name: 'qubership-apihub-build-task-consumer'
-                app.kubernetes.io/version: '{{ .Values.qubershipApihub.version }}'
                 app.kubernetes.io/component: 'backend'
                 app.kubernetes.io/part-of: qubership-apihub
                 app.kubernetes.io/managed-by: helm
@@ -39,7 +37,7 @@ spec:
                     protocol: TCP
                 env:
                 -   name: LOG_LEVEL
-                    value: '{{ .Values.qubershipApihub.logLevel }}'
+                    value: '{{ .Values.qubershipApihubBuildTaskConsumer.env.logLevel }}'
                 -   name: APIHUB_BACKEND_ADDRESS
                     value: '{{ .Values.qubershipApihubUi.env.apihubBackendAddress }}'
                 -   name: FOLDER_STORE

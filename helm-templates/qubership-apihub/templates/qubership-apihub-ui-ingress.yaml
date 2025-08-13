@@ -14,7 +14,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: {{ .Values.qubershipApihub.apihubUrl | quote }}
+  - host: {{ .Values.qubershipApihubUi.apihubUrl | quote }}
     http:
       paths:
       - path: /

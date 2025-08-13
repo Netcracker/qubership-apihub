@@ -12,7 +12,7 @@ generate_jwt_private_key
 
 export APIHUB_ADMIN_EMAIL=$(generate_random_string 6)
 export APIHUB_ADMIN_PASSWORD=$(generate_random_string 6)
-export APIHUB_ACCESS_TOKEN=$(generate_random_string 10)
+export APIHUB_ACCESS_TOKEN=$(generate_random_string 30)
 export JWT_PRIVATE_KEY=$(cat ./jwt_private_key)
 
 rm -f rsakey.pem
@@ -29,3 +29,7 @@ for file in *.env; do
     echo "Templating $file"
   fi
 done
+
+envsubst < qubership-apihub-backend-config.yaml > qubership-apihub-backend-config.yaml.tmp
+mv qubership-apihub-backend-config.yaml.tmp qubership-apihub-backend-config.yaml
+echo "Templating qubership-apihub-backend-config.yaml"

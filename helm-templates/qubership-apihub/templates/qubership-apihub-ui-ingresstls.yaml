@@ -13,10 +13,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - '{{ .Values.qubershipApihub.apihubUrl }}'
+        - '{{ .Values.qubershipApihubUi.apihubUrl }}'
       secretName: 'qubership-apihub-ui-tls'
   rules:
-    - host: '{{ .Values.qubershipApihub.apihubUrl }}'
+    - host: '{{ .Values.qubershipApihubUi.apihubUrl }}'
       http:
         paths:
           - path: /

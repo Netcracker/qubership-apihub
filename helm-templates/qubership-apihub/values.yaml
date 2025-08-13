@@ -1,18 +1,3 @@
-# Section with global APIHUB configuration
-qubershipApihub:
-
-  # Optional; APIHUB release version to be shown in UI; If not set, default value: unknown; Example: 37653
-  version: ''
-
-  # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG
-  logLevel: ''
-
-  # Mandatory; Default system access token (any string). The token will be provisioned automatically during startup; If not set, default value: ""; Example: access-token-12345
-  accessToken: ''
-
-  # Mandatory; Factual APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
-  apihubUrl: ''
-
 # Section with APIHUB Backend configuration
 qubershipApihubBackend:
   image:
@@ -31,123 +16,137 @@ qubershipApihubBackend:
     memory:
      limit: "512Mi"
 
-  # Section with monitoring configuration for APIHUB
-  # APIHUB backend is using Prometheus for monitoring and Grafana for visualization
-  monitoring:
-    # Optional; Enables creation of Service Monitor. If not set, default value: FALSE; Example: TRUE
-    enabled: ''
-
   # Section with business and technical parameters for APIHUB.
   env:
-
-    # Optional; Enables production mode - login under local apihub users is prohibited in this mode. In this mode only SAML auth is possible, so SAML integration related deploy parameters are mandatory in this case; If not set, default value: FALSE; Example: TRUE
-    productionMode: 'true'  # set to false at your own risk
+    # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG
+    logLevel: ''
 
     # Section with PostgreSQL database connection parameters
     database:
       # Mandatory; PostgreSQL database host ; If not set, default value: localhost; Example: postgres.example.com
-      dbHost: ''
+      host: ''
       # Mandatory; PostgreSQL database port; If not set, default value: 5432; Example: 5432
-      dbPort: ''
+      port:
       # Mandatory; Logical database in PostgreSQL cluster for APIHUB. Manual pre-creation required; If not set, default value: apihub; Example: apihub_backend_prod_db
-      dbName: ''
-      # Mandatory; User for APIHUB_POSTGRESQL_DB_NAME database; If not set, default value: apihub; Example: apihub_backend_prod_admin
-      dbUsername: ''
-      # Mandatory; Password for APIHUB_POSTGRESQL_USERNAME user.; If not set, default value: apihub; Example: apihub_backend_prod_password
-      dbPassword: ''
+      name: ''
+      # Mandatory; User for database.name database; If not set, default value: apihub; Example: apihub_backend_prod_admin
+      username: ''
+      # Mandatory; Password for database.user.; If not set, default value: apihub; Example: apihub_backend_prod_password
+      password: ''
 
-    # Section with parameters for configuring JWT tokens issued by APIHUB
-    jwt:
-      # Mandatory; Self generated private PKCS#8 private key, base64 encoded. Used for siging of JWT tokens issued by APIHUB, must be unique fore each APIHUB instance; If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
-      privateKey: ''
-      # Optional; Duration in seconds for access tokens issued by APIHUB; If not set, default value: 3600; Example: 3600
-      accessTokenDurationSec: ''
-      # Optional; Duration in seconds for refresh tokens issued by APIHUB; If not set, default value: 43200; Example: 43200
-      refreshTokenDurationSec: ''
+    # Section with all security (authentication and authorization) parameters
+    security:
+      # Optional; Enables production mode - login under local apihub users is prohibited in this mode. In this mode only external IdP auth is possible; If not set, default value: true; Example: true
+      productionMode: true  # set to false at your own risk
+      # Section with parameters for configuring JWT tokens issued by APIHUB
+      jwt:
+        # Mandatory; Self generated private PKCS#8 private key, base64 encoded. Used for siging of JWT tokens issued by APIHUB, must be unique fore each APIHUB instance; If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
+        privateKey: ''
+        # Optional; Duration in seconds for access tokens issued by APIHUB; If not set, default value: 1800; Example: 1800
+        accessTokenDurationSec:
+        # Optional; Duration in seconds for refresh tokens issued by APIHUB; If not set, default value: 43200; Example: 43200
+        refreshTokenDurationSec:
+      # Mandatory; Factual APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
+      apihubExternalUrl: ''
+      # Optional; Set to true to enable apihub playground work without authtorization. Dangerous. Not recommended; If not set, default value: false; Example: true
+      insecureProxy: false
+      # Optional; Allowed list of hosts that are accepted for proxy(playground) requests.; If not set, default value: []; Example: [example.com]
+      allowedHostsForProxy: []
+      # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
+      allowedOrigins: []
+      # Optional; Enables automatic login with the configured identity provider instead of showing the APIHUB login page; If not set, default value: false; Example: true
+      autoLogin: false
+      # Optional; To be deleted, WA for smooth upgrade of exisiting deployments; If not set, default value: true; Example: false
+      legacySaml: true
+      # Optional; List of external identity providers to use for authentication; OIDC and SAML types are supported. If not set, default value: []; Example:
+      #   # Mandatory; ID for external identity provider; If not set, default value: ""; Example: external-saml-idp
+      # - id: 'external-saml-idp'
+      #   # Optional; Display name for external SAML identity provider; If not set, default value: ""; Example: External Identity Provider
+      #   displayName: 'test'
+      #   # Optional; SVG image for external SAML identity provider logo; If not set, default value: ""; Example: <svg fill="#000000" width="800px"...
+      #   imageSvg: ''
+      #   # Mandatory; Protocol for external identity provider; If not set, default value: ""; Example: SAML
+      #   protocol: 'SAML'
+      #   # Optional; SAML configuration for external identity provider, required if protocol is 'SAML'; If not set, default value: ""; Example: 
+      #   samlConfiguration:
+      #     # Optional; SAML metadata URL. Required for SAML configuration; If not set, default value: ""; Example: https://idp.example.com/FederationMetadata/2007-06/FederationMetadata.xml
+      #     metadataUrl: ''
+      #     # Optional; SAML server certificate, base64 encoded. Required for SAML configuration; If not set, default value: ""; Example: LS0tLS1CRUdJTi...
+      #     certificate: '' 
+      #     # Optional; SAML server private key, base64 encoded. Required for SAML configuration; If not set, default value: ""; Example: LS0tLS1CRUdJTi...
+      #     privateKey: ''
+      # # Mandatory; ID for external identity provider; If not set, default value: ""; Example: external-oidc-idp   
+      # - id: 'external-oidc-idp'
+      #   # Optional; Display name for external OIDC identity provider; If not set, default value: ""; Example: External Identity Provider
+      #   displayName: 'test'
+      #   # Optional; SVG image for external OIDC identity provider logo; If not set, default value: ""; Example: <svg fill="#000000" width="800px"...
+      #   imageSvg: ''
+      #   # Mandatory; Protocol for external identity provider; If not set, default value: ""; Example: OIDC
+      #   protocol: 'OIDC'
+      #   # Optional; OIDC configuration for external identity provider, required if protocol is 'OIDC'; If not set, default value: ""; Example: 
+      #   oidcConfiguration:
+      #     # Optional; OIDC identity provider URL. Required for OIDC configuration; If not set, default value: ""; Example: https://idp.example.com/realms/apihub
+      #     providerUrl: ''
+      #     # Optional; OIDC client ID. Required for OIDC configuration; If not set, default value: ""; Example: apihub
+      #     clientId: ''
+      #     # Optional; OIDC client secret. Required for OIDC configuration; If not set, default value: ""; Example: l5cKFvwDRSnhBErE9LUGeBk0dqqFB7No
+      #     clientSecret: ''
+      externalIdentityProviders: []
 
-    # Optional; Default local admin user login. If set - this admin user will be created automatically.; If not set, default value: ""; Example: admin@example.com
-    adminEmail: ''
-    # Optional; Default local admin user password; If not set, default value: ""; Example: admin-password
-    adminPassword: ''
+      # Section with LDAP integration parameters. LDAP integration is used for User search. Makes sense only if SAML/OIDC integration enabled.
+      ldap:
+        # Optional; LDAP server URL. Required for SAML integration for syncing users information; If not set, default value: ""; Example: ldap://ldap.example.com:389
+        server: ''
+        # Optional; LDAP User used for connecting to LDAP server; If not set, default value: ""; Example: x_apihub
+        user: ''
+        # Optional; Password for LDAP User; If not set, default value: ""; Example: x_apihub_password
+        password: ''
+        # Optional; Base DN to search users in; If not set, default value: ""; Example: organization
+        baseDN: ''
+        # Optional; Organization unit to search users in; If not set, default value: ""; Example: example
+        organizationUnit: ''
+        # Optional; Search base to search users in; If not set, default value: ""; Example: com
+        searchBase: ''
 
-    # Section with authentication configuration
-    auth:
-      # Optional; Enables automatic login with the configured identity provider instead of showing the APIHUB login page; If not set, default value: FALSE; Example: TRUE
-      autoLogin: 'false'
-      # Optional; To be deleted, WA for smooth upgrade of exisiting deployments; If not set, default value: TRUE; Example: FALSE
-      legacySaml: 'false'
-      # External identity providers configuration. SAML or OIDC integration is mandatory for production mode.
-      externalIdentityProviders:
-        # Section with SAML integration parameters. SAML integration is used for authentication of APIHUB users. SAML integration is mandatory for production mode.
-        saml:
-          # Optional; Display name for external SAML identity provider; If not set, default value: ""; Example: External Identity Provider
-          displayName: ''
-          # Optional; SVG image for external SAML identity provider logo; If not set, default value: ""; Example: <svg fill="#000000" width="800px"...
-          imageSvg: ''
-          # Optional; SAML metadata URL. Required for SAML configuration; If not set, default value: ""; Example: https://idp.example.com/FederationMetadata/2007-06/FederationMetadata.xml
-          metadataUrl: ''
-          # Optional; SAML server certificate, base64 encoded. Required for SAML configuration; If not set, default value: ""; Example: LS0tLS1CRUdJTi...
-          certificate: ''
-          # Optional; SAML server private key, base64 encoded. Required for SAML configuration; If not set, default value: ""; Example: LS0tLS1CRUdJTi...
-          privateKey: ''
-        # Section with OIDC integration parameters. OIDC integration is used for authentication of APIHUB users.
-        oidc:
-          # Optional; Display name for external OIDC identity provider; If not set, default value: ""; Example: External Identity Provider
-          displayName: ''
-          # Optional; SVG image for external OIDC identity provider logo; If not set, default value: ""; Example: <svg fill="#000000" width="800px"...
-          imageSvg: ''
-          # Optional; OIDC identity provider URL. Required for OIDC configuration; If not set, default value: ""; Example: https://idp.example.com/realms/apihub
-          providerUrl: ''
-          # Optional; OIDC client ID. Required for OIDC configuration; If not set, default value: ""; Example: apihub
-          clientId: ''
-          # Optional; OIDC client secret. Required for OIDC configuration; If not set, default value: ""; Example: l5cKFvwDRSnhBErE9LUGeBk0dqqFB7No
-          clientSecret: ''
+    # Section with zero-day settings
+    zeroDayConfiguration:
+      # Mandatory; Default system access token (any string). The token will be provisioned automatically during startup; If not set, default value: ""; Example: access-token-12345
+      accessToken: ''
+      # Optional; Default local admin user login. If set - this admin user will be created automatically.; If not set, default value: ""; Example: admin@example.com
+      adminEmail: ''
+      # Optional; Default local admin user password; If not set, default value: ""; Example: admin-password
+      adminPassword: ''
 
     # Section with various parameters related to APIHUB business logic
     businessParameters:
-      # Optional; Links to be shown under (i) button in UI; If not set, default value: ""; Example: 
-      externalLinks: ''
+      # Optional; Links to be shown under (i) button in UI; If not set, default value: []; Example: [https://example.com]
+      externalLinks: []
       # Optional; Default workspace ID for Agent UI; If not set, default value: ""; Example: QS
       defaultWorkspaceId: ''
-      # Optional; Regex pattern for releases names validation.; If not set, default value: ^[0-9]{4}[.]{1}[1-4]{1}$; Example: ^2023\.1$
+      # Optional; Regex pattern for releases names validation.; If not set, default value: .*; Example: ^2023\.1$
       releaseVersionPattern: '.*'
       # Optional; Limit for uploaded package size in order to avoid OOM; If not set, default value: 50; Example: 50
-      publishArchiveSizeLimitMb: '50'
+      publishArchiveSizeLimitMb: 50
       # Optional; Limit for uploaded file (inside package) size in order to avoid OOM; If not set, default value: 15; Example: 20
-      publishFileSizeLimitMb: '15'
+      publishFileSizeLimitMb: 15
+      # Deprecated. Required for Editor feature. Size limit for the branch content.
+      branchContentSizeLimitMb: 50
       # Optional; If set - footer with this text is shown for all APIHUB users in APIHUB UI. Designed for maintenance windows notifications.; If not set, default value: ""; Example: Maintenance scheduled on 2023-10-15
       systemNotification: ''
-      # Optional; Set to true to enable apihub playground work without authtorization. Dangerous. Not recommended; If not set, default value: FALSE; Example: FALSE
-      insecureProxy: 'FALSE'
-      # Optional; Allowed list of hosts that are accepted for proxy(playground) requests.; If not set, default value: ""; Example: *.example.com
-      allowedHosts: ''
+      # Optional; Set to true to fail build on broken refs; If not set, default value: true; Example: true
+      failBuildOnBrokenRefs: true
 
-    # Section with various parameters related to APIHUB technical behavior 
-    technicalParameters:
-      # Optional; Allows to set extra allowed origin to CORS header. Used for FE debugging. Should be empty on prod evs.; If not set, default value: ""; Example: https://localhost:5137
-      originAllowed: ''
-      # Optional; Allows to specify custom paths for extension (plug-in) backend services; If not set, default value: ""; Example: 
-      customPathPrefixes: ''
 
-    # Section with LDAP integration parameters. LDAP integration is used for User syncronization. Makes sense only if SAML integration enabled.
-    ldap:
-      # Optional; LDAP server URL. Required for SAML integration for syncing users information; If not set, default value: ""; Example: ldap://ldap.example.com:389
-      server: ''
-      # Optional; LDAP User used for connecting to LDAP server; If not set, default value: ""; Example: x_apihub
-      user: ''
-      # Optional; Password for LDAP User; If not set, default value: ""; Example: x_apihub_password
-      password: ''
-      # Optional; Base DN to search users in; If not set, default value: ""; Example: organization
-      baseDN: ''
-      # Optional; Organization unit to search users in; If not set, default value: ""; Example: example
-      organizationUnit: ''
-      # Optional; Search base to search users in; If not set, default value: ""; Example: com
-      searchBase: ''
+    # Section with monitoring configuration for APIHUB
+    # APIHUB backend is using Prometheus for monitoring and Grafana for visualization
+    monitoring:
+      # Optional; Enables creation of Service Monitor. If not set, default value: false; Example: true
+      enabled: false
 
     # Section with S3 storage integration parameters.
-    storageServer:
-      # Optional; Set to true to enable S3 integration. S3 is used for store temporary relatively large files.; If not set, default value: FALSE; Example: TRUE
-      active: 'FALSE'
+    s3Storage:
+      # Optional; Set to true to enable S3 integration. S3 is used for store temporary relatively large files.; If not set, default value: false; Example: true
+      enabled: false
       # Optional; S3 endpoint for client connection; If not set, default value: ""; Example: s3.example.com
       url: ''
       # Optional; Access Key ID from S3 storage; If not set, default value: ""; Example: s3-access-key
@@ -157,28 +156,37 @@ qubershipApihubBackend:
       # Optional; Certificate for accessing S3 storage; If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
       crt: ''
       # Optional; Bucket name in S3 storage; If not set, default value: ""; Example: apihub-bucket
-      bucketTame: ''
-      # Optional; Set to true to store only build results (less data amout) in S3 storage; If not set, default value: FALSE; Example: TRUE
-      storeOnlyBuildResult: ''
-    
-    # Section with cleanup jobs configuration
-    cleanup:
-      revisions:
-        # Optional; If set to true, the revisions cleanup job will delete the last revision of the version. Otherwise, such revisions are skipped; If not set, default value: false; Example: true
-        deleteLastRevision: 'false'
-        # Optional; If set to true, the revisions cleanup job will delete revisions with a 'release' status. Otherwise, such revisions are skipped; If not set, default value: false; Example: true
-        deleteReleaseRevisions: 'false'
-        # Optional; Number of days to keep revisions before cleanup; If not set, default value: 365; Example: 180
-        ttlDays: '365'
-      comparisons:
-        # Optional; Number of days to keep ad-hoc comparisons before cleanup; If not set, default value: 30; Example: 180
-        ttlDays: '30'
+      bucketName: ''
+      # Optional; Set to true to store only build results (less data amout) in S3 storage; If not set, default value: false; Example: true
+      storeOnlyBuildResult: false
 
     # Parameters for APIHUB Editor feature. Deprecated. Will be removed in future releases.
     editor:
       gitlabUrl: ''
       clientId: ''
       clientSecret: ''
+
+    # Section with Olric configuration.
+    olric:
+      # Optional; Discovery mode for Olric. If not set, default value: local; Example: local
+      discoveryMode: 'lan'
+      # Optional; Replica count for Olric. If not set, default value: 1; Example: 1
+      replicaCount: 1
+      # Optional; Namespace for Olric discovery. If not set, default value: ""; Example: apihub
+      namespace: ''
+    
+    # Section with cleanup jobs configuration
+    cleanup:
+      revisions:
+        # Optional; If set to true, the revisions cleanup job will delete the last revision of the version. Otherwise, such revisions are skipped; If not set, default value: false; Example: true
+        deleteLastRevision: false
+        # Optional; If set to true, the revisions cleanup job will delete revisions with a 'release' status. Otherwise, such revisions are skipped; If not set, default value: false; Example: true
+        deleteReleaseRevisions: false
+        # Optional; Number of days to keep revisions before cleanup; If not set, default value: 365; Example: 180
+        ttlDays: 365
+      comparisons:
+        # Optional; Number of days to keep ad-hoc comparisons before cleanup; If not set, default value: 30; Example: 180
+        ttlDays: 30
 
 # Section with APIHUB Build Task Consumer configuration
 qubershipApihubBuildTaskConsumer:
@@ -201,6 +209,12 @@ qubershipApihubBuildTaskConsumer:
   env:
     operationsBuildBatch: "16" # most likely never change this value
 
+    # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG
+    logLevel: ''
+
+    # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
+    accessToken: ''
+
 # Section with APIHUB UI configuration
 qubershipApihubUi:
   image:
@@ -221,6 +235,9 @@ qubershipApihubUi:
   env:
     apihubBackendAddress: 'qubership-apihub-backend:8080' # k8s local address of apihub backend service. Do not change it unless you know what you are doing
     apihubNcServiceAddress: 'qubership-apihub-backend:8080' # k8s local address of apihub custom service. Do not change it unless you know what you are doing
+    
+  # Mandatory; Factual APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
+  apihubUrl: ''
 
   # Flag to enable/disable http UI ingress creation
   ingress:
@@ -231,7 +248,7 @@ qubershipApihubUi:
   tlsIngress:
     enabled: true
     tlsSecret:
-      # Certificate used for TLS termination in https ingress
+      # Certificate used for TLS termination in https ingress, base64 encoded. If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
       certificate: ''
-      # Private key for certificate above
+      # Private key for certificate above, base64 encoded. If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
       certificateKey: ''
