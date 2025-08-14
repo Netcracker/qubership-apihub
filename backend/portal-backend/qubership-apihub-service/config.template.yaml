@@ -28,11 +28,11 @@ security:
   # Optional; Set to true to enable apihub playground work without authtorization. Dangerous. Not recommended; If not set, default value: false; Example: true
   insecureProxy: false
   # Optional; Allowed list of hosts that are accepted for proxy(playground) requests.; If not set, default value: []; Example: [example.com]
-  allowedHostsForProxy: 
+  allowedHostsForProxy:
     - example.com
     - localhost
   # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
-  allowedOrigins: 
+  allowedOrigins:
     - https://localhost:5137
   # Optional; Enables automatic login with the configured identity provider instead of showing the APIHUB login page; If not set, default value: false; Example: true
   autoLogin: false
@@ -48,15 +48,15 @@ security:
       imageSvg: ''
       # Mandatory; Protocol for external identity provider; If not set, default value: ""; Example: SAML
       protocol: 'SAML'
-      # Optional; SAML configuration for external identity provider, required if protocol is 'SAML'; If not set, default value: ""; Example: 
+      # Optional; SAML configuration for external identity provider, required if protocol is 'SAML'; If not set, default value: ""; Example:
       samlConfiguration:
         # Optional; SAML metadata URL. Required for SAML configuration; If not set, default value: ""; Example: https://idp.example.com/FederationMetadata/2007-06/FederationMetadata.xml
         metadataUrl: ''
         # Optional; SAML server certificate, base64 encoded. Required for SAML configuration; If not set, default value: ""; Example: LS0tLS1CRUdJTi...
-        certificate: '' 
+        certificate: ''
         # Optional; SAML server private key, base64 encoded. Required for SAML configuration; If not set, default value: ""; Example: LS0tLS1CRUdJTi...
         privateKey: ''
-    # Mandatory; ID for external identity provider; If not set, default value: ""; Example: external-oidc-idp   
+    # Mandatory; ID for external identity provider; If not set, default value: ""; Example: external-oidc-idp
     - id: 'external-oidc-idp'
       # Optional; Display name for external OIDC identity provider; If not set, default value: ""; Example: External Identity Provider
       displayName: 'test'
@@ -64,7 +64,7 @@ security:
       imageSvg: ''
       # Mandatory; Protocol for external identity provider; If not set, default value: ""; Example: OIDC
       protocol: 'OIDC'
-      # Optional; OIDC configuration for external identity provider, required if protocol is 'OIDC'; If not set, default value: ""; Example: 
+      # Optional; OIDC configuration for external identity provider, required if protocol is 'OIDC'; If not set, default value: ""; Example:
       oidcConfiguration:
         # Optional; OIDC identity provider URL. Required for OIDC configuration; If not set, default value: ""; Example: https://idp.example.com/realms/apihub
         providerUrl: ''
@@ -107,7 +107,7 @@ technicalParameters:
 # Section with various parameters related to APIHUB business logic
 businessParameters:
   # Optional; Links to be shown under (i) button in UI; If not set, default value: []; Example: [https://example.com]
-  externalLinks: 
+  externalLinks:
     - https://example.com
   # Optional; Default workspace ID for Agent UI; If not set, default value: ""; Example: QS
   defaultWorkspaceId: 'QS'
@@ -167,8 +167,8 @@ olric:
 # Section with cleanup jobs configuration
 cleanup:
   revisions:
-    # Optional; Schedule for the revisions cleanup job. If not set, default value: "0 1 * * 6"; Example: "* * * * *"
-    schedule: '0 1 * * 6'
+    # Optional; Schedule for the revisions cleanup job. If not set, default value: "0 21 * * 0"; Example: "* * * * *"
+    schedule: '0 21 * * 0'
     # Optional; If set to true, the revisions cleanup job will delete the last revision of the version. Otherwise, such revisions are skipped; If not set, default value: false; Example: true
     deleteLastRevision: false
     # Optional; If set to true, the revisions cleanup job will delete revisions with a 'release' status. Otherwise, such revisions are skipped; If not set, default value: false; Example: true
@@ -176,10 +176,19 @@ cleanup:
     # Optional; Number of days to keep revisions before cleanup; If not set, default value: 365; Example: 180
     ttlDays: 365
   comparisons:
-    # Optional; Schedule for the comparisons cleanup job. If not set, default value: "0 23 * * 0"; Example: "* * * * *"
-    schedule: '0 23 * * 0'
+    # Optional; Schedule for the comparisons cleanup job. If not set, default value: "0 5 * * 0"; Example: "* * * * *"
+    schedule: '0 5 * * 0'
+    # Optional; Timeout in minutes for comparisons cleanup. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination; If not set, default value: 720; Example: 60
+    timeoutMinutes: 720
     # Optional; Number of days to keep ad-hoc comparisons before cleanup; If not set, default value: 30; Example: 180
     ttlDays: 30
+  softDeletedData:
+    # Optional; Cron schedule for soft deleted data cleanup job; If not set default value: '0 22 * * 5'; Example: '0 4 * * *'
+    schedule: '0 22 * * 5'
+    # Optional; Timeout in minutes for soft deleted data cleanup. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination; If not set, default value: 1200; Example: 120
+    timeoutMinutes: 1200
+    # Optional; Number of days to keep soft deleted data before cleanup; If not set, default value: 730; Example: 700
+    ttlDays: 730
   builds:
     # Optional; Schedule for the builds cleanup job. If not set, default value: "0 1 * * 0"; Example: "* * * * *"
     schedule: '0 1 * * 0'

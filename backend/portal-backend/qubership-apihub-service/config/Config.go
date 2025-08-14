@@ -130,21 +130,29 @@ type OlricConfig struct {
 }
 
 type CleanupConfig struct {
-	Revisions RevisionsCleanupConfig
-	Comparisons ComparisonsCleanupConfig
-	Builds BuildsCleanupConfig
+	Revisions       RevisionsCleanupConfig
+	Comparisons     ComparisonsCleanupConfig
+	SoftDeletedData SoftDeletedDataCleanupConfig
+	Builds          BuildsCleanupConfig
 }
 
 type RevisionsCleanupConfig struct {
-	Schedule string
-	DeleteLastRevision bool
+	Schedule               string
+	DeleteLastRevision     bool
 	DeleteReleaseRevisions bool
-	TTLDays int
+	TTLDays                int
 }
 
 type ComparisonsCleanupConfig struct {
-	Schedule string
-	TTLDays int
+	Schedule       string
+	TimeoutMinutes int
+	TTLDays        int
+}
+
+type SoftDeletedDataCleanupConfig struct {
+	Schedule       string
+	TimeoutMinutes int
+	TTLDays        int
 }
 
 type BuildsCleanupConfig struct {

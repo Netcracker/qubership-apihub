@@ -16,6 +16,10 @@ If you want to run qubership-apihub-backend only for development or debugging pu
 
 Just run build.cmd(sh) file from this repository
 
+## Configuration
+
+Backend configuration is implemented via a configuration file(config.yaml), for the full configuration please refer to [the template file](/qubership-apihub-service/config.template.yaml).
+
 
 ## Debug
 

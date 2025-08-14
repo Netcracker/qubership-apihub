@@ -36,16 +36,16 @@ type ApihubApiKeyEntity_deprecated struct {
 type ApihubApiKeyEntity struct {
 	tableName struct{} `pg:"apihub_api_keys"`
 
-	Id         string     `pg:"id, pk, type:varchar"`
-	PackageId  string     `pg:"package_id, type:varchar"`
-	Name       string     `pg:"name, type:varchar"`
-	CreatedBy  string     `pg:"created_by, type:varchar"`
-	CreatedFor string     `pg:"created_for, type:varchar"`
-	CreatedAt  time.Time  `pg:"created_at, type:timestamp without time zone"`
-	DeletedBy  string     `pg:"deleted_by, type:varchar"`
-	DeletedAt  *time.Time `pg:"deleted_at, type:timestamp without time zone"`
-	ApiKey     string     `pg:"api_key, type:varchar"` // hash
-	Roles      []string   `pg:"roles, type:varchar array, array"`
+	Id         string     `pg:"id, pk, type:varchar" json:"id"`
+	PackageId  string     `pg:"package_id, type:varchar" json:"packageId"`
+	Name       string     `pg:"name, type:varchar" json:"name"`
+	CreatedBy  string     `pg:"created_by, type:varchar" json:"createdBy"`
+	CreatedFor string     `pg:"created_for, type:varchar" json:"createdFor"`
+	CreatedAt  time.Time  `pg:"created_at, type:timestamp without time zone" json:"createdAt"`
+	DeletedBy  string     `pg:"deleted_by, type:varchar" json:"deletedBy"`
+	DeletedAt  *time.Time `pg:"deleted_at, type:timestamp without time zone" json:"deletedAt"`
+	ApiKey     string     `pg:"api_key, type:varchar" json:"apiKey"` // hash
+	Roles      []string   `pg:"roles, type:varchar array, array" json:"roles"`
 }
 
 type ApihubApiKeyUserEntity_deprecated struct {

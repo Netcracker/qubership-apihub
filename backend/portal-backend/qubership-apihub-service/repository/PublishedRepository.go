@@ -66,6 +66,7 @@ type PublishedRepository interface {
 	GetDefaultVersion(packageId string, status string) (*entity.PublishedVersionEntity, error)
 	CleanupDeleted() error
 	DeletePackageRevisionsBeforeDate(ctx context.Context, packageId string, beforeDate time.Time, deleteLastRevision bool, deleteReleaseRevisions bool, deletedBy string) (int, error)
+	DeleteSoftDeletedPackageRevisionsBeforeDate(ctx context.Context, runId string, beforeDate time.Time, batchSize int) (int, error)
 
 	GetFileSharedInfo(packageId string, fileId string, versionName string) (*entity.SharedUrlInfoEntity, error)
 	GetFileSharedInfoById(sharedId string) (*entity.SharedUrlInfoEntity, error)
@@ -86,6 +87,7 @@ type PublishedRepository interface {
 	GetParentsForPackage(id string, includeDeleted bool) ([]entity.PackageEntity, error)
 	UpdatePackage(ent *entity.PackageEntity) (*entity.PackageEntity, error)
 	DeletePackage(id string, userId string) error
+	DeleteSoftDeletedPackagesBeforeDate(ctx context.Context, runId string, beforeDate time.Time, batchSize int) (int, error)
 	GetPackageGroupsByName(name string) ([]entity.PackageEntity, error)
 	GetFilteredPackages(filter string, parentId string) ([]entity.PackageEntity, error)
 	GetFilteredPackagesWithOffset(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error)
