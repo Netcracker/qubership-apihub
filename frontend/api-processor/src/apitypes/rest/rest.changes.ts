@@ -29,16 +29,15 @@ import {
   apiDiff,
   breaking,
   COMPARE_MODE_OPERATION,
-  DEFAULT_DIFFS_AGGREGATED_META_KEY,
   Diff,
   DIFF_META_KEY,
   DiffAction,
+  DIFFS_AGGREGATED_META_KEY,
   risky,
 } from '@netcracker/qubership-apihub-api-diff'
 import { MESSAGE_SEVERITY, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
 import {
   BREAKING_CHANGE_TYPE,
-  CompareContext,
   CompareOperationsPairContext,
   NormalizedOperationId,
   OperationChanges,
@@ -66,12 +65,22 @@ import { createOperationChange, getOperationTags, takeSubstringIf } from '../../
 export const compareDocuments = async (apiType: OperationsApiType, operationsMap: Record<NormalizedOperationId, {
   previous?: ResolvedOperation
   current?: ResolvedOperation
-}>, prevFile: File, currFile: File, currDoc: ResolvedVersionDocument, prevDoc: ResolvedVersionDocument, ctx: CompareContext): Promise<{
+}>, prevDoc: ResolvedVersionDocument | undefined, currDoc: ResolvedVersionDocument | undefined, ctx: CompareOperationsPairContext): Promise<{
   operationChanges: OperationChanges[]
   tags: string[]
 }> => {
-  const prevDocData = JSON.parse(await prevFile.text())
-  const currDocData = JSON.parse(await currFile.text())
+  const { rawDocumentResolver, previousVersion, currentVersion, previousPackageId, currentPackageId } = ctx
+  const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
+  const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
+  let prevDocData = prevFile && JSON.parse(await prevFile.text())
+  let currDocData = currFile && JSON.parse(await currFile.text())
+
+  if (!prevDocData && currDocData) {
+    prevDocData = createCopyWithEmptyPath(currDocData)
+  }
+  if (prevDocData && !currDocData) {
+    currDocData = createCopyWithEmptyPath(prevDocData)
+  }
 
   const { merged, diffs } = apiDiff(
     prevDocData,
@@ -80,7 +89,7 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
       ...NORMALIZE_OPTIONS,
       metaKey: DIFF_META_KEY,
       originsFlag: ORIGINS_SYMBOL,
-      diffsAggregatedFlag: DEFAULT_DIFFS_AGGREGATED_META_KEY,
+      diffsAggregatedFlag: DIFFS_AGGREGATED_META_KEY,
       // mode: COMPARE_MODE_OPERATION,
       normalizedResult: true,
     },
@@ -128,7 +137,7 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
       let operationDiffs: Diff[] = []
       if (current && previous) {
         operationDiffs = [
-          ...(methodData as WithAggregatedDiffs<OpenAPIV3.OperationObject>)[DEFAULT_DIFFS_AGGREGATED_META_KEY],
+          ...(methodData as WithAggregatedDiffs<OpenAPIV3.OperationObject>)[DIFFS_AGGREGATED_META_KEY],
           // todo what about security? add test
           ...extractServersDiffs(merged),
         ]
@@ -136,9 +145,14 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
         const pathParamRenameDiff = (merged.paths as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[path]
         pathParamRenameDiff && operationDiffs.push(pathParamRenameDiff)
       } else if (current || previous) {
-        const operationDiff = (merged.paths as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[path]
+        const operationDiff = (merged.paths[path] as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[inferredMethod]
         if (!operationDiff) {
-          throw new Error('should not happen')
+          // ignore removed and added operations, they'll be handled in a separate docs comparison
+          continue
+        }
+        const deprecatedInVersionsCount = previousVersionDeprecations?.operations.find((operation) => operation.operationId === operationId)?.deprecatedInPreviousVersions?.length ?? 0
+        if (isOperationRemove(operationDiff) && deprecatedInVersionsCount > 1) {
+          operationDiff.type = risky
         }
         operationDiffs.push(operationDiff)
       }
@@ -162,11 +176,11 @@ export const compareRestOperationsData = async (current: VersionRestOperation | 
   let previousOperation = removeComponents(previous?.data)
   let currentOperation = removeComponents(current?.data)
   if (!previousOperation && currentOperation) {
-    previousOperation = getCopyWithEmptyPath(currentOperation as RestOperationData)
+    previousOperation = createCopyWithEmptyPath(currentOperation as RestOperationData)
   }
 
   if (previousOperation && !currentOperation) {
-    currentOperation = getCopyWithEmptyPath(previousOperation as RestOperationData)
+    currentOperation = createCopyWithEmptyPath(previousOperation as RestOperationData)
   }
 
   const diffResult = apiDiff(
@@ -201,7 +215,6 @@ async function reclassifyBreakingChanges(
   if (!previosVersionDeprecations) {
     return
   }
-  previosVersionDeprecations.operations[0]
 
   const previousOperation = previosVersionDeprecations.operations[0]
 
@@ -272,11 +285,14 @@ async function reclassifyBreakingChanges(
   }
 }
 
-function getCopyWithEmptyPath(template: RestOperationData): RestOperationData {
+export function createCopyWithEmptyPath(template: RestOperationData): RestOperationData {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { paths, ...rest } = template
+
   return {
-    paths: {},
+    paths: {
+      ...Object.fromEntries(Object.keys(template.paths).map(key => [key, {}])),
+    },
     ...rest,
   }
 }

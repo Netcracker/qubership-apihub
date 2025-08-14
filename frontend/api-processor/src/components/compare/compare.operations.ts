@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import {
   ApiAudienceTransition,
   CompareContext,
@@ -22,17 +21,25 @@ import {
   OperationId,
   OperationsApiType,
   OperationType,
+  ResolvedVersionDocument,
   VersionCache,
   VersionParams,
   VersionsComparison,
 } from '../../types'
-import { calculateTotalImpactedSummary, createPairOperationsMap, getUniqueApiTypesFromVersions } from './compare.utils'
+import {
+  calculateTotalImpactedSummary,
+  createPairOperationsMap,
+  getUniqueApiTypesFromVersions,
+  normalizeOperationIds,
+} from './compare.utils'
 import {
   calculateApiAudienceTransitions,
   calculateChangeSummary,
   calculateDiffId,
+  difference,
   executeInBatches,
   getSplittedVersionKey,
+  intersection,
   removeFirstSlash,
   removeObjectDuplicates,
   slugify,
@@ -107,7 +114,12 @@ async function compareCurrentApiType(
   const { operations: prevOperations = [] } = await versionOperationsResolver(apiType, prev?.version ?? '', prev?.packageId ?? '', undefined, false) || {}
   const { operations: currOperations = [] } = await versionOperationsResolver(apiType, curr?.version ?? '', curr?.packageId ?? '', undefined, false) || {}
 
-  const apiAudienceTransitions: ApiAudienceTransition[] = []
+  const [prevOperationIds, prevNormalizedOperationIdToOriginal] = normalizeOperationIds(prevOperations, apiBuilder)
+  const [currOperationIds, currNormalizedOperationIdToOriginal] = normalizeOperationIds(currOperations, apiBuilder)
+
+  const added = difference(currOperationIds, prevOperationIds)
+  const removed = difference(prevOperationIds, currOperationIds)
+  const rest = intersection(prevOperationIds, currOperationIds)
 
   const { version: prevVersion, packageId: prevPackageId } = prev ?? { version: '', packageId: '' }
   const { version: currVersion, packageId: currPackageId } = curr ?? { version: '', packageId: '' }
@@ -118,8 +130,47 @@ async function compareCurrentApiType(
   // const currDocuments = ctx.config.files ? unfilteredCurrDocuments.filter(({fileId}) => ctx.config.files?.find((file) => file.fileId === fileId)) : unfilteredCurrDocuments
   const currDocuments = unfilteredCurrDocuments
 
+  const pairedRestDocs: Map<ResolvedVersionDocument, ResolvedVersionDocument> = new Map()
+  for (const normalizedOperationId of rest) {
+    const prevOperationId = prevNormalizedOperationIdToOriginal[normalizedOperationId]
+    const currOperationId = currNormalizedOperationIdToOriginal[normalizedOperationId]
+
+    const prevDocumentId = prevOperations.find((operation) => operation.operationId === prevOperationId)?.documentId
+    const currDocumentId = currOperations.find((operation) => operation.operationId === currOperationId)?.documentId
+    const prevDoc = prevDocuments.find(document => document.slug === prevDocumentId)
+    const currDoc = currDocuments.find(document => document.slug === currDocumentId)
+
+    if (!prevDoc || !currDoc) {
+      throw new Error('should not happen')
+    }
+
+    if (pairedRestDocs.get(prevDoc) === currDoc) {
+      continue
+    }
+    pairedRestDocs.set(prevDoc, currDoc)
+  }
+
+  const pairedDocs: [ResolvedVersionDocument | undefined, ResolvedVersionDocument | undefined][] = [...pairedRestDocs.entries()]
+  const qwe = [...new Set(added.map((normalizedOperationId) => {
+    const operationId = currNormalizedOperationIdToOriginal[normalizedOperationId]
+    const currDocumentId = currOperations.find((operation) => operation.operationId === operationId)?.documentId
+    return currDocuments.find(document => document.slug === currDocumentId)
+  }))]
+  for (const currDoc of qwe) {
+    pairedDocs.push([undefined, currDoc])
+  }
+
+  const asd = [...new Set(removed.map((normalizedOperationId) => {
+    const operationId = prevNormalizedOperationIdToOriginal[normalizedOperationId]
+    const prevDocumentId = prevOperations.find((operation) => operation.operationId === operationId)?.documentId
+    return prevDocuments.find(document => document.slug === prevDocumentId)
+  }))]
+  for (const prevDoc of asd) {
+    pairedDocs.push([prevDoc, undefined])
+  }
+
   // todo > 1 is a hack for before\after files naming, docs matching approach is not yet defined
-  const pairedDocs = prevDocuments.map((prevDoc) => [prevDoc, currDocuments.length > 1 ? currDocuments.find(({ fileId }) => fileId === prevDoc.fileId) : currDocuments[0]])
+  // const pairedDocs = prevDocuments.map((prevDoc) => [prevDoc, currDocuments.length > 1 ? currDocuments.find(({ fileId }) => fileId === prevDoc.fileId) : currDocuments[0]])
 
   const { currentGroup, previousGroup } = ctx.config
   const currGroupSlug = slugify(removeFirstSlash(currentGroup || ''))
@@ -131,26 +182,22 @@ async function compareCurrentApiType(
   const tags: string[] = []
 
   for (const [prevDoc, currDoc] of pairedDocs) {
-    if (!prevDoc || !currDoc) {
-      continue
-    }
-    const prevFile = await rawDocumentResolver(prevVersion, prevPackageId, prevDoc.slug)
-    const currFile = await rawDocumentResolver(currVersion, currPackageId, currDoc.slug)
-
-    // todo
     const pairContext: CompareOperationsPairContext = {
       notifications: ctx.notifications,
+      rawDocumentResolver,
       versionDeprecatedResolver: ctx.versionDeprecatedResolver,
       previousVersion: prevVersion,
       currentVersion: currVersion,
       previousPackageId: prevPackageId,
       currentPackageId: currPackageId,
+      currentGroup: currentGroup,
+      previousGroup: previousGroup,
     }
 
     const {
       operationChanges: docsPairOperationChanges,
       tags: docsPairTags,
-    } = await apiBuilder.compareDocuments!(apiType, operationsMap, prevFile, currFile, prevDoc, currDoc, ctx)
+    } = await apiBuilder.compareDocuments!(apiType, operationsMap, prevDoc, currDoc, pairContext)
 
     operationChanges.push(...docsPairOperationChanges)
     tags.push(...docsPairTags)
@@ -167,6 +214,7 @@ async function compareCurrentApiType(
       .filter(([, { previous, current }]) => previous && current)
       .map(([, { previous, current }]) => [previous?.operationId, current?.operationId] as [OperationId, OperationId])
 
+  const apiAudienceTransitions: ApiAudienceTransition[] = []
   // todo: convert from objects analysis to apihub-diff result analysis after the "info" section participates in the comparison of operations
   await asyncDebugPerformance('[ApiAudience]', async () => await executeInBatches(pairedOperationIds, async (operationsBatch) => {
     const previousBatch = operationsBatch.map(([prevOperationId]) => prevOperationId)

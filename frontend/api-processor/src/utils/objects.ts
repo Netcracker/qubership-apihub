@@ -65,3 +65,7 @@ export const isSymbol = (value: unknown): value is symbol => {
 export const isObject = (value: unknown): value is Record<string | symbol, unknown> => {
   return typeof value === 'object' && value !== null
 }
+
+export function isNonNullable<T>(value: T): value is NonNullable<T> {
+  return value !== undefined && value !== null
+}

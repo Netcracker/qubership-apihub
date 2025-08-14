@@ -92,6 +92,8 @@ export const EXPORT_BUILD_TYPES = [
   BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP,
 ]
 
+export type ExportBuildType = typeof EXPORT_BUILD_TYPES[number]
+
 export const VERSION_STATUS = {
   RELEASE: 'release',
   DRAFT: 'draft',

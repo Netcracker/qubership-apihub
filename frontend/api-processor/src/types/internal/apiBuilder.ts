@@ -24,6 +24,7 @@ import {
   OperationId,
   OperationsApiType,
   PackageId,
+  RawDocumentResolver,
   ResolvedOperation,
   ResolvedVersionDocument,
   TemplatePath,
@@ -86,11 +87,14 @@ export type _RawDocumentResolver = (
 
 export interface CompareOperationsPairContext {
   notifications: NotificationMessage[]
+  rawDocumentResolver: RawDocumentResolver
   versionDeprecatedResolver: VersionDeprecatedResolver
   previousVersion: VersionId
   currentVersion: VersionId
   previousPackageId: PackageId
   currentPackageId: PackageId
+  currentGroup?: string
+  previousGroup?: string
 }
 
 export type NormalizedOperationId = string
@@ -103,7 +107,7 @@ export type OperationDataCompare<T> = (current: T, previous: T, ctx: CompareOper
 export type DocumentsCompare = (apiType: OperationsApiType, operationsMap: Record<NormalizedOperationId, {
   previous?: ResolvedOperation
   current?: ResolvedOperation
-}>, prevFile: File, currFile: File, currDoc: ResolvedVersionDocument, prevDoc: ResolvedVersionDocument, ctx: CompareContext) => Promise<{operationChanges: OperationChanges[]; tags: string[]}>
+}>, currDoc: ResolvedVersionDocument | undefined, prevDoc: ResolvedVersionDocument | undefined, ctx: CompareOperationsPairContext) => Promise<{operationChanges: OperationChanges[]; tags: string[]}>
 export type OperationChangesValidator = (
   changes: ChangeMessage, // + ctx with internal resolvers
   previousOperation?: RestOperationData, // TODO remove

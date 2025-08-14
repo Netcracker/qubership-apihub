@@ -162,6 +162,7 @@ const createOperationsFile = (zip: ZipTool, operations: Map<string, ApiOperation
 
     data.operations.push({
       operationId: operation.operationId,
+      documentId: operation.documentId,
       title: operation.title,
       dataHash: operation.dataHash,
       deprecated: operation.deprecated,

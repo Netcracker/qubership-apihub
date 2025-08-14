@@ -97,6 +97,15 @@ export function getOperationTypesFromTwoVersions(
 type OperationIdWithoutGroupPrefix = string
 export type OperationIdentityMap = Record<OperationIdWithoutGroupPrefix, OperationId>
 
+export function normalizeOperationIds(operations: ResolvedOperation[], apiBuilder: ApiBuilder): [OperationId[], Record<NormalizedOperationId | OperationId, OperationId>] {
+  const normalizedOperationIdToOriginal: Record<NormalizedOperationId | OperationId, OperationId> = {}
+  for (const operation of operations) {
+    const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(operation) ?? operation.operationId
+    normalizedOperationIdToOriginal[normalizedOperationId] = operation.operationId
+  }
+  return [Object.keys(normalizedOperationIdToOriginal), normalizedOperationIdToOriginal]
+}
+
 export function getOperationsHashMapByApiType(
   apiBuilder: ApiBuilder,
   operations: ResolvedOperation[],

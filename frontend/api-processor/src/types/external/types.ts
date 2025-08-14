@@ -15,7 +15,7 @@
  */
 
 import {
-  DEFAULT_DIFFS_AGGREGATED_META_KEY,
+  DIFFS_AGGREGATED_META_KEY,
   Diff,
   DIFF_META_KEY,
   DiffMetaRecord,
@@ -31,4 +31,4 @@ export type VersionId = string | `${string}@${number}`
 export type OperationId = string
 
 export type WithDiffMetaRecord<T> = T & {[DIFF_META_KEY]?: DiffMetaRecord}
-export type WithAggregatedDiffs<T> = T & {[DEFAULT_DIFFS_AGGREGATED_META_KEY]: Diff[]}
+export type WithAggregatedDiffs<T> = T & {[DIFFS_AGGREGATED_META_KEY]: Diff[]}

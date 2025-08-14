@@ -94,6 +94,7 @@ export const buildGraphQLOperation = (
 
   return {
     operationId,
+    documentId: document.slug,
     dataHash: 'dataHash is to be removed',
     apiType: GRAPHQL_API_TYPE,
     apiKind: rawToApiKind(apiKind),

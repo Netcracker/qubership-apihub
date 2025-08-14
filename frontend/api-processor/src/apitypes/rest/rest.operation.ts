@@ -155,6 +155,7 @@ export const buildRestOperation = (
 
   return {
     operationId,
+    documentId: document.slug,
     dataHash: 'dataHash is to be removed',
     apiType: REST_API_TYPE,
     apiKind: rawToApiKind(apiKind),

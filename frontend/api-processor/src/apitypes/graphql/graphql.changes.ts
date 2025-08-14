@@ -19,16 +19,16 @@ import { isEmpty, removeComponents, removeFirstSlash, slugify, takeIf } from '..
 import {
   apiDiff,
   COMPARE_MODE_OPERATION,
-  DEFAULT_DIFFS_AGGREGATED_META_KEY,
   Diff,
   DIFF_META_KEY,
+  DIFFS_AGGREGATED_META_KEY,
 } from '@netcracker/qubership-apihub-api-diff'
 import { NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
 import { GraphApiOperation, GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 import { buildSchema } from 'graphql/utilities'
 import { buildGraphQLDocument } from './graphql.document'
 import {
-  CompareContext,
+  CompareOperationsPairContext,
   FILE_KIND,
   NormalizedOperationId,
   OperationChanges,
@@ -44,25 +44,35 @@ import { createOperationChange, getOperationTags } from '../../components'
 export const compareDocuments = async (apiType: OperationsApiType, operationsMap: Record<NormalizedOperationId, {
   previous?: ResolvedOperation
   current?: ResolvedOperation
-}>, prevFile: File, currFile: File, currDoc: ResolvedVersionDocument, prevDoc: ResolvedVersionDocument, ctx: CompareContext): Promise<{
+}>, prevDoc: ResolvedVersionDocument | undefined, currDoc: ResolvedVersionDocument | undefined, ctx: CompareOperationsPairContext): Promise<{
   operationChanges: OperationChanges[]
   tags: string[]
 }> => {
-  const prevDocSchema = buildSchema(await prevFile.text(), { noLocation: true })
-  const currDocSchema = buildSchema(await currFile.text(), { noLocation: true })
+  const { rawDocumentResolver, previousVersion, currentVersion, previousPackageId, currentPackageId } = ctx
+  const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
+  const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
+  const prevDocSchema = prevFile && buildSchema(await prevFile.text(), { noLocation: true })
+  const currDocSchema = currFile && buildSchema(await currFile.text(), { noLocation: true })
 
-  const prevDocData = (await buildGraphQLDocument({
+  let prevDocData = prevDocSchema && (await buildGraphQLDocument({
     ...prevDoc,
     source: prevFile,
     kind: FILE_KIND.TEXT,
     data: prevDocSchema,
   }, prevDoc)).data
-  const currDocData = (await buildGraphQLDocument({
+  let currDocData = currDocSchema && (await buildGraphQLDocument({
     ...currDoc,
     source: currFile,
     kind: FILE_KIND.TEXT,
     data: currDocSchema,
   }, currDoc)).data
+
+  if (!prevDocData && currDocData) {
+    prevDocData = getCopyWithEmptyOperations(currDocData)
+  }
+  if (prevDocData && !currDocData) {
+    currDocData = getCopyWithEmptyOperations(prevDocData)
+  }
 
   const { merged, diffs } = apiDiff(
     prevDocData,
@@ -71,7 +81,7 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
       ...NORMALIZE_OPTIONS,
       metaKey: DIFF_META_KEY,
       originsFlag: ORIGINS_SYMBOL,
-      diffsAggregatedFlag: DEFAULT_DIFFS_AGGREGATED_META_KEY,
+      diffsAggregatedFlag: DIFFS_AGGREGATED_META_KEY,
       // mode: COMPARE_MODE_OPERATION,
       normalizedResult: true,
     },
@@ -83,7 +93,7 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
 
   let operationDiffs: Diff[] = []
 
-  const { currentGroup, previousGroup } = ctx.config
+  const { currentGroup, previousGroup } = ctx
   const currGroupSlug = slugify(removeFirstSlash(currentGroup || ''))
   const prevGroupSlug = slugify(removeFirstSlash(previousGroup || ''))
 
@@ -100,7 +110,7 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
 
       const { current, previous } = operationsMap[operationId] ?? {}
       if (current && previous) {
-        operationDiffs = [...(methodData as WithAggregatedDiffs<GraphApiOperation>)[DEFAULT_DIFFS_AGGREGATED_META_KEY]]
+        operationDiffs = [...(methodData as WithAggregatedDiffs<GraphApiOperation>)[DIFFS_AGGREGATED_META_KEY]]
       } else if (current || previous) {
         for (const type of GRAPHQL_TYPE_KEYS) {
           const operationsByType = (merged[type] as WithDiffMetaRecord<Record<string, GraphApiOperation>>)?.[DIFF_META_KEY]
