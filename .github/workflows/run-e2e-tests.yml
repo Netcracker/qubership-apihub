@@ -52,6 +52,7 @@ on:
 
 jobs:
   call-docker-compose-run-and-test-ci-workflow:
+    #TODO: change to main after testing
     uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@main
     with:
       compose-repository-branch: ${{ github.event.inputs.compose-repository-branch || 'main'}}

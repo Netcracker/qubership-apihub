@@ -6,7 +6,10 @@ services:
         container_name: qubership-apihub-backend
         ports:
         - "8090:8080"
-        env_file: "qubership-apihub-backend.env"
+        environment:
+            - APIHUB_CONFIG_FOLDER=/app/qubership-apihub-service/
+        volumes:
+            - ./qubership-apihub-backend-config.yaml:/app/qubership-apihub-service/config.yaml
         healthcheck:
             test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]
             interval: 10s
