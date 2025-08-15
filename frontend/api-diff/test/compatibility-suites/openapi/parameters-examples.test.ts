@@ -1,17 +1,11 @@
 import { compareFiles } from '../utils'
 import { diffsMatcher } from '../../helper/matchers'
 import { annotation, DiffAction } from '../../../src'
+import { runRefObjectDescriptionTests, runRefObjectSummaryTests } from './templates/reference-object-31.template'
 
 const SUITE_ID = 'parameters-examples'
 
-const PARAMETERS_EXAMPLES_PATH = [
-  'paths',
-  '/path1',
-  'post',
-  'parameters',
-  0,
-  'examples',
-]
+const PARAMETERS_EXAMPLES_PATH = ['paths', '/path1', 'post', 'parameters', 0, 'examples']
 
 describe('Openapi3 Parameters Examples', () => {
 
@@ -168,3 +162,10 @@ describe('Openapi3 Parameters Examples', () => {
     ]))
   })
 })
+
+const COMPONENTS_PARAMETERS_EXAMPLE_PATH = ['components', 'examples', 'ex1']
+describe('Reference object. Parameters examples. Description and Summary fields in ref object', () => {
+  runRefObjectDescriptionTests(SUITE_ID, [...PARAMETERS_EXAMPLES_PATH, 'ex1'], COMPONENTS_PARAMETERS_EXAMPLE_PATH)
+  runRefObjectSummaryTests(SUITE_ID, [...PARAMETERS_EXAMPLES_PATH, 'ex1'], COMPONENTS_PARAMETERS_EXAMPLE_PATH)
+})
+
