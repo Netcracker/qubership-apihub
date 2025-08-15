@@ -114,8 +114,8 @@ async function compareCurrentApiType(
   const { operations: prevOperations = [] } = await versionOperationsResolver(apiType, prev?.version ?? '', prev?.packageId ?? '', undefined, false) || {}
   const { operations: currOperations = [] } = await versionOperationsResolver(apiType, curr?.version ?? '', curr?.packageId ?? '', undefined, false) || {}
 
-  const [prevOperationIds, prevNormalizedOperationIdToOriginal] = normalizeOperationIds(prevOperations, apiBuilder)
-  const [currOperationIds, currNormalizedOperationIdToOriginal] = normalizeOperationIds(currOperations, apiBuilder)
+  const [prevOperationIds, prevNormalizedOperationIdToOperation] = normalizeOperationIds(prevOperations, apiBuilder)
+  const [currOperationIds, currNormalizedOperationIdToOperation] = normalizeOperationIds(currOperations, apiBuilder)
 
   const added = difference(currOperationIds, prevOperationIds)
   const removed = difference(prevOperationIds, currOperationIds)
@@ -130,13 +130,10 @@ async function compareCurrentApiType(
   // const currDocuments = ctx.config.files ? unfilteredCurrDocuments.filter(({fileId}) => ctx.config.files?.find((file) => file.fileId === fileId)) : unfilteredCurrDocuments
   const currDocuments = unfilteredCurrDocuments
 
-  const pairedRestDocs: Map<ResolvedVersionDocument, ResolvedVersionDocument> = new Map()
+  const pairedRestDocs: [ResolvedVersionDocument, ResolvedVersionDocument][] = []
   for (const normalizedOperationId of rest) {
-    const prevOperationId = prevNormalizedOperationIdToOriginal[normalizedOperationId]
-    const currOperationId = currNormalizedOperationIdToOriginal[normalizedOperationId]
-
-    const prevDocumentId = prevOperations.find((operation) => operation.operationId === prevOperationId)?.documentId
-    const currDocumentId = currOperations.find((operation) => operation.operationId === currOperationId)?.documentId
+    const prevDocumentId = prevNormalizedOperationIdToOperation[normalizedOperationId]?.documentId
+    const currDocumentId = currNormalizedOperationIdToOperation[normalizedOperationId]?.documentId
     const prevDoc = prevDocuments.find(document => document.slug === prevDocumentId)
     const currDoc = currDocuments.find(document => document.slug === currDocumentId)
 
@@ -144,25 +141,20 @@ async function compareCurrentApiType(
       throw new Error('should not happen')
     }
 
-    if (pairedRestDocs.get(prevDoc) === currDoc) {
-      continue
-    }
-    pairedRestDocs.set(prevDoc, currDoc)
+    pairedRestDocs.push([prevDoc, currDoc])
   }
 
-  const pairedDocs: [ResolvedVersionDocument | undefined, ResolvedVersionDocument | undefined][] = [...pairedRestDocs.entries()]
-  const qwe = [...new Set(added.map((normalizedOperationId) => {
-    const operationId = currNormalizedOperationIdToOriginal[normalizedOperationId]
-    const currDocumentId = currOperations.find((operation) => operation.operationId === operationId)?.documentId
+  const pairedDocs: [ResolvedVersionDocument | undefined, ResolvedVersionDocument | undefined][] = dedupePairs(pairedRestDocs)
+  const uniqueCurrentDocuments = [...new Set(added.map((normalizedOperationId) => {
+    const currDocumentId = currNormalizedOperationIdToOperation[normalizedOperationId]?.documentId
     return currDocuments.find(document => document.slug === currDocumentId)
   }))]
-  for (const currDoc of qwe) {
+  for (const currDoc of uniqueCurrentDocuments) {
     pairedDocs.push([undefined, currDoc])
   }
 
   const asd = [...new Set(removed.map((normalizedOperationId) => {
-    const operationId = prevNormalizedOperationIdToOriginal[normalizedOperationId]
-    const prevDocumentId = prevOperations.find((operation) => operation.operationId === operationId)?.documentId
+    const prevDocumentId = prevNormalizedOperationIdToOperation[normalizedOperationId]?.documentId
     return prevDocuments.find(document => document.slug === prevDocumentId)
   }))]
   for (const prevDoc of asd) {

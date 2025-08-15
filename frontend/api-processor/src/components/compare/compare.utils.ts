@@ -97,13 +97,33 @@ export function getOperationTypesFromTwoVersions(
 type OperationIdWithoutGroupPrefix = string
 export type OperationIdentityMap = Record<OperationIdWithoutGroupPrefix, OperationId>
 
-export function normalizeOperationIds(operations: ResolvedOperation[], apiBuilder: ApiBuilder): [OperationId[], Record<NormalizedOperationId | OperationId, OperationId>] {
-  const normalizedOperationIdToOriginal: Record<NormalizedOperationId | OperationId, OperationId> = {}
+export function dedupePairs<A extends object, B extends object>(
+  pairs: ReadonlyArray<[A, B]>,
+): Array<[A, B]> {
+  const seen = new WeakMap<A, WeakSet<B>>()
+  const out: Array<[A, B]> = []
+
+  for (const [a, b] of pairs) {
+    let bs = seen.get(a)
+    if (!bs) {
+      bs = new WeakSet<B>()
+      seen.set(a, bs)
+    }
+    if (bs.has(b)) continue
+    bs.add(b)
+    out.push([a, b])
+  }
+
+  return out
+}
+
+export function normalizeOperationIds(operations: ResolvedOperation[], apiBuilder: ApiBuilder): [OperationId[], Record<NormalizedOperationId | OperationId, ResolvedOperation>] {
+  const normalizedOperationIdToOperation: Record<NormalizedOperationId | OperationId, ResolvedOperation> = {}
   for (const operation of operations) {
     const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(operation) ?? operation.operationId
-    normalizedOperationIdToOriginal[normalizedOperationId] = operation.operationId
+    normalizedOperationIdToOperation[normalizedOperationId] = operation
   }
-  return [Object.keys(normalizedOperationIdToOriginal), normalizedOperationIdToOriginal]
+  return [Object.keys(normalizedOperationIdToOperation), normalizedOperationIdToOperation]
 }
 
 export function getOperationsHashMapByApiType(
