@@ -10,7 +10,7 @@ import {
   TYPE_BOOLEAN,
   TYPE_JSON_ANY,
   TYPE_OBJECT,
-  TYPE_STRING
+  TYPE_STRING,
 } from '../validate/checker'
 import {
   GRAPH_API_DIRECTIVE_LOCATIONS,
@@ -25,7 +25,7 @@ import {
   GRAPH_API_NODE_KIND_OBJECT,
   GRAPH_API_NODE_KIND_SCALAR,
   GRAPH_API_NODE_KIND_STRING,
-  GRAPH_API_NODE_KIND_UNION
+  GRAPH_API_NODE_KIND_UNION,
 } from '@netcracker/qubership-apihub-graphapi'
 import { resolveValueByPath } from '../utils'
 import {
@@ -50,9 +50,10 @@ import {
   GRAPH_API_PROPERTY_SUBSCRIPTIONS,
   GRAPH_API_PROPERTY_TYPE,
   GRAPH_API_PROPERTY_UNIONS,
-  GRAPH_API_PROPERTY_VALUES
+  GRAPH_API_PROPERTY_VALUES,
 } from './graphapi.const'
 import { GRAPH_API_DEPRECATION_PREDICATE } from './graphapi.deprecated'
+import { notAllowedReferenceHandler, referenceObjectResolver } from '../references/ref-resolver'
 
 const EMPTY_MARKER = Symbol('empty-items')
 
@@ -236,8 +237,9 @@ const directiveDefinitionRules: NormalizationRules = {
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(DIRECTIVE_DEFINITION_DEFAULTS),
-    valueReplaces(DIRECTIVE_DEFINITION_REPLACES)
-  ]
+    valueReplaces(DIRECTIVE_DEFINITION_REPLACES),
+  ],
+  referenceHandler: referenceObjectResolver(),
 }
 
 const typeDefinitionRules: (ctx: CrawlRulesContext) => NormalizationRules = ({ value }) => {
@@ -262,7 +264,13 @@ const typeDefinitionRules: (ctx: CrawlRulesContext) => NormalizationRules = ({ v
     case GRAPH_API_NODE_KIND_LIST:
       return listDefinitionRules
     default:
-      return { validate: () => false }
+      return {
+        validate: () => false,
+        //TODO This function does not work with ref.
+        // It is used to resolve the reference object for the unknown type definition.
+        '/**': { referenceHandler: referenceObjectResolver() },
+        referenceHandler: referenceObjectResolver(),
+      }
   }
 }
 
@@ -453,6 +461,9 @@ export const graphApiRules: () => NormalizationRules = () => ({
       valueDefaults(COMPONENTS_DEFAULTS),
       valueReplaces(COMPONENTS_REPLACES)
     ],
+  },
+  '/**': {
+    referenceHandler: notAllowedReferenceHandler,
   },
   validate: checkType(TYPE_OBJECT),
   unify: [
