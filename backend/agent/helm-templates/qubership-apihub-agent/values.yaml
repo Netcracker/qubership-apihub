@@ -4,8 +4,8 @@ qubershipApihubAgent:
   version: ''
 
   image:
-    repository: 'ghcr.io/netcracker/qubership-apihub-agent' 
-    tag: 'latest'
+    repository: 'ghcr.io/netcracker/qubership-apihub-agent'
+    tag: 'dev'
 
   # Section with resource limits
   # Mandatory
@@ -14,13 +14,13 @@ qubershipApihubAgent:
     memory:
       request: "256Mi"
       limit: "256Mi"
-    cpu:  
+    cpu:
       request: "30m"
       limit: "1"
 
   # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG
   logLevel: ''
-  
+
   # Section with business and technical parameters for Qubership APIHUB Agent.
   env:
     # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
@@ -33,7 +33,7 @@ qubershipApihubAgent:
     cloudName: ''
 
     # Mandatory; Factual Qubership APIHUB Agent Ingress URL in your environment.; If not set, default value: ""; Example: https://apihub-agent.k8s.example.com
-    agentUrl: '' 
+    agentUrl: ''
 
     # Mandatory; Display name of Qubership APIHUB Agent's instance; If not set, default value: ""; Example: apihub-agent-1
     agentName: ''
@@ -46,7 +46,6 @@ qubershipApihubAgent:
 
     # Optional; Comma-separated list of k8s labels keys which will be a mark to skip this service during discovery; If not set, default value: ''; Example: 'gateway,cronJob'
     discoveryExcludeLabels: ''
-    
+
     # Optional; Comma-separated list of k8s labels keys by which services will be grouped during discovery; If not set, default value: ''; Example: 'app_name,application'
     discoveryGroupingLabels: ''
-    

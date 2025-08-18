@@ -35,9 +35,9 @@ paths:
   /v1/namespaces:
     get:
       summary: Get Namespace list
-      description: Get Namespace list from current Cloud. 
+      description: Get Namespace list from current Cloud.
       operationId: getNamespaces
-      tags: 
+      tags:
         - Cloud Services
       responses:
         "200":
@@ -53,13 +53,14 @@ paths:
                     items:
                       type: string
                       description: Namespace name
+                    maxItems: 100
                   cloudName:
                     type: string
                     description: Cloud name
         "500":
-          $ref: "#/components/responses/internalServerError500"  
+          $ref: "#/components/responses/internalServerError500"
         "503":
-          $ref: "#/components/responses/serviceUnavailable503" 
+          $ref: "#/components/responses/serviceUnavailable503"
   /v1/namespaces/{name}/services:
     parameters:
       - $ref: "#/components/parameters/Namespace"
@@ -103,9 +104,9 @@ paths:
                       - complete
                       - error
         "500":
-          $ref: "#/components/responses/internalServerError500"                      
+          $ref: "#/components/responses/internalServerError500"
         "503":
-          $ref: "#/components/responses/serviceUnavailable503" 
+          $ref: "#/components/responses/serviceUnavailable503"
   /v2/namespaces/{name}/workspaces/{workspaceId}/services:
     parameters:
       - $ref: "#/components/parameters/Namespace"
@@ -154,9 +155,9 @@ paths:
                       - complete
                       - error
         "500":
-          $ref: "#/components/responses/internalServerError500"                      
+          $ref: "#/components/responses/internalServerError500"
         "503":
-          $ref: "#/components/responses/serviceUnavailable503" 
+          $ref: "#/components/responses/serviceUnavailable503"
   /v1/namespaces/{name}/discover:
     parameters:
       - $ref: "#/components/parameters/Namespace"
@@ -168,7 +169,7 @@ paths:
       x-deprecation-reason: New version of API is created - POST /v2/namespaces/{name}/workspaces/{workspaceId}/discover
       summary: Start discovery process
       description: |
-        Starts the asyncronous service discovery process. 
+        Starts the asyncronous service discovery process.
         The process status may be get by the getServices operation.
         API doesn't return the process ID, because Agent may have only one discovery process in one moment of time.
       responses:
@@ -178,7 +179,7 @@ paths:
         "500":
           $ref: "#/components/responses/internalServerError500"
         "503":
-          $ref: "#/components/responses/serviceUnavailable503" 
+          $ref: "#/components/responses/serviceUnavailable503"
   /v2/namespaces/{name}/workspaces/{workspaceId}/discover:
     parameters:
       - $ref: "#/components/parameters/Namespace"
@@ -195,7 +196,7 @@ paths:
       operationId: postNamespaceDiscoverV2
       summary: Start discovery process
       description: |
-        Starts the asyncronous service discovery process. 
+        Starts the asyncronous service discovery process.
         The process status may be get by the getServices operation.
         API doesn't return the process ID, because Agent may have only one discovery process in one moment of time.
       responses:
@@ -205,7 +206,7 @@ paths:
         "500":
           $ref: "#/components/responses/internalServerError500"
         "503":
-          $ref: "#/components/responses/serviceUnavailable503" 
+          $ref: "#/components/responses/serviceUnavailable503"
   /v1/namespaces/{name}/services/{serviceId}/specs/{specId}:
     parameters:
       - $ref: "#/components/parameters/Namespace"
@@ -237,7 +238,7 @@ paths:
         "500":
           $ref: "#/components/responses/internalServerError500"
         "503":
-          $ref: "#/components/responses/serviceUnavailable503" 
+          $ref: "#/components/responses/serviceUnavailable503"
   /v2/namespaces/{name}/workspaces/{workspaceId}/services/{serviceId}/specs/{specId}:
     parameters:
       - $ref: "#/components/parameters/Namespace"
@@ -274,14 +275,14 @@ paths:
         "500":
           $ref: "#/components/responses/internalServerError500"
         "503":
-          $ref: "#/components/responses/serviceUnavailable503" 
+          $ref: "#/components/responses/serviceUnavailable503"
   /v1/agents/{agentId}/namespaces/{name}/services/{serviceId}/proxy/{path}:
     get:
       summary: Proxy endpoint to service
       description: Proxy endpoint to service
       operationId: getAgentsIdNamespacesIdServicesProxy
       security:
-        - { }
+        - {}
       tags:
         - Cloud Services
       parameters:
@@ -376,7 +377,7 @@ paths:
         "500":
           $ref: "#/components/responses/internalServerError500"
         "503":
-          $ref: "#/components/responses/serviceUnavailable503" 
+          $ref: "#/components/responses/serviceUnavailable503"
   /v1/discover:
     post:
       summary: Run discover for whole cloud
@@ -401,7 +402,7 @@ paths:
         "500":
           $ref: "#/components/responses/internalServerError500"
         "503":
-          $ref: "#/components/responses/serviceUnavailable503" 
+          $ref: "#/components/responses/serviceUnavailable503"
   /v2/workspaces/{workspaceId}/discover:
     parameters:
     - name: workspaceId
@@ -432,10 +433,10 @@ paths:
         "500":
           $ref: "#/components/responses/internalServerError500"
         "503":
-          $ref: "#/components/responses/serviceUnavailable503" 
+          $ref: "#/components/responses/serviceUnavailable503"
   /v1/services:
     get:
-      summary: Get namespaces summary for the whole cloud 
+      summary: Get namespaces summary for the whole cloud
       description: |
         Get namespaces summary for the whole cloud.
       operationId: getCloudNamespaces
@@ -499,7 +500,7 @@ paths:
         "500":
           $ref: "#/components/responses/internalServerError500"
         "503":
-          $ref: "#/components/responses/serviceUnavailable503" 
+          $ref: "#/components/responses/serviceUnavailable503"
   /v2/workspaces/{workspaceId}/services:
     parameters:
     - name: workspaceId
@@ -510,7 +511,7 @@ paths:
         type: string
       example: NC
     get:
-      summary: Get namespaces summary for the whole cloud 
+      summary: Get namespaces summary for the whole cloud
       description: |
         Get namespaces summary for the whole cloud.
       operationId: getCloudNamespacesV2
@@ -565,7 +566,7 @@ paths:
         "500":
           $ref: "#/components/responses/internalServerError500"
         "503":
-          $ref: "#/components/responses/serviceUnavailable503" 
+          $ref: "#/components/responses/serviceUnavailable503"
   /api/v1/namespaces/{name}/routes/{routeName}:
     parameters:
       - $ref: "#/components/parameters/Namespace"
@@ -609,9 +610,9 @@ paths:
         "404":
           $ref: "#/components/responses/notFound404"
         "500":
-          $ref: "#/components/responses/internalServerError500"        
+          $ref: "#/components/responses/internalServerError500"
         "503":
-          $ref: "#/components/responses/serviceUnavailable503" 
+          $ref: "#/components/responses/serviceUnavailable503"
   /v1/namespaces/{name}/serviceItems:
     parameters:
       - $ref: "#/components/parameters/Namespace"
@@ -663,7 +664,7 @@ paths:
                         servicePods:
                           type: array
                           description: list of service pod ids
-                          items: 
+                          items:
                             type: string
                         proxyServerUrl:
                           type: string
@@ -710,7 +711,7 @@ components:
       schema:
         type: string
   schemas:
-    SpecificationType:  
+    SpecificationType:
       title: type
       description: Type of the specification notation.
       type: string
@@ -764,17 +765,17 @@ components:
           type: object
           additionalProperties:
             type: string
-          example: 
+          example:
             part-of: CloudBSS-CPQBE
             app_name: cpq
         availablePromoteStatuses:
             description: |
-              List of statuses available to the user to promote the service. 
+              List of statuses available to the user to promote the service.
               The list of statuses is calculated based on the user's permissions.
             type: array
             items:
               type: string
-              enum:       
+              enum:
                 - draft
                 - release
                 - release candidate
@@ -801,7 +802,7 @@ components:
             versions:
               description: Package release versions
               type: array
-              items: 
+              items:
                 type: string
         specs:
           description: List of the service's API documents, found on environment.
@@ -884,17 +885,17 @@ components:
           type: object
           additionalProperties:
             type: string
-          example: 
+          example:
             part-of: CloudBSS-CPQBE
             app_name: cpq
         availablePromoteStatuses:
             description: |
-              List of statuses available to the user to promote the service. 
+              List of statuses available to the user to promote the service.
               The list of statuses is calculated based on the user's permissions.
             type: array
             items:
               type: string
-              enum:       
+              enum:
                 - draft
                 - release
                 - release candidate
@@ -921,7 +922,7 @@ components:
             versions:
               description: Package release versions
               type: array
-              items: 
+              items:
                 type: string
         specs:
           description: List of the service's API documents, found on environment.
@@ -992,13 +993,13 @@ components:
             "type": "string"
         debug:
           description: |
-            The attribute contains debug details (e.g. stack-trace). 
+            The attribute contains debug details (e.g. stack-trace).
             Presented in the error response only on Dev/Test environments if corresponding logging level is enabled.
           type: string
       required:
         - status
         - code
-        - message                  
+        - message
   responses:
     badRequest400:
       description: Bad request
