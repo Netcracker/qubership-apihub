@@ -564,7 +564,6 @@ func (j *comparisonsCleanupJob) Run() {
 	jobTimeout := j.timeout + vacuumTimeout //an extended timeout is required to hold the lock for the entire duration of the job; the configured timeout is used for the main stage of the job, and an additional timeout is applied for performing VACUUM FULL on the affected tables
 	jobCtx, jobCancel := context.WithTimeout(context.Background(), jobTimeout)
 	defer jobCancel()
-
 	defer func() {
 		if err := recover(); err != nil {
 			errorMsg := fmt.Sprintf("Comparison cleanup job %s failed with panic: %v", jobId, err)
