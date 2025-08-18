@@ -28,9 +28,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import type { FC } from 'react'
+import type { FC, RefObject } from 'react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { usePackages } from '../usePackages'
 import { useMainPageCollapsedGroupKeys, useSetMainPageCollapsedGroupKeys } from './MainPageProvider'
 import { useDisfavorPackage } from './useDisfavorPackage'
 import { useFavorPackage } from './useFavorPackage'
@@ -67,6 +66,8 @@ import { PackageSettingsButton } from '@apihub/components/PackageSettingsButton'
 import { useResizeObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useResizeObserver'
 import { getTooltipMessage } from '@netcracker/qubership-apihub-ui-shared/utils/tooltip-message'
 import { getBwcData } from '@netcracker/qubership-apihub-ui-shared/utils/change-severities'
+import { useIntersectionObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useIntersectionObserver'
+import { usePagedPackages } from '@apihub/routes/root/usePagedPackages'
 
 export type PackagesTreeProps = Readonly<{
   rootPackageKey?: Key
@@ -80,27 +81,45 @@ export const PackagesTree: FC<PackagesTreeProps> = memo<PackagesTreeProps>(({ ro
 
   const [updatingPackageKey] = useUpdatingPackageKeyWritableContext()
 
-  const [groups, isGroupsLoading] = usePackages({
+  const {
+    packages: groups,
+    isLoading: isGroupsLoading,
+    fetchNextPage: fetchNextPageGroup,
+    fetchingNextPage: fetchingNextPageGroup,
+    hasNextPage: hasNextPageGroup,
+  } = usePagedPackages({
     kind: GROUP_KIND,
     onlyFavorite: onlyFavorite,
     showParents: false,
     parentId: rootPackageKey,
     onlyShared: onlyShared,
-    refererPageKey: refererPageName ?? MAIN_PAGE_REFERER,
+    refererPageName: refererPageName ?? MAIN_PAGE_REFERER,
   })
-  const [packages, isPackagesLoading, isFetching] = usePackages({
+
+  const {
+    packages,
+    isLoading: isPackagesLoading,
+    isFetching,
+    fetchNextPage,
+    fetchingNextPage,
+    hasNextPage,
+  } = usePagedPackages({
     kind: [PACKAGE_KIND, DASHBOARD_KIND],
     parentId: rootPackageKey,
     enabled: true,
     onlyFavorite: onlyFavorite,
     onlyShared: onlyShared,
     lastReleaseVersionDetails: true,
-    refererPageKey: refererPageName ?? MAIN_PAGE_REFERER,
+    refererPageName: refererPageName ?? MAIN_PAGE_REFERER,
   })
 
   const [containerWidth, setContainerWidth] = useState(DEFAULT_CONTAINER_WIDTH)
   const [columnSizingInfo, setColumnSizingInfo] = useState<ColumnSizingInfoState>()
   const [, setHandlingColumnSizing] = useState<ColumnSizingState>()
+
+  const ref = useRef<HTMLTableRowElement>(null)
+  useIntersectionObserver(ref, fetchingNextPage, hasNextPage, fetchNextPage)
+  useIntersectionObserver(ref, fetchingNextPageGroup, hasNextPageGroup, fetchNextPageGroup)
 
   const tableContainerRef = useRef<HTMLDivElement>(null)
   useResizeObserver(tableContainerRef, setContainerWidth)
@@ -113,31 +132,31 @@ export const PackagesTree: FC<PackagesTreeProps> = memo<PackagesTreeProps>(({ ro
   })
 
   const columns: ColumnDef<TableData>[] = useMemo(() => [
-    {
-      id: FAVORITE_COLUMN_ID,
-      header: () => <CustomTableHeadCell title={''} />,
-    },
-    {
-      id: NAME_COLUMN_ID,
-      header: () => <CustomTableHeadCell title={'Name'} />,
-    },
-    {
-      id: ID_COLUMN_ID,
-      header: () => <CustomTableHeadCell title={'ID'} />,
-    },
-    {
-      id: SERVICE_NAME_COLUMN_ID,
-      header: () => <CustomTableHeadCell title={'Service Name'} />,
-    },
-    {
-      id: LAST_VERSION_COLUMN_ID,
-      header: () => <CustomTableHeadCell title={'Latest Release'} />,
-    },
-    {
-      id: BWC_ERRORS_COLUMN_ID,
-      header: () => <CustomTableHeadCell title={'BWC Status'} />,
-    },
-  ], [],
+      {
+        id: FAVORITE_COLUMN_ID,
+        header: () => <CustomTableHeadCell title={''}/>,
+      },
+      {
+        id: NAME_COLUMN_ID,
+        header: () => <CustomTableHeadCell title={'Name'}/>,
+      },
+      {
+        id: ID_COLUMN_ID,
+        header: () => <CustomTableHeadCell title={'ID'}/>,
+      },
+      {
+        id: SERVICE_NAME_COLUMN_ID,
+        header: () => <CustomTableHeadCell title={'Service Name'}/>,
+      },
+      {
+        id: LAST_VERSION_COLUMN_ID,
+        header: () => <CustomTableHeadCell title={'Latest Release'}/>,
+      },
+      {
+        id: BWC_ERRORS_COLUMN_ID,
+        header: () => <CustomTableHeadCell title={'BWC Status'}/>,
+      },
+    ], [],
   )
 
   const { getHeaderGroups, setColumnSizing } = useReactTable({
@@ -183,7 +202,7 @@ export const PackagesTree: FC<PackagesTreeProps> = memo<PackagesTreeProps>(({ ro
                   >
                     {flexRender(headerColumn.column.columnDef.header, headerColumn.getContext())}
                     {index !== headerGroup.headers.length - 1 &&
-                      <ColumnDelimiter header={headerColumn} resizable={true} />}
+                      <ColumnDelimiter header={headerColumn} resizable={true}/>}
                   </TableCell>
                 ))}
               </TableRow>
@@ -211,7 +230,8 @@ export const PackagesTree: FC<PackagesTreeProps> = memo<PackagesTreeProps>(({ ro
               />
             ))}
           </TableBody>
-          {isLoading && <TableSkeleton />}
+          {(hasNextPage || hasNextPageGroup) && <RowSkeleton refObject={ref}/>}
+          {isLoading && <TableSkeleton/>}
         </Table>
       </TableContainer>
     </Placeholder>
@@ -251,23 +271,29 @@ const GroupRow: FC<GroupRowProps> = memo<GroupRowProps>(props => {
   const [updatingPackageKey, setUpdatingPackageKey] = useUpdatingPackageKeyWritableContext()
 
   const [open, setOpen] = useState(collapsedKeys?.includes(key))
-  const [groups, , isFetchingGroup] = usePackages({
+  const {
+    packages: groups,
+    isFetching: isFetchingGroup,
+    fetchNextPage: fetchNextPageGroup,
+    fetchingNextPage: fetchingNextPageGroup,
+    hasNextPage: hasNextPageGroup,
+  } = usePagedPackages({
     kind: GROUP_KIND,
     parentId: key,
     enabled: open,
     onlyFavorite: onlyFavorite,
     onlyShared: onlyShared,
-    refererPageKey: refererPageName ?? MAIN_PAGE_REFERER,
+    refererPageName: refererPageName ?? MAIN_PAGE_REFERER,
     showParents: false,
   })
-  const [packages, , isFetchingPackage] = usePackages({
+  const { packages, isFetching: isFetchingPackage, fetchingNextPage, hasNextPage, fetchNextPage } = usePagedPackages({
     kind: [PACKAGE_KIND, DASHBOARD_KIND],
     parentId: key,
     enabled: open,
     onlyFavorite: onlyFavorite,
     onlyShared: onlyShared,
     lastReleaseVersionDetails: true,
-    refererPageKey: refererPageName ?? MAIN_PAGE_REFERER,
+    refererPageName: refererPageName ?? MAIN_PAGE_REFERER,
   })
 
   const isLoading = useMemo(() => (isFetchingPackage || isFetchingGroup), [isFetchingPackage, isFetchingGroup])
@@ -282,6 +308,10 @@ const GroupRow: FC<GroupRowProps> = memo<GroupRowProps>(props => {
         : previousKey.filter(id => id !== key)
     ))
   }, [open, setCollapsedKeys])
+
+  const ref = useRef<HTMLTableRowElement>(null)
+  useIntersectionObserver(ref, fetchingNextPage, hasNextPage, fetchNextPage)
+  useIntersectionObserver(ref, fetchingNextPageGroup, hasNextPageGroup, fetchNextPageGroup)
 
   return (
     <>
@@ -332,14 +362,14 @@ const GroupRow: FC<GroupRowProps> = memo<GroupRowProps>(props => {
                           >
                             {
                               open
-                                ? <KeyboardArrowDownOutlinedIcon sx={{ fontSize: expandButtonSize }} />
-                                : <KeyboardArrowRightOutlinedIcon sx={{ fontSize: expandButtonSize }} />
+                                ? <KeyboardArrowDownOutlinedIcon sx={{ fontSize: expandButtonSize }}/>
+                                : <KeyboardArrowRightOutlinedIcon sx={{ fontSize: expandButtonSize }}/>
                             }
                           </IconButton>
                         )
-                        : <Box sx={{ width: '24px' }} />
+                        : <Box sx={{ width: '24px' }}/>
                       }
-                      <PackageKindLogo kind={kind} />
+                      <PackageKindLogo kind={kind}/>
                       <Box sx={{
                         pl: 0.5,
                         display: 'flex',
@@ -355,7 +385,7 @@ const GroupRow: FC<GroupRowProps> = memo<GroupRowProps>(props => {
                             {name}
                           </Link>
                         </TextWithOverflowTooltip>
-                        <PackageSettingsButton packageKey={key} isIconButton={true} />
+                        <PackageSettingsButton packageKey={key} isIconButton={true}/>
                       </Box>
                     </Box>
                   </TableCell>
@@ -416,7 +446,8 @@ const GroupRow: FC<GroupRowProps> = memo<GroupRowProps>(props => {
           isFetching={isFetching && updatingPackageKey === packageItem.key}
         />
       ))}
-      {isLoading && <RowSkeleton />}
+      {(hasNextPage || hasNextPageGroup) && <RowSkeleton refObject={ref}/>}
+      {isLoading && <RowSkeleton/>}
     </>
   )
 })
@@ -485,7 +516,7 @@ const PackageRow: FC<PackageRowProps> = memo<PackageRowProps>(props => {
                       pl: (level * 3.5),
                     }}>
                       <Box ml="24px">
-                        <PackageKindLogo kind={kind} />
+                        <PackageKindLogo kind={kind}/>
                       </Box>
                       <TextWithOverflowTooltip tooltipText={name}>
                         <Link
@@ -502,7 +533,7 @@ const PackageRow: FC<PackageRowProps> = memo<PackageRowProps>(props => {
                         </Link>
                       </TextWithOverflowTooltip>
                       <Box ml="auto">
-                        <PackageSettingsButton packageKey={key} isIconButton={true} />
+                        <PackageSettingsButton packageKey={key} isIconButton={true}/>
                       </Box>
                     </Box>
                   </TableCell>
@@ -549,7 +580,7 @@ const PackageRow: FC<PackageRowProps> = memo<PackageRowProps>(props => {
                       <Box width={'min-content'}>
                         {bwcData && (
                           <Box display="flex" gap={1}>
-                            <StatusMarker value={bwcData.type} />
+                            <StatusMarker value={bwcData.type}/>
                             <Typography noWrap variant="inherit">
                               {bwcData.count}
                             </Typography>
@@ -611,22 +642,24 @@ type TableData = {
 }
 
 const TableSkeleton: FC = memo(() => {
-  return createComponents(<RowSkeleton />, DEFAULT_NUMBER_SKELETON_ROWS)
+  return createComponents(<RowSkeleton/>, DEFAULT_NUMBER_SKELETON_ROWS)
 })
-
-const RowSkeleton: FC = memo(() => {
+type RowSkeletonProps = {
+  refObject?: RefObject<HTMLDivElement>
+}
+const RowSkeleton: FC<RowSkeletonProps> = memo(({ refObject }) => {
   return (
     <TableRow>
-      <TableCell />
-      <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
+      <TableCell/>
+      <TableCell ref={refObject}>
+        <Skeleton variant="rectangular" width={'80%'}/>
       </TableCell>
       <TableCell>
-        <Skeleton variant="rectangular" width={'80%'} />
+        <Skeleton variant="rectangular" width={'80%'}/>
       </TableCell>
-      <TableCell />
-      <TableCell />
-      <TableCell />
+      <TableCell/>
+      <TableCell/>
+      <TableCell/>
     </TableRow>
   )
 })

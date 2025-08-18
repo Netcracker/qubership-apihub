@@ -34,6 +34,8 @@ http {
     gzip_min_length 860;
     gzip_proxied any;
 
+    resolver ${DNS_RESOLVERS} valid=10s ipv6=off;
+
     map $http_upgrade $connection_upgrade {
         default upgrade;
         ''      close;
@@ -74,74 +76,95 @@ http {
 
         # Special section for apihub-nc (rewrite required)
         location ^~ /apihub-nc {
+            set $apihub_nc_upstream http://${APIHUB_NC_SERVICE_ADDRESS};
+
             add_header Cache-Control "no-store" always;
             rewrite ^/apihub-nc/(.*)$ /$1 break;
-            proxy_pass http://${APIHUB_NC_SERVICE_ADDRESS};
+
+            proxy_pass $apihub_nc_upstream;
+
+            proxy_connect_timeout 1s;
+            proxy_next_upstream off;
+            proxy_intercept_errors off;
         }
 
-       location ~ ^/(portal|agents)/version\.json$ {
-          root /usr/share/nginx/html;
-          add_header Cache-Control "no-store" always;
-          try_files $uri =404;
-       }
+        # Special section for api-linter (rewrite required)
+        location ^~ /api-linter {
+            set $api_linter_upstream http://${API_LINTER_SERVICE_ADDRESS};
 
-       location ~ ^/(portal|agents)/index\.html$ {
-           root /usr/share/nginx/html;
-           add_header Cache-Control             "no-store" always;
-           add_header Strict-Transport-Security "max-age=15768000; includeSubdomains; preload;" always;
-           add_header X-Frame-Options           "DENY" always;
-           add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self'" always;
-       }
+            add_header Cache-Control "no-store" always;
+            rewrite ^/api-linter/(.*)$ /$1 break;
+
+            proxy_pass $api_linter_upstream;
+
+            proxy_connect_timeout 1s;
+            proxy_next_upstream off;
+            proxy_intercept_errors off;
+        }
+
+        location ~ ^/(portal|agents)/version\.json$ {
+            root /usr/share/nginx/html;
+            add_header Cache-Control "no-store" always;
+            try_files $uri =404;
+        }
+
+        location ~ ^/(portal|agents)/index\.html$ {
+            root /usr/share/nginx/html;
+            add_header Cache-Control             "no-store" always;
+            add_header Strict-Transport-Security "max-age=15768000; includeSubdomains; preload;" always;
+            add_header X-Frame-Options           "DENY" always;
+            add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'" always;
+        }
 
         location ~* ^/agents/.*\.(?:js|css|woff2?|ttf|svg|png)$ {
-          add_header Cache-Control "public, max-age=604800, immutable";
-          root /usr/share/nginx/html;
+            add_header Cache-Control "public, max-age=604800, immutable";
+            root /usr/share/nginx/html;
         }
 
         location /agents {
-          root /usr/share/nginx/html;
-          index /agents/index.html;
-          try_files $uri $uri/ /agents/index.html;
+            root /usr/share/nginx/html;
+            index /agents/index.html;
+            try_files $uri $uri/ /agents/index.html;
 
-          proxy_cookie_path / "/; secure; HttpOnly";
-          add_header Cache-Control             "no-cache"                                      always;
-          add_header Strict-Transport-Security "max-age=15768000; includeSubdomains; preload;" always;
-          add_header X-Frame-Options           "DENY"                                          always;
-          add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'" always;
+            proxy_cookie_path / "/; secure; HttpOnly";
+            add_header Cache-Control             "no-cache"                                      always;
+            add_header Strict-Transport-Security "max-age=15768000; includeSubdomains; preload;" always;
+            add_header X-Frame-Options           "DENY"                                          always;
+            add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'" always;
         }
 
         location ~* ^/portal/.*\.(?:js|css|woff2?|ttf|svg|png)$ {
-          add_header Cache-Control "public, max-age=604800, immutable";
-          root /usr/share/nginx/html/portal;
+            add_header Cache-Control "public, max-age=604800, immutable";
+            root /usr/share/nginx/html/portal;
         }
 
         location /portal {
-          root /usr/share/nginx/html;
-          index /portal/index.html;
-          try_files $uri $uri/ /portal/index.html;
-          proxy_cookie_path / "/; secure; HttpOnly";
+            root /usr/share/nginx/html;
+            index /portal/index.html;
+            try_files $uri $uri/ /portal/index.html;
+            proxy_cookie_path / "/; secure; HttpOnly";
 
-          add_header Cache-Control             "no-cache"                                      always;
-          add_header Strict-Transport-Security "max-age=15768000; includeSubdomains; preload;" always;
-          add_header X-Frame-Options           "DENY"                                          always;
-          add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self'" always;
+            add_header Cache-Control             "no-cache"                                      always;
+            add_header Strict-Transport-Security "max-age=15768000; includeSubdomains; preload;" always;
+            add_header X-Frame-Options           "DENY"                                          always;
+            add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'" always;
         }
 
         location ~* \.(?:js|css|woff2?|ttf|svg|png)$ {
-          add_header Cache-Control "public, max-age=604800, immutable";
-          root /usr/share/nginx/html/portal;
+            add_header Cache-Control "public, max-age=604800, immutable";
+            root /usr/share/nginx/html/portal;
         }
 
         location / {
-          root /usr/share/nginx/html/portal;
-          index /index.html;
-          try_files $uri $uri/ /index.html;
-          proxy_cookie_path / "/; secure; HttpOnly";
+            root /usr/share/nginx/html/portal;
+            index /index.html;
+            try_files $uri $uri/ /index.html;
+            proxy_cookie_path / "/; secure; HttpOnly";
 
-          add_header Cache-Control             "no-cache"                                      always;
-          add_header Strict-Transport-Security "max-age=15768000; includeSubdomains; preload;" always;
-          add_header X-Frame-Options           "DENY"                                          always;
-          add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'" always;
+            add_header Cache-Control             "no-cache"                                      always;
+            add_header Strict-Transport-Security "max-age=15768000; includeSubdomains; preload;" always;
+            add_header X-Frame-Options           "DENY"                                          always;
+            add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'" always;
         }
 
         # Health-checks
