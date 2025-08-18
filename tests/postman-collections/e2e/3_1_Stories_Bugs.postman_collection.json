@@ -9116,7 +9116,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-2.PKG5-2\",\r\n    \"Alias\" :\"PKG5-2\",\r\n    \"name\": \"Test static package 2\",\r\n    \"parentId\": \"QS-STATIC-TEST-2\",\r\n    \"kind\":\"package\",\r\n    \"description\": \"Package to be built\",\r\n    \"serviceName\": \"\",\r\n    \"imageUrl\": \"\",\r\n    \"restGroupingPrefix\": \"/api/{group}/\"\r\n}",
+                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-2.PKG5-2\",\r\n    \"Alias\" :\"PKG5-2\",\r\n    \"name\": \"Test static package 2\",\r\n    \"parentId\": \"QS-STATIC-TEST-2\",\r\n    \"kind\":\"package\",\r\n    \"description\": \"Package to be built\",\r\n    \"serviceName\": \"\",\r\n    \"imageUrl\": \"\",\r\n    \"restGroupingPrefix\": \"/api/{group}/\",\r\n    \"releaseVersionPattern\": \"^[0-9]{4}[.]{1}[1-4]{1}$\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
