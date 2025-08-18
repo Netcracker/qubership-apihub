@@ -16,9 +16,9 @@
 import { _TemplateResolver, ExportDocument } from '../types'
 import { getDocumentTitle } from './document'
 
-export async function createCommonStaticExportDocuments(packageName: string, version: string, templateResolver: _TemplateResolver, backLinkFilename: string): Promise<ExportDocument[]> {
+export async function createCommonStaticExportDocuments(packageName: string, version: string, templateResolver: _TemplateResolver): Promise<ExportDocument[]> {
   return [
-    createUnknownExportDocument('ls.html', await generateLegalStatementPage(packageName, version, await templateResolver('ls.html'), backLinkFilename)),
+    createUnknownExportDocument('ls.html', await generateLegalStatementPage(packageName, version, await templateResolver('ls.html'), 'index.html')),
     createUnknownExportDocument('resources/corporatelogo.png', await templateResolver('resources/corporatelogo.png')),
     createUnknownExportDocument('resources/styles.css', await templateResolver('resources/styles.css')),
   ]
@@ -39,10 +39,10 @@ export async function generateLegalStatementPage(packageName: string, version: s
   return new Blob([filled])
 }
 
-export async function generateHtmlPage(document: string, fileTitle: string, packageName: string, version: string, templateResolver: _TemplateResolver, addBackLink: boolean = false): Promise<Blob> {
+export async function generateHtmlPage(document: string, fileTitle: string, packageName: string, version: string, templateResolver: _TemplateResolver): Promise<Blob> {
   const template = await (await templateResolver('page.html')).text()
   const apispecViewScript = await (await templateResolver('scripts/apispec-view.js')).text()
-  const breadcrumbs = addBackLink ? `<div class="breadcrumbs"><a href="index.html">Table of contents</a> > <span>${fileTitle}</span></div>` : ''
+  const breadcrumbs = `<div class="breadcrumbs"><a href="index.html">Table of contents</a> > <span>${fileTitle}</span></div>`
   const filled = template
     .replace('{{fileTitle}}', fileTitle)
     // arrow function disables replacement patterns like $&

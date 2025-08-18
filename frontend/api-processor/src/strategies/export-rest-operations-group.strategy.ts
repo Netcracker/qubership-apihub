@@ -78,7 +78,7 @@ async function exportMergedDocument(config: ExportRestOperationsGroupBuildConfig
   buildResult.exportDocuments.push(await createRestExportDocument(buildResult.merged.filename, JSON.stringify(buildResult.merged?.data), format, packageName, version, templateResolver, allowedOasExtensions))
 
   if (format === FILE_FORMAT_HTML) {
-    buildResult.exportDocuments.push(...await createCommonStaticExportDocuments(packageName, version, templateResolver, buildResult.exportDocuments[0].filename))
+    buildResult.exportDocuments.push(...await createCommonStaticExportDocuments(packageName, version, templateResolver))
   }
 }
 
@@ -100,19 +100,15 @@ async function exportReducedDocuments(config: ExportRestOperationsGroupBuildConf
   }, buildResult, contexts)
 
   const generatedHtmlExportDocuments: ExportDocument[] = []
-  const restDocuments = [...buildResult.documents.values()].filter(isRestDocument)
   const transformedDocuments = await Promise.all([...buildResult.documents.values()].map(async document => {
-    return createRestExportDocument?.(document.filename, JSON.stringify(document.data), format, packageName, version, templateResolver, allowedOasExtensions, generatedHtmlExportDocuments, restDocuments.length > 1)
+    return createRestExportDocument?.(document.filename, JSON.stringify(document.data), format, packageName, version, templateResolver, allowedOasExtensions, generatedHtmlExportDocuments)
   }))
 
   buildResult.exportDocuments.push(...transformedDocuments)
 
   if (format === FILE_FORMAT_HTML) {
-    const shouldAddIndexPage = generatedHtmlExportDocuments.length > 1
-    buildResult.exportDocuments.push(...await createCommonStaticExportDocuments(packageName, version, templateResolver, shouldAddIndexPage ? 'index.html' : buildResult.exportDocuments[0].filename))
+    buildResult.exportDocuments.push(...await createCommonStaticExportDocuments(packageName, version, templateResolver))
 
-    if (shouldAddIndexPage) {
-      buildResult.exportDocuments.push(createUnknownExportDocument('index.html', await generateIndexHtmlPage(packageName, version, generatedHtmlExportDocuments, templateResolver)))
-    }
+    buildResult.exportDocuments.push(createUnknownExportDocument('index.html', await generateIndexHtmlPage(packageName, version, generatedHtmlExportDocuments, templateResolver)))
   }
 }
