@@ -26,9 +26,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security/idp"
-	"github.com/coreos/go-oidc/v3/oidc"
-
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -614,98 +611,4 @@ func (g *systemInfoServiceImpl) GetSoftDeletedDataCleanupTimeout() int {
 
 func (g *systemInfoServiceImpl) GetSoftDeletedDataTTLDays() int {
 	return g.config.Cleanup.SoftDeletedData.TTLDays
-}
-
-func (g systemInfoServiceImpl) setRevisionsCleanupSchedule() {
-	g.systemInfoMap[REVISIONS_CLEANUP_SCHEDULE] = "0 1 * * 6" // at 01:00 AM on Saturday
-}
-
-func (g systemInfoServiceImpl) GetRevisionsCleanupSchedule() string {
-	return g.systemInfoMap[REVISIONS_CLEANUP_SCHEDULE].(string)
-}
-
-func (g systemInfoServiceImpl) setRevisionsCleanupDeleteLastRevision() {
-	envVal := os.Getenv(REVISIONS_CLEANUP_DELETE_LAST_REVISION)
-	if envVal == "" {
-		envVal = "false"
-	}
-	val, err := strconv.ParseBool(envVal)
-	if err != nil {
-		log.Errorf("failed to parse %v env value: %v. Value by default - false", REVISIONS_CLEANUP_DELETE_LAST_REVISION, err.Error())
-		val = false
-	}
-	g.systemInfoMap[REVISIONS_CLEANUP_DELETE_LAST_REVISION] = val
-}
-
-func (g systemInfoServiceImpl) GetRevisionsCleanupDeleteLastRevision() bool {
-	return g.systemInfoMap[REVISIONS_CLEANUP_DELETE_LAST_REVISION].(bool)
-}
-
-func (g systemInfoServiceImpl) setRevisionsCleanupDeleteReleaseRevisions() {
-	envVal := os.Getenv(REVISIONS_CLEANUP_DELETE_RELEASE_REVISIONS)
-	if envVal == "" {
-		envVal = "false"
-	}
-	val, err := strconv.ParseBool(envVal)
-	if err != nil {
-		log.Errorf("failed to parse %v env value: %v. Value by default - false", REVISIONS_CLEANUP_DELETE_RELEASE_REVISIONS, err.Error())
-		val = false
-	}
-	g.systemInfoMap[REVISIONS_CLEANUP_DELETE_RELEASE_REVISIONS] = val
-}
-
-func (g systemInfoServiceImpl) GetRevisionsCleanupDeleteReleaseRevisions() bool {
-	return g.systemInfoMap[REVISIONS_CLEANUP_DELETE_RELEASE_REVISIONS].(bool)
-}
-
-func (g systemInfoServiceImpl) setRevisionsTTLDays() {
-	envVal := os.Getenv(REVISIONS_TTL_DAYS)
-	if envVal == "" {
-		envVal = "365" //1 year
-	}
-	val, err := strconv.Atoi(envVal)
-	if err != nil {
-		log.Errorf("failed to parse %v env value: %v. Value by default - 365", REVISIONS_TTL_DAYS, err.Error())
-		val = 365
-	}
-	g.systemInfoMap[REVISIONS_TTL_DAYS] = val
-}
-
-func (g systemInfoServiceImpl) GetRevisionsTTLDays() int {
-	return g.systemInfoMap[REVISIONS_TTL_DAYS].(int)
-}
-
-func (g systemInfoServiceImpl) setInstanceId() {
-	instanceId := uuid.New().String()
-	log.Infof("Instance ID: %s", instanceId)
-	g.systemInfoMap[INSTANCE_ID] = instanceId
-}
-
-func (g systemInfoServiceImpl) GetInstanceId() string {
-	return g.systemInfoMap[INSTANCE_ID].(string)
-}
-
-func (g systemInfoServiceImpl) setComparisonsCleanupSchedule() {
-	g.systemInfoMap[COMPARISONS_CLEANUP_SCHEDULE] = "0 23 * * 0" //TODO: what a schedule should be?
-}
-
-func (g systemInfoServiceImpl) GetComparisonCleanupSchedule() string {
-	return g.systemInfoMap[COMPARISONS_CLEANUP_SCHEDULE].(string)
-}
-
-func (g systemInfoServiceImpl) setComparisonsTTLDays() {
-	envVal := os.Getenv(COMPARISONS_TTL_DAYS)
-	if envVal == "" {
-		envVal = "30"
-	}
-	val, err := strconv.Atoi(envVal)
-	if err != nil {
-		log.Errorf("failed to parse %v env value: %v. Value by default - 30", COMPARISONS_TTL_DAYS, err.Error())
-		val = 30
-	}
-	g.systemInfoMap[COMPARISONS_TTL_DAYS] = val
-}
-
-func (g systemInfoServiceImpl) GetComparisonsTTLDays() int {
-	return g.systemInfoMap[COMPARISONS_TTL_DAYS].(int)
 }
