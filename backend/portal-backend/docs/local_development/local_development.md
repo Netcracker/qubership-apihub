@@ -57,48 +57,32 @@ Apihub contains built-in identity provider and it requires RSA private key as a 
 
 Run [`generate_jwt_pkey.sh`](generate_jwt_pkey.sh), it will generate file jwt_private_key in the current directory. Paste the value to Apihub BE environment. Please mind that the key must be non-empty.
 
-#### APIHUB BE environment
+#### APIHUB BE configuration
 
-The following environment variables are required to start Apihub application:
+Backend configuration is implemented via a configuration file(config.yaml), for the full configuration please refer to [the template file](../../qubership-apihub-service/config.template.yaml).
 
-ENV format
-```INI
-LISTEN_ADDRESS=127.0.0.1:8090;
-APIHUB_POSTGRESQL_DB_NAME=apihub;
-APIHUB_POSTGRESQL_USERNAME=apihub;
-APIHUB_POSTGRESQL_PASSWORD=apihub;
-APIHUB_POSTGRESQL_PORT=5432;
-PRODUCTION_MODE=false;
-JWT_PRIVATE_KEY={use generated key here};
-```
+Use the `APIHUB_CONFIG_FOLDER` environment variable to specify the path to the configuration file, default value `.`. 
 
-JSON format
-```JSON
-"LISTEN_ADDRESS": "127.0.0.1:8090",
-"APIHUB_POSTGRESQL_DB_NAME": "apihub",
-"APIHUB_POSTGRESQL_USERNAME": "apihub",
-"APIHUB_POSTGRESQL_PASSWORD": "apihub",
-"APIHUB_POSTGRESQL_PORT": "5432",
-"PRODUCTION_MODE": "false",
-"JWT_PRIVATE_KEY": "USE GENERATED KEY HERE"
-```
+The following configuration are required to start Apihub application:
 
-Set these variables to build configuration.
-
-Add the following ENVs in order to have pre-created local admin user and access token.
-
-ENV format
-```INI
-APIHUB_ADMIN_EMAIL=<admin_login, example: apihub>;
-APIHUB_ADMIN_PASSWORD=<admin_password, example: password>;
-APIHUB_ACCESS_TOKEN=<put_your_key_here - any random string>;
-```
-
-JSON format
-```JSON
-"APIHUB_ADMIN_EMAIL": "admin_login, example: apihub"
-"APIHUB_ADMIN_PASSWORD": "admin_password, example: password"
-"APIHUB_ACCESS_TOKEN": "put_your_key_here - any random string"
+```YAML
+database:
+  host: 'localhost'
+  port: 5432
+  name: 'apihub'
+  username: 'apihub'
+  password: 'apihub'
+security:
+  productionMode: false
+  jwt:
+    privateKey: '{use generated key here}'
+  apihubExternalUrl: 'http://localhost:8081'
+zeroDayConfiguration:
+  accessToken: '<put_your_key_here - any random string, minimum 30 characters>'
+  adminEmail: '<admin_login, example: apihub@mail.com>'
+  adminPassword: '<admin_password, example: password>'
+technicalParameters:
+  listenAddress: '127.0.0.1:8090'
 ```
 
 #### Run API hub

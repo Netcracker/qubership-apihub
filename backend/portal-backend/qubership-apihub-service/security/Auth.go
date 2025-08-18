@@ -75,6 +75,10 @@ func SetupGoGuardian(intService service.IntegrationsService, userServiceLocal se
 	if !ok {
 		return fmt.Errorf("can't parse pkcs8 private key to rsa.PrivateKey. Error - %s", err.Error())
 	}
+	keySize := privateKey.N.BitLen()
+	if keySize < 2048 || keySize > 4096 { 
+		return fmt.Errorf("RSA key length must be between 2048 and 4096 bits, got %d bits", keySize)
+	}
 	publicKey = x509.MarshalPKCS1PublicKey(&privateKey.PublicKey)
 
 	keeper = jwt.StaticSecret{

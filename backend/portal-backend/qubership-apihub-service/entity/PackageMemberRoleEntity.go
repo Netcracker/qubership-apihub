@@ -34,13 +34,13 @@ type RoleEntity struct {
 type PackageMemberRoleEntity struct {
 	tableName struct{} `pg:"package_member_role, alias:package_member_role"`
 
-	PackageId string     `pg:"package_id, pk, type:varchar"`
-	UserId    string     `pg:"user_id, pk, type:varchar"`
-	Roles     []string   `pg:"roles, type:varchar array, array"`
-	CreatedAt time.Time  `pg:"created_at, type:timestamp without time zone"`
-	CreatedBy string     `pg:"created_by, type:varchar"`
-	UpdatedAt *time.Time `pg:"updated_at, type:timestamp without time zone"`
-	UpdatedBy string     `pg:"updated_by, type:varchar"`
+	PackageId string     `pg:"package_id, pk, type:varchar" json:"packageId"`
+	UserId    string     `pg:"user_id, pk, type:varchar" json:"userId"`
+	Roles     []string   `pg:"roles, type:varchar array, array" json:"roles"`
+	CreatedAt time.Time  `pg:"created_at, type:timestamp without time zone" json:"createdAt"`
+	CreatedBy string     `pg:"created_by, type:varchar" json:"createdBy"`
+	UpdatedAt *time.Time `pg:"updated_at, type:timestamp without time zone" json:"updatedAt"`
+	UpdatedBy string     `pg:"updated_by, type:varchar" json:"updatedBy"`
 }
 
 type PackageMemberRoleRichEntity struct {

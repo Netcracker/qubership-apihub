@@ -9,12 +9,16 @@ qubership-apihub-backend (aka API Registry) is the main backend microservice of 
 Partial installation of qubership-apihub-backend makes no sense as it is a part of bigger application qubership-apihub.
 qubership-apihub installation is possible via docker-compose and helm. Please refer to installation guides: [qubership-apihub](https://github.com/Netcracker/qubership-apihub).
 
-If you want to run qubership-apihub-backend only for developement or debugging purposes please refer to Debug section below
+If you want to run qubership-apihub-backend only for development or debugging purposes please refer to Debug section below
 
 
 ## Build
 
 Just run build.cmd(sh) file from this repository
+
+## Configuration
+
+Backend configuration is implemented via a configuration file(config.yaml), for the full configuration please refer to [the template file](/qubership-apihub-service/config.template.yaml).
 
 
 ## Debug

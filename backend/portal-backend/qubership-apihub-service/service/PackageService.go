@@ -34,7 +34,7 @@ import (
 type PackageService interface {
 	CreatePackage(ctx context.SecurityContext, packg view.SimplePackage) (*view.SimplePackage, error)
 	GetPackage(ctx context.SecurityContext, id string, withParents bool) (*view.SimplePackage, error)
-	GetPackagesList(ctx context.SecurityContext, req view.PackageListReq) (*view.Packages, error)
+	GetPackagesList(ctx context.SecurityContext, req view.PackageListReq, showOnlyDeleted bool) (*view.Packages, error)
 	UpdatePackage(ctx context.SecurityContext, packg *view.PatchPackageReq, packageId string) (*view.SimplePackage, error)
 	DeletePackage(ctx context.SecurityContext, id string) error
 	FavorPackage(ctx context.SecurityContext, id string) error
@@ -243,7 +243,7 @@ func (p packageServiceImpl) CreatePackage(ctx context.SecurityContext, packg vie
 		UserId:    packg.CreatedBy,
 	})
 
-	parents, err := p.getParents(packg.Id)
+	parents, err := p.getParents(packg.Id, false)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +304,7 @@ func (p packageServiceImpl) GetPackage(ctx context.SecurityContext, id string, w
 	}
 	var parentPackages []view.ParentPackageInfo
 	if withParents {
-		parents, err := p.publishedRepo.GetParentsForPackage(id)
+		parents, err := p.publishedRepo.GetParentsForPackage(id, false)
 		if err != nil {
 			return nil, err
 		}
@@ -351,7 +351,7 @@ func (p packageServiceImpl) GetPackage(ctx context.SecurityContext, id string, w
 	return packageView, nil
 }
 
-func (p packageServiceImpl) GetPackagesList(ctx context.SecurityContext, searchReq view.PackageListReq) (*view.Packages, error) {
+func (p packageServiceImpl) GetPackagesList(ctx context.SecurityContext, searchReq view.PackageListReq, showOnlyDeleted bool) (*view.Packages, error) {
 	var err error
 	result := make([]view.PackagesInfo, 0)
 	var entities []entity.PackageEntity
@@ -359,7 +359,13 @@ func (p packageServiceImpl) GetPackagesList(ctx context.SecurityContext, searchR
 	if len(searchReq.Kind) == 0 {
 		searchReq.Kind = []string{entity.KIND_WORKSPACE}
 	}
-	entities, err = p.publishedRepo.GetFilteredPackagesWithOffset(stdctx.Background(), searchReq, ctx.GetUserId())
+
+	if showOnlyDeleted {
+		entities, err = p.publishedRepo.GetFilteredDeletedPackages(stdctx.Background(), searchReq, ctx.GetUserId())
+	} else {
+		entities, err = p.publishedRepo.GetFilteredPackagesWithOffset(stdctx.Background(), searchReq, ctx.GetUserId())
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -367,10 +373,11 @@ func (p packageServiceImpl) GetPackagesList(ctx context.SecurityContext, searchR
 		log.Error("Failed to get packages: ", err.Error())
 		return nil, err
 	}
+
 	for _, ent := range entities {
 		var parents []view.ParentPackageInfo = nil
 		if searchReq.ShowParents {
-			parents, err = p.getParents(ent.Id)
+			parents, err = p.getParents(ent.Id, showOnlyDeleted)
 			if err != nil {
 				return nil, err
 			}
@@ -412,13 +419,14 @@ func (p packageServiceImpl) GetPackagesList(ctx context.SecurityContext, searchR
 			}
 		}
 
-		packagesInfo := entity.MakePackagesInfo(&ent, lastReleaseVersionDetails, parents, isFavorite, permissions)
+		packagesInfo := entity.MakePackagesInfo(&ent, lastReleaseVersionDetails, parents, isFavorite, permissions, showOnlyDeleted)
 		result = append(result, *packagesInfo)
 	}
+	
 	if skipped != 0 {
 		searchReq.Offset = searchReq.Offset + searchReq.Limit
 		searchReq.Limit = skipped
-		extraPackages, err := p.GetPackagesList(ctx, searchReq)
+		extraPackages, err := p.GetPackagesList(ctx, searchReq, showOnlyDeleted)
 		if err != nil {
 			return nil, err
 		}
@@ -597,7 +605,7 @@ func (p packageServiceImpl) UpdatePackage(ctx context.SecurityContext, packg *vi
 		UserId:    ctx.GetUserId(),
 	})
 
-	parents, err := p.getParents(res.Id)
+	parents, err := p.getParents(res.Id, false)
 	if err != nil {
 		return nil, err
 	}
@@ -748,8 +756,8 @@ func (p packageServiceImpl) GetPackageStatus(id string) (*view.Status, error) {
 	}
 }
 
-func (p packageServiceImpl) getParents(packageId string) ([]view.ParentPackageInfo, error) {
-	parents, err := p.publishedRepo.GetParentsForPackage(packageId)
+func (p packageServiceImpl) getParents(packageId string, includeDeleted bool) ([]view.ParentPackageInfo, error) {
+	parents, err := p.publishedRepo.GetParentsForPackage(packageId, includeDeleted)
 	if err != nil {
 		return nil, err
 	}

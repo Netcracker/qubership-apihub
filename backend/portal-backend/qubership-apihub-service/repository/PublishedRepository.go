@@ -27,7 +27,7 @@ type PublishedRepository interface {
 	PatchVersion(packageId string, versionName string, status *string, versionLabels *[]string) (*entity.PublishedVersionEntity, error)
 	GetVersion(packageId string, versionName string) (*entity.PublishedVersionEntity, error)
 	GetReadonlyVersion_deprecated(packageId string, versionName string) (*entity.ReadonlyPublishedVersionEntity_deprecated, error)
-	GetReadonlyVersion(packageId string, versionName string) (*entity.PackageVersionRevisionEntity, error)
+	GetReadonlyVersion(packageId string, versionName string, showOnlyDeleted bool) (*entity.PackageVersionRevisionEntity, error)
 	GetVersionByRevision(packageId string, versionName string, revision int) (*entity.PublishedVersionEntity, error)
 	GetVersionIncludingDeleted(packageId string, versionName string) (*entity.PublishedVersionEntity, error)
 	IsPublished(packageId string, branchName string) (bool, error)
@@ -60,12 +60,13 @@ type PublishedRepository interface {
 	GetPackageVersions(packageId string, filter string) ([]entity.PublishedVersionEntity, error)
 	GetPackageVersionsWithLimit(searchQuery entity.PublishedVersionSearchQueryEntity, checkRevisions bool) ([]entity.PublishedVersionEntity, error)
 	GetReadonlyPackageVersionsWithLimit_deprecated(searchQuery entity.PublishedVersionSearchQueryEntity, checkRevisions bool) ([]entity.ReadonlyPublishedVersionEntity_deprecated, error)
-	GetReadonlyPackageVersionsWithLimit(searchQuery entity.PublishedVersionSearchQueryEntity, checkRevisions bool) ([]entity.PackageVersionRevisionEntity, error)
+	GetReadonlyPackageVersionsWithLimit(searchQuery entity.PublishedVersionSearchQueryEntity, checkRevisions bool, showOnlyDeleted bool) ([]entity.PackageVersionRevisionEntity, error)
 	GetLastVersions(ids []string) ([]entity.PublishedVersionEntity, error)
 	GetLastVersion(id string) (*entity.PublishedVersionEntity, error)
 	GetDefaultVersion(packageId string, status string) (*entity.PublishedVersionEntity, error)
 	CleanupDeleted() error
 	DeletePackageRevisionsBeforeDate(ctx context.Context, packageId string, beforeDate time.Time, deleteLastRevision bool, deleteReleaseRevisions bool, deletedBy string) (int, error)
+	DeleteSoftDeletedPackageRevisionsBeforeDate(ctx context.Context, runId string, beforeDate time.Time, batchSize int) (int, error)
 
 	GetFileSharedInfo(packageId string, fileId string, versionName string) (*entity.SharedUrlInfoEntity, error)
 	GetFileSharedInfoById(sharedId string) (*entity.SharedUrlInfoEntity, error)
@@ -83,12 +84,14 @@ type PublishedRepository interface {
 	GetAllChildPackageIdsIncludingParent(parentId string) ([]string, error)
 	GetAllPackageGroups(name string, onlyFavorite bool, userId string) ([]entity.PackageFavEntity, error)
 	GetParentPackageGroups(id string) ([]entity.PackageEntity, error)
-	GetParentsForPackage(id string) ([]entity.PackageEntity, error)
+	GetParentsForPackage(id string, includeDeleted bool) ([]entity.PackageEntity, error)
 	UpdatePackage(ent *entity.PackageEntity) (*entity.PackageEntity, error)
 	DeletePackage(id string, userId string) error
+	DeleteSoftDeletedPackagesBeforeDate(ctx context.Context, runId string, beforeDate time.Time, batchSize int) (int, error)
 	GetPackageGroupsByName(name string) ([]entity.PackageEntity, error)
 	GetFilteredPackages(filter string, parentId string) ([]entity.PackageEntity, error)
 	GetFilteredPackagesWithOffset(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error)
+	GetFilteredDeletedPackages(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error)
 	GetPackageForServiceName(serviceName string) (*entity.PackageEntity, error)
 	GetVersionValidationChanges(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity, error)
 	GetVersionValidationProblems(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity, error)
@@ -104,6 +107,7 @@ type PublishedRepository interface {
 	DeleteVersionComparison(ctx context.Context, comparisonId string) (bool, error)
 	SaveVersionChanges(packageInfo view.PackageInfoFile, publishId string, operationComparisons []*entity.OperationComparisonEntity, versionComparisons []*entity.VersionComparisonEntity, versionComparisonsFromCache []string) error
 	GetLatestRevision(packageId, version string) (int, error)
+	GetDeletedPackageLatestRevision(packageId, version string) (int, error)
 
 	GetVersionRevisionContentForDocumentsTransformation(packageId string, version string, revision int,
 		searchQuery entity.ContentForDocumentsTransformationSearchQueryEntity) ([]entity.PublishedContentWithDataEntity, error)

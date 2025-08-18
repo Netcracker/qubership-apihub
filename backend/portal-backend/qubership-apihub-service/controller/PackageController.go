@@ -40,6 +40,7 @@ type PackageController interface {
 	GetPackage(w http.ResponseWriter, r *http.Request)
 	GetPackageStatus(w http.ResponseWriter, r *http.Request)
 	GetPackagesList(w http.ResponseWriter, r *http.Request)
+	GetDeletedPackagesList(w http.ResponseWriter, r *http.Request)
 	GetAvailableVersionStatusesForPublish(w http.ResponseWriter, r *http.Request)
 	RecalculateOperationGroups(w http.ResponseWriter, r *http.Request)
 	CalculateOperationGroups(w http.ResponseWriter, r *http.Request)
@@ -318,7 +319,96 @@ func (p packageControllerImpl) GetPackagesList(w http.ResponseWriter, r *http.Re
 		ShowAllDescendants:        showAllDescendants,
 	}
 
-	packages, err := p.packageService.GetPackagesList(context.Create(r), packageListReq)
+	packages, err := p.packageService.GetPackagesList(context.Create(r), packageListReq, false)
+
+	if err != nil {
+		utils.RespondWithError(w, "Failed to get packages", err)
+		return
+	}
+	utils.RespondWithJson(w, http.StatusOK, packages)
+}
+
+func (p packageControllerImpl) GetDeletedPackagesList(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Create(r)
+	sufficientPrivileges := p.roleService.IsSysadm(ctx)
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+
+	var err error
+	parentId := r.URL.Query().Get("parentId")
+	kind, customErr := getListFromParam(r, "kind")
+	if customErr != nil {
+		utils.RespondWithCustomError(w, customErr)
+		return
+	}
+
+	showParents := false
+	if r.URL.Query().Get("showParents") != "" {
+		showParents, err = strconv.ParseBool(r.URL.Query().Get("showParents"))
+		if err != nil {
+			utils.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": "showParents", "type": "boolean"},
+				Debug:   err.Error(),
+			})
+			return
+		}
+	}
+
+	limit, customError := getLimitQueryParam(r)
+	if customError != nil {
+		utils.RespondWithCustomError(w, customError)
+		return
+	}
+
+	page := 0
+	if r.URL.Query().Get("page") != "" {
+		page, err = strconv.Atoi(r.URL.Query().Get("page"))
+		if err != nil {
+			utils.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": "page", "type": "int"},
+				Debug:   err.Error(),
+			})
+			return
+		}
+	}
+
+	showAllDescendants := false
+	if r.URL.Query().Get("showAllDescendants") != "" {
+		showAllDescendants, err = strconv.ParseBool(r.URL.Query().Get("showAllDescendants"))
+		if err != nil {
+			utils.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": "showAllDescendants", "type": "boolean"},
+				Debug:   err.Error(),
+			})
+			return
+		}
+	}
+
+	packageListReq := view.PackageListReq{
+		Kind:               kind,
+		Limit:              limit,
+		Offset:             limit * page,
+		ParentId:           parentId,
+		ShowParents:        showParents,
+		ShowAllDescendants: showAllDescendants,
+	}
+
+	packages, err := p.packageService.GetPackagesList(context.Create(r), packageListReq, true)
 
 	if err != nil {
 		utils.RespondWithError(w, "Failed to get packages", err)

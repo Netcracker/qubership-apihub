@@ -15,7 +15,6 @@
 package service
 
 import (
-	"fmt"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	log "github.com/sirupsen/logrus"
@@ -42,10 +41,7 @@ type zeroDayAdminServiceImpl struct {
 }
 
 func (a zeroDayAdminServiceImpl) CreateZeroDayAdmin() error {
-	email, password, err := a.systemInfoService.GetZeroDayAdminCreds()
-	if err != nil {
-		return fmt.Errorf("CreateZeroDayAdmin: credentials error: %w, admin will not be created", err)
-	}
+	email, password := a.systemInfoService.GetZeroDayAdminCreds()
 
 	user, _ := a.userService.GetUserByEmail(email)
 	if user != nil {

@@ -24,10 +24,10 @@ An approach that uses standard `Authorization: Bearer <token>` header.
   - Requires additional security considerations for XSS protection
 
 ### Token configuration
-You can configure token lifetimes using these environment variables:
+You can configure token lifetimes using these configuration properties:
 ```properties
-JWT_ACCESS_TOKEN_DURATION_SEC=1800    # Access token duration in seconds (default: 30 minutes)
-JWT_REFRESH_TOKEN_DURATION_SEC=43200  # Refresh token duration in seconds (default: 12 hours)
+security.jwt.accessTokenDurationSec     # Access token duration in seconds (default: 30 minutes)
+security.jwt.refreshTokenDurationSec    # Refresh token duration in seconds (default: 12 hours)
 ```
 ### Automatic token refresh
 The system will automatically refresh your access token if:
@@ -81,7 +81,7 @@ Library https://github.com/shaj13/go-guardian is used on the backend to issue an
 
 ## Internal(local) user management
 Apihub supports local user management, but this functionality is disabled in production.  
-(Production mode is configured via `PRODUCTION_MODE` env, false by default)
+(Production mode is configured via `security.productionMode` configuration property, `false` by default)
 
 There's no registration page, but it's possible to create local user via API.
 Local login is supported via UI page("/login") and dedicated endpoint ("/api/v2/auth/local").

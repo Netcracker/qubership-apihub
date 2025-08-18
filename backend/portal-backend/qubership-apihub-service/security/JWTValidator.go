@@ -18,14 +18,15 @@ import (
 	"crypto"
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
+
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/shaj13/go-guardian/v2/auth"
 	"github.com/shaj13/go-guardian/v2/auth/claims"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/jwt"
 	josejwt "gopkg.in/square/go-jose.v2/jwt"
-	"strconv"
-	"time"
 )
 
 const TokenIssuedAtExt = "issuedAt"

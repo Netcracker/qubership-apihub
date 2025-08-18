@@ -37,7 +37,7 @@ type OperationRepository interface {
 	GetChangelog(searchQuery entity.ChangelogSearchQueryEntity) ([]entity.OperationComparisonChangelogEntity, error)
 	SearchForOperations_deprecated(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult_deprecated, error)
 	SearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult, error)
-	GetOperationsTypeCount(packageId string, version string, revision int) ([]entity.OperationsTypeCountEntity, error)
+	GetOperationsTypeCount(packageId string, version string, revision int, showOnlyDeleted bool) ([]entity.OperationsTypeCountEntity, error)
 	GetOperationsTypeDataHashes(packageId string, version string, revision int) ([]entity.OperationsTypeDataHashEntity, error)
 	GetOperationDeprecatedItems(packageId string, version string, revision int, operationType string, operationId string) (*entity.OperationRichEntity, error)
 	GetDeprecatedOperationsSummary(packageId string, version string, revision int) ([]entity.DeprecatedOperationsSummaryEntity, error)
@@ -1189,8 +1189,13 @@ func (o operationRepositoryImpl) SearchForOperations(searchQuery *entity.Operati
 	return result, nil
 }
 
-func (o operationRepositoryImpl) GetOperationsTypeCount(packageId string, version string, revision int) ([]entity.OperationsTypeCountEntity, error) {
+func (o operationRepositoryImpl) GetOperationsTypeCount(packageId string, version string, revision int, showOnlyDeleted bool) ([]entity.OperationsTypeCountEntity, error) {
 	var result []entity.OperationsTypeCountEntity
+	notCondition := ""
+	if showOnlyDeleted {
+		notCondition = "not"
+	}
+
 	operationsTypeCountQuery := `
 	with versions as(
         select s.reference_id as package_id, s.reference_version as version, s.reference_revision as revision
@@ -1199,7 +1204,7 @@ func (o operationRepositoryImpl) GetOperationsTypeCount(packageId string, versio
 		on pv.package_id = s.reference_id
 		and pv.version = s.reference_version
 		and pv.revision = s.reference_revision
-		and pv.deleted_at is null
+		and pv.deleted_at is %s null
         where s.package_id = ?
         and s.version = ?
         and s.revision = ?
@@ -1256,7 +1261,7 @@ func (o operationRepositoryImpl) GetOperationsTypeCount(packageId string, versio
 	and uoc.api_audience = ?;
 	`
 	_, err := o.cp.GetConnection().Query(&result,
-		operationsTypeCountQuery,
+		fmt.Sprintf(operationsTypeCountQuery, notCondition),
 		packageId, version, revision,
 		packageId, version, revision,
 		view.NoBwcApiKind,

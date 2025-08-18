@@ -15,6 +15,7 @@
 package entity
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
@@ -168,6 +169,18 @@ type PublishedShortVersionEntity struct {
 	Revision    int       `pg:"revision, pk, type:integer"`
 	Status      string    `pg:"status, type:varchar"`
 	PublishedAt time.Time `pg:"published_at, type:timestamp without time zone"`
+}
+
+type PublishedVersionKeyEntity struct {
+	tableName struct{} `pg:"published_version,discard_unknown_columns"`
+
+	PackageId string `pg:"package_id, pk, type:varchar" json:"packageId"`
+	Version   string `pg:"version, pk, type:varchar" json:"version"`
+	Revision  int    `pg:"revision, pk, type:integer" json:"revision"`
+}
+
+func (e PublishedVersionKeyEntity) String() string {
+	return fmt.Sprintf("{packageId:%s version:%s revision:%d}", e.PackageId, e.Version, e.Revision)
 }
 
 type PublishedContentEntity struct {
@@ -710,7 +723,7 @@ func MakeSimplePackageView(entity *PackageEntity, parents []view.ParentPackageIn
 	}
 }
 
-func MakePackagesInfo(entity *PackageEntity, defaultVersionDetails *view.VersionDetails, parents []view.ParentPackageInfo, isFavorite bool, userPermissions []string) *view.PackagesInfo {
+func MakePackagesInfo(entity *PackageEntity, defaultVersionDetails *view.VersionDetails, parents []view.ParentPackageInfo, isFavorite bool, userPermissions []string, showOnlyDeleted bool) *view.PackagesInfo {
 	var parentsRes []view.ParentPackageInfo
 	if parents == nil {
 		parentsRes = make([]view.ParentPackageInfo, 0)
@@ -719,21 +732,28 @@ func MakePackagesInfo(entity *PackageEntity, defaultVersionDetails *view.Version
 	}
 
 	packageInfo := view.PackagesInfo{
-		Id:                        entity.Id,
-		ParentId:                  entity.ParentId,
-		Name:                      entity.Name,
-		Alias:                     entity.Alias,
-		ImageUrl:                  entity.ImageUrl,
-		Parents:                   parentsRes,
-		IsFavorite:                isFavorite,
-		ServiceName:               entity.ServiceName,
-		Description:               entity.Description,
-		Kind:                      entity.Kind,
-		DefaultRole:               entity.DefaultRole,
-		UserPermissions:           userPermissions,
-		LastReleaseVersionDetails: defaultVersionDetails,
-		RestGroupingPrefix:        entity.RestGroupingPrefix,
-		ReleaseVersionPattern:     entity.ReleaseVersionPattern,
+		Id:                    entity.Id,
+		ParentId:              entity.ParentId,
+		Name:                  entity.Name,
+		Alias:                 entity.Alias,
+		Parents:               parentsRes,
+		ServiceName:           entity.ServiceName,
+		Description:           entity.Description,
+		Kind:                  entity.Kind,
+		DefaultRole:           entity.DefaultRole,
+		RestGroupingPrefix:    entity.RestGroupingPrefix,
+		ReleaseVersionPattern: entity.ReleaseVersionPattern,
+		CreatedAt:             entity.CreatedAt,
+	}
+
+	if !showOnlyDeleted {
+		packageInfo.ImageUrl = entity.ImageUrl
+		packageInfo.IsFavorite = isFavorite
+		packageInfo.UserPermissions = userPermissions
+		packageInfo.LastReleaseVersionDetails = defaultVersionDetails
+		packageInfo.DeletedAt = nil
+	} else {
+		packageInfo.DeletedAt = entity.DeletedAt
 	}
 
 	return &packageInfo
