@@ -1,6 +1,10 @@
 import React, { FC, memo } from 'react'
 import { Typography } from '@mui/material'
 import { Editor } from '@monaco-editor/react'
+import * as monaco from 'monaco-editor';
+import { loader } from '@monaco-editor/react'
+
+loader.config({ monaco })
 
 export type ExampleViewerProps = {
   example: string;
