@@ -1,5 +1,5 @@
 ---
-name: Link Checker
+name: MD Link Checker
 
 on:
   push: null
