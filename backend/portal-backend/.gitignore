@@ -20,7 +20,6 @@ docs/local_development/jwt_private_key
 *.bak
 *.orig
 *.exe
-*.env
 env
 jwt_private_key
 
