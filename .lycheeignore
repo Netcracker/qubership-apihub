@@ -1,2 +1,4 @@
 ^.*example.com
 ^.*xmlsoap.org
+host.docker.internal
+^.*localtest.me
