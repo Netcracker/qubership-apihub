@@ -1,0 +1,24 @@
+name: Assign PR
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  assign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: PR Auto-Assignment
+        uses: netcracker/qubership-workflow-hub/actions/pr-assigner@main
+        with:
+          configuration-path: ".github/pr-assigner-config.yml"
+          shuffle: 2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
