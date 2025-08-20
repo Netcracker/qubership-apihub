@@ -73,6 +73,49 @@
       "default": "./dist/oas3WithMeta/operation.js"
     }
   },
+  "typesVersions": {
+    ">=4.7": {
+      "generators": [
+        "./dist/generators.d.ts"
+      ],
+      "hash": [
+        "./dist/hash.d.ts"
+      ],
+      "oas": [
+        "./dist/oas/index.d.ts"
+      ],
+      "oas2": [
+        "./dist/oas2/index.d.ts"
+      ],
+      "oas2/operation": [
+        "./dist/oas2/operation.d.ts"
+      ],
+      "oas3": [
+        "./dist/oas3/index.d.ts"
+      ],
+      "oas3/operation": [
+        "./dist/oas3/operation.d.ts"
+      ],
+      "postman": [
+        "./dist/postman/index.d.ts"
+      ],
+      "postman/operation": [
+        "./dist/postman/operation.d.ts"
+      ],
+      "asyncapi": [
+        "./dist/asyncapi/index.d.ts"
+      ],
+      "asyncapi/operation": [
+        "./dist/asyncapi/operation.d.ts"
+      ],
+      "oas3WithMeta": [
+        "./dist/oas3WithMeta/index.d.ts"
+      ],
+      "oas3WithMeta/operation": [
+        "./dist/oas3WithMeta/operation.d.ts"
+      ]
+    }
+  },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "sl-scripts build",
