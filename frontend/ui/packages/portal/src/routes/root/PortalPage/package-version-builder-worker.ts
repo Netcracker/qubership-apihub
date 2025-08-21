@@ -149,17 +149,15 @@ const worker: PackageVersionBuilderWorker = {
       abortController.abort()
     }
 
-    await builder.run()
-
     let publicationStatus: PublishStatus = NONE_PUBLISH_STATUS
-    let message = ''
+    let message
 
     try {
+      await builder.run()
       const data = await builder?.createVersionPackage({ type: 'blob' })
       stopSendingRunningStatus()
 
       publicationStatus = COMPLETE_PUBLISH_STATUS
-      message = 'Published successfully'
       await setPublicationDetails({
         packageKey: packageId,
         publishKey: publishId,
@@ -172,7 +170,7 @@ const worker: PackageVersionBuilderWorker = {
       stopSendingRunningStatus()
 
       publicationStatus = ERROR_PUBLISH_STATUS
-      message = 'Publication failed'
+      message = error instanceof Error ? error.message : `${error}`
       await setPublicationDetails({
         packageKey: packageId,
         publishKey: publishId,

@@ -57,6 +57,7 @@ export function useServicePublishDetails(options?: Partial<{
       })
     },
     enabled: !!serviceConfig,
+    retry: false,
     onError: (error) => {
       onQueryUnauthorized(refetch)(error)
     },
