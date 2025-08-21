@@ -1,0 +1,1175 @@
+<?xml version="1.0" encoding="UTF-8"?><database name="apihub_backend" schema="public" type="PostgreSQL - 16.8 (Debian 16.8-1.pgdg120+1)">
+   <sequences>
+      <sequence increment="1" name="activity_tracking_transition_completed_seq" startValue="0"/>
+   </sequences>
+   <tables>
+      <table catalog="apihub_backend" name="activity_tracking" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="e_type" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="data" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="package_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="activity_tracking_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="date" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="user_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="activity_tracking_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="activity_tracking_transition" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tr_type" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="from_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="to_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="status" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="details" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="started_by" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="7" name="started_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="8" name="finished_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="progress_percent" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="affected_objects" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="completed_serial_number" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="activity_tracking_transition_pk" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="activity_tracking_transition_id_uindex" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="agent" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="agent_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="cloud" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="namespace" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="url" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="last_active" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="backend_version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="name" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="agent_version" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="agent_id" sequenceNumberInPK="1"/>
+         <index name="agent_pkey" unique="true">
+            <column ascending="true" name="agent_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="agent_config" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="cloud" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="namespace" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="config" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <primaryKey column="cloud" sequenceNumberInPK="1"/>
+         <primaryKey column="namespace" sequenceNumberInPK="2"/>
+         <index name="PK_agent_config" unique="true">
+            <column ascending="true" name="cloud"/>
+            <column ascending="true" name="namespace"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="apihub_api_keys" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="name" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="created_by" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="created_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="deleted_by" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="6" name="deleted_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="api_key" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="'{}'::character varying[]" digits="0" id="8" name="roles" nullable="true" remarks="" size="2147483647" type="_varchar" typeCode="2003"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="created_for" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="apihub_api_keys_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="branch_draft_content" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="project_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="FK_project" implied="false" onDeleteCascade="true" schema="public" table="project"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="branch_name" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="2" name="index" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="name" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="file_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="path" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="data_type" nullable="true" remarks="OpenAPI / Swagger / MD" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="data" nullable="true" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="media_type" nullable="false" remarks="HTTP media-type" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="status" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="moved_from" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="commit_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="publish" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="labels" nullable="true" remarks="" size="2147483647" type="_varchar" typeCode="2003"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="last_status" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="15" name="conflicted_commit_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="conflicted_file_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="false" digits="0" id="17" name="included" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="is_folder" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="from_folder" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="blob_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="21" name="conflicted_blob_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="project_id" sequenceNumberInPK="1"/>
+         <primaryKey column="branch_name" sequenceNumberInPK="2"/>
+         <primaryKey column="file_id" sequenceNumberInPK="3"/>
+         <index name="PK_branch_draft_content" unique="true">
+            <column ascending="true" name="project_id"/>
+            <column ascending="true" name="branch_name"/>
+            <column ascending="true" name="file_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="branch_draft_reference" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="project_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="FK_project" implied="false" onDeleteCascade="true" schema="public" table="project"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="branch_name" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="reference_package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="reference_version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="status" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="branch_name" sequenceNumberInPK="1"/>
+         <primaryKey column="project_id" sequenceNumberInPK="2"/>
+         <primaryKey column="reference_package_id" sequenceNumberInPK="3"/>
+         <primaryKey column="reference_version" sequenceNumberInPK="4"/>
+         <index name="PK_branch_draft_reference" unique="true">
+            <column ascending="true" name="branch_name"/>
+            <column ascending="true" name="project_id"/>
+            <column ascending="true" name="reference_package_id"/>
+            <column ascending="true" name="reference_version"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="build" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="build_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <child catalog="apihub_backend" column="build_id" foreignKey="FK_build_depends_id" implied="false" onDeleteCascade="true" schema="public" table="build_depends"/>
+            <child catalog="apihub_backend" column="depend_id" foreignKey="FK_build_depends_depend" implied="false" onDeleteCascade="true" schema="public" table="build_depends"/>
+            <child catalog="apihub_backend" column="build_id" foreignKey="FK_build_result_build_id" implied="false" onDeleteCascade="true" schema="public" table="build_result"/>
+            <child catalog="apihub_backend" column="build_id" foreignKey="FK_build_src" implied="false" onDeleteCascade="true" schema="public" table="build_src"/>
+            <child catalog="apihub_backend" column="build_id" foreignKey="builder_notifications_build_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="builder_notifications"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="status" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="details" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="build_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="now()" digits="6" id="5" name="created_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="now()" digits="6" id="6" name="last_active" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="created_by" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="restart_count" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="client_build" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="10" name="started_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="builder_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="12" name="priority" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="metadata" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <primaryKey column="build_id" sequenceNumberInPK="1"/>
+         <index name="PK_build" unique="true">
+            <column ascending="true" name="build_id"/>
+         </index>
+         <index name="build_status_index" unique="false">
+            <column ascending="true" name="status"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="build_cleanup_run" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="run_id" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="1" name="scheduled_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="deleted_rows" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="3" name="build_result" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="4" name="build_src" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="5" name="operation_data" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="6" name="ts_operation_data" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="7" name="ts_rest_operation_data" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="8" name="ts_gql_operation_data" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <primaryKey column="run_id" sequenceNumberInPK="1"/>
+         <index name="build_cleanup_run_pkey" unique="true">
+            <column ascending="true" name="run_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="build_depends" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="build_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="build_id" foreignKey="FK_build_depends_id" implied="false" onDeleteCascade="true" schema="public" table="build"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="depend_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="build_id" foreignKey="FK_build_depends_depend" implied="false" onDeleteCascade="true" schema="public" table="build"/>
+         </column>
+         <index name="build_depends_index" unique="false">
+            <column ascending="true" name="depend_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="build_result" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="build_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="build_id" foreignKey="FK_build_result_build_id" implied="false" onDeleteCascade="true" schema="public" table="build"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="data" nullable="false" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+      </table>
+      <table catalog="apihub_backend" name="build_src" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="build_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="build_id" foreignKey="FK_build_src" implied="false" onDeleteCascade="true" schema="public" table="build"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="source" nullable="true" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="config" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+      </table>
+      <table catalog="apihub_backend" name="builder_notifications" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="build_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="build_id" foreignKey="builder_notifications_build_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="build"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="severity" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="message" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="file_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+      </table>
+      <table catalog="apihub_backend" name="business_metric" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="year" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="month" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="day" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="metric" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="data" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="'unknown'::character varying" digits="0" id="5" name="user_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="year" sequenceNumberInPK="1"/>
+         <primaryKey column="month" sequenceNumberInPK="2"/>
+         <primaryKey column="day" sequenceNumberInPK="3"/>
+         <primaryKey column="metric" sequenceNumberInPK="4"/>
+         <primaryKey column="user_id" sequenceNumberInPK="5"/>
+         <index name="business_metric_pkey" unique="true">
+            <column ascending="true" name="year"/>
+            <column ascending="true" name="month"/>
+            <column ascending="true" name="day"/>
+            <column ascending="true" name="metric"/>
+            <column ascending="true" name="user_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="comparisons_cleanup_run" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="run_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="instance_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="2" name="started_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="status" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="details" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="delete_before" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="deleted_items" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="7" name="finished_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <primaryKey column="run_id" sequenceNumberInPK="1"/>
+         <index name="comparisons_cleanup_run_pkey" unique="true">
+            <column ascending="true" name="run_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="csv_dashboard_publication" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="publish_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="status" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="message" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="csv_report" nullable="true" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+         <primaryKey column="publish_id" sequenceNumberInPK="1"/>
+         <index name="csv_dashboard_publication_pkey" unique="true">
+            <column ascending="true" name="publish_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="drafted_branches" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="project_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="FK_project" implied="false" onDeleteCascade="true" schema="public" table="project"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="branch_name" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="change_type" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="original_config" nullable="true" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="editors" nullable="true" remarks="" size="2147483647" type="_varchar" typeCode="2003"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="commit_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="project_id" sequenceNumberInPK="1"/>
+         <primaryKey column="branch_name" sequenceNumberInPK="2"/>
+         <index name="drafted_branches_pkey" unique="true">
+            <column ascending="true" name="project_id"/>
+            <column ascending="true" name="branch_name"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="endpoint_calls" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="path" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="hash" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="options" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="count" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <primaryKey column="path" sequenceNumberInPK="1"/>
+         <primaryKey column="hash" sequenceNumberInPK="2"/>
+         <index name="endpoint_calls_pkey" unique="true">
+            <column ascending="true" name="path"/>
+            <column ascending="true" name="hash"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="export_result" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="export_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="1" name="created_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="created_by" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="config" nullable="false" remarks="" size="2147483647" type="json" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="filename" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="data" nullable="false" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+         <primaryKey column="export_id" sequenceNumberInPK="1"/>
+         <index name="export_result_pk" unique="true">
+            <column ascending="true" name="export_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="external_identity" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="provider" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="external_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="internal_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="user_id" foreignKey="FK_user_data" implied="false" onDeleteCascade="true" schema="public" table="user_data"/>
+         </column>
+         <column autoUpdated="false" defaultValue="''::character varying" digits="0" id="3" name="provider_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="provider" sequenceNumberInPK="1"/>
+         <primaryKey column="provider_id" sequenceNumberInPK="2"/>
+         <primaryKey column="external_id" sequenceNumberInPK="3"/>
+         <index name="external_identity_pkey" unique="true">
+            <column ascending="true" name="provider"/>
+            <column ascending="true" name="provider_id"/>
+            <column ascending="true" name="external_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="favorite_packages" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="user_id" foreignKey="FK_favorite_packages_user_data" implied="false" onDeleteCascade="true" schema="public" table="user_data"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="FK_favorite_packages_package_group" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+         </column>
+         <primaryKey column="user_id" sequenceNumberInPK="1"/>
+         <primaryKey column="package_id" sequenceNumberInPK="2"/>
+         <index name="PK_favorite_packages" unique="true">
+            <column ascending="true" name="user_id"/>
+            <column ascending="true" name="package_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="favorite_projects" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="user_id" foreignKey="FK_favorite_projects_user_data" implied="false" onDeleteCascade="true" schema="public" table="user_data"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="project_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="FK_favorite_projects_project" implied="false" onDeleteCascade="true" schema="public" table="project"/>
+         </column>
+         <primaryKey column="user_id" sequenceNumberInPK="1"/>
+         <primaryKey column="project_id" sequenceNumberInPK="2"/>
+         <index name="PK_favorite_projects" unique="true">
+            <column ascending="true" name="user_id"/>
+            <column ascending="true" name="project_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="grouped_operation" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="group_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="group_id" foreignKey="FK_operation_group" implied="false" onDeleteCascade="true" schema="public" table="operation_group"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="package_id" foreignKey="FK_operation" implied="false" onDeleteCascade="true" schema="public" table="operation"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="version" foreignKey="FK_operation" implied="false" onDeleteCascade="true" schema="public" table="operation"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="revision" nullable="false" remarks="" size="10" type="int4" typeCode="4">
+            <parent catalog="apihub_backend" column="revision" foreignKey="FK_operation" implied="false" onDeleteCascade="true" schema="public" table="operation"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="operation_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="operation_id" foreignKey="FK_operation" implied="false" onDeleteCascade="true" schema="public" table="operation"/>
+         </column>
+         <index name="grouped_operation_idx" unique="false">
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="version"/>
+            <column ascending="true" name="revision"/>
+            <column ascending="true" name="operation_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="locks" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="name" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="instance_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="2" name="acquired_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="expires_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="1" digits="0" id="4" name="version" nullable="false" remarks="" size="19" type="int8" typeCode="-5"/>
+         <primaryKey column="name" sequenceNumberInPK="1"/>
+         <index name="locks_pkey" unique="true">
+            <column ascending="true" name="name"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="migrated_version" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="migrated_version_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="revision" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="error" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="build_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="migration_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="build_type" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="no_changelog" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+      </table>
+      <table catalog="apihub_backend" name="migrated_version_changes" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="revision" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="build_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="migration_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="changes" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="unique_changes" nullable="true" remarks="" size="2147483647" type="_varchar" typeCode="2003"/>
+      </table>
+      <table catalog="apihub_backend" name="migration_changes" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="migration_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="changes" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <primaryKey column="migration_id" sequenceNumberInPK="1"/>
+         <index name="migration_changes_pkey" unique="true">
+            <column ascending="true" name="migration_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="migration_run" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="1" name="started_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="status" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="stage" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="package_ids" nullable="true" remarks="" size="2147483647" type="_varchar" typeCode="2003"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="versions" nullable="true" remarks="" size="2147483647" type="_varchar" typeCode="2003"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="is_rebuild" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="is_rebuild_changelog_only" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="current_builder_version" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="error_details" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="10" name="finished_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="11" name="updated_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="skip_validation" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+      </table>
+      <table catalog="apihub_backend" name="operation" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <child catalog="apihub_backend" column="package_id" foreignKey="FK_operation" implied="false" onDeleteCascade="true" schema="public" table="grouped_operation"/>
+            <parent catalog="apihub_backend" column="package_id" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <child catalog="apihub_backend" column="version" foreignKey="FK_operation" implied="false" onDeleteCascade="true" schema="public" table="grouped_operation"/>
+            <parent catalog="apihub_backend" column="version" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="revision" nullable="false" remarks="" size="10" type="int4" typeCode="4">
+            <child catalog="apihub_backend" column="revision" foreignKey="FK_operation" implied="false" onDeleteCascade="true" schema="public" table="grouped_operation"/>
+            <parent catalog="apihub_backend" column="revision" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="operation_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <child catalog="apihub_backend" column="operation_id" foreignKey="FK_operation" implied="false" onDeleteCascade="true" schema="public" table="grouped_operation"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="data_hash" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="data_hash" foreignKey="FK_operation_data" implied="false" onDeleteCascade="true" schema="public" table="operation_data"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="deprecated" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="kind" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="title" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="metadata" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="type" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="deprecated_info" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="deprecated_items" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="previous_release_versions" nullable="true" remarks="" size="2147483647" type="_varchar" typeCode="2003"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="models" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="custom_tags" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="'external'::character varying" digits="0" id="15" name="api_audience" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="package_id" sequenceNumberInPK="1"/>
+         <primaryKey column="version" sequenceNumberInPK="2"/>
+         <primaryKey column="revision" sequenceNumberInPK="3"/>
+         <primaryKey column="operation_id" sequenceNumberInPK="4"/>
+         <index name="pk_operation" unique="true">
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="version"/>
+            <column ascending="true" name="revision"/>
+            <column ascending="true" name="operation_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="operation_comparison" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="revision" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="previous_package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="previous_version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="previous_revision" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="operation_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="data_hash" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="previous_data_hash" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="changes_summary" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="changes" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="comparison_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="comparison_id" foreignKey="FK_version_comparison" implied="false" onDeleteCascade="true" schema="public" table="version_comparison"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="previous_operation_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <index name="operation_comparison_comparison_id_index" unique="false">
+            <column ascending="true" name="comparison_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="operation_data" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="data_hash" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <child catalog="apihub_backend" column="data_hash" foreignKey="FK_operation_data" implied="false" onDeleteCascade="true" schema="public" table="operation"/>
+            <child catalog="apihub_backend" column="data_hash" foreignKey="ts_graphql_operation_data_operation_data_hash_fk" implied="false" onDeleteCascade="true" schema="public" table="ts_graphql_operation_data"/>
+            <child catalog="apihub_backend" column="data_hash" foreignKey="ts_operation_data_operation_data_hash_fk" implied="false" onDeleteCascade="true" schema="public" table="ts_operation_data"/>
+            <child catalog="apihub_backend" column="data_hash" foreignKey="FK_operation_data" implied="false" onDeleteCascade="true" schema="public" table="ts_rest_operation_data"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="data" nullable="true" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="search_scope" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <primaryKey column="data_hash" sequenceNumberInPK="1"/>
+         <index name="pk_operation_data" unique="true">
+            <column ascending="true" name="data_hash"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="operation_group" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="package_id" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="version" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="revision" nullable="false" remarks="" size="10" type="int4" typeCode="4">
+            <parent catalog="apihub_backend" column="revision" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="api_type" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="group_name" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="autogenerated" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="group_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <child catalog="apihub_backend" column="group_id" foreignKey="FK_operation_group" implied="false" onDeleteCascade="true" schema="public" table="grouped_operation"/>
+            <child catalog="apihub_backend" column="group_id" foreignKey="FK_transformed_content_data_operation_group" implied="false" onDeleteCascade="true" schema="public" table="transformed_content_data"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="description" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="template_checksum" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="template_filename" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="package_id" sequenceNumberInPK="1"/>
+         <primaryKey column="version" sequenceNumberInPK="2"/>
+         <primaryKey column="revision" sequenceNumberInPK="3"/>
+         <primaryKey column="api_type" sequenceNumberInPK="4"/>
+         <primaryKey column="group_name" sequenceNumberInPK="5"/>
+         <index name="operation_group_pkey" unique="true">
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="version"/>
+            <column ascending="true" name="revision"/>
+            <column ascending="true" name="api_type"/>
+            <column ascending="true" name="group_name"/>
+         </index>
+         <index name="operation_group_group_id_key" unique="true">
+            <column ascending="true" name="group_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="operation_group_history" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="group_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="action" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="data" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="user_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="date" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="automatic" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+      </table>
+      <table catalog="apihub_backend" name="operation_group_publication" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="publish_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="status" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="details" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="publish_id" sequenceNumberInPK="1"/>
+         <index name="operation_group_publication_pkey" unique="true">
+            <column ascending="true" name="publish_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="operation_group_template" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="checksum" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="template" nullable="true" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+         <primaryKey column="checksum" sequenceNumberInPK="1"/>
+         <index name="operation_group_template_pkey" unique="true">
+            <column ascending="true" name="checksum"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="operation_open_count" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="operation_open_count_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="operation_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="open_count" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <primaryKey column="package_id" sequenceNumberInPK="1"/>
+         <primaryKey column="version" sequenceNumberInPK="2"/>
+         <primaryKey column="operation_id" sequenceNumberInPK="3"/>
+         <index name="operation_open_count_pkey" unique="true">
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="version"/>
+            <column ascending="true" name="operation_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="package_export_config" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="package_export_config_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="allowed_oas_extensions" nullable="false" remarks="" size="2147483647" type="_varchar" typeCode="2003"/>
+         <index name="package_export_config_package_id_uindex" unique="true">
+            <column ascending="true" name="package_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="package_group" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <child catalog="apihub_backend" column="package_id" foreignKey="activity_tracking_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="activity_tracking"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="build_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="build"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="FK_favorite_packages_package_group" implied="false" onDeleteCascade="true" schema="public" table="favorite_packages"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="migrated_version_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="migrated_version"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="operation_open_count_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="operation_open_count"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="package_export_config_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="package_export_config"/>
+            <child catalog="apihub_backend" column="parent_id" foreignKey="FK_parent_package_group" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="FK_package_group" implied="false" onDeleteCascade="true" schema="public" table="package_member_role"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="FK_package_group" implied="false" onDeleteCascade="true" schema="public" table="package_service"/>
+            <child catalog="apihub_backend" column="workspace_id" foreignKey="FK_package_group_workspace" implied="false" onDeleteCascade="true" schema="public" table="package_service"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="published_data_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="published_data"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="published_document_open_count_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="published_document_open_count"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="FK_package_group" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="published_version_open_count_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="published_version_open_count"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="shared_url_info_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="shared_url_info"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="kind" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="name" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="alias" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="parent_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="FK_parent_package_group" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="image_url" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="description" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="7" name="deleted_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="8" name="created_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="created_by" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="deleted_by" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="'Viewer'::character varying" digits="0" id="11" name="default_role" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="default_released_version" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="service_name" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="release_version_pattern" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="false" digits="0" id="15" name="exclude_from_search" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="rest_grouping_prefix" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="PK_project_group" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="package_member_role" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="FK_package_group" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="created_by" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="created_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="updated_by" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="updated_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="'{}'::character varying[]" digits="0" id="6" name="roles" nullable="true" remarks="" size="2147483647" type="_varchar" typeCode="2003"/>
+         <primaryKey column="package_id" sequenceNumberInPK="1"/>
+         <primaryKey column="user_id" sequenceNumberInPK="2"/>
+         <index name="PK_package_member_role" unique="true">
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="user_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="package_service" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="FK_package_group" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="service_name" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="workspace_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="FK_package_group_workspace" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+         </column>
+         <primaryKey column="workspace_id" sequenceNumberInPK="1"/>
+         <primaryKey column="package_id" sequenceNumberInPK="2"/>
+         <primaryKey column="service_name" sequenceNumberInPK="3"/>
+         <index name="PK_package_service" unique="true">
+            <column ascending="true" name="workspace_id"/>
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="service_name"/>
+         </index>
+         <index name="package_service_workspace_id_service_name_key" unique="true">
+            <column ascending="true" name="workspace_id"/>
+            <column ascending="true" name="service_name"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="package_transition" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="old_package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="new_package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <index name="package_transition_old_package_id_index" unique="false">
+            <column ascending="true" name="old_package_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="personal_access_tokens" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="user_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="user_id" foreignKey="personal_access_tokens_user_fk" implied="false" onDeleteCascade="false" schema="public" table="user_data"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="token_hash" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="name" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="now()" digits="6" id="4" name="created_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="expires_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="6" name="deleted_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="personal_access_tokens_pk" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="personal_access_tokens_hash_index" unique="true">
+            <column ascending="true" name="token_hash"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="project" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <child catalog="apihub_backend" column="project_id" foreignKey="FK_project" implied="false" onDeleteCascade="true" schema="public" table="branch_draft_content"/>
+            <child catalog="apihub_backend" column="project_id" foreignKey="FK_project" implied="false" onDeleteCascade="true" schema="public" table="branch_draft_reference"/>
+            <child catalog="apihub_backend" column="project_id" foreignKey="FK_project" implied="false" onDeleteCascade="true" schema="public" table="drafted_branches"/>
+            <child catalog="apihub_backend" column="project_id" foreignKey="FK_favorite_projects_project" implied="false" onDeleteCascade="true" schema="public" table="favorite_projects"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="name" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="alias" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="group_id" nullable="true" remarks="Only for the GROUP kind" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="description" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="integration_type" nullable="true" remarks="GitLab / Local storage" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="default_branch" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="default_folder" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="repository_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="9" name="deleted_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="repository_name" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="repository_url" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="deleted_by" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="package_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="secret_token" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="15" name="secret_token_user_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="PK_project" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="published_data" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <child catalog="apihub_backend" column="package_id" foreignKey="FK_published_data" implied="false" onDeleteCascade="true" schema="public" table="published_version_revision_content"/>
+            <parent catalog="apihub_backend" column="id" foreignKey="published_data_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="checksum" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <child catalog="apihub_backend" column="checksum" foreignKey="FK_published_data" implied="false" onDeleteCascade="true" schema="public" table="published_version_revision_content"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="media_type" nullable="false" remarks="HTTP media-type" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="data" nullable="false" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+         <primaryKey column="checksum" sequenceNumberInPK="1"/>
+         <primaryKey column="package_id" sequenceNumberInPK="2"/>
+         <index name="PK_published_data" unique="true">
+            <column ascending="true" name="checksum"/>
+            <column ascending="true" name="package_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="published_document_open_count" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="published_document_open_count_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="slug" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="open_count" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <primaryKey column="package_id" sequenceNumberInPK="1"/>
+         <primaryKey column="version" sequenceNumberInPK="2"/>
+         <primaryKey column="slug" sequenceNumberInPK="3"/>
+         <index name="published_document_open_count_pkey" unique="true">
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="version"/>
+            <column ascending="true" name="slug"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="published_sources" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="package_id" foreignKey="FK_published_sources_version_revision" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="version" foreignKey="FK_published_sources_version_revision" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="revision" nullable="false" remarks="" size="10" type="int4" typeCode="4">
+            <parent catalog="apihub_backend" column="revision" foreignKey="FK_published_sources_version_revision" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="config" nullable="true" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="metadata" nullable="true" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="archive_checksum" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="checksum" foreignKey="published_sources_published_sources_archives_checksum_fk" implied="false" onDeleteCascade="false" schema="public" table="published_sources_archives"/>
+         </column>
+         <index name="published_sources_package_id_version_revision_uindex" unique="true">
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="version"/>
+            <column ascending="true" name="revision"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="published_sources_archives" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="checksum" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <child catalog="apihub_backend" column="archive_checksum" foreignKey="published_sources_published_sources_archives_checksum_fk" implied="false" onDeleteCascade="false" schema="public" table="published_sources"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="data" nullable="true" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+         <primaryKey column="checksum" sequenceNumberInPK="1"/>
+         <index name="published_sources_archives_pk" unique="true">
+            <column ascending="true" name="checksum"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="published_version" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <child catalog="apihub_backend" column="package_id" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="operation"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="operation_group"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="FK_published_sources_version_revision" implied="false" onDeleteCascade="true" schema="public" table="published_sources"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="published_version_reference"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="FK_published_version_revision" implied="false" onDeleteCascade="true" schema="public" table="published_version_revision_content"/>
+            <child catalog="apihub_backend" column="package_id" foreignKey="FK_published_version_validation" implied="false" onDeleteCascade="true" schema="public" table="published_version_validation"/>
+            <parent catalog="apihub_backend" column="id" foreignKey="FK_package_group" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <child catalog="apihub_backend" column="version" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="operation"/>
+            <child catalog="apihub_backend" column="version" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="operation_group"/>
+            <child catalog="apihub_backend" column="version" foreignKey="FK_published_sources_version_revision" implied="false" onDeleteCascade="true" schema="public" table="published_sources"/>
+            <child catalog="apihub_backend" column="version" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="published_version_reference"/>
+            <child catalog="apihub_backend" column="version" foreignKey="FK_published_version_revision" implied="false" onDeleteCascade="true" schema="public" table="published_version_revision_content"/>
+            <child catalog="apihub_backend" column="version" foreignKey="FK_published_version_validation" implied="false" onDeleteCascade="true" schema="public" table="published_version_validation"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="revision" nullable="false" remarks="" size="10" type="int4" typeCode="4">
+            <child catalog="apihub_backend" column="revision" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="operation"/>
+            <child catalog="apihub_backend" column="revision" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="operation_group"/>
+            <child catalog="apihub_backend" column="revision" foreignKey="FK_published_sources_version_revision" implied="false" onDeleteCascade="true" schema="public" table="published_sources"/>
+            <child catalog="apihub_backend" column="revision" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="published_version_reference"/>
+            <child catalog="apihub_backend" column="revision" foreignKey="FK_published_version_revision" implied="false" onDeleteCascade="true" schema="public" table="published_version_revision_content"/>
+            <child catalog="apihub_backend" column="revision" foreignKey="FK_published_version_validation" implied="false" onDeleteCascade="true" schema="public" table="published_version_validation"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="status" nullable="false" remarks="DRAFT / APPROVED / RELEASED / ARCHIVE" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="published_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="deleted_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="metadata" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="previous_version" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="previous_version_package_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="labels" nullable="true" remarks="" size="2147483647" type="_varchar" typeCode="2003"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="created_by" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="deleted_by" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="package_id" sequenceNumberInPK="1"/>
+         <primaryKey column="version" sequenceNumberInPK="2"/>
+         <primaryKey column="revision" sequenceNumberInPK="3"/>
+         <index name="PK_published_version" unique="true">
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="version"/>
+            <column ascending="true" name="revision"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="published_version_open_count" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="published_version_open_count_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="open_count" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <primaryKey column="package_id" sequenceNumberInPK="1"/>
+         <primaryKey column="version" sequenceNumberInPK="2"/>
+         <index name="published_version_open_count_pkey" unique="true">
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="version"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="published_version_reference" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="package_id" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="version" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="revision" nullable="false" remarks="" size="10" type="int4" typeCode="4">
+            <parent catalog="apihub_backend" column="revision" foreignKey="FK_published_version" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="reference_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="reference_version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="5" name="reference_revision" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="''::character varying" digits="0" id="6" name="parent_reference_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="''::character varying" digits="0" id="7" name="parent_reference_version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="8" name="parent_reference_revision" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="false" digits="0" id="9" name="excluded" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <primaryKey column="package_id" sequenceNumberInPK="1"/>
+         <primaryKey column="version" sequenceNumberInPK="2"/>
+         <primaryKey column="revision" sequenceNumberInPK="3"/>
+         <primaryKey column="reference_id" sequenceNumberInPK="4"/>
+         <primaryKey column="reference_version" sequenceNumberInPK="5"/>
+         <primaryKey column="reference_revision" sequenceNumberInPK="6"/>
+         <primaryKey column="parent_reference_id" sequenceNumberInPK="7"/>
+         <primaryKey column="parent_reference_version" sequenceNumberInPK="8"/>
+         <primaryKey column="parent_reference_revision" sequenceNumberInPK="9"/>
+         <index name="PK_published_version_reference" unique="true">
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="version"/>
+            <column ascending="true" name="revision"/>
+            <column ascending="true" name="reference_id"/>
+            <column ascending="true" name="reference_version"/>
+            <column ascending="true" name="reference_revision"/>
+            <column ascending="true" name="parent_reference_id"/>
+            <column ascending="true" name="parent_reference_version"/>
+            <column ascending="true" name="parent_reference_revision"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="published_version_revision_content" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="package_id" foreignKey="FK_published_data" implied="false" onDeleteCascade="true" schema="public" table="published_data"/>
+            <parent catalog="apihub_backend" column="package_id" foreignKey="FK_published_version_revision" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="version" foreignKey="FK_published_version_revision" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="revision" nullable="false" remarks="" size="10" type="int4" typeCode="4">
+            <parent catalog="apihub_backend" column="revision" foreignKey="FK_published_version_revision" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="checksum" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="checksum" foreignKey="FK_published_data" implied="false" onDeleteCascade="true" schema="public" table="published_data"/>
+         </column>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="4" name="index" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="file_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="path" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="slug" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="data_type" nullable="false" remarks="OpenAPI / Swagger / MD" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="name" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="metadata" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="title" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="format" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="operation_ids" nullable="true" remarks="" size="2147483647" type="_varchar" typeCode="2003"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="filename" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="package_id" sequenceNumberInPK="1"/>
+         <primaryKey column="version" sequenceNumberInPK="2"/>
+         <primaryKey column="revision" sequenceNumberInPK="3"/>
+         <primaryKey column="file_id" sequenceNumberInPK="4"/>
+         <index name="published_version_revision_content_pk" unique="true">
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="version"/>
+            <column ascending="true" name="revision"/>
+            <column ascending="true" name="file_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="published_version_validation" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="package_id" foreignKey="FK_published_version_validation" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="version" foreignKey="FK_published_version_validation" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="revision" nullable="false" remarks="" size="10" type="int4" typeCode="4">
+            <parent catalog="apihub_backend" column="revision" foreignKey="FK_published_version_validation" implied="false" onDeleteCascade="true" schema="public" table="published_version"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="changelog" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="spectral" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="bwc" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <primaryKey column="package_id" sequenceNumberInPK="1"/>
+         <primaryKey column="version" sequenceNumberInPK="2"/>
+         <primaryKey column="revision" sequenceNumberInPK="3"/>
+         <index name="PK_published_version_validation" unique="true">
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="version"/>
+            <column ascending="true" name="revision"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="role" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="role" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="rank" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="permissions" nullable="true" remarks="" size="2147483647" type="_varchar" typeCode="2003"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="read_only" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="role_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="schema_migrations" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="version" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="dirty" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
+         <primaryKey column="version" sequenceNumberInPK="1"/>
+         <index name="schema_migrations_pkey" unique="true">
+            <column ascending="true" name="version"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="shared_url_info" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="id" foreignKey="shared_url_info_package_group_id_fk" implied="false" onDeleteCascade="true" schema="public" table="package_group"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="file_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="shared_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="shared_id" sequenceNumberInPK="1"/>
+         <index name="PK_shared_url_info" unique="true">
+            <column ascending="true" name="shared_id"/>
+         </index>
+         <index name="shared_url_info__file_info" unique="true">
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="version"/>
+            <column ascending="true" name="file_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="soft_deleted_data_cleanup_run" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="run_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="instance_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="now()" digits="6" id="2" name="started_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="finished_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="status" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="details" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="6" name="delete_before" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="deleted_items" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <primaryKey column="run_id" sequenceNumberInPK="1"/>
+         <index name="soft_deleted_data_cleanup_run_pkey" unique="true">
+            <column ascending="true" name="run_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="stored_schema_migration" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="num" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="up_hash" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="sql_up" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="down_hash" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="sql_down" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="num" sequenceNumberInPK="1"/>
+         <index name="stored_schema_migration_pkey" unique="true">
+            <column ascending="true" name="num"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="system_role" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="role" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="user_id" sequenceNumberInPK="1"/>
+         <index name="PK_system_role" unique="true">
+            <column ascending="true" name="user_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="transformed_content_data" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="revision" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="api_type" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="group_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="group_id" foreignKey="FK_transformed_content_data_operation_group" implied="false" onDeleteCascade="true" schema="public" table="operation_group"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="data" nullable="true" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="documents_info" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="'documentGroup'::character varying" digits="0" id="7" name="build_type" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="'json'::character varying" digits="0" id="8" name="format" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="package_id" sequenceNumberInPK="1"/>
+         <primaryKey column="version" sequenceNumberInPK="2"/>
+         <primaryKey column="revision" sequenceNumberInPK="3"/>
+         <primaryKey column="api_type" sequenceNumberInPK="4"/>
+         <primaryKey column="group_id" sequenceNumberInPK="5"/>
+         <primaryKey column="build_type" sequenceNumberInPK="6"/>
+         <primaryKey column="format" sequenceNumberInPK="7"/>
+         <index name="transformed_content_data_pkey" unique="true">
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="version"/>
+            <column ascending="true" name="revision"/>
+            <column ascending="true" name="api_type"/>
+            <column ascending="true" name="group_id"/>
+            <column ascending="true" name="build_type"/>
+            <column ascending="true" name="format"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="ts_graphql_operation_data" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="data_hash" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="data_hash" foreignKey="ts_graphql_operation_data_operation_data_hash_fk" implied="false" onDeleteCascade="true" schema="public" table="operation_data"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="scope_argument" nullable="true" remarks="" size="2147483647" type="tsvector" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="scope_property" nullable="true" remarks="" size="2147483647" type="tsvector" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="scope_annotation" nullable="true" remarks="" size="2147483647" type="tsvector" typeCode="1111"/>
+         <primaryKey column="data_hash" sequenceNumberInPK="1"/>
+         <index name="pk_ts_graphql_operation_data" unique="true">
+            <column ascending="true" name="data_hash"/>
+         </index>
+         <index name="ts_graphql_operation_data_idx" unique="false">
+            <column ascending="true" name="scope_argument"/>
+            <column ascending="true" name="scope_property"/>
+            <column ascending="true" name="scope_annotation"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="ts_operation_data" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="data_hash" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="data_hash" foreignKey="ts_operation_data_operation_data_hash_fk" implied="false" onDeleteCascade="true" schema="public" table="operation_data"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="scope_all" nullable="true" remarks="" size="2147483647" type="tsvector" typeCode="1111"/>
+         <primaryKey column="data_hash" sequenceNumberInPK="1"/>
+         <index name="pk_ts_operation_data" unique="true">
+            <column ascending="true" name="data_hash"/>
+         </index>
+         <index name="ts_operation_data_idx" unique="false">
+            <column ascending="true" name="scope_all"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="ts_rest_operation_data" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="data_hash" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <parent catalog="apihub_backend" column="data_hash" foreignKey="FK_operation_data" implied="false" onDeleteCascade="true" schema="public" table="operation_data"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="scope_request" nullable="true" remarks="" size="2147483647" type="tsvector" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="scope_response" nullable="true" remarks="" size="2147483647" type="tsvector" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="scope_annotation" nullable="true" remarks="" size="2147483647" type="tsvector" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="scope_properties" nullable="true" remarks="" size="2147483647" type="tsvector" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="scope_examples" nullable="true" remarks="" size="2147483647" type="tsvector" typeCode="1111"/>
+         <primaryKey column="data_hash" sequenceNumberInPK="1"/>
+         <index name="pk_ts_rest_operation_data" unique="true">
+            <column ascending="true" name="data_hash"/>
+         </index>
+         <index name="ts_rest_operation_data_idx" unique="false">
+            <column ascending="true" name="scope_request"/>
+            <column ascending="true" name="scope_response"/>
+            <column ascending="true" name="scope_annotation"/>
+            <column ascending="true" name="scope_properties"/>
+            <column ascending="true" name="scope_examples"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="user_avatar_data" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="avatar" nullable="true" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="checksum" nullable="true" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+         <primaryKey column="user_id" sequenceNumberInPK="1"/>
+         <index name="PK_user_avatar_data" unique="true">
+            <column ascending="true" name="user_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="user_data" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <child catalog="apihub_backend" column="internal_id" foreignKey="FK_user_data" implied="false" onDeleteCascade="true" schema="public" table="external_identity"/>
+            <child catalog="apihub_backend" column="user_id" foreignKey="FK_favorite_packages_user_data" implied="false" onDeleteCascade="true" schema="public" table="favorite_packages"/>
+            <child catalog="apihub_backend" column="user_id" foreignKey="FK_favorite_projects_user_data" implied="false" onDeleteCascade="true" schema="public" table="favorite_projects"/>
+            <child catalog="apihub_backend" column="user_id" foreignKey="personal_access_tokens_user_fk" implied="false" onDeleteCascade="false" schema="public" table="personal_access_tokens"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="email" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="name" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="avatar_url" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="password" nullable="true" remarks="" size="2147483647" type="bytea" typeCode="-2"/>
+         <column autoUpdated="false" defaultValue="''::character varying" digits="0" id="5" name="private_package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="user_id" sequenceNumberInPK="1"/>
+         <index name="PK_user_data" unique="true">
+            <column ascending="true" name="user_id"/>
+         </index>
+         <index name="email_unique" unique="true">
+            <column ascending="true" name="email"/>
+         </index>
+         <index name="private_package_id_unique" unique="true">
+            <column ascending="true" name="private_package_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="user_integration" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="integration_type" nullable="false" remarks="GitLab" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="key" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="false" digits="0" id="3" name="is_revoked" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="refresh_token" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="expires_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="redirect_uri" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="7" name="failed_refresh_attempts" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <primaryKey column="user_id" sequenceNumberInPK="1"/>
+         <primaryKey column="integration_type" sequenceNumberInPK="2"/>
+         <index name="PK_user_integration" unique="true">
+            <column ascending="true" name="user_id"/>
+            <column ascending="true" name="integration_type"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="version_comparison" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="revision" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="previous_package_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="previous_version" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="previous_revision" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="comparison_id" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12">
+            <child catalog="apihub_backend" column="comparison_id" foreignKey="FK_version_comparison" implied="false" onDeleteCascade="true" schema="public" table="operation_comparison"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="operation_types" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="refs" nullable="true" remarks="" size="2147483647" type="_varchar" typeCode="2003"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="open_count" nullable="false" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="10" name="last_active" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="no_content" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="builder_version" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <primaryKey column="package_id" sequenceNumberInPK="1"/>
+         <primaryKey column="version" sequenceNumberInPK="2"/>
+         <primaryKey column="revision" sequenceNumberInPK="3"/>
+         <primaryKey column="previous_package_id" sequenceNumberInPK="4"/>
+         <primaryKey column="previous_version" sequenceNumberInPK="5"/>
+         <primaryKey column="previous_revision" sequenceNumberInPK="6"/>
+         <index name="version_comparison_pkey" unique="true">
+            <column ascending="true" name="package_id"/>
+            <column ascending="true" name="version"/>
+            <column ascending="true" name="revision"/>
+            <column ascending="true" name="previous_package_id"/>
+            <column ascending="true" name="previous_version"/>
+            <column ascending="true" name="previous_revision"/>
+         </index>
+         <index name="version_comparison_comparison_id_key" unique="true">
+            <column ascending="true" name="comparison_id"/>
+         </index>
+      </table>
+      <table catalog="apihub_backend" name="versions_cleanup_run" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="run_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="now()" digits="6" id="1" name="started_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="package_id" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="delete_before" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="status" nullable="false" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="details" nullable="true" remarks="" size="2147483647" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="deleted_items" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="instance_id" nullable="true" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="8" name="finished_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <primaryKey column="run_id" sequenceNumberInPK="1"/>
+         <index name="pk_versions_cleanup_run" unique="true">
+            <column ascending="true" name="run_id"/>
+         </index>
+      </table>
+   </tables>
+</database>
