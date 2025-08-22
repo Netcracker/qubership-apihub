@@ -30,8 +30,6 @@ RUN set GOSUMDB=off && set CGO_ENABLED=0 && go mod tidy && go mod download && GO
 
 FROM docker.io/golang:1.18.10-alpine3.17
 
-MAINTAINER qubership.org
-
 WORKDIR /app/qubership-apihub-test-service
 
 COPY --from=builder /workspace/qubership-apihub-test-service/qubership-apihub-test-service ./qubership-apihub-test-service

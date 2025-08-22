@@ -5,7 +5,7 @@ Please, follow these guidelines to make the contribution process easy and effect
 
 ## Contributor License Agreement
 
-You must sign the [Contributor License Agreement](https://pages.domain.com/cla-main.html) in order to contribute.
+You must sign the [Contributor License Agreement](https://pages.netcracker.com/cla-main.html) in order to contribute.
 
 ## Code of Conduct
 
