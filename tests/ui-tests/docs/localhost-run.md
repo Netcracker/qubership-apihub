@@ -1,6 +1,6 @@
 # Features of running on a localhost
 To test the "Playground" via a localhost, in playwright tests, you need to set a value for the `PLAYGROUND_BACKEND_HOST` environment variable, it will be used in the test to create a custom server for sending requests.
-In case of using Docker Compose, this is `http://host.docker.internal:8081` (protocol + value of the `APIHUB_URL` variable from the [qubership-apihub-backend.env](https://github.com/Netcracker/qubership-apihub/blob/main/docker-compose/qubership-apihub-backend.env) file). Also, you need to add the variable `ALLOWED_HOSTS=host.docker.internal` to the [qubership-apihub-backend.env](https://github.com/Netcracker/qubership-apihub/blob/main/docker-compose/qubership-apihub-backend.env) file.
+In case of using Docker Compose, this is `http://host.docker.internal:8081` (protocol + value of the `apihubExternalUrl` field from the [qubership-apihub-backend-config.yaml](https://github.com/Netcracker/qubership-apihub/blob/main/docker-compose/apihub-generic/qubership-apihub-backend-config.yaml) file). Also, you need to add the field `allowedHostsForProxy` with vale `host.docker.internal` to the [qubership-apihub-backend-config.yaml](https://github.com/Netcracker/qubership-apihub/blob/main/docker-compose/apihub-generic/qubership-apihub-backend-config.yaml) file.
 
 In case of using docker compose + dev proxy, in addition to the previous settings, in playwright tests, you need to add the variable `DEV_PROXY_MODE=true`, to skip tests that cannot be executed in this mode.
 
