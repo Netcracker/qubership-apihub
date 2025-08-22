@@ -25,3 +25,4 @@ skip-check:
 - CKV_OPENAPI_21 #Ensure that arrays have a maximum number of items
 - CKV_OPENAPI_4 #Ensure that the global security field has rules defined
 - CKV_OPENAPI_5 # Ensure that security operations is not empty
+- CKV_OPENAPI_3 # Ensure that security schemes don't allow cleartext credentials over unencrypted channel - version 3.x.y files
