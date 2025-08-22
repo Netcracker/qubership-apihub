@@ -2,11 +2,11 @@ FROM docker.io/node:20
 
 WORKDIR /usr/src/app
 
-ADD .npmrc .npmrc
+COPY .npmrc .npmrc
 COPY package.json ./
 COPY npm-shrinkwrap.json ./
 RUN npm ci
-ADD dist dist
+COPY dist dist
 
 USER 10001
 
