@@ -52,18 +52,19 @@ type OperationSearchQuery struct {
 	OperationSearchScopeFilter
 	OperationSearchWeight
 	VersionStatusSearchWeight
-	SearchString   string    `pg:"search_filter, type:varchar, use_zero"` //for postgres FTS
-	TextFilter     string    `pg:"text_filter, type:varchar, use_zero"`   //for varchar
-	ApiType        string    `pg:"api_type, type:varchar, use_zero"`
-	Packages       []string  `pg:"packages, type:varchar[], use_zero"`
-	Versions       []string  `pg:"versions, type:varchar[], use_zero"`
-	Statuses       []string  `pg:"statuses, type:varchar[], use_zero"`
-	Methods        []string  `pg:"methods, type:varchar[], use_zero"`
-	OperationTypes []string  `pg:"operation_types, type:varchar[], use_zero"`
-	StartDate      time.Time `pg:"start_date, type:timestamp without time zone, use_zero"`
-	EndDate        time.Time `pg:"end_date, type:timestamp without time zone, use_zero"`
-	Limit          int       `pg:"limit, type:integer, use_zero"`
-	Offset         int       `pg:"offset, type:integer, use_zero"`
+	SearchString      string    `pg:"search_filter, type:varchar, use_zero"`       //for postgres ts indexes
+	TextFilter        string    `pg:"text_filter, type:varchar, use_zero"`         //for varchar
+	OriginalTextInput string    `pg:"original_text_input, type:varchar, use_zero"` // for FTS
+	ApiType           string    `pg:"api_type, type:varchar, use_zero"`
+	Packages          []string  `pg:"packages, type:varchar[], use_zero"`
+	Versions          []string  `pg:"versions, type:varchar[], use_zero"`
+	Statuses          []string  `pg:"statuses, type:varchar[], use_zero"`
+	Methods           []string  `pg:"methods, type:varchar[], use_zero"`
+	OperationTypes    []string  `pg:"operation_types, type:varchar[], use_zero"`
+	StartDate         time.Time `pg:"start_date, type:timestamp without time zone, use_zero"`
+	EndDate           time.Time `pg:"end_date, type:timestamp without time zone, use_zero"`
+	Limit             int       `pg:"limit, type:integer, use_zero"`
+	Offset            int       `pg:"offset, type:integer, use_zero"`
 
 	RestApiType    string `pg:"rest_api_type, type:varchar, use_zero"`
 	GraphqlApiType string `pg:"graphql_api_type, type:varchar, use_zero"`
@@ -109,6 +110,7 @@ type OperationSearchResult struct {
 	VersionStatusTf    float64 `pg:"version_status_tf, type:real"`
 	OpenCountWeight    float64 `pg:"open_count_weight, type:real"`
 	OperationOpenCount float64 `pg:"operation_open_count, type:real"`
+	AllTsRank          float64 `pg:"all_ts.rank, type:real"`
 }
 
 func MakeOperationSearchQueryEntity(searchQuery *view.SearchQueryReq) (*OperationSearchQuery, error) {
@@ -125,20 +127,32 @@ func MakeOperationSearchQueryEntity(searchQuery *view.SearchQueryReq) (*Operatio
 	ftsSearchString = strings.ReplaceAll(ftsSearchString, ":*", "")
 	ftsSearchString = strings.TrimSpace(ftsSearchString) + ":*" //starts with
 
+	parts := strings.Split(ftsSearchString, "&")
+	var partsFiltered []string
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		partsFiltered = append(partsFiltered, part)
+	}
+	ftsSearchString = strings.Join(partsFiltered, " & ")
+
 	searchQueryEntity := &OperationSearchQuery{
-		SearchString:   ftsSearchString,
-		TextFilter:     searchQuery.SearchString,
-		Packages:       searchQuery.PackageIds,
-		Versions:       searchQuery.Versions,
-		Statuses:       searchQuery.Statuses,
-		StartDate:      searchQuery.PublicationDateInterval.StartDate,
-		EndDate:        searchQuery.PublicationDateInterval.EndDate,
-		Methods:        make([]string, 0),
-		OperationTypes: make([]string, 0),
-		Limit:          searchQuery.Limit,
-		Offset:         searchQuery.Limit * searchQuery.Page,
-		RestApiType:    string(view.RestApiType),
-		GraphqlApiType: string(view.GraphqlApiType),
+		SearchString:      ftsSearchString,
+		TextFilter:        searchQuery.SearchString,
+		OriginalTextInput: searchQuery.SearchString,
+		Packages:          searchQuery.PackageIds,
+		Versions:          searchQuery.Versions,
+		Statuses:          searchQuery.Statuses,
+		StartDate:         searchQuery.PublicationDateInterval.StartDate,
+		EndDate:           searchQuery.PublicationDateInterval.EndDate,
+		Methods:           make([]string, 0),
+		OperationTypes:    make([]string, 0),
+		Limit:             searchQuery.Limit,
+		Offset:            searchQuery.Limit * searchQuery.Page,
+		RestApiType:       string(view.RestApiType),
+		GraphqlApiType:    string(view.GraphqlApiType),
 	}
 	if searchQueryEntity.Packages == nil {
 		searchQueryEntity.Packages = make([]string, 0)
