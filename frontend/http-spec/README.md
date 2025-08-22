@@ -8,7 +8,7 @@ Fork of the [@stoplightio/http-spec](https://github.com/stoplightio/http-spec)
 
 HTTP Spec is yet another, hopefully more pragmatic, attempt to standardise OpenAPI v2, OpenAPI v3, Postman Collections and other HTTP-related specification under a single AST to rule them all (at least in Stoplight).
 
-There have been a lot of other attempts to have a universal specification such as API Elements, API Flow and they all failed for a number of reasons. Some of those have been discussed [here](https://www.youtube.com/watch?v=jn_1lJr-DLY).
+There have been a lot of other attempts to have a universal specification such as API Elements, API Flow and they all failed for a number of reasons.
 
 ## Why build it?
 
@@ -46,6 +46,6 @@ The strategy is the following:
 
 ### Merging strategy highlights
 
-- Conflicting examples will make the merger relax the constraints. That means e.g. if a header is required in one request and not required in another one then the resulting operation will _not_ require that header to be present.
+- Conflicting examples will make the merger relax the constraints. That means e.g. if a header is required in one request and not required in another one then the resulting operation will *not* require that header to be present.
 - Different JSON Schemas are coupled with `anyOf`.
 - By default, additionalProperties are permitted.
