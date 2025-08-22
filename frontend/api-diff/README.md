@@ -34,12 +34,12 @@ Modified version of [udamir/api-smart-diff](https://github.com/udamir/api-smart-
 - [JsonSchema](https://json-schema.org/draft/2020-12/json-schema-core.html)
 - GraphQL via GraphApi
 - ~~Swagger 2.0~~
-- ~~[AsyncApi 3.x](https://www.asyncapi.com/docs/specifications/)~~ (Roadmap)
+- ~~[AsyncApi 3.x](https://www.asyncapi.com/docs/reference/specification/v3.0.0-explorer)~~ (Roadmap)
 - ~~gRPC~~ (Roadmap)
 
 ## Features
 - Generate diff for supported specifications
-- Generate merged document with changes in metadata 
+- Generate merged document with changes in metadata
 - Classify all changes as breaking, non-breaking, deprecated and annotation
 - Human-readable change description
 - Supports custom classification rules
@@ -47,8 +47,8 @@ Modified version of [udamir/api-smart-diff](https://github.com/udamir/api-smart-
 - Supports custom transformations
 - Supports custom human-readable changes annotation
 - Resolves all $ref pointers, including circular
-- Typescript syntax support out of the box
-- Can be used in nodejs or browser
+- TypeScript syntax support out of the box
+- Can be used in Node.js or browser
 
 ## Contributing
 When contributing, keep in mind that it is an objective of `api-smart-diff` to have no additional package dependencies. This may change in the future, but for now, no new dependencies.
