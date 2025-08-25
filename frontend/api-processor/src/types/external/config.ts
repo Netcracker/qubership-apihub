@@ -156,8 +156,6 @@ export interface PrefixGroupsChangelogBuildConfig extends BuildConfigBase {
   packageId: PackageId
   version: VersionId
   status: VersionStatus
-  previousVersion?: VersionId
-  previousVersionPackageId?: PackageId
   currentGroup?: string
   previousGroup?: string
 

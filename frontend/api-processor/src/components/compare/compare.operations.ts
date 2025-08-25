@@ -29,6 +29,7 @@ import {
 import {
   calculateTotalImpactedSummary,
   createPairOperationsMap,
+  dedupePairs,
   getUniqueApiTypesFromVersions,
   normalizeOperationIds,
 } from './compare.utils'
@@ -36,6 +37,7 @@ import {
   calculateApiAudienceTransitions,
   calculateChangeSummary,
   calculateDiffId,
+  convertToSlug,
   difference,
   executeInBatches,
   getSplittedVersionKey,
@@ -106,20 +108,31 @@ async function compareCurrentApiType(
   ctx: CompareContext,
   debugCtx?: DebugPerformanceContext,
 ): Promise<[OperationType, OperationChanges[]] | null> {
-  const { batchSize, versionOperationsResolver, versionDocumentsResolver, rawDocumentResolver } = ctx
-
+  const {
+    batchSize,
+    versionOperationsResolver,
+    versionDocumentsResolver,
+    rawDocumentResolver,
+    config: { currentGroup = '', previousGroup = '' },
+  } = ctx
   const apiBuilder = ctx.apiBuilders.find((builder) => apiType === builder.apiType)
   if (!apiBuilder) { return null }
 
   const { operations: prevOperations = [] } = await versionOperationsResolver(apiType, prev?.version ?? '', prev?.packageId ?? '', undefined, false) || {}
   const { operations: currOperations = [] } = await versionOperationsResolver(apiType, curr?.version ?? '', curr?.packageId ?? '', undefined, false) || {}
 
-  const [prevOperationIds, prevNormalizedOperationIdToOperation] = normalizeOperationIds(prevOperations, apiBuilder)
-  const [currOperationIds, currNormalizedOperationIdToOperation] = normalizeOperationIds(currOperations, apiBuilder)
+  const previousGroupSlug = convertToSlug(previousGroup)
+  const prevOperationsWithPrefix = previousGroupSlug ? prevOperations.filter(operation => operation.operationId.startsWith(previousGroupSlug)) : prevOperations
 
-  const added = difference(currOperationIds, prevOperationIds)
-  const removed = difference(prevOperationIds, currOperationIds)
-  const rest = intersection(prevOperationIds, currOperationIds)
+  const currentGroupSlug = convertToSlug(currentGroup)
+  const currOperationsWithPrefix = currentGroupSlug ? currOperations.filter(operation => operation.operationId.startsWith(currentGroupSlug)) : currOperations
+
+  const [prevNormalizedOperationIds, prevNormalizedOperationIdToOperation] = normalizeOperationIds(prevOperationsWithPrefix, apiBuilder, previousGroup)
+  const [currNormalizedOperationIds, currNormalizedOperationIdToOperation] = normalizeOperationIds(currOperationsWithPrefix, apiBuilder, currentGroup)
+
+  const added = difference(currNormalizedOperationIds, prevNormalizedOperationIds)
+  const removed = difference(prevNormalizedOperationIds, currNormalizedOperationIds)
+  const potentiallyChanged = intersection(prevNormalizedOperationIds, currNormalizedOperationIds)
 
   const { version: prevVersion, packageId: prevPackageId } = prev ?? { version: '', packageId: '' }
   const { version: currVersion, packageId: currPackageId } = curr ?? { version: '', packageId: '' }
@@ -131,7 +144,7 @@ async function compareCurrentApiType(
   const currDocuments = unfilteredCurrDocuments
 
   const pairedRestDocs: [ResolvedVersionDocument, ResolvedVersionDocument][] = []
-  for (const normalizedOperationId of rest) {
+  for (const normalizedOperationId of potentiallyChanged) {
     const prevDocumentId = prevNormalizedOperationIdToOperation[normalizedOperationId]?.documentId
     const currDocumentId = currNormalizedOperationIdToOperation[normalizedOperationId]?.documentId
     const prevDoc = prevDocuments.find(document => document.slug === prevDocumentId)
@@ -161,31 +174,27 @@ async function compareCurrentApiType(
     pairedDocs.push([prevDoc, undefined])
   }
 
-  // todo > 1 is a hack for before\after files naming, docs matching approach is not yet defined
-  // const pairedDocs = prevDocuments.map((prevDoc) => [prevDoc, currDocuments.length > 1 ? currDocuments.find(({ fileId }) => fileId === prevDoc.fileId) : currDocuments[0]])
-
-  const { currentGroup, previousGroup } = ctx.config
   const currGroupSlug = slugify(removeFirstSlash(currentGroup || ''))
   const prevGroupSlug = slugify(removeFirstSlash(previousGroup || ''))
 
-  const operationsMap = createPairOperationsMap(currGroupSlug, prevGroupSlug, currOperations, prevOperations, apiBuilder)
+  const operationsMap = createPairOperationsMap(prevGroupSlug, currGroupSlug, prevOperationsWithPrefix, currOperationsWithPrefix, apiBuilder)
 
   const operationChanges: OperationChanges[] = []
   const tags: string[] = []
 
-  for (const [prevDoc, currDoc] of pairedDocs) {
-    const pairContext: CompareOperationsPairContext = {
-      notifications: ctx.notifications,
-      rawDocumentResolver,
-      versionDeprecatedResolver: ctx.versionDeprecatedResolver,
-      previousVersion: prevVersion,
-      currentVersion: currVersion,
-      previousPackageId: prevPackageId,
-      currentPackageId: currPackageId,
-      currentGroup: currentGroup,
-      previousGroup: previousGroup,
-    }
+  const pairContext: CompareOperationsPairContext = {
+    notifications: ctx.notifications,
+    rawDocumentResolver,
+    versionDeprecatedResolver: ctx.versionDeprecatedResolver,
+    previousVersion: prevVersion,
+    currentVersion: currVersion,
+    previousPackageId: prevPackageId,
+    currentPackageId: currPackageId,
+    currentGroup: currentGroup,
+    previousGroup: previousGroup,
+  }
 
+  for (const [prevDoc, currDoc] of pairedDocs) {
     const {
       operationChanges: docsPairOperationChanges,
       tags: docsPairTags,
@@ -214,7 +223,7 @@ async function compareCurrentApiType(
     const { operations: currOperationsWithoutData = [] } = await versionOperationsResolver(apiType, currVersion, currPackageId, previousBatch, false) || {}
     const { operations: prevOperationsWithoutData = [] } = await versionOperationsResolver(apiType, prevVersion, prevPackageId, currentBatch, false) || {}
 
-    const pairOperationsMap = createPairOperationsMap(currGroupSlug, prevGroupSlug, currOperationsWithoutData, prevOperationsWithoutData, apiBuilder)
+    const pairOperationsMap = createPairOperationsMap(prevGroupSlug, currGroupSlug, prevOperationsWithoutData, currOperationsWithoutData, apiBuilder)
     Object.values(pairOperationsMap).forEach((pair) => {
       calculateApiAudienceTransitions(pair.current, pair.previous, apiAudienceTransitions)
     })

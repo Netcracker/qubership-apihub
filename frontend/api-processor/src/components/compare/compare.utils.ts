@@ -117,12 +117,13 @@ export function dedupePairs<A extends object, B extends object>(
   return out
 }
 
-export function normalizeOperationIds(operations: ResolvedOperation[], apiBuilder: ApiBuilder): [OperationId[], Record<NormalizedOperationId | OperationId, ResolvedOperation>] {
+export function normalizeOperationIds(operations: ResolvedOperation[], apiBuilder: ApiBuilder, group: string): [OperationId[], Record<NormalizedOperationId | OperationId, ResolvedOperation>] {
   const normalizedOperationIdToOperation: Record<NormalizedOperationId | OperationId, ResolvedOperation> = {}
-  for (const operation of operations) {
+  const groupSlug = convertToSlug(group)
+  operations.forEach(operation => {
     const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(operation) ?? operation.operationId
-    normalizedOperationIdToOperation[normalizedOperationId] = operation
-  }
+    normalizedOperationIdToOperation[takeSubstringIf(!!groupSlug, normalizedOperationId, groupSlug.length)] = operation
+  })
   return [Object.keys(normalizedOperationIdToOperation), normalizedOperationIdToOperation]
 }
 
@@ -193,10 +194,10 @@ export function takeSubstringIf(condition: boolean, value: string, startIndex: n
 }
 
 export const createPairOperationsMap = (
-  currGroupSlug: string,
   prevGroupSlug: string,
-  currentOperations: ResolvedOperation[],
+  currGroupSlug: string,
   previousOperations: ResolvedOperation[],
+  currentOperations: ResolvedOperation[],
   apiBuilder: ApiBuilder,
 ): Record<NormalizedOperationId, {
   previous?: ResolvedOperation
@@ -210,12 +211,12 @@ export const createPairOperationsMap = (
 
   for (const currentOperation of currentOperations) {
     const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(currentOperation) ?? currentOperation.operationId
-    operationsMap[takeSubstringIf(!!currGroupSlug, normalizedOperationId, currGroupSlug.length)] = { current: currentOperation }
+    operationsMap[takeSubstringIf(!!currGroupSlug, normalizedOperationId, currGroupSlug.length + '-'.length)] = { current: currentOperation }
   }
 
   for (const previousOperation of previousOperations) {
     const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(previousOperation) ?? previousOperation.operationId
-    const prevOperationId = takeSubstringIf(!!prevGroupSlug, normalizedOperationId, prevGroupSlug.length)
+    const prevOperationId = takeSubstringIf(!!prevGroupSlug, normalizedOperationId, prevGroupSlug.length + '-'.length)
     // todo it won't work if groups have different length (add test with /api/v1/ and /api/abc/)
     const operationsMappingElement = operationsMap[prevOperationId]
     operationsMap[prevOperationId] = {
