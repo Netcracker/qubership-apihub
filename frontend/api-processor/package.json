@@ -31,7 +31,7 @@
     "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-diff": "2.1.2",
+    "@netcracker/qubership-apihub-api-diff": "feature-performance-optimization",
     "@netcracker/qubership-apihub-api-unifier": "2.2.0",
     "@netcracker/qubership-apihub-graphapi": "1.0.8",
     "@netcracker/qubership-apihub-json-crawl": "1.0.4",
