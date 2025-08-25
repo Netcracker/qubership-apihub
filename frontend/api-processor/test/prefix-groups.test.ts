@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-import { Editor, LocalRegistry } from './helpers'
-import { BUILD_TYPE } from '../src'
+import {
+  buildPrefixGroupChangelogPackage,
+  changesSummaryMatcher,
+  Editor,
+  LocalRegistry,
+  numberOfImpactedOperationsMatcher,
+} from './helpers'
+import { ANNOTATION_CHANGE_TYPE, BREAKING_CHANGE_TYPE, BUILD_TYPE, NON_BREAKING_CHANGE_TYPE } from '../src'
 
 const pkg = LocalRegistry.openPackage('apihub')
 
-describe('Prefix Groups test',  () => {
-  beforeAll(async () => {
+describe('Prefix Groups test', () => {
+  test('should compare prefix groups /api/{group}, groups=v2, v3', async () => {
     // generate missing versions/apihub folder contents
     await pkg.publish(pkg.packageId, {
       version: 'v1',
@@ -62,13 +68,10 @@ describe('Prefix Groups test',  () => {
         { fileId: 'Public Registry API.yaml' },
       ],
     })
-  })
 
-  test('should compare prefix groups /api/{group}, groups=v2, v3', async () => {
     const editor = await Editor.openProject(pkg.packageId, pkg)
     const result = await editor.run({
       version: 'prefix2',
-      previousVersion: 'prefix1',
       currentGroup: '/api/v3',
       previousGroup: 'api/v2',
       buildType: BUILD_TYPE.PREFIX_GROUPS_CHANGELOG,
@@ -76,4 +79,61 @@ describe('Prefix Groups test',  () => {
 
     expect(result.comparisons?.[0].data?.length).toBe(95)
   })
+
+  test('should compare prefix groups /api/{group}', async () => {
+    const result = await buildPrefixGroupChangelogPackage({ packageId: 'prefix-groups/mixed-cases' })
+
+    expect(result).toEqual(changesSummaryMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 2,
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 2,
+    }))
+  })
+
+  test('Add method in a new version', async () => {
+    const result = await buildPrefixGroupChangelogPackage({ packageId: 'prefix-groups/add-method' })
+
+    expect(result).toEqual(changesSummaryMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }))
+  })
+
+  test('Remove method in a new version', async () => {
+    const result = await buildPrefixGroupChangelogPackage({ packageId: 'prefix-groups/remove-method' })
+
+    expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+  })
+
+  test('Change method content in a new version', async () => {
+    const result = await buildPrefixGroupChangelogPackage({ packageId: 'prefix-groups/change-method' })
+
+    expect(result).toEqual(changesSummaryMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+    }))
+  })
+
+  test('should compare prefix groups with different length', async () => {
+    const result = await buildPrefixGroupChangelogPackage({
+      packageId: 'prefix-groups/different-prefix-length',
+      config: {
+        currentGroup: '/api/v10',
+        previousGroup: '/api/v1000',
+      },
+    })
+
+    expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+  })
+
+  // todo add case when api/v1 in servers and api/v2 in some paths?
 })

@@ -155,6 +155,38 @@ export async function buildChangelogPackage(
   return await editor.run()
 }
 
+export async function buildPrefixGroupChangelogPackage(options: {
+  packageId: string
+  config?: Partial<BuildConfig>
+}): Promise<BuildResult> {
+  const {
+    packageId,
+    config: {
+      files = [{ fileId: 'spec.yaml' }],
+      currentGroup = '/api/v2',
+      previousGroup = 'api/v1',
+    } = {},
+  } = options ?? {}
+
+  const pkg = LocalRegistry.openPackage(packageId)
+
+  await pkg.publish(pkg.packageId, {
+    packageId: pkg.packageId,
+    version: BEFORE_VERSION_ID,
+    files: files,
+  })
+
+  const editor = new Editor(pkg.packageId, {
+    version: BEFORE_VERSION_ID,
+    packageId: pkg.packageId,
+    currentGroup: currentGroup,
+    previousGroup: previousGroup,
+    buildType: BUILD_TYPE.PREFIX_GROUPS_CHANGELOG,
+    status: VERSION_STATUS.RELEASE,
+  })
+  return await editor.run()
+}
+
 export async function buildGqlChangelogPackage(
   packageId: string,
 ): Promise<BuildResult> {

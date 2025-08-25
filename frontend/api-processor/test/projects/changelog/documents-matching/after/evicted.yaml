@@ -1,0 +1,20 @@
+openapi: 3.0.0
+info:
+  title: Sample API
+  description: API specification example
+  version: 1.0.0
+paths:
+  /extra:
+    post:
+      summary: extra operation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '201':
+          description: extra description 2

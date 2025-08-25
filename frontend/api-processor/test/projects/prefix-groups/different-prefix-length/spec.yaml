@@ -1,0 +1,17 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /api/v1000/packages:
+    get:
+      summary: Gets a list of packages.
+      responses:
+        '200':
+          description: a2
+  /api/v10/packages:
+    get:
+      summary: Gets a list of packages.
+      responses:
+        '200':
+          description: a1
