@@ -5212,8 +5212,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -5424,8 +5424,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -6185,8 +6185,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -6397,8 +6397,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -7158,8 +7158,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -7370,8 +7370,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -8131,8 +8131,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -8343,8 +8343,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -9104,8 +9104,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -9316,8 +9316,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -10077,8 +10077,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -10289,8 +10289,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -11252,8 +11252,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -11464,8 +11464,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -12355,8 +12355,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -12567,8 +12567,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -13511,8 +13511,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -13723,8 +13723,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -14614,8 +14614,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -14826,8 +14826,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -15770,8 +15770,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -15982,8 +15982,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -16873,8 +16873,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -17085,8 +17085,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -18262,8 +18262,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -18474,8 +18474,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -19518,8 +19518,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -19730,8 +19730,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -20663,8 +20663,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -20875,8 +20875,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -21868,8 +21868,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -22080,8 +22080,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -23013,8 +23013,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -23225,8 +23225,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -24218,8 +24218,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
@@ -24430,8 +24430,8 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
+                                            "pm.test(\"Status code is 403\", function () {\r",
+                                            "    pm.response.to.have.status(403);\r",
                                             "});"
                                         ]
                                     }
