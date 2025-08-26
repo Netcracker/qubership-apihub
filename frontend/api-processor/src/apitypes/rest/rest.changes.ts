@@ -134,7 +134,7 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
       const basePath = getOperationBasePath(methodData?.servers || pathData?.servers || merged.servers || [])
       const operationPath = basePath + path
       const operationId = slugify(`${operationPath}-${inferredMethod}`)
-      const normalizedOperationId = slugify(`${normalizePath(basePath + path)}-${inferredMethod}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
+      const normalizedOperationId = slugify(`${normalizePath(operationPath)}-${inferredMethod}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
 
       const { current, previous } = operationsMap[normalizedOperationId] ?? operationsMap[operationId] ?? {}
 
@@ -174,7 +174,6 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
         await reclassifyBreakingChanges(previous.operationId, merged, onlyBreaking, ctx)
       }
 
-      // todo operationDiffs can be [undefined] in 'type error must not appear during build'
       changedOperations.push(createOperationChange(apiType, operationDiffs, previous, current, currGroupSlug, prevGroupSlug, currentGroup, previousGroup))
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }

@@ -61,8 +61,6 @@ export interface OperationChanges<T extends DiffType | DiffTypeDto = DiffType> {
   apiType: BuilderType
   apiKind?: ApiKind
   previousApiKind?: ApiKind
-  dataHash?: string
-  previousDataHash?: string
   changeSummary: ChangeSummary<T>
   impactedSummary: ImpactedOperationSummary
   // @deprecated. OOM problem

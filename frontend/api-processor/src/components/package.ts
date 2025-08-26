@@ -164,7 +164,6 @@ const createOperationsFile = (zip: ZipTool, operations: Map<string, ApiOperation
       operationId: operation.operationId,
       documentId: operation.documentId,
       title: operation.title,
-      dataHash: operation.dataHash,
       deprecated: operation.deprecated,
       apiKind: operation.apiKind,
       apiType: operation.apiType,

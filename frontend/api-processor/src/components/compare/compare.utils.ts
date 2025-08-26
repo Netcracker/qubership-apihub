@@ -127,52 +127,6 @@ export function normalizeOperationIds(operations: ResolvedOperation[], apiBuilde
   return [Object.keys(normalizedOperationIdToOperation), normalizedOperationIdToOperation]
 }
 
-export function getOperationsHashMapByApiType(
-  apiBuilder: ApiBuilder,
-  operations: ResolvedOperation[],
-  ctx: CompareContext,
-  areOperationsFromCurrentVersion: boolean = false,
-): [ResolvedVersionOperationsHashMap, OperationIdentityMap] {
-  const { buildType, currentGroup, previousGroup } = ctx.config
-  const resolvedHashMap: ResolvedVersionOperationsHashMap = {}
-  const normalizedToOriginalOperationIdMap: Record<NormalizedOperationId | OperationId, OperationId> = {}
-
-  for (const operation of operations) {
-    const { operationId, dataHash } = operation
-    const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(operation) ?? operationId
-    resolvedHashMap[normalizedOperationId] = dataHash
-    normalizedToOriginalOperationIdMap[normalizedOperationId] = operationId
-  }
-
-  if (buildType !== BUILD_TYPE.PREFIX_GROUPS_CHANGELOG) {
-    return [resolvedHashMap, normalizedToOriginalOperationIdMap]
-  }
-
-  if (!currentGroup || !previousGroup) {
-    ctx.notifications.push({
-      severity: MESSAGE_SEVERITY.Warning,
-      message: `Build type is prefix group changelog, but one of the groups is not provided: currentGroup=${currentGroup}, previousGroup=${previousGroup}`,
-    })
-    return [resolvedHashMap, normalizedToOriginalOperationIdMap]
-  }
-
-  const changedIdToOriginal: OperationIdentityMap = {}
-
-  for (const [operationId, dataHash] of Object.entries(resolvedHashMap)) {
-    Reflect.deleteProperty(resolvedHashMap, operationId)
-
-    const groupSlug = convertToSlug(areOperationsFromCurrentVersion ? currentGroup : previousGroup)
-
-    if (operationId.startsWith(groupSlug)) {
-      const changedOperationId = operationId.substring(groupSlug.length)
-      resolvedHashMap[changedOperationId] = dataHash
-      changedIdToOriginal[changedOperationId] = normalizedToOriginalOperationIdMap[operationId]
-    }
-  }
-
-  return [resolvedHashMap, changedIdToOriginal]
-}
-
 export function getOperationMetadata(operation: ResolvedOperation): OperationChangesMetadata {
   return {
     title: operation.title,
