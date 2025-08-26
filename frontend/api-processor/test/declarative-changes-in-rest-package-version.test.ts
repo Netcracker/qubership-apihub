@@ -15,7 +15,7 @@
  */
 
 import { buildChangelogPackage, changesSummaryMatcher, numberOfImpactedOperationsMatcher } from './helpers'
-import { BREAKING_CHANGE_TYPE, NON_BREAKING_CHANGE_TYPE, RISKY_CHANGE_TYPE, SEMI_BREAKING_CHANGE_TYPE } from '../src'
+import { BREAKING_CHANGE_TYPE, NON_BREAKING_CHANGE_TYPE, RISKY_CHANGE_TYPE } from '../src'
 
 describe('Number of declarative changes in rest package version test', () => {
   test('Two operations use one schema in response', async () => {

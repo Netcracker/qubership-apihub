@@ -17,7 +17,6 @@
 import {
   ApiBuilder,
   ChangeSummary,
-  CompareContext,
   DIFF_TYPES,
   ImpactedOperationSummary,
   NormalizedOperationId,
@@ -27,10 +26,9 @@ import {
   OperationsApiType,
   OperationTypes,
   ResolvedOperation,
-  ResolvedVersionOperationsHashMap,
   VersionCache,
 } from '../../types'
-import { BUILD_TYPE, EMPTY_CHANGE_SUMMARY, MESSAGE_SEVERITY } from '../../consts'
+import { EMPTY_CHANGE_SUMMARY } from '../../consts'
 import {
   calculateChangeSummary,
   calculateImpactedSummary,
@@ -38,14 +36,8 @@ import {
   removeFirstSlash,
   takeIfDefined,
 } from '../../utils'
-import { validateBwcBreakingChanges } from './bwc.validation'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
-
-export const totalChanges = (changeSummary?: ChangeSummary): number => {
-  return changeSummary
-    ? Object.values(changeSummary).reduce((acc, current) => acc + current, 0)
-    : 0
-}
+import { reclassifyNoBwcBreakingChanges } from './bwc.validation'
 
 export function calculateTotalChangeSummary(
   summaries: ChangeSummary[],
@@ -171,6 +163,7 @@ export const createPairOperationsMap = (
   for (const previousOperation of previousOperations) {
     const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(previousOperation) ?? previousOperation.operationId
     const prevOperationId = takeSubstringIf(!!prevGroupSlug, normalizedOperationId, prevGroupSlug.length + '-'.length)
+    // todo fix
     // todo it won't work if groups have different length (add test with /api/v1/ and /api/abc/)
     const operationsMappingElement = operationsMap[prevOperationId]
     operationsMap[prevOperationId] = {
@@ -182,11 +175,22 @@ export const createPairOperationsMap = (
   return operationsMap
 }
 
-export function createOperationChange(apiType: OperationsApiType, operationDiffs: Diff[], previous?: ResolvedOperation, current?: ResolvedOperation, currGroupSlug?: string, prevGroupSlug?: string, currentGroup?: string, previousGroup?: string): OperationChanges {
-  const changeSummary = calculateChangeSummary(operationDiffs)
+export function createOperationChange(
+  apiType: OperationsApiType,
+  operationDiffs: Diff[],
+  previous?: ResolvedOperation,
+  current?: ResolvedOperation,
+  currGroupSlug?: string,
+  prevGroupSlug?: string,
+  currentGroup?: string,
+  previousGroup?: string,
+): OperationChanges {
+  const reclassifiedDiffs = reclassifyNoBwcBreakingChanges(operationDiffs, previous, current)
+  const changeSummary = calculateChangeSummary(reclassifiedDiffs)
   const impactedSummary = calculateImpactedSummary([changeSummary])
 
   const currentOperationFields = current && {
+    // todo remove one that is excessive: slug or group
     operationId: takeSubstringIf(!!currGroupSlug, current.operationId, removeFirstSlash(currentGroup ?? '').length),
     apiKind: current.apiKind,
     metadata: getOperationMetadata(current),
@@ -198,15 +202,12 @@ export function createOperationChange(apiType: OperationsApiType, operationDiffs
     previousMetadata: getOperationMetadata(previous),
   }
 
-  const operationChange = {
+  return {
     apiType,
-    diffs: operationDiffs,
+    diffs: reclassifiedDiffs,
     changeSummary: changeSummary,
     impactedSummary: impactedSummary,
     ...currentOperationFields,
     ...previousOperationFields,
   }
-  validateBwcBreakingChanges(operationChange)
-
-  return operationChange
 }

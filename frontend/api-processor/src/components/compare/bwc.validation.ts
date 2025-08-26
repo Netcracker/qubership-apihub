@@ -14,29 +14,22 @@
  * limitations under the License.
  */
 
-import { BREAKING_CHANGE_TYPE, OperationChanges, RISKY_CHANGE_TYPE } from '../../types'
+import { BREAKING_CHANGE_TYPE, ResolvedOperation, RISKY_CHANGE_TYPE } from '../../types'
 import { API_KIND } from '../../consts'
+import { Diff } from '@netcracker/qubership-apihub-api-diff'
 
-export function validateBwcBreakingChanges(
-  operationChanges: OperationChanges,
-): void {
-  if (!operationChanges.changeSummary?.breaking) {
-    return
+export function reclassifyNoBwcBreakingChanges(
+  operationDiffs: Diff[],
+  previous?: ResolvedOperation,
+  current?: ResolvedOperation,
+): Diff[] {
+  if (current?.apiKind === API_KIND.NO_BWC || previous?.apiKind === API_KIND.NO_BWC) {
+    return operationDiffs?.map((diff) => {
+      if (diff.type !== BREAKING_CHANGE_TYPE) {
+        return diff
+      }
+      return { ...diff, type: RISKY_CHANGE_TYPE }
+    })
   }
-  if (operationChanges.apiKind !== API_KIND.NO_BWC && operationChanges.previousApiKind !== API_KIND.NO_BWC) {
-    return
-  }
-
-  operationChanges.changeSummary[RISKY_CHANGE_TYPE] = operationChanges.changeSummary[BREAKING_CHANGE_TYPE]
-  operationChanges.changeSummary[BREAKING_CHANGE_TYPE] = 0
-
-  operationChanges.impactedSummary[BREAKING_CHANGE_TYPE] = false
-  operationChanges.impactedSummary[RISKY_CHANGE_TYPE] = true
-
-  operationChanges.diffs = operationChanges.diffs?.map((diff) => {
-    if (diff.type !== BREAKING_CHANGE_TYPE) {
-      return { ...diff }
-    }
-    return { ...diff, type: RISKY_CHANGE_TYPE }
-  })
+  return operationDiffs
 }

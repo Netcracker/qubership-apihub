@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-import { VersionGraphQLOperation } from './graphql.types'
-import { isEmpty, removeComponents, removeFirstSlash, slugify, takeIf } from '../../utils'
-import {
-  apiDiff,
-  COMPARE_MODE_OPERATION,
-  Diff,
-  DIFF_META_KEY,
-  DIFFS_AGGREGATED_META_KEY,
-} from '@netcracker/qubership-apihub-api-diff'
+import { isEmpty, removeFirstSlash, slugify, takeIf } from '../../utils'
+import { apiDiff, Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
 import { GraphApiOperation, GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 import { buildSchema } from 'graphql/utilities'
@@ -132,33 +125,6 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
   }
 
   return { operationChanges: changedOperations, tags: [...tags.values()] }
-}
-
-/** @deprecated */
-export const graphqlOperationsCompare = async (current: VersionGraphQLOperation | undefined, previous: VersionGraphQLOperation | undefined): Promise<Diff[]> => {
-  let previousOperation = removeComponents(previous?.data)
-  let currentOperation = removeComponents(current?.data)
-  if (!previousOperation && currentOperation) {
-    previousOperation = getCopyWithEmptyOperations(currentOperation as GraphApiSchema)
-  }
-
-  if (previousOperation && !currentOperation) {
-    currentOperation = getCopyWithEmptyOperations(previousOperation as GraphApiSchema)
-  }
-
-  //todo think about normalize options
-  const { diffs } = apiDiff(
-    previousOperation,
-    currentOperation,
-    {
-      ...NORMALIZE_OPTIONS,
-      mode: COMPARE_MODE_OPERATION,
-      normalizedResult: true,
-      beforeSource: previous?.data,
-      afterSource: current?.data,
-    },
-  )
-  return diffs
 }
 
 function getCopyWithEmptyOperations(template: GraphApiSchema): GraphApiSchema {

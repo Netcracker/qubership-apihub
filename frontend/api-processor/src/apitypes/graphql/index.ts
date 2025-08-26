@@ -21,7 +21,7 @@ import { buildGraphQLOperations } from './graphql.operations'
 import { GRAPHQL_API_TYPE, GRAPHQL_DOCUMENT_TYPE } from './graphql.consts'
 import { parseGraphQLFile } from './graphql.parser'
 import { ApiBuilder } from '../../types'
-import { compareDocuments, graphqlOperationsCompare } from './graphql.changes'
+import { compareDocuments } from './graphql.changes'
 
 export * from './graphql.consts'
 
@@ -32,6 +32,5 @@ export const graphqlApiBuilder: ApiBuilder<GraphApiSchema> = {
   buildDocument: buildGraphQLDocument,
   buildOperations: buildGraphQLOperations,
   dumpDocument: dumpGraphQLDocument,
-  compareOperationsData: graphqlOperationsCompare,
   compareDocuments: compareDocuments,
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { RestOperationData, VersionRestOperation } from './rest.types'
+import { RestOperationData } from './rest.types'
 import {
   areDeprecatedOriginsNotEmpty,
   IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER,
@@ -22,14 +22,12 @@ import {
   isOperationRemove,
   isPathParamRenameDiff,
   normalizePath,
-  removeComponents,
   removeFirstSlash,
   slugify,
 } from '../../utils'
 import {
   apiDiff,
   breaking,
-  COMPARE_MODE_OPERATION,
   Diff,
   DIFF_META_KEY,
   DiffAction,
@@ -79,12 +77,10 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
   const isChangedOperations = prevDoc && currDoc
 
   if (prevDocData && previousGroup) {
-    // todo what's with components? why don't remove?
     prevDocData = createCopyWithCurrentGroupOperationsOnly(prevDocData, previousGroup)
   }
 
   if (currDocData && currentGroup) {
-    // todo what's with components? why don't remove?
     currDocData = createCopyWithCurrentGroupOperationsOnly(currDocData, currentGroup)
   }
 
@@ -158,10 +154,6 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
           // ignore removed and added operations, they'll be handled in a separate docs comparison
           continue
         }
-        // const deprecatedInVersionsCount = previousVersionDeprecations?.operations.find((operation) => operation.operationId === operationId)?.deprecatedInPreviousVersions?.length ?? 0
-        // if (isOperationRemove(operationDiff) && deprecatedInVersionsCount > 1) {
-        //   operationDiff.type = risky
-        // }
         operationDiffs.push(operationDiff)
       }
 
@@ -169,10 +161,7 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
         continue
       }
 
-      const onlyBreaking = operationDiffs.filter((diff) => diff.type === breaking)
-      if (onlyBreaking.length > 0 && previous?.operationId) {
-        await reclassifyBreakingChanges(previous.operationId, merged, onlyBreaking, ctx)
-      }
+      await reclassifyBreakingChanges(previous?.operationId, merged, operationDiffs, ctx)
 
       changedOperations.push(createOperationChange(apiType, operationDiffs, previous, current, currGroupSlug, prevGroupSlug, currentGroup, previousGroup))
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
@@ -182,57 +171,31 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
   return { operationChanges: changedOperations, tags: [...tags.values()] }
 }
 
-/** @deprecated */
-export const compareRestOperationsData = async (current: VersionRestOperation | undefined, previous: VersionRestOperation | undefined, ctx: CompareOperationsPairContext): Promise<Diff[]> => {
-
-  let previousOperation = removeComponents(previous?.data)
-  let currentOperation = removeComponents(current?.data)
-  if (!previousOperation && currentOperation) {
-    previousOperation = createCopyWithEmptyPathItems(currentOperation as RestOperationData)
-  }
-
-  if (previousOperation && !currentOperation) {
-    currentOperation = createCopyWithEmptyPathItems(previousOperation as RestOperationData)
-  }
-
-  const diffResult = apiDiff(
-    previousOperation,
-    currentOperation,
-    {
-      ...NORMALIZE_OPTIONS,
-      originsFlag: ORIGINS_SYMBOL,
-      mode: COMPARE_MODE_OPERATION,
-      normalizedResult: true,
-      beforeSource: previous?.data,
-      afterSource: current?.data,
-    },
-  )
-  const olnyBreaking = diffResult.diffs.filter((diff) => diff.type === breaking)
-  if (olnyBreaking.length > 0 && previous?.operationId) {
-    await reclassifyBreakingChanges(previous.operationId, diffResult.merged, olnyBreaking, ctx)
-  }
-  return diffResult.diffs
-}
-
 async function reclassifyBreakingChanges(
-  operationId: string,
+  previousOperationId: string | undefined,
   mergedJso: unknown,
   diffs: Diff[],
   ctx: CompareOperationsPairContext,
 ): Promise<void> {
-  if (!ctx.previousVersion || !ctx.previousPackageId) {
-    return
-  }
-  const previosVersionDeprecations = await ctx.versionDeprecatedResolver(REST_API_TYPE, ctx.previousVersion, ctx.previousPackageId, [operationId])
-  if (!previosVersionDeprecations) {
+  if (!previousOperationId || !ctx.previousVersion || !ctx.previousPackageId) {
     return
   }
 
-  const previousOperation = previosVersionDeprecations.operations[0]
+  const onlyBreaking = diffs.filter((diff) => diff.type === breaking)
+  if (isEmpty(onlyBreaking)) {
+    return
+  }
+
+  const previousVersionDeprecations = await ctx.versionDeprecatedResolver(REST_API_TYPE, ctx.previousVersion, ctx.previousPackageId, [previousOperationId])
+  if (!previousVersionDeprecations) {
+    return
+  }
+
+  const [previousOperation] = previousVersionDeprecations.operations
 
   if (!previousOperation?.deprecatedItems) { return }
 
-  for (const diff of diffs) {
+  for (const diff of onlyBreaking) {
     if (diff.type !== breaking) {
       continue
     }
@@ -286,15 +249,13 @@ async function reclassifyBreakingChanges(
     }
   }
   // mark removed required status of the property as risky
-  if (diffs.length) {
-    const requiredProperties = findRequiredRemovedProperties(mergedJso, diffs)
+  const requiredProperties = findRequiredRemovedProperties(mergedJso, onlyBreaking)
 
-    requiredProperties?.forEach(prop => {
-      if (prop.propDiff.type === RISKY_CHANGE_TYPE && prop.requiredDiff?.type === BREAKING_CHANGE_TYPE) {
-        prop.requiredDiff.type = risky
-      }
-    })
-  }
+  requiredProperties?.forEach(prop => {
+    if (prop.propDiff.type === RISKY_CHANGE_TYPE && prop.requiredDiff?.type === BREAKING_CHANGE_TYPE) {
+      prop.requiredDiff.type = risky
+    }
+  })
 }
 
 export function createCopyWithEmptyPathItems(template: RestOperationData): RestOperationData {

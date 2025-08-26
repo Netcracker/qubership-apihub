@@ -20,7 +20,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
 
-
 components:
   schemas:
     User:
