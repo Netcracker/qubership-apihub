@@ -31,7 +31,12 @@ import type {
 import { ADD_CHANGE_ROLE_ACTION, REMOVE_CHANGE_ROLE_ACTION, toPackageMembers } from '../package-settings'
 import { generatePath } from 'react-router-dom'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import type { IsError, IsLoading, IsSuccess, OptionInvalidateQuery } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import type {
+  IsError,
+  IsLoading,
+  IsSuccess,
+  OptionInvalidateQuery,
+} from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { portalRequestJson, portalRequestVoid } from '@apihub/utils/requests'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import { useInvalidatePackage } from '@apihub/routes/root/usePackage'
@@ -60,17 +65,17 @@ type AddPackageMemberRoleData = {
   value: AddPackageMemberProps
 }
 
-export function usePackageMembers(packageKey: Key): [PackageMembers, IsLoading, Error | null] {
-  const { data, isLoading, error } = useQuery<PackageMembersDto, Error, PackageMembers>({
+export function usePackageMembers(packageKey: Key, enabled = true): [PackageMembers, IsLoading, Error | null] {
+  const { data, isInitialLoading, error } = useQuery<PackageMembersDto, Error, PackageMembers>({
     queryKey: [USER_PACKAGE_ACCESS_QUERY_KEY, packageKey],
     queryFn: () => getPackageMembers(packageKey!),
-    enabled: !!packageKey,
+    enabled: !!packageKey && enabled,
     select: toPackageMembers,
   })
 
   return [
     data ?? [],
-    isLoading,
+    isInitialLoading,
     error,
   ]
 }

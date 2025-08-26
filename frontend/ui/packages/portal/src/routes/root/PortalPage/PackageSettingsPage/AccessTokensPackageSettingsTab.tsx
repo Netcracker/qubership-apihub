@@ -45,12 +45,12 @@ export const AccessTokensPackageSettingsTab: FC<PackageSettingsTabProps> = memo<
 
   const [availableRoles, isLoadingRoles] = useAvailablePackageRoles(packageKey, user?.key ?? '')
 
-  const [tokensList, isTokensLoading] = useTokens(packageKey!)
+  const [tokensList, isTokensLoading] = useTokens(packageKey!, hasTokenManagementPermission)
   const [deleteAPIKey] = useDeleteApiKey()
   const [generatedApiKey, generateApiKey, isLoading] = useGenerateApiKey()
 
   const [userSearch, setUserSearch] = useState<string>('')
-  const [usersData, isUsersDataLoading] = useUsers(userSearch)
+  const [usersData, isUsersDataLoading] = useUsers({ searchValue: userSearch, enabled: hasTokenManagementPermission })
 
   const handleGenerateToken = useCallback((value: GenerateApiKeyValue): void => {
     generateApiKey({ value, packageKey })

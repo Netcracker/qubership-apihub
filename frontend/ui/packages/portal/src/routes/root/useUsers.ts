@@ -24,14 +24,17 @@ import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/uti
 
 const USERS_QUERY_KEY = 'users-query-key'
 
-export function useUsers(searchValue: string, packageKey?: Key, limit?: number, page?: number): [Users | null, IsLoading, Error | null] {
-  const { data, isLoading, error } = useQuery<UsersDto, Error, Users>({
+export function useUsers(
+  { searchValue, packageKey, enabled = true }: { searchValue: string; packageKey?: Key | undefined; enabled?: boolean },
+): [Users | null, IsLoading, Error | null] {
+  const { data, error, isInitialLoading } = useQuery<UsersDto, Error, Users>({
     queryKey: [USERS_QUERY_KEY, packageKey, searchValue],
-    queryFn: () => getUsersByFilter(searchValue, limit, page),
+    queryFn: () => getUsersByFilter(searchValue),
     select: toUsers,
+    enabled: enabled,
   })
 
-  return [data ?? null, isLoading, error]
+  return [data ?? null, isInitialLoading, error]
 }
 
 export async function getUsersByFilter(

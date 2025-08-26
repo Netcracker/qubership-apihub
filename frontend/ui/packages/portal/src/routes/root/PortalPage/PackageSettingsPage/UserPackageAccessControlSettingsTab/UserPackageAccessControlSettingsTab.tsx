@@ -60,15 +60,19 @@ export const UserPackageAccessControlSettingsTab: FC<PackageSettingsTabProps> = 
 
   const [user] = useUser()
   const [availablePackageRoles, isRolesPackageLoading] = useAvailablePackageRoles(packageObject.key, user?.key ?? '')
-  const [packageMembers, isPackageMembersLoading] = usePackageMembers(packageObject.key)
+  const [packageMembers, isPackageMembersLoading] = usePackageMembers(packageObject.key, hasUserAccessManagementPermission)
 
   const isLoading = useMemo(() => isRolesPackageLoading && isPackageMembersLoading, [isRolesPackageLoading, isPackageMembersLoading])
 
-  const { data: roles, isLoading: isRolesLoading } = useRoles()
-  const [permissions, isPermissionsLoading] = usePermissions()
+  const { data: roles, isLoading: isRolesLoading } = useRoles(hasUserAccessManagementPermission)
+  const [permissions, isPermissionsLoading] = usePermissions(hasUserAccessManagementPermission)
 
   const [usersSearch, setUsersSearch] = useState('')
-  const [usersData, isUsersDataLoading] = useUsers(usersSearch, packageObject.key)
+  const [usersData, isUsersDataLoading] = useUsers({
+    searchValue: usersSearch,
+    packageKey: packageObject.key,
+    enabled: hasUserAccessManagementPermission,
+  })
   const handleSetUserSearch = useCallback((search: string) => {
     setUsersSearch(search)
   }, [])
@@ -93,7 +97,7 @@ export const UserPackageAccessControlSettingsTab: FC<PackageSettingsTabProps> = 
           <Box display="flex" alignItems="center">
             Access Control
             <IconButton onClick={showUserRolesDialog} data-testid="AcHelpButton">
-              <HelpOutlineIcon sx={{ color: '#626D82', width: '16px', height: '16px' }} />
+              <HelpOutlineIcon sx={{ color: '#626D82', width: '16px', height: '16px' }}/>
             </IconButton>
           </Box>
         }
@@ -104,7 +108,7 @@ export const UserPackageAccessControlSettingsTab: FC<PackageSettingsTabProps> = 
               disabled={!hasUserAccessManagementPermission}
               disableHint={hasUserAccessManagementPermission}
               hint="You do not have permission to add member"
-              startIcon={<AddIcon />}
+              startIcon={<AddIcon/>}
               title="Add User"
               onClick={showAddUserDialog}
               data-testid="AddUserButton"
@@ -119,7 +123,7 @@ export const UserPackageAccessControlSettingsTab: FC<PackageSettingsTabProps> = 
           </Box>
         }
         body={isLoading ? (
-          <LoadingIndicator />
+          <LoadingIndicator/>
         ) : (
           <Box marginTop="8px" marginBottom="16px" overflow="hidden" height="100%">
             <UserAccessControlTable
