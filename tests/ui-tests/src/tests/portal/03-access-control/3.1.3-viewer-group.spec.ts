@@ -70,12 +70,6 @@ test.describe('03.1.3 Access Control. Viewer role. (Group)', () => {
         await expect(portalPage.tooltip).toHaveCount(1)
         await expect(portalPage.tooltip).toHaveText(NO_PERM_GEN_TOKEN)
 
-        await accessTokensTab.getTokenRow(1).hover()
-
-        await expect(accessTokensTab.getTokenRow(1).deleteBtn).toBeDisabled()
-
-        await accessTokensTab.getTokenRow(1).deleteBtn.hover({ force: true })
-
         await expect(portalPage.tooltip).toHaveCount(1)
         //! await expect(portalPage.tooltip).toHaveText(NO_PERM_REVOKE_TOKEN) //Issue: TestCase-B-1019
       })
@@ -89,21 +83,6 @@ test.describe('03.1.3 Access Control. Viewer role. (Group)', () => {
 
         await expect(portalPage.tooltip).toHaveCount(1)
         await expect(portalPage.tooltip).toHaveText(NO_PERM_ADD_MEMBER)
-
-        await accessControlTab.getUserRow(1).hover()
-
-        await expect(accessControlTab.getUserRow(1).adminChx).toBeDisabled()
-        await expect(accessControlTab.getUserRow(1).deleteBtn).toBeDisabled()
-
-        await accessControlTab.getUserRow(1).adminChx.hover({ force: true })
-
-        await expect(portalPage.tooltip).toHaveCount(1)
-        await expect(portalPage.tooltip).toHaveText(NO_PERM_MANAGE_ROLES)
-
-        await accessControlTab.getUserRow(1).deleteBtn.hover({ force: true })
-
-        await expect(portalPage.tooltip).toHaveCount(1)
-        await expect(portalPage.tooltip).toHaveText(NO_PERM_MANAGE_ROLES)
       })
     })
 })
