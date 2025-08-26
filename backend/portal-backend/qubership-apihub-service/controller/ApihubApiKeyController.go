@@ -27,12 +27,8 @@ import (
 )
 
 type ApihubApiKeyController interface {
-	CreateApiKey_deprecated(w http.ResponseWriter, r *http.Request)
-	CreateApiKey_v3_deprecated(w http.ResponseWriter, r *http.Request)
 	CreateApiKey(w http.ResponseWriter, r *http.Request)
 	RevokeApiKey(w http.ResponseWriter, r *http.Request)
-	GetApiKeys_deprecated(w http.ResponseWriter, r *http.Request)
-	GetApiKeys_v3_deprecated(w http.ResponseWriter, r *http.Request)
 	GetApiKeys(w http.ResponseWriter, r *http.Request)
 	GetApiKeyByKey(w http.ResponseWriter, r *http.Request)
 	GetApiKeyById(w http.ResponseWriter, r *http.Request)
@@ -48,144 +44,6 @@ func NewApihubApiKeyController(apihubApiKeyService service.ApihubApiKeyService, 
 type ApihubApiKeyControllerImpl struct {
 	apihubApiKeyService service.ApihubApiKeyService
 	roleService         service.RoleService
-}
-
-func (a ApihubApiKeyControllerImpl) CreateApiKey_deprecated(w http.ResponseWriter, r *http.Request) {
-	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
-
-	if packageId == "*" {
-		if !a.roleService.IsSysadm(ctx) {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusForbidden,
-				Code:    exception.InsufficientPrivileges,
-				Message: exception.InsufficientPrivilegesMsg,
-				Debug:   "Only system administrator can create api key for all packages",
-			})
-			return
-		}
-	} else {
-		sufficientPrivileges, err := a.roleService.HasRequiredPermissions(ctx, packageId, view.AccessTokenManagementPermission)
-		if err != nil {
-			utils.RespondWithError(w, "Failed to check user privileges", err)
-			return
-		}
-		if !sufficientPrivileges {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusForbidden,
-				Code:    exception.InsufficientPrivileges,
-				Message: exception.InsufficientPrivilegesMsg,
-				Debug:   "Access token management permission is required to create api key for the package",
-			})
-			return
-		}
-	}
-
-	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.BadRequestBody,
-			Message: exception.BadRequestBodyMsg,
-			Debug:   err.Error(),
-		})
-		return
-	}
-	var createApiKeyReq view.ApihubApiKeyCreateReq_deprecated
-	err = json.Unmarshal(body, &createApiKeyReq)
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.BadRequestBody,
-			Message: exception.BadRequestBodyMsg,
-			Debug:   err.Error(),
-		})
-		return
-	}
-	validationErr := utils.ValidateObject(createApiKeyReq)
-	if validationErr != nil {
-		if customError, ok := validationErr.(*exception.CustomError); ok {
-			utils.RespondWithCustomError(w, customError)
-			return
-		}
-	}
-
-	apiKey, err := a.apihubApiKeyService.CreateApiKey_deprecated(ctx, packageId, createApiKeyReq.Name, createApiKeyReq.Roles)
-	if err != nil {
-		utils.RespondWithError(w, "Failed to create apihub api key", err)
-		return
-	}
-	utils.RespondWithJson(w, http.StatusOK, apiKey)
-}
-
-func (a ApihubApiKeyControllerImpl) CreateApiKey_v3_deprecated(w http.ResponseWriter, r *http.Request) {
-	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
-
-	if packageId == "*" {
-		if !a.roleService.IsSysadm(ctx) {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusForbidden,
-				Code:    exception.InsufficientPrivileges,
-				Message: exception.InsufficientPrivilegesMsg,
-				Debug:   "Only system administrator can create api key for all packages",
-			})
-			return
-		}
-	} else {
-		sufficientPrivileges, err := a.roleService.HasRequiredPermissions(ctx, packageId, view.AccessTokenManagementPermission)
-		if err != nil {
-			utils.RespondWithError(w, "Failed to check user privileges", err)
-			return
-		}
-		if !sufficientPrivileges {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusForbidden,
-				Code:    exception.InsufficientPrivileges,
-				Message: exception.InsufficientPrivilegesMsg,
-				Debug:   "Access token management permission is required to create api key for the package",
-			})
-			return
-		}
-	}
-
-	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.BadRequestBody,
-			Message: exception.BadRequestBodyMsg,
-			Debug:   err.Error(),
-		})
-		return
-	}
-	var createApiKeyReq view.ApihubApiKeyCreateReq
-	err = json.Unmarshal(body, &createApiKeyReq)
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.BadRequestBody,
-			Message: exception.BadRequestBodyMsg,
-			Debug:   err.Error(),
-		})
-		return
-	}
-	validationErr := utils.ValidateObject(createApiKeyReq)
-	if validationErr != nil {
-		if customError, ok := validationErr.(*exception.CustomError); ok {
-			utils.RespondWithCustomError(w, customError)
-			return
-		}
-	}
-
-	apiKey, err := a.apihubApiKeyService.CreateApiKey_v3_deprecated(ctx, packageId, createApiKeyReq.Name, createApiKeyReq.Roles)
-	if err != nil {
-		utils.RespondWithError(w, "Failed to create apihub api key", err)
-		return
-	}
-	utils.RespondWithJson(w, http.StatusOK, apiKey)
 }
 
 func (a ApihubApiKeyControllerImpl) CreateApiKey(w http.ResponseWriter, r *http.Request) {
@@ -296,69 +154,34 @@ func (a ApihubApiKeyControllerImpl) RevokeApiKey(w http.ResponseWriter, r *http.
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (a ApihubApiKeyControllerImpl) GetApiKeys_deprecated(w http.ResponseWriter, r *http.Request) {
-	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
-	sufficientPrivileges, err := a.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
-	if err != nil {
-		utils.RespondWithError(w, "Failed to check user privileges", err)
-		return
-	}
-	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusForbidden,
-			Code:    exception.InsufficientPrivileges,
-			Message: exception.InsufficientPrivilegesMsg,
-		})
-		return
-	}
-	apiKeys, err := a.apihubApiKeyService.GetProjectApiKeys_deprecated(packageId)
-	if err != nil {
-		utils.RespondWithError(w, "Failed to get all apihub api keys", err)
-		return
-	}
-	utils.RespondWithJson(w, http.StatusOK, apiKeys)
-}
-
-func (a ApihubApiKeyControllerImpl) GetApiKeys_v3_deprecated(w http.ResponseWriter, r *http.Request) {
-	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
-	sufficientPrivileges, err := a.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
-	if err != nil {
-		utils.RespondWithError(w, "Failed to check user privileges", err)
-		return
-	}
-	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusForbidden,
-			Code:    exception.InsufficientPrivileges,
-			Message: exception.InsufficientPrivilegesMsg,
-		})
-		return
-	}
-	apiKeys, err := a.apihubApiKeyService.GetProjectApiKeys(packageId)
-	if err != nil {
-		utils.RespondWithError(w, "Failed to get all apihub api keys", err)
-		return
-	}
-	utils.RespondWithJson(w, http.StatusOK, apiKeys)
-}
-
 func (a ApihubApiKeyControllerImpl) GetApiKeys(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
 	ctx := context.Create(r)
-	sufficientPrivileges, err := a.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
-	if err != nil {
-		utils.RespondWithError(w, "Failed to check user privileges", err)
-		return
-	}
-	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusForbidden,
-			Code:    exception.InsufficientPrivileges,
-			Message: exception.InsufficientPrivilegesMsg,
-		})
-		return
+	if packageId == "*" {
+		if !a.roleService.IsSysadm(ctx) {
+			utils.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusForbidden,
+				Code:    exception.InsufficientPrivileges,
+				Message: exception.InsufficientPrivilegesMsg,
+				Debug:   "Only system administrator can get api keys for all packages",
+			})
+			return
+		}
+	} else {
+		sufficientPrivileges, err := a.roleService.HasRequiredPermissions(ctx, packageId, view.AccessTokenManagementPermission)
+		if err != nil {
+			utils.RespondWithError(w, "Failed to check user privileges", err)
+			return
+		}
+		if !sufficientPrivileges {
+			utils.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusForbidden,
+				Code:    exception.InsufficientPrivileges,
+				Message: exception.InsufficientPrivilegesMsg,
+				Debug:   "Access token management permission is required to get api keys for the package",
+			})
+			return
+		}
 	}
 	apiKeys, err := a.apihubApiKeyService.GetProjectApiKeys(packageId)
 	if err != nil {

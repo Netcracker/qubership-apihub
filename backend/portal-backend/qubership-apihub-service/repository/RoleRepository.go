@@ -16,6 +16,7 @@ package repository
 
 import (
 	"context"
+
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
@@ -41,6 +42,7 @@ type RoleRepository interface {
 	GetRole(roleId string) (*entity.RoleEntity, error)
 	GetPermissionsForRoles(roles []string) ([]string, error)
 	GetUserPermissions(packageId string, userId string) ([]string, error)
+	GetAllUserPermissions(userId string) ([]string, error)
 	SetRoleRanks(entities []entity.RoleEntity) error
 	GetUsersBySystemRole(systemRole string) ([]entity.UserEntity, error)
 }
@@ -410,6 +412,34 @@ func (r roleRepositoryImpl) GetUserPermissions(packageId string, userId string) 
 			where id in (?)
 	);`
 	_, err := r.cp.GetConnection().Query(&permissions, query, pg.In(packageIds), userId, pg.In(packageIds))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]string, 0)
+	for _, p := range permissions {
+		result = append(result, p.Permission)
+	}
+	return result, nil
+}
+
+func (r roleRepositoryImpl) GetAllUserPermissions(userId string) ([]string, error) {
+	var permissions []Permission
+	query := `
+	select distinct unnest(permissions) as permission
+	from role 
+	where id in(
+		select unnest(roles) as role
+		from 
+			package_member_role
+			where user_id = ?
+			union
+			select default_role as role
+			from package_group
+			where id in (
+				select package_id from package_member_role where user_id = ?
+			)
+	);`
+	_, err := r.cp.GetConnection().Query(&permissions, query, userId, userId)
 	if err != nil {
 		return nil, err
 	}

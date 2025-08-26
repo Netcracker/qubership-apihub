@@ -56,7 +56,7 @@ type roleControllerImpl struct {
 func (c roleControllerImpl) GetPackageMembers(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
 	ctx := context.Create(r)
-	sufficientPrivileges, err := c.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	sufficientPrivileges, err := c.roleService.HasRequiredPermissions(ctx, packageId, view.UserAccessManagementPermission)
 	if err != nil {
 		utils.RespondWithError(w, "Failed to check user privileges", err)
 		return
@@ -348,6 +348,20 @@ func (c roleControllerImpl) UpdateRole(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c roleControllerImpl) GetExistingRoles(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Create(r)
+	sufficientPrivileges, err := c.roleService.HasRequiredPermissionsAcrossAllPackages(ctx, view.UserAccessManagementPermission)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
 	roles, err := c.roleService.GetExistingRolesExcludingNone()
 	if err != nil {
 		utils.RespondWithError(w, "Failed to get existing roles", err)
@@ -357,6 +371,20 @@ func (c roleControllerImpl) GetExistingRoles(w http.ResponseWriter, r *http.Requ
 }
 
 func (c roleControllerImpl) GetExistingPermissions(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Create(r)
+	sufficientPrivileges, err := c.roleService.HasRequiredPermissionsAcrossAllPackages(ctx, view.UserAccessManagementPermission)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
 	permissions, err := c.roleService.GetExistingPermissions()
 	if err != nil {
 		utils.RespondWithError(w, "Failed to get permissions list", err)

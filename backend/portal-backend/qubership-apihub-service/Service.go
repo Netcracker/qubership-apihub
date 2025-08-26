@@ -381,7 +381,7 @@ func main() {
 	roleController := controller.NewRoleController(roleService)
 	samlAuthController := controller.NewSamlAuthController(userService, systemInfoService, idpManager) //deprecated
 	authController := controller.NewAuthController(systemInfoService, idpManager)
-	userController := controller.NewUserController(userService, privateUserPackageService, roleService.IsSysadm)
+	userController := controller.NewUserController(userService, privateUserPackageService, roleService)
 	jwtPubKeyController := controller.NewJwtPubKeyController()
 	oauthController := controller.NewOauth20Controller(integrationsService, userService, systemInfoService)
 	logoutController := controller.NewLogoutController(tokenRevocationService, systemInfoService)
@@ -495,11 +495,7 @@ func main() {
 	r.HandleFunc("/api/v2/packages", security.Secure(packageController.GetPackagesList)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/publish/availableStatuses", security.Secure(packageController.GetAvailableVersionStatusesForPublish)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v2/packages/{packageId}/apiKeys", security.Secure(apihubApiKeyController.GetApiKeys_deprecated)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v3/packages/{packageId}/apiKeys", security.Secure(apihubApiKeyController.GetApiKeys_v3_deprecated)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v4/packages/{packageId}/apiKeys", security.Secure(apihubApiKeyController.GetApiKeys)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/packages/{packageId}/apiKeys", security.Secure(apihubApiKeyController.CreateApiKey_deprecated)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v3/packages/{packageId}/apiKeys", security.Secure(apihubApiKeyController.CreateApiKey_v3_deprecated)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v4/packages/{packageId}/apiKeys", security.Secure(apihubApiKeyController.CreateApiKey)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/packages/{packageId}/apiKeys/{id}", security.Secure(apihubApiKeyController.RevokeApiKey)).Methods(http.MethodDelete)
 
