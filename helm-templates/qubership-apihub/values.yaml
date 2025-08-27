@@ -268,3 +268,47 @@ qubershipApihubUi:
       certificate: ''
       # Private key for certificate above, base64 encoded. If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
       certificateKey: ''
+
+# Section with APIHUB API Linter service configuration
+qubershipApiLinterService:
+  image:
+    repository: 'ghcr.io/netcracker/qubership-api-linter-service' 
+    tag: 'latest'
+  replicas: 1
+
+  # Section with resource limits
+  # Mandatory
+  # Below are the default values which are good enough for any cases including production
+  resource:
+    cpu:
+      request: "30m"
+      limit: "1.25"
+    memory:
+     request: "150Mi"
+     limit: "1000Mi"
+  env:
+    # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG
+    logLevel: 'INFO'
+    
+    # Section with PostgreSQL database connection parameters
+    database:
+      # Mandatory; PostgreSQL database host ; If not set, default value: localhost; Example: postgres.example.com
+      host: ''
+      # Mandatory; PostgreSQL database port; If not set, default value: 5432; Example: 5432
+      port:
+      # Mandatory; Logical database in PostgreSQL cluster for APIHUB. Manual pre-creation required; If not set, default value: apihub; Example: apihub_backend_prod_db
+      name: ''
+      # Mandatory; User for database.name database; If not set, default value: apihub; Example: apihub_api_linter_service_prod_admin
+      username: ''
+      # Mandatory; Password for database.user.; If not set, default value: apihub; Example: apihub_api_linter_service_prod_password
+      password: ''
+    # Confguration for linters
+    linters:
+      spectral:
+        # Path to Spectral binary inside docker container
+        bin_path: 'resources/spectral/linux/spectral'
+    apihub:
+      # Apihub base URL
+      url:
+      # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
+      accessToken: ''
