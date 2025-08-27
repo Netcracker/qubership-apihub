@@ -126,8 +126,8 @@ describe('Prefix Groups test', () => {
     const result = await buildPrefixGroupChangelogPackage({
       packageId: 'prefix-groups/different-prefix-length',
       config: {
-        currentGroup: '/api/v10',
-        previousGroup: '/api/v1000',
+        previousGroup: '/api/v10',
+        currentGroup: 'api/v1000',
       },
     })
 

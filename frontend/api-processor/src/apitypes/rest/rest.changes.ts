@@ -17,6 +17,7 @@
 import { RestOperationData } from './rest.types'
 import {
   areDeprecatedOriginsNotEmpty,
+  convertToSlug,
   IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER,
   isEmpty,
   isOperationRemove,
@@ -38,10 +39,7 @@ import { MESSAGE_SEVERITY, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../const
 import {
   BREAKING_CHANGE_TYPE,
   CompareOperationsPairContext,
-  NormalizedOperationId,
   OperationChanges,
-  OperationsApiType,
-  ResolvedOperation,
   ResolvedVersionDocument,
   RISKY_CHANGE_TYPE,
   WithAggregatedDiffs,
@@ -59,16 +57,27 @@ import { calculateObjectHash } from '../../utils/hashes'
 import { REST_API_TYPE } from './rest.consts'
 import { OpenAPIV3 } from 'openapi-types'
 import { extractServersDiffs, getOperationBasePath } from './rest.utils'
-import { createOperationChange, getOperationTags } from '../../components'
+import { createOperationChange, getOperationTags, OperationsMap } from '../../components'
 
-export const compareDocuments = async (apiType: OperationsApiType, operationsMap: Record<NormalizedOperationId, {
-  previous?: ResolvedOperation
-  current?: ResolvedOperation
-}>, prevDoc: ResolvedVersionDocument | undefined, currDoc: ResolvedVersionDocument | undefined, ctx: CompareOperationsPairContext): Promise<{
+export const compareDocuments = async (
+  operationsMap: OperationsMap,
+  prevDoc: ResolvedVersionDocument | undefined,
+  currDoc: ResolvedVersionDocument | undefined,
+  ctx: CompareOperationsPairContext,
+): Promise<{
   operationChanges: OperationChanges[]
   tags: string[]
 }> => {
-  const { rawDocumentResolver, previousVersion, currentVersion, previousPackageId, currentPackageId, currentGroup, previousGroup } = ctx
+  const {
+    apiType,
+    rawDocumentResolver,
+    previousVersion,
+    currentVersion,
+    previousPackageId,
+    currentPackageId,
+    currentGroup,
+    previousGroup,
+  } = ctx
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
   const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
   let prevDocData = prevFile && JSON.parse(await prevFile.text())
@@ -108,8 +117,8 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
     return { operationChanges: [], tags: [] }
   }
 
-  const currGroupSlug = slugify(removeFirstSlash(currentGroup || ''))
-  const prevGroupSlug = slugify(removeFirstSlash(previousGroup || ''))
+  const currGroupSlug = convertToSlug(currentGroup || '')
+  const prevGroupSlug = convertToSlug(previousGroup || '')
 
   const tags = new Set<string>()
   const changedOperations: OperationChanges[] = []
@@ -127,6 +136,7 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
       }
 
       const methodData = pathData[inferredMethod]
+      // todo if there were actually servers here, we wouldn't have handle it, add a test
       const basePath = getOperationBasePath(methodData?.servers || pathData?.servers || merged.servers || [])
       const operationPath = basePath + path
       const operationId = slugify(`${operationPath}-${inferredMethod}`)

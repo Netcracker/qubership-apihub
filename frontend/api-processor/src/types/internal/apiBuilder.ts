@@ -46,6 +46,7 @@ import { DebugPerformanceContext } from '../../utils/logs'
 import { ResolvedPackage } from '../external/package'
 import { FILE_FORMAT_JSON, FILE_FORMAT_YAML } from '../../consts'
 import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
+import { OperationsMap } from '../../components'
 
 export type BuilderType =
   | typeof REST_API_TYPE
@@ -86,15 +87,19 @@ export type _RawDocumentResolver = (
 ) => Promise<File>
 
 export interface CompareOperationsPairContext {
+  apiType: OperationsApiType
   notifications: NotificationMessage[]
   rawDocumentResolver: RawDocumentResolver
   versionDeprecatedResolver: VersionDeprecatedResolver
+  versionDocumentsResolver: VersionDocumentsResolver
   previousVersion: VersionId
   currentVersion: VersionId
   previousPackageId: PackageId
   currentPackageId: PackageId
   currentGroup?: string
   previousGroup?: string
+  currentGroupSlug: string
+  previousGroupSlug: string
 }
 
 export type NormalizedOperationId = string
@@ -104,10 +109,10 @@ export type DocumentBuilder<T> = (parsedFile: TextFile, file: BuildConfigFile, c
 export type OperationsBuilder<T, M = any> = (document: VersionDocument<T>, ctx: BuilderContext<T>, debugCtx?: DebugPerformanceContext) => Promise<ApiOperation<M>[]>
 export type DocumentDumper<T> = (document: ZippableDocument<T>, format?: typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON) => Blob
 export type OperationDataCompare<T> = (current: T, previous: T, ctx: CompareOperationsPairContext) => Promise<Diff[]>
-export type DocumentsCompare = (apiType: OperationsApiType, operationsMap: Record<NormalizedOperationId, {
-  previous?: ResolvedOperation
-  current?: ResolvedOperation
-}>, currDoc: ResolvedVersionDocument | undefined, prevDoc: ResolvedVersionDocument | undefined, ctx: CompareOperationsPairContext) => Promise<{operationChanges: OperationChanges[]; tags: string[]}>
+export type DocumentsCompare = (operationsMap: OperationsMap, currDoc: ResolvedVersionDocument | undefined, prevDoc: ResolvedVersionDocument | undefined, ctx: CompareOperationsPairContext) => Promise<{
+  operationChanges: OperationChanges[]
+  tags: string[]
+}>
 export type OperationChangesValidator = (
   changes: ChangeMessage, // + ctx with internal resolvers
   previousOperation?: RestOperationData, // TODO remove

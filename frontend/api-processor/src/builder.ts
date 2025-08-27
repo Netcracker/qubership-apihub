@@ -475,7 +475,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     apiType?: OperationsApiType,
   ): Promise<ResolvedVersionDocuments | null> {
     packageId = packageId ?? this.config.packageId
-    // this is a case when the version has been built just now, and there's nothing to fetch yet, so
+    // this is the case when a version has been built just now, and there's nothing to fetch yet, so
     // the only way to get the docs is to get them from buildResult, but the referenced packages map will be empty (packages: {})
     if (this.canBeResolvedLocally(version, packageId)) {
       const apiBuilder = this.apiBuilders.find(apiBuilder => apiBuilder.apiType === apiType)

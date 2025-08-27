@@ -23,25 +23,23 @@ import { buildGraphQLDocument } from './graphql.document'
 import {
   CompareOperationsPairContext,
   FILE_KIND,
-  NormalizedOperationId,
   OperationChanges,
-  OperationsApiType,
-  ResolvedOperation,
   ResolvedVersionDocument,
   WithAggregatedDiffs,
   WithDiffMetaRecord,
 } from '../../types'
 import { GRAPHQL_TYPE, GRAPHQL_TYPE_KEYS } from './graphql.consts'
-import { createOperationChange, getOperationTags } from '../../components'
+import { createOperationChange, getOperationTags, OperationsMap } from '../../components'
 
-export const compareDocuments = async (apiType: OperationsApiType, operationsMap: Record<NormalizedOperationId, {
-  previous?: ResolvedOperation
-  current?: ResolvedOperation
-}>, prevDoc: ResolvedVersionDocument | undefined, currDoc: ResolvedVersionDocument | undefined, ctx: CompareOperationsPairContext): Promise<{
+export const compareDocuments = async (
+  operationsMap: OperationsMap,
+  prevDoc: ResolvedVersionDocument | undefined,
+  currDoc: ResolvedVersionDocument | undefined,
+  ctx: CompareOperationsPairContext): Promise<{
   operationChanges: OperationChanges[]
   tags: string[]
 }> => {
-  const { rawDocumentResolver, previousVersion, currentVersion, previousPackageId, currentPackageId } = ctx
+  const { apiType, rawDocumentResolver, previousVersion, currentVersion, previousPackageId, currentPackageId } = ctx
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
   const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
   const prevDocSchema = prevFile && buildSchema(await prevFile.text(), { noLocation: true })
@@ -78,7 +76,7 @@ export const compareDocuments = async (apiType: OperationsApiType, operationsMap
       // mode: COMPARE_MODE_OPERATION,
       normalizedResult: true,
     },
-  ) as {merged: GraphApiSchema; diffs: Diff[]}
+  ) as { merged: GraphApiSchema; diffs: Diff[] }
 
   if (isEmpty(diffs)) {
     return { operationChanges: [], tags: [] }

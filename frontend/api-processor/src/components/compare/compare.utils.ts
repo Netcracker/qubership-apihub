@@ -17,6 +17,7 @@
 import {
   ApiBuilder,
   ChangeSummary,
+  CompareOperationsPairContext,
   DIFF_TYPES,
   ImpactedOperationSummary,
   NormalizedOperationId,
@@ -26,13 +27,15 @@ import {
   OperationsApiType,
   OperationTypes,
   ResolvedOperation,
+  ResolvedVersionDocument,
   VersionCache,
 } from '../../types'
 import { EMPTY_CHANGE_SUMMARY } from '../../consts'
 import {
   calculateChangeSummary,
   calculateImpactedSummary,
-  convertToSlug,
+  difference,
+  intersection,
   removeFirstSlash,
   takeIfDefined,
 } from '../../utils'
@@ -109,12 +112,38 @@ export function dedupePairs<A extends object, B extends object>(
   return out
 }
 
-export function normalizeOperationIds(operations: ResolvedOperation[], apiBuilder: ApiBuilder, group: string): [OperationId[], Record<NormalizedOperationId | OperationId, ResolvedOperation>] {
+function dedupeTuples<T extends [object | undefined, object | undefined]>(
+  tuples: T[],
+): T[] {
+  const UNDEF: object = {}
+  const root = new WeakMap<object, WeakSet<object>>()
+  const result: T[] = []
+
+  for (const [a, b] of tuples) {
+    const keyA = (a ?? UNDEF)
+    const keyB = (b ?? UNDEF)
+
+    let inner = root.get(keyA)
+    if (!inner) {
+      inner = new WeakSet()
+      root.set(keyA, inner)
+    }
+
+    if (!inner.has(keyB)) {
+      inner.add(keyB)
+      result.push([a, b] as T)
+    }
+  }
+
+  return result
+}
+
+export function normalizeOperationIds(operations: ResolvedOperation[], apiBuilder: ApiBuilder, groupSlug: string): [OperationId[], Record<NormalizedOperationId | OperationId, ResolvedOperation>] {
   const normalizedOperationIdToOperation: Record<NormalizedOperationId | OperationId, ResolvedOperation> = {}
-  const groupSlug = convertToSlug(group)
   operations.forEach(operation => {
     const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(operation) ?? operation.operationId
-    normalizedOperationIdToOperation[takeSubstringIf(!!groupSlug, normalizedOperationId, groupSlug.length)] = operation
+    // todo '-' is a slugified slash in the middle of a string
+    normalizedOperationIdToOperation[takeSubstringIf(!!groupSlug, normalizedOperationId, groupSlug.length + '-'.length)] = operation
   })
   return [Object.keys(normalizedOperationIdToOperation), normalizedOperationIdToOperation]
 }
@@ -126,6 +155,7 @@ export function getOperationMetadata(operation: ResolvedOperation): OperationCha
 
     // api specific
     ...takeIfDefined({ method: operation.metadata?.method }),
+    // todo originalPath is missing?
     ...takeIfDefined({ path: operation.metadata?.path }),
     ...takeIfDefined({ type: operation.metadata?.type }),
   }
@@ -139,40 +169,84 @@ export function takeSubstringIf(condition: boolean, value: string, startIndex: n
   return value.substring(startIndex)
 }
 
+export type OperationPair = {
+  previous?: ResolvedOperation
+  current?: ResolvedOperation
+}
+
+export type OperationsMap = Record<NormalizedOperationId, OperationPair>
+
 export const createPairOperationsMap = (
-  prevGroupSlug: string,
-  currGroupSlug: string,
+  previousGroupSlug: string,
+  currentGroupSlug: string,
   previousOperations: ResolvedOperation[],
   currentOperations: ResolvedOperation[],
   apiBuilder: ApiBuilder,
-): Record<NormalizedOperationId, {
-  previous?: ResolvedOperation
-  current?: ResolvedOperation
-}> => {
+): OperationsMap => {
+  const [prevNormalizedOperationIds, prevNormalizedIdToOperation] = normalizeOperationIds(previousOperations, apiBuilder, previousGroupSlug)
+  const [currNormalizedOperationIds, currNormalizedIdToOperation] = normalizeOperationIds(currentOperations, apiBuilder, currentGroupSlug)
 
-  const operationsMap: Record<NormalizedOperationId, {
-    previous?: ResolvedOperation
-    current?: ResolvedOperation
-  }> = {}
+  const added: NormalizedOperationId[] = difference(currNormalizedOperationIds, prevNormalizedOperationIds)
+  const removed: NormalizedOperationId[] = difference(prevNormalizedOperationIds, currNormalizedOperationIds)
+  const potentiallyChanged: NormalizedOperationId[] = intersection(prevNormalizedOperationIds, currNormalizedOperationIds)
 
-  for (const currentOperation of currentOperations) {
-    const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(currentOperation) ?? currentOperation.operationId
-    operationsMap[takeSubstringIf(!!currGroupSlug, normalizedOperationId, currGroupSlug.length + '-'.length)] = { current: currentOperation }
-  }
-
-  for (const previousOperation of previousOperations) {
-    const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(previousOperation) ?? previousOperation.operationId
-    const prevOperationId = takeSubstringIf(!!prevGroupSlug, normalizedOperationId, prevGroupSlug.length + '-'.length)
-    // todo fix
-    // todo it won't work if groups have different length (add test with /api/v1/ and /api/abc/)
-    const operationsMappingElement = operationsMap[prevOperationId]
-    operationsMap[prevOperationId] = {
-      ...takeIfDefined({ ...operationsMappingElement }),
-      previous: previousOperation,
-    }
-  }
+  const operationsMap: OperationsMap = {}
+  added.forEach(id => operationsMap[id] = { current: currNormalizedIdToOperation[id] })
+  removed.forEach(id => operationsMap[id] = { previous: prevNormalizedIdToOperation[id] })
+  potentiallyChanged.forEach(id => operationsMap[id] = {
+    previous: prevNormalizedIdToOperation[id],
+    current: currNormalizedIdToOperation[id],
+  })
 
   return operationsMap
+}
+
+export const calculatePairedDocs = async (
+  operationPairs: OperationPair[],
+  ctx: CompareOperationsPairContext,
+): Promise<[ResolvedVersionDocument | undefined, ResolvedVersionDocument | undefined][]> => {
+
+  const {
+    apiType,
+    versionDocumentsResolver,
+    previousVersion,
+    currentVersion,
+    previousPackageId,
+    currentPackageId,
+  } = ctx
+
+  const { documents: prevDocuments } = await versionDocumentsResolver(previousVersion, previousPackageId, apiType) ?? { documents: [] }
+  const { documents: currDocuments } = await versionDocumentsResolver(currentVersion, currentPackageId, apiType) ?? { documents: [] }
+
+  const pairedDocs: [ResolvedVersionDocument | undefined, ResolvedVersionDocument | undefined][] = []
+  for (const { previous, current } of operationPairs) {
+    const prevDoc = previous && prevDocuments.find(document => document.slug === previous.documentId)
+    const currDoc = current && currDocuments.find(document => document.slug === current.documentId)
+    pairedDocs.push([prevDoc, currDoc])
+  }
+  return dedupeTuples(pairedDocs)
+}
+
+export const comparePairedDocs = async (
+  operationsMap: OperationsMap,
+  pairedDocs: [ResolvedVersionDocument | undefined, ResolvedVersionDocument | undefined][],
+  apiBuilder: ApiBuilder,
+  ctx: CompareOperationsPairContext,
+): Promise<[OperationChanges[], string[]]> => {
+  const operationChanges: OperationChanges[] = []
+  const tags: string[] = []
+
+  for (const [prevDoc, currDoc] of pairedDocs) {
+    const {
+      operationChanges: docsPairOperationChanges,
+      tags: docsPairTags,
+    } = await apiBuilder.compareDocuments!(operationsMap, prevDoc, currDoc, ctx)
+
+    operationChanges.push(...docsPairOperationChanges)
+    tags.push(...docsPairTags)
+  }
+
+  return [operationChanges, tags]
 }
 
 export function createOperationChange(
