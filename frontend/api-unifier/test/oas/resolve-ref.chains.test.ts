@@ -1,15 +1,26 @@
 import { defineOriginsAndResolveRef } from '../../src/define-origins-and-resolve-ref'
-import { pathItemToFullPath, stringifyCyclicJso, stringifyCyclicJsoWithOrigins } from '../../src'
+import { pathItemToFullPath } from '../../src'
 import { commonOriginsCheck, TEST_ORIGINS_FLAG, TEST_SYNTHETIC_TITLE_FLAG } from '../helpers'
 
 describe('ref chain by several pure refs', () => {
   const source = {
+    openapi: '3.0.4',
     paths: {
-      get: {
-        schema: {
-          type: 'array',
-          items: {
-            $ref: '#/components/schemas/Item',
+      '/items': {
+        get: {
+          responses: {
+            '200': {
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'array',
+                    items: {
+                      $ref: '#/components/schemas/Item',
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -27,11 +38,22 @@ describe('ref chain by several pure refs', () => {
   }
   it('resolve refs', () => {
     const expected = {
+      openapi: '3.0.4',
       paths: {
-        get: {
-          schema: {
-            type: 'array',
-            items: null as any,
+        '/items': {
+          get: {
+            responses: {
+              '200': {
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'array',
+                      items: null as any,
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -45,13 +67,13 @@ describe('ref chain by several pure refs', () => {
       },
     }
     expected.components.schemas.Item = expected.components.schemas.Item1
-    expected.paths.get.schema.items = expected.components.schemas.Item1
+    expected.paths['/items'].get.responses['200'].content['application/json'].schema.items = expected.components.schemas.Item1
     const result: any = defineOriginsAndResolveRef(source)
 
     expect(result).toEqual(expected)
 
     // check same resolved-ref instance
-    expect(result.components.schemas.Item1).toBe(result.paths.get.schema.items)
+    expect(result.components.schemas.Item1).toBe(result.paths['/items'].get.responses['200'].content['application/json'].schema.items )
     expect(result.components.schemas.Item1).toBe(result.components.schemas.Item)
   })
 
@@ -60,13 +82,13 @@ describe('ref chain by several pure refs', () => {
       commonOriginsCheck(result, { source })
 
       // items, Item and Item1 have specific origins
-      expect(pathItemToFullPath(result.paths.get.schema[TEST_ORIGINS_FLAG].items[0])).toEqual(['paths', 'get', 'schema', 'items'])
+      expect(pathItemToFullPath(result.paths['/items'].get.responses['200'].content['application/json'].schema[TEST_ORIGINS_FLAG].items[0])).toEqual(['paths','/items', 'get', 'responses', '200', 'content', 'application/json', 'schema', 'items'])
       expect(pathItemToFullPath(result.components.schemas[TEST_ORIGINS_FLAG].Item[0])).toEqual(['components', 'schemas', 'Item'])
       expect(pathItemToFullPath(result.components.schemas[TEST_ORIGINS_FLAG].Item1[0])).toEqual(['components', 'schemas', 'Item1'])
       // field 'type' under Item1, Item and items should has same origin instance
-      expect(pathItemToFullPath(result.paths.get.schema.items[TEST_ORIGINS_FLAG].type[0])).toEqual(['components', 'schemas', 'Item1', 'type'])
-      expect(result.paths.get.schema.items[TEST_ORIGINS_FLAG].type[0]).toBe(result.components.schemas.Item[TEST_ORIGINS_FLAG].type[0])
-      expect(result.paths.get.schema.items[TEST_ORIGINS_FLAG].type[0]).toBe(result.components.schemas.Item1[TEST_ORIGINS_FLAG].type[0])
+      expect(pathItemToFullPath(result.paths['/items'].get.responses['200'].content['application/json'].schema.items[TEST_ORIGINS_FLAG].type[0])).toEqual(['components', 'schemas', 'Item1', 'type'])
+      expect(result.paths['/items'].get.responses['200'].content['application/json'].schema.items[TEST_ORIGINS_FLAG].type[0]).toBe(result.components.schemas.Item[TEST_ORIGINS_FLAG].type[0])
+      expect(result.paths['/items'].get.responses['200'].content['application/json'].schema.items[TEST_ORIGINS_FLAG].type[0]).toBe(result.components.schemas.Item1[TEST_ORIGINS_FLAG].type[0])
     },
   )
 })

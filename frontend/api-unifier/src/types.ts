@@ -1,6 +1,7 @@
-import type { CrawlRules, JsonPath, SyncCloneHook } from '@netcracker/qubership-apihub-json-crawl'
+import { CrawlRules, JsonPath, SyncCloneHook } from '@netcracker/qubership-apihub-json-crawl'
 import { EvaluationCacheService, PropertySpreadWithCacheService } from './cache'
 import { HasSelfMetaResolver } from './utils'
+import { ReferenceHandlerArgsWithResolver, ReferenceHandlerResponse } from './references/ref-resolver'
 
 export type RawJsonSchema = Record<PropertyKey, unknown> | boolean
 export type JsonSchema = Record<PropertyKey, unknown>
@@ -11,6 +12,7 @@ export const RefErrorTypes = {
   RICH_REF_NOT_ALLOWED: 'richRefObjectNotAllowed' as const,
   REF_NOT_FOUND: 'refNotFound' as const,
   REF_NOT_VALID_FORMAT: 'refNotValidFormat' as const,
+  REF_NOT_ALLOWED: 'refNotAllowed' as const,
 } as const
 
 export type RefErrorType = typeof RefErrorTypes[keyof typeof RefErrorTypes]
@@ -60,12 +62,11 @@ interface HasInternalIgnoreSymbols {
 
 export interface InternalResolveOptions extends Omit<ResolveOptions, 'source' | 'resolveRef' | 'originsAlreadyDefined' | 'ignoreSymbols'>, HasInternalIgnoreSymbols {
   source: any
-  richRefAllowed: boolean         // allOf $ref and sibling content
   resolveRef: boolean
   originsAlreadyDefined: boolean
 }
 
-export interface InternalMergeOptions extends Omit<MergeOptions, never>, Omit<InternalResolveOptions, 'source' | 'richRefAllowed' | 'syntheticAllOfFlag'>, HasInternalIgnoreSymbols {
+export interface InternalMergeOptions extends Omit<MergeOptions, never>, Omit<InternalResolveOptions, 'source' | 'syntheticAllOfFlag'>, HasInternalIgnoreSymbols {
   evaluationCacheService: EvaluationCacheService
   spreadAllOfCache: PropertySpreadWithCacheService<PropertyKey, unknown>
   syntheticMetaDefinitions: MetaDefinitions
@@ -174,6 +175,7 @@ export interface MergeContext {
 }
 
 export type MergeResolver<T> = (args: ValueWithOrigins<T>[], ctx: MergeContext) => ValueWithOrigins<T> | undefined
+export type ReferenceHandler = (args: ReferenceHandlerArgsWithResolver) => ReferenceHandlerResponse
 
 export interface HasIgnoreTreeUnderSymbols {
   ignoreTreeUnderSymbols: boolean
@@ -231,6 +233,7 @@ export interface NormalizationRule {
   readonly newDataLayer?: boolean
   readonly deprecation?: DeprecationPolicy
   readonly isExtension?: boolean
+  readonly referenceHandler?: ReferenceHandler
 }
 
 export type MergeAndLiftCombinersSyncCloneHook = SyncCloneHook<MergeAndLiftCombinersState, NormalizationRule>

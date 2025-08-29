@@ -79,10 +79,13 @@ describe('simple origins', () => {
             lol: { $ref: '#/components/entities/reference' },
           },
         },
-        items: [
-          { $ref: '#/components/entities/reference' },
-          { $ref: '#/components/entities/link' },
-        ],
+        baz: {
+          type: 'array',
+          items: [
+            { $ref: '#/components/entities/reference' },
+            { $ref: '#/components/entities/link' },
+          ],
+        },
       },
     }
 
@@ -132,24 +135,31 @@ describe('simple origins', () => {
             properties: [{ parent: undefined as any /*3*/, value: 'properties' }], /*5*/
           },
         },
-        items: [
-          {
-            type: 'string',
-            [TEST_ORIGINS_FLAG]: {
-              type: [{ parent: undefined as any /*1002*/, value: 'type' }],
+        baz: {
+          type: 'array',
+          items: [
+            {
+              type: 'string',
+              [TEST_ORIGINS_FLAG]: {
+                type: [{ parent: undefined as any /*1002*/, value: 'type' }],
+              },
             },
-          },
-          {
-            type: 'integer',
-            [TEST_ORIGINS_FLAG]: {
-              type: [{ parent: undefined as any /*1003*/, value: 'type' }],
+            {
+              type: 'integer',
+              [TEST_ORIGINS_FLAG]: {
+                type: [{ parent: undefined as any /*1003*/, value: 'type' }],
+              },
             },
+          ] as any,
+          [TEST_ORIGINS_FLAG]: {
+            type: [{ parent: undefined as any /*3*/, value: 'type' }],
+            items: [{ parent: undefined as any /*3*/, value: 'items' }], /*5*/
           },
-        ] as any,
+        },
         [TEST_ORIGINS_FLAG]: {
           foo: [{ parent: undefined as any /*1*/, value: 'foo' }], /*2*/
           bar: [{ parent: undefined as any /*1*/, value: 'bar' }], /*3*/
-          items: [{ parent: undefined as any /*1*/, value: 'items' }], /*4*/
+          baz: [{ parent: undefined as any /*1*/, value: 'baz' }], /*4*/
         },
       },
       [TEST_ORIGINS_FLAG]: {
@@ -160,16 +170,18 @@ describe('simple origins', () => {
 
     expected.properties[TEST_ORIGINS_FLAG].bar[0].parent = expected[TEST_ORIGINS_FLAG].properties[0]
     expected.properties[TEST_ORIGINS_FLAG].foo[0].parent = expected[TEST_ORIGINS_FLAG].properties[0]
-    expected.properties[TEST_ORIGINS_FLAG].items[0].parent = expected[TEST_ORIGINS_FLAG].properties[0]
+    expected.properties[TEST_ORIGINS_FLAG].baz[0].parent = expected[TEST_ORIGINS_FLAG].properties[0]
     expected.properties.foo[TEST_ORIGINS_FLAG].type[0].parent = componentsOrigins.reference[0]
     expected.properties.bar[TEST_ORIGINS_FLAG].type[0].parent = expected.properties[TEST_ORIGINS_FLAG].bar[0]
     expected.properties.bar[TEST_ORIGINS_FLAG].properties[0].parent = expected.properties[TEST_ORIGINS_FLAG].bar[0]
-    expected.properties.items[TEST_ORIGINS_FLAG] = {
-      0: [{ parent: expected.properties[TEST_ORIGINS_FLAG].items[0], value: 0 }],
-      1: [{ parent: expected.properties[TEST_ORIGINS_FLAG].items[0], value: 1 }],
+    expected.properties.baz[TEST_ORIGINS_FLAG].type[0].parent = expected.properties[TEST_ORIGINS_FLAG].baz[0]
+    expected.properties.baz[TEST_ORIGINS_FLAG].items[0].parent = expected.properties[TEST_ORIGINS_FLAG].baz[0]
+    expected.properties.baz.items[TEST_ORIGINS_FLAG] = {
+      0: [{ parent: expected.properties.baz[TEST_ORIGINS_FLAG].items[0], value: 0 }],
+      1: [{ parent: expected.properties.baz[TEST_ORIGINS_FLAG].items[0], value: 1 }],
     }
-    expected.properties.items[0][TEST_ORIGINS_FLAG].type[0].parent = componentsOrigins.reference[0]
-    expected.properties.items[1][TEST_ORIGINS_FLAG].type[0].parent = componentsOrigins.link[0]
+    expected.properties.baz.items[0][TEST_ORIGINS_FLAG].type[0].parent = componentsOrigins.reference[0]
+    expected.properties.baz.items[1][TEST_ORIGINS_FLAG].type[0].parent = componentsOrigins.link[0]
     expected.properties.bar.properties[TEST_ORIGINS_FLAG].lol[0].parent = expected.properties.bar[TEST_ORIGINS_FLAG].properties[0]
     expected.properties.bar.properties.lol[TEST_ORIGINS_FLAG].type[0].parent = componentsOrigins.reference[0]
 
@@ -186,12 +198,12 @@ describe('simple origins', () => {
     expect(pathItemToFullPath(result.properties.foo[TEST_ORIGINS_FLAG].type[0])).toEqual(['components', 'entities', 'reference', 'type'])
     // foo, lol and items[0] have 'type' with same origin instance
     expect(result.properties.foo[TEST_ORIGINS_FLAG].type[0]).toBe(result.properties.bar.properties.lol[TEST_ORIGINS_FLAG].type[0])
-    expect(result.properties.foo[TEST_ORIGINS_FLAG].type[0]).toBe(result.properties.items[0][TEST_ORIGINS_FLAG].type[0])
+    expect(result.properties.foo[TEST_ORIGINS_FLAG].type[0]).toBe(result.properties.baz.items[0][TEST_ORIGINS_FLAG].type[0])
     // origins of foo, bar, and items[0] have different origins (NOT reference!!!)
     expect(result.properties[TEST_ORIGINS_FLAG].foo[0]).not.toBe(result.properties.bar.properties[TEST_ORIGINS_FLAG].lol[0])
-    expect(result.properties[TEST_ORIGINS_FLAG].foo[0]).not.toBe(result.properties.items[TEST_ORIGINS_FLAG][0])
+    expect(result.properties[TEST_ORIGINS_FLAG].foo[0]).not.toBe(result.properties.baz.items[TEST_ORIGINS_FLAG][0])
     // 'type' under items[0] and items[1] have same parent origin instance
-    expect(result.properties.items[0][TEST_ORIGINS_FLAG].type[0].parent.parent).toBe(result.properties.items[1][TEST_ORIGINS_FLAG].type[0].parent.parent)
+    expect(result.properties.baz.items[0][TEST_ORIGINS_FLAG].type[0].parent.parent).toBe(result.properties.baz.items[1][TEST_ORIGINS_FLAG].type[0].parent.parent)
   })
 
   it('synthetic allOf origins', () => {
@@ -298,8 +310,12 @@ describe('simple origins', () => {
         path: {
           get: {
             requestBody: {
-              schema: {
-                $ref: '#/components/schemas/two',
+              content: {
+                'application/json': {
+                  schema: {
+                    $ref: '#/components/schemas/two',
+                  },
+                },
               },
             },
           },
@@ -367,8 +383,8 @@ describe('simple origins', () => {
               },
               two: {
                 $ref: '#/components/schemas/Intermidiate1',
-              }
-            }
+              },
+            },
           },
           Intermidiate1: {
             $ref: '#/components/schemas/Intermidiate2',
@@ -378,12 +394,15 @@ describe('simple origins', () => {
             readOnly: true,
           },
           Final: {
-            readOnly: true
-          }
+            readOnly: true,
+          },
         },
       },
     }
-    const result = defineOriginsAndResolveRef(source, { originsFlag: TEST_ORIGINS_FLAG, syntheticTitleFlag: TEST_SYNTHETIC_TITLE_FLAG })
+    const result = defineOriginsAndResolveRef(source, {
+      originsFlag: TEST_ORIGINS_FLAG,
+      syntheticTitleFlag: TEST_SYNTHETIC_TITLE_FLAG,
+    })
     commonOriginsCheck(result, { source })
     expect(result).toHaveProperty(['components', 'schemas', 'Object', 'properties', 'one', 'allOf', 0, TEST_ORIGINS_FLAG, 'title', 0, 'value'], 'Intermidiate1')
     expect(result).toHaveProperty(['components', 'schemas', 'Object', 'properties', 'two', 'allOf', 0, TEST_ORIGINS_FLAG, 'title', 0, 'value'], 'Intermidiate1')
