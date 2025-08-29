@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-doc-viewer",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "license": "Apache-2.0",
   "type": "module",
   "main": "dist/index.js",
@@ -22,11 +22,11 @@
   "scripts": {
     "build": "npm run build:dist",
     "build:dist": "tsc && vite build",
-    "build:showcase": "storybook build -o dist-showcase --disable-telemetry",
+    "build:showcase": "storybook build -o ../../dist-showcase --disable-telemetry",
     "generate-stories": "node bin/generate-graphql-compatibility-suite-stories.mjs",
     "generate-tests": "node bin/generate-graphql-compatibility-suite-tests.mjs",
     "development:storybook": "storybook dev -p 9009",
-    "development:local-server:static": "npm run build:showcase && ws -p 9009 -d dist-showcase --spa index.html --static.maxage 3600",
+    "development:local-server:static": "npm run build:showcase && ws -p 9009 -d ../../dist-showcase --spa index.html --static.maxage 3600",
     "screenshot-test:ci": "start-server-and-test development:local-server:static http://localhost:9009 screenshot-test:run-test:ci",
     "screenshot-test:docker": "start-server-and-test development:local-server:static http://localhost:9009 screenshot-test:run-test:docker",
     "screenshot-test:run-test:ci": "jest --maxWorkers 4 -c .config/it/it-test.jest.config.cjs",
