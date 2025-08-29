@@ -56,7 +56,7 @@ import { findRequiredRemovedProperties } from './rest.required'
 import { calculateObjectHash } from '../../utils/hashes'
 import { REST_API_TYPE } from './rest.consts'
 import { OpenAPIV3 } from 'openapi-types'
-import { extractServersDiffs, getOperationBasePath } from './rest.utils'
+import { extractRootSecurityDiffs, extractRootServersDiffs, getOperationBasePath } from './rest.utils'
 import { createOperationChange, getOperationTags, OperationsMap } from '../../components'
 
 export const compareDocuments = async (
@@ -148,8 +148,9 @@ export const compareDocuments = async (
       if (current && previous && isChangedOperations) {
         operationDiffs = [
           ...(methodData as WithAggregatedDiffs<OpenAPIV3.OperationObject>)[DIFFS_AGGREGATED_META_KEY],
-          // todo what about security? add test
-          ...extractServersDiffs(merged),
+          ...extractRootServersDiffs(merged),
+          ...extractRootSecurityDiffs(merged),
+          // parameters, servers, summary, description and extensionKeys are moved from path to method in pathItemsUnification during normalization in apiDiff, so no need to aggregate them here
         ]
 
         const diff = (merged.paths as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[path]

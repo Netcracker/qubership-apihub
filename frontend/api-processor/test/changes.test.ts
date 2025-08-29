@@ -66,20 +66,20 @@ describe('Changes test', () => {
 
   test('compare parametrized operations', async () => {
     const result = await buildChangelogPackage('changelog/compare-parametrized-operations')
-    expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 2}))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1}))
+    expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 2 }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
   })
 
   test('add method', async () => {
     const result = await buildChangelogPackage('changelog/add-method')
-    expect(result).toEqual(changesSummaryMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1}))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1}))
+    expect(result).toEqual(changesSummaryMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }))
   })
 
   test('remove method', async () => {
     const result = await buildChangelogPackage('changelog/remove-method')
-    expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1}))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1}))
+    expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
   })
 
   test('change method content', async () => {
@@ -103,5 +103,39 @@ describe('Changes test', () => {
     )
     expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 3 }))
     expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 3 }))
+  })
+
+  test('add root servers', async () => {
+    const result = await buildChangelogPackage('changelog/add-root-servers')
+
+    expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+  })
+
+  test('change root servers', async () => {
+    const result = await buildChangelogPackage('changelog/change-root-servers')
+
+    expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+  })
+
+  test('add security', async () => {
+    const result = await buildChangelogPackage('changelog/add-security')
+
+    expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 2 }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+  })
+
+  test('add securityScheme', async () => {
+    const result = await buildChangelogPackage('changelog/add-securityScheme')
+
+    expect(result).toEqual(changesSummaryMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+    }))
   })
 })
