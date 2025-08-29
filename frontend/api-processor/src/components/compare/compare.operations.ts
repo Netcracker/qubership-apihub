@@ -150,11 +150,10 @@ async function compareCurrentApiType(
 
   const apiAudienceTransitions: ApiAudienceTransition[] = []
   // todo: convert from objects analysis to apihub-diff result analysis after the "info" section participates in the comparison of operations
-  syncDebugPerformance('[ApiAudience]', () => {
-    operationPairs.forEach(({current, previous}) => {
-      calculateApiAudienceTransitions(current, previous, apiAudienceTransitions)
-    })
-  }, debugCtx)
+  syncDebugPerformance('[ApiAudience]',
+    () => operationPairs.forEach((pair) => calculateApiAudienceTransitions(pair, apiAudienceTransitions)),
+    debugCtx,
+  )
 
   return [
     {

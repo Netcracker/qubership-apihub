@@ -113,11 +113,6 @@ export type DocumentsCompare = (operationsMap: OperationsMap, currDoc: ResolvedV
   operationChanges: OperationChanges[]
   tags: string[]
 }>
-export type OperationChangesValidator = (
-  changes: ChangeMessage, // + ctx with internal resolvers
-  previousOperation?: RestOperationData, // TODO remove
-  prePreviousOperation?: RestOperationData, // TODO remove
-) => boolean
 export type OperationIdNormalizer = (operation: ResolvedOperation) => NormalizedOperationId
 export type DocumentExporter = (
   filename: string,
@@ -141,7 +136,6 @@ export interface ApiBuilder<T = any, O = any, M = any> {
   buildOperations?: OperationsBuilder<T, M>
   compareOperationsData?: OperationDataCompare<O>
   compareDocuments?: DocumentsCompare
-  validateOperationChanges?: OperationChangesValidator
   createNormalizedOperationId?: OperationIdNormalizer
   createExportDocument?: DocumentExporter
 }

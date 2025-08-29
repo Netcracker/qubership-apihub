@@ -29,6 +29,7 @@ import {
 import { API_KIND } from '../consts'
 import { Diff, DiffType } from '@netcracker/qubership-apihub-api-diff'
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
+import { OperationPair } from '../components'
 
 export type ObjPath = (string | number)[]
 
@@ -175,12 +176,12 @@ export const rawToApiKind = (apiKindLike: string): ApiKind => {
 }
 
 export const calculateApiAudienceTransitions = (
-  currentOperation: ResolvedOperation | undefined,
-  previousOperation: ResolvedOperation | undefined,
+  operationPair: OperationPair,
   apiAudienceTransitions: ApiAudienceTransition[],
 ): void => {
-  const currentAudience = currentOperation?.apiAudience
-  const previousAudience = previousOperation?.apiAudience
+  const { previous, current } = operationPair
+  const previousAudience = previous?.apiAudience
+  const currentAudience = current?.apiAudience
   if (!currentAudience || !previousAudience) {
     return
   }
