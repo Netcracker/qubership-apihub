@@ -19,9 +19,9 @@ Just run build.cmd(sh) file from this repository
 
 ## Debug
 
-[Local development principles](./docs/local_development/local_development.md)
+Placeholder
 
 
 ## Developer Tools
 
-[Development tools setup](./docs/newcomer_env_setup.md)
+Placeholder

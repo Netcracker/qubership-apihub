@@ -125,7 +125,6 @@ export async function createRestExportDocument(
   templateResolver: _TemplateResolver,
   allowedOasExtensions?: OpenApiExtensionKey[],
   generatedHtmlExportDocuments?: ExportDocument[],
-  addBackLink?: boolean,
 ): Promise<ExportDocument> {
   const exportFilename = `${getDocumentTitle(filename)}.${format}`
   const [[document], blobProperties] = dump(removeOasExtensions(JSON.parse(data), allowedOasExtensions), EXPORT_FORMAT_TO_FILE_FORMAT.get(format)!)
@@ -138,7 +137,6 @@ export async function createRestExportDocument(
         packageName,
         version,
         templateResolver,
-        addBackLink,
       ),
       filename: exportFilename,
     }
