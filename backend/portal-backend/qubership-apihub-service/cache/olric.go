@@ -127,9 +127,9 @@ func getConfig(olricConfig sysconfig.OlricConfig) (*config.Config, error) {
 		cfg.LogVerbosity = 2
 
 		cfg.BindAddr = "localhost"
-
-		cfg.BindPort = getRandomFreePort()
-		cfg.MemberlistConfig.BindPort = getRandomFreePort()
+		cfg.BindPort = getLocalPort()
+		cfg.MemberlistConfig.BindAddr = "localhost"
+		cfg.MemberlistConfig.BindPort = getLocalMemberlistPort()
 		cfg.PartitionCount = 5
 
 		return cfg, nil
@@ -139,7 +139,26 @@ func getConfig(olricConfig sysconfig.OlricConfig) (*config.Config, error) {
 	}
 }
 
-func getRandomFreePort() int {
+func getLocalPort() int {
+	//try specific port first
+	port := 47375
+	if isPortFree("localhost", port) {
+		return port
+	}
+	//and if fails, then random
+	return getLocalRandomFreePort()
+}
+func getLocalMemberlistPort() int {
+	//try specific port first
+	port := 47376
+	if isPortFree("localhost", port) {
+		return port
+	}
+	//and if fails, then random
+	return getLocalRandomFreePort()
+}
+
+func getLocalRandomFreePort() int {
 	for {
 		port := rand.Intn(48127) + 1024
 		if isPortFree("localhost", port) {

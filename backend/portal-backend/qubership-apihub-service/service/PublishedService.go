@@ -82,38 +82,41 @@ func NewPublishedService(branchService BranchService,
 	atService ActivityTrackingService,
 	monitoringService MonitoringService,
 	minioStorageService MinioStorageService,
-	systemInfoService SystemInfoService) PublishedService {
+	systemInfoService SystemInfoService,
+	publishNotificationService PublishNotificationService) PublishedService {
 	return &publishedServiceImpl{
-		branchService:       branchService,
-		publishedRepo:       versionRepo,
-		projectsRepo:        projectsRepo,
-		buildRepository:     buildRepository,
-		gitClientProvider:   gitClientProvider,
-		websocketService:    websocketService,
-		favoritesRepo:       favoritesRepo,
-		operationRepo:       operationRepo,
-		atService:           atService,
-		monitoringService:   monitoringService,
-		minioStorageService: minioStorageService,
-		systemInfoService:   systemInfoService,
-		publishedValidator:  validation.NewPublishedValidator(versionRepo),
+		branchService:              branchService,
+		publishedRepo:              versionRepo,
+		projectsRepo:               projectsRepo,
+		buildRepository:            buildRepository,
+		gitClientProvider:          gitClientProvider,
+		websocketService:           websocketService,
+		favoritesRepo:              favoritesRepo,
+		operationRepo:              operationRepo,
+		atService:                  atService,
+		monitoringService:          monitoringService,
+		minioStorageService:        minioStorageService,
+		systemInfoService:          systemInfoService,
+		publishedValidator:         validation.NewPublishedValidator(versionRepo),
+		publishNotificationService: publishNotificationService,
 	}
 }
 
 type publishedServiceImpl struct {
-	branchService       BranchService
-	publishedRepo       repository.PublishedRepository
-	projectsRepo        repository.PrjGrpIntRepository
-	buildRepository     repository.BuildRepository
-	gitClientProvider   GitClientProvider
-	websocketService    WsBranchService
-	favoritesRepo       repository.FavoritesRepository
-	operationRepo       repository.OperationRepository
-	atService           ActivityTrackingService
-	monitoringService   MonitoringService
-	minioStorageService MinioStorageService
-	systemInfoService   SystemInfoService
-	publishedValidator  validation.PublishedValidator
+	branchService              BranchService
+	publishedRepo              repository.PublishedRepository
+	projectsRepo               repository.PrjGrpIntRepository
+	buildRepository            repository.BuildRepository
+	gitClientProvider          GitClientProvider
+	websocketService           WsBranchService
+	favoritesRepo              repository.FavoritesRepository
+	operationRepo              repository.OperationRepository
+	atService                  ActivityTrackingService
+	monitoringService          MonitoringService
+	minioStorageService        MinioStorageService
+	systemInfoService          SystemInfoService
+	publishedValidator         validation.PublishedValidator
+	publishNotificationService PublishNotificationService
 }
 
 func (p publishedServiceImpl) GetPackageVersions(packageId string) (*view.PublishedVersions, error) {
@@ -1190,6 +1193,11 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 			Date:      time.Now(),
 			UserId:    versionEnt.CreatedBy,
 		})
+
+		err = p.publishNotificationService.SendNotification(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
+		if err != nil {
+			log.Errorf("failed to send published version notification: %v", err)
+		}
 	}
 
 	utils.PerfLog(time.Since(publishStart).Milliseconds(), 10000, "publishPackage: total package publishing")

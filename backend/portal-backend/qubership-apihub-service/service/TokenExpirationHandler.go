@@ -196,9 +196,16 @@ func (t *tokenExpirationHandlerImpl) initGCRevokedUsersDTopic() {
 	if err != nil {
 		log.Errorf("Failed to create DTopic: %s", err.Error())
 	}
+	t.isReadyWg.Done()
 }
 
 func (t *tokenExpirationHandlerImpl) PublishToGCRevokedUsersTopic(userId string) error {
+	t.isReadyWg.Wait()
+
+	if t.gcRevokedUsersTopic == nil {
+		return fmt.Errorf("failed to publish message to %s DTopic since it's not initialized", GCRevokedUsersTopicName)
+	}
+
 	err := t.gcRevokedUsersTopic.Publish(userId)
 	if err != nil {
 		log.Errorf("Error while publishing the user git client data: %s", err)

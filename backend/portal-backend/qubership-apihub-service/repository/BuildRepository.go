@@ -105,6 +105,7 @@ func (b buildRepositoryImpl) StoreBuild(buildEntity entity.BuildEntity, sourceEn
 
 		_, err = tx.Model(&sourceEntity).Insert()
 		if err != nil {
+			sourceEntity.Source = nil // do not print binary data
 			return fmt.Errorf("failed to insert build source entity %+v with error %w", sourceEntity, err)
 		}
 
@@ -248,17 +249,17 @@ func (b buildRepositoryImpl) GetBuildByChangelogSearchQuery(searchQuery entity.C
 	query := `
 		with bs as (
 			select  * from build_src
-			where config->>'version' = ?version 
+			where config->>'version' = ?version
 				and config->>'packageId' = ?package_id
-				and config->>'previousVersionPackageId' = ?previous_version_package_id 
-				and config->>'previousVersion' = ?previous_version 
+				and config->>'previousVersionPackageId' = ?previous_version_package_id
+				and config->>'previousVersion' = ?previous_version
 				and config->>'buildType' = ?build_type
 				and (config->>'comparisonRevision')::int = ?comparison_revision
 				and (config->>'comparisonPrevRevision')::int = ?comparison_prev_revision
 		)
 		select b.* from build as b, bs
 		where b.build_id = bs.build_id
-		order by created_at desc 
+		order by created_at desc
 		limit 1`
 	_, err := b.cp.GetConnection().Model(&searchQuery).QueryOne(&ent, query)
 	if err != nil {
@@ -275,7 +276,7 @@ func (b buildRepositoryImpl) GetBuildByDocumentGroupSearchQuery(searchQuery enti
 	query := `
 		with bs as (
 			select  * from build_src
-			where config->>'version' = ?version 
+			where config->>'version' = ?version
 				and config->>'packageId' = ?package_id
 				and config->>'buildType' = ?build_type
 				and config->>'format' = ?format
@@ -284,7 +285,7 @@ func (b buildRepositoryImpl) GetBuildByDocumentGroupSearchQuery(searchQuery enti
 		)
 		select b.* from build as b, bs
 		where b.build_id = bs.build_id
-		order by created_at desc 
+		order by created_at desc
 		limit 1`
 	_, err := b.cp.GetConnection().Model(&searchQuery).QueryOne(&ent, query)
 	if err != nil {
