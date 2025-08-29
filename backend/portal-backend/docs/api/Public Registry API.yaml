@@ -153,6 +153,25 @@ paths:
                               type: string
                       autoLogin:
                         type: boolean
+                  extensions:
+                    description: List of enabled extension services for apihub
+                    type: array
+                    items:
+                      description: Extension item
+                      type: object
+                      properties:
+                        name:
+                          description: Unique name of the extension service
+                          type: string
+                          example: linter
+                        baseUrl:
+                          description: URL of the extension service
+                          type: string
+                          example: http://example.com
+                        pathPrefix:
+                          description: path for routing
+                          type: string
+                          example: api-linter
         "500":
           description: Internal Server Error
           content:

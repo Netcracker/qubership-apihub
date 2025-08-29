@@ -115,5 +115,6 @@ func (a *authControllerImpl) GetSystemConfigurationInfo(w http.ResponseWriter, r
 		view.SystemConfigurationInfo{
 			DefaultWorkspaceId: a.systemInfoService.GetDefaultWorkspaceId(),
 			AuthConfig:         a.systemInfoService.GetAuthConfig(),
+			Extensions:         a.systemInfoService.GetExtensions(),
 		})
 }

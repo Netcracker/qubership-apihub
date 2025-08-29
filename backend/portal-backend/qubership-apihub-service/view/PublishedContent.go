@@ -101,7 +101,7 @@ type DocumentForTransformationView struct {
 	Description          string   `json:"description,omitempty"`
 	Version              string   `json:"version,omitempty"`
 	Filename             string   `json:"filename"`
-	IncludedOperationIds []string `json:"includedOperationIds"`
+	IncludedOperationIds []string `json:"includedOperationIds,omitempty"`
 	Data                 []byte   `json:"data"`
 	PackageRef           string   `json:"packageRef"`
 }
