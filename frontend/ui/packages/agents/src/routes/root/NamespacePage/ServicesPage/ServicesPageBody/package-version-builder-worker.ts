@@ -60,6 +60,11 @@ const worker: PackageVersionBuilderWorker = {
       })
     }, 15000)
 
+    const stopSendingRunningStatus = (): void => {
+      abortController.abort()
+      clearInterval(intervalId)
+    }
+
     const builder = new PackageVersionBuilder(
       {
         ...serviceConfig,
@@ -75,16 +80,15 @@ const worker: PackageVersionBuilderWorker = {
         },
       })
 
-    await builder.run()
-
     let status: PublishStatus = NONE_PUBLISH_STATUS
-    let message = ''
+    let message
 
     try {
+      await builder.run()
       const data = await builder.createVersionPackage({ type: 'blob' })
+      stopSendingRunningStatus()
+
       status = COMPLETE_PUBLISH_STATUS
-      message = 'Published successfully'
-      abortController.abort()
       await setPublicationDetails({
         packageKey: serviceConfig.packageId,
         publishKey: serviceConfig.publishId,
@@ -94,9 +98,10 @@ const worker: PackageVersionBuilderWorker = {
         data: data,
       })
     } catch (error) {
+      stopSendingRunningStatus()
+
       status = ERROR_PUBLISH_STATUS
-      message = 'Publication failed'
-      abortController.abort()
+      message = error instanceof Error ? error.message : `${error}`
       await setPublicationDetails({
         packageKey: serviceConfig.packageId,
         publishKey: serviceConfig.publishId,
@@ -105,8 +110,6 @@ const worker: PackageVersionBuilderWorker = {
         builderId: builderId,
         errors: `${error}`,
       })
-    } finally {
-      clearInterval(intervalId)
     }
 
     return {

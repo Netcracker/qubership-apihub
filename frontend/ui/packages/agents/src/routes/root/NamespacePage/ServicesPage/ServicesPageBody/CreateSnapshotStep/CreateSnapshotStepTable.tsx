@@ -49,7 +49,10 @@ import {
 import { useServicePublishDetails } from './useServicePublishDetails'
 import { ServiceOrDocumentationTableCell } from '../ServiceOrDocumentationTableCell'
 import { BaselinePackageTableCell } from '../BaselinePackageTableCell'
-import { PUBLISH_STATUS_TO_STATUS_MARKER_VARIANT_MAP } from '../../../constants'
+import {
+  PUBLISH_STATUS_TO_STATUS_DESCRIPTION_MAP,
+  PUBLISH_STATUS_TO_STATUS_MARKER_VARIANT_MAP,
+} from '../../../constants'
 import { useSnapshotPublicationInfo } from '../../../useSnapshotPublicationInfo'
 import { useConfigureServiceSelection } from '../useConfigureServiceSelection'
 import { ServiceLabelsTableCell } from '../ServiceLabelsTableCell'
@@ -72,7 +75,10 @@ import { ColumnDelimiter } from '@netcracker/qubership-apihub-ui-shared/componen
 import type { Service } from '@apihub/entities/services'
 import type { ServiceConfig } from '@apihub/entities/publish-config'
 import type { Spec } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
-import { LOADING_STATUS_MARKER_VARIANT, StatusMarker } from '@netcracker/qubership-apihub-ui-shared/components/StatusMarker'
+import {
+  LOADING_STATUS_MARKER_VARIANT,
+  StatusMarker,
+} from '@netcracker/qubership-apihub-ui-shared/components/StatusMarker'
 import { useResizeObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useResizeObserver'
 
 export type CreateSnapshotStepTableProps = {
@@ -335,8 +341,13 @@ const CreateSnapshotDetailsTableCell: FC<CreateSnapshotDetailsTableCellProps> = 
 
   return (
     <Box display="flex" gap={1}>
-      <StatusMarker value={PUBLISH_STATUS_TO_STATUS_MARKER_VARIANT_MAP[publishDetails.status]}/>
-      <Typography noWrap variant="inherit">{publishDetails.message}</Typography>
+      <StatusMarker
+        value={PUBLISH_STATUS_TO_STATUS_MARKER_VARIANT_MAP[publishDetails.status]}
+        title={publishDetails.message}
+      />
+      <Typography noWrap variant="inherit">
+        {PUBLISH_STATUS_TO_STATUS_DESCRIPTION_MAP[publishDetails.status]}
+      </Typography>
     </Box>
   )
 })
