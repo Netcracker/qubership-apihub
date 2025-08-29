@@ -1261,6 +1261,19 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 				if err != nil {
 					return fmt.Errorf("failed to insert ts_operation_data: %w", err)
 				}
+
+				calculateFullTextSearchOperationsQuery := `
+					insert into fts_operation_data
+					select data_hash,
+						   to_tsvector(convert_from(data,'UTF-8'))  data_vector
+					from operation_data where operation_data.data_hash in (select distinct data_hash from operation where package_id = ? and version = ? and revision = ?)
+					on conflict (data_hash) do update set data_vector = EXCLUDED.data_vector`
+				_, err = tx.Exec(calculateFullTextSearchOperationsQuery,
+					version.PackageId, version.Version, version.Revision)
+				if err != nil {
+					return fmt.Errorf("failed to insert fts_operation_data: %w", err)
+				}
+
 				utils.PerfLog(time.Since(start).Milliseconds(), 1000, "CreateVersionWithData: ts_vectors insert")
 			}
 		}
