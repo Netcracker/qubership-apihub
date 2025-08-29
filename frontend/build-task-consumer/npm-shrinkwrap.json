@@ -1,12 +1,12 @@
 {
   "name": "@netcracker/qubership-apihub-build-task-consumer",
-  "version": "3.1.2",
+  "version": "3.1.3",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@netcracker/qubership-apihub-build-task-consumer",
-      "version": "3.1.2",
+      "version": "3.1.3",
       "license": "Apache-2.0",
       "dependencies": {
         "@nestjs/axios": "^3.0.0",
@@ -15,7 +15,7 @@
         "@nestjs/core": "^10.0.0",
         "@nestjs/platform-express": "^10.0.0",
         "@nestjs/swagger": "^7.0.0",
-        "@netcracker/qubership-apihub-api-processor": "4.1.1",
+        "@netcracker/qubership-apihub-api-processor": "4.1.2",
         "@sinclair/typebox": "^0.32.1",
         "adm-zip": "^0.5.10",
         "dotenv": "^16.3.1",
@@ -1844,11 +1844,11 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-diff": {
-      "version": "2.1.2",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/2.1.2/e33c64155d997fc5e5f356c9e50ecd15fb7cac96",
-      "integrity": "sha512-PtRURcChY1nPuXisMz+wdJ/ZYn2gfu2uxJGgUdUk/8QFXC6RKOvadEtbyju62ZycOJV1w8v5mVQkT9cpF+4Epg==",
+      "version": "2.2.0",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/2.2.0/d0e44617d33c0e404ab4148e3b51e3147fac28da",
+      "integrity": "sha512-sxJ7WoUvHrglZUtcwwbKeJrtH4p5CYxY/UkmD7N0pWbr+n6EfBr6dnH/SX5KlJKaI7y+CEncfK5ktsw3F3MvYQ==",
       "dependencies": {
-        "@netcracker/qubership-apihub-api-unifier": "2.2.0",
+        "@netcracker/qubership-apihub-api-unifier": "2.3.0",
         "@netcracker/qubership-apihub-json-crawl": "1.0.4",
         "fast-equals": "4.0.3"
       }
@@ -1860,13 +1860,13 @@
       "license": "MIT"
     },
     "node_modules/@netcracker/qubership-apihub-api-processor": {
-      "version": "4.1.1",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/4.1.1/c020899781fbf518a11db0ef9bed216e20a0d505",
-      "integrity": "sha512-JbqKTnT9x0xVOCde99TMYJlFC0ntTo4wbXFGBD3JS6N8SyJuOUP6bM/qkQnlN2Y4MDMC+wkV8H21ZjL1hsHreA==",
+      "version": "4.1.2",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/4.1.2/12ace15c549f40b73e7037b1fe64cb1cc62b96ac",
+      "integrity": "sha512-w4Z//NgdGMDCF8jbOy8d6jZMgs6ikLjolkdnUiFiAGux84EYxroRRpHB3UdOquttk+gvPzYmAUZ1AmN+2V8wLQ==",
       "license": "Apache-2.0",
       "dependencies": {
-        "@netcracker/qubership-apihub-api-diff": "2.1.2",
-        "@netcracker/qubership-apihub-api-unifier": "2.2.0",
+        "@netcracker/qubership-apihub-api-diff": "2.2.0",
+        "@netcracker/qubership-apihub-api-unifier": "2.3.0",
         "@netcracker/qubership-apihub-graphapi": "1.0.8",
         "@netcracker/qubership-apihub-json-crawl": "1.0.4",
         "adm-zip": "0.5.10",
@@ -1890,14 +1890,15 @@
       "version": "0.5.10",
       "resolved": "https://registry.npmjs.org/adm-zip/-/adm-zip-0.5.10.tgz",
       "integrity": "sha512-x0HvcHqVJNTPk/Bw8JbLWlWoo6Wwnsug0fnYYro1HBrjxZ3G7/AZk7Ahv8JwDe1uIcz8eBqvu86FuF1POiG7vQ==",
+      "license": "MIT",
       "engines": {
         "node": ">=6.0"
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-unifier": {
-      "version": "2.2.0",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-unifier/2.2.0/43d2a08697d0b34f94c062b7701abe029f6bbab7",
-      "integrity": "sha512-3KNRFm5+dv35AI8fwuKdWNpA+NaLIABMmrppxvCmdJm8YyVnDB65LqMDSer4E6bxIRbhmM+sP/CZPHk/VtJttA==",
+      "version": "2.3.0",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-unifier/2.3.0/47c6b2a25e3364361256fa59758aee16b5684a58",
+      "integrity": "sha512-LyKCE9e5hM3Pq1KomvUalMCiiyoSmo48qVUXjb4Z0iyWx1CxMlupwaB9sHpoy5/8QJbtiSTIFA13XQQALV8UTg==",
       "dependencies": {
         "@netcracker/qubership-apihub-json-crawl": "1.0.4",
         "fast-equals": "4.0.3",
@@ -1956,6 +1957,7 @@
       "resolved": "https://registry.npmjs.org/semver/-/semver-5.7.2.tgz",
       "integrity": "sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==",
       "dev": true,
+      "license": "ISC",
       "bin": {
         "semver": "bin/semver"
       }
