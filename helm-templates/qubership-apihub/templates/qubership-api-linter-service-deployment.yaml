@@ -11,6 +11,7 @@ metadata:
         app.kubernetes.io/part-of: 'qubership-api-linter-service'
         app.kubernetes.io/managed-by: 'helm'
         app.kubernetes.io/technology: 'go'
+        olric-cluster: apihub
 spec:
     replicas: {{ .Values.qubershipApiLinterService.replicas }}
     strategy:
@@ -27,6 +28,7 @@ spec:
                 app.kubernetes.io/part-of: 'qubership-api-linter-service'
                 app.kubernetes.io/managed-by: 'helm'
                 app.kubernetes.io/technology: 'go'
+                olric-cluster: apihub
         spec:
             hostPID: false
             hostIPC: false
