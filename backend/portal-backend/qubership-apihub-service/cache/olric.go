@@ -35,6 +35,8 @@ type OlricProvider interface {
 	GetBindAddr() string
 }
 
+const olricBindAddr = "0.0.0.0"
+
 type olricProviderImpl struct {
 	wg     sync.WaitGroup
 	cfg    *config.Config
@@ -100,11 +102,10 @@ func getConfig(olricConfig sysconfig.OlricConfig) (*config.Config, error) {
 		}
 
 		cloudDiscovery := &discovery.CloudDiscovery{}
-		labelSelector := fmt.Sprintf("name=%s", getServiceName())
 		cfg.ServiceDiscovery = map[string]interface{}{
 			"plugin":   cloudDiscovery,
 			"provider": "k8s",
-			"args":     fmt.Sprintf("namespace=%s label_selector=\"%s\"", namespace, labelSelector),
+			"args":     fmt.Sprintf("namespace=%s label_selector=\"%s\"", namespace, "olric-cluster=apihub"), // select pods with label "olric-cluster=apihub"
 		}
 
 		// TODO: try to get from replica set via kube client
@@ -126,9 +127,9 @@ func getConfig(olricConfig sysconfig.OlricConfig) (*config.Config, error) {
 		cfg.LogLevel = "WARN"
 		cfg.LogVerbosity = 2
 
-		cfg.BindAddr = "localhost"
+		cfg.BindAddr = olricBindAddr
 		cfg.BindPort = getLocalPort()
-		cfg.MemberlistConfig.BindAddr = "localhost"
+		cfg.MemberlistConfig.BindAddr = olricBindAddr
 		cfg.MemberlistConfig.BindPort = getLocalMemberlistPort()
 		cfg.PartitionCount = 5
 
@@ -142,7 +143,7 @@ func getConfig(olricConfig sysconfig.OlricConfig) (*config.Config, error) {
 func getLocalPort() int {
 	//try specific port first
 	port := 47375
-	if isPortFree("localhost", port) {
+	if isPortFree(olricBindAddr, port) {
 		return port
 	}
 	//and if fails, then random
@@ -151,7 +152,7 @@ func getLocalPort() int {
 func getLocalMemberlistPort() int {
 	//try specific port first
 	port := 47376
-	if isPortFree("localhost", port) {
+	if isPortFree(olricBindAddr, port) {
 		return port
 	}
 	//and if fails, then random
@@ -161,7 +162,10 @@ func getLocalMemberlistPort() int {
 func getLocalRandomFreePort() int {
 	for {
 		port := rand.Intn(48127) + 1024
-		if isPortFree("localhost", port) {
+		if isPortFree(olricBindAddr, port) {
+			return port
+		}
+		if isPortFree(olricBindAddr, port) {
 			return port
 		}
 	}
@@ -176,8 +180,4 @@ func isPortFree(address string, port int) bool {
 
 	_ = ln.Close()
 	return true
-}
-
-func getServiceName() string {
-	return "apihub-backend"
 }
