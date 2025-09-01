@@ -30,6 +30,7 @@ type PersonalAccessTokenController interface {
 	CreatePAT(w http.ResponseWriter, r *http.Request)
 	ListPATs(w http.ResponseWriter, r *http.Request)
 	DeletePAT(w http.ResponseWriter, r *http.Request)
+	GetPatByPat(w http.ResponseWriter, r *http.Request)
 }
 
 func NewPersonalAccessTokenController(svc service.PersonalAccessTokenService) PersonalAccessTokenController {
@@ -105,4 +106,62 @@ func (u PersonalAccessTokenControllerImpl) DeletePAT(w http.ResponseWriter, r *h
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (u PersonalAccessTokenControllerImpl) GetPatByPat(w http.ResponseWriter, r *http.Request) {
+	patHeader := r.Header.Get("X-Personal-Access-Token")
+	if patHeader == "" {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.PersonalAccessTokenHeaderIsEmpty,
+			Message: exception.PersonalAccessTokenHeaderIsEmptyMsg,
+		})
+		return
+	}
+
+	token, user, systemRole, err := u.svc.GetPATByToken(patHeader)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to get personal access token", err)
+		return
+	}
+	if token == nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusUnauthorized,
+			Code:    exception.PersonalAccessTokenNotValid,
+			Message: exception.PersonalAccessTokenNotValidMsg,
+			Debug:   "token not found",
+		})
+		return
+	}
+	if token.Status != view.PersonaAccessTokenActive {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusUnauthorized,
+			Code:    exception.PersonalAccessTokenNotValid,
+			Message: exception.PersonalAccessTokenNotValidMsg,
+			Debug:   "token is not active",
+		})
+		return
+	}
+	if user == nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusUnauthorized,
+			Code:    exception.PersonalAccessTokenNotValid,
+			Message: exception.PersonalAccessTokenNotValidMsg,
+			Debug:   "user not found",
+		})
+		return
+	}
+
+	systemRoles := make([]string, 0)
+	if systemRole != "" {
+		systemRoles = append(systemRoles, systemRole)
+	}
+
+	result := view.PersonalAccessTokenExtAuthView{
+		Pat:         *token,
+		User:        *user,
+		SystemRoles: systemRoles,
+	}
+
+	utils.RespondWithJson(w, http.StatusOK, result)
 }

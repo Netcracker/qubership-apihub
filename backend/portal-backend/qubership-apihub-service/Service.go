@@ -508,7 +508,7 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}/recalculateGroups", security.Secure(packageController.RecalculateOperationGroups)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/packages/{packageId}/calculateGroups", security.Secure(packageController.CalculateOperationGroups)).Methods(http.MethodGet)
 
-	//api for agent
+	//api for extensions
 	r.HandleFunc("/api/v2/users/{userId}/availablePackagePromoteStatuses", security.Secure(roleController.GetAvailableUserPackagePromoteStatuses)).Methods(http.MethodPost)
 
 	r.HandleFunc("/api/v2/packages/{packageId}/publish/{publishId}/status", security.Secure(publishV2Controller.GetPublishStatus)).Methods(http.MethodGet)
@@ -553,6 +553,8 @@ func main() {
 	r.HandleFunc("/api/v2/auth/publicKey", security.NoSecure(jwtPubKeyController.GetRsaPublicKey)).Methods(http.MethodGet)
 	// Required to verify api key for external authorization
 	r.HandleFunc("/api/v2/auth/apiKey", security.NoSecure(apihubApiKeyController.GetApiKeyByKey)).Methods(http.MethodGet)
+	// Required to verify PAT for external authorization
+	r.HandleFunc("/api/v2/auth/pat", security.NoSecure(personalAccessTokenController.GetPatByPat)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/auth/apiKey/{apiKeyId}", security.Secure(apihubApiKeyController.GetApiKeyById)).Methods(http.MethodGet)
 	// Required for extensions to check Apihub auth. Just return 200 OK if authentication is passed.
 	r.HandleFunc("/api/v1/auth/token", security.SecureJWT(func(writer http.ResponseWriter, request *http.Request) {})).Methods(http.MethodGet)

@@ -743,6 +743,12 @@ const PersonalAccessTokenIncorrectExpiryMsg = "Allowed values for '$param' are -
 const PersonalAccessTokenNotFound = "7003"
 const PersonalAccessTokenNotFoundMsg = "Personal access token with id '$id' not found"
 
+const PersonalAccessTokenHeaderIsEmpty = "7004"
+const PersonalAccessTokenHeaderIsEmptyMsg = "Personal Access Token header is empty"
+
+const PersonalAccessTokenNotValid = "7005"
+const PersonalAccessTokenNotValidMsg = "Personal access token is not valid"
+
 const IncorrectOASExtensions = "7101"
 const IncorrectOASExtensionsMsg = "OAS extension is required to be have 'x-' prefix. Incorrect extensions: $incorrectExt"
 
