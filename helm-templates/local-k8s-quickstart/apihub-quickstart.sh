@@ -1,3 +1,4 @@
+#!/bin/sh
 cd ./scripts
 ./1-start-kind-cluster.sh
 echo "Sleep 30 seconds, wait for Kind init"
