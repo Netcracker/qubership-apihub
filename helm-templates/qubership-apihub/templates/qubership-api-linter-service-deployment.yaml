@@ -31,87 +31,87 @@ spec:
             hostPID: false
             hostIPC: false
             volumes:
-            -   name: tmp-volume
-                emptyDir: {}
+            - name: tmp-volume
+              emptyDir: {}
             containers:
-            -   name: 'qubership-api-linter-service'
-                image: '{{ .Values.qubershipApiLinterService.image.repository }}:{{ .Values.qubershipApiLinterService.image.tag }}'
-                volumeMounts:
-                -   name: tmp-volume
-                    mountPath: /tmp
-                ports:
-                -   name: web
-                    containerPort: 8080
-                    protocol: TCP
-                env:
-                -   name: LOG_LEVEL
-                    value: '{{ .Values.qubershipApiLinterService.logLevel }}'
+            - name: 'qubership-api-linter-service'
+              image: '{{ .Values.qubershipApiLinterService.image.repository }}:{{ .Values.qubershipApiLinterService.image.tag }}'
+              volumeMounts:
+              - name: tmp-volume
+                mountPath: /tmp
+              ports:
+              - name: web
+                containerPort: 8080
+                protocol: TCP
+              env:
+              - name: LOG_LEVEL
+                value: '{{ .Values.qubershipApiLinterService.logLevel }}'
 
-                -   name: APIHUB_URL
-                    value: '{{ .Values.qubershipApiLinterService.env.apihub.url }}'
-                -   name: APIHUB_ACCESS_TOKEN
-                    valueFrom:
-                      secretKeyRef:
-                         name: 'qubership-api-linter-service-api-key-secret'
-                         key: apihub_access_token
+              - name: APIHUB_URL
+                value: '{{ .Values.qubershipApiLinterService.env.apihub.url }}'
+              - name: APIHUB_ACCESS_TOKEN
+                valueFrom:
+                    secretKeyRef:
+                        name: 'qubership-api-linter-service-api-key-secret'
+                        key: apihub_access_token
 
-                -   name: LINTER_POSTGRESQL_HOST
-                    value: '{{ .Values.qubershipApiLinterService.env.database.host }}'
-                -   name: LINTER_POSTGRESQL_PORT
-                    value: '{{ .Values.qubershipApiLinterService.env.database.port }}'
-                -   name: LINTER_POSTGRESQL_DB_NAME
-                    value: '{{ .Values.qubershipApiLinterService.env.database.name }}'
-                -   name: LINTER_POSTGRESQL_USERNAME
-                    valueFrom:
-                      secretKeyRef:
-                         name: 'qubership-api-linter-service-db-secret'
-                         key: linter_postgresql_username
-                -   name: LINTER_POSTGRESQL_PASSWORD
-                    valueFrom:
-                      secretKeyRef:
-                         name: 'qubership-api-linter-service-db-secret'
-                         key: linter_postgresql_password
-                    
-                -   name: OLRIC_DISCOVERY_MODE
-                    value: 'lan'
-                -   name: OLRIC_REPLICA_COUNT
-                    value: '{{ .Values.qubershipApiLinterService.replicas }}'
-                -   name: SPECTRAL_BIN_PATH
-                    value: '{{ .Values.qubershipApiLinterService.env.linters.spectral.spectralBinPath }}'
-                -   name: NAMESPACE
-                    valueFrom:
-                        fieldRef:
-                            fieldPath: metadata.namespace
-                resources:
-                    requests:
-                        cpu: {{ .Values.qubershipApiLinterService.resource.cpu.request }}
-                        memory: '{{ .Values.qubershipApiLinterService.resource.memory.request }}'
-                    limits:
-                        cpu: {{ .Values.qubershipApiLinterService.resource.cpu.limit }}
-                        memory: '{{ .Values.qubershipApiLinterService.resource.memory.limit }}'
-                livenessProbe:
-                    httpGet:
-                        path: /live
-                        port: web
-                    initialDelaySeconds: 35
-                    timeoutSeconds: 10
-                readinessProbe:
-                    httpGet:
-                        path: /ready
-                        port: web
-                    initialDelaySeconds: 35
-                    timeoutSeconds: 10
-                securityContext:
-                    runAsUser: 10001
-                    runAsGroup: 10001
-                    readOnlyRootFilesystem: true
-                    runAsNonRoot: true
-                    seccompProfile:
-                        type: RuntimeDefault
-                    allowPrivilegeEscalation: false
-                    capabilities:
-                        drop:
-                          - ALL
+              - name: LINTER_POSTGRESQL_HOST
+                value: '{{ .Values.qubershipApiLinterService.env.database.host }}'
+              - name: LINTER_POSTGRESQL_PORT
+                value: '{{ .Values.qubershipApiLinterService.env.database.port }}'
+              - name: LINTER_POSTGRESQL_DB_NAME
+                value: '{{ .Values.qubershipApiLinterService.env.database.name }}'
+              - name: LINTER_POSTGRESQL_USERNAME
+                valueFrom:
+                    secretKeyRef:
+                        name: 'qubership-api-linter-service-db-secret'
+                        key: linter_postgresql_username
+              - name: LINTER_POSTGRESQL_PASSWORD
+                valueFrom:
+                    secretKeyRef:
+                        name: 'qubership-api-linter-service-db-secret'
+                        key: linter_postgresql_password
+
+              - name: OLRIC_DISCOVERY_MODE
+                value: 'lan'
+              - name: OLRIC_REPLICA_COUNT
+                value: '{{ .Values.qubershipApiLinterService.replicas }}'
+              - name: SPECTRAL_BIN_PATH
+                value: '{{ .Values.qubershipApiLinterService.env.linters.spectral.spectralBinPath }}'
+              - name: NAMESPACE
+                valueFrom:
+                    fieldRef:
+                        fieldPath: metadata.namespace
+              resources:
+                requests:
+                    cpu: {{ .Values.qubershipApiLinterService.resource.cpu.request }}
+                    memory: '{{ .Values.qubershipApiLinterService.resource.memory.request }}'
+                limits:
+                    cpu: {{ .Values.qubershipApiLinterService.resource.cpu.limit }}
+                    memory: '{{ .Values.qubershipApiLinterService.resource.memory.limit }}'
+              livenessProbe:
+                httpGet:
+                    path: /live
+                    port: web
+                initialDelaySeconds: 35
+                timeoutSeconds: 10
+              readinessProbe:
+                httpGet:
+                    path: /ready
+                    port: web
+                initialDelaySeconds: 35
+                timeoutSeconds: 10
+              securityContext:
+                runAsUser: 10001
+                runAsGroup: 10001
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                seccompProfile:
+                    type: RuntimeDefault
+                allowPrivilegeEscalation: false
+                capabilities:
+                    drop:
+                        - ALL
 
     selector:
         matchLabels:
