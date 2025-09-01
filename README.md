@@ -41,6 +41,14 @@ The **Web Portal** provides a user-friendly interface for interacting with the A
 
 See [qubership-apihub-ui](https://github.com/Netcracker/qubership-apihub-ui)
 
+### API Linter service add-on
+
+The **API Linter service** is a pluggable add-on (included into OOB delivery be default) which enrich APIHUB Portal with an ability to do linting of API specification using 3rd party linting engine (spectral)
+
+See [qubership-api-linter-service](https://github.com/Netcracker/qubership-api-linter-service)
+
+See [APIHUB Wiki](https://github.com/Netcracker/qubership-apihub/wiki#supplementary-applications) for APIHUB add-ons architecture
+
 # Documentation
 
 ## Installation Guide

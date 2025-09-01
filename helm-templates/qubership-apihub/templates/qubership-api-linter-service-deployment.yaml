@@ -76,6 +76,8 @@ spec:
                     value: 'lan'
                 -   name: OLRIC_REPLICA_COUNT
                     value: '{{ .Values.qubershipApiLinterService.replicas }}'
+                -   name: SPECTRAL_BIN_PATH
+                    value: '{{ .Values.qubershipApiLinterService.env.linters.spectral.spectralBinPath }}'
                 -   name: NAMESPACE
                     valueFrom:
                         fieldRef:

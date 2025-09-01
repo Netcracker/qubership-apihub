@@ -21,3 +21,5 @@ zeroDayConfiguration:
   adminEmail: ${APIHUB_ADMIN_EMAIL}
   # <admin_password, example: password>
   adminPassword: ${APIHUB_ADMIN_PASSWORD}
+olric:
+  discoveryMode: 'local'
