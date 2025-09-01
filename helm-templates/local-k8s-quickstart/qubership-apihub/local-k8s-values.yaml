@@ -1,6 +1,6 @@
 qubershipApihubBackend:
   image:
-    repository: 'ghcr.io/netcracker/qubership-apihub-backend'  
+    repository: 'ghcr.io/netcracker/qubership-apihub-backend'
     tag: 'dev'
   replicas: 1
   resource:
@@ -30,9 +30,9 @@ qubershipApihubBackend:
 
 qubershipApihubBuildTaskConsumer:
   image:
-    repository: 'ghcr.io/netcracker/qubership-apihub-build-task-consumer' 
+    repository: 'ghcr.io/netcracker/qubership-apihub-build-task-consumer'
     tag: 'dev'
-  replicas: 1  
+  replicas: 1
   resource:
     cpu:
       request: "100m"
@@ -73,7 +73,7 @@ qubershipApihubUi:
 
 qubershipApiLinterService:
   image:
-    repository: 'ghcr.io/netcracker/qubership-api-linter-service' 
+    repository: 'ghcr.io/netcracker/qubership-api-linter-service'
     tag: 'remake'
   replicas: 1
   resource:

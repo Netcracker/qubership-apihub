@@ -67,15 +67,15 @@ qubershipApihubBackend:
       #   imageSvg: ''
       #   # Mandatory; Protocol for external identity provider; If not set, default value: ""; Example: SAML
       #   protocol: 'SAML'
-      #   # Optional; SAML configuration for external identity provider, required if protocol is 'SAML'; If not set, default value: ""; Example: 
+      #   # Optional; SAML configuration for external identity provider, required if protocol is 'SAML'; If not set, default value: ""; Example:
       #   samlConfiguration:
       #     # Optional; SAML metadata URL. Required for SAML configuration; If not set, default value: ""; Example: https://idp.example.com/FederationMetadata/2007-06/FederationMetadata.xml
       #     metadataUrl: ''
       #     # Optional; SAML server certificate, base64 encoded. Required for SAML configuration; If not set, default value: ""; Example: LS0tLS1CRUdJTi...
-      #     certificate: '' 
+      #     certificate: ''
       #     # Optional; SAML server private key, base64 encoded. Required for SAML configuration; If not set, default value: ""; Example: LS0tLS1CRUdJTi...
       #     privateKey: ''
-      # # Mandatory; ID for external identity provider; If not set, default value: ""; Example: external-oidc-idp   
+      # # Mandatory; ID for external identity provider; If not set, default value: ""; Example: external-oidc-idp
       # - id: 'external-oidc-idp'
       #   # Optional; Display name for external OIDC identity provider; If not set, default value: ""; Example: External Identity Provider
       #   displayName: 'test'
@@ -83,7 +83,7 @@ qubershipApihubBackend:
       #   imageSvg: ''
       #   # Mandatory; Protocol for external identity provider; If not set, default value: ""; Example: OIDC
       #   protocol: 'OIDC'
-      #   # Optional; OIDC configuration for external identity provider, required if protocol is 'OIDC'; If not set, default value: ""; Example: 
+      #   # Optional; OIDC configuration for external identity provider, required if protocol is 'OIDC'; If not set, default value: ""; Example:
       #   oidcConfiguration:
       #     # Optional; OIDC identity provider URL. Required for OIDC configuration; If not set, default value: ""; Example: https://idp.example.com/realms/apihub
       #     providerUrl: ''
@@ -251,7 +251,7 @@ qubershipApihubUi:
   env:
     apihubBackendAddress: 'qubership-apihub-backend:8080' # k8s local address of apihub backend service. Do not change it unless you know what you are doing
     apihubNcServiceAddress: 'qubership-apihub-backend:8080' # k8s local address of apihub custom service. Do not change it unless you know what you are doing
-    
+
   # Mandatory; Factual APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
   apihubUrl: ''
 
@@ -272,7 +272,7 @@ qubershipApihubUi:
 # Section with APIHUB API Linter service configuration
 qubershipApiLinterService:
   image:
-    repository: 'ghcr.io/netcracker/qubership-api-linter-service' 
+    repository: 'ghcr.io/netcracker/qubership-api-linter-service'
     tag: 'latest'
   replicas: 1
 
@@ -289,7 +289,7 @@ qubershipApiLinterService:
   env:
     # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG
     logLevel: 'INFO'
-    
+
     # Section with PostgreSQL database connection parameters
     database:
       # Mandatory; PostgreSQL database host ; If not set, default value: localhost; Example: postgres.example.com
