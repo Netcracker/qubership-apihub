@@ -30,6 +30,7 @@ spec:
         spec:
             hostPID: false
             hostIPC: false
+            serviceAccountName: 'qubership-api-linter-service'
             volumes:
             - name: tmp-volume
               emptyDir: {}
@@ -46,7 +47,6 @@ spec:
               env:
               - name: LOG_LEVEL
                 value: '{{ .Values.qubershipApiLinterService.logLevel }}'
-
               - name: APIHUB_URL
                 value: '{{ .Values.qubershipApiLinterService.env.apihub.url }}'
               - name: APIHUB_ACCESS_TOKEN
@@ -54,7 +54,6 @@ spec:
                     secretKeyRef:
                         name: 'qubership-api-linter-service-api-key-secret'
                         key: apihub_access_token
-
               - name: LINTER_POSTGRESQL_HOST
                 value: '{{ .Values.qubershipApiLinterService.env.database.host }}'
               - name: LINTER_POSTGRESQL_PORT
@@ -71,13 +70,12 @@ spec:
                     secretKeyRef:
                         name: 'qubership-api-linter-service-db-secret'
                         key: linter_postgresql_password
-
               - name: OLRIC_DISCOVERY_MODE
                 value: 'lan'
               - name: OLRIC_REPLICA_COUNT
                 value: '{{ .Values.qubershipApiLinterService.replicas }}'
               - name: SPECTRAL_BIN_PATH
-                value: '{{ .Values.qubershipApiLinterService.env.linters.spectral.spectralBinPath }}'
+                value: '{{ .Values.qubershipApiLinterService.env.linters.spectral.bin_path }}'
               - name: NAMESPACE
                 valueFrom:
                     fieldRef:
@@ -112,7 +110,6 @@ spec:
                 capabilities:
                     drop:
                         - ALL
-
     selector:
         matchLabels:
             name: 'qubership-api-linter-service'
