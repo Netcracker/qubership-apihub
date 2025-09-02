@@ -204,6 +204,13 @@ qubershipApihubBackend:
         # Optional; Schedule for the builds cleanup job. If not set, default value: "0 1 * * 0"; Example: "* * * * *"
         schedule: '0 1 * * 0'
 
+    # Optional; Section APIHUB extensions list. If not set, default value: [];
+    extensions:
+      # API Linter enabled by default. See section qubershipApiLinterService below for configuration
+      - name: api-linter
+        baseUrl: http://qubership-api-linter-service:8080
+        pathPrefix: api-linter
+
 # Section with APIHUB Build Task Consumer configuration
 qubershipApihubBuildTaskConsumer:
   image:
@@ -308,7 +315,7 @@ qubershipApiLinterService:
         # Path to Spectral binary inside docker container
         bin_path: 'resources/spectral/linux/spectral'
     apihub:
-      # Apihub base URL
+      # Mandatory; APIHUB URL
       url:
       # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
       accessToken: ''

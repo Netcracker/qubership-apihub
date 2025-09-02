@@ -23,3 +23,7 @@ zeroDayConfiguration:
   adminPassword: ${APIHUB_ADMIN_PASSWORD}
 olric:
   discoveryMode: 'local'
+extensions:
+  - name: api-linter
+    baseUrl: http://host.docker.internal:8091
+    pathPrefix: api-linter
