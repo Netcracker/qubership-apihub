@@ -41,6 +41,7 @@ export type ExportChangesMenuProps = {
   group?: string
   previousVersion?: string
   previousVersionPackageId?: string
+  onDownloadAllChanges?: () => void
 }
 
 export const ExportChangesMenu: FC<ExportChangesMenuProps> = memo(({
@@ -55,6 +56,7 @@ export const ExportChangesMenu: FC<ExportChangesMenuProps> = memo(({
   group,
   previousVersion,
   previousVersionPackageId,
+  onDownloadAllChanges: onDownloadAllChangesProps,
 }) => {
   const { packageId, versionId, apiType = DEFAULT_API_TYPE } = useParams<{
     packageId: string
@@ -70,6 +72,10 @@ export const ExportChangesMenu: FC<ExportChangesMenuProps> = memo(({
   const isDownloadButtonDisabled = isEmptyChangesSummary(severityChanges, changesSummaryFromContext)
 
   const onDownloadAllChanges = (): void => {
+    if (onDownloadAllChangesProps) {
+      onDownloadAllChangesProps()
+      return
+    }
     downloadChangesAsExcel({
       packageKey: packageId!,
       version: versionId!,

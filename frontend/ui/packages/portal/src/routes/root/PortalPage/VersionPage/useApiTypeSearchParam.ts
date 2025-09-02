@@ -20,12 +20,13 @@ import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/sea
 import { API_TYPE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSetSearchParams } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSetSearchParams'
 import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 export function useApiTypeSearchParam(): {
-  apiType: Key
+  apiType: ApiType
   setApiTypeSearchParam: SetApiTypeSearchParam
 } {
-  const param = useSearchParam<Key>(API_TYPE_SEARCH_PARAM) ?? DEFAULT_API_TYPE
+  const param = useSearchParam<ApiType>(API_TYPE_SEARCH_PARAM) ?? DEFAULT_API_TYPE
   const setSearchParams = useSetSearchParams()
 
   return useMemo(

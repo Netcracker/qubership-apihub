@@ -52,6 +52,17 @@ import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { ChangesTooltipCategory } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import { CATEGORY_OPERATION, CATEGORY_PACKAGE } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import { useApiTypeSearchParam } from '@apihub/routes/root/PortalPage/VersionPage/useApiTypeSearchParam'
+import { ExportChangesMenu } from '@apihub/routes/root/PortalPage/VersionPage/ExportChangesMenu'
+import { CHANGE_SEVERITIES } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import {
+  useSeverityFiltersSearchParam,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
+import { useTagSearchFilter } from '@apihub/routes/root/PortalPage/VersionPage/useTagSearchFilter'
+import { useVersionSearchParam } from '@apihub/routes/root/useVersionSearchParam'
+import { useDownloadChangesAsExcel } from '@apihub/routes/root/PortalPage/VersionPage/useDownloadChangesAsExcel'
+import {
+  usePackageSearchParam,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
 
 export type ComparisonPageToolbarProps = {
   compareToolbarMode: CompareToolbarMode
@@ -59,20 +70,37 @@ export type ComparisonPageToolbarProps = {
 
 export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<ComparisonPageToolbarProps>((props) => {
   const { compareToolbarMode, isChangelogAvailable } = props
-  const { apiType: apiTypeSearchParam } = useApiTypeSearchParam() // in case of package/dashboard comparison we don't hase apiType in url, we have it in searchParams
-
+  const { apiType: apiTypeSearchParam } = useApiTypeSearchParam()
+  const [packageSearchParam] = usePackageSearchParam()// in case of package/dashboard comparison we don't hase apiType in url, we have it in searchParams
   const {
     packageId: mainPackageId,
     versionId: mainVersionId,
     group,
-    apiType: operationApiType,
+    apiType: operationApiTypeInUrl,
   } = useParams<{
     packageId: Key
     versionId: Key
     group: Key
     apiType: ApiType
   }>()
+  const apiType = operationApiTypeInUrl ?? apiTypeSearchParam
+  const previousVersionPackageId = packageSearchParam ?? mainPackageId
+
   const { isPackageFromDashboard } = useIsPackageFromDashboard(true)
+  const [severityFilter] = useSeverityFiltersSearchParam()
+  const [selectedTag] = useTagSearchFilter()
+  const [previousVersion] = useVersionSearchParam()
+  const [downloadChangesAsExcel] = useDownloadChangesAsExcel()
+
+  const onDownloadAllChanges = useCallback((): void => {
+    downloadChangesAsExcel({
+      packageKey: mainPackageId!,
+      version: mainVersionId!,
+      apiType: apiType!,
+      previousVersion: previousVersion!,
+      previousVersionPackageId: previousVersionPackageId,
+    })
+  }, [downloadChangesAsExcel, mainPackageId, mainVersionId, apiType, previousVersion, previousVersionPackageId])
 
   const navigate = useNavigate()
   const backwardLocation = useBackwardLocationContext()
@@ -118,11 +146,11 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
 
   const title = useMemo(() => (
     isOperationsComparison
-      ? `${TITLE_BY_COMPARE_MODE[compareToolbarMode]} ${API_TYPE_TITLE_MAP[operationApiType as ApiType]}`
+      ? `${TITLE_BY_COMPARE_MODE[compareToolbarMode]} ${API_TYPE_TITLE_MAP[apiType]}`
       : group
         ? COMPARE_API_BY_GROUPS
         : TITLE_BY_COMPARE_MODE[compareToolbarMode]
-  ), [compareToolbarMode, group, isOperationsComparison, operationApiType])
+  ), [compareToolbarMode, group, isOperationsComparison, apiType])
 
   return (
     <Box sx={COMPARISON_PAGE_TOOLBAR_STYLES} data-testid="ComparisonToolbar">
@@ -152,12 +180,20 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
             : <>
               <ComparisonChangeSeverityFilters
                 category={getChangeSeverityCategory(isDashboardsComparison, isPackagesComparison)}
-                apiType={operationApiType ?? API_TYPES.find(type => type.toString() === apiTypeSearchParam)}
+                apiType={apiType ?? API_TYPES.find(type => type.toString() === apiTypeSearchParam)}
               />
               {isDashboardsComparison && showApiTypeSelector && <ApiTypeSegmentedSelector/>}
             </>
         )}
       </Box>
+      <ExportChangesMenu
+        severityFilter={severityFilter}
+        severityChanges={CHANGE_SEVERITIES}
+        tag={selectedTag}
+        previousVersion={previousVersion}
+        previousVersionPackageId={previousVersionPackageId}
+        onDownloadAllChanges={onDownloadAllChanges}
+      />
     </Box>
   )
 })
