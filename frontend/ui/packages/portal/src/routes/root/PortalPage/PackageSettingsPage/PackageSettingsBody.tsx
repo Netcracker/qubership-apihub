@@ -15,7 +15,7 @@
  */
 
 import type { FC } from 'react'
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { AccessTokensPackageSettingsTab } from './AccessTokensPackageSettingsTab'
 import { GeneralPackageSettingsTab } from './GeneralPackageSettingsTab/GeneralPackageSettingsTab'
 import { useActiveTabContentContext } from './PackageSettingsPage'
@@ -38,13 +38,22 @@ import {
 import {
   ExportSettingsTab,
 } from '@apihub/routes/root/PortalPage/PackageSettingsPage/ExportSettingsTab/ExportSettingsTab'
+import {
+  CONTENT_PLACEHOLDER_AREA,
+  NO_PERMISSION,
+  Placeholder,
+} from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+import { ACCESS_TOKEN_MANAGEMENT_PERMISSION } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
 
 export const PackageSettingsBody: FC<PackageSettingsTabProps> = memo<PackageSettingsTabProps>(({
   packageObject,
   isPackageLoading,
 }) => {
   const activeTab = useActiveTabContentContext()
-
+  const hasTokenManagementPermission = useMemo(
+    () => !!packageObject?.permissions?.includes(ACCESS_TOKEN_MANAGEMENT_PERMISSION),
+    [packageObject],
+  )
   return (
     <>
       {
@@ -58,8 +67,21 @@ export const PackageSettingsBody: FC<PackageSettingsTabProps> = memo<PackageSett
           [API_SPECIFIC_CONFIGURATION_PAGE]: <SpecificConfigurationPackageSettingsTab packageObject={packageObject}/>,
           [EXPORT_SETTINGS_PAGE]: <ExportSettingsTab packageObject={packageObject}/>,
           [VERSIONS_PAGE]: <VersionsPackageSettingsTab packageObject={packageObject}/>,
-          [ACCESS_TOKENS_PAGE]: <AccessTokensPackageSettingsTab packageObject={packageObject}/>,
-          [USER_ACCESS_CONTROLS_PAGE]: <UserPackageAccessControlSettingsTab packageObject={packageObject}/>,
+          [ACCESS_TOKENS_PAGE]:
+            <Placeholder
+              invisible={hasTokenManagementPermission}
+              area={CONTENT_PLACEHOLDER_AREA}
+              message={NO_PERMISSION}
+              testId={'NoPermissionPlaceholder'}
+            > <AccessTokensPackageSettingsTab packageObject={packageObject}/>
+            </Placeholder>,
+          [USER_ACCESS_CONTROLS_PAGE]: <Placeholder
+            invisible={hasTokenManagementPermission}
+            area={CONTENT_PLACEHOLDER_AREA}
+            message={NO_PERMISSION}
+            testId={'NoPermissionPlaceholder'}
+          ><UserPackageAccessControlSettingsTab packageObject={packageObject}/>
+          </Placeholder>,
         }[activeTab]
       }
     </>
