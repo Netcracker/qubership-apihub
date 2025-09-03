@@ -27,6 +27,7 @@ import { isObject } from '@netcracker/qubership-apihub-json-crawl'
 import { CUSTOM_PARAMETER_API_AUDIENCE, FILE_FORMAT_JSON, FILE_FORMAT_YAML } from '../../consts'
 import YAML from 'js-yaml'
 import { Diff, DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import { isPathParamRenameDiff } from '../../utils'
 
 export const getOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): string => {
   if (!Array.isArray(servers) || !servers.length) { return '' }
@@ -84,6 +85,11 @@ export const dump = (value: unknown, format: typeof FILE_FORMAT_YAML | typeof FI
     return [[JSON.stringify(value, undefined, 2)], { type: 'application/json' }]
   }
   throw new Error(`Unsupported format: ${format}`)
+}
+
+export const extractPathParamRenameDiff = (doc: OpenAPIV3.Document, path: string): Diff[] => {
+  const diff = (doc.paths as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[path]
+  return diff && isPathParamRenameDiff(diff) ? [diff] : []
 }
 
 export const extractRootServersDiffs = (doc: OpenAPIV3.Document): Diff[] => {

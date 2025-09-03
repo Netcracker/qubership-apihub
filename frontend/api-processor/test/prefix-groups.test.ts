@@ -127,7 +127,7 @@ describe('Prefix Groups test', () => {
       packageId: 'prefix-groups/different-prefix-length',
       config: {
         previousGroup: '/api/v10',
-        currentGroup: 'api/v1000',
+        currentGroup: 'api/v1000/',
       },
     })
 

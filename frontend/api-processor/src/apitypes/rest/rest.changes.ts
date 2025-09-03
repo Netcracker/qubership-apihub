@@ -21,10 +21,10 @@ import {
   IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER,
   isEmpty,
   isOperationRemove,
-  isPathParamRenameDiff,
   normalizePath,
   removeFirstSlash,
   slugify,
+  trimSlashes,
 } from '../../utils'
 import {
   apiDiff,
@@ -56,7 +56,12 @@ import { findRequiredRemovedProperties } from './rest.required'
 import { calculateObjectHash } from '../../utils/hashes'
 import { REST_API_TYPE } from './rest.consts'
 import { OpenAPIV3 } from 'openapi-types'
-import { extractRootSecurityDiffs, extractRootServersDiffs, getOperationBasePath } from './rest.utils'
+import {
+  extractPathParamRenameDiff,
+  extractRootSecurityDiffs,
+  extractRootServersDiffs,
+  getOperationBasePath,
+} from './rest.utils'
 import { createOperationChange, getOperationTags, OperationsMap } from '../../components'
 
 export const compareDocuments = async (
@@ -83,7 +88,7 @@ export const compareDocuments = async (
   let prevDocData = prevFile && JSON.parse(await prevFile.text())
   let currDocData = currFile && JSON.parse(await currFile.text())
 
-  const isChangedOperations = prevDoc && currDoc
+  const collectOnlyChangedOperations = Boolean(prevDoc && currDoc)
 
   if (prevDocData && previousGroup) {
     prevDocData = createCopyWithCurrentGroupOperationsOnly(prevDocData, previousGroup)
@@ -142,29 +147,25 @@ export const compareDocuments = async (
       const normalizedOperationId = slugify(`${normalizePath(operationPath)}-${inferredMethod}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
 
       const { current, previous } = operationsMap[normalizedOperationId] ?? operationsMap[operationId] ?? {}
+      if (!current && !previous) {
+        throw new Error(`Can't find the operation ${operationId} from documents pair ${prevDoc?.fileId} and ${currDoc?.fileId}`)
+      }
+      const operationChanged = Boolean(current && previous)
+      const operationAddedOrRemoved = !operationChanged
 
       let operationDiffs: Diff[] = []
-      if (current && previous && isChangedOperations) {
+      if (operationChanged && collectOnlyChangedOperations) {
         operationDiffs = [
           ...(methodData as WithAggregatedDiffs<OpenAPIV3.OperationObject>)[DIFFS_AGGREGATED_META_KEY],
           ...extractRootServersDiffs(merged),
           ...extractRootSecurityDiffs(merged),
+          ...extractPathParamRenameDiff(merged, path),
           // parameters, servers, summary, description and extensionKeys are moved from path to method in pathItemsUnification during normalization in apiDiff, so no need to aggregate them here
         ]
-
-        const diff = (merged.paths as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[path]
-        if (diff && isPathParamRenameDiff(diff)) {
-          // ignore removed and added operations, they'll be handled in a separate docs comparison???
-          operationDiffs.push(diff)
-        }
       }
-      if ((!!current !== !!previous) && !isChangedOperations) {
-        const operationDiff = (merged.paths[path] as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[inferredMethod]
-        if (!operationDiff) {
-          // ignore removed and added operations, they'll be handled in a separate docs comparison
-          continue
-        }
-        operationDiffs.push(operationDiff)
+      if (operationAddedOrRemoved && !collectOnlyChangedOperations) {
+        const operationAddedOrRemovedDiff = (merged.paths[path] as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[inferredMethod]
+        operationDiffs = operationAddedOrRemovedDiff ? [operationAddedOrRemovedDiff] : []
       }
 
       if (isEmpty(operationDiffs)) {
@@ -277,16 +278,16 @@ export function createCopyWithEmptyPathItems(template: RestOperationData): RestO
 
 export function createCopyWithCurrentGroupOperationsOnly(template: RestOperationData, group: string): RestOperationData {
   const { paths, ...rest } = template
-  const groupWithoutLeadingSlash = removeFirstSlash(group)
+  const groupWithoutEdgeSlashes = trimSlashes(group)
 
   return {
     paths: {
       ...Object.fromEntries(
         Object.entries(paths)
-          .filter(([key]) => removeFirstSlash(key).startsWith(groupWithoutLeadingSlash))
+          .filter(([key]) => removeFirstSlash(key).startsWith(`${groupWithoutEdgeSlashes}/`)) // note that 'api/v10' is a substring of 'api/v1000'
           // remove prefix group for correct path mapping in apiDiff
           // todo support the most common case when a group is in servers instead of hardcoded in path, add a test
-          .map(([key, value]) => [removeFirstSlash(key).substring(groupWithoutLeadingSlash.length), value]),
+          .map(([key, value]) => [removeFirstSlash(key).substring(groupWithoutEdgeSlashes.length), value]),
       ),
     },
     ...rest,

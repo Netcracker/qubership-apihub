@@ -43,6 +43,10 @@ export const removeFirstSlash = (input: string): string => {
   return input.startsWith('/') ? input.substring(1) : input
 }
 
+export function trimSlashes(input: string): string {
+  return input.replace(/^\/+|\/+$/g, '')
+}
+
 export type NormalizedPath = string
 
 export const normalizePath = (path: string): NormalizedPath => {
