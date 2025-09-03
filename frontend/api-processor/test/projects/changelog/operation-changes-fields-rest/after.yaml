@@ -1,0 +1,30 @@
+openapi: 3.0.0
+info:
+  title: Sample API
+  description: API specification example
+  version: 1.0.0
+tags:
+  - name: tag1
+  - name: tag2
+paths:
+  /order/{orderId}:
+    parameters:
+      - name: orderId
+        in: path
+        description: Order unique id
+    post:
+      tags:
+        - tag1
+        - tag2
+      summary: create order 2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '201':
+          description: order description

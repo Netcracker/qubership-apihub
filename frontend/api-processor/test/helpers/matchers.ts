@@ -103,6 +103,19 @@ export function operationTypeMatcher(
   )
 }
 
+export function operationChangesMatcher(
+  expected: Array<RecursiveMatcher<OperationChanges>>,
+): ApihubOperationChangesMatcher {
+  return expect.objectContaining({
+      comparisons: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.toIncludeSameMembers(expected),
+        }),
+      ]),
+    },
+  )
+}
+
 export function apihubChangeMessageMatcher(
   path: JsonPath,
   action: ActionType,
