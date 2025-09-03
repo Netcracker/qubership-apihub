@@ -316,7 +316,61 @@ qubershipApiLinterService:
         # Path to Spectral binary inside docker container
         bin_path: 'resources/spectral/linux/spectral'
     apihub:
-      # Mandatory; APIHUB URL
+      # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
       url:
       # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
       accessToken: ''
+
+# Section with Qubership APIHUB Agents Backend deployment configuration
+qubershipApihubAgentsBackend:
+  # Optional; QQubership APIHUB Agents Backend release version; If not set, default value: unknown; Example: 1.0.0
+  version: ''
+  image:
+    repository: 'qubership-apihub-agents-backend'
+    tag: 'impl'
+
+  # Section with resource limits
+  # Mandatory
+  # Below are the default values which are good enough for any cases including production
+  resource:
+    memory:
+      request: "256Mi"
+      limit: "256Mi"
+    cpu:
+      request: "30m"
+      limit: "1"
+
+  # Section with business and technical parameters for Qubership APIHUB Agents Backend.
+  env:
+    # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG
+    logLevel: ''
+    # Section with PostgreSQL database connection parameters
+    database:
+      # Mandatory; PostgreSQL database host ; If not set, default value: localhost; Example: postgres.example.com
+      host: ''
+      # Mandatory; PostgreSQL database port; If not set, default value: 5432; Example: 5432
+      port: ''
+      # Mandatory; Logical database in PostgreSQL cluster for APIHUB. Manual pre-creation required; If not set, default value: apihub_agents_backend; Example: apihub_agents_backend_prod_db
+      name: ''
+      # Mandatory; User for AGENTS_BACKEND_POSTGRESQL_DB_NAME database; If not set, default value: apihub_agents_backend; Example: apihub_agents_backend_prod_admin
+      username: ''
+      # Mandatory; Password for AGENTS_BACKEND_POSTGRESQL_USERNAME user.; If not set, default value: ""; Example: apihub_agents_backend_prod_password
+      password: ''
+
+    apihub:
+      # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
+      url: ''
+      # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
+      accessToken: ''
+
+    # Optional; If specified, during discovery the package structure is copied from the default workspace to the target discovery workspace.; If not set, default value: ""; Example: QS
+    defaultWorkspaceId: ''
+
+    # Optional; Schedule for the drafts cleanup job. If not set, default value: "0 2 * * 0"; Example: "* * * * *"
+    draftsCleanupSchedule: ''
+
+    # Optional; Set to true to enable apihub playground work without authtorization. Dangerous. Not recommended; If not set, default value: false; Example: true
+    insecureProxy: false
+
+    # Optional; Allows to set extra allowed origin to CORS header. Used for FE debugging. Should be empty on prod evs.; If not set, default value: ""; Example: https://localhost:5137
+    originAllowed: ''
