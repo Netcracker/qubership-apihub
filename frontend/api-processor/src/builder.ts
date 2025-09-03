@@ -19,6 +19,7 @@ import {
   BuildConfigBase,
   BuildConfigFile,
   BuildConfigRef,
+  BuilderType,
   ExportDocument,
   FileId,
   isPublishBuildConfig,
@@ -58,7 +59,6 @@ import {
   DEFAULT_BATCH_SIZE,
   DEFAULT_VALIDATION_RULES_SEVERITY_CONFIG,
   EXPORT_BUILD_TYPES,
-  ExportBuildType,
   MESSAGE_SEVERITY,
   SUPPORTED_FILE_FORMATS,
   VERSION_STATUS,
@@ -283,6 +283,22 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     return this.buildResult
   }
 
+  private findApiBuilderByApiType(apiType: BuilderType): ApiBuilder {
+    const apiBuilder = this.apiBuilders.find(apiBuilder => apiBuilder.apiType === apiType)
+    if (!apiBuilder) {
+      throw new Error(`Cannot find apiBuilder for apiType ${apiType}`)
+    }
+    return apiBuilder
+  }
+
+  private findApiBuilderBySpecType(type: string): ApiBuilder {
+    const apiBuilder = this.apiBuilders.find(apiBuilder => apiBuilder.types.includes(type))
+    if (!apiBuilder) {
+      throw new Error(`Cannot find apiBuilder for specification type ${type}`)
+    }
+    return apiBuilder
+  }
+
   async parsedFileResolver(fileId: string): Promise<SourceFile | null> {
     if (this.parsedFiles.has(fileId)) {
       return this.parsedFiles.get(fileId) ?? null
@@ -325,11 +341,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       if (!document) {
         throw new Error(`Raw document ${slug} is missing in local cache`)
       }
-      const apiBuilder = this.apiBuilders.find(apiBuilder => apiBuilder.types.includes(document?.type))
-      if (!apiBuilder) {
-        // todo
-        throw new Error(`Cannot find apiBuilder for type ${document?.type}`)
-      }
+      const apiBuilder = this.findApiBuilderBySpecType(document.type)
       return new File([apiBuilder.dumpDocument(document)], document.filename)
     }
 
@@ -475,12 +487,14 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     apiType?: OperationsApiType,
   ): Promise<ResolvedVersionDocuments | null> {
     packageId = packageId ?? this.config.packageId
-    // this is the case when a version has been built just now, and there's nothing to fetch yet, so
-    // the only way to get the docs is to get them from buildResult, but the referenced packages map will be empty (packages: {})
     if (this.canBeResolvedLocally(version, packageId)) {
-      const apiBuilder = this.apiBuilders.find(apiBuilder => apiBuilder.apiType === apiType)
-      const currentApiTypeDocuments = this.documentList.filter(({ type }) => apiBuilder?.types.includes(type))
-      return { documents: currentApiTypeDocuments, packages: {} }
+      // this is the case when a version has been built just now, and there's nothing to fetch yet, so
+      // the only way to get the docs is to get them from buildResult, but the referenced packages map will be empty (packages: {})
+      if (apiType) {
+        const apiBuilder = this.findApiBuilderByApiType(apiType)
+        return { documents: this.documentList.filter(({ type }) => apiBuilder.types.includes(type)), packages: {} }
+      }
+      return { documents: this.documentList, packages: {} }
     }
 
     const { versionDocumentsResolver } = this.params.resolvers
@@ -538,7 +552,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
   private canBeResolvedLocally(version: string, packageId: string | undefined): boolean {
     return this.config.buildType !== BUILD_TYPE.CHANGELOG &&
       this.config.buildType !== BUILD_TYPE.PREFIX_GROUPS_CHANGELOG &&
-      !EXPORT_BUILD_TYPES.includes(this.config.buildType as ExportBuildType) &&
+      EXPORT_BUILD_TYPES.every(type => type !== this.config.buildType) &&
       version === this.config.version &&
       packageId === this.config.packageId
   }

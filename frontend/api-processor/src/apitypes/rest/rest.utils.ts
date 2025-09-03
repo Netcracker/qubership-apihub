@@ -100,7 +100,7 @@ export const extractRootServersDiffs = (doc: OpenAPIV3.Document): Diff[] => {
 export const extractRootSecurityDiffs = (doc: OpenAPIV3.Document): Diff[] => {
   const addedSecurityDiff = (doc as WithDiffMetaRecord<OpenAPIV3.Document>)[DIFF_META_KEY]?.security
   const securityDiffs = Object.values((doc.security as WithDiffMetaRecord<OpenAPIV3.SecurityRequirementObject[]>)?.[DIFF_META_KEY] ?? {})
-  const componentsSecuritySchemesDiffs = Object.values((doc.components?.securitySchemes as WithDiffMetaRecord<OpenAPIV3.ComponentsObject['securitySchemes']>)[DIFF_META_KEY] ?? {})
+  const componentsSecuritySchemesDiffs = Object.values((doc.components?.securitySchemes as WithDiffMetaRecord<Record<string, OpenAPIV3.SecuritySchemeObject>>)[DIFF_META_KEY] ?? {})
   return [
     ...(addedSecurityDiff ? [addedSecurityDiff] : []),
     ...securityDiffs,

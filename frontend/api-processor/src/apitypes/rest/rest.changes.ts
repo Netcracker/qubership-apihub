@@ -108,7 +108,6 @@ export const compareDocuments = async (
       metaKey: DIFF_META_KEY,
       originsFlag: ORIGINS_SYMBOL,
       diffsAggregatedFlag: DIFFS_AGGREGATED_META_KEY,
-      // mode: COMPARE_MODE_OPERATION,
       normalizedResult: true,
     },
   ) as { merged: OpenAPIV3.Document; diffs: Diff[] }
@@ -123,8 +122,8 @@ export const compareDocuments = async (
   const tags = new Set<string>()
   const changedOperations: OperationChanges[] = []
 
-  for (const path of Object.keys((merged as OpenAPIV3.Document).paths)) {
-    const pathData = (merged as OpenAPIV3.Document).paths[path]
+  for (const path of Object.keys(merged.paths)) {
+    const pathData = merged.paths[path]
     if (typeof pathData !== 'object' || !pathData) { continue }
 
     for (const key of Object.keys(pathData)) {
@@ -179,7 +178,7 @@ export const compareDocuments = async (
     }
   }
 
-  return { operationChanges: changedOperations, tags: [...tags.values()] }
+  return { operationChanges: changedOperations, tags: Array.from(tags) }
 }
 
 async function reclassifyBreakingChanges(
@@ -207,10 +206,6 @@ async function reclassifyBreakingChanges(
   if (!previousOperation?.deprecatedItems) { return }
 
   for (const diff of onlyBreaking) {
-    if (diff.type !== breaking) {
-      continue
-    }
-
     const deprecatedInVersionsCount = previousOperation?.deprecatedInPreviousVersions?.length ?? 0
     if (isOperationRemove(diff) && deprecatedInVersionsCount > 1) {
       diff.type = risky

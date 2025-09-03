@@ -89,29 +89,6 @@ export function getOperationTypesFromTwoVersions(
   return [prevVersion?.operationTypes || [], currVersion?.operationTypes || []]
 }
 
-type OperationIdWithoutGroupPrefix = string
-export type OperationIdentityMap = Record<OperationIdWithoutGroupPrefix, OperationId>
-
-export function dedupePairs<A extends object, B extends object>(
-  pairs: ReadonlyArray<[A, B]>,
-): Array<[A, B]> {
-  const seen = new WeakMap<A, WeakSet<B>>()
-  const out: Array<[A, B]> = []
-
-  for (const [a, b] of pairs) {
-    let bs = seen.get(a)
-    if (!bs) {
-      bs = new WeakSet<B>()
-      seen.set(a, bs)
-    }
-    if (bs.has(b)) continue
-    bs.add(b)
-    out.push([a, b])
-  }
-
-  return out
-}
-
 function dedupeTuples<T extends [object | undefined, object | undefined]>(
   tuples: T[],
 ): T[] {
@@ -138,7 +115,7 @@ function dedupeTuples<T extends [object | undefined, object | undefined]>(
   return result
 }
 
-export function normalizeOperationIds(operations: ResolvedOperation[], apiBuilder: ApiBuilder, groupSlug: string): [OperationId[], Record<NormalizedOperationId | OperationId, ResolvedOperation>] {
+export function normalizeOperationIds(operations: ResolvedOperation[], apiBuilder: ApiBuilder, groupSlug: string): [(NormalizedOperationId | OperationId)[], Record<NormalizedOperationId | OperationId, ResolvedOperation>] {
   const normalizedOperationIdToOperation: Record<NormalizedOperationId | OperationId, ResolvedOperation> = {}
   operations.forEach(operation => {
     const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(operation) ?? operation.operationId
@@ -155,7 +132,6 @@ export function getOperationMetadata(operation: ResolvedOperation): OperationCha
 
     // api specific
     ...takeIfDefined({ method: operation.metadata?.method }),
-    // todo originalPath is missing?
     ...takeIfDefined({ path: operation.metadata?.path }),
     ...takeIfDefined({ type: operation.metadata?.type }),
   }

@@ -73,7 +73,6 @@ export const compareDocuments = async (
       metaKey: DIFF_META_KEY,
       originsFlag: ORIGINS_SYMBOL,
       diffsAggregatedFlag: DIFFS_AGGREGATED_META_KEY,
-      // mode: COMPARE_MODE_OPERATION,
       normalizedResult: true,
     },
   ) as { merged: GraphApiSchema; diffs: Diff[] }

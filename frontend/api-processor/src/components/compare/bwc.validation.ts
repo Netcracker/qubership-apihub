@@ -25,10 +25,9 @@ export function reclassifyNoBwcBreakingChanges(
 ): Diff[] {
   if (current?.apiKind === API_KIND.NO_BWC || previous?.apiKind === API_KIND.NO_BWC) {
     return operationDiffs?.map((diff) => {
-      if (diff.type !== BREAKING_CHANGE_TYPE) {
-        return diff
-      }
-      return { ...diff, type: RISKY_CHANGE_TYPE }
+      return diff.type === BREAKING_CHANGE_TYPE
+        ? { ...diff, type: RISKY_CHANGE_TYPE }
+        : diff
     })
   }
   return operationDiffs
