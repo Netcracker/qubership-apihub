@@ -65,6 +65,7 @@ qubershipApihubUi:
     apihubBackendAddress: 'qubership-apihub-backend:8080'
     apihubNcServiceAddress: 'qubership-apihub-backend:8080'
     apiLinterServiceAddress: 'qubership-api-linter-service:8080'
+    apihubAgentsBackendAddress: 'qubership-apihub-agents-backend:8080'
 
   apihubUrl: 'qubership-apihub.localtest.me'
 

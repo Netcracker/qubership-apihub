@@ -258,7 +258,8 @@ qubershipApihubUi:
   env:
     apihubBackendAddress: 'qubership-apihub-backend:8080' # k8s local address of apihub backend service. Do not change it unless you know what you are doing
     apihubNcServiceAddress: 'qubership-apihub-backend:8080' # k8s local address of apihub custom service. Do not change it unless you know what you are doing
-    apiLinterServiceAddress: 'qubership-api-linter-service:8080' # k8s local address of apihub backend service. Do not change it unless you know what you are doing
+    apiLinterServiceAddress: 'qubership-api-linter-service:8080' # k8s local address of api linter service. Do not change it unless you know what you are doing
+    apihubAgentsBackendAddress: 'qubership-apihub-agents-backend:8080' # k8s local address of apihub agents backend service. Do not change it unless you know what you are doing
 
   # Mandatory; Factual APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
   apihubUrl: ''
