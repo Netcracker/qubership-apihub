@@ -6,6 +6,8 @@ services:
         container_name: qubership-apihub-backend
         ports:
         - "8090:8080"
+        - "47375:47375"
+        - "47376:47376"
         environment:
             - APIHUB_CONFIG_FOLDER=/app/qubership-apihub-service/
         volumes:
@@ -57,7 +59,7 @@ services:
                 condition: service_healthy
 
     qubership-apihub-ui:
-        image: ghcr.io/netcracker/qubership-apihub-ui:dev
+        image: ghcr.io/netcracker/qubership-apihub-ui:feature-linter-validation-results 
         container_name: qubership-apihub-ui
         ports:
         - "8081:8080"
@@ -80,6 +82,32 @@ services:
                 - qubership-apihub-ui
         depends_on:
             qubership-apihub-backend:
+                condition: service_healthy
+
+    qubership-api-linter-service:
+        image: ghcr.io/netcracker/qubership-api-linter-service:remake
+        container_name: qubership-api-linter-service
+        ports:
+        - "8091:8080"
+        env_file: "qubership-api-linter-service.env"
+        healthcheck:
+            test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]
+            interval: 10s
+            timeout: 10s
+            retries: 10
+            start_period: 5s
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 2G
+        networks:
+            default:
+                aliases:
+                - qubership-api-linter-service
+        depends_on:
+            qubership-apihub-ui:
                 condition: service_healthy
 
     ###### 3rd party services
