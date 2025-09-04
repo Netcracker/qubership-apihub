@@ -42,8 +42,9 @@ adjust_addr() {
 
 adjust_addr APIHUB_NC_SERVICE_ADDRESS
 adjust_addr API_LINTER_SERVICE_ADDRESS
+adjust_addr APIHUB_AGENTS_BACKEND_ADDRESS
 
 # No need to modify APIHUB_BACKEND_ADDRESS as its resolution is static
 
-envsubst '${APIHUB_BACKEND_ADDRESS} ${APIHUB_NC_SERVICE_ADDRESS} ${API_LINTER_SERVICE_ADDRESS} ${DNS_RESOLVERS}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+envsubst '${APIHUB_BACKEND_ADDRESS} ${APIHUB_NC_SERVICE_ADDRESS} ${API_LINTER_SERVICE_ADDRESS} ${APIHUB_AGENTS_BACKEND_ADDRESS} ${DNS_RESOLVERS}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 nginx -g "daemon off;"
