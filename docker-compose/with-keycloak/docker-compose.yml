@@ -5,6 +5,8 @@ services:
     container_name: qubership-apihub-backend
     ports:
       - "8090:8080"
+      - "47375:47375"
+      - "47376:47376"
     environment:
             - APIHUB_CONFIG_FOLDER=/app/qubership-apihub-service/
     volumes:
