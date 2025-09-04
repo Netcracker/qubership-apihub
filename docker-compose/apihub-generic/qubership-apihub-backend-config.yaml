@@ -27,3 +27,6 @@ extensions:
   - name: api-linter
     baseUrl: http://host.docker.internal:8091
     pathPrefix: api-linter
+  - name: agents-backend
+    baseUrl: http://host.docker.internal:8092
+    pathPrefix: agents-backend
