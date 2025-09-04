@@ -49,7 +49,9 @@ spec:
                 - name: APIHUB_NC_SERVICE_ADDRESS
                   value: '{{ .Values.qubershipApihubUi.env.apihubNcServiceAddress }}'
                 - name: API_LINTER_SERVICE_ADDRESS
-                  value: '{{ .Values.qubershipApihubUi.env.apiLinterServiceAddress }}'
+                  value: '{{ .Values.qubershipApihubUi.env.apiLinterServiceAddress }}' 
+                - name: APIHUB_AGENTS_BACKEND_ADDRESS
+                  value: '{{ .Values.qubershipApihubUi.env.apihubAgentsBackendAddress }}' 
                 resources:
                     requests:
                         cpu: '{{ .Values.qubershipApihubUi.resource.cpu.request }}'

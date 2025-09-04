@@ -1,0 +1,111 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: qubership-apihub-agents-backend
+  labels:
+    name: qubership-apihub-agents-backend
+    app.kubernetes.io/version: '{{.Values.qubershipApihubAgentsBackend.version}}'
+    app.kubernetes.io/component: 'backend'
+    app.kubernetes.io/technology: 'go'
+    app.kubernetes.io/part-of: qubership-apihub-agents-backend
+    app.kubernetes.io/managed-by: helm
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        name: qubership-apihub-agents-backend
+        app.kubernetes.io/version: '{{.Values.qubershipApihubAgentsBackend.version}}'
+        app.kubernetes.io/component: 'backend'
+        app.kubernetes.io/part-of: qubership-apihub-agents-backend
+        app.kubernetes.io/managed-by: helm
+        app.kubernetes.io/technology: 'go'
+    spec:
+      hostPID: false
+      hostIPC: false
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}
+      containers:
+      - name: qubership-apihub-agents-backend
+        image: '{{.Values.qubershipApihubAgentsBackend.image.repository}}:{{.Values.qubershipApihubAgentsBackend.image.tag}}'
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - name: tmp-volume
+            mountPath: /tmp
+        ports:
+          - name: web
+            containerPort: 8080
+            protocol: TCP
+        env:
+          - name: LOG_LEVEL
+            value: '{{.Values.qubershipApihubAgentsBackend.env.logLevel}}'
+          - name: AGENTS_BACKEND_POSTGRESQL_HOST
+            value: '{{.Values.qubershipApihubAgentsBackend.env.database.host}}'
+          - name: AGENTS_BACKEND_POSTGRESQL_PORT
+            value: '{{.Values.qubershipApihubAgentsBackend.env.database.port}}'
+          - name: AGENTS_BACKEND_POSTGRESQL_DB_NAME
+            value: '{{.Values.qubershipApihubAgentsBackend.env.database.name}}'
+          - name: AGENTS_BACKEND_POSTGRESQL_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: qubership-apihub-agents-backend-db-secret
+                key: postgresql_username
+          - name: AGENTS_BACKEND_POSTGRESQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: qubership-apihub-agents-backend-db-secret
+                key: postgresql_password
+          - name: APIHUB_URL
+            value: '{{.Values.qubershipApihubAgentsBackend.env.apihub.url}}'
+          - name: APIHUB_ACCESS_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: qubership-apihub-agents-backend-api-key-secret
+                key: access_token
+          - name: DEFAULT_WORKSPACE_ID
+            value: '{{.Values.qubershipApihubAgentsBackend.env.defaultWorkspaceId}}'
+          - name: DRAFTS_CLEANUP_SCHEDULE
+            value: '{{.Values.qubershipApihubAgentsBackend.env.draftsCleanupSchedule}}'
+          - name: INSECURE_PROXY
+            value: '{{.Values.qubershipApihubAgentsBackend.env.insecureProxy}}'
+          - name: ORIGIN_ALLOWED
+            value: '{{.Values.qubershipApihubAgentsBackend.env.originAllowed}}'
+        resources:
+          requests:
+            cpu: '{{.Values.qubershipApihubAgentsBackend.resource.cpu.request}}'
+            memory: '{{.Values.qubershipApihubAgentsBackend.resource.memory.request}}'
+          limits:
+            cpu: '{{.Values.qubershipApihubAgentsBackend.resource.cpu.limit}}'
+            memory: '{{.Values.qubershipApihubAgentsBackend.resource.memory.limit}}'
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: web
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: web
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+        securityContext:
+          runAsUser: 10001
+          runAsGroup: 10001
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+  selector:
+    matchLabels:
+      name: qubership-apihub-agents-backend
