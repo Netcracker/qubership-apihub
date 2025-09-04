@@ -210,6 +210,10 @@ qubershipApihubBackend:
       - name: api-linter
         baseUrl: http://qubership-api-linter-service:8080
         pathPrefix: api-linter
+      # APIHUB Agents Backend enabled by default. See section qubershipApihubAgentsBackend below for configuration
+      - name: agents-backend
+        baseUrl: http://qubership-apihub-agents-backend:8080
+        pathPrefix: agents-backend
 
 # Section with APIHUB Build Task Consumer configuration
 qubershipApihubBuildTaskConsumer:
