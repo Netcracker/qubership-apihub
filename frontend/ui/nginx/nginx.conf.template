@@ -68,79 +68,6 @@ http {
             return 400;
         }
 
-        # ----- Temporarty section for backward compatiblity to handle the following endpoint move to agents-backend:
-        # - Moved from BE
-        # /api/v2/agents
-        # /api/v2/agents
-        # /api/v2/agents/{agentId}/namespaces
-        # /api/v2/agents/{agentId}/namespaces/{name}/serviceNames
-        # /api/v2/agents/{id}
-        # - Moved from NC service
-        # /apihub-nc/api/v1/agents/{agentId}/namespaces
-        # /apihub-nc/api/v2/agents/{agentId}/namespaces/{name}/workspaces/{workspaceId}/discover
-        # /apihub-nc/api/v2/agents/{agentId}/namespaces/{name}/workspaces/{workspaceId}/services
-        # /apihub-nc/api/v2/agents/{agentId}/namespaces/{name}/workspaces/{workspaceId}/snapshots
-        # /apihub-nc/api/v2/agents/{agentId}/namespaces/{name}/workspaces/{workspaceId}/snapshots
-        # /apihub-nc/api/v2/agents/{agentId}/namespaces/{name}/workspaces/{workspaceId}/snapshots/{version}
-        # /apihub-nc/api/v2/agents/{agentId}/namespaces/{name}/workspaces/{workspaceId}/services/{serviceId}/specs/{fileId}
-        # /apihub-nc/api/v2/security/authCheck
-        # /apihub-nc/api/v3/security/authCheck
-        # /apihub-nc/api/v2/security/authCheck/{processId}/status
-        # /apihub-nc/api/v2/security/authCheck/{processId}/report
-        # /apihub-nc/agents/{agentId}/namespaces/{namespace}/services/{serviceId}/proxy/
-        # ----- Can be removed after UI adaptation
-
-        location ^~ /api/v2/agents {
-            set $agents_backend_upstream http://${APIHUB_AGENTS_BACKEND_ADDRESS};
-            add_header Cache-Control "no-store" always;
-            proxy_pass $agents_backend_upstream;
-            proxy_connect_timeout 1s;
-            proxy_next_upstream off;
-            proxy_intercept_errors off;
-        }
-
-        location ^~ /apihub-nc/api/v1/agents {
-            set $agents_backend_upstream http://${APIHUB_AGENTS_BACKEND_ADDRESS};
-            add_header Cache-Control "no-store" always;
-            rewrite ^/apihub-nc/(.*)$ /$1 break;
-            proxy_pass $agents_backend_upstream;
-            proxy_connect_timeout 1s;
-            proxy_next_upstream off;
-            proxy_intercept_errors off;
-        }
-
-        location ^~ /apihub-nc/api/v2/agents {
-            set $agents_backend_upstream http://${APIHUB_AGENTS_BACKEND_ADDRESS};
-            add_header Cache-Control "no-store" always;
-            rewrite ^/apihub-nc/(.*)$ /$1 break;
-            proxy_pass $agents_backend_upstream;
-            proxy_connect_timeout 1s;
-            proxy_next_upstream off;
-            proxy_intercept_errors off;
-        }
-
-        location ^~ /apihub-nc/api/v2/security/authCheck {
-            set $agents_backend_upstream http://${APIHUB_AGENTS_BACKEND_ADDRESS};
-            add_header Cache-Control "no-store" always;
-            rewrite ^/apihub-nc/(.*)$ /$1 break;
-            proxy_pass $agents_backend_upstream;
-            proxy_connect_timeout 1s;
-            proxy_next_upstream off;
-            proxy_intercept_errors off;
-        }
-
-        location ^~ /apihub-nc/agents/ {
-            set $agents_backend_upstream http://${APIHUB_AGENTS_BACKEND_ADDRESS};
-            add_header Cache-Control "no-store" always;
-            rewrite ^/apihub-nc/(.*)$ /$1 break;
-            proxy_pass $agents_backend_upstream;
-            proxy_connect_timeout 1s;
-            proxy_next_upstream off;
-            proxy_intercept_errors off;
-        }
-        # ----- END of temporary section -----
-
-
         # API endpoints proxifying to backend
         location ~ ^/(?:api|ws|saml|login/gitlab|login/sso|debug|playground)(?:/.*)?$ {
             add_header Cache-Control "no-store" always;
@@ -169,20 +96,6 @@ http {
             rewrite ^/api-linter/(.*)$ /$1 break;
 
             proxy_pass $api_linter_upstream;
-
-            proxy_connect_timeout 1s;
-            proxy_next_upstream off;
-            proxy_intercept_errors off;
-        }
-
-        # Special section for agents-backend (rewrite required)
-        location ^~ /agents-backend {
-            set $agents_backend_upstream http://${APIHUB_AGENTS_BACKEND_ADDRESS};
-
-            add_header Cache-Control "no-store" always;
-            rewrite ^/agents-backend/(.*)$ /$1 break;
-
-            proxy_pass $agents_backend_upstream;
 
             proxy_connect_timeout 1s;
             proxy_next_upstream off;
