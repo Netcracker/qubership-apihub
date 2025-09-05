@@ -22,7 +22,7 @@ import {
   ResolveOptions,
   RichReference,
 } from './types'
-import { resolveSpec, SPEC_TYPE_GRAPH_API, SPEC_TYPE_OPEN_API_31 } from './spec-type'
+import { resolveSpec } from './spec-type'
 import { ErrorMessage } from './errors'
 import { createCycledJsoHandlerHook } from './cycle-jso'
 import { JSON_SCHEMA_PROPERTY_ALL_OF, JSON_SCHEMA_PROPERTY_REF } from './rules/jsonschema.const'
@@ -60,12 +60,14 @@ const IMPOSSIBLE_ORIGIN_PARENT: ChainItem = { parent: undefined, value: 'ERROR!!
 
 export const defineOriginsAndResolveRef = (value: unknown, options?: ResolveOptions) => {
   const spec = resolveSpec(value)
+  const source = options?.source ?? value
+
   const internalOptions = {
     resolveRef: DEFAULT_OPTION_RESOLVE_REF,
     originsAlreadyDefined: !!options?.originsFlag,
     ...options,
     originsFlag: options?.originsAlreadyDefined ? undefined : options?.originsFlag,
-    source: options?.source ?? value,
+    source,
     ignoreSymbols: new Set([
       ...(options?.originsFlag ? [options.originsFlag] : []),
       ...(options?.inlineRefsFlag ? [options.inlineRefsFlag] : []),
@@ -140,7 +142,13 @@ export const deDefineOriginsAndResolvedRefSymbols = (value: unknown, options?: R
 const createDefineOriginsAndResolveRefHook: (rootJso: unknown, options: InternalResolveOptions, cycleJsoHook: SyncCloneHook<DefineOriginsAndResolveRefState>) => DefineOriginsAndResolveRefSyncCloneHook = (rootJso, options, cycleJsoHook) => {
   const cyclingGuard: Set<unknown> = new Set()
   const syntheticTitleCache: Map<string, Record<PropertyKey, unknown>> = new Map()
-  const defineOriginsAndResolveRefHook: DefineOriginsAndResolveRefSyncCloneHook = ({ key, value, state, path, rules, }) => {
+  const defineOriginsAndResolveRefHook: DefineOriginsAndResolveRefSyncCloneHook = ({
+    key,
+    value,
+    state,
+    path,
+    rules,
+  }) => {
     if (state.ignoreTreeUnderSymbols) {
       return { value }
     }
@@ -189,7 +197,7 @@ const createDefineOriginsAndResolveRefHook: (rootJso: unknown, options: Internal
           }
           const reference = parseRef($ref)
 
-          const processWrapRefWithAllOfReference = (resolvedRefWithSibling: ResolvedRefWithSiblings)  => {
+          const processWrapRefWithAllOfReference = (resolvedRefWithSibling: ResolvedRefWithSiblings) => {
             const {
               refValue,
               origin,
@@ -282,9 +290,9 @@ const createDefineOriginsAndResolveRefHook: (rootJso: unknown, options: Internal
             }
           }
 
-          const processResolvedReference = (resolvedRefWithSibling: ResolvedRefWithSiblings) =>  {
+          const processResolvedReference = (resolvedRefWithSibling: ResolvedRefWithSiblings) => {
             if (hasChildrenOrigins(resolvedRefWithSibling)) {
-                return processReferenceWithChildren(resolvedRefWithSibling)
+              return processReferenceWithChildren(resolvedRefWithSibling)
             }
             return processWrapRefWithAllOfReference(resolvedRefWithSibling)
           }

@@ -10,7 +10,7 @@ import {
   NormalizeOptions,
 } from './types'
 import { deDefineOriginsAndResolvedRefSymbols, defineOriginsAndResolveRef } from './define-origins-and-resolve-ref'
-import { validate } from './validate'
+import { preValidate, validate } from './validate'
 import { merge } from './merge'
 import { cleanUpSynthetic, deCleanUpSynthetic, deUnify, unify } from './unify'
 import { deHash, hash } from './hash'
@@ -19,7 +19,8 @@ import { removeOasExtensions } from './remove-oas-extensions'
 export const normalize = (value: unknown, options: NormalizeOptions = {}) => {
   const optionsWithDefaults = createOptionsWithDefaults(options)
   let spec = value
-  if (optionsWithDefaults.resolveRef || (!optionsWithDefaults.originsAlreadyDefined && optionsWithDefaults.originsFlag)) { spec = defineOriginsAndResolveRef(spec, optionsWithDefaults) }
+  if (optionsWithDefaults.validate) { preValidate(spec, options) }
+  if (optionsWithDefaults.resolveRef || (!optionsWithDefaults.originsAlreadyDefined && optionsWithDefaults.originsFlag)) {spec = defineOriginsAndResolveRef(spec, optionsWithDefaults)}
   if (optionsWithDefaults.validate) { spec = validate(spec, optionsWithDefaults) }
   if (optionsWithDefaults.mergeAllOf) { spec = merge(spec, optionsWithDefaults) }
   if (optionsWithDefaults.unify) { spec = unify(spec, optionsWithDefaults) }

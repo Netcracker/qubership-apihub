@@ -7,10 +7,33 @@ import {
   ValidateSyncCloneHook,
 } from './types'
 import { isArray, isObject, JSON_ROOT_KEY, syncClone } from '@netcracker/qubership-apihub-json-crawl'
-import { resolveSpec } from './spec-type'
+import { resolveSpec, SPEC_TYPE_OPEN_API_30 } from './spec-type'
 import { createCycledJsoHandlerHook } from './cycle-jso'
 import { RULES } from './rules'
 import { cleanSeveralOrigins } from './origins'
+import { OPEN_API_PROPERTY_COMPONENTS, OPEN_API_PROPERTY_PATH_ITEMS } from './rules/openapi.const'
+
+/**
+ * Preprocesses an OpenAPI specification prior to reference resolution/origin definition.
+ *
+ * For OpenAPI 3.0 documents, `components.pathItems` is not a valid field (it was
+ * added in OAS 3.1). Some tools may still emit it. To keep the input compliant,
+ * deterministic, and to avoid misinterpreting invalid nodes as real API paths,
+ * this function removes `components.pathItems` for OAS 3.0 and emits an optional
+ * validation message via `options.onValidateError`.
+ */
+export function preValidate(source: unknown, options?: ValidateOptions & ResolveOptions): void {
+  const spec = resolveSpec(source)
+  if (spec.type !== SPEC_TYPE_OPEN_API_30 || !isObject(source)) {
+    return
+  }
+  if (OPEN_API_PROPERTY_COMPONENTS in source && isObject(source.components)) {
+    const components = source.components as Record<string, unknown>
+    if (Reflect.deleteProperty(components, OPEN_API_PROPERTY_PATH_ITEMS)) {
+      (options as ValidateOptions)?.onValidateError?.(`Invalid property 'components.pathItems' for OpenAPI 3.0. The property has been removed to maintain 3.0 compliance.`, ['components', 'pathItems'], 'pathItems')
+    }
+  }
+}
 
 const createValidationHook: (options: InternalValidationOptions) => ValidateSyncCloneHook = (options) => {
   const validateHook: ValidateSyncCloneHook = ({ key, path, value, rules, state }) => {
