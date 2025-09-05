@@ -26,9 +26,9 @@ WORKDIR /workspace/qubership-apihub-test-service
 
 RUN go mod tidy
 
-RUN set GOSUMDB=off && set CGO_ENABLED=0 && go mod tidy && go mod download && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build .
+RUN GOSUMDB=off CGO_ENABLED=0 && go mod tidy && go mod download && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build .
 
-FROM docker.io/golang:1.18.10-alpine3.17
+FROM docker.io/alpine:3.22.1
 
 WORKDIR /app/qubership-apihub-test-service
 
