@@ -59,7 +59,7 @@ export function toSystemInfo(value: SystemInfoDto): SystemInfo {
     }
     filteredLinks.push({
       title: externalLink.slice(0, verticalBarIndex),
-      url: externalLink.slice(verticalBarIndex),
+      url: externalLink.slice(verticalBarIndex + 1),
     })
     return filteredLinks
   }, [])
