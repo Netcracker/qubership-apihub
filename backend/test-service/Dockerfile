@@ -26,9 +26,15 @@ WORKDIR /workspace/qubership-apihub-test-service
 
 RUN go mod tidy
 
-RUN GOSUMDB=off CGO_ENABLED=0 && go mod tidy && go mod download && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build .
+RUN GOSUMDB=off CGO_ENABLED=0 go mod tidy && go mod download && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build .
 
 FROM docker.io/alpine:3.22.1
+
+ARG GIT_BRANCH=unknown
+ARG GIT_HASH=unknown
+
+ENV GIT_BRANCH=$GIT_BRANCH
+ENV GIT_HASH=$GIT_HASH
 
 WORKDIR /app/qubership-apihub-test-service
 
