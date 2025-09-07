@@ -196,7 +196,7 @@ test.describe('03.1.1 Access Control. Viewer role. (Package)', () => {
         versionsTab,
         accessTokensTab,
         accessControlTab,
-        noPermissionPlaceholder
+        noPermissionPlaceholder,
       } = versionPage.packageSettingsPage
 
       await portalPage.gotoPackage(testPackage)

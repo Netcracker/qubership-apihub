@@ -35,7 +35,7 @@ test.describe('03.3.3 Access Control. Owner role. (Group)', () => {
       const {
         accessTokensTab,
         accessControlTab,
-        noPermissionPlaceholder
+        noPermissionPlaceholder,
       } = versionPage.packageSettingsPage
 
       await portalPage.gotoGroup(rootGroup)
