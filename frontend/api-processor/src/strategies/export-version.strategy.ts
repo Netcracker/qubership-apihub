@@ -63,8 +63,7 @@ async function exportToHTML(config: ExportVersionBuildConfig, buildResult: Build
 
   const generatedHtmlExportDocuments: ExportDocument[] = []
   const restDocuments = documents.filter(isRestDocument)
-  const hasReadme = !!documents.find(({ filename }) => filename.toLowerCase() === 'readme.md')
-  const shouldAddIndexPage = hasReadme && restDocuments.length > 0 || restDocuments.length > 1
+  const shouldAddIndexPage = restDocuments.length > 0
   const transformedDocuments = await Promise.all(documents.map(async document => {
     const { createExportDocument } = apiBuilders.find(({ types }) => types.includes(document.type)) || unknownApiBuilder
     const file = await rawDocumentResolver(versionWithRevision, packageId, document.slug)
@@ -74,7 +73,7 @@ async function exportToHTML(config: ExportVersionBuildConfig, buildResult: Build
   buildResult.exportDocuments.push(...transformedDocuments)
 
   if (generatedHtmlExportDocuments.length > 0) {
-    buildResult.exportDocuments.push(...await createCommonStaticExportDocuments(packageName, version, templateResolver, shouldAddIndexPage ? 'index.html' : buildResult.exportDocuments[0].filename))
+    buildResult.exportDocuments.push(...await createCommonStaticExportDocuments(packageName, version, templateResolver))
   }
   if (shouldAddIndexPage) {
     const readme = await buildResult.exportDocuments.find(({ filename }) => filename.toLowerCase() === 'readme.md')?.data.text()

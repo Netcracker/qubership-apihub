@@ -117,6 +117,7 @@ describe('Export test', () => {
     expect(result).toEqual(exportDocumentsMatcher([
       exportDocumentMatcher('1.html'),
       exportDocumentMatcher('ls.html'),
+      exportDocumentMatcher('index.html'),
       exportDocumentMatcher('resources/corporatelogo.png'),
       exportDocumentMatcher('resources/styles.css'),
     ]))
@@ -211,7 +212,7 @@ describe('Export test', () => {
     expect(result.exportFileName).toEqual('export_single-document-version.zip')
     expect(result).toEqual(exportDocumentsMatcher([
       exportDocumentMatcher('1.html'),
-
+      exportDocumentMatcher('index.html'),
       exportDocumentMatcher('ls.html'),
       exportDocumentMatcher('resources/corporatelogo.png'),
       exportDocumentMatcher('resources/styles.css'),
@@ -253,7 +254,7 @@ describe('Export test', () => {
       exportDocumentMatcher('1.html'),
       exportDocumentMatcher('README.md'),
 
-      exportDocumentMatcher('index.html'), // contains index.html due to the presence of README
+      exportDocumentMatcher('index.html'),
       exportDocumentMatcher('ls.html'),
       exportDocumentMatcher('resources/corporatelogo.png'),
       exportDocumentMatcher('resources/styles.css'),
@@ -300,7 +301,7 @@ describe('Export test', () => {
     expect(result.exportFileName).toEqual('export_regular-version_GROUP_WITH_OPERATIONS_FROM_ONE_DOCUMENT_ONLY.zip')
     expect(result).toEqual(exportDocumentsMatcher([
       exportDocumentMatcher('2.html'),
-
+      exportDocumentMatcher('index.html'),
       exportDocumentMatcher('ls.html'),
       exportDocumentMatcher('resources/corporatelogo.png'),
       exportDocumentMatcher('resources/styles.css'),
