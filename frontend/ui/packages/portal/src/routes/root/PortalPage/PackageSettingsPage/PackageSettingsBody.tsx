@@ -43,7 +43,10 @@ import {
   NO_PERMISSION,
   Placeholder,
 } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import { ACCESS_TOKEN_MANAGEMENT_PERMISSION } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
+import {
+  ACCESS_TOKEN_MANAGEMENT_PERMISSION,
+  USER_ACCESS_MANAGEMENT_PERMISSION,
+} from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
 
 export const PackageSettingsBody: FC<PackageSettingsTabProps> = memo<PackageSettingsTabProps>(({
   packageObject,
@@ -52,6 +55,10 @@ export const PackageSettingsBody: FC<PackageSettingsTabProps> = memo<PackageSett
   const activeTab = useActiveTabContentContext()
   const hasTokenManagementPermission = useMemo(
     () => !!packageObject?.permissions?.includes(ACCESS_TOKEN_MANAGEMENT_PERMISSION),
+    [packageObject],
+  )
+  const hasUserAccessManagementPermission = useMemo(
+    () => !!packageObject.permissions?.includes(USER_ACCESS_MANAGEMENT_PERMISSION),
     [packageObject],
   )
   return (
@@ -76,7 +83,7 @@ export const PackageSettingsBody: FC<PackageSettingsTabProps> = memo<PackageSett
             > <AccessTokensPackageSettingsTab packageObject={packageObject}/>
             </Placeholder>,
           [USER_ACCESS_CONTROLS_PAGE]: <Placeholder
-            invisible={hasTokenManagementPermission}
+            invisible={hasUserAccessManagementPermission}
             area={CONTENT_PLACEHOLDER_AREA}
             message={NO_PERMISSION}
             testId={'NoPermissionPlaceholder'}
