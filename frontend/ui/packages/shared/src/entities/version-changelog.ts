@@ -57,7 +57,6 @@ export interface OperationInfoDto {
   readonly apiKind: ApiKind
   readonly apiAudience: ApiAudience
   readonly tags: string[]
-  readonly dataHash: string
   readonly packageRef?: string
 }
 
@@ -100,7 +99,6 @@ export interface OperationInfo {
   readonly title: string
   readonly apiKind: ApiKind
   readonly apiAudience: ApiAudience
-  readonly dataHash: string
   readonly packageRef?: PackageRef
 }
 
@@ -166,7 +164,7 @@ export const toOperationChange = (
         packageRef: includePackageRefs ? toPackageRef(dto.previousOperation.packageRef, packagesRefs) : undefined,
       }
       : undefined,
-    action: calculateAction(dto.currentOperation?.dataHash, dto.previousOperation?.dataHash),
+    action: calculateAction(dto.currentOperation?.operationId, dto.previousOperation?.operationId),
   }
 }
 

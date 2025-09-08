@@ -276,8 +276,8 @@ export function toVersionOperation(value: OperationDto): ResolvedOperation {
     }
   return {
     operationId: value.operationId,
+    documentId: value.documentId,
     data: value.data!,
-    dataHash: value.dataHash,
     apiKind: value.apiKind as ApiKind,
     apiAudience: value.apiAudience as ApiAudience,
     deprecated: value.deprecated ?? false,
