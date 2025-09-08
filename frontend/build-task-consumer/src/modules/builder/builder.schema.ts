@@ -30,8 +30,6 @@ export const FileSchema = Type.Object({
 // TODO: Remove Any when the problem with alias types is resolved
 export const OperationSchema = Type.Object({
   operationId: Type.String(),
-  dataHash: Type.String(),
-  previousDataHash: Type.Optional(Type.String()),
   apiType: Type.Any({enum: ['Rest', 'Kafka', 'gRPC', 'GraphQL', 'MD', 'Unknown'], description: 'API type'}),
   apiKind: Type.Any(),
   deprecated: Type.Boolean(),
