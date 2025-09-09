@@ -18,7 +18,9 @@ import type { FileId, FileSourceMap, VersionsComparison } from '@netcracker/qube
 import { BUILD_TYPE, PackageVersionBuilder, VERSION_STATUS } from '@netcracker/qubership-apihub-api-processor'
 import {
   packageVersionResolver,
+  rawDocumentResolver,
   versionDeprecatedResolver,
+  versionDocumentsResolver,
   versionOperationsResolver,
   versionReferencesResolver,
 } from '@netcracker/qubership-apihub-ui-shared/utils/builder-resolvers'
@@ -130,6 +132,8 @@ const worker: PackageVersionBuilderWorker = {
         versionReferencesResolver: await versionReferencesResolver(),
         versionOperationsResolver: await versionOperationsResolver(),
         versionDeprecatedResolver: await versionDeprecatedResolver(),
+        versionDocumentsResolver: await versionDocumentsResolver(),
+        rawDocumentResolver: await rawDocumentResolver(),
       },
     }, fileSources)
 

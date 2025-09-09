@@ -24,7 +24,7 @@ import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstac
 import type { Key, VersionKey } from './keys'
 import type { ApiType } from './api-types'
 import { API_TYPE_REST } from './api-types'
-import type { DeprecateItem } from '@netcracker/qubership-apihub-api-processor'
+import type { DeprecateItem, ReferencedPackageKind } from '@netcracker/qubership-apihub-api-processor'
 import type { IsLoading } from '../utils/aliases'
 
 export const DEFAULT_API_TYPE: ApiType = API_TYPE_REST
@@ -139,11 +139,11 @@ export type PackagesRefs = {
 }
 export type PackageRefDto = {
   refId: string
-  kind?: string
-  name?: string
+  kind: ReferencedPackageKind
+  name: string
   version: string
   notLatestRevision?: boolean
-  status?: VersionStatus
+  status: VersionStatus
   deletedAt?: string
   deletedBy?: string
   parentPackages?: ReadonlyArray<string>

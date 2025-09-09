@@ -32,6 +32,7 @@ import { getPackageRedirectDetails } from './redirects'
 import { API_V1, API_V2, API_V3, requestBlob, requestJson, requestVoid } from './requests'
 import { optionalSearchParams } from './search-params'
 import type { Key } from './types'
+import type { DocumentsDto } from '../entities/documents'
 
 export async function getPackageVersionContent(
   packageKey: Key,
@@ -316,4 +317,26 @@ export async function fetchExportTemplate(
     .split(';')[0]
 
   return [await data.text(), getFilename()]
+}
+
+export async function getDocuments(
+  packageKey: Key,
+  versionKey: Key,
+  apiType?: ApiType,
+  signal?: AbortSignal,
+): Promise<DocumentsDto> {
+  const packageId = encodeURIComponent(packageKey)
+  const versionId = encodeURIComponent(versionKey)
+
+  const queryParams = optionalSearchParams({ apiType: { value: apiType } })
+  const pathPattern = '/packages/:packageId/versions/:versionId/documents'
+  return await requestJson<DocumentsDto>(
+    `${generatePath(pathPattern, { packageId, versionId })}?${queryParams}`,
+    { method: 'get' },
+    {
+      basePath: API_V2,
+      customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
+    },
+    signal,
+  )
 }
