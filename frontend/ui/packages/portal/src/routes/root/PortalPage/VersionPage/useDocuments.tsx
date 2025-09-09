@@ -16,15 +16,13 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useVersionWithRevision } from '../../useVersionWithRevision'
-import { generatePath } from 'react-router-dom'
-import type { Documents, DocumentsDto } from '@apihub/entities/documents'
+import type { Documents } from '@apihub/entities/documents'
 import { toDocuments } from '@apihub/entities/documents'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
-import { portalRequestJson } from '@apihub/utils/requests'
-import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { DocumentsDto } from '@netcracker/qubership-apihub-ui-shared/entities/documents'
+import { getDocuments } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 
 const DOCUMENTS_QUERY_KEY = 'documents-query-key'
 
@@ -59,25 +57,4 @@ export function useDocuments(options: Partial<{
     isLoading: isLoading || isVersionLoading,
     isInitialLoading: isInitialLoading || isVersionInitialLoading,
   }
-}
-
-async function getDocuments(
-  packageKey: Key,
-  versionKey: Key,
-  apiType?: ApiType,
-  signal?: AbortSignal,
-): Promise<DocumentsDto> {
-  const packageId = encodeURIComponent(packageKey)
-  const versionId = encodeURIComponent(versionKey)
-
-  const queryParams = optionalSearchParams({ apiType: { value: apiType } })
-  const pathPattern = '/packages/:packageId/versions/:versionId/documents'
-  return await portalRequestJson<DocumentsDto>(
-    `${generatePath(pathPattern, { packageId, versionId })}?${queryParams}`,
-    { method: 'get' },
-    {
-      customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
-    },
-    signal,
-  )
 }

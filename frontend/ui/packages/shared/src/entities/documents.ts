@@ -15,30 +15,13 @@
  */
 
 import type { FileKey, Key } from './keys'
-import type { OperationDto, OperationsData, PackageRef, PackagesRefs } from './operations'
+import type { OperationDto, PackagesRefs } from './operations'
 import type { SpecType } from '../utils/specs'
+import type { FileFormat } from './file-formats'
 
 export type DocumentsDto = Readonly<{
   documents: ReadonlyArray<DocumentDto>
   packages: PackagesRefs
-}>
-
-export type Documents = ReadonlyArray<Document>
-
-export type Document = Readonly<{
-  key: Key
-  slug: Key
-  filename: string
-  title: string
-  type: SpecType
-  format: FileFormat
-  version?: string
-  labels?: Labels
-  description?: string
-  info?: Readonly<DocumentInfo>
-  externalDocs?: Readonly<ExternalDocsLink>
-  operations: OperationsData
-  packageRef?: PackageRef
 }>
 
 export type DocumentDto = Readonly<{
@@ -72,14 +55,3 @@ export type DocLink = {
 export type ExternalDocsLink = Omit<DocLink, 'name'> & { description?: string }
 
 export type Labels = string[]
-
-export const JSON_FILE_FORMAT = 'json'
-export const YAML_FILE_FORMAT = 'yaml'
-export const MD_FILE_FORMAT = 'md'
-export const UNKNOWN_FILE_FORMAT = 'unknown'
-
-export type FileFormat =
-  | typeof JSON_FILE_FORMAT
-  | typeof YAML_FILE_FORMAT
-  | typeof MD_FILE_FORMAT
-  | typeof UNKNOWN_FILE_FORMAT

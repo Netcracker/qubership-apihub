@@ -15,8 +15,6 @@
  */
 
 import type { FileKey, Key } from './keys'
-import type { FileFormat } from './file-formats'
-import { UNKNOWN_FILE_FORMAT } from './file-formats'
 import type {
   OperationData,
   OperationDto,
@@ -28,20 +26,19 @@ import type {
 import { toPackageRef } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import { UNKNOWN_SPEC_TYPE } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import type { FileFormat } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import { getFileFormat } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import type { MethodType } from '@netcracker/qubership-apihub-ui-shared/entities/method-types'
 import type { GraphQlOperationType } from '@netcracker/qubership-apihub-ui-shared/entities/graphql-operation-types'
-
-export type DocumentsDto = Readonly<{
-  documents: ReadonlyArray<DocumentDto>
-  packages: PackagesRefs
-}>
+import { type DocumentsDto } from '@netcracker/qubership-apihub-ui-shared/entities/documents'
+import { UNKNOWN_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/entities/file-formats'
 
 export type Documents = ReadonlyArray<Document>
 
 export type Document = Readonly<{
   key: Key
   slug: Key
+  filename: string
   title: string
   type: SpecType
   format: FileFormat
@@ -57,6 +54,7 @@ export type Document = Readonly<{
 export type DocumentDto = Readonly<{
   fileId: FileKey
   slug: Key
+  filename: string
   title: string
   type: SpecType
   format: FileFormat
@@ -74,6 +72,7 @@ export function toDocument(value: DocumentDto, packagesRefs?: PackagesRefs): Doc
   return {
     key: value.fileId,
     slug: value.slug,
+    filename: value.filename,
     title: value.title,
     type: value.type,
     format: value.format ?? getFileFormat(value.fileId),
@@ -100,6 +99,7 @@ export const EMPTY_DOC: Document = {
   key: '',
   title: '',
   slug: '',
+  filename: '',
 }
 
 export type RestMetaData = {
