@@ -58,7 +58,7 @@ export function runReferenceObjectTests(suiteId: string, refPath: JsonPath, comp
 
   test(`Change referenced ${overridenField} when overridden exists`, async () => {
     const testId = `change-referenced-${overridenField}-when-overridden-exists`
-    const result = await compareFiles(suiteId, testId)
-    expect(result.length).toEqual(0)
+    const diffs = await compareFiles(suiteId, testId)
+    expect(diffs).toBeEmpty()
   })
 }
