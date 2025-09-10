@@ -29,7 +29,7 @@ import YAML from 'js-yaml'
 import { Diff, DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { isPathParamRenameDiff } from '../../utils'
 
-export const getOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): string => {
+export const extractOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): string => {
   if (!Array.isArray(servers) || !servers.length) { return '' }
 
   try {

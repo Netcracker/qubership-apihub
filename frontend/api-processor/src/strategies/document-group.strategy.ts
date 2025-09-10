@@ -34,7 +34,7 @@ import {
   toVersionDocument,
 } from '../utils'
 import { OpenAPIV3 } from 'openapi-types'
-import { getOperationBasePath } from '../apitypes/rest/rest.utils'
+import { extractOperationBasePath } from '../apitypes/rest/rest.utils'
 import { VersionRestDocument } from '../apitypes/rest/rest.types'
 import { FILE_FORMAT_JSON, INLINE_REFS_FLAG, NORMALIZE_OPTIONS } from '../consts'
 import { normalize } from '@netcracker/qubership-apihub-api-unifier'
@@ -140,7 +140,7 @@ function transformDocumentData(versionDocument: VersionDocument): OpenAPIV3.Docu
       }
 
       const methodData = pathData[inferredMethod]
-      const basePath = getOperationBasePath(methodData?.servers || pathData?.servers || documentData?.servers || [])
+      const basePath = extractOperationBasePath(methodData?.servers || pathData?.servers || documentData?.servers || [])
       const operationPath = basePath + path
 
       const operationId = slugify(`${removeFirstSlash(operationPath)}-${method}`)

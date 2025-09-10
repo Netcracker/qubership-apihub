@@ -106,6 +106,19 @@ describe('Changes test', () => {
       expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 2 }))
       expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
     })
+
+    test('Remove prefix from server', async () => {
+      const result = await buildChangelogPackage('changelog/remove-prefix-from-server')
+
+      expect(result).toEqual(changesSummaryMatcher({
+        [BREAKING_CHANGE_TYPE]: 1,
+        [NON_BREAKING_CHANGE_TYPE]: 1,
+      }))
+      expect(result).toEqual(numberOfImpactedOperationsMatcher({
+        [BREAKING_CHANGE_TYPE]: 1,
+        [NON_BREAKING_CHANGE_TYPE]: 1,
+      }))
+    })
   })
 
   describe('Diffs collecting in the root-level properties', () => {

@@ -76,7 +76,7 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
 
       await asyncFunction(() => {
         const methodData = pathData[key as OpenAPIV3.HttpMethods]
-        const basePath = getOperationBasePath(methodData?.servers || pathData?.servers || servers || [])
+        const basePath = extractOperationBasePath(methodData?.servers || pathData?.servers || servers || [])
         const operationPath = basePath + path
 
         const operationId = slugify(`${removeFirstSlash(operationPath)}-${key}`)

@@ -60,7 +60,7 @@ import {
   extractPathParamRenameDiff,
   extractRootSecurityDiffs,
   extractRootServersDiffs,
-  getOperationBasePath,
+  extractOperationBasePath,
 } from './rest.utils'
 import { createOperationChange, getOperationTags, OperationsMap } from '../../components'
 
@@ -141,14 +141,15 @@ export const compareDocuments = async (
 
       const methodData = pathData[inferredMethod]
       // todo if there were actually servers here, we wouldn't have handle it, add a test
-      const basePath = getOperationBasePath(methodData?.servers || pathData?.servers || merged.servers || [])
-      const operationPath = basePath + path
-      const operationId = slugify(`${operationPath}-${inferredMethod}`)
-      const normalizedOperationId = slugify(`${normalizePath(operationPath)}-${inferredMethod}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
+      const previousBasePath = extractOperationBasePath(methodData?.servers || pathData?.servers || prevDocData.servers || [])
+      const currentBasePath = extractOperationBasePath(methodData?.servers || pathData?.servers || currDocData.servers || [])
+      const prevNormalizedOperationId = slugify(`${normalizePath(previousBasePath + path)}-${inferredMethod}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
+      const currNormalizedOperationId = slugify(`${normalizePath(currentBasePath + path)}-${inferredMethod}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
 
-      const { current, previous } = operationsMap[normalizedOperationId] ?? operationsMap[operationId] ?? {}
+      const { current, previous } = operationsMap[prevNormalizedOperationId] ?? operationsMap[currNormalizedOperationId] /*?? operationsMap[operationId]*/ ?? {}
       if (!current && !previous) {
-        throw new Error(`Can't find the operation ${operationId} from documents pair ${prevDoc?.fileId} and ${currDoc?.fileId}`)
+        const missingOperations = prevNormalizedOperationId === currNormalizedOperationId ? `the ${prevNormalizedOperationId} operation` : `the ${prevNormalizedOperationId} and ${currNormalizedOperationId} operations`
+        throw new Error(`Can't find ${missingOperations} from documents pair ${prevDoc?.fileId} and ${currDoc?.fileId}`)
       }
       const operationChanged = Boolean(current && previous)
       const operationAddedOrRemoved = !operationChanged
