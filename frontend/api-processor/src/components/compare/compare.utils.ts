@@ -119,7 +119,7 @@ export function normalizeOperationIds(operations: ResolvedOperation[], apiBuilde
   const normalizedOperationIdToOperation: Record<NormalizedOperationId | OperationId, ResolvedOperation> = {}
   operations.forEach(operation => {
     const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(operation) ?? operation.operationId
-    // todo '-' is a slugified slash in the middle of a string
+    // '-' is a slugified slash in the middle of a normalizedOperationId that should also be removed for a proper matching during comparison
     normalizedOperationIdToOperation[takeSubstringIf(!!groupSlug, normalizedOperationId, groupSlug.length + '-'.length)] = operation
   })
   return [Object.keys(normalizedOperationIdToOperation), normalizedOperationIdToOperation]

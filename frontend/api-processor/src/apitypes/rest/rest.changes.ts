@@ -121,9 +121,6 @@ export const compareDocuments = async (
     return { operationChanges: [], tags: [] }
   }
 
-  const currGroupSlug = convertToSlug(currentGroup || '')
-  const prevGroupSlug = convertToSlug(previousGroup || '')
-
   const tags = new Set<string>()
   const changedOperations: OperationChanges[] = []
 
