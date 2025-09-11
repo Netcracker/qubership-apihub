@@ -22,7 +22,13 @@ import {
   numberOfImpactedOperationsMatcher,
   operationChangesMatcher,
 } from './helpers'
-import { ANNOTATION_CHANGE_TYPE, BREAKING_CHANGE_TYPE, BUILD_TYPE, NON_BREAKING_CHANGE_TYPE } from '../src'
+import {
+  ANNOTATION_CHANGE_TYPE,
+  BREAKING_CHANGE_TYPE,
+  BUILD_TYPE,
+  NON_BREAKING_CHANGE_TYPE,
+  UNCLASSIFIED_CHANGE_TYPE,
+} from '../src'
 
 let beforePackage: LocalRegistry
 let afterPackage: LocalRegistry
@@ -153,6 +159,17 @@ describe('Changes test', () => {
       expect(result).toEqual(numberOfImpactedOperationsMatcher({
         [BREAKING_CHANGE_TYPE]: 1,
         [NON_BREAKING_CHANGE_TYPE]: 1,
+      }))
+    })
+
+    test('Change securityScheme content', async () => {
+      const result = await buildChangelogPackage('changelog/change-inside-securityScheme')
+
+      expect(result).toEqual(changesSummaryMatcher({
+        [UNCLASSIFIED_CHANGE_TYPE]: 1,
+      }))
+      expect(result).toEqual(numberOfImpactedOperationsMatcher({
+        [UNCLASSIFIED_CHANGE_TYPE]: 1,
       }))
     })
   })

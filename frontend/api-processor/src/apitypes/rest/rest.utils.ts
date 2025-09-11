@@ -21,12 +21,13 @@ import {
   API_AUDIENCE_INTERNAL,
   API_AUDIENCE_UNKNOWN,
   ApiAudience,
+  WithAggregatedDiffs,
   WithDiffMetaRecord,
 } from '../../types'
 import { isObject } from '@netcracker/qubership-apihub-json-crawl'
 import { CUSTOM_PARAMETER_API_AUDIENCE, FILE_FORMAT_JSON, FILE_FORMAT_YAML } from '../../consts'
 import YAML from 'js-yaml'
-import { Diff, DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import { Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { isPathParamRenameDiff } from '../../utils'
 
 export const extractOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): string => {
@@ -106,7 +107,7 @@ export const extractRootServersDiffs = (doc: OpenAPIV3.Document): Diff[] => {
 export const extractRootSecurityDiffs = (doc: OpenAPIV3.Document): Diff[] => {
   const addedSecurityDiff = (doc as WithDiffMetaRecord<OpenAPIV3.Document>)[DIFF_META_KEY]?.security
   const securityDiffs = Object.values((doc.security as WithDiffMetaRecord<OpenAPIV3.SecurityRequirementObject[]>)?.[DIFF_META_KEY] ?? {})
-  const componentsSecuritySchemesDiffs = Object.values((doc.components?.securitySchemes as WithDiffMetaRecord<Record<string, OpenAPIV3.SecuritySchemeObject>>)[DIFF_META_KEY] ?? {})
+  const componentsSecuritySchemesDiffs = (doc.components?.securitySchemes as WithAggregatedDiffs<Record<string, OpenAPIV3.SecuritySchemeObject>>)[DIFFS_AGGREGATED_META_KEY]
   return [
     ...(addedSecurityDiff ? [addedSecurityDiff] : []),
     ...securityDiffs,
