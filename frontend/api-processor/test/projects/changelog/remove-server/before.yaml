@@ -1,0 +1,16 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+servers:
+  - url: https://example2.com
+    description: It is a description of server
+  - url: https://example21.com
+    description: It is a description of server
+paths:
+  /path1:
+    get:
+      responses:
+        '200':
+          description: OK
+          content: { }

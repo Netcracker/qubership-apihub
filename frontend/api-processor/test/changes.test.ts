@@ -85,7 +85,7 @@ describe('Changes test', () => {
     })
 
     test('Change method content', async () => {
-      const result = await buildChangelogPackage('changelog/change-method')
+      const result = await buildChangelogPackage('changelog/change-inside-method')
 
       expect(result).toEqual(changesSummaryMatcher({
         [BREAKING_CHANGE_TYPE]: 1,
@@ -113,6 +113,19 @@ describe('Changes test', () => {
       expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
     })
 
+    test('Add prefix to server', async () => {
+      const result = await buildChangelogPackage('changelog/add-prefix-to-server')
+
+      expect(result).toEqual(changesSummaryMatcher({
+        [BREAKING_CHANGE_TYPE]: 1,
+        [NON_BREAKING_CHANGE_TYPE]: 1,
+      }))
+      expect(result).toEqual(numberOfImpactedOperationsMatcher({
+        [BREAKING_CHANGE_TYPE]: 1,
+        [NON_BREAKING_CHANGE_TYPE]: 1,
+      }))
+    })
+
     test('Remove prefix from server', async () => {
       const result = await buildChangelogPackage('changelog/remove-prefix-from-server')
 
@@ -125,11 +138,32 @@ describe('Changes test', () => {
         [NON_BREAKING_CHANGE_TYPE]: 1,
       }))
     })
+
+    test('move-prefix-from-server-to-path', async () => {
+      const result = await buildChangelogPackage('changelog/move-prefix-from-server-to-path')
+
+      expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+    })
   })
 
   describe('Diffs collecting in the root-level properties', () => {
     test('Add root servers', async () => {
       const result = await buildChangelogPackage('changelog/add-root-servers')
+
+      expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+    })
+
+    test('Remove root servers', async () => {
+      const result = await buildChangelogPackage('changelog/remove-root-servers')
+
+      expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+    })
+
+    test('Remove server', async () => {
+      const result = await buildChangelogPackage('changelog/remove-server')
 
       expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
       expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
@@ -147,6 +181,13 @@ describe('Changes test', () => {
 
       expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 2 }))
       expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+    })
+
+    test('Remove security', async () => {
+      const result = await buildChangelogPackage('changelog/remove-security')
+
+      expect(result).toEqual(changesSummaryMatcher({ [NON_BREAKING_CHANGE_TYPE]: 2 }))
+      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }))
     })
 
     test('Add securityScheme', async () => {

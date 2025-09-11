@@ -94,23 +94,21 @@ export const extractPathParamRenameDiff = (doc: OpenAPIV3.Document, path: string
 }
 
 export const extractRootServersDiffs = (doc: OpenAPIV3.Document): Diff[] => {
-  const addedServersDiff = (doc as WithDiffMetaRecord<OpenAPIV3.Document>)[DIFF_META_KEY]?.servers
-  const serverDiffs = doc.servers?.flatMap(server => {
-    return Object.values((server as WithDiffMetaRecord<OpenAPIV3.ServerObject>)[DIFF_META_KEY] ?? {})
-  }) ?? []
+  const addOrRemoveServersDiff = (doc as WithDiffMetaRecord<OpenAPIV3.Document>)[DIFF_META_KEY]?.servers
+  const serversInternalDiffs = (doc.servers as WithAggregatedDiffs<OpenAPIV3.ServerObject[]> | undefined)?.[DIFFS_AGGREGATED_META_KEY] ?? []
   return [
-    ...(addedServersDiff ? [addedServersDiff] : []),
-    ...serverDiffs,
+    ...(addOrRemoveServersDiff ? [addOrRemoveServersDiff] : []),
+    ...serversInternalDiffs,
   ]
 }
 
 export const extractRootSecurityDiffs = (doc: OpenAPIV3.Document): Diff[] => {
-  const addedSecurityDiff = (doc as WithDiffMetaRecord<OpenAPIV3.Document>)[DIFF_META_KEY]?.security
-  const securityDiffs = Object.values((doc.security as WithDiffMetaRecord<OpenAPIV3.SecurityRequirementObject[]>)?.[DIFF_META_KEY] ?? {})
-  const componentsSecuritySchemesDiffs = (doc.components?.securitySchemes as WithAggregatedDiffs<Record<string, OpenAPIV3.SecuritySchemeObject>>)[DIFFS_AGGREGATED_META_KEY]
+  const addOrRemoveSecurityDiff = (doc as WithDiffMetaRecord<OpenAPIV3.Document>)[DIFF_META_KEY]?.security
+  const securityInternalDiffs = (doc.security as WithAggregatedDiffs<OpenAPIV3.SecurityRequirementObject[]> | undefined)?.[DIFFS_AGGREGATED_META_KEY] ?? []
+  const componentsSecuritySchemesDiffs = (doc.components?.securitySchemes as WithAggregatedDiffs<Record<string, OpenAPIV3.SecuritySchemeObject>>)[DIFFS_AGGREGATED_META_KEY] ?? []
   return [
-    ...(addedSecurityDiff ? [addedSecurityDiff] : []),
-    ...securityDiffs,
+    ...(addOrRemoveSecurityDiff ? [addOrRemoveSecurityDiff] : []),
+    ...securityInternalDiffs,
     ...componentsSecuritySchemesDiffs,
   ]
 }

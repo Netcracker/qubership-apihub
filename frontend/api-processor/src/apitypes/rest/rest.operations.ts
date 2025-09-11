@@ -25,7 +25,7 @@ import {
   removeFirstSlash,
   slugify,
 } from '../../utils'
-import { getOperationBasePath } from './rest.utils'
+import { extractOperationBasePath } from './rest.utils'
 import type * as TYPE from './rest.types'
 import { HASH_FLAG, INLINE_REFS_FLAG, MESSAGE_SEVERITY, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
 import { asyncFunction } from '../../utils/async'
