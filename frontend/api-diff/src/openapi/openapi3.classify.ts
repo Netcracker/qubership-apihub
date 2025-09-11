@@ -5,8 +5,8 @@ import {
   breakingIfAfterTrue,
   nonBreaking,
   PARENT_JUMP,
-  strictResolveValueFromContext,
   reverseClassifyRule,
+  strictResolveValueFromContext,
   transformClassifyRule,
   unclassified,
 } from '../core'
@@ -14,7 +14,7 @@ import { getKeyValue, isExist, isNotEmptyArray } from '../utils'
 import { emptySecurity, includeSecurity } from './openapi3.utils'
 import type { ClassifyRule, CompareContext } from '../types'
 import { DiffType } from '../types'
-import { hidePathParamNames } from './openapi3.mapping'
+import { unifyPath } from './openapi3.mapping'
 
 export const paramClassifyRule: ClassifyRule = [
   ({ after }) => {
@@ -143,9 +143,9 @@ export const pathChangeClassifyRule: ClassifyRule = [
   ({ before, after }) => {
     const beforePath = before.key as string
     const afterPath = after.key as string
-    const unifiedBeforePath = hidePathParamNames(beforePath)
-    const unifiedAfterPath = hidePathParamNames(afterPath)
-    
+    const unifiedBeforePath = unifyPath(before)(beforePath)
+    const unifiedAfterPath = unifyPath(after)(afterPath)
+
     // If unified paths are the same, it means only parameter names changed
     return unifiedBeforePath === unifiedAfterPath ? annotation : breaking
   }

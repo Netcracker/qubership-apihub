@@ -1,6 +1,7 @@
-import type { MapKeysResult, MappingResolver } from '../types'
+import { MapKeysResult, MappingResolver, NodeContext } from '../types'
 import { getStringValue, objectKeys, onlyExistedArrayIndexes } from '../utils'
 import { mapPathParams } from './openapi3.utils'
+import { OpenAPIV3 } from 'openapi-types'
 
 export const singleOperationPathMappingResolver: MappingResolver<string> = (before, after) => {
 
@@ -23,18 +24,18 @@ export const singleOperationPathMappingResolver: MappingResolver<string> = (befo
   return result
 }
 
-export const pathMappingResolver: MappingResolver<string> = (before, after) => {
+export const pathMappingResolver: MappingResolver<string> = (before, after, ctx) => {
 
   const result: MapKeysResult<string> = { added: [], removed: [], mapped: {} }
 
   const originalBeforeKeys = objectKeys(before)
   const originalAfterKeys = objectKeys(after)
-  const unifiedAfterKeys = originalAfterKeys.map(hidePathParamNames)
+  const unifiedAfterKeys = originalAfterKeys.map(unifyPath(ctx.after))
 
   const notMappedAfterIndices = new Set(originalAfterKeys.keys())
 
   originalBeforeKeys.forEach(beforeKey => {
-    const unifiedBeforePath = hidePathParamNames(beforeKey)
+    const unifiedBeforePath = unifyPath(ctx.before)(beforeKey)
     const index = unifiedAfterKeys.indexOf(unifiedBeforePath)
 
     if (index < 0) {
@@ -173,6 +174,35 @@ function isWildcardCompatible(beforeType: string, afterType: string): boolean {
   }
 
   return true
+}
+
+// todo copy-paste from api-processor
+export const extractOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): string => {
+  if (!Array.isArray(servers) || !servers.length) { return '' }
+
+  try {
+    const [firstServer] = servers
+    let serverUrl = firstServer.url
+    const { variables = {} } = firstServer
+
+    for (const param of Object.keys(variables)) {
+      serverUrl = serverUrl.replace(new RegExp(`{${param}}`, 'g'), variables[param].default)
+    }
+
+    const { pathname } = new URL(serverUrl, 'https://localhost')
+    return pathname.slice(-1) === '/' ? pathname.slice(0, -1) : pathname
+  } catch (error) {
+    return ''
+  }
+}
+
+export function unifyPath(nodeContext: NodeContext): (path: string) => string {
+  const serverPrefix = extractOperationBasePath((nodeContext.root as OpenAPIV3.Document).servers) // /api/v2
+  return (path) => (
+    serverPrefix
+      ? `${serverPrefix}${hidePathParamNames(path)}`
+      : hidePathParamNames(path)
+  )
 }
 
 export function hidePathParamNames(path: string): string {
