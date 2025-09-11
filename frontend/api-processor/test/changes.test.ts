@@ -142,7 +142,7 @@ describe('Changes test', () => {
     test('move-prefix-from-server-to-path', async () => {
       const result = await buildChangelogPackage('changelog/move-prefix-from-server-to-path')
 
-      expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+      expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 2 }))
       expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
     })
   })
