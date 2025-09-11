@@ -22,6 +22,7 @@ import type {
   ResolvedGroupDocuments,
   ResolvedOperation,
   ResolvedReferences,
+  ResolvedVersionDocuments,
 } from '@netcracker/qubership-apihub-api-processor'
 import { generatePath } from 'react-router-dom'
 import type { ApiType } from '../entities/api-types'
@@ -331,6 +332,29 @@ export async function getDocuments(
   const queryParams = optionalSearchParams({ apiType: { value: apiType } })
   const pathPattern = '/packages/:packageId/versions/:versionId/documents'
   return await requestJson<DocumentsDto>(
+    `${generatePath(pathPattern, { packageId, versionId })}?${queryParams}`,
+    { method: 'get' },
+    {
+      basePath: API_V2,
+      customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
+    },
+    signal,
+  )
+}
+
+// todo fix api-processor and ui types incompatibility. Only one getDocuments should be left
+export async function getResolvedVersionDocuments(
+  packageKey: Key,
+  versionKey: Key,
+  apiType?: ApiType,
+  signal?: AbortSignal,
+): Promise<ResolvedVersionDocuments> {
+  const packageId = encodeURIComponent(packageKey)
+  const versionId = encodeURIComponent(versionKey)
+
+  const queryParams = optionalSearchParams({ apiType: { value: apiType } })
+  const pathPattern = '/packages/:packageId/versions/:versionId/documents'
+  return await requestJson<ResolvedVersionDocuments>(
     `${generatePath(pathPattern, { packageId, versionId })}?${queryParams}`,
     { method: 'get' },
     {

@@ -17,8 +17,8 @@
 import {
   fetchDeprecatedItems,
   fetchOperations,
-  getDocuments,
   getPackageVersionContent,
+  getResolvedVersionDocuments,
   getVersionReferences,
   toVersionOperation,
 } from './packages-builder'
@@ -106,7 +106,7 @@ export async function versionDocumentsResolver(): Promise<VersionDocumentsResolv
 
     try {
       while (page === 0 || documentsCount === limit) {
-        const { documents, packages } = await getDocuments(packageId, version, apiType) ?? EMPTY_DOCUMENTS_DTO
+        const { documents, packages } = await getResolvedVersionDocuments(packageId, version, apiType) ?? EMPTY_DOCUMENTS_DTO
         result.documents = [...result.documents, ...documents]
         result.packages = { ...result.packages, ...packages }
 
