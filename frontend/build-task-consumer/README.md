@@ -2,6 +2,12 @@
 
 NodeJS microservice for APIHUB Package versions builds.
 
+This microservice is REST API and task management wrapper for [qubership-apihub-api-processor](https://github.com/Netcracker/qubership-apihub-api-processor) library.
+
+Delievered as a Docker image and included into Qubership-APIHUB delivery as a mandatory part.
+
+So please refer to [qubership-apihub](https://github.com/Netcracker/qubership-apihub) application repository for end-to-end installation details.
+
 ## Installation
 
 ```bash
@@ -41,6 +47,6 @@ $ npm start:prod
 ```
 
 
-# Documentation
+# API documentation
 
 http://localhost:3000/api
