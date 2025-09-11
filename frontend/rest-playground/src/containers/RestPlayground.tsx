@@ -1,7 +1,7 @@
 import { flow } from 'lodash'
 import * as React from 'react'
 
-import { Playground, PlaygroundProps } from '../components/TryIt'
+import { Playground, PlaygroundProps } from '../components/TryIt/Playground'
 import { withPersistenceBoundary } from '../context/Persistence'
 import { withMosaicProvider } from '../hoc/withMosaicProvider'
 import { withQueryClientProvider } from '../hoc/withQueryClientProvider'

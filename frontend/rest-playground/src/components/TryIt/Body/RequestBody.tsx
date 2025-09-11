@@ -6,7 +6,7 @@ import * as React from 'react'
 import { useState } from 'react'
 import Select from '@mui/material/Select'
 import { MenuItem } from '@mui/material'
-import { MenuItemContent } from '../MenuItemConten'
+import { MenuItemContent } from '../../MenuItemContent'
 import { nanoid } from 'nanoid'
 
 interface RequestBodyProps {

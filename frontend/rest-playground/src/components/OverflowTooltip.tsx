@@ -1,7 +1,5 @@
-import type { FC } from 'react'
-import * as React from 'react'
-import { memo, useState } from 'react'
 import { Tooltip, TooltipProps } from '@mui/material'
+import { type FC, memo, useState } from 'react'
 
 export const OverflowTooltip: FC<TooltipProps> = memo<TooltipProps>(({ children, ...props }) => {
   const [open, setOpen] = useState(false)
@@ -17,3 +15,5 @@ export const OverflowTooltip: FC<TooltipProps> = memo<TooltipProps>(({ children,
     </Tooltip>
   )
 })
+
+OverflowTooltip.displayName = 'OverflowTooltip'

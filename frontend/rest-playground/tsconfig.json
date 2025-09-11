@@ -1,17 +1,17 @@
 {
   "extends": "@stoplight/scripts/tsconfig.json",
   "include": [
-    "src"
+    "src/**/*"
   ],
   "exclude": [
-    "**/__*__/**"
+    "**/__*__/**",
+    "**/*.test.*",
+    "**/*.spec.*"
   ],
   "compilerOptions": {
     "baseUrl": "./",
-    "outDir": "dist",
-    "moduleResolution": "node",
     "esModuleInterop": true,
     "allowJs": true,
-    "sourceMap": true,
+    "jsx": "react-jsx"
   }
 }

@@ -5,7 +5,7 @@ import Select from '@mui/material/Select'
 import { MenuItem } from '@mui/material'
 import { INodeExample, INodeExternalExample } from '@stoplight/types'
 import { safeStringify } from '@stoplight/json'
-import { MenuItemContent } from '../TryIt/MenuItemConten'
+import { MenuItemContent } from '../MenuItemContent'
 
 export type ExamplesDropdownProps = {
   examples: ReadonlyArray<INodeExample | INodeExternalExample>;
