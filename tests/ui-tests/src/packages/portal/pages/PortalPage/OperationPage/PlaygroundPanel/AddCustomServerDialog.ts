@@ -7,7 +7,7 @@ export class AddCustomServerDialog extends BaseAddDialog {
   readonly cloudAc = new Autocomplete(this.rootLocator.getByTestId('CloudAutocomplete'), 'Cloud')
   readonly namespaceAc = new Autocomplete(this.rootLocator.getByTestId('NamespaceAutocomplete'), 'Namespace')
   readonly serviceAc = new Autocomplete(this.rootLocator.getByTestId('ServiceAutocomplete'), 'Service')
-  readonly urlTxtFld = new TextField(this.rootLocator.getByTestId('ServerUrlTextInput'), 'Server URL')
+  readonly urlTxtFld = new TextField(this.rootLocator.getByTestId('ServerUrlTextField'), 'Server URL')
 
   constructor(page: Page) {
     super(page)
