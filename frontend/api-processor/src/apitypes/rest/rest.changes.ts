@@ -175,7 +175,7 @@ export const compareDocuments = async (
 
       await reclassifyBreakingChanges(previous?.operationId, merged, operationDiffs, ctx)
 
-      changedOperations.push(createOperationChange(apiType, operationDiffs, previous, current, currGroupSlug, prevGroupSlug, currentGroup, previousGroup))
+      changedOperations.push(createOperationChange(apiType, operationDiffs, previous, current, currentGroup, previousGroup))
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }
   }

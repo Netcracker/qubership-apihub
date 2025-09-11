@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { OpenAPIV3 } from 'openapi-types'
+import { OpenAPIV3 } from 'openapi-types'
 
 import type { ApiOperation, NotificationMessage, VersionDocument } from '../../types'
 import { REST_DOCUMENT_TYPE, REST_KIND_KEY, REST_SCOPES } from './rest.consts'
@@ -70,3 +70,16 @@ export interface RestOperationContext {
 export interface OperationExtension {
   [REST_KIND_KEY]?: string
 }
+
+// export type Merged = {
+//   openapi: string;
+//   info: InfoObject;
+//   servers?: ServerObject[];
+//   paths: PathsObject<T>;
+//   components?: ComponentsObject;
+//   security?: SecurityRequirementObject[];
+//   tags?: TagObject[];
+//   externalDocs?: ExternalDocumentationObject;
+//   'x-express-openapi-additional-middleware'?: (((request: any, response: any, next: any) => Promise<void>) | ((request: any, response: any, next: any) => void))[];
+//   'x-express-openapi-validation-strict'?: boolean;
+// }

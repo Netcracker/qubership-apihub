@@ -41,10 +41,10 @@ export interface ReferencedPackage {
   name: string
   version: string
   status: VersionStatus
-  parentPackages?: string[]
+  parentPackages?: ReadonlyArray<string>
   deletedAt?: string
   deletedBy?: string
-  notLatestRevision?: string
+  notLatestRevision?: boolean
 }
 
 export const KIND_PACKAGE = 'package'

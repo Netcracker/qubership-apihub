@@ -116,12 +116,12 @@ export const compareDocuments = async (
         continue
       }
 
-      changedOperations.push(createOperationChange(apiType, operationDiffs, previous, current, currGroupSlug, prevGroupSlug, currentGroup, previousGroup))
+      changedOperations.push(createOperationChange(apiType, operationDiffs, previous, current, currentGroup, previousGroup))
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }
   }
 
-  return { operationChanges: changedOperations, tags: [...tags.values()] }
+  return { operationChanges: changedOperations, tags: Array.from(tags) }
 }
 
 function getCopyWithEmptyOperations(template: GraphApiSchema): GraphApiSchema {
