@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { Params, PathMatch } from 'react-router'
 import { matchPath } from 'react-router-dom'
 
@@ -24,6 +8,11 @@ export function isUrl(url: string): boolean {
   } catch (e) {
     return false
   }
+}
+
+// Check if URL is absolute HTTP/HTTPS
+export function isAbsoluteHttpUrl(url: string | undefined): boolean {
+  return url ? /^https?:\/\//i.test(url) : false
 }
 
 export function matchPathname(pathname: string, patterns: string[]): PathMatch | null {
@@ -38,7 +27,12 @@ export function matchPathname(pathname: string, patterns: string[]): PathMatch |
   return pathMatch
 }
 
-export function replaceParam(locationPathname: string, params: Params<string>, paramKey: string, newParamValue: string): string | null {
+export function replaceParam(
+  locationPathname: string,
+  params: Params<string>,
+  paramKey: string,
+  newParamValue: string,
+): string | null {
   if (!params[paramKey]) {
     return null
   }
