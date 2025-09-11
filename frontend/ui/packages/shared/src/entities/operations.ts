@@ -139,11 +139,11 @@ export type PackagesRefs = {
 }
 export type PackageRefDto = {
   refId: string
-  kind: ReferencedPackageKind
-  name: string
+  kind?: ReferencedPackageKind
+  name?: string
   version: string
   notLatestRevision?: boolean
-  status: VersionStatus
+  status?: VersionStatus
   deletedAt?: string
   deletedBy?: string
   parentPackages?: ReadonlyArray<string>
