@@ -2,8 +2,6 @@ module github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service
 
 go 1.24.7
 
-toolchain go1.24.7
-
 require (
 	github.com/buraksezer/olric v0.4.7
 	github.com/buraksezer/olric-cloud-plugin v0.3.0-beta.4
@@ -28,7 +26,7 @@ require (
 	github.com/shaj13/libcache v1.0.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.20.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	github.com/xanzy/go-gitlab v0.115.0
 	github.com/xuri/excelize/v2 v2.7.1
