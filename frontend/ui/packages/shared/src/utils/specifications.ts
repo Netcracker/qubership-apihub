@@ -16,12 +16,15 @@
 
 import type { JSONSchema } from '@stoplight/spectral-core'
 import type { ILocation } from '@stoplight/types'
-import { dump, type DumpOptions, load } from 'js-yaml'
 import { getLocationForJsonPath, parseWithPointers } from '@stoplight/yaml'
+import { dump, type DumpOptions, load } from 'js-yaml'
 import type { Key } from './types'
 
-export type SpecItemUri = Key
+export type SpecItemUri = `/${Key}` // Example: /foo/bar/baz/qux/1
 export type SpecItemPath = Key[]
+export function isSpecItemUri(value: unknown): value is SpecItemUri {
+  return typeof value === 'string' && value.startsWith('/')
+}
 
 export type OpenapiSchema = Record<Key, never> & JSONSchema & {
   info?: SchemaObject

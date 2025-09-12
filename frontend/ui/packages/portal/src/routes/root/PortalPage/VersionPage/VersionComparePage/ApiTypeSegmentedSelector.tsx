@@ -24,12 +24,21 @@ import { API_TYPE_TITLE_MAP, API_TYPES } from '@netcracker/qubership-apihub-ui-s
 export const ApiTypeSegmentedSelector: FC = memo(() => {
   const { apiType, setApiTypeSearchParam } = useApiTypeSearchParam()
 
-  return <Toggler mode={apiType as ApiType} modes={SELECTOR_OPTIONS} onChange={setApiTypeSearchParam}
-                  modeToText={OPTION_DISPLAYS}/>
+  return (
+    <Toggler<SelectorOption>
+      mode={apiType as SelectorOption}
+      modes={SELECTOR_OPTIONS}
+      onChange={setApiTypeSearchParam}
+      modeToText={OPTION_DISPLAYS}
+    />
+  )
 })
 
-const SELECTOR_OPTIONS = ['all', ...API_TYPES]
+const API_TYPE_ALL = 'all'
+type SelectorOption = typeof API_TYPE_ALL | ApiType
+
+const SELECTOR_OPTIONS: readonly SelectorOption[] = [API_TYPE_ALL, ...API_TYPES]
 const OPTION_DISPLAYS = {
   ...API_TYPE_TITLE_MAP,
-  all: 'All',
+  [API_TYPE_ALL]: 'All',
 }

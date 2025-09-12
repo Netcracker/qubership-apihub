@@ -34,12 +34,19 @@ export type IdentityProviderDto = Readonly<{
 export type InternalIdentityProvider = Omit<IdentityProviderDto, 'type'> & { type: typeof IdentityProviderTypes.INTERNAL }
 export type ExternalIdentityProvider = Omit<IdentityProviderDto, 'type'> & { type: typeof IdentityProviderTypes.EXTERNAL }
 
+export type SystemExtension = Readonly<{
+  name: string
+  baseUrl: string
+  pathPrefix: string
+}>
+
 export type SystemConfigurationDto = Readonly<{
   defaultWorkspaceId: string
   authConfig: {
     identityProviders: ReadonlyArray<IdentityProviderDto>
     autoLogin?: boolean
   }
+  extensions: Array<SystemExtension>
 }>
 
 export type SystemConfiguration = SystemConfigurationDto

@@ -29,7 +29,7 @@ import { memo, useMemo } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
 import { OVERVIEW_PAGE, REVISION_HISTORY_PAGE } from '../../../../../../routes'
 import { usePackageVersionContent } from '../../../../usePackageVersionContent'
-import { OperationTypeChanges } from './OperationTypeChanges'
+import { OperationTypeSummary } from './OperationTypeSummary'
 
 const SUMMARY_BOX_MARGIN_TOP = 4
 
@@ -181,7 +181,7 @@ export const SummaryTab: FC = memo(() => {
       </Box>
       {sortedOperationTypes
         .map(({ apiType, changesSummary, numberOfImpactedOperations, operationsCount, deprecatedCount, noBwcOperationsCount, internalAudienceOperationsCount, unknownAudienceOperationsCount, apiAudienceTransitions }) =>
-          <OperationTypeChanges
+          <OperationTypeSummary
             key={apiType}
             apiType={apiType}
             changesSummary={changesSummary}

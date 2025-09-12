@@ -36,6 +36,14 @@ export function createPalette(): PaletteOptions {
       main: '#FFB02E',
     },
     ...CHIP_COLOR_OVERRIDES,
+    ...{
+      hint: {
+        main: '#B4BFCF',
+      },
+      information: { // because 'info' is already taken by MUI
+        main: '#61AAF2',
+      },
+    },
   }
 }
 
@@ -100,6 +108,19 @@ export const CHIP_COLOR_OVERRIDES: Record<keyof ChipPropsColorOverrides, SimpleP
   expired: {
     main: '#FFB9AB',
     contrastText: '#520100',
+  },
+  // Validation Ruleset Status
+  rulesetSpecType: {
+    main: '#D6EDFF',
+    contrastText: '#004EAE',
+  },
+  rulesetActive: {
+    main: '#D0FAD4',
+    contrastText: '#026104',
+  },
+  rulesetInactive: {
+    main: '#ECEDEF',
+    contrastText: '#353C4E',
   },
 }
 export const DEFAULT_PAPER_SHADOW =

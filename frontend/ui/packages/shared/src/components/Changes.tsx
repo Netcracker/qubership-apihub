@@ -56,15 +56,18 @@ export const Changes: FC<ChangesProps> = memo<ChangesProps>(({
         const changeName = CHANGE_SEVERITY_NAME_MAP[type as keyof ChangesSummary]
         const changeColor = CHANGE_SEVERITY_COLOR_MAP[type as keyof ChangesSummary]
         return (
-          <ListItem component="span" key={type} sx={{ p: 0 }}>
-            <ChangesTooltip changeType={type as ChangeSeverity} category={category}
-                            disableHoverListener={mode === 'default'}>
+          <ListItem key={type} component="span" sx={{ p: 0 }}>
+            <ChangesTooltip
+              changeType={type as ChangeSeverity}
+              category={category}
+              disableHoverListener={mode === 'default'}
+            >
               <Box data-testid={type} display="flex" alignItems="baseline">
                 <Box
                   component="span"
-                  sx={{ background: changeColor, width: 8, height: 8, borderRadius: '50%', mr: 1 }}
+                  sx={{ backgroundColor: changeColor, width: 8, height: 8, borderRadius: '50%', mr: 1 }}
                 />
-                <Typography noWrap component="span" sx={{ fontSize: 12, fontWeight: 500, color: '#8F9EB4', mr: 1.5 }}>
+                <Typography noWrap component="span" sx={{ fontSize: 13, mr: 1.5 }}>
                   {mode === 'default' ? `${changeName}: ${count}` : count}
                 </Typography>
               </Box>

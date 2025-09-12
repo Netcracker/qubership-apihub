@@ -22,10 +22,11 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import { Box, IconButton, MenuItem } from '@mui/material'
 import { MenuButton } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
-import { SpecViewToggler } from '@netcracker/qubership-apihub-ui-shared/components/SpecViewToggler'
+import type { SpecViewMode } from '@netcracker/qubership-apihub-ui-shared/components/SpecViewToggler'
 import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
 import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
+import type { SchemaViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
 import { DETAILED_SCHEMA_VIEW_MODE, SCHEMA_VIEW_MODES } from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
 import { MD_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import { isOpenApiSpecType, UNKNOWN_SPEC_TYPE } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
@@ -47,9 +48,7 @@ import { useSpecViewMode } from './useSpecViewMode'
 
 export const DOC_SPEC_VIEW_MODE = 'doc'
 export const RAW_SPEC_VIEW_MODE = 'raw'
-type SpecViewMode =
-  | typeof DOC_SPEC_VIEW_MODE
-  | typeof RAW_SPEC_VIEW_MODE
+
 const DOC_VIEW_COMPATIBLE_TYPES = ['openapi-3-1', 'openapi-3-0', 'openapi-2-0', 'openapi', 'asyncapi-2', 'json-schema']
 
 export const SpecToolbar: FC = memo(() => {
@@ -131,7 +130,7 @@ export const SpecToolbar: FC = memo(() => {
         type !== UNKNOWN_SPEC_TYPE && <>
           {specViewMode === DOC_SPEC_VIEW_MODE && (<>
             {DOC_VIEW_COMPATIBLE_TYPES.includes(type ?? '') && (
-              <Toggler
+              <Toggler<SchemaViewMode>
                 modes={SCHEMA_VIEW_MODES}
                 mode={schemaViewMode}
                 onChange={setSchemaViewMode}
@@ -139,8 +138,8 @@ export const SpecToolbar: FC = memo(() => {
             )}
           </>
           )}
-          <SpecViewToggler
-            mode={specViewMode as SpecViewMode}
+          <Toggler<SpecViewMode>
+            mode={specViewMode}
             modes={[
               DOC_SPEC_VIEW_MODE,
               RAW_SPEC_VIEW_MODE,
