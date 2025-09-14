@@ -36,6 +36,7 @@ spec:
         - ip: \"$INGRESS_IP\"
           hostnames:
             - \"keycloak.localtest.me\"
+            - \"qubership-apihub.localtest.me\"
 "
 done
 

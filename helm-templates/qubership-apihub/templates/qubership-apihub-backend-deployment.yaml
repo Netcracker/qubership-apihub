@@ -10,6 +10,7 @@ metadata:
         app.kubernetes.io/part-of: qubership-apihub
         app.kubernetes.io/managed-by: helm
         app.kubernetes.io/technology: 'go'
+        olric-cluster: apihub
 spec:
     replicas: {{ .Values.qubershipApihubBackend.replicas }}
     strategy:
@@ -26,6 +27,7 @@ spec:
                 app.kubernetes.io/part-of: qubership-apihub
                 app.kubernetes.io/managed-by: helm
                 app.kubernetes.io/technology: 'go'
+                olric-cluster: apihub
         spec:
             serviceAccountName: 'qubership-apihub-backend'
             hostPID: false

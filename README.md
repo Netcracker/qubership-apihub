@@ -21,9 +21,9 @@ It provides the following features
 
 ### High Level architecture
 
-![](./docs/images/arch.png)
+![APIHUB arch](./docs/images/arch.png)
 
-### API Registry 
+### API Registry
 
 The **API Registry** is a backend component that serves as a centralized repository for storing and managing API data. It stores API operations, documentation, metadata, and other relevant information.
 
@@ -41,16 +41,24 @@ The **Web Portal** provides a user-friendly interface for interacting with the A
 
 See [qubership-apihub-ui](https://github.com/Netcracker/qubership-apihub-ui)
 
-# Documentation
+### API Linter service add-on
 
-## Installation Guide
+The **API Linter service** is a pluggable add-on (included into OOB delivery be default) which enrich APIHUB Portal with an ability to do linting of API specification using third-party linting engine (spectral)
+
+See [qubership-api-linter-service](https://github.com/Netcracker/qubership-api-linter-service)
+
+See [APIHUB Wiki](https://github.com/Netcracker/qubership-apihub/wiki#supplementary-applications) for APIHUB add-ons architecture
+
+## Documentation
+
+### Installation Guide
 
 [Installation Guide](./docs/installation-guide.md)
 
-## Administration Guide
+### Administration Guide
 
 [Administration Guide](./docs/admin-guide.md)
 
-## User Guide
+### User Guide
 
 [User Guide](./docs/user-guide.md)
