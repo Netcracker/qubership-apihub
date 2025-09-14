@@ -104,7 +104,9 @@ func (s systemInfoServiceImpl) Init() error {
 	s.setListenAddress()
 	s.setOriginAllowed()
 	s.setLogLevel()
-	s.setSpectralBinPath()
+	if err := s.setSpectralBinPath(); err != nil {
+		return err
+	}
 
 	s.setOlricDiscoveryMode()
 	s.setReplicaCount()
@@ -257,10 +259,12 @@ func (s systemInfoServiceImpl) GetLogLevel() string {
 	return s.systemInfoMap[LOG_LEVEL].(string)
 }
 
-func (s systemInfoServiceImpl) setSpectralBinPath() {
-	// TODO: should be mandatory for start
+func (s systemInfoServiceImpl) setSpectralBinPath() error {
 	s.systemInfoMap[SPECTRAL_BIN_PATH] = os.Getenv(SPECTRAL_BIN_PATH)
-
+	if val, _ := s.systemInfoMap[SPECTRAL_BIN_PATH]; val == "" {
+		return fmt.Errorf("mandatory env %s is not set", SPECTRAL_BIN_PATH)
+	}
+	return nil
 }
 
 func (s systemInfoServiceImpl) GetSpectralBinPath() string {

@@ -166,8 +166,6 @@ func main() {
 
 	// Validation result
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/validation/summary", security.Secure(validationResultController.GetValidationSummaryForVersion)).Methods(http.MethodGet)
-	//TODO: remove /documents
-	//r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/validation/documents", security.Secure(validationResultController.GetValidatedDocumentsForVersion)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/validation/documents/{slug}/details", security.Secure(validationResultController.GetValidationResultForDocument)).Methods(http.MethodGet)
 
 	// Ruleset management

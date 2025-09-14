@@ -26,7 +26,7 @@ type LintedDocumentStatus string
 
 const (
 	StatusSuccess LintedDocumentStatus = "success"
-	StatusFailure LintedDocumentStatus = "fail"
+	StatusError   LintedDocumentStatus = "error"
 )
 
 type ValidatedDocument struct {
