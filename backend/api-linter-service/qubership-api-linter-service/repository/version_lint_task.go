@@ -108,7 +108,7 @@ func (r *versionLintTaskRepositoryImpl) VersionLintCompleted(ctx context.Context
 	return r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		var taskEnt entity.VersionLintTask
 		_, err := tx.Model(&taskEnt).
-			Set("status = ?", view.TaskStatusComplete).
+			Set("status = ?", view.TaskStatusSuccess).
 			Set("last_active = ?", time.Now()).
 			Where("id = ?", taskId).
 			Update()
@@ -130,7 +130,7 @@ func (r *versionLintTaskRepositoryImpl) EmptyVersionCompleted(ctx context.Contex
 	return r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		var taskEnt entity.VersionLintTask
 		_, err := tx.Model(&taskEnt).
-			Set("status = ?", view.TaskStatusComplete).
+			Set("status = ?", view.TaskStatusSuccess).
 			Set("last_active = ?", time.Now()).
 			Where("id = ?", task.Id).
 			Update()
@@ -161,7 +161,7 @@ func (r *versionLintTaskRepositoryImpl) VersionLintFailed(ctx context.Context, t
 	return r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		var taskEnt entity.VersionLintTask
 		_, err := tx.Model(&taskEnt).
-			Set("status = ?", view.StatusFailure).
+			Set("status = ?", view.StatusError).
 			Set("details = ?", details).
 			Set("last_active = ?", time.Now()).
 			Where("id = ?", taskId).
@@ -184,7 +184,7 @@ func (r *versionLintTaskRepositoryImpl) VersionLintFailed(ctx context.Context, t
 			return err
 		}
 		if lintedVersionExists {
-			ver.LintStatus = view.VersionStatusFailed
+			ver.LintStatus = view.VersionStatusError
 			ver.LintDetails = details
 			_, err = tx.Model(&ver).WherePK().Update()
 			if err != nil {

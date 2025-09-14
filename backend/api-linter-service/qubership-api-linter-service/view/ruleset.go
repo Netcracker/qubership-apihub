@@ -2,13 +2,6 @@ package view
 
 import "time"
 
-type RulesetMetadata struct {
-	Id       string        `json:"id"`
-	Name     string        `json:"name"`
-	Status   RulesetStatus `json:"status"`
-	FileName string        `json:"fileName"`
-}
-
 type Ruleset struct {
 	Id           string        `json:"id"`
 	Name         string        `json:"name"`

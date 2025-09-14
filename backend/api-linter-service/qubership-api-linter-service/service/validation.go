@@ -31,7 +31,6 @@ import (
 type ValidationService interface {
 	ValidateVersion(ctx context.Context, packageId string, version string, eventId string) (string, error)
 	GetVersionSummary(ctx context.Context, packageId string, version string) (*view.ValidationSummaryForVersion, error)
-	GetValidatedDocuments(ctx context.Context, packageId string, version string) ([]view.ValidatedDocument, error)
 	GetValidationResult(ctx context.Context, packageId string, version string, slug string) (*view.DocumentResult, error)
 }
 
@@ -108,7 +107,7 @@ func (v validationServiceImpl) GetVersionSummary(ctx context.Context, packageId 
 	}
 
 	for _, doc := range lintedDocs {
-		if doc.LintStatus == view.StatusFailure {
+		if doc.LintStatus == view.StatusError {
 			result.Documents = append(result.Documents, view.ValidationDocument{
 				Status:       doc.LintStatus,
 				Details:      doc.LintDetails,
@@ -171,24 +170,6 @@ func (v validationServiceImpl) GetVersionSummary(ctx context.Context, packageId 
 	return result, nil
 }
 
-func (v validationServiceImpl) GetValidatedDocuments(ctx context.Context, packageId string, version string) ([]view.ValidatedDocument, error) {
-	var result []view.ValidatedDocument
-
-	ver, rev, err := v.getVersionAndRevision(ctx, packageId, version)
-	if err != nil {
-		return nil, err
-	}
-
-	docs, err := v.versionResultRepository.GetLintedDocuments(ctx, packageId, ver, rev)
-	if err != nil {
-		return nil, err
-	}
-	for _, doc := range docs {
-		result = append(result, entity.MakeValidatedDocumentView(doc))
-	}
-	return result, nil
-}
-
 func (v validationServiceImpl) GetValidationResult(ctx context.Context, packageId string, version string, slug string) (*view.DocumentResult, error) {
 	ver, rev, err := v.getVersionAndRevision(ctx, packageId, version)
 	if err != nil {
@@ -211,7 +192,7 @@ func (v validationServiceImpl) GetValidationResult(ctx context.Context, packageI
 		return nil, fmt.Errorf("ruleset with id %s not found", lintedDocument.RulesetId)
 	}
 
-	if lintedDocument.LintStatus == view.StatusFailure {
+	if lintedDocument.LintStatus == view.StatusError {
 		result := view.DocumentResult{
 			Ruleset:           entity.MakeRulesetView(*ruleset),
 			Issues:            nil,

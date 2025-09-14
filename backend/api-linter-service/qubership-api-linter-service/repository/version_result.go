@@ -11,7 +11,6 @@ import (
 type VersionResultRepository interface {
 	GetLintedVersion(ctx context.Context, packageId, version string, revision int) (*entity.LintedVersion, error)
 	GetVersionAndDocsSummary(ctx context.Context, packageId, version string, revision int) (*entity.LintedVersion, []entity.LintedDocument, error)
-	GetLintedDocuments(ctx context.Context, packageId, version string, revision int) ([]entity.LintedDocument, error)
 	GetLintedDocument(ctx context.Context, packageId, version string, revision int, slug string) (*entity.LintedDocument, error)
 }
 
@@ -70,23 +69,6 @@ func (v versionResultRepositoryImpl) GetVersionAndDocsSummary(ctx context.Contex
 	}
 
 	return &verEnt, docs, nil
-}
-
-func (v versionResultRepositoryImpl) GetLintedDocuments(ctx context.Context, packageId, version string, revision int) ([]entity.LintedDocument, error) {
-	var docs []entity.LintedDocument
-	err := v.cp.GetConnection().ModelContext(ctx, &docs).
-		Where("package_id = ?", packageId).
-		Where("version = ?", version).
-		Where("revision = ?", revision).
-		Select()
-	if err != nil {
-		if errors.As(err, &sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	return docs, nil
 }
 
 func (v versionResultRepositoryImpl) GetLintedDocument(ctx context.Context, packageId, version string, revision int, slug string) (*entity.LintedDocument, error) {

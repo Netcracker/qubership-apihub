@@ -84,7 +84,7 @@ type LintedVersionStatus string
 const (
 	VersionStatusInProgress LintedVersionStatus = "inProgress"
 	VersionStatusSuccess    LintedVersionStatus = "success"
-	VersionStatusFailed     LintedVersionStatus = "failed" //  TODO: SPEC: past tense vs present tense for success
+	VersionStatusError      LintedVersionStatus = "error"
 )
 
 func (i *IssuesSummary) Append(add IssuesSummary) {

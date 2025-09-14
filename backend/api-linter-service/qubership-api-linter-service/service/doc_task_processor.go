@@ -184,14 +184,14 @@ func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.Do
 		log.Infof("Processing doc %s for package %s, version %s@%d by spectral", task.FileId, task.PackageId, task.Version, task.Revision)
 		resultPath, calcTime, err := d.spectralExecutor.LintLocalDoc(filePath, rulesetPath)
 		if err != nil {
-			status = view.StatusFailure
+			status = view.StatusError
 			details = fmt.Sprintf("error linting doc with spectral: %s", err)
 		}
 
 		if status == view.StatusSuccess {
 			result, err = os.ReadFile(resultPath)
 			if err != nil {
-				status = view.StatusFailure
+				status = view.StatusError
 				details = fmt.Sprintf("error reading result file: %s", err)
 			}
 			log.Tracef("result file size is %d bytes", len(result))
@@ -200,7 +200,7 @@ func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.Do
 		if status == view.StatusSuccess {
 			err = json.Unmarshal(result, &report)
 			if err != nil {
-				status = view.StatusFailure
+				status = view.StatusError
 				details = fmt.Sprintf("error unmarshalling result: %s", err)
 			}
 		}
@@ -211,12 +211,12 @@ func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.Do
 
 			sumJson, err := json.Marshal(summary)
 			if err != nil {
-				status = view.StatusFailure
+				status = view.StatusError
 				details = fmt.Sprintf("error marshaling summary: %s", err)
 			} else {
 				err = json.Unmarshal(sumJson, &sumAsMap)
 				if err != nil {
-					status = view.StatusFailure
+					status = view.StatusError
 					details = fmt.Sprintf("error unmarshaling summary: %s", err)
 				}
 			}

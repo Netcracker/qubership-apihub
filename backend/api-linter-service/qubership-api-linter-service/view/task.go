@@ -6,6 +6,6 @@ const (
 	TaskStatusNotStarted     TaskStatus = "not_started"
 	TaskStatusProcessing     TaskStatus = "processing"
 	TaskStatusWaitingForDocs TaskStatus = "waiting_for_docs" // version task only
-	TaskStatusComplete       TaskStatus = "complete"
+	TaskStatusSuccess        TaskStatus = "success"
 	TaskStatusError          TaskStatus = "error"
 )

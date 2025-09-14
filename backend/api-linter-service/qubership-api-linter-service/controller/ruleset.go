@@ -102,10 +102,15 @@ func (c rulesetControllerImpl) CreateRuleset(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	apiType := view.ApiType(apiTypeStr) // TODO: validate!
+	apiType := view.ApiType(apiTypeStr)
+	err = validateApiType(apiType)
+	if err != nil {
+		respondWithError(w, "incorrect api type", err)
+		return
+	}
 
-	linter := r.FormValue("linter")
-	if linter == "" {
+	linterStr := r.FormValue("linter")
+	if linterStr == "" {
 		RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.RequiredParamsMissing,
@@ -114,8 +119,12 @@ func (c rulesetControllerImpl) CreateRuleset(w http.ResponseWriter, r *http.Requ
 		})
 		return
 	}
-
-	// TODO: validate linter
+	linter := view.Linter(linterStr)
+	err = validateLinter(linter)
+	if err != nil {
+		respondWithError(w, "incorrect linter", err)
+		return
+	}
 
 	var data []byte
 	sourcesFile, fileHeader, err := r.FormFile("rulesetFile")
@@ -337,5 +346,33 @@ func (c rulesetControllerImpl) DeleteRuleset(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		respondWithError(w, "Failed to delete ruleset", err)
 		return
+	}
+}
+
+func validateApiType(at view.ApiType) error {
+	switch at {
+	case view.OpenAPI20Type, view.OpenAPI30Type, view.OpenAPI31Type:
+		return nil
+	default:
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"params": "apiType"},
+		}
+	}
+}
+
+func validateLinter(linter view.Linter) error {
+	switch linter {
+	case view.SpectralLinter:
+		return nil
+	default:
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"params": "linter"},
+		}
 	}
 }

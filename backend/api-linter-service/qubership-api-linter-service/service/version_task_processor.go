@@ -257,7 +257,7 @@ func (v versionTaskProcessorImpl) checkDocReady() {
 					continue
 				}
 				switch docLintTask.Status {
-				case view.TaskStatusComplete:
+				case view.TaskStatusSuccess:
 					numSucceed++
 					break
 				case view.TaskStatusError:
@@ -288,7 +288,7 @@ func (v versionTaskProcessorImpl) checkDocReady() {
 
 				if numFailed > 0 {
 					log.Infof("Version lint (task = %s) is failed because of failed doc tasks", verLintTask.Id)
-					lintedVerEnt.LintStatus = view.VersionStatusFailed
+					lintedVerEnt.LintStatus = view.VersionStatusError
 					lintedVerEnt.LintDetails = fmt.Sprintf("%d doc task(s) failed", numFailed)
 				} else {
 					log.Infof("Version lint (task = %s) successfully completed", verLintTask.Id)

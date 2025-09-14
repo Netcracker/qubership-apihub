@@ -3,8 +3,6 @@ package entity
 type LintFileResult struct {
 	tableName struct{} `pg:"lint_file_result"`
 
-	// TODO: nest summary into result?
-
 	DataHash      string                 `pg:"data_hash,pk,type:varchar,notnull"`
 	RulesetId     string                 `pg:"ruleset_id,pk,type:varchar,notnull"`
 	LinterVersion string                 `pg:"linter_version,type:varchar,notnull"`

@@ -15,7 +15,7 @@ import (
 )
 
 type RulesetService interface {
-	CreateRuleset(ctx context.Context, name string, apiType view.ApiType, linter string, filename string, data []byte) (*view.Ruleset, error)
+	CreateRuleset(ctx context.Context, name string, apiType view.ApiType, linter view.Linter, filename string, data []byte) (*view.Ruleset, error)
 	ActivateRuleset(ctx context.Context, id string) error
 	ListRulesets(ctx context.Context) ([]view.Ruleset, error)
 	GetRuleset(ctx context.Context, id string) (*view.Ruleset, error)
@@ -32,7 +32,7 @@ type rulesetServiceImpl struct {
 	rulesetRepository repository.RulesetRepository
 }
 
-func (r rulesetServiceImpl) CreateRuleset(ctx context.Context, name string, apiType view.ApiType, linter string, filename string, data []byte) (*view.Ruleset, error) {
+func (r rulesetServiceImpl) CreateRuleset(ctx context.Context, name string, apiType view.ApiType, linter view.Linter, filename string, data []byte) (*view.Ruleset, error) {
 	userId := secctx.GetUserId(ctx)
 
 	// TODO: check for duplicate names!
@@ -45,7 +45,7 @@ func (r rulesetServiceImpl) CreateRuleset(ctx context.Context, name string, apiT
 			CreatedAt:    time.Now(),
 			CreatedBy:    userId,
 			ApiType:      apiType,
-			Linter:       view.Linter(linter),
+			Linter:       linter,
 			FileName:     filename,
 			CanBeDeleted: true,
 		},

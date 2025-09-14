@@ -35,7 +35,7 @@ func (d docLintTaskRepositoryImpl) SetDocTaskStatus(ctx context.Context, docTask
 			return err
 		}
 
-		if docEnt.Status == view.TaskStatusComplete || docEnt.Status == view.TaskStatusError {
+		if docEnt.Status == view.TaskStatusSuccess || docEnt.Status == view.TaskStatusError {
 			log.Debugf("Doc lint task %s is already finished, skipping set status = %s and details = %s", docTaskId, status, details)
 			return nil
 		}
