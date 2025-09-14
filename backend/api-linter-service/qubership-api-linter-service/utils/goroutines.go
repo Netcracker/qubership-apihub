@@ -39,3 +39,23 @@ func internalRecover() {
 		return
 	}
 }
+
+/////////////
+
+type Semaphore struct {
+	C chan struct{}
+}
+
+func (s *Semaphore) Acquire() {
+	s.C <- struct{}{}
+}
+
+func (s *Semaphore) Release() {
+	<-s.C
+}
+
+func NewSemaphore(count int) *Semaphore {
+	return &Semaphore{
+		C: make(chan struct{}, count),
+	}
+}

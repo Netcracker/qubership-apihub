@@ -16,7 +16,9 @@ package controller
 
 import (
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"net/http"
+	"net/url"
 
 	"github.com/Netcracker/qubership-api-linter-service/exception"
 	log "github.com/sirupsen/logrus"
@@ -44,4 +46,14 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	w.Write(response)
+}
+
+func getStringParam(r *http.Request, p string) string {
+	params := mux.Vars(r)
+	return params[p]
+}
+
+func getUnescapedStringParam(r *http.Request, p string) (string, error) {
+	params := mux.Vars(r)
+	return url.QueryUnescape(params[p])
 }

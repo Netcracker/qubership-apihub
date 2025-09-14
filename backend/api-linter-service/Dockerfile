@@ -24,15 +24,19 @@ COPY qubership-api-linter-service ./qubership-api-linter-service
 
 WORKDIR /workspace/qubership-api-linter-service
 
-RUN go mod tidy
+RUN GOSUMDB=off CGO_ENABLED=0 go mod tidy && go mod download && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build .
 
-RUN set GOSUMDB=off && set CGO_ENABLED=0 && go mod tidy && go mod download && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build .
+FROM docker.io/alpine:3.22.1
 
+ARG GIT_BRANCH=unknown
+ARG GIT_HASH=unknown
 
-FROM docker.io/golang:1.23.4-alpine3.21
+ENV GIT_BRANCH=$GIT_BRANCH
+ENV GIT_HASH=$GIT_HASH
 
 USER root
 
+# hadolint ignore=DL3018
 RUN apk --no-cache add curl
 
 WORKDIR /app/qubership-api-linter-service
