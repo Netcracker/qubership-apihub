@@ -221,3 +221,13 @@ export const checkPrimitiveType = (value: unknown): PrimitiveType | undefined =>
   }
   return undefined
 }
+
+export function intersection(array1: string[], array2: string[]): string[] {
+  const set2 = new Set(array2)
+  return [...new Set(array1.filter(x => set2.has(x)))]
+}
+
+export function difference(array1: string[], array2: string[]): string[] {
+  const set2 = new Set(array2)
+  return [...new Set(array1.filter(x => !set2.has(x)))]
+}
