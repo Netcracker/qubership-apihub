@@ -47,7 +47,7 @@ import { VERSION_CHANGES_TAB_REST, VERSION_DOCUMENTS_TAB, VERSION_OVERVIEW_TAB_G
 import { type DownloadedTestFile, ROOT_DOWNLOADS, TestFile } from '@shared/entities'
 import path from 'node:path'
 
-// Set timeout for all tests in this file to 140 seconds
+// Set timeout for each test in this file to 140 seconds
 test.setTimeout(140_000)
 
 test.describe('03.1.1.0 Access Control. Viewer role. (Package)', () => {
