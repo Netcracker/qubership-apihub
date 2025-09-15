@@ -28,8 +28,11 @@ export const pathMappingResolver: MappingResolver<string> = (before, after, ctx)
 
   const result: MapKeysResult<string> = { added: [], removed: [], mapped: {} }
 
-  const unifiedBeforeKeyToKey = Object.fromEntries(objectKeys(before).map(key => [createPathUnifier(ctx.before)(key), key]))
-  const unifiedAfterKeyToKey = Object.fromEntries(objectKeys(after).map(key => [createPathUnifier(ctx.after)(key), key]))
+  const unifyBeforePath = createPathUnifier(ctx.before)
+  const unifyAfterPath = createPathUnifier(ctx.after)
+
+  const unifiedBeforeKeyToKey = Object.fromEntries(objectKeys(before).map(key => [unifyBeforePath(key), key]))
+  const unifiedAfterKeyToKey = Object.fromEntries(objectKeys(after).map(key => [unifyAfterPath(key), key]))
 
   const unifiedBeforeKeys = Object.keys(unifiedBeforeKeyToKey)
   const unifiedAfterKeys = Object.keys(unifiedAfterKeyToKey)
