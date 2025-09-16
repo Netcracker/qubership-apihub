@@ -187,6 +187,7 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
         )}
       </Box>
       <ExportChangesMenu
+        apiType={apiType}
         severityFilter={severityFilter}
         severityChanges={CHANGE_SEVERITIES}
         tag={selectedTag}
