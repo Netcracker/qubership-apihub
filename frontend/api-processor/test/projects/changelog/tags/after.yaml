@@ -7,7 +7,8 @@ paths:
     get:
       responses:
         '200':
-          content: { }
+          description: OK
+          content: {}
       tags:
         - sameTagInDifferentPaths1
         - sameTagInDifferentPaths3
@@ -15,7 +16,8 @@ paths:
     get:
       responses:
         '200':
-          content: { }
+          description: OK
+          content: {}
       tags:
         - sameTagInDifferentPaths1
         - sameTagInDifferentPaths3
@@ -23,14 +25,16 @@ paths:
     post:
       responses:
         '200':
-          content: { }
+          description: OK
+          content: {}
       tags:
         - sameTagInMethodSiblings2
   /changed1:
     get:
       responses:
         '200':
-          content: { }
+          description: OK
+          content: {}
       tags:
         - sameTagInDifferentPaths1
         - sameTagInMethodSiblings3
@@ -38,6 +42,7 @@ paths:
     post:
       responses:
         '200':
-          content: { }
+          description: OK
+          content: {}
       tags:
         - sameTagInMethodSiblings3
