@@ -230,8 +230,6 @@ export function createOperationChange(
   operationDiffs: Diff[],
   previous?: ResolvedOperation,
   current?: ResolvedOperation,
-  currGroupSlug?: string,
-  prevGroupSlug?: string,
   currentGroup?: string,
   previousGroup?: string,
 ): OperationChanges {
@@ -240,14 +238,13 @@ export function createOperationChange(
   const impactedSummary = calculateImpactedSummary([changeSummary])
 
   const currentOperationFields = current && {
-    // todo remove one that is excessive: slug or group
-    operationId: takeSubstringIf(!!currGroupSlug, current.operationId, removeFirstSlash(currentGroup ?? '').length),
+    operationId: takeSubstringIf(!!currentGroup, current.operationId, removeFirstSlash(currentGroup ?? '').length),
     apiKind: current.apiKind,
     metadata: getOperationMetadata(current),
   }
 
   const previousOperationFields = previous && {
-    previousOperationId: takeSubstringIf(!!prevGroupSlug, previous.operationId, removeFirstSlash(previousGroup ?? '').length),
+    previousOperationId: takeSubstringIf(!!previousGroup, previous.operationId, removeFirstSlash(previousGroup ?? '').length),
     previousApiKind: previous.apiKind,
     previousMetadata: getOperationMetadata(previous),
   }
