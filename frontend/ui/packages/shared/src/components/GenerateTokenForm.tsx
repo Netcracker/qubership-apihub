@@ -67,8 +67,7 @@ export const GenerateTokenForm: FC<GenerateTokenFormProps> = memo(({
 
   const onConfirmCallback = useCallback((value: TokenDataForm): void => {
     const { name, roles, createdFor } = value
-    const mappedRoles = roles?.map(role => reverseTokenRoleMapping[role])
-
+    const mappedRoles = roles?.map(role => reverseTokenRoleMapping[role] ?? role)
     generateApiKey({ name: name, roles: mappedRoles, createdFor: createdFor.key })
     reset()
   }, [generateApiKey, reset])
