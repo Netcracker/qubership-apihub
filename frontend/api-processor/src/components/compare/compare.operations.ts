@@ -160,7 +160,7 @@ async function compareCurrentApiType(
       apiType,
       changesSummary,
       numberOfImpactedOperations,
-      tags: tags.sort(),
+      tags,
       apiAudienceTransitions,
     },
     operationChanges,

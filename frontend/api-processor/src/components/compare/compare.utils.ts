@@ -210,7 +210,7 @@ export const comparePairedDocs = async (
   ctx: CompareOperationsPairContext,
 ): Promise<[OperationChanges[], string[]]> => {
   const operationChanges: OperationChanges[] = []
-  const tags: string[] = []
+  const tags = new Set<string>()
 
   for (const [prevDoc, currDoc] of pairedDocs) {
     const {
@@ -219,10 +219,10 @@ export const comparePairedDocs = async (
     } = await apiBuilder.compareDocuments!(operationsMap, prevDoc, currDoc, ctx)
 
     operationChanges.push(...docsPairOperationChanges)
-    tags.push(...docsPairTags)
+    docsPairTags.forEach(tag => tags.add(tag))
   }
 
-  return [operationChanges, tags]
+  return [operationChanges, Array.from(tags).sort()]
 }
 
 export function createOperationChange(

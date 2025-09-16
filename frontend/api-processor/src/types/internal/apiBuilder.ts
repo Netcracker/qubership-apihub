@@ -111,7 +111,7 @@ export type DocumentDumper<T> = (document: ZippableDocument<T>, format?: typeof 
 export type OperationDataCompare<T> = (current: T, previous: T, ctx: CompareOperationsPairContext) => Promise<Diff[]>
 export type DocumentsCompare = (operationsMap: OperationsMap, currDoc: ResolvedVersionDocument | undefined, prevDoc: ResolvedVersionDocument | undefined, ctx: CompareOperationsPairContext) => Promise<{
   operationChanges: OperationChanges[]
-  tags: string[]
+  tags: Set<string>
 }>
 export type OperationIdNormalizer = (operation: ResolvedOperation) => NormalizedOperationId
 export type DocumentExporter = (

@@ -71,7 +71,7 @@ export const compareDocuments = async (
   ctx: CompareOperationsPairContext,
 ): Promise<{
   operationChanges: OperationChanges[]
-  tags: string[]
+  tags: Set<string>
 }> => {
   const {
     apiType,
@@ -118,11 +118,11 @@ export const compareDocuments = async (
   ) as { merged: OpenAPIV3.Document; diffs: Diff[] }
 
   if (isEmpty(diffs)) {
-    return { operationChanges: [], tags: [] }
+    return { operationChanges: [], tags: new Set() }
   }
 
   const tags = new Set<string>()
-  const changedOperations: OperationChanges[] = []
+  const operationChanges: OperationChanges[] = []
 
   for (const path of Object.keys(merged.paths)) {
     const pathData = merged.paths[path]
@@ -172,12 +172,12 @@ export const compareDocuments = async (
 
       await reclassifyBreakingChanges(previous?.operationId, merged, operationDiffs, ctx)
 
-      changedOperations.push(createOperationChange(apiType, operationDiffs, previous, current, currentGroup, previousGroup))
+      operationChanges.push(createOperationChange(apiType, operationDiffs, previous, current, currentGroup, previousGroup))
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }
   }
 
-  return { operationChanges: changedOperations, tags: Array.from(tags) }
+  return { operationChanges, tags }
 }
 
 async function reclassifyBreakingChanges(

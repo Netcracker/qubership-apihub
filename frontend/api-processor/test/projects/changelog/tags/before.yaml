@@ -1,0 +1,43 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /removed1:
+    get:
+      responses:
+        '200':
+          content: { }
+      tags:
+        - sameTagInDifferentPaths1
+        - sameTagInDifferentPaths2
+  /removed2:
+    get:
+      responses:
+        '200':
+          content: { }
+      tags:
+        - sameTagInDifferentPaths1
+        - sameTagInDifferentPaths2
+        - sameTagInMethodSiblings1
+    post:
+      responses:
+        '200':
+          content: { }
+      tags:
+        - sameTagInMethodSiblings1
+  /changed1:
+    get:
+      responses:
+        '200':
+          content: { }
+      tags:
+        - sameTagInDifferentPaths1
+        - tag
+        - missingByDesign
+    post:
+      responses:
+        '200':
+          content: { }
+      tags:
+        - missingByDesign

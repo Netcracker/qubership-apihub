@@ -262,4 +262,20 @@ describe('Changes test', () => {
       }),
     ]))
   })
+
+  test('Tags are not duplicated', async () => {
+    const result = await buildChangelogPackage('changelog/tags')
+
+    expect(result).toEqual(operationTypeMatcher({
+      tags: expect.toIncludeSameMembers([
+        'sameTagInDifferentPaths1',
+        'sameTagInDifferentPaths2',
+        'sameTagInDifferentPaths3',
+        'sameTagInMethodSiblings1',
+        'sameTagInMethodSiblings2',
+        'sameTagInMethodSiblings3',
+        'tag',
+      ]),
+    }))
+  })
 })

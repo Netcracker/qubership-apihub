@@ -37,7 +37,7 @@ export const compareDocuments = async (
   currDoc: ResolvedVersionDocument | undefined,
   ctx: CompareOperationsPairContext): Promise<{
   operationChanges: OperationChanges[]
-  tags: string[]
+  tags: Set<string>
 }> => {
   const { apiType, rawDocumentResolver, previousVersion, currentVersion, previousPackageId, currentPackageId } = ctx
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
@@ -78,17 +78,15 @@ export const compareDocuments = async (
   ) as { merged: GraphApiSchema; diffs: Diff[] }
 
   if (isEmpty(diffs)) {
-    return { operationChanges: [], tags: [] }
+    return { operationChanges: [], tags: new Set() }
   }
 
   let operationDiffs: Diff[] = []
 
   const { currentGroup, previousGroup } = ctx
-  const currGroupSlug = slugify(removeFirstSlash(currentGroup || ''))
-  const prevGroupSlug = slugify(removeFirstSlash(previousGroup || ''))
 
   const tags = new Set<string>()
-  const changedOperations: OperationChanges[] = []
+  const operationChanges: OperationChanges[] = []
 
   for (const type of GRAPHQL_TYPE_KEYS) {
     const operationsByType = merged[type]
@@ -116,12 +114,12 @@ export const compareDocuments = async (
         continue
       }
 
-      changedOperations.push(createOperationChange(apiType, operationDiffs, previous, current, currentGroup, previousGroup))
+      operationChanges.push(createOperationChange(apiType, operationDiffs, previous, current, currentGroup, previousGroup))
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }
   }
 
-  return { operationChanges: changedOperations, tags: Array.from(tags) }
+  return { operationChanges, tags }
 }
 
 function getCopyWithEmptyOperations(template: GraphApiSchema): GraphApiSchema {
