@@ -10,5 +10,5 @@ paths:
     get:
       responses:
         '200':
-          description: OK
+          description: not OK
           content: { }
