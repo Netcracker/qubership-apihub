@@ -30,7 +30,8 @@ import { DASHBOARD_KIND, GROUP_KIND, WORKSPACE_KIND } from '@netcracker/qubershi
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import {
   ACCESS_TOKEN_MANAGEMENT_PERMISSION,
-  type PackagePermissions, USER_ACCESS_MANAGEMENT_PERMISSION,
+  type PackagePermissions,
+  USER_ACCESS_MANAGEMENT_PERMISSION,
 } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
 
 const PACKAGE_KINDS_WITHOUT_VERSIONS = [GROUP_KIND, WORKSPACE_KIND]
@@ -46,8 +47,11 @@ export function useSidebarItems(packageObject: Package): PackageSettingsNavItemP
   if (PACKAGE_KINDS_WITHOUT_API_SPECIFIC_CONFIGURATION.includes(kind)) {
     filters.push(({ value }) => value !== API_SPECIFIC_CONFIGURATION_PAGE)
   }
-  const hasPermissions = (source: PackagePermissions, probe: PackagePermissions | undefined): boolean => {
-    return !probe?.length || probe.some(v => source.includes(v))
+
+  const hasPermissions = (userPerms: PackagePermissions, rule: PackagePermissions | undefined): boolean => {
+    if (!rule?.length) {return true}
+    const setUserPerms = new Set(userPerms)
+    return rule.every(element => setUserPerms.has(element))
   }
 
   filters.push(({ permissions }) => hasPermissions(packageObject?.permissions ?? [], permissions))
@@ -87,7 +91,7 @@ const SETTINGS_SIDEBAR_ITEM = (
     label: 'Access Tokens',
     description: `Add a ${packageKind} access token`,
     value: ACCESS_TOKENS_PAGE,
-    permissions: [ACCESS_TOKEN_MANAGEMENT_PERMISSION],
+    permissions: [ACCESS_TOKEN_MANAGEMENT_PERMISSION, USER_ACCESS_MANAGEMENT_PERMISSION],
     url: getPackageSettingsPath({ packageKey: packageKey, tab: ACCESS_TOKENS_PAGE }),
   },
   {
