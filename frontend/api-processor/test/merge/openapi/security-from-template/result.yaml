@@ -3,5 +3,5 @@ info:
   title: test
   version: 0.1.0
 security:
-  - ApiKeyAuth1: [ ]
-  - ApiKeyAuth2: [ ]
+  - ApiKeyAuth1: []
+  - ApiKeyAuth2: []

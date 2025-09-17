@@ -80,7 +80,7 @@ paths:
         '405':
           description: Validation exception
       security:
-        - { }
+        - {}
   /pet/{petId}:
     get:
       tags:

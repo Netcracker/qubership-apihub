@@ -13,7 +13,7 @@ paths:
           description: OK
           content:
             application/json:
-              schema: { }
+              schema: {}
   /api/v1/pets/test/{id}:
     get:
       tags:
@@ -24,7 +24,7 @@ paths:
           description: OK
           content:
             application/json:
-              schema: { }
+              schema: {}
   /api/v1/cars/test/test/{id}:
     get:
       tags:
@@ -35,7 +35,7 @@ paths:
           description: OK
           content:
             application/json:
-              schema: { }
+              schema: {}
 tags:
   - name: Test Tag 1
     description: desc1

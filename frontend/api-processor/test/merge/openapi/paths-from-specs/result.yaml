@@ -13,7 +13,7 @@ paths:
       responses:
         '200':
           description: OK
-          content: { }
+          content: {}
   /path2:
     post:
       parameters:
@@ -24,4 +24,4 @@ paths:
       responses:
         '200':
           description: OK
-          content: { }
+          content: {}

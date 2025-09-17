@@ -3,4 +3,4 @@ info: ''
 servers:
   - url: /
 security:
-  - OAuth2 Access Token: [ ]
+  - OAuth2 Access Token: []

@@ -39,7 +39,7 @@ paths:
                 type: string
                 deprecated: true
               # [Deprecated] schema in response '200' (application/json)
-              examples: { }
+              examples: {}
 
       requestBody:
         content:
@@ -50,7 +50,7 @@ paths:
     post:
       requestBody:
         $ref: '#/components/requestBodies/RequestBody'
-      responses: { }
+      responses: {}
 
 components:
   schemas:

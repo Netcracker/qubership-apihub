@@ -1,4 +1,8 @@
 openapi: "3.0.0"
+info:
+  title: Sample API
+  description: API specification example
+  version: 1.0.0
 paths:
   /path1:
     parameters:
@@ -60,4 +64,3 @@ components:
       description: usedHeader
     unusedHeader:
       description: unusedHeader
-    

@@ -702,7 +702,7 @@ definitions:
         anyOf:
           - $ref: '#/definitions/schema'
           - type: boolean
-        default: { }
+        default: {}
       type:
         anyOf:
           - $ref: '#/definitions/Schema_SimpleTypes'
@@ -718,7 +718,7 @@ definitions:
             minItems: 1
             items:
               $ref: '#/definitions/schema'
-        default: { }
+        default: {}
       allOf:
         type: array
         minItems: 1
@@ -728,7 +728,7 @@ definitions:
         type: object
         additionalProperties:
           $ref: '#/definitions/schema'
-        default: { }
+        default: {}
       discriminator:
         type: string
       readOnly:
@@ -738,7 +738,7 @@ definitions:
         $ref: '#/definitions/xml'
       externalDocs:
         $ref: '#/definitions/externalDocs'
-      example: { }
+      example: {}
     additionalProperties: false
   fileSchema:
     type: object
@@ -768,7 +768,7 @@ definitions:
         default: false
       externalDocs:
         $ref: '#/definitions/externalDocs'
-      example: { }
+      example: {}
     additionalProperties: false
   primitivesItems:
     type: object
@@ -1070,7 +1070,7 @@ definitions:
     type: string
   description:
     type: string
-  default: { }
+  default: {}
   multipleOf:
     type: number
     minimum: 0

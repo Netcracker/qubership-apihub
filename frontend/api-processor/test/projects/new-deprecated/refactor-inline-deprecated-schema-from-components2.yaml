@@ -17,5 +17,5 @@ paths:
                   type: string
                   deprecated: true
         required: true
-      responses: { }
+      responses: {}
 
