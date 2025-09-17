@@ -69,5 +69,8 @@ const EntityNotFoundMsg = "$entity with id $id is not found"
 const RulesetCanNotBeDeleted = "2000"
 const RulesetCanNotBeDeletedMsg = "Ruleset with $id can not be deleted because it's active or has been activated"
 
+const RulesetNameDuplicated = "2001"
+const RulesetNameDuplicatedMsg = "Ruleset name $name is not unique for API type $type"
+
 const LintResultNotFound = "2100"
 const LintResultNotFoundMsg = "Validation result not found for packageId $packageId and version $version"

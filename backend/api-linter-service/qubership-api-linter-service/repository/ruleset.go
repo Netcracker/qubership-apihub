@@ -18,6 +18,7 @@ type RulesetRepository interface {
 	ListRulesets(ctx context.Context) ([]entity.Ruleset, error)
 	GetActiveRulesets(ctx context.Context, apiType view.ApiType) (map[view.Linter]entity.Ruleset, error)
 	GetRulesetById(ctx context.Context, id string) (*entity.Ruleset, error)
+	RulesetExists(ctx context.Context, name string, apiType view.ApiType) (bool, error)
 	GetRulesetWithData(ctx context.Context, id string) (*entity.RulesetWithData, error)
 	GetActivationHistory(ctx context.Context, id string) ([]entity.RulesetActivationHistory, error)
 	DeleteRuleset(ctx context.Context, id string) error
@@ -82,6 +83,7 @@ func (r ruleSetRepositoryImpl) ActivateRuleset(ctx context.Context, id, oldId st
 			Set("deactivated_at = ?", time.Now()).
 			Set("deactivated_by = ?", user).
 			Where("ruleset_id = ?", oldId).
+			Where("deactivated_at is null").
 			Update()
 		if err != nil {
 			return err
@@ -104,9 +106,7 @@ func (r ruleSetRepositoryImpl) ActivateRuleset(ctx context.Context, id, oldId st
 
 func (r ruleSetRepositoryImpl) ListRulesets(ctx context.Context) ([]entity.Ruleset, error) {
 	var rulesets []entity.Ruleset
-	err := r.cp.GetConnection().ModelContext(ctx, &rulesets).
-		Where("deleted_at is null").
-		Select()
+	err := r.cp.GetConnection().ModelContext(ctx, &rulesets).Select()
 	if errors.Is(err, pg.ErrNoRows) {
 		return nil, nil
 	}
@@ -138,7 +138,6 @@ func (r ruleSetRepositoryImpl) GetRulesetById(ctx context.Context, id string) (*
 
 	err := r.cp.GetConnection().ModelContext(ctx, &ruleset).
 		Where("id = ?", id).
-		Where("deleted_at is null").
 		Select()
 	if err != nil {
 		if errors.Is(err, pg.ErrNoRows) {
@@ -149,11 +148,26 @@ func (r ruleSetRepositoryImpl) GetRulesetById(ctx context.Context, id string) (*
 	return &ruleset, nil
 }
 
+func (r ruleSetRepositoryImpl) RulesetExists(ctx context.Context, name string, apiType view.ApiType) (bool, error) {
+	ruleset := new(entity.Ruleset)
+
+	err := r.cp.GetConnection().ModelContext(ctx, ruleset).
+		Where("name = ?", name).
+		Where("api_type = ?", apiType).
+		Select()
+	if err != nil {
+		if errors.Is(err, pg.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+	return ruleset != nil, nil
+}
+
 func (r ruleSetRepositoryImpl) GetRulesetWithData(ctx context.Context, id string) (*entity.RulesetWithData, error) {
 	var ruleset entity.RulesetWithData
 	err := r.cp.GetConnection().ModelContext(ctx, &ruleset).
 		Where("id = ?", id).
-		Where("deleted_at is null").
 		Select()
 	if errors.Is(err, pg.ErrNoRows) {
 		return nil, nil
@@ -191,10 +205,8 @@ func (r ruleSetRepositoryImpl) DeleteRuleset(ctx context.Context, id string) err
 		}
 
 		_, err = tx.Model(&ruleset).
-			Set("deleted_at = ?", time.Now()).
-			Set("deleted_by = ?", "system"). // TODO: Replace with actual user from context if available
 			Where("id = ?", id).
-			Update()
+			Delete()
 		return err
 	})
 }

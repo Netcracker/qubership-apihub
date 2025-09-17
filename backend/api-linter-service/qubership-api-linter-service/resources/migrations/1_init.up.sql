@@ -35,27 +35,25 @@ create table ruleset
     data           bytea                       not null,
     created_at     timestamp without time zone not null,
     created_by     varchar,
-    deleted_at     timestamp without time zone,
-    deleted_by     varchar,
     api_type       varchar                     not null,
     linter         varchar                     not null,
     file_name      varchar                     not null,
     can_be_deleted bool                        not null,
     last_activated timestamp without time zone,
-    constraint ruleset_name_unique unique (name)
+    constraint ruleset_name_unique unique (name, api_type)
 );
 
 insert into ruleset
 values ('f4bd4da4-56d4-42ea-9667-36fb1a4c53c6', 'default-openapi-2-0', 'active',
-        'extends: [[spectral:oas, recommended]]'::BYTEA, now(), 'system', null, null, 'openapi-2-0', 'spectral',
+        'extends: [[spectral:oas, recommended]]'::BYTEA, now(), 'system', 'openapi-2-0', 'spectral',
         'default-openapi-2-0.yaml', false);
 insert into ruleset
 values ('bc356817-06dc-45a7-a91b-af0d9ad7a2eb', 'default-openapi-3-0', 'active',
-        'extends: [[spectral:oas, recommended]]'::BYTEA, now(), 'system', null, null, 'openapi-3-0', 'spectral',
+        'extends: [[spectral:oas, recommended]]'::BYTEA, now(), 'system',  'openapi-3-0', 'spectral',
         'default-openapi-3-0.yaml', false);
 insert into ruleset
 values ('e3fcd2b3-187b-4bcf-970d-d6dbcf30a83a', 'default-openapi-3-1', 'active',
-        'extends: [[spectral:oas, recommended]]'::BYTEA, now(), 'system', null, null, 'openapi-3-1', 'spectral',
+        'extends: [[spectral:oas, recommended]]'::BYTEA, now(), 'system', 'openapi-3-1', 'spectral',
         'default-openapi-3-1.yaml', false);
 
 create table ruleset_activation_history
@@ -182,6 +180,6 @@ create table lint_file_result
     data           bytea   not null,
     summary        jsonb   not null,
     constraint lint_file_result_pk
-        primary key (data_hash, ruleset_id) -- TODO: add linter_version to PK???
+        primary key (data_hash, ruleset_id)
 );
 
