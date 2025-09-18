@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FileId, FileSourceMap, VersionsComparison } from '@netcracker/qubership-apihub-api-processor'
+import type { BuilderResolvers, FileId, FileSourceMap, VersionsComparison } from '@netcracker/qubership-apihub-api-processor'
 import { BUILD_TYPE, PackageVersionBuilder, VERSION_STATUS } from '@netcracker/qubership-apihub-api-processor'
 import {
   packageVersionResolver,
@@ -61,15 +61,19 @@ export type PackageVersionBuilderWorker = {
   publishPackage: (options: PublishOptions) => Promise<PublishDetails>
 }
 
+async function createCommonResolvers(): Promise<BuilderResolvers> {
+  return {
+    versionResolver: await packageVersionResolver(),
+    versionReferencesResolver: await versionReferencesResolver(),
+    versionOperationsResolver: await versionOperationsResolver(),
+    versionDeprecatedResolver: await versionDeprecatedResolver(),
+    versionDocumentsResolver: await versionDocumentsResolver(),
+    rawDocumentResolver: await rawDocumentResolver(),
+  }
+}
+
 const worker: PackageVersionBuilderWorker = {
   buildChangelogPackage: async ({ packageKey, versionKey, previousPackageKey, previousVersionKey }) => {
-    const builderResolvers = {
-      fileResolver: async () => null,
-      versionResolver: await packageVersionResolver(),
-      versionReferencesResolver: await versionReferencesResolver(),
-      versionOperationsResolver: await versionOperationsResolver(),
-      versionDeprecatedResolver: await versionDeprecatedResolver(),
-    }
     const builder = new PackageVersionBuilder(
       {
         packageId: packageKey,
@@ -80,7 +84,7 @@ const worker: PackageVersionBuilderWorker = {
         buildType: BUILD_TYPE.CHANGELOG,
       },
       {
-        resolvers: builderResolvers,
+        resolvers: await createCommonResolvers(),
       },
     )
 
@@ -89,13 +93,6 @@ const worker: PackageVersionBuilderWorker = {
     return [builder.buildResult.comparisons, await builder.createVersionPackage({ type: 'blob' })]
   },
   buildGroupChangelogPackage: async ({ packageKey, versionKey, currentGroup, previousGroup }) => {
-    const builderResolvers = {
-      fileResolver: async () => null,
-      versionResolver: await packageVersionResolver(),
-      versionReferencesResolver: await versionReferencesResolver(),
-      versionOperationsResolver: await versionOperationsResolver(),
-      versionDeprecatedResolver: await versionDeprecatedResolver(),
-    }
     const builder = new PackageVersionBuilder(
       {
         packageId: packageKey,
@@ -106,7 +103,7 @@ const worker: PackageVersionBuilderWorker = {
         buildType: BUILD_TYPE.PREFIX_GROUPS_CHANGELOG,
       },
       {
-        resolvers: builderResolvers,
+        resolvers: await createCommonResolvers(),
       },
     )
 
@@ -128,12 +125,7 @@ const worker: PackageVersionBuilderWorker = {
     const builder = new PackageVersionBuilder(buildConfig, {
       resolvers: {
         fileResolver: async (fileId: FileId) => fileSources?.[fileId] ?? null,
-        versionResolver: await packageVersionResolver(),
-        versionReferencesResolver: await versionReferencesResolver(),
-        versionOperationsResolver: await versionOperationsResolver(),
-        versionDeprecatedResolver: await versionDeprecatedResolver(),
-        versionDocumentsResolver: await versionDocumentsResolver(),
-        rawDocumentResolver: await rawDocumentResolver(),
+        ...(await createCommonResolvers()),
       },
     }, fileSources)
 
