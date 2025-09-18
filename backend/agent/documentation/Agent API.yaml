@@ -722,7 +722,7 @@ components:
         - json-schema
         - markdown
         - graphql-schema
-        # используется ли где-то graphapi?
+        # is graphapi used anywhere?
         - graphapi
         - introspection
         - protobuf-3
