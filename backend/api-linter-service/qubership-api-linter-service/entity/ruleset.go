@@ -13,8 +13,6 @@ type Ruleset struct {
 	Status        view.RulesetStatus `pg:"status,type:varchar,notnull"`
 	CreatedAt     time.Time          `pg:"created_at,type:timestamp without time zone,notnull"`
 	CreatedBy     string             `pg:"created_by,type:varchar"`
-	DeletedAt     time.Time          `pg:"deleted_at,type:timestamp without time zone"`
-	DeletedBy     string             `pg:"deleted_by,type:varchar,notnull"`
 	ApiType       view.ApiType       `pg:"api_type,type:varchar,notnull"`
 	Linter        view.Linter        `pg:"linter,type:varchar,notnull"`
 	FileName      string             `pg:"file_name,type:varchar"`

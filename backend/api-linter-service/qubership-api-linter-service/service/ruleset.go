@@ -35,7 +35,21 @@ type rulesetServiceImpl struct {
 func (r rulesetServiceImpl) CreateRuleset(ctx context.Context, name string, apiType view.ApiType, linter view.Linter, filename string, data []byte) (*view.Ruleset, error) {
 	userId := secctx.GetUserId(ctx)
 
-	// TODO: check for duplicate names!
+	exists, err := r.rulesetRepository.RulesetExists(ctx, name, apiType)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, &exception.CustomError{
+			Status:  http.StatusConflict,
+			Code:    exception.RulesetNameDuplicated,
+			Message: exception.RulesetNameDuplicatedMsg,
+			Params: map[string]interface{}{
+				"name": name,
+				"type": apiType,
+			},
+		}
+	}
 
 	ent := entity.RulesetWithData{
 		Ruleset: entity.Ruleset{
@@ -51,7 +65,7 @@ func (r rulesetServiceImpl) CreateRuleset(ctx context.Context, name string, apiT
 		},
 		Data: data,
 	}
-	err := r.rulesetRepository.CreateRuleset(ctx, ent)
+	err = r.rulesetRepository.CreateRuleset(ctx, ent)
 	if err != nil {
 		return nil, err
 	}
