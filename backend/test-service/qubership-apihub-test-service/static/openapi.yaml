@@ -29,7 +29,7 @@ info:
   x-nc-api-audience: non-BWC
 externalDocs:
   description: Find out more about package
-  url: https://wiki.domain.com/display/APIM/API+HUB
+  url: https://wiki.domain.com
 servers:
   - url: https://{apihub}.domain.com/api/v2
     description: APIHUB server
@@ -1200,7 +1200,7 @@ paths:
                           description: Url of the Git repository.
                           type: string
                           format: URI
-                          example: https://git.domain.com/PROD.Platform.APIHUB/apihub-registry
+                          example: https://git.domain.com/apihub-registry
                         cloudName:
                           description: Name of the cloud for publication from Agent.
                           type: string
@@ -1209,7 +1209,7 @@ paths:
                           description: Full address of the cloud from Agent.
                           type: string
                           format: URI
-                          example: https://k8s-apps2.k8s.sdntest.domain.com
+                          example: https://k8s.domain.com
                         namespace:
                           description: Namespace of Agent's publication.
                           type: string
@@ -5936,7 +5936,7 @@ components:
               description: Url of the Git repository.
               type: string
               format: URI
-              example: https://git.domain.com/PROD.Platform.APIHUB/apihub-registry
+              example: https://git.domain.com/apihub-registry
             labels:
               description: List of version labels.
               type: array
