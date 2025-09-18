@@ -1580,9 +1580,9 @@
           "username": "markrozenberg",
           "firstName": "Mark",
           "lastName": "Rozenberg",
-          "email": "mark.rozenberg@mail.ru",
+          "email": "mark.rozenberg@example.com",
           "password": "00qwerty00",
-          "phone": "+7 921 123-45-67",
+          "phone": "+1 000 123-45-67",
           "userStatus": 1
         }
       },
