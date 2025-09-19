@@ -1,0 +1,29 @@
+openapi: "3.1.0"
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    $ref: '#/components/pathItems/pathItem1'
+  /path2:
+    $ref: '#/components/pathItems/pathItem2'
+  # operation other than from provided group
+  /path3:
+    $ref: '#/components/pathItems/pathItem3'
+components:
+  pathItems:
+    pathItem1:
+      get:
+        responses:
+          '200':
+            description: response description main
+    pathItem2:
+      post:
+        responses:
+          '200':
+            description: response description main
+    pathItem3:
+      post:
+        responses:
+          '200':
+            description: response description main

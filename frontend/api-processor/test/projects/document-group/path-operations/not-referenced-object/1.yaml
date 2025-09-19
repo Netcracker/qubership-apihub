@@ -1,0 +1,33 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  description: API specification example
+  version: 1.0.0
+paths:
+  /path1:
+    post:
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+components:
+  responses:
+    SuccessResponse:
+      description: response description SuccessResponse
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+    SuccessResponse1:
+      description: response description SuccessResponse1
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true

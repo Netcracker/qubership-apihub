@@ -1,0 +1,17 @@
+openapi: 3.1.0
+info:
+  title: ATUI Petstore 3.0
+  version: 1.0.0
+servers:
+  - url: https://petstore3.swagger.io/api/v1
+paths:
+  /path1:
+    get:
+      responses:
+        '200':
+          description: response description main
+  /path2:
+    post:
+      responses:
+        '200':
+          description: response description main
