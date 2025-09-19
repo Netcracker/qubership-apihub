@@ -5,6 +5,7 @@ import type { TestableProps } from '../components/Testable'
 
 type InfoContextIconProps = SvgIconProps & TestableProps
 
+/* This icon should be replaced according to https://github.com/Netcracker/qubership-apihub-ui/issues/166 */
 export const InfoContextIcon = styled(InfoOutlinedIcon)<InfoContextIconProps>``
 
 InfoContextIcon.defaultProps = {
@@ -13,4 +14,4 @@ InfoContextIcon.defaultProps = {
   'data-testid': 'InfoIcon',
 }
 
-InfoContextIcon.displayName = 'InfoContextIcon' 
+InfoContextIcon.displayName = 'InfoContextIcon'

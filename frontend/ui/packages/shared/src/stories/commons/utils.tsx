@@ -10,21 +10,27 @@ import React from 'react'
 export const createVariantStory = (
   Component: React.ComponentType,
   propName: string,
-  propValues: readonly string[],
+  propValues: readonly (string | undefined)[],
 ): StoryObj => {
   return {
     render: () => (
       <List>
-        {propValues.map((value) => (
-          <ListItem key={value}>
-            <Stack direction="row" spacing={2} alignItems="center" width="100%">
-              <Box display="flex" justifyContent="center" minWidth={40}>
-                <Component {...{ [propName]: value }} />
-              </Box>
-              <Typography align="left">{value}</Typography>
-            </Stack>
-          </ListItem>
-        ))}
+        {propValues.map((value) => {
+          if (value === undefined) {
+            return null
+          }
+
+          return (
+            <ListItem key={value}>
+              <Stack direction="row" spacing={2} alignItems="center" width="100%">
+                <Box display="flex" justifyContent="center" minWidth={40}>
+                  <Component {...{ [propName]: value }} />
+                </Box>
+                <Typography align="left">{value}</Typography>
+              </Stack>
+            </ListItem>
+          )
+        })}
       </List>
     ),
   }

@@ -73,7 +73,6 @@ export const DOCUMENT_MENU_CONFIG: MenuItemConfig[] = [
   {
     id: 'copy-public-link',
     label: 'Copy public link to source',
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     condition: (_, isSharingAvailable) => isSharingAvailable,
     action: ({ getSharedKey, protocol, host, copyToClipboard, showNotification }) => {
       getSharedKey().then(({ data }) => {

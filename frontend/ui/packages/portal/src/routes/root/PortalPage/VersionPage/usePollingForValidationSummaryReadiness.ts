@@ -1,30 +1,36 @@
 import type { RefetchValidationSummary } from '@apihub/api-hooks/ApiQuality/useValidationSummaryByPackageVersion'
 import type { Dispatch, SetStateAction } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import type { ClientValidationStatus } from './ApiQualityValidationSummaryProvider'
 import { ClientValidationStatuses } from './ApiQualityValidationSummaryProvider'
 
 const POLLING_INTERVAL: number = 10 // Seconds
+
+const POLLING_FAILURE_COUNT: number = 5
+
+let interval: NodeJS.Timeout | undefined
 
 export function usePollingForValidationSummaryReadiness(
   status: ClientValidationStatus,
   setStatus: Dispatch<SetStateAction<ClientValidationStatus>>,
   refetch: RefetchValidationSummary | undefined,
 ): void {
-  const [count, setCount] = useState(5)
+  const count = useRef(POLLING_FAILURE_COUNT)
   useEffect(() => {
-    if (!refetch) {
+    if (!refetch || !setStatus) {
       return
     }
-    if (count === 0) {
-      setStatus?.(ClientValidationStatuses.NOT_VALIDATED)
-      return
-    }
-    if (status === ClientValidationStatuses.IN_PROGRESS) {
-      setTimeout(() => {
+    interval = setInterval(() => {
+      if (count.current === 0) {
+        setStatus(ClientValidationStatuses.NOT_VALIDATED)
+        count.current = POLLING_FAILURE_COUNT
+        clearInterval(interval!)
+        return
+      }
+      if (status === ClientValidationStatuses.IN_PROGRESS) {
         refetch()
-        setCount(prev => prev - 1)
-      }, POLLING_INTERVAL * 1000)
-    }
-  }, [status, refetch, count, setStatus])
+        count.current--
+      }
+    }, POLLING_INTERVAL * 1000)
+  }, [status, refetch, setStatus])
 }

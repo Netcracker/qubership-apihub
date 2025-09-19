@@ -180,7 +180,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
     return () => {
       setApiDiffResult(undefined)
     }
-  }, [])
+  }, [setApiDiffResult])
 
   if (isLoading || isApiDiffResultLoading) {
     operationContentElement = <LoadingIndicator />

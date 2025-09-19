@@ -21,7 +21,6 @@ import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import { useSystemInfo } from '../api/useSystemInfo'
 import { isNotEmpty } from '../../../utils/arrays'
-import InfoIcon from '@mui/icons-material/Info'
 import { InfoContextIcon } from '../../../icons/InfoContextIcon'
 
 type SystemInfoPopupProps = {

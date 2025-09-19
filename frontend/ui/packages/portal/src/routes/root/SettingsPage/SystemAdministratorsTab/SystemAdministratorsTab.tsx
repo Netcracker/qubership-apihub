@@ -28,7 +28,9 @@ import { SystemAdministratorsTable } from '@netcracker/qubership-apihub-ui-share
 import {
   AddSystemAdministratorDialog,
 } from '@netcracker/qubership-apihub-ui-shared/components/AddSystemAdministratorDialog'
-import { ConfirmationDialog } from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog'
+import {
+  ConfirmationDialog,
+} from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog/ConfirmationDialog'
 
 export const SystemAdministratorsTab: FC = memo(() => {
   const { showAddSystemAdministratorDialog } = useEventBus()

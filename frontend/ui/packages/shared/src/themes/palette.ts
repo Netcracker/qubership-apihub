@@ -1,21 +1,6 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { PaletteOptions, SimplePaletteColorOptions } from '@mui/material/styles/createPalette'
 import type { ChipPropsColorOverrides } from '@mui/material/Chip/Chip'
+import { SECONDARY_TEXT_COLOR } from './colors'
 
 export function createPalette(): PaletteOptions {
   return {
@@ -34,6 +19,11 @@ export function createPalette(): PaletteOptions {
     },
     warning: {
       main: '#FFB02E',
+    },
+    // Override colors of interactive UI elements for more precise mockup compliance
+    action: {
+      active: SECONDARY_TEXT_COLOR,
+      disabled: 'rgba(98, 109, 130, 0.5)', // Corresponds to SECONDARY_TEXT_COLOR with 50% opacity
     },
     ...CHIP_COLOR_OVERRIDES,
     ...{

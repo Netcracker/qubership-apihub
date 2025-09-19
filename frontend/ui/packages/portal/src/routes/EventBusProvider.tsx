@@ -85,6 +85,7 @@ export const SHOW_EXAMPLES_DIALOG = 'show-examples-dialog'
 export const SHOW_CREATE_OPERATION_GROUP_DIALOG = 'show-create-operation-group-dialog'
 export const SHOW_EDIT_OPERATION_GROUP_DIALOG = 'show-edit-operation-group-dialog'
 export const SHOW_EDIT_OPERATION_GROUP_CONTENT_DIALOG = 'show-edit-operation-group-content-dialog'
+export const SHOW_CREATE_RULESET_DIALOG = 'show-create-ruleset-dialog'
 export const REF_PACKAGE_SELECTED = 'ref-package-selected'
 export const API_KIND_SELECTED = 'api-kind-selected'
 export const API_AUDIENCE_SELECTED = 'api-audience-selected'
@@ -239,6 +240,7 @@ type EventBus = {
   showCreateOperationGroupDialog: (detail: CreateOperationGroupDetail) => void
   showEditOperationGroupDialog: (detail: EditOperationGroupDetail) => void
   showEditOperationGroupContentDialog: (detail: EditOperationGroupContentDetails) => void
+  showCreateRulesetDialog: () => void
   showModelUsagesDialog: (detail: ModelUsagesDetail) => void
   onRefPackageSelected: (value?: PackageReference | null) => void
   onApiKindSelected: (value?: ApiKind) => void
@@ -299,6 +301,7 @@ function eventBusProvider(): EventBus {
       showCreateOperationGroupDialog: slot<CreateOperationGroupDetail>(),
       showEditOperationGroupDialog: slot<EditOperationGroupDetail>(),
       showEditOperationGroupContentDialog: slot<EditOperationGroupContentDetails>(),
+      showCreateRulesetDialog: slot(),
       showModelUsagesDialog: slot<ModelUsagesDetail>(),
       onRefPackageSelected: slot<Key>(),
       onApiKindSelected: slot<ApiKind>(),
@@ -412,6 +415,9 @@ function eventBusProvider(): EventBus {
   })
   eventBus.showEditOperationGroupContentDialog.on((detail: EditOperationGroupContentDetails) => {
     dispatchEvent(new CustomEvent(SHOW_EDIT_OPERATION_GROUP_CONTENT_DIALOG, { detail }))
+  })
+  eventBus.showCreateRulesetDialog.on(() => {
+    dispatchEvent(new CustomEvent(SHOW_CREATE_RULESET_DIALOG))
   })
   eventBus.showModelUsagesDialog.on((detail: ModelUsagesDetail) => {
     dispatchEvent(new CustomEvent(SHOW_MODEL_USAGES_DIALOG, { detail }))

@@ -1,25 +1,29 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-import type { FC } from 'react'
-import { memo, useEffect } from 'react'
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material'
 import { LoadingButton } from '@mui/lab'
+import { Box, Button, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton } from '@mui/material'
 import type { ButtonPropsColorOverrides } from '@mui/material/Button/Button'
 import type { OverridableStringUnion } from '@mui/types'
+import { type FC, memo, useEffect } from 'react'
+import { CloseIcon } from '../../icons/CloseIcon'
+import { DialogForm } from '../DialogForm'
+
+const STYLE_DIALOG_TITLE = {
+  px: 2.5,
+  pt: 2.5,
+  pb: 0.5,
+}
+
+const STYLE_DIALOG_CONTENT = {
+  minWidth: 420,
+  pl: 2.5,
+  pr: 6.5,
+  pb: 0.5,
+}
+
+const STYLE_DIALOG_ACTIONS = {
+  px: 2.5,
+  pt: 1.5,
+  pb: 2.5,
+}
 
 export type ConfirmationDialogProps = {
   open: boolean
@@ -45,24 +49,37 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = memo<Confirmation
   useCloseOnSuccess(loading, onCancel)
 
   return (
-    <Dialog
+    <DialogForm
       open={open}
       onClose={onCancel}
+      width="420px"
     >
-      <DialogTitle>
-        {title}
+      <DialogTitle
+        sx={STYLE_DIALOG_TITLE}
+      >
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+          {title}
+          <IconButton
+            onClick={onCancel}
+            sx={{ p: 0 }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
       </DialogTitle>
 
-      <DialogContent>
-        <DialogContentText
-          variant="body2"
-          data-testid="ConfirmationDialogContent"
-        >
-          {message}
-        </DialogContentText>
-      </DialogContent>
+      {message && (
+        <DialogContent sx={STYLE_DIALOG_CONTENT}>
+          <DialogContentText
+            variant="body2"
+            data-testid="ConfirmationDialogContent"
+          >
+            {message}
+          </DialogContentText>
+        </DialogContent>
+      )}
 
-      <DialogActions>
+      <DialogActions sx={STYLE_DIALOG_ACTIONS}>
         <LoadingButton
           variant="contained"
           color={confirmButtonColor}
@@ -74,13 +91,14 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = memo<Confirmation
         </LoadingButton>
         <Button
           variant="outlined"
+          disabled={loading}
           onClick={onCancel}
           data-testid="CancelButton"
         >
           Cancel
         </Button>
       </DialogActions>
-    </Dialog>
+    </DialogForm>
   )
 })
 
@@ -89,7 +107,7 @@ function useCloseOnSuccess(
   onClose?: () => void,
 ): void {
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {loading === false && onClose?.()}, [loading])
+  useEffect(() => { loading === false && onClose?.() }, [loading])
 }
 
 type ButtonColor = OverridableStringUnion<

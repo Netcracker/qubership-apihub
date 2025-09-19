@@ -70,7 +70,6 @@ export const ActivityListItem: FC<ActivitiesListItemProps> = ({ activity }) => {
       )
     }
     return element
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content])
 
   return (

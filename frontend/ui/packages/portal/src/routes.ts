@@ -78,6 +78,7 @@ export const USER_ROLES_PAGE = 'roles'
 export const ROLES_HIERARCHY_PAGE = 'hierarchy'
 export const SYSTEM_ADMINISTRATORS_PAGE = 'sysadms'
 export const SYSTEM_TOKENS_PAGE = 'tokens'
+export const RULESET_MANAGEMENT_PAGE = 'rulesets'
 
 // Profile page tabs
 export const PERSONAL_ACCESS_TOKENS_PAGE = 'personal-access-tokens'
@@ -140,6 +141,7 @@ export type SettingsPageRoute =
   | typeof ROLES_HIERARCHY_PAGE
   | typeof SYSTEM_ADMINISTRATORS_PAGE
   | typeof SYSTEM_TOKENS_PAGE
+  | typeof RULESET_MANAGEMENT_PAGE
 
 export type ProfilePageRoute =
   | typeof PERSONAL_ACCESS_TOKENS_PAGE

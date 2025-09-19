@@ -44,7 +44,7 @@ export function useTokens(packageKey?: Key, enabled = true): [Tokens, IsLoading,
     queryKey: [ACCESS_TOKENS_QUERY_KEY, packageKey],
     queryFn: () => getTokens(packageKey),
     select: toSystemTokens,
-    enabled,
+    enabled: enabled,
   })
 
   return [

@@ -72,13 +72,14 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
   // Feature "API Quality Validation"
   const [manualRunLinter] = useManualRunApiQualityValidation()
   const { packageId, versionId } = useParams()
+  const [clientValidationStatus = ClientValidationStatuses.CHECKING, setClientValidationStatus] = useApiQualityClientValidationStatus()
   const onManualRunLinter = useCallback(() => {
     if (packageId && versionId) {
       manualRunLinter({ packageId, versionId })
+      setClientValidationStatus?.(ClientValidationStatuses.CHECKING)
     }
-  }, [manualRunLinter, packageId, versionId])
+  }, [manualRunLinter, packageId, versionId, setClientValidationStatus])
   const linterEnabled = useApiQualityLinterEnabled(apiType)
-  const [clientValidationStatus = ClientValidationStatuses.CHECKING] = useApiQualityClientValidationStatus()
   const validationFailed = clientValidationStatus === ClientValidationStatuses.ERROR
   const apiQualitySummaryPlaceholder = getApiQualitySummaryPlaceholder(onManualRunLinter, clientValidationStatus)
   const showApiQualityPlaceholder = !!apiQualitySummaryPlaceholder
@@ -330,7 +331,7 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
                     sx={{
                       gridArea: 'validationRulesetTitle',
                       display: 'flex',
-                      alignItems: 'center',
+                      alignItems: 'flex-start',
                     }}
                     variant="subtitle2"
                   >
@@ -341,6 +342,7 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
                     gridArea='validationRuleset'
                     display='flex'
                     flexDirection='column'
+                    alignItems='flex-start'
                     gap={1}
                   >
                     {validationRulesets.map(ruleset => (
@@ -349,9 +351,11 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
                       </Box>
                     ))}
                     {hasInactiveRulesets && (
-                      <Link onClick={onManualRunLinter}>
-                        Run Validation
-                      </Link>
+                      <Typography variant="body2">
+                        <Link onClick={onManualRunLinter}>
+                          Run Validation
+                        </Link>
+                      </Typography>
                     )}
                   </Box>
                 </>}

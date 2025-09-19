@@ -49,7 +49,7 @@ export const MainPage: FC = memo(() => {
     if (!packages.length && !isLoading && location.pathname?.includes(FAVORITE_PAGE)) {
       navigateToWorkspace({ workspaceKey: '' })
     }
-  }, [isLoading])
+  }, [isLoading, location.pathname, navigateToWorkspace, packages.length])
 
   return (
     <Box sx={{
