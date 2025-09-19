@@ -73,20 +73,20 @@ describe('Changes test', () => {
   })
 
   describe('Added/removed/changed operations handling', () => {
-    test('Add method', async () => {
-      const result = await buildChangelogPackage('changelog/add-method')
+    test('Add operation', async () => {
+      const result = await buildChangelogPackage('changelog/add-operation')
       expect(result).toEqual(changesSummaryMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }))
       expect(result).toEqual(numberOfImpactedOperationsMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }))
     })
 
-    test('Remove method', async () => {
-      const result = await buildChangelogPackage('changelog/remove-method')
+    test('Remove operation', async () => {
+      const result = await buildChangelogPackage('changelog/remove-operation')
       expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
       expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
     })
 
-    test('Change method content', async () => {
-      const result = await buildChangelogPackage('changelog/change-inside-method')
+    test('Change operation content', async () => {
+      const result = await buildChangelogPackage('changelog/change-inside-operation')
 
       expect(result).toEqual(changesSummaryMatcher({
         [BREAKING_CHANGE_TYPE]: 1,
@@ -226,8 +226,8 @@ describe('Changes test', () => {
     })
   })
 
-  test('Operation changes fields are correct (REST)', async () => {
-    const result = await buildChangelogPackage('changelog/operation-changes-fields-rest')
+  test('Operation changes fields are correct', async () => {
+    const result = await buildChangelogPackage('changelog/operation-changes-fields')
 
     expect(result).toEqual(operationChangesMatcher([
       expect.objectContaining({
@@ -244,30 +244,6 @@ describe('Changes test', () => {
           'tags': ['tag1', 'tag2'],
           'method': 'post',
           'path': '/order/*',
-        },
-        // rest of the fields are covered by dedicated tests
-      }),
-    ]))
-  })
-
-  test('Operation changes fields are correct (GQL)', async () => {
-    const result = await buildChangelogPackage('changelog/operation-changes-fields-gql', [{ fileId: 'before.graphql' }], [{ fileId: 'after.graphql' }])
-
-    expect(result).toEqual(operationChangesMatcher([
-      expect.objectContaining({
-        previousOperationId: 'query-fruits',
-        operationId: 'query-fruits',
-        previousMetadata: {
-          'title': 'Fruits',
-          'tags': ['queries'],
-          'method': 'fruits',
-          'type': 'query',
-        },
-        metadata: {
-          'title': 'Fruits',
-          'tags': ['queries'],
-          'method': 'fruits',
-          'type': 'query',
         },
         // rest of the fields are covered by dedicated tests
       }),

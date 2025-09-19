@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isEmpty, removeFirstSlash, slugify, takeIf } from '../../utils'
+import { isEmpty, slugify, takeIf } from '../../utils'
 import { apiDiff, Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
 import { GraphApiOperation, GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
@@ -44,6 +44,8 @@ export const compareDocuments = async (
   const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
   const prevDocSchema = prevFile && buildSchema(await prevFile.text(), { noLocation: true })
   const currDocSchema = currFile && buildSchema(await currFile.text(), { noLocation: true })
+
+  const collectOnlyChangedOperations = Boolean(prevDoc && currDoc)
 
   let prevDocData = prevDocSchema && (await buildGraphQLDocument({
     ...prevDoc,
@@ -81,8 +83,6 @@ export const compareDocuments = async (
     return { operationChanges: [], tags: new Set() }
   }
 
-  let operationDiffs: Diff[] = []
-
   const { currentGroup, previousGroup } = ctx
 
   const tags = new Set<string>()
@@ -97,17 +97,19 @@ export const compareDocuments = async (
       const methodData = operationsByType[operationKey]
 
       const { current, previous } = operationsMap[operationId] ?? {}
-      if (current && previous) {
+      if (!current && !previous) {
+        throw new Error(`Can't find the ${operationId} operation from documents pair ${prevDoc?.fileId} and ${currDoc?.fileId}`)
+      }
+      const operationChanged = Boolean(current && previous)
+      const operationAddedOrRemoved = !operationChanged
+
+      let operationDiffs: Diff[] = []
+      if (operationChanged && collectOnlyChangedOperations) {
         operationDiffs = [...(methodData as WithAggregatedDiffs<GraphApiOperation>)[DIFFS_AGGREGATED_META_KEY]]
-      } else if (current || previous) {
-        for (const type of GRAPHQL_TYPE_KEYS) {
-          const operationsByType = (merged[type] as WithDiffMetaRecord<Record<string, GraphApiOperation>>)?.[DIFF_META_KEY]
-          if (!operationsByType) { continue }
-          operationDiffs.push(...Object.values(operationsByType))
-        }
-        if (isEmpty(operationDiffs)) {
-          throw new Error('should not happen')
-        }
+      }
+      if (operationAddedOrRemoved && !collectOnlyChangedOperations) {
+        const operationAddedOrRemovedDiff = (merged[type] as WithDiffMetaRecord<Record<string, GraphApiOperation>>)[DIFF_META_KEY]?.[operationKey]
+        operationAddedOrRemovedDiff && operationDiffs.push(operationAddedOrRemovedDiff)
       }
 
       if (isEmpty(operationDiffs)) {

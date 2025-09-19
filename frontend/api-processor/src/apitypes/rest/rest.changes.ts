@@ -143,7 +143,7 @@ export const compareDocuments = async (
       const prevNormalizedOperationId = slugify(`${normalizePath(previousBasePath + path)}-${inferredMethod}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
       const currNormalizedOperationId = slugify(`${normalizePath(currentBasePath + path)}-${inferredMethod}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
 
-      const { current, previous } = operationsMap[prevNormalizedOperationId] ?? operationsMap[currNormalizedOperationId] /*?? operationsMap[operationId]*/ ?? {}
+      const { current, previous } = operationsMap[prevNormalizedOperationId] ?? operationsMap[currNormalizedOperationId] ?? {}
       if (!current && !previous) {
         const missingOperations = prevNormalizedOperationId === currNormalizedOperationId ? `the ${prevNormalizedOperationId} operation` : `the ${prevNormalizedOperationId} and ${currNormalizedOperationId} operations`
         throw new Error(`Can't find ${missingOperations} from documents pair ${prevDoc?.fileId} and ${currDoc?.fileId}`)
