@@ -1,4 +1,4 @@
-import { YAML_FILE_FORMAT, JSON_FILE_FORMAT } from '@apihub/entities/file-formats'
+import { YAML_FILE_FORMAT, JSON_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/entities/file-formats'
 import type { SpecItemUri } from '@netcracker/qubership-apihub-ui-shared/utils/specifications'
 import { encodeKey } from '@netcracker/qubership-apihub-ui-shared/utils/specifications'
 import { safeParse } from '@stoplight/json'
