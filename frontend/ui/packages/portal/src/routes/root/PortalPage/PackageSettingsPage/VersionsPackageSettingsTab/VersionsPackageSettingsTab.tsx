@@ -24,7 +24,9 @@ import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entit
 import { useEventBus } from '@apihub/routes/EventBusProvider'
 import type { PackageVersion } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
-import { ConfirmationDialog } from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog'
+import {
+  ConfirmationDialog,
+} from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog/ConfirmationDialog'
 import { useDeletePackageVersion } from '@apihub/routes/root/usePackageVersions'
 
 export const VersionsPackageSettingsTab: FC<PackageSettingsTabProps> = memo<PackageSettingsTabProps>(({ packageObject }) => {

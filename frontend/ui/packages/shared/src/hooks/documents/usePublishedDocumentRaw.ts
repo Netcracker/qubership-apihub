@@ -31,18 +31,20 @@ export function usePublishedDocumentRaw(options?: {
   versionKey?: Key
   slug: Key
   enabled?: boolean
+  transform?: (value: string) => string
 }): [FileContent, IsLoading] {
   const { packageId, versionId } = useParams()
   const packageKey = options?.packageKey ?? packageId
   const versionKey = options?.versionKey ?? versionId
   const slug = options?.slug
   const enabled = options?.enabled ?? true
+  const transform = options?.transform ?? toFormattedJsonString
 
   const { data, isLoading } = useQuery<string, Error, string>({
     queryKey: [PUBLISHED_DOCUMENT_RAW_QUERY_KEY, packageKey, versionKey, slug],
     queryFn: () => getPublishedDocumentRaw(packageKey!, versionKey!, slug!),
     enabled: !!packageKey && !!versionKey && !!slug && enabled,
-    select: toFormattedJsonString,
+    select: transform,
   })
 
   return [data ?? '', isLoading]

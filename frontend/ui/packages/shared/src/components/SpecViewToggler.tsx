@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import type { TogglerProps } from './Toggler'
-import { Toggler } from './Toggler'
 import {
   DOC_OPERATION_VIEW_MODE,
   INTROSPECTION_OPERATION_VIEW_MODE,
@@ -31,13 +28,11 @@ export const RAW_SPEC_VIEW_MODE = RAW_OPERATION_VIEW_MODE
 export const SCHEMA_SPEC_VIEW_MODE = SCHEMA_OPERATION_VIEW_MODE
 export const INTROSPECTION_SPEC_VIEW_MODE = INTROSPECTION_OPERATION_VIEW_MODE
 
+// TODO 23.06.25 // Is it correct to have these options in the union type?
+// Possibly, they are not related to feature using it
 export type SpecViewMode =
   | typeof DOC_SPEC_VIEW_MODE
   | typeof SIMPLE_SPEC_VIEW_MODE
   | typeof RAW_SPEC_VIEW_MODE
   | typeof SCHEMA_SPEC_VIEW_MODE
   | typeof INTROSPECTION_SPEC_VIEW_MODE
-
-export type SpecViewTogglerProps = TogglerProps<SpecViewMode>
-
-export const SpecViewToggler = Toggler as FC<SpecViewTogglerProps>

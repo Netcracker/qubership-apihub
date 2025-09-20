@@ -18,14 +18,15 @@ import { Examples } from '@apihub/routes/root/PortalPage/VersionPage/OperationCo
 import { Playground } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/Playground'
 import {
   usePlaygroundEvents,
-} from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/usePlaygroundEvents'
+} from './Playground/hooks/usePlaygroundEvents'
 import { Box } from '@mui/material'
 import { ModuleFetchingErrorBoundary } from '@netcracker/qubership-apihub-ui-shared/components/ModuleFetchingErrorBoundary/ModuleFetchingErrorBoundary'
 import { NAVIGATION_MAX_WIDTH } from '@netcracker/qubership-apihub-ui-shared/utils/page-layouts'
 import { Resizable } from 're-resizable'
 import type { FC, ReactNode } from 'react'
 import { memo } from 'react'
-import { CreateCustomServerDialog } from './Playground/CreateCustomServerDialog'
+import { CreateCustomServerDialog } from './Playground/components/CreateCustomServerDialog'
+import { DeleteCustomServerDialog } from './Playground/components/DeleteCustomServerDialog'
 import { ExamplesDialog } from './Playground/Examples/ExamplesDialog'
 
 export type OperationWithPlaygroundProps = {
@@ -85,6 +86,7 @@ export const OperationWithPlayground: FC<OperationWithPlaygroundProps> = memo<Op
       )}
 
       <CreateCustomServerDialog />
+      <DeleteCustomServerDialog />
       <ExamplesDialog document={changedOperationContent} />
     </Box>
   )

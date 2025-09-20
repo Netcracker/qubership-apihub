@@ -15,13 +15,14 @@
  */
 
 import { useHash } from 'react-use'
-import type { SpecItemUri } from '../../utils/specifications'
+import { isSpecItemUri, type SpecItemUri } from '../../utils/specifications'
 
 export function useSpecItemUriHashParam(): [SpecItemUri, SetSpecItemUri] {
   const [hashParam, setHashParam] = useHash()
+  const handledHashParam = hashParam.replace('#', '')
 
   return [
-    hashParam.replace('#', ''),
+    isSpecItemUri(handledHashParam) ? handledHashParam : '/',
     (value: SpecItemUri) => setHashParam(`#${value}`),
   ]
 }

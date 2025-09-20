@@ -37,7 +37,6 @@ const DEFAULT_HEADER_SX: SxProps<Theme> = {
   px: 4,
 }
 const DEFAULT_BODY_SX: SxProps<Theme> = {
-  pt: 2,
   px: 4,
   overflow: 'hidden',
   display: 'flex',
@@ -85,6 +84,7 @@ export const BodyCard: FC<BodyCardProps> = memo<BodyCardProps>((props) => {
       <CardContent
         sx={{
           ...DEFAULT_BODY_SX,
+          pt: header ? 2 : 0,
           ...overrideBodySx,
         }}
         data-testid="CardContent"

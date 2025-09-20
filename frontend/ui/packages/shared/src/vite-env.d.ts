@@ -88,6 +88,10 @@ declare module '@mui/material/Chip' {
     // Personal Access Tokens
     active: true
     expired: true
+    // Validation Ruleset Status
+    rulesetSpecType: true
+    rulesetActive: true
+    rulesetInactive: true
   }
 
   interface ChipPropsVariantOverrides {

@@ -63,6 +63,7 @@ export function toSystemConfiguration(value: SystemConfigurationDto): SystemConf
         })),
       ],
     },
+    extensions: value.extensions,
   }
 }
 

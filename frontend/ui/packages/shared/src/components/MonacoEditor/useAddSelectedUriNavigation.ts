@@ -18,11 +18,12 @@ import type { editor as Editor } from 'monaco-editor'
 import type { MutableRefObject } from 'react'
 import { useEffect } from 'react'
 import { navigateTo } from './utils'
+import type { SpecItemUri } from '../../utils/specifications'
 import { findPathLocation } from '../../utils/specifications'
 
 export function useAddSelectedUriNavigation(
   editor: MutableRefObject<Editor.IStandaloneCodeEditor | undefined>,
-  selectedUri?: string,
+  selectedUri?: SpecItemUri,
 ): void {
   useEffect(() => {
     const currentEditor = editor.current

@@ -14,57 +14,79 @@
  * limitations under the License.
  */
 
-import type { FC, ReactNode } from 'react'
-import { memo } from 'react'
-import { VersionPageToolbar } from './VersionPageToolbar'
-import { VersionApiChangesSubPage } from './VersionApiChangesSubPage/VersionApiChangesSubPage'
-import { VersionOperationsSubPage } from './VersionOperationsSubPage/VersionOperationsSubPage'
-import { VersionDocumentsSubPage } from './VersionDocumentsSubPage/VersionDocumentsSubPage'
-import { usePackage } from '../../usePackage'
-import type { VersionPageRoute } from '../../../../routes'
-import { API_CHANGES_PAGE, DEPRECATED_PAGE, DOCUMENTS_PAGE, OPERATIONS_PAGE, OVERVIEW_PAGE } from '../../../../routes'
-import { VersionOverviewSubPage } from './VersionOverviewSubPage/VersionOverviewSubPage'
-import {
-  VersionDeprecatedOperationsSubPage,
-} from './VersionDeprecatedOperationsSubPage/VersionDeprecatedOperationsSubPage'
-import { NoPackageVersionPlaceholder } from '../../NoPackageVersionPlaceholder'
+import { useValidationSummaryByPackageVersion } from '@apihub/api-hooks/ApiQuality/useValidationSummaryByPackageVersion'
 import { CurrentPackageProvider } from '@apihub/components/CurrentPackageProvider'
-import { FullMainVersionProvider } from '../FullMainVersionProvider'
-import { OutdatedRevisionNotification } from './OutdatedRevisionNotification/OutdatedRevisionNotification'
-import { ActivityHistoryFiltersProvider } from '../../MainPage/ActivityHistoryFiltersProvider'
-import { NoPackagePlaceholder } from '../../NoPackagePlaceholder'
-import { SelectedPreviewOperationProvider } from '../SelectedPreviewOperationProvider'
-import { VersionNavigationMenu } from '../VersionNavigationMenu'
-import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
-import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithToolbar'
-import { PreviousReleaseOptionsProvider } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget'
+import { ExportSettingsDialog } from '@apihub/components/ExportSettingsDialog/ui/ExportSettingsDialog'
+import { PublishDashboardVersionFromCSVDialog } from '@apihub/routes/root/PortalPage/DashboardPage/PublishDashboardVersionFromCSVDialog'
 import { TOGGLE_SIDEBAR_BUTTON } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
 import { LayoutWithTabs } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithTabs'
+import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithToolbar'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import {
-  PublishDashboardVersionFromCSVDialog,
-} from '@apihub/routes/root/PortalPage/DashboardPage/PublishDashboardVersionFromCSVDialog'
-import { ExportSettingsDialog } from '@apihub/components/ExportSettingsDialog/ui/ExportSettingsDialog'
+import { useLinterEnabled } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
+import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
+import { PreviousReleaseOptionsProvider } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget'
+import type { FC, ReactNode } from 'react'
+import { memo, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import type { VersionPageRoute } from '../../../../routes'
+import { API_CHANGES_PAGE, API_QUALITY_PAGE, DEPRECATED_PAGE, DOCUMENTS_PAGE, OPERATIONS_PAGE, OVERVIEW_PAGE } from '../../../../routes'
+import { ActivityHistoryFiltersProvider } from '../../MainPage/ActivityHistoryFiltersProvider'
+import { NoPackagePlaceholder } from '../../NoPackagePlaceholder'
+import { NoPackageVersionPlaceholder } from '../../NoPackageVersionPlaceholder'
+import { usePackage } from '../../usePackage'
+import { FullMainVersionProvider } from '../FullMainVersionProvider'
+import { SelectedPreviewOperationProvider } from '../SelectedPreviewOperationProvider'
+import { VersionNavigationMenu } from '../VersionNavigationMenu'
+import type { ClientValidationStatus } from './ApiQualityValidationSummaryProvider'
+import { ApiQualityDataProvider, ClientValidationStatuses } from './ApiQualityValidationSummaryProvider'
+import { OutdatedRevisionNotification } from './OutdatedRevisionNotification/OutdatedRevisionNotification'
+import { usePollingForValidationSummaryReadiness } from './usePollingForValidationSummaryReadiness'
+import { VersionApiChangesSubPage } from './VersionApiChangesSubPage/VersionApiChangesSubPage'
+import { RulesetInfoDialog } from './VersionApiQualitySubPage/components/RulesetInfoDialog/RulesetInfoDialog'
+import { VersionApiQualitySubPage } from './VersionApiQualitySubPage/VersionApiQualitySubPage'
+import { VersionDeprecatedOperationsSubPage } from './VersionDeprecatedOperationsSubPage/VersionDeprecatedOperationsSubPage'
+import { VersionDocumentsSubPage } from './VersionDocumentsSubPage/VersionDocumentsSubPage'
+import { VersionOperationsSubPage } from './VersionOperationsSubPage/VersionOperationsSubPage'
+import { VersionOverviewSubPage } from './VersionOverviewSubPage/VersionOverviewSubPage'
+import { VersionPageToolbar } from './VersionPageToolbar'
 
 export const VersionPage: FC = memo(() => {
+  const { packageId, versionId } = useParams()
   const [menuItem] = useActiveTabs()
+
   const [packageObject, isLoading] = usePackage({ showParents: true })
+
+  const linterEnabled = useLinterEnabled()
+  const [validationStatus, setValidationStatus] = useState<ClientValidationStatus>(ClientValidationStatuses.CHECKING)
+  const {
+    data: validationSummary,
+    refetch: refetchValidationSummary,
+  } = useValidationSummaryByPackageVersion(linterEnabled, packageId!, versionId!, setValidationStatus)
+  usePollingForValidationSummaryReadiness(validationStatus, setValidationStatus, refetchValidationSummary)
 
   return (
     <CurrentPackageProvider value={packageObject}>
       <FullMainVersionProvider>
         <ActivityHistoryFiltersProvider>
-          <NoPackagePlaceholder packageObject={packageObject} isLoading={isLoading}>
-            <NoPackageVersionPlaceholder packageObject={packageObject}>
-              <LayoutWithToolbar
-                toolbar={<VersionPageToolbar />}
-                body={<VersionPageBody menuItem={menuItem as VersionPageRoute} />}
-              />
-              <OutdatedRevisionNotification />
-            </NoPackageVersionPlaceholder>
-          </NoPackagePlaceholder>
-          {packageObject?.kind === DASHBOARD_KIND && <PublishDashboardVersionFromCSVDialog />}
-          <ExportSettingsDialog />
+          <ApiQualityDataProvider
+            linterEnabled={linterEnabled}
+            validationSummary={validationSummary}
+            clientValidationStatus={validationStatus}
+            setClientValidationStatus={setValidationStatus}
+          >
+            <NoPackagePlaceholder packageObject={packageObject} isLoading={isLoading}>
+              <NoPackageVersionPlaceholder packageObject={packageObject}>
+                <LayoutWithToolbar
+                  toolbar={<VersionPageToolbar />}
+                  body={<VersionPageBody menuItem={menuItem as VersionPageRoute} />}
+                />
+                <OutdatedRevisionNotification />
+              </NoPackageVersionPlaceholder>
+            </NoPackagePlaceholder>
+            {packageObject?.kind === DASHBOARD_KIND && <PublishDashboardVersionFromCSVDialog />}
+            <ExportSettingsDialog />
+            <RulesetInfoDialog />
+          </ApiQualityDataProvider>
         </ActivityHistoryFiltersProvider>
       </FullMainVersionProvider>
     </CurrentPackageProvider>
@@ -88,6 +110,7 @@ const PATH_PARAM_TO_SUB_PAGE_MAP: Record<VersionPageRoute, ReactNode> = {
       <VersionDeprecatedOperationsSubPage />
     </SelectedPreviewOperationProvider>
   ),
+  [API_QUALITY_PAGE]: <VersionApiQualitySubPage />,
   [DOCUMENTS_PAGE]: <VersionDocumentsSubPage />,
 }
 
@@ -96,6 +119,7 @@ const VERSION_PAGE_MENU_ITEMS = [
   OPERATIONS_PAGE,
   API_CHANGES_PAGE,
   DEPRECATED_PAGE,
+  API_QUALITY_PAGE,
   DOCUMENTS_PAGE,
   TOGGLE_SIDEBAR_BUTTON,
 ]

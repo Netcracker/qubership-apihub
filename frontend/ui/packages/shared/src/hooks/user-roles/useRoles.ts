@@ -86,7 +86,7 @@ export function useRoles(enabled = true): RolesQueryState {
     queryKey: [ROLES_QUERY_KEY],
     queryFn: () => getRoles(),
     select: toRoles,
-    enabled,
+    enabled: enabled,
   })
 
   const result = useMemo(() => {

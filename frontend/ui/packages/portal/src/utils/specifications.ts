@@ -43,7 +43,7 @@ export function generateSpecificationByPathItems(
     return null
   }
 
-  const itemUri = `/paths/~1/${Object.keys(pathItemObject)[0]}`
+  const itemUri: SpecItemUri = `/paths/~1/${Object.keys(pathItemObject)[0]}`
 
   if (fileFormat === YAML_FILE_FORMAT) {
     const content = toYaml({

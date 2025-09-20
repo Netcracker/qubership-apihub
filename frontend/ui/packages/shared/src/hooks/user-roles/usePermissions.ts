@@ -26,7 +26,7 @@ export function usePermissions(enabled = true): [Permissions, IsLoading, Error |
     queryKey: [PERMISSIONS_QUERY_KEY],
     queryFn: () => getPermissions(),
     select: (value: PermissionsDto) => value.permissions,
-    enabled,
+    enabled: enabled,
   })
 
   return [data ?? [], isInitialLoading, error]

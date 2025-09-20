@@ -46,6 +46,7 @@ import type { Path } from '@remix-run/router'
 import type { OverviewPageRoute, PackageSettingsPageRoute, ProfilePageRoute, SettingsPageRoute } from '../routes'
 import {
   API_CHANGES_PAGE_PATH_PATTERN,
+  API_QUALITY_PAGE_PATH_PATTERN,
   CONFIGURATION_PAGE,
   DEPRECATED_PAGE_PATH_PATTERN,
   DOCUMENTS_PAGE_PATH_PATTERN,
@@ -143,6 +144,15 @@ export type DeprecatedDetail = {
   search?: {
     [EXPAND_NAVIGATION_MENU_SEARCH_PARAM]?: SearchParam
     [OPERATIONS_VIEW_MODE_PARAM]?: SearchParam
+  }
+}
+
+export type ApiQualityDetail = {
+  packageKey: Key
+  versionKey: Key
+  apiType: ApiType
+  search?: {
+    [EXPAND_NAVIGATION_MENU_SEARCH_PARAM]?: SearchParam
   }
 }
 
@@ -597,6 +607,20 @@ export function getDeprecatedPath({
   const versionId = encodeURIComponent(versionKey)
   return {
     pathname: generatePath(DEPRECATED_PAGE_PATH_PATTERN, { packageId, versionId, apiType }),
+    search: search ? `${optionalSearchParams(search)}` : undefined,
+  }
+}
+
+export function getApiQualityPath({
+  packageKey,
+  versionKey,
+  apiType,
+  search,
+}: ApiQualityDetail): Partial<Path> {
+  const packageId = encodeURIComponent(packageKey)
+  const versionId = encodeURIComponent(versionKey)
+  return {
+    pathname: generatePath(API_QUALITY_PAGE_PATH_PATTERN, { packageId, versionId, apiType }),
     search: search ? `${optionalSearchParams(search)}` : undefined,
   }
 }

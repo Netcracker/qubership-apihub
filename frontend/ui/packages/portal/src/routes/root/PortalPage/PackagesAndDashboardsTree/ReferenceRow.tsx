@@ -39,7 +39,10 @@ import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/
 import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { PackageKindLogo } from '@netcracker/qubership-apihub-ui-shared/components/PackageKindLogo'
-import { RedWarningCircleIcon, YellowWarningCircleIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningCircleIcon'
+import {
+  RedWarningCircleIcon,
+  YellowWarningCircleIcon,
+} from '@netcracker/qubership-apihub-ui-shared/icons/WarningCircleIcon'
 import { RedWarningIcon, YellowWarningIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIcon'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import { DeleteIcon } from '@netcracker/qubership-apihub-ui-shared/icons/DeleteIcon'
@@ -49,7 +52,9 @@ import type {
   UnresolvedReference,
   VersionReferences,
 } from '@netcracker/qubership-apihub-ui-shared/entities/version-references'
-import { ConfirmationDialog } from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog'
+import {
+  ConfirmationDialog,
+} from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog/ConfirmationDialog'
 
 export type ReferenceRowProps = {
   reference: UnresolvedReference

@@ -26,7 +26,9 @@ import {
 } from '@apihub/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/useUserPackageAccess'
 import { Box, Checkbox, TableCell, Tooltip, Typography } from '@mui/material'
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
-import { ConfirmationDialog } from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog'
+import {
+  ConfirmationDialog,
+} from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog/ConfirmationDialog'
 import { InfinityScrollableMatrix } from '@netcracker/qubership-apihub-ui-shared/components/InfinityScrollableMatrix'
 import { UserView } from '@netcracker/qubership-apihub-ui-shared/components/Users/UserView'
 import { CheckboxCheckedIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CheckboxCheckedIcon'

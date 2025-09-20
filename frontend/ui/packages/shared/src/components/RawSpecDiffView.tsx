@@ -21,6 +21,7 @@ import { memo } from 'react'
 import { EXTENSION_TO_TYPE_LANGUAGE_MAP } from '../types/languages'
 import type { FileExtension } from '../utils/files'
 import type { SpecType } from '../utils/specs'
+import type { SpecItemUri } from '../utils/specifications'
 import { ModuleFetchingErrorBoundary } from './ModuleFetchingErrorBoundary/ModuleFetchingErrorBoundary'
 import { MonacoDiffEditor } from './MonacoDiffEditor'
 
@@ -35,7 +36,6 @@ export type RawDiffViewProps = {
 
 type BeforeSpecContent = string
 type AfterSpecContent = string
-type SpecItemUri = string
 
 export const RawSpecDiffView: FC<RawDiffViewProps> = memo<RawDiffViewProps>(({
   beforeValue,

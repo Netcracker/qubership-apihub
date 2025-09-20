@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
+import type { Key } from '@apihub/entities/keys'
 import type { FC } from 'react'
 import { memo, useCallback, useMemo } from 'react'
 import type { To } from 'react-router-dom'
 import { useNavigate, useParams } from 'react-router-dom'
 import { usePackageVersionContent } from '../usePackageVersionContent'
-import type { Key } from '@apihub/entities/keys'
 
 import {
   API_CHANGES_PAGE,
+  API_QUALITY_PAGE,
   CONFIGURATION_PAGE,
   DEPRECATED_PAGE,
   DOCUMENTS_PAGE,
@@ -31,8 +32,33 @@ import {
   PACKAGE_SETTINGS_PAGE,
 } from '../../../routes'
 
+import { usePortalPageSettingsContext } from '@apihub/routes/PortalPageSettingsProvider'
+import { getDefaultApiType } from '@apihub/utils/operation-types'
+import type { SidebarMenu } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
+import { NavigationMenu } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
+import { useLinterEnabled } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
+import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
+import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
+import { EXPAND_NAVIGATION_MENU } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useExpandNavigationMenuSearchParam'
+import { ApiIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ApiIcon'
+import { CertifiedFileIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CertifiedFileIcon'
+import { ComparisonIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ComparisonIcon'
+import { ConfigureIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ConfigureIcon'
+import { FileIcon } from '@netcracker/qubership-apihub-ui-shared/icons/FileIcon'
+import { ServicesIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ServicesIcon'
+import { SettingIcon } from '@netcracker/qubership-apihub-ui-shared/icons/SettingIcon'
+import { DefaultWarningIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIcon'
+import type { OperationsViewMode } from '@netcracker/qubership-apihub-ui-shared/types/views'
+import {
+  EXPAND_NAVIGATION_MENU_SEARCH_PARAM,
+  OPERATIONS_VIEW_MODE_PARAM,
+} from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import {
   getApiChangesPath,
+  getApiQualityPath,
   getDeprecatedPath,
   getDocumentPath,
   getOperationsPath,
@@ -40,29 +66,9 @@ import {
   getPackageSettingsPath,
   getVersionPath,
 } from '../../NavigationProvider'
+import type { ApiQualityTabTooltip } from './VersionPage/ApiQualityValidationSummaryProvider'
+import { useApiQualityTabTooltip } from './VersionPage/ApiQualityValidationSummaryProvider'
 import { useOperationsView } from './VersionPage/useOperationsView'
-import { getDefaultApiType } from '@apihub/utils/operation-types'
-import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
-import type { SidebarMenu } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
-import { NavigationMenu } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
-import {
-  EXPAND_NAVIGATION_MENU_SEARCH_PARAM,
-  OPERATIONS_VIEW_MODE_PARAM,
-} from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
-import { EXPAND_NAVIGATION_MENU } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useExpandNavigationMenuSearchParam'
-import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
-import { ConfigureIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ConfigureIcon'
-import { ServicesIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ServicesIcon'
-import { ApiIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ApiIcon'
-import { ComparisonIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ComparisonIcon'
-import { DefaultWarningIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIcon'
-import { FileIcon } from '@netcracker/qubership-apihub-ui-shared/icons/FileIcon'
-import { SettingIcon } from '@netcracker/qubership-apihub-ui-shared/icons/SettingIcon'
-import { usePortalPageSettingsContext } from '@apihub/routes/PortalPageSettingsProvider'
-import type { OperationsViewMode } from '@netcracker/qubership-apihub-ui-shared/types/views'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 
 export type VersionNavigationMenuProps = {
   menuItems: string[]
@@ -75,6 +81,7 @@ export const VersionNavigationMenu: FC<VersionNavigationMenuProps> = memo<Versio
 }) => {
   const navigate = useNavigate()
   const { productionMode } = useSystemInfo()
+  const linterEnabled = useLinterEnabled()
 
   const { packageId, versionId } = useParams()
   const { versionContent } = usePackageVersionContent({
@@ -87,10 +94,21 @@ export const VersionNavigationMenu: FC<VersionNavigationMenuProps> = memo<Versio
   const { expandMainMenu, toggleExpandMainMenu, operationsViewMode } = usePortalPageSettingsContext()
   const [operationsView] = useOperationsView(operationsViewMode)
 
+  const apiQualityTabTooltip = useApiQualityTabTooltip()
+
   const [currentMenuItem] = useActiveTabs()
   const sidebarMenuItems = useMemo(
-    () => getAvailableSidebarMenuItems(previousVersion, defaultApiType, productionMode).filter(({ id }) => menuItems.includes(id)),
-    [defaultApiType, menuItems, previousVersion, productionMode],
+    () => getAvailableSidebarMenuItems(
+      previousVersion,
+      defaultApiType,
+      productionMode,
+      {
+        linterEnabled: linterEnabled,
+        tooltip: apiQualityTabTooltip,
+        tabDisabled: !!apiQualityTabTooltip,
+      },
+    ).filter(({ id }) => menuItems.includes(id)),
+    [defaultApiType, menuItems, previousVersion, productionMode, linterEnabled, apiQualityTabTooltip],
   )
   const sidebarServiceMenuItems = useMemo(
     () => getAvailableSidebarServiceMenuItems(showSettings).filter(({ id }) => menuItems.includes(id)),
@@ -167,38 +185,51 @@ const getPagePathsMap = (
         [OPERATIONS_VIEW_MODE_PARAM]: { value: defaultOperationsView },
       },
     }),
+    [API_QUALITY_PAGE]: getApiQualityPath({
+      packageKey: packageKey,
+      versionKey: versionKey,
+      apiType: defaultApiType,
+      search: commonSearchParams,
+    }),
     [DOCUMENTS_PAGE]: getDocumentPath({ packageKey: packageKey, versionKey: versionKey, search: commonSearchParams }),
     [PACKAGE_SETTINGS_PAGE]: getPackageSettingsPath({ packageKey }),
   }
+}
+
+type ApiQualityTabOptions = {
+  linterEnabled: boolean
+  tooltip: ApiQualityTabTooltip
+  tabDisabled: boolean
 }
 
 const getAvailableSidebarMenuItems = (
   previousVersion: Key | undefined,
   defaultApiType: ApiType,
   productionMode: boolean,
+  apiQualityTabOptions: ApiQualityTabOptions,
 ): SidebarMenu[] => {
   const disableTab = API_TYPE_DISABLE_TAB_MAP[defaultApiType](productionMode)
 
-  return [
+  const menuItems = [
     {
       id: CONFIGURATION_PAGE,
       title: 'Configuration',
       tooltip: 'Configuration',
-      icon: <ConfigureIcon/>,
+      icon: <ConfigureIcon />,
       testId: 'ConfigureDashboardButton',
     },
     {
       id: OVERVIEW_PAGE,
       title: 'Overview',
       tooltip: 'Overview',
-      icon: <ServicesIcon/>,
+      icon: <ServicesIcon />,
       testId: 'OverviewButton',
     },
     {
       id: OPERATIONS_PAGE,
       title: 'Operations',
       tooltip: 'Operations',
-      icon: <ApiIcon/>,
+      icon: <ApiIcon />,
       testId: 'OperationsButton',
     },
     {
@@ -206,7 +237,7 @@ const getAvailableSidebarMenuItems = (
       title: 'API Changes',
       tooltip: !previousVersion ? 'No API changes since there is no previous version' : 'API Changes',
       disabled: !previousVersion || disableTab,
-      icon: <ComparisonIcon/>,
+      icon: <ComparisonIcon />,
       testId: 'ApiChangesButton',
     },
     {
@@ -214,17 +245,39 @@ const getAvailableSidebarMenuItems = (
       title: 'Deprecated',
       tooltip: 'Deprecated',
       disabled: disableTab,
-      icon: <DefaultWarningIcon/>,
+      icon: <DefaultWarningIcon />,
       testId: 'DeprecatedButton',
     },
     {
       id: DOCUMENTS_PAGE,
       title: 'Documents',
       tooltip: 'Documents',
-      icon: <FileIcon/>,
+      icon: <FileIcon />,
       testId: 'DocumentsButton',
     },
   ]
+
+  if (apiQualityTabOptions.linterEnabled) {
+    let index = -1
+    for (let i = 0; i < menuItems.length; i++) {
+      if (menuItems[i].id === DEPRECATED_PAGE) {
+        index = i
+        break
+      }
+    }
+    if (index !== -1) {
+      menuItems.splice(index + 1, 0, {
+        id: API_QUALITY_PAGE,
+        title: 'API Quality',
+        disabled: apiQualityTabOptions.tabDisabled,
+        tooltip: apiQualityTabOptions.tooltip ?? 'API Quality',
+        icon: <CertifiedFileIcon />,
+        testId: 'ApiQualityButton',
+      })
+    }
+  }
+
+  return menuItems
 }
 
 const getAvailableSidebarServiceMenuItems = (
@@ -237,7 +290,7 @@ const getAvailableSidebarServiceMenuItems = (
       id: PACKAGE_SETTINGS_PAGE,
       title: 'Settings',
       tooltip: 'Package Settings',
-      icon: <SettingIcon color="#626D82"/>,
+      icon: <SettingIcon color="#626D82" />,
       testId: 'SettingsButton',
     })
   }

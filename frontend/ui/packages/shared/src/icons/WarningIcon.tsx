@@ -15,7 +15,6 @@
  */
 
 import type { FC } from 'react'
-import * as React from 'react'
 import { memo } from 'react'
 
 export type WarningIconProps = {

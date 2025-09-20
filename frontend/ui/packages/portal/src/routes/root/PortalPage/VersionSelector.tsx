@@ -14,14 +14,34 @@
  * limitations under the License.
  */
 
-import type { FC, ReactNode } from 'react'
-import * as React from 'react'
-import { memo, useCallback, useMemo, useState } from 'react'
-import { Box, Button, Tab } from '@mui/material'
+import { useAsyncInvalidatePackageVersionContentByVersion } from '@apihub/routes/root/usePackageVersionContent'
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import { TabContext, TabList, TabPanel } from '@mui/lab'
-import { useParams } from 'react-router-dom'
+import { Box, Button, Tab } from '@mui/material'
+import { MenuButtonItems } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
+import {
+  NAVIGATION_PLACEHOLDER_AREA,
+  NO_SEARCH_RESULTS,
+  Placeholder,
+} from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
+import { VersionTitle } from '@netcracker/qubership-apihub-ui-shared/components/Titles/VersionTitle'
+import { VersionsTable } from '@netcracker/qubership-apihub-ui-shared/components/VersionsTable'
+import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
+import {
+  ARCHIVED_VERSION_STATUS,
+  DRAFT_VERSION_STATUS,
+  RELEASE_VERSION_STATUS,
+} from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
+import type { PackageVersion } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import { usePackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
+import type { PackageVersionsSortBy, SortOrder } from '@netcracker/qubership-apihub-ui-shared/types/sorting'
+import { ASC_ORDER, DESC_ORDER, SORT_BY_CREATED_AT, SORT_BY_VERSION } from '@netcracker/qubership-apihub-ui-shared/types/sorting'
+import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
+import type { FC, ReactNode } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { useNavigation } from '../../NavigationProvider'
 import {
   useFullMainVersion,
@@ -29,27 +49,7 @@ import {
   useSetFullMainVersion,
   useSetIsLatestRevision,
 } from './FullMainVersionProvider'
-import {
-  NAVIGATION_PLACEHOLDER_AREA,
-  NO_SEARCH_RESULTS,
-  Placeholder,
-} from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import { MenuButtonItems } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
-import type { PackageVersion } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
-import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
-import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
-import {
-  ARCHIVED_VERSION_STATUS,
-  DRAFT_VERSION_STATUS,
-  RELEASE_VERSION_STATUS,
-} from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
-import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
-import { useAsyncInvalidatePackageVersionContentByVersion } from '@apihub/routes/root/usePackageVersionContent'
-import { VersionsTable } from '@netcracker/qubership-apihub-ui-shared/components/VersionsTable'
-import type { PackageVersionsSortBy, SortOrder } from '@netcracker/qubership-apihub-ui-shared/types/sorting'
-import { ASC_ORDER, DESC_ORDER, SORT_BY_CREATED_AT, SORT_BY_VERSION } from '@netcracker/qubership-apihub-ui-shared/types/sorting'
-import { VersionTitle } from '@netcracker/qubership-apihub-ui-shared/components/Titles/VersionTitle'
+import { ClientValidationStatuses, useApiQualityClientValidationStatus } from './VersionPage/ApiQualityValidationSummaryProvider'
 
 export const VersionSelector: FC = memo(() => {
   const [searchValue, setSearchValue] = useState('')
@@ -69,6 +69,8 @@ export const VersionSelector: FC = memo(() => {
   const setIsLatestRevision = useSetIsLatestRevision()
   const invalidatePackageVersionContent = useAsyncInvalidatePackageVersionContentByVersion()
 
+  const [, setClientValidationStatus] = useApiQualityClientValidationStatus()
+
   const onClickVersion = useCallback(async (version: PackageVersion | undefined) => {
     const { key, latestRevision } = version ?? {}
     const { versionKey } = getSplittedVersionKey(key)
@@ -77,12 +79,14 @@ export const VersionSelector: FC = memo(() => {
     redundant displaying Outdated Revision Notification */
     await invalidatePackageVersionContent(versionKey)
 
+    setClientValidationStatus?.(ClientValidationStatuses.CHECKING)
+
     setIsLatestRevision(latestRevision)
     setFullMainVersion(key)
 
     navigateToOverview({ packageKey: packageId!, versionKey: versionKey })
     setAnchor(undefined)
-  }, [invalidatePackageVersionContent, navigateToOverview, packageId, setFullMainVersion, setIsLatestRevision])
+  }, [invalidatePackageVersionContent, navigateToOverview, packageId, setClientValidationStatus, setFullMainVersion, setIsLatestRevision])
 
   const selectorContent = useMemo(() =>
     <>
@@ -95,7 +99,7 @@ export const VersionSelector: FC = memo(() => {
           value={versions!}
           versionStatus={VERSION_STATUS_MAP[activeTab]}
           onClickVersion={onClickVersion}
-          isLoading={areVersionsLoading}/>
+          isLoading={areVersionsLoading} />
       </Placeholder>
     </>, [versions, areVersionsLoading, searchValue, activeTab, onClickVersion])
 
@@ -105,9 +109,9 @@ export const VersionSelector: FC = memo(() => {
         sx={{ minWidth: 4, height: 20, p: 0, boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
         variant="text"
         onClick={({ currentTarget }) => setAnchor(currentTarget)}
-        endIcon={<KeyboardArrowDownOutlinedIcon/>}
+        endIcon={<KeyboardArrowDownOutlinedIcon />}
       >
-        <VersionSelectorTitle/>
+        <VersionSelectorTitle />
         <MenuButtonItems
           anchorEl={anchor}
           open={!!anchor}
@@ -131,9 +135,9 @@ export const VersionSelector: FC = memo(() => {
                 sx={{ mb: 1, gridArea: 'tabs' }}
                 onChange={(_, value) => setActiveTab(value)}
               >
-                <Tab label="Release" value={RELEASE_TAB} data-testid="ReleaseButton"/>
-                <Tab label="Draft" value={DRAFT_TAB} data-testid="DraftButton"/>
-                <Tab label="Archived" value={ARCHIVED_TAB} data-testid="ArchivedButton"/>
+                <Tab label="Release" value={RELEASE_TAB} data-testid="ReleaseButton" />
+                <Tab label="Draft" value={DRAFT_TAB} data-testid="DraftButton" />
+                <Tab label="Archived" value={ARCHIVED_TAB} data-testid="ArchivedButton" />
               </TabList>
               {ACTIVE_TAB_CONTENT_MAP[activeTab](selectorContent)}
             </TabContext>
@@ -146,7 +150,7 @@ export const VersionSelector: FC = memo(() => {
               gridTemplateColumns="1fr auto"
               sx={{ mb: 1 }}
             >
-              <SearchBar onValueChange={setSearchValue} data-testid="VersionSearchBar"/>
+              <SearchBar onValueChange={setSearchValue} data-testid="VersionSearchBar" />
             </Box>
           </Box>
         </MenuButtonItems>

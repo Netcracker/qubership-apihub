@@ -13,6 +13,7 @@ import monacoWorkerHashPlugin from '../../vite-monaco-worker-hash'
 import createVersionJsonFilePlugin from '../../vite-create-version-json'
 
 const proxyServer = 'http://host.docker.internal:8081'
+const apiLinterProxyServer = 'http://host.docker.internal:8091'
 const devServer = 'http://localhost:3003'
 
 export default defineConfig(({ mode }) => {
@@ -90,7 +91,7 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@apihub/components': path.resolve(__dirname, './src/components/'),
         '@apihub/entities': path.resolve(__dirname, './src/entities/'),
-        '@apihub/hooks': path.resolve(__dirname, './src/hooks/'),
+        '@apihub/api-hooks': path.resolve(__dirname, './src/api-hooks/'),
         '@apihub/routes': path.resolve(__dirname, './src/routes/'),
         '@apihub/utils': path.resolve(__dirname, './src/utils/'),
         '@netcracker/qubership-apihub-ui-shared': path.resolve(__dirname, './../shared/src'),
@@ -114,6 +115,14 @@ export default defineConfig(({ mode }) => {
         '/playground': {
           target: isProxyMode ? `${proxyServer}/playground` : devServer,
           rewrite: isProxyMode ? path => path.replace(/^\/playground/, '') : undefined,
+          changeOrigin: true,
+          secure: false,
+        },
+        // Endpoint prefix related to extension which is equal to "qubership-api-linter" has name defined in following file:
+        // https://github.com/Netcracker/qubership-apihub/blob/linter/helm-templates/qubership-apihub/values.yaml#L210
+        '/api-linter': {
+          target: apiLinterProxyServer,
+          rewrite: path => path.replace(/^\/api-linter/, ''),
           changeOrigin: true,
           secure: false,
         },

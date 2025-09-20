@@ -42,6 +42,7 @@ export function useInitializeEditor(
       hover: { above: false },
       automaticLayout: true,
       readOnly: true,
+      renderValidationDecorations: 'on',
       wordWrap: 'on',
       tabSize: 2,
       model: model,

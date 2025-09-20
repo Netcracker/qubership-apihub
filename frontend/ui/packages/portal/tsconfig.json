@@ -8,6 +8,9 @@
       "@apihub/entities/*": [
         "./src/entities/*"
       ],
+      "@apihub/api-hooks/*": [
+        "./src/api-hooks/*"
+      ],
       "@apihub/routes/*": [
         "./src/routes/*"
       ],

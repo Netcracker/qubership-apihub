@@ -22,8 +22,7 @@ import {
   CHANGE_SEVERITY_DESCRIPTION_MAP,
   CHANGE_SEVERITY_TOOLTIP_TITLE_MAP,
 } from '../entities/change-severities'
-import { Box, Divider, Tooltip } from '@mui/material'
-import ListItem from '@mui/material/ListItem'
+import { MarkerTooltip } from './MarkerTooltip'
 
 export type ChangesTooltipProps = PropsWithChildren<{
   changeType: ChangeSeverity
@@ -40,60 +39,17 @@ export const ChangesTooltip: FC<ChangesTooltipProps> = memo<ChangesTooltipProps>
   } = props
 
   return (
-    <Tooltip
-      title={
-        <ChangesTooltipContent
-          changeType={changeType}
-          category={category}
-        />
-      }
-      placement="bottom-end"
+    <MarkerTooltip<ChangeSeverity, ChangesTooltipCategory>
       disableHoverListener={disableHoverListener}
+      variant={changeType}
+      variantToDescription={CHANGE_SEVERITY_DESCRIPTION_MAP}
+      variantToTooltipTitle={CHANGE_SEVERITY_TOOLTIP_TITLE_MAP}
+      variantToColor={CHANGE_SEVERITY_COLOR_MAP}
+      category={category}
+      categoryToTooltipTitle={TOOLTIP_TITLE_BY_CATEGORY}
     >
-      <Box>
-        {children}
-      </Box>
-    </Tooltip>
-  )
-})
-
-type ChangesTooltipContentProps = {
-  changeType: ChangeSeverity
-  category?: ChangesTooltipCategory
-}
-
-const ChangesTooltipContent: FC<ChangesTooltipContentProps> = memo<ChangesTooltipContentProps>(({
-  changeType,
-  category,
-}) => {
-  const tooltipContent = CHANGE_SEVERITY_DESCRIPTION_MAP[changeType]
-  const categoryTitle = `${category ? `${TOOLTIP_TITLE_BY_CATEGORY[category]} with ` : ''}${CHANGE_SEVERITY_TOOLTIP_TITLE_MAP[changeType]}`
-
-  return (
-    <Box sx={{ p: '4px 4px' }}>
-      <Box display="flex" alignItems="center">
-        <Box
-          component="span"
-          sx={{
-            background: CHANGE_SEVERITY_COLOR_MAP[changeType],
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            mr: 1,
-          }}
-        />
-        {categoryTitle}
-      </Box>
-      <Divider sx={{ mx: 0, mt: 1, mb: 1 }} orientation="horizontal"/>
-      <Box>
-        {tooltipContent.text}
-        {tooltipContent.options && tooltipContent.options.map((item, index) => (
-          <ListItem sx={{ display: 'list-item', py: 0 }} key={index}>
-            {item}
-          </ListItem>
-        ))}
-      </Box>
-    </Box>
+      {children}
+    </MarkerTooltip>
   )
 })
 
@@ -105,4 +61,6 @@ const TOOLTIP_TITLE_BY_CATEGORY = {
   [CATEGORY_PACKAGE]: 'Packages',
 }
 
-export type ChangesTooltipCategory = typeof CATEGORY_OPERATION | typeof CATEGORY_PACKAGE
+export type ChangesTooltipCategory =
+  | typeof CATEGORY_OPERATION
+  | typeof CATEGORY_PACKAGE

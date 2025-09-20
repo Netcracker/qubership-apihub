@@ -32,7 +32,7 @@ export default function monacoWorkerHashPlugin(options: IMonacoHashOpts): Plugin
 
   return {
     name: 'vite-plugin-monaco-hash',
-    writeBundle() {
+    writeBundle: function() {
       const fileNameMap: { [key: string]: string } = {}
       const dirPath = path.resolve(process.cwd(), monacoDir)
       const entries = fs.readdirSync(dirPath, { withFileTypes: true })

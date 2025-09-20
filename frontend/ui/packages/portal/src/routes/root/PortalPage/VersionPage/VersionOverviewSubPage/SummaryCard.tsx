@@ -24,6 +24,9 @@ export const SummaryCard: FC = memo(() => {
     <BodyCard
       header="Summary"
       body={<SummaryTab/>}
+      overrideBodySx={{
+        overflowY: 'auto',
+      }}
     />
   )
 })

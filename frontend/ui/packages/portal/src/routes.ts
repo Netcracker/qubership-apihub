@@ -32,6 +32,7 @@ export const OVERVIEW_PAGE = 'overview'
 export const API_CHANGES_PAGE = 'changes'
 export const OPERATIONS_PAGE = 'operations'
 export const DEPRECATED_PAGE = 'deprecated'
+export const API_QUALITY_PAGE = 'api-quality'
 export const DOCUMENTS_PAGE = 'documents'
 export const VERSION_PAGE_PATH_PATTERN = '/portal/packages/:packageId/:versionId/'
 export const OVERVIEW_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${OVERVIEW_PAGE}/`
@@ -39,6 +40,7 @@ export const API_CHANGES_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versi
 export const OPERATIONS_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${OPERATIONS_PAGE}/:apiType/`
 export const OPERATION_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${OPERATIONS_PAGE}/:apiType/:operationId`
 export const DEPRECATED_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${DEPRECATED_PAGE}/:apiType`
+export const API_QUALITY_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${API_QUALITY_PAGE}/:apiType`
 export const DOCUMENTS_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${DOCUMENTS_PAGE}/:documentId`
 
 export const CONFIGURATION_PAGE = 'edit'
@@ -76,6 +78,7 @@ export const USER_ROLES_PAGE = 'roles'
 export const ROLES_HIERARCHY_PAGE = 'hierarchy'
 export const SYSTEM_ADMINISTRATORS_PAGE = 'sysadms'
 export const SYSTEM_TOKENS_PAGE = 'tokens'
+export const RULESET_MANAGEMENT_PAGE = 'rulesets'
 
 // Profile page tabs
 export const PERSONAL_ACCESS_TOKENS_PAGE = 'personal-access-tokens'
@@ -110,6 +113,7 @@ export type VersionPageRoute =
   | typeof OPERATIONS_PAGE
   | typeof API_CHANGES_PAGE
   | typeof DEPRECATED_PAGE
+  | typeof API_QUALITY_PAGE
   | typeof DOCUMENTS_PAGE
 
 export type PackageVersionPageRoute =
@@ -137,6 +141,7 @@ export type SettingsPageRoute =
   | typeof ROLES_HIERARCHY_PAGE
   | typeof SYSTEM_ADMINISTRATORS_PAGE
   | typeof SYSTEM_TOKENS_PAGE
+  | typeof RULESET_MANAGEMENT_PAGE
 
 export type ProfilePageRoute =
   | typeof PERSONAL_ACCESS_TOKENS_PAGE
