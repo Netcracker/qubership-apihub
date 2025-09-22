@@ -34,10 +34,8 @@ export function useAddSelectedUriNavigation(
     const content = currentEditor.getModel()?.getValue()
     if (selectedUri && content) {
       const location = findPathLocation(content, selectedUri)
-      if (location) {
-        const startLine = location?.range.start.line
-        navigateTo(currentEditor, startLine + 1)
-      }
+      const startLine = location?.range.start.line ?? 0
+      navigateTo(currentEditor, startLine + 1)
     }
   }, [editor, selectedUri])
 }

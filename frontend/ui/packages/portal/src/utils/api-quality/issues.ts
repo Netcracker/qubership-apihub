@@ -9,13 +9,11 @@ export function transformIssuesToMarkers(
   format: OriginalDocumentFileFormat,
   issues: readonly Issue[],
 ): Editor.IMarkerData[] {
-  const notFilteredMarkers: (Editor.IMarkerData | null)[] = issues
+  return issues
     .map(issue => {
       const { path } = issue
-      const location = findLocationByPath(content, path, format)
-      if (!location) {
-        return null
-      }
+      // TODO 19.09.25 // Remove default because real response doesn't match API
+      const location = findLocationByPath(content, path ?? [], format)
       let severity: MarkerSeverity
       switch (issue.severity) {
         case IssueSeverities.ERROR:
@@ -31,6 +29,17 @@ export function transformIssuesToMarkers(
           severity = MarkerSeverity.Hint
           break
       }
+      if (!location) {
+        return {
+          startLineNumber: 1,
+          startColumn: 1,
+          endLineNumber: 1,
+          endColumn: 1,
+          message: issue.message,
+          severity: severity,
+          source: `spectral (${issue.code})`,
+        }
+      }
       return {
         startLineNumber: location.range.start.line + 1,
         startColumn: location.range.start.character,
@@ -41,5 +50,4 @@ export function transformIssuesToMarkers(
         source: `spectral (${issue.code})`,
       }
     })
-  return notFilteredMarkers.filter((marker): marker is Editor.IMarkerData => marker !== null)
 }

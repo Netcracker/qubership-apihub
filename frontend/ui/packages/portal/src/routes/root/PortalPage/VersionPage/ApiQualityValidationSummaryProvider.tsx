@@ -14,19 +14,19 @@ export const ClientValidationStatuses = {
 } as const
 export type ClientValidationStatus = (typeof ClientValidationStatuses)[keyof typeof ClientValidationStatuses]
 
-export type SetClientValidationStatus = (status: ClientValidationStatus) => void
+export type SetClientValidationStatus = (status: ClientValidationStatus | undefined) => void
 
 // Raw contexts
 
 export const ApiQualityLinterEnabledContext = createContext<boolean>(false)
 export const ApiQualityValidationSummaryContext = createContext<ValidationSummary | undefined>(undefined)
-export const ClientValidationStatusContext = createContext<ClientValidationStatus>(ClientValidationStatuses.CHECKING)
+export const ClientValidationStatusContext = createContext<ClientValidationStatus | undefined>(undefined)
 export const SetClientValidationStatusContext = createContext<SetClientValidationStatus | undefined>(undefined)
 
 type ApiQualityDataProviderProps = PropsWithChildren & {
   linterEnabled: boolean
   validationSummary: ValidationSummary | undefined
-  clientValidationStatus: ClientValidationStatus
+  clientValidationStatus: ClientValidationStatus | undefined
   setClientValidationStatus: SetClientValidationStatus
 }
 
@@ -62,6 +62,8 @@ export function useApiQualityTabTooltip(): ApiQualityTabTooltip {
       return 'Checking of API quality validation status is in progress'
     case ClientValidationStatuses.IN_PROGRESS:
       return 'API quality check is in progress'
+    case ClientValidationStatuses.ERROR:
+      return 'API quality check is failed'
     case ClientValidationStatuses.NOT_VALIDATED:
       return 'API quality is not validated'
   }
