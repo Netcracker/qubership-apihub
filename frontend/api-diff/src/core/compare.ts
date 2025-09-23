@@ -156,7 +156,7 @@ const cleanUpRecursive = (ctx: NodeContext): NodeContext => {
 }
 
 export const getOrCreateChildDiffAdd = (diffUniquenessCache: EvaluationCacheService, childCtx: CompareContext) => {
-  return diffUniquenessCache.cacheEvaluationResultByFootprint<[unknown, string, CompareScope, typeof DiffAction.add, PropertyKey], DiffEntry<DiffAdd>>([childCtx.after.value, buildPathsIdentifier(childCtx.after.declarativePaths), childCtx.scope, DiffAction.add, childCtx.mergeKey], () => {
+  return diffUniquenessCache.cacheEvaluationResultByFootprint<[unknown, string, CompareScope, typeof DiffAction.add], DiffEntry<DiffAdd>>([childCtx.after.value, buildPathsIdentifier(childCtx.after.declarativePaths), childCtx.scope, DiffAction.add], () => {
     return diffFactory.added(childCtx)
   }, {} as DiffEntry<DiffAdd>, (result, guard) => {
     Object.assign(guard, result)

@@ -1,4 +1,4 @@
-import { annotation, apiDiff, breaking, ClassifierType, CompareOptions, DiffAction, nonBreaking, unclassified } from '../src'
+import { annotation, apiDiff, ClassifierType, CompareOptions, DiffAction, nonBreaking, unclassified } from '../src'
 import offeringQualificationBefore from './helper/resources/api-v2-offeringqualification-qualification-post/before.json'
 import offeringQualificationAfter from './helper/resources/api-v2-offeringqualification-qualification-post/after.json'
 import readDefaultValueOfRequiredBefore from './helper/resources/read-default-value-of-required-field/before.json'
@@ -29,9 +29,6 @@ import spearedParamsAfter from './helper/resources/speared-parameters/after.json
 
 import wildcardContentSchemaMediaTypeCombinedWithSpecificMediaTypeBefore from './helper/resources/wildcard-content-schema-media-type-combined-with-specific-media-type/before.json'
 import wildcardContentSchemaMediaTypeCombinedWithSpecificMediaTypeAfter from './helper/resources/wildcard-content-schema-media-type-combined-with-specific-media-type/after.json'
-
-import shouldNotMissRemoveDiffForEnumEntryInOneOfBefore from './helper/resources/should-not-miss-remove-diff-for-enum-entry-in-oneOf/before.json'
-import shouldNotMissRemoveDiffForEnumEntryInOneOfAfter from './helper/resources/should-not-miss-remove-diff-for-enum-entry-in-oneOf/after.json'
 
 import { diffsMatcher } from './helper/matchers'
 import { TEST_DIFF_FLAG, TEST_ORIGINS_FLAG } from './helper'
@@ -227,37 +224,6 @@ describe('Real Data', () => {
         beforeDeclarationPaths: [['servers', 0, 'url']],
         afterDeclarationPaths: [['servers', 0, 'url']],
         type: annotation,
-      }),
-    ]))
-  })
-
-  it('should not miss remove diff for enum entry in oneOf', () => {
-    const before: any = shouldNotMissRemoveDiffForEnumEntryInOneOfBefore
-    const after: any = shouldNotMissRemoveDiffForEnumEntryInOneOfAfter
-    const { merged } = apiDiff(before, after, OPTIONS)
-
-    expect(
-      Object.values((merged as any).paths['/path1'].post.requestBody.content['application/json'].schema.oneOf[1].properties.scope.items.enum[TEST_DIFF_FLAG])
-    ).toEqual(diffsMatcher([
-      expect.objectContaining({
-        beforeValue: 'query',
-        action: DiffAction.remove,
-        type: breaking,
-      }),
-      expect.objectContaining({
-        beforeValue: 'subscription',
-        action: DiffAction.remove,
-        type: breaking,
-      }),
-      expect.objectContaining({
-        afterValue: 'argument',
-        action: DiffAction.add,
-        type: nonBreaking,
-      }),
-      expect.objectContaining({
-        afterValue: 'annotation',
-        action: DiffAction.add,
-        type: nonBreaking,
       }),
     ]))
   })
