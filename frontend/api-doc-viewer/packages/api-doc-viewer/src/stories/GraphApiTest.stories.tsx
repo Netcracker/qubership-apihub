@@ -74,6 +74,7 @@ export const SelfCycled: Story = {
     }),
   }
 }
+
 export const Experiment: Story = {
   args: {
     source: prepareGraphApiSchema({
