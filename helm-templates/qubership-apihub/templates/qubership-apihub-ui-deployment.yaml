@@ -38,7 +38,6 @@ spec:
             containers:
             -   name: 'qubership-apihub-ui'
                 image: '{{ .Values.qubershipApihubUi.image.repository }}:{{ .Values.qubershipApihubUi.image.tag }}'
-                imagePullPolicy: Always
                 ports:
                 -   name: web
                     containerPort: 8080
