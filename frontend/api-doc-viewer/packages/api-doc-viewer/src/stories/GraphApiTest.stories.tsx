@@ -74,3 +74,22 @@ export const SelfCycled: Story = {
     }),
   }
 }
+export const Experiment: Story = {
+  args: {
+    source: prepareGraphApiSchema({
+      source: graphapi`
+type Query {
+  user(id: ID!): User  
+}
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  peer: User @deprecated
+}
+      `,
+      circular: true
+    }),
+  }
+}

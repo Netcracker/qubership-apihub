@@ -52,10 +52,82 @@ export type GraphQLOperationViewerProps = {
 
 export const GraphQLOperationViewer: FC<GraphQLOperationViewerProps> = (props) => {
   return (
-    <ErrorBoundary fallback={<ErrorBoundaryFallback componentName="GraphQL Operation Viewer"/>}>
-      <GraphQLOperationViewerInner {...props}/>
+    <ErrorBoundary fallback={<ErrorBoundaryFallback componentName="GraphQL Operation Viewer" />}>
+      <GraphQLOperationViewerInner {...props} />
     </ErrorBoundary>
   )
+}
+
+const set = new Set<unknown>()
+
+function customStringifyCyclicJso(jso: unknown, indent: string = ''): string {
+  if (jso instanceof Set) {
+    jso = Array.from(jso)
+  }
+  if (jso instanceof Map) {
+    jso = Object.fromEntries(jso)
+  }
+  switch (typeof jso) {
+    case 'object':
+      if (jso === null) {
+        return 'null'
+      }
+      // eslint-disable-next-line no-case-declarations
+      const isArray = Array.isArray(jso)
+      if (set.has(jso)) {
+        return isArray ? '<circular array>' : '<circular object>'
+      }
+      set.add(jso)
+      if (isArray) {
+        // eslint-disable-next-line no-case-declarations
+        // @ts-expect-error // Doesn't matter
+        if (jso.length === 0) {
+          return '[]'
+        }
+        let str = `[\n`
+        // eslint-disable-next-line no-case-declarations
+        // @ts-expect-error // Doesn't matter
+        for (const item of jso) {
+          str += `${indent} ${customStringifyCyclicJso(item, indent + ' ')},\n`
+        }
+        str += `${indent}]`
+        return str
+      }
+      // eslint-disable-next-line no-case-declarations
+      const keys = Reflect.ownKeys(jso)
+      if (keys.length === 0) {
+        return '{}'
+      }
+      // eslint-disable-next-line no-case-declarations
+      let str = `{\n`
+      // eslint-disable-next-line no-case-declarations
+      for (const key of keys) {
+        if (typeof key === 'symbol') {
+          // @ts-expect-error // Doesn't matter
+          str += `${indent} "${key.toString()}": ${customStringifyCyclicJso(jso[key], indent + ' ')},\n`
+        } else {
+          // @ts-expect-error // Doesn't matter
+          str += `${indent} "${key}": ${customStringifyCyclicJso(jso[key], indent + ' ')},\n`
+        }
+      }
+      str += `${indent}}`
+      return str
+    case 'string':
+      return `"${jso}"`
+    case 'number':
+      return `${jso}`
+    case 'boolean':
+      return `${jso}`
+    case 'undefined':
+      return 'undefined'
+    case 'symbol':
+      return `"Symbol(${jso.toString()})"`
+    case 'function':
+      return `"function(${jso.toString()})"`
+    default:
+      return '"unknown"'
+  }
+
 }
 
 const GraphQLOperationViewerInner: FC<GraphQLOperationViewerProps> = (props) => {
@@ -79,9 +151,12 @@ const GraphQLOperationViewerInner: FC<GraphQLOperationViewerProps> = (props) => 
     [expandedDepth, operationPath, tree]
   )
 
-  // console.debug('GraphAPI Schema:', source)
-  // console.debug('Tree Model:', tree)
-  // console.debug('State Model:', state)
+  console.debug('GraphAPI Schema:', source)
+  console.debug('Tree Model:', tree)
+  console.debug('State Model:', state)
+  console.debug('GraphAPI Schema (string):', customStringifyCyclicJso(source))
+  // console.debug('Tree model (string):', customStringifyCyclicJso(tree))
+  // console.debug('State model (string):', customStringifyCyclicJso(state))
 
   const root = state.root
 
@@ -112,7 +187,7 @@ const GraphQLOperationViewerInner: FC<GraphQLOperationViewerProps> = (props) => 
               if (isDirectiveNode(child.node) && child.first) {
                 return (
                   <div key={key}>
-                    <CustomDirectivesSectionRow layoutMode={DOCUMENT_LAYOUT_MODE}/>
+                    <CustomDirectivesSectionRow layoutMode={DOCUMENT_LAYOUT_MODE} />
                     <GraphPropNodeViewer
                       state={child}
                       $nodeChange={$childMeta?.$nodeChange}
