@@ -47,7 +47,6 @@ export function createGraphSchemaTreeCrawlHook(
             state: {
               parent: parent as GraphApiDiffTreeNode | null,
               source: subSource,
-              // @ts-expect-error formally incompatible types
               alreadyConvertedMappingStack: new Map(state.alreadyConvertedMappingStack)
             }
           })

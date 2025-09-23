@@ -1,5 +1,5 @@
 import { buildPointer } from '@netcracker/qubership-apihub-api-unifier';
-import { DiffType } from '@netcracker/qubership-apihub-api-diff';
+// import { DiffType } from '@netcracker/qubership-apihub-api-diff';
 import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi';
 import { SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
 import { GraphApiDiffComplexNode, GraphApiDiffCrawlRule, GraphApiDiffCrawlState, GraphApiDiffNodeData, GraphApiDiffNodeMeta, GraphApiDiffTreeNode, graphApiNodeKind, graphApiNodeKinds, type GraphApiNodeKind } from '../..';
@@ -29,7 +29,7 @@ export function createGraphApiDiffTreeCrawlHook(
     }
 
     const id = '#' + buildPointer(path);
-    const { parent, container, source } = state;
+    const { parent, /* container,  */source } = state;
     const { kind } = rules;
 
     let result: any = {
@@ -57,7 +57,7 @@ export function createGraphApiDiffTreeCrawlHook(
             // $metaChanges: undefined,
             $childrenChanges: collectSchemaChildrenChanges(value, metaKey),
             // $nestedChanges: undefined,
-            $nodeChangesSummary: new Set<DiffType>(),
+            // $nodeChangesSummary: new Set<DiffType>(),
           },
           newDataLevel: false,
         };

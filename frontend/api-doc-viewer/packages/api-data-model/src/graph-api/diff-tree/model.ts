@@ -1,4 +1,4 @@
-import { breaking, Diff, DiffAction, DiffAdd, DiffMetaRecord, DiffRemove, DiffReplace, DiffType, isDiffAdd, isDiffRemove, isDiffReplace } from '@netcracker/qubership-apihub-api-diff';
+import { breaking, Diff, DiffAction, DiffAdd, DiffMetaRecord, DiffRemove, DiffReplace, /* DiffType, */ isDiffAdd, isDiffRemove, isDiffReplace } from '@netcracker/qubership-apihub-api-diff';
 import { GRAPH_API_NODE_KIND_INPUT_OBJECT, GRAPH_API_NODE_KIND_INTERFACE, GRAPH_API_NODE_KIND_LIST, GRAPH_API_NODE_KIND_OBJECT, GraphApiAnyDefinition, GraphApiDirective, GraphApiListDefinition, isGraphApiAnyDefinition, isGraphApiArgs, isGraphApiDirective, isGraphApiDirectives, isGraphApiInputObjectDefinition, isGraphApiListDefinition, isGraphApiObjectiveDefinition } from '@netcracker/qubership-apihub-graphapi';
 import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl';
 import { DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstract/diff';
@@ -224,7 +224,7 @@ export class GraphApiModelDiffTree<
       ...Object.keys($childrenChanges).length
         ? { $childrenChanges }
         : {},
-      $nodeChangesSummary: new Set<DiffType>(),
+      // $nodeChangesSummary: new Set<DiffType>(),
       _fragment: value,
     }
   }
@@ -252,7 +252,7 @@ export class GraphApiModelDiffTree<
       ...Object.keys($metaChanges).length
         ? { $metaChanges }
         : {},
-      $nodeChangesSummary: new Set<DiffType>(),
+      // $nodeChangesSummary: new Set<DiffType>(),
       ...(isBrokenRef(value) ? { brokenRef: value.$ref } : {}),
       _fragment: value,
     }

@@ -112,7 +112,7 @@ export const JsonPropNodeBody: FC<JsonPropNodeBodyProps> = (props) => {
           $changes={$nodeValue?.$changes}
           $metaChanges={$nodeMeta?.$metaChanges}
           $nodeChange={$nodeChange ?? $nodeMeta?.$nodeChange}
-          $nodeChangesSummary={$nodeMeta?.$nodeChangesSummary}
+          // $nodeChangesSummary={$nodeMeta?.$nodeChangesSummary}
         />
       )}
 

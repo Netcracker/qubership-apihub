@@ -1,8 +1,8 @@
 import { buildPointer } from '@netcracker/qubership-apihub-api-unifier';
-import { Diff, DiffMetaRecord, DiffType, isDiffReplace } from '@netcracker/qubership-apihub-api-diff';
+import { Diff, DiffMetaRecord, /* DiffType, */ isDiffReplace } from '@netcracker/qubership-apihub-api-diff';
 import { isArray, syncCrawl } from '@netcracker/qubership-apihub-json-crawl';
 import { DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstract/diff';
-import { DIFF_TREE_UTILS } from '../../abstract/diff-tree-utils';
+// import { DIFF_TREE_UTILS } from '../../abstract/diff-tree-utils';
 import { IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from '../../abstract/model/types';
 import { UNKNOWN_TYPE } from "../../abstract/constants";
 import { getNodeComplexityType, isDiff, isObject, objectKeys, pick, setValueByPath } from '../../utils';
@@ -26,7 +26,7 @@ export class JsonSchemaModelDiffTree<
   public createNode(id: string, kind: K, key: string | number, isCycle: boolean, params: ModelTreeNodeParams<T, K, M>) {
     const node = super.createNode(id, kind, key, isCycle, params)
     // calculate $nodeChangesSummary
-    node.meta.$nodeChangesSummary = DIFF_TREE_UTILS.totalChangesSummary(node)
+    // node.meta.$nodeChangesSummary = DIFF_TREE_UTILS.totalChangesSummary(node)
     return node
   }
 
@@ -35,13 +35,13 @@ export class JsonSchemaModelDiffTree<
   }) {
     const node = super.createComplexNode(id, kind, key, isCycle, params)
     // calculate $nodeChangesSummary
-    node.meta.$nodeChangesSummary = DIFF_TREE_UTILS.totalChangesSummary(node)
+    // node.meta.$nodeChangesSummary = DIFF_TREE_UTILS.totalChangesSummary(node)
     return node
   }
 
   public createCycledClone<Node extends IModelTreeNode<T, K, M>>(source: Node, id: string, key: string | number, parent: IModelTreeNode<T, K, M> | null): Node {
     const node = super.createCycledClone(source, id, key, parent) as Node
-    node.meta.$nodeChangesSummary = DIFF_TREE_UTILS.totalChangesSummary(node)
+    // node.meta.$nodeChangesSummary = DIFF_TREE_UTILS.totalChangesSummary(node)
     return node
   }
 
@@ -276,7 +276,7 @@ export class JsonSchemaModelDiffTree<
       ...$nodeChange ? { $nodeChange } : {},
       ...Object.keys($metaChanges).length ? { $metaChanges } : {},
       ...Object.keys($childrenChanges).length ? { $childrenChanges } : {},
-      $nodeChangesSummary: new Set<DiffType>(),
+      // $nodeChangesSummary: new Set<DiffType>(),
       required: isRequired(key, parent),
       ...(isBrokenRef(value) ? { brokenRef: value.$ref } : {}),
       _fragment: value,
@@ -297,7 +297,7 @@ export class JsonSchemaModelDiffTree<
     return {
       ...Object.keys($nestedChanges).length ? { $nestedChanges } : {},
       ...$nodeChange ? { $nodeChange } : {},
-      $nodeChangesSummary: new Set<DiffType>(),
+      // $nodeChangesSummary: new Set<DiffType>(),
       required: isRequired(key, parent),
       ...(isBrokenRef(value) ? { brokenRef: value.$ref } : {}),
       _fragment: value,

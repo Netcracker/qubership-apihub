@@ -10,7 +10,7 @@ export interface DiffRecord {
 
 export type DiffNodeMeta = {
   $nodeChange?: NodeChange
-  $nodeChangesSummary: NodeChangesSummary
+  // $nodeChangesSummary: NodeChangesSummary
   $metaChanges?: DiffRecord
   $childrenChanges?: DiffRecord
   $nestedChanges?: DiffRecord

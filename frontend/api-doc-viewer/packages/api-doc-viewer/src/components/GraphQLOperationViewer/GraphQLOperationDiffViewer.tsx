@@ -79,7 +79,6 @@ const GraphQLOperationDiffViewerInner: FC<GraphQLOperationDiffViewerProps> = (pr
     diffMetaKey
   } = props
 
-  // @ts-expect-error // Bad types
   const tree: ModelTree<GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta> = useMemo(
     () => createGraphApiDiffTree(source, diffMetaKey),
     [diffMetaKey, source]

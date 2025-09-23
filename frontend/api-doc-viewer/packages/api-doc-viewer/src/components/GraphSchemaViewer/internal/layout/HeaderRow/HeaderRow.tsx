@@ -158,14 +158,14 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
     $changes,
     $metaChanges,
     $nodeChange,
-    $nodeChangesSummary,
+    // $nodeChangesSummary,
   } = props
 
   const isNodeChanged = !!$nodeChange
 
   const filters = useChangeSeverityFilters()
 
-  const diffTypesFromNodeChangesSummary = getDiffTypesFromSummary(!isNodeChanged ? $nodeChangesSummary : undefined)
+  const diffTypesFromNodeChangesSummary = getDiffTypesFromSummary(!isNodeChanged ? /* $nodeChangesSummary */undefined : undefined)
   const diffTypesFromNodeChangesSummaryFilter = useCallback((key: DiffType) => filters.length === 0 || filters.includes(key), [filters])
 
   const { isDocumentLayoutMode, isInlineDiffsLayoutMode, isSideBySideDiffsLayoutMode } = getLayoutModeFlags(layoutMode)
