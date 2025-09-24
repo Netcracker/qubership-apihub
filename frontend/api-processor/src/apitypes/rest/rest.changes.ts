@@ -148,11 +148,11 @@ export const compareDocuments = async (
         const missingOperations = prevNormalizedOperationId === currNormalizedOperationId ? `the ${prevNormalizedOperationId} operation` : `the ${prevNormalizedOperationId} and ${currNormalizedOperationId} operations`
         throw new Error(`Can't find ${missingOperations} from documents pair ${prevDoc?.fileId} and ${currDoc?.fileId}`)
       }
-      const operationChanged = Boolean(current && previous)
-      const operationAddedOrRemoved = !operationChanged
+      const operationPotentiallyChanged = Boolean(current && previous)
+      const operationAddedOrRemoved = !operationPotentiallyChanged
 
       let operationDiffs: Diff[] = []
-      if (operationChanged && collectOnlyChangedOperations) {
+      if (operationPotentiallyChanged && collectOnlyChangedOperations) {
         operationDiffs = [
           ...(methodData as WithAggregatedDiffs<OpenAPIV3.OperationObject>)[DIFFS_AGGREGATED_META_KEY],
           ...extractRootServersDiffs(merged),
@@ -268,7 +268,9 @@ export function createCopyWithEmptyPathItems(template: RestOperationData): RestO
 
   return {
     paths: {
-      ...Object.fromEntries(Object.keys(paths).map(key => [key, {}])),
+      ...Object.fromEntries(
+        Object.keys(paths).map(key => [key, {}]),
+      ),
     },
     ...rest,
   }
@@ -277,6 +279,12 @@ export function createCopyWithEmptyPathItems(template: RestOperationData): RestO
 export function createCopyWithCurrentGroupOperationsOnly(template: RestOperationData, group: string): RestOperationData {
   const { paths, ...rest } = template
   const groupWithoutEdgeSlashes = trimSlashes(group)
+
+  if (trimSlashes(extractOperationBasePath(template.servers)) === groupWithoutEdgeSlashes) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { servers, ...rest } = template
+    return { ...rest }
+  }
 
   return {
     paths: {

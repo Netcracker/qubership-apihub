@@ -95,6 +95,80 @@ describe('Prefix Groups test', () => {
     }))
   })
 
+  test('should compare prefix groups /api/{group} when prefix specified in server', async () => {
+    const result = await buildPrefixGroupChangelogPackage({
+      packageId: 'prefix-groups/mixed-cases-with-bulk-prefix-increment',
+      config: { files: [{ fileId: 'spec1.yaml' }, { fileId: 'spec2.yaml' }] },
+    })
+
+    expect(result).toEqual(changesSummaryMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,
+    }))
+  })
+
+  test('should compare prefix groups /api/{group} when prefix is moved from server to path', async () => {
+    const result = await buildPrefixGroupChangelogPackage({
+      packageId: 'prefix-groups/mixed-cases-with-prefix-moved-from-server-to-path',
+      config: { files: [{ fileId: 'spec1.yaml' }, { fileId: 'spec2.yaml' }] },
+    })
+
+    expect(result).toEqual(changesSummaryMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,
+    }))
+  })
+
+  // todo: case that we don't support due to shifting to the new changelog calculation approach which involves comparison of the entire docs instead of the operation vs operation comparison
+  test.skip('should compare prefix groups /api/{group} when prefix is overridden in method', async () => {
+    const result = await buildPrefixGroupChangelogPackage({
+      packageId: 'prefix-groups/mixed-cases-with-method-prefix-override',
+      config: { files: [{ fileId: 'spec1.yaml' }, { fileId: 'spec2.yaml' }] },
+    })
+
+    expect(result).toEqual(changesSummaryMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,// todo
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,// todo
+    }))
+  })
+
+  // todo: case that we don't support due to shifting to the new changelog calculation approach which involves comparison of the entire docs instead of the operation vs operation comparison
+  test.skip('should compare prefix groups /api/{group} when prefix is overridden in path', async () => {
+    const result = await buildPrefixGroupChangelogPackage({
+      packageId: 'prefix-groups/mixed-cases-with-path-prefix-override',
+      config: { files: [{ fileId: 'spec1.yaml' }, { fileId: 'spec2.yaml' }] },
+    })
+
+    expect(result).toEqual(changesSummaryMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,// todo
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,// todo
+    }))
+  })
+
   test('Add method in a new version', async () => {
     const result = await buildPrefixGroupChangelogPackage({ packageId: 'prefix-groups/add-method' })
 

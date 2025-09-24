@@ -1,0 +1,28 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+servers:
+  - url: https://example1.com/api/v4
+paths:
+  /added:
+    get:
+      responses:
+        '200':
+          description: OK
+    servers:
+      - url: https://example1.com/api/v1
+  /changed1:
+    get:
+      responses:
+        '200':
+          description: a2
+    servers:
+      - url: https://example1.com/api/v1
+  /untouched:
+    get:
+      responses:
+        '200':
+          description: OK
+    servers:
+      - url: https://example1.com/api/v1
