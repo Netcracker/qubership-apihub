@@ -156,6 +156,36 @@ describe('Changes test', () => {
         [BREAKING_CHANGE_TYPE]: 1,
       }))
     })
+
+    // todo: case that we don't support due to shifting to the new changelog calculation approach which involves comparison of the entire docs instead of the operation vs operation comparison
+    test.skip('Should match operations with granular servers override in method', async () => {
+      const result = await buildChangelogPackage('changelog/mixed-cases-with-method-prefix-override')
+      expect(result).toEqual(changesSummaryMatcher({
+        [BREAKING_CHANGE_TYPE]: 1,
+        [NON_BREAKING_CHANGE_TYPE]: 1,
+        [ANNOTATION_CHANGE_TYPE]: 2, // todo: do we really need to count change in root servers[0].url in mapped operations with overridden servers?
+      }))
+      expect(result).toEqual(numberOfImpactedOperationsMatcher({
+        [BREAKING_CHANGE_TYPE]: 1,
+        [NON_BREAKING_CHANGE_TYPE]: 1,
+        [ANNOTATION_CHANGE_TYPE]: 2, // todo: do we really need to count change in root servers[0].url in mapped operations with overridden servers?
+      }))
+    })
+
+    // todo: case that we don't support due to shifting to the new changelog calculation approach which involves comparison of the entire docs instead of the operation vs operation comparison
+    test.skip('Should match operations with granular servers override in path', async () => {
+      const result = await buildChangelogPackage('changelog/mixed-cases-with-path-prefix-override')
+      expect(result).toEqual(changesSummaryMatcher({
+        [BREAKING_CHANGE_TYPE]: 1,
+        [NON_BREAKING_CHANGE_TYPE]: 1,
+        [ANNOTATION_CHANGE_TYPE]: 2, // todo
+      }))
+      expect(result).toEqual(numberOfImpactedOperationsMatcher({
+        [BREAKING_CHANGE_TYPE]: 1,
+        [NON_BREAKING_CHANGE_TYPE]: 1,
+        [ANNOTATION_CHANGE_TYPE]: 2, // todo
+      }))
+    })
   })
 
   describe('Diffs collecting in the root-level properties', () => {
