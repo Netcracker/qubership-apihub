@@ -57,4 +57,33 @@ describe('Path and method mapping', () => {
       }),
     ]))
   })
+
+  it('Remove mistyped slashes', () => {
+    const before = openapiBuilder
+      .addPath({
+        path: '//path1/',
+        responses: { '200': { description: 'OK' } },
+      })
+      .getSpec()
+
+    openapiBuilder.reset()
+
+    const after = openapiBuilder
+      .addPath({
+        path: '/path1',
+        responses: { '200': { description: 'OK' } },
+      })
+      .getSpec()
+
+    const { diffs } = apiDiff(before, after)
+
+    expect(diffs).toEqual(diffsMatcher([
+      expect.objectContaining({
+        beforeDeclarationPaths: [['paths', '//path1/']],
+        afterDeclarationPaths: [['paths', '/path1']],
+        action: DiffAction.rename,
+        type: breaking, // todo should be annotation
+      })
+    ]))
+  })
 })

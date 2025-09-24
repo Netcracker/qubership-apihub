@@ -231,3 +231,7 @@ export function difference(array1: string[], array2: string[]): string[] {
   const set2 = new Set(array2)
   return [...new Set(array1.filter(x => !set2.has(x)))]
 }
+
+export function removeSlashes(input: string): string {
+  return input.replace(/\//g, '')
+}

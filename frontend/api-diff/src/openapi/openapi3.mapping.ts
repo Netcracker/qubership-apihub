@@ -1,5 +1,12 @@
 import { MapKeysResult, MappingResolver, NodeContext } from '../types'
-import { difference, getStringValue, intersection, objectKeys, onlyExistedArrayIndexes } from '../utils'
+import {
+  difference,
+  getStringValue,
+  intersection,
+  objectKeys,
+  onlyExistedArrayIndexes,
+  removeSlashes,
+} from '../utils'
 import { mapPathParams } from './openapi3.utils'
 import { OpenAPIV3 } from 'openapi-types'
 
@@ -206,11 +213,7 @@ export const extractOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): st
 
 export function createPathUnifier(nodeContext: NodeContext): (path: string) => string {
   const serverPrefix = extractOperationBasePath((nodeContext.root as OpenAPIV3.Document).servers) // /api/v2
-  return (path) => (
-    serverPrefix
-      ? `${serverPrefix}${hidePathParamNames(path)}`
-      : hidePathParamNames(path)
-  )
+  return (path) => removeSlashes(`${serverPrefix}${hidePathParamNames(path)}`)
 }
 
 export function hidePathParamNames(path: string): string {
