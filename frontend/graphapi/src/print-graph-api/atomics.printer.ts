@@ -76,7 +76,20 @@ export function printDescription(value?: string, indent = '', firstInBlock = tru
 }
 
 export function printString(str: string): string {
-  return `"${str}"`
+  // Escape all control characters according to GraphQL string literal specification
+  // See: https://spec.graphql.org/October2021/#sec-String-Value
+  
+  // Chained replace() calls are actually fastest due to V8 optimizations
+  const escaped = str
+    .replace(/\\/g, '\\\\')           // Escape backslashes first (must be first to avoid double-escaping)
+    .replace(/"/g, '\\"')             // Escape quotes
+    .replace(/\n/g, '\\n')            // Escape newlines (line feed)
+    .replace(/\r/g, '\\r')            // Escape carriage returns
+    .replace(/\t/g, '\\t')            // Escape tabs (horizontal tab)
+    .replace(/[\b]/g, '\\b')          // Escape backspace (using character class to avoid \b word boundary)
+    .replace(/\f/g, '\\f')            // Escape form feed
+  
+  return `"${escaped}"`
 }
 
 export function printMultilineString(str: string): string {

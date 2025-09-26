@@ -11,4 +11,21 @@ describe('bugs in printing GraphAPI', () => {
     const actual = printGraphApi(graphApi)
     expect(actual).toBe(expected)
   })
+
+  it('scalar description with backticks and double quotes should escape quotes properly', () => {
+    const original = `"""
+A monetary value string without a currency symbol or code. Example value: \`"100.57"\`.
+"""
+scalar Money`
+    
+    const graphApi = buildGraphApi(original)
+    const actual = printGraphApi(graphApi)
+    
+    // The printed GraphQL should be valid and parseable
+    expect(() => buildGraphApi(actual)).not.toThrow()
+    
+    // Verify the generated GraphQL contains properly escaped quotes
+    expect(actual).toContain('\\"100.57\\"')
+    expect(actual).toContain('scalar Money')
+  })  
 })
