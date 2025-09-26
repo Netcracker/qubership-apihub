@@ -66,9 +66,7 @@ export function printOriginalType(schema?: GraphApiRef | GraphApiListDefinition 
 export function printDescription(value?: string, indent = '', firstInBlock = true): string {
   if (!value) { return '' }
 
-  const result = isPrintableMultilineString(value)
-    ? printMultilineString(value)
-    : printString(value)
+  const result = printMultilineString(value)
 
   const prefix = indent && !firstInBlock ? '\n' + indent : indent
 
@@ -85,5 +83,14 @@ export function printString(str: string): string {
 }
 
 export function printMultilineString(str: string): string {
-  return '"""\n' + `${str}\n` + '"""'
+  const hasNewlines = str.includes('\n')
+  const isLong = str.length > 70
+  
+  if (hasNewlines || isLong) {
+    // Newline format: triple quotes on separate lines
+    return '"""\n' + str + '\n"""'
+  } else {
+    // Inline format: triple quotes on same line
+    return '"""' + str + '"""'
+  }
 }

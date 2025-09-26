@@ -52,7 +52,7 @@ describe('printInputValue', () => {
       typeDef: { type: { kind: 'string' } },
       description: 'Arg description'
     })
-    const expected = '"Arg description"\nfoo: String'
+    const expected = '"""Arg description"""\nfoo: String'
     expect(actual).toBe(expected)
   })
 
@@ -113,7 +113,7 @@ describe('printInputValue', () => {
       }
     })
     const expected = (
-      '"Arg description"\n' +
+      '"""Arg description"""\n' +
       'foo: String! @foo @bar'
     )
     expect(actual).toBe(expected)

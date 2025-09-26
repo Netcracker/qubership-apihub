@@ -8,22 +8,22 @@ describe('printDescription', () => {
 
   it('simple description', () => {
     const result = printDescription('Test')
-    expect(result).toBe('"Test"\n')
+    expect(result).toBe('"""Test"""\n')
   })
 
   it('simple description with indent', () => {
     const result = printDescription('Test', '  ')
-    expect(result).toBe('  "Test"\n')
+    expect(result).toBe('  """Test"""\n')
   })
 
   it('simple description, not first', () => {
     const result = printDescription('Test', undefined, false)
-    expect(result).toBe('"Test"\n')
+    expect(result).toBe('"""Test"""\n')
   })
 
   it('simple description, with indent, not first', () => {
     const result = printDescription('Test', '  ', false)
-    expect(result).toBe('\n  "Test"\n')
+    expect(result).toBe('\n  """Test"""\n')
   })
 
   it('multiline description', () => {
