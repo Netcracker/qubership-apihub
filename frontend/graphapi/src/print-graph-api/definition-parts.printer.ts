@@ -89,8 +89,16 @@ export function printArgDefinition(
   first: boolean = true
 ): string {
   let printedDefault = 'default' in arg ? arg.default : undefined
-  if (typeof printedDefault === 'string') {
-    printedDefault = `"${printedDefault}"`
+  if (printedDefault !== undefined) {
+    if (typeof printedDefault === 'string') {
+      printedDefault = `"${printedDefault}"`
+    } else if (Array.isArray(printedDefault)) {
+      printedDefault = `[${printedDefault.map(item => 
+        typeof item === 'string' ? `"${item}"` : String(item)
+      ).join(', ')}]`
+    } else {
+      printedDefault = String(printedDefault)
+    }
   }
 
   return (

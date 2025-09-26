@@ -118,4 +118,93 @@ describe('printInputValue', () => {
     )
     expect(actual).toBe(expected)
   })
+
+  describe('default values for non-string types', () => {
+    it('boolean default value true', () => {
+      const actual = printArgDefinition('isEnabled', {
+        typeDef: { type: { kind: 'boolean' } },
+        default: true
+      })
+      const expected = 'isEnabled: Boolean = true'
+      expect(actual).toBe(expected)
+    })
+    
+    it('integer default value', () => {
+      const actual = printArgDefinition('count', {
+        typeDef: { type: { kind: 'integer' } },
+        default: 42
+      })
+      const expected = 'count: Int = 42'
+      expect(actual).toBe(expected)
+    })
+
+    it('float default value', () => {
+      const actual = printArgDefinition('rate', {
+        typeDef: { type: { kind: 'float' } },
+        default: 3.14159
+      })
+      const expected = 'rate: Float = 3.14159'
+      expect(actual).toBe(expected)
+    })
+
+    it('null default value', () => {
+      const actual = printArgDefinition('optional', {
+        typeDef: { type: { kind: 'string' } },
+        default: null
+      })
+      const expected = 'optional: String = null'
+      expect(actual).toBe(expected)
+    })
+
+    it('empty array default value', () => {
+      const actual = printArgDefinition('metafields', {
+        typeDef: { 
+          type: {
+            kind: 'list',
+            items: { 
+              typeDef: { $ref: '#/components/inputObjects/MetafieldInput' },
+              nullable: false 
+            }
+          }
+        } as any, // Using 'as any' for test simplicity since this matches the actual usage pattern
+        default: []
+      })
+      const expected = 'metafields: [MetafieldInput!] = []'
+      expect(actual).toBe(expected)
+    })
+
+    it('array with string values default', () => {
+      const actual = printArgDefinition('tags', {
+        typeDef: { 
+          type: {
+            kind: 'list',
+            items: { 
+              typeDef: { type: { kind: 'string' } },
+              nullable: false 
+            }
+          }
+        } as any, // Using 'as any' for test simplicity
+        default: ['tag1', 'tag2', 'tag3']
+      })
+      const expected = 'tags: [String!] = ["tag1", "tag2", "tag3"]'
+      expect(actual).toBe(expected)
+    })
+
+    it('array with number values default', () => {
+      const actual = printArgDefinition('numbers', {
+        typeDef: { 
+          type: {
+            kind: 'list',
+            items: { 
+              typeDef: { type: { kind: 'integer' } },
+              nullable: false 
+            }
+          }
+        } as any, // Using 'as any' for test simplicity
+        default: [1, 2, 3]
+      })
+      const expected = 'numbers: [Int!] = [1, 2, 3]'
+      expect(actual).toBe(expected)
+    })        
+  })
 })
