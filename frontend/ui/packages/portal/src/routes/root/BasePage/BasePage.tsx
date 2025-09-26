@@ -15,7 +15,8 @@
  */
 
 import { Box, IconButton } from '@mui/material'
-import type { FC } from 'react'
+import type { FC} from 'react'
+import { useEffect } from 'react'
 import { memo, useCallback } from 'react'
 import { generatePath, Outlet } from 'react-router-dom'
 import { MainPageProvider } from '../MainPage/MainPageProvider'
@@ -52,6 +53,8 @@ import {
 import {
   AppHeaderDivider,
 } from '@netcracker/qubership-apihub-ui-shared/components/Dividers/AppHeaderDivider/AppHeaderDivider'
+import { PackageVersionBuilder } from '@apihub/routes/root/PortalPage/package-version-builder'
+import { SESSION_STORAGE_KEY_LAST_IDENTITY_PROVIDER_ID } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
 
 export const BasePage: FC = memo(() => {
   const { notification: systemNotification } = useSystemInfo()
@@ -65,6 +68,10 @@ export const BasePage: FC = memo(() => {
     },
     [systemNotification],
   )
+
+  useEffect(() => {
+    PackageVersionBuilder.init(localStorage.getItem(SESSION_STORAGE_KEY_LAST_IDENTITY_PROVIDER_ID)).then()
+  }, [])
 
   return (
     <MainPageProvider>

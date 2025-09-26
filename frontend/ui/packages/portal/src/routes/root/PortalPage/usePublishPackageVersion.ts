@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-import type { BuildConfigFile, BuildConfigRef, BuildType, VersionStatus } from '@netcracker/qubership-apihub-api-processor'
+import type {
+  BuildConfigFile,
+  BuildConfigRef,
+  BuildType,
+  VersionStatus,
+} from '@netcracker/qubership-apihub-api-processor'
 import { BUILD_TYPE } from '@netcracker/qubership-apihub-api-processor'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { PackageReference } from '@netcracker/qubership-apihub-ui-shared/entities/version-references'
@@ -24,7 +29,10 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
 import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import type { PublishDetails } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
-import { COMPLETE_PUBLISH_STATUS, ERROR_PUBLISH_STATUS } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
+import {
+  COMPLETE_PUBLISH_STATUS,
+  ERROR_PUBLISH_STATUS,
+} from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 import { isTokenRefreshed, onMutationUnauthorized } from '@netcracker/qubership-apihub-ui-shared/utils/security'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import { useMutation } from '@tanstack/react-query'
