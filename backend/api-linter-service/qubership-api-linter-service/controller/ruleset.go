@@ -23,6 +23,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
 )
 
 type RulesetController interface {
@@ -284,9 +285,19 @@ func (c rulesetControllerImpl) GetRulesetData(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	w.Header().Set("Content-Disposition", fmt.Sprintf("%s; filename=\"%s\"", disposition, filename))
-	// TODO: "Content-Type" header?
+	contentType := ""
+	fileExt := filepath.Ext(filename)
+	switch fileExt {
+	case ".json":
+		contentType = "application/json"
+	case ".yml", ".yaml":
+		contentType = "application/yaml"
+	}
 
+	w.Header().Set("Content-Disposition", fmt.Sprintf("%s; filename=\"%s\"", disposition, filename))
+	if contentType != "" {
+		w.Header().Set("Content-Type", contentType)
+	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 }
