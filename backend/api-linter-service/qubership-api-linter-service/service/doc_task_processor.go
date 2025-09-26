@@ -89,17 +89,42 @@ func (d docTaskProcessorImpl) processTask() bool {
 	return false
 }
 
-func (d docTaskProcessorImpl) handleError(ctx context.Context, docTaskId string, err error) {
-	log.Infof("Doc task %s failed with error: %s", docTaskId, err)
-	setErr := d.docTaskRepo.SetDocTaskStatus(ctx, docTaskId, view.TaskStatusError, err.Error(), d.executorId)
-	if setErr != nil {
-		log.Errorf("Error updating status of doc task %s: %s", docTaskId, err)
+func (d docTaskProcessorImpl) handleError(ctx context.Context, task entity.DocumentLintTask, err error, lintTimeMs int64) {
+	log.Infof("Doc task %s failed with error: %s", task.Id, err)
+
+	docEnt := entity.LintedDocument{
+		PackageId:         task.PackageId,
+		Version:           task.Version,
+		Revision:          task.Revision,
+		Slug:              task.FileSlug,
+		FileId:            task.FileId,
+		SpecificationType: task.APIType,
+		RulesetId:         task.RulesetId,
+		DataHash:          "", // set to empty string because in some error cases it is not available
+		LintStatus:        view.StatusError,
+		LintDetails:       err.Error(),
+	}
+
+	verEnt := entity.LintedVersion{
+		PackageId:   task.PackageId,
+		Version:     task.Version,
+		Revision:    task.Revision,
+		LintStatus:  view.VersionStatusInProgress,
+		LintDetails: "",
+		LintedAt:    time.Now(),
+	}
+
+	err = d.docResultRepository.SaveLintResult(ctx, task.Id, view.StatusError, err.Error(),
+		lintTimeMs, verEnt, docEnt, nil, d.executorId)
+	if err != nil {
+		log.Errorf("Handle error for doc task %s failed: unable to save lint result: %s", task.Id, err)
 	}
 }
 
 func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.DocumentLintTask) {
 	// TODO : hash could be in DocumentLintTask, it will allow to avoid downloading the doc and further processing
-	// TODO: shortcut here
+	// TODO: shortcut by hash here? or validate anyway?
+	start := time.Now()
 
 	runningC := make(chan struct{})
 	defer func() {
@@ -130,31 +155,28 @@ func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.Do
 		}
 	})
 
-	// TODO: get document metadata??
-
 	data, err := d.cl.GetDocumentRawData(ctx, task.PackageId, fmt.Sprintf("%s@%d", task.Version, task.Revision), task.FileSlug)
 	if err != nil {
-		d.handleError(ctx, task.Id, err)
+		d.handleError(ctx, task, err, time.Since(start).Milliseconds())
 		return
 	}
 
 	if len(data) == 0 {
-		d.handleError(ctx, task.Id, fmt.Errorf("document data is empty")) // TODO: save lint result!
+		d.handleError(ctx, task, fmt.Errorf("document data is empty"), time.Since(start).Milliseconds())
 		return
 	}
 
 	tempDir := filepath.Join(os.TempDir(), task.Id)
 	if err := os.MkdirAll(tempDir, 0700); err != nil {
-		d.handleError(ctx, task.Id, fmt.Errorf("error creating temp directory: %s", err))
+		d.handleError(ctx, task, fmt.Errorf("error creating temp directory: %s", err), time.Since(start).Milliseconds())
 		return
 	}
 	defer os.RemoveAll(tempDir)
 	ext := filepath.Ext(task.FileId)
-	fileName := "file" + ext
-
+	fileName := "file" + ext // Some linters (e.g. Spectral) have a problem with some characters is file names, so generating a safe one.
 	filePath := filepath.Join(tempDir, fileName)
 	if err := os.WriteFile(filePath, data, 0600); err != nil {
-		d.handleError(ctx, task.Id, fmt.Errorf("error writing doc file: %s", err))
+		d.handleError(ctx, task, fmt.Errorf("error writing doc file: %s", err), time.Since(start).Milliseconds())
 		return
 	}
 
@@ -162,12 +184,14 @@ func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.Do
 
 	rs, err := d.ruleSetRepository.GetRulesetWithData(ctx, task.RulesetId)
 	if err != nil {
-		d.handleError(ctx, task.Id, fmt.Errorf("error getting ruleset: %s", err))
+		d.handleError(ctx, task, fmt.Errorf("error getting ruleset: %s", err), time.Since(start).Milliseconds())
 		return
 	}
-	rulesetPath := filepath.Join(tempDir, rs.FileName)
+	rsExt := filepath.Ext(rs.FileName)
+	rulesetFileName := "ruleset" + rsExt // Some linters (e.g. Spectral) have a problem with some characters is file names, so generating a safe one.
+	rulesetPath := filepath.Join(tempDir, rulesetFileName)
 	if err := os.WriteFile(rulesetPath, rs.Data, 0600); err != nil {
-		d.handleError(ctx, task.Id, fmt.Errorf("error writing ruleset file: %s", err))
+		d.handleError(ctx, task, fmt.Errorf("error writing ruleset file: %s", err), time.Since(start).Milliseconds())
 		return
 	}
 
@@ -261,11 +285,11 @@ func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.Do
 
 		err = d.docResultRepository.SaveLintResult(context.Background(), task.Id, status, details, calcTime, verEnt, docEnt, lintFileResult, d.executorId)
 		if err != nil {
-			d.handleError(ctx, task.Id, fmt.Errorf("failed to save lint result with error: %s", err))
+			d.handleError(ctx, task, fmt.Errorf("failed to save lint result with error: %s", err), time.Since(start).Milliseconds())
 			return
 		}
 	} else {
-		d.handleError(ctx, task.Id, fmt.Errorf("selected linter %s is not supported", task.Linter))
+		d.handleError(ctx, task, fmt.Errorf("selected linter %s is not supported", task.Linter), time.Since(start).Milliseconds())
 		return
 	}
 }

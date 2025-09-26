@@ -160,6 +160,7 @@ func (v validationServiceImpl) GetVersionSummary(ctx context.Context, packageId 
 				Error:   summ.Error,
 				Warning: summ.Warning,
 				Info:    summ.Info,
+				Hint:    summ.Hint,
 			},
 		})
 	}
@@ -216,8 +217,14 @@ func (v validationServiceImpl) GetValidationResult(ctx context.Context, packageI
 		return nil, err
 	}
 	for _, item := range spectralOutput {
+		var path []string
+		if item.Path != nil {
+			path = item.Path
+		} else {
+			path = make([]string, 0)
+		}
 		issues = append(issues, view.ValidationIssue{
-			Path:     item.Path,
+			Path:     path,
 			Code:     item.Code,
 			Severity: view.ConvertSpectralSeverityToString(item.Severity),
 			Message:  item.Message,
@@ -252,6 +259,13 @@ func makeSpectralSummary(summary map[string]interface{}) (*view.IssuesSummary, e
 	if ok {
 		if infoC, ok := infoCStr.(float64); ok {
 			result.Info = int(infoC)
+		}
+	}
+
+	hintCStr, ok := summary["hintCount"]
+	if ok {
+		if infoC, ok := hintCStr.(float64); ok {
+			result.Hint = int(infoC)
 		}
 	}
 

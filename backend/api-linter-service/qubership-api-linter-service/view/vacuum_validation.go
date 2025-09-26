@@ -36,6 +36,7 @@ type VacuumResultSummary struct {
 	ErrorCount   int `json:"errorCount"`
 	WarningCount int `json:"warningCount"`
 	InfoCount    int `json:"infoCount"`
+	HintCount    int `json:"hintCount"`
 }
 
 type DocumentValidationEntity struct {

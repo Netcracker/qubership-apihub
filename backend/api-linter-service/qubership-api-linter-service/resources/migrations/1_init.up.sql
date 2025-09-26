@@ -157,7 +157,7 @@ create table linted_document
     slug               varchar not null,
     specification_type varchar not null,
     ruleset_id         varchar not null,
-    data_hash          varchar not null,
+    data_hash          varchar,
     lint_status        varchar not null,
     lint_details       varchar,
 

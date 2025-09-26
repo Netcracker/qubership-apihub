@@ -77,6 +77,7 @@ type IssuesSummary struct {
 	Error   int `json:"error"`
 	Warning int `json:"warning"`
 	Info    int `json:"info"`
+	Hint    int `json:"hint"`
 }
 
 type LintedVersionStatus string
