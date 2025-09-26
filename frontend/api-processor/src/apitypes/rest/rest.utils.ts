@@ -27,6 +27,10 @@ export const getOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): string
   try {
     const [firstServer] = servers
     let serverUrl = firstServer.url
+    if(!serverUrl) {
+      return ''
+    }
+
     const { variables = {} } = firstServer
 
     for (const param of Object.keys(variables)) {
