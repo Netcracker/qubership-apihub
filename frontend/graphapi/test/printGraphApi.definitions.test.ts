@@ -166,9 +166,7 @@ describe('GraphAPI to GraphQL. Definitions', () => {
       '  first: Float!\n' +
       '  second: Boolean\n' +
       '\n' +
-      '  """\n' +
-      '  Added new field\n' +
-      '  """\n' +
+      '  """Added new field"""\n' +
       '  third: Int\n' +
       '}'
     )
@@ -191,9 +189,7 @@ describe('GraphAPI to GraphQL. Definitions', () => {
       '  second: Boolean\n' +
       '  third: Int\n' +
       '\n' +
-      '  """\n' +
-      '  Added new field\n' +
-      '  """\n' +
+      '  """Added new field"""\n' +
       '  fourth: String!\n' +
       '}'
     )

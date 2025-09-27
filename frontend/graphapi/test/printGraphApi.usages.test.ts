@@ -30,7 +30,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
   describe('directives', () => {
     it('on schema', () => {
       const expectedGraphQl = (
-        '"Schema Description"\n' +
+        '"""Schema Description"""\n' +
         'schema @foo {\n' +
         '  query: Query\n' +
         '}\n' +
@@ -162,7 +162,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
           'directive @foo on ARGUMENT_DEFINITION\n' +
           `type ${operationsMap[kind]} {\n` +
           '  todo(\n' +
-          '    "First arg"\n' +
+          '    """First arg"""\n' +
           '    one: ID! @foo\n' +
           '  ): String!\n' +
           '}'
@@ -202,7 +202,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
           'directive @bar on ARGUMENT_DEFINITION\n' +
           `type ${operationsMap[kind]} {\n` +
           '  todo(\n' +
-          '    "First arg"\n' +
+          '    """First arg"""\n' +
           '    one: ID! @foo @bar\n' +
           '  ): String!\n' +
           '}'
@@ -261,7 +261,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
           '    """\n' +
           '    one: ID!\n' +
           '    \n' +
-          '    "Second Description"\n' +
+          '    """Second Description"""\n' +
           '    second: Int\n' +
           '  ): String!\n' +
           '}'
@@ -279,7 +279,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
           '    """\n' +
           '    one: ID!\n' +
           '\n' +
-          '    "Second Description"\n' +
+          '    """Second Description"""\n' +
           '    second: Int\n' +
           '  ): String!\n' +
           '}'
@@ -295,7 +295,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
           ORIGINAL_MULTILINE_DESCRIPTION +
           '    one: ID! @foo\n' +
           '    \n' +
-          '    "Second Description"\n' +
+          '    """Second Description"""\n' +
           '    second: Int\n' +
           '  ): String!\n' +
           '}'
@@ -309,7 +309,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
           PRINTED_MULTILINE_DESCRIPTION +
           '    one: ID! @foo\n' +
           '\n' +
-          '    "Second Description"\n' +
+          '    """Second Description"""\n' +
           '    second: Int\n' +
           '  ): String!\n' +
           '}'
@@ -328,7 +328,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
     it('on directives (1, with simple description)', () => {
       const expectedGraphQl = (
         'directive @foo(\n' +
-        '  "First Description"\n' +
+        '  """First Description"""\n' +
         '  one: ID!\n' +
         ') on FIELD_DEFINITION | ENUM_VALUE'
       )
@@ -381,7 +381,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
     it('on directives (2, one with simple description, another without)', () => {
       const expectedGraphQl = (
         'directive @foo(\n' +
-        '  "First Description"\n' +
+        '  """First Description"""\n' +
         '  one: ID!\n' +
         '  second: Int\n' +
         ') on FIELD_DEFINITION | ENUM_VALUE'
@@ -396,7 +396,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
         'directive @foo(\n' +
         '  one: ID!\n' +
         '\n' +
-        '  "Second Description"\n' +
+        '  """Second Description"""\n' +
         '  second: Int\n' +
         ') on FIELD_DEFINITION | ENUM_VALUE'
       )
@@ -408,10 +408,10 @@ describe('GraphAPI to GraphQL. Usages', () => {
     it('on directives (2, both with simple description)', () => {
       const expectedGraphQl = (
         'directive @foo(\n' +
-        '  "First Description"\n' +
+        '  """First Description"""\n' +
         '  one: ID!\n' +
         '\n' +
-        '  "Second Description"\n' +
+        '  """Second Description"""\n' +
         '  second: Int\n' +
         ') on FIELD_DEFINITION | ENUM_VALUE'
       )
@@ -423,7 +423,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
     it('on directives (2, one with simple descr, another with multiline)', () => {
       const originalGraphQl = (
         'directive @foo(\n' +
-        '  "First Description"\n' +
+        '  """First Description"""\n' +
         '  one: ID!\n' +
         '\n' +
         '  """\n' +
@@ -439,7 +439,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
       const actualGraphQl = printGraphApi(graphApi)
       const expectedGraphQl = (
         'directive @foo(\n' +
-        '  "First Description"\n' +
+        '  """First Description"""\n' +
         '  one: ID!\n' +
         '\n' +
         '  """\n' +
