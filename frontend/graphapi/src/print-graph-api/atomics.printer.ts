@@ -92,9 +92,10 @@ export function printString(str: string): string {
 
 export function printMultilineString(str: string): string {
   const hasNewlines = str.includes('\n')
+  const startsOrEndsWithQuote = str.startsWith('"') || str.endsWith('"')
   const isLong = str.length > 70
   
-  if (hasNewlines || isLong) {
+  if (hasNewlines || startsOrEndsWithQuote || isLong) {
     // Newline format: triple quotes on separate lines
     return '"""\n' + str + '\n"""'
   } else {

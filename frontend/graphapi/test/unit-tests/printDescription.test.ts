@@ -106,4 +106,19 @@ describe('printDescription', () => {
       indent + '"""\n'
     )
   })
+
+  it('short description with trailing quote', () => {
+    const result = printDescription('Short text"')
+    expect(result).toBe('"""\nShort text"\n"""\n')
+  })
+
+  it('short description with leading quote', () => {
+    const result = printDescription('"Short text')
+    expect(result).toBe('"""\n"Short text\n"""\n')
+  })
+
+  it('short description with both leading and trailing quotes', () => {
+    const result = printDescription('"Short text"')
+    expect(result).toBe('"""\n"Short text"\n"""\n')
+  })
 })
