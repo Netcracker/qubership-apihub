@@ -10,6 +10,7 @@ describe('New types. From introspection', () => {
     `, GRAPH_API_BUILD_MODE_INTROSPECTION)
     const expected = {
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: {
           output: {
@@ -30,6 +31,7 @@ describe('New types. From introspection', () => {
     `, GRAPH_API_BUILD_MODE_INTROSPECTION)
     const expected = {
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: {
           output: {
@@ -50,6 +52,7 @@ describe('New types. From introspection', () => {
     `, GRAPH_API_BUILD_MODE_INTROSPECTION)
     const expected = {
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: {
           output: {
@@ -70,6 +73,7 @@ describe('New types. From introspection', () => {
     `, GRAPH_API_BUILD_MODE_INTROSPECTION)
     const expected = {
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: {
           output: {
@@ -90,6 +94,7 @@ describe('New types. From introspection', () => {
     `, GRAPH_API_BUILD_MODE_INTROSPECTION)
     const expected = {
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: {
           output: {
@@ -112,6 +117,7 @@ describe('New types. From introspection', () => {
     `, GRAPH_API_BUILD_MODE_INTROSPECTION)
     const expected = {
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: {
           output: {
@@ -146,6 +152,7 @@ describe('New types. From introspection', () => {
     `, GRAPH_API_BUILD_MODE_INTROSPECTION)
     const expected = {
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         fruit: {
           output: {

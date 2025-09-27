@@ -12,12 +12,23 @@ export function printSchemaDefinition(schema: GraphApiSchema): Maybe<string> {
 
   if (!queriesCount && !mutationionsCount && !subscriptionsCount) { return }
 
-  // Only print a schema definition if there is a description
-  if (schema.description) {
+  // Use the original root type names if available, otherwise fall back to standard names
+  const queryTypeName = schema.queryTypeName || 'Query'
+  const mutationTypeName = schema.mutationTypeName || 'Mutation'
+  const subscriptionTypeName = schema.subscriptionTypeName || 'Subscription'
+
+  // Determine if we need a schema definition:
+  // 1. If there's a description, or
+  // 2. If using non-standard root type names (not Query/Mutation/Subscription)
+  const hasCustomRootTypes = (queriesCount && queryTypeName !== 'Query') ||
+                             (mutationionsCount && mutationTypeName !== 'Mutation') ||
+                             (subscriptionsCount && subscriptionTypeName !== 'Subscription')
+
+  if (schema.description || hasCustomRootTypes) {
     const block = []
-    queriesCount && block.push(`  query: Query`)
-    mutationionsCount && block.push(`  mutation: Mutation`)
-    subscriptionsCount && block.push(`  subscription: Subscription`)
+    queriesCount && block.push(`  query: ${queryTypeName}`)
+    mutationionsCount && block.push(`  mutation: ${mutationTypeName}`)
+    subscriptionsCount && block.push(`  subscription: ${subscriptionTypeName}`)
     return (
       printDescription(schema.description) +
       'schema' +

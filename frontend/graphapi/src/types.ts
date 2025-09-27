@@ -73,6 +73,11 @@ export interface GraphApiSchema {
   mutations?: Record<string, GraphApiOperation>
   subscriptions?: Record<string, GraphApiOperation>
 
+  // original root type names (for proper schema definition printing)
+  queryTypeName?: string
+  mutationTypeName?: string
+  subscriptionTypeName?: string
+
   // schema directives
   directives?: GraphApiDirectives
 
