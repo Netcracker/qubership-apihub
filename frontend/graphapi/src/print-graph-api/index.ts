@@ -13,5 +13,5 @@ export function printGraphApi(graphapi: GraphApiSchema): string {
     printOperations(queryTypeName, graphapi.queries),
     printOperations(mutationTypeName, graphapi.mutations),
     printOperations(subscriptionTypeName, graphapi.subscriptions),
-  ].filter(Boolean).join('\n')
+  ].filter(Boolean).join('\n\n')
 }

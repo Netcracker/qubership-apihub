@@ -5,6 +5,7 @@ describe('bugs in printing GraphAPI', () => {
   it('directive "specifiedBy" is not duplicated when other directives are present', () => {
     const expected = (
       'directive @foo on SCALAR\n' +
+      '\n' +
       'scalar MyScalar @specifiedBy(url: "https://example.com/")'
     )
     const graphApi = buildGraphApi(expected)

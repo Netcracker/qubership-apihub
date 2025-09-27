@@ -99,7 +99,9 @@ describe('GraphAPI to GraphQL. Definitions', () => {
   it('union with custom scalars', () => {
     const expectedGraphQl = (
       'scalar First\n' +
+      '\n' +
       'scalar Second\n' +
+      '\n' +
       'union Primitive = First | Second'
     )
     const graphApi = buildGraphApi(expectedGraphQl)
@@ -110,20 +112,20 @@ describe('GraphAPI to GraphQL. Definitions', () => {
   it('complex object', () => {
     const expectedScalar = 'scalar MyScalar'
     const expectedEnum = (
-      '\nenum MyEnum {\n' +
+      'enum MyEnum {\n' +
       '  First\n' +
       '  Second\n' +
       '}'
     )
     const expectedObject = (
-      '\ntype MyObject {\n' +
+      'type MyObject {\n' +
       '  first: String\n' +
       '  second: Int\n' +
       '}'
     )
-    const expectedUnion = '\nunion MyUnion = String | MyScalar | MyEnum | MyObject'
+    const expectedUnion = 'union MyUnion = String | MyScalar | MyEnum | MyObject'
     const expectedRoot = (
-      '\ntype Root {\n' +
+      'type Root {\n' +
       '  array1: [String]!\n' +
       '  array2: [MyScalar!]\n' +
       '  array3: [MyEnum!]!\n' +
@@ -133,10 +135,10 @@ describe('GraphAPI to GraphQL. Definitions', () => {
       '}'
     )
     const expected = (
-      expectedScalar +
-      expectedObject +
-      expectedRoot +
-      expectedUnion +
+      expectedScalar + '\n\n' +
+      expectedObject + '\n\n' +
+      expectedRoot + '\n\n' +
+      expectedUnion + '\n\n' +
       expectedEnum
     )
     const graphApi = buildGraphApi(expected)
@@ -162,6 +164,7 @@ describe('GraphAPI to GraphQL. Definitions', () => {
       '  first: Float!\n' +
       '  second: Boolean\n' +
       '}\n' +
+      '\n' +
       'interface IChild implements IParent {\n' +
       '  first: Float!\n' +
       '  second: Boolean\n' +
@@ -181,9 +184,11 @@ describe('GraphAPI to GraphQL. Definitions', () => {
       '  first: Float!\n' +
       '  second: Boolean\n' +
       '}\n' +
+      '\n' +
       'interface IParentB {\n' +
       '  third: Int\n' +
       '}\n' +
+      '\n' +
       'interface IChild implements IParentA & IParentB {\n' +
       '  first: Float!\n' +
       '  second: Boolean\n' +

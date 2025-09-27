@@ -34,7 +34,9 @@ describe('GraphAPI to GraphQL. Usages', () => {
         'schema @foo {\n' +
         '  query: Query\n' +
         '}\n' +
+        '\n' +
         'directive @foo(arg: String = "default") repeatable on SCHEMA\n' +
+        '\n' +
         'type Query {\n' +
         '  todo: String\n' +
         '}'
@@ -47,6 +49,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
     it('on field definition', () => {
       const expectedGraphQl = (
         'directive @foo(arg: String = "default") repeatable on FIELD_DEFINITION\n' +
+        '\n' +
         'type MyType {\n' +
         '  withoutValue: ID! @foo\n' +
         '  withNull: ID! @foo(arg: null)\n' +
@@ -61,6 +64,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
     it('on argument definition', () => {
       const expectedGraphQl = (
         'directive @foo(arg: String = "default") repeatable on ARGUMENT_DEFINITION\n' +
+        '\n' +
         'type Query {\n' +
         '  todo(search: String! @foo): ID!\n' +
         '}'
@@ -73,6 +77,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
     it('on enum value', () => {
       const expectedGraphQl = (
         'directive @foo(arg: String = "default") repeatable on ENUM_VALUE\n' +
+        '\n' +
         'enum MyEnum {\n' +
         '  First @foo\n' +
         '  Second @foo(arg: null)\n' +
@@ -87,6 +92,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
     it('on scalar', () => {
       const expectedGraphQl = (
         'directive @foo(arg: String = "default") repeatable on SCALAR\n' +
+        '\n' +
         'scalar MyScalar @foo'
       )
       const graphApi = buildGraphApi(expectedGraphQl)
@@ -97,6 +103,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
     it('on enum', () => {
       const expectedGraphQl = (
         'directive @foo(arg: String = "default") repeatable on ENUM\n' +
+        '\n' +
         'enum MyEnum @foo {\n' +
         '  First\n' +
         '  Second\n' +
@@ -110,6 +117,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
     it('on union', () => {
       const expectedGraphQl = (
         'directive @foo(arg: String = "default") repeatable on UNION\n' +
+        '\n' +
         'union MyUnion @foo(arg: "value") = String | Int'
       )
       const graphApi = buildGraphApi(expectedGraphQl)
@@ -120,6 +128,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
     it('on object', () => {
       const expectedGraphQl = (
         'directive @foo(arg: String = "default") repeatable on OBJECT\n' +
+        '\n' +
         'type MyType @foo {\n' +
         '  first: ID!\n' +
         '  second: String\n' +
@@ -133,6 +142,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
     it('on input object', () => {
       const expectedGraphQl = (
         'directive @foo(arg: String = "default") repeatable on INPUT_OBJECT\n' +
+        '\n' +
         'input MyInput @foo {\n' +
         '  first: ID!\n' +
         '  second: String\n' +
@@ -160,6 +170,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
       it(`on ${kind} (1, with simple description and directive)`, () => {
         const expectedGraphQl = (
           'directive @foo on ARGUMENT_DEFINITION\n' +
+          '\n' +
           `type ${operationsMap[kind]} {\n` +
           '  todo(\n' +
           '    """First arg"""\n' +
@@ -186,6 +197,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
         const actualGraphQl = printGraphApi(graphApi)
         const expectedGraphQl = (
           'directive @foo on ARGUMENT_DEFINITION\n' +
+          '\n' +
           `type ${operationsMap[kind]} {\n` +
           '  todo(\n' +
           PRINTED_MULTILINE_DESCRIPTION +
@@ -199,7 +211,9 @@ describe('GraphAPI to GraphQL. Usages', () => {
       it(`on ${kind} (1, with simple description and 2 directives)`, () => {
         const expectedGraphQl = (
           'directive @foo on ARGUMENT_DEFINITION\n' +
+          '\n' +
           'directive @bar on ARGUMENT_DEFINITION\n' +
+          '\n' +
           `type ${operationsMap[kind]} {\n` +
           '  todo(\n' +
           '    """First arg"""\n' +
@@ -227,7 +241,9 @@ describe('GraphAPI to GraphQL. Usages', () => {
         const actualGraphQl = printGraphApi(graphApi)
         const expectedGraphQl = (
           'directive @foo on ARGUMENT_DEFINITION\n' +
+          '\n' +
           'directive @bar on ARGUMENT_DEFINITION\n' +
+          '\n' +
           `type ${operationsMap[kind]} {\n` +
           '  todo(\n' +
           PRINTED_MULTILINE_DESCRIPTION +
@@ -304,6 +320,7 @@ describe('GraphAPI to GraphQL. Usages', () => {
         const actualGraphQl = printGraphApi(graphApi)
         const expectedGraphQl = (
           'directive @foo on ARGUMENT_DEFINITION\n' +
+          '\n' +
           `type ${operationsMap[kind]} {\n` +
           '  todo(\n' +
           PRINTED_MULTILINE_DESCRIPTION +

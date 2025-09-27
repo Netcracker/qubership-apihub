@@ -62,7 +62,10 @@ export function printTypeDefinitions(components: GraphApiComponents = {}): strin
     if (!definitions) { continue }
 
     for (const [name, definition] of Object.entries(definitions)) {
-      printedTypes.push(printType(name, definition))
+      const printed = printType(name, definition)
+      if (printed) {
+        printedTypes.push(printed)
+      }
     }
   }
 
