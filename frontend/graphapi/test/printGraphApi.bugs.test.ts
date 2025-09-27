@@ -27,5 +27,31 @@ scalar Money`
     // Verify the generated GraphQL contains properly formatted quotes
     expect(actual).toContain('`"100.57"`')
     expect(actual).toContain('scalar Money')
-  })  
+  })
+
+  it('directive arguments with special characters should print correctly', () => {
+    const original = `type PrivateMetafield {
+  id: ID
+}
+
+type Query {
+  """
+  Returns a private metafield by namespace and key that belongs to the resource.
+  """
+  privateMetafield(
+    """The namespace for the private metafield."""
+    namespace: String!
+
+    """The key for the private metafield."""
+    key: String!
+  ): PrivateMetafield @deprecated(reason: "Metafields created using a reserved namespace are private by default. \\n")
+}`
+    
+    const graphApi = buildGraphApi(original)
+    const actual = printGraphApi(graphApi)
+    
+    // The printed GraphQL should be valid and parseable
+    expect(() => buildGraphApi(actual)).not.toThrow()
+  })
+
 })
