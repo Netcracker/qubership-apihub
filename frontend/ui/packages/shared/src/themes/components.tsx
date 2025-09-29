@@ -145,21 +145,23 @@ export function createComponents(): Components {
           height: 32,
         },
       },
-      variants: [{
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        props: { variant: 'added' },
-        style: {
-          minWidth: 100,
-          color: '#FFFFFF',
-          backgroundColor: '#00BB5B',
-          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
-          '&:hover': {
+      variants: [
+        {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          props: { variant: 'added' },
+          style: {
+            minWidth: 100,
+            color: '#FFFFFF',
+            backgroundColor: '#00BB5B',
             boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
-            backgroundColor: '#00A356',
+            '&:hover': {
+              boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
+              backgroundColor: '#00A356',
+            },
           },
         },
-      }],
+      ],
     },
     MuiButtonBase: {
       defaultProps: {

@@ -21,6 +21,7 @@ import { Box } from '@mui/material'
 import { MonacoEditor } from '../MonacoEditor'
 import type { SpecType } from '../../utils/specs'
 import type { FileExtension } from '../../utils/files'
+import type { SpecItemUri } from '../../utils/specifications'
 import { EXTENSION_TO_TYPE_LANGUAGE_MAP } from '../../types/languages'
 import { ModuleFetchingErrorBoundary } from '../ModuleFetchingErrorBoundary/ModuleFetchingErrorBoundary'
 
@@ -35,7 +36,6 @@ export type RawSpecViewProps = {
 }
 
 type SpecContent = string
-type SpecItemUri = string
 type SpecExtension = FileExtension
 
 export const RawSpecView: FC<RawSpecViewProps> = /* @__PURE__ */ memo<RawSpecViewProps>((

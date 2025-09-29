@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
+import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
+import type { OperationViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import type { FC } from 'react'
 import { memo, useCallback } from 'react'
 import { useOperationViewMode } from './useOperationViewMode'
-import type { OperationViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
-import type { TogglerProps } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
-import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
 
 type OperationViewModeSelectorProps = {
   modes: ReadonlyArray<OperationViewMode>
@@ -29,8 +28,5 @@ export const OperationViewModeSelector: FC<OperationViewModeSelectorProps> = mem
   const { mode, setMode } = useOperationViewMode()
   const handleMode = useCallback((mode: OperationViewMode) => setMode(mode), [setMode])
 
-  return <ViewModeSegmentedSelector mode={mode} modes={modes} onChange={handleMode}/>
+  return <Toggler<OperationViewMode> mode={mode} modes={modes} onChange={handleMode} />
 })
-
-type ViewModeSegmentedSelectorProps = TogglerProps<OperationViewMode>
-const ViewModeSegmentedSelector = Toggler as FC<ViewModeSegmentedSelectorProps>

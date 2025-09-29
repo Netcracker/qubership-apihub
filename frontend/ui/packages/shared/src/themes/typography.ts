@@ -15,6 +15,7 @@
  */
 
 import type { TypographyOptions } from '@mui/material/styles/createTypography'
+import { SECONDARY_TEXT_COLOR } from './colors'
 
 export function createTypography(): TypographyOptions {
   return {
@@ -63,13 +64,13 @@ export function createTypography(): TypographyOptions {
     subtitle2: {
       fontSize: 12,
       fontWeight: 400,
-      color: '#626D82',
+      color: SECONDARY_TEXT_COLOR,
     },
     subtitle3: {
       fontSize: 13,
       fontWeight: 500,
       lineHeight: '20px',
-      color: '#626D82',
+      color: SECONDARY_TEXT_COLOR,
     },
   }
 }

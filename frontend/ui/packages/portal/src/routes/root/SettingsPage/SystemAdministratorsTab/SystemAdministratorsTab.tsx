@@ -25,8 +25,12 @@ import type { SystemAdmin } from '@netcracker/qubership-apihub-ui-shared/types/s
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { AddIcon } from '@netcracker/qubership-apihub-ui-shared/icons/AddIcon'
 import { SystemAdministratorsTable } from '@netcracker/qubership-apihub-ui-shared/components/SystemAdministratorsTable'
-import { AddSystemAdministratorDialog } from '@netcracker/qubership-apihub-ui-shared/components/AddSystemAdministratorDialog'
-import { ConfirmationDialog } from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog'
+import {
+  AddSystemAdministratorDialog,
+} from '@netcracker/qubership-apihub-ui-shared/components/AddSystemAdministratorDialog'
+import {
+  ConfirmationDialog,
+} from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog/ConfirmationDialog'
 
 export const SystemAdministratorsTab: FC = memo(() => {
   const { showAddSystemAdministratorDialog } = useEventBus()
@@ -36,7 +40,7 @@ export const SystemAdministratorsTab: FC = memo(() => {
   const [addSystemAdmin, isAddSystemAdminLoading] = useAddSystemAdmin()
 
   const [userSearch, setUserSearch] = useState<string>('')
-  const [usersData, isUsersDataLoading] = useUsers(userSearch)
+  const [usersData, isUsersDataLoading] = useUsers({ searchValue: userSearch })
 
   const [confirmationOpen, setConfirmationOpen] = useState(false)
   const [deleteConfirmationData, setDeleteConfirmationData] = useState<SystemAdmin | undefined>(undefined)

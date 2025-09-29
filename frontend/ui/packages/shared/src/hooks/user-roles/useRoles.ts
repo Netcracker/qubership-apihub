@@ -81,11 +81,12 @@ type RolesQueryState = {
   error: Error | null
 }
 
-export function useRoles(): RolesQueryState {
-  const { data, isLoading, error } = useQuery<RolesDto, Error, Roles>({
+export function useRoles(enabled = true): RolesQueryState {
+  const { data, isInitialLoading, error } = useQuery<RolesDto, Error, Roles>({
     queryKey: [ROLES_QUERY_KEY],
     queryFn: () => getRoles(),
     select: toRoles,
+    enabled: enabled,
   })
 
   const result = useMemo(() => {
@@ -94,7 +95,7 @@ export function useRoles(): RolesQueryState {
 
   return {
     data: result,
-    isLoading: isLoading,
+    isLoading: isInitialLoading,
     error: error,
   }
 }

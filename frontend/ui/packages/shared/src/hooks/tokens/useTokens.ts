@@ -39,16 +39,17 @@ import { toRoles } from '../user-roles/useRoles'
 const ACCESS_TOKENS_QUERY_KEY = 'access-tokens-query-key'
 const AVAILABLE_ROLES_FOR_PACKAGE_QUERY_KEY = 'available-roles-for-package-query-key'
 
-export function useTokens(packageKey?: Key): [Tokens, IsLoading, Error | null] {
-  const { data, isLoading, error } = useQuery<SystemTokensDto, Error, Tokens>({
+export function useTokens(packageKey?: Key, enabled = true): [Tokens, IsLoading, Error | null] {
+  const { data, isInitialLoading, error } = useQuery<SystemTokensDto, Error, Tokens>({
     queryKey: [ACCESS_TOKENS_QUERY_KEY, packageKey],
     queryFn: () => getTokens(packageKey),
     select: toSystemTokens,
+    enabled: enabled,
   })
 
   return [
     useMemo(() => data ?? [], [data]),
-    isLoading,
+    isInitialLoading,
     error,
   ]
 }

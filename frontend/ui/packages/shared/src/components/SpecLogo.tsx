@@ -38,6 +38,7 @@ import { API_TYPE_GRAPHQL, API_TYPE_REST } from '../entities/api-types'
 import { ProtobufIcon } from '../icons/ProtobufIcon'
 
 export type SpecLogoProps = {
+  // TODO 23.06.25 // Fix this type, because it has no sense
   value?: SpecType | ApiType | string
 }
 

@@ -82,7 +82,6 @@ export const ButtonWithHint: FC<ButtonWithHintProps> = memo<ButtonWithHintProps>
     if (!title && icon) {
       return (
         <IconButton
-          aria-label="delete-icon"
           disabled={disabled}
           {...buttonProps}
         >

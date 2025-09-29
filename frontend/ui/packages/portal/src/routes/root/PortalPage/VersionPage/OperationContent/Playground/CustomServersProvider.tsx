@@ -16,8 +16,8 @@
 
 import type { Dispatch, FC, PropsWithChildren, SetStateAction } from 'react'
 import { createContext, memo, useContext, useState } from 'react'
-import type { CustomServersPackageMap } from './useCustomServersPackageMap'
-import { getCustomServersPackageMapFromLocalStorage } from './useCustomServersPackageMap'
+import type { CustomServersPackageMap } from './hooks/useCustomServersPackageMap'
+import { getCustomServersPackageMapFromLocalStorage } from './hooks/useCustomServersPackageMap'
 
 export const CustomServersProvider: FC<PropsWithChildren> = memo<PropsWithChildren>(({ children }) => {
   const [customServers, setCustomServers] = useState<CustomServersPackageMap | null>(getCustomServersPackageMapFromLocalStorage)

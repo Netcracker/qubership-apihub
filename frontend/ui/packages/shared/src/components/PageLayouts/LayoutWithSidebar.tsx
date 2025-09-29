@@ -37,6 +37,7 @@ export type LayoutWithSidebarProps = {
   action?: ReactNode
   sidebar?: ReactNode
   body: ReactNode
+  disableHorizontalDivider?: boolean
 } & TestableProps
 export const LayoutWithSidebar: FC<LayoutWithSidebarProps> = memo<LayoutWithSidebarProps>(({
   header,
@@ -44,6 +45,7 @@ export const LayoutWithSidebar: FC<LayoutWithSidebarProps> = memo<LayoutWithSide
   sidebar,
   body,
   testId,
+  disableHorizontalDivider,
 }) => {
   return (
     <Box
@@ -67,7 +69,12 @@ export const LayoutWithSidebar: FC<LayoutWithSidebarProps> = memo<LayoutWithSide
             header={header}
             action={action}
           />
-          <Divider orientation="horizontal" variant="fullWidth"/>
+          {!disableHorizontalDivider && (
+            <Divider
+              orientation="horizontal"
+              variant="fullWidth"
+            />
+          )}
         </Box>
       </Box>
 

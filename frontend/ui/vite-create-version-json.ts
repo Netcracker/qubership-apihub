@@ -5,7 +5,7 @@ import type { Plugin } from 'vite'
 export default function createVersionJsonFilePlugin(): Plugin {
   return {
     name: 'create-version-json-file',
-    async closeBundle() {
+    closeBundle: async function() {
       const lernaPath = path.resolve(__dirname, 'lerna.json')
       const lockPath = path.resolve(__dirname, 'package-lock.json')
       const outputPathPortal = path.resolve(__dirname, 'packages/portal/dist/version.json')

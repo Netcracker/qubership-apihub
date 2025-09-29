@@ -14,30 +14,29 @@
  * limitations under the License.
  */
 
+import type { editor as Editor } from 'monaco-editor'
 import type { RefObject } from 'react'
 import { useRef } from 'react'
-import type { editor as Editor } from 'monaco-editor'
-import { useAddSelectionDecorator } from './useAddSelectionDecorator'
+import type { LanguageType } from '../../types/languages'
+import type { SpecItemUri } from '../../utils/specifications'
+import type { SpecType } from '../../utils/specs'
+import { useAddMarkers } from './useAddMarkers'
 import { useAddSearchNavigation } from './useAddSearchNavigation'
 import { useAddSelectedUriNavigation } from './useAddSelectedUriNavigation'
-import { useSetEditorModel } from './useSetEditorModel'
+import { useAddSelectionDecorator } from './useAddSelectionDecorator'
 import { useInitializeEditor } from './useInitializeEditor'
-import { preconfigureMonaco } from './configurator'
-import type { SpecType } from '../../utils/specs'
-import type { SpecItemUri } from '../../utils/specifications'
-import type { LanguageType } from '../../types/languages'
-
-preconfigureMonaco()
+import { useSetEditorModel } from './useSetEditorModel'
 
 export function useMonacoEditorElement(options: {
   value: string
   type: SpecType
   language?: LanguageType
-  selectedUri?: SpecItemUri
+  selectedUri?: SpecItemUri // Example: '#/foo/bar/baz/qux/1'
   searchPhrase?: string
   onSearchPhraseChange?: (value: string | undefined) => void
+  markers?: Editor.IMarkerData[]
 }): RefObject<HTMLDivElement> {
-  const { value, type, language, selectedUri, searchPhrase, onSearchPhraseChange } = options
+  const { value, type, language, selectedUri, searchPhrase, onSearchPhraseChange, markers } = options
 
   const ref = useRef<HTMLDivElement>(null)
   const editor = useRef<Editor.IStandaloneCodeEditor>()
@@ -48,6 +47,7 @@ export function useMonacoEditorElement(options: {
   useAddSelectionDecorator(editor, selectedUri)
   useAddSelectedUriNavigation(editor, selectedUri)
   useAddSearchNavigation(editor, searchPhrase, onSearchPhraseChange)
+  useAddMarkers(editor, markers)
 
   return ref
 }

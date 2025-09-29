@@ -39,7 +39,7 @@ export const SystemTokensTab: FC = memo(() => {
 
   const [user] = useUser()
   const [userSearch, setUserSearch] = useState<string>('')
-  const [usersData, isUsersDataLoading] = useUsers(userSearch)
+  const [usersData, isUsersDataLoading] = useUsers({ searchValue: userSearch })
 
   const handleGenerateToken = useCallback((value: GenerateApiKeyValue): void => {
     generateApiKey({ value })

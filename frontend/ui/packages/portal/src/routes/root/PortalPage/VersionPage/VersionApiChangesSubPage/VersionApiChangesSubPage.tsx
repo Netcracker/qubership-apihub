@@ -22,7 +22,9 @@ import { ChangesSummaryProvider } from '../ChangesSummaryProvider'
 import { NavLink, useParams } from 'react-router-dom'
 import { usePackageVersionApiTypes } from '../usePackageVersionApiTypes'
 import { useVersionSearchParam } from '../../../useVersionSearchParam'
-import { usePackageSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
+import {
+  usePackageSearchParam,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
 import { useApiKindSearchFilter } from '../useApiKindSearchFilters'
 import { useTagSearchFilter } from '../useTagSearchFilter'
 import { useRefSearchParam } from '../../useRefSearchParam'
@@ -50,7 +52,9 @@ import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/ap
 import { CATEGORY_OPERATION } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { useApiAudienceSearchFilter } from '../useApiAudienceSearchFilters'
-import { useSeverityFiltersSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
+import {
+  useSeverityFiltersSearchParam,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
 
 // High Order Component //
 export const VersionApiChangesSubPage: FC = memo(() => {
@@ -107,6 +111,7 @@ export const VersionApiChangesSubPage: FC = memo(() => {
         setSearchValue={setSearchValue}
         exportButton={
           <ExportChangesMenu
+            apiType={apiType ?? DEFAULT_API_TYPE}
             textFilter={searchValue}
             severityChanges={CHANGE_SEVERITIES}
             kind={apiKindFilter}
@@ -128,9 +133,9 @@ export const VersionApiChangesSubPage: FC = memo(() => {
         }
         filtersApplied={filtersApplied}
         hideFiltersPanel={hideFiltersPanel}
-        filters={<ApiChangesNavigation />}
+        filters={<ApiChangesNavigation/>}
         onClickFilterButton={toggleHideFiltersPanel}
-        body={<ApiChangesCard searchValue={searchValue} />}
+        body={<ApiChangesCard searchValue={searchValue}/>}
         testId="ApiChangesTab"
       />
     </ChangesSummaryProvider>

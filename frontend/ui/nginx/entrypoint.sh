@@ -25,14 +25,23 @@ CLUSTER_DOMAIN="$(awk '
 [ -n "${CLUSTER_DOMAIN:-}" ] || CLUSTER_DOMAIN="cluster.local"
 export CLUSTER_DOMAIN
 
+adjust_addr() {
+  var="$1"
+  val="$(eval echo \$$var)"
+  case "$val" in
+    *localhost*|*host.docker.internal*) ;;
+    "")
+      val="invalid.invalid.:80"
+      ;;
+    *)
+      val="${val%:*}.${POD_NAMESPACE}.svc.${CLUSTER_DOMAIN}.:${val##*:}"
+      ;;
+  esac
+  eval export $var=\"\$val\"
+}
 
-APIHUB_NC_SERVICE_ADDRESS="${APIHUB_NC_SERVICE_ADDRESS:+${APIHUB_NC_SERVICE_ADDRESS%:*}.${POD_NAMESPACE}.svc.${CLUSTER_DOMAIN}.:${APIHUB_NC_SERVICE_ADDRESS##*:}}"
-APIHUB_NC_SERVICE_ADDRESS="${APIHUB_NC_SERVICE_ADDRESS:-invalid.invalid.:80}"
-export APIHUB_NC_SERVICE_ADDRESS
-
-API_LINTER_SERVICE_ADDRESS="${API_LINTER_SERVICE_ADDRESS:+${API_LINTER_SERVICE_ADDRESS%:*}.${POD_NAMESPACE}.svc.${CLUSTER_DOMAIN}.:${API_LINTER_SERVICE_ADDRESS##*:}}"
-API_LINTER_SERVICE_ADDRESS="${API_LINTER_SERVICE_ADDRESS:-invalid.invalid.:80}"
-export API_LINTER_SERVICE_ADDRESS
+adjust_addr APIHUB_NC_SERVICE_ADDRESS
+adjust_addr API_LINTER_SERVICE_ADDRESS
 
 # No need to modify APIHUB_BACKEND_ADDRESS as its resolution is static
 

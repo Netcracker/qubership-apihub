@@ -16,7 +16,13 @@
 
 import type { FC } from 'react'
 import { memo } from 'react'
-import { ROLES_HIERARCHY_PAGE, SYSTEM_ADMINISTRATORS_PAGE, SYSTEM_TOKENS_PAGE, USER_ROLES_PAGE } from '../../../routes'
+import {
+  ROLES_HIERARCHY_PAGE,
+  RULESET_MANAGEMENT_PAGE,
+  SYSTEM_ADMINISTRATORS_PAGE,
+  SYSTEM_TOKENS_PAGE,
+  USER_ROLES_PAGE,
+} from '../../../routes'
 import { useActiveTabContentContext } from './SettingsPage'
 import { SettingsNavigation } from './SettingsNavigation'
 import { UserRolesSettingsTab } from './UserRolesSettingsTab'
@@ -26,6 +32,7 @@ import { RolesHierarchySettingsTab } from '@apihub/routes/root/RolesHierarchySet
 import {
   SystemAdministratorsTab,
 } from '@apihub/routes/root/SettingsPage/SystemAdministratorsTab/SystemAdministratorsTab'
+import { RulesetManagementTab } from './RulesetManagementTab/RulesetManagementTab'
 
 export const SettingsBody: FC = memo(() => {
   const activeTab = useActiveTabContentContext()
@@ -40,6 +47,7 @@ export const SettingsBody: FC = memo(() => {
               [ROLES_HIERARCHY_PAGE]: <RolesHierarchySettingsTab/>,
               [SYSTEM_ADMINISTRATORS_PAGE]: <SystemAdministratorsTab/>,
               [SYSTEM_TOKENS_PAGE]: <SystemTokensTab/>,
+              [RULESET_MANAGEMENT_PAGE]: <RulesetManagementTab/>,
             }[activeTab]
           }
         </>

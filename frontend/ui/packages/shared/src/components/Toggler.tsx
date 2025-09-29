@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo } from 'react'
 import Paper from '@mui/material/Paper'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import type { ReactElement } from 'react'
 
-export type TogglerProps<T = string> = {
+export type TogglerProps<T extends string> = {
   mode: T
   modes: ReadonlyArray<T>
   onChange: (mode: T) => void
   modeToText?: Record<PropertyKey, string>
 }
 
-export const Toggler: FC<TogglerProps> = memo<TogglerProps>(({ mode, modes, onChange, modeToText }) => {
+// TODO 23.06.25 // Restore "memo"
+export function Toggler<T extends string>(props: TogglerProps<T>): ReactElement {
+  const { mode, modes, onChange, modeToText } = props
+
   return (
     <Paper
       sx={{
@@ -60,4 +62,4 @@ export const Toggler: FC<TogglerProps> = memo<TogglerProps>(({ mode, modes, onCh
       </ToggleButtonGroup>
     </Paper>
   )
-})
+}

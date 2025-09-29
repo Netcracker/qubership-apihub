@@ -31,7 +31,9 @@ import { useEventBus } from '@apihub/routes/EventBusProvider'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
-import { ConfirmationDialog } from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog'
+import {
+  ConfirmationDialog,
+} from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog/ConfirmationDialog'
 import {
   DRAFT_VERSION_STATUS,
   VERSION_STATUS_MANAGE_PERMISSIONS,

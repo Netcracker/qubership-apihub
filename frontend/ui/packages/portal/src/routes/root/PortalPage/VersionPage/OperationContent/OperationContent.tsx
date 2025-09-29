@@ -14,66 +14,67 @@
  * limitations under the License.
  */
 
-import type { FC, ReactNode } from 'react'
-import { memo, useCallback, useEffect, useMemo } from 'react'
-import { Box } from '@mui/material'
-import { OperationsSwapper } from './OperationsSwapper'
-import type { OperationDisplayMode } from './OperationView/OperationDisplayMode'
-import { DEFAULT_DISPLAY_MODE, isComparisonMode } from './OperationView/OperationDisplayMode'
-import { useOperationViewMode } from '../useOperationViewMode'
-import { useSetChangesLoadingStatus } from '../ChangesLoadingStatusProvider'
-import { useBreadcrumbsData } from '../ComparedPackagesBreadcrumbsProvider'
-import { OperationWithPlayground } from './OperationWithPlayground'
-import { useSelectOperationTags } from './useSelectOperationTags'
-import { useFileViewMode } from '../useFileViewMode'
-import { OperationSubheader } from './OperationSubheader'
-import { useIsExamplesMode, useIsPlaygroundMode, useIsPlaygroundSidebarOpen } from './usePlaygroundSidebarMode'
-import { useSidebarPlaygroundViewMode } from '../useSidebarPlaygroundViewMode'
-import { OperationModelsGraph } from './OperationModelsGraph'
-import { useOperationNavigationDetails } from '../../../OperationNavigationDataProvider'
-import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
+import type { OpenApiData } from '@apihub/entities/operation-structure'
 import {
-  useSeverityFiltersSearchParam,
-} from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
-import { GRAPH_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
-import { FILE_FORMAT_VIEW, YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
-import {
-  useOperationsPairAsStrings,
-} from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationsPairAsStrings'
-import {
-  useIsDocOperationViewMode,
-  useIsRawOperationViewMode,
-} from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationMode'
+  useApiDiffResult,
+  useIsApiDiffResultLoading, useSetApiDiffResult,
+} from '@apihub/routes/root/ApiDiffResultProvider'
+import { OperationView } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationView'
 import {
   useCustomServersContext,
 } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/CustomServersProvider'
 import { getFileDetails } from '@apihub/utils/file-details'
+import { Box } from '@mui/material'
+import { removeComponents } from '@netcracker/qubership-apihub-api-processor'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import {
   CONTENT_PLACEHOLDER_AREA,
   Placeholder,
   SEARCH_PLACEHOLDER_VARIANT,
 } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import { OperationView } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationView'
-import { RawSpecView } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/RawSpecView'
-import type { OpenApiData } from '@apihub/entities/operation-structure'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { normalizeOpenApiDocument } from '@netcracker/qubership-apihub-ui-shared/utils/normalize'
-import {
-  useApiDiffResult,
-  useIsApiDiffResultLoading, useSetApiDiffResult,
-} from '../../../ApiDiffResultProvider'
-import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
 import { RawSpecDiffView } from '@netcracker/qubership-apihub-ui-shared/components/RawSpecDiffView'
-import { removeComponents } from '@netcracker/qubership-apihub-api-processor'
+import { RawSpecView } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/RawSpecView'
+import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
 import {
   WarningApiProcessorVersion,
 } from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
-import { useVersionsComparisonGlobalParams } from '../../..//PortalPage/VersionPage/VersionsComparisonGlobalParams'
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { FileViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
+import { FILE_FORMAT_VIEW, YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
+import { GRAPH_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
+import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
+import {
+  useSeverityFiltersSearchParam,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
+import {
+  useIsDocOperationViewMode,
+  useIsRawOperationViewMode,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationMode'
+import {
+  useOperationsPairAsStrings,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationsPairAsStrings'
+import { normalizeOpenApiDocument } from '@netcracker/qubership-apihub-ui-shared/utils/normalize'
+import type { FC, ReactNode } from 'react'
+import { memo, useCallback, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
+import { useVersionsComparisonGlobalParams } from '../../..//PortalPage/VersionPage/VersionsComparisonGlobalParams'
+import { useOperationNavigationDetails } from '../../../OperationNavigationDataProvider'
+import { useSetChangesLoadingStatus } from '../ChangesLoadingStatusProvider'
+import { useBreadcrumbsData } from '../ComparedPackagesBreadcrumbsProvider'
+import { useFileViewMode } from '../useFileViewMode'
+import { useOperationViewMode } from '../useOperationViewMode'
+import { useSidebarPlaygroundViewMode } from '../useSidebarPlaygroundViewMode'
+import { OperationModelsGraph } from './OperationModelsGraph'
+import { OperationsSwapper } from './OperationsSwapper'
+import { OperationSubheader } from './OperationSubheader'
+import type { OperationDisplayMode } from './OperationView/OperationDisplayMode'
+import { DEFAULT_DISPLAY_MODE, isComparisonMode } from './OperationView/OperationDisplayMode'
+import { OperationWithPlayground } from './OperationWithPlayground'
+import { useIsExamplesMode, useIsPlaygroundMode, useIsPlaygroundSidebarOpen } from './usePlaygroundSidebarMode'
+import { useSelectOperationTags } from './useSelectOperationTags'
 
 export type OperationContentProps = {
   changedOperation?: OperationData
@@ -179,10 +180,10 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
     return () => {
       setApiDiffResult(undefined)
     }
-  }, [])
+  }, [setApiDiffResult])
 
   if (isLoading || isApiDiffResultLoading) {
-    operationContentElement = <LoadingIndicator/>
+    operationContentElement = <LoadingIndicator />
   } else if (!changedOperationContent && !originOperationContent) {
     return (
       <Placeholder
@@ -209,9 +210,9 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
             breadcrumbsData={breadcrumbsData}
             actions={isRawViewMode && rawViewActions}
             swapperBreadcrumbsBeforeComponent={<WarningApiProcessorVersion packageKey={originPackageKey}
-                                                                           versionKey={originVersionKey}/>}
+              versionKey={originVersionKey} />}
             swapperBreadcrumbsAfterComponent={<WarningApiProcessorVersion packageKey={changedPackageKey}
-                                                                          versionKey={changedVersionKey}/>}
+              versionKey={changedVersionKey} />}
           />
           {isDocViewMode && !!mergedDocument && (
             <OperationView
@@ -266,7 +267,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
                     overflow="scroll"
                   >
                     {!!rawViewActions && (
-                      <OperationSubheader actions={rawViewActions}/>
+                      <OperationSubheader actions={rawViewActions} />
                     )}
                     <RawSpecView
                       value={changedValue}
@@ -304,9 +305,9 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
   )
 })
 
-const API_TYPE_RAW_VIEW_ACTIONS_MAP: Record<ApiType, (fileViewMode: string, setFileViewMode: (value: string) => void) => ReactNode | null> = {
+const API_TYPE_RAW_VIEW_ACTIONS_MAP: Record<ApiType, (fileViewMode: FileViewMode, setFileViewMode: (value: FileViewMode) => void) => ReactNode | null> = {
   [API_TYPE_REST]: (fileViewMode, setFileViewMode) => (
-    <Toggler
+    <Toggler<FileViewMode>
       modes={FILE_FORMAT_VIEW}
       mode={fileViewMode}
       onChange={setFileViewMode}

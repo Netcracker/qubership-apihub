@@ -21,13 +21,23 @@ import { useActiveTabContentContext, useSetActiveTabContentContext } from './Set
 import type { To } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 import type { SettingsPageRoute } from '../../../routes'
-import { ROLES_HIERARCHY_PAGE, SYSTEM_ADMINISTRATORS_PAGE, SYSTEM_TOKENS_PAGE, USER_ROLES_PAGE } from '../../../routes'
+import {
+  ROLES_HIERARCHY_PAGE,
+  RULESET_MANAGEMENT_PAGE,
+  SYSTEM_ADMINISTRATORS_PAGE,
+  SYSTEM_TOKENS_PAGE,
+  USER_ROLES_PAGE,
+} from '../../../routes'
 import { getSettingsPath } from '../../NavigationProvider'
+import type { TestableProps } from '@netcracker/qubership-apihub-ui-shared/components/Testable'
+import { useLinterEnabled } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 
 export const SettingsNavigation: FC = memo(() => {
   const activeTab = useActiveTabContentContext()
   const setActiveTab = useSetActiveTabContentContext()
   const navigate = useNavigate()
+  const linterEnabled = useLinterEnabled()
+
   const navigateAndSelect = useCallback((pathToNavigate: To): void => {
     navigate(pathToNavigate)
   }, [navigate])
@@ -48,33 +58,42 @@ export const SettingsNavigation: FC = memo(() => {
         </Typography>
       </Box>
       <List>
-        {SETTINGS_SIDEBAR_ITEMS.map(({ value, url, label, description }) => (
-          <ListItemButton
-            key={value}
-            selected={activeTab === value}
-            sx={{ justifyContent: 'center' }}
-            onClick={() => {
-              setActiveTab(value)
-              navigateAndSelect(url)
-            }}
-          >
-            <Box>
-              <ListItemText primary={label}/>
-              <ListItemText primary={description} primaryTypographyProps={{ color: '#626D82' }}/>
-            </Box>
-          </ListItemButton>
-        ))}
+        {SETTINGS_SIDEBAR_ITEMS.map(({ value, url, label, description, 'data-testid': dataTestId }) => {
+          if (value === RULESET_MANAGEMENT_PAGE && !linterEnabled) {
+            return null
+          }
+
+          return (
+            <ListItemButton
+              key={value}
+              selected={activeTab === value}
+              sx={{ justifyContent: 'center' }}
+              onClick={() => {
+                setActiveTab(value)
+                navigateAndSelect(url)
+              }}
+              data-testid={dataTestId}
+            >
+              <Box>
+                <ListItemText primary={label} />
+                <ListItemText primary={description} primaryTypographyProps={{ color: '#626D82' }} />
+              </Box>
+            </ListItemButton>
+          )
+        })}
       </List>
     </Box>
   )
 })
 
-export type SettingsNavItemProps = Readonly<{
-  label: string
-  description: string
-  value: SettingsPageRoute
-  url: To
-}>
+export type SettingsNavItemProps =
+  & Readonly<{
+    label: string
+    description: string
+    value: SettingsPageRoute
+    url: To
+  }>
+  & TestableProps
 
 const SETTINGS_SIDEBAR_ITEMS: SettingsNavItemProps[] = [
   {
@@ -82,35 +101,34 @@ const SETTINGS_SIDEBAR_ITEMS: SettingsNavItemProps[] = [
     description: 'Configure user roles and permissions',
     value: USER_ROLES_PAGE,
     url: getSettingsPath({ tab: USER_ROLES_PAGE }),
+    'data-testid': 'UserRolesTabButton',
   },
   {
     label: 'Roles Hierarchy',
     description: 'Configure roles hierarchy',
     value: ROLES_HIERARCHY_PAGE,
     url: getSettingsPath({ tab: ROLES_HIERARCHY_PAGE }),
+    'data-testid': 'RolesHierarchyTabButton',
   },
   {
     label: 'System Administrators',
     description: 'Assign sysadm role to the users',
     value: SYSTEM_ADMINISTRATORS_PAGE,
     url: getSettingsPath({ tab: SYSTEM_ADMINISTRATORS_PAGE }),
+    'data-testid': 'SystemAdministratorsTabButton',
   },
   {
     label: 'System Tokens',
     description: 'Add a system access token',
     value: SYSTEM_TOKENS_PAGE,
     url: getSettingsPath({ tab: SYSTEM_TOKENS_PAGE }),
+    'data-testid': 'SystemTokensTabButton',
   },
-  // {
-  //   label: 'System Administrators',
-  //   description: 'Assign sysadm role to the users',
-  //   value: SYSTEM_ADMINISTRATORS_PAGE,
-  //   url: getSettingsPath({ tab: SYSTEM_ADMINISTRATORS_PAGE }),
-  // },
-  // {
-  //   label: 'System Tokens',
-  //   description: 'Add a system access token',
-  //   value: SYSTEM_TOKENS_PAGE,
-  //   url: getSettingsPath({ tab: SYSTEM_TOKENS_PAGE }),
-  // },
+  {
+    label: 'API Quality Ruleset Management',
+    description: 'Manage quality rulesets',
+    value: RULESET_MANAGEMENT_PAGE,
+    url: getSettingsPath({ tab: RULESET_MANAGEMENT_PAGE }),
+    'data-testid': 'RulesetManagementTabButton',
+  },
 ]
