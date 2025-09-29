@@ -82,7 +82,7 @@ describe('Path and method mapping', () => {
         beforeDeclarationPaths: [['paths', '//path1/']],
         afterDeclarationPaths: [['paths', '/path1']],
         action: DiffAction.rename,
-        type: breaking, // todo should be annotation
+        type: annotation,
       })
     ]))
   })
