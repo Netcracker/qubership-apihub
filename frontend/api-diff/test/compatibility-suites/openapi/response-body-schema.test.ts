@@ -1636,3 +1636,4 @@ describe('Openapi3 ResponseBody.Schema ', () => {
 describe('Openapi31 ResponseBody.Schema', () => {
   runCommonResponseSchema31Tests(SUITE_ID, RESPONSE_SCHEMA_PATH)
 })
+

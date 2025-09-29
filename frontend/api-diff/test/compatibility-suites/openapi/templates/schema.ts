@@ -1101,8 +1101,8 @@ export function runCommonSchemaTests(suiteId: string, commonPath: JsonPath): voi
     test('Update definition of free-form object', async () => {
 
       const testId = 'update-definition-of-free-form-object'
-      const result = await compareFiles(suiteId, testId)
-      expect(result.length).toEqual(0)
+      const diffs = await compareFiles(suiteId, testId)
+      expect(diffs).toBeEmpty()
     })
 
     test('Add non-boolean additionalProperties', async () => {
