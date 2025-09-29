@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-rest-playground",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Web Component for Try It",
   "sideEffects": [
     "./dist/index.js",
