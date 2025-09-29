@@ -1,11 +1,16 @@
+import { 
+  GRAPH_QL_MUTATION_TYPE_NAME_DEFAULT,
+  GRAPH_QL_QUERY_TYPE_NAME_DEFAULT, 
+  GRAPH_QL_SUBSCRIPTION_TYPE_NAME_DEFAULT 
+} from "../src/constants";
 import { printGraphApi } from "../src/print-graph-api";
 import { buildGraphApi } from "./helpers/build-graphApi";
 
 const operationKinds = ['queries', 'mutations', 'subscriptions', 'methods'] as const;
 const operationsMap: Record<typeof operationKinds[number], string> = {
-  queries: 'Query',
-  mutations: 'Mutation',
-  subscriptions: 'Subscription',
+  queries: GRAPH_QL_QUERY_TYPE_NAME_DEFAULT,
+  mutations: GRAPH_QL_MUTATION_TYPE_NAME_DEFAULT,
+  subscriptions: GRAPH_QL_SUBSCRIPTION_TYPE_NAME_DEFAULT,
   methods: 'MyType',
 };
 

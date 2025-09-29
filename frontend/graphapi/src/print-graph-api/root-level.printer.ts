@@ -1,4 +1,9 @@
-import { GRAPH_API_NODE_KIND_OBJECT } from "../constants"
+import { 
+  GRAPH_API_NODE_KIND_OBJECT, 
+  GRAPH_QL_MUTATION_TYPE_NAME_DEFAULT, 
+  GRAPH_QL_QUERY_TYPE_NAME_DEFAULT, 
+  GRAPH_QL_SUBSCRIPTION_TYPE_NAME_DEFAULT 
+} from "../constants"
 import { GraphApiSchema, GraphApiObjectDefinition, GraphApiObjectKind, GraphApiComponents } from "../types"
 import { printDescription, printBlock, typePrinter } from "./atomics.printer"
 import { GRAPH_API_COMPONENT_KINDS, Maybe } from "./declarations"
@@ -13,16 +18,16 @@ export function printSchemaDefinition(schema: GraphApiSchema): Maybe<string> {
   if (!queriesCount && !mutationionsCount && !subscriptionsCount) { return }
 
   // Use the original root type names if available, otherwise fall back to standard names
-  const queryTypeName = schema.queryTypeName || 'Query'
-  const mutationTypeName = schema.mutationTypeName || 'Mutation'
-  const subscriptionTypeName = schema.subscriptionTypeName || 'Subscription'
+  const queryTypeName = schema.queryTypeName || GRAPH_QL_QUERY_TYPE_NAME_DEFAULT
+  const mutationTypeName = schema.mutationTypeName || GRAPH_QL_MUTATION_TYPE_NAME_DEFAULT
+  const subscriptionTypeName = schema.subscriptionTypeName || GRAPH_QL_SUBSCRIPTION_TYPE_NAME_DEFAULT
 
   // Determine if we need a schema definition:
   // 1. If there's a description, or
   // 2. If using non-standard root type names (not Query/Mutation/Subscription)
-  const hasCustomRootTypes = (queriesCount && queryTypeName !== 'Query') ||
-                             (mutationionsCount && mutationTypeName !== 'Mutation') ||
-                             (subscriptionsCount && subscriptionTypeName !== 'Subscription')
+  const hasCustomRootTypes = (queriesCount && queryTypeName !== GRAPH_QL_QUERY_TYPE_NAME_DEFAULT) ||
+                             (mutationionsCount && mutationTypeName !== GRAPH_QL_MUTATION_TYPE_NAME_DEFAULT) ||
+                             (subscriptionsCount && subscriptionTypeName !== GRAPH_QL_SUBSCRIPTION_TYPE_NAME_DEFAULT)
 
   if (schema.description || hasCustomRootTypes) {
     const block = []
