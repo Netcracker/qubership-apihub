@@ -1,0 +1,20 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  description: API specification example
+  version: 1.0.0
+paths:
+  /path1:
+    $ref: '#/components/pathItems/componentsPathItem'
+components:
+  pathItems:
+    componentsPathItem:
+      post:
+        responses:
+          '200':
+            $ref: '#/components/responses/SuccessResponse'
+  responses:
+    SuccessResponse:
+      $ref: '#/components/responses/SuccessResponse2'
+    SuccessResponse2:
+      $ref: '#/components/responses/SuccessResponse'

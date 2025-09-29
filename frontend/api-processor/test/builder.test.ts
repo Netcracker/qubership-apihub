@@ -145,4 +145,33 @@ describe('Editor scenarios', () => {
       })
     })
   })
+
+  describe('PathItems build', () => {
+    const COMPONENTS_ITEM_1_PATH = ['components', 'pathItems', 'componentsPathItem1']
+    test('should have separate operations with pathitems', async () => {
+      const pkg = LocalRegistry.openPackage('builder/define-pathitems-via-reference-object-chain')
+      const editor = await Editor.openProject(pkg.packageId, pkg)
+
+      await pkg.publish(pkg.packageId, { packageId: pkg.packageId })
+      const result = await editor.run({
+        version: 'v1',
+        status: VERSION_STATUS.RELEASE,
+        buildType: BUILD_TYPE.BUILD,
+      })
+
+      const resultOperations = Array.from(result.operations.values())
+      expect(resultOperations.length).toEqual(2)
+
+      const [postOperation, getOperation] = resultOperations
+      // check that we have only path operation in componentsPathItem1 for path1-post
+      expect(postOperation.operationId).toEqual('path1-post')
+      expect(postOperation.data).toHaveProperty([...COMPONENTS_ITEM_1_PATH, 'post'])
+      expect(postOperation.data).not.toHaveProperty([...COMPONENTS_ITEM_1_PATH, 'get'])
+
+      // check that we have only get operation in componentsPathItem1 for path1-get
+      expect(getOperation.operationId).toEqual('path1-get')
+      expect(getOperation.data).not.toHaveProperty([...COMPONENTS_ITEM_1_PATH, 'post'])
+      expect(getOperation.data).toHaveProperty([...COMPONENTS_ITEM_1_PATH, 'get'])
+    })
+  })
 })

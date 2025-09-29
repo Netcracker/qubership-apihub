@@ -24,14 +24,14 @@ paths:
         description: Pet object that needs to be added to the store
         content:
           application/json:
-            schema: { }
+            schema: {}
         required: true
       responses:
         '200':
           description: Pet was updated
           content:
             application/json:
-              schema: { }
+              schema: {}
           headers:
             x-request-id:
               schema:

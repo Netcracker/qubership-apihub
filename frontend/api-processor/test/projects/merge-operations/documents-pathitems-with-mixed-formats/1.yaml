@@ -1,0 +1,14 @@
+openapi: "3.1.0"
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    $ref: '#/components/pathItems/pathItem1'
+components:
+  pathItems:
+    pathItem1:
+      get:
+        responses:
+          '200':
+            description: response description main

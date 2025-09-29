@@ -1,0 +1,20 @@
+openapi: 3.1.0
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    $ref: '#/components/pathItems/path1'
+components:
+  pathItems:
+    path1:
+      post:
+        parameters:
+          - name: p1
+            in: query
+            schema:
+              type: object
+        responses:
+          '200':
+            description: OK
+            content: {}

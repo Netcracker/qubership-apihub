@@ -67,12 +67,12 @@ paths:
       deprecated: true
       description: |
         Starts the SAML authentication process in APIHUB.
-        
-        In case of successful authentication, the request will be redirected to the **redirectUri** and 
+
+        In case of successful authentication, the request will be redirected to the **redirectUri** and
         the response will contain cookie with access token for future API calls.
         All subsequent APIHUB calls must use this token in a **BearerAuth** authentication.
       operationId: postAuthSAML
-      security: [ { } ]
+      security: [{}]
       parameters:
         - name: redirectUri
           in: query
@@ -123,7 +123,7 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PackageCreate"
-            examples: { }
+            examples: {}
         required: true
       responses:
         "201":
@@ -140,7 +140,7 @@ paths:
                         type: array
                         items:
                           $ref: "#/components/schemas/PackageList"
-              examples: { }
+              examples: {}
         "400":
           description: Bad request
           content:
@@ -156,14 +156,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "403":
           description: Forbidden
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "500":
           description: Internal Server Error
           content:
@@ -191,9 +191,9 @@ paths:
           in: query
           description: |
             Filter the packages by kind.
-            
+
             The list of values is acceptable. In this case, the following pattern will be used: ```?kind=group,package,dashboard```.
-            
+
             If not transmitted, the default value will be used.
           schema:
             type: array
@@ -210,7 +210,7 @@ paths:
           in: query
           description: |
             Show all the descendants to the parent workspace or group.
-            
+
             * If ```true```, return the list of all child groups/packages/dashboards to the parentId (take into account all other filter parameters).
             * If the parentId is not transmitted???
             * If the parent is transmitted, but kind not - and parentId = package???
@@ -296,7 +296,7 @@ paths:
                                   default: false
                                 summary:
                                   $ref: "#/components/schemas/ChangeSummary"
-              examples: { }
+              examples: {}
         "400":
           description: Bad request
           content:
@@ -312,7 +312,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "500":
           description: Internal Server Error
           content:
@@ -551,7 +551,7 @@ components:
           deprecatedInfo:
             description: |
               Additional information about single deprecated item:
-              * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated item. 
+              * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated item.
               * for GraphQL API it is value of 'reason' argument of @deprecated directive.
             type: string
           tolerantHash:
@@ -693,7 +693,7 @@ components:
           type: boolean
         restGroupingPrefix:
           description: |
-            Regular expression used as criteria for grouping operations. 
+            Regular expression used as criteria for grouping operations.
             Groups for the package version are calculated during publication of this version.
           type: string
           example: "/api/v1/{group}/"
@@ -1431,7 +1431,7 @@ components:
       title: SearchResultPackage
       description: |
         Global search result for packages with kind = package; must be returned when searchLevel = package
-        * If search term matches the package id/name/description/service name, return the latest published version only. 
+        * If search term matches the package id/name/description/service name, return the latest published version only.
         * If search term matches the version name/label, return that version.
       type: object
       required:
@@ -1938,7 +1938,7 @@ components:
     BuildResultV2:
       description: |
         Result of build operation in ZIP archive.
-        * The archive contains folders with sources, builded JSON documents and JSON operation files. 
+        * The archive contains folders with sources, builded JSON documents and JSON operation files.
         * In addition, several config files are provided. he structure of these files is described below.
       title: BuildResult
       type: object
@@ -1977,7 +1977,7 @@ components:
               description: |
                 Type of the build process. Available options are:
 
-                **build** - Standard build process. 
+                **build** - Standard build process.
                 Consist of contract and operations build and validation, calculation of the changelog, creation of the final version of the published contracts.
 
                 **changelog** - Only the changelog calculation, no API contracts version will be created.
@@ -2423,7 +2423,7 @@ components:
     BuildResult:
       description: |
         Result of build operation in ZIP archive.
-        * The archive contains folders with sources, builded JSON documents and JSON operation files. 
+        * The archive contains folders with sources, builded JSON documents and JSON operation files.
         * In addition, several config files are provided. he structure of these files is described below.
       title: BuildResult
       type: object
@@ -2773,7 +2773,7 @@ components:
                       deprecatedInfo:
                         description: |
                           Additional information about deprecated operation:
-                          * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated operation. 
+                          * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated operation.
                           * for GraphQL API it is value of 'reason' argument of @deprecated directive, which is defined for deprecated operation.
                         type: string
                       deprecatedInPreviousVersions:
@@ -2840,9 +2840,9 @@ components:
             type: array
             items:
               anyOf:
-               - type: string
-               - type: integer
-          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+                - type: string
+                - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"], ["/quoteManagement/v5/quote"]]
         currentValueHash:
           type: string
           description: |
@@ -2861,9 +2861,9 @@ components:
             type: array
             items:
               anyOf:
-               - type: string
-               - type: integer
-          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+                - type: string
+                - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"], ["/quoteManagement/v5/quote"]]
         previousValueHash:
           type: string
           description: |
@@ -2882,9 +2882,9 @@ components:
             type: array
             items:
               anyOf:
-               - type: string
-               - type: integer
-          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+                - type: string
+                - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"], ["/quoteManagement/v5/quote"]]
         previousDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
@@ -2894,9 +2894,9 @@ components:
             type: array
             items:
               anyOf:
-               - type: string
-               - type: integer
-          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+                - type: string
+                - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"], ["/quoteManagement/v5/quote"]]
         previousValueHash:
           type: string
           description: |
@@ -2920,9 +2920,9 @@ components:
             type: array
             items:
               anyOf:
-               - type: string
-               - type: integer
-          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+                - type: string
+                - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"], ["/quoteManagement/v5/quote"]]
         previousDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
@@ -2932,9 +2932,9 @@ components:
             type: array
             items:
               anyOf:
-               - type: string
-               - type: integer
-          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+                - type: string
+                - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"], ["/quoteManagement/v5/quote"]]
         previousKey:
           type: string
           description: Previous key (name) of the renamed entity.
@@ -2944,7 +2944,7 @@ components:
     BuildConfig:
       type: object
       description: |
-        Configuration of the source files. 
+        Configuration of the source files.
         Content can not be empty, files or refs are **required**.
       required:
         - version
@@ -2962,8 +2962,8 @@ components:
           example: "2022.2"
           default: ""
         previousVersionPackageId:
-          description: | 
-            Required in case of snapshot when publishing version should be compared to different package. 
+          description: |
+            Required in case of snapshot when publishing version should be compared to different package.
             Do not set anything if the package sould be compared to itself. Value equals to packageId is forbidden.
           type: string
           example: "QS.CloudOSS.PL.MC"
@@ -3062,9 +3062,9 @@ components:
                 description: File name.
                 example: "qitmf-v5.11.json"
               publish:
-                description: | 
-                  Flag, publish the source file or not. 
-                  Required for case with external refs when specification is separated into multiple files. 
+                description: |
+                  Flag, publish the source file or not.
+                  Required for case with external refs when specification is separated into multiple files.
                   After dereference in scope of build process the source files(parts) are no longer required. So it's possible to skip publish of such files.
                 type: boolean
                 default: true
@@ -3242,7 +3242,7 @@ components:
           example: template123.json
     BuildTypes:
       type: string
-      description: | 
+      description: |
         Type of the build process. Available options are:\
         **build** - Standard build process to publish new version. Consist of contract and operations build and validation, calculation of the changelog, creation of the final version of the published contracts.\
         **changelog** - Only the changelog calculation, no API contracts version will be created. The ```files``` and ```refs``` objects are not required in this case.\

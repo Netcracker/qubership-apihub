@@ -64,3 +64,6 @@ export function areDeclarationPathsEqual(firstItemDeclarationPaths: JsonPath[], 
 
   return true
 }
+
+export const getValueByPath = (value: any, path: JsonPath): any => path.reduce((data, key) => data[key], value)
+

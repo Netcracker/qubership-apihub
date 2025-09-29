@@ -30,6 +30,12 @@ describe('Number of declarative changes in rest operation test', () => {
     expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
   })
 
+  test('Multiple use of one schema in another schema which is used in response pathItems', async () => {
+    const result = await buildChangelogPackage('declarative-changes-in-rest-operation/case8')
+    expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+  })
+
   test('Multiple use of one schema in both request and response (different severity)', async () => {
     const result = await buildChangelogPackage('declarative-changes-in-rest-operation/case3')
     expect(result).toEqual(changesSummaryMatcher({

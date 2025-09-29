@@ -3,7 +3,7 @@ info:
   title: My Test API
   description: My Test API description
   version: "1.1"
-  contact: { }
+  contact: {}
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0
@@ -438,4 +438,4 @@ components:
           schema:
             $ref: "#/components/responses/error_400/content/application~1json/schema"
 security:
-  - openId: [ ]
+  - openId: []

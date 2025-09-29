@@ -103,7 +103,7 @@ paths:
       description: |
         Starts the SAML authentication process in APIHUB.
 
-        In case of successful authentication, the request will be redirected to the **redirectUri** and 
+        In case of successful authentication, the request will be redirected to the **redirectUri** and
         the response will contain cookie with access token for future API calls.
         All subsequent APIHUB calls must use this token in a **BearerAuth** authentication.
       operationId: postAuthSAML
@@ -2019,7 +2019,7 @@ paths:
             * new_version - publish_new_version.
             * package_version - patch_version_meta, delete_version, publish_new_revision.
             * package_management - create_package, delete_package, patch_package_meta.
-            * operations_group - create_manual_group, delete_manual_group, 
+            * operations_group - create_manual_group, delete_manual_group,
             update_operations_group_parameters
           in: query
           schema:
@@ -3095,7 +3095,7 @@ paths:
       summary: Publish package version via upload
       description: |
         Publish package version via upload. Possible options:
-        * **Client-side building** - client application marks, that the validation and build of the final specification will be outside the APIHUB backend. 
+        * **Client-side building** - client application marks, that the validation and build of the final specification will be outside the APIHUB backend.
         The final specifications will be stored using the POST /packages/{packageId}/publish/{publishId}/status API.
         The 202 response and the publish process Id will be returned in success.
         In case of the client session close, the build will be continued on the server-sde.
@@ -3126,9 +3126,9 @@ paths:
           in: query
           required: false
           description: "In case when resolved refs list contains multiple versions of the same package:
-            
+
             - if resolveConflicts=false - status 400 (Bad request). Conflicts should be resolved manually.
-            
+
             - if resolveConflicts=true - conflicts will be resolved automatically, some refs will be marked as excluded"
           schema:
             type: boolean
@@ -3534,7 +3534,7 @@ paths:
         - name: checkRevisions
           in: query
           description: |
-            Flag, if to search in the previous versions revisions. 
+            Flag, if to search in the previous versions revisions.
             * if several revisions were found, return only the maximum found value.
             * if false - return the last published revision.
           schema:
@@ -3705,7 +3705,7 @@ paths:
         - name: checkRevisions
           in: query
           description: |
-            Flag, if to search in the previous versions revisions. 
+            Flag, if to search in the previous versions revisions.
             * if several revisions were found, return only the maximum found value.
             * if false - return the last published revision.
           schema:
@@ -3815,7 +3815,7 @@ paths:
         - name: version
           in: path
           description: |
-            Package version. 
+            Package version.
             The mask <version>@<revision> may be used for search in a specific revision.
           required: true
           schema:
@@ -3972,9 +3972,9 @@ paths:
         - Admin
       summary: Update package version
       description: |
-        Update package version. 
+        Update package version.
         * If the parameter is not transmitted in request - its value stays unchanged.
-        * The empty parameter value in request sets the empty value in database. 
+        * The empty parameter value in request sets the empty value in database.
         * The array of labels will be fully replaced as-it-send, no JSON-Patch approach for arrays is applicable.
       operationId: patchPackagesIdVersionsIdV2
       security:
@@ -4140,7 +4140,7 @@ paths:
         - name: version
           in: path
           description: |
-            Package version. 
+            Package version.
             The mask <version>@<revision> may be used for search in a specific revision.
           required: true
           schema:
@@ -4529,7 +4529,7 @@ paths:
         - name: version
           in: path
           description: |
-            Package version. 
+            Package version.
             The mask <version>@<revision> may be used for search in a specific revision.
           required: true
           schema:
@@ -4758,7 +4758,7 @@ paths:
         - name: version
           in: path
           description: |
-            Package version. 
+            Package version.
             The mask <version>@<revision> may be used for search in a specific revision.
           required: true
           schema:
@@ -5146,8 +5146,8 @@ paths:
       description: Export API changes to xlsx file
       operationId: getPackageIdVersionIdChangesExport
       security:
-        - BearerAuth: [ ]
-        - api-key: [ ]
+        - BearerAuth: []
+        - api-key: []
       responses:
         "200":
           description: Success
@@ -5189,7 +5189,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "404":
           description: Not found
           content:
@@ -5493,9 +5493,9 @@ paths:
                   example: QS.CQSS.CPQ.TMF
                 version:
                   description: |
-                    Package version. 
+                    Package version.
                     The mask <version>@<revision> may be used for search in a specific revision.
-                    
+
                     If the @revision is not provided, the latest version's revision will be used.
                   type: string
                   example: "2022.3@3"
@@ -5507,7 +5507,7 @@ paths:
                   description: |
                     Name of the previous published version to compare with.
                     The mask <version>@<revision> may be used for search in a specific revision.
-                    
+
                     If the @revision is not provided, the latest version's revision will be used.
                   type: string
                   example: "2022.2@4"
@@ -5528,9 +5528,9 @@ paths:
                     example: QS.CQSS.CPQ.TMF
                   version:
                     description: |
-                      Package version. 
+                      Package version.
                       The mask <version>@<revision> will be used for return in a specific revision.
-                      
+
                       If the @<revision> was not transmitted in the request - it won't be returned in response. Consider the version as the latest one.
                     type: string
                     example: "2022.3@3"
@@ -5542,7 +5542,7 @@ paths:
                     description: |
                       Name of the previous published version.
                       The mask <version>@<revision> will be used for return a specific revision.
-                      
+
                       If the @<revision> was not transmitted in the request - it won't be returned in response. Consider the version as the latest one.
                     type: string
                     example: "2022.2@4"
@@ -5665,9 +5665,9 @@ paths:
                     example: QS.CQSS.CPQ.TMF
                   version:
                     description: |
-                      Package version. 
+                      Package version.
                       The mask <version>@<revision> will be used for return in a specific revision.
-                      
+
                       If the @<revision> was not transmitted in the request - it won't be returned in response. Consider the version as the latest one.
                     type: string
                     example: "2022.3@3"
@@ -5819,7 +5819,7 @@ paths:
           default: false
       - name: format
         in: query
-        description: | 
+        description: |
           Format of the exported file.\
           If buidType = reducedSourceSpecifications, then format can be yaml, json or html.\
           If buidType = mergedspecification, then format can be yaml or json; html is not supported for this buildType.
@@ -5847,7 +5847,7 @@ paths:
                     example: QS.CQSS.CPQ.TMF
                   version:
                     description: |
-                      Package version. 
+                      Package version.
                       The mask <version>@<revision> will be used for return in a specific revision.
                       If the @<revision> was not transmitted in the request - it won't be returned in response. Consider the version as the latest one.
                     type: string
@@ -6022,7 +6022,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "500":
           description: Internal Server Error
           content:
@@ -6077,7 +6077,7 @@ paths:
         - name: format
           in: query
           required: true
-          description: | 
+          description: |
             Format of the exported file.\
             If buidType = reducedSourceSpecifications, then format can be yaml, json or html.\
             If buidType = mergedspecification, then format can be yaml or json; html is not supported for this buildType.
@@ -6145,7 +6145,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "500":
           description: Internal Server Error
           content:
@@ -6228,7 +6228,7 @@ paths:
         - Export
       summary: Export offline API documentation by selected file
       description: |
-        Export of offline API documentation by selected file as a zip archive. 
+        Export of offline API documentation by selected file as a zip archive.
         Type of the documentation file is provided as input parameters:
         - interactive - html document
         - raw - yaml/json document.
@@ -6318,8 +6318,8 @@ paths:
         Export sources of package version as a zip archive and build configuration that was used for this version.
       operationId: getPackageVersionSourcesWithBuildConfig
       security:
-          - BearerAuth: [ ]
-          - api-key: [ ]
+          - BearerAuth: []
+          - api-key: []
       responses:
         "200":
           description: Success
@@ -6349,14 +6349,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "403":
           description: Forbidden
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "404":
           description: Not found
           content:
@@ -6388,7 +6388,7 @@ paths:
         - Export
       summary: Export offline API documentation by selected versions
       description: |
-        Export of offline API documentation by selected version (all files) as a zip archive. 
+        Export of offline API documentation by selected version (all files) as a zip archive.
         Type of the documentation file is provided as input parameters:
         * interactive - html document.
       operationId: getPackagesIdVersionsIdDoc
@@ -6467,7 +6467,7 @@ paths:
         - Roles
       summary: Create a new role
       description: |
-        Create a new role with the set of available permissions for this role. 
+        Create a new role with the set of available permissions for this role.
 
         The role may be assigned to the user for the specific package.
 
@@ -6579,7 +6579,7 @@ paths:
         - Roles
       summary: Update role
       description: |
-        Change role parameters. 
+        Change role parameters.
 
         If the parameter is not transmitted in the request, its value remains unchanged.
 
@@ -6644,7 +6644,7 @@ paths:
         - Roles
       summary: Delete role
       description: |
-        Delete a role with its permissions. 
+        Delete a role with its permissions.
 
         When the role is deleted, all users with that role shall be removed from packages.
 
@@ -6687,7 +6687,7 @@ paths:
         - Roles
       summary: Update the roles order
       description: |
-        Update the roles order. 
+        Update the roles order.
 
         The list of roles will be replaced, all existing roles are required in request (return an error otherwise).
       operationId: postRolesChangeOrder
@@ -7613,7 +7613,7 @@ paths:
                   example: "Billing account"
                 packageIds:
                   description: |
-                    List of Package Id(s). 
+                    List of Package Id(s).
                     * If user specified Workspace(s), then Workspace Id(s) must be transmitted.
                     * If user specified Workspace(s) and Group(s), then Group Id(s) must be transmitted.
                     * If user specified Workspace(s), Group(s) and Package(s) or Workspace(s) and Package(s), then Package Id(s) must be transmitted.
@@ -7816,7 +7816,7 @@ paths:
                   example: "Billing account"
                 packageIds:
                   description: |
-                    List of Package Id(s). 
+                    List of Package Id(s).
                     * If user specified Workspace(s), then Workspace Id(s) must be transmitted.
                     * If user specified Workspace(s) and Group(s), then Group Id(s) must be transmitted.
                     * If user specified Workspace(s), Group(s) and Package(s) or Workspace(s) and Package(s), then Package Id(s) must be transmitted.
@@ -8024,7 +8024,7 @@ paths:
                       title: SearchResultPackage
                       description: |
                         Global search result for packages with kind = package; must be returned when searchLevel = package
-                        * If search term matches the package id/name/description/service name, return the latest published version only. 
+                        * If search term matches the package id/name/description/service name, return the latest published version only.
                         * If search term matches the version name/label, return that version.
                       type: object
                       required:
@@ -8434,7 +8434,7 @@ paths:
       summary: Create internal user
       description: |
         Creation of the internal user, not connected to LDAP or GitLab.
-        * If the userId already exists, return an error. 
+        * If the userId already exists, return an error.
         * One email may be connected to several users at one time, no unique constraint.
         * The password will be stored in an encrypted form locally.
       operationId: postUsers
@@ -8569,7 +8569,7 @@ paths:
             type: string
             example: user1221
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       responses:
         "200":
           description: Success
@@ -8577,21 +8577,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-              examples: { }
+              examples: {}
         "401":
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "403":
           description: Forbidden
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "404":
           description: Not found
           content:
@@ -8711,7 +8711,7 @@ paths:
             Flag, filtering the operations without tags at all.
 
             In response will be returned the list of operations, on what the tag is not filled in.
-            
+
             This attribute has a higher priority than the **tag**. In case, then **emptyTag: true**, it will override the **tag** filter.
           schema:
             type: boolean
@@ -8891,7 +8891,7 @@ paths:
             Flag, filtering the operations without tags at all.
 
             In response will be returned the list of operations, on what the tag is not filled in.
-            
+
             This attribute has a higher priority than the **tag**. In case, then **emptyTag: true**, it will override the **tag** filter.
           schema:
             type: boolean
@@ -9070,7 +9070,7 @@ paths:
         Get summary of deprecated operations in the version
       operationId: getPackageIdVersionDeprecatedSummaryV3
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       parameters:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
@@ -9199,8 +9199,8 @@ paths:
         List of deprecated operations in the current version
       operationId: getPackagesIdVersionsIdApiTypeDeprecations
       security:
-        - BearerAuth: [ ]
-        - api-key: [ ]
+        - BearerAuth: []
+        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -9222,7 +9222,7 @@ paths:
         - name: version
           in: path
           description: |
-            Package version. 
+            Package version.
             The mask <version>@<revision> may be used for search in a specific revision.
           required: true
           schema:
@@ -9340,7 +9340,7 @@ paths:
                             deprecatedInfo:
                               description: |
                                 Additional information about deprecated operation:
-                                * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated operation. 
+                                * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated operation.
                                 * for GraphQL API it is value of 'reason' argument of @deprecated directive, which is defined for deprecated operation.
                               type: string
                             deprecatedItems:
@@ -9420,8 +9420,8 @@ paths:
         Deprecated item is entity that is deprecated inside of API operation. For example for REST API it can be parameter or schema, for GraphQL API - field or enum value.
       operationId: getPackagesIdVersionsApiTypeOperationsIddeprecatedItems
       security:
-        - BearerAuth: [ ]
-        - api-key: [ ]
+        - BearerAuth: []
+        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -9481,8 +9481,8 @@ paths:
         Get list of operations that have the same model
       operationId: getPackagesIdVersionsApiTypeOperationsIdModelsModelName
       security:
-        - BearerAuth: [ ]
-        - api-key: [ ]
+        - BearerAuth: []
+        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -9556,8 +9556,8 @@ paths:
         Export operations of specific API type.
       operationId: getPackagesIdVersionsIdApiTypeOperationsExport
       security:
-        - BearerAuth: [ ]
-        - api-key: [ ]
+        - BearerAuth: []
+        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -9670,7 +9670,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "500":
           description: Internal Server Error
           content:
@@ -9689,8 +9689,8 @@ paths:
         Export operations of specific API type.
       operationId: getPackagesIdVersionsIdApiTypeOperationsExport
       security:
-        - BearerAuth: [ ]
-        - api-key: [ ]
+        - BearerAuth: []
+        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -9801,7 +9801,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "500":
           description: Internal Server Error
           content:
@@ -10294,7 +10294,7 @@ paths:
               Flag, filtering the operations without tags at all.
 
               In response will be returned the list of operations, on what the tag is not filled in.
-              
+
               This attribute has a higher priority than the **tag**. In case, then **emptyTag: true**, it will override the **tag** filter.
             schema:
               type: boolean
@@ -10486,7 +10486,7 @@ paths:
                       packageId:
                         description: |
                           ID of package.\
-                          PackageId and version shall be specified in case of dashboard to identify source package. 
+                          PackageId and version shall be specified in case of dashboard to identify source package.
                           If packageId and version are not specified, this will mean that the source of the operation is the current package version.
                         type: string
                         example: "QS.CloudQSS.CPQ.Q-TMF"
@@ -10748,7 +10748,7 @@ paths:
                       packageId:
                         description: |
                           ID of package.\
-                          PackageId and version shall be specified in case of dashboard to identify source package. 
+                          PackageId and version shall be specified in case of dashboard to identify source package.
                           If packageId and version are not specified, this will mean that the source of the operation is the current package version.
                         type: string
                         example: "QS.CloudQSS.CPQ.Q-TMF"
@@ -10876,7 +10876,7 @@ paths:
                       packageId:
                         description: |
                           ID of package.\
-                          PackageId and version shall be specified in case of dashboard to identify source package. 
+                          PackageId and version shall be specified in case of dashboard to identify source package.
                           If packageId and version are not specified, this will mean that the source of the operation is the current package version.
                         type: string
                         example: "QS.CloudQSS.CPQ.Q-TMF"
@@ -11138,7 +11138,7 @@ paths:
       description: |
         Get list of documents in a version. The result depend on the package.kind:
         * For package.kind: package - return the list of version documents.
-        * For package.kind: dashboard - return the list of all referenced dashboards and their referenced packages in recursion. 
+        * For package.kind: dashboard - return the list of all referenced dashboards and their referenced packages in recursion.
           The returned list will contain only leaves - referenced packages of the lowest level with their published documents.
       operationId: getPackagesIdVersionsIdDocuments
       security:
@@ -12176,8 +12176,8 @@ paths:
         Get the list of version revisions.
       operationId: getPackagesIdVersionsIdRevisions
       security:
-        - BearerAuth: [ ]
-        - api-key: [ ]
+        - BearerAuth: []
+        - api-key: []
       parameters:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
@@ -12263,7 +12263,7 @@ paths:
                               description: Namespace of Agent's publication.
                               type: string
                               example: cloudQSS-release2
-              examples: { }
+              examples: {}
         "301":
           description: Moved Permanently
           headers:
@@ -12290,14 +12290,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "403":
           description: Forbidden
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "404":
           description: Not found
           content:
@@ -12325,8 +12325,8 @@ paths:
         Get the list of version revisions.
       operationId: getPackagesIdVersionsIdRevisionsV3
       security:
-        - BearerAuth: [ ]
-        - api-key: [ ]
+        - BearerAuth: []
+        - api-key: []
       parameters:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
@@ -12350,7 +12350,7 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/PackageVersionRevision"
-              examples: { }
+              examples: {}
         "301":
           description: Moved Permanently
           headers:
@@ -12377,7 +12377,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "404":
           description: Not found
           content:
@@ -12406,8 +12406,8 @@ paths:
       description: Recursively delete all expired versions in 'Draft' status under group or workspace
       operationId: deleteExpiredVersionsRecursively
       security:
-        - BearerAuth: [ ]
-        - api-key: [ ]
+        - BearerAuth: []
+        - api-key: []
       requestBody:
         description: Recursive delete parameters
         content:
@@ -12621,7 +12621,7 @@ paths:
       summary: Create personal private package for the user
       description: |
         Any user is able to create one personal private workspace (*no permissions required*)
-        
+
         PackageId for this workspace could be set via user creation endpoint (only for new users) or generated automatically when user first logs in to apihub
       operationId: postUsersIdAvailablePackagePromoteStatuses
       security:
@@ -12686,9 +12686,9 @@ paths:
       summary: Get list of available package publish statuses for the user.
       description: |
         By collection of packages, **get** the available statuses for publish into for the particular user.
-        
+
         Statuses list depends on the current user access rights for the particular package.
-        
+
         The response is a **mapped list** of statuses to the packageIds.
       operationId: getUsersIdAvailablePackagePromoteStatuses
       security:
@@ -12715,7 +12715,7 @@ paths:
                   type: array
                   items:
                     type: string
-                  example: ["QS.CloudQSS.CPQ.Q-TMF","QS.CloudQSS.CPQ.QE-SRV"]
+                  example: ["QS.CloudQSS.CPQ.Q-TMF", "QS.CloudQSS.CPQ.QE-SRV"]
         required: true
       responses:
         "200":
@@ -12766,7 +12766,7 @@ paths:
       description: Allows to send any request to any address.
       operationId: getAgentsIdNamespacesIdServicesProxy
       security:
-        - { }
+        - {}
       tags:
         - TryIt
       parameters:
@@ -13227,7 +13227,7 @@ components:
           deprecatedInfo:
             description: |
               Additional information about single deprecated item:
-              * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated item. 
+              * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated item.
               * for GraphQL API it is value of 'reason' argument of @deprecated directive.
             type: string
           tolerantHash:
@@ -13369,7 +13369,7 @@ components:
           type: boolean
         restGroupingPrefix:
           description: |
-            Regular expression used as criteria for grouping operations. 
+            Regular expression used as criteria for grouping operations.
             Groups for the package version are calculated during publication of this version.
           type: string
           example: "/api/v1/{group}/"
@@ -14107,7 +14107,7 @@ components:
       title: SearchResultPackage
       description: |
         Global search result for packages with kind = package; must be returned when searchLevel = package
-        * If search term matches the package id/name/description/service name, return the latest published version only. 
+        * If search term matches the package id/name/description/service name, return the latest published version only.
         * If search term matches the version name/label, return that version.
       type: object
       required:
@@ -14614,7 +14614,7 @@ components:
     BuildResultV2:
       description: |
         Result of build operation in ZIP archive.
-        * The archive contains folders with sources, builded JSON documents and JSON operation files. 
+        * The archive contains folders with sources, builded JSON documents and JSON operation files.
         * In addition, several config files are provided. he structure of these files is described below.
       title: BuildResult
       type: object
@@ -14653,7 +14653,7 @@ components:
               description: |
                 Type of the build process. Available options are:
 
-                **build** - Standard build process. 
+                **build** - Standard build process.
                 Consist of contract and operations build and validation, calculation of the changelog, creation of the final version of the published contracts.
 
                 **changelog** - Only the changelog calculation, no API contracts version will be created.
@@ -15099,7 +15099,7 @@ components:
     BuildResult:
       description: |
         Result of build operation in ZIP archive.
-        * The archive contains folders with sources, builded JSON documents and JSON operation files. 
+        * The archive contains folders with sources, builded JSON documents and JSON operation files.
         * In addition, several config files are provided. he structure of these files is described below.
       title: BuildResult
       type: object
@@ -15449,7 +15449,7 @@ components:
                       deprecatedInfo:
                         description: |
                           Additional information about deprecated operation:
-                          * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated operation. 
+                          * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated operation.
                           * for GraphQL API it is value of 'reason' argument of @deprecated directive, which is defined for deprecated operation.
                         type: string
                       deprecatedInPreviousVersions:
@@ -15516,9 +15516,9 @@ components:
             type: array
             items:
               anyOf:
-               - type: string
-               - type: integer
-          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+                - type: string
+                - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"], ["/quoteManagement/v5/quote"]]
         currentValueHash:
           type: string
           description: |
@@ -15537,9 +15537,9 @@ components:
             type: array
             items:
               anyOf:
-               - type: string
-               - type: integer
-          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+                - type: string
+                - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"], ["/quoteManagement/v5/quote"]]
         previousValueHash:
           type: string
           description: |
@@ -15558,9 +15558,9 @@ components:
             type: array
             items:
               anyOf:
-               - type: string
-               - type: integer
-          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+                - type: string
+                - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"], ["/quoteManagement/v5/quote"]]
         previousDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
@@ -15570,9 +15570,9 @@ components:
             type: array
             items:
               anyOf:
-               - type: string
-               - type: integer
-          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+                - type: string
+                - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"], ["/quoteManagement/v5/quote"]]
         previousValueHash:
           type: string
           description: |
@@ -15596,9 +15596,9 @@ components:
             type: array
             items:
               anyOf:
-               - type: string
-               - type: integer
-          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+                - type: string
+                - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"], ["/quoteManagement/v5/quote"]]
         previousDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
@@ -15608,9 +15608,9 @@ components:
             type: array
             items:
               anyOf:
-               - type: string
-               - type: integer
-          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"],["/quoteManagement/v5/quote"]]
+                - type: string
+                - type: integer
+          example: [["components/schemas/Cat/minProperties", "components/schemas/Dog/minProperties"], ["/quoteManagement/v5/quote"]]
         previousKey:
           type: string
           description: Previous key (name) of the renamed entity.
@@ -15620,7 +15620,7 @@ components:
     BuildConfig:
       type: object
       description: |
-        Configuration of the source files. 
+        Configuration of the source files.
         Content can not be empty, files or refs are **required**.
       required:
         - version
@@ -15638,8 +15638,8 @@ components:
           example: "2022.2"
           default: ""
         previousVersionPackageId:
-          description: | 
-            Required in case of snapshot when publishing version should be compared to different package. 
+          description: |
+            Required in case of snapshot when publishing version should be compared to different package.
             Do not set anything if the package sould be compared to itself. Value equals to packageId is forbidden.
           type: string
           example: "QS.CloudOSS.PL.MC"
@@ -15738,9 +15738,9 @@ components:
                 description: File name.
                 example: "qitmf-v5.11.json"
               publish:
-                description: | 
-                  Flag, publish the source file or not. 
-                  Required for case with external refs when specification is separated into multiple files. 
+                description: |
+                  Flag, publish the source file or not.
+                  Required for case with external refs when specification is separated into multiple files.
                   After dereference in scope of build process the source files(parts) are no longer required. So it's possible to skip publish of such files.
                 type: boolean
                 default: true
@@ -15918,7 +15918,7 @@ components:
           example: template123.json
     BuildTypes:
       type: string
-      description: | 
+      description: |
         Type of the build process. Available options are:\
         **build** - Standard build process to publish new version. Consist of contract and operations build and validation, calculation of the changelog, creation of the final version of the published contracts.\
         **changelog** - Only the changelog calculation, no API contracts version will be created. The ```files``` and ```refs``` objects are not required in this case.\

@@ -4,7 +4,7 @@ info:
   version: 0.1.0
 paths:
   /path1:
-    get:
+    post:
       parameters:
         - name: p1
           in: query
@@ -13,4 +13,4 @@ paths:
       responses:
         '200':
           description: OK
-          content: { }
+          content: {}

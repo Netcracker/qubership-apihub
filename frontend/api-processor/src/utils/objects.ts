@@ -65,3 +65,20 @@ export const isSymbol = (value: unknown): value is symbol => {
 export const isObject = (value: unknown): value is Record<string | symbol, unknown> => {
   return typeof value === 'object' && value !== null
 }
+
+export const getSymbolValueIfDefined = <T extends object>(
+  obj: T,
+  symbol: symbol,
+): unknown => {
+  const symbolObj = obj as { [key: symbol]: unknown }
+
+  return symbol in symbolObj ? symbolObj[symbol] : undefined
+}
+
+export const extractSymbolProperty = <T extends object>(
+  obj: T,
+  symbol: symbol,
+): { [key: symbol]: unknown } => {
+  const value = getSymbolValueIfDefined(obj, symbol)
+  return value !== undefined ? { [symbol]: value } : {}
+}

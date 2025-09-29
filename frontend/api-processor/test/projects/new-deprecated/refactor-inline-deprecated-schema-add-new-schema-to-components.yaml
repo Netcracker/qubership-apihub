@@ -16,7 +16,7 @@ paths:
               TestSchema:
                 $ref: "#/components/schemas/schema"
         required: true
-      responses: { }
+      responses: {}
 
 components:
   schemas:

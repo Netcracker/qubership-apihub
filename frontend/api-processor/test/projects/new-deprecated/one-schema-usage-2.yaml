@@ -14,9 +14,9 @@ paths:
       responses:
         '200':
           description: OK
-          content: { }
+          content: {}
     post:
       responses:
         '200':
           description: OK
-          content: { }
+          content: {}
