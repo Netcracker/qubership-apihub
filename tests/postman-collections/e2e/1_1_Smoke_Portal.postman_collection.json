@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_1_Smoke_Portal",
-        "_postman_id": "785ce50e-ce48-4c78-8864-d9b4200e2b21",
+        "_postman_id": "fc9a33a8-edb3-4c90-90f5-8b553003e86d",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -699,16 +699,16 @@
                             ],
                             "request": {
                                 "url": {
-									"raw": "{{SERVER_HOST}}/api/v2/packages",
-									"host": [
-										"{{SERVER_HOST}}"
-									],
-									"path": [
-										"api",
-										"v2",
-										"packages"
-									]
-								},
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
                                 "method": "POST",
                                 "header": [
                                     {
@@ -718,14 +718,14 @@
                                     }
                                 ],
                                 "body": {
-									"mode": "raw",
-									"raw": "{\r\n    \"id\": \"QS-STATIC-TEST-1\",\r\n    \"Alias\" :\"QS-STATIC-TEST-1\",\r\n    \"name\": \"Test Workspace\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								}
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-1\",\r\n    \"Alias\" :\"QS-STATIC-TEST-1\",\r\n    \"name\": \"Test Workspace\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
@@ -2984,7 +2984,7 @@
                                             "\r",
                                             "pm.test(\"All events made by specified user\", function() {\r",
                                             "    for (var i = 0; i < data.events.length; i++) {\r",
-                                            "        pm.expect(data.events[i].userId).to.be.oneOf(['x_apihub', 'x_APIHUB']);\r",
+                                            "        pm.expect(data.events[i].principal.Id).to.be.oneOf(['x_apihub', 'x_APIHUB']);\r",
                                             "    }\r",
                                             "});\r",
                                             ""
@@ -4472,16 +4472,16 @@
                             ],
                             "request": {
                                 "url": {
-									"raw": "{{SERVER_HOST}}/api/v2/packages",
-									"host": [
-										"{{SERVER_HOST}}"
-									],
-									"path": [
-										"api",
-										"v2",
-										"packages"
-									]
-								},
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
                                 "method": "POST",
                                 "header": [
                                     {
@@ -4491,14 +4491,14 @@
                                     }
                                 ],
                                 "body": {
-									"mode": "raw",
-									"raw": "{\r\n    \"id\": \"QS-STATIC-TEST-2\",\r\n    \"Alias\" :\"QS-STATIC-TEST-2\",\r\n    \"name\": \"Test Workspace 2\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								}
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-2\",\r\n    \"Alias\" :\"QS-STATIC-TEST-2\",\r\n    \"name\": \"Test Workspace 2\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
@@ -10790,16 +10790,16 @@
                             ],
                             "request": {
                                 "url": {
-									"raw": "{{SERVER_HOST}}/api/v2/packages",
-									"host": [
-										"{{SERVER_HOST}}"
-									],
-									"path": [
-										"api",
-										"v2",
-										"packages"
-									]
-								},
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
                                 "method": "POST",
                                 "header": [
                                     {
@@ -10809,14 +10809,14 @@
                                     }
                                 ],
                                 "body": {
-									"mode": "raw",
-									"raw": "{\r\n    \"id\": \"QS-STATIC-TEST-3\",\r\n    \"Alias\" :\"QS-STATIC-TEST-3\",\r\n    \"name\": \"Test Workspace 3\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								}
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-3\",\r\n    \"Alias\" :\"QS-STATIC-TEST-3\",\r\n    \"name\": \"Test Workspace 3\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
@@ -13484,16 +13484,16 @@
                             ],
                             "request": {
                                 "url": {
-									"raw": "{{SERVER_HOST}}/api/v2/packages",
-									"host": [
-										"{{SERVER_HOST}}"
-									],
-									"path": [
-										"api",
-										"v2",
-										"packages"
-									]
-								},
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
                                 "method": "POST",
                                 "header": [
                                     {
@@ -13503,14 +13503,14 @@
                                     }
                                 ],
                                 "body": {
-									"mode": "raw",
-									"raw": "{\r\n    \"id\": \"QS-STATIC-TEST-2\",\r\n    \"Alias\" :\"QS-STATIC-TEST-2\",\r\n    \"name\": \"Test Workspace 2\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								}
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-2\",\r\n    \"Alias\" :\"QS-STATIC-TEST-2\",\r\n    \"name\": \"Test Workspace 2\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
