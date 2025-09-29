@@ -1,7 +1,7 @@
 import type { APIRequestContext, APIResponse } from '@playwright/test'
 import type { RestAgentConfig, RestSnapshot } from './rest.types'
 
-//TODO: сhange endpoints after they change on the backend (/apihub/api/ doesn't work)
+//TODO: change endpoints after they change on the backend (/apihub/api/ doesn't work)
 export async function rCreateSnapshot(rc: APIRequestContext, params: RestSnapshot): Promise<APIResponse> {
   return await rc.post(`/apihub/api/v1/agents/${params.agentId}/namespaces/${params.namespace}/snapshots?clientBuild=false&promote=${params.promote}`, {
     data: {

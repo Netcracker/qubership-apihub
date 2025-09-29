@@ -3,14 +3,13 @@ import { expect } from '@services/expect-decorator'
 import { PortalPage } from '@portal/pages/PortalPage'
 import {
   GRP_P_VIEWER_R,
-  NO_PERM_ADD_MEMBER,
   NO_PERM_CREATE_PACKAGES,
   NO_PERM_DEL_PACKAGE,
   NO_PERM_EDIT_PACKAGE,
-  NO_PERM_GEN_TOKEN,
-  NO_PERM_MANAGE_ROLES,
+  NO_PERM_SEE_PAGE,
 } from '@test-data/portal'
 import { TICKET_BASE_URL } from '@test-setup'
+import { SETTINGS_TAB_TOKENS, SETTINGS_TAB_USERS } from '@portal/entities'
 
 test.describe('03.1.3 Access Control. Viewer role. (Group)', () => {
 
@@ -27,7 +26,7 @@ test.describe('03.1.3 Access Control. Viewer role. (Group)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { generalTab, accessTokensTab, accessControlTab } = versionPage.packageSettingsPage
+      const { generalTab, accessTokensTab, accessControlTab, noPermissionPlaceholder } = versionPage.packageSettingsPage
 
       await test.step('Navigate to a group', async () => {
         await portalPage.gotoGroup(testGroup)
@@ -58,52 +57,15 @@ test.describe('03.1.3 Access Control. Viewer role. (Group)', () => {
       })
 
       await test.step('View "Access Tokens" tab', async () => {
-        await accessTokensTab.click()
-
-        await expect(accessTokensTab.nameTxtFld).toBeDisabled()
-        await expect(accessTokensTab.rolesAc).toBeDisabled()
-        await expect(accessTokensTab.createdForAc).toBeDisabled()
-        await expect(accessTokensTab.generateBtn).toBeDisabled()
-
-        await accessTokensTab.generateBtn.hover({ force: true })
-
-        await expect(portalPage.tooltip).toHaveCount(1)
-        await expect(portalPage.tooltip).toHaveText(NO_PERM_GEN_TOKEN)
-
-        await accessTokensTab.getTokenRow(1).hover()
-
-        await expect(accessTokensTab.getTokenRow(1).deleteBtn).toBeDisabled()
-
-        await accessTokensTab.getTokenRow(1).deleteBtn.hover({ force: true })
-
-        await expect(portalPage.tooltip).toHaveCount(1)
-        //! await expect(portalPage.tooltip).toHaveText(NO_PERM_REVOKE_TOKEN) //Issue: TestCase-B-1019
+        await expect(accessTokensTab).not.toBeVisible()
+        await portalPage.gotoPackage(testGroup, SETTINGS_TAB_TOKENS)
+        await expect(noPermissionPlaceholder).toHaveText(NO_PERM_SEE_PAGE)
       })
 
       await test.step('View "User Access Control" tab', async () => {
-        await accessControlTab.click()
-
-        await expect(accessControlTab.addUserBtn).toBeDisabled()
-
-        await accessControlTab.addUserBtn.hover({ force: true })
-
-        await expect(portalPage.tooltip).toHaveCount(1)
-        await expect(portalPage.tooltip).toHaveText(NO_PERM_ADD_MEMBER)
-
-        await accessControlTab.getUserRow(1).hover()
-
-        await expect(accessControlTab.getUserRow(1).adminChx).toBeDisabled()
-        await expect(accessControlTab.getUserRow(1).deleteBtn).toBeDisabled()
-
-        await accessControlTab.getUserRow(1).adminChx.hover({ force: true })
-
-        await expect(portalPage.tooltip).toHaveCount(1)
-        await expect(portalPage.tooltip).toHaveText(NO_PERM_MANAGE_ROLES)
-
-        await accessControlTab.getUserRow(1).deleteBtn.hover({ force: true })
-
-        await expect(portalPage.tooltip).toHaveCount(1)
-        await expect(portalPage.tooltip).toHaveText(NO_PERM_MANAGE_ROLES)
+        await expect(accessControlTab).not.toBeVisible()
+        await portalPage.gotoPackage(testGroup, SETTINGS_TAB_USERS)
+        await expect(noPermissionPlaceholder).toHaveText(NO_PERM_SEE_PAGE)
       })
     })
 })

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { Breadcrumbs, Button, Title } from '@shared/components/base'
+import { Breadcrumbs, Button, Placeholder, Title } from '@shared/components/base'
 import { GeneralSettingsTab } from './PackageSettingsPage/GeneralSettingsTab'
 import { ApiSpecConfigTab } from './PackageSettingsPage/ApiSpecConfigTab'
 import { VersionsTab } from './PackageSettingsPage/VersionsTab'
@@ -16,6 +16,7 @@ export class PackageSettingsPage {
   readonly versionsTab = new VersionsTab(this.page)
   readonly accessTokensTab = new AccessTokensTab(this.page)
   readonly accessControlTab = new AccessControlTab(this.page)
+  readonly noPermissionPlaceholder  = new Placeholder(this.page.getByTestId('NoPermissionPlaceholder'), 'No permission')
 
   constructor(private readonly page: Page) { }
 }

@@ -5,7 +5,6 @@ export const ROOT_RESOURCES = 'resources'
 export const ROOT_DOWNLOADS = 'temp/downloads'
 
 export class TestFile {
-
   readonly path: string
   readonly testMeta?: TestMetaFile
   name: string
@@ -21,7 +20,8 @@ export class TestFile {
   }
 
   async blob(): Promise<Blob> {
-    return new Blob([await readFile(this.path)])
+    const buffer = await readFile(this.path)
+    return new Blob([new Uint8Array(buffer)])
   }
 }
 

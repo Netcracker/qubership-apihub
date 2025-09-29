@@ -1,8 +1,11 @@
 # IDEs
-/.vscode/
 /.cursor/
-/.trae/
 /.junie/
+/.qoder/
+/.trae/
+/.vscode/
+/.windsurf/
+/.zed/
 /.idea/
 !/.idea/icon.png
 *.iml

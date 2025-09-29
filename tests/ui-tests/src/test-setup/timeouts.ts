@@ -16,7 +16,7 @@ export const DOWNLOAD_EXPECT = 10_000
 
 export const CREATE_TIMEOUT = 3_000
 
-export const PUBLISH_TIMEOUT = 30_000
+export const PUBLISH_TIMEOUT = 50_000
 
 export const DISCOVERY_TIMEOUT = 120_000
 

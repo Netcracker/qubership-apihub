@@ -38,8 +38,7 @@
     }
   ],
   "schemes": [
-    "https",
-    "http"
+    "https"
   ],
   "paths": {
     "/pet": {
@@ -469,6 +468,10 @@
         "summary": "Place an order for a pet",
         "description": "",
         "operationId": "placeOrder",
+        "consumes": [
+          "application/json",
+          "application/xml"
+        ],
         "produces": [
           "application/xml",
           "application/json"
@@ -576,6 +579,10 @@
         "summary": "Create user",
         "description": "This can only be done by the logged in user.",
         "operationId": "createUser",
+        "consumes": [
+          "application/json",
+          "application/xml"
+        ],
         "produces": [
           "application/xml",
           "application/json"
@@ -606,6 +613,10 @@
         "summary": "Creates list of users with given input array",
         "description": "",
         "operationId": "createUsersWithArrayInput",
+        "consumes": [
+          "application/json",
+          "application/xml"
+        ],
         "produces": [
           "application/xml",
           "application/json"
@@ -639,6 +650,10 @@
         "summary": "Creates list of users with given input array",
         "description": "",
         "operationId": "createUsersWithListInput",
+        "consumes": [
+          "application/json",
+          "application/xml"
+        ],
         "produces": [
           "application/xml",
           "application/json"
@@ -780,6 +795,10 @@
         "summary": "Updated user",
         "description": "This can only be done by the logged in user.",
         "operationId": "updateUser",
+        "consumes": [
+          "application/json",
+          "application/xml"
+        ],
         "produces": [
           "application/xml",
           "application/json"
@@ -845,8 +864,9 @@
   "securityDefinitions": {
     "petstore_auth": {
       "type": "oauth2",
-      "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-      "flow": "implicit",
+      "authorizationUrl": "https://petstore.swagger.io/oauth/dialog",
+      "flow": "accessCode",
+      "tokenUrl": "https://petstore.swagger.io/oauth/token",
       "scopes": {
         "write:pets": "modify pets in your account",
         "read:pets": "read your pets"
