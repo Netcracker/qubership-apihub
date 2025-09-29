@@ -23,16 +23,26 @@ import { isObject } from "@stoplight/diff-elements-core/utils/guards";
 
 export function isDiff(diffRecordItem?: DiffMetaRecord | Diff): diffRecordItem is Diff {
   const maybeDiff = diffRecordItem as Diff
-  return !!diffRecordItem && (
-    isDiffAdd(maybeDiff) || isDiffRemove(maybeDiff) || isDiffReplace(maybeDiff) || isDiffRename(maybeDiff)
+  if (!maybeDiff) {
+    return false
+  }
+  return (
+    isDiffAdd(maybeDiff) ||
+    isDiffRemove(maybeDiff) ||
+    isDiffReplace(maybeDiff) ||
+    isDiffRename(maybeDiff)
   )
 }
 
 export function isDiffMetaRecord(diffRecordItem?: DiffMetaRecord | Diff): diffRecordItem is DiffMetaRecord {
-  const maybeNotDiff = diffRecordItem as Diff
-  return !!diffRecordItem && (
-    !isDiffAdd(maybeNotDiff) && !isDiffRemove(maybeNotDiff) && !isDiffReplace(maybeNotDiff) && !isDiffRename(maybeNotDiff)
-  )
+  if (!diffRecordItem) {
+    return false
+  }
+  if (typeof diffRecordItem !== 'object') {
+    return false
+  }
+  const maybeDiffs = Object.values(diffRecordItem)
+  return maybeDiffs.every(isDiff)
 }
 
 export const combineDiffType = (a: DiffType, b: DiffType): DiffType => {
@@ -175,8 +185,9 @@ export const extractAmountOfDiffs = (value: any, diffMetaKey: symbol): { [key in
     }
 
     if (isDiffMetaRecord(meta)) {
+      const combinedMeta = combineDiffMetas(meta)
       // @ts-ignore
-      addMetaToInitial(combineDiffMetas(meta));
+      addMetaToInitial(combinedMeta);
     } else {
       initial[meta.type]++;
     }

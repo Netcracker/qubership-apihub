@@ -633,7 +633,7 @@ ChangePathParamName.args = {
           get: {
             summary: 'Get test by key',
             parameters: [
-              { 
+              {
                 name: 'key',
                 in: 'path',
                 required: true,
@@ -688,4 +688,59 @@ export const RenameMediaTypeInRequestBody: Story = {
   name: '[Request] Rename media type in request body',
   render: StoryComponent,
   args: { before: renameMediaTypeInRequestBodyBefore, after: renameMediaTypeInRequestBodyAfter },
+}
+
+const beforeBugCrashInfiniteAdditionalPropsInDiffs = {
+  "openapi": "3.0.1",
+  "paths": {
+    "/path1": {
+      "get": {
+        "operationId": "myId",
+        "responses": {
+          "200": {
+            "description": "lorem ipsum",
+            "content": {
+              "text/plain": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {}
+}
+const afterBugCrashInfiniteAdditionalPropsInDiffs = {
+  "openapi": "3.0.1",
+  "paths": {
+    "/path1": {
+      "get": {
+        "operationId": "myId",
+        "responses": {
+          "200": {
+            "description": "lorem ipsum",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {}
+}
+
+// Root cause: incorrect behavior of "isDiffMetaRecord" which produces infinite loop in "combineDiffMetas"
+export const BugCrashInfiniteAdditionalPropsInDiffs: Story = {
+  name: '[Bug] Crash Infinite Additional Props In Diffs',
+  render: StoryComponent,
+  args: { before: beforeBugCrashInfiniteAdditionalPropsInDiffs, after: afterBugCrashInfiniteAdditionalPropsInDiffs },
 }
