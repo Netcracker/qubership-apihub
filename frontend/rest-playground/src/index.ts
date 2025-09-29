@@ -1,4 +1,4 @@
-export { Playground, PlaygroundProps } from './components/TryIt'
+export { Playground, PlaygroundProps } from './components/TryIt/Playground'
 export { HttpMethodColors } from './constants'
 export { MockingProvider } from './containers/MockingProvider'
 export * from './context/InlineRefResolver'

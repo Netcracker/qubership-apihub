@@ -123,7 +123,7 @@ function computeChildNodes(
       }
 
       if (match.children) {
-        nodes.push(...computeChildNodes(document, data[key], match.children, transformer, uri))
+        nodes.push(...computeChildNodes(document, (data as Record<string, unknown>)[key], match.children, transformer, uri))
       }
     }
   }

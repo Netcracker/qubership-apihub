@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/hooks/index.ts",
+    "src/hooks/useServerProcessing.ts",
+    "src/hooks/usePerformanceLogger.ts",
+    "src/utils/http-spec/IServer.ts"
+  ],
+  "compilerOptions": {
+    "outDir": "./dist",
+    "declarationDir": "./dist",
+    "declaration": true,
+    "types": ["react"]
+  }
+}

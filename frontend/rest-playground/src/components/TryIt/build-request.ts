@@ -6,7 +6,6 @@ import {
 import { Request as HarRequest } from "har-format";
 
 import {
-  getServerUrlWithDefaultValues,
   IServer,
 } from "../../utils/http-spec/IServer";
 import {
@@ -52,17 +51,13 @@ interface BuildRequestInput {
 
 const getServerUrl = ({
   chosenServer,
-  httpOperation,
   mockData,
   corsProxy,
-  origin,
 }: Pick<
   BuildRequestInput,
-  "httpOperation" | "chosenServer" | "mockData" | "corsProxy" | "origin"
+  "chosenServer" | "mockData" | "corsProxy"
 >) => {
-  const server = chosenServer || httpOperation.servers?.[0];
-  const chosenServerUrl = server && getServerUrlWithDefaultValues(server);
-  const serverUrl = mockData?.url || chosenServerUrl || origin;
+  const serverUrl = mockData?.url || chosenServer?.url;
 
   if (corsProxy && !mockData) {
     return `${corsProxy}${serverUrl}`;
@@ -84,11 +79,9 @@ export async function buildFetchRequest({
   corsProxy,
 }: BuildRequestInput): Promise<Parameters<typeof fetch>> {
   const serverUrl = getServerUrl({
-    httpOperation,
     mockData,
     chosenServer,
     corsProxy,
-    origin,
   });
 
   const shouldIncludeBody = ["PUT", "POST", "PATCH"].includes(
@@ -123,8 +116,7 @@ export async function buildFetchRequest({
 
   const shouldUseProxyEndpoint = chosenServer?.shouldUseProxyEndpoint;
 
-  // urlObject is concatenated this way to avoid /user and /user/ endpoint edge cases
-  const urlObject = new URL(serverUrl + expandedPath);
+  const urlObject = joinUrl(serverUrl!, expandedPath)
   urlObject.search = new URLSearchParams(
     queryParamsWithAuth.map(nameAndValueObjectToPair)
   ).toString();
@@ -228,14 +220,11 @@ export async function buildHarRequest({
   mockData,
   chosenServer,
   corsProxy,
-  origin,
 }: BuildRequestInput): Promise<HarRequest> {
   const serverUrl = getServerUrl({
-    httpOperation,
     mockData,
     chosenServer,
     corsProxy,
-    origin,
   });
 
   const mimeType = mediaTypeContent?.mediaType ?? "application/json";
@@ -264,7 +253,7 @@ export async function buildHarRequest({
   const [queryParamsWithAuth, headerParamsWithAuth] =
     runAuthRequestEnhancements(auth, queryParams, headerParams);
   const expandedPath = uriExpand(httpOperation.path, parameterValues);
-  const urlObject = new URL(serverUrl + expandedPath);
+  const urlObject = joinUrl(serverUrl!, expandedPath)
 
   let postData: HarRequest["postData"] = undefined;
   if (shouldIncludeBody && typeof bodyInput === "string") {
@@ -312,4 +301,15 @@ function uriExpand(uri: string, data: Dictionary<string, string>) {
   return uri.replace(/{([^#?]+?)}/g, (match, value) => {
     return data[value] || value;
   });
+}
+
+/**
+ * Joins a base URL and a slash-prefixed path. This function prevents the standard URL constructor's behavior
+ * of overwriting the entire base URL's path when concatenating with a path that starts with a slash.
+ * Handles cases where the base URL may or may not end with a slash.
+ */
+function joinUrl(baseUrl: string, path: string) {
+  const baseUrlObj = new URL(baseUrl)
+  baseUrlObj.pathname = baseUrlObj.pathname.replace(/\/+$/, '') + path
+  return baseUrlObj
 }

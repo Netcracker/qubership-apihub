@@ -20,3 +20,15 @@ export function hashCode(str: string) {
   }
   return hash
 }
+
+/**
+ * Replaces placeholders in a string with values from an object
+ * @param template - String with placeholders like "{key}"
+ * @param values - Object with key-value pairs for replacement
+ * @returns String with placeholders replaced by values
+ */
+export const replacePlaceholders = (template: string, values: Record<string, string>): string => {
+  return template.replace(/\{([^}]+)}/g, (match, key) => {
+    return values[key] !== undefined ? values[key] : match
+  })
+}
