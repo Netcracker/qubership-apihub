@@ -1,0 +1,560 @@
+{
+	"info": {
+		"_postman_id": "5cb9c5f5-4102-4f5a-9710-2039d22220c4",
+		"name": "Linter Service API",
+		"description": "API for validating OpenAPI specifications and managing rulesets",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "42584020"
+	},
+	"item": [
+		{
+			"name": "Ruleset Management",
+			"item": [
+				{
+					"name": "GET List Rulesets",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/rulesets?page=1&limit=100",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"rulesets"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST Create Ruleset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"var data = JSON.parse(responseBody);\r",
+									"pm.environment.set(\"rulesetId\", data.id)"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "rulesetName",
+									"value": "custom-v1",
+									"type": "text"
+								},
+								{
+									"key": "apiType",
+									"value": "openapi-3-0",
+									"type": "text"
+								},
+								{
+									"key": "linter",
+									"value": "spectral",
+									"type": "text"
+								},
+								{
+									"key": "rulesetFile",
+									"type": "file",
+									"src": "/C:/Users/Viacheslav/Downloads/ruleset.yaml"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/rulesets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"rulesets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Ruleset Metadata",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/rulesets/{{rulesetId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"rulesets",
+								"{{rulesetId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST Activate Ruleset",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/rulesets/{{rulesetId}}/activation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"rulesets",
+								"{{rulesetId}}",
+								"activation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE Ruleset",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/rulesets/{{rulesetId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"rulesets",
+								"{{rulesetId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Activation History",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/rulesets/{{rulesetId}}/activation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"rulesets",
+								"{{rulesetId}}",
+								"activation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Download Ruleset",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/rulesets/{{rulesetId}}/data?disposition=attachment",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"rulesets",
+								"{{rulesetId}}",
+								"data"
+							],
+							"query": [
+								{
+									"key": "disposition",
+									"value": "attachment"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Validation Result",
+			"item": [
+				{
+					"name": "GET Validation Summary",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/packages/{{packageId}}/versions/{{version}}/validation/summary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"packages",
+								"{{packageId}}",
+								"versions",
+								"{{version}}",
+								"validation",
+								"summary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Validated Documents",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text"
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/packages/{{packageId}}/versions/{{version}}/validation/documents",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"packages",
+								"{{packageId}}",
+								"versions",
+								"{{version}}",
+								"validation",
+								"documents"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Document Validation Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/packages/{{packageId}}/versions/{{version}}/validation/documents/{{slug}}/details",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"packages",
+								"{{packageId}}",
+								"versions",
+								"{{version}}",
+								"validation",
+								"documents",
+								"{{slug}}",
+								"details"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Validation Operations",
+			"item": [
+				{
+					"name": "POST Run Manual Validation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/packages/{{packageId}}/versions/{{version}}/validation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"packages",
+								"{{packageId}}",
+								"versions",
+								"{{version}}",
+								"validation"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "/",
+			"type": "string"
+		},
+		{
+			"key": "bearerToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "apiKey",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "personalAccessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "rulesetId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "packageId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "version",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "slug",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

@@ -1,0 +1,1 @@
+podman build ./ -t netcracker/qubership-api-linter-service
