@@ -40,6 +40,7 @@ type RoleService interface {
 	GetUserPackagePromoteStatuses(packageIds []string, userId string) (*view.AvailablePackagePromoteStatuses, error)
 	GetAvailableVersionPublishStatuses(ctx context.SecurityContext, packageId string) ([]string, error)
 	HasRequiredPermissions(ctx context.SecurityContext, packageId string, requiredPermissions ...view.RolePermission) (bool, error)
+	HasRequiredPermissionsAcrossAllPackages(ctx context.SecurityContext, requiredPermissions ...view.RolePermission) (bool, error)
 	HasManageVersionPermission(ctx context.SecurityContext, packageId string, versionStatuses ...string) (bool, error)
 	ValidateDefaultRole(ctx context.SecurityContext, packageId string, roleId string) error
 	PackageRoleExists(roleId string) (bool, error)
@@ -629,6 +630,37 @@ func (r roleServiceImpl) HasRequiredPermissions(ctx context.SecurityContext, pac
 			Params:  map[string]interface{}{"packageId": packageId},
 		}
 	}
+	for _, requiredPermission := range requiredPermissions {
+		if !utils.SliceContains(userPermissions, string(requiredPermission)) {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func (r roleServiceImpl) HasRequiredPermissionsAcrossAllPackages(ctx context.SecurityContext, requiredPermissions ...view.RolePermission) (bool, error) {
+	if r.IsSysadm(ctx) {
+		return true, nil
+	}
+
+	if apikeyRoles := ctx.GetApikeyRoles(); len(apikeyRoles) > 0 {
+		apikeyPermissions, err := r.roleRepository.GetPermissionsForRoles(apikeyRoles)
+		if err != nil {
+			return false, err
+		}
+		for _, requiredPermission := range requiredPermissions {
+			if !utils.SliceContains(apikeyPermissions, string(requiredPermission)) {
+				return false, nil
+			}
+		}
+		return true, nil
+	}
+
+	userPermissions, err := r.roleRepository.GetAllUserPermissions(ctx.GetUserId())
+	if err != nil {
+		return false, err
+	}
+
 	for _, requiredPermission := range requiredPermissions {
 		if !utils.SliceContains(userPermissions, string(requiredPermission)) {
 			return false, nil

@@ -297,7 +297,8 @@ func main() {
 	branchService := service.NewBranchService(projectService, draftRepository, gitClientProvider, publishedRepository, wsBranchService, branchEditorsService, branchRepository)
 	projectFilesService := service.NewProjectFilesService(gitClientProvider, projectRepository, branchService)
 	ptHandler := service.NewPackageTransitionHandler(transitionRepository)
-	publishedService := service.NewPublishedService(branchService, publishedRepository, projectRepository, buildRepository, gitClientProvider, wsBranchService, favoritesRepository, operationRepository, activityTrackingService, monitoringService, minioStorageService, systemInfoService)
+	publishNotificationService := service.NewPublishNotificationService(olricProvider)
+	publishedService := service.NewPublishedService(branchService, publishedRepository, projectRepository, buildRepository, gitClientProvider, wsBranchService, favoritesRepository, operationRepository, activityTrackingService, monitoringService, minioStorageService, systemInfoService, publishNotificationService)
 	contentService := service.NewContentService(draftRepository, projectService, branchService, gitClientProvider, wsBranchService, templateService, systemInfoService)
 	refService := service.NewRefService(draftRepository, projectService, branchService, publishedRepository, wsBranchService)
 	wsFileEditService := service.NewWsFileEditService(userService, contentService, branchEditorsService, wsLoadBalancer)
@@ -381,7 +382,7 @@ func main() {
 	roleController := controller.NewRoleController(roleService)
 	samlAuthController := controller.NewSamlAuthController(userService, systemInfoService, idpManager) //deprecated
 	authController := controller.NewAuthController(systemInfoService, idpManager)
-	userController := controller.NewUserController(userService, privateUserPackageService, roleService.IsSysadm)
+	userController := controller.NewUserController(userService, privateUserPackageService, roleService)
 	jwtPubKeyController := controller.NewJwtPubKeyController()
 	oauthController := controller.NewOauth20Controller(integrationsService, userService, systemInfoService)
 	logoutController := controller.NewLogoutController(tokenRevocationService, systemInfoService)
@@ -495,11 +496,7 @@ func main() {
 	r.HandleFunc("/api/v2/packages", security.Secure(packageController.GetPackagesList)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/publish/availableStatuses", security.Secure(packageController.GetAvailableVersionStatusesForPublish)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v2/packages/{packageId}/apiKeys", security.Secure(apihubApiKeyController.GetApiKeys_deprecated)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v3/packages/{packageId}/apiKeys", security.Secure(apihubApiKeyController.GetApiKeys_v3_deprecated)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v4/packages/{packageId}/apiKeys", security.Secure(apihubApiKeyController.GetApiKeys)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/packages/{packageId}/apiKeys", security.Secure(apihubApiKeyController.CreateApiKey_deprecated)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v3/packages/{packageId}/apiKeys", security.Secure(apihubApiKeyController.CreateApiKey_v3_deprecated)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v4/packages/{packageId}/apiKeys", security.Secure(apihubApiKeyController.CreateApiKey)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/packages/{packageId}/apiKeys/{id}", security.Secure(apihubApiKeyController.RevokeApiKey)).Methods(http.MethodDelete)
 
@@ -511,7 +508,7 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}/recalculateGroups", security.Secure(packageController.RecalculateOperationGroups)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/packages/{packageId}/calculateGroups", security.Secure(packageController.CalculateOperationGroups)).Methods(http.MethodGet)
 
-	//api for agent
+	//api for extensions
 	r.HandleFunc("/api/v2/users/{userId}/availablePackagePromoteStatuses", security.Secure(roleController.GetAvailableUserPackagePromoteStatuses)).Methods(http.MethodPost)
 
 	r.HandleFunc("/api/v2/packages/{packageId}/publish/{publishId}/status", security.Secure(publishV2Controller.GetPublishStatus)).Methods(http.MethodGet)
@@ -556,6 +553,8 @@ func main() {
 	r.HandleFunc("/api/v2/auth/publicKey", security.NoSecure(jwtPubKeyController.GetRsaPublicKey)).Methods(http.MethodGet)
 	// Required to verify api key for external authorization
 	r.HandleFunc("/api/v2/auth/apiKey", security.NoSecure(apihubApiKeyController.GetApiKeyByKey)).Methods(http.MethodGet)
+	// Required to verify PAT for external authorization
+	r.HandleFunc("/api/v2/auth/pat", security.NoSecure(personalAccessTokenController.GetPatByPat)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/auth/apiKey/{apiKeyId}", security.Secure(apihubApiKeyController.GetApiKeyById)).Methods(http.MethodGet)
 	// Required for extensions to check Apihub auth. Just return 200 OK if authentication is passed.
 	r.HandleFunc("/api/v1/auth/token", security.SecureJWT(func(writer http.ResponseWriter, request *http.Request) {})).Methods(http.MethodGet)

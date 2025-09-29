@@ -174,7 +174,6 @@ func (u usersServiceImpl) SearchUsersInLdap(ldapSearchFilterReq view.LdapSearchF
 		return nil, nil
 	}
 	ld, err := ldap.DialURL(ldapServerUrl)
-	defer ld.Close()
 	if err != nil {
 		log.Debugf("[ldap.DialURL()] err -%s", err.Error())
 		return nil, &exception.CustomError{
@@ -184,6 +183,7 @@ func (u usersServiceImpl) SearchUsersInLdap(ldapSearchFilterReq view.LdapSearchF
 			Params:  map[string]interface{}{"server": ldapServerUrl, "error": err.Error()},
 		}
 	}
+	defer ld.Close()
 	err = ld.Bind(
 		fmt.Sprintf("cn=%s,%s,%s",
 			u.systemInfoService.GetLdapUser(),

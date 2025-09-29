@@ -39,18 +39,18 @@ type UserController interface {
 	GetExtendedUser(w http.ResponseWriter, r *http.Request)
 }
 
-func NewUserController(service service.UserService, privateUserPackageService service.PrivateUserPackageService, isSysadm func(context.SecurityContext) bool) UserController {
+func NewUserController(service service.UserService, privateUserPackageService service.PrivateUserPackageService, roleService service.RoleService) UserController {
 	return &userControllerImpl{
 		service:                   service,
 		privateUserPackageService: privateUserPackageService,
-		isSysadm:                  isSysadm,
+		roleService:               roleService,
 	}
 }
 
 type userControllerImpl struct {
 	service                   service.UserService
 	privateUserPackageService service.PrivateUserPackageService
-	isSysadm                  func(context.SecurityContext) bool
+	roleService               service.RoleService
 }
 
 func (u userControllerImpl) GetUserAvatar(w http.ResponseWriter, r *http.Request) {
@@ -85,7 +85,20 @@ func (u userControllerImpl) GetUserAvatar(w http.ResponseWriter, r *http.Request
 }
 
 func (u userControllerImpl) GetUsers(w http.ResponseWriter, r *http.Request) {
-	var err error
+	ctx := context.Create(r)
+	sufficientPrivileges, err := u.roleService.HasRequiredPermissionsAcrossAllPackages(ctx, view.UserAccessManagementPermission)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
 		utils.RespondWithCustomError(w, customError)
@@ -133,6 +146,22 @@ func (u userControllerImpl) GetUsers(w http.ResponseWriter, r *http.Request) {
 
 func (u userControllerImpl) GetUserById(w http.ResponseWriter, r *http.Request) {
 	userId := getStringParam(r, "userId")
+	ctx := context.Create(r)
+	if userId != ctx.GetUserId() {
+		sufficientPrivileges, err := u.roleService.HasRequiredPermissionsAcrossAllPackages(ctx, view.UserAccessManagementPermission)
+		if err != nil {
+			utils.RespondWithError(w, "Failed to check user privileges", err)
+			return
+		}
+		if !sufficientPrivileges {
+			utils.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusForbidden,
+				Code:    exception.InsufficientPrivileges,
+				Message: exception.InsufficientPrivilegesMsg,
+			})
+			return
+		}
+	}
 
 	user, err := u.service.GetUserFromDB(userId)
 	if err != nil {
@@ -194,7 +223,7 @@ func (u userControllerImpl) CreatePrivatePackageForUser(w http.ResponseWriter, r
 	userId := getStringParam(r, "userId")
 	ctx := context.Create(r)
 	if userId != ctx.GetUserId() {
-		if !u.isSysadm(ctx) {
+		if !u.roleService.IsSysadm(ctx) {
 			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusForbidden,
 				Code:    exception.InsufficientPrivileges,

@@ -18,38 +18,6 @@ import (
 	"time"
 )
 
-type ApihubApiKey_deprecated struct {
-	Id        string     `json:"id"`
-	PackageId string     `json:"packageId"`
-	Name      string     `json:"name"`
-	CreatedBy string     `json:"createdBy"`
-	CreatedAt time.Time  `json:"createdAt"`
-	DeletedBy string     `json:"deletedBy,omitempty"`
-	DeletedAt *time.Time `json:"deletedAt,omitempty"`
-	ApiKey    string     `json:"apiKey,omitempty"`
-	Roles     []string   `json:"roles"`
-}
-
-type ApihubApiKeys_deprecated struct {
-	ApiKeys []ApihubApiKey_deprecated `json:"apiKeys"`
-}
-
-type ApihubApiKey_v3_deprecated struct {
-	Id        string     `json:"id"`
-	PackageId string     `json:"packageId"`
-	Name      string     `json:"name"`
-	CreatedBy User       `json:"createdBy"`
-	CreatedAt time.Time  `json:"createdAt"`
-	DeletedBy string     `json:"deletedBy,omitempty"`
-	DeletedAt *time.Time `json:"deletedAt,omitempty"`
-	ApiKey    string     `json:"apiKey,omitempty"`
-	Roles     []string   `json:"roles"`
-}
-
-type ApihubApiKeys_v3_deprecated struct {
-	ApiKeys []ApihubApiKey_v3_deprecated `json:"apiKeys"`
-}
-
 type ApihubApiKey struct {
 	Id         string     `json:"id"`
 	PackageId  string     `json:"packageId"`
@@ -65,11 +33,6 @@ type ApihubApiKey struct {
 
 type ApihubApiKeys struct {
 	ApiKeys []ApihubApiKey `json:"apiKeys"`
-}
-
-type ApihubApiKeyCreateReq_deprecated struct {
-	Name  string   `json:"name" validate:"required"`
-	Roles []string `json:"roles"`
 }
 
 type ApihubApiKeyCreateReq struct {

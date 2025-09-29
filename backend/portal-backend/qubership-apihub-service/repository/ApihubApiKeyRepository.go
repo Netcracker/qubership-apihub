@@ -19,14 +19,10 @@ import (
 )
 
 type ApihubApiKeyRepository interface {
-	SaveApiKey_deprecated(apihubApiKeyEntity *entity.ApihubApiKeyEntity_deprecated) error
 	SaveApiKey(apihubApiKeyEntity *entity.ApihubApiKeyEntity) error
 	RevokeApiKey(id string, userId string) error
-	GetPackageApiKeys_deprecated(packageId string) ([]entity.ApihubApiKeyEntity_deprecated, error)
-	GetPackageApiKeys_v3_deprecated(packageId string) ([]entity.ApihubApiKeyUserEntity_deprecated, error)
 	GetPackageApiKeys(packageId string) ([]entity.ApihubApiKeyUserEntity, error)
 	GetApiKeyByHash(apiKeyHash string) (*entity.ApihubApiKeyEntity, error)
-	GetPackageApiKey_deprecated(apiKeyId string, packageId string) (*entity.ApihubApiKeyUserEntity_deprecated, error)
 	GetPackageApiKey(apiKeyId string, packageId string) (*entity.ApihubApiKeyUserEntity, error)
 	GetApiKey(apiKeyId string) (*entity.ApihubApiKeyEntity, error)
 }

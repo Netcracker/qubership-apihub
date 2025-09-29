@@ -153,6 +153,25 @@ paths:
                               type: string
                       autoLogin:
                         type: boolean
+                  extensions:
+                    description: List of enabled extension services for apihub
+                    type: array
+                    items:
+                      description: Extension item
+                      type: object
+                      properties:
+                        name:
+                          description: Unique name of the extension service
+                          type: string
+                          example: linter
+                        baseUrl:
+                          description: URL of the extension service
+                          type: string
+                          example: http://example.com
+                        pathPrefix:
+                          description: path for routing
+                          type: string
+                          example: api-linter
         "500":
           description: Internal Server Error
           content:
@@ -2971,408 +2990,6 @@ paths:
               description: New packageId of moved package
         "401":
           description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                InternalServerError:
-                  $ref: "#/components/examples/InternalServerError"
-  "/api/v2/packages/{packageId}/apiKeys":
-    parameters:
-      - $ref: "#/components/parameters/packageId"
-    post:
-      deprecated: true
-      tags:
-        - Admin
-      summary: Create a package API Key
-      description: |
-        Create a package API Key.
-        The Api Key for package with kind:group is acceptable for all child groups and packages.
-      operationId: postPackagesIdApiKeys
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-      requestBody:
-        description: Create API key parameters
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: API key name
-                roles:
-                  description: List of roles for api key. Limited by user's available roles, i.e. only available roles could be set. List of available roles could be retrieved via "/packages/{packageId}/availableRoles" endpoint.
-                  type: array
-                  items:
-                    type: string
-              required:
-                - name
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - type: object
-                    description: ApiKey details for the package
-                    title: PackageApiKey
-                    properties:
-                      id:
-                        description: ApiKey unique identifier
-                        type: string
-                      packageId:
-                        description: Internal unique package ID (full alias)
-                        type: string
-                      name:
-                        description: ApiKey name
-                        type: string
-                      createdBy:
-                        type: string
-                      createdAt:
-                        description: Date and time of ApiKey creation
-                        type: string
-                        format: datetime
-                      roles:
-                        description: List of roles.
-                        type: array
-                        items:
-                          type: string
-                  - type: object
-                    properties:
-                      apiKey:
-                        description: |
-                          Generated ApiKey. It shows only once. Need to copy to your credentials storage.
-                        type: string
-              examples: {}
-        "301":
-          description: Moved Permanently
-          headers:
-            Location:
-              schema:
-                type: string
-              description: Current ednpoint with new packageId of moved package
-            X-New-Package-Id:
-              schema:
-                type: string
-              description: New packageId of moved package
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                IncorrectInputParams:
-                  $ref: "#/components/examples/IncorrectInputParameters"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                InternalServerError:
-                  $ref: "#/components/examples/InternalServerError"
-    get:
-      deprecated: true
-      tags:
-        - Admin
-      summary: Package API Keys list retrieve
-      description: |
-        Get a package API Keys list.
-      operationId: getPackagesIdApiKeys
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  apiKeys:
-                    description: List of apikeys for package.
-                    type: array
-                    items:
-                      type: object
-                      description: ApiKey details for the package
-                      title: PackageApiKey
-                      properties:
-                        id:
-                          description: ApiKey unique identifier
-                          type: string
-                        packageId:
-                          description: Internal unique package ID (full alias)
-                          type: string
-                        name:
-                          description: ApiKey name
-                          type: string
-                        createdBy:
-                          type: string
-                        createdAt:
-                          description: Date and time of ApiKey creation
-                          type: string
-                          format: datetime
-                        roles:
-                          description: List of roles.
-                          type: array
-                          items:
-                            type: string
-              examples: {}
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                InternalServerError:
-                  $ref: "#/components/examples/InternalServerError"
-  "/api/v3/packages/{packageId}/apiKeys":
-    parameters:
-      - $ref: "#/components/parameters/packageId"
-    post:
-      tags:
-        - Admin
-      deprecated: true
-      x-deprecation-reason: New version of API is created - POST /api/v4/packages/{packageId}/apiKeys.
-      summary: Create a package API Key
-      description: |
-        Create a package API Key.
-        The Api Key for package with kind:group is acceptable for all child groups and packages.\
-        If packageId = '\*', then system tokens shall be created. Only system administrator can specify packageId = '\*'.
-      operationId: postPackagesIdApiKeysV3
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-      requestBody:
-        description: Create API key parameters
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: API key name
-                roles:
-                  description: List of roles for api key. Limited by user's available roles, i.e. only available roles could be set. List of available roles could be retrieved via "/packages/{packageId}/availableRoles" endpoint.
-                  type: array
-                  items:
-                    type: string
-              required:
-                - name
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - type: object
-                    description: ApiKey details for the package
-                    title: PackageApiKey
-                    properties:
-                      id:
-                        description: ApiKey unique identifier
-                        type: string
-                      packageId:
-                        description: Internal unique package ID (full alias)
-                        type: string
-                      name:
-                        description: ApiKey name
-                        type: string
-                      createdBy:
-                        $ref: "#/components/schemas/User"
-                      createdAt:
-                        description: Date and time of ApiKey creation
-                        type: string
-                        format: datetime
-                      roles:
-                        description: List of roles.
-                        type: array
-                        items:
-                          type: string
-                  - type: object
-                    properties:
-                      apiKey:
-                        description: |
-                          Generated ApiKey. It shows only once. Need to copy to your credentials storage.
-                        type: string
-              examples: {}
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                IncorrectInputParams:
-                  $ref: "#/components/examples/IncorrectInputParameters"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                InternalServerError:
-                  $ref: "#/components/examples/InternalServerError"
-    get:
-      tags:
-        - Admin
-      deprecated: true
-      x-deprecation-reason: New version of API is created - GET /api/v4/packages/{packageId}/apiKeys.
-      summary: Package API Keys list retrieve
-      description: |
-        Get a package API Keys list.\
-        If packageId = '\*', then system tokens shall be returned. Only system administrator can specify packageId = '\*'.
-      operationId: getPackagesIdApiKeysV3
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  apiKeys:
-                    description: List of apikeys for package.
-                    type: array
-                    items:
-                      type: object
-                      description: ApiKey details for the package
-                      title: PackageApiKey
-                      properties:
-                        id:
-                          description: ApiKey unique identifier
-                          type: string
-                        packageId:
-                          description: Internal unique package ID (full alias)
-                          type: string
-                        name:
-                          description: ApiKey name
-                          type: string
-                        createdBy:
-                          $ref: "#/components/schemas/User"
-                        createdAt:
-                          description: Date and time of ApiKey creation
-                          type: string
-                          format: datetime
-                        roles:
-                          description: List of roles.
-                          type: array
-                          items:
-                            type: string
-              examples: {}
-        "301":
-          description: Moved Permanently
-          headers:
-            Location:
-              schema:
-                type: string
-              description: Current ednpoint with new packageId of moved package
-            X-New-Package-Id:
-              schema:
-                type: string
-              description: New packageId of moved package
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "403":
-          description: Forbidden
           content:
             application/json:
               schema:
@@ -7894,6 +7511,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: Internal Server Error
           content:
@@ -8322,6 +7945,12 @@ paths:
               description: New packageId of moved package
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
           content:
             application/json:
               schema:
@@ -9848,6 +9477,13 @@ paths:
               examples: {}
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "403":
+          description: Forbidden
           content:
             application/json:
               schema:

@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security/idp"
 )
@@ -18,6 +19,7 @@ type Config struct {
 	Editor               EditorConfig
 	Olric                OlricConfig
 	Cleanup              CleanupConfig
+	Extensions           []view.Extension
 }
 
 type DatabaseConfig struct {

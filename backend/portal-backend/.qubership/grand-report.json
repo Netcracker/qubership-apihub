@@ -1,0 +1,30 @@
+{
+  "exclusions" : [ {
+    "t-hash" : "00000000",
+    "f-hash" : "0d000f95633c557deedf8eb1c44ee3b1e2f4dd7bd71fb3bae44e1fccd1ba6ad7"
+  }, {
+    "t-hash" : "795f701a5a477424919b8f2f6dbd915815e3aeaba2f01c5585b62088f0ea72f1",
+    "f-hash" : "2751bee66fe299b15419e3b544d923dba686ad269edfc95b8c3708e7a8f26919"
+  }, {
+    "t-hash" : "d0c92c764c5647d43d7166efc3e7d350751de063c1388bd2e113fab4865529d3",
+    "f-hash" : "4eb6792e6d5fda994d172e0ee47925bd63f50ed2dbec482e4809a4dc624ad74c"
+  }, {
+    "t-hash" : "58752b756ddeeb694f824db2e99508ee8df1581a0a222ebfff2a5c24c7affda9",
+    "f-hash" : "56d0194412710900df7740c072fc3585c03022cd8c32ba8a5091dc601e2f8b1f"
+  }, {
+    "t-hash" : "4cd448cef17d9d3e0777a39b047bd548acfce96b746fedc8d1e569851ff7b1c3",
+    "f-hash" : "8edf8728f1887210dde70b15345d7ea4a7d2ee334dc55af943e3b61bc79bc84f"
+  }, {
+    "t-hash" : "d0c92c764c5647d43d7166efc3e7d350751de063c1388bd2e113fab4865529d3",
+    "f-hash" : "9ac7c5c39b36e6b9b094421aa2f13f9807217efa619b2660e12dcc2d7aa3bdb9"
+  }, {
+    "t-hash" : "58752b756ddeeb694f824db2e99508ee8df1581a0a222ebfff2a5c24c7affda9",
+    "f-hash" : "a3b7c5722af8719b965a971419e3d939f07c2eb944e3f5f4f7f51fc97cb3bb37"
+  }, {
+    "t-hash" : "00000000",
+    "f-hash" : "f60e0dc90cc2d94eb618390a4a14fe8efb3c340fa233dba4a53390bc3b82756f"
+  }, {
+    "t-hash" : "d0c92c764c5647d43d7166efc3e7d350751de063c1388bd2e113fab4865529d3",
+    "f-hash" : "fccb1ba736ab89372f4a5b6fa8957b4747940ee87a6d011d29b4ba5b4b6977cf"
+  } ]
+}

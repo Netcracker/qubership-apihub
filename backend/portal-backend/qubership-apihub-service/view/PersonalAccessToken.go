@@ -26,3 +26,9 @@ type PersonalAccessTokenItem struct {
 	CreatedAt time.Time                `json:"createdAt"`
 	Status    PersonaAccessTokenStatus `json:"status"`
 }
+
+type PersonalAccessTokenExtAuthView struct {
+	Pat         PersonalAccessTokenItem `json:"personalAccessToken"`
+	User        User                    `json:"user"`
+	SystemRoles []string                `json:"systemRoles"`
+}

@@ -105,6 +105,7 @@ type SystemInfoService interface {
 	GetSoftDeletedDataCleanupSchedule() string
 	GetSoftDeletedDataCleanupTimeout() int
 	GetSoftDeletedDataTTLDays() int
+	GetExtensions() []view.Extension
 }
 
 func (g *systemInfoServiceImpl) GetCredsFromEnv() *view.DbCredentials {
@@ -117,15 +118,15 @@ func (g *systemInfoServiceImpl) GetCredsFromEnv() *view.DbCredentials {
 	}
 }
 
-func (s *systemInfoServiceImpl) GetMinioStorageCreds() *view.MinioStorageCreds {
+func (g *systemInfoServiceImpl) GetMinioStorageCreds() *view.MinioStorageCreds {
 	return &view.MinioStorageCreds{
-		BucketName:           s.GetMinioBucketName(),
-		IsActive:             s.IsMinioStorageActive(),
-		Endpoint:             s.GetMinioEndpoint(),
-		Crt:                  s.GetMinioCrt(),
-		AccessKeyId:          s.GetMinioAccessKeyId(),
-		SecretAccessKey:      s.GetMinioSecretAccessKey(),
-		IsOnlyForBuildResult: s.IsMinioStoreOnlyBuildResult(),
+		BucketName:           g.GetMinioBucketName(),
+		IsActive:             g.IsMinioStorageActive(),
+		Endpoint:             g.GetMinioEndpoint(),
+		Crt:                  g.GetMinioCrt(),
+		AccessKeyId:          g.GetMinioAccessKeyId(),
+		SecretAccessKey:      g.GetMinioSecretAccessKey(),
+		IsOnlyForBuildResult: g.IsMinioStoreOnlyBuildResult(),
 	}
 }
 
@@ -400,16 +401,16 @@ func (g *systemInfoServiceImpl) GetBuildsCleanupSchedule() string {
 	return g.config.Cleanup.Builds.Schedule
 }
 
-func (s *systemInfoServiceImpl) InsecureProxyEnabled() bool {
-	return s.config.Security.InsecureProxy
+func (g *systemInfoServiceImpl) InsecureProxyEnabled() bool {
+	return g.config.Security.InsecureProxy
 }
 
 func (g *systemInfoServiceImpl) GetMetricsGetterSchedule() string {
 	return g.config.TechnicalParameters.MetricsGetterSchedule
 }
 
-func (s *systemInfoServiceImpl) MonitoringEnabled() bool {
-	return s.config.Monitoring.Enabled
+func (g *systemInfoServiceImpl) MonitoringEnabled() bool {
+	return g.config.Monitoring.Enabled
 }
 
 func (g *systemInfoServiceImpl) GetMinioAccessKeyId() string {
@@ -611,4 +612,11 @@ func (g *systemInfoServiceImpl) GetSoftDeletedDataCleanupTimeout() int {
 
 func (g *systemInfoServiceImpl) GetSoftDeletedDataTTLDays() int {
 	return g.config.Cleanup.SoftDeletedData.TTLDays
+}
+
+func (g *systemInfoServiceImpl) GetExtensions() []view.Extension {
+	if len(g.config.Extensions) == 0 {
+		return make([]view.Extension, 0)
+	}
+	return g.config.Extensions
 }
