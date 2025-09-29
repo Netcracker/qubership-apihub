@@ -2166,17 +2166,59 @@ func (v versionServiceImpl) publishFromCSV(ctx context.SecurityContext, dashboar
 		Revision     int
 		OperationIds []string
 	}
-	columns := 4
-	serviceNameCol := 0
-	serviceVersionCol := 1
-	methodCol := 2
-	pathCol := 3
 
 	separator := ','
 	customSeparator := getCSVSeparator(csvOriginal[0][0])
 	if customSeparator != nil {
 		separator = *customSeparator
 	}
+	
+	report := make([][]string, len(csvOriginal))
+	for i := range csvOriginal {
+		report[i] = make([]string, len(csvOriginal[i]))
+		copy(report[i], csvOriginal[i])
+	}
+
+	colNamesRow := 0
+	//skip first row if its just a separator
+	if customSeparator != nil {
+		colNamesRow = 1
+	}
+
+	// TODO: check len(csvOriginal)
+
+	colNames := csvOriginal[colNamesRow]
+
+	serviceNameCol := -1
+	serviceVersionCol := -1
+	methodCol := -1
+	pathCol := -1
+	extensionCols := make(map[string]int, 0)
+
+	for i, name := range colNames {
+		switch name {
+		case "service":
+			serviceNameCol = i
+			break
+		case "version":
+			serviceVersionCol = i
+			break
+		case "method":
+			methodCol = i
+			break
+		case "path":
+			pathCol = i
+			break
+		default:
+			extensionCols[name] = i
+		}
+	}
+	if serviceNameCol == -1 || serviceVersionCol == -1 || methodCol == -1 || pathCol == -1 {
+		v.updateDashboardPublishProcess(publishEntity, string(view.StatusError), fmt.Sprintf("Some mandatory columns [%s, %s, %s, %s] are not present in table header", "service", "version", "method", "path"))
+		return
+	}
+
+	firstRow := colNamesRow + 1
 
 	servicesMap := make(map[string]*ServiceInfo)
 	allServices := make(map[string]struct{})
@@ -2185,22 +2227,11 @@ func (v versionServiceImpl) publishFromCSV(ctx context.SecurityContext, dashboar
 	notIncludedVersions := make(map[string]struct{})
 	notIncludedOperationsCount := 0
 
-	report := make([][]string, len(csvOriginal))
-	for i := range csvOriginal {
-		report[i] = make([]string, len(csvOriginal[i]))
-		copy(report[i], csvOriginal[i])
-	}
-
-	firstRow := 0
-	//skip first row if its just a separator
-	if customSeparator != nil {
-		firstRow = 1
-	}
 	pathParamsRegex := regexp.MustCompile(`\{.+?\}`)
 	for i := firstRow; i < len(csvOriginal); i++ {
 		row := csvOriginal[i]
-		if len(row) != columns {
-			report[i] = append(report[i], "incorrect number of columns")
+		if len(row) < len(colNames) {
+			report[i] = append(report[i], fmt.Sprintf("number of columns in row (%d) do not match table header(%d)", len(row), len(colNames)))
 			continue
 		}
 		serviceName := row[serviceNameCol]
