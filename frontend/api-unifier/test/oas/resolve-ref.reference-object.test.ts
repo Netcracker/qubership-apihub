@@ -1,5 +1,6 @@
 import {
   normalize,
+  NormalizeOptions,
   OPEN_API_PROPERTY_DESCRIPTION,
   OPEN_API_PROPERTY_SUMMARY,
   RefErrorType,
@@ -19,7 +20,7 @@ import notHangUpWhenProcessingResponseWhichPointsToItself
   from '../resources/reference-object/not-hang-up-when-processing-for-response-which-points-to-itself.json'
 import { ReferenceObjectResolverOverrideField } from '../../src/references/ref-resolver'
 
-const OPTIONS = { resolveRef: true }
+const OPTIONS: NormalizeOptions = { resolveRef: true, validate: true }
 
 describe('OAS Reference Object', () => {
 
@@ -112,6 +113,7 @@ describe('OAS Reference Object', () => {
      * This array allows values to be added at a specified path
      */
     additionalValues: AdditionalValue[]
+    oasSupportedVersions: string[]
   }
 
   const objectSchemaType = {
@@ -179,7 +181,7 @@ describe('OAS Reference Object', () => {
         {
           name: 'overridedParameter',
           in: 'query',
-        }
+        },
       ],
     ],
   }
@@ -187,11 +189,11 @@ describe('OAS Reference Object', () => {
   const valuePair: AdditionalValue = {
     path: ['value'],
     values: [
-      { "bar": "baz" },
-      { "foo": "bar" },
+      { 'bar': 'baz' },
+      { 'foo': 'bar' },
     ],
   }
-  
+
   const responseObjectPaths: JsonPath[] = [
     ['components', 'responses', 'someResponse'],
     ['paths', '/somePath', 'get', 'responses', '200'],
@@ -271,8 +273,9 @@ describe('OAS Reference Object', () => {
     overridableFields: [OPEN_API_PROPERTY_DESCRIPTION],
     additionalValues: [
       nameValuePair,
-      schemaValuePair
+      schemaValuePair,
     ],
+    oasSupportedVersions: ['3.0.0', '3.1.0'],
   }
 
   const requestBodyObjectTestData: ReferenceObjectRuleTestData = {
@@ -284,16 +287,18 @@ describe('OAS Reference Object', () => {
     },
     overridableFields: [OPEN_API_PROPERTY_DESCRIPTION],
     additionalValues: [contentValuePair],
+    oasSupportedVersions: ['3.0.0', '3.1.0'],
   }
 
   const responseObjectTestData: ReferenceObjectRuleTestData = {
     refPaths: responseObjectPaths,
     componentsPath: ['components', 'responses', 'componentsResponse'],
-    componentObject: {      
+    componentObject: {
       description: VALUE_BASE,
     },
     overridableFields: [OPEN_API_PROPERTY_DESCRIPTION],
     additionalValues: [contentValuePair],
+    oasSupportedVersions: ['3.0.0', '3.1.0'],
   }
 
   const headerObjectTestData: ReferenceObjectRuleTestData = {
@@ -304,6 +309,7 @@ describe('OAS Reference Object', () => {
     },
     overridableFields: [OPEN_API_PROPERTY_DESCRIPTION],
     additionalValues: [schemaValuePair],
+    oasSupportedVersions: ['3.0.0', '3.1.0'],
   }
 
   const linkObjectTestData: ReferenceObjectRuleTestData = {
@@ -314,6 +320,7 @@ describe('OAS Reference Object', () => {
     },
     overridableFields: [OPEN_API_PROPERTY_DESCRIPTION],
     additionalValues: [operationIdValuePair],
+    oasSupportedVersions: ['3.0.0', '3.1.0'],
   }
 
   const securitySchemeObjectTestData: ReferenceObjectRuleTestData = {
@@ -324,15 +331,16 @@ describe('OAS Reference Object', () => {
     },
     overridableFields: [OPEN_API_PROPERTY_DESCRIPTION],
     additionalValues: [nameValuePair],
+    oasSupportedVersions: ['3.0.0', '3.1.0'],
   }
 
   const callbackObjectTestData: ReferenceObjectRuleTestData = {
     refPaths: callbackObjectPaths,
     componentsPath: ['components', 'callbacks', 'componentsCallback'],
-    componentObject: {
-    },
+    componentObject: {},
     overridableFields: [OPEN_API_PROPERTY_DESCRIPTION],
     additionalValues: [],
+    oasSupportedVersions: ['3.0.0', '3.1.0'],
   }
 
   const pathItemObjectTestData: ReferenceObjectRuleTestData = {
@@ -342,8 +350,9 @@ describe('OAS Reference Object', () => {
       description: VALUE_BASE,
       summary: VALUE_BASE,
     },
-    overridableFields: [OPEN_API_PROPERTY_DESCRIPTION, OPEN_API_PROPERTY_SUMMARY],
+    overridableFields: [],
     additionalValues: [parametersValuePair],
+    oasSupportedVersions: ['3.1.0'],
   }
 
   const exampleObjectTestData: ReferenceObjectRuleTestData = {
@@ -355,6 +364,7 @@ describe('OAS Reference Object', () => {
     },
     overridableFields: [OPEN_API_PROPERTY_DESCRIPTION, OPEN_API_PROPERTY_SUMMARY],
     additionalValues: [valuePair],
+    oasSupportedVersions: ['3.0.0', '3.1.0'],
   }
 
   const referenceObjectRuleTestData: ReferenceObjectRuleTestData[] = [
@@ -365,7 +375,7 @@ describe('OAS Reference Object', () => {
     linkObjectTestData,
     securitySchemeObjectTestData,
     //callbackObjectTestData,
-    //pathItemObjectTestData,
+    pathItemObjectTestData,
     exampleObjectTestData,
   ]
 
@@ -386,7 +396,7 @@ describe('OAS Reference Object', () => {
     }
   }
 
-  const getValueByPath = (value: any, path: JsonPath) => path.reduce((data, key) => data[key], value)
+  const getValueByPath = (value: any, path: JsonPath) => path.reduce((data, key) => data?.[key], value)
 
   const createRef = (path: JsonPath) => `#/${path.join('/')}`
 
@@ -397,7 +407,15 @@ describe('OAS Reference Object', () => {
     return base
   }
 
-  const checkChainReferenceObjects = (title: string, baseSpec: any, refPath: JsonPath, componentsPath: JsonPath, componentObject: any, property: ReferenceObjectResolverOverrideField, allowOverride: boolean) => {
+  const checkChainReferenceObjects = (
+    title: string,
+    baseSpec: any,
+    refPath: JsonPath,
+    componentsPath: JsonPath,
+    componentObject: any,
+    property: ReferenceObjectResolverOverrideField,
+    allowOverride: boolean,
+  ) => {
     const name = `intermediate${title}`
     const intermediateRefPath = [...componentsPath.slice(0, componentsPath.length - 1), name]
     setValueAtPath(baseSpec, componentsPath, componentObject)
@@ -406,12 +424,10 @@ describe('OAS Reference Object', () => {
 
     const result = normalize(baseSpec, OPTIONS) as any
 
-    const expectation = expect(result)
-
     const refPropertyValue = getValueByPath(result, [...refPath, property])
     const intermediateRefPropertyValue = getValueByPath(result, [...intermediateRefPath, property])
     const componentsPropertyValue = getValueByPath(result, [...componentsPath, property])
-    
+
     if (allowOverride) {
       expect(refPropertyValue).toBe(VALUE_OVERRIDEN)
       expect(intermediateRefPropertyValue).toBe(VALUE_SECOND)
@@ -421,16 +437,24 @@ describe('OAS Reference Object', () => {
     }
   }
 
-  const oasSpecificationVersions = ['3.0.0', '3.1.0']
+  referenceObjectRuleTestData.forEach(({
+    refPaths,
+    componentsPath,
+    componentObject,
+    overridableFields,
+    additionalValues,
+    oasSupportedVersions,
+  }) => {
+    oasSupportedVersions.forEach(version => {
+      describe(`Reference object rules for OAS ${version}`, () => {
+        let overridableFieldsForVersion = [...overridableFields]
 
-  oasSpecificationVersions.forEach(version => {
-    describe(`Reference object rules for OAS ${version}`, () => {
-      referenceObjectRuleTestData.forEach(({ refPaths, componentsPath, componentObject, overridableFields, additionalValues }) => {
         if (version === '3.0.0') {
-          overridableFields = []
+          overridableFieldsForVersion = []
         }
-        const allowDescriptionOverride = overridableFields.includes(OPEN_API_PROPERTY_DESCRIPTION)
-        const allowSummaryOverride = overridableFields.includes(OPEN_API_PROPERTY_SUMMARY)
+
+        const allowDescriptionOverride = overridableFieldsForVersion.includes(OPEN_API_PROPERTY_DESCRIPTION)
+        const allowSummaryOverride = overridableFieldsForVersion.includes(OPEN_API_PROPERTY_SUMMARY)
 
         refPaths.forEach(refPath => {
           const title = refPath.at(-2) as string
@@ -448,6 +472,7 @@ describe('OAS Reference Object', () => {
                 const result = normalize(baseSpec, OPTIONS) as any
 
                 const refValue = getValueByPath(result, refPath)
+
                 const componentsValue = getValueByPath(result, componentsPath)
                 expect(refValue).toBe(componentsValue)
               })
@@ -510,7 +535,7 @@ describe('OAS Reference Object', () => {
         })
       })
     })
-
+  })
 
   describe('OAS 3.1. Reference Object. Validate origins', () => {
     it('origin is calculated correctly for field overriden using reference object', () => {
@@ -602,5 +627,4 @@ describe('OAS Reference Object', () => {
       expect(result).toEqual(expected)
     })
   })
-})
 })

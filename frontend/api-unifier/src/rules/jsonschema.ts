@@ -438,7 +438,6 @@ export const jsonSchemaRules: (
     hashStrategy: CURRENT_DATA_LEVEL,
   },
   '/properties': {
-
     '/*': () => ({
       ...self(),
       newDataLayer: true,

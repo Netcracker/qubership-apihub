@@ -47,6 +47,7 @@ export const OPEN_API_PROPERTY_SCHEMAS = 'schemas'
 export const OPEN_API_PROPERTY_SCHEMA = 'schema'
 export const OPEN_API_PROPERTY_LINKS = 'links'
 export const OPEN_API_PROPERTY_SECURITY_SCHEMAS = 'securitySchemes'
+export const OPEN_API_PROPERTY_PATH_ITEMS = 'pathItems'
 
 export const OPEN_API_PROPERTY_DESCRIPTION = 'description'
 export const OPEN_API_PROPERTY_SUMMARY = 'summary'

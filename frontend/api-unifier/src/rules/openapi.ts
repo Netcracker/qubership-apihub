@@ -436,7 +436,7 @@ const customFor30JsonSchemaRulesFactory = (): NormalizationRules => {
       ...customFor30JsonSchemaRules,
       merge: resolvers.itemsMergeResolver,
       hashStrategy: CURRENT_DATA_LEVEL,
-      newDataLayer: true
+      newDataLayer: true,
     }),
     '/additionalItems': {
       validate: () => false,
@@ -704,10 +704,7 @@ const openApiPathItemRules = (version: OpenApiSpecVersion): NormalizationRules =
     validate: checkType(TYPE_OBJECT),
   }),
   '/parameters': openApiParametersRules(version),
-  referenceHandler: referenceObjectRuleFunction({
-    version,
-    allowedOverrides: [OPEN_API_PROPERTY_SUMMARY, OPEN_API_PROPERTY_DESCRIPTION],
-  }),
+  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: pathItemsUnification,
 })
@@ -822,6 +819,18 @@ export const openApiRules = (version: OpenApiSpecVersion): NormalizationRules =>
         ...openApiExtensionRulesFunction(() => openApiPathItemRules(version)),
       },
     },
+    /**
+     * Note: For OAS 3.0, `components.pathItems` is not a valid property.
+     * We intentionally keep these rules and do not delete this path here
+     * because invalid `components.pathItems` entries are pre-processed and
+     * handled during pre-validation step.
+     * Additionally, the reference resolver contains checks that guard against
+     * misuse in OAS 3.0. See: validate.ts
+     */
+    '/pathItems': ({
+      ...openApiExtensionRulesFunction(openApiPathItemRules(version)),
+      validate: checkType(TYPE_OBJECT),
+    }),
     ...openApiExamplesRules(version),
     ...openApiExtensionRules,
     validate: checkType(TYPE_OBJECT),
