@@ -1,10 +1,11 @@
 import { ModelTreeNode } from './model-tree-node.impl';
-import { ModelTreeNodeParams, ModelTreeNodeType, IModelTreeNode } from './types';
+import { IModelTree, IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from './types';
 
 
 export class ModelTreeComplexNode<T, K extends string, M> extends ModelTreeNode<T, K, M> {
 
   constructor(
+    public readonly tree: IModelTree<T, K, M>,
     public readonly id: string = '#',
     public readonly kind: K,
     public readonly key: string | number = '',
@@ -12,11 +13,11 @@ export class ModelTreeComplexNode<T, K extends string, M> extends ModelTreeNode<
     params: ModelTreeNodeParams<T, K, M> & { type: Exclude<ModelTreeNodeType, 'simple'>; },
     children?: IModelTreeNode<T, K, M>[]
   ) {
-    super(id, kind, key, isCycle, params, children);
+    super(tree, id, kind, key, isCycle, params, children);
   }
 
-  public createCycledClone(id: string, key: string | number, parent: IModelTreeNode<T, K, M> | null): IModelTreeNode<T, K, M> {
-    const result = new ModelTreeComplexNode(id, this.kind, key, true, {
+  public createCycledClone(tree: IModelTree<T, K, M>, id: string, key: string | number, parent: IModelTreeNode<T, K, M> | null): IModelTreeNode<T, K, M> {
+    const result = new ModelTreeComplexNode(tree, id, this.kind, key, true, {
       type: this.type as Exclude<ModelTreeNodeType, 'simple'>,
       value: this._value ?? undefined,
       parent: parent,

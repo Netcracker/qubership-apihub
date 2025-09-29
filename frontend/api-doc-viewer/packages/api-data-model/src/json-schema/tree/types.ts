@@ -41,6 +41,10 @@ export interface JsonSchemaCreateNodeParams<T, K extends string, M extends objec
   container?: IModelTreeNode<T, K, M> | null
   newDataLevel?: boolean
   isCycle: boolean
+  /* Feature "Lazy Tree Building" */
+  expandingFragment?: Record<PropertyKey, unknown>;
+  expandingCallback?: (parent: any) => void;
+  /* --- */
 }
 
 export type JsonSchemaNodeValue<T extends JsonSchemaNodeType = any> = T extends 'any' ? IJsonSchemaAnyType : T extends 'number' ? IJsonSchemaNumberType : T extends 'string' ? IJsonSchemaStringType : T extends 'boolean' ? IJsonSchemaBooleanType : T extends 'object' ? IJsonSchemaObjectType : T extends 'array' ? IJsonSchemaArrayType : T extends 'null' ? IJsonSchemaNullType : never

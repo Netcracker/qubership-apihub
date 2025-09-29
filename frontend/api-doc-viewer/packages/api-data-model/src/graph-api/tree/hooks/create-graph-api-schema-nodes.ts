@@ -9,6 +9,7 @@ import { GraphApiDiffTreeNode } from '../../diff-tree/types';
 import { areExcludedComponents } from '../../utils';
 import { GraphApiModelTree } from '../model';
 import { GraphApiCrawlRule, GraphApiCrawlState, GraphApiTreeComplexNode, GraphApiTreeNode } from '../types';
+import { createExpandingCallback } from './create-expanding-callback';
 
 function shouldCrawlDiff(value: unknown): value is DiffRemove | DiffReplace {
   return isDiff(value) &&
@@ -86,6 +87,8 @@ export function createGraphSchemaTreeCrawlHook(
         newDataLevel = parent?.kind === graphSchemaNodeKind.property;
         break;
     }
+
+    const expandingCallback = createExpandingCallback(tree, value as Record<PropertyKey, unknown>, state.alreadyConvertedMappingStack);
 
     const res = tree.createGraphSchemaNode({
       id,

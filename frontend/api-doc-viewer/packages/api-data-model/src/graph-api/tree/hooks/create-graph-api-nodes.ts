@@ -7,6 +7,7 @@ import { ModelTreeNodeParams } from '../../../abstract/model/types';
 import { isBrokenRef } from '../../../json-schema';
 import { areExcludedComponents } from '../../utils';
 import { GraphApiModelTree } from '../model';
+import { createExpandingCallback } from './create-expanding-callback';
 
 export function createGraphApiTreeCrawlHook(
   tree: GraphApiModelTree
@@ -34,11 +35,20 @@ export function createGraphApiTreeCrawlHook(
       node: {},
     };
 
+    const expandingCallback = createExpandingCallback(tree, value as Record<PropertyKey, unknown>, state.alreadyConvertedMappingStack);
+
     switch (kind) {
       case graphApiNodeKind.query:
       case graphApiNodeKind.mutation:
       case graphApiNodeKind.subscription: {
-        result = tree.createGraphSchemaNode({ id, kind, key, value, parent, container, newDataLevel: false, isCycle: false });
+        result = tree.createGraphSchemaNode({
+          id, kind, key, value, parent, container, 
+          newDataLevel: false, 
+          isCycle: false, 
+          /* Feature "Lazy Tree Building" */
+          expandingCallback,
+          /* --- */
+        });
         break;
       }
       case graphApiNodeKind.schema: {
@@ -52,6 +62,9 @@ export function createGraphApiTreeCrawlHook(
             _fragment: value,
           },
           newDataLevel: false,
+          /* Feature "Lazy Tree Building" */
+          expandingCallback,
+          /* --- */
         };
         result.node = tree.createNode(id, kind, key, false, params);
         break;

@@ -1,8 +1,8 @@
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl';
 import { modelTreeNodeType } from "../constants";
 import { ModelTreeComplexNode } from './model-tree-complex-node.impl';
-import { IModelTreeNode, ModelTreeNodeType, ModelTreeNodeParams } from './types';
-
+import { IModelTree, IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from './types';
+import { ExpandingCallback } from '@apihub/graph-api-model/tree/hooks/create-expanding-callback';
 
 export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, K, M> {
   public nested: IModelTreeNode<T, K, M>[] = [];
@@ -14,16 +14,39 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
 
   public readonly type: ModelTreeNodeType = modelTreeNodeType.simple;
 
+  /* Feature "Lazy Tree Building" */
+  private _expandingFragment: Record<PropertyKey, unknown> | null = null;
+  private _expandingCallback: ExpandingCallback | null = null;
+
+  public expand() {
+    this._expandingCallback?.(this);
+  }
+
+  public collapse() {
+    this._children = [];
+  }
+  /* --- */
+
   constructor(
+    public readonly tree: IModelTree<T, K, M>,
     public readonly id: string = '#',
     public readonly kind: K,
     public readonly key: string | number = '',
     public readonly isCycle: boolean,
     params?: ModelTreeNodeParams<T, K, M>,
-    protected readonly _children: IModelTreeNode<T, K, M>[] = []
+    protected /* readonly */ _children: IModelTreeNode<T, K, M>[] = []
   ) {
     const {
-      type = modelTreeNodeType.simple, value = null, parent = null, container = null, newDataLevel = true, meta
+      type = modelTreeNodeType.simple,
+      value = null,
+      parent = null,
+      container = null,
+      newDataLevel = true,
+      meta,
+      /* Feature "Lazy Tree Building" */
+      expandingFragment = null,
+      expandingCallback = null,
+      /* --- */
     } = params ?? {};
     this._value = value;
     this.type = type;
@@ -31,10 +54,19 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
     this.container = container;
     this.newDataLevel = newDataLevel;
     this.meta = meta as M;
+    /* Feature "Lazy Tree Building" */
+    this._expandingFragment = expandingFragment;
+    this._expandingCallback = expandingCallback;
+    /* --- */
   }
 
-  public createCycledClone(id: string, key: string | number, parent: IModelTreeNode<T, K, M> | null): IModelTreeNode<T, K, M> {
-    const result = new ModelTreeNode(id, this.kind, key, true, {
+  public createCycledClone(
+    tree: IModelTree<T, K, M>,
+    id: string,
+    key: string | number,
+    parent: IModelTreeNode<T, K, M> | null,
+  ): IModelTreeNode<T, K, M> {
+    const result = new ModelTreeNode(tree, id, this.kind, key, true, {
       type: this.type,
       value: this._value ?? undefined,
       parent: parent,

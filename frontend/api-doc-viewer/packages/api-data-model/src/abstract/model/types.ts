@@ -31,7 +31,7 @@ export interface IModelTreeNode<T, K extends string, M> {
   meta: M;
   isCycle: boolean;
 
-  createCycledClone(id: string, key: string | number, parent: IModelTreeNode<T, K, M> | null): IModelTreeNode<T, K, M>;
+  createCycledClone(tree: IModelTree<T, K, M>, id: string, key: string | number, parent: IModelTreeNode<T, K, M> | null): IModelTreeNode<T, K, M>;
 
   value(nestedId?: string): T | null;
 
@@ -42,6 +42,11 @@ export interface IModelTreeNode<T, K extends string, M> {
   addChild(node: IModelTreeNode<T, K, M>): void;
 
   addNestedNode(node: IModelTreeNode<T, K, M>): void;
+
+  /* Feature "Lazy Tree Building" */
+  expand(): void;
+  collapse(): void;
+  /* --- */
 }
 
 export type ModelTreeNodeParams<T, K extends string, M> = {
@@ -51,4 +56,8 @@ export type ModelTreeNodeParams<T, K extends string, M> = {
   parent?: IModelTreeNode<T, K, M> | null;
   container?: IModelTreeNode<T, K, M> | null;
   newDataLevel?: boolean;
+  /* Feature "Lazy Tree Building" */
+  expandingFragment?: Record<PropertyKey, unknown>;
+  expandingCallback?: (parent: any) => void;
+  /* --- */
 };
