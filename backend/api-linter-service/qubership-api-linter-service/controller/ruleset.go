@@ -15,6 +15,7 @@
 package controller
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/Netcracker/qubership-api-linter-service/exception"
 	"github.com/Netcracker/qubership-api-linter-service/secctx"
@@ -25,6 +26,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 type RulesetController interface {
@@ -159,6 +161,20 @@ func (c rulesetControllerImpl) CreateRuleset(w http.ResponseWriter, r *http.Requ
 			Message: exception.IncorrectMultipartFileMsg,
 			Debug:   err.Error()})
 		return
+	}
+
+	encoding := r.Header.Get("Content-Transfer-Encoding")
+	if strings.EqualFold(encoding, "base64") {
+		len, err := base64.StdEncoding.Decode(data, data)
+		if err != nil {
+			RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectMultipartFile,
+				Message: exception.IncorrectMultipartFileMsg,
+				Debug:   err.Error()})
+			return
+		}
+		data = data[:len]
 	}
 
 	result, err := c.rulesetService.CreateRuleset(ctx, name, apiType, linter, fileHeader.Filename, data)
