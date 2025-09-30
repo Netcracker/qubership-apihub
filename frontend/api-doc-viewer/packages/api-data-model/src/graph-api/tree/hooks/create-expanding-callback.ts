@@ -17,7 +17,7 @@ export function createExpandingCallback(
     const initialState: GraphApiCrawlState = {
       parent: parent,
       alreadyConvertedMappingStack: state.alreadyConvertedMappingStack,
-      treeLevel: state.treeLevel,
+      treeLevel: state.treeLevel + 1,
       maxTreeLevel: state.maxTreeLevel + 1,
     }
     syncCrawl(
