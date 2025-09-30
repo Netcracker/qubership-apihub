@@ -191,4 +191,84 @@ describe('Lazy Tree Building', () => {
     propObj.collapse()
     expect(propObj.children().length).toBe(0)
   })
+
+  it('expand single-level argument (input type) with a list', () => {
+    const graphQl = `
+      type Query {
+        test(ids: [ID!]!): String!
+      }
+    `
+    const graphApi = buildGraphApi(graphQl)
+    const tree = createGraphApiTreeForTests(graphApi)
+    const root = tree.root!
+    // 1
+    const query = root
+      .children()
+      .find(node => node.kind === graphApiNodeKind.query)!
+    // 2
+    const queryArgs = query
+      .children()
+      .find(node => node.kind === graphSchemaNodeKind.args)!
+    // 3, initializing build stops here (by default)
+    const queryArgIds = queryArgs
+      .children()
+      .find(node => node.kind === graphSchemaNodeKind.arg)!
+    expect(queryArgIds.children().length).toBe(0)
+    queryArgIds.expand()
+    expect(queryArgIds.children().length).toBe(1)
+    // 4
+    const items = queryArgIds
+      .children()
+      .find(node => node.kind === graphSchemaNodeKind.items)!
+    expect(items.children().length).toBe(0)
+  })
+
+  it('expand multi-level argument (input type) with a list of output types', () => {
+    const graphQl = `
+      type Query {
+        test(ids: [Obj!]!): String!
+      }
+      
+      type Obj {
+        id: ID!
+      }
+    `
+    const graphApi = buildGraphApi(graphQl)
+    const tree = createGraphApiTreeForTests(graphApi)
+    const root = tree.root!
+    // 1
+    const query = root
+      .children()
+      .find(node => node.kind === graphApiNodeKind.query)!
+    // 2
+    const queryArgs = query
+      .children()
+      .find(node => node.kind === graphSchemaNodeKind.args)!
+    // 3, initializing build stops here (by default)
+    const queryArgIds = queryArgs
+      .children()
+      .find(node => node.kind === graphSchemaNodeKind.arg)!
+    expect(queryArgIds.children().length).toBe(0)
+    queryArgIds.expand()
+    expect(queryArgIds.children().length).toBe(1)
+    // 4
+    const items = queryArgIds
+      .children()
+      .find(node => node.kind === graphSchemaNodeKind.items)!
+    expect(items.children().length).toBe(0)
+    items.expand()
+    expect(items.children().length).toBe(1)
+    // 5
+    const methodId = items
+      .children()
+      .find(node => node.kind === graphSchemaNodeKind.method)!
+    expect(methodId.children().length).toBe(0)
+    methodId.expand()
+    expect(methodId.children().length).toBe(1)
+    // 6
+    const methodIdOutput = methodId
+      .children()
+      .find(node => node.kind === graphSchemaNodeKind.output)!
+    expect(methodIdOutput.children().length).toBe(0)
+  })
 })
