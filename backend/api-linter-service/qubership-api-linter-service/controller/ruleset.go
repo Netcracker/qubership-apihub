@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
+	"strconv"
 )
 
 type RulesetController interface {
@@ -191,11 +192,13 @@ func (c rulesetControllerImpl) ActivateRuleset(w http.ResponseWriter, r *http.Re
 		respondWithError(w, "Failed to activate ruleset", err)
 		return
 	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (c rulesetControllerImpl) ListRulesets(w http.ResponseWriter, r *http.Request) {
 	ctx := secctx.MakeUserContext(r)
-	sufficientPrivileges, err := c.authorizationService.HasRulesetReadPermission(ctx)
+	sufficientPrivileges, err := c.authorizationService.HasRulesetListPermission(ctx)
 	if err != nil {
 		respondWithError(w, "Failed to check permissions", err)
 		return
@@ -209,7 +212,28 @@ func (c rulesetControllerImpl) ListRulesets(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	result, err := c.rulesetService.ListRulesets(ctx)
+	page := 0
+	if r.URL.Query().Get("page") != "" {
+		page, err = strconv.Atoi(r.URL.Query().Get("page"))
+		if err != nil {
+			RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": "page", "type": "int"},
+				Debug:   err.Error(),
+			})
+			return
+		}
+	}
+
+	limit, customErr := getLimitQueryParam(r)
+	if customErr != nil {
+		RespondWithCustomError(w, customErr)
+		return
+	}
+
+	result, err := c.rulesetService.ListRulesets(ctx, limit, page)
 	if err != nil {
 		respondWithError(w, "Failed to list rulesets", err)
 		return

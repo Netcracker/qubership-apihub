@@ -36,6 +36,9 @@ func (c CustomError) Error() string {
 	return msg
 }
 
+const IncorrectParamType = "5"
+const IncorrectParamTypeMsg = "$param parameter should be $type"
+
 const NoApihubAccess = "200"
 const NoApihubAccessMsg = "No access to Apihub with code: $code. Probably incorrect configuration: api key."
 
@@ -50,6 +53,7 @@ const InvalidURLEscapeMsg = "Failed to unescape parameter $param"
 
 const InvalidParameterValue = "9"
 const InvalidParameterValueMsg = "Value '$value' is not allowed for parameter $param"
+const InvalidLimitMsg = "Value '$value' is not allowed for parameter limit. Allowed values are in range 1:$maxLimit"
 
 const BadRequestBody = "10"
 const BadRequestBodyMsg = "Failed to decode body"

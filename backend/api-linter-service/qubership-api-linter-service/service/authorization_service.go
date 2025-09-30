@@ -9,6 +9,7 @@ import (
 
 type AuthorizationService interface {
 	HasRulesetReadPermission(ctx context.Context) (bool, error)
+	HasRulesetListPermission(ctx context.Context) (bool, error)
 	HasRulesetManagementPermission(ctx context.Context) (bool, error)
 
 	HasReadPackagePermission(ctx context.Context, packageId string) (bool, error)
@@ -25,6 +26,10 @@ type authorizationServiceImpl struct {
 
 func (a authorizationServiceImpl) HasRulesetReadPermission(ctx context.Context) (bool, error) {
 	return true, nil // No restrictions at this moment
+}
+
+func (a authorizationServiceImpl) HasRulesetListPermission(ctx context.Context) (bool, error) {
+	return secctx.IsSysadm(ctx), nil
 }
 
 func (a authorizationServiceImpl) HasRulesetManagementPermission(ctx context.Context) (bool, error) {

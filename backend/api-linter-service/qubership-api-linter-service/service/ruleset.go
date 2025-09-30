@@ -17,7 +17,7 @@ import (
 type RulesetService interface {
 	CreateRuleset(ctx context.Context, name string, apiType view.ApiType, linter view.Linter, filename string, data []byte) (*view.Ruleset, error)
 	ActivateRuleset(ctx context.Context, id string) error
-	ListRulesets(ctx context.Context) ([]view.Ruleset, error)
+	ListRulesets(ctx context.Context, limit, page int) ([]view.Ruleset, error)
 	GetRuleset(ctx context.Context, id string) (*view.Ruleset, error)
 	GetRulesetData(ctx context.Context, id string) ([]byte, string, error)
 	GetActivationHistory(ctx context.Context, id string) ([]view.ActivationRecord, error)
@@ -106,7 +106,7 @@ func (r rulesetServiceImpl) ActivateRuleset(ctx context.Context, id string) erro
 	return r.rulesetRepository.ActivateRuleset(ctx, id, currentR.Id)
 }
 
-func (r rulesetServiceImpl) ListRulesets(ctx context.Context) ([]view.Ruleset, error) {
+func (r rulesetServiceImpl) ListRulesets(ctx context.Context, limit, page int) ([]view.Ruleset, error) {
 	ents, err := r.rulesetRepository.ListRulesets(ctx)
 	if err != nil {
 		return nil, err
@@ -156,9 +156,16 @@ func (r rulesetServiceImpl) ListRulesets(ctx context.Context) ([]view.Ruleset, e
 		return a.LastActivated.After(*b.LastActivated)
 	})
 
+	offset := limit * page
 	result := make([]view.Ruleset, 0)
-	for _, ent := range ents {
+	for i, ent := range ents {
+		if i < offset {
+			continue
+		}
 		result = append(result, entity.MakeRulesetView(ent))
+		if len(result) >= limit {
+			break
+		}
 	}
 
 	return result, nil

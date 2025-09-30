@@ -87,14 +87,18 @@ func (s *spectralExecutorImpl) LintLocalDoc(docPath string, rulesetPath string) 
 	if err != nil {
 		// in case of timeout err is "exit status 1", so need to distinguish context deadline explicitly
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			return "", calculationTime.Milliseconds(), fmt.Errorf("lint time exceeded limit(%v)", limit)
+			errStr := fmt.Sprintf("lint time exceeded limit(%v)", limit)
+			if stderr.String() != "" {
+				errStr += " | stderr: " + stderr.String()
+			}
+			return "", calculationTime.Milliseconds(), errors.New(errStr)
 		}
 
 		//spectral process exits with status 1 if validation contains at least one error...
 		if err.Error() != "exit status 1" {
 			errStr := err.Error()
 			if stderr.String() != "" {
-				errStr += ": " + stderr.String()
+				errStr += " | stderr: " + stderr.String()
 			}
 			return "", calculationTime.Milliseconds(), fmt.Errorf("failed to get Spectral report: %v", errStr)
 		}

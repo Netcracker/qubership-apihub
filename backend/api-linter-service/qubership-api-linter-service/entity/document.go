@@ -12,7 +12,7 @@ type LintedDocument struct {
 	Slug              string                    `pg:"slug,type:varchar,notnull"`
 	SpecificationType view.ApiType              `pg:"specification_type,type:varchar,notnull"`
 	RulesetId         string                    `pg:"ruleset_id,pk,type:varchar,notnull"`
-	DataHash          string                    `pg:"data_hash,type:varchar,notnull"`
+	DataHash          string                    `pg:"data_hash,type:varchar"`
 	LintStatus        view.LintedDocumentStatus `pg:"lint_status,type:varchar,notnull"`
 	LintDetails       string                    `pg:"lint_details,type:varchar"`
 }
