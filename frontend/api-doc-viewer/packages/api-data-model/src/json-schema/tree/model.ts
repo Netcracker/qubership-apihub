@@ -1,12 +1,13 @@
+import { UNKNOWN_TYPE, modelTreeNodeType } from "../../abstract/constants";
 import { ModelTree } from '../../abstract/model/model-tree.impl';
 import { CreateNodeResult, IModelTreeNode } from '../../abstract/model/types';
-import { UNKNOWN_TYPE, modelTreeNodeType } from "../../abstract/constants";
 import { isOpenApiExtensionKey } from '../../oas-extension-key';
 import { getNodeComplexityType, isObject, pick, pickByPredicate } from '../../utils';
 import { jsonSchemaNodeMetaProps, jsonSchemaNodeValueProps } from '../constants';
 import { isJsonSchemaNodeType } from '../guards';
 import { isBrokenRef, isRequired } from '../utils';
-import { type JsonSchemaCreateNodeParams, type JsonSchemaNodeKind, type JsonSchemaNodeMeta, JsonSchemaNodeType, type JsonSchemaNodeValue } from './types';
+import type { JsonSchemaCreateNodeParams, JsonSchemaNodeKind, JsonSchemaNodeMeta, JsonSchemaNodeValue } from './types';
+import { JsonSchemaNodeType } from './types';
 
 export class JsonSchemaModelTree<
   T = JsonSchemaNodeValue,

@@ -2,7 +2,7 @@ import { JsonPath } from '@netcracker/qubership-apihub-json-crawl';
 import { modelTreeNodeType } from "../constants";
 import { ModelTreeComplexNode } from './model-tree-complex-node.impl';
 import { IModelTree, IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from './types';
-import { ExpandingCallback } from '@apihub/graph-api-model/tree/hooks/create-expanding-callback';
+import { ExpandingCallback } from "../types";
 
 export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, K, M> {
   public nested: IModelTreeNode<T, K, M>[] = [];
@@ -15,7 +15,6 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
   public readonly type: ModelTreeNodeType = modelTreeNodeType.simple;
 
   /* Feature "Lazy Tree Building" */
-  private _expandingFragment: Record<PropertyKey, unknown> | null = null;
   private _expandingCallback: ExpandingCallback | null = null;
 
   public expand() {
@@ -44,7 +43,6 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
       newDataLevel = true,
       meta,
       /* Feature "Lazy Tree Building" */
-      expandingFragment = null,
       expandingCallback = null,
       /* --- */
     } = params ?? {};
@@ -55,7 +53,6 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
     this.newDataLevel = newDataLevel;
     this.meta = meta as M;
     /* Feature "Lazy Tree Building" */
-    this._expandingFragment = expandingFragment;
     this._expandingCallback = expandingCallback;
     /* --- */
   }
