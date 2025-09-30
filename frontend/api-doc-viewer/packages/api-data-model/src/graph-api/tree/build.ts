@@ -7,7 +7,12 @@ import { createGraphSchemaTreeCrawlHook } from './hooks/create-graph-api-schema-
 import { GraphApiModelTree } from './model';
 import { GraphApiCrawlRule, GraphApiCrawlState, GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta } from './types';
 
-export const createGraphApiTree = (mergedSource: unknown) => {
+export const DEFAULT_MAX_TREE_LEVEL = 3;
+
+export const createGraphApiTree = (
+  mergedSource: unknown,
+  maxTreeLevel: number = DEFAULT_MAX_TREE_LEVEL,
+) => {
   const tree = new GraphApiModelTree<GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta>(mergedSource)
   if (!isObject(mergedSource)) {
     return tree
@@ -16,6 +21,8 @@ export const createGraphApiTree = (mergedSource: unknown) => {
   const crawlState: GraphApiCrawlState = {
     parent: null,
     alreadyConvertedMappingStack: new Map(),
+    treeLevel: 0,
+    maxTreeLevel: maxTreeLevel,
   }
 
   /**

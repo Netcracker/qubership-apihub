@@ -72,6 +72,9 @@ export class JsonSchemaModelTree<
         container,
         meta: _nodeMeta,
         newDataLevel: newDataLevel,
+        /* Feature "Lazy Tree Building" */
+        expandingCallback: params.expandingCallback,
+        /* --- */
       }
       return {
         node: this.createNode(id, kind, key, isCycle, _params),
@@ -93,6 +96,9 @@ export class JsonSchemaModelTree<
         container,
         meta: _nodeMeta,
         newDataLevel: newDataLevel,
+        /* Feature "Lazy Tree Building" */
+        expandingCallback: params.expandingCallback,
+        /* --- */
       }
       result.node = this.createComplexNode(id, kind, key, isCycle, _params)
     } else {
@@ -108,6 +114,9 @@ export class JsonSchemaModelTree<
         parent,
         container,
         newDataLevel: newDataLevel,
+        /* Feature "Lazy Tree Building" */
+        expandingCallback: params.expandingCallback,
+        /* --- */
       }
       result.node = this.createNode(id, kind, key, isCycle, _params)
     }

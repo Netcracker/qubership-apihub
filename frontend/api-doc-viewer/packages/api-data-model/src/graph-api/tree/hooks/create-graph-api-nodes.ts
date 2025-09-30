@@ -35,16 +35,17 @@ export function createGraphApiTreeCrawlHook(
       node: {},
     };
 
-    const expandingCallback = createExpandingCallback(tree, value as Record<PropertyKey, unknown>, state.alreadyConvertedMappingStack);
+    const expandingCallback = createExpandingCallback(tree, value as Record<PropertyKey, unknown>, state, rules);
 
+    const newDataLevel = false;
     switch (kind) {
       case graphApiNodeKind.query:
       case graphApiNodeKind.mutation:
       case graphApiNodeKind.subscription: {
         result = tree.createGraphSchemaNode({
-          id, kind, key, value, parent, container, 
-          newDataLevel: false, 
-          isCycle: false, 
+          id, kind, key, value, parent, container,
+          newDataLevel: newDataLevel,
+          isCycle: false,
           /* Feature "Lazy Tree Building" */
           expandingCallback,
           /* --- */
@@ -61,7 +62,7 @@ export function createGraphApiTreeCrawlHook(
             ...(isBrokenRef(value) ? { brokenRef: value.$ref } : {}),
             _fragment: value,
           },
-          newDataLevel: false,
+          newDataLevel: newDataLevel,
           /* Feature "Lazy Tree Building" */
           expandingCallback,
           /* --- */
@@ -73,12 +74,38 @@ export function createGraphApiTreeCrawlHook(
 
     parent?.addChild(result.node);
 
+    /* Feature "Lazy Tree Building" */
+    if (state.treeLevel === state.maxTreeLevel) {
+      return { done: true };
+    }
+
+    const nextTreeLevel = state.treeLevel + 1;
+    /* --- */
+
     if (result.value) {
       const stack = new Map(state.alreadyConvertedMappingStack);
       stack.set(value, result.node);
-      const newState: GraphApiCrawlState = result.node!.type === modelTreeNodeType.simple
-        ? { parent: result.node as GraphApiTreeNode, alreadyConvertedMappingStack: stack }
-        : { parent, container: result.node as GraphApiTreeComplexNode, alreadyConvertedMappingStack: stack };
+      let newState: GraphApiCrawlState
+      if (result.node!.type === modelTreeNodeType.simple) {
+        newState = {
+          parent: result.node as GraphApiTreeNode,
+          alreadyConvertedMappingStack: stack,
+          /* Feature "Lazy Tree Building" */
+          treeLevel: nextTreeLevel,
+          maxTreeLevel: state.maxTreeLevel,
+          /* --- */
+        }
+      } else {
+        newState = {
+          parent: parent,
+          container: result.node as GraphApiTreeComplexNode,
+          alreadyConvertedMappingStack: stack,
+          /* Feature "Lazy Tree Building" */
+          treeLevel: nextTreeLevel,
+          maxTreeLevel: state.maxTreeLevel,
+          /* --- */
+        }
+      }
       return { value: result.value, state: newState };
     } else {
       return { done: true };

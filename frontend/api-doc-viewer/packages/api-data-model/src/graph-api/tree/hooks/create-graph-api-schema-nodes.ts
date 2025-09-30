@@ -1,5 +1,5 @@
-import { buildPointer } from '@netcracker/qubership-apihub-api-unifier';
 import { DiffRemove, DiffReplace, isDiffRemove, isDiffReplace } from '@netcracker/qubership-apihub-api-diff';
+import { buildPointer } from '@netcracker/qubership-apihub-api-unifier';
 import { isObject, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
 import { modelTreeNodeType } from "../../../abstract/constants";
 import { isDiff } from '../../../utils';
@@ -88,7 +88,7 @@ export function createGraphSchemaTreeCrawlHook(
         break;
     }
 
-    const expandingCallback = createExpandingCallback(tree, value as Record<PropertyKey, unknown>, state.alreadyConvertedMappingStack);
+    const expandingCallback = createExpandingCallback(tree, value as Record<PropertyKey, unknown>, state, rules);
 
     const res = tree.createGraphSchemaNode({
       id,
@@ -99,6 +99,9 @@ export function createGraphSchemaTreeCrawlHook(
       container,
       newDataLevel: newDataLevel,
       isCycle: false,
+      /* Feature "Lazy Tree Building" */
+      expandingCallback: expandingCallback,
+      /* --- */
     });
 
     if (container) {
@@ -107,12 +110,38 @@ export function createGraphSchemaTreeCrawlHook(
       parent?.addChild(res.node);
     }
 
+    /* Feature "Lazy Tree Building" */
+    if (state.treeLevel === state.maxTreeLevel) {
+      return { done: true };
+    }
+
+    const nextTreeLevel = state.treeLevel + 1;
+    /* --- */
+
     if (res.value) {
       const stack = new Map(state.alreadyConvertedMappingStack);
       stack.set(value, res.node as GraphApiTreeNode | GraphApiTreeComplexNode);
-      const newState: GraphApiCrawlState = res.node.type === modelTreeNodeType.simple
-        ? { parent: res.node as GraphApiTreeNode, alreadyConvertedMappingStack: stack }
-        : { parent, container: res.node as GraphApiTreeComplexNode, alreadyConvertedMappingStack: stack };
+      let newState: GraphApiCrawlState
+      if (res.node.type === modelTreeNodeType.simple) {
+        newState = {
+          parent: res.node as GraphApiTreeNode,
+          alreadyConvertedMappingStack: stack,
+          /* Feature "Lazy Tree Building" */
+          treeLevel: nextTreeLevel,
+          maxTreeLevel: state.maxTreeLevel,
+          /* --- */
+        }
+      } else {
+        newState = {
+          parent: parent,
+          container: res.node as GraphApiTreeComplexNode,
+          alreadyConvertedMappingStack: stack,
+          /* Feature "Lazy Tree Building" */
+          treeLevel: nextTreeLevel,
+          maxTreeLevel: state.maxTreeLevel,
+          /* --- */
+        }
+      }
       return { value: res.value, state: newState };
     } else {
       return { done: true };
