@@ -59,6 +59,7 @@ func (v versionTaskProcessorImpl) StartVersionLintTask(taskId string) error {
 
 func (v versionTaskProcessorImpl) processVersionLintTask(taskId string) {
 	log.Debugf("Start processing version Lint task %s", taskId)
+	start := time.Now()
 
 	ctx := secctx.MakeSysadminContext(context.Background())
 
@@ -110,7 +111,7 @@ func (v versionTaskProcessorImpl) processVersionLintTask(taskId string) {
 
 	for _, doc := range docs.Documents {
 		if !supportedApiType(doc.Type) {
-			log.Infof("Skipping document %s with unsupported api type: %s", doc.Slug, doc.Type)
+			log.Infof("Skipping document %s for [ %s | %s ] with unsupported api type: %s", doc.Slug, task.PackageId, task.Version, doc.Type)
 			continue
 		}
 
@@ -162,7 +163,7 @@ func (v versionTaskProcessorImpl) processVersionLintTask(taskId string) {
 			v.handleProcessingFailed(ctx, *task, err)
 			return
 		}
-		log.Infof("Version lint task %s processing finished, no suitable documents to lint", taskId)
+		log.Infof("Version lint task for [ %s | %s ] (id = %s) processing finished, no suitable documents to lint", task.PackageId, task.Version, taskId)
 		return
 	}
 
@@ -172,7 +173,7 @@ func (v versionTaskProcessorImpl) processVersionLintTask(taskId string) {
 		return
 	}
 
-	log.Infof("Version lint task with id %s is processed, %d document lint task(s) created", taskId, len(docTasks))
+	log.Infof("Version lint task for [ %s | %s ] (id = %s) is processed, %d doc lint task(s) created. Processing time = %dms", task.PackageId, task.Version, taskId, len(docTasks), time.Since(start).Milliseconds())
 }
 
 func supportedApiType(at view.ApiType) bool {
