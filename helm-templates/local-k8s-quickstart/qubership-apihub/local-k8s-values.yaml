@@ -31,6 +31,9 @@ qubershipApihubBackend:
       - name: api-linter
         baseUrl: http://qubership-api-linter-service:8080
         pathPrefix: api-linter
+      - name: agents-backend
+        baseUrl: http://qubership-apihub-agents-backend:8080
+        pathPrefix: agents-backend
 
 qubershipApihubBuildTaskConsumer:
   image:
