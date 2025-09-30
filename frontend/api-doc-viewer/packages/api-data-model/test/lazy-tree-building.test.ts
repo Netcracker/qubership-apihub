@@ -10,7 +10,7 @@ describe('Lazy Tree Building', () => {
     global.console = jestConsole
   })
 
-  it('expand single-level output with a list', () => {
+  it('expand single-level output (output type) with a list', () => {
     const graphql = `
       type Query {
         test: Out!
@@ -34,7 +34,7 @@ describe('Lazy Tree Building', () => {
     expect(methodArr.children().length).toBe(0)
   })
 
-  it('expand single-level output with an object', () => {
+  it('expand single-level output (output type) with an object', () => {
     const graphql = `
       type Query {
         test: Out!
@@ -62,7 +62,7 @@ describe('Lazy Tree Building', () => {
     expect(methodObj.children().length).toBe(0)
   })
 
-  it('expand multi-level output with an object', () => {
+  it('expand multi-level output (output type) with an object', () => {
     const graphql = `
       type Query {
         test: Out!
@@ -102,5 +102,93 @@ describe('Lazy Tree Building', () => {
     // Collapse all descendants
     methodObj.collapse()
     expect(methodObj.children().length).toBe(0)
+  })
+
+  it('expand single-level output (input type) with a list', () => {
+    const graphql = `
+      type Query {
+        test: In!
+      }
+      input In {
+        arr: [Int]
+      }
+    `
+    const graphApi = buildGraphApi(graphql)
+    const tree = createGraphApiTreeForTests(graphApi)
+    expect(tree).toBeDefined()
+
+    const root = tree.root!
+    const query = root.children().find(node => node.kind === graphApiNodeKind.query)!
+    const queryOutput = query.children().find(node => node.kind === graphSchemaNodeKind.output)!
+    const propArr = queryOutput.children().find(node => node.kind === graphSchemaNodeKind.property)!
+    expect(propArr.children().length).toBe(0)
+    propArr.expand()
+    expect(propArr.children().length).toBe(1)
+    propArr.collapse()
+    expect(propArr.children().length).toBe(0)
+  })
+
+  it('expand single-level output (input type) with an object', () => {
+    const graphql = `
+      type Query {
+        test: In!
+      }
+      input In {
+        obj: Obj!
+      }
+      type Obj {
+        int: Int
+      }
+    `
+    const graphApi = buildGraphApi(graphql)
+    const tree = createGraphApiTreeForTests(graphApi)
+    expect(tree).toBeDefined()
+
+    const root = tree.root!
+    const query = root.children().find(node => node.kind === graphApiNodeKind.query)!
+    const queryOutput = query.children().find(node => node.kind === graphSchemaNodeKind.output)!
+    const propObj = queryOutput.children().find(node => node.kind === graphSchemaNodeKind.property)!
+    expect(propObj.children().length).toBe(0)
+    propObj.expand()
+    expect(propObj.children().length).toBe(1)
+    expect(propObj.children()[0].children().length).toBe(0)
+    propObj.collapse()
+    expect(propObj.children().length).toBe(0)
+  })
+
+  it('expand multi-level output (input type) with an object', () => {
+    const graphql = `
+      type Query {
+        test: In!
+      }
+      input In {
+        obj: Obj!
+      }
+      type Obj {
+        int: Int
+      }
+    `
+    const graphApi = buildGraphApi(graphql)
+    const tree = createGraphApiTreeForTests(graphApi)
+    expect(tree).toBeDefined()
+
+    const root = tree.root!
+    const query = root.children().find(node => node.kind === graphApiNodeKind.query)!
+    const queryOutput = query.children().find(node => node.kind === graphSchemaNodeKind.output)!
+    const propObj = queryOutput.children().find(node => node.kind === graphSchemaNodeKind.property)!
+    // Expand property "obj"
+    expect(propObj.children().length).toBe(0)
+    propObj.expand()
+    expect(propObj.children().length).toBe(1)
+    expect(propObj.children()[0].children().length).toBe(0)
+    // Expand method "int"
+    const methodInt = propObj.children().find(node => node.kind === graphSchemaNodeKind.method)!
+    expect(methodInt.children().length).toBe(0)
+    methodInt.expand()
+    expect(methodInt.children().length).toBe(1)
+    expect(methodInt.children()[0].children().length).toBe(0)
+    // Collapse all descendants
+    propObj.collapse()
+    expect(propObj.children().length).toBe(0)
   })
 })
