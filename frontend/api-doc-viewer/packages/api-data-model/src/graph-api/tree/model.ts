@@ -5,13 +5,21 @@ import {
   isGraphApiDirective,
   isGraphApiListDefinition
 } from '@netcracker/qubership-apihub-graphapi';
-import { CreateNodeResult, IModelTreeNode } from '../../abstract/model/types';
-import { JsonSchemaCreateNodeParams, JsonSchemaModelTree } from '../../json-schema';
-import { getNodeComplexityType, isObject, pick } from '../../utils';
-import { graphSchemaNodeKind, graphSchemaNodeMetaProps, graphSchemaNodeValueProps } from '../constants';
-import { resolveDirectiveDeprecated, resolveEnumValues } from '../utils';
-import { GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta } from './types';
-import { LazyBuildingContext } from "@apihub/abstract-model/model/model-tree-node.impl";
+import { CreateNodeResult, IModelTreeNode } from '@apihub/api-data-model/abstract-model/model/types';
+import { JsonSchemaCreateNodeParams, JsonSchemaModelTree } from '@apihub/api-data-model/json-schema-model';
+import { getNodeComplexityType, isObject, pick } from '@apihub/api-data-model/utils';
+import {
+  graphSchemaNodeKind,
+  graphSchemaNodeMetaProps,
+  graphSchemaNodeValueProps
+} from '@apihub/api-data-model/graph-api-model/constants';
+import { resolveDirectiveDeprecated, resolveEnumValues } from '@apihub/api-data-model/graph-api-model/utils';
+import {
+  GraphApiNodeData,
+  GraphApiNodeKind,
+  GraphApiNodeMeta
+} from '@apihub/api-data-model/graph-api-model/tree/types';
+import { LazyBuildingContext } from "@apihub/api-data-model/abstract-model/model/model-tree-node.impl";
 
 export class GraphApiModelTree<
   T = GraphApiNodeData,
