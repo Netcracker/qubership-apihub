@@ -258,3 +258,7 @@ export function createOperationChange(
     ...previousOperationFields,
   }
 }
+
+export function extractDiffs(operationChanges: OperationChanges[]): Diff[] {
+  return Array.from(new Set(operationChanges.flatMap(({ diffs }) => diffs)))
+}

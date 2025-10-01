@@ -29,6 +29,7 @@ import {
   calculateTotalImpactedSummary,
   comparePairedDocs,
   createPairOperationsMap,
+  extractDiffs,
   getUniqueApiTypesFromVersions,
 } from './compare.utils'
 import {
@@ -142,7 +143,8 @@ async function compareCurrentApiType(
   const pairedDocs = await calculatePairedDocs(operationPairs, pairContext)
   const [operationChanges, tags] = await comparePairedDocs(operationsMap, pairedDocs, apiBuilder, pairContext)
 
-  const dedupedChanges = removeObjectDuplicates(operationChanges.flatMap(({ diffs }) => diffs), calculateDiffId)
+  const allDiffs = extractDiffs(operationChanges)
+  const dedupedChanges = removeObjectDuplicates(allDiffs, calculateDiffId)
   const changesSummary = calculateChangeSummary(dedupedChanges)
   const numberOfImpactedOperations = calculateTotalImpactedSummary(
     operationChanges.map(({ impactedSummary }) => impactedSummary),
