@@ -45,8 +45,6 @@ export const compareDocuments = async (
   const prevDocSchema = prevFile && buildSchema(await prevFile.text(), { noLocation: true })
   const currDocSchema = currFile && buildSchema(await currFile.text(), { noLocation: true })
 
-  const collectOnlyChangedOperations = Boolean(prevDoc && currDoc)
-
   let prevDocData = prevDocSchema && (await buildGraphQLDocument({
     ...prevDoc,
     source: prevFile,
@@ -104,10 +102,10 @@ export const compareDocuments = async (
       const operationAddedOrRemoved = !operationChanged
 
       let operationDiffs: Diff[] = []
-      if (operationChanged && collectOnlyChangedOperations) {
-        operationDiffs = [...(methodData as WithAggregatedDiffs<GraphApiOperation>)[DIFFS_AGGREGATED_META_KEY]]
+      if (operationChanged) {
+        operationDiffs = [...(methodData as WithAggregatedDiffs<GraphApiOperation>)[DIFFS_AGGREGATED_META_KEY]??[]]
       }
-      if (operationAddedOrRemoved && !collectOnlyChangedOperations) {
+      if (operationAddedOrRemoved) {
         const operationAddedOrRemovedDiff = (merged[type] as WithDiffMetaRecord<Record<string, GraphApiOperation>>)[DIFF_META_KEY]?.[operationKey]
         operationAddedOrRemovedDiff && operationDiffs.push(operationAddedOrRemovedDiff)
       }

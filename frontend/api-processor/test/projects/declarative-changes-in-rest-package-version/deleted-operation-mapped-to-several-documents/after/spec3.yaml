@@ -1,0 +1,15 @@
+openapi: 3.0.0
+info:
+  title: Sample API
+  description: API specification example
+  version: 1.0.0
+paths:
+  /packages:
+    post:
+      summary: create package
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema: {}

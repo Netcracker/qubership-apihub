@@ -115,6 +115,32 @@ function dedupeTuples<T extends [object | undefined, object | undefined]>(
   return result
 }
 
+function removeRedundantPartialPairs<T extends [object | undefined, object | undefined]>(
+  tuples: T[],
+): T[] {
+  const completeAtPosition = [new Set<object>(), new Set<object>()] as const
+
+  // First pass: identify all values that appear in complete pairs by position
+  for (const [a, b] of tuples) {
+    if (a !== undefined && b !== undefined) {
+      completeAtPosition[0].add(a)
+      completeAtPosition[1].add(b)
+    }
+  }
+
+  // Second pass: filter out partial pairs that are consumed by a complete pair
+  return tuples.filter(([a, b]) => {
+    const isPartial = a === undefined || b === undefined
+    if (!isPartial) return true // Keep all complete pairs
+    
+    // For partial pairs, only keep if there's no corresponding complete pair 
+    // with the defined value at corresponding position
+    return a === undefined 
+      ? !completeAtPosition[1].has(b!)
+      : !completeAtPosition[0].has(a)
+  })
+}
+
 export function normalizeOperationIds(operations: ResolvedOperation[], apiBuilder: ApiBuilder, groupSlug: string): [(NormalizedOperationId | OperationId)[], Record<NormalizedOperationId | OperationId, ResolvedOperation>] {
   const normalizedOperationIdToOperation: Record<NormalizedOperationId | OperationId, ResolvedOperation> = {}
   operations.forEach(operation => {
@@ -200,7 +226,7 @@ export const calculatePairedDocs = async (
     const currDoc = current && currDocuments.find(document => document.slug === current.documentId)
     pairedDocs.push([prevDoc, currDoc])
   }
-  return dedupeTuples(pairedDocs)
+  return removeRedundantPartialPairs(dedupeTuples(pairedDocs))
 }
 
 export const comparePairedDocs = async (

@@ -141,11 +141,16 @@ async function compareCurrentApiType(
   const operationPairs = Object.values(operationsMap)
   const pairedDocs = await calculatePairedDocs(operationPairs, pairContext)
   const [operationChanges, tags] = await comparePairedDocs(operationsMap, pairedDocs, apiBuilder, pairContext)
+  // Duplicates could happen in rare case when document for added/deleted operation was mapped to several documents in other version
+  const uniqueOperationChanges = removeObjectDuplicates(
+    operationChanges,
+    (item) => `${item.apiType}:${item.operationId ?? ''}:${item.previousOperationId ?? ''}`,
+  )
 
-  const dedupedChanges = removeObjectDuplicates(operationChanges.flatMap(({ diffs }) => diffs), calculateDiffId)
-  const changesSummary = calculateChangeSummary(dedupedChanges)
+  const uniqueDiffs = removeObjectDuplicates(uniqueOperationChanges.flatMap(({ diffs }) => diffs), calculateDiffId)
+  const changesSummary = calculateChangeSummary(uniqueDiffs)
   const numberOfImpactedOperations = calculateTotalImpactedSummary(
-    operationChanges.map(({ impactedSummary }) => impactedSummary),
+    uniqueOperationChanges.map(({ impactedSummary }) => impactedSummary),
   )
 
   const apiAudienceTransitions: ApiAudienceTransition[] = []
@@ -163,6 +168,6 @@ async function compareCurrentApiType(
       tags,
       apiAudienceTransitions,
     },
-    operationChanges,
+    uniqueOperationChanges,
   ]
 }

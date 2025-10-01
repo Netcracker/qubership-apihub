@@ -1,0 +1,32 @@
+openapi: 3.0.0
+info:
+  title: Sample API
+  description: API specification example
+  version: 1.0.0
+paths:
+  /packages:
+    get:
+      operationId: getPackage
+      summary: get package
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {}
+    post:
+      summary: create package
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema: {}
+    put:
+      summary: update package
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {}

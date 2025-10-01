@@ -88,8 +88,6 @@ export const compareDocuments = async (
   let prevDocData = prevFile && JSON.parse(await prevFile.text())
   let currDocData = currFile && JSON.parse(await currFile.text())
 
-  const collectOnlyChangedOperations = Boolean(prevDoc && currDoc)
-
   if (prevDocData && previousGroup) {
     prevDocData = createCopyWithCurrentGroupOperationsOnly(prevDocData, previousGroup)
   }
@@ -152,17 +150,19 @@ export const compareDocuments = async (
       const operationAddedOrRemoved = !operationPotentiallyChanged
 
       let operationDiffs: Diff[] = []
-      if (operationPotentiallyChanged && collectOnlyChangedOperations) {
+      if (operationPotentiallyChanged) {
         operationDiffs = [
-          ...(methodData as WithAggregatedDiffs<OpenAPIV3.OperationObject>)[DIFFS_AGGREGATED_META_KEY],
+          ...(methodData as WithAggregatedDiffs<OpenAPIV3.OperationObject>)[DIFFS_AGGREGATED_META_KEY]??[],
           ...extractRootServersDiffs(merged),
           ...extractRootSecurityDiffs(merged),
           ...extractPathParamRenameDiff(merged, path),
           // parameters, servers, summary, description and extensionKeys are moved from path to method in pathItemsUnification during normalization in apiDiff, so no need to aggregate them here
         ]
       }
-      if (operationAddedOrRemoved && !collectOnlyChangedOperations) {
-        const operationAddedOrRemovedDiff = (merged.paths[path] as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[inferredMethod]
+      if (operationAddedOrRemoved) {
+        const operationAddedOrRemovedDiffFromSpecificPath = (merged.paths[path] as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[inferredMethod]
+        const operationAddedOrRemovedDiffFromPaths = (merged.paths as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[path]
+        const operationAddedOrRemovedDiff = operationAddedOrRemovedDiffFromSpecificPath ?? operationAddedOrRemovedDiffFromPaths
         operationDiffs = operationAddedOrRemovedDiff ? [operationAddedOrRemovedDiff] : []
       }
 
