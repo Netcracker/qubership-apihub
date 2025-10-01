@@ -1,5 +1,5 @@
 import { CrawlRules, syncCrawl } from "@netcracker/qubership-apihub-json-crawl";
-import { GraphApiModelTree } from "../..";
+import { GraphApiModelTree, GraphApiTreeComplexNode } from "../..";
 import { createCycleGuardHook } from "../../../abstract/hooks/cycle-guard";
 import { ExpandingCallback } from "../../../abstract/types";
 import { GraphApiCrawlRule, GraphApiCrawlState, GraphApiTreeNode } from "../types";
@@ -12,9 +12,10 @@ export function createExpandingCallback(
   state: GraphApiCrawlState,
   rules: CrawlRules<GraphApiCrawlRule> | undefined,
 ): ExpandingCallback {
-  return (parent: GraphApiTreeNode) => {
+  return (parent: GraphApiTreeNode, container?: GraphApiTreeComplexNode) => {
     const initialState: GraphApiCrawlState = {
       parent: parent,
+      container: container,
       alreadyConvertedMappingStack: state.alreadyConvertedMappingStack,
       treeLevel: state.treeLevel + 1,
       maxTreeLevel: state.maxTreeLevel + 1,

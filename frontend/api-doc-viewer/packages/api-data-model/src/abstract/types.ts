@@ -7,4 +7,4 @@ export type SchemaCrawlRule<K extends string, S> = {
   transformers?: SchemaTransformFunc<S>[]
 }
 
-export type ExpandingCallback = (parent: any) => void;
+export type ExpandingCallback = () => void;

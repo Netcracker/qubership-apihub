@@ -1,4 +1,4 @@
-import { UNKNOWN_TYPE, modelTreeNodeType } from "../../abstract/constants";
+import { modelTreeNodeType, UNKNOWN_TYPE } from "../../abstract/constants";
 import { ModelTree } from '../../abstract/model/model-tree.impl';
 import { CreateNodeResult, IModelTreeNode } from '../../abstract/model/types';
 import { isOpenApiExtensionKey } from '../../oas-extension-key';
@@ -8,6 +8,7 @@ import { isJsonSchemaNodeType } from '../guards';
 import { isBrokenRef, isRequired } from '../utils';
 import type { JsonSchemaCreateNodeParams, JsonSchemaNodeKind, JsonSchemaNodeMeta, JsonSchemaNodeValue } from './types';
 import { JsonSchemaNodeType } from './types';
+import { LazyBuildingContext } from "@apihub/abstract-model/model/model-tree-node.impl";
 
 export class JsonSchemaModelTree<
   T = JsonSchemaNodeValue,
@@ -61,7 +62,10 @@ export class JsonSchemaModelTree<
     } as T
   }
 
-  public createJsonSchemaNode(params: JsonSchemaCreateNodeParams<T, K, M>): CreateNodeResult<IModelTreeNode<T, K, M>> {
+  public createJsonSchemaNode(
+    params: JsonSchemaCreateNodeParams<T, K, M>,
+    lazyBuildingContext?: LazyBuildingContext<any, any, any>,
+  ): CreateNodeResult<IModelTreeNode<T, K, M>> {
     const {
       id, kind, key = '', value, parent = null, container = null, newDataLevel = true, isCycle,
     } = params
@@ -73,12 +77,9 @@ export class JsonSchemaModelTree<
         container,
         meta: _nodeMeta,
         newDataLevel: newDataLevel,
-        /* Feature "Lazy Tree Building" */
-        expandingCallback: params.expandingCallback,
-        /* --- */
       }
       return {
-        node: this.createNode(id, kind, key, isCycle, _params),
+        node: this.createNode(id, kind, key, isCycle, _params, lazyBuildingContext),
         value: null,
       }
     }
@@ -97,11 +98,8 @@ export class JsonSchemaModelTree<
         container,
         meta: _nodeMeta,
         newDataLevel: newDataLevel,
-        /* Feature "Lazy Tree Building" */
-        expandingCallback: params.expandingCallback,
-        /* --- */
       }
-      result.node = this.createComplexNode(id, kind, key, isCycle, _params)
+      result.node = this.createComplexNode(id, kind, key, isCycle, _params, lazyBuildingContext)
     } else {
       const _nodeValue = this.createNodeValue({
         ...params,
@@ -115,11 +113,8 @@ export class JsonSchemaModelTree<
         parent,
         container,
         newDataLevel: newDataLevel,
-        /* Feature "Lazy Tree Building" */
-        expandingCallback: params.expandingCallback,
-        /* --- */
       }
-      result.node = this.createNode(id, kind, key, isCycle, _params)
+      result.node = this.createNode(id, kind, key, isCycle, _params, lazyBuildingContext)
     }
 
     return result

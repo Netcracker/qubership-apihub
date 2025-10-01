@@ -1,5 +1,5 @@
 import { ModelTreeComplexNode } from './model-tree-complex-node.impl';
-import { ModelTreeNode } from './model-tree-node.impl';
+import { LazyBuildingContext, ModelTreeNode } from './model-tree-node.impl';
 import { IModelTree, IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from './types';
 
 export class ModelTree<T, K extends string, M> implements IModelTree<T, K, M> {
@@ -9,16 +9,28 @@ export class ModelTree<T, K extends string, M> implements IModelTree<T, K, M> {
     return this.nodes.size ? this.nodes.get('#')! : null;
   }
 
-  public createNode(id: string, kind: K, key: string | number, isCycle: boolean, params?: ModelTreeNodeParams<T, K, M>): ModelTreeNode<T, K, M> {
-    const node = new ModelTreeNode<T, K, M>(this, id, kind, key, isCycle, params);
+  public createNode(
+    id: string,
+    kind: K,
+    key: string | number,
+    isCycle: boolean,
+    params?: ModelTreeNodeParams<T, K, M>,
+    lazyBuildingContext?: LazyBuildingContext<T, K, M>,
+  ): ModelTreeNode<T, K, M> {
+    const node = new ModelTreeNode<T, K, M>(id, kind, key, isCycle, params, lazyBuildingContext);
     this.nodes.set(id, node);
     return node;
   }
 
-  public createComplexNode(id: string, kind: K, key: string | number, isCycle: boolean, params: ModelTreeNodeParams<T, K, M> & {
-    type: Exclude<ModelTreeNodeType, 'simple'>;
-  }): ModelTreeComplexNode<T, K, M> {
-    const node = new ModelTreeComplexNode<T, K, M>(this, id, kind, key, isCycle, params);
+  public createComplexNode(
+    id: string,
+    kind: K,
+    key: string | number,
+    isCycle: boolean,
+    params: ModelTreeNodeParams<T, K, M> & { type: Exclude<ModelTreeNodeType, 'simple'> },
+    lazyBuildingContext?: LazyBuildingContext<T, K, M>,
+  ): ModelTreeComplexNode<T, K, M> {
+    const node = new ModelTreeComplexNode<T, K, M>(id, kind, key, isCycle, params, lazyBuildingContext);
     this.nodes.set(id, node);
     return node;
   }

@@ -1,10 +1,17 @@
-import { GraphApiAnyDefinition, GraphApiListDefinition, isGraphApiAnyDefinition, isGraphApiDirective, isGraphApiListDefinition } from '@netcracker/qubership-apihub-graphapi';
+import {
+  GraphApiAnyDefinition,
+  GraphApiListDefinition,
+  isGraphApiAnyDefinition,
+  isGraphApiDirective,
+  isGraphApiListDefinition
+} from '@netcracker/qubership-apihub-graphapi';
 import { CreateNodeResult, IModelTreeNode } from '../../abstract/model/types';
 import { JsonSchemaCreateNodeParams, JsonSchemaModelTree } from '../../json-schema';
 import { getNodeComplexityType, isObject, pick } from '../../utils';
 import { graphSchemaNodeKind, graphSchemaNodeMetaProps, graphSchemaNodeValueProps } from '../constants';
 import { resolveDirectiveDeprecated, resolveEnumValues } from '../utils';
 import { GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta } from './types';
+import { LazyBuildingContext } from "@apihub/abstract-model/model/model-tree-node.impl";
 
 export class GraphApiModelTree<
   T = GraphApiNodeData,
@@ -86,8 +93,9 @@ export class GraphApiModelTree<
   }
 
   public createGraphSchemaNode(
-    params: JsonSchemaCreateNodeParams<T, K, M>
+    params: JsonSchemaCreateNodeParams<T, K, M>,
+    lazyBuildingContext?: LazyBuildingContext<any, any, any>
   ): CreateNodeResult<IModelTreeNode<T, K, M>> {
-    return this.createJsonSchemaNode(params)
+    return this.createJsonSchemaNode(params, lazyBuildingContext)
   }
 }

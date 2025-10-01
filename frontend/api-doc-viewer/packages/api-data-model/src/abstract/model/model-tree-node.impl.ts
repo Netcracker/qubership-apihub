@@ -1,8 +1,36 @@
-import { JsonPath } from '@netcracker/qubership-apihub-json-crawl';
+import { CrawlRules, JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl';
 import { modelTreeNodeType } from "../constants";
 import { ModelTreeComplexNode } from './model-tree-complex-node.impl';
 import { IModelTree, IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from './types';
-import { ExpandingCallback } from "../types";
+import { ExpandingCallback, SchemaCrawlRule } from "../types";
+import { createCycleGuardHook } from "../hooks/cycle-guard";
+import { createGraphApiTreeCrawlHook } from "../../graph-api/tree/hooks/create-graph-api-nodes";
+import { createGraphSchemaTreeCrawlHook } from "../../graph-api/tree/hooks/create-graph-api-schema-nodes";
+import { ModelTree } from './model-tree.impl';
+
+/* Feature "Lazy Tree Building" */
+type CrawlValue = unknown
+
+type LazyBuildingCrawlRule<T, K extends string, M> = SchemaCrawlRule<K, LazyBuildingCrawlState<T, K, M>>
+
+export type LazyBuildingContext<T, K extends string, M> = {
+  tree: ModelTree<T, K, M>
+  crawlValue: CrawlValue,
+  crawlRules: CrawlRules<LazyBuildingCrawlRule<T, K, M>> | undefined
+  alreadyConvertedMappingStack: Map<CrawlValue, ModelTreeNode<T, K, M> | ModelTreeComplexNode<T, K, M>>,
+  nextLevel: number,
+  nextMaxLevel: number,
+}
+
+type LazyBuildingCrawlState<T, K extends string, M> = {
+  parent: IModelTreeNode<T, K, M> | null
+  container?: IModelTreeNode<T, K, M>
+  alreadyConvertedMappingStack: Map<unknown, IModelTreeNode<T, K, M>>,
+  treeLevel: number, // current tree level
+  maxTreeLevel: number, // this level will have no children/nested nodes until they're lazy-built
+}
+
+/* --- */
 
 export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, K, M> {
   public nested: IModelTreeNode<T, K, M>[] = [];
@@ -18,22 +46,25 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
   private _expandingCallback: ExpandingCallback | null = null;
 
   public expand() {
-    this._expandingCallback?.(this);
+    this._expandingCallback?.();
   }
 
   public collapse() {
-    this._children = [];
+    this._children.length = 0;
   }
+
   /* --- */
 
   constructor(
-    public readonly tree: IModelTree<T, K, M>,
     public readonly id: string = '#',
     public readonly kind: K,
     public readonly key: string | number = '',
     public readonly isCycle: boolean,
     params?: ModelTreeNodeParams<T, K, M>,
-    protected /* readonly */ _children: IModelTreeNode<T, K, M>[] = []
+    /* Feature "Lazy Tree Building" */
+    lazyBuildingContext?: LazyBuildingContext<T, K, M>,
+    /* --- */
+    protected readonly _children: IModelTreeNode<T, K, M>[] = []
   ) {
     const {
       type = modelTreeNodeType.simple,
@@ -42,9 +73,6 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
       container = null,
       newDataLevel = true,
       meta,
-      /* Feature "Lazy Tree Building" */
-      expandingCallback = null,
-      /* --- */
     } = params ?? {};
     this._value = value;
     this.type = type;
@@ -53,7 +81,41 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
     this.newDataLevel = newDataLevel;
     this.meta = meta as M;
     /* Feature "Lazy Tree Building" */
-    this._expandingCallback = expandingCallback;
+    const isSimpleNode = this.type === 'simple'
+    if (lazyBuildingContext) {
+      const {
+        tree,
+        crawlValue,
+        crawlRules,
+        alreadyConvertedMappingStack,
+        nextLevel,
+        nextMaxLevel,
+      } = lazyBuildingContext
+      this._expandingCallback = () => {
+        syncCrawl<
+          LazyBuildingCrawlState<T, K, M>,
+          LazyBuildingCrawlRule<T, K, M>
+        >(
+          crawlValue,
+          [
+            createCycleGuardHook(tree as any),
+            createGraphApiTreeCrawlHook(tree as any),
+            createGraphSchemaTreeCrawlHook(tree as any),
+          ],
+          {
+            state: {
+              parent: isSimpleNode ? this : this.parent,
+              container: !isSimpleNode ? this : undefined,
+              alreadyConvertedMappingStack: alreadyConvertedMappingStack,
+              treeLevel: nextLevel + 1,
+              maxTreeLevel: nextMaxLevel + 1,
+            },
+            rules: crawlRules,
+          },
+          true, // enable "skip root level" mode
+        )
+      };
+    }
     /* --- */
   }
 
@@ -63,13 +125,13 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
     key: string | number,
     parent: IModelTreeNode<T, K, M> | null,
   ): IModelTreeNode<T, K, M> {
-    const result = new ModelTreeNode(tree, id, this.kind, key, true, {
+    const result = new ModelTreeNode(id, this.kind, key, true, {
       type: this.type,
       value: this._value ?? undefined,
       parent: parent,
       newDataLevel: this.newDataLevel,
       meta: { ...this.meta },
-    }, this._children);
+    }, undefined, this._children);
     result.nested = this.nested;
     return result;
   }

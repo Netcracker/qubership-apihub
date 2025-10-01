@@ -271,4 +271,45 @@ describe('Lazy Tree Building', () => {
       .find(node => node.kind === graphSchemaNodeKind.output)!
     expect(methodIdOutput.children().length).toBe(0)
   })
+
+  it('expand simple combiner', () => {
+    const graphQl = `
+      type Query {
+        test: Out
+      }
+      
+      type Out {
+        union: Union
+      }
+      
+      union Union = String | Int
+    `
+    const graphApi = buildGraphApi(graphQl)
+    const tree = createGraphApiTreeForTests(graphApi)
+    const root = tree.root!
+    // 1
+    const query = root
+      .children()
+      .find(node => node.kind === graphApiNodeKind.query)!
+    // 2
+    const queryOutput = query
+      .children()
+      .find(node => node.kind === graphSchemaNodeKind.output)!
+    // 3
+    const methodUnion = queryOutput
+      .children()
+      .find(node => node.kind === graphSchemaNodeKind.method)!
+    expect(methodUnion.children().length).toBe(0)
+    methodUnion.expand()
+    expect(methodUnion.children().length).toBe(1)
+    // 4
+    const methodUnionOutput = methodUnion
+      .children()
+      .find(node => node.kind === graphSchemaNodeKind.output)!
+    expect(methodUnionOutput.children().length).toBe(0)
+    expect(methodUnionOutput.nested.length).toBe(0)
+    methodUnionOutput.expand()
+    expect(methodUnionOutput.children().length).toBe(0)
+    expect(methodUnionOutput.nested.length).toBe(2)
+  })
 })

@@ -1,17 +1,27 @@
 import { buildPointer } from '@netcracker/qubership-apihub-api-unifier';
 import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi';
 import { SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
-import { GraphApiCrawlRule, GraphApiCrawlState, GraphApiNodeData, graphApiNodeKind, GraphApiNodeKind, graphApiNodeKinds, GraphApiNodeMeta, GraphApiTreeComplexNode, GraphApiTreeNode } from '../..';
+import {
+  GraphApiCrawlState,
+  GraphApiNodeData,
+  graphApiNodeKind,
+  GraphApiNodeKind,
+  graphApiNodeKinds,
+  GraphApiNodeMeta,
+  GraphApiTreeComplexNode,
+  GraphApiTreeNode
+} from '../..';
 import { modelTreeNodeType } from "../../../abstract/constants";
 import { ModelTreeNodeParams } from '../../../abstract/model/types';
 import { isBrokenRef } from '../../../json-schema';
 import { areExcludedComponents } from '../../utils';
 import { GraphApiModelTree } from '../model';
-import { createExpandingCallback } from './create-expanding-callback';
+import { LazyBuildingContext } from "@apihub/abstract-model/model/model-tree-node.impl";
 
 export function createGraphApiTreeCrawlHook(
   tree: GraphApiModelTree
-): SyncCrawlHook<GraphApiCrawlState, GraphApiCrawlRule> {
+  // FIXME 01.10.25 // Revert "any"
+): SyncCrawlHook<any, any> {
   return ({ value, state, rules, path, key }) => {
     if (typeof key === 'symbol') {
       return { done: true };
@@ -35,7 +45,14 @@ export function createGraphApiTreeCrawlHook(
       node: {},
     };
 
-    const expandingCallback = createExpandingCallback(tree, value as Record<PropertyKey, unknown>, state, rules);
+    const lazyBuildingContext: LazyBuildingContext<any, any, any> = {
+      tree: tree,
+      crawlValue: value,
+      crawlRules: rules,
+      alreadyConvertedMappingStack: new Map(state.alreadyConvertedMappingStack),
+      nextLevel: state.treeLevel,
+      nextMaxLevel: state.maxTreeLevel + 1,
+    }
 
     const newDataLevel = false;
     switch (kind) {
@@ -43,12 +60,14 @@ export function createGraphApiTreeCrawlHook(
       case graphApiNodeKind.mutation:
       case graphApiNodeKind.subscription: {
         result = tree.createGraphSchemaNode({
-          id, kind, key, value, parent, container,
+          id,
+          kind,
+          key,
+          value,
+          parent,
+          container,
           newDataLevel: newDataLevel,
-          isCycle: false,
-          /* Feature "Lazy Tree Building" */
-          expandingCallback,
-          /* --- */
+          isCycle: false
         });
         break;
       }
@@ -63,9 +82,6 @@ export function createGraphApiTreeCrawlHook(
             _fragment: value,
           },
           newDataLevel: newDataLevel,
-          /* Feature "Lazy Tree Building" */
-          expandingCallback,
-          /* --- */
         };
         result.node = tree.createNode(id, kind, key, false, params);
         break;
@@ -78,7 +94,6 @@ export function createGraphApiTreeCrawlHook(
     if (state.treeLevel === state.maxTreeLevel) {
       return { done: true };
     }
-
     const nextTreeLevel = state.treeLevel + 1;
     /* --- */
 
@@ -89,6 +104,7 @@ export function createGraphApiTreeCrawlHook(
       if (result.node!.type === modelTreeNodeType.simple) {
         newState = {
           parent: result.node as GraphApiTreeNode,
+          // @ts-expect-error FIXME 01.10.25 // Fix types
           alreadyConvertedMappingStack: stack,
           /* Feature "Lazy Tree Building" */
           treeLevel: nextTreeLevel,
@@ -99,6 +115,7 @@ export function createGraphApiTreeCrawlHook(
         newState = {
           parent: parent,
           container: result.node as GraphApiTreeComplexNode,
+          // @ts-expect-error FIXME 01.10.25 // Fix types
           alreadyConvertedMappingStack: stack,
           /* Feature "Lazy Tree Building" */
           treeLevel: nextTreeLevel,

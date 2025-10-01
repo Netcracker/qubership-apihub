@@ -8,8 +8,8 @@ import { createGraphApiDiffTree } from '../../diff-tree/build';
 import { GraphApiDiffTreeNode } from '../../diff-tree/types';
 import { areExcludedComponents } from '../../utils';
 import { GraphApiModelTree } from '../model';
-import { GraphApiCrawlRule, GraphApiCrawlState, GraphApiTreeComplexNode, GraphApiTreeNode } from '../types';
-import { createExpandingCallback } from './create-expanding-callback';
+import { GraphApiCrawlState, GraphApiTreeComplexNode, GraphApiTreeNode } from '../types';
+import { LazyBuildingContext } from "@apihub/abstract-model/model/model-tree-node.impl";
 
 function shouldCrawlDiff(value: unknown): value is DiffRemove | DiffReplace {
   return isDiff(value) &&
@@ -20,7 +20,8 @@ function shouldCrawlDiff(value: unknown): value is DiffRemove | DiffReplace {
 export function createGraphSchemaTreeCrawlHook(
   tree: GraphApiModelTree,
   metaKey?: symbol
-): SyncCrawlHook<GraphApiCrawlState, GraphApiCrawlRule> {
+  // FIXME 01.10.25 // Revert "any"
+): SyncCrawlHook<any, any> {
   const graphSchemaNodeKinds = Object.keys(graphSchemaNodeKind);
 
   return ({ value, rules, state, path, key }) => {
@@ -88,9 +89,7 @@ export function createGraphSchemaTreeCrawlHook(
         break;
     }
 
-    const expandingCallback = createExpandingCallback(tree, value as Record<PropertyKey, unknown>, state, rules);
-
-    const res = tree.createGraphSchemaNode({
+    const nodeCreationParams = {
       id,
       kind,
       key,
@@ -99,15 +98,25 @@ export function createGraphSchemaTreeCrawlHook(
       container,
       newDataLevel: newDataLevel,
       isCycle: false,
-      /* Feature "Lazy Tree Building" */
-      expandingCallback: expandingCallback,
-      /* --- */
-    });
+    }
+
+    /* Feature "Lazy Tree Building" */
+    const lazyBuildingContext: LazyBuildingContext<any, any, any> = {
+      tree: tree,
+      crawlValue: value,
+      crawlRules: rules,
+      alreadyConvertedMappingStack: state.alreadyConvertedMappingStack,
+      nextLevel: state.treeLevel + 1,
+      nextMaxLevel: state.maxTreeLevel + 1,
+    }
+    /* --- */
+
+    const nodeCreationResult = tree.createGraphSchemaNode(nodeCreationParams, lazyBuildingContext);
 
     if (container) {
-      container.addNestedNode(res.node);
+      container.addNestedNode(nodeCreationResult.node);
     } else {
-      parent?.addChild(res.node);
+      parent?.addChild(nodeCreationResult.node);
     }
 
     /* Feature "Lazy Tree Building" */
@@ -118,13 +127,14 @@ export function createGraphSchemaTreeCrawlHook(
     const nextTreeLevel = state.treeLevel + 1;
     /* --- */
 
-    if (res.value) {
+    if (nodeCreationResult.value) {
       const stack = new Map(state.alreadyConvertedMappingStack);
-      stack.set(value, res.node as GraphApiTreeNode | GraphApiTreeComplexNode);
+      stack.set(value, nodeCreationResult.node as GraphApiTreeNode | GraphApiTreeComplexNode);
       let newState: GraphApiCrawlState
-      if (res.node.type === modelTreeNodeType.simple) {
+      if (nodeCreationResult.node.type === modelTreeNodeType.simple) {
         newState = {
-          parent: res.node as GraphApiTreeNode,
+          parent: nodeCreationResult.node as GraphApiTreeNode,
+          // @ts-expect-error FIXME 01.10.25 // Fix types
           alreadyConvertedMappingStack: stack,
           /* Feature "Lazy Tree Building" */
           treeLevel: nextTreeLevel,
@@ -134,7 +144,8 @@ export function createGraphSchemaTreeCrawlHook(
       } else {
         newState = {
           parent: parent,
-          container: res.node as GraphApiTreeComplexNode,
+          container: nodeCreationResult.node as GraphApiTreeComplexNode,
+          // @ts-expect-error FIXME 01.10.25 // Fix types
           alreadyConvertedMappingStack: stack,
           /* Feature "Lazy Tree Building" */
           treeLevel: nextTreeLevel,
@@ -142,7 +153,7 @@ export function createGraphSchemaTreeCrawlHook(
           /* --- */
         }
       }
-      return { value: res.value, state: newState };
+      return { value: nodeCreationResult.value, state: newState };
     } else {
       return { done: true };
     }

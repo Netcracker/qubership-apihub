@@ -56,8 +56,4 @@ export type ModelTreeNodeParams<T, K extends string, M> = {
   parent?: IModelTreeNode<T, K, M> | null;
   container?: IModelTreeNode<T, K, M> | null;
   newDataLevel?: boolean;
-  /* Feature "Lazy Tree Building" */
-  expandingFragment?: Record<PropertyKey, unknown>;
-  expandingCallback?: (parent: any) => void;
-  /* --- */
 };
