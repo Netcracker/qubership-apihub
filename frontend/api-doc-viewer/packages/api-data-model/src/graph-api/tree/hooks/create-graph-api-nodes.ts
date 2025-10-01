@@ -2,6 +2,7 @@ import { buildPointer } from '@netcracker/qubership-apihub-api-unifier';
 import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi';
 import { SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
 import {
+  crawlHooksGraphApiTree,
   GraphApiCrawlState,
   GraphApiNodeData,
   graphApiNodeKind,
@@ -48,6 +49,7 @@ export function createGraphApiTreeCrawlHook(
     const lazyBuildingContext: LazyBuildingContext<any, any, any> = {
       tree: tree,
       crawlValue: value,
+      crawlHooks: crawlHooksGraphApiTree(tree),
       crawlRules: rules,
       alreadyConvertedMappingStack: new Map(state.alreadyConvertedMappingStack),
       nextLevel: state.treeLevel,

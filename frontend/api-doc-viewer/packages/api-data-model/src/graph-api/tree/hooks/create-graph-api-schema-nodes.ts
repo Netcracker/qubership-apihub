@@ -10,6 +10,7 @@ import { areExcludedComponents } from '../../utils';
 import { GraphApiModelTree } from '../model';
 import { GraphApiCrawlState, GraphApiTreeComplexNode, GraphApiTreeNode } from '../types';
 import { LazyBuildingContext } from "@apihub/abstract-model/model/model-tree-node.impl";
+import { crawlHooksGraphApiTree } from "@apihub/graph-api-model/tree/build";
 
 function shouldCrawlDiff(value: unknown): value is DiffRemove | DiffReplace {
   return isDiff(value) &&
@@ -104,6 +105,7 @@ export function createGraphSchemaTreeCrawlHook(
     const lazyBuildingContext: LazyBuildingContext<any, any, any> = {
       tree: tree,
       crawlValue: value,
+      crawlHooks: crawlHooksGraphApiTree(tree),
       crawlRules: rules,
       alreadyConvertedMappingStack: state.alreadyConvertedMappingStack,
       nextLevel: state.treeLevel + 1,

@@ -9,6 +9,19 @@ import { GraphApiCrawlRule, GraphApiCrawlState, GraphApiNodeData, GraphApiNodeKi
 
 export const DEFAULT_MAX_TREE_LEVEL = 3;
 
+const CRAWL_HOOKS_CACHE: Map<GraphApiModelTree, any[]> = new Map()
+
+export function crawlHooksGraphApiTree(tree: GraphApiModelTree): any[] {
+  if (!CRAWL_HOOKS_CACHE.has(tree)) {
+    CRAWL_HOOKS_CACHE.set(tree, [
+      createCycleGuardHook(tree),
+      createGraphApiTreeCrawlHook(tree),
+      createGraphSchemaTreeCrawlHook(tree),
+    ])
+  }
+  return CRAWL_HOOKS_CACHE.get(tree)!
+}
+
 export const createGraphApiTree = (
   mergedSource: unknown,
   maxTreeLevel: number = DEFAULT_MAX_TREE_LEVEL,
@@ -51,11 +64,7 @@ export const createGraphApiTree = (
 
   syncCrawl<GraphApiCrawlState, GraphApiCrawlRule>(
     mergedSource,
-    [
-      createCycleGuardHook(tree),
-      createGraphApiTreeCrawlHook(tree),
-      createGraphSchemaTreeCrawlHook(tree),
-    ],
+    crawlHooksGraphApiTree(tree),
     {
       state: crawlState,
       rules: graphApiRules,

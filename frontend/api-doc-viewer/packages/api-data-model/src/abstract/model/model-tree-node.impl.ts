@@ -1,11 +1,8 @@
-import { CrawlRules, JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl';
+import { CrawlRules, JsonPath, syncCrawl, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
 import { modelTreeNodeType } from "../constants";
 import { ModelTreeComplexNode } from './model-tree-complex-node.impl';
 import { IModelTree, IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from './types';
 import { ExpandingCallback, SchemaCrawlRule } from "../types";
-import { createCycleGuardHook } from "../hooks/cycle-guard";
-import { createGraphApiTreeCrawlHook } from "../../graph-api/tree/hooks/create-graph-api-nodes";
-import { createGraphSchemaTreeCrawlHook } from "../../graph-api/tree/hooks/create-graph-api-schema-nodes";
 import { ModelTree } from './model-tree.impl';
 
 /* Feature "Lazy Tree Building" */
@@ -16,6 +13,7 @@ type LazyBuildingCrawlRule<T, K extends string, M> = SchemaCrawlRule<K, LazyBuil
 export type LazyBuildingContext<T, K extends string, M> = {
   tree: ModelTree<T, K, M>
   crawlValue: CrawlValue,
+  crawlHooks: SyncCrawlHook<any, any> | SyncCrawlHook<any, any>[]
   crawlRules: CrawlRules<LazyBuildingCrawlRule<T, K, M>> | undefined
   alreadyConvertedMappingStack: Map<CrawlValue, ModelTreeNode<T, K, M> | ModelTreeComplexNode<T, K, M>>,
   nextLevel: number,
@@ -86,6 +84,7 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
       const {
         tree,
         crawlValue,
+        crawlHooks,
         crawlRules,
         alreadyConvertedMappingStack,
         nextLevel,
@@ -97,11 +96,7 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
           LazyBuildingCrawlRule<T, K, M>
         >(
           crawlValue,
-          [
-            createCycleGuardHook(tree as any),
-            createGraphApiTreeCrawlHook(tree as any),
-            createGraphSchemaTreeCrawlHook(tree as any),
-          ],
+          crawlHooks,
           {
             state: {
               parent: isSimpleNode ? this : this.parent,
