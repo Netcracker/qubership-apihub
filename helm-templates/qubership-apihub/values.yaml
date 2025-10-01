@@ -371,8 +371,10 @@ qubershipApihubAgentsBackend:
     # Optional; If specified, during discovery the package structure is copied from the default workspace to the target discovery workspace.; If not set, default value: ""; Example: QS
     defaultWorkspaceId: ''
 
-    # Optional; Schedule for the drafts cleanup job. If not set, default value: "0 2 * * 0"; Example: "* * * * *"
-    draftsCleanupSchedule: ''
+    # Optional; Schedule for the snapshot cleanup job. If not set, default value: "0 2 * * 0"; Example: "* * * * *"
+    snapshotsCleanupSchedule: ''
+    # Optional; Number of days to keep snapshots before cleanup; If not set, default value: 183; Example: 30
+    snapshotsTtlDays: ''
 
     # Optional; Set to true to enable apihub playground work without authtorization. Dangerous. Not recommended; If not set, default value: false; Example: true
     insecureProxy: false

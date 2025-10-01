@@ -70,8 +70,10 @@ spec:
                 key: access_token
           - name: DEFAULT_WORKSPACE_ID
             value: '{{.Values.qubershipApihubAgentsBackend.env.defaultWorkspaceId}}'
-          - name: DRAFTS_CLEANUP_SCHEDULE
-            value: '{{.Values.qubershipApihubAgentsBackend.env.draftsCleanupSchedule}}'
+          - name: SNAPSHOTS_CLEANUP_SCHEDULE
+            value: '{{.Values.qubershipApihubAgentsBackend.env.snapshotsCleanupSchedule}}'
+          - name: SNAPSHOTS_TTL_DAYS
+            value: '{{.Values.qubershipApihubAgentsBackend.env.snapshotsTtlDays}}'
           - name: INSECURE_PROXY
             value: '{{.Values.qubershipApihubAgentsBackend.env.insecureProxy}}'
           - name: ORIGIN_ALLOWED
