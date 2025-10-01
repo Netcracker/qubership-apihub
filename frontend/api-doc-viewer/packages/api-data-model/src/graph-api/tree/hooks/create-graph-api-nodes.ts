@@ -68,7 +68,7 @@ export function createGraphApiTreeCrawlHook(
           container,
           newDataLevel: newDataLevel,
           isCycle: false
-        });
+        }, lazyBuildingContext);
         break;
       }
       case graphApiNodeKind.schema: {
