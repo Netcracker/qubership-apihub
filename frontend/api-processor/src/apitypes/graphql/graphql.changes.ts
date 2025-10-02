@@ -15,7 +15,7 @@
  */
 
 import { isEmpty, slugify, takeIf } from '../../utils'
-import { apiDiff, Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import { aggregateDiffsWithRollup, apiDiff, Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
 import { GraphApiOperation, GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 import { buildSchema } from 'graphql/utilities'
@@ -72,7 +72,6 @@ export const compareDocuments = async (
       ...NORMALIZE_OPTIONS,
       metaKey: DIFF_META_KEY,
       originsFlag: ORIGINS_SYMBOL,
-      diffsAggregatedFlag: DIFFS_AGGREGATED_META_KEY,
       normalizedResult: true,
     },
   ) as { merged: GraphApiSchema; diffs: Diff[] }
@@ -80,6 +79,8 @@ export const compareDocuments = async (
   if (isEmpty(diffs)) {
     return { operationChanges: [], tags: new Set() }
   }
+
+  aggregateDiffsWithRollup(merged, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)  
 
   const { currentGroup, previousGroup } = ctx
 

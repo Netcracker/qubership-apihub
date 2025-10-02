@@ -17,7 +17,6 @@
 import { RestOperationData } from './rest.types'
 import {
   areDeprecatedOriginsNotEmpty,
-  convertToSlug,
   IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER,
   isEmpty,
   isOperationRemove,
@@ -27,7 +26,8 @@ import {
   trimSlashes,
 } from '../../utils'
 import {
-  apiDiff,
+  aggregateDiffsWithRollup,
+  apiDiff,  
   breaking,
   Diff,
   DIFF_META_KEY,
@@ -110,7 +110,6 @@ export const compareDocuments = async (
       ...NORMALIZE_OPTIONS,
       metaKey: DIFF_META_KEY,
       originsFlag: ORIGINS_SYMBOL,
-      diffsAggregatedFlag: DIFFS_AGGREGATED_META_KEY,
       normalizedResult: true,
     },
   ) as { merged: OpenAPIV3.Document; diffs: Diff[] }
@@ -118,6 +117,8 @@ export const compareDocuments = async (
   if (isEmpty(diffs)) {
     return { operationChanges: [], tags: new Set() }
   }
+
+  aggregateDiffsWithRollup(merged, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)  
 
   const tags = new Set<string>()
   const operationChanges: OperationChanges[] = []
