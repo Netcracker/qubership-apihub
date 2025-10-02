@@ -32,7 +32,7 @@
     "fast-equals": "4.0.3"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-compatibility-suites": "2.3.0",
+    "@netcracker/qubership-apihub-compatibility-suites": "dev",
     "@netcracker/qubership-apihub-graphapi": "feature-performance-optimization",
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
     "@types/jest": "29.5.11",

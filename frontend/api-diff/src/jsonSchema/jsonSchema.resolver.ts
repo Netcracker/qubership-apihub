@@ -8,6 +8,7 @@ import {
   getOrCreateChildDiffAdd,
   getOrCreateChildDiffRemove,
   nestedCompare,
+  createDiffEntry,
 } from '../core'
 import type { CompareResolver, Diff, DiffEntry } from '../types'
 import { isArray, isObject, onlyExistedArrayIndexes } from '../utils'
@@ -21,7 +22,7 @@ export const combinersCompareResolver: CompareResolver = (ctx) => {
   }
 
   if (!isArray(before.value) || !isArray(after.value)) {
-    const diffEntry = diffFactory.replaced(ctx)
+    const diffEntry = createDiffEntry(ctx, diffFactory.replaced(ctx))
     // actually we don't make deep copy here and create "way to modify" original source
     return { diffs: [diffEntry.diff], ownerDiffEntry: diffEntry, merged: after.value }
   }

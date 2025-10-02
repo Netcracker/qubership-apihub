@@ -31,51 +31,46 @@ export const createDiff = <D extends Diff>(diff: Omit<D, 'type'>, ctx: CompareCo
   return mutableDiffCopy
 }
 
+export function createDiffEntry(ctx: CompareContext, diff: Diff): DiffEntry<Diff> {
+  return ({
+    propertyKey: ctx.mergeKey,
+    diff: diff,
+  })
+}
+
 export const diffFactory: DiffFactory = {
-  added: (ctx) => ({
-    propertyKey: ctx.mergeKey,
-    diff: createDiff({
-      afterValue: ctx.after?.value,
-      afterNormalizedValue: ctx.after?.value,
-      action: DiffAction.add,
-      afterDeclarationPaths: ctx.after.declarativePaths,
-      scope: ctx.scope,
-    }, ctx),
-  }),
-  removed: (ctx) => ({
-    propertyKey: ctx.mergeKey,
-    diff: createDiff({
-      beforeValue: ctx.before.value,
-      beforeNormalizedValue: ctx.before.value,
-      action: DiffAction.remove,
-      beforeDeclarationPaths: ctx.before.declarativePaths,
-      scope: ctx.scope,
-    }, ctx),
-  }),
-  replaced: (ctx) => ({
-    propertyKey: ctx.mergeKey,
-    diff: createDiff({
-      beforeValue: ctx.before.value,
-      beforeNormalizedValue: ctx.before.value,
-      afterValue: ctx.after.value,
-      afterNormalizedValue: ctx.after.value,
-      action: DiffAction.replace,
-      afterDeclarationPaths: ctx.after.declarativePaths,
-      beforeDeclarationPaths: ctx.before.declarativePaths,
-      scope: ctx.scope,
-    }, ctx),
-  }),
-  renamed: (ctx) => ({
-    propertyKey: ctx.mergeKey,
-    diff: createDiff({
-      beforeKey: ctx.before?.key,
-      afterKey: ctx.after?.key,
-      action: DiffAction.rename,
-      afterDeclarationPaths: ctx.after?.declarativePaths ?? [],
-      beforeDeclarationPaths: ctx.before?.declarativePaths ?? [],
-      scope: ctx.scope,
-    }, ctx),
-  }),
+  added: (ctx) => createDiff({
+    afterValue: ctx.after?.value,
+    afterNormalizedValue: ctx.after?.value,
+    action: DiffAction.add,
+    afterDeclarationPaths: ctx.after.declarativePaths,
+    scope: ctx.scope,
+  }, ctx),
+  removed: (ctx) => createDiff({
+    beforeValue: ctx.before.value,
+    beforeNormalizedValue: ctx.before.value,
+    action: DiffAction.remove,
+    beforeDeclarationPaths: ctx.before.declarativePaths,
+    scope: ctx.scope,
+  }, ctx),
+  replaced: (ctx) => createDiff({
+    beforeValue: ctx.before.value,
+    beforeNormalizedValue: ctx.before.value,
+    afterValue: ctx.after.value,
+    afterNormalizedValue: ctx.after.value,
+    action: DiffAction.replace,
+    afterDeclarationPaths: ctx.after.declarativePaths,
+    beforeDeclarationPaths: ctx.before.declarativePaths,
+    scope: ctx.scope,
+  }, ctx),
+  renamed: (ctx) => createDiff({
+    beforeKey: ctx.before?.key,
+    afterKey: ctx.after?.key,
+    action: DiffAction.rename,
+    afterDeclarationPaths: ctx.after?.declarativePaths ?? [],
+    beforeDeclarationPaths: ctx.before?.declarativePaths ?? [],
+    scope: ctx.scope,
+  }, ctx),
 }
 
 export const addDiffObjectToContainer = (
