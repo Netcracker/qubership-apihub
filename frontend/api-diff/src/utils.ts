@@ -235,3 +235,74 @@ export function difference(array1: string[], array2: string[]): string[] {
 export function removeSlashes(input: string): string {
   return input.replace(/\//g, '')
 }
+
+/**
+ * Traverses the merged document starting from given obj to the bottom and aggregates the diffs with rollup from the bottom up.
+ * Each object in the tree will have aggregatedDiffProperty only if there are diffs in the object or in the children, 
+ * otherwise the aggregatedDiffProperty is not added.
+ * Note, that adding/removing the object itself is not included in the aggregation for this object,
+ * you need retrieve this diffs from parent object if you need them.
+ * Supports cycled JSO, nested objects and arrays.
+ * @param obj - The object to aggregate the diffs of.
+ * @param diffProperty - The property of the object to aggregate the diffs of.
+ * @param aggregatedDiffProperty - The property of the object to store the aggregated diffs in.
+ * @returns The aggregated diffs of the given object.
+ */
+
+// TODO: generalize to other use cases (like collecting deprecated)
+export function aggregateDiffsWithRollup(obj: any, diffProperty: any, aggregatedDiffProperty: any): Set<Diff> | undefined {
+
+  const visited = new Set<any>()
+
+  function _aggregateDiffsWithRollup(obj: any): Set<Diff> | undefined {
+      if (obj === null || typeof obj !== 'object' ) {
+          return undefined
+      }
+
+      if (visited.has(obj)) {
+          return obj[aggregatedDiffProperty]
+      }
+
+      visited.add(obj)        
+
+      // Process all children and collect their diffs
+      const childrenDiffs = new Array<Set<Diff>>()
+      if (Array.isArray(obj)) {
+          for (const item of obj) {
+              const childDiffs = _aggregateDiffsWithRollup(item)
+              childDiffs && childDiffs.size > 0 && childrenDiffs.push(childDiffs)
+          }
+      } else {
+          for (const [_, value] of Object.entries(obj)) {
+              const childDiffs = _aggregateDiffsWithRollup(value)
+              childDiffs && childDiffs.size > 0 && childrenDiffs.push(childDiffs)
+          }
+      }
+
+      const hasOwnDiffs = diffProperty in obj
+
+      if (hasOwnDiffs || childrenDiffs.length > 1) {
+          // obj aggregated diffs are different from children diffs
+          const aggregatedDiffs = new Set<Diff>()
+          for (const childDiffs of childrenDiffs) {
+              childDiffs.forEach(diff => aggregatedDiffs.add(diff))
+          }
+          const diffs = obj[diffProperty]
+          for (const key in diffs) {
+              aggregatedDiffs.add(diffs[key])
+          }
+          // Store the aggregated diffs in the object
+          obj[aggregatedDiffProperty] = aggregatedDiffs
+      }else if (childrenDiffs.length === 1) {
+          // could reuse a child diffs if there is only one
+          [obj[aggregatedDiffProperty]] = childrenDiffs
+      }else{
+          // no diffs- no aggregated diffs get assigned            
+      }
+
+      return obj[aggregatedDiffProperty]
+  }
+
+  return _aggregateDiffsWithRollup(obj)
+}
+
