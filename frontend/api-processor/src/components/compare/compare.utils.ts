@@ -234,8 +234,9 @@ export const comparePairedDocs = async (
   pairedDocs: [ResolvedVersionDocument | undefined, ResolvedVersionDocument | undefined][],
   apiBuilder: ApiBuilder,
   ctx: CompareOperationsPairContext,
-): Promise<[OperationChanges[], string[]]> => {
+): Promise<[OperationChanges[], Set<Diff>[], string[]]> => {
   const operationChanges: OperationChanges[] = []
+  const uniqueDiffsForDocPairs: Set<Diff>[] = []
   const tags = new Set<string>()
 
   for (const [prevDoc, currDoc] of pairedDocs) {
@@ -244,11 +245,14 @@ export const comparePairedDocs = async (
       tags: docsPairTags,
     } = await apiBuilder.compareDocuments!(operationsMap, prevDoc, currDoc, ctx)
 
+    // We can remove duplicates for diffs coming from the same apiDiff call using simple identity
+    uniqueDiffsForDocPairs.push(new Set(docsPairOperationChanges.flatMap(({ diffs }) => diffs ?? [])))
+
     operationChanges.push(...docsPairOperationChanges)
     docsPairTags.forEach(tag => tags.add(tag))
   }
 
-  return [operationChanges, Array.from(tags).sort()]
+  return [operationChanges, uniqueDiffsForDocPairs, Array.from(tags).sort()]
 }
 
 export function createOperationChange(
