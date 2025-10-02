@@ -142,7 +142,8 @@ async function compareCurrentApiType(
   const pairedDocs = await calculatePairedDocs(operationPairs, pairContext)
   const [operationChanges, uniqueDiffsForDocPairs, tags] = await comparePairedDocs(operationsMap, pairedDocs, apiBuilder, pairContext)
   // Duplicates could happen in rare case when document for added/deleted operation was mapped to several documents in other version
-  const uniqueOperationChanges = removeObjectDuplicates(
+  const uniqueOperationChanges = pairedDocs.length === 1 ? operationChanges 
+  : removeObjectDuplicates(
     operationChanges,
     (item) => `${item.apiType}:${item.operationId ?? ''}:${item.previousOperationId ?? ''}`,
   )
