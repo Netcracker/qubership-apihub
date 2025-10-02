@@ -142,10 +142,10 @@ export interface DiffEntry<D extends Diff> {
 }
 
 export interface DiffFactory {
-  added: (ctx: CompareContext) => DiffEntry<DiffAdd>
-  removed: (ctx: CompareContext) => DiffEntry<DiffRemove>
-  replaced: (ctx: CompareContext) => DiffEntry<DiffReplace>
-  renamed: (ctx: CompareContext) => DiffEntry<DiffRename>
+  added: (ctx: CompareContext) => DiffAdd
+  removed: (ctx: CompareContext) => DiffRemove
+  replaced: (ctx: CompareContext) => DiffReplace
+  renamed: (ctx: CompareContext) => DiffRename
 }
 
 export interface ContextInput extends MergeState {

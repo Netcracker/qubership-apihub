@@ -34,7 +34,7 @@ import {
 } from '../types'
 import { getObjectValue, isArray, isDiffAdd, isDiffRemove, isDiffReplace, isNumber, isObject, typeOf } from '../utils'
 import { ANY_COMBINER_PATH, DiffAction, JSO_ROOT } from './constants'
-import { addDiffObjectToContainer, diffFactory, NEVER_KEY } from './diff'
+import { addDiffObjectToContainer, createDiffEntry, diffFactory, NEVER_KEY } from './diff'
 import { arrayMappingResolver, objectMappingResolver } from './mapping'
 
 const extractDeclarationPaths = (jso: Record<PropertyKey, unknown>, originMetaKey: symbol, property: PropertyKey): JsonPath[] => {
@@ -156,21 +156,24 @@ const cleanUpRecursive = (ctx: NodeContext): NodeContext => {
 }
 
 export const getOrCreateChildDiffAdd = (diffUniquenessCache: EvaluationCacheService, childCtx: CompareContext) => {
-  return diffUniquenessCache.cacheEvaluationResultByFootprint<[unknown, string, CompareScope, typeof DiffAction.add], DiffEntry<DiffAdd>>([childCtx.after.value, buildPathsIdentifier(childCtx.after.declarativePaths), childCtx.scope, DiffAction.add], () => {
+  const diff = diffUniquenessCache.cacheEvaluationResultByFootprint<[unknown, string, CompareScope, typeof DiffAction.add], DiffAdd>([childCtx.after.value, buildPathsIdentifier(childCtx.after.declarativePaths), childCtx.scope, DiffAction.add], () => {
     return diffFactory.added(childCtx)
-  }, {} as DiffEntry<DiffAdd>, (result, guard) => {
+  }, {} as DiffAdd, (result, guard) => {
     Object.assign(guard, result)
     return guard
   })
+
+  return createDiffEntry(childCtx, diff)
 }
 
 export const getOrCreateChildDiffRemove = (diffUniquenessCache: EvaluationCacheService, childCtx: CompareContext) => {
-  return diffUniquenessCache.cacheEvaluationResultByFootprint<[unknown, string, CompareScope, typeof DiffAction.remove], DiffEntry<DiffRemove>>([childCtx.before.value, buildPathsIdentifier(childCtx.before.declarativePaths), childCtx.scope, DiffAction.remove], () => {
+  const diff = diffUniquenessCache.cacheEvaluationResultByFootprint<[unknown, string, CompareScope, typeof DiffAction.remove], DiffRemove>([childCtx.before.value, buildPathsIdentifier(childCtx.before.declarativePaths), childCtx.scope, DiffAction.remove], () => {
     return diffFactory.removed(childCtx)
-  }, {} as DiffEntry<DiffRemove>, (result, guard) => {
+  }, {} as DiffRemove, (result, guard) => {
     Object.assign(guard, result)
     return guard
   })
+  return createDiffEntry(childCtx, diff)
 }
 
 const adaptValues = (beforeJso: JsonNode, beforeKey: PropertyKey, afterJso: JsonNode, afterKey: PropertyKey, adapter: AdapterResolver[] | undefined, options: InternalCompareOptions) => {
@@ -235,7 +238,7 @@ const useMergeFactory = (onDiff: DiffCallback, options: InternalCompareOptions):
 
     const beforeKey = unsafeKey ?? (isArray(beforeJso) ? +Object.keys(keyMap).pop()! : Object.keys(keyMap).pop())
     const afterKey = keyMap[beforeKey]
-    const mergeKey = isArray(mergedJso) && isNumber(beforeKey) ? beforeKey : afterKey//THIS IS VERY FRAGILE. Cause this logic duplicate this line mergedJsoValue[keyInMerge] = afterValue[keyInAfter]
+    const mergeKey = isArray(mergedJso) && isNumber(beforeKey) ? beforeKey : afterKey //gitleaks:allow //THIS IS VERY FRAGILE. Cause this logic duplicate this line mergedJsoValue[keyInMerge] = afterValue[keyInAfter]
 
     // skip if node was removed
     if (!(beforeKey in keyMap)) {
@@ -265,7 +268,7 @@ const useMergeFactory = (onDiff: DiffCallback, options: InternalCompareOptions):
 
     const reuseResult: ReusableMergeResult = mergedJsoCache.cacheEvaluationResultByFootprint<[typeof ctx.before.value, typeof ctx.after.value, typeof beforeDeclarativePathsId, typeof afterDeclarativePathsId, CompareScope], ReusableMergeResult>([ctx.before.value, ctx.after.value, beforeDeclarativePathsId, afterDeclarativePathsId, ctx.scope], ([beforeValue, afterValue]) => {
       if (!ignoreKeyDifference && beforeKey !== afterKey) {
-        const diffEntry = diffFactory.renamed(ctx)
+        const diffEntry = createDiffEntry(ctx, diffFactory.renamed(ctx))
         addDiff(diffEntry.diff)
         addDiffObjectToContainer(mergedJso, metaKey, [diffEntry])
       }
@@ -279,7 +282,7 @@ const useMergeFactory = (onDiff: DiffCallback, options: InternalCompareOptions):
 
       // types are different
       if (typeOf(beforeValue) !== typeOf(afterValue)) {
-        const diffEntry = diffFactory.replaced(ctx)
+        const diffEntry = createDiffEntry(ctx, diffFactory.replaced(ctx))
         addDiff(diffEntry.diff)
         return { diffsToPullUp: [diffEntry], mergedValue: afterValue } satisfies ReusableMergeResult
       }
@@ -336,7 +339,7 @@ const useMergeFactory = (onDiff: DiffCallback, options: InternalCompareOptions):
         diffsToPullUp: diffsToPullUp,
       }
       if (beforeValue !== afterValue) {
-        const diffEntry = diffFactory.replaced(ctx)
+        const diffEntry = createDiffEntry(ctx, diffFactory.replaced(ctx))
         diffsToPullUp.push(diffEntry)
         addDiff(diffEntry.diff)
       }
