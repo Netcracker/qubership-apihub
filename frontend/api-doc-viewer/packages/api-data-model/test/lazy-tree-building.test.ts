@@ -360,11 +360,18 @@ describe('Lazy Tree Building', () => {
     methodUnionOutput.expand()
     expect(methodUnionOutput.children().length).toBe(0)
     expect(methodUnionOutput.nested.length).toBe(2) // A, B in options
+
+    function testChoice(num: number) {
+      const choiceId = '#/queries/test/output/typeDef/type/methods/union/output/typeDef/type/oneOf/' + num
+      expect(methodUnionOutput.children(choiceId).length).toBe(0)
+      const choice = methodUnionOutput.nestedNode(choiceId)
+      expect(choice).toBeTruthy()
+      choice!.expand()
+      expect(methodUnionOutput.children(choiceId).length).toBe(1)
+    }
     // choose A
-    expect(methodUnionOutput.children('#/typeDef/type/oneOf/1').length).toBe(0)
-    const choiceA = methodUnionOutput.nestedNode('#/typeDef/type/oneOf/1')
-    expect(choiceA).toBeTruthy()
-    choiceA!.expand()
-    expect(methodUnionOutput.children('#/typeDef/type/oneOf/1').length).toBe(1)
+    testChoice(0)
+    // choose B
+    testChoice(1)
   })
 })

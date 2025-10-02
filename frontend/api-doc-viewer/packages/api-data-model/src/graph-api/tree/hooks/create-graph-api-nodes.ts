@@ -37,8 +37,8 @@ export function createGraphApiTreeCrawlHook(
       return areExcludedComponents(path) ? { done: true } : { value, state }
     }
 
-    const id = '#' + buildPointer(path);
-    const { parent, container } = state;
+    const { parent, container, nodeIdPrefix = '#' } = state;
+    const id = nodeIdPrefix + buildPointer(path);
     const { kind } = rules;
 
     let result: any = {
@@ -52,6 +52,7 @@ export function createGraphApiTreeCrawlHook(
       crawlHooks: crawlHooksGraphApiTree(tree),
       crawlRules: rules,
       alreadyConvertedMappingStack: new Map(state.alreadyConvertedMappingStack),
+      nodeIdPrefix: id,
       nextLevel: state.treeLevel,
       nextMaxLevel: state.maxTreeLevel + 1,
     }

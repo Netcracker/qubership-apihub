@@ -9,6 +9,7 @@ interface CommonState<T, K extends string, M> {
   parent: IModelTreeNode<T, K, M> | null
   container?: IModelTreeNode<T, K, M>
   alreadyConvertedMappingStack: Map<unknown, IModelTreeNode<T, K, M>>
+  nodeIdPrefix?: string
 }
 
 export function createCycleGuardHook<T, K extends string, M, S extends CommonState<T, K, M>>(
@@ -19,10 +20,15 @@ export function createCycleGuardHook<T, K extends string, M, S extends CommonSta
       return areExcludedComponents(path) ? { done: true } : { value }
     }
 
-    const { alreadyConvertedMappingStack, parent, container } = state
+    const {
+      alreadyConvertedMappingStack,
+      parent,
+      container,
+      nodeIdPrefix = '#',
+    } = state
     const alreadyExisted = alreadyConvertedMappingStack.get(value)
     if (alreadyExisted) {
-      const id = '#' + buildPointer(path)
+      const id = nodeIdPrefix + buildPointer(path)
       if (container) {
         container.addNestedNode(tree.createCycledClone(alreadyExisted, id, key, parent))
         container.addNestedNode(alreadyExisted)

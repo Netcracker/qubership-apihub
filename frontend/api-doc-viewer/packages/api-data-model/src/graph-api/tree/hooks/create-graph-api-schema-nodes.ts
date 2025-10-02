@@ -37,8 +37,8 @@ export function createGraphSchemaTreeCrawlHook(
       return { done: true };
     }
 
-    const id = '#' + buildPointer(path);
-    const { parent, container } = state;
+    const { parent, container, nodeIdPrefix = '#' } = state;
+    const id = nodeIdPrefix + buildPointer(path);
 
     if (isObject(value) && metaKey && metaKey in value) {
       // TODO 27.11.24 // Fix paths of sub-tree nodes. They must start from the same subpath
@@ -112,6 +112,7 @@ export function createGraphSchemaTreeCrawlHook(
       crawlHooks: crawlHooksGraphApiTree(tree),
       crawlRules: rules,
       alreadyConvertedMappingStack: state.alreadyConvertedMappingStack,
+      nodeIdPrefix: id,
       nextLevel: state.treeLevel + 1,
       nextMaxLevel: state.maxTreeLevel + 1,
     }
