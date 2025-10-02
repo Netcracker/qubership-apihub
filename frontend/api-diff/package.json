@@ -27,7 +27,7 @@
     "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-unifier": "feature-oas-30-to-31-comparison",
+    "@netcracker/qubership-apihub-api-unifier": "dev",
     "@netcracker/qubership-apihub-json-crawl": "1.0.4",
     "fast-equals": "4.0.3"
   },
