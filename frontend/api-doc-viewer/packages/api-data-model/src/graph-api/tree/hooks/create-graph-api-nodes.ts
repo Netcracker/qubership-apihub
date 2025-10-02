@@ -41,7 +41,7 @@ export function createGraphApiTreeCrawlHook(
     const id = nodeIdPrefix + buildPointer(path);
     const { kind } = rules;
 
-    let result: any = {
+    let nodeCreationResult: any = {
       value,
       node: {},
     };
@@ -62,7 +62,7 @@ export function createGraphApiTreeCrawlHook(
       case graphApiNodeKind.query:
       case graphApiNodeKind.mutation:
       case graphApiNodeKind.subscription: {
-        result = tree.createGraphSchemaNode({
+        nodeCreationResult = tree.createGraphSchemaNode({
           id,
           kind,
           key,
@@ -86,30 +86,34 @@ export function createGraphApiTreeCrawlHook(
           },
           newDataLevel: newDataLevel,
         };
-        result.node = tree.createNode(id, kind, key, false, params);
+        nodeCreationResult.node = tree.createNode(id, kind, key, false, params);
         break;
       }
     }
 
-    parent?.addChild(result.node);
+    parent?.addChild(nodeCreationResult.node);
 
     /* Feature "Lazy Tree Building" */
-    if (state.treeLevel === state.maxTreeLevel) {
+    if (
+      state.treeLevel >= state.maxTreeLevel &&
+      nodeCreationResult.node.type === 'simple'
+    ) {
       return { done: true };
     }
     const nextTreeLevel = state.treeLevel + 1;
     /* --- */
 
-    if (result.value) {
+    if (nodeCreationResult.value) {
       const stack = new Map(state.alreadyConvertedMappingStack);
-      stack.set(value, result.node);
+      stack.set(value, nodeCreationResult.node);
       let newState: GraphApiCrawlState
-      if (result.node!.type === modelTreeNodeType.simple) {
+      if (nodeCreationResult.node!.type === modelTreeNodeType.simple) {
         newState = {
-          parent: result.node as GraphApiTreeNode,
+          parent: nodeCreationResult.node as GraphApiTreeNode,
           // @ts-expect-error FIXME 01.10.25 // Fix types
           alreadyConvertedMappingStack: stack,
           /* Feature "Lazy Tree Building" */
+          nodeIdPrefix: nodeIdPrefix,
           treeLevel: nextTreeLevel,
           maxTreeLevel: state.maxTreeLevel,
           /* --- */
@@ -117,16 +121,17 @@ export function createGraphApiTreeCrawlHook(
       } else {
         newState = {
           parent: parent,
-          container: result.node as GraphApiTreeComplexNode,
+          container: nodeCreationResult.node as GraphApiTreeComplexNode,
           // @ts-expect-error FIXME 01.10.25 // Fix types
           alreadyConvertedMappingStack: stack,
           /* Feature "Lazy Tree Building" */
+          nodeIdPrefix: nodeIdPrefix,
           treeLevel: nextTreeLevel,
           maxTreeLevel: state.maxTreeLevel,
           /* --- */
         }
       }
-      return { value: result.value, state: newState };
+      return { value: nodeCreationResult.value, state: newState };
     } else {
       return { done: true };
     }

@@ -127,7 +127,10 @@ export function createGraphSchemaTreeCrawlHook(
     }
 
     /* Feature "Lazy Tree Building" */
-    if (state.treeLevel === state.maxTreeLevel) {
+    if (
+      state.treeLevel >= state.maxTreeLevel &&
+      nodeCreationResult.node.type === 'simple'
+    ) {
       return { done: true };
     }
 
@@ -144,6 +147,7 @@ export function createGraphSchemaTreeCrawlHook(
           // @ts-expect-error FIXME 01.10.25 // Fix types
           alreadyConvertedMappingStack: stack,
           /* Feature "Lazy Tree Building" */
+          nodeIdPrefix: nodeIdPrefix,
           treeLevel: nextTreeLevel,
           maxTreeLevel: state.maxTreeLevel,
           /* --- */
@@ -155,6 +159,7 @@ export function createGraphSchemaTreeCrawlHook(
           // @ts-expect-error FIXME 01.10.25 // Fix types
           alreadyConvertedMappingStack: stack,
           /* Feature "Lazy Tree Building" */
+          nodeIdPrefix: nodeIdPrefix,
           treeLevel: nextTreeLevel,
           maxTreeLevel: state.maxTreeLevel,
           /* --- */

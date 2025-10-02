@@ -306,11 +306,21 @@ describe('Lazy Tree Building', () => {
     const methodUnionOutput = methodUnion
       .children()
       .find(node => node.kind === graphSchemaNodeKind.output)!
+
+    function expectChildrenByNested(choiceNumber: number, expectedChildrenCount: number) {
+      const nodeIdPrefix = '#/queries/test/output/typeDef/type/methods/union/output/typeDef/type/oneOf/'
+      expect(methodUnionOutput.children(nodeIdPrefix + choiceNumber).length).toBe(expectedChildrenCount)
+    }
+
     expect(methodUnionOutput.children().length).toBe(0)
-    expect(methodUnionOutput.nested.length).toBe(0)
+    expect(methodUnionOutput.nested.length).toBe(2)
+    expectChildrenByNested(0, 0)
+    expectChildrenByNested(1, 0)
     methodUnionOutput.expand()
     expect(methodUnionOutput.children().length).toBe(0)
     expect(methodUnionOutput.nested.length).toBe(2)
+    expectChildrenByNested(0, 0)
+    expectChildrenByNested(1, 0)
   })
 
   it('expand simple combiner with objects', () => {
@@ -355,23 +365,23 @@ describe('Lazy Tree Building', () => {
     const methodUnionOutput = methodUnion
       .children()
       .find(node => node.kind === graphSchemaNodeKind.output)!
-    expect(methodUnionOutput.children().length).toBe(0)
-    expect(methodUnionOutput.nested.length).toBe(0)
-    methodUnionOutput.expand()
-    expect(methodUnionOutput.children().length).toBe(0)
-    expect(methodUnionOutput.nested.length).toBe(2) // A, B in options
 
-    function testChoice(num: number) {
-      const choiceId = '#/queries/test/output/typeDef/type/methods/union/output/typeDef/type/oneOf/' + num
-      expect(methodUnionOutput.children(choiceId).length).toBe(0)
-      const choice = methodUnionOutput.nestedNode(choiceId)
-      expect(choice).toBeTruthy()
-      choice!.expand()
-      expect(methodUnionOutput.children(choiceId).length).toBe(1)
+    function expectChildrenByNested(choiceNumber: number, expectedChildrenCount: number) {
+      const nestedNodeId = '#/queries/test/output/typeDef/type/methods/union/output/typeDef/type/oneOf/' + choiceNumber
+      const children = methodUnionOutput.children(nestedNodeId)
+      expect(children.length).toBe(expectedChildrenCount)
     }
+
+    expect(methodUnionOutput.children().length).toBe(0)
+    expect(methodUnionOutput.nested.length).toBe(2)
+    expectChildrenByNested(0, 0)
+    expectChildrenByNested(1, 0)
+    methodUnionOutput.expand()
+    expect(methodUnionOutput.children().length).toBe(1)
+    expect(methodUnionOutput.nested.length).toBe(2)
     // choose A
-    testChoice(0)
+    expectChildrenByNested(0, 1)
     // choose B
-    testChoice(1)
+    expectChildrenByNested(1, 1)
   })
 })

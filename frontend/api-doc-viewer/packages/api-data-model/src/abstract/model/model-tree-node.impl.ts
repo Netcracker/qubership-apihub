@@ -43,10 +43,17 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
   public readonly type: ModelTreeNodeType = modelTreeNodeType.simple;
 
   /* Feature "Lazy Tree Building" */
-  private _expandingCallback: ExpandingCallback | null = null;
+  private readonly _expandingCallback: ExpandingCallback | null = null;
 
   public expand() {
-    this._expandingCallback?.();
+    if (this._children.length > 0) {
+      return
+    }
+    if (this.type === 'simple') {
+      this._expandingCallback?.()
+    } else {
+      this.nested.forEach(nestedNode => nestedNode.expand())
+    }
   }
 
   public collapse() {
@@ -84,7 +91,6 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
     const isSimpleNode = this.type === 'simple'
     if (lazyBuildingContext) {
       const {
-        tree,
         crawlValue,
         crawlHooks,
         crawlRules,
