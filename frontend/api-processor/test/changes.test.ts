@@ -143,18 +143,8 @@ describe('Changes test', () => {
     test('Move prefix from server to path', async () => {
       const result = await buildChangelogPackage('changelog/move-prefix-from-server-to-path')
 
-      // todo uncomment after applying the fix in apiDiff
-      // expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 3 }))
-      // expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
-
-      expect(result).toEqual(changesSummaryMatcher({
-        [ANNOTATION_CHANGE_TYPE]: 2,
-        [BREAKING_CHANGE_TYPE]: 1,
-      }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({
-        [ANNOTATION_CHANGE_TYPE]: 1,
-        [BREAKING_CHANGE_TYPE]: 1,
-      }))
+      expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 3 }))
+      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))      
     })
 
     // todo: case that we don't support due to shifting to the new changelog calculation approach which involves comparison of the entire docs instead of the operation vs operation comparison
