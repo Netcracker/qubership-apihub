@@ -272,7 +272,7 @@ describe('Lazy Tree Building', () => {
     expect(methodIdOutput.children().length).toBe(0)
   })
 
-  it('expand simple combiner', () => {
+  it('expand simple combiner with primitives', () => {
     const graphQl = `
       type Query {
         test: Out
@@ -311,5 +311,60 @@ describe('Lazy Tree Building', () => {
     methodUnionOutput.expand()
     expect(methodUnionOutput.children().length).toBe(0)
     expect(methodUnionOutput.nested.length).toBe(2)
+  })
+
+  it('expand simple combiner with objects', () => {
+    const graphQl = `
+      type Query {
+        test: Out
+      }
+      
+      type Out {
+        union: Union
+      }
+      
+      union Union = A | B
+      
+      type A {
+        id: ID
+      }
+      
+      type B {
+        name: String
+      }
+    `
+    const graphApi = buildGraphApi(graphQl)
+    const tree = createGraphApiTreeForTests(graphApi)
+    const root = tree.root!
+    // 1
+    const query = root
+      .children()
+      .find(node => node.kind === graphApiNodeKind.query)!
+    // 2
+    const queryOutput = query
+      .children()
+      .find(node => node.kind === graphSchemaNodeKind.output)!
+    // 3
+    const methodUnion = queryOutput
+      .children()
+      .find(node => node.kind === graphSchemaNodeKind.method)!
+    expect(methodUnion.children().length).toBe(0)
+    methodUnion.expand()
+    expect(methodUnion.children().length).toBe(1)
+    // 4
+    const methodUnionOutput = methodUnion
+      .children()
+      .find(node => node.kind === graphSchemaNodeKind.output)!
+    expect(methodUnionOutput.children().length).toBe(0)
+    expect(methodUnionOutput.nested.length).toBe(0)
+    methodUnionOutput.expand()
+    expect(methodUnionOutput.children().length).toBe(0)
+    expect(methodUnionOutput.nested.length).toBe(2) // A, B in options
+    // choose A
+    expect(methodUnionOutput.children('#/typeDef/type/oneOf/1').length).toBe(0)
+    const choiceA = methodUnionOutput.nestedNode('#/typeDef/type/oneOf/1')
+    expect(choiceA).toBeTruthy()
+    choiceA!.expand()
+    expect(methodUnionOutput.children('#/typeDef/type/oneOf/1').length).toBe(1)
   })
 })
