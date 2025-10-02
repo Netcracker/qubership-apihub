@@ -1,5 +1,6 @@
 import { normalize, NormalizeOptions } from '../../src'
 import { TEST_ORIGINS_FLAG, TEST_SYNTHETIC_TITLE_FLAG } from '../helpers'
+import differentObjectsWithResolvedRefObjectAfterLiftCombiners from '../resources/lift-combiners/different-objects-with-resolved-ref-object-after-lift-combiners.json'
 
 describe('Lifting combiners from the same level with sibling props', () => {
   const DEFAULT_OPTIONS: NormalizeOptions = {
@@ -2585,5 +2586,23 @@ describe('Lifting combiners from the same level with sibling props', () => {
     const actualSchema = normalize(originalSchema, { originsFlag: TEST_ORIGINS_FLAG }) as typeof originalSchema
     expect(actualSchema.properties.shared).toBe(actualSchema.properties.oneOf.oneOf[0])
     expect(actualSchema.properties.shared).toBe(actualSchema.properties.oneOf.oneOf[1])
+  })
+
+  it('should be different objects between referenced object and resolved ref object after lift-combiners', () => {
+    const result = normalize(differentObjectsWithResolvedRefObjectAfterLiftCombiners, { liftCombiners: true, syntheticTitleFlag: TEST_SYNTHETIC_TITLE_FLAG, }) as any
+
+    // Check that synthetic titles are added to anyOf items after resolving $ref and lifting combiners
+    const contentSchemaAnyOfPath = ['paths', '/path1', 'get', 'requestBody', 'content', 'application/json', 'schema', 'anyOf']
+    expect(result).toHaveProperty([...contentSchemaAnyOfPath, 0, 'title'])
+    expect(result).toHaveProperty([...contentSchemaAnyOfPath, 1, 'title'])
+
+    // Check that synthetic titles are not added to anyOf items in components.schemas.MySchema
+    const componentsSchemaAnyOfPath = ['components', 'schemas', 'MySchema', 'anyOf']
+    expect(result).not.toHaveProperty([...componentsSchemaAnyOfPath, 0, 'title'])
+    expect(result).not.toHaveProperty([...componentsSchemaAnyOfPath, 1, 'title'])
+
+    // Check that objects are different
+    expect(result.components.schemas.MySchema.anyOf["0"]).not.toBe(result.paths["/path1"].get.requestBody.content["application/json"].schema.anyOf["0"])
+    expect(result.components.schemas.MySchema.anyOf["1"]).not.toBe(result.paths["/path1"].get.requestBody.content["application/json"].schema.anyOf["1"])
   })
 })
