@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useValidationSummaryByPackageVersion } from '@apihub/api-hooks/ApiQuality/useValidationSummaryByPackageVersion'
+import { useAutoSetClientValidationStatusBySummary, useValidationSummaryByPackageVersion } from '@apihub/api-hooks/ApiQuality/useValidationSummaryByPackageVersion'
 import { CurrentPackageProvider } from '@apihub/components/CurrentPackageProvider'
 import { ExportSettingsDialog } from '@apihub/components/ExportSettingsDialog/ui/ExportSettingsDialog'
 import { PublishDashboardVersionFromCSVDialog } from '@apihub/routes/root/PortalPage/DashboardPage/PublishDashboardVersionFromCSVDialog'
@@ -38,7 +38,7 @@ import { FullMainVersionProvider } from '../FullMainVersionProvider'
 import { SelectedPreviewOperationProvider } from '../SelectedPreviewOperationProvider'
 import { VersionNavigationMenu } from '../VersionNavigationMenu'
 import type { ClientValidationStatus } from './ApiQualityValidationSummaryProvider'
-import { ApiQualityDataProvider, ClientValidationStatuses } from './ApiQualityValidationSummaryProvider'
+import { ApiQualityDataProvider } from './ApiQualityValidationSummaryProvider'
 import { OutdatedRevisionNotification } from './OutdatedRevisionNotification/OutdatedRevisionNotification'
 import { usePollingForValidationSummaryReadiness } from './usePollingForValidationSummaryReadiness'
 import { VersionApiChangesSubPage } from './VersionApiChangesSubPage/VersionApiChangesSubPage'
@@ -57,11 +57,12 @@ export const VersionPage: FC = memo(() => {
   const [packageObject, isLoading] = usePackage({ showParents: true })
 
   const linterEnabled = useLinterEnabled()
-  const [validationStatus, setValidationStatus] = useState<ClientValidationStatus>(ClientValidationStatuses.CHECKING)
+  const [validationStatus, setValidationStatus] = useState<ClientValidationStatus | undefined>()
   const {
     data: validationSummary,
     refetch: refetchValidationSummary,
   } = useValidationSummaryByPackageVersion(linterEnabled, packageId!, versionId!, setValidationStatus)
+  useAutoSetClientValidationStatusBySummary(validationSummary, setValidationStatus)
   usePollingForValidationSummaryReadiness(validationStatus, setValidationStatus, refetchValidationSummary)
 
   return (

@@ -4,6 +4,7 @@ import type { Key } from '@apihub/entities/keys'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { requestJson } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { generatePath } from 'react-router'
 import type { SetClientValidationStatus } from '../../routes/root/PortalPage/VersionPage/ApiQualityValidationSummaryProvider'
 import { ClientValidationStatuses } from '../../routes/root/PortalPage/VersionPage/ApiQualityValidationSummaryProvider'
@@ -34,17 +35,7 @@ export function useValidationSummaryByPackageVersion(
     queryFn: () => getValidationSummaryByPackageVersion(packageKey, versionKey),
     enabled: linterEnabled,
     onSuccess: (summary: ValidationSummaryDto) => {
-      switch (summary.status) {
-        case ValidationStatuses.IN_PROGRESS:
-          setClientValidationStatus(ClientValidationStatuses.IN_PROGRESS)
-          break
-        case ValidationStatuses.ERROR:
-          setClientValidationStatus(ClientValidationStatuses.ERROR)
-          break
-        case ValidationStatuses.SUCCESS:
-          setClientValidationStatus(ClientValidationStatuses.SUCCESS)
-          break
-      }
+      setClientValidationStatusBySummary(summary, setClientValidationStatus)
     },
     retry: (failureCount) => {
       if (failureCount < 5) {
@@ -90,4 +81,33 @@ export function useInvalidateValidationSummaryByPackageVersion(): CallbackInvali
       queryKey: [QUERY_KEY_VALIDATION_SUMMARY_FOR_PACKAGE_VERSION],
     })
   }
+}
+
+export function setClientValidationStatusBySummary(
+  summary: ValidationSummary | undefined,
+  setClientValidationStatus: SetClientValidationStatus,
+): void {
+  switch (summary?.status) {
+    case ValidationStatuses.IN_PROGRESS:
+      setClientValidationStatus(ClientValidationStatuses.IN_PROGRESS)
+      break
+    case ValidationStatuses.ERROR:
+      setClientValidationStatus(ClientValidationStatuses.ERROR)
+      break
+    case ValidationStatuses.SUCCESS:
+      setClientValidationStatus(ClientValidationStatuses.SUCCESS)
+      break
+    default:
+      setClientValidationStatus(ClientValidationStatuses.CHECKING)
+  }
+}
+
+export function useAutoSetClientValidationStatusBySummary(
+  summary: ValidationSummary | undefined,
+  setClientValidationStatus: SetClientValidationStatus,
+): void {
+  useEffect(
+    () => setClientValidationStatusBySummary(summary, setClientValidationStatus),
+    [summary, setClientValidationStatus],
+  )
 }

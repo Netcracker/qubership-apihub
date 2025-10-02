@@ -74,13 +74,14 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
   const { packageId, versionId } = useParams()
   const [clientValidationStatus = ClientValidationStatuses.CHECKING, setClientValidationStatus] = useApiQualityClientValidationStatus()
   const onManualRunLinter = useCallback(() => {
-    if (packageId && versionId) {
+    if (packageId && versionId && setClientValidationStatus) {
       manualRunLinter({ packageId, versionId })
-      setClientValidationStatus?.(ClientValidationStatuses.CHECKING)
+      setClientValidationStatus(ClientValidationStatuses.CHECKING)
     }
   }, [manualRunLinter, packageId, versionId, setClientValidationStatus])
   const linterEnabled = useApiQualityLinterEnabled(apiType)
   const validationFailed = clientValidationStatus === ClientValidationStatuses.ERROR
+  const validationSuccess = clientValidationStatus === ClientValidationStatuses.SUCCESS
   const apiQualitySummaryPlaceholder = getApiQualitySummaryPlaceholder(onManualRunLinter, clientValidationStatus)
   const showApiQualityPlaceholder = !!apiQualitySummaryPlaceholder
   const showApiQualitySummary = !apiQualitySummaryPlaceholder
@@ -239,7 +240,7 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
                   showApiQualitySummary
                     ? '\'validationRulesetTitle validationRuleset\''
                     : undefined,
-                  showApiQualitySummary
+                  showApiQualitySummary && validationSuccess
                     ? '\'qualityIssuesNumberTitle qualityIssuesNumber\''
                     : undefined,
                   showApiQualitySummary && validationFailed
@@ -360,7 +361,7 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
                   </Box>
                 </>}
 
-                {validationSummary && <>
+                {validationSuccess && <>
                   <Typography sx={{ gridArea: 'qualityIssuesNumberTitle' }} variant="subtitle2">
                     Number of quality issues
                   </Typography>

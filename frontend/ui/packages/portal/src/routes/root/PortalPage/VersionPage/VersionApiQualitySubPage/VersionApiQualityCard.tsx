@@ -73,11 +73,6 @@ const MONACO_EDITOR_PRETTY_FORMATS = {
   [YAML_FILE_FORMAT]: YAML_FILE_FORMAT.toUpperCase(),
 }
 
-const STATUSES_WITH_AVAILABLE_VALIDATION_SUMMARY = [
-  ClientValidationStatuses.SUCCESS,
-  ClientValidationStatuses.ERROR,
-]
-
 export const VersionApiQualityCard: FC = memo(() => {
   const { packageId, versionId } = useParams()
 
@@ -93,10 +88,7 @@ export const VersionApiQualityCard: FC = memo(() => {
   )
 
   const validationSummary = useApiQualityValidationSummary()
-  const validationSummaryAvailable = useMemo(() => (
-    !!validationSummary &&
-    STATUSES_WITH_AVAILABLE_VALIDATION_SUMMARY.some(status => status === validationSummary.status)
-  ), [validationSummary])
+  const validationSummaryAvailable = validationSummary?.status === ClientValidationStatuses.SUCCESS
   const validatedDocuments = useMemo(() => validationSummary?.documents ?? [], [validationSummary])
   const loadingValidatedDocuments = useMemo(() => validationSummary === undefined, [validationSummary])
 
@@ -113,6 +105,10 @@ export const VersionApiQualityCard: FC = memo(() => {
       return []
     }
     if (!validationDetails) {
+      return []
+    }
+    // TODO 19.09.25 // Remove default because real response doesn't match API
+    if (!validationDetails.issues) {
       return []
     }
     const { issues } = validationDetails

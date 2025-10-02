@@ -20,15 +20,12 @@ import { useRef } from 'react'
 import type { LanguageType } from '../../types/languages'
 import type { SpecItemUri } from '../../utils/specifications'
 import type { SpecType } from '../../utils/specs'
-import { preconfigureMonaco } from './configurator'
 import { useAddMarkers } from './useAddMarkers'
 import { useAddSearchNavigation } from './useAddSearchNavigation'
 import { useAddSelectedUriNavigation } from './useAddSelectedUriNavigation'
 import { useAddSelectionDecorator } from './useAddSelectionDecorator'
 import { useInitializeEditor } from './useInitializeEditor'
 import { useSetEditorModel } from './useSetEditorModel'
-
-preconfigureMonaco()
 
 export function useMonacoEditorElement(options: {
   value: string

@@ -1,3 +1,6 @@
+import type { ValidationDetails } from '@apihub/entities/api-quality/document-validation-details'
+import type { IssueSeverity } from '@apihub/entities/api-quality/issue-severities'
+import type { Issue } from '@apihub/entities/api-quality/issues'
 import { Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
 import { CustomTableHeadCell } from '@netcracker/qubership-apihub-ui-shared/components/CustomTableHeadCell'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
@@ -7,9 +10,6 @@ import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-tabl
 import type { FC } from 'react'
 import { memo, useMemo, useRef } from 'react'
 import { IssueSeverityMarker } from './IssueSeverityMarker'
-import type { ValidationDetails } from '@apihub/entities/api-quality/document-validation-details'
-import type { Issue } from '@apihub/entities/api-quality/issues'
-import type { IssueSeverity } from '@apihub/entities/api-quality/issue-severities'
 import { issuePathToSpecItemUri } from './utilities/transformers'
 
 const TABLE_COLUMN_ID_TYPE = 'type'
@@ -105,7 +105,8 @@ export const ValidationResultsTable: FC<ValidationResultsTableProps> = memo<Vali
   const transformedData: TableData[] = useMemo(() => (data?.issues ?? []).map((issue: Issue) => ({
     type: issue.severity,
     message: issue.message,
-    path: issuePathToSpecItemUri(issue.path),
+    // TODO 19.09.25 // Remove default because real response doesn't match API
+    path: issuePathToSpecItemUri(issue.path ?? []),
   })), [data?.issues])
 
   const { getHeaderGroups, getRowModel } = useReactTable({

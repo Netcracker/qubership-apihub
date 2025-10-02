@@ -34,11 +34,12 @@ import {
   setPublicationDetails,
   startPackageVersionPublication,
 } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
-import { WorkerUnauthorizedError } from '@netcracker/qubership-apihub-ui-shared/utils/security'
+import { isInWebWorker, WorkerUnauthorizedError } from '@netcracker/qubership-apihub-ui-shared/utils/security'
 import { expose, transferHandlers } from 'comlink'
 import { v4 as uuidv4 } from 'uuid'
 import type { BuilderOptions } from './package-version-builder'
 import type { PublishOptions } from './usePublishPackageVersion'
+import { systemConfiguration } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useSystemConfiguration'
 
 /*
 For using worker in proxy mode you need to change common apihub-shared import
@@ -59,6 +60,7 @@ export type PackageVersionBuilderWorker = {
   buildChangelogPackage: (options: BuilderOptions) => Promise<[VersionsComparison[], Blob]>
   buildGroupChangelogPackage: (options: BuilderOptions) => Promise<[VersionsComparison[], Blob]>
   publishPackage: (options: PublishOptions) => Promise<PublishDetails>
+  init: (lastIdentityProviderId: string | null) => Promise<void>
 }
 
 async function createCommonResolvers(): Promise<BuilderResolvers> {
@@ -73,6 +75,12 @@ async function createCommonResolvers(): Promise<BuilderResolvers> {
 }
 
 const worker: PackageVersionBuilderWorker = {
+  init: async (lastIdentityProviderId) => {
+    if (isInWebWorker(self)) {
+      self.systemConfigurationDto = await systemConfiguration()
+      self.lastIdentityProviderId = lastIdentityProviderId
+    }
+  },
   buildChangelogPackage: async ({ packageKey, versionKey, previousPackageKey, previousVersionKey }) => {
     const builder = new PackageVersionBuilder(
       {
@@ -209,7 +217,10 @@ transferHandlers.set('throw', {
     }
     return [serialized, []]
   },
-  deserialize: (serialized: { isError: boolean; value: { message: string; name: string; stack: string; responseStatus: number } }) => {
+  deserialize: (serialized: {
+    isError: boolean
+    value: { message: string; name: string; stack: string; responseStatus: number }
+  }) => {
     if (serialized.isError) {
       throw new WorkerUnauthorizedError()
     }

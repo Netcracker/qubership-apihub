@@ -11,13 +11,17 @@ const POLLING_FAILURE_COUNT: number = 5
 let interval: NodeJS.Timeout | undefined
 
 export function usePollingForValidationSummaryReadiness(
-  status: ClientValidationStatus,
-  setStatus: Dispatch<SetStateAction<ClientValidationStatus>>,
+  status: ClientValidationStatus | undefined,
+  setStatus: Dispatch<SetStateAction<ClientValidationStatus | undefined>>,
   refetch: RefetchValidationSummary | undefined,
 ): void {
   const count = useRef(POLLING_FAILURE_COUNT)
   useEffect(() => {
     if (!refetch || !setStatus) {
+      return
+    }
+    if (status === ClientValidationStatuses.SUCCESS || status === ClientValidationStatuses.ERROR) {
+      clearInterval(interval!)
       return
     }
     interval = setInterval(() => {
@@ -32,5 +36,5 @@ export function usePollingForValidationSummaryReadiness(
         count.current--
       }
     }, POLLING_INTERVAL * 1000)
-  }, [status, refetch, setStatus])
+  }, [refetch, setStatus, status])
 }
