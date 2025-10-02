@@ -34,6 +34,7 @@ export const createGraphApiTree = (
   const crawlState: GraphApiCrawlState = {
     parent: null,
     alreadyConvertedMappingStack: new Map(),
+    nodeIdPrefix: '#',
     treeLevel: 0,
     maxTreeLevel: maxTreeLevel,
   }

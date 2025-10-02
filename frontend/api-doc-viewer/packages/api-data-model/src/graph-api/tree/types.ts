@@ -102,6 +102,7 @@ export type GraphApiCrawlState = {
   container?: GraphApiTreeComplexNode
   alreadyConvertedMappingStack: Map<unknown, GraphApiTreeNode | GraphApiTreeComplexNode>,
   /* Feature "Lazy Tree Building" */
+  nodeIdPrefix: string
   treeLevel: number, // current tree level
   maxTreeLevel: number, // this level will have no children/nested nodes until they're lazy-built
   /* --- */

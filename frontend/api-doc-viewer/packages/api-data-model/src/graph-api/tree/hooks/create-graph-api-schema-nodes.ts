@@ -138,13 +138,14 @@ export function createGraphSchemaTreeCrawlHook(
     /* --- */
 
     if (nodeCreationResult.value) {
-      const stack = new Map(state.alreadyConvertedMappingStack);
+      // FIXME 02.10.25 // Get rid of it when "SyncCrawlHook<any, any>" is reverted
+      const prevStack = state.alreadyConvertedMappingStack as GraphApiCrawlState['alreadyConvertedMappingStack']
+      const stack = new Map(prevStack);
       stack.set(value, nodeCreationResult.node as GraphApiTreeNode | GraphApiTreeComplexNode);
       let newState: GraphApiCrawlState
       if (nodeCreationResult.node.type === modelTreeNodeType.simple) {
         newState = {
           parent: nodeCreationResult.node as GraphApiTreeNode,
-          // @ts-expect-error FIXME 01.10.25 // Fix types
           alreadyConvertedMappingStack: stack,
           /* Feature "Lazy Tree Building" */
           nodeIdPrefix: nodeIdPrefix,
@@ -156,7 +157,6 @@ export function createGraphSchemaTreeCrawlHook(
         newState = {
           parent: parent,
           container: nodeCreationResult.node as GraphApiTreeComplexNode,
-          // @ts-expect-error FIXME 01.10.25 // Fix types
           alreadyConvertedMappingStack: stack,
           /* Feature "Lazy Tree Building" */
           nodeIdPrefix: nodeIdPrefix,
