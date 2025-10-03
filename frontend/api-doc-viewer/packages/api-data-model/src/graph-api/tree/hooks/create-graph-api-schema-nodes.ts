@@ -2,7 +2,7 @@ import { DiffRemove, DiffReplace, isDiffRemove, isDiffReplace } from '@netcracke
 import { buildPointer } from '@netcracker/qubership-apihub-api-unifier';
 import { isObject, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
 import { modelTreeNodeType } from "@apihub/api-data-model/abstract-model/constants";
-import { isDiff } from '@apihub/api-data-model/utils';
+import { isDiff, isDiffMetaRecord } from '@apihub/api-data-model/utils';
 import { graphSchemaNodeKind } from '@apihub/api-data-model/graph-api-model/constants';
 import { createGraphApiDiffTree } from '@apihub/api-data-model/graph-api-model/diff-tree/build';
 import { GraphApiDiffTreeNode } from '@apihub/api-data-model/graph-api-model/diff-tree/types';
@@ -40,6 +40,15 @@ export function createGraphSchemaTreeCrawlHook(
     const { parent, container, nodeIdPrefix = '#' } = state;
     const id = nodeIdPrefix + buildPointer(path);
 
+    /**
+     * Code fragment below is supposed to build part of the tree which contains nodes
+     * built from wholly added/removed fragments.
+     *
+     * E.g. when we change an output type to an input type, or an input type to an array.
+     * Merged tree must contain both nodes built from "before" and "after" sources.
+     */
+    /* TODO 03.10.25 // Use new lazy-building approach for building this tree part.
+        New approach will resolve TODOs below. */
     if (isObject(value) && metaKey && metaKey in value) {
       // TODO 27.11.24 // Fix paths of sub-tree nodes. They must start from the same subpath
       const createSubTree =
@@ -61,15 +70,13 @@ export function createGraphSchemaTreeCrawlHook(
 
       const diffMeta = value[metaKey]
       // TODO 27.11.24 // parent will have child with kind = 'root'!
-      if (shouldCrawlDiff(diffMeta)) {
-        const subTree = createSubTree(diffMeta.beforeValue)
-        subTree?.root && parent?.addChild(subTree.root)
-      } else if (isObject(diffMeta)) {
-        for (const [key, maybeDiff] of Object.entries(diffMeta)) {
-          if (shouldCrawlDiff(maybeDiff)) {
-            const subTree = createSubTree(maybeDiff.beforeValue, `/${key}`)
-            subTree?.root && parent?.addChild(subTree.root)
+      if (isDiffMetaRecord(diffMeta)) {
+        for (const [fieldKey, diff] of Object.entries(diffMeta)) {
+          if (!shouldCrawlDiff(diff)) {
+            continue
           }
+          const subTree = createSubTree(diff.beforeValue, `/${fieldKey}`)
+          subTree?.root && parent?.addChild(subTree.root)
         }
       }
     }
