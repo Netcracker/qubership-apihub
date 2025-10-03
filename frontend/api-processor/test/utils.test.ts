@@ -15,7 +15,7 @@
  */
 
 import { findSharedPath, removeObjectDuplicates, removeSecurityDuplicates, slugify } from '../src/utils'
-import { extractOperationBasePath } from '../src/apitypes/rest/rest.utils'
+import { getOperationBasePath } from '../src/apitypes/rest/rest.utils'
 
 describe('Utils', () => {
   describe('Unit tests for \'slugify\' function', () => {
@@ -42,20 +42,20 @@ describe('Utils', () => {
         },
       }]
 
-      expect(extractOperationBasePath(servers)).toEqual('/api')
+      expect(getOperationBasePath(servers)).toEqual('/api')
     })
 
     test('Should handle Servers with absolute url correctly', () => {
-      expect(extractOperationBasePath([{ url: 'https://example.com/v1' }])).toEqual('/v1')
-      expect(extractOperationBasePath([{ url: 'https://example.com/v1/' }])).toEqual('/v1')
+      expect(getOperationBasePath([{ url: 'https://example.com/v1' }])).toEqual('/v1')
+      expect(getOperationBasePath([{ url: 'https://example.com/v1/' }])).toEqual('/v1')
     })
 
     test('Should handle Servers with relative url correctly', () => {
-      expect(extractOperationBasePath([{ url: '/v1' }])).toEqual('/v1')
-      expect(extractOperationBasePath([{ url: 'v1' }])).toEqual('/v1')
-      expect(extractOperationBasePath([{ url: 'v1/' }])).toEqual('/v1')
-      expect(extractOperationBasePath([{ url: '/v1/' }])).toEqual('/v1')
-      expect(extractOperationBasePath([{ url: '/' }])).toEqual('')
+      expect(getOperationBasePath([{ url: '/v1' }])).toEqual('/v1')
+      expect(getOperationBasePath([{ url: 'v1' }])).toEqual('/v1')
+      expect(getOperationBasePath([{ url: 'v1/' }])).toEqual('/v1')
+      expect(getOperationBasePath([{ url: '/v1/' }])).toEqual('/v1')
+      expect(getOperationBasePath([{ url: '/' }])).toEqual('')
     })
   })
 
