@@ -132,10 +132,10 @@ function removeRedundantPartialPairs<T extends [object | undefined, object | und
   return tuples.filter(([a, b]) => {
     const isPartial = a === undefined || b === undefined
     if (!isPartial) return true // Keep all complete pairs
-    
-    // For partial pairs, only keep if there's no corresponding complete pair 
+
+    // For partial pairs, only keep if there's no corresponding complete pair
     // with the defined value at corresponding position
-    return a === undefined 
+    return a === undefined
       ? !completeAtPosition[1].has(b!)
       : !completeAtPosition[0].has(a)
   })

@@ -8,12 +8,12 @@ paths:
       responses:
         '200':
           description: OK
-          content: { }
+          content: {}
     post:
       responses:
         '200':
           description: OK
-          content: { }
+          content: {}
   /api/v1/path1:
     get:
       responses:

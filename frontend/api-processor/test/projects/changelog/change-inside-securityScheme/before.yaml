@@ -3,14 +3,14 @@ info:
   title: test
   version: 0.1.0
 security:
-  - ApiKeyAuth1: [ ]
+  - ApiKeyAuth1: []
 paths:
   /path1:
     post:
       responses:
         '200':
           description: OK
-          content: { }
+          content: {}
       security:
         - Oauth2:
             - https://www.googleapis.com/auth/bigquery

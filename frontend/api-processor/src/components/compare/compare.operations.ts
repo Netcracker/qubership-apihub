@@ -142,7 +142,7 @@ async function compareCurrentApiType(
   const pairedDocs = await calculatePairedDocs(operationPairs, pairContext)
   const [operationChanges, uniqueDiffsForDocPairs, tags] = await comparePairedDocs(operationsMap, pairedDocs, apiBuilder, pairContext)
   // Duplicates could happen in rare case when document for added/deleted operation was mapped to several documents in other version
-  const uniqueOperationChanges = pairedDocs.length === 1 ? operationChanges 
+  const uniqueOperationChanges = pairedDocs.length === 1 ? operationChanges
   : removeObjectDuplicates(
     operationChanges,
     (item) => `${item.apiType}:${item.operationId ?? ''}:${item.previousOperationId ?? ''}`,
@@ -151,7 +151,7 @@ async function compareCurrentApiType(
   // We only need to additionally deduplicate diffs if there are multiple document pairs
   // because diffs coming from the same apiDiff call are already deduplicated in comparePairedDocs
   // This is performance optimization for common case when there is only one document pair
-  const uniqueDiffs = uniqueDiffsForDocPairs.length === 1 ? Array.from(uniqueDiffsForDocPairs[0]) 
+  const uniqueDiffs = uniqueDiffsForDocPairs.length === 1 ? Array.from(uniqueDiffsForDocPairs[0])
     : removeObjectDuplicates(uniqueDiffsForDocPairs.flatMap(set => Array.from(set)), calculateDiffId)
   const changesSummary = calculateChangeSummary(uniqueDiffs)
   const numberOfImpactedOperations = calculateTotalImpactedSummary(

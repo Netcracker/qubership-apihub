@@ -10,7 +10,7 @@ paths:
           description: OK
           content:
             application/json:
-              schema: { }
+              schema: {}
   /api/v2/path1:
     get:
       responses:
@@ -18,4 +18,4 @@ paths:
           description: OK
           content:
             application/xml:
-              schema: { }
+              schema: {}

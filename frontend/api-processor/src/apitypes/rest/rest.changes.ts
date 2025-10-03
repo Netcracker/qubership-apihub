@@ -27,7 +27,7 @@ import {
 } from '../../utils'
 import {
   aggregateDiffsWithRollup,
-  apiDiff,  
+  apiDiff,
   breaking,
   Diff,
   DIFF_META_KEY,
@@ -118,7 +118,7 @@ export const compareDocuments = async (
     return { operationChanges: [], tags: new Set() }
   }
 
-  aggregateDiffsWithRollup(merged, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)  
+  aggregateDiffsWithRollup(merged, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)
 
   const tags = new Set<string>()
   const operationChanges: OperationChanges[] = []

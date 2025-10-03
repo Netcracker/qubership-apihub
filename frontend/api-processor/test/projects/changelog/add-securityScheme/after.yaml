@@ -3,15 +3,15 @@ info:
   title: test
   version: 0.1.0
 security:
-  - ApiKeyAuth1: [ ]
-  - ApiKeyAuth2: [ ]
+  - ApiKeyAuth1: []
+  - ApiKeyAuth2: []
 paths:
   /path1:
     post:
       responses:
         '200':
           description: OK
-          content: { }
+          content: {}
 components:
   securitySchemes:
     ApiKeyAuth1:

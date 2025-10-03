@@ -7,4 +7,4 @@ type Query {
 input Fruit {
   id: ID
   name: String
-} 
+}

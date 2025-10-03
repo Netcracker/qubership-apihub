@@ -80,7 +80,7 @@ export const compareDocuments = async (
     return { operationChanges: [], tags: new Set() }
   }
 
-  aggregateDiffsWithRollup(merged, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)  
+  aggregateDiffsWithRollup(merged, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)
 
   const { currentGroup, previousGroup } = ctx
 

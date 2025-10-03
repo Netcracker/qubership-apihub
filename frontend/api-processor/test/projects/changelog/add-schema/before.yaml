@@ -8,7 +8,7 @@ paths:
       requestBody:
         content:
           'application/json':
-            schema: { }
+            schema: {}
       responses:
         '200':
           description: OK

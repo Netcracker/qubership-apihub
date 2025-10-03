@@ -10,4 +10,4 @@ paths:
           description: OK
           content:
             application/xml:
-              schema: { }
+              schema: {}
