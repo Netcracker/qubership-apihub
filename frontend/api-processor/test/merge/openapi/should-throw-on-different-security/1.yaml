@@ -3,4 +3,4 @@ info:
   title: test
   version: 0.1.0
 security:
-  - oAuthSample: [ ]
+  - oAuthSample: []

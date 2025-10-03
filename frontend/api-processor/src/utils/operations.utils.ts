@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-import { ApiOperation, BuildResult } from '../types'
+import { ApiOperation, BuildResult, OperationIdNormalizer } from '../types'
 import { GraphApiComponents, GraphApiDirectiveDefinition } from '@netcracker/qubership-apihub-graphapi'
-import type { OpenAPIV3 } from 'openapi-types'
+import { OpenAPIV3 } from 'openapi-types'
 import { isObject } from './objects'
-import { slugify } from './document'
+import { IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER, slugify } from './document'
 import { removeFirstSlash } from './builder'
 import { Diff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import { matchPaths, OPEN_API_PROPERTY_PATHS, PREDICATE_ANY_VALUE } from '@netcracker/qubership-apihub-api-unifier'
 import { DirectiveLocation } from 'graphql/language'
+import { HTTP_METHODS_SET } from '../consts'
 
 export function getOperationsList(buildResult: BuildResult): ApiOperation[] {
   return [...buildResult.operations.values()]
@@ -85,4 +86,22 @@ export function isOperationRemove(operationDiff: Diff): boolean {
 
 export function isPathParamRenameDiff(diff: Diff): boolean {
   return diff.action === DiffAction.rename && !!matchPaths(diff.beforeDeclarationPaths, [[OPEN_API_PROPERTY_PATHS, PREDICATE_ANY_VALUE]])
+}
+
+export const isValidHttpMethod = (method: string): method is OpenAPIV3.HttpMethods => {
+  return HTTP_METHODS_SET.has(method)
+}
+
+export const calculateNormalizedOperationId: OperationIdNormalizer = (operation) => {
+  const { metadata: { path, method } } = operation
+  return slugify(`${path}-${method}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
+}
+
+export const calculateOperationId = (
+  basePath: string,
+  key: string,
+  path: string,
+): string => {
+  const operationPath = basePath + path
+  return slugify(`${removeFirstSlash(operationPath)}-${key}`)
 }

@@ -69,3 +69,20 @@ export const isObject = (value: unknown): value is Record<string | symbol, unkno
 export function isNonNullable<T>(value: T): value is NonNullable<T> {
   return value !== undefined && value !== null
 }
+
+export const getSymbolValueIfDefined = <T extends object>(
+  obj: T,
+  symbol: symbol,
+): unknown => {
+  const symbolObj = obj as { [key: symbol]: unknown }
+
+  return symbol in symbolObj ? symbolObj[symbol] : undefined
+}
+
+export const extractSymbolProperty = <T extends object>(
+  obj: T,
+  symbol: symbol,
+): { [key: symbol]: unknown } => {
+  const value = getSymbolValueIfDefined(obj, symbol)
+  return value !== undefined ? { [symbol]: value } : {}
+}

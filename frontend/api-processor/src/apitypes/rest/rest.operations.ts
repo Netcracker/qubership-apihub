@@ -19,13 +19,14 @@ import { OpenAPIV3 } from 'openapi-types'
 import { buildRestOperation } from './rest.operation'
 import { OperationIdNormalizer, OperationsBuilder } from '../../types'
 import {
+  calculateOperationId,
   createBundlingErrorHandler,
   IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER,
   removeComponents,
   removeFirstSlash,
   slugify,
 } from '../../utils'
-import { extractOperationBasePath } from './rest.utils'
+import { getOperationBasePath } from './rest.utils'
 import type * as TYPE from './rest.types'
 import { HASH_FLAG, INLINE_REFS_FLAG, MESSAGE_SEVERITY, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
 import { asyncFunction } from '../../utils/async'
@@ -61,7 +62,7 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
     debugCtx,
   )
 
-  const { paths, servers } = document.data
+  const { paths, servers } = effectiveDocument
 
   const operations: TYPE.VersionRestOperation[] = []
   if (!paths) { return [] }
@@ -76,10 +77,8 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
 
       await asyncFunction(() => {
         const methodData = pathData[key as OpenAPIV3.HttpMethods]
-        const basePath = extractOperationBasePath(methodData?.servers || pathData?.servers || servers || [])
-        const operationPath = basePath + path
-
-        const operationId = slugify(`${removeFirstSlash(operationPath)}-${key}`)
+        const basePath = getOperationBasePath(methodData?.servers || pathData?.servers || servers || [])
+        const operationId = calculateOperationId(basePath, key, path)
 
         if (ctx.operationResolver(operationId)) {
           ctx.notifications.push({
@@ -111,9 +110,4 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
 
   }
   return operations
-}
-
-export const createNormalizedOperationId: OperationIdNormalizer = (operation) => {
-  const { metadata: { path, method } } = operation
-  return slugify(`${path}-${method}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
 }

@@ -18,7 +18,7 @@ paths:
                   prop1:
                     type: object
                     description: prop1 description
-                  prop2: 
+                  prop2:
                     $ref: '#/components/schemas/componentProp2'
 components:
   schemas:

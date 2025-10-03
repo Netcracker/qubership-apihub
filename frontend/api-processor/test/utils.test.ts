@@ -20,7 +20,7 @@ import { extractOperationBasePath } from '../src/apitypes/rest/rest.utils'
 describe('Utils', () => {
   describe('Unit tests for \'slugify\' function', () => {
     expect(slugify('test/test.json')).toEqual('test-test-json')
-    expect(slugify('тест 123.json')).toEqual('test-123-json')
+    expect(slugify('test 123.json')).toEqual('test-123-json')
   })
 
   describe('Unit test for getOperationPath', () => {

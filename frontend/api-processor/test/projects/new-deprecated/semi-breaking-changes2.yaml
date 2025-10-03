@@ -19,4 +19,4 @@ paths:
               required:
                 - prop1
         required: true
-      responses: { }
+      responses: {}

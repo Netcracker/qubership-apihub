@@ -1,0 +1,44 @@
+openapi: "3.1.0"
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    $ref: '#/components/pathItems/pathItem1'
+components:
+  pathItems:
+    pathItem1:
+      summary: path item summary
+      description: path item description
+      servers:
+        - url: https://example1.com
+          description: This is a server description in path item
+      parameters:
+        - $ref: "#/components/parameters/usedParameter1"
+      get:
+        summary: operation summary
+        description: operation description
+        servers:
+          - url: https://example2.com
+            description: This is a server description in operation
+        parameters:
+          - $ref: '#/components/parameters/usedParameter2'
+        responses:
+          '200':
+            description: response description
+  parameters:
+    usedParameter1:
+      name: usedParameter1
+      in: query
+    usedParameter2:
+      name: usedParameter2
+      in: query
+    unusedParameter:
+      name: unusedParameter
+      in: query
+  securitySchemes:
+    BearerAuth:
+      type: http
+      description: Bearer token authentication. Default security scheme for API usage.
+      scheme: bearer
+      bearerFormat: JWT

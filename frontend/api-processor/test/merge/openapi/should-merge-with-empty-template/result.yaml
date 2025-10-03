@@ -16,7 +16,7 @@ paths:
       responses:
         '200':
           description: OK
-          content: { }
+          content: {}
 components:
   schemas:
     TestSchema:
@@ -26,7 +26,7 @@ components:
   responses:
     '200':
       description: OK
-      content: { }
+      content: {}
   parameters:
     x-request-id:
       name: x-request-id
@@ -59,7 +59,7 @@ components:
         userId: '$response.body#/id'
       description: description
 security:
-  - oAuthSample: [ ]
+  - oAuthSample: []
 externalDocs:
   description: External Docs
   url: https://example.com

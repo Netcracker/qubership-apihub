@@ -1,0 +1,22 @@
+openapi: "3.1.0"
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    post:
+      responses:
+        '200':
+          description: response description main
+  /path2:
+    post:
+      responses:
+        '200':
+          description: response description main
+  # operation other than from provided group
+  /path3:
+    post:
+      responses:
+        '200':
+          description: response description main
+

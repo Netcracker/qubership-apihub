@@ -30,12 +30,16 @@ import YAML from 'js-yaml'
 import { Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { isPathParamRenameDiff } from '../../utils'
 
-export const extractOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): string => {
+export const getOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): string => {
   if (!Array.isArray(servers) || !servers.length) { return '' }
 
   try {
     const [firstServer] = servers
     let serverUrl = firstServer.url
+    if(!serverUrl) {
+      return ''
+    }
+
     const { variables = {} } = firstServer
 
     for (const param of Object.keys(variables)) {

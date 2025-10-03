@@ -13,7 +13,7 @@ paths:
             schema:
               $ref: "#/components/schemas/schema"
         required: true
-      responses: { }
+      responses: {}
 
 components:
   schemas:

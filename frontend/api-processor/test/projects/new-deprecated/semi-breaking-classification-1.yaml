@@ -18,7 +18,7 @@ paths:
       responses:
         '200':
           description: OK
-          content: { }
+          content: {}
     post:
       parameters:
         - name: param1
@@ -28,4 +28,4 @@ paths:
       responses:
         '200':
           description: OK
-          content: { }
+          content: {}

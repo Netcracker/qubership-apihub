@@ -60,7 +60,7 @@ import {
   extractPathParamRenameDiff,
   extractRootSecurityDiffs,
   extractRootServersDiffs,
-  extractOperationBasePath,
+  getOperationBasePath,
 } from './rest.utils'
 import { createOperationChange, getOperationTags, OperationsMap } from '../../components'
 
@@ -137,8 +137,8 @@ export const compareDocuments = async (
 
       const methodData = pathData[inferredMethod]
       // todo if there were actually servers here, we wouldn't have handle it, add a test
-      const previousBasePath = extractOperationBasePath(methodData?.servers || pathData?.servers || prevDocData.servers || [])
-      const currentBasePath = extractOperationBasePath(methodData?.servers || pathData?.servers || currDocData.servers || [])
+      const previousBasePath = getOperationBasePath(methodData?.servers || pathData?.servers || prevDocData.servers || [])
+      const currentBasePath = getOperationBasePath(methodData?.servers || pathData?.servers || currDocData.servers || [])
       const prevNormalizedOperationId = slugify(`${normalizePath(previousBasePath + path)}-${inferredMethod}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
       const currNormalizedOperationId = slugify(`${normalizePath(currentBasePath + path)}-${inferredMethod}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
 
@@ -281,7 +281,7 @@ export function createCopyWithCurrentGroupOperationsOnly(template: RestOperation
   const { paths, ...rest } = template
   const groupWithoutEdgeSlashes = trimSlashes(group)
 
-  if (trimSlashes(extractOperationBasePath(template.servers)) === groupWithoutEdgeSlashes) {
+  if (trimSlashes(getOperationBasePath(template.servers)) === groupWithoutEdgeSlashes) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { servers, ...rest } = template
     return { ...rest }

@@ -27,6 +27,7 @@ import {
   VALIDATION_RULES_SEVERITY_LEVEL_WARNING,
   ValidationRulesSeverity,
 } from './types'
+import { OpenAPIV3 } from 'openapi-types'
 
 export const DEFAULT_BATCH_SIZE = 32
 
@@ -171,3 +172,4 @@ export const EMPTY_CHANGE_SUMMARY_DTO = {
 }
 
 export const CUSTOM_PARAMETER_API_AUDIENCE = 'x-api-audience'
+export const HTTP_METHODS_SET = new Set(Object.values(OpenAPIV3.HttpMethods) as string[])

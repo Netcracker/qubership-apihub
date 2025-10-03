@@ -3,7 +3,7 @@ info: ''
 servers:
   - url: /
 security:
-  - OAuth2 Access Token: [ ]
+  - OAuth2 Access Token: []
 paths:
   /api/v2/test/animals/{id}:
     get:
@@ -25,7 +25,7 @@ paths:
           content:
             application/json:
               schema:
-                items: [ { } ]
+                items: [{}]
         '400':
           description: Bad request
           content:
@@ -62,7 +62,7 @@ paths:
         content:
           application/json:
             schema:
-              items: [ { } ]
+              items: [{}]
         required: true
       responses:
         '200':
@@ -127,7 +127,7 @@ paths:
         content:
           application/json:
             schema:
-              items: [ { } ]
+              items: [{}]
         required: true
       responses:
         '200':
@@ -136,7 +136,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: [ { } ]
+                items: [{}]
         '400':
           description: Bad request
           content:
