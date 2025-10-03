@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Note: this uses host platform for the build, and we ask go build to target the needed platform, so we do not spend time on qemu emulation when running "go build"
-FROM --platform=$BUILDPLATFORM docker.io/golang:1.24.6-alpine3.21 as builder
+FROM --platform=$BUILDPLATFORM docker.io/golang:1.25.1-alpine3.22 as builder
 ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
