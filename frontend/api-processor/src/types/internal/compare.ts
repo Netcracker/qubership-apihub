@@ -70,7 +70,7 @@ export interface OperationChanges<T extends DiffType | DiffTypeDto = DiffType> {
   }
   previousMetadata?: OperationChangesMetadata & {
     [key: string]: unknown
-  } 
+  }
 }
 
 export interface OperationChangesDto extends Omit<OperationChanges<DiffTypeDto>, 'diffs' | 'impactedSummary' | 'mergedJso'> {
