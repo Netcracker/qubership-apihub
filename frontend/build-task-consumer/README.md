@@ -1,6 +1,6 @@
 # qubership-apihub-build-task-consumer
 
-NodeJS microservice for APIHUB Package versions builds.
+Node.js microservice for APIHUB Package versions builds.
 
 This microservice is REST API and task management wrapper for [qubership-apihub-api-processor](https://github.com/Netcracker/qubership-apihub-api-processor) library.
 
@@ -11,7 +11,7 @@ So please refer to [qubership-apihub](https://github.com/Netcracker/qubership-ap
 ## Installation
 
 ```bash
-$ npm
+npm install
 ```
 
 ## Building the app locally
@@ -20,7 +20,7 @@ Modify `.npmrc` file by adding GitHub PAT (personal access token) with access to
 
 The file content sample:
 
-```
+```text
 @netcracker:registry=https://npm.pkg.github.com/
 //npm.pkg.github.com/:_authToken=ghp_XYZ
 always-auth=true
@@ -47,6 +47,6 @@ $ npm start:prod
 ```
 
 
-# API documentation
+## API documentation
 
-http://localhost:3000/api
+<http://localhost:3000/api>
