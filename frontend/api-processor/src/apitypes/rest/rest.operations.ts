@@ -17,14 +17,11 @@
 import { OpenAPIV3 } from 'openapi-types'
 
 import { buildRestOperation } from './rest.operation'
-import { OperationIdNormalizer, OperationsBuilder } from '../../types'
+import { OperationsBuilder } from '../../types'
 import {
   calculateOperationId,
   createBundlingErrorHandler,
-  IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER,
   removeComponents,
-  removeFirstSlash,
-  slugify,
 } from '../../utils'
 import { getOperationBasePath } from './rest.utils'
 import type * as TYPE from './rest.types'
