@@ -146,7 +146,7 @@ export function normalizeOperationIds(operations: ResolvedOperation[], apiBuilde
   operations.forEach(operation => {
     const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(operation) ?? operation.operationId
     // '-' is a slugified slash in the middle of a normalizedOperationId that should also be removed for a proper matching during comparison
-    normalizedOperationIdToOperation[takeSubstringIf(!!groupSlug, normalizedOperationId, groupSlug.length + '-'.length)] = operation
+    normalizedOperationIdToOperation[removeGroupPrefixFromOperationId(normalizedOperationId, groupSlug)] = operation
   })
   return [Object.keys(normalizedOperationIdToOperation), normalizedOperationIdToOperation]
 }
@@ -268,13 +268,13 @@ export function createOperationChange(
   const impactedSummary = calculateImpactedSummary([changeSummary])
 
   const currentOperationFields = current && {
-    operationId: takeSubstringIf(!!currentGroup, current.operationId, removeFirstSlash(currentGroup ?? '').length),
+    operationId: removeGroupPrefixFromOperationId(current.operationId, currentGroup ?? ''),
     apiKind: current.apiKind,
     metadata: getOperationMetadata(current),
   }
 
   const previousOperationFields = previous && {
-    previousOperationId: takeSubstringIf(!!previousGroup, previous.operationId, removeFirstSlash(previousGroup ?? '').length),
+    previousOperationId: removeGroupPrefixFromOperationId(previous.operationId, previousGroup ?? ''),
     previousApiKind: previous.apiKind,
     previousMetadata: getOperationMetadata(previous),
   }
@@ -287,4 +287,8 @@ export function createOperationChange(
     ...currentOperationFields,
     ...previousOperationFields,
   }
+}
+
+export const removeGroupPrefixFromOperationId = (operationId: string, groupPrefix: string): string => {
+  return takeSubstringIf(!!groupPrefix, operationId, removeFirstSlash(groupPrefix).length + '-'.length)
 }

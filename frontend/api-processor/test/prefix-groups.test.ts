@@ -20,6 +20,7 @@ import {
   Editor,
   LocalRegistry,
   numberOfImpactedOperationsMatcher,
+  operationChangesMatcher,
 } from './helpers'
 import { ANNOTATION_CHANGE_TYPE, BREAKING_CHANGE_TYPE, BUILD_TYPE, NON_BREAKING_CHANGE_TYPE } from '../src'
 
@@ -101,6 +102,17 @@ describe('Prefix Groups test', () => {
       config: { files: [{ fileId: 'spec1.yaml' }, { fileId: 'spec2.yaml' }] },
     })
 
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        previousOperationId: 'removed-get',
+      }),
+      expect.objectContaining({
+        operationId: 'added-get',
+      }),
+      expect.objectContaining({
+        operationId: 'changed1-get',
+      }),
+    ]))
     expect(result).toEqual(changesSummaryMatcher({
       [BREAKING_CHANGE_TYPE]: 1,
       [NON_BREAKING_CHANGE_TYPE]: 1,
