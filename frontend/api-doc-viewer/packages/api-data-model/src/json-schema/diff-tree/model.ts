@@ -1,5 +1,5 @@
 import { buildPointer } from '@netcracker/qubership-apihub-api-unifier';
-import { Diff, DiffMetaRecord, /* DiffType, */ isDiffReplace } from '@netcracker/qubership-apihub-api-diff';
+import { Diff, DiffMetaRecord, isDiffReplace } from '@netcracker/qubership-apihub-api-diff';
 import { isArray, syncCrawl } from '@netcracker/qubership-apihub-json-crawl';
 import { DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstract/diff';
 // import { DIFF_TREE_UTILS } from '../../abstract/diff-tree-utils';
@@ -12,6 +12,7 @@ import { JsonSchemaModelTree } from '../tree/model';
 import type { JsonSchemaCreateNodeParams, JsonSchemaNodeKind, JsonSchemaNodeType } from '../tree/types';
 import { isBrokenRef, isRequired } from '../utils';
 import { JsonSchemaDiffNodeMeta, JsonSchemaDiffNodeValue } from './types';
+import { LazyBuildingContext } from "@apihub/api-data-model/abstract/model/model-tree-node.impl";
 
 export class JsonSchemaModelDiffTree<
   T extends DiffNodeValue | null = JsonSchemaDiffNodeValue,
@@ -23,17 +24,29 @@ export class JsonSchemaModelDiffTree<
     super(source)
   }
 
-  public createNode(id: string, kind: K, key: string | number, isCycle: boolean, params: ModelTreeNodeParams<T, K, M>) {
-    const node = super.createNode(id, kind, key, isCycle, params)
+  public createNode(
+    id: string,
+    kind: K,
+    key: string | number,
+    isCycle: boolean,
+    params: ModelTreeNodeParams<T, K, M>,
+    lazyBuildingContext?: LazyBuildingContext<T, K, M>,
+  ) {
+    const node = super.createNode(id, kind, key, isCycle, params, lazyBuildingContext)
     // calculate $nodeChangesSummary
     // node.meta.$nodeChangesSummary = DIFF_TREE_UTILS.totalChangesSummary(node)
     return node
   }
 
-  public createComplexNode(id: string, kind: K, key: string | number, isCycle: boolean, params: ModelTreeNodeParams<T, K, M> & {
-    type: Exclude<ModelTreeNodeType, 'simple'>
-  }) {
-    const node = super.createComplexNode(id, kind, key, isCycle, params)
+  public createComplexNode(
+    id: string,
+    kind: K,
+    key: string | number,
+    isCycle: boolean,
+    params: ModelTreeNodeParams<T, K, M> & { type: Exclude<ModelTreeNodeType, 'simple'> },
+    lazyBuildingContext?: LazyBuildingContext<T, K, M>,
+  ) {
+    const node = super.createComplexNode(id, kind, key, isCycle, params, lazyBuildingContext)
     // calculate $nodeChangesSummary
     // node.meta.$nodeChangesSummary = DIFF_TREE_UTILS.totalChangesSummary(node)
     return node

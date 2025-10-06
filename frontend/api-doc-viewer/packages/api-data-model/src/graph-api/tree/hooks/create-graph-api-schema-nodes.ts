@@ -1,11 +1,7 @@
-import { DiffRemove, DiffReplace, isDiffRemove, isDiffReplace } from '@netcracker/qubership-apihub-api-diff';
 import { buildPointer } from '@netcracker/qubership-apihub-api-unifier';
-import { isObject, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
+import { getNodeRules, syncCrawl, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
 import { modelTreeNodeType } from "@apihub/api-data-model/abstract-model/constants";
-import { isDiff, isDiffMetaRecord } from '@apihub/api-data-model/utils';
 import { graphSchemaNodeKind } from '@apihub/api-data-model/graph-api-model/constants';
-import { createGraphApiDiffTree } from '@apihub/api-data-model/graph-api-model/diff-tree/build';
-import { GraphApiDiffTreeNode } from '@apihub/api-data-model/graph-api-model/diff-tree/types';
 import { areExcludedComponents } from '@apihub/api-data-model/graph-api-model/utils';
 import { GraphApiModelTree } from '@apihub/api-data-model/graph-api-model/tree/model';
 import {
@@ -15,6 +11,9 @@ import {
 } from '@apihub/api-data-model/graph-api-model/tree/types';
 import { LazyBuildingContext } from "@apihub/api-data-model/abstract-model/model/model-tree-node.impl";
 import { crawlHooksGraphApiTree } from "@apihub/api-data-model/graph-api-model/tree/build";
+import { isDiff, isDiffMetaRecord, isObject } from '@apihub/api-data-model/utils';
+import { DiffRemove, DiffReplace, isDiffRemove, isDiffReplace } from "@netcracker/qubership-apihub-api-diff";
+import { crawlHooksGraphApiDiffTree } from "@apihub/api-data-model";
 
 function shouldCrawlDiff(value: unknown): value is DiffRemove | DiffReplace {
   return isDiff(value) &&
@@ -47,36 +46,29 @@ export function createGraphSchemaTreeCrawlHook(
      * E.g. when we change an output type to an input type, or an input type to an array.
      * Merged tree must contain both nodes built from "before" and "after" sources.
      */
-    /* TODO 03.10.25 // Use new lazy-building approach for building this tree part.
-        New approach will resolve TODOs below. */
     if (isObject(value) && metaKey && metaKey in value) {
-      // TODO 27.11.24 // Fix paths of sub-tree nodes. They must start from the same subpath
-      const createSubTree =
-        (subSource: unknown, ruleKey: string = `/${key}`) => {
-          // TODO 27.11.24 // Refactor it
-          const subRules = rules ? (rules as any)[ruleKey] : undefined
-          if (!subRules) {
-            return null
-          }
-          return createGraphApiDiffTree(subSource, metaKey, {
-            rules: subRules,
-            state: {
-              parent: parent as GraphApiDiffTreeNode | null,
-              source: subSource,
-              alreadyConvertedMappingStack: new Map(state.alreadyConvertedMappingStack)
-            }
-          })
-        };
-
       const diffMeta = value[metaKey]
-      // TODO 27.11.24 // parent will have child with kind = 'root'!
       if (isDiffMetaRecord(diffMeta)) {
-        for (const [fieldKey, diff] of Object.entries(diffMeta)) {
+        for (const [field, diff] of Object.entries(diffMeta)) {
           if (!shouldCrawlDiff(diff)) {
-            continue
+            continue;
           }
-          const subTree = createSubTree(diff.beforeValue, `/${fieldKey}`)
-          subTree?.root && parent?.addChild(subTree.root)
+          const nodeRules = getNodeRules(rules, field, [...path, key], diff.beforeValue)
+          syncCrawl(
+            diff.beforeValue,
+            crawlHooksGraphApiDiffTree(tree as any, metaKey),
+            {
+              state: {
+                parent: parent,
+                container: container,
+                alreadyConvertedMappingStack: new Map(state.alreadyConvertedMappingStack),
+                nodeIdPrefix: nodeIdPrefix,
+                treeLevel: state.treeLevel + 1,
+                maxTreeLevel: state.maxTreeLevel + 1,
+              },
+              rules: nodeRules,
+            },
+          )
         }
       }
     }
@@ -116,12 +108,15 @@ export function createGraphSchemaTreeCrawlHook(
     const lazyBuildingContext: LazyBuildingContext<any, any, any> = {
       tree: tree,
       crawlValue: value,
-      crawlHooks: crawlHooksGraphApiTree(tree),
+      crawlHooks: metaKey
+        ? crawlHooksGraphApiDiffTree(tree as any, metaKey)
+        : crawlHooksGraphApiTree(tree),
       crawlRules: rules,
       alreadyConvertedMappingStack: state.alreadyConvertedMappingStack,
       nodeIdPrefix: id,
       nextLevel: state.treeLevel + 1,
       nextMaxLevel: state.maxTreeLevel + 1,
+      metaKey: metaKey,
     }
     /* --- */
 

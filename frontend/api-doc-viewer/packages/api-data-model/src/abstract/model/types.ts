@@ -44,8 +44,9 @@ export interface IModelTreeNode<T, K extends string, M> {
   addNestedNode(node: IModelTreeNode<T, K, M>): void;
 
   /* Feature "Lazy Tree Building" */
-  expand(): void;
-  collapse(): void;
+  expand(): this;
+
+  collapse(): this;
   /* --- */
 }
 

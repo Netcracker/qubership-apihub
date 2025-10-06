@@ -1,4 +1,11 @@
-import { annotation, breaking, deprecated, DiffAction, nonBreaking, unclassified } from "@netcracker/qubership-apihub-api-diff"
+import {
+  annotation,
+  breaking,
+  deprecated,
+  DiffAction,
+  nonBreaking,
+  unclassified
+} from "@netcracker/qubership-apihub-api-diff"
 import { isGraphSchemaNodeEnumValue } from "../src"
 import { createGraphApiDiffTreeForTests, graphapi, metaKey } from "./helpers/graphql"
 
@@ -42,7 +49,9 @@ describe('output', () => {
       .children().find(child => child.kind === 'output')
     const fruitValue = fruit!.value()
 
-    if (!isGraphSchemaNodeEnumValue(fruitValue)) { fail() }
+    if (!isGraphSchemaNodeEnumValue(fruitValue)) {
+      fail()
+    }
 
     expect(fruitValue!.nullable).toBe(false)
     expect(fruitValue!.title).toBe('Fruit')
@@ -198,14 +207,18 @@ describe('output', () => {
     const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
+      .expand()
       .children().find(child => child.kind === 'output')!
+      .expand()
     expect(output.value()).toMatchObject({
       title: 'FruitWrapper',
       type: 'object',
     })
     const test = output!
       .children().find(child => child.kind === 'method')!
+      .expand()
       .children().find(child => child.kind === 'output')!
+      .expand()
     expect(test.value()).toMatchObject({
       title: 'Response',
       type: 'list',
@@ -512,7 +525,9 @@ describe('output', () => {
       .children().find(child => child.kind === 'output')!
     const fruitValue = fruit.value()
 
-    if (!isGraphSchemaNodeEnumValue(fruitValue)) { fail() }
+    if (!isGraphSchemaNodeEnumValue(fruitValue)) {
+      fail()
+    }
 
     expect(fruitValue?.nullable).toBe(false)
     expect(fruitValue?.values).toMatchObject({

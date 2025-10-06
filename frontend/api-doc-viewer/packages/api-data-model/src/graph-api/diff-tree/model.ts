@@ -1,15 +1,51 @@
-import { breaking, Diff, DiffAction, DiffAdd, DiffMetaRecord, DiffRemove, DiffReplace, /* DiffType, */ isDiffAdd, isDiffRemove, isDiffReplace } from '@netcracker/qubership-apihub-api-diff';
-import { GRAPH_API_NODE_KIND_INPUT_OBJECT, GRAPH_API_NODE_KIND_INTERFACE, GRAPH_API_NODE_KIND_LIST, GRAPH_API_NODE_KIND_OBJECT, GraphApiAnyDefinition, GraphApiDirective, GraphApiListDefinition, isGraphApiAnyDefinition, isGraphApiArgs, isGraphApiDirective, isGraphApiDirectives, isGraphApiInputObjectDefinition, isGraphApiListDefinition, isGraphApiObjectiveDefinition } from '@netcracker/qubership-apihub-graphapi';
+import {
+  breaking,
+  Diff,
+  DiffAction,
+  DiffAdd,
+  DiffMetaRecord,
+  DiffRemove,
+  DiffReplace,
+  isDiffAdd,
+  isDiffRemove,
+  isDiffReplace
+} from '@netcracker/qubership-apihub-api-diff';
+import {
+  GRAPH_API_NODE_KIND_INPUT_OBJECT,
+  GRAPH_API_NODE_KIND_INTERFACE,
+  GRAPH_API_NODE_KIND_LIST,
+  GRAPH_API_NODE_KIND_OBJECT,
+  GraphApiAnyDefinition,
+  GraphApiDirective,
+  GraphApiListDefinition,
+  isGraphApiAnyDefinition,
+  isGraphApiArgs,
+  isGraphApiDirective,
+  isGraphApiDirectives,
+  isGraphApiInputObjectDefinition,
+  isGraphApiListDefinition,
+  isGraphApiObjectiveDefinition
+} from '@netcracker/qubership-apihub-graphapi';
 import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl';
 import { DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstract/diff';
 import { CreateNodeResult, IModelTreeNode } from '../../abstract/model/types';
 import { isBrokenRef, JsonSchemaCreateNodeParams, JsonSchemaModelDiffTree } from '../../json-schema';
-import { getNodeComplexityType, inverDiffAction, isDiff, isObject, objectKeys, PathUtils, pick, setValueByPath } from '../../utils';
+import {
+  getNodeComplexityType,
+  inverDiffAction,
+  isDiff,
+  isObject,
+  objectKeys,
+  PathUtils,
+  pick,
+  setValueByPath
+} from '../../utils';
 import { graphSchemaNodeKind, graphSchemaNodeMetaProps, graphSchemaNodeValueProps } from '../constants';
 import { isGraphApiNodeType } from '../guards';
 import { type GraphSchemaNodeKind, type GraphSchemaNodeType } from '../tree/types';
 import { resolveDirectiveDeprecated, resolveEnumValues } from '../utils';
 import { GraphApiDiffNodeMeta, GraphSchemaDiffNodeValue } from './types';
+import { LazyBuildingContext } from "@apihub/api-data-model/abstract/model/model-tree-node.impl";
 
 const OBJECTIVE_KINDS = new Set([
   GRAPH_API_NODE_KIND_OBJECT,
@@ -132,7 +168,7 @@ export class GraphApiModelDiffTree<
           inverDiffAction(diffForMethods) :
           diffForMethods
         for (const method of replacedMethodsKeys) {
-          childrenChanges[`#/methods/${method}`] = {
+          childrenChanges[`${id}/methods/${method}`] = {
             ...diffForReplacedMethods,
             ...diffForReplacedMethods!.action === DiffAction.remove ?
               { beforeValue: methods[method] } :
@@ -159,7 +195,7 @@ export class GraphApiModelDiffTree<
           inverDiffAction(diffForProps) :
           diffForProps
         for (const property of replacedPropertiesKeys) {
-          childrenChanges[`#/properties/${property}`] = {
+          childrenChanges[`${id}/properties/${property}`] = {
             ...diffForReplacedProps,
             ...diffForReplacedProps!.action === DiffAction.add ?
               { beforeValue: replacedProperties[property] } :
@@ -361,9 +397,10 @@ export class GraphApiModelDiffTree<
   }
 
   public createGraphSchemaNode(
-    params: JsonSchemaCreateNodeParams<T, K, M>
+    params: JsonSchemaCreateNodeParams<T, K, M>,
+    lazyBuildingContext?: LazyBuildingContext<any, any, any>
   ): CreateNodeResult<IModelTreeNode<T, K, M>> {
-    return this.createJsonSchemaNode(params)
+    return this.createJsonSchemaNode(params, lazyBuildingContext)
   }
 
   protected getPropsChanges(_value: any, props: readonly string[]) {

@@ -7,7 +7,7 @@ import { createGraphSchemaTreeCrawlHook } from './hooks/create-graph-api-schema-
 import { GraphApiModelTree } from './model';
 import { GraphApiCrawlRule, GraphApiCrawlState, GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta } from './types';
 
-export const DEFAULT_MAX_TREE_LEVEL = 3;
+const DEFAULT_MAX_TREE_LEVEL = 3;
 
 const CRAWL_HOOKS_CACHE: Map<GraphApiModelTree, any[]> = new Map()
 
@@ -34,9 +34,11 @@ export const createGraphApiTree = (
   const crawlState: GraphApiCrawlState = {
     parent: null,
     alreadyConvertedMappingStack: new Map(),
+    /* Feature "Lazy Tree Building" */
     nodeIdPrefix: '#',
     treeLevel: 0,
     maxTreeLevel: maxTreeLevel,
+    /* --- */
   }
 
   /**

@@ -19,6 +19,7 @@ export type LazyBuildingContext<T, K extends string, M> = {
   nodeIdPrefix: string,
   nextLevel: number,
   nextMaxLevel: number,
+  metaKey?: symbol
 }
 
 type LazyBuildingCrawlState<T, K extends string, M> = {
@@ -29,7 +30,6 @@ type LazyBuildingCrawlState<T, K extends string, M> = {
   treeLevel: number, // current tree level
   maxTreeLevel: number, // this level will have no children/nested nodes until they're lazy-built
 }
-
 /* --- */
 
 export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, K, M> {
@@ -47,17 +47,19 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
 
   public expand() {
     if (this._children.length > 0) {
-      return
+      return this
     }
     if (this.type === 'simple') {
       this._expandingCallback?.()
     } else {
       this.nested.forEach(nestedNode => nestedNode.expand())
     }
+    return this
   }
 
   public collapse() {
-    this._children.length = 0;
+    this._children.length = 0
+    return this
   }
 
   /* --- */
