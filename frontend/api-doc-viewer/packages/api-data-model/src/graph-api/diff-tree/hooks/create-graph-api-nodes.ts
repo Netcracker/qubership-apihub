@@ -19,7 +19,7 @@ import { isBrokenRef } from '../../../json-schema';
 import { areExcludedComponents } from '../../utils';
 import { GraphApiModelDiffTree } from '../model';
 import { collectSchemaChildrenChanges } from '../utils';
-import { LazyBuildingContext } from "@apihub/api-data-model/abstract/model/model-tree-node.impl";
+import { LazyBuildingContext } from "../../../abstract/model/model-tree-node.impl";
 
 export function createGraphApiDiffTreeCrawlHook(
   tree: GraphApiModelDiffTree<GraphApiDiffNodeData, GraphApiNodeKind, GraphApiDiffNodeMeta>,

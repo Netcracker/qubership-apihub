@@ -1,19 +1,19 @@
-import { modelTreeNodeType, UNKNOWN_TYPE } from "@apihub/api-data-model/abstract-model/constants";
-import { ModelTree } from '@apihub/api-data-model/abstract-model/model/model-tree.impl';
-import { CreateNodeResult, IModelTreeNode } from '@apihub/api-data-model/abstract-model/model/types';
-import { isOpenApiExtensionKey } from '@apihub/api-data-model/oas-extension-key';
-import { getNodeComplexityType, isObject, pick, pickByPredicate } from '@apihub/api-data-model/utils';
-import { jsonSchemaNodeMetaProps, jsonSchemaNodeValueProps } from '@apihub/api-data-model/json-schema-model/constants';
-import { isJsonSchemaNodeType } from '@apihub/api-data-model/json-schema-model/guards';
-import { isBrokenRef, isRequired } from '@apihub/api-data-model/json-schema-model/utils';
+import { modelTreeNodeType, UNKNOWN_TYPE } from "../../abstract/constants";
+import { ModelTree } from '../../abstract/model/model-tree.impl';
+import { CreateNodeResult, IModelTreeNode } from '../../abstract/model/types';
+import { isOpenApiExtensionKey } from '../../oas-extension-key';
+import { getNodeComplexityType, isObject, pick, pickByPredicate } from '../../utils';
+import { jsonSchemaNodeMetaProps, jsonSchemaNodeValueProps } from '../constants';
+import { isJsonSchemaNodeType } from '../guards';
+import { isBrokenRef, isRequired } from '../utils';
 import type {
   JsonSchemaCreateNodeParams,
   JsonSchemaNodeKind,
   JsonSchemaNodeMeta,
   JsonSchemaNodeValue
-} from '@apihub/api-data-model/json-schema-model/tree/types';
-import { JsonSchemaNodeType } from '@apihub/api-data-model/json-schema-model/tree/types';
-import { LazyBuildingContext } from "@apihub/api-data-model/abstract-model/model/model-tree-node.impl";
+} from './types';
+import { JsonSchemaNodeType } from './types';
+import { LazyBuildingContext } from "../../abstract/model/model-tree-node.impl";
 
 export class JsonSchemaModelTree<
   T = JsonSchemaNodeValue,

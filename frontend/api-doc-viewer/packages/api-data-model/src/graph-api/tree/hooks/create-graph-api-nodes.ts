@@ -11,13 +11,13 @@ import {
   GraphApiNodeMeta,
   GraphApiTreeComplexNode,
   GraphApiTreeNode
-} from '@apihub/api-data-model/graph-api-model';
-import { modelTreeNodeType } from "@apihub/api-data-model/abstract-model/constants";
-import { ModelTreeNodeParams } from '@apihub/api-data-model/abstract-model/model/types';
-import { isBrokenRef } from '@apihub/api-data-model/json-schema-model';
-import { areExcludedComponents } from '@apihub/api-data-model/graph-api-model/utils';
-import { GraphApiModelTree } from '@apihub/api-data-model/graph-api-model/tree/model';
-import { LazyBuildingContext } from "@apihub/api-data-model/abstract-model/model/model-tree-node.impl";
+} from '../../index';
+import { modelTreeNodeType } from "../../../abstract/constants";
+import { ModelTreeNodeParams } from '../../../abstract/model/types';
+import { isBrokenRef } from '../../../json-schema/utils';
+import { areExcludedComponents } from '../../utils';
+import { GraphApiModelTree } from '../model';
+import { LazyBuildingContext } from "../../../abstract/model/model-tree-node.impl";
 
 export function createGraphApiTreeCrawlHook(
   tree: GraphApiModelTree

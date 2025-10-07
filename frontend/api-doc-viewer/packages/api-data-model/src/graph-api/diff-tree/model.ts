@@ -45,7 +45,7 @@ import { isGraphApiNodeType } from '../guards';
 import { type GraphSchemaNodeKind, type GraphSchemaNodeType } from '../tree/types';
 import { resolveDirectiveDeprecated, resolveEnumValues } from '../utils';
 import { GraphApiDiffNodeMeta, GraphSchemaDiffNodeValue } from './types';
-import { LazyBuildingContext } from "@apihub/api-data-model/abstract/model/model-tree-node.impl";
+import { LazyBuildingContext } from "../../abstract/model/model-tree-node.impl";
 
 const OBJECTIVE_KINDS = new Set([
   GRAPH_API_NODE_KIND_OBJECT,

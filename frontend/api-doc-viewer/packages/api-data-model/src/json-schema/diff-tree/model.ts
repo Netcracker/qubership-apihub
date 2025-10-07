@@ -12,7 +12,7 @@ import { JsonSchemaModelTree } from '../tree/model';
 import type { JsonSchemaCreateNodeParams, JsonSchemaNodeKind, JsonSchemaNodeType } from '../tree/types';
 import { isBrokenRef, isRequired } from '../utils';
 import { JsonSchemaDiffNodeMeta, JsonSchemaDiffNodeValue } from './types';
-import { LazyBuildingContext } from "@apihub/api-data-model/abstract/model/model-tree-node.impl";
+import { LazyBuildingContext } from "../../abstract/model/model-tree-node.impl";
 
 export class JsonSchemaModelDiffTree<
   T extends DiffNodeValue | null = JsonSchemaDiffNodeValue,

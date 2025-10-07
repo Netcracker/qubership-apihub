@@ -1,19 +1,19 @@
 import { buildPointer } from '@netcracker/qubership-apihub-api-unifier';
 import { getNodeRules, syncCrawl, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
-import { modelTreeNodeType } from "@apihub/api-data-model/abstract-model/constants";
-import { graphSchemaNodeKind } from '@apihub/api-data-model/graph-api-model/constants';
-import { areExcludedComponents } from '@apihub/api-data-model/graph-api-model/utils';
-import { GraphApiModelTree } from '@apihub/api-data-model/graph-api-model/tree/model';
+import { modelTreeNodeType } from "../../../abstract/constants";
+import { graphSchemaNodeKind } from '../../constants';
+import { areExcludedComponents } from '../../utils';
+import { GraphApiModelTree } from '../model';
 import {
   GraphApiCrawlState,
   GraphApiTreeComplexNode,
   GraphApiTreeNode
-} from '@apihub/api-data-model/graph-api-model/tree/types';
-import { LazyBuildingContext } from "@apihub/api-data-model/abstract-model/model/model-tree-node.impl";
-import { crawlHooksGraphApiTree } from "@apihub/api-data-model/graph-api-model/tree/build";
-import { isDiff, isDiffMetaRecord, isObject } from '@apihub/api-data-model/utils';
+} from '../types';
+import { LazyBuildingContext } from "../../../abstract/model/model-tree-node.impl";
+import { crawlHooksGraphApiTree } from "../build";
+import { isDiff, isDiffMetaRecord, isObject } from '../../../utils';
 import { DiffRemove, DiffReplace, isDiffRemove, isDiffReplace } from "@netcracker/qubership-apihub-api-diff";
-import { crawlHooksGraphApiDiffTree } from "@apihub/api-data-model";
+import { crawlHooksGraphApiDiffTree } from "../../../index";
 
 function shouldCrawlDiff(value: unknown): value is DiffRemove | DiffReplace {
   return isDiff(value) &&
