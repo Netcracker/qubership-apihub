@@ -59,6 +59,7 @@ export class GraphApiStatePropNode extends GraphSchemaStatePropNode<GraphApiTree
     }
 
     const children = this.node
+      .expand()
       .children(this.selected)
       .filter((child) => !this._filter || this._filter(child as GraphApiTreeNode))
 

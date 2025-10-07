@@ -208,7 +208,7 @@ export class JsonSchemaStatePropNode<T extends IModelTreeNode<any, any, any> = J
   }
 
   protected buildChildrenNodes(sort: number): IModelStateNode<T>[] {
-    const children = [...this.node.children(this.selected)] as T[]
+    const children = [...this.node.expand().children(this.selected)] as T[]
     const sorted = sort
       ? children.sort((n1, n2) => (n1.key > n2.key ? -1 * sort : sort))
       : children
