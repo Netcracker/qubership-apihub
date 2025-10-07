@@ -168,7 +168,7 @@ export class GraphApiModelDiffTree<
           inverDiffAction(diffForMethods) :
           diffForMethods
         for (const method of replacedMethodsKeys) {
-          childrenChanges[`${id}/methods/${method}`] = {
+          childrenChanges[`${id}/typeDef/type/methods/${method}`] = {
             ...diffForReplacedMethods,
             ...diffForReplacedMethods!.action === DiffAction.remove ?
               { beforeValue: methods[method] } :
@@ -195,7 +195,7 @@ export class GraphApiModelDiffTree<
           inverDiffAction(diffForProps) :
           diffForProps
         for (const property of replacedPropertiesKeys) {
-          childrenChanges[`${id}/properties/${property}`] = {
+          childrenChanges[`${id}/typeDef/type/properties/${property}`] = {
             ...diffForReplacedProps,
             ...diffForReplacedProps!.action === DiffAction.add ?
               { beforeValue: replacedProperties[property] } :

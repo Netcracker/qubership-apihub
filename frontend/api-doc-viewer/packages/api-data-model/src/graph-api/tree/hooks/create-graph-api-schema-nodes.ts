@@ -4,11 +4,7 @@ import { modelTreeNodeType } from "../../../abstract/constants";
 import { graphSchemaNodeKind } from '../../constants';
 import { areExcludedComponents } from '../../utils';
 import { GraphApiModelTree } from '../model';
-import {
-  GraphApiCrawlState,
-  GraphApiTreeComplexNode,
-  GraphApiTreeNode
-} from '../types';
+import { GraphApiCrawlState, GraphApiTreeComplexNode, GraphApiTreeNode } from '../types';
 import { LazyBuildingContext } from "../../../abstract/model/model-tree-node.impl";
 import { crawlHooksGraphApiTree } from "../build";
 import { isDiff, isDiffMetaRecord, isObject } from '../../../utils';
@@ -53,7 +49,8 @@ export function createGraphSchemaTreeCrawlHook(
           if (!shouldCrawlDiff(diff)) {
             continue;
           }
-          const nodeRules = getNodeRules(rules, field, [...path, key], diff.beforeValue)
+          const nodeRules = getNodeRules(rules, field, [...path, field], diff.beforeValue)
+          const nextId = nodeIdPrefix + buildPointer([...path, field])
           syncCrawl(
             diff.beforeValue,
             crawlHooksGraphApiDiffTree(tree as any, metaKey),
@@ -62,7 +59,7 @@ export function createGraphSchemaTreeCrawlHook(
                 parent: parent,
                 container: container,
                 alreadyConvertedMappingStack: new Map(state.alreadyConvertedMappingStack),
-                nodeIdPrefix: nodeIdPrefix,
+                nodeIdPrefix: nextId,
                 treeLevel: state.treeLevel + 1,
                 maxTreeLevel: state.maxTreeLevel + 1,
               },

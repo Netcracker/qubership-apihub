@@ -154,7 +154,7 @@ const GraphQLOperationViewerInner: FC<GraphQLOperationViewerProps> = (props) => 
   console.debug('GraphAPI Schema:', source)
   console.debug('Tree Model:', tree)
   console.debug('State Model:', state)
-  console.debug('GraphAPI Schema (string):', customStringifyCyclicJso(source))
+  // console.debug('GraphAPI Schema (string):', customStringifyCyclicJso(source))
   // console.debug('Tree model (string):', customStringifyCyclicJso(tree))
   // console.debug('State model (string):', customStringifyCyclicJso(state))
 
