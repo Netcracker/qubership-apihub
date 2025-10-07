@@ -1,4 +1,4 @@
-import { serialize, deserialize } from '../../src/test'
+import { serialize, deserialize } from '../../src/serialize.utils'
 import { parse } from 'flatted'
 
 describe('Serialize/Deserialize Utils', () => {
@@ -451,5 +451,16 @@ describe('Serialize/Deserialize Utils', () => {
     const deserialized = deserialize(serialized, new Map()) as any
 
     expect(deserialized).toHaveProperty(['data'], undefined)
+  })
+
+
+  it('should keep undefined array data', () => {
+    const original = [1, 2, undefined, 4]
+
+    const serialized = serialize(original, new Map())
+    const deserialized = deserialize(serialized, new Map()) as any
+
+    expect(deserialized).toHaveLength(4)
+    expect(deserialized[2]).toEqual(undefined)
   })
 }) 

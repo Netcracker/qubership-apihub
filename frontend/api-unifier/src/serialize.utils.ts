@@ -28,54 +28,54 @@ export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, strin
     if (object === undefined) {
       return { __isUndefined: true }
     }
-    if (isObject(object) && visited.has(object)) {
+    if (!isObject(object)) {
       return object
     }
 
-    if (isObject(object)) {
-      visited.add(object)
+    if (visited.has(object)) {return object}
 
-      // Process symbol keys for both arrays and objects
-      const symbolKeys = Object.getOwnPropertySymbols(object)
-      let hasSymbolKeys = false
-      for (const symbolKey of symbolKeys) {
-        const stringKey = symbolToStringMapping.get(symbolKey)
-        if (stringKey) {
-          // Move value from symbol key to string key
-          object[stringKey] = replaceSymbolKeys(object[symbolKey])
-          delete object[symbolKey]
-          hasSymbolKeys = true
+    visited.add(object)
+
+    let hasSymbolKeys = false
+
+    const symbolKeys = Object.getOwnPropertySymbols(object)
+    for (const symbolKey of symbolKeys) {
+      const stringKey = symbolToStringMapping.get(symbolKey)
+      if (stringKey) {
+        // Move value from symbol key to string key
+        object[stringKey] = replaceSymbolKeys(object[symbolKey])
+        delete object[symbolKey]
+        hasSymbolKeys = true
+      }
+    }
+
+    if (isArray(object)) {
+      // If array has symbol keys converted to string keys, we need to convert it to a plain object
+      // because flatted.stringify doesn't serialize custom properties on arrays
+      if (hasSymbolKeys) {
+        const arrayAsObject: any = { __isArray: true }
+        // Copy array elements
+        for (let i = 0; i < object.length; i++) {
+          arrayAsObject[i] = replaceSymbolKeys(object[i])
+        }
+        // Copy any additional string properties (converted from symbols)
+        for (const [key, value] of Object.entries(object)) {
+          if (!(/^\d+$/.test(key))) { // Skip numeric indices
+            arrayAsObject[key] = replaceSymbolKeys(value)
+          }
+        }
+        arrayAsObject.length = object.length
+        return arrayAsObject
+      } else {
+        // Process array elements normally
+        for (let i = 0; i < object.length; i++) {
+          object[i] = replaceSymbolKeys(object[i])
         }
       }
-
-      if (isArray(object)) {
-        // If array has symbol keys converted to string keys, we need to convert it to a plain object
-        // because flatted.stringify doesn't serialize custom properties on arrays
-        if (hasSymbolKeys) {
-          const arrayAsObject: any = { __isArray: true }
-          // Copy array elements
-          for (let i = 0; i < object.length; i++) {
-            arrayAsObject[i] = replaceSymbolKeys(object[i])
-          }
-          // Copy any additional string properties (converted from symbols)
-          for (const [key, value] of Object.entries(object)) {
-            if (!(/^\d+$/.test(key))) { // Skip numeric indices
-              arrayAsObject[key] = replaceSymbolKeys(value)
-            }
-          }
-          arrayAsObject.length = object.length
-          return arrayAsObject
-        } else {
-          // Process array elements normally
-          for (let i = 0; i < object.length; i++) {
-            object[i] = replaceSymbolKeys(object[i])
-          }
-        }
-      } else {
-        // Process regular properties for objects
-        for (const [key, objValue] of Object.entries(object)) {
-          object[key] = replaceSymbolKeys(objValue)
-        }
+    } else {
+      // Process regular properties for objects
+      for (const [key, objValue] of Object.entries(object)) {
+        object[key] = replaceSymbolKeys(objValue)
       }
     }
 
@@ -114,7 +114,6 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
     if (value && value.__isUndefined === true) {
       return undefined
     }
-
 
     if (isObject(value)) {
       visited.add(value)
