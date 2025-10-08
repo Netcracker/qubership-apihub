@@ -1,4 +1,5 @@
 export * from './openapiBuilder'
+export * from './utils'
 
 export const TEST_DIFF_FLAG = Symbol('test-diff')
 export const TEST_INLINE_REF_FLAG = Symbol('test-inline-ref')

@@ -5,7 +5,7 @@ import {
   intersection,
   objectKeys,
   onlyExistedArrayIndexes,
-  removeSlashes,
+  removeExcessiveSlashes,
 } from '../utils'
 import { mapPathParams } from './openapi3.utils'
 import { OpenAPIV3 } from 'openapi-types'
@@ -35,11 +35,14 @@ export const pathMappingResolver: MappingResolver<string> = (before, after, ctx)
 
   const result: MapKeysResult<string> = { added: [], removed: [], mapped: {} }
 
-  const unifyBeforePath = createPathUnifier(ctx.before)
-  const unifyAfterPath = createPathUnifier(ctx.after)
+  // current approach for mapping does not allow to match operations between versions
+  // if base path is specified in the servers array of the operation object, so this case is not supported
+  // see test "Should match operation when prefix moved from operation object servers to path"
+  const unifyBeforePath = createPathUnifier((ctx.before.root as OpenAPIV3.Document).servers)
+  const unifyAfterPath = createPathUnifier((ctx.after.root as OpenAPIV3.Document).servers)
 
-  const unifiedBeforeKeyToKey = Object.fromEntries(objectKeys(before).map(key => [unifyBeforePath(key), key]))
-  const unifiedAfterKeyToKey = Object.fromEntries(objectKeys(after).map(key => [unifyAfterPath(key), key]))
+  const unifiedBeforeKeyToKey = Object.fromEntries(objectKeys(before).map(key => [unifyBeforePath(key, (before[key] as OpenAPIV3.PathItemObject)?.servers), key]))
+  const unifiedAfterKeyToKey = Object.fromEntries(objectKeys(after).map(key => [unifyAfterPath(key, (after[key] as OpenAPIV3.PathItemObject)?.servers), key]))
 
   const unifiedBeforeKeys = Object.keys(unifiedBeforeKeyToKey)
   const unifiedAfterKeys = Object.keys(unifiedAfterKeyToKey)
@@ -116,10 +119,10 @@ export const contentMediaTypeMappingResolver: MappingResolver<string> = (before,
   function mapExactMatches(
     getComparisonKey: (key: string) => string
   ): void {
-    
+
     for (const beforeIndex of unmappedBeforeIndices) {
       const beforeKey = getComparisonKey(beforeKeys[beforeIndex])
-      
+
       // Find matching after index by iterating over the after indices set
       let matchingAfterIndex: number | undefined
       for (const afterIndex of unmappedAfterIndices) {
@@ -211,9 +214,12 @@ export const extractOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): st
   }
 }
 
-export function createPathUnifier(nodeContext: NodeContext): (path: string) => string {
-  const serverPrefix = extractOperationBasePath((nodeContext.root as OpenAPIV3.Document).servers) // /api/v2
-  return (path) => removeSlashes(`${serverPrefix}${hidePathParamNames(path)}`)
+export function createPathUnifier(rootServers?: OpenAPIV3.ServerObject[]): (path: string, pathServers?: OpenAPIV3.ServerObject[]) => string {
+  return (path, pathServers) => {
+    // Prioritize path-level servers over root-level servers
+    const serverPrefix = extractOperationBasePath(pathServers || rootServers)
+    return removeExcessiveSlashes(`${serverPrefix}${hidePathParamNames(path)}`)
+  }
 }
 
 export function hidePathParamNames(path: string): string {

@@ -232,13 +232,16 @@ export function difference(array1: string[], array2: string[]): string[] {
   return [...new Set(array1.filter(x => !set2.has(x)))]
 }
 
-export function removeSlashes(input: string): string {
-  return input.replace(/\//g, '')
+export function removeExcessiveSlashes(input: string): string {
+  return input
+    .replace(/\/+/g, '/') // Replace multiple consecutive slashes with single slash
+    .replace(/^\//, '')    // Remove leading slash
+    .replace(/\/$/, '')    // Remove trailing slash
 }
 
 /**
  * Traverses the merged document starting from given obj to the bottom and aggregates the diffs with rollup from the bottom up.
- * Each object in the tree will have aggregatedDiffProperty only if there are diffs in the object or in the children, 
+ * Each object in the tree will have aggregatedDiffProperty only if there are diffs in the object or in the children,
  * otherwise the aggregatedDiffProperty is not added.
  * Note, that adding/removing the object itself is not included in the aggregation for this object,
  * you need retrieve this diffs from parent object if you need them.
@@ -263,7 +266,7 @@ export function aggregateDiffsWithRollup(obj: any, diffProperty: any, aggregated
           return obj[aggregatedDiffProperty]
       }
 
-      visited.add(obj)        
+      visited.add(obj)
 
       // Process all children and collect their diffs
       const childrenDiffs = new Array<Set<Diff>>()
@@ -297,7 +300,7 @@ export function aggregateDiffsWithRollup(obj: any, diffProperty: any, aggregated
           // could reuse a child diffs if there is only one
           [obj[aggregatedDiffProperty]] = childrenDiffs
       }else{
-          // no diffs- no aggregated diffs get assigned            
+          // no diffs- no aggregated diffs get assigned
       }
 
       return obj[aggregatedDiffProperty]

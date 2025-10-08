@@ -1,5 +1,5 @@
 import { annotation, apiDiff, DiffAction } from '../src'
-import { OpenapiBuilder } from './helper'
+import { loadYamlSample, OpenapiBuilder } from './helper'
 import { diffsMatcher } from './helper/matchers'
 
 describe('Path and method mapping', () => {
@@ -84,6 +84,96 @@ describe('Path and method mapping', () => {
         action: DiffAction.rename,
         type: annotation,
       })
+    ]))
+  })
+
+  it('Should match operation when prefix moved from root servers to path', () => {
+    const before = loadYamlSample('path-prefix-root-server-to-path/before.yaml')
+    const after = loadYamlSample('path-prefix-root-server-to-path/after.yaml')
+
+    const { diffs } = apiDiff(before, after)
+
+    expect(diffs).toEqual(diffsMatcher([
+      expect.objectContaining({
+        beforeDeclarationPaths: [['paths', '/users']],
+        afterDeclarationPaths: [['paths', '/api/v1/users']],
+        action: DiffAction.rename,
+        type: annotation,
+      }),
+      expect.objectContaining({
+        beforeDeclarationPaths: [['servers', 0, 'url']],
+        action: DiffAction.replace,
+        type: annotation,
+      }),
+    ]))
+  })
+
+  it('Should match operation when prefix moved from path item object servers to path', () => {
+    const before = loadYamlSample('path-prefix-path-item-server-to-path/before.yaml')
+    const after = loadYamlSample('path-prefix-path-item-server-to-path/after.yaml')
+
+    const { diffs } = apiDiff(before, after)
+
+    expect(diffs).toEqual(diffsMatcher([
+      expect.objectContaining({
+        beforeDeclarationPaths: [['paths', '/users']],
+        afterDeclarationPaths: [['paths', '/api/v1/users']],
+        action: DiffAction.rename,
+        type: annotation,
+      }),
+      expect.objectContaining({
+        beforeDeclarationPaths: [['paths', '/users', 'servers', 0, 'url']],
+        afterDeclarationPaths: [['paths', '/api/v1/users', 'servers', 0, 'url']],
+        action: DiffAction.replace,
+        type: annotation,
+      }),
+    ]))
+  })
+
+  it('Should prioritize prefix specified in path item object servers to root servers', () => {
+    const before = loadYamlSample('path-prefix-path-item-priority/before.yaml')
+    const after = loadYamlSample('path-prefix-path-item-priority/after.yaml')
+
+    const { diffs } = apiDiff(before, after)
+
+    expect(diffs).toEqual(diffsMatcher([
+      expect.objectContaining({
+        action: "rename",
+        afterDeclarationPaths: [["paths", "/api/v1/users"]],
+        beforeDeclarationPaths: [["paths", "/users"]],
+        type: "annotation",
+      }),
+      expect.objectContaining({
+        action: "remove",
+        beforeDeclarationPaths: [["paths", "/users", "servers"]],
+        type: "annotation",
+      }),
+      expect.objectContaining({
+        action: "remove",
+        beforeDeclarationPaths: [["servers"]],
+        type: "annotation",
+      }),
+    ]))
+  })
+
+  it.skip('Should match operation when prefix moved from operation object servers to path', () => {
+    const before = loadYamlSample('path-prefix-operation-server-to-path/before.yaml')
+    const after = loadYamlSample('path-prefix-operation-server-to-path/after.yaml')
+
+    const { diffs } = apiDiff(before, after)
+
+    expect(diffs).toEqual(diffsMatcher([
+      expect.objectContaining({
+        beforeDeclarationPaths: [['paths', '/users']],
+        afterDeclarationPaths: [['paths', '/api/v1/users']],
+        action: DiffAction.rename,
+        type: annotation,
+      }),
+      expect.objectContaining({
+        beforeDeclarationPaths: [['paths', '/users', 'get', 'servers']],
+        action: DiffAction.remove,
+        type: annotation,
+      }),
     ]))
   })
 })
