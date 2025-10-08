@@ -27,6 +27,9 @@ export function createGraphApiDiffTreeCrawlHook(
   // FIXME 06.10.25 // Revert "any"
 ): SyncCrawlHook<any, any> {
   return ({ value, state, rules, path, key }) => {
+    if (key === 'interfaces') {
+      return { done: true };
+    }
     if (typeof key === 'symbol') {
       return { done: true }
     }

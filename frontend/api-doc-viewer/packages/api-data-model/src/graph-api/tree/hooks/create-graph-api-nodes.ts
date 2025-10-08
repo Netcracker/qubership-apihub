@@ -24,12 +24,28 @@ export function createGraphApiTreeCrawlHook(
   // FIXME 01.10.25 // Revert "any"
 ): SyncCrawlHook<any, any> {
   return ({ value, state, rules, path, key }) => {
+    if (key === 'interfaces') {
+      return { done: true };
+    }
     if (typeof key === 'symbol') {
       return { done: true };
     }
     if (value === undefined || value === null) {
       return { done: true };
     }
+
+    const { parent, container, nodeIdPrefix = '#' } = state;
+    const id = nodeIdPrefix + buildPointer(path);
+
+    /* Feature "Lazy Tree Building" */
+    if (
+      state.treeLevel >= state.maxTreeLevel
+    ) {
+      return { done: true };
+    }
+    const nextTreeLevel = state.treeLevel + 1;
+    /* --- */
+
     if (!rules) {
       return areExcludedComponents(path) ? { done: true } : { value, state }
     }
@@ -37,8 +53,6 @@ export function createGraphApiTreeCrawlHook(
       return areExcludedComponents(path) ? { done: true } : { value, state }
     }
 
-    const { parent, container, nodeIdPrefix = '#' } = state;
-    const id = nodeIdPrefix + buildPointer(path);
     const { kind } = rules;
 
     let nodeCreationResult: any = {
@@ -54,7 +68,7 @@ export function createGraphApiTreeCrawlHook(
       alreadyConvertedMappingStack: new Map(state.alreadyConvertedMappingStack),
       nodeIdPrefix: id,
       nextLevel: state.treeLevel,
-      nextMaxLevel: state.maxTreeLevel + 1,
+      nextMaxLevel: state.maxTreeLevel,
     }
 
     const newDataLevel = false;
@@ -92,16 +106,6 @@ export function createGraphApiTreeCrawlHook(
     }
 
     parent?.addChild(nodeCreationResult.node);
-
-    /* Feature "Lazy Tree Building" */
-    if (
-      state.treeLevel >= state.maxTreeLevel &&
-      nodeCreationResult.node.type === 'simple'
-    ) {
-      return { done: true };
-    }
-    const nextTreeLevel = state.treeLevel + 1;
-    /* --- */
 
     if (nodeCreationResult.value) {
       // FIXME 02.10.25 // Get rid of it when "SyncCrawlHook<any, any>" is reverted

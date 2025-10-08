@@ -25,6 +25,9 @@ export function createGraphSchemaTreeCrawlHook(
   const graphSchemaNodeKinds = Object.keys(graphSchemaNodeKind);
 
   return ({ value, rules, state, path, key }) => {
+    if (key === 'interfaces') {
+      return { done: true };
+    }
     if (value === undefined || value === null) {
       return { done: true };
     }
@@ -34,6 +37,15 @@ export function createGraphSchemaTreeCrawlHook(
 
     const { parent, container, nodeIdPrefix = '#' } = state;
     const id = nodeIdPrefix + buildPointer(path);
+
+    /* Feature "Lazy Tree Building" */
+    if (
+      state.treeLevel >= state.maxTreeLevel
+    ) {
+      return { done: true };
+    }
+    const nextTreeLevel = state.treeLevel + 1;
+    /* --- */
 
     /**
      * Code fragment below is supposed to build part of the tree which contains nodes
@@ -60,8 +72,8 @@ export function createGraphSchemaTreeCrawlHook(
                 container: container,
                 alreadyConvertedMappingStack: new Map(state.alreadyConvertedMappingStack),
                 nodeIdPrefix: nextId,
-                treeLevel: state.treeLevel + 1,
-                maxTreeLevel: state.maxTreeLevel + 1,
+                treeLevel: state.treeLevel,
+                maxTreeLevel: state.maxTreeLevel,
               },
               rules: nodeRules,
             },
@@ -111,8 +123,8 @@ export function createGraphSchemaTreeCrawlHook(
       crawlRules: rules,
       alreadyConvertedMappingStack: state.alreadyConvertedMappingStack,
       nodeIdPrefix: id,
-      nextLevel: state.treeLevel + 1,
-      nextMaxLevel: state.maxTreeLevel + 1,
+      nextLevel: state.treeLevel,
+      nextMaxLevel: state.maxTreeLevel,
       metaKey: metaKey,
     }
     /* --- */
@@ -124,17 +136,6 @@ export function createGraphSchemaTreeCrawlHook(
     } else {
       parent?.addChild(nodeCreationResult.node);
     }
-
-    /* Feature "Lazy Tree Building" */
-    if (
-      state.treeLevel >= state.maxTreeLevel &&
-      nodeCreationResult.node.type === 'simple'
-    ) {
-      return { done: true };
-    }
-
-    const nextTreeLevel = state.treeLevel + 1;
-    /* --- */
 
     if (nodeCreationResult.value) {
       // FIXME 02.10.25 // Get rid of it when "SyncCrawlHook<any, any>" is reverted
