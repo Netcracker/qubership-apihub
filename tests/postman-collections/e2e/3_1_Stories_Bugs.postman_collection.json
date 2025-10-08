@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "3_1_Stories_Bugs",
-        "_postman_id": "8a7c271c-9119-42dd-9b16-6f5f2caff73c",
+        "_postman_id": "45747a4f-2664-4ed3-971f-d0b076e7ab87",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -9116,7 +9116,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-2.PKG5-2\",\r\n    \"Alias\" :\"PKG5-2\",\r\n    \"name\": \"Test static package 2\",\r\n    \"parentId\": \"QS-STATIC-TEST-2\",\r\n    \"kind\":\"package\",\r\n    \"description\": \"Package to be built\",\r\n    \"serviceName\": \"\",\r\n    \"imageUrl\": \"\",\r\n    \"restGroupingPrefix\": \"/api/{group}/\",\r\n    \"releaseVersionPattern\": \"^[0-9]{4}[.]{1}[1-4]{1}$\"\r\n}",
+                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-2.PKG5-2\",\r\n    \"Alias\" :\"PKG5-2\",\r\n    \"name\": \"Test static package 2\",\r\n    \"parentId\": \"QS-STATIC-TEST-2\",\r\n    \"kind\":\"package\",\r\n    \"description\": \"Package to be built\",\r\n    \"serviceName\": \"\",\r\n    \"imageUrl\": \"\",\r\n    \"restGroupingPrefix\": \"/api/{group}/\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -11195,6 +11195,11 @@
                                             "    pm.expect(data.events[0].principal.name).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_name}}\"));\r",
                                             "    pm.expect(data.events[0].principal.id).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_id}}\"));\r",
                                             "    pm.expect(data.events[0].principal.type).to.eql('apiKey');\r",
+                                            "});\r",
+                                            "\r",
+                                            "\r",
+                                            "pm.test(\"'userId' is correct\", function () {\r",
+                                            "    pm.expect(data.events[0].userId).to.eql(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "});"
                                         ]
                                     }
@@ -11412,6 +11417,11 @@
                                             "    pm.expect(data.events[0].principal.name).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_name}}\"));\r",
                                             "    pm.expect(data.events[0].principal.id).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_id}}\"));\r",
                                             "    pm.expect(data.events[0].principal.type).to.eql('apiKey');\r",
+                                            "});\r",
+                                            "\r",
+                                            "\r",
+                                            "pm.test(\"'userId' is correct\", function () {\r",
+                                            "    pm.expect(data.events[0].userId).to.eql(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "});"
                                         ]
                                     }
@@ -11629,6 +11639,11 @@
                                             "    pm.expect(data.events[0].principal.name).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_name}}\"));\r",
                                             "    pm.expect(data.events[0].principal.id).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_id}}\"));\r",
                                             "    pm.expect(data.events[0].principal.type).to.eql('apiKey');\r",
+                                            "});\r",
+                                            "\r",
+                                            "\r",
+                                            "pm.test(\"'userId' is correct\", function () {\r",
+                                            "    pm.expect(data.events[0].userId).to.eql(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "});"
                                         ]
                                     }
@@ -11757,6 +11772,11 @@
                                             "    pm.expect(data.events[0].principal.name).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_name}}\"));\r",
                                             "    pm.expect(data.events[0].principal.id).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_id}}\"));\r",
                                             "    pm.expect(data.events[0].principal.type).to.eql('apiKey');\r",
+                                            "});\r",
+                                            "\r",
+                                            "\r",
+                                            "pm.test(\"'userId' is correct\", function () {\r",
+                                            "    pm.expect(data.events[0].userId).to.eql(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "});"
                                         ]
                                     }
@@ -11817,6 +11837,7 @@
                                             "            pm.expect(data.events[i].principal.id).to.include(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "            pm.expect(data.events[i].principal.name).to.eql(pm.variables.replaceIn('{{apihub_api_key_name}}'));\r",
                                             "            pm.expect(data.events[i].principal.type).to.eql(\"apiKey\");\r",
+                                            "            pm.expect(data.events[i].userId).to.eql(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "        }\r",
                                             "    }\r",
                                             "});"
@@ -16151,7 +16172,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"version\"\r\n\r\n0001.1\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"status\"\r\n\r\nrelease\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"servicesWorkspaceId\"\r\n\r\nQS-STATIC-TEST-D\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"csv_for_publish - api-hub.csv\"\r\n\r\nservice,version,method,path\r\nbackend,2024.3,POST,/api/v1/store/order\r\n----------------------------127308995100818139707097--",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"version\"\r\n\r\n0001.1\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"status\"\r\n\r\nrelease\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"servicesWorkspaceId\"\r\n\r\nQS-STATIC-TEST-D\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"csv_for_publish - api-hub.csv\"\r\n\r\nbackend,2024.3,POST,/api/v1/store/order\r\n----------------------------127308995100818139707097--",
                                     "options": {
                                         "raw": {
                                             "language": "text"
@@ -16385,6 +16406,1885 @@
                                 "auth": {
                                     "type": "noauth"
                                 }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        }
+                    ]
+                },
+                {
+                    "name": "8.29 APIHUB-12364 Sibling properties for $ref in json schema",
+                    "item": [
+                        {
+                            "name": "8.29.1 Delete static test data from DB",
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/internal/clear/QS-STATIC-TEST-2",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "internal",
+                                        "clear",
+                                        "QS-STATIC-TEST-2"
+                                    ]
+                                },
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.2 Create static test group",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 201', function () {",
+                                            "    pm.response.to.have.status(201);",
+                                            "});",
+                                            "var data = JSON.parse(responseBody);",
+                                            "pm.environment.set('static_root_group', data.packageId);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{apihub_api_key_234}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"id\": \"QS-STATIC-TEST-2\",\"Alias\": \"QS-STATIC-TEST-2\",\"name\": \"Test Workspace\",\"parentId\": null,\"kind\": \"workspace\",\"description\": \"Workspace for schema comparison tests\"}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.3 Create Package for parameters-schemas",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 201', function () {",
+                                            "    pm.response.to.have.status(201);",
+                                            "});",
+                                            "var data = JSON.parse(responseBody);",
+                                            "pm.environment.set('package_parameters', data.packageId);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{apihub_api_key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"id\": \"QS-STATIC-TEST-2.PARAMS\",\"Alias\": \"PARAMS\",\"name\": \"Parameters Schema Test\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for parameters schema comparison\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.4 Publish parameters-schemas/add-sibling-description-for-ref/before.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 202', function () {",
+                                            "    pm.response.to.have.status(202);",
+                                            "});",
+                                            "var data = JSON.parse(responseBody);",
+                                            "pm.environment.set('parameters_before_publish_id', data.publishId);",
+                                            "setTimeout(() => {}, 5000);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_parameters}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"QS-STATIC-TEST-2.PARAMS\",\r\n    \"version\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"before.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"before.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIAOJtL1sAAAAAAAAAAAAAAAALACAAYmVmb3JlLnlhbWx1eAsAAQQAAAAABAAAAABVVA0AB6nux2iH78do2YrCaG1SyW6DMBC9I/EPI7USp7KkVQ++9VTl1Ej5AgcG6ipe6hna8Pc1EIJRc7PeNm9sW4dGOiXgOa/yMk2Uaa1IEwBWfEYBx1/ZdejhgExsPcITfATL22E/OkbhD3pS1ggI/rzapYmT/ElTRuGQpwNAdzsBUK+19IOAd2SQBvCiiJXpIMjzRdQg1V45nqLvCOE0wL65ya1DL0fxvhHjsNB3oZz0UiOHmrcGENYwARQzWa04gArzvnv0QwxS/YlaihgCePTYCsgeitpqZw0apmIWUhHmZ4vaIwWaMJ6f7coy2+RtFj72dY1EbX9eN0uTdc7kvM66phyiG95kzbIYg9ZbDWvaYuPBhSuxpy+s19vzYwFWm/aq2VSffcowhq8SE631WvJEvb7EBF6kduP/qsoVnl7kfy6xD29+193YrlP4B1BLBwjDUMwUPgEAAMQCAABQSwECFAMUAAgACADibS9bw1DMFD4BAADEAgAACwAYAAAAAAAAAAAAtoEAAAAAYmVmb3JlLnlhbWx1eAsAAQQAAAAABAAAAABVVAUAAanux2hQSwUGAAAAAAEAAQBRAAAAlwEAAAAA\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.5 Check Publish Status for parameters-schemas/add-sibling-description-for-ref/before.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                            "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                            "var respBody = pm.response.json();",
+                                            "if (respBody.status !== 'complete' && retry < 15) {",
+                                            "    retry++;",
+                                            "    delay = 5000 + delay;",
+                                            "    pm.test('Status is OK, response is JSON', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.response.to.be.ok;",
+                                            "    });",
+                                            "    setTimeout(function () {}, delay);",
+                                            "    postman.setNextRequest(request.name);",
+                                            "    pm.environment.set('com_retry_counter', retry);",
+                                            "    pm.environment.set('com_retry_delay', delay);",
+                                            "} else {",
+                                            "    pm.environment.set('com_retry_counter', null);",
+                                            "    pm.environment.set('com_retry_delay', null);",
+                                            "    pm.test('Status code is 200 and publication completed', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.expect(respBody.status).to.eql('complete');",
+                                            "    });",
+                                            "}"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish/{{parameters_before_publish_id}}/status",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_parameters}}",
+                                        "publish",
+                                        "{{parameters_before_publish_id}}",
+                                        "status"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.5 Publish parameters-schemas/add-sibling-description-for-ref/after.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 202', function () {",
+                                            "    pm.response.to.have.status(202);",
+                                            "});",
+                                            "var data = JSON.parse(responseBody);",
+                                            "pm.environment.set('parameters_after_publish_id', data.publishId);",
+                                            "setTimeout(() => {}, 5000);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_parameters}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{apihub_api_key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "description": "",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0000.2\",\r\n    \"previousVersion\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"after.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"after.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIAI9mD1sAAAAAAAAAAAAAAAAKACAAYWZ0ZXIueWFtbHV4CwABBAAAAAAEAAAAAFVUDQAHXgOfaDrYx2jZisJohVLLTsMwELznK1YCKSfyKIiDb5xQTlTqF7jJJjWqH9gbaP6edZM2rqjEydbszOx4vdahkU4JeC7qosqU6a3IAEjREQXsfuQwoIctUiDrEZ7ggwVv2ybymfeNPihrBLC4qDeZk3QI0aB0SPEEGC4XgDBqLf0k4B0JpAE8qUDKDMDkYuF0GFqvHJ1d7/BgP0HTXdjWoZeR23QiduKgS8VJLzUS57t0B05vGBNzrb7CAIp7fY3opwQL7QG1FAkC8OixF5A/lK3Vzho0FMqZF0pund+Qb14ys1IMLA/Pqw4XkcfAlgGTvPmmqvI0wY3lbmxbDKEfj+sYsjVY1C3ZZovt+hH/Reu91bBaLSqaHA/P7j+xvU7Zx9ak0tSqSyPPImUIeZESvLdeSzpXXl8SHE9Su7h7dXVFz7/2xzOQ5524J+3sMCj8BVBLBwhRjURgRQEAANsCAABQSwECFAMUAAgACACPZg9bUY1EYEUBAADbAgAACgAYAAAAAAAAAAAAtoEAAAAAYWZ0ZXIueWFtbHV4CwABBAAAAAAEAAAAAFVUBQABXgOfaFBLBQYAAAAAAQABAFAAAACdAQAAAAA=\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.6 Check Publish Status for parameters-schemas/add-sibling-description-for-ref/after.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                            "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                            "var respBody = pm.response.json();",
+                                            "if (respBody.status !== 'complete' && retry < 15) {",
+                                            "    retry++;",
+                                            "    delay = 5000 + delay;",
+                                            "    pm.test('Status is OK, response is JSON', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.response.to.be.ok;",
+                                            "    });",
+                                            "    setTimeout(function () {}, delay);",
+                                            "    postman.setNextRequest(request.name);",
+                                            "    pm.environment.set('com_retry_counter', retry);",
+                                            "    pm.environment.set('com_retry_delay', delay);",
+                                            "} else {",
+                                            "    pm.environment.set('com_retry_counter', null);",
+                                            "    pm.environment.set('com_retry_delay', null);",
+                                            "    pm.test('Status code is 200 and publication completed', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.expect(respBody.status).to.eql('complete');",
+                                            "    });",
+                                            "}"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish/{{parameters_after_publish_id}}/status",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_parameters}}",
+                                        "publish",
+                                        "{{parameters_after_publish_id}}",
+                                        "status"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.7 Validate parameters-schemas change (annotation)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 200', function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "var data = pm.response.json();",
+                                            "",
+                                            "pm.test('Annotation count is 1 in first operation', function () {",
+                                            "    // Check if annotation equals 1",
+                                            "    pm.expect(data.operations[0].changeSummary.annotation, 'Expected annotation to be defined and equal to 1').to.eql(1);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_parameters}}/versions/0000.2%401/rest/changes?refPackageId={{package_parameters}}&previousVersion=0000.1%401&previousVersionPackageId={{package_parameters}}&apiAudience=all&apiType=rest&page=0&limit=100",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v4",
+                                        "packages",
+                                        "{{package_parameters}}",
+                                        "versions",
+                                        "0000.2%401",
+                                        "rest",
+                                        "changes"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "refPackageId",
+                                            "value": "{{package_parameters}}"
+                                        },
+                                        {
+                                            "key": "previousVersion",
+                                            "value": "0000.1%401"
+                                        },
+                                        {
+                                            "key": "previousVersionPackageId",
+                                            "value": "{{package_parameters}}"
+                                        },
+                                        {
+                                            "key": "apiAudience",
+                                            "value": "all"
+                                        },
+                                        {
+                                            "key": "apiType",
+                                            "value": "rest"
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "0"
+                                        },
+                                        {
+                                            "key": "limit",
+                                            "value": "100"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.8 Create Package for request-body-schema",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 201', function () {",
+                                            "    pm.response.to.have.status(201);",
+                                            "});",
+                                            "var data = JSON.parse(responseBody);",
+                                            "pm.environment.set('package_request_body', data.packageId);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{apihub_api_key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"id\": \"QS-STATIC-TEST-2.REQ_BODY\",\"Alias\": \"REQ_BODY\",\"name\": \"Request Body Schema Test\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for request body schema comparison\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.9 Publish request-body-schema/change-referenced-enum-when-sibling-exists-for-ref/before.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 202', function () {",
+                                            "    pm.response.to.have.status(202);",
+                                            "});",
+                                            "var data = JSON.parse(responseBody);",
+                                            "pm.environment.set('request_body_before_publish_id', data.publishId);",
+                                            "setTimeout(() => {}, 5000);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_request_body}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_request_body}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{apihub_api_key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"before.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"before.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIAI9mD1sAAAAAAAAAAAAAAAALACAAYmVmb3JlLnlhbWx1eAsAAQQAAAAABAAAAABVVA0AB14Dn2g7DMRo2YrCaG2RwW6DMAyG7zyFpU3iNKDdLbetp55WqU+QBQPZIM5is4q3X0LpaKveLPv/P/9xyKPT3ip4LTZFlVnXkMoAxEqPCo4n3bYY4IDCQgHhBT6i4e2wT/qo+8XAlpyCaC4228xr6TgBSk8sqQBocSkAeBwGHSYFu4BaEDR4lGIZ1sgmWC8z75GAPAadxvtaQeLHWMso4M+ILO9UT5ddAIacoJO1AaC9762ZIeUXx0VXsxjPdDjo2x7Ac8BGQf5UGho8uUjk8qzkckc9hfzOgG4c7iEQT/fZa/P9oH/qrOD/QzjuYOQVkG+rKr/m3RzqOBqDzM3Yr/fJ1qTJt4Q9I+bEF5pMPv4yS7CuzR6FX0L/AVBLBwgG7Ck8DgEAACYCAABQSwECFAMUAAgACACPZg9bBuwpPA4BAAAmAgAACwAYAAAAAAAAAAAAtoEAAAAAYmVmb3JlLnlhbWx1eAsAAQQAAAAABAAAAABVVAUAAV4Dn2hQSwUGAAAAAAEAAQBRAAAAZwEAAAAA\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.10 Check Publish Status for request-body-schema/change-referenced-enum-when-sibling-exists-for-ref/before.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                            "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                            "var respBody = pm.response.json();",
+                                            "if (respBody.status !== 'complete' && retry < 15) {",
+                                            "    retry++;",
+                                            "    delay = 5000 + delay;",
+                                            "    pm.test('Status is OK, response is JSON', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.response.to.be.ok;",
+                                            "    });",
+                                            "    setTimeout(function () {}, delay);",
+                                            "    postman.setNextRequest(request.name);",
+                                            "    pm.environment.set('com_retry_counter', retry);",
+                                            "    pm.environment.set('com_retry_delay', delay);",
+                                            "} else {",
+                                            "    pm.environment.set('com_retry_counter', null);",
+                                            "    pm.environment.set('com_retry_delay', null);",
+                                            "    pm.test('Status code is 200 and publication completed', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.expect(respBody.status).to.eql('complete');",
+                                            "    });",
+                                            "}"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_request_body}}/publish/{{request_body_before_publish_id}}/status",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_request_body}}",
+                                        "publish",
+                                        "{{request_body_before_publish_id}}",
+                                        "status"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.11 Publish request-body-schema/change-referenced-enum-when-sibling-exists-for-ref/after.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 202', function () {",
+                                            "    pm.response.to.have.status(202);",
+                                            "});",
+                                            "var data = JSON.parse(responseBody);",
+                                            "pm.environment.set('request_body_after_publish_id', data.publishId);",
+                                            "setTimeout(() => {}, 5000);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_request_body}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_request_body}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{apihub_api_key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "description": "",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0000.2\",\r\n    \"previousVersion\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"after.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"after.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIAI9mD1sAAAAAAAAAAAAAAAAKACAAYWZ0ZXIueWFtbHV4CwABBAAAAAAEAAAAAFVUDQAHXgOfaEEMxGjZisJobZHBboMwDIbvPIWlTeI0oN0tt62nnlapT5AFF7JBnMVmFW+/hNLRot4S//4//3HIo9PeKngtNkWVWXcilQGIlQ4VHM+6aTDAAYWFAsILfETD22Gf+mPfLwa25BREc7HZZl5LywlQemJJB4AG5wMAD32vw6hgF1ALggaPUsxijWyC9TLxHjWQx6CTvK8VJH6MNUsBfwZkead6vM4CMOQEnSwFAO19Z80EKb84DrrRYjzTYq/vawDPAU8K8qfSUO/JRSKXl04ud9RRyFcGdEO/hkBc3WenzfeD+rm1gv8P4TiDkRdAvq2q/JZ3t6jjYAwyn4Zu2U+2JE2+OewFMSW+0mT08ZdZgnVN9ij8OvR92HRvqKv/AFBLBwg8BFjtFQEAAEUCAABQSwECFAMUAAgACACPZg9bPARY7RUBAABFAgAACgAYAAAAAAAAAAAAtoEAAAAAYWZ0ZXIueWFtbHV4CwABBAAAAAAEAAAAAFVUBQABXgOfaFBLBQYAAAAAAQABAFAAAABtAQAAAAA=\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.12 Check Publish Status for request-body-schema/change-referenced-enum-when-sibling-exists-for-ref/after.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                            "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                            "var respBody = pm.response.json();",
+                                            "if (respBody.status !== 'complete' && retry < 15) {",
+                                            "    retry++;",
+                                            "    delay = 5000 + delay;",
+                                            "    pm.test('Status is OK, response is JSON', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.response.to.be.ok;",
+                                            "    });",
+                                            "    setTimeout(function () {}, delay);",
+                                            "    postman.setNextRequest(request.name);",
+                                            "    pm.environment.set('com_retry_counter', retry);",
+                                            "    pm.environment.set('com_retry_delay', delay);",
+                                            "} else {",
+                                            "    pm.environment.set('com_retry_counter', null);",
+                                            "    pm.environment.set('com_retry_delay', null);",
+                                            "    pm.test('Status code is 200 and publication completed', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.expect(respBody.status).to.eql('complete');",
+                                            "    });",
+                                            "}"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_request_body}}/publish/{{request_body_after_publish_id}}/status",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_request_body}}",
+                                        "publish",
+                                        "{{request_body_after_publish_id}}",
+                                        "status"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.13 Validate request-body-schema change (non-breaking)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 200', function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "var data = pm.response.json();",
+                                            "",
+                                            "pm.test('Non-breaking count is 1 in first operation', function () {",
+                                            "    // Check if non-breaking equals 1",
+                                            "    pm.expect(data.operations[0].changeSummary['non-breaking'], 'Expected non-breaking to be defined and equal to 1').to.eql(1);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_request_body}}/versions/0000.2%401/rest/changes?refPackageId={{package_request_body}}&previousVersion=0000.1%401&previousVersionPackageId={{package_request_body}}&apiAudience=all&apiType=rest&page=0&limit=100",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v4",
+                                        "packages",
+                                        "{{package_request_body}}",
+                                        "versions",
+                                        "0000.2%401",
+                                        "rest",
+                                        "changes"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "refPackageId",
+                                            "value": "{{package_request_body}}"
+                                        },
+                                        {
+                                            "key": "previousVersion",
+                                            "value": "0000.1%401"
+                                        },
+                                        {
+                                            "key": "previousVersionPackageId",
+                                            "value": "{{package_request_body}}"
+                                        },
+                                        {
+                                            "key": "apiAudience",
+                                            "value": "all"
+                                        },
+                                        {
+                                            "key": "apiType",
+                                            "value": "rest"
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "0"
+                                        },
+                                        {
+                                            "key": "limit",
+                                            "value": "100"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.14 Create Package for response-body-schema",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 201', function () {",
+                                            "    pm.response.to.have.status(201);",
+                                            "});",
+                                            "var data = JSON.parse(responseBody);",
+                                            "pm.environment.set('package_response_body', data.packageId);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{apihub_api_key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"id\": \"QS-STATIC-TEST-2.RESP_BODY\",\"Alias\": \"RESP_BODY\",\"name\": \"Response Body Schema Test\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for response body schema comparison\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.15 Publish response-body-schema/change-referenced-enum-when-sibling-exists-for-ref/before.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 202', function () {",
+                                            "    pm.response.to.have.status(202);",
+                                            "});",
+                                            "var data = JSON.parse(responseBody);",
+                                            "pm.environment.set('response_body_before_publish_id', data.publishId);",
+                                            "setTimeout(() => {}, 5000);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_response_body}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_response_body}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{apihub_api_key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"before.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"before.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIAI9mD1sAAAAAAAAAAAAAAAALACAAYmVmb3JlLnlhbWx1eAsAAQQAAAAABAAAAABVVA0AB14Dn2hgDMRo2YrCaG2RzW7CMBCE73mKkVoppyZAb75VPVQ5FYknMM6SuE1sy7sp5e3rQKJQ4OSf/WZm7fWBnA5W4bVYF6vMuoNXGSBWOlLYHXXTUMSWhMVHwgs+k+BtW4184n4osvVOIYmL9SYLWloeDcpAMq5AM28AHvpex5PCBwm0A/1aFusaJLiYmJrYRBvk7PqAw/6Eqp5pHyjqka1qNSalRqdKJA7eMfEcDuSb1SpfjjdZu8EYYj4M3eJ6xRrvhJxcywEdQmfNGS2/OLn8q6YHm5Z6fXsLPEc6KORPpfF96jL5cnlhuXz3nY/5nYTc0N8bIU1k32nz/bBybK1QtmSM+inmYnXOml3lFNLIWWL66exR6BT1B1BLBwgXbKzNDgEAADMCAABQSwECFAMUAAgACACPZg9bF2yszQ4BAAAzAgAACwAYAAAAAAAAAAAAtoEAAAAAYmVmb3JlLnlhbWx1eAsAAQQAAAAABAAAAABVVAUAAV4Dn2hQSwUGAAAAAAEAAQBRAAAAZwEAAAAA\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.16 Check Publish Status for response-body-schema/change-referenced-enum-when-sibling-exists-for-ref/before.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                            "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                            "var respBody = pm.response.json();",
+                                            "if (respBody.status !== 'complete' && retry < 15) {",
+                                            "    retry++;",
+                                            "    delay = 5000 + delay;",
+                                            "    pm.test('Status is OK, response is JSON', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.response.to.be.ok;",
+                                            "    });",
+                                            "    setTimeout(function () {}, delay);",
+                                            "    postman.setNextRequest(request.name);",
+                                            "    pm.environment.set('com_retry_counter', retry);",
+                                            "    pm.environment.set('com_retry_delay', delay);",
+                                            "} else {",
+                                            "    pm.environment.set('com_retry_counter', null);",
+                                            "    pm.environment.set('com_retry_delay', null);",
+                                            "    pm.test('Status code is 200 and publication completed', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.expect(respBody.status).to.eql('complete');",
+                                            "    });",
+                                            "}"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_response_body}}/publish/{{response_body_before_publish_id}}/status",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_response_body}}",
+                                        "publish",
+                                        "{{response_body_before_publish_id}}",
+                                        "status"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.17 Publish response-body-schema/change-referenced-enum-when-sibling-exists-for-ref/after.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 202', function () {",
+                                            "    pm.response.to.have.status(202);",
+                                            "});",
+                                            "var data = JSON.parse(responseBody);",
+                                            "pm.environment.set('response_body_after_publish_id', data.publishId);",
+                                            "setTimeout(() => {}, 5000);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_response_body}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_response_body}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{apihub_api_key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0000.2\",\r\n    \"previousVersion\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"after.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"after.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIAI9mD1sAAAAAAAAAAAAAAAAKACAAYWZ0ZXIueWFtbHV4CwABBAAAAAAEAAAAAFVUDQAHXgOfaGQMxGjZisJobZHLboMwEEX3fMWVWolVIUl33lVdVKwaKV/gmIG4BdvyDE3z9zUkiDTJyo85c48fPpDTwSq8FutilVnXeJUBYqUjhd1Rty1FbElYfCS84DM1vG2rkU/cD0W23imk5mK9yYKWA48BZSAZR6CdJwAPfa/jSeGDBNqBfi2LdS0SXFyYmthEG2RKfcBhf0JVz7QPFPXIVrUaTemgl0okDt4x8SwH8s1qlS/LG9duMIaYm6FbUq9Y452Qk+t2QIfQWTOh5RenlH/VdGFzoF7f7gLPkRqF/Kk0vk+nTLlcnlku333nY37XQm7o74OQfmTfafP9sHI8WKEsWyRjwMVzzppkc6ycQvpzlpieOntkvXXNhmXd+q7+A1BLBwiuSfgCFQEAAFMCAABQSwECFAMUAAgACACPZg9brkn4AhUBAABTAgAACgAYAAAAAAAAAAAAtoEAAAAAYWZ0ZXIueWFtbHV4CwABBAAAAAAEAAAAAFVUBQABXgOfaFBLBQYAAAAAAQABAFAAAABtAQAAAAA=\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.18 Check Publish Status for response-body-schema/change-referenced-enum-when-sibling-exists-for-ref/after.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                            "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                            "var respBody = pm.response.json();",
+                                            "if (respBody.status !== 'complete' && retry < 15) {",
+                                            "    retry++;",
+                                            "    delay = 5000 + delay;",
+                                            "    pm.test('Status is OK, response is JSON', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.response.to.be.ok;",
+                                            "    });",
+                                            "    setTimeout(function () {}, delay);",
+                                            "    postman.setNextRequest(request.name);",
+                                            "    pm.environment.set('com_retry_counter', retry);",
+                                            "    pm.environment.set('com_retry_delay', delay);",
+                                            "} else {",
+                                            "    pm.environment.set('com_retry_counter', null);",
+                                            "    pm.environment.set('com_retry_delay', null);",
+                                            "    pm.test('Status code is 200 and publication completed', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.expect(respBody.status).to.eql('complete');",
+                                            "    });",
+                                            "}"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_response_body}}/publish/{{response_body_after_publish_id}}/status",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_response_body}}",
+                                        "publish",
+                                        "{{response_body_after_publish_id}}",
+                                        "status"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.19 Validate response-body-schema change (risky)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 200', function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "var data = pm.response.json();",
+                                            "",
+                                            "pm.test('Non-breaking count is 1 in first operation', function () {",
+                                            "    // Check if semi-breaking equals 1",
+                                            "    pm.expect(data.operations[0].changeSummary['semi-breaking'], 'Expected semi-breaking to be defined and equal to 1').to.eql(1);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_response_body}}/versions/0000.2%401/rest/changes?refPackageId={{package_response_body}}&previousVersion=0000.1%401&previousVersionPackageId={{package_response_body}}&apiAudience=all&apiType=rest&page=0&limit=100",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_response_body}}",
+                                        "versions",
+                                        "0000.2%401",
+                                        "rest",
+                                        "changes"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "refPackageId",
+                                            "value": "{{package_response_body}}"
+                                        },
+                                        {
+                                            "key": "previousVersion",
+                                            "value": "0000.1%401"
+                                        },
+                                        {
+                                            "key": "previousVersionPackageId",
+                                            "value": "{{package_response_body}}"
+                                        },
+                                        {
+                                            "key": "apiAudience",
+                                            "value": "all"
+                                        },
+                                        {
+                                            "key": "apiType",
+                                            "value": "rest"
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "0"
+                                        },
+                                        {
+                                            "key": "limit",
+                                            "value": "100"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.20 Create Package for response-headers-schema",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 201', function () {",
+                                            "    pm.response.to.have.status(201);",
+                                            "});",
+                                            "var data = JSON.parse(responseBody);",
+                                            "pm.environment.set('package_response_headers', data.packageId);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{apihub_api_key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"id\": \"QS-STATIC-TEST-2.RESP_HEADERS\",\"Alias\": \"RESP_HEADERS\",\"name\": \"Response Headers Schema Test\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for response headers schema comparison\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.21 Publish response-headers-schema/remove-sibling-maxLength-for-ref/before.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 202', function () {",
+                                            "    pm.response.to.have.status(202);",
+                                            "});",
+                                            "var data = JSON.parse(responseBody);",
+                                            "pm.environment.set('response_headers_before_publish_id', data.publishId);",
+                                            "setTimeout(() => {}, 5000);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_response_headers}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_response_headers}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{apihub_api_key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"before.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"before.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIADhnD1sAAAAAAAAAAAAAAAALACAAYmVmb3JlLnlhbWx1eAsAAQQAAAAABAAAAABVVA0AB50En2hxDMRo2YrCaG2RzU7DMBCE73mKUeDa/HHzDXGASkhU6oWrSbaJpca2vBto3h4nTdTScrK9/mZm13aerPZG4SkrsyIx9uBUAoiRIynsf3TbUsCOhMUFwgYfUfC820585L4psHFWIYqzskq8lo4ng9yTTCvQrhuAh77XYVR4JYG2oJNhMbZFhLOFaYjrYLzMrv9w+BqxbVbaeQp6YreNmpJio8tNIPbOMvEaDqRVUaSX403WfqhrYj4Mx4vrFduRbuKw13Lgc/M2lzfl33octe6o17dV4DHQQSF9yGvXx/7ICudnlvMXd3QhvZP0+vROtpUuvnKRXHST+SI958z6NVJGHz+QJcR3S+6MqiL5BVBLBwig/XHdBQEAAPoBAABQSwECFAMUAAgACAA4Zw9boP1x3QUBAAD6AQAACwAYAAAAAAAAAAAAtoEAAAAAYmVmb3JlLnlhbWx1eAsAAQQAAAAABAAAAABVVAUAAZ0En2hQSwUGAAAAAAEAAQBRAAAAXgEAAAAA\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.22 Check Publish Status for response-headers-schema/remove-sibling-maxLength-for-ref/before.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                            "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                            "var respBody = pm.response.json();",
+                                            "if (respBody.status !== 'complete' && retry < 15) {",
+                                            "    retry++;",
+                                            "    delay = 5000 + delay;",
+                                            "    pm.test('Status is OK, response is JSON', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.response.to.be.ok;",
+                                            "    });",
+                                            "    setTimeout(function () {}, delay);",
+                                            "    postman.setNextRequest(request.name);",
+                                            "    pm.environment.set('com_retry_counter', retry);",
+                                            "    pm.environment.set('com_retry_delay', delay);",
+                                            "} else {",
+                                            "    pm.environment.set('com_retry_counter', null);",
+                                            "    pm.environment.set('com_retry_delay', null);",
+                                            "    pm.test('Status code is 200 and publication completed', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.expect(respBody.status).to.eql('complete');",
+                                            "    });",
+                                            "}"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_response_headers}}/publish/{{response_headers_before_publish_id}}/status",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_response_headers}}",
+                                        "publish",
+                                        "{{response_headers_before_publish_id}}",
+                                        "status"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.23 Publish response-headers-schema/remove-sibling-maxLength-for-ref/after.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 202', function () {",
+                                            "    pm.response.to.have.status(202);",
+                                            "});",
+                                            "var data = JSON.parse(responseBody);",
+                                            "pm.environment.set('response_headers_after_publish_id', data.publishId);",
+                                            "setTimeout(() => {}, 5000);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_response_headers}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_response_headers}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{apihub_api_key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0000.2\",\r\n    \"previousVersion\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"after.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"after.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIAD1nD1sAAAAAAAAAAAAAAAAKACAAYWZ0ZXIueWFtbHV4CwABBAAAAAAEAAAAAFVUDQAHpwSfaHYMxGjZisJobZHNTsMwEITveYpR4Nr8cfMNcYBKSFTqhatJtomlxra8G2jeHidNlFJxsj37zezadp6s9kbhKSuzIjH25FQCiJEzKRx/dNtSwIGExQXCDh/R8HzYT3zkvimwcVYhmrOySryWjqeA3JNMK9CuG4CHvtdhVHglgbagi2ExtkWEs4VpiOtgvMyp/3D4GrFvVtp5Cnpi942aOsVBl0og9s4y8docSKuiSLfjXa/jUNfEfBrOW+oN25Fu4mVv7cDn7m2Wd+VfPV617qjX9yrwGOikkD7ktevjfGSF8yvL+Ys7u5AmW2WyL8Vr0kysoTL6+EUsIb7MIvX68k62lU6hKpJfUEsHCMA7R0D/AAAA3AEAAFBLAQIUAxQACAAIAD1nD1vAO0dA/wAAANwBAAAKABgAAAAAAAAAAAC2gQAAAABhZnRlci55YW1sdXgLAAEEAAAAAAQAAAAAVVQFAAGnBJ9oUEsFBgAAAAABAAEAUAAAAFcBAAAAAA==\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.24 Check Publish Status for response-headers-schema/remove-sibling-maxLength-for-ref/after.yaml",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                            "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                            "var respBody = pm.response.json();",
+                                            "if (respBody.status !== 'complete' && retry < 15) {",
+                                            "    retry++;",
+                                            "    delay = 5000 + delay;",
+                                            "    pm.test('Status is OK, response is JSON', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.response.to.be.ok;",
+                                            "    });",
+                                            "    setTimeout(function () {}, delay);",
+                                            "    postman.setNextRequest(request.name);",
+                                            "    pm.environment.set('com_retry_counter', retry);",
+                                            "    pm.environment.set('com_retry_delay', delay);",
+                                            "} else {",
+                                            "    pm.environment.set('com_retry_counter', null);",
+                                            "    pm.environment.set('com_retry_delay', null);",
+                                            "    pm.test('Status code is 200 and publication completed', function () {",
+                                            "        pm.response.to.have.status(200);",
+                                            "        pm.expect(respBody.status).to.eql('complete');",
+                                            "    });",
+                                            "}"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_response_headers}}/publish/{{response_headers_after_publish_id}}/status",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_response_headers}}",
+                                        "publish",
+                                        "{{response_headers_after_publish_id}}",
+                                        "status"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.25 Validate response-headers-schema change (non-breaking)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status code is 200', function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "var data = pm.response.json();",
+                                            "",
+                                            "pm.test('Breaking count is 1 in first operation', function () {",
+                                            "    // Check if breaking equals 1",
+                                            "    pm.expect(data.operations[0].changeSummary.breaking, 'Expected breaking to be defined and equal to 1').to.eql(1);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_response_headers}}/versions/0000.2%401/rest/changes?refPackageId={{package_response_headers}}&previousVersion=0000.1%401&previousVersionPackageId={{package_response_headers}}&apiAudience=all&apiType=rest&page=0&limit=100",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v4",
+                                        "packages",
+                                        "{{package_response_headers}}",
+                                        "versions",
+                                        "0000.2%401",
+                                        "rest",
+                                        "changes"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "refPackageId",
+                                            "value": "{{package_response_headers}}"
+                                        },
+                                        {
+                                            "key": "previousVersion",
+                                            "value": "0000.1%401"
+                                        },
+                                        {
+                                            "key": "previousVersionPackageId",
+                                            "value": "{{package_response_headers}}"
+                                        },
+                                        {
+                                            "key": "apiAudience",
+                                            "value": "all"
+                                        },
+                                        {
+                                            "key": "apiType",
+                                            "value": "rest"
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "0"
+                                        },
+                                        {
+                                            "key": "limit",
+                                            "value": "100"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.29.26 Delete static_test_2 data from",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 204\", function () {\r",
+                                            "    pm.response.to.have.status(204);\r",
+                                            "});\r",
+                                            ""
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/internal/clear/STATIC-TEST-2",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "internal",
+                                        "clear",
+                                        "STATIC-TEST-2"
+                                    ]
+                                },
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
