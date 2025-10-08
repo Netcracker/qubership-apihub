@@ -25,7 +25,7 @@ import { NodesChangesSummary } from '../../../api-doc-viewer/src/types/aliases/c
 import { NodeId } from '../../../api-doc-viewer/src/types/aliases/nodes'
 import { modelStateNodeType } from '../consts'
 import { IModelStateCombinaryNode, IModelStateNode, IModelStatePropNode, ModelStateNodeType, } from '../types'
-import { isModelStatePropNode } from '../utils'
+import { isExpandableTreeNode, isModelStatePropNode } from '../utils'
 
 export class JsonSchemaStateCombinaryNode<T extends IModelTreeNode<any, any, any> = JsonSchemaTreeNode>
   implements IModelStateCombinaryNode<T> {
@@ -99,10 +99,9 @@ export class JsonSchemaStatePropNode<T extends IModelTreeNode<any, any, any> = J
     public readonly parent: IModelStatePropNode<T> | null = null,
     public first = false,
   ) {
-    // this.type = isExpandableTreeNode(node)
-    //   ? modelStateNodeType.expandable
-    //   : modelStateNodeType.basic
-    this.type = modelStateNodeType.expandable
+    this.type = isExpandableTreeNode(node)
+      ? modelStateNodeType.expandable
+      : modelStateNodeType.basic
   }
 
   get sorted(): number {

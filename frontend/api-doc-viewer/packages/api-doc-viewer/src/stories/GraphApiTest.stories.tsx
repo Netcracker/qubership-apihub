@@ -16,8 +16,9 @@
 
 import type { Meta, StoryObj } from '@storybook/react';
 import { GraphQLOperationViewer } from '../components/GraphQLOperationViewer/GraphQLOperationViewer';
-import { graphapi } from './utils/helpers';
+import { buildGraphApi, graphapi } from './utils/helpers';
 import { prepareGraphApiSchema } from './preprocess';
+import shopifyExtraSmall from '../mocks/performance/shopify-xs.graphql?raw'
 
 // It's necessary because storybook doesn't render nested stories without this empty story
 // eslint-disable-next-line storybook/story-exports
@@ -25,7 +26,11 @@ const meta = {
   title: 'Graph Api Viewer',
   component: GraphQLOperationViewer,
   parameters: {},
-  argTypes: {},
+  argTypes: {
+    source: {
+      control: 'object'
+    }
+  },
   args: {
     source: {}
   }
@@ -59,8 +64,8 @@ export const Union: Story = {
 }
 
 export const SelfCycled: Story = {
-  args: {
-    source: prepareGraphApiSchema({
+  render: (args) => {
+    const processedSource = prepareGraphApiSchema({
       source: graphapi`
         type Query {
           test: CycledEntity
@@ -71,13 +76,15 @@ export const SelfCycled: Story = {
         }
       `,
       circular: true
-    }),
-  }
+    });
+    return <GraphQLOperationViewer {...args} source={processedSource}/>;
+  },
+  args: {}
 }
 
 export const Experiment: Story = {
-  args: {
-    source: prepareGraphApiSchema({
+  render: (args) => {
+    const processedSource = prepareGraphApiSchema({
       source: graphapi`
 type Query {
   user(id: ID!): User  
@@ -91,6 +98,21 @@ type User {
 }
       `,
       circular: true
-    }),
+    });
+    return <GraphQLOperationViewer {...args} source={processedSource}/>;
+  },
+  args: {}
+}
+
+export const ShopifyXS: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiSchema({
+      source: buildGraphApi(shopifyExtraSmall),
+      circular: true,
+    });
+    return <GraphQLOperationViewer {...args} source={processedSource}/>;
+  },
+  args: {
+    expandedDepth: 2,
   }
 }
