@@ -5,6 +5,7 @@ import { createGraphApiTreeCrawlHook } from './hooks/create-graph-api-nodes';
 import { createGraphSchemaTreeCrawlHook } from './hooks/create-graph-api-schema-nodes';
 import { GraphApiModelTree } from './model';
 import { GraphApiCrawlRule, GraphApiCrawlState, GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta } from './types';
+import { isGraphApiOperationNode } from "@netcracker/qubership-apihub-api-state-model";
 
 const DEFAULT_MAX_TREE_LEVEL = 2;
 
@@ -24,9 +25,16 @@ export function crawlHooksGraphApiTree(tree: GraphApiModelTree): any[] {
 export const createGraphApiTree = (
   mergedSource: unknown,
   maxTreeLevel: number = DEFAULT_MAX_TREE_LEVEL,
+  operationName?: string
 ) => {
   const tree = new GraphApiModelTree<GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta>(mergedSource)
+
   if (!isObject(mergedSource)) {
+    return tree
+  }
+
+  if (maxTreeLevel < 2) {
+    console.error('We do not display nodes with kind = "schema", so it will be impossible to expand such node.')
     return tree
   }
 
@@ -71,6 +79,12 @@ export const createGraphApiTree = (
       state: crawlState,
       rules: graphApiRules,
     }
+  )
+
+  tree.root?.removeChildrenByCondition(
+    operationName
+      ? (node => !isGraphApiOperationNode(node) || node.key === operationName)
+      : (_, index) => index === 0
   )
 
   return tree

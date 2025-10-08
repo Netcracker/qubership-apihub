@@ -1,7 +1,7 @@
 import { CrawlRules, JsonPath, syncCrawl, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
 import { modelTreeNodeType } from "../constants";
 import { ModelTreeComplexNode } from './model-tree-complex-node.impl';
-import { IModelTree, IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from './types';
+import { FilterChildrenByCondition, IModelTree, IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from './types';
 import { ExpandingCallback, SchemaCrawlRule } from "../types";
 import { ModelTree } from './model-tree.impl';
 
@@ -62,6 +62,13 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
     return this
   }
 
+  public removeChildrenByCondition(filter: FilterChildrenByCondition<T, K, M>): void {
+    if (this.type === 'simple' && this._children.length) {
+      const newChildren = this._children.filter(filter)
+      this._children.splice(0, this._children.length)
+      this._children.push(...newChildren)
+    }
+  }
   /* --- */
 
   constructor(

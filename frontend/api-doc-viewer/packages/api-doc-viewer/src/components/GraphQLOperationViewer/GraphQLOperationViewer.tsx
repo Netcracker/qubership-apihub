@@ -141,14 +141,14 @@ const GraphQLOperationViewerInner: FC<GraphQLOperationViewerProps> = (props) => 
   } = props
 
   const tree: ModelTree<GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta> = useMemo(
-    () => createGraphApiTree(source),
-    [source]
+    () => createGraphApiTree(source, undefined, operationPath),
+    [operationPath, source]
   )
 
   // TODO 27.12.23 // Diff State!
   const state = useMemo(
-    () => new GraphApiState(tree, operationPath, expandedDepth),
-    [expandedDepth, operationPath, tree]
+    () => new GraphApiState(tree, expandedDepth),
+    [expandedDepth, tree]
   )
 
   console.debug('GraphAPI Schema:', source)

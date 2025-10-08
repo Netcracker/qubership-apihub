@@ -47,6 +47,8 @@ export interface IModelTreeNode<T, K extends string, M> {
   expand(): this;
 
   collapse(): this;
+
+  removeChildrenByCondition(filter: FilterChildrenByCondition<T, K, M>): void
   /* --- */
 }
 
@@ -58,3 +60,10 @@ export type ModelTreeNodeParams<T, K extends string, M> = {
   container?: IModelTreeNode<T, K, M> | null;
   newDataLevel?: boolean;
 };
+
+export type FilterChildrenByCondition<T, K extends string, M> =
+  (
+    node: IModelTreeNode<T, K, M>,
+    index: number,
+    array: IModelTreeNode<T, K, M>[],
+  ) => boolean
