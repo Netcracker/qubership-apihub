@@ -22,74 +22,57 @@ import { isArray, isObject } from '@netcracker/qubership-apihub-json-crawl'
 export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, string>): string => {
 
   // Walk the object and replace symbol keys, handling cycles
-  const visited = new WeakSet()
-  const copy = new Map()
+  const visitedObjects = new WeakSet()
+  const objectCache  = new WeakMap<object, unknown>()
 
-  const replaceSymbolKeys = (object: any): any => {
-    if (object === undefined) {
+  const transformSymbols = (value: any): any => {
+    if (value === undefined) {
       return { __isUndefined: true }
     }
-    if (!isObject(object)) {
-      return object
+    if (!isObject(value)) {
+      return value
+    }
+    if (visitedObjects.has(value)) {
+      return objectCache.get(value) ?? value
     }
 
-    if (visited.has(object)) {
-      if (copy.has(object)) {
-        return copy.get(object)
-      }
-      return object
-    }
+    visitedObjects.add(value)
 
-    visited.add(object)
+    const symbolKeys = Object.getOwnPropertySymbols(value)
+    const  hasSymbolKeys = symbolKeys.length > 0
 
-    let hasSymbolKeys = false
-
-    const symbolKeys = Object.getOwnPropertySymbols(object)
-    for (const symbolKey of symbolKeys) {
-      const stringKey = symbolToStringMapping.get(symbolKey)
-      if (stringKey) {
-        // Move value from symbol key to string key
-        object[stringKey] = replaceSymbolKeys(object[symbolKey])
-        delete object[symbolKey]
-        hasSymbolKeys = true
-      }
-    }
-
-    if (isArray(object)) {
-      // If array has symbol keys converted to string keys, we need to convert it to a plain object
-      // because flatted.stringify doesn't serialize custom properties on arrays
-      if (hasSymbolKeys) {
-        const arrayAsObject: any = { __isArray: true }
-        // Copy array elements
-        for (let i = 0; i < object.length; i++) {
-          arrayAsObject[i] = replaceSymbolKeys(object[i])
-        }
-        // Copy any additional string properties (converted from symbols)
-        for (const [key, value] of Object.entries(object)) {
-          if (!(/^\d+$/.test(key))) { // Skip numeric indices
-            arrayAsObject[key] = replaceSymbolKeys(value)
-          }
-        }
-        arrayAsObject.length = object.length
-        copy.set(object, arrayAsObject)
-        return arrayAsObject
-      } else {
-        // Process array elements normally
-        for (let i = 0; i < object.length; i++) {
-          object[i] = replaceSymbolKeys(object[i])
-        }
-      }
+    let result: any;
+    if (isArray(value)) {
+      result = hasSymbolKeys ? { __isArray: true } : [];
     } else {
-      // Process regular properties for objects
-      for (const [key, objValue] of Object.entries(object)) {
-        object[key] = replaceSymbolKeys(objValue)
+      result = {};
+    }
+    objectCache.set(value, result);
+
+    for (const [key, val] of Object.entries(value)) {
+      result[key] = transformSymbols(val);
+    }
+
+    for (const sym of symbolKeys) {
+      const strKey = symbolToStringMapping.get(sym);
+      if (strKey) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        result[strKey] = transformSymbols(value[sym]);
       }
     }
 
-    return object
+    if (isArray(value)) {
+      for (let i = 0; i < value.length; i++) {
+        result[i] = transformSymbols(value[i]);
+      }
+      result.length = value.length;
+    }
+
+    return result;
   }
 
-  const processedObj = replaceSymbolKeys(obj)
+  const processedObj = transformSymbols(obj)
   return stringify(processedObj)
 }
 
@@ -106,22 +89,22 @@ export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, strin
  * @returns Deserialized object with Symbol keys restored
  */
 export const deserialize = (str: string, stringToSymbolMapping: Map<string, symbol>): unknown => {
-  // First, parse the string using flatted
-  const parsedObj = parse(str)
+  const parsed = parse(str);
+  const visitedObjects = new WeakSet<object>();
+  const objectCache = new WeakMap<object, any>();
 
-  // Then walk the parsed object and replace string keys with symbol keys, handling cycles
-  const visited = new WeakSet()
-  const copy = new Map()
-
-  const replaceStringKeys = (value: any): any => {
-    // Handle cycles by tracking visited objects
-
-    if (visited.has(value)) {
-      if (copy.has(value)) {
-        return copy.get(value)
-      }
+  const restoreSymbols = (value: any): any => {
+    if (!isObject(value)) {
       return value
     }
+    if (value.__isUndefined) {
+      return undefined
+    }
+
+    if (visitedObjects.has(value)) {
+      return objectCache.get(value) ?? value;
+    }
+    visitedObjects.add(value);
 
     if (!isObject(value)) {
       return value
@@ -131,7 +114,7 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
       return undefined
     }
 
-    visited.add(value)
+    visitedObjects.add(value)
 
     // Check if this is a serialized array (converted to object during serialization)
     if (value.__isArray === true) {
@@ -140,7 +123,7 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
       // Restore array elements
       for (let i = 0; i < arr.length; i++) {
         if (i in value) {
-          arr[i] = replaceStringKeys(value[i])
+          arr[i] = restoreSymbols(value[i])
         }
       }
 
@@ -149,13 +132,13 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
         if (key !== '__isArray' && key !== 'length' && !(/^\d+$/.test(key))) {
           const symbolKey = stringToSymbolMapping.get(key)
           if (symbolKey) {
-            (arr as any)[symbolKey] = replaceStringKeys(objValue)
+            (arr as any)[symbolKey] = restoreSymbols(objValue)
           } else {
-            (arr as any)[key] = replaceStringKeys(objValue)
+            (arr as any)[key] = restoreSymbols(objValue)
           }
         }
       }
-      copy.set(value, arr)
+      objectCache.set(value, arr)
       return arr
     }
 
@@ -172,24 +155,24 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
 
     // Replace string keys with symbol keys
     for (const [stringKey, symbolKey] of keysToReplace) {
-      value[symbolKey] = replaceStringKeys(value[stringKey])
+      value[symbolKey] = restoreSymbols(value[stringKey])
       delete value[stringKey]
     }
 
     if (isArray(value)) {
       // Process array elements
       for (let i = 0; i < value.length; i++) {
-        value[i] = replaceStringKeys(value[i])
+        value[i] = restoreSymbols(value[i])
       }
     } else {
       // Process remaining properties for objects
       for (const [key, objValue] of Object.entries(value)) {
-        value[key] = replaceStringKeys(objValue)
+        value[key] = restoreSymbols(objValue)
       }
     }
 
     return value
   }
 
-  return replaceStringKeys(parsedObj)
+  return restoreSymbols(parsed)
 }
