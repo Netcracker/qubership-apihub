@@ -278,23 +278,37 @@ export function createCopyWithEmptyPathItems(template: RestOperationData): RestO
 }
 
 export function createCopyWithCurrentGroupOperationsOnly(template: RestOperationData, group: string): RestOperationData {
-  const { paths, ...rest } = template
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { paths, servers: rootServers, ...rest } = template
   const groupWithoutEdgeSlashes = trimSlashes(group)
 
-  if (trimSlashes(getOperationBasePath(template.servers)) === groupWithoutEdgeSlashes) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { servers, ...rest } = template
-    return { ...rest }
-  }
-
+  // Since we are anyway composing synthetic specs for prefix groups comparison, we can incorporate
+  // base paths from root servers and path item servers into the paths.
+  // We also remove servers objects, since changes in servers for prefix groups are not relevant.
+  // Note that servers in operation objects are not taken into account
+  // (it is impossible to support them in api-diff mapping
+  // and they are considered bad practice on OpenAPI specifications anyway)
   return {
     paths: {
       ...Object.fromEntries(
         Object.entries(paths)
-          .filter(([key]) => removeFirstSlash(key).startsWith(`${groupWithoutEdgeSlashes}/`)) // note that 'api/v10' is a substring of 'api/v1000'
+          .map(([pathKey, pathItem]) => {
+            // Path item servers take precedence over root servers
+            const pathItemServers = (pathItem as OpenAPIV3.PathItemObject)?.servers
+            const basePath = getOperationBasePath(pathItemServers || template.servers || [])
+
+            // Prepend base path to the path
+            const fullPath = basePath ? `/${trimSlashes(basePath)}/${trimSlashes(pathKey)}`.replace(/\/+/g, '/') : pathKey
+
+            // Remove servers from path item copy
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { servers: pathServers, ...pathItemWithoutServers } = pathItem as OpenAPIV3.PathItemObject
+
+            return [fullPath, pathItemWithoutServers] as const
+          })
+          .filter(([key]) => removeFirstSlash(key as string).startsWith(`${groupWithoutEdgeSlashes}/`)) // note that 'api/v10' is a substring of 'api/v1000'
           // remove prefix group for correct path mapping in apiDiff
-          // todo support the most common case when a group is in servers instead of hardcoded in path, add a test
-          .map(([key, value]) => [removeFirstSlash(key).substring(groupWithoutEdgeSlashes.length), value]),
+          .map(([key, value]) => [removeFirstSlash(key as string).substring(groupWithoutEdgeSlashes.length), value]),
       ),
     },
     ...rest,
