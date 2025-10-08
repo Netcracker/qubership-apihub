@@ -23,6 +23,7 @@ export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, strin
 
   // Walk the object and replace symbol keys, handling cycles
   const visited = new WeakSet()
+  const copy = new Map()
 
   const replaceSymbolKeys = (object: any): any => {
     if (object === undefined) {
@@ -32,7 +33,12 @@ export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, strin
       return object
     }
 
-    if (visited.has(object)) {return object}
+    if (visited.has(object)) {
+      if (copy.has(object)) {
+        return copy.get(object)
+      }
+      return object
+    }
 
     visited.add(object)
 
@@ -65,6 +71,7 @@ export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, strin
           }
         }
         arrayAsObject.length = object.length
+        copy.set(object, arrayAsObject)
         return arrayAsObject
       } else {
         // Process array elements normally
@@ -104,10 +111,19 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
 
   // Then walk the parsed object and replace string keys with symbol keys, handling cycles
   const visited = new WeakSet()
+  const copy = new Map()
 
   const replaceStringKeys = (value: any): any => {
     // Handle cycles by tracking visited objects
-    if (isObject(value) && visited.has(value)) {
+
+    if (visited.has(value)) {
+      if (copy.has(value)) {
+        return copy.get(value)
+      }
+      return value
+    }
+
+    if (!isObject(value)) {
       return value
     }
 
@@ -115,62 +131,60 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
       return undefined
     }
 
-    if (isObject(value)) {
-      visited.add(value)
+    visited.add(value)
 
-      // Check if this is a serialized array (converted to object during serialization)
-      if (value.__isArray === true) {
-        const arr: any[] = new Array(value.length || 0)
+    // Check if this is a serialized array (converted to object during serialization)
+    if (value.__isArray === true) {
+      const arr: any[] = new Array(value.length || 0)
 
-        // Restore array elements
-        for (let i = 0; i < arr.length; i++) {
-          if (i in value) {
-            arr[i] = replaceStringKeys(value[i])
+      // Restore array elements
+      for (let i = 0; i < arr.length; i++) {
+        if (i in value) {
+          arr[i] = replaceStringKeys(value[i])
+        }
+      }
+
+      // Restore additional properties (including converted symbol keys)
+      for (const [key, objValue] of Object.entries(value)) {
+        if (key !== '__isArray' && key !== 'length' && !(/^\d+$/.test(key))) {
+          const symbolKey = stringToSymbolMapping.get(key)
+          if (symbolKey) {
+            (arr as any)[symbolKey] = replaceStringKeys(objValue)
+          } else {
+            (arr as any)[key] = replaceStringKeys(objValue)
           }
         }
-
-        // Restore additional properties (including converted symbol keys)
-        for (const [key, objValue] of Object.entries(value)) {
-          if (key !== '__isArray' && key !== 'length' && !(/^\d+$/.test(key))) {
-            const symbolKey = stringToSymbolMapping.get(key)
-            if (symbolKey) {
-              (arr as any)[symbolKey] = replaceStringKeys(objValue)
-            } else {
-              (arr as any)[key] = replaceStringKeys(objValue)
-            }
-          }
-        }
-
-        return arr
       }
+      copy.set(value, arr)
+      return arr
+    }
 
-      // Process string keys that should be converted to symbol keys for both arrays and objects
-      const keysToReplace: Array<[string, symbol]> = []
+    // Process string keys that should be converted to symbol keys for both arrays and objects
+    const keysToReplace: Array<[string, symbol]> = []
 
-      // First, identify which keys need to be replaced
-      for (const key of Object.keys(value)) {
-        const symbolKey = stringToSymbolMapping.get(key)
-        if (symbolKey) {
-          keysToReplace.push([key, symbolKey])
-        }
+    // First, identify which keys need to be replaced
+    for (const key of Object.keys(value)) {
+      const symbolKey = stringToSymbolMapping.get(key)
+      if (symbolKey) {
+        keysToReplace.push([key, symbolKey])
       }
+    }
 
-      // Replace string keys with symbol keys
-      for (const [stringKey, symbolKey] of keysToReplace) {
-        value[symbolKey] = replaceStringKeys(value[stringKey])
-        delete value[stringKey]
+    // Replace string keys with symbol keys
+    for (const [stringKey, symbolKey] of keysToReplace) {
+      value[symbolKey] = replaceStringKeys(value[stringKey])
+      delete value[stringKey]
+    }
+
+    if (isArray(value)) {
+      // Process array elements
+      for (let i = 0; i < value.length; i++) {
+        value[i] = replaceStringKeys(value[i])
       }
-
-      if (isArray(value)) {
-        // Process array elements
-        for (let i = 0; i < value.length; i++) {
-          value[i] = replaceStringKeys(value[i])
-        }
-      } else {
-        // Process remaining properties for objects
-        for (const [key, objValue] of Object.entries(value)) {
-          value[key] = replaceStringKeys(objValue)
-        }
+    } else {
+      // Process remaining properties for objects
+      for (const [key, objValue] of Object.entries(value)) {
+        value[key] = replaceStringKeys(objValue)
       }
     }
 

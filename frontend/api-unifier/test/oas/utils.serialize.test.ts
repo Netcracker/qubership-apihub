@@ -463,4 +463,24 @@ describe('Serialize/Deserialize Utils', () => {
     expect(deserialized).toHaveLength(4)
     expect(deserialized[2]).toEqual(undefined)
   })
+
+  it('same instance', () => {
+    const sym = Symbol('nestedArrayProp')
+    const original: any = {
+      data: [1,2,3] as any
+    }
+    original.data[sym] = 'nestedSymbolValue'
+    original['sameInstanceData'] = original.data as any
+
+    const symbolToString = new Map<symbol, string>([[sym, 'nestedStr']])
+    const stringToSymbol = new Map<string, symbol>([['nestedStr', sym]])
+
+    const serialized = serialize(original, symbolToString)
+    const deserialized = deserialize(serialized, stringToSymbol) as any
+
+    expect(Array.isArray(deserialized.data)).toBe(true);
+    expect(Array.isArray(deserialized.sameInstanceData)).toBe(true);
+
+    expect(deserialized.data).toBe(deserialized.sameInstanceData);
+  })
 }) 
