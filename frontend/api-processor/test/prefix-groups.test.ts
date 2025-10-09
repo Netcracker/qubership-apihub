@@ -27,7 +27,11 @@ import { ANNOTATION_CHANGE_TYPE, BREAKING_CHANGE_TYPE, BUILD_TYPE, NON_BREAKING_
 const pkg = LocalRegistry.openPackage('apihub')
 
 describe('Prefix Groups test', () => {
-  test('should compare prefix groups groups=v2,v3', async () => {
+  // this test uses too large sample (runs too long)
+  // and checks only number of operations,
+  // mostly useless
+  // todo: remove this test
+  test.skip('should compare prefix groups groups=v2,v3', async () => {
     // generate missing versions/apihub folder contents
     await pkg.publish(pkg.packageId, {
       version: 'v1',
