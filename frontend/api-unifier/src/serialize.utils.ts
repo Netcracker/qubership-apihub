@@ -56,9 +56,7 @@ export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, strin
     for (const sym of symbolKeys) {
       const strKey = symbolToStringMapping.get(sym);
       if (strKey) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        result[strKey] = transformSymbols(value[sym]);
+        result[strKey] = transformSymbols((value as Record<PropertyKey, any>)[sym]);
       }
     }
 
@@ -89,9 +87,9 @@ export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, strin
  * @returns Deserialized object with Symbol keys restored
  */
 export const deserialize = (str: string, stringToSymbolMapping: Map<string, symbol>): unknown => {
-  const parsed = parse(str);
-  const visitedObjects = new WeakSet<object>();
-  const objectCache = new WeakMap<object, any>();
+  const parsed = parse(str)
+  const visitedObjects = new WeakSet<object>()
+  const objectCache = new WeakMap<object, any>()
 
   const restoreSymbols = (value: any): any => {
     if (!isObject(value)) {
@@ -102,43 +100,29 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
     }
 
     if (visitedObjects.has(value)) {
-      return objectCache.get(value) ?? value;
+      return objectCache.get(value) ?? value
     }
-    visitedObjects.add(value);
-
-    if (!isObject(value)) {
-      return value
-    }
-
-    if (value && value.__isUndefined === true) {
-      return undefined
-    }
-
     visitedObjects.add(value)
 
-    // Check if this is a serialized array (converted to object during serialization)
-    if (value.__isArray === true) {
-      const arr: any[] = new Array(value.length || 0)
+    if (value.__isArray) {
+      const arrLength = value.length ?? 0
+      const arr: any[] = new Array(arrLength)
+      objectCache.set(value, arr)
 
-      // Restore array elements
-      for (let i = 0; i < arr.length; i++) {
-        if (i in value) {
-          arr[i] = restoreSymbols(value[i])
-        }
+      for (let i = 0; i < arrLength; i++) {
+        arr[i] = restoreSymbols(value[i])
       }
 
       // Restore additional properties (including converted symbol keys)
-      for (const [key, objValue] of Object.entries(value)) {
-        if (key !== '__isArray' && key !== 'length' && !(/^\d+$/.test(key))) {
-          const symbolKey = stringToSymbolMapping.get(key)
-          if (symbolKey) {
-            (arr as any)[symbolKey] = restoreSymbols(objValue)
-          } else {
-            (arr as any)[key] = restoreSymbols(objValue)
-          }
+      for (const [key, val] of Object.entries(value)) {
+        if (key === '__isArray' || key === 'length' || /^\d+$/.test(key)) {
+          continue
         }
+        const symKey = stringToSymbolMapping.get(key)
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        arr[symKey ?? key] = restoreSymbols(val)
       }
-      objectCache.set(value, arr)
       return arr
     }
 
