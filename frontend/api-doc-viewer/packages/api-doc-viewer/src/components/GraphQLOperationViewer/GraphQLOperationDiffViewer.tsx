@@ -18,14 +18,7 @@ import '../../index.css'
 
 import type { FC } from 'react'
 import { useMemo } from 'react'
-import {
-  createGraphApiDiffTree,
-  DiffNodeMeta,
-  GraphApiNodeData,
-  GraphApiNodeKind,
-  GraphApiNodeMeta,
-  ModelTree
-} from '@netcracker/qubership-apihub-api-data-model'
+import { createGraphApiDiffTree, DiffNodeMeta } from '@netcracker/qubership-apihub-api-data-model'
 import { GraphApiState } from '@netcracker/qubership-apihub-api-state-model'
 import { isCombinerNodeState, isPropNodeState } from './types/nodes.guards'
 import { DEFAULT_EXPANDED_DEPTH, DEFAULT_LAYOUT_MODE } from '../../consts/configuration'
@@ -79,15 +72,16 @@ const GraphQLOperationDiffViewerInner: FC<GraphQLOperationDiffViewerProps> = (pr
     diffMetaKey
   } = props
 
-  const tree: ModelTree<GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta> = useMemo(
-    () => createGraphApiDiffTree(source, diffMetaKey),
-    [diffMetaKey, source]
+  const tree = useMemo(
+    () => createGraphApiDiffTree(source, diffMetaKey, undefined, undefined, operationPath),
+    [diffMetaKey, operationPath, source]
   )
 
   // TODO 27.12.23 // Diff State!
   const state = useMemo(
-    () => new GraphApiState(tree, operationPath, expandedDepth),
-    [expandedDepth, operationPath, tree]
+    // TODO 09.10.25 // Get rid of "any"
+    () => new GraphApiState(tree as any, expandedDepth),
+    [expandedDepth, tree]
   )
 
   console.debug('GraphAPI Schema:', source)

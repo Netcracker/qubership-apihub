@@ -73,7 +73,9 @@ export class GraphApiModelDiffTree<
       if (hasWhollyChangedItem) {
         for (const key of rootDiffsKeys) {
           const diff = rootDiffs[key]
-          if (!isDiff(diff)) { continue }
+          if (!isDiff(diff)) {
+            continue
+          }
           childrenChanges[`${id}/${key}`] = diff
         }
         return childrenChanges
@@ -226,7 +228,9 @@ export class GraphApiModelDiffTree<
     if (isObject(elementsDiffs)) {
       for (const property of Object.keys(typeDefElements)) {
         const diff = elementsDiffs[property]
-        if (!isDiff(diff)) { continue }
+        if (!isDiff(diff)) {
+          continue
+        }
         childrenChanges[`${id}/typeDef/type/${kindOfElements}/${property}`] = diff
       }
     }
@@ -238,11 +242,43 @@ export class GraphApiModelDiffTree<
     const { id } = params
     let { value } = params
 
+    const $metaChanges: Partial<DiffRecord> = {}
+
     if (isGraphApiDirective(value)) {
       value = value.definition
+
+      // args
+      const argsRawChanges = value?.args?.[this.metaKey]
+      if (isObject(argsRawChanges)) {
+        for (const [argName, argDiff] of Object.entries(argsRawChanges)) {
+          setValueByPath($metaChanges, argDiff, ...['args', argName])
+        }
+      }
+      // locations
+      const locationsRawChanges = value?.locations?.[this.metaKey]
+      if (isObject(locationsRawChanges)) {
+        for (const [locIndex, locDiff] of Object.entries(locationsRawChanges)) {
+          setValueByPath($metaChanges, locDiff, ...['locations', locIndex])
+        }
+      }
+      // repeatable
+      const valueRawChanges = value?.[this.metaKey]
+      if (isObject(valueRawChanges)) {
+        const repeatableDiff = valueRawChanges?.repeatable
+        repeatableDiff && setValueByPath($metaChanges, repeatableDiff, ...['repeatable'])
+      }
+    } else {
+      // directives
+      const directivesRawChanges = value?.args?.[this.metaKey]
+      if (isObject(directivesRawChanges)) {
+        for (const [directiveName, directiveDiff] of Object.entries(directivesRawChanges)) {
+          setValueByPath($metaChanges, directiveDiff, ...['directives', directiveName])
+        }
+      }
+      // deprecation reason
+      // TODO 09.10.2025 // TBA
     }
 
-    const $metaChanges = this.getPropsChanges(value, graphSchemaNodeMetaProps)
     const $childrenChanges = this.getChildrenChanges(id, value ?? {})
     const $nodeChange = this.getNodeChange(params)
 
@@ -276,7 +312,9 @@ export class GraphApiModelDiffTree<
       $nestedChanges[`${id}/typeDef/type/${complexityType}/${nested.toString()}`] = nestedChanges[nested]
     }
     const $nodeChange = this.getNodeChange(params)
-    const $metaChanges = this.getPropsChanges(value, ['args'])
+    // TODO 09.10.2025 // TBA
+    // const $metaChanges = this.getPropsChanges(value, ['args'])
+    const $metaChanges: Partial<DiffRecord> = {}
 
     return {
       ...Object.keys($nestedChanges).length
@@ -311,10 +349,19 @@ export class GraphApiModelDiffTree<
     */
     // directive usage
     if (isGraphApiDirective(value)) {
-      const definitionChanges = this.getPropsChanges(value.definition, graphSchemaNodeValueProps)
-      // remark: this is not the same that $metaChanges is
-      const metaChanges = this.getPropsChanges(value, ['meta'])
-      const $changes = { ...definitionChanges, ...metaChanges }
+      // definition changes for fields: title, description
+      const definition = value.definition
+      const definitionChanges: Partial<DiffRecord> = {}
+      const definitionRawChanges = definition[this.metaKey]
+      if (isObject(definitionRawChanges)) {
+        ['description'].forEach(field => {
+          const diff = definitionRawChanges[field]
+          diff && setValueByPath(definitionChanges, diff, ...[field])
+        })
+      }
+
+      // TODO 09.10.25 // If some time we handle/display changes inside directive usage arguments, add them here
+      const $changes = { ...definitionChanges }
       return {
         ...pick<any>(value.definition, graphSchemaNodeValueProps),
         ...value.meta ? { meta: value.meta } : {},
@@ -353,9 +400,34 @@ export class GraphApiModelDiffTree<
           diffForFieldType.afterValue = currentType
         }
       }
-      const $changes = this.getPropsChanges(sourceValue, graphSchemaNodeValueProps)
-      const totalChanges: DiffNodeValue = {
-        ...isNotUnionItem ? { $changes: this.getPropsChanges(value, graphSchemaNodeValueProps) } : {},
+
+      const $changes: Partial<DiffRecord> = {};
+
+      if (isNotUnionItem) { // sourceValue !== value
+        const valueRawChanges = value[this.metaKey];
+        const sourceValueRawChanges = sourceValue[this.metaKey];
+        ['nullable', 'default'].forEach(field => {
+          const diff = valueRawChanges?.[field]
+          const path = [field]
+          diff && setValueByPath($changes, diff, ...path)
+        });
+        ['title', 'description'].forEach(field => {
+          const diff = sourceValueRawChanges?.[field]
+          const path = [field]
+          diff && setValueByPath($changes, diff, ...path)
+        });
+        // TODO 09.10.2025 // Enum values TBA
+      } else { // sourceValue === value
+        const valueRawChanges = value[this.metaKey];
+        ['title', 'description'].forEach(field => {
+          const diff = valueRawChanges?.[field]
+          const path = [field]
+          diff && setValueByPath($changes, diff, ...path)
+        });
+        // TODO 09.10.2025 // Enum values TBA
+      }
+
+      const diffNodeValue: DiffNodeValue = {
         ...Object.keys($changes).length ? { $changes } : {},
       }
       // directive arg specific
@@ -371,12 +443,12 @@ export class GraphApiModelDiffTree<
       }
       // ---
       if (diffForFieldType) {
-        totalChanges.$changes ??= {}
-        totalChanges.$changes.type = diffForFieldType
+        diffNodeValue.$changes ??= {}
+        diffNodeValue.$changes.type = diffForFieldType
       }
       if (diffForDirectiveUsageArgument) {
-        totalChanges.$changes ??= {}
-        totalChanges.$changes.value = diffForDirectiveUsageArgument
+        diffNodeValue.$changes ??= {}
+        diffNodeValue.$changes.value = diffForDirectiveUsageArgument
       }
       // @ts-expect-error // TODO // 29.10.24 // wrong types
       return {
@@ -385,14 +457,14 @@ export class GraphApiModelDiffTree<
         type: currentType,
         ...resolveEnumValues(value.typeDef, valueDiffs),
         ...directiveUsageArgValue !== undefined ? { value: directiveUsageArgValue } : {},
-        ...totalChanges,
+        ...diffNodeValue,
       } as T
     }
 
-    const $changes = this.getPropsChanges(value, graphSchemaNodeValueProps)
+    // const $changes = this.getPropsChanges(value, graphSchemaNodeValueProps)
     return {
       ...pick<any>(value, graphSchemaNodeValueProps),
-      ...Object.keys($changes).length ? { $changes } : {},
+      // ...Object.keys($changes).length ? { $changes } : {},
     } as T
   }
 
@@ -425,7 +497,7 @@ export class GraphApiModelDiffTree<
           value[this.metaKey]
       ) as DiffMetaRecord
       for (const key of objectKeys(_changes)) {
-        // <! Attention !> Order of this instructions is IMPORTANT
+        // <! Attention !> Order of these instructions is IMPORTANT
         const changePath = [...path, key]
         const transformedChangePath = this.transformPathForDeprecation(changePath)
         const change = _changes[key]

@@ -1,11 +1,11 @@
 import { CrawlRules, syncCrawl, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
-import { createCycleGuardHook } from '../../abstract/hooks/cycle-guard';
 import { graphApiRules } from '../rules';
 import { createGraphSchemaTreeCrawlHook } from '../tree/hooks/create-graph-api-schema-nodes';
 import type { GraphApiNodeKind } from '../tree/types';
 import { createGraphApiDiffTreeCrawlHook } from './hooks/create-graph-api-nodes';
 import { GraphApiModelDiffTree } from './model';
 import { GraphApiDiffCrawlRule, GraphApiDiffCrawlState, GraphApiDiffNodeData, GraphApiDiffNodeMeta } from './types';
+import { isGraphApiOperationNode } from "@netcracker/qubership-apihub-api-state-model";
 
 const DEFAULT_MAX_TREE_LEVEL = 3;
 
@@ -17,7 +17,6 @@ export function crawlHooksGraphApiDiffTree(
 ): any[] {
   if (!CRAWL_HOOKS_CACHE.has(tree)) {
     CRAWL_HOOKS_CACHE.set(tree, [
-      createCycleGuardHook(tree),
       createGraphApiDiffTreeCrawlHook(tree as any, metaKey) as SyncCrawlHook<any, any>,
       createGraphSchemaTreeCrawlHook(tree as any /*because AMT not type safe*/, metaKey) as SyncCrawlHook<any, any>,
     ])
@@ -33,6 +32,7 @@ export function createGraphApiDiffTree(
     state?: GraphApiDiffCrawlState
   },
   maxTreeLevel: number = DEFAULT_MAX_TREE_LEVEL,
+  operationName?: string
 ) {
   const { rules, state } = options ?? {}
 
@@ -41,6 +41,11 @@ export function createGraphApiDiffTree(
     GraphApiNodeKind,
     GraphApiDiffNodeMeta
   >(mergedSource, metaKey)
+
+  if (maxTreeLevel < 2) {
+    console.error('We do not display nodes with kind = "schema", so it will be impossible to expand such node.')
+    return tree
+  }
 
   const defaultState: GraphApiDiffCrawlState = {
     parent: null,
@@ -80,6 +85,12 @@ export function createGraphApiDiffTree(
     mergedSource,
     crawlHooksGraphApiDiffTree(tree, metaKey),
     { state: state ?? defaultState, rules: rules ?? graphApiRules }
+  )
+
+  tree.root?.removeChildrenByCondition(
+    operationName
+      ? (node => !isGraphApiOperationNode(node) || node.key === operationName)
+      : (_, index) => index === 0
   )
 
   return tree

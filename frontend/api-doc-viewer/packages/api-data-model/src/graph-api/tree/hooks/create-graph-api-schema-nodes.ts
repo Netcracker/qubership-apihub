@@ -10,6 +10,7 @@ import { crawlHooksGraphApiTree } from "../build";
 import { isDiff, isDiffMetaRecord, isObject } from '../../../utils';
 import { DiffRemove, DiffReplace, isDiffRemove, isDiffReplace } from "@netcracker/qubership-apihub-api-diff";
 import { crawlHooksGraphApiDiffTree } from "../../../index";
+import { isGraphApiAnyDefinition } from "@netcracker/qubership-apihub-graphapi"
 
 function shouldCrawlDiff(value: unknown): value is DiffRemove | DiffReplace {
   return isDiff(value) &&
@@ -54,7 +55,10 @@ export function createGraphSchemaTreeCrawlHook(
      * E.g. when we change an output type to an input type, or an input type to an array.
      * Merged tree must contain both nodes built from "before" and "after" sources.
      */
-    if (isObject(value) && metaKey && metaKey in value) {
+    if (
+      isGraphApiAnyDefinition(value) &&
+      isObject(value) && metaKey && metaKey in value
+    ) {
       const diffMeta = value[metaKey]
       if (isDiffMetaRecord(diffMeta)) {
         for (const [field, diff] of Object.entries(diffMeta)) {
