@@ -17,8 +17,7 @@ const DEFAULT_OPTIONS: NormalizeOptions = {
   hashFlag: TEST_HASH_FLAG,
 }
 
-// serialize crashes due to function hashFlag: TEST_HASH_FLAG - ok
-describe.skip('hash', () => {
+describe('hash', () => {
   it('title does not affect hash', () => {
     const data1 = createOas({
       title: 'Some Schema 1',

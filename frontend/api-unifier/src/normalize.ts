@@ -15,7 +15,6 @@ import { merge } from './merge'
 import { cleanUpSynthetic, deCleanUpSynthetic, deUnify, unify } from './unify'
 import { deHash, hash } from './hash'
 import { removeOasExtensions } from './remove-oas-extensions'
-import { deserialize, serialize } from './serialize.utils'
 
 export const normalize = (value: unknown, options: NormalizeOptions = {}) => {
   const optionsWithDefaults = createOptionsWithDefaults(options)
@@ -28,38 +27,7 @@ export const normalize = (value: unknown, options: NormalizeOptions = {}) => {
   if (optionsWithDefaults.mergeAllOf && !optionsWithDefaults.unify && !optionsWithDefaults.allowNotValidSyntheticChanges) { spec = cleanUpSynthetic(spec, optionsWithDefaults) }
   if (optionsWithDefaults.removeOasExtensions) { spec = removeOasExtensions(spec, optionsWithDefaults) }
   if (optionsWithDefaults.hashFlag) { spec = hash(spec, optionsWithDefaults) }
-
-  const symbolToStringMapping = new Map<symbol, string>()
-  const stringToSymbolMapping = new Map<string, symbol>()
-
-  if(options?.originsFlag){
-    symbolToStringMapping.set(options.originsFlag, '__originsFlag')
-    stringToSymbolMapping.set('__originsFlag', options.originsFlag)
-  }
-  if(options?.inlineRefsFlag){
-    symbolToStringMapping.set(options.inlineRefsFlag, '__inlineRefsFlag')
-    stringToSymbolMapping.set('__inlineRefsFlag', options.inlineRefsFlag)
-  }
-  if(options?.hashFlag){
-    symbolToStringMapping.set(options.hashFlag, '__hashFlag')
-    stringToSymbolMapping.set('__hashFlag', options.hashFlag)
-  }
-  if(options?.syntheticTitleFlag){
-    symbolToStringMapping.set(options.syntheticTitleFlag, '__syntheticTitleFlag')
-    stringToSymbolMapping.set('__syntheticTitleFlag', options.syntheticTitleFlag)
-  }
-  if(options?.syntheticAllOfFlag){
-    symbolToStringMapping.set(options.syntheticAllOfFlag, '__syntheticAllOfFlag')
-    stringToSymbolMapping.set('__syntheticAllOfFlag', options.syntheticAllOfFlag)
-  }
-  if(options?.defaultsFlag){
-    symbolToStringMapping.set(options.defaultsFlag, '__defaultsFlag')
-    stringToSymbolMapping.set('__defaultsFlag', options.defaultsFlag)
-  }
-
-  const serialized = serialize(spec, symbolToStringMapping)
-  const deserialized = deserialize(serialized, stringToSymbolMapping)
-  return deserialized
+  return spec
 }
 
 export const denormalize = (value: unknown, options: DenormalizeOptions = {}) => {

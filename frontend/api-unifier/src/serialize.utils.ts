@@ -13,7 +13,6 @@ const INTERNAL_KEYS = Object.freeze({
  * @param symbolToStringMapping - Mapping from Symbol keys to string keys
  * @returns Serialized string representation
  */
-
 export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, string>): string => {
   const visitedObjects = new WeakSet()
   const objectCache  = new WeakMap<object, unknown>()
@@ -34,33 +33,33 @@ export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, strin
     const symbolKeys = Object.getOwnPropertySymbols(value)
     const  hasSymbolKeys = symbolKeys.length > 0
 
-    let result: any;
+    let result: any
     if (isArray(value)) {
-      result = hasSymbolKeys ? { [INTERNAL_KEYS.IS_ARRAY]: true } : [];
+      result = hasSymbolKeys ? { [INTERNAL_KEYS.IS_ARRAY]: true } : []
     } else {
-      result = {};
+      result = {}
     }
-    objectCache.set(value, result);
+    objectCache.set(value, result)
 
     for (const [key, val] of Object.entries(value)) {
-      result[key] = transformSymbols(val);
+      result[key] = transformSymbols(val)
     }
 
     for (const sym of symbolKeys) {
-      const strKey = symbolToStringMapping.get(sym);
+      const strKey = symbolToStringMapping.get(sym)
       if (strKey) {
-        result[strKey] = transformSymbols((value as Record<PropertyKey, any>)[sym]);
+        result[strKey] = transformSymbols((value as Record<PropertyKey, any>)[sym])
       }
     }
 
     if (isArray(value)) {
       for (let i = 0; i < value.length; i++) {
-        result[i] = transformSymbols(value[i]);
+        result[i] = transformSymbols(value[i])
       }
-      result.length = value.length;
+      result.length = value.length
     }
 
-    return result;
+    return result
   }
 
   const processedObj = transformSymbols(obj)
@@ -92,7 +91,7 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
     visitedObjects.add(value)
 
     if (value[INTERNAL_KEYS.IS_ARRAY]) {
-      const arrLength = value.length ?? 0
+      const arrLength = value.length as number ?? 0
       const arr = new Array(arrLength)
       objectCache.set(value, arr)
 
@@ -111,14 +110,14 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
     }
 
     for (const [key, val] of Object.entries(value)) {
-      const symbolKey = stringToSymbolMapping.get(key);
-      const restored = restoreSymbols(val);
+      const symbolKey = stringToSymbolMapping.get(key)
+      const restored = restoreSymbols(val)
 
       if (symbolKey) {
-        value[symbolKey] = restored;
-        delete value[key];
+        value[symbolKey] = restored
+        delete value[key]
       } else {
-        value[key] = restored;
+        value[key] = restored
       }
     }
 

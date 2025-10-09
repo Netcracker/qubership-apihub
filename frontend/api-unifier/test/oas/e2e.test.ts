@@ -798,8 +798,7 @@ describe('e2e', () => {
     expect(result).toEqual(expected)
   })
 
-  // serialize crashes due to customSymbol - ok
-  it.skip('detect dirty {}. Synthetic', () => {
+  it('detect dirty {}. Synthetic', () => {
     const customSymbol = Symbol('custom')
     const result = normalize({
       description: 'anything',
@@ -812,8 +811,7 @@ describe('e2e', () => {
     })
   })
 
-  // serialize crashes due to customSymbol - ok
-  it.skip('detect pure {}. case {}. Synthetic', () => {
+  it('detect pure {}. case {}. Synthetic', () => {
     const customSymbol = Symbol('custom')
     const result = normalize({ [customSymbol]: true }, { unify: true, allowNotValidSyntheticChanges: true })
     const expected = {
