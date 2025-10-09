@@ -163,8 +163,8 @@ export async function buildPrefixGroupChangelogPackage(options: {
     packageId,
     config: {
       files = [{ fileId: 'spec.yaml' }],
-      currentGroup = '/api/v2',
-      previousGroup = 'api/v1',
+      currentGroup = '/api/v2/',
+      previousGroup = '/api/v1/',
     } = {},
   } = options ?? {}
 

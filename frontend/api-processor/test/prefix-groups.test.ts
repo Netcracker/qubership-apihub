@@ -263,8 +263,8 @@ describe('Prefix Groups test', () => {
     const result = await buildPrefixGroupChangelogPackage({
       packageId: 'prefix-groups/different-prefix-length',
       config: {
-        previousGroup: '/api/v10',
-        currentGroup: 'api/v1000/',
+        previousGroup: '/api/v10/',
+        currentGroup: '/api/v1000/',
       },
     })
 
@@ -278,6 +278,38 @@ describe('Prefix Groups test', () => {
         previousOperationId: 'packages-get',
       }),
     ]))
+  })
+
+  describe('Validation of incorrect group prefixes', () => {
+    test('should throw error for invalid currentGroup - missing ending slash', async () => {
+      await expect(buildPrefixGroupChangelogPackage({
+        packageId: 'prefix-groups/different-prefix-length',
+        config: {
+          previousGroup: '/api/v10/',
+          currentGroup: '/api/v1000',
+        },
+      })).rejects.toThrow('currentGroup must begin and end with a "/" character and contain at least one meaningful character, received: "/api/v1000"')
+    })
+
+    test('should throw error for invalid previousGroup - missing starting slash', async () => {
+      await expect(buildPrefixGroupChangelogPackage({
+        packageId: 'prefix-groups/different-prefix-length',
+        config: {
+          previousGroup: 'api/v10/',
+          currentGroup: '/api/v1000/',
+        },
+      })).rejects.toThrow('previousGroup must begin and end with a "/" character and contain at least one meaningful character, received: "api/v10/"')
+    })
+
+    test('should throw error for group that is too short', async () => {
+      await expect(buildPrefixGroupChangelogPackage({
+        packageId: 'prefix-groups/different-prefix-length',
+        config: {
+          previousGroup: '//',
+          currentGroup: '/api/v1000/',
+        },
+      })).rejects.toThrow('previousGroup must begin and end with a "/" character and contain at least one meaningful character, received: "//"')
+    })
   })
 
   // todo add case when api/v1 in servers and api/v2 in some paths?

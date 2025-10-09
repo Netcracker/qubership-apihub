@@ -22,6 +22,10 @@ export class PrefixGroupsChangelogStrategy implements BuilderStrategy {
     const { packageId, version } = config
     const { compareContext } = contexts
 
+    // Validate groups
+    this.validateGroup(config.currentGroup, 'currentGroup')
+    this.validateGroup(config.previousGroup, 'previousGroup')
+
     buildResult.comparisons = await compareVersions(
       [version, packageId],
       [version, packageId],
@@ -29,5 +33,19 @@ export class PrefixGroupsChangelogStrategy implements BuilderStrategy {
     )
 
     return buildResult
+  }
+
+  private validateGroup(group: unknown, paramName: string): void {
+    if (group === undefined) {
+      return
+    }
+
+    if (typeof group !== 'string') {
+      throw new Error(`${paramName} must be a string, received: ${typeof group}`)
+    }
+
+    if (group.length < 3 || !group.startsWith('/') || !group.endsWith('/')) {
+      throw new Error(`${paramName} must begin and end with a "/" character and contain at least one meaningful character, received: "${group}"`)
+    }
   }
 }
