@@ -238,12 +238,12 @@ func (s systemInfoServiceImpl) GetSnapshotsCleanupSchedule() string {
 func (s systemInfoServiceImpl) setSnapshotsTTLDays() {
 	envVal := os.Getenv(SNAPSHOTS_TTL_DAYS)
 	if envVal == "" {
-		envVal = "183" //6 months
+		envVal = "30" //1 month
 	}
 	val, err := strconv.Atoi(envVal)
 	if err != nil {
-		log.Errorf("failed to parse %v env value: %v. Value by default - 183", SNAPSHOTS_TTL_DAYS, err.Error())
-		val = 183
+		log.Errorf("failed to parse %v env value: %v. Value by default - 30", SNAPSHOTS_TTL_DAYS, err.Error())
+		val = 30
 	}
 	s.systemInfoMap[SNAPSHOTS_TTL_DAYS] = val
 }
