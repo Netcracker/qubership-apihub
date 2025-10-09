@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "3_1_Stories_Bugs",
-        "_postman_id": "45747a4f-2664-4ed3-971f-d0b076e7ab87",
+        "_postman_id": "63d2e843-fe8d-4a1b-94dc-c992e9c05723",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -9116,7 +9116,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-2.PKG5-2\",\r\n    \"Alias\" :\"PKG5-2\",\r\n    \"name\": \"Test static package 2\",\r\n    \"parentId\": \"QS-STATIC-TEST-2\",\r\n    \"kind\":\"package\",\r\n    \"description\": \"Package to be built\",\r\n    \"serviceName\": \"\",\r\n    \"imageUrl\": \"\",\r\n    \"restGroupingPrefix\": \"/api/{group}/\"\r\n}",
+                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-2.PKG5-2\",\r\n    \"Alias\" :\"PKG5-2\",\r\n    \"name\": \"Test static package 2\",\r\n    \"parentId\": \"QS-STATIC-TEST-2\",\r\n    \"kind\":\"package\",\r\n    \"description\": \"Package to be built\",\r\n    \"serviceName\": \"\",\r\n    \"imageUrl\": \"\",\r\n    \"restGroupingPrefix\": \"/api/{group}/\",\r\n    \"releaseVersionPattern\": \"^[0-9]{4}[.]{1}[1-4]{1}$\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -11195,11 +11195,6 @@
                                             "    pm.expect(data.events[0].principal.name).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_name}}\"));\r",
                                             "    pm.expect(data.events[0].principal.id).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_id}}\"));\r",
                                             "    pm.expect(data.events[0].principal.type).to.eql('apiKey');\r",
-                                            "});\r",
-                                            "\r",
-                                            "\r",
-                                            "pm.test(\"'userId' is correct\", function () {\r",
-                                            "    pm.expect(data.events[0].userId).to.eql(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "});"
                                         ]
                                     }
@@ -11417,11 +11412,6 @@
                                             "    pm.expect(data.events[0].principal.name).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_name}}\"));\r",
                                             "    pm.expect(data.events[0].principal.id).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_id}}\"));\r",
                                             "    pm.expect(data.events[0].principal.type).to.eql('apiKey');\r",
-                                            "});\r",
-                                            "\r",
-                                            "\r",
-                                            "pm.test(\"'userId' is correct\", function () {\r",
-                                            "    pm.expect(data.events[0].userId).to.eql(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "});"
                                         ]
                                     }
@@ -11639,11 +11629,6 @@
                                             "    pm.expect(data.events[0].principal.name).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_name}}\"));\r",
                                             "    pm.expect(data.events[0].principal.id).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_id}}\"));\r",
                                             "    pm.expect(data.events[0].principal.type).to.eql('apiKey');\r",
-                                            "});\r",
-                                            "\r",
-                                            "\r",
-                                            "pm.test(\"'userId' is correct\", function () {\r",
-                                            "    pm.expect(data.events[0].userId).to.eql(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "});"
                                         ]
                                     }
@@ -11772,11 +11757,6 @@
                                             "    pm.expect(data.events[0].principal.name).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_name}}\"));\r",
                                             "    pm.expect(data.events[0].principal.id).to.eql(pm.variables.replaceIn(\"{{apihub_api_key_id}}\"));\r",
                                             "    pm.expect(data.events[0].principal.type).to.eql('apiKey');\r",
-                                            "});\r",
-                                            "\r",
-                                            "\r",
-                                            "pm.test(\"'userId' is correct\", function () {\r",
-                                            "    pm.expect(data.events[0].userId).to.eql(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "});"
                                         ]
                                     }
@@ -11837,7 +11817,6 @@
                                             "            pm.expect(data.events[i].principal.id).to.include(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "            pm.expect(data.events[i].principal.name).to.eql(pm.variables.replaceIn('{{apihub_api_key_name}}'));\r",
                                             "            pm.expect(data.events[i].principal.type).to.eql(\"apiKey\");\r",
-                                            "            pm.expect(data.events[i].userId).to.eql(pm.variables.replaceIn('{{apihub_api_key_id}}'));\r",
                                             "        }\r",
                                             "    }\r",
                                             "});"
@@ -16172,7 +16151,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"version\"\r\n\r\n0001.1\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"status\"\r\n\r\nrelease\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"servicesWorkspaceId\"\r\n\r\nQS-STATIC-TEST-D\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"csv_for_publish - api-hub.csv\"\r\n\r\nbackend,2024.3,POST,/api/v1/store/order\r\n----------------------------127308995100818139707097--",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"version\"\r\n\r\n0001.1\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"status\"\r\n\r\nrelease\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"servicesWorkspaceId\"\r\n\r\nQS-STATIC-TEST-D\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"csv_for_publish - api-hub.csv\"\r\n\r\nservice,version,method,path\r\nbackend,2024.3,POST,/api/v1/store/order\r\n----------------------------127308995100818139707097--",
                                     "options": {
                                         "raw": {
                                             "language": "text"
@@ -16484,7 +16463,7 @@
                                 "header": [
                                     {
                                         "key": "api-key",
-                                        "value": "{{apihub_api_key_234}}",
+                                        "value": "{{at-api-key}}",
                                         "type": "default"
                                     }
                                 ],
@@ -16543,7 +16522,7 @@
                                 "header": [
                                     {
                                         "key": "api-key",
-                                        "value": "{{apihub_api_key}}",
+                                        "value": "{{at-api-key}}",
                                         "type": "default"
                                     }
                                 ],
@@ -16748,7 +16727,7 @@
                                 "header": [
                                     {
                                         "key": "api-key",
-                                        "value": "{{apihub_api_key}}",
+                                        "value": "{{at-api-key}}",
                                         "type": "default"
                                     },
                                     {
@@ -16978,7 +16957,7 @@
                                 "header": [
                                     {
                                         "key": "api-key",
-                                        "value": "{{apihub_api_key}}",
+                                        "value": "{{at-api-key}}",
                                         "type": "default"
                                     }
                                 ],
@@ -17040,7 +17019,7 @@
                                 "header": [
                                     {
                                         "key": "api-key",
-                                        "value": "{{apihub_api_key}}",
+                                        "value": "{{at-api-key}}",
                                         "type": "default"
                                     },
                                     {
@@ -17183,7 +17162,7 @@
                                 "header": [
                                     {
                                         "key": "api-key",
-                                        "value": "{{apihub_api_key}}",
+                                        "value": "{{at-api-key}}",
                                         "type": "default"
                                     },
                                     {
@@ -17413,7 +17392,7 @@
                                 "header": [
                                     {
                                         "key": "api-key",
-                                        "value": "{{apihub_api_key}}",
+                                        "value": "{{at-api-key}}",
                                         "type": "default"
                                     }
                                 ],
@@ -17475,7 +17454,7 @@
                                 "header": [
                                     {
                                         "key": "api-key",
-                                        "value": "{{apihub_api_key}}",
+                                        "value": "{{at-api-key}}",
                                         "type": "default"
                                     },
                                     {
@@ -17618,7 +17597,7 @@
                                 "header": [
                                     {
                                         "key": "api-key",
-                                        "value": "{{apihub_api_key}}",
+                                        "value": "{{at-api-key}}",
                                         "type": "default"
                                     },
                                     {
@@ -17847,7 +17826,7 @@
                                 "header": [
                                     {
                                         "key": "api-key",
-                                        "value": "{{apihub_api_key}}",
+                                        "value": "{{at-api-key}}",
                                         "type": "default"
                                     }
                                 ],
@@ -17909,7 +17888,7 @@
                                 "header": [
                                     {
                                         "key": "api-key",
-                                        "value": "{{apihub_api_key}}",
+                                        "value": "{{at-api-key}}",
                                         "type": "default"
                                     },
                                     {
@@ -18052,7 +18031,7 @@
                                 "header": [
                                     {
                                         "key": "api-key",
-                                        "value": "{{apihub_api_key}}",
+                                        "value": "{{at-api-key}}",
                                         "type": "default"
                                     },
                                     {
