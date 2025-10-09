@@ -1,17 +1,12 @@
 import { parse, stringify } from 'flatted'
 import { isArray, isObject } from '@netcracker/qubership-apihub-json-crawl'
 
-// This is just a PoC to serialize/deserialize the merged document.
-// Merged document is a JSON object with cycles and symbol keys.
-// Symbol key could be both in object and array.
-// flatted.stringify doesn't serialize custom properties on arrays
-// flatted.parse doesn't deserialize custom properties on arrays
-// lodash cloneDeepWith does not copy custom properties on arrays
-// Approximate times:
-// - OAS large x6: Diff: 57914.54ms, Serialize: 488.82ms, Deserialize: 1057.61ms
-// - GQL1: Diff: 25495.87ms, Serialize: 255.23ms, Deserialize: 477.04ms
-// - GQL2: Diff: 16599.96ms, Serialize: 341.62ms, Deserialize: 527.20ms
-// - Shopify (GQL): Diff: 21453.64ms, Serialize: 186.46ms, Deserialize: 371.04ms
+const INTERNAL_KEYS = Object.freeze({
+  IS_ARRAY: '__isArray',
+  IS_UNDEFINED: '__isUndefined',
+  LENGTH: 'length',
+})
+
 /**
  * Serializes an object with cycles and symbol substitution to a string
  * @param obj - The object to serialize (can contain cycles and Symbol keys)
@@ -20,14 +15,12 @@ import { isArray, isObject } from '@netcracker/qubership-apihub-json-crawl'
  */
 
 export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, string>): string => {
-
-  // Walk the object and replace symbol keys, handling cycles
   const visitedObjects = new WeakSet()
   const objectCache  = new WeakMap<object, unknown>()
 
   const transformSymbols = (value: any): any => {
     if (value === undefined) {
-      return { __isUndefined: true }
+      return { [INTERNAL_KEYS.IS_UNDEFINED]: true }
     }
     if (!isObject(value)) {
       return value
@@ -43,7 +36,7 @@ export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, strin
 
     let result: any;
     if (isArray(value)) {
-      result = hasSymbolKeys ? { __isArray: true } : [];
+      result = hasSymbolKeys ? { [INTERNAL_KEYS.IS_ARRAY]: true } : [];
     } else {
       result = {};
     }
@@ -80,12 +73,6 @@ export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, strin
  * @param stringToSymbolMapping - Mapping from string keys to Symbol keys
  * @returns Deserialized object with Symbol keys restored
  */
-/**
- * Deserializes a string back to an object with symbol key restoration
- * @param str - The serialized string
- * @param stringToSymbolMapping - Mapping from string keys to Symbol keys
- * @returns Deserialized object with Symbol keys restored
- */
 export const deserialize = (str: string, stringToSymbolMapping: Map<string, symbol>): unknown => {
   const parsed = parse(str)
   const visitedObjects = new WeakSet<object>()
@@ -95,7 +82,7 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
     if (!isObject(value)) {
       return value
     }
-    if (value.__isUndefined) {
+    if (value[INTERNAL_KEYS.IS_UNDEFINED]) {
       return undefined
     }
 
@@ -104,7 +91,7 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
     }
     visitedObjects.add(value)
 
-    if (value.__isArray) {
+    if (value[INTERNAL_KEYS.IS_ARRAY]) {
       const arrLength = value.length ?? 0
       const arr = new Array(arrLength)
       objectCache.set(value, arr)
@@ -114,7 +101,7 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
       }
 
       for (const [key, val] of Object.entries(value)) {
-        if (key === '__isArray' || key === 'length' || /^\d+$/.test(key)) {
+        if (key === INTERNAL_KEYS.IS_ARRAY || key === INTERNAL_KEYS.LENGTH || /^\d+$/.test(key)) {
           continue
         }
         const symKey = stringToSymbolMapping.get(key);
