@@ -213,6 +213,8 @@ Connect to PG via pgAdmin and execute the following SQL:
 
 Or you can do the same (create user, create db) via pgAdmin UI.
 
+*Note:* do the same for each backend microservice (api-linter, agents-backend, etc)
+
 **Step 2 - prepare helm chart**
 
 Copy directory `qubership-apihub` with name `qubership-apihub-2`.
@@ -220,11 +222,14 @@ Copy directory `qubership-apihub` with name `qubership-apihub-2`.
 Modify the following lines in `local-k8s-values.yaml`:
 
 ```
+apihubExternalUrl: 'https://qubership-apihub-2.localtest.me'
+...
 apihubUrl: 'qubership-apihub-2.localtest.me' 
 ...
       dbName: 'apihub_backend_2' 
       dbUsername: 'apihub_backend_user_2'  
-      dbPassword: 'apihub_backend_password_2' 
+      dbPassword: 'apihub_backend_password_2'
+<Modify database coordinates for all other backend services as well>
 ```
 In order to change APIHUB release modify `tag: 'dev'` for services to desired docker images tags.
 
