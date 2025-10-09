@@ -106,22 +106,19 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
 
     if (value.__isArray) {
       const arrLength = value.length ?? 0
-      const arr: any[] = new Array(arrLength)
+      const arr = new Array(arrLength)
       objectCache.set(value, arr)
 
       for (let i = 0; i < arrLength; i++) {
         arr[i] = restoreSymbols(value[i])
       }
 
-      // Restore additional properties (including converted symbol keys)
       for (const [key, val] of Object.entries(value)) {
         if (key === '__isArray' || key === 'length' || /^\d+$/.test(key)) {
           continue
         }
-        const symKey = stringToSymbolMapping.get(key)
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        arr[symKey ?? key] = restoreSymbols(val)
+        const symKey = stringToSymbolMapping.get(key);
+        (arr as any)[symKey ?? key] = restoreSymbols(val)
       }
       return arr
     }
