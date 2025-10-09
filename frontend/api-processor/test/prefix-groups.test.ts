@@ -73,15 +73,15 @@ describe('Prefix Groups test', () => {
     const editor = await Editor.openProject(pkg.packageId, pkg)
     const result = await editor.run({
       version: 'prefix2',
-      currentGroup: '/api/v3',
-      previousGroup: 'api/v2',
+      currentGroup: '/api/v3/',
+      previousGroup: '/api/v2/',
       buildType: BUILD_TYPE.PREFIX_GROUPS_CHANGELOG,
     })
 
     expect(result.comparisons?.[0].data?.length).toBe(95)
   })
 
-  test('should compare prefix groups /api/{group}', async () => {
+  test('should compare prefix groups mixed cases', async () => {
     const result = await buildPrefixGroupChangelogPackage({ packageId: 'prefix-groups/mixed-cases' })
 
     expect(result).toEqual(changesSummaryMatcher({
@@ -102,6 +102,18 @@ describe('Prefix Groups test', () => {
       config: { files: [{ fileId: 'spec1.yaml' }, { fileId: 'spec2.yaml' }] },
     })
 
+    expect(result).toEqual(changesSummaryMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,
+    }))
+
+    //check operation ids
     expect(result).toEqual(operationChangesMatcher([
       expect.objectContaining({
         previousOperationId: 'removed-get',
@@ -113,16 +125,6 @@ describe('Prefix Groups test', () => {
         operationId: 'changed1-get',
       }),
     ]))
-    expect(result).toEqual(changesSummaryMatcher({
-      [BREAKING_CHANGE_TYPE]: 1,
-      [NON_BREAKING_CHANGE_TYPE]: 1,
-      [ANNOTATION_CHANGE_TYPE]: 1,
-    }))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({
-      [BREAKING_CHANGE_TYPE]: 1,
-      [NON_BREAKING_CHANGE_TYPE]: 1,
-      [ANNOTATION_CHANGE_TYPE]: 1,
-    }))
   })
 
   test('should compare prefix groups when prefix is moved from server to path', async () => {
@@ -141,6 +143,20 @@ describe('Prefix Groups test', () => {
       [NON_BREAKING_CHANGE_TYPE]: 1,
       [ANNOTATION_CHANGE_TYPE]: 1,
     }))
+
+    //check operation ids
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        previousOperationId: 'removed-get',
+      }),
+      expect.objectContaining({
+        operationId: 'changed1-get',
+        previousOperationId: 'changed1-get',
+      }),
+      expect.objectContaining({
+        operationId: 'added-get',
+      }),
+    ]))
   })
 
   // todo: case that we don't support due to shifting to the new changelog calculation approach which involves comparison of the entire docs instead of the operation vs operation comparison
@@ -178,6 +194,20 @@ describe('Prefix Groups test', () => {
       [NON_BREAKING_CHANGE_TYPE]: 1,
       [ANNOTATION_CHANGE_TYPE]: 1,
     }))
+
+    //check operation ids
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        previousOperationId: 'added-get',
+      }),
+      expect.objectContaining({
+        operationId: 'changed1-get',
+        previousOperationId: 'changed1-get',
+      }),
+      expect.objectContaining({
+        operationId: 'removed-get',
+      }),
+    ]))
   })
 
   test('Add method in a new version', async () => {
@@ -185,6 +215,13 @@ describe('Prefix Groups test', () => {
 
     expect(result).toEqual(changesSummaryMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }))
     expect(result).toEqual(numberOfImpactedOperationsMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }))
+
+    //check operation ids
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        operationId: 'path1-post',
+      }),
+    ]))
   })
 
   test('Remove method in a new version', async () => {
@@ -192,6 +229,13 @@ describe('Prefix Groups test', () => {
 
     expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
     expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+
+    //check operation ids
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        previousOperationId: 'path1-post',
+      }),
+    ]))
   })
 
   test('Change method content in a new version', async () => {
@@ -205,6 +249,14 @@ describe('Prefix Groups test', () => {
       [BREAKING_CHANGE_TYPE]: 1,
       [NON_BREAKING_CHANGE_TYPE]: 1,
     }))
+
+    //check operation ids
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        operationId: 'path1-get',
+        previousOperationId: 'path1-get',
+      }),
+    ]))
   })
 
   test('should compare prefix groups with different length', async () => {
@@ -218,6 +270,14 @@ describe('Prefix Groups test', () => {
 
     expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
     expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+
+    //check operation ids
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        operationId: 'packages-get',
+        previousOperationId: 'packages-get',
+      }),
+    ]))
   })
 
   // todo add case when api/v1 in servers and api/v2 in some paths?
