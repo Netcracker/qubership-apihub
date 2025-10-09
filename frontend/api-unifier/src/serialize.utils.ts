@@ -123,32 +123,15 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
       return arr
     }
 
-    // Process string keys that should be converted to symbol keys for both arrays and objects
-    const keysToReplace: Array<[string, symbol]> = []
+    for (const [key, val] of Object.entries(value)) {
+      const symbolKey = stringToSymbolMapping.get(key);
+      const restored = restoreSymbols(val);
 
-    // First, identify which keys need to be replaced
-    for (const key of Object.keys(value)) {
-      const symbolKey = stringToSymbolMapping.get(key)
       if (symbolKey) {
-        keysToReplace.push([key, symbolKey])
-      }
-    }
-
-    // Replace string keys with symbol keys
-    for (const [stringKey, symbolKey] of keysToReplace) {
-      value[symbolKey] = restoreSymbols(value[stringKey])
-      delete value[stringKey]
-    }
-
-    if (isArray(value)) {
-      // Process array elements
-      for (let i = 0; i < value.length; i++) {
-        value[i] = restoreSymbols(value[i])
-      }
-    } else {
-      // Process remaining properties for objects
-      for (const [key, objValue] of Object.entries(value)) {
-        value[key] = restoreSymbols(objValue)
+        value[symbolKey] = restored;
+        delete value[key];
+      } else {
+        value[key] = restored;
       }
     }
 

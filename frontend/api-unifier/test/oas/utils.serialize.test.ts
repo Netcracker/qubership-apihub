@@ -442,45 +442,48 @@ describe('Serialize/Deserialize Utils', () => {
       expect(deserialized.data[sym]).toEqual('nestedSymbolValue')
       expect(deserialized.data.nestedStr).toBeUndefined()
     })
-  })
 
-  it('should keep undefined data', () => {
-    const original = { data: undefined }
+    it('should preserve undefined elements in arrays', () => {
+      const original = [1, 2, undefined, 4]
 
-    const serialized = serialize(original, new Map())
-    const deserialized = deserialize(serialized, new Map()) as any
+      const serialized = serialize(original, new Map())
+      const deserialized = deserialize(serialized, new Map()) as any
 
-    expect(deserialized).toHaveProperty(['data'], undefined)
-  })
+      expect(deserialized).toHaveLength(4)
+      expect(deserialized[2]).toEqual(undefined)
+    })
 
+    it('should preserve undefined properties in objects', () => {
+      const original = { data: undefined }
 
-  it('should keep undefined array data', () => {
-    const original = [1, 2, undefined, 4]
+      const serialized = serialize(original, new Map())
+      const deserialized = deserialize(serialized, new Map()) as any
 
-    const serialized = serialize(original, new Map())
-    const deserialized = deserialize(serialized, new Map()) as any
+      expect(deserialized).toHaveProperty(['data'], undefined)
+    })
 
-    expect(deserialized).toHaveLength(4)
-    expect(deserialized[2]).toEqual(undefined)
-  })
+    it('you should take an already processed object with the same instances', () => {
+      // This test ensures that if the same object appears multiple times in the structure,
+      // it is serialized once and restored as the same instance (referential equality).
+      // Without using objectCache, deserialization would create two separate instances.
+      // With only visitedObjects, the second reference might be skipped or incomplete.
+      const sym = Symbol('nestedArrayProp')
+      const original: any = {
+        data: [1,2,3] as any
+      }
+      original.data[sym] = 'nestedSymbolValue'
+      original['sameInstanceData'] = original.data as any
 
-  it('same instance', () => {
-    const sym = Symbol('nestedArrayProp')
-    const original: any = {
-      data: [1,2,3] as any
-    }
-    original.data[sym] = 'nestedSymbolValue'
-    original['sameInstanceData'] = original.data as any
+      const symbolToString = new Map<symbol, string>([[sym, 'nestedStr']])
+      const stringToSymbol = new Map<string, symbol>([['nestedStr', sym]])
 
-    const symbolToString = new Map<symbol, string>([[sym, 'nestedStr']])
-    const stringToSymbol = new Map<string, symbol>([['nestedStr', sym]])
+      const serialized = serialize(original, symbolToString)
+      const deserialized = deserialize(serialized, stringToSymbol) as any
 
-    const serialized = serialize(original, symbolToString)
-    const deserialized = deserialize(serialized, stringToSymbol) as any
+      expect(Array.isArray(deserialized.data)).toBe(true);
+      expect(Array.isArray(deserialized.sameInstanceData)).toBe(true);
 
-    expect(Array.isArray(deserialized.data)).toBe(true);
-    expect(Array.isArray(deserialized.sameInstanceData)).toBe(true);
-
-    expect(deserialized.data).toBe(deserialized.sameInstanceData);
+      expect(deserialized.data).toBe(deserialized.sameInstanceData);
+    })
   })
 }) 
