@@ -1,0 +1,1231 @@
+openapi: 3.0.3
+info:
+  title: Qubership APIHUB Agents Backend API
+  description: REST API for managing agents, discovery, snapshots, security checks, and service specifications in Qubership APIHUB agents backend
+  license:
+    name: qubership
+    url: https://qubership.org
+  version: "2024.2"
+  x-nc-api-audience: BWC
+
+servers:
+  - url: https://{apihubAgentsBackend}.qubership.org
+    description: APIHUB server
+    variables:
+      apihubAgentsBackend:
+        description: Name of the APIHUB Agents Backend server.
+        enum:
+          - apihub-agents-backend
+          - dev.apihub-agents-backend
+          - staging.apihub-agents-backend
+        default: apihub-agents-backend
+security:
+  - BearerAuth: []
+  - CookieAuth: []
+  - ApiKeyAuth: []
+  - PersonalAccessToken: []
+tags:
+  - name: Agents
+    description: Agent management operations
+  - name: Discovery
+    description: Service discovery operations
+  - name: Snapshots
+    description: Snapshot management operations
+  - name: Specifications
+    description: Service specification retrieval
+  - name: Security
+    description: Namespace security check operations
+paths:
+  /api/v2/agents:
+    get:
+      tags:
+        - Agents
+      summary: Get list of Agent instances
+      description: Retrieves a list of registered agents with optional filtering
+      operationId: listAgents
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - name: onlyActive
+          in: query
+          required: false
+          description: Filter to show only active agents
+          schema:
+            type: boolean
+            default: true
+        - name: showIncompatible
+          in: query
+          required: false
+          description: Include incompatible agents in results
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgentInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Agents
+      summary: Process agent signal
+      description: Process registration/keepalive message from an agent
+      operationId: processAgentSignal
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cloud
+                - namespace
+                - url
+                - backendVersion
+              properties:
+                cloud:
+                  type: string
+                  description: Cloud where agent is deployed
+                namespace:
+                  type: string
+                  description: Namespace where agent is deployed
+                url:
+                  type: string
+                  description: Agent URL
+                backendVersion:
+                  type: string
+                  description: Backend version
+                name:
+                  type: string
+                  description: Agent name
+                agentVersion:
+                  type: string
+                  description: Agent version
+      responses:
+        '200':
+          description: Message successfully processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    type: string
+                    description: Expected agent version
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v2/agents/{id}:
+    get:
+      tags:
+        - Agents
+      summary: Get agent by ID
+      description: Retrieves detailed information about a specific agent
+      operationId: getAgent
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Agent ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agent information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentInstance'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/agents/{agentId}/namespaces:
+    get:
+      tags:
+        - Agents
+      summary: Get agent namespaces
+      deprecated: true
+      description: Retrieves the list of namespaces available for the specified agent
+      operationId: getAgentNamespacesV1
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - $ref: '#/components/parameters/AgentId'
+      responses:
+        '200':
+          description: Agent namespaces
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  namespaces:
+                    type: array
+                    items:
+                      type: string
+                    description: List of available namespaces
+                  cloudName:
+                    type: string
+                    description: Cloud name
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '424':
+          $ref: '#/components/responses/FailedDependency'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v2/agents/{agentId}/namespaces:
+    get:
+      tags:
+        - Agents
+      summary: Get agent namespaces
+      description: Retrieves the list of namespaces available for the specified agent
+      operationId: getAgentNamespaces
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - $ref: '#/components/parameters/AgentId'
+      responses:
+        '200':
+          description: Agent namespaces
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  namespaces:
+                    type: array
+                    items:
+                      type: string
+                    description: List of available namespaces
+                  cloudName:
+                    type: string
+                    description: Cloud name
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '424':
+          $ref: '#/components/responses/FailedDependency'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v2/agents/{agentId}/namespaces/{namespace}/serviceNames:
+    get:
+      tags:
+        - Agents
+      summary: List service names
+      description: Retrieves the list of service names in the specified namespace
+      operationId: listServiceNames
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - $ref: '#/components/parameters/AgentId'
+        - $ref: '#/components/parameters/Namespace'
+      responses:
+        '200':
+          description: Service names list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - serviceNames
+                properties:
+                  serviceNames:
+                    description: List of the service names in namespace
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: service id
+                        name:
+                          type: string
+                          description: service name
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '424':
+          $ref: '#/components/responses/FailedDependency'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/discover:
+    post:
+      tags:
+        - Discovery
+      summary: Start discovery process
+      description: Initiates the service discovery process for the specified workspace
+      operationId: startDiscovery
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - $ref: '#/components/parameters/AgentId'
+        - $ref: '#/components/parameters/Namespace'
+        - $ref: '#/components/parameters/WorkspaceId'
+      responses:
+        '202':
+          description: Discovery process started successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services:
+    get:
+      tags:
+        - Discovery
+      summary: List discovered services
+      description: Retrieves the list of services discovered in the specified workspace
+      operationId: listDiscoveredServices
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - $ref: '#/components/parameters/AgentId'
+        - $ref: '#/components/parameters/Namespace'
+        - $ref: '#/components/parameters/WorkspaceId'
+      responses:
+        '200':
+          description: List of discovered services
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  services:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: Service ID
+                        serviceName:
+                          type: string
+                          description: Service name
+                        url:
+                          type: string
+                          description: Service URL
+                        specs:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: Specification name
+                              format:
+                                type: string
+                                description: Specification format (json or yaml)
+                              fileId:
+                                type: string
+                                description: File identifier
+                              type:
+                                type: string
+                                description: Specification type
+                              xApiKind:
+                                type: string
+                                description: API kind metadata
+                        baseline:
+                          type: object
+                          properties:
+                            packageId:
+                              type: string
+                              description: Package ID
+                            name:
+                              type: string
+                              description: Baseline name
+                            url:
+                              type: string
+                              description: Baseline URL
+                            versions:
+                              type: array
+                              items:
+                                type: string
+                              description: Available versions
+                        serviceLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          description: Service labels
+                        availablePromoteStatuses:
+                          type: array
+                          items:
+                            type: string
+                          description: Available promotion statuses
+                        proxyServerUrl:
+                          type: string
+                          description: Proxy server URL
+                  status:
+                    type: string
+                    enum:
+                      - none
+                      - running
+                      - complete
+                      - error
+                      - failed
+                    description: Service processing status
+                  debug:
+                    type: string
+                    description: Debug information
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services/{serviceId}/specs/{fileId}:
+    get:
+      tags:
+        - Specifications
+      summary: Get service specification
+      description: Retrieves the specification file for a specific service
+      operationId: getServiceSpecification
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - $ref: '#/components/parameters/AgentId'
+        - $ref: '#/components/parameters/Namespace'
+        - $ref: '#/components/parameters/WorkspaceId'
+        - $ref: '#/components/parameters/ServiceId'
+        - name: fileId
+          in: path
+          required: true
+          description: Specification file ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Service specification file content
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/snapshots:
+    post:
+      tags:
+        - Snapshots
+      summary: Create snapshot
+      description: Creates a new snapshot of services in the specified workspace
+      operationId: createSnapshot
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - $ref: '#/components/parameters/AgentId'
+        - $ref: '#/components/parameters/Namespace'
+        - $ref: '#/components/parameters/WorkspaceId'
+        - name: clientBuild
+          in: query
+          required: false
+          description: Client-side package build will be used. Should be used only for browser-based build process
+          schema:
+            type: boolean
+            default: false
+        - name: promote
+          in: query
+          required: false
+          description: If true, the specifications will be published to the baseline package
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - version
+              properties:
+                version:
+                  type: string
+                  description: Snapshot version
+                previousVersion:
+                  type: string
+                  description: Previous baseline version
+                services:
+                  type: array
+                  items:
+                    type: string
+                  description: List of service IDs to include
+                status:
+                  type: string
+                  description: Snapshot status
+                builderId:
+                  type: string
+                  description: Builder identifier. **Required** only if clientBuild=true. Used to bind the build to specific executor
+      responses:
+        '200':
+          description: Snapshot created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  snapshot:
+                    type: object
+                    properties:
+                      packageId:
+                        type: string
+                        description: Package ID
+                      publishId:
+                        type: string
+                        description: Publish process Id
+                  services:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        packageId:
+                          type: string
+                          description: Package identifier
+                        version:
+                          type: string
+                          description: Version of the build
+                        previousVersion:
+                          type: string
+                          description: Previous version reference
+                        previousVersionPackageId:
+                          type: string
+                          description: Package ID of the previous version
+                        status:
+                          type: string
+                          description: Build status
+                        versionFolder:
+                          type: string
+                          description: Folder path for this version
+                        refs:
+                          type: array
+                          description: Build configuration references
+                          items:
+                            type: object
+                            properties:
+                              refId:
+                                type: string
+                                description: Reference identifier
+                              version:
+                                type: string
+                                description: Reference version
+                            required:
+                              - refId
+                              - version
+                        files:
+                          type: array
+                          description: Files included in the build
+                          items:
+                            type: object
+                            properties:
+                              fileId:
+                                type: string
+                                description: File identifier
+                              publish:
+                                type: boolean
+                                description: Whether to publish this file
+                              labels:
+                                type: array
+                                description: File labels
+                                items:
+                                  type: string
+                              xApiKind:
+                                type: string
+                                description: API kind metadata
+                            required:
+                              - fileId
+                              - publish
+                              - labels
+                        publishId:
+                          type: string
+                          description: Publishing process identifier
+                        serviceId:
+                          type: string
+                          description: Associated service identifier
+                        apihubPackageUrl:
+                          type: string
+                          description: URL to the APIHUB package (required for frontend in promote scenarios)
+                        createdBy:
+                          type: string
+                          description: User who created the build
+                        metadata:
+                          type: object
+                          additionalProperties: true
+                          description: Build metadata as key-value pairs
+                        serviceName:
+                          type: string
+                          description: Name of the associated service
+                        buildType:
+                          type: string
+                          description: Type of build configuration
+                        externalMetadata:
+                          type: object
+                          additionalProperties: true
+                          description: External metadata as key-value pairs
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+        - Snapshots
+      summary: List snapshots
+      description: Retrieves a list of snapshots for the specified workspace
+      operationId: listSnapshots
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - $ref: '#/components/parameters/AgentId'
+        - $ref: '#/components/parameters/Namespace'
+        - $ref: '#/components/parameters/WorkspaceId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: List of snapshots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  snapshots:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        version:
+                          type: string
+                          description: Snapshot version
+                        createdAt:
+                          type: string
+                          format: date-time
+                          description: Creation timestamp
+                        notLatestRevision:
+                          type: boolean
+                          description: Indicates if this is not the latest revision
+                  packageId:
+                    type: string
+                    description: Package ID
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/snapshots/{version}:
+    get:
+      tags:
+        - Snapshots
+      summary: Get snapshot
+      description: Retrieves detailed information about a specific snapshot version
+      operationId: getSnapshot
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - $ref: '#/components/parameters/AgentId'
+        - $ref: '#/components/parameters/Namespace'
+        - $ref: '#/components/parameters/WorkspaceId'
+        - name: version
+          in: path
+          required: true
+          description: Snapshot version
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Snapshot details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    type: string
+                    description: Snapshot version
+                  apiTypes:
+                    type: array
+                    items:
+                      type: string
+                    description: API types in the snapshot
+                  previousVersion:
+                    type: string
+                    description: Previous snapshot version
+                  publishedAt:
+                    type: string
+                    description: Publication timestamp
+                  services:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: Service ID
+                        packageId:
+                          type: string
+                          description: Package ID
+                        previousVersionPackageId:
+                          type: string
+                          description: Previous version package ID
+                        changes:
+                          type: object
+                          properties:
+                            breaking:
+                              type: integer
+                              description: Number of breaking changes
+                            semi-breaking:
+                              type: integer
+                              description: Number of semi-breaking changes
+                            deprecated:
+                              type: integer
+                              description: Number of deprecated changes
+                            non-breaking:
+                              type: integer
+                              description: Number of non-breaking changes
+                            annotation:
+                              type: integer
+                              description: Number of annotation changes
+                            unclassified:
+                              type: integer
+                              description: Number of unclassified changes
+                        viewChangesUrl:
+                          type: string
+                          description: URL to view changes
+                        viewSnapshotUrl:
+                          type: string
+                          description: URL to view service snapshot
+                        viewBaselineUrl:
+                          type: string
+                          description: URL to view baseline
+                        baselineFound:
+                          type: boolean
+                          description: Indicates if baseline was found
+                        baselineVersionFound:
+                          type: boolean
+                          description: Indicates if baseline version was found
+                        apiTypes:
+                          type: array
+                          items:
+                            type: string
+                          description: API types for this service
+                  viewSnapshotUrl:
+                    type: string
+                    description: URL to view the snapshot
+                  notLatestRevision:
+                    type: boolean
+                    description: Indicates if this is not the latest revision
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v2/security/authCheck:
+    post:
+      tags:
+        - Security
+      summary: Start authentication security check
+      description: Initiates an authentication security check process for the specified namespace and workspace
+      operationId: startAuthSecurityCheck
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - agentId
+                - name
+                - workspaceId
+              properties:
+                agentId:
+                  type: string
+                  description: Agent ID
+                name:
+                  type: string
+                  description: Namespace name
+                workspaceId:
+                  type: string
+                  description: Workspace ID
+      responses:
+        '202':
+          description: Security check process started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  processId:
+                    type: string
+                    description: Process identifier
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v3/security/authCheck:
+    get:
+      tags:
+        - Security
+      summary: Get authentication security check reports
+      description: Retrieves list of authentication security check reports
+      operationId: getAuthSecurityCheckReports
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - name: agentId
+          in: query
+          required: false
+          description: Agent ID to filter results
+          schema:
+            type: string
+        - name: name
+          in: query
+          required: false
+          description: Namespace name to filter results
+          schema:
+            type: string
+        - name: workspaceId
+          in: query
+          required: false
+          description: Workspace ID to filter results
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: List of security check reports
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reports:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        processId:
+                          type: string
+                          description: Process ID
+                        createdAt:
+                          type: string
+                          format: date-time
+                          description: Creation timestamp
+                        createdBy:
+                          type: object
+                          additionalProperties: true
+                          description: User who created the check
+                        status:
+                          type: string
+                          description: Check status
+                        details:
+                          type: string
+                          description: Additional details
+                        servicesProcessed:
+                          type: integer
+                          description: Number of services processed
+                        servicesTotal:
+                          type: integer
+                          description: Total number of services
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v2/security/authCheck/{processId}/status:
+    get:
+      tags:
+        - Security
+      summary: Get authentication security check status
+      description: Retrieves the current status of a specific authentication security check process
+      operationId: getAuthSecurityCheckStatus
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - $ref: '#/components/parameters/ProcessId'
+      responses:
+        '200':
+          description: Security check status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Current status
+                  servicesProcessed:
+                    type: integer
+                    description: Number of services processed
+                  servicesTotal:
+                    type: integer
+                    description: Total number of services
+                  details:
+                    type: string
+                    description: Status details
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v2/security/authCheck/{processId}/report:
+    get:
+      tags:
+        - Security
+      summary: Get authentication security check result
+      description: Downloads the security check result as an Excel report
+      operationId: getAuthSecurityCheckResult
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - $ref: '#/components/parameters/ProcessId'
+      responses:
+        '200':
+          description: Excel report file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              description: Attachment filename
+              schema:
+                type: string
+                example: 'attachment; filename="security-report.xlsx"'
+            Content-Transfer-Encoding:
+              description: Transfer encoding
+              schema:
+                type: string
+                example: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /agents/{agentId}/namespaces/{namespace}/services/{serviceId}/proxy/{path}:
+    get:
+      summary: Proxy endpoint to service
+      description: Proxy endpoint to service
+      operationId: getAgentsIdNamespacesIdServicesProxy
+      security:
+        - {}
+      tags:
+        - Agent
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+        - $ref: "#/components/parameters/Namespace"
+        - $ref: "#/components/parameters/ServiceId"
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+          description: String that includes paths and query params
+          example: api/v2/escaped/te%20xt/text/text123?escaped=te%20xt
+        - name: X-Apihub-Authorization
+          in: header
+          schema:
+            type: string
+          description: |
+            nc-service authorization:
+              * if system env INSECURE_PROXY is empty or false, then X-Apihub-Authorization is **required**
+              * if system env INSECURE_PROXY = true, then then X-Apihub-Authorization is optional
+      responses:
+        1XX:
+          description: Information responses
+          content:
+            "*/*":
+              schema:
+                description: Schema of any type
+        2XX:
+          description: Successful responses
+          content:
+            "*/*":
+              schema:
+                description: Schema of any type
+        3XX:
+          description: Redirection messages
+          content:
+            "*/*":
+              schema:
+                description: Schema of any type
+        4XX:
+          description: Client error responses
+          content:
+            "*/*":
+              schema:
+                description: Schema of any type
+        5XX:
+          description: Server error responses
+          content:
+            "*/*":
+              schema:
+                description: Schema of any type
+components:
+  parameters:
+    AgentId:
+      name: agentId
+      in: path
+      required: true
+      description: Agent ID
+      schema:
+        type: string
+    Namespace:
+      name: namespace
+      in: path
+      required: true
+      description: Namespace name
+      schema:
+        type: string
+    WorkspaceId:
+      name: workspaceId
+      in: path
+      required: true
+      description: Workspace ID
+      schema:
+        type: string
+    ServiceId:
+      name: serviceId
+      in: path
+      required: true
+      description: Service ID (URL encoded)
+      schema:
+        type: string
+    Page:
+      name: page
+      in: query
+      required: false
+      description: Page number for pagination
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Number of items per page
+      schema:
+        type: integer
+        minimum: 1
+        default: 100
+    ProcessId:
+      name: processId
+      in: path
+      required: true
+      description: Process ID of the security check
+      schema:
+        type: string
+  schemas:
+    AgentInstance:
+      type: object
+      properties:
+        agentId:
+          type: string
+          description: Unique agent identifier
+        agentDeploymentCloud:
+          type: string
+          description: Cloud where agent is deployed
+        agentDeploymentNamespace:
+          type: string
+          description: Namespace where agent is deployed
+        agentUrl:
+          type: string
+          description: Agent URL endpoint
+        lastActive:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+          description: Current status of the agent
+        backendVersion:
+          type: string
+          description: Backend version
+        name:
+          type: string
+          description: Agent name
+        agentVersion:
+          type: string
+          description: Agent version
+        compatibilityError:
+          $ref: '#/components/schemas/AgentCompatibilityError'
+    AgentCompatibilityError:
+      type: object
+      properties:
+        severity:
+          type: string
+          enum:
+            - error
+            - warning
+          description: Severity level of compatibility error
+        message:
+          type: string
+          description: Error message details
+    CustomError:
+      type: object
+      description: An error description
+      properties:
+        status:
+          type: integer
+          description: HTTP status code
+        code:
+          type: string
+          description: Internal string error code. Mandatory in response.
+        message:
+          type: string
+          description: Error message
+        debug:
+          type: string
+          description: Debug information
+        params:
+          type: object
+          additionalProperties: true
+          description: Error parameters
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CustomError'
+    Unauthorized:
+      description: Unauthorized access
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CustomError'
+    Forbidden:
+      description: Access forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CustomError'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CustomError'
+    FailedDependency:
+      description: Failed dependency
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CustomError'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CustomError'
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication.
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: apihub-access-token
+      description: Authentication via the `apihub-access-token` cookie.
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: api-key
+      description: API key authentication.
+    PersonalAccessToken:
+      type: apiKey
+      in: header
+      name: X-Personal-Access-Token
+      description: Personal Access Token authentication
