@@ -27,7 +27,7 @@ import { ANNOTATION_CHANGE_TYPE, BREAKING_CHANGE_TYPE, BUILD_TYPE, NON_BREAKING_
 const pkg = LocalRegistry.openPackage('apihub')
 
 describe('Prefix Groups test', () => {
-  test('should compare prefix groups /api/{group}, groups=v2, v3', async () => {
+  test('should compare prefix groups groups=v2,v3', async () => {
     // generate missing versions/apihub folder contents
     await pkg.publish(pkg.packageId, {
       version: 'v1',
@@ -96,7 +96,7 @@ describe('Prefix Groups test', () => {
     }))
   })
 
-  test('should compare prefix groups /api/{group} when prefix specified in server', async () => {
+  test('should compare prefix groups when prefix specified in server', async () => {
     const result = await buildPrefixGroupChangelogPackage({
       packageId: 'prefix-groups/mixed-cases-with-bulk-prefix-increment',
       config: { files: [{ fileId: 'spec1.yaml' }, { fileId: 'spec2.yaml' }] },
@@ -125,7 +125,7 @@ describe('Prefix Groups test', () => {
     }))
   })
 
-  test('should compare prefix groups /api/{group} when prefix is moved from server to path', async () => {
+  test('should compare prefix groups when prefix is moved from server to path', async () => {
     const result = await buildPrefixGroupChangelogPackage({
       packageId: 'prefix-groups/mixed-cases-with-prefix-moved-from-server-to-path',
       config: { files: [{ fileId: 'spec1.yaml' }, { fileId: 'spec2.yaml' }] },
@@ -144,7 +144,7 @@ describe('Prefix Groups test', () => {
   })
 
   // todo: case that we don't support due to shifting to the new changelog calculation approach which involves comparison of the entire docs instead of the operation vs operation comparison
-  test.skip('should compare prefix groups /api/{group} when prefix is overridden in method', async () => {
+  test.skip('should compare prefix groups when prefix is overridden in method', async () => {
     const result = await buildPrefixGroupChangelogPackage({
       packageId: 'prefix-groups/mixed-cases-with-method-prefix-override',
       config: { files: [{ fileId: 'spec1.yaml' }, { fileId: 'spec2.yaml' }] },
@@ -162,7 +162,7 @@ describe('Prefix Groups test', () => {
     }))
   })
 
-  test('should compare prefix groups /api/{group} when prefix is overridden in path', async () => {
+  test('should compare prefix groups when prefix is overridden in path', async () => {
     const result = await buildPrefixGroupChangelogPackage({
       packageId: 'prefix-groups/mixed-cases-with-path-prefix-override',
       config: { files: [{ fileId: 'spec1.yaml' }, { fileId: 'spec2.yaml' }] },
