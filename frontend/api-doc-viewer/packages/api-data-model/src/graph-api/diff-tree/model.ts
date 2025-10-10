@@ -24,7 +24,8 @@ import {
   isGraphApiDirectives,
   isGraphApiInputObjectDefinition,
   isGraphApiListDefinition,
-  isGraphApiObjectiveDefinition
+  isGraphApiObjectiveDefinition,
+  isGraphApiOperation
 } from '@netcracker/qubership-apihub-graphapi';
 import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl';
 import { DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstract/diff';
@@ -34,6 +35,7 @@ import {
   getNodeComplexityType,
   inverDiffAction,
   isDiff,
+  isDiffMetaRecord,
   isObject,
   objectKeys,
   PathUtils,
@@ -240,7 +242,7 @@ export class GraphApiModelDiffTree<
 
   public simpleDiffMeta(params: JsonSchemaCreateNodeParams<T, K, M>): GraphApiDiffNodeMeta {
     const { id } = params
-    let { value } = params
+    let value = params.value as unknown
 
     const $metaChanges: Partial<DiffRecord> = {}
 
@@ -276,7 +278,30 @@ export class GraphApiModelDiffTree<
         }
       }
       // deprecation reason
-      // TODO 09.10.2025 // TBA
+      if (isGraphApiOperation(value)) {
+        const directives = value.directives ?? {}
+        const path = ['deprecationReason']
+        // added/removed deprecation
+        if (
+          this.metaKey in directives &&
+          isDiffMetaRecord(directives[this.metaKey]) &&
+          'deprecated' in directives[this.metaKey]
+        ) {
+          const maybeDiff = directives[this.metaKey].deprecated as unknown
+          const diff = isDiff(maybeDiff) ? maybeDiff : undefined
+          diff && setValueByPath($metaChanges, diff, ...path)
+        }
+        // replace deprecation reason
+        const usedDirectiveDeprecated = directives.deprecated
+        if (usedDirectiveDeprecated) {
+          const { meta } = usedDirectiveDeprecated
+          if (meta && this.metaKey in meta) {
+            const maybeDiff = meta[this.metaKey].reason as unknown
+            const diff = isDiff(maybeDiff) ? maybeDiff : undefined
+            diff && setValueByPath($metaChanges, diff, ...path)
+          }
+        }
+      }
     }
 
     const $childrenChanges = this.getChildrenChanges(id, value ?? {})
@@ -333,7 +358,7 @@ export class GraphApiModelDiffTree<
   }
 
   public createNodeValue(params: JsonSchemaCreateNodeParams<T, K, M>): T {
-    const { value } = params
+    const value = params.value as unknown
     if (value === undefined || value === null) {
       // return null as T
       throw new Error(`[GraphAPI][Diff] Provided value is empty. Value = ${value}`)
@@ -461,10 +486,12 @@ export class GraphApiModelDiffTree<
       } as T
     }
 
-    // const $changes = this.getPropsChanges(value, graphSchemaNodeValueProps)
+    const $changes: Partial<DiffRecord> = {}
+
+
     return {
       ...pick<any>(value, graphSchemaNodeValueProps),
-      // ...Object.keys($changes).length ? { $changes } : {},
+      ...Object.keys($changes).length ? { $changes } : {},
     } as T
   }
 
@@ -515,6 +542,12 @@ export class GraphApiModelDiffTree<
     return changes
   }
 
+  /** @deprecated
+   *
+   * @param path
+   * @param change
+   * @private
+   */
   private transformChangeForDeprecation(path: JsonPath, change: Diff | DiffMetaRecord): Diff | DiffMetaRecord {
     if (path.length < 2) {
       return change

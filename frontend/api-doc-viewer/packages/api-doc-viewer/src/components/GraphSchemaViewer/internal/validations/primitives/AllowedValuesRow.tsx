@@ -14,8 +14,23 @@
  * limitations under the License.
  */
 
-import { applyDiffReplaceAlias, IGraphSchemaEnumValueType, isDiff, isDiffMetaRecord, isDiffRecord, NodeChange } from '@netcracker/qubership-apihub-api-data-model'
-import { ActionType, Diff, DiffAction, DiffMetaRecord, isDiffAdd, isDiffRemove, isDiffReplace } from "@netcracker/qubership-apihub-api-diff"
+import {
+  applyDiffReplaceAlias,
+  IGraphSchemaEnumValueType,
+  isDiff,
+  isDiffMetaRecord,
+  isDiffRecord,
+  NodeChange
+} from '@netcracker/qubership-apihub-api-data-model'
+import {
+  ActionType,
+  Diff,
+  DiffAction,
+  DiffMetaRecord,
+  isDiffAdd,
+  isDiffRemove,
+  isDiffReplace
+} from "@netcracker/qubership-apihub-api-diff"
 import type { FC } from 'react'
 import { ReactNode } from 'react'
 import { NODE_DIFF_COLOR_MAP } from '../../../../../consts/changes'
@@ -135,6 +150,7 @@ export const AllowedValuesRow: FC<AllowedValuesRowProps> = (props) => {
 
         return (
           <AllowedValueRow
+            key={`allowed-value-row-${item}`}
             shift={shift}
             initialValue={item}
             initialDescription={description}
