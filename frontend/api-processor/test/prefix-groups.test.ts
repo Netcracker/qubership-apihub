@@ -263,6 +263,25 @@ describe('Prefix Groups test', () => {
     ]))
   })
 
+  test('Change path parameter name in a new version', async () => {
+    const result = await buildPrefixGroupChangelogPackage({ packageId: 'prefix-groups/change-path-param-name' })
+
+    expect(result).toEqual(changesSummaryMatcher({
+      [ANNOTATION_CHANGE_TYPE]: 2,
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [ANNOTATION_CHANGE_TYPE]: 1,
+    }))
+
+    //check operation ids
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        operationId: 'users-id-posts-get',
+        previousOperationId: 'users-userid-posts-get',
+      }),
+    ]))
+  })
+
   test('should compare prefix groups with different length', async () => {
     const result = await buildPrefixGroupChangelogPackage({
       packageId: 'prefix-groups/different-prefix-length',
