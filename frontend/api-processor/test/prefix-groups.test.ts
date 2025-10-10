@@ -27,9 +27,8 @@ import { ANNOTATION_CHANGE_TYPE, BREAKING_CHANGE_TYPE, BUILD_TYPE, NON_BREAKING_
 const pkg = LocalRegistry.openPackage('apihub')
 
 describe('Prefix Groups test', () => {
-  // this test uses too large sample (runs too long)
-  // and checks only number of operations,
-  // mostly useless
+
+  // this test uses too large sample (runs too long) and checks only number of operations, mostly useless
   // todo: remove this test
   test.skip('should compare prefix groups groups=v2,v3', async () => {
     // generate missing versions/apihub folder contents
@@ -120,13 +119,14 @@ describe('Prefix Groups test', () => {
     //check operation ids
     expect(result).toEqual(operationChangesMatcher([
       expect.objectContaining({
-        previousOperationId: 'removed-get',
+        previousOperationId: 'api-v1-removed-get',
       }),
       expect.objectContaining({
-        operationId: 'added-get',
+        operationId: 'api-v2-added-get',
       }),
       expect.objectContaining({
-        operationId: 'changed1-get',
+        operationId: 'api-v2-changed1-get',
+        previousOperationId: 'api-v1-changed1-get',
       }),
     ]))
   })
@@ -151,14 +151,14 @@ describe('Prefix Groups test', () => {
     //check operation ids
     expect(result).toEqual(operationChangesMatcher([
       expect.objectContaining({
-        previousOperationId: 'removed-get',
+        previousOperationId: 'api-v1-removed-get',
       }),
       expect.objectContaining({
-        operationId: 'changed1-get',
-        previousOperationId: 'changed1-get',
+        operationId: 'api-v2-changed1-get',
+        previousOperationId: 'api-v1-changed1-get',
       }),
       expect.objectContaining({
-        operationId: 'added-get',
+        operationId: 'api-v2-added-get',
       }),
     ]))
   })
@@ -202,14 +202,14 @@ describe('Prefix Groups test', () => {
     //check operation ids
     expect(result).toEqual(operationChangesMatcher([
       expect.objectContaining({
-        previousOperationId: 'added-get',
+        previousOperationId: 'api-v1-removed-get',
       }),
       expect.objectContaining({
-        operationId: 'changed1-get',
-        previousOperationId: 'changed1-get',
+        operationId: 'api-v2-changed1-get',
+        previousOperationId: 'api-v1-changed1-get',
       }),
       expect.objectContaining({
-        operationId: 'removed-get',
+        operationId: 'api-v2-added-get',
       }),
     ]))
   })
@@ -223,7 +223,7 @@ describe('Prefix Groups test', () => {
     //check operation ids
     expect(result).toEqual(operationChangesMatcher([
       expect.objectContaining({
-        operationId: 'path1-post',
+        operationId: 'api-v2-path1-post',
       }),
     ]))
   })
@@ -237,7 +237,7 @@ describe('Prefix Groups test', () => {
     //check operation ids
     expect(result).toEqual(operationChangesMatcher([
       expect.objectContaining({
-        previousOperationId: 'path1-post',
+        previousOperationId: 'api-v1-path1-post',
       }),
     ]))
   })
@@ -257,8 +257,8 @@ describe('Prefix Groups test', () => {
     //check operation ids
     expect(result).toEqual(operationChangesMatcher([
       expect.objectContaining({
-        operationId: 'path1-get',
-        previousOperationId: 'path1-get',
+        operationId: 'api-v2-path1-get',
+        previousOperationId: 'api-v1-path1-get',
       }),
     ]))
   })
@@ -276,8 +276,8 @@ describe('Prefix Groups test', () => {
     //check operation ids
     expect(result).toEqual(operationChangesMatcher([
       expect.objectContaining({
-        operationId: 'users-id-posts-get',
-        previousOperationId: 'users-userid-posts-get',
+        operationId: 'api-v2-users-id-posts-get',
+        previousOperationId: 'api-v1-users-userid-posts-get',
       }),
     ]))
   })
@@ -297,8 +297,8 @@ describe('Prefix Groups test', () => {
     //check operation ids
     expect(result).toEqual(operationChangesMatcher([
       expect.objectContaining({
-        operationId: 'packages-get',
-        previousOperationId: 'packages-get',
+        operationId: 'api-v1000-packages-get',
+        previousOperationId: 'api-v10-packages-get',
       }),
     ]))
   })

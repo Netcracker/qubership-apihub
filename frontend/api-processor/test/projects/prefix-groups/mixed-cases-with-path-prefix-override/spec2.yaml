@@ -5,7 +5,7 @@ info:
 servers:
   - url: https://example1.com/api/v3
 paths:
-  /removed:
+  /added:
     get:
       responses:
         '200':

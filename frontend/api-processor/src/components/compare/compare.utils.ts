@@ -268,13 +268,13 @@ export function createOperationChange(
   const impactedSummary = calculateImpactedSummary([changeSummary])
 
   const currentOperationFields = current && {
-    operationId: removeGroupPrefixFromOperationId(current.operationId, currentGroup ?? ''),
+    operationId: current.operationId,
     apiKind: current.apiKind,
     metadata: getOperationMetadata(current),
   }
 
   const previousOperationFields = previous && {
-    previousOperationId: removeGroupPrefixFromOperationId(previous.operationId, previousGroup ?? ''),
+    previousOperationId: previous.operationId,
     previousApiKind: previous.apiKind,
     previousMetadata: getOperationMetadata(previous),
   }
