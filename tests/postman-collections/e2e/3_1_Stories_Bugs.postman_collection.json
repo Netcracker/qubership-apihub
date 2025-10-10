@@ -16398,7 +16398,7 @@
                             "name": "8.29.1 Delete static test data from DB",
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/internal/clear/QS-STATIC-TEST-2",
+                                    "raw": "{{SERVER_HOST}}/api/internal/clear/STATIC-TEST-3",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
@@ -16406,7 +16406,7 @@
                                         "api",
                                         "internal",
                                         "clear",
-                                        "QS-STATIC-TEST-2"
+                                        "STATIC-TEST-3"
                                     ]
                                 },
                                 "method": "DELETE",
@@ -16469,7 +16469,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\"id\": \"QS-STATIC-TEST-2\",\"Alias\": \"QS-STATIC-TEST-2\",\"name\": \"Test Workspace\",\"parentId\": null,\"kind\": \"workspace\",\"description\": \"Workspace for schema comparison tests\"}",
+                                    "raw": "{\"id\": \"QS-STATIC-TEST-3\",\"Alias\": \"QS-STATIC-TEST-3\",\"name\": \"Test Workspace\",\"parentId\": null,\"kind\": \"workspace\",\"description\": \"Workspace for schema comparison tests\"}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -16528,7 +16528,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\"id\": \"QS-STATIC-TEST-2.PARAMS\",\"Alias\": \"PARAMS\",\"name\": \"Parameters Schema Test\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for parameters schema comparison\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
+                                    "raw": "{\"id\": \"QS-STATIC-TEST-3.PARAMS\",\"Alias\": \"PARAMS\",\"name\": \"Parameters Schema Test\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for parameters schema comparison\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -16600,7 +16600,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"QS-STATIC-TEST-2.PARAMS\",\r\n    \"version\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"before.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"before.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIAOJtL1sAAAAAAAAAAAAAAAALACAAYmVmb3JlLnlhbWx1eAsAAQQAAAAABAAAAABVVA0AB6nux2iH78do2YrCaG1SyW6DMBC9I/EPI7USp7KkVQ++9VTl1Ej5AgcG6ipe6hna8Pc1EIJRc7PeNm9sW4dGOiXgOa/yMk2Uaa1IEwBWfEYBx1/ZdejhgExsPcITfATL22E/OkbhD3pS1ggI/rzapYmT/ElTRuGQpwNAdzsBUK+19IOAd2SQBvCiiJXpIMjzRdQg1V45nqLvCOE0wL65ya1DL0fxvhHjsNB3oZz0UiOHmrcGENYwARQzWa04gArzvnv0QwxS/YlaihgCePTYCsgeitpqZw0apmIWUhHmZ4vaIwWaMJ6f7coy2+RtFj72dY1EbX9eN0uTdc7kvM66phyiG95kzbIYg9ZbDWvaYuPBhSuxpy+s19vzYwFWm/aq2VSffcowhq8SE631WvJEvb7EBF6kduP/qsoVnl7kfy6xD29+193YrlP4B1BLBwjDUMwUPgEAAMQCAABQSwECFAMUAAgACADibS9bw1DMFD4BAADEAgAACwAYAAAAAAAAAAAAtoEAAAAAYmVmb3JlLnlhbWx1eAsAAQQAAAAABAAAAABVVAUAAanux2hQSwUGAAAAAAEAAQBRAAAAlwEAAAAA\r\n----------------------------127308995100818139707097--",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"QS-STATIC-TEST-3.PARAMS\",\r\n    \"version\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"before.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"before.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIAOJtL1sAAAAAAAAAAAAAAAALACAAYmVmb3JlLnlhbWx1eAsAAQQAAAAABAAAAABVVA0AB6nux2iH78do2YrCaG1SyW6DMBC9I/EPI7USp7KkVQ++9VTl1Ej5AgcG6ipe6hna8Pc1EIJRc7PeNm9sW4dGOiXgOa/yMk2Uaa1IEwBWfEYBx1/ZdejhgExsPcITfATL22E/OkbhD3pS1ggI/rzapYmT/ElTRuGQpwNAdzsBUK+19IOAd2SQBvCiiJXpIMjzRdQg1V45nqLvCOE0wL65ya1DL0fxvhHjsNB3oZz0UiOHmrcGENYwARQzWa04gArzvnv0QwxS/YlaihgCePTYCsgeitpqZw0apmIWUhHmZ4vaIwWaMJ6f7coy2+RtFj72dY1EbX9eN0uTdc7kvM66phyiG95kzbIYg9ZbDWvaYuPBhSuxpy+s19vzYwFWm/aq2VSffcowhq8SE631WvJEvb7EBF6kduP/qsoVnl7kfy6xD29+193YrlP4B1BLBwjDUMwUPgEAAMQCAABQSwECFAMUAAgACADibS9bw1DMFD4BAADEAgAACwAYAAAAAAAAAAAAtoEAAAAAYmVmb3JlLnlhbWx1eAsAAQQAAAAABAAAAABVVAUAAanux2hQSwUGAAAAAAEAAQBRAAAAlwEAAAAA\r\n----------------------------127308995100818139707097--",
                                     "options": {
                                         "raw": {
                                             "language": "text"
@@ -16963,7 +16963,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\"id\": \"QS-STATIC-TEST-2.REQ_BODY\",\"Alias\": \"REQ_BODY\",\"name\": \"Request Body Schema Test\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for request body schema comparison\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
+                                    "raw": "{\"id\": \"QS-STATIC-TEST-3.REQ_BODY\",\"Alias\": \"REQ_BODY\",\"name\": \"Request Body Schema Test\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for request body schema comparison\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -17398,7 +17398,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\"id\": \"QS-STATIC-TEST-2.RESP_BODY\",\"Alias\": \"RESP_BODY\",\"name\": \"Response Body Schema Test\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for response body schema comparison\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
+                                    "raw": "{\"id\": \"QS-STATIC-TEST-3.RESP_BODY\",\"Alias\": \"RESP_BODY\",\"name\": \"Response Body Schema Test\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for response body schema comparison\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -17832,7 +17832,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\"id\": \"QS-STATIC-TEST-2.RESP_HEADERS\",\"Alias\": \"RESP_HEADERS\",\"name\": \"Response Headers Schema Test\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for response headers schema comparison\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
+                                    "raw": "{\"id\": \"QS-STATIC-TEST-3.RESP_HEADERS\",\"Alias\": \"RESP_HEADERS\",\"name\": \"Response Headers Schema Test\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for response headers schema comparison\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -18207,56 +18207,6 @@
                                     ]
                                 },
                                 "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "8.29.26 Delete static_test_2 data from",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 204\", function () {\r",
-                                            "    pm.response.to.have.status(204);\r",
-                                            "});\r",
-                                            ""
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/internal/clear/STATIC-TEST-2",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "internal",
-                                        "clear",
-                                        "STATIC-TEST-2"
-                                    ]
-                                },
-                                "method": "DELETE",
                                 "header": [
                                     {
                                         "key": "api-key",
