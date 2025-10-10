@@ -20,7 +20,7 @@ import {
   isDiff,
   isDiffMetaRecord,
   isDiffRecord,
-  NodeChange
+  NodeChange,
 } from '@netcracker/qubership-apihub-api-data-model'
 import {
   ActionType,
@@ -29,8 +29,8 @@ import {
   DiffMetaRecord,
   isDiffAdd,
   isDiffRemove,
-  isDiffReplace
-} from "@netcracker/qubership-apihub-api-diff"
+  isDiffReplace,
+} from '@netcracker/qubership-apihub-api-diff'
 import type { FC } from 'react'
 import { ReactNode } from 'react'
 import { NODE_DIFF_COLOR_MAP } from '../../../../../consts/changes'
@@ -38,7 +38,7 @@ import {
   DEFAULT_LAYOUT_MODE,
   DEFAULT_ROW_DEPTH,
   DEFAULT_ROW_PADDING_LEFT,
-  SHIFTED_ROW_PADDING_LEFT
+  SHIFTED_ROW_PADDING_LEFT,
 } from '../../../../../consts/configuration'
 import { AMBER_TAG_COLOR_SCHEMA, DEPRECATED_TAG } from '../../../../../consts/tags'
 import { ALLOWED_VALUES_LABEL } from '../../../../../consts/validations'
@@ -47,8 +47,8 @@ import { ContentProps } from '../../../../../types/internal/ContentProps'
 import { CHANGED_LAYOUT_SIDE, ORIGIN_LAYOUT_SIDE } from '../../../../../types/internal/LayoutSide'
 import { PropsWithChanges } from '../../../../../types/internal/PropsWithChanges'
 import { PropsWithShift } from '../../../../../types/internal/PropsWithShift'
-import { LayoutMode } from "../../../../../types/LayoutMode"
-import { PropsWithoutChangesSummary } from "../../../../../types/PropsWithoutChangesSummary"
+import { LayoutMode } from '../../../../../types/LayoutMode'
+import { PropsWithoutChangesSummary } from '../../../../../types/PropsWithoutChangesSummary'
 import {
   buildOpenApiDiffCause,
   diffAdd,
@@ -56,21 +56,21 @@ import {
   getLayoutModeFlags,
   getLayoutSideFlags,
   isDiffTypeIncluded,
-  maxDiffType
+  maxDiffType,
 } from '../../../../../utils/common/changes'
 import { isDefined } from '../../../../../utils/common/checkers'
 import { stringifyItem } from '../../../../../utils/common/rows'
 import { AdditionalInfoArrayRow } from '../../../../common/AdditionalInfoArrayRow'
 import { DeprecationReasonValue } from '../../../../common/annotations/DeprecationReasonRow'
 import { DescriptionValue } from '../../../../common/annotations/Description/DescriptionRow'
-import { DiffBadge } from "../../../../common/diffs/DiffBadge"
-import { EmptyContent } from "../../../../common/diffs/EmptyContent"
+import { DiffBadge } from '../../../../common/diffs/DiffBadge'
+import { EmptyContent } from '../../../../common/diffs/EmptyContent'
 import { UnsupportedContent } from '../../../../common/diffs/UnsupportedContent'
 import { NestingIndicator } from '../../../../common/NestingIndicator'
 import { COLOR_SCHEMAS } from '../../../../kit/ux/consts'
 import { BADGE_KIND_DEFAULT } from '../../../../kit/ux/types'
 import { UxBadge } from '../../../../kit/ux/UxBadge'
-import { UxDiffFloatingBadge } from "../../../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge"
+import { UxDiffFloatingBadge } from '../../../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 import { changesToChange, isDefaultDeprecationReason, isObjectWithoutPayload } from '../../../utils'
 import { DefaultWrappers, Wrapper as Deprecation } from '../../../../common/Wrapper'
 
@@ -103,8 +103,8 @@ export const AllowedValuesRow: FC<AllowedValuesRowProps> = (props) => {
           const [k, v] = val
           acc[keyToIndex[k]] = v
           return acc
-        }, {} as DiffMetaRecord)
-      }
+        }, {} as DiffMetaRecord),
+      },
     }
     return (
       <AdditionalInfoArrayRow
@@ -136,8 +136,8 @@ export const AllowedValuesRow: FC<AllowedValuesRowProps> = (props) => {
       {keys.map(item => {
         const { description = '', deprecationReason } = values[item] ?? {}
 
-        let descriptionChange: Diff | undefined;
-        let deprecationReasonChange: Diff | undefined;
+        let descriptionChange: Diff | undefined
+        let deprecationReasonChange: Diff | undefined
         const changesForCurrentEnumValue = isDiffRecord(valuesChange) ? valuesChange?.[item] : undefined
         if (isDiffRecord(changesForCurrentEnumValue)) {
           if (isDiff(changesForCurrentEnumValue.description)) {
@@ -183,7 +183,7 @@ const AllowedValuesHeaderRowContent: FC<AllowedValuesHeaderRowProps & ContentPro
     enumChange,
     level,
     layoutMode,
-    layoutSide
+    layoutSide,
   } = props
 
   const { isSideBySideDiffsLayoutMode } = getLayoutModeFlags(layoutMode)
@@ -211,7 +211,7 @@ const AllowedValuesHeaderRowContent: FC<AllowedValuesHeaderRowProps & ContentPro
 
   return (
     <div className={`flex flex-row gap-5 ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
-      <NestingIndicator level={level} />
+      <NestingIndicator level={level}/>
       {labelNode}
     </div>
   )
@@ -238,7 +238,7 @@ const AllowedValuesHeaderRow: FC<AllowedValuesHeaderRowProps> = (props) => {
   const {
     isDocumentLayoutMode,
     isInlineDiffsLayoutMode,
-    isSideBySideDiffsLayoutMode
+    isSideBySideDiffsLayoutMode,
   } = getLayoutModeFlags(layoutMode)
 
   const contentProps: AllowedValuesHeaderRowProps = {
@@ -252,7 +252,7 @@ const AllowedValuesHeaderRow: FC<AllowedValuesHeaderRowProps> = (props) => {
   if (isDocumentLayoutMode) {
     return (
       <div className="flex flex-row">
-        <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE} />
+        <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE}/>
       </div>
     )
   }
@@ -261,15 +261,15 @@ const AllowedValuesHeaderRow: FC<AllowedValuesHeaderRowProps> = (props) => {
     if (!nodeChange && !enumChange) {
       return (
         <div className="flex flex-row">
-          <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE} />
+          <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE}/>
         </div>
       )
     }
 
     return (
       <div className={`flex flex-row relative ${changeTypeIncluded ? changeBackground : ''}`}>
-        {changeType && changeTypeIncluded && <UxDiffFloatingBadge variant={changeType} message={changeTypeCause} />}
-        <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE} />
+        {changeType && changeTypeIncluded && <UxDiffFloatingBadge variant={changeType} message={changeTypeCause}/>}
+        <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE}/>
       </div>
     )
   }
@@ -278,26 +278,26 @@ const AllowedValuesHeaderRow: FC<AllowedValuesHeaderRowProps> = (props) => {
     if (!nodeChange && !enumChange) {
       return (
         <div className="flex flex-row">
-          <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE} />
-          <AllowedValuesHeaderRowContent {...contentProps} layoutSide={CHANGED_LAYOUT_SIDE} />
+          <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE}/>
+          <AllowedValuesHeaderRowContent {...contentProps} layoutSide={CHANGED_LAYOUT_SIDE}/>
         </div>
       )
     }
 
     return (
       <div className={`flex flex-row relative ${changeTypeIncluded ? changeBackground : ''}`}>
-        {changeType && changeTypeIncluded && <UxDiffFloatingBadge variant={changeType} message={changeTypeCause} />}
+        {changeType && changeTypeIncluded && <UxDiffFloatingBadge variant={changeType} message={changeTypeCause}/>}
         {!change || diffRemove(change)
-          ? <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE} />
-          : <EmptyContent level={level} />}
+          ? <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE}/>
+          : <EmptyContent level={level}/>}
         {!change || diffAdd(change)
-          ? <AllowedValuesHeaderRowContent {...contentProps} layoutSide={CHANGED_LAYOUT_SIDE} />
-          : <EmptyContent level={level} />}
+          ? <AllowedValuesHeaderRowContent {...contentProps} layoutSide={CHANGED_LAYOUT_SIDE}/>
+          : <EmptyContent level={level}/>}
       </div>
     )
   }
 
-  return <UnsupportedContent layoutMode={layoutMode} />
+  return <UnsupportedContent layoutMode={layoutMode}/>
 }
 
 type AllowedValueRowProps = PropsWithShift & {
@@ -325,7 +325,7 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
     descriptionChange,
     deprecationReasonChange,
     layoutMode,
-    level = DEFAULT_ROW_DEPTH
+    level = DEFAULT_ROW_DEPTH,
   } = props
 
   const filters = useChangeSeverityFilters()
@@ -364,12 +364,13 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
     maxDiffType(
       valueChange,
       deprecationReasonChange,
-      descriptionChange
+      descriptionChange,
     )
-  const [diffType, diffTypeCause] =
+  const [diffType, diffTypeCause] = (
     (nodeDiffTypeData[0] ? nodeDiffTypeData : undefined) ??
     (enumDiffTypeData[0] ? enumDiffTypeData : undefined) ??
     contentDiffTypeData
+  )
   const diffTypeIncluded = isDiffTypeIncluded(diffType, filters)
 
   const diffBackgroundAction: ActionType | undefined =
@@ -408,7 +409,6 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
     }
 
     // TODO 04.12.24 // This logic somewhere is inside component, somewhere (here) is outside
-    const isDefaultReason = isDefaultDeprecationReason(initialDeprecationReason)
     const isDeprecated =
       initialDeprecationReason && (
         !deprecationReasonChange || (
@@ -418,27 +418,37 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
         )
       )
 
+    const isDefaultReason = isDefaultDeprecationReason(initialDeprecationReason)
+
     const shouldDisplayReason =
       initialDeprecationReason && (
         !deprecationReasonChange && !isDefaultReason ||
-        deprecationReasonChange && isDiffReplace(deprecationReasonChange)
+        deprecationReasonChange && (
+          isDiffAdd(deprecationReasonChange) && changedSide && !isDefaultReason ||
+          isDiffRemove(deprecationReasonChange) && originSide && !isDefaultReason ||
+          isDiffReplace(deprecationReasonChange) && (
+            !isDefaultDeprecationReason(String(deprecationReasonChange.beforeValue)) && originSide ||
+            !isDefaultDeprecationReason(String(deprecationReasonChange.afterValue)) && changedSide
+          )
+        )
       )
 
     const componentDiffBadge = isDeprecated ? (
       <DiffBadge
-        key='diff-badge'
+        key="diff-badge"
         label={DEPRECATED_TAG}
         layoutSide={layoutSide}
         layoutMode={layoutMode}
         colorSchema={AMBER_TAG_COLOR_SCHEMA}
         isNodeChanged={isNodeChanged}
         isContentChanged={isItemSelfChanged || isItemDetailsChanged}
+        // here we provide "add", "remove", skip "replace"
         $changes={isItemDetailsChanged ? applyDiffReplaceAlias(undefined, deprecationReasonChange) : undefined}
       />
     ) : null
     const componentDeprecationReason = shouldDisplayReason ? (
       <DeprecationReasonValue
-        key='deprecation-reason-value'
+        key="deprecation-reason-value"
         value={initialDeprecationReason}
         enableDiffs={diffTypeIncluded}
         layoutMode={layoutMode}
@@ -449,7 +459,7 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
 
     return (
       <div className={`flex flex-row gap-5 ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
-        <NestingIndicator level={level} />
+        <NestingIndicator level={level}/>
         {renderedItem && (
           <div className="flex flex-row items-start gap-2 py-1">
             <UxBadge
@@ -481,7 +491,7 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
   if (isDocumentLayoutMode) {
     return (
       <div className="flex flex-row">
-        <Content layoutSide={CHANGED_LAYOUT_SIDE} />
+        <Content layoutSide={CHANGED_LAYOUT_SIDE}/>
       </div>
     )
   }
@@ -490,15 +500,15 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
     if (!isNodeChanged && !isEnumChanged && !isItemSelfChanged && !isItemDetailsChanged) {
       return (
         <div className="flex flex-row">
-          <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
+          <Content layoutSide={ORIGIN_LAYOUT_SIDE}/>
         </div>
       )
     }
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
-        <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
+        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause}/>}
+        <Content layoutSide={ORIGIN_LAYOUT_SIDE}/>
       </div>
     )
   }
@@ -507,24 +517,24 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
     if (!isNodeChanged && !isEnumChanged && !isItemSelfChanged && !isItemDetailsChanged) {
       return (
         <div className="flex flex-row">
-          <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
-          <Content layoutSide={CHANGED_LAYOUT_SIDE} />
+          <Content layoutSide={ORIGIN_LAYOUT_SIDE}/>
+          <Content layoutSide={CHANGED_LAYOUT_SIDE}/>
         </div>
       )
     }
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
+        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause}/>}
         {isItemSelfChanged || isItemDetailsChanged || (isNodeChanged || isEnumChanged) && (nodeRemoved || nodeReplaced)
-          ? <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
-          : <EmptyContent level={nodeChange?.depth ?? level} />}
+          ? <Content layoutSide={ORIGIN_LAYOUT_SIDE}/>
+          : <EmptyContent level={nodeChange?.depth ?? level}/>}
         {isItemSelfChanged || isItemDetailsChanged || (isNodeChanged || isEnumChanged) && (nodeAdded || nodeReplaced)
-          ? <Content layoutSide={CHANGED_LAYOUT_SIDE} />
-          : <EmptyContent level={nodeChange?.depth ?? level} />}
+          ? <Content layoutSide={CHANGED_LAYOUT_SIDE}/>
+          : <EmptyContent level={nodeChange?.depth ?? level}/>}
       </div>
     )
   }
 
-  return <UnsupportedContent layoutMode={layoutMode} />
+  return <UnsupportedContent layoutMode={layoutMode}/>
 }
