@@ -22,6 +22,7 @@ import {
   isGraphApiArgs,
   isGraphApiDirective,
   isGraphApiDirectives,
+  isGraphApiEnumDefinition,
   isGraphApiInputObjectDefinition,
   isGraphApiListDefinition,
   isGraphApiObjectiveDefinition,
@@ -250,12 +251,12 @@ export class GraphApiModelDiffTree<
       value = value.definition
 
       // args
-      const argsRawChanges = value?.args?.[this.metaKey]
-      if (isObject(argsRawChanges)) {
-        for (const [argName, argDiff] of Object.entries(argsRawChanges)) {
-          setValueByPath($metaChanges, argDiff, ...['args', argName])
-        }
-      }
+      // const argsRawChanges = value?.args?.[this.metaKey]
+      // if (isObject(argsRawChanges)) {
+      //   for (const [argName, argDiff] of Object.entries(argsRawChanges)) {
+      //     setValueByPath($metaChanges, argDiff, ...['args', argName])
+      //   }
+      // }
       // locations
       const locationsRawChanges = value?.locations?.[this.metaKey]
       if (isObject(locationsRawChanges)) {
@@ -269,37 +270,30 @@ export class GraphApiModelDiffTree<
         const repeatableDiff = valueRawChanges?.repeatable
         repeatableDiff && setValueByPath($metaChanges, repeatableDiff, ...['repeatable'])
       }
-    } else {
-      // directives
-      const directivesRawChanges = value?.args?.[this.metaKey]
-      if (isObject(directivesRawChanges)) {
-        for (const [directiveName, directiveDiff] of Object.entries(directivesRawChanges)) {
-          setValueByPath($metaChanges, directiveDiff, ...['directives', directiveName])
-        }
+    }
+
+    // deprecation reason
+    if (isGraphApiOperation(value)) {
+      const directives = value.directives ?? {}
+      const path = ['deprecationReason']
+      // added/removed deprecation
+      if (
+        this.metaKey in directives &&
+        isDiffMetaRecord(directives[this.metaKey]) &&
+        'deprecated' in directives[this.metaKey]
+      ) {
+        const maybeDiff = directives[this.metaKey].deprecated as unknown
+        const diff = isDiff(maybeDiff) ? maybeDiff : undefined
+        diff && setValueByPath($metaChanges, diff, ...path)
       }
-      // deprecation reason
-      if (isGraphApiOperation(value)) {
-        const directives = value.directives ?? {}
-        const path = ['deprecationReason']
-        // added/removed deprecation
-        if (
-          this.metaKey in directives &&
-          isDiffMetaRecord(directives[this.metaKey]) &&
-          'deprecated' in directives[this.metaKey]
-        ) {
-          const maybeDiff = directives[this.metaKey].deprecated as unknown
+      // replace deprecation reason
+      const usedDirectiveDeprecated = directives.deprecated
+      if (usedDirectiveDeprecated) {
+        const { meta } = usedDirectiveDeprecated
+        if (meta && this.metaKey in meta) {
+          const maybeDiff = meta[this.metaKey].reason as unknown
           const diff = isDiff(maybeDiff) ? maybeDiff : undefined
           diff && setValueByPath($metaChanges, diff, ...path)
-        }
-        // replace deprecation reason
-        const usedDirectiveDeprecated = directives.deprecated
-        if (usedDirectiveDeprecated) {
-          const { meta } = usedDirectiveDeprecated
-          if (meta && this.metaKey in meta) {
-            const maybeDiff = meta[this.metaKey].reason as unknown
-            const diff = isDiff(maybeDiff) ? maybeDiff : undefined
-            diff && setValueByPath($metaChanges, diff, ...path)
-          }
         }
       }
     }
@@ -430,26 +424,56 @@ export class GraphApiModelDiffTree<
 
       if (isNotUnionItem) { // sourceValue !== value
         const valueRawChanges = value[this.metaKey];
-        const sourceValueRawChanges = sourceValue[this.metaKey];
         ['nullable', 'default'].forEach(field => {
           const diff = valueRawChanges?.[field]
-          const path = [field]
-          diff && setValueByPath($changes, diff, ...path)
+          diff && setValueByPath($changes, diff, ...[field])
         });
-        ['title', 'description'].forEach(field => {
-          const diff = sourceValueRawChanges?.[field]
-          const path = [field]
-          diff && setValueByPath($changes, diff, ...path)
-        });
-        // TODO 09.10.2025 // Enum values TBA
-      } else { // sourceValue === value
-        const valueRawChanges = value[this.metaKey];
-        ['title', 'description'].forEach(field => {
-          const diff = valueRawChanges?.[field]
-          const path = [field]
-          diff && setValueByPath($changes, diff, ...path)
-        });
-        // TODO 09.10.2025 // Enum values TBA
+      }
+
+      const sourceValueRawChanges = sourceValue[this.metaKey];
+
+      ['title', 'description'].forEach(field => {
+        const diff = sourceValueRawChanges?.[field]
+        diff && setValueByPath($changes, diff, ...[field])
+      });
+
+      if (isGraphApiEnumDefinition(sourceValue)) {
+        const values = sourceValue.type.values ?? {}
+        // added/removed enum values
+        if (this.metaKey in values) {
+          const rawChanges = values[this.metaKey]
+          rawChanges && setValueByPath($changes, rawChanges, ...['values'])
+        }
+        // changed "description" or "deprecation reason" inside enum values
+        for (const [enumKey, enumValue] of Object.entries(values)) {
+          // description (added/removed/replaced)
+          if (this.metaKey in enumValue) {
+            const maybeDiff = enumValue[this.metaKey].description as unknown
+            const diff = isDiff(maybeDiff) ? maybeDiff : undefined
+            diff && setValueByPath($changes, diff, ...['values', enumKey, 'description'])
+          }
+          // deprecation reason (added/removed)
+          const directives = enumValue.directives ?? {}
+          if (
+            this.metaKey in directives &&
+            isDiffMetaRecord(directives[this.metaKey]) &&
+            'deprecated' in directives[this.metaKey]
+          ) {
+            const maybeDiff = directives[this.metaKey].deprecated as unknown
+            const diff = isDiff(maybeDiff) ? maybeDiff : undefined
+            diff && setValueByPath($changes, diff, ...['values', enumKey, 'deprecationReason'])
+          }
+          // deprecation reason (replaced)
+          const usedDirectiveDeprecated = directives.deprecated
+          if (usedDirectiveDeprecated) {
+            const { meta } = usedDirectiveDeprecated
+            if (meta && this.metaKey in meta) {
+              const maybeDiff = meta[this.metaKey].reason as unknown
+              const diff = isDiff(maybeDiff) ? maybeDiff : undefined
+              diff && setValueByPath($changes, diff, ...['values', enumKey, 'deprecationReason'])
+            }
+          }
+        }
       }
 
       const diffNodeValue: DiffNodeValue = {

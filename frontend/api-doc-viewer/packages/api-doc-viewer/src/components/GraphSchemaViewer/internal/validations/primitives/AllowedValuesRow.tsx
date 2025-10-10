@@ -426,6 +426,7 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
 
     const componentDiffBadge = isDeprecated ? (
       <DiffBadge
+        key='diff-badge'
         label={DEPRECATED_TAG}
         layoutSide={layoutSide}
         layoutMode={layoutMode}
@@ -437,6 +438,7 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
     ) : null
     const componentDeprecationReason = shouldDisplayReason ? (
       <DeprecationReasonValue
+        key='deprecation-reason-value'
         value={initialDeprecationReason}
         enableDiffs={diffTypeIncluded}
         layoutMode={layoutMode}
