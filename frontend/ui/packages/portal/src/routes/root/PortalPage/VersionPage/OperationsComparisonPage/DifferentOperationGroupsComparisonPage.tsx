@@ -199,24 +199,22 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
     currentOperationKey: operationKey,
   }, operationAction)
 
+  //TODO: fix isLoading stuck in true if operation key is undefined
   const { data: originOperation, isLoading: isOriginOperationLoading } = useOperation({
     packageKey: !isPackageFromDashboard ? originPackageKey : refPackageKey,
-    versionKey: !isPackageFromDashboard ? changedVersionKey : refComparisonSummary?.previousVersion,
+    versionKey: !isPackageFromDashboard ? originVersionKey : refComparisonSummary?.previousVersion,
     enabled: !!operationAction && actionForOriginalOperation.includes(operationAction) && !!restGroupingPrefix,
     apiType: apiType as ApiType,
-    operationKey: operationAction === DiffAction.rename
-      ? `${getFullGroupForOperation(restGroupingPrefix, previousGroup!)}-${operationKeyForOriginOperation}`
-      : operationKeyForOriginOperation,
+    operationKey: operationKeyForOriginOperation,
   })
 
+  //TODO: fix isLoading stuck in true if operation key is undefined
   const { data: changedOperation, isLoading: isChangedOperationLoading } = useOperation({
-    packageKey: !isPackageFromDashboard ? originPackageKey : refPackageKey,
+    packageKey: !isPackageFromDashboard ? changedPackageKey : refPackageKey,
     versionKey: !isPackageFromDashboard ? changedVersionKey : refComparisonSummary?.version,
     enabled: !!operationAction && actionForChangedOperation.includes(operationAction) && !!restGroupingPrefix,
     apiType: apiType as ApiType,
-    operationKey: operationAction === DiffAction.rename
-      ? `${getFullGroupForOperation(restGroupingPrefix, group!)}-${operationKeyForChangedOperation}`
-      : operationKeyForChangedOperation,
+    operationKey:operationKeyForChangedOperation,
   })
 
   const areChangesAndOperationsLoading = isOriginOperationLoading && isChangedOperationLoading
@@ -414,12 +412,5 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
 
 const actionForOriginalOperation = ['remove', 'replace', 'rename']
 const actionForChangedOperation = ['add', 'replace', 'rename']
-
-export const getFullGroupForOperation = (restGroupingPrefix: string | undefined, group: string): string => {
-  if (!restGroupingPrefix) return group
-
-  return convertToSlug(restGroupingPrefix.replace(/{group}/g, group))
-}
-
 const httpMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 
