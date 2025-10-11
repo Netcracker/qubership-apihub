@@ -64,9 +64,7 @@ import { getActionForRestOperation } from '@apihub/utils/operations'
 import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import {
   ACTION_TYPE_COLOR_MAP,
-  ADD_ACTION_TYPE,
   CHANGE_SEVERITIES,
-  REMOVE_ACTION_TYPE,
   REPLACE_ACTION_TYPE,
 } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import { format } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
@@ -178,7 +176,6 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
                   changeSummary,
                   metadata: metadataObject,
                   previousMetadata: previousMetadataObject,
-                  diffs,
                 } = change
 
                 const metadata = metadataObject as OperationChangesMetadata & Partial<RestChangesMetadata> & Partial<GraphQLChangesMetadata>
@@ -188,7 +185,10 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
                 const severity = getMajorSeverity(changeSummary!)
 
                 const isMetaDataPresent = !!(
-                  metadata?.title && metadata?.path && metadata?.method ||
+                  metadata?.title && metadata?.path && metadata?.method
+                )
+
+                const isPreviousMetaDataPresent = !!(
                   previousMetadata?.title && previousMetadata?.path && previousMetadata?.method
                 )
 
@@ -256,13 +256,12 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
                           }}
                         />
                         <Spec
-                          key={operationId}
-                          value={isMetaDataPresent && action !== ADD_ACTION_TYPE && previousMetadata ||
-                            !previousMetadata && action === REMOVE_ACTION_TYPE ? {
-                            title: previousMetadata?.title ?? metadata.title,
-                            operationId: operationId,
-                            method: previousMetadata?.method ?? metadata.method,
-                            path: (previousMetadata as typeof metadata)?.path ?? metadata.path,
+                          key={previousOperationId}
+                          value={isPreviousMetaDataPresent ? {
+                            title: previousMetadata.title,
+                            operationId: previousOperationId,
+                            method: previousMetadata.method,
+                            path: previousMetadata.path as string,
                           } : undefined}
                         />
                       </Box>
@@ -276,8 +275,7 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
                     >
                       <Spec
                         key={`changed-${operationId}`}
-                        value={isMetaDataPresent && action !== REMOVE_ACTION_TYPE && previousMetadata ||
-                          !previousMetadata && action === ADD_ACTION_TYPE ? {
+                        value={isMetaDataPresent ? {
                           title: metadata.title,
                           operationId: operationId,
                           method: metadata.method,
