@@ -60,7 +60,7 @@ import {
 import { isEmpty, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import { getActionForOperation } from '@apihub/utils/operations'
+import { getActionForRestOperation } from '@apihub/utils/operations'
 import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import {
   ACTION_TYPE_COLOR_MAP,
@@ -184,8 +184,7 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
                 const metadata = metadataObject as OperationChangesMetadata & Partial<RestChangesMetadata> & Partial<GraphQLChangesMetadata>
                 const previousMetadata = previousMetadataObject as OperationChangesMetadata & Partial<RestChangesMetadata> & Partial<GraphQLChangesMetadata>
 
-                const { action } = diffs?.[0] ?? {}
-                const operationAction = getActionForOperation(change, REPLACE_ACTION_TYPE)
+                const operationAction = getActionForRestOperation(change, REPLACE_ACTION_TYPE)
                 const severity = getMajorSeverity(changeSummary!)
 
                 const isMetaDataPresent = !!(
