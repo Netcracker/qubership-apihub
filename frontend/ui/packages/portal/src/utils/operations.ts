@@ -23,7 +23,7 @@ import type {
 } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { DEFAULT_TAG, EMPTY_TAG } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import { matchPaths, OPEN_API_PROPERTY_PATHS, PREDICATE_UNCLOSED_END } from '@netcracker/qubership-apihub-api-unifier'
+import { matchPaths, OPEN_API_PROPERTY_PATHS, PREDICATE_NOT_OAS_EXTENSION } from '@netcracker/qubership-apihub-api-unifier'
 import { DiffAction } from '@netcracker/qubership-apihub-api-diff'
 
 export function groupOperationsByTags<T extends Operation>(
@@ -108,7 +108,7 @@ export function isFullyAddedOperationChange(change: OperationChanges): boolean {
 }
 
 function isOperationChange(paths: JsonPath[]): boolean { //check
-  return !!matchPaths(paths, [[OPEN_API_PROPERTY_PATHS, PREDICATE_UNCLOSED_END]])
+  return !!matchPaths(paths, [[OPEN_API_PROPERTY_PATHS, PREDICATE_NOT_OAS_EXTENSION, PREDICATE_NOT_OAS_EXTENSION]])
 }
 
 // TODO: Remove JsonPath from shared or inline it with crawler
