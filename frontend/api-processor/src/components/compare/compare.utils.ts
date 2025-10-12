@@ -115,7 +115,7 @@ function dedupeTuples<T extends [object | undefined, object | undefined]>(
   return result
 }
 
-function removeRedundantPartialPairs<T extends [object | undefined, object | undefined]>(
+export function removeRedundantPartialPairs<T extends [object | undefined, object | undefined]>(
   tuples: T[],
 ): T[] {
   const completeAtPosition = [new Set<object>(), new Set<object>()] as const
