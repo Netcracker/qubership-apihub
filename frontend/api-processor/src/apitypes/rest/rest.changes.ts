@@ -20,6 +20,7 @@ import {
   IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER,
   isEmpty,
   isOperationRemove,
+  isValidHttpMethod,
   normalizePath,
   removeFirstSlash,
   slugify,
@@ -131,8 +132,7 @@ export const compareDocuments = async (
     for (const key of Object.keys(pathData)) {
       const inferredMethod = key as OpenAPIV3.HttpMethods
 
-      // check if field is a valid openapi http method defined in OpenAPIV3.HttpMethods
-      if (!Object.values(OpenAPIV3.HttpMethods).includes(inferredMethod)) {
+      if (!isValidHttpMethod(inferredMethod)) {
         continue
       }
 
