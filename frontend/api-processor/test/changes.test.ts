@@ -38,7 +38,7 @@ const AFTER_PACKAGE_ID = 'changes_test_after'
 const BEFORE_VERSION_ID = 'v1'
 const AFTER_VERSION_ID = 'v2'
 
-describe('Changes test', () => {
+describe('Changelog build type', () => {
   beforeAll(async () => {
     beforePackage = LocalRegistry.openPackage(BEFORE_PACKAGE_ID)
     afterPackage = LocalRegistry.openPackage(AFTER_PACKAGE_ID)
