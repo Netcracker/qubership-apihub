@@ -50,5 +50,12 @@ describe('Unit test for extractOperationBasePath', () => {
     expect(extractOperationBasePath([{ url: '/v1/' }])).toEqual('/v1')
     expect(extractOperationBasePath([{ url: '/' }])).toEqual('')
   })
+
+  // todo: should really handle this case in api-unifier, it returns incorrect object in this case,
+  // since url is required for server object
+  test('Should handle Servers with empty url correctly', () => {
+    // @ts-expect-error - Testing edge case with missing url property
+    expect(extractOperationBasePath([{ }])).toEqual('')
+  })
 })
 
