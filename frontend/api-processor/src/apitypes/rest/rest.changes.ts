@@ -66,6 +66,18 @@ import {
 } from './rest.utils'
 import { createOperationChange, getOperationTags, OperationsMap } from '../../components'
 
+/**
+ * Calculates a normalized operation ID for an operation.
+ *
+ * @param basePath - The base path from servers configuration
+ * @param path - The operation path
+ * @param method - The HTTP method
+ * @returns The normalized operation ID
+ */
+function calculateNormalizedOperationId(basePath: string, path: string, method: string): string {
+  return slugify(`${normalizePath(basePath + path)}-${method}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
+}
+
 export const compareDocuments = async (
   operationsMap: OperationsMap,
   prevDoc: ResolvedVersionDocument | undefined,
@@ -140,8 +152,8 @@ export const compareDocuments = async (
       // todo if there were actually servers here, we wouldn't have handle it, add a test
       const previousBasePath = getOperationBasePath(methodData?.servers || pathData?.servers || prevDocData.servers || [])
       const currentBasePath = getOperationBasePath(methodData?.servers || pathData?.servers || currDocData.servers || [])
-      const prevNormalizedOperationId = slugify(`${normalizePath(previousBasePath + path)}-${inferredMethod}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
-      const currNormalizedOperationId = slugify(`${normalizePath(currentBasePath + path)}-${inferredMethod}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
+      const prevNormalizedOperationId = calculateNormalizedOperationId(previousBasePath, path, inferredMethod)
+      const currNormalizedOperationId = calculateNormalizedOperationId(currentBasePath, path, inferredMethod)
 
       const { current, previous } = operationsMap[prevNormalizedOperationId] ?? operationsMap[currNormalizedOperationId] ?? {}
       if (!current && !previous) {
