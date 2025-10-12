@@ -1,6 +1,7 @@
 import { MapKeysResult, MappingResolver, NodeContext } from '../types'
 import {
   difference,
+  extractOperationBasePath,
   getStringValue,
   intersection,
   objectKeys,
@@ -192,26 +193,6 @@ function isWildcardCompatible(beforeType: string, afterType: string): boolean {
   }
 
   return true
-}
-
-// todo copy-paste from api-processor
-export const extractOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): string => {
-  if (!Array.isArray(servers) || !servers.length) { return '' }
-
-  try {
-    const [firstServer] = servers
-    let serverUrl = firstServer.url
-    const { variables = {} } = firstServer
-
-    for (const param of Object.keys(variables)) {
-      serverUrl = serverUrl.replace(new RegExp(`{${param}}`, 'g'), variables[param].default)
-    }
-
-    const { pathname } = new URL(serverUrl, 'https://localhost')
-    return pathname.slice(-1) === '/' ? pathname.slice(0, -1) : pathname
-  } catch (error) {
-    return ''
-  }
 }
 
 export function createPathUnifier(rootServers?: OpenAPIV3.ServerObject[]): (path: string, pathServers?: OpenAPIV3.ServerObject[]) => string {

@@ -23,6 +23,7 @@ import {
   JSON_SCHEMA_NODE_TYPE_STRING,
   JsonSchemaNodesNormalizedType,
 } from '@netcracker/qubership-apihub-api-unifier'
+import { OpenAPIV3 } from 'openapi-types'
 
 export const isObject = (value: unknown): value is Record<string | symbol, unknown> => {
   return typeof value === 'object' && value !== null
@@ -309,3 +310,29 @@ export function aggregateDiffsWithRollup(obj: any, diffProperty: any, aggregated
   return _aggregateDiffsWithRollup(obj)
 }
 
+/**
+ * Extracts the base path (path after the domain) from the first server URL in an array of OpenAPI ServerObjects.
+ * It replaces any URL variable placeholders (e.g. {host}) with their default values from the 'variables' property.
+ * The function will return the normalized pathname (without trailing slash) or an empty string on error or if the input is empty.
+ *
+ * @param {OpenAPIV3.ServerObject[]} [servers] - An array of OpenAPI ServerObject definitions.
+ * @returns {string} The base path (pathname) part of the URL, without a trailing slash, or an empty string if unavailable.
+ */
+export const extractOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): string => {
+  if (!Array.isArray(servers) || !servers.length) { return '' }
+
+  try {
+    const [firstServer] = servers
+    let serverUrl = firstServer.url
+    const { variables = {} } = firstServer
+
+    for (const param of Object.keys(variables)) {
+      serverUrl = serverUrl.replace(new RegExp(`{${param}}`, 'g'), variables[param].default)
+    }
+
+    const { pathname } = new URL(serverUrl, 'https://localhost')
+    return pathname.slice(-1) === '/' ? pathname.slice(0, -1) : pathname
+  } catch (error) {
+    return ''
+  }
+}

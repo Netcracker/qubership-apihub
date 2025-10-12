@@ -34,6 +34,9 @@ export {
   isDiffReplace,
 } from './utils'
 
-export { onlyExistedArrayIndexes } from './utils'
+export {
+  aggregateDiffsWithRollup,
+  extractOperationBasePath,
+  onlyExistedArrayIndexes
+} from './utils'
 
-export { aggregateDiffsWithRollup } from './utils'
