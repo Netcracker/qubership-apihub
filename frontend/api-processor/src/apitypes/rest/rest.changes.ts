@@ -102,14 +102,15 @@ export const compareDocuments = async (
   let prevDocData = prevFile && JSON.parse(await prevFile.text())
   let currDocData = currFile && JSON.parse(await currFile.text())
 
+  // create a copy of the document with only the operations belonging to the prefix group if there are prefix groups
   if (prevDocData && previousGroup) {
     prevDocData = createCopyWithPrefixGroupOperationsOnly(prevDocData, previousGroup)
   }
-
   if (currDocData && currentGroup) {
     currDocData = createCopyWithPrefixGroupOperationsOnly(currDocData, currentGroup)
   }
 
+  // create an empty counterpart of the document for the case when one of the documents is empty
   if (!prevDocData && currDocData) {
     prevDocData = createCopyWithEmptyPathItems(currDocData)
   }
