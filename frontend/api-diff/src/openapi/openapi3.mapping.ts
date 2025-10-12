@@ -32,6 +32,24 @@ export const singleOperationPathMappingResolver: MappingResolver<string> = (befo
   return result
 }
 
+/**
+ * Maps OpenAPI path keys between two versions of the spec by considering possible base path changes
+ * defined in the root object `servers` field and path item object `servers` field.
+ * This mapping normalizes (unifies) paths by removing any basePath prefixes
+ * so that equivalent endpoints are recognized and correctly mapped even if the base path (URL prefix)
+ * has changed. It does *not* handle server base paths defined at the operation level.
+ * It also maps paths even if path parameters have changed.
+ *
+ * @param before - The "before" object representing a set of OpenAPI paths (mapping string keys to PathItemObject)
+ * @param after - The "after" object representing a set of OpenAPI paths (mapping string keys to PathItemObject)
+ * @param ctx - The NodeContext, used here to access the root OpenAPI Document for both "before" and "after"
+ * @returns {MapKeysResult<string>} An object containing arrays of `added` and `removed` path keys, and
+ *   a mapping between old and new keys for matched paths.
+ *
+ * @remarks
+ * This method does not support mapping when the base path is defined in the operation-level `servers`.
+ * See related test: "Should match operation when prefix moved from operation object servers to path".
+ */
 export const pathMappingResolver: MappingResolver<string> = (before, after, ctx) => {
 
   const result: MapKeysResult<string> = { added: [], removed: [], mapped: {} }
