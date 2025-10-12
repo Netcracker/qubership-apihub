@@ -90,11 +90,11 @@ export const compareDocuments = async (
   let currDocData = currFile && JSON.parse(await currFile.text())
 
   if (prevDocData && previousGroup) {
-    prevDocData = createCopyWithCurrentGroupOperationsOnly(prevDocData, previousGroup)
+    prevDocData = createCopyWithPrefixGroupOperationsOnly(prevDocData, previousGroup)
   }
 
   if (currDocData && currentGroup) {
-    currDocData = createCopyWithCurrentGroupOperationsOnly(currDocData, currentGroup)
+    currDocData = createCopyWithPrefixGroupOperationsOnly(currDocData, currentGroup)
   }
 
   if (!prevDocData && currDocData) {
@@ -278,10 +278,23 @@ export function createCopyWithEmptyPathItems(template: RestOperationData): RestO
   }
 }
 
+/**
+ * Creates a copy of the given RestOperationData, but only includes path items belonging to the specified prefix group.
+ * All returned paths are adjusted to include any relevant basePath prefixes.
+ * All servers objects are removed from the resulting structure, as prefix group comparisons do not consider them.
+ *
+ * @param {RestOperationData} source - The source RestOperationData object to copy from.
+ * @param {string} groupPrefix - The base path prefix (group) used to select which operations to include.
+ *   This should be a slash-bounded OpenAPI path group, e.g. "/api/v1/".
+ * @returns {RestOperationData} A copy of the template including only paths belonging to the specified group,
+ *   with their paths remapped (prefix removed) and with all servers removed from path items and the root.
+ */
+export function createCopyWithPrefixGroupOperationsOnly(source: RestOperationData, groupPrefix: string): RestOperationData {
   validateGroupPrefix(groupPrefix, 'groupPrefix')
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { paths, servers: rootServers, ...rest } = template
-  const groupWithoutEdgeSlashes = trimSlashes(group)
+  const { paths, servers: rootServers, ...rest } = source
+  const groupWithoutEdgeSlashes = trimSlashes(groupPrefix)
 
   // Since we are anyway composing synthetic specs for prefix groups comparison, we can incorporate
   // base paths from root servers and path item servers into the paths.
@@ -296,7 +309,7 @@ export function createCopyWithEmptyPathItems(template: RestOperationData): RestO
           .map(([pathKey, pathItem]) => {
             // Path item servers take precedence over root servers
             const pathItemServers = (pathItem as OpenAPIV3.PathItemObject)?.servers
-            const basePath = getOperationBasePath(pathItemServers || template.servers || [])
+            const basePath = getOperationBasePath(pathItemServers || source.servers || [])
 
             // Prepend base path to the path
             const fullPath = basePath ? `/${trimSlashes(basePath)}/${trimSlashes(pathKey)}`.replace(/\/+/g, '/') : pathKey
