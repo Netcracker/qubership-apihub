@@ -15,48 +15,11 @@
  */
 
 import { findSharedPath, removeObjectDuplicates, removeSecurityDuplicates, slugify } from '../src/utils'
-import { getOperationBasePath } from '../src/apitypes/rest/rest.utils'
 
 describe('Utils', () => {
   describe('Unit tests for \'slugify\' function', () => {
     expect(slugify('test/test.json')).toEqual('test-test-json')
     expect(slugify('test 123.json')).toEqual('test-123-json')
-  })
-
-  describe('Unit test for getOperationPath', () => {
-    test('Should handle Servers with parameters correctly', () => {
-      const servers = [{
-        url: '{protocol}://{host}/api',
-        description: 'Remote server',
-        variables: {
-          protocol: {
-            description: 'Request protocol.',
-            enum: ['http', 'https'],
-            default: 'https',
-          },
-          host: {
-            description: 'Name of the server, for remote development.',
-            enum: ['billing-ui-api.com'],
-            default: 'billing-ui-api.com',
-          },
-        },
-      }]
-
-      expect(getOperationBasePath(servers)).toEqual('/api')
-    })
-
-    test('Should handle Servers with absolute url correctly', () => {
-      expect(getOperationBasePath([{ url: 'https://example.com/v1' }])).toEqual('/v1')
-      expect(getOperationBasePath([{ url: 'https://example.com/v1/' }])).toEqual('/v1')
-    })
-
-    test('Should handle Servers with relative url correctly', () => {
-      expect(getOperationBasePath([{ url: '/v1' }])).toEqual('/v1')
-      expect(getOperationBasePath([{ url: 'v1' }])).toEqual('/v1')
-      expect(getOperationBasePath([{ url: 'v1/' }])).toEqual('/v1')
-      expect(getOperationBasePath([{ url: '/v1/' }])).toEqual('/v1')
-      expect(getOperationBasePath([{ url: '/' }])).toEqual('')
-    })
   })
 
   describe('Unit tests for \'findSharedPath\' function', () => {

@@ -34,10 +34,10 @@ import {
   toVersionDocument,
 } from '../utils'
 import { OpenAPIV3 } from 'openapi-types'
-import { getOperationBasePath } from '../apitypes/rest/rest.utils'
 import { VersionRestDocument } from '../apitypes/rest/rest.types'
 import { FILE_FORMAT_JSON, INLINE_REFS_FLAG, NORMALIZE_OPTIONS } from '../consts'
 import { normalize } from '@netcracker/qubership-apihub-api-unifier'
+import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
 import { calculateSpecRefs, extractCommonPathItemProperties } from '../apitypes/rest/rest.operation'
 
 function getTransformedDocument(document: ResolvedGroupDocument, format: FileFormat, packages: ResolvedReferenceMap): VersionRestDocument {
@@ -134,7 +134,7 @@ function transformDocumentData(versionDocument: VersionDocument): OpenAPIV3.Docu
       if (!isValidHttpMethod(httpMethod)) continue
 
       const methodData = normalizedPathItem[httpMethod]
-      const basePath = getOperationBasePath(
+      const basePath = extractOperationBasePath(
         methodData?.servers ||
         sourcePathItem?.servers ||
         sourceDocument?.servers ||

@@ -47,7 +47,7 @@ import {
   takeIfDefined,
 } from '../../utils'
 import { API_KIND, INLINE_REFS_FLAG, ORIGINS_SYMBOL, VERSION_STATUS } from '../../consts'
-import { getCustomTags, getOperationBasePath, resolveApiAudience } from './rest.utils'
+import { getCustomTags, resolveApiAudience } from './rest.utils'
 import { DebugPerformanceContext, syncDebugPerformance } from '../../utils/logs'
 import {
   calculateDeprecatedItems,
@@ -63,6 +63,7 @@ import {
   PREDICATE_UNCLOSED_END,
   resolveOrigins,
 } from '@netcracker/qubership-apihub-api-unifier'
+import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
 import { calculateObjectHash } from '../../utils/hashes'
 import { calculateTolerantHash } from '../../components/deprecated'
 import { getValueByPath } from '../../utils/path'
@@ -268,7 +269,7 @@ function reduceComponentPathItemsToOperations(
       .filter(httpMethod => {
         const methodData = sourcePathItem[httpMethod as OpenAPIV3.HttpMethods]
         if (!methodData) return false
-        const basePath = getOperationBasePath(
+        const basePath = extractOperationBasePath(
           methodData?.servers ||
           sourcePathItem?.servers ||
           [],

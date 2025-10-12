@@ -30,6 +30,7 @@ import {
   aggregateDiffsWithRollup,
   apiDiff,
   breaking,
+  extractOperationBasePath,
   Diff,
   DIFF_META_KEY,
   DiffAction,
@@ -61,7 +62,6 @@ import {
   extractPathParamRenameDiff,
   extractRootSecurityDiffs,
   extractRootServersDiffs,
-  getOperationBasePath,
   validateGroupPrefix,
 } from './rest.utils'
 import { createOperationChange, getOperationTags, OperationsMap } from '../../components'
@@ -151,8 +151,8 @@ export const compareDocuments = async (
 
       const methodData = pathData[inferredMethod]
       // todo if there were actually servers here, we wouldn't have handle it, add a test
-      const previousBasePath = getOperationBasePath(methodData?.servers || pathData?.servers || prevDocData.servers || [])
-      const currentBasePath = getOperationBasePath(methodData?.servers || pathData?.servers || currDocData.servers || [])
+      const previousBasePath = extractOperationBasePath(methodData?.servers || pathData?.servers || prevDocData.servers || [])
+      const currentBasePath = extractOperationBasePath(methodData?.servers || pathData?.servers || currDocData.servers || [])
       const prevNormalizedOperationId = calculateNormalizedOperationId(previousBasePath, path, inferredMethod)
       const currNormalizedOperationId = calculateNormalizedOperationId(currentBasePath, path, inferredMethod)
 
@@ -321,7 +321,7 @@ export function createCopyWithPrefixGroupOperationsOnly(source: RestOperationDat
           .map(([pathKey, pathItem]) => {
             // Path item servers take precedence over root servers
             const pathItemServers = (pathItem as OpenAPIV3.PathItemObject)?.servers
-            const basePath = getOperationBasePath(pathItemServers || source.servers || [])
+            const basePath = extractOperationBasePath(pathItemServers || source.servers || [])
 
             // Prepend base path to the path
             const fullPath = basePath ? `/${trimSlashes(basePath)}/${trimSlashes(pathKey)}`.replace(/\/+/g, '/') : pathKey
