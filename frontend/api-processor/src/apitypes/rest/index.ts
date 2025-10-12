@@ -25,6 +25,7 @@ import { ApiBuilder } from '../../types'
 import { calculateNormalizedOperationId } from '../../utils'
 
 export * from './rest.consts'
+export type { RestOperationData } from './rest.types'
 export { createCopyWithPrefixGroupOperationsOnly } from './rest.changes'
 
 export const restApiBuilder: ApiBuilder<OpenAPIV3.Document> = {
