@@ -89,7 +89,7 @@ export function getOperationTypesFromTwoVersions(
   return [prevVersion?.operationTypes || [], currVersion?.operationTypes || []]
 }
 
-function dedupeTuples<T extends [object | undefined, object | undefined]>(
+export function dedupeTuples<T extends [object | undefined, object | undefined]>(
   tuples: T[],
 ): T[] {
   const UNDEF: object = {}

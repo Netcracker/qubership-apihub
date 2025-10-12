@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { removeRedundantPartialPairs } from '../src/components/compare/compare.utils'
+import { dedupeTuples, removeRedundantPartialPairs } from '../src/components/compare/compare.utils'
 
 describe('removeRedundantPartialPairs', () => {
   test('should return empty array when input is empty', () => {
@@ -174,6 +174,170 @@ describe('removeRedundantPartialPairs', () => {
     ]
 
     const result = removeRedundantPartialPairs(input)
+    expect(result).toEqual([
+      [objA, objB],
+      [objB, objA],
+    ])
+    expect(result).toHaveLength(2)
+  })
+})
+
+describe('dedupeTuples', () => {
+  test('should return empty array when input is empty', () => {
+    const result = dedupeTuples([])
+    expect(result).toEqual([])
+  })
+
+  test('should return all tuples when there are no duplicates', () => {
+    const objA = { id: 'A' }
+    const objB = { id: 'B' }
+    const objC = { id: 'C' }
+    const objD = { id: 'D' }
+
+    const input: [object, object][] = [
+      [objA, objB],
+      [objC, objD],
+    ]
+
+    const result = dedupeTuples(input)
+    expect(result).toEqual(input)
+  })
+
+  test('should remove exact duplicate tuples (same object references)', () => {
+    const objA = { id: 'A' }
+    const objB = { id: 'B' }
+
+    const input: [object, object][] = [
+      [objA, objB],
+      [objA, objB],  // Duplicate
+      [objA, objB],  // Duplicate
+    ]
+
+    const result = dedupeTuples(input)
+    expect(result).toEqual([[objA, objB]])
+    expect(result).toHaveLength(1)
+  })
+
+  test('should handle tuples with undefined in first position', () => {
+    const objB = { id: 'B' }
+    const objD = { id: 'D' }
+
+    const input: [object | undefined, object][] = [
+      [undefined, objB],
+      [undefined, objD],
+      [undefined, objB],  // Duplicate
+    ]
+
+    const result = dedupeTuples(input)
+    expect(result).toEqual([
+      [undefined, objB],
+      [undefined, objD],
+    ])
+    expect(result).toHaveLength(2)
+  })
+
+  test('should handle tuples with undefined in second position', () => {
+    const objA = { id: 'A' }
+    const objC = { id: 'C' }
+
+    const input: [object, object | undefined][] = [
+      [objA, undefined],
+      [objC, undefined],
+      [objA, undefined],  // Duplicate
+    ]
+
+    const result = dedupeTuples(input)
+    expect(result).toEqual([
+      [objA, undefined],
+      [objC, undefined],
+    ])
+    expect(result).toHaveLength(2)
+  })
+
+  test('should remove multiple duplicate instances and keep only first occurrence', () => {
+    const objA = { id: 'A' }
+    const objB = { id: 'B' }
+    const objC = { id: 'C' }
+    const objD = { id: 'D' }
+
+    const input: [object, object][] = [
+      [objA, objB],
+      [objC, objD],
+      [objA, objB],  // Duplicate
+      [objC, objD],  // Duplicate
+      [objA, objB],  // Duplicate
+    ]
+
+    const result = dedupeTuples(input)
+    expect(result).toEqual([
+      [objA, objB],
+      [objC, objD],
+    ])
+    expect(result).toHaveLength(2)
+  })
+
+  test('should use object identity - different objects with same content are NOT duplicates', () => {
+    const objA1 = { id: 'A' }
+    const objA2 = { id: 'A' }  // Different object, same content
+    const objB1 = { id: 'B' }
+    const objB2 = { id: 'B' }  // Different object, same content
+
+    const input: [object, object][] = [
+      [objA1, objB1],
+      [objA2, objB2],  // NOT a duplicate - different object references
+      [objA1, objB1],  // Duplicate of first
+    ]
+
+    const result = dedupeTuples(input)
+    expect(result).toEqual([
+      [objA1, objB1],
+      [objA2, objB2],
+    ])
+    expect(result).toHaveLength(2)
+  })
+
+  test('should handle mixed scenario with various combinations', () => {
+    const objA = { id: 'A' }
+    const objB = { id: 'B' }
+    const objC = { id: 'C' }
+    const objD = { id: 'D' }
+
+    const input: [object | undefined, object | undefined][] = [
+      [objA, objB],          // Unique
+      [objC, objD],          // Unique
+      [objA, objB],          // Duplicate of first
+      [undefined, objB],     // Unique (undefined in first position)
+      [objA, undefined],     // Unique (undefined in second position)
+      [undefined, objB],     // Duplicate
+      [objA, undefined],     // Duplicate
+      [undefined, undefined],// Unique (both undefined)
+      [objC, objD],          // Duplicate
+      [undefined, undefined],// Duplicate
+    ]
+
+    const result = dedupeTuples(input)
+    expect(result).toEqual([
+      [objA, objB],
+      [objC, objD],
+      [undefined, objB],
+      [objA, undefined],
+      [undefined, undefined],
+    ])
+    expect(result).toHaveLength(5)
+  })
+
+  test('should handle tuples where same object appears at different positions', () => {
+    const objA = { id: 'A' }
+    const objB = { id: 'B' }
+
+    const input: [object, object][] = [
+      [objA, objB],          // [A, B]
+      [objB, objA],          // [B, A] - NOT a duplicate (different positions)
+      [objA, objB],          // Duplicate of first
+      [objB, objA],          // Duplicate of second
+    ]
+
+    const result = dedupeTuples(input)
     expect(result).toEqual([
       [objA, objB],
       [objB, objA],
