@@ -292,8 +292,6 @@ export function createCopyWithEmptyPathItems(template: RestOperationData): RestO
 export function createCopyWithPrefixGroupOperationsOnly(source: RestOperationData, groupPrefix: string): RestOperationData {
   validateGroupPrefix(groupPrefix, 'groupPrefix')
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { paths, servers: rootServers, ...rest } = source
   const groupWithoutEdgeSlashes = trimSlashes(groupPrefix)
 
   // Since we are anyway composing synthetic specs for prefix groups comparison, we can incorporate
@@ -302,10 +300,11 @@ export function createCopyWithPrefixGroupOperationsOnly(source: RestOperationDat
   // Note that servers in operation objects are not taken into account
   // (it is impossible to support them in api-diff mapping
   // and they are considered bad practice on OpenAPI specifications anyway)
-  return {
+  const result: RestOperationData = {
+    ...source,
     paths: {
       ...Object.fromEntries(
-        Object.entries(paths)
+        Object.entries(source.paths)
           .map(([pathKey, pathItem]) => {
             // Path item servers take precedence over root servers
             const pathItemServers = (pathItem as OpenAPIV3.PathItemObject)?.servers
@@ -314,17 +313,21 @@ export function createCopyWithPrefixGroupOperationsOnly(source: RestOperationDat
             // Prepend base path to the path
             const fullPath = basePath ? `/${trimSlashes(basePath)}/${trimSlashes(pathKey)}`.replace(/\/+/g, '/') : pathKey
 
-            // Remove servers from path item copy
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { servers: pathServers, ...pathItemWithoutServers } = pathItem as OpenAPIV3.PathItemObject
+            // Remove servers from path item copy using delete to preserve property order
+            const pathItemCopy = { ...(pathItem as OpenAPIV3.PathItemObject) }
+            delete pathItemCopy.servers
 
-            return [fullPath, pathItemWithoutServers] as const
+            return [fullPath, pathItemCopy] as const
           })
           .filter(([key]) => removeFirstSlash(key as string).startsWith(`${groupWithoutEdgeSlashes}/`)) // note that 'api/v10' is a substring of 'api/v1000'
           // remove group prefix for correct path mapping in apiDiff
           .map(([key, value]) => [removeFirstSlash(key as string).substring(groupWithoutEdgeSlashes.length), value]),
       ),
     },
-    ...rest,
   }
+
+  // Remove servers from root level using delete to preserve property order
+  delete result.servers
+
+  return result
 }
