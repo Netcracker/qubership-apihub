@@ -61,6 +61,7 @@ import {
   extractRootSecurityDiffs,
   extractRootServersDiffs,
   getOperationBasePath,
+  validateGroupPrefix,
 } from './rest.utils'
 import { createOperationChange, getOperationTags, OperationsMap } from '../../components'
 
@@ -277,7 +278,7 @@ export function createCopyWithEmptyPathItems(template: RestOperationData): RestO
   }
 }
 
-export function createCopyWithCurrentGroupOperationsOnly(template: RestOperationData, group: string): RestOperationData {
+  validateGroupPrefix(groupPrefix, 'groupPrefix')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { paths, servers: rootServers, ...rest } = template
   const groupWithoutEdgeSlashes = trimSlashes(group)
@@ -307,7 +308,7 @@ export function createCopyWithCurrentGroupOperationsOnly(template: RestOperation
             return [fullPath, pathItemWithoutServers] as const
           })
           .filter(([key]) => removeFirstSlash(key as string).startsWith(`${groupWithoutEdgeSlashes}/`)) // note that 'api/v10' is a substring of 'api/v1000'
-          // remove prefix group for correct path mapping in apiDiff
+          // remove group prefix for correct path mapping in apiDiff
           .map(([key, value]) => [removeFirstSlash(key as string).substring(groupWithoutEdgeSlashes.length), value]),
       ),
     },

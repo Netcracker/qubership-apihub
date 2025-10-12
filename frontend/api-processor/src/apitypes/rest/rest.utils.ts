@@ -116,3 +116,17 @@ export const extractRootSecurityDiffs = (doc: OpenAPIV3.Document): Diff[] => {
     ...componentsSecuritySchemesDiffs,
   ]
 }
+
+export function validateGroupPrefix(group: unknown, paramName: string): void {
+  if (group === undefined) {
+    return
+  }
+
+  if (typeof group !== 'string') {
+    throw new Error(`${paramName} must be a string, received: ${typeof group}`)
+  }
+
+  if (group.length < 3 || !group.startsWith('/') || !group.endsWith('/')) {
+    throw new Error(`${paramName} must begin and end with a "/" character and contain at least one meaningful character, received: "${group}"`)
+  }
+}

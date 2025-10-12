@@ -16,6 +16,7 @@
 
 import { BuildConfig, BuilderStrategy, BuildResult, BuildTypeContexts } from '../types'
 import { compareVersions } from '../components/compare'
+import { validateGroupPrefix } from '../apitypes/rest/rest.utils'
 
 export class PrefixGroupsChangelogStrategy implements BuilderStrategy {
   async execute(config: BuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
@@ -23,8 +24,8 @@ export class PrefixGroupsChangelogStrategy implements BuilderStrategy {
     const { compareContext } = contexts
 
     // Validate groups
-    this.validateGroup(config.currentGroup, 'currentGroup')
-    this.validateGroup(config.previousGroup, 'previousGroup')
+    validateGroupPrefix(config.currentGroup, 'currentGroup')
+    validateGroupPrefix(config.previousGroup, 'previousGroup')
 
     buildResult.comparisons = await compareVersions(
       [version, packageId],
@@ -33,19 +34,5 @@ export class PrefixGroupsChangelogStrategy implements BuilderStrategy {
     )
 
     return buildResult
-  }
-
-  private validateGroup(group: unknown, paramName: string): void {
-    if (group === undefined) {
-      return
-    }
-
-    if (typeof group !== 'string') {
-      throw new Error(`${paramName} must be a string, received: ${typeof group}`)
-    }
-
-    if (group.length < 3 || !group.startsWith('/') || !group.endsWith('/')) {
-      throw new Error(`${paramName} must begin and end with a "/" character and contain at least one meaningful character, received: "${group}"`)
-    }
   }
 }
