@@ -70,16 +70,3 @@ export interface RestOperationContext {
 export interface OperationExtension {
   [REST_KIND_KEY]?: string
 }
-
-// export type Merged = {
-//   openapi: string;
-//   info: InfoObject;
-//   servers?: ServerObject[];
-//   paths: PathsObject<T>;
-//   components?: ComponentsObject;
-//   security?: SecurityRequirementObject[];
-//   tags?: TagObject[];
-//   externalDocs?: ExternalDocumentationObject;
-//   'x-express-openapi-additional-middleware'?: (((request: any, response: any, next: any) => Promise<void>) | ((request: any, response: any, next: any) => void))[];
-//   'x-express-openapi-validation-strict'?: boolean;
-// }
