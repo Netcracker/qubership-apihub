@@ -36,9 +36,9 @@ export const compareDocuments = async (
   prevDoc: ResolvedVersionDocument | undefined,
   currDoc: ResolvedVersionDocument | undefined,
   ctx: CompareOperationsPairContext): Promise<{
-  operationChanges: OperationChanges[]
-  tags: Set<string>
-}> => {
+    operationChanges: OperationChanges[]
+    tags: Set<string>
+  }> => {
   const { apiType, rawDocumentResolver, previousVersion, currentVersion, previousPackageId, currentPackageId } = ctx
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
   const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
@@ -104,7 +104,7 @@ export const compareDocuments = async (
 
       let operationDiffs: Diff[] = []
       if (operationChanged) {
-        operationDiffs = [...(methodData as WithAggregatedDiffs<GraphApiOperation>)[DIFFS_AGGREGATED_META_KEY]??[]]
+        operationDiffs = [...(methodData as WithAggregatedDiffs<GraphApiOperation>)[DIFFS_AGGREGATED_META_KEY] ?? []]
       }
       if (operationAddedOrRemoved) {
         const operationAddedOrRemovedDiff = (merged[type] as WithDiffMetaRecord<Record<string, GraphApiOperation>>)[DIFF_META_KEY]?.[operationKey]
