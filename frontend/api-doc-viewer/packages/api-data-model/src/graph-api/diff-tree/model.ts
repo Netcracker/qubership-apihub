@@ -8,8 +8,8 @@ import {
   DiffReplace,
   isDiffAdd,
   isDiffRemove,
-  isDiffReplace
-} from '@netcracker/qubership-apihub-api-diff';
+  isDiffReplace,
+} from '@netcracker/qubership-apihub-api-diff'
 import {
   GRAPH_API_NODE_KIND_INPUT_OBJECT,
   GRAPH_API_NODE_KIND_INTERFACE,
@@ -26,12 +26,12 @@ import {
   isGraphApiInputObjectDefinition,
   isGraphApiListDefinition,
   isGraphApiObjectiveDefinition,
-  isGraphApiOperation
-} from '@netcracker/qubership-apihub-graphapi';
-import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl';
-import { DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstract/diff';
-import { CreateNodeResult, IModelTreeNode } from '../../abstract/model/types';
-import { isBrokenRef, JsonSchemaCreateNodeParams, JsonSchemaModelDiffTree } from '../../json-schema';
+  isGraphApiOperation,
+} from '@netcracker/qubership-apihub-graphapi'
+import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
+import { DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstract/diff'
+import { CreateNodeResult, IModelTreeNode } from '../../abstract/model/types'
+import { isBrokenRef, JsonSchemaCreateNodeParams, JsonSchemaModelDiffTree } from '../../json-schema'
 import {
   getNodeComplexityType,
   inverDiffAction,
@@ -41,19 +41,19 @@ import {
   objectKeys,
   PathUtils,
   pick,
-  setValueByPath
-} from '../../utils';
-import { graphSchemaNodeKind, graphSchemaNodeMetaProps, graphSchemaNodeValueProps } from '../constants';
-import { isGraphApiNodeType } from '../guards';
-import { type GraphSchemaNodeKind, type GraphSchemaNodeType } from '../tree/types';
-import { resolveDirectiveDeprecated, resolveEnumValues } from '../utils';
-import { GraphApiDiffNodeMeta, GraphSchemaDiffNodeValue } from './types';
-import { LazyBuildingContext } from "../../abstract/model/model-tree-node.impl";
+  setValueByPath,
+} from '../../utils'
+import { graphSchemaNodeKind, graphSchemaNodeMetaProps, graphSchemaNodeValueProps } from '../constants'
+import { isGraphApiNodeType } from '../guards'
+import { type GraphSchemaNodeKind, type GraphSchemaNodeType } from '../tree/types'
+import { resolveDirectiveDeprecated, resolveEnumValues } from '../utils'
+import { GraphApiDiffNodeMeta, GraphSchemaDiffNodeValue } from './types'
+import { LazyBuildingContext } from '../../abstract/model/model-tree-node.impl'
 
 const OBJECTIVE_KINDS = new Set([
   GRAPH_API_NODE_KIND_OBJECT,
   GRAPH_API_NODE_KIND_INTERFACE,
-  GRAPH_API_NODE_KIND_INPUT_OBJECT
+  GRAPH_API_NODE_KIND_INPUT_OBJECT,
 ] as const)
 
 export class GraphApiModelDiffTree<
@@ -163,7 +163,7 @@ export class GraphApiModelDiffTree<
             ...diffForMethods,
             ...diffForMethods.action === DiffAction.remove ?
               { beforeValue: methods[method] } :
-              { afterValue: methods[method] }
+              { afterValue: methods[method] },
           }
         }
         const replacedMethods = diffForType?.beforeValue?.methods ?? {}
@@ -177,7 +177,7 @@ export class GraphApiModelDiffTree<
             ...diffForReplacedMethods,
             ...diffForReplacedMethods!.action === DiffAction.remove ?
               { beforeValue: methods[method] } :
-              { afterValue: methods[method] }
+              { afterValue: methods[method] },
           }
         }
       }
@@ -190,7 +190,7 @@ export class GraphApiModelDiffTree<
             ...diffForProps,
             ...diffForProps.action === DiffAction.remove ?
               { beforeValue: properties[property] } :
-              { afterValue: properties[property] }
+              { afterValue: properties[property] },
           }
         }
         const replacedProperties = diffForType?.beforeValue?.properties ?? {}
@@ -204,7 +204,7 @@ export class GraphApiModelDiffTree<
             ...diffForReplacedProps,
             ...diffForReplacedProps!.action === DiffAction.add ?
               { beforeValue: replacedProperties[property] } :
-              { afterValue: replacedProperties[property] }
+              { afterValue: replacedProperties[property] },
           }
         }
       }
@@ -400,12 +400,18 @@ export class GraphApiModelDiffTree<
       sourceValue = value.typeDef
     }
     if (sourceValue) {
+      const $changes: Partial<DiffRecord> = {}
+
       const isNotUnionItem = (sourceValue as unknown) !== value
       const currentType = sourceValue.type.kind
       const valueDiffs = isObject(sourceValue) ? sourceValue[this.metaKey] : undefined
       let diffForFieldType: DiffReplace | undefined = undefined
+      // changed node type
       if (isObject(valueDiffs) && 'type' in valueDiffs) {
-        if (isDiff(valueDiffs.type) && isDiffReplace(valueDiffs.type)) {
+        if (
+          isDiff(valueDiffs.type) &&
+          isDiffReplace(valueDiffs.type)
+        ) {
           const diff = valueDiffs.type
           diffForFieldType = { ...diff }
         }
@@ -414,20 +420,59 @@ export class GraphApiModelDiffTree<
           isObject(diffForFieldType.beforeValue) &&
           isGraphApiNodeType(diffForFieldType.beforeValue.kind)
         ) {
+          // synthesize diffs for enum values if kind "enum" was replaced by another one or vice versa
+          const maybeEnumTypeBefore = diffForFieldType.beforeValue
+          const maybeEnumTypeAfter = diffForFieldType.afterValue
+          const enumValuesBefore =
+            isObject(maybeEnumTypeBefore) && isObject(maybeEnumTypeBefore.values)
+              ? maybeEnumTypeBefore.values
+              : undefined
+          const enumValuesAfter =
+            isObject(maybeEnumTypeAfter) && isObject(maybeEnumTypeAfter.values)
+              ? maybeEnumTypeAfter.values
+              : undefined
+          const valuesChanges: DiffMetaRecord = {}
+          if (enumValuesBefore) {
+            Object.entries(enumValuesBefore).forEach(([enumKey, enumValue]) => {
+              valuesChanges[enumKey] = {
+                ...diffForFieldType,
+                action: DiffAction.remove,
+                beforeValue: enumValue,
+                afterValue: undefined,
+                afterNormalizedValue: undefined,
+                afterDeclarationPaths: undefined,
+              } as DiffRemove
+            })
+          }
+          if (enumValuesAfter) {
+            Object.entries(enumValuesAfter).forEach(([enumKey, enumValue]) => {
+              valuesChanges[enumKey] = {
+                ...diffForFieldType,
+                action: DiffAction.add,
+                afterValue: enumValue,
+                beforeValue: undefined,
+                beforeNormalizedValue: undefined,
+                beforeDeclarationPaths: undefined,
+              } as DiffAdd
+            })
+          }
+          if (Object.keys(valuesChanges).length > 0) {
+            setValueByPath($changes, valuesChanges, ...['values'])
+          }
+
+          // If any work with raw diff value is finished, update it
           const previousType: GraphSchemaNodeType = diffForFieldType.beforeValue.kind
           diffForFieldType.beforeValue = previousType
           diffForFieldType.afterValue = currentType
         }
       }
 
-      const $changes: Partial<DiffRecord> = {};
-
       if (isNotUnionItem) { // sourceValue !== value
         const valueRawChanges = value[this.metaKey];
         ['nullable', 'default'].forEach(field => {
           const diff = valueRawChanges?.[field]
           diff && setValueByPath($changes, diff, ...[field])
-        });
+        })
       }
 
       const sourceValueRawChanges = sourceValue[this.metaKey];
@@ -435,7 +480,7 @@ export class GraphApiModelDiffTree<
       ['title', 'description'].forEach(field => {
         const diff = sourceValueRawChanges?.[field]
         diff && setValueByPath($changes, diff, ...[field])
-      });
+      })
 
       if (isGraphApiEnumDefinition(sourceValue)) {
         const values = sourceValue.type.values ?? {}
@@ -510,18 +555,12 @@ export class GraphApiModelDiffTree<
       } as T
     }
 
-    const $changes: Partial<DiffRecord> = {}
-
-
-    return {
-      ...pick<any>(value, graphSchemaNodeValueProps),
-      ...Object.keys($changes).length ? { $changes } : {},
-    } as T
+    return pick<any>(value, graphSchemaNodeValueProps) as T
   }
 
   public createGraphSchemaNode(
     params: JsonSchemaCreateNodeParams<T, K, M>,
-    lazyBuildingContext?: LazyBuildingContext<any, any, any>
+    lazyBuildingContext?: LazyBuildingContext<any, any, any>,
   ): CreateNodeResult<IModelTreeNode<T, K, M>> {
     return this.createJsonSchemaNode(params, lazyBuildingContext)
   }
@@ -654,8 +693,8 @@ export class GraphApiModelDiffTree<
     if (pathUtils.endsWith(['type']) && isDiffReplace(change)) {
       const typeBefore = change.beforeValue
       const typeAfter = change.afterValue
-      const valuesBefore = isObject(typeBefore) ? typeBefore.values : undefined
-      const valuesAfter = isObject(typeAfter) ? typeAfter.values : undefined
+      const valuesBefore = isObject(typeBefore) && isObject(typeBefore.values) ? typeBefore.values : undefined
+      const valuesAfter = isObject(typeAfter) && isObject(typeAfter.values) ? typeAfter.values : undefined
 
       const valuesChanges: DiffMetaRecord = {}
       if (valuesBefore) {
@@ -723,8 +762,8 @@ export class GraphApiModelDiffTree<
           get depth(): number {
             const allDescendantsChanged = isAllDescendantsChanged(parent, container, childrenChanges, nestedChanges)
             return (parent?.depth ?? 0) + (!allDescendantsChanged && params.newDataLevel ? 1 : 0)
-          }
+          },
         })
         : undefined
-  };
+  }
 }

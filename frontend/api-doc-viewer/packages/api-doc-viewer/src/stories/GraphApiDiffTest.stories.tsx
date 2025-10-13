@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff';
-import type { Meta, StoryObj } from '@storybook/react';
-import { GraphQLOperationDiffViewer } from '../components/GraphQLOperationViewer/GraphQLOperationDiffViewer';
-import { SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '../types/LayoutMode';
-import { prepareGraphApiDiffSchema } from './preprocess';
-import { graphapi } from './utils/helpers';
+import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import type { Meta, StoryObj } from '@storybook/react'
+import { GraphQLOperationDiffViewer } from '../components/GraphQLOperationViewer/GraphQLOperationDiffViewer'
+import { SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '../types/LayoutMode'
+import { prepareGraphApiDiffSchema } from './preprocess'
+import { buildGraphApi, graphapi } from './utils/helpers'
 
 // It's necessary because storybook doesn't render nested stories without this empty story
 // eslint-disable-next-line storybook/story-exports
@@ -61,9 +61,9 @@ type Response {
   deprecatedWithReasonProperty: String
   unDeprecatedWithReasonProperty: String @deprecated(reason: "Will be removed")
   changedDeprecationReasonProperty: String @deprecated(reason: "BEFORE")
-  unchangedDeprecatedProperty: String @deprecated
-  unchangedDeprecatedWithReasonProperty: String @deprecated(reason: "Reason!!!")
-  unchangedNotDeprecatedProperty: String
+  notChangedDeprecatedProperty: String @deprecated
+  notChangedDeprecatedWithReasonProperty: String @deprecated(reason: "Reason!!!")
+  notChangedNotDeprecatedProperty: String
   enum: Enum
   bugEnum: BugEnum
 }
@@ -73,9 +73,11 @@ enum Enum {
   deprecatedWithReasonValue
   unDeprecatedWithReasonValue @deprecated(reason: "Will be removed")
   changedDeprecationReasonProperty @deprecated(reason: "BEFORE")
-  unchangedDeprecatedValue @deprecated
-  unchangedDeprecatedWithReasonValue @deprecated(reason: "Reason!!!")
-  unchangedNotDeprecatedValue
+  changedDeprecationReasonPropertyFromDefault @deprecated
+  changedDeprecationReasonPropertyToDefault @deprecated(reason: "Not default reason")
+  notChangedDeprecatedValue @deprecated
+  notChangedDeprecatedWithReasonValue @deprecated(reason: "Reason!!!")
+  notChangedNotDeprecatedValue
 }
 enum BugEnum {
   deprecated
@@ -94,9 +96,9 @@ type Response {
   deprecatedWithReasonProperty: String @deprecated(reason: "Will be removed")
   unDeprecatedWithReasonProperty: String
   changedDeprecationReasonProperty: String @deprecated(reason: "AFTER")
-  unchangedDeprecatedProperty: String @deprecated
-  unchangedDeprecatedWithReasonProperty: String @deprecated(reason: "Reason!!!")
-  unchangedNotDeprecatedProperty: String
+  notChangedDeprecatedProperty: String @deprecated
+  notChangedDeprecatedWithReasonProperty: String @deprecated(reason: "Reason!!!")
+  notChangedNotDeprecatedProperty: String
   enum: Enum
   bugEnum: BugEnum
 }
@@ -106,9 +108,11 @@ enum Enum {
   deprecatedWithReasonValue @deprecated(reason: "Will be removed")
   unDeprecatedWithReasonValue
   changedDeprecationReasonProperty @deprecated(reason: "AFTER")
-  unchangedDeprecatedValue @deprecated
-  unchangedDeprecatedWithReasonValue @deprecated(reason: "Reason!!!")
-  unchangedNotDeprecatedValue
+  changedDeprecationReasonPropertyFromDefault @deprecated(reason: "Not default reason")
+  changedDeprecationReasonPropertyToDefault @deprecated
+  notChangedDeprecatedValue @deprecated
+  notChangedDeprecatedWithReasonValue @deprecated(reason: "Reason!!!")
+  notChangedNotDeprecatedValue
 }
 enum BugEnum {
   deprecated @deprecated
@@ -329,7 +333,7 @@ export const WhollyAddedComplexEnum: Story = {
         enum Enum {
           first
           "My Value"
-          second 
+          second
           third @deprecated
           "My value"
           fourth @foo @deprecated(reason: "Because why")
@@ -352,7 +356,7 @@ export const WhollyRemovedComplexEnum: Story = {
         enum Enum {
           first
           "My Value"
-          second 
+          second
           third @deprecated
           "My value"
           fourth @foo @deprecated(reason: "Because why")
@@ -822,4 +826,82 @@ export const ChangedObjectiveUnion: Story = {
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
     diffMetaKey: DIFF_META_KEY,
   }
+}
+
+export const TypeToInput: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiDiffSchema({
+      beforeSource: buildGraphApi(`
+        type Query {
+          test: Type
+        }
+        
+        type Type {
+          id: ID!
+        }
+      `),
+      afterSource: buildGraphApi(`
+        type Query {
+          test: Input
+        }
+        
+        input Input {
+          id: ID!
+        }
+      `),
+      circular: true,
+    })
+    return <GraphQLOperationDiffViewer {...args} source={processedSource}/>
+  },
+  args: {
+    expandedDepth: 2,
+    diffMetaKey: DIFF_META_KEY,
+    layoutMode: 'side-by-side-diffs',
+    operationPath: 'companyCount',
+  },
+}
+
+export const EnumChanges: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiDiffSchema({
+      beforeSource: buildGraphApi(`
+        type Query {
+          test: Fruit
+        }
+        
+        enum Fruit {
+          "Removed APPLE description"
+          APPLE
+          BANANA
+          "Changed ORANGE description"
+          ORANGE
+          PINEAPPLE
+          STRAWBERRY
+        }
+      `),
+      afterSource: buildGraphApi(`
+        type Query {
+          test: Fruit
+        }
+        
+        enum Fruit {
+          APPLE
+          "Added BANANA description"
+          BANANA
+          "CHANGED ORANGE description"
+          ORANGE
+          PEAR
+          STRAWBERRY
+        }
+      `),
+      circular: true,
+    })
+    return <GraphQLOperationDiffViewer {...args} source={processedSource}/>
+  },
+  args: {
+    expandedDepth: 2,
+    diffMetaKey: DIFF_META_KEY,
+    layoutMode: 'side-by-side-diffs',
+    operationPath: 'companyCount',
+  },
 }
