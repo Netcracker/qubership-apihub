@@ -59,7 +59,7 @@ services:
                 condition: service_healthy
 
     qubership-apihub-ui:
-        image: ghcr.io/netcracker/qubership-apihub-ui:dev
+        image: ghcr.io/netcracker/qubership-apihub-ui:feature-linter-validation-results 
         container_name: qubership-apihub-ui
         ports:
         - "8081:8080"
@@ -106,6 +106,32 @@ services:
             default:
                 aliases:
                 - qubership-api-linter-service
+        depends_on:
+            qubership-apihub-ui:
+                condition: service_healthy
+
+    qubership-apihub-agents-backend:
+        image: ghcr.io/netcracker/qubership-apihub-agents-backend:impl
+        container_name: qubership-apihub-agents-backend
+        ports:
+        - "8092:8080"
+        env_file: "qubership-apihub-agents-backend.env"
+        healthcheck:
+            test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]
+            interval: 10s
+            timeout: 10s
+            retries: 10
+            start_period: 5s
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.25'
+                    memory: 256M
+        networks:
+            default:
+                aliases:
+                - qubership-apihub-agents-backend
         depends_on:
             qubership-apihub-ui:
                 condition: service_healthy

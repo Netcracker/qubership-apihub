@@ -45,4 +45,11 @@ zeroDayConfiguration:
   # <admin_login, example: apihub>
   adminEmail: ${APIHUB_ADMIN_EMAIL}
   # <admin_password, example: password>
-  adminPassword: ${APIHUB_ADMIN_PASSWORD}
+  adminPassword: ${APIHUB_ADMIN_PASSWORD}\
+extensions:
+  - name: api-linter
+    baseUrl: http://host.docker.internal:8091
+    pathPrefix: api-linter
+  - name: agents-backend
+    baseUrl: http://host.docker.internal:8092
+    pathPrefix: agents-backend
