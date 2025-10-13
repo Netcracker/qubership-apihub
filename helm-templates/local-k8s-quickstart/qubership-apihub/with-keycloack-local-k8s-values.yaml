@@ -34,6 +34,9 @@ qubershipApihubBackend:
       - name: api-linter
         baseUrl: http://qubership-api-linter-service:8080
         pathPrefix: api-linter
+      - name: agents-backend
+        baseUrl: http://qubership-apihub-agents-backend:8080
+        pathPrefix: agents-backend
 
 qubershipApihubBuildTaskConsumer:
   image:
@@ -83,7 +86,7 @@ qubershipApihubUi:
 qubershipApiLinterService:
   image:
     repository: 'ghcr.io/netcracker/qubership-api-linter-service'
-    tag: 'remake'
+    tag: 'dev'
   replicas: 1
   resource:
     cpu:
@@ -111,7 +114,7 @@ qubershipApihubAgentsBackend:
   version: ''
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-agents-backend'
-    tag: 'impl'
+    tag: 'dev'
   replicas: 1
   resource:
     memory:

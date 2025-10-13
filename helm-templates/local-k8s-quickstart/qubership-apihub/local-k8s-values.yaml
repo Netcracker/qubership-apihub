@@ -84,7 +84,7 @@ qubershipApihubUi:
 qubershipApiLinterService:
   image:
     repository: 'ghcr.io/netcracker/qubership-api-linter-service'
-    tag: 'remake'
+    tag: 'dev'
   replicas: 1
   resource:
     cpu:
@@ -112,7 +112,7 @@ qubershipApihubAgentsBackend:
   version: ''
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-agents-backend'
-    tag: 'impl'
+    tag: 'dev'
   replicas: 1
   resource:
     memory:
