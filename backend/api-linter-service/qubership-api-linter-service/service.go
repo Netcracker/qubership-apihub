@@ -16,20 +16,22 @@ package main
 
 import (
 	"context"
-	"github.com/Netcracker/qubership-api-linter-service/client"
-	"github.com/Netcracker/qubership-api-linter-service/db"
-	"github.com/Netcracker/qubership-api-linter-service/exception"
-	"github.com/Netcracker/qubership-api-linter-service/repository"
-	"github.com/Netcracker/qubership-api-linter-service/security"
-	"github.com/google/uuid"
 	"net/http"
 	"os"
 	"runtime/debug"
 	"sync"
 	"time"
 
+	"github.com/Netcracker/qubership-api-linter-service/client"
+	"github.com/Netcracker/qubership-api-linter-service/db"
+	"github.com/Netcracker/qubership-api-linter-service/exception"
+	"github.com/Netcracker/qubership-api-linter-service/repository"
+	"github.com/Netcracker/qubership-api-linter-service/security"
+	"github.com/google/uuid"
+
 	"github.com/Netcracker/qubership-api-linter-service/controller"
 	"github.com/Netcracker/qubership-api-linter-service/service"
+	"github.com/Netcracker/qubership-api-linter-service/utils"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -122,6 +124,10 @@ func main() {
 	}
 
 	apihubClient := client.NewApihubClient(systemInfoService.GetAPIHubUrl(), systemInfoService.GetApihubAccessToken())
+	
+	utils.SafeAsync(func() {
+		systemInfoService.SetProductionMode(apihubClient)
+	})
 
 	err = security.SetupGoGuardian(apihubClient)
 	if err != nil {
@@ -152,6 +158,7 @@ func main() {
 	validationService := service.NewValidationService(versionLintTaskRepository, versionResultRepository, lintResultRepository, ruleSetRepository, docLintTaskRepository, versionTaskProcessor, apihubClient, executorId)
 	publishEventListener := service.NewPublishEventListener(olricProvider, validationService)
 	rulesetService := service.NewRulesetService(ruleSetRepository)
+	cleanupService := service.NewCleanupService(cp)
 	authorizationService := service.NewAuthorizationService(apihubClient)
 
 	validationController := controller.NewValidationController(validationService, authorizationService)
@@ -159,6 +166,7 @@ func main() {
 	validationResultController := controller.NewValidationResultController(validationService, authorizationService)
 
 	rulesetController := controller.NewRulesetController(rulesetService, authorizationService)
+	cleanupController := controller.NewCleanupController(cleanupService, authorizationService, systemInfoService)
 	healthController := controller.NewHealthController(readyChan)
 
 	// Validate version
@@ -176,6 +184,9 @@ func main() {
 	r.HandleFunc("/api/v1/rulesets/{ruleset_id}/data", security.NoSecure(rulesetController.GetRulesetData)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/rulesets/{ruleset_id}/activation", security.Secure(rulesetController.GetRulesetActivationHistory)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/rulesets/{ruleset_id}", security.Secure(rulesetController.DeleteRuleset)).Methods(http.MethodDelete)
+
+	// Test data cleanup
+	r.HandleFunc("/api/internal/clear/{testId}", security.Secure(cleanupController.ClearTestData)).Methods(http.MethodDelete)
 
 	// Service endpoints
 	r.HandleFunc("/live", healthController.HandleLiveRequest).Methods(http.MethodGet)

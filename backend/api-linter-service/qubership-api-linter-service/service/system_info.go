@@ -15,10 +15,15 @@
 package service
 
 import (
+	"context"
 	"fmt"
-	"github.com/Netcracker/qubership-api-linter-service/view"
 	"os"
 	"strconv"
+	"time"
+
+	"github.com/Netcracker/qubership-api-linter-service/client"
+	"github.com/Netcracker/qubership-api-linter-service/secctx"
+	"github.com/Netcracker/qubership-api-linter-service/view"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -45,6 +50,8 @@ const (
 	OLRIC_DISCOVERY_MODE = "OLRIC_DISCOVERY_MODE"
 	OLRIC_REPLICA_COUNT  = "OLRIC_REPLICA_COUNT"
 	NAMESPACE            = "NAMESPACE"
+
+	PRODUCTION_MODE = "PRODUCTION_MODE"
 )
 
 type SystemInfoService interface {
@@ -71,6 +78,9 @@ type SystemInfoService interface {
 	GetOlricDiscoveryMode() string
 	GetReplicaCount() int
 	GetNamespace() string
+
+	SetProductionMode(apihubClient client.ApihubClient)
+	IsProductionMode() bool
 }
 
 func NewSystemInfoService() (SystemInfoService, error) {
@@ -302,4 +312,28 @@ func (s systemInfoServiceImpl) setNamespace() {
 
 func (s systemInfoServiceImpl) GetNamespace() string {
 	return s.systemInfoMap[NAMESPACE].(string)
+}
+
+func (s systemInfoServiceImpl) SetProductionMode(apihubClient client.ApihubClient) {
+	for {
+		systemInfo, err := apihubClient.GetSystemInfo(secctx.MakeSysadminContext(context.Background()))
+		if err != nil {
+			log.Warnf("Failed to get system info from APIHUB: %v. Retrying...", err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+
+		log.Infof("Successfully retrieved system info from APIHUB")
+		s.systemInfoMap[PRODUCTION_MODE] = systemInfo.ProductionMode
+		break
+	}
+}
+
+func (s systemInfoServiceImpl) IsProductionMode() bool {
+	if val, exists := s.systemInfoMap[PRODUCTION_MODE]; exists {
+		if boolVal, ok := val.(bool); ok {
+			return boolVal
+		}
+	}
+	return true
 }
