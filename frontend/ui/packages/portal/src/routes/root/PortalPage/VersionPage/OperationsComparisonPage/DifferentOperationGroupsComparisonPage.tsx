@@ -202,8 +202,7 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
     currentOperationKey: operationKey,
   }, operationAction)
 
-  //TODO: fix isLoading stuck in true if operation key is undefined
-  const { data: originOperation, isLoading: isOriginOperationLoading } = useOperation({
+  const { data: originOperation, isInitialLoading: isOriginOperationLoading } = useOperation({
     packageKey: !isPackageFromDashboard ? originPackageKey : refPackageKey,
     versionKey: !isPackageFromDashboard ? originVersionKey : refComparisonSummary?.previousVersion,
     enabled: !!operationAction && actionForOriginalOperation.includes(operationAction) && !!groupPrefixTemplate,
@@ -211,8 +210,7 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
     operationKey: operationKeyForOriginOperation,
   })
 
-  //TODO: fix isLoading stuck in true if operation key is undefined
-  const { data: changedOperation, isLoading: isChangedOperationLoading } = useOperation({
+  const { data: changedOperation, isInitialLoading: isChangedOperationLoading } = useOperation({
     packageKey: !isPackageFromDashboard ? changedPackageKey : refPackageKey,
     versionKey: !isPackageFromDashboard ? changedVersionKey : refComparisonSummary?.version,
     enabled: !!operationAction && actionForChangedOperation.includes(operationAction) && !!groupPrefixTemplate,
