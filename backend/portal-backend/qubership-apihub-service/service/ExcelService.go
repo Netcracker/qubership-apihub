@@ -735,6 +735,8 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 		return nil, err
 	}
 
+	colNum := 2 // B
+
 	for key, value := range restApiAllChangesSummaryMap {
 		versionName := versionChanges.Packages[key].RefPackageVersion
 		if !versionChanges.Packages[key].NotLatestRevision {
@@ -750,24 +752,26 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 				return nil, err
 			}
 		}
+		colName, _ := excelize.ColumnNumberToName(colNum)
+		colNum++
 		cellsValues = make(map[string]interface{})
-		cellsValues["B2"] = versionChanges.Packages[key].RefPackageId
-		cellsValues["B3"] = versionChanges.Packages[key].RefPackageName
-		cellsValues["B4"] = versionChanges.Packages[key].ServiceName
-		cellsValues["B5"] = versionName
-		cellsValues["B6"] = previousVersionName
-		cellsValues["B7"] = "rest"
-		cellsValues["B8"] = value.Breaking
-		cellsValues["B9"] = value.SemiBreaking
-		cellsValues["B10"] = value.NonBreaking
-		cellsValues["B11"] = value.Deprecated
-		cellsValues["B12"] = value.Annotation
-		cellsValues["B13"] = value.Unclassified
+		cellsValues[fmt.Sprintf("%s2", colName)] = versionChanges.Packages[key].RefPackageId
+		cellsValues[fmt.Sprintf("%s3", colName)] = versionChanges.Packages[key].RefPackageName
+		cellsValues[fmt.Sprintf("%s4", colName)] = versionChanges.Packages[key].ServiceName
+		cellsValues[fmt.Sprintf("%s5", colName)] = versionName
+		cellsValues[fmt.Sprintf("%s6", colName)] = previousVersionName
+		cellsValues[fmt.Sprintf("%s7", colName)] = "rest"
+		cellsValues[fmt.Sprintf("%s8", colName)] = value.Breaking
+		cellsValues[fmt.Sprintf("%s9", colName)] = value.SemiBreaking
+		cellsValues[fmt.Sprintf("%s10", colName)] = value.NonBreaking
+		cellsValues[fmt.Sprintf("%s11", colName)] = value.Deprecated
+		cellsValues[fmt.Sprintf("%s12", colName)] = value.Annotation
+		cellsValues[fmt.Sprintf("%s13", colName)] = value.Unclassified
 		err := setCellsValues(report.workbook, view.SummarySheetName, cellsValues)
 		if err != nil {
 			return nil, err
 		}
-		err = report.workbook.SetCellStyle(view.SummarySheetName, "B1", "B13", summaryCellStyle)
+		err = report.workbook.SetCellStyle(view.SummarySheetName, fmt.Sprintf("%s1", colName), fmt.Sprintf("%s13", colName), summaryCellStyle)
 		if err != nil {
 			return nil, err
 		}
@@ -787,24 +791,26 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 				return nil, err
 			}
 		}
+		colName, _ := excelize.ColumnNumberToName(colNum)
+		colNum++
 		cellsValues = make(map[string]interface{})
-		cellsValues["C2"] = versionChanges.Packages[key].RefPackageId
-		cellsValues["C3"] = versionChanges.Packages[key].RefPackageName
-		cellsValues["C4"] = versionChanges.Packages[key].ServiceName
-		cellsValues["C5"] = versionName
-		cellsValues["C6"] = previousVersionName
-		cellsValues["C7"] = "graphQL"
-		cellsValues["C8"] = value.Breaking
-		cellsValues["C9"] = value.SemiBreaking
-		cellsValues["C10"] = value.NonBreaking
-		cellsValues["C11"] = value.Deprecated
-		cellsValues["C12"] = value.Annotation
-		cellsValues["C13"] = value.Unclassified
+		cellsValues[fmt.Sprintf("%s2", colName)] = versionChanges.Packages[key].RefPackageId
+		cellsValues[fmt.Sprintf("%s3", colName)] = versionChanges.Packages[key].RefPackageName
+		cellsValues[fmt.Sprintf("%s4", colName)] = versionChanges.Packages[key].ServiceName
+		cellsValues[fmt.Sprintf("%s5", colName)] = versionName
+		cellsValues[fmt.Sprintf("%s6", colName)] = previousVersionName
+		cellsValues[fmt.Sprintf("%s7", colName)] = "graphQL"
+		cellsValues[fmt.Sprintf("%s8", colName)] = value.Breaking
+		cellsValues[fmt.Sprintf("%s9", colName)] = value.SemiBreaking
+		cellsValues[fmt.Sprintf("%s10", colName)] = value.NonBreaking
+		cellsValues[fmt.Sprintf("%s11", colName)] = value.Deprecated
+		cellsValues[fmt.Sprintf("%s12", colName)] = value.Annotation
+		cellsValues[fmt.Sprintf("%s13", colName)] = value.Unclassified
 		err := setCellsValues(report.workbook, view.SummarySheetName, cellsValues)
 		if err != nil {
 			return nil, err
 		}
-		err = report.workbook.SetCellStyle(view.SummarySheetName, "C1", "C13", summaryCellStyle)
+		err = report.workbook.SetCellStyle(view.SummarySheetName, fmt.Sprintf("%s1", colName), fmt.Sprintf("%s13", colName), summaryCellStyle)
 		if err != nil {
 			return nil, err
 		}
@@ -824,24 +830,26 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 				return nil, err
 			}
 		}
+		colName, _ := excelize.ColumnNumberToName(colNum)
+		colNum++
 		cellsValues = make(map[string]interface{})
-		cellsValues["D2"] = versionChanges.Packages[key].RefPackageId
-		cellsValues["D3"] = versionChanges.Packages[key].RefPackageName
-		cellsValues["D4"] = versionChanges.Packages[key].ServiceName
-		cellsValues["D5"] = versionName
-		cellsValues["D6"] = previousVersionName
-		cellsValues["D7"] = "protobuf"
-		cellsValues["D8"] = value.Breaking
-		cellsValues["D9"] = value.SemiBreaking
-		cellsValues["D10"] = value.NonBreaking
-		cellsValues["D11"] = value.Deprecated
-		cellsValues["D12"] = value.Annotation
-		cellsValues["D13"] = value.Unclassified
+		cellsValues[fmt.Sprintf("%s2", colName)] = versionChanges.Packages[key].RefPackageId
+		cellsValues[fmt.Sprintf("%s3", colName)] = versionChanges.Packages[key].RefPackageName
+		cellsValues[fmt.Sprintf("%s4", colName)] = versionChanges.Packages[key].ServiceName
+		cellsValues[fmt.Sprintf("%s5", colName)] = versionName
+		cellsValues[fmt.Sprintf("%s6", colName)] = previousVersionName
+		cellsValues[fmt.Sprintf("%s7", colName)] = "protobuf"
+		cellsValues[fmt.Sprintf("%s8", colName)] = value.Breaking
+		cellsValues[fmt.Sprintf("%s9", colName)] = value.SemiBreaking
+		cellsValues[fmt.Sprintf("%s10", colName)] = value.NonBreaking
+		cellsValues[fmt.Sprintf("%s11", colName)] = value.Deprecated
+		cellsValues[fmt.Sprintf("%s12", colName)] = value.Annotation
+		cellsValues[fmt.Sprintf("%s13", colName)] = value.Unclassified
 		err := setCellsValues(report.workbook, view.SummarySheetName, cellsValues)
 		if err != nil {
 			return nil, err
 		}
-		err = report.workbook.SetCellStyle(view.SummarySheetName, "D1", "D13", summaryCellStyle)
+		err = report.workbook.SetCellStyle(view.SummarySheetName, fmt.Sprintf("%s1", colName), fmt.Sprintf("%s13", colName), summaryCellStyle)
 		if err != nil {
 			return nil, err
 		}

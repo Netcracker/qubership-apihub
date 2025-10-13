@@ -276,7 +276,7 @@ func (s *lockServiceImpl) performHeartbeat(ctx context.Context, lockName string,
 		if options.NotifyOnLoss {
 			s.sendLockLostNotification(lockName, reason)
 		}
-		return fmt.Errorf(reason)
+		return fmt.Errorf("%s", reason)
 	}
 
 	if lockInfo != nil && lockInfo.InstanceId != s.instanceId {

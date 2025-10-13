@@ -192,7 +192,7 @@ func (m minioStorageServiceImpl) createBucketIfNotExists(ctx context.Context) er
 		return err
 	}
 	if exists {
-		log.Infof(fmt.Sprintf("Minio bucket - %s exists", m.creds.BucketName))
+		log.Infof("Minio bucket - %s exists", m.creds.BucketName)
 	} else {
 		err = m.minioClient.client.MakeBucket(ctx, m.creds.BucketName, minio.MakeBucketOptions{})
 		if err != nil {
@@ -203,7 +203,7 @@ func (m minioStorageServiceImpl) createBucketIfNotExists(ctx context.Context) er
 			return err
 		}
 		if exists {
-			log.Infof(fmt.Sprintf("Minio bucket - %s was created", m.creds.BucketName))
+			log.Infof("Minio bucket - %s was created", m.creds.BucketName)
 		}
 	}
 	return nil

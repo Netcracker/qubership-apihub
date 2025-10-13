@@ -29,3 +29,4 @@ jwt_private_key
 .DS_Store
 
 qubership-apihub-service/local_config/config.yaml
+docs/local_development/docker-compose/DB/data/**
