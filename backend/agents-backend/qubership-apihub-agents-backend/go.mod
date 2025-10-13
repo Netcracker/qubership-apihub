@@ -1,6 +1,6 @@
 module github.com/Netcracker/qubership-apihub-agents-backend
 
-go 1.23.4
+go 1.25.1
 
 require (
 	github.com/go-pg/pg/v10 v10.14.0
