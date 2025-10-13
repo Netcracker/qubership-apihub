@@ -25,8 +25,6 @@ security:
     refreshTokenDurationSec: 43200
   # Mandatory; Factual APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
   apihubExternalUrl: 'https://apihub.example.com'
-  # Optional; Set to true to enable apihub playground work without authtorization. Dangerous. Not recommended; If not set, default value: false; Example: true
-  insecureProxy: false
   # Optional; Allowed list of hosts that are accepted for proxy(playground) requests.; If not set, default value: []; Example: [example.com]
   allowedHostsForProxy:
     - example.com

@@ -16,13 +16,14 @@ package security
 
 import (
 	"fmt"
+	"net/http"
+	"runtime/debug"
+
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/shaj13/go-guardian/v2/auth"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/union"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"runtime/debug"
 )
 
 func Secure(next http.HandlerFunc) http.HandlerFunc {
@@ -157,37 +158,6 @@ func NoSecure(next http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 		}()
-		next.ServeHTTP(w, r)
-	}
-}
-
-func SecureAgentProxy(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if err := recover(); err != nil {
-				log.Errorf("Request failed with panic: %v", err)
-				log.Tracef("Stacktrace: %v", string(debug.Stack()))
-				debug.PrintStack()
-				utils.RespondWithCustomError(w, &exception.CustomError{
-					Status:  http.StatusInternalServerError,
-					Message: http.StatusText(http.StatusInternalServerError),
-					Debug:   fmt.Sprintf("%v", err),
-				})
-				return
-			}
-		}()
-		//TODO: need to remove customJwtStrategy and use sessionCookie strategy only
-		user, err := proxyAuthStrategy.Authenticate(r.Context(), r)
-		if err != nil {
-			respondWithAuthFailedError(w, err)
-			return
-		}
-		//TODO: remove after the agent has migrated to using 'apihub-access-token' in authentication
-		if r.Header.Get(CustomJwtAuthHeader) == "" {
-			accessTokenCookie, _ := r.Cookie(AccessTokenCookieName)
-			r.Header.Set(CustomJwtAuthHeader, accessTokenCookie.Value)
-		}
-		r = auth.RequestWithUser(user, r)
 		next.ServeHTTP(w, r)
 	}
 }

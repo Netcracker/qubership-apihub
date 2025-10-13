@@ -34,7 +34,6 @@ type SecurityConfig struct {
 	ProductionMode            bool
 	Jwt                       JwtConfig
 	ApihubExternalUrl         string `validate:"required"`
-	InsecureProxy             bool
 	AllowedHostsForProxy      []string
 	AllowedOrigins            []string
 	AutoLogin                 bool

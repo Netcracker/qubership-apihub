@@ -70,7 +70,6 @@ type SystemInfoService interface {
 	GetLdapOrganizationUnit() string
 	GetLdapSearchBase() string
 	GetBuildsCleanupSchedule() string
-	InsecureProxyEnabled() bool
 	GetMetricsGetterSchedule() string
 	MonitoringEnabled() bool
 	GetMinioAccessKeyId() string
@@ -279,7 +278,6 @@ func (g *systemInfoServiceImpl) postProcessConfig() {
 func (g *systemInfoServiceImpl) setBackendVersion() {
 	gitBranch := os.Getenv(GIT_BRANCH)
 	gitHash := os.Getenv(GIT_HASH)
-
 	if gitBranch == "" && gitHash == "" {
 		g.config.TechnicalParameters.BackendVersion = "unknown"
 	} else {
@@ -399,10 +397,6 @@ func (g *systemInfoServiceImpl) getSystemNotification() string {
 
 func (g *systemInfoServiceImpl) GetBuildsCleanupSchedule() string {
 	return g.config.Cleanup.Builds.Schedule
-}
-
-func (g *systemInfoServiceImpl) InsecureProxyEnabled() bool {
-	return g.config.Security.InsecureProxy
 }
 
 func (g *systemInfoServiceImpl) GetMetricsGetterSchedule() string {
