@@ -17,7 +17,7 @@
 import type { AgentKey, NamespaceKey, VersionKey, WorkspaceKey } from './keys'
 import type { AutodiscoveryStatus } from './statuses'
 import { NONE_DISCOVERY_STATUS } from './statuses'
-import { ncCustomAgentsRequestJson, ncCustomAgentsRequestVoid } from '@apihub/utils/requests'
+import { API_V2, requestJson, requestVoid } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 
 export type Settings = Readonly<{
   name: string
@@ -65,10 +65,12 @@ export async function getSettings(
   agentId: AgentKey,
   namespaceKey: NamespaceKey,
   workspaceKey: WorkspaceKey,
+  prefix: string,
 ): Promise<SettingsDto> {
-  return await ncCustomAgentsRequestJson<SettingsDto>(`/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/settings`, {
+  return await requestJson<SettingsDto>(`/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/settings`, {
       method: 'get',
     },
+    { basePath: `${prefix}${API_V2}` },
   )
 }
 
@@ -88,8 +90,9 @@ export async function updateSettings(
   schedules: Schedules,
   emailNotificationEnabled: boolean,
   emailNotificationList: Emails,
+  prefix: string,
 ): Promise<void> {
-  return await ncCustomAgentsRequestVoid(`/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/settings`, {
+  return await requestVoid(`/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/settings`, {
       method: 'post',
       body: JSON.stringify(<UpdateSettingsRequestDto>{
         name: namespaceKey,
@@ -101,5 +104,6 @@ export async function updateSettings(
         emailNotificationList: emailNotificationList,
       }),
     },
+    { basePath: `${prefix}${API_V2}` },
   )
 }

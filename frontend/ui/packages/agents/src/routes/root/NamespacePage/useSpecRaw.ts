@@ -17,7 +17,6 @@
 import type { UseQueryOptions } from '@tanstack/react-query'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
-import { ncCustomAgentsRequestBlob } from '@apihub/utils/requests'
 import type { ServiceKey, SpecKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { SpecRaw } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
@@ -26,8 +25,9 @@ import type { AgentKey, NamespaceKey, WorkspaceKey } from '@apihub/entities/keys
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useMemo } from 'react'
-import { APIHUB_NC_BASE_PATH } from '@netcracker/qubership-apihub-ui-shared/utils/urls'
-import { API_V2 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import { API_V2, requestBlob } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import { systemConfiguration } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useSystemConfiguration'
+import { findExtensions } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 
 const SPEC_RAW_QUERY_KEY = 'spec-raw-query-key'
 const EMPTY_SPECS_RESULT: Map<SpecKey, SpecRaw> = new Map()
@@ -125,12 +125,14 @@ export async function getSpecBlob(
   specKey: SpecKey,
   ignoreErrors?: boolean,
 ): Promise<Blob> {
-  return (await ncCustomAgentsRequestBlob(
+  const { extensions } = await systemConfiguration()
+  const prefix = findExtensions(extensions, 'agents-backend')?.pathPrefix || ''
+  return (await requestBlob(
     `/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/services/${serviceKey}/specs/${encodeURIComponent(specKey)}`,
     { method: 'get' },
     {
-      basePath: `${APIHUB_NC_BASE_PATH}${API_V2}`,
-      customErrorHandler: ignoreErrors ? () => {/*do nothing*/ } : undefined,
+      basePath: `/${prefix}${API_V2}`,
+      customErrorHandler: ignoreErrors ? () => {/*do nothing*/} : undefined,
     },
   )).blob()
 }

@@ -15,7 +15,7 @@
  */
 
 import type { Key } from './keys'
-import { requestJson } from '../utils/requests'
+import { API_V2, requestJson } from '../utils/requests'
 import { isNotEmpty } from '../utils/arrays'
 
 export type ServiceNamesDto = {
@@ -41,13 +41,13 @@ export function toServiceNames(value: ServiceNamesDto): ServiceNames {
   }))
 }
 
-export async function getServiceNames(agentKey: Key, namespaceName: string): Promise<ServiceNamesDto> {
+export async function getServiceNames(agentKey: Key, namespaceName: string, prefix: string): Promise<ServiceNamesDto> {
   const agentId = encodeURIComponent(agentKey)
   const namespace = encodeURIComponent(namespaceName)
 
-  return await requestJson<ServiceNamesDto>(`/api/v2/agents/${agentId}/namespaces/${namespace}/serviceNames`, {
+  return await requestJson<ServiceNamesDto>(`/agents/${agentId}/namespaces/${namespace}/serviceNames`, {
     method: 'get',
-  })
+  }, { basePath: `${prefix}${API_V2}` })
 }
 
 export function isServiceNameExistInNamespace(

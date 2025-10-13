@@ -15,7 +15,7 @@
  */
 
 import type { Key } from './keys'
-import { requestJson } from '../utils/requests'
+import { API_V2, requestJson } from '../utils/requests'
 
 export type Agents = ReadonlyArray<Agent>
 
@@ -36,8 +36,8 @@ export const EMPTY_AGENT: Agent = {
   status: '',
 }
 
-export async function getAgents(): Promise<Agents> {
-  return await requestJson<Agents>('/api/v2/agents', {
+export async function getAgents(prefix: string): Promise<Agents> {
+  return await requestJson<Agents>('/agents', {
     method: 'get',
-  })
+  }, { basePath: `${prefix}${API_V2}` })
 }

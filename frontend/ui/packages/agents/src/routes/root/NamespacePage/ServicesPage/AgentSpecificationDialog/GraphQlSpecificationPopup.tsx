@@ -30,7 +30,6 @@ import { Header } from './internal/Header'
 import { useSpecsRaw } from '../../useSpecRaw'
 import type { Spec } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
 import { GRAPHQL_SCHEMA_SPEC_TYPE, isGraphQlSpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
-import { APIHUB_NC_BASE_PATH } from '@netcracker/qubership-apihub-ui-shared/utils/urls'
 import { useMergedGraphQlSpec } from './useMergedGraphQlSpec'
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
 import { GRAPHQL_FILE_EXTENSION } from '@netcracker/qubership-apihub-ui-shared/utils/files'
@@ -45,6 +44,10 @@ import { IdpAuthTokenForm } from '@netcracker/qubership-apihub-ui-shared/compone
 import { useIdpAuthToken } from './useIdpAuthToken'
 import { useLocalIdpAuthToken } from '../../useLocalIdpAuthToken'
 import { useEffectOnce } from 'react-use'
+import {
+  useGetAgentPrefix,
+} from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
+import { API_V2 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 
 export type GraphQlSpecificationPopupProps = {
   clickedSpec: Spec
@@ -78,9 +81,10 @@ export const GraphQlSpecificationPopup: FC<GraphQlSpecificationPopupProps> = mem
   const mergedSpecRaw = useMergedGraphQlSpec({ specsRaw: specsRaw, enabled: hasManySpecs })
 
   const [expand, setExpand] = useState<boolean>(false)
+  const prefix = useGetAgentPrefix()
 
   const proxyServer = useMemo(() => ({
-    url: getAgentProxyServerUrl(clickedSpec?.serviceKey, agentId, namespaceKey, endpoint),
+    url: getAgentProxyServerUrl(prefix, clickedSpec?.serviceKey, agentId, namespaceKey, endpoint),
   }), [agentId, clickedSpec?.serviceKey, endpoint, namespaceKey])
   const spec: Spec = useMemo(() => (
     {
@@ -246,12 +250,12 @@ export const SpecOptionItem: FC<SpecOptionItemProps> = memo<SpecOptionItemProps>
   )
 })
 
-function getAgentProxyServerUrl(serviceKey?: string, agentId?: string, namespace?: string, endpoint = DEFAULT_GRAPHQL_ENDPOINT): string {
+function getAgentProxyServerUrl(prefix: string, serviceKey?: string, agentId?: string, namespace?: string, endpoint = DEFAULT_GRAPHQL_ENDPOINT): string {
   if (!agentId || !namespace) {
     return ''
   }
 
-  return `${APIHUB_NC_BASE_PATH}/agents/${agentId}/namespaces/${namespace}/services/${serviceKey}/proxy${endpoint}`
+  return `${prefix}${API_V2}/agents/${agentId}/namespaces/${namespace}/services/${serviceKey}/proxy${endpoint}`
 }
 
 const DEFAULT_GRAPHQL_ENDPOINT = '/api/graphql-server/graphql'

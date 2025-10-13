@@ -20,8 +20,8 @@ import type { AgentKey, NamespaceKey, PackageKey, ServiceKey, VersionKey, Worksp
 import type { VersionStatuses } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import type { Spec, SpecDto } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
 import { toSpec } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
-import { ncCustomAgentsRequestJson, ncCustomAgentsRequestVoid } from '@apihub/utils/requests'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import { API_V2, requestJson, requestVoid } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 
 export type Services = {
   status: DiscoveryStatus
@@ -103,10 +103,14 @@ export async function getServices(
   namespaceKey: NamespaceKey,
   workspaceKey: WorkspaceKey,
   onlyWithSpecs: boolean = false,
+  prefix: string,
 ): Promise<ServicesDto> {
-  const servicesDto = await ncCustomAgentsRequestJson<ServicesDto>(`/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/services`, {
+  const servicesDto = await requestJson<ServicesDto>(
+    `/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/services`,
+    {
       method: 'get',
     },
+    { basePath: `${prefix}${API_V2}` },
   )
   if (onlyWithSpecs) {
     return {
@@ -121,9 +125,11 @@ export async function runServiceDiscovery(
   agentId: AgentKey,
   namespaceKey: NamespaceKey,
   workspaceKey: WorkspaceKey,
+  prefix: string,
 ): Promise<void> {
-  return await ncCustomAgentsRequestVoid(`/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/discover`, {
+  return await requestVoid(`/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/discover`, {
       method: 'post',
     },
+    { basePath: `${prefix}${API_V2}` },
   )
 }

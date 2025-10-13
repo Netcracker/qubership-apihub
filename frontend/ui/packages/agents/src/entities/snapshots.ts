@@ -16,8 +16,8 @@
 
 import type { AgentKey, NamespaceKey, PackageKey, ServiceKey, VersionKey, WorkspaceKey } from './keys'
 import type { PublishConfigDto } from './publish-config'
-import { ncCustomAgentsRequestJson } from '@apihub/utils/requests'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
+import { API_V2, requestJson } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 
 export type Snapshots = {
   packageKey: PackageKey
@@ -67,10 +67,12 @@ export async function getSnapshots(
   agentId: AgentKey,
   namespaceKey: NamespaceKey,
   workspaceKey: WorkspaceKey,
+  prefix: string,
 ): Promise<SnapshotsDto> {
-  return await ncCustomAgentsRequestJson<SnapshotsDto>(`/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/snapshots`, {
+  return await requestJson<SnapshotsDto>(`/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/snapshots`, {
       method: 'get',
     },
+    { basePath: `${prefix}${API_V2}` },
   )
 }
 
@@ -96,9 +98,11 @@ export async function publishSnapshot(
   previousVersion: string,
   serviceKeys: ServiceKey[],
   builderId: string,
+  prefix: string,
   status?: VersionStatus,
 ): Promise<PublishConfigDto> {
-  return await ncCustomAgentsRequestJson<PublishConfigDto>(`/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/snapshots?clientBuild=${clientBuild}&promote=${promote}`, {
+
+  return await requestJson<PublishConfigDto>(`/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/snapshots?clientBuild=${clientBuild}&promote=${promote}`, {
       method: 'post',
       body: JSON.stringify(<PublishSnapshotRequestDto>{
         version: version,
@@ -108,5 +112,6 @@ export async function publishSnapshot(
         builderId: builderId,
       }),
     },
+    { basePath: `${prefix}${API_V2}` },
   )
 }
