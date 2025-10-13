@@ -250,13 +250,6 @@ export class GraphApiModelDiffTree<
     if (isGraphApiDirective(value)) {
       value = value.definition
 
-      // args
-      // const argsRawChanges = value?.args?.[this.metaKey]
-      // if (isObject(argsRawChanges)) {
-      //   for (const [argName, argDiff] of Object.entries(argsRawChanges)) {
-      //     setValueByPath($metaChanges, argDiff, ...['args', argName])
-      //   }
-      // }
       // locations
       const locationsRawChanges = value?.locations?.[this.metaKey]
       if (isObject(locationsRawChanges)) {
@@ -327,13 +320,10 @@ export class GraphApiModelDiffTree<
     const nestedChanges: DiffRecord = value?.typeDef?.type?.[complexityType]?.[this.metaKey] ?? {}
 
     const $nestedChanges: DiffRecord = {}
-    for (const nested of objectKeys(nestedChanges)) {
-      $nestedChanges[`${id}/typeDef/type/${complexityType}/${nested.toString()}`] = nestedChanges[nested]
+    for (const nestedId of Object.keys(nestedChanges)) {
+      $nestedChanges[`${id}/typeDef/type/${complexityType}/${nestedId}`] = nestedChanges[nestedId]
     }
     const $nodeChange = this.getNodeChange(params)
-    // TODO 09.10.2025 // TBA
-    // const $metaChanges = this.getPropsChanges(value, ['args'])
-    const $metaChanges: Partial<DiffRecord> = {}
 
     return {
       ...Object.keys($nestedChanges).length
@@ -341,9 +331,6 @@ export class GraphApiModelDiffTree<
         : {},
       ...$nodeChange
         ? { $nodeChange }
-        : {},
-      ...Object.keys($metaChanges).length
-        ? { $metaChanges }
         : {},
       // $nodeChangesSummary: new Set<DiffType>(),
       ...(isBrokenRef(value) ? { brokenRef: value.$ref } : {}),

@@ -192,7 +192,6 @@ export const SimpleEnum: Story = {
   }
 }
 
-
 export const WhollyAddedSimpleEnum: Story = {
   args: {
     source: prepareGraphApiDiffSchema({
