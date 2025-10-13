@@ -41,6 +41,7 @@ The **Web Portal** provides a user-friendly interface for interacting with the A
 
 See [qubership-apihub-ui](https://github.com/Netcracker/qubership-apihub-ui)
 
+
 ### Out of the box add ons
 
 See [APIHUB Wiki](https://github.com/Netcracker/qubership-apihub/wiki#supplementary-applications) for APIHUB add-ons architecture
@@ -57,7 +58,6 @@ A Go-based microservice that provides management and orchestration capabilities 
 This service handles agent registration, service discovery, snapshot management, and security checks.
 
 See [qubership-apihub-agents-backend](https://github.com/Netcracker/qubership-apihub-agents-backend)
-
 
 ## Documentation
 

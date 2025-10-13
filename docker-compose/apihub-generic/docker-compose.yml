@@ -85,7 +85,7 @@ services:
                 condition: service_healthy
 
     qubership-api-linter-service:
-        image: ghcr.io/netcracker/qubership-api-linter-service:remake
+        image: ghcr.io/netcracker/qubership-api-linter-service:dev
         container_name: qubership-api-linter-service
         ports:
         - "8091:8080"
