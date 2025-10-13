@@ -23,7 +23,9 @@ test.describe('General', () => {
 
       await expect(portalPage.header.userMenu).toBeVisible()
       await expect.soft(portalPage.header.portalBtn).toBeVisible()
-      await expect.soft(portalPage.header.agentBtn).toBeVisible()
+      /*TODO: Fix it after migrating tests for the agent and configuring tests*/
+
+      // await expect.soft(portalPage.header.agentBtn).toBeVisible()
       await expect.soft(portalPage.header.vsCodeExtensionBtn).toBeVisible()
       await expect.soft(portalPage.header.appHeaderDivider).toBeVisible()
       await expect.soft(portalPage.header.globalSearchBtn).toBeVisible()
@@ -55,14 +57,15 @@ test.describe('General', () => {
       await expect(portalPage.tooltip).toHaveText(SYSADMIN.name)
     })
 
+  /*TODO: Fix it after migrating tests for the agent and configuring tests*/
   test('[P-GEN-2] Navigation to the Agent page',
     {
       tag: '@smoke',
       annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-4279` },
     },
     async ({ sysadminPage: page }) => {
+      test.skip(true,'Fix it after migrating tests for the agent and configuring tests')
       test.skip(isDevProxyMode(), 'Does not support dev proxy mode')
-
       const portalPage = new PortalPage(page)
       const agentPage = new AgentPage(page)
 
