@@ -205,7 +205,6 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
   const { data: originOperation, isInitialLoading: isOriginOperationLoading } = useOperation({
     packageKey: !isPackageFromDashboard ? originPackageKey : refPackageKey,
     versionKey: !isPackageFromDashboard ? originVersionKey : refComparisonSummary?.previousVersion,
-    enabled: !!operationAction && actionForOriginalOperation.includes(operationAction) && !!groupPrefixTemplate,
     apiType: apiType as ApiType,
     operationKey: operationKeyForOriginOperation,
   })
@@ -213,7 +212,6 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
   const { data: changedOperation, isInitialLoading: isChangedOperationLoading } = useOperation({
     packageKey: !isPackageFromDashboard ? changedPackageKey : refPackageKey,
     versionKey: !isPackageFromDashboard ? changedVersionKey : refComparisonSummary?.version,
-    enabled: !!operationAction && actionForChangedOperation.includes(operationAction) && !!groupPrefixTemplate,
     apiType: apiType as ApiType,
     operationKey:operationKeyForChangedOperation,
   })
