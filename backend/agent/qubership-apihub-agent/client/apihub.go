@@ -41,10 +41,9 @@ type ApihubClient interface {
 
 	GetUserPackagesPromoteStatuses(ctx secctx.SecurityContext, packagesReq view.PackagesReq) (view.AvailablePackagePromoteStatuses, error)
 
+	GetSystemConfiguration() (*view.ApihubSystemConfigurationInfo, error)
+
 	GetRsaPublicKey(ctx secctx.SecurityContext) (*view.PublicKey, error)
-
-	SendKeepaliveMessage(msg view.AgentKeepaliveMessage) (string, error)
-
 	CheckApiKeyValid(apiKey string) (bool, error)
 	CheckAuthToken(ctx context.Context, token string) (bool, error)
 }
@@ -174,36 +173,6 @@ func (a apihubClientImpl) GetUserPackagesPromoteStatuses(ctx secctx.SecurityCont
 	return result, nil
 }
 
-func (a apihubClientImpl) SendKeepaliveMessage(msg view.AgentKeepaliveMessage) (string, error) {
-	req := a.makeRequest(secctx.CreateSystemContext())
-	req.SetBody(msg)
-
-	resp, err := req.Post(fmt.Sprintf("%s/api/v2/agents", a.apihubUrl))
-	if err != nil {
-		return "", err
-	}
-	if resp.StatusCode() != http.StatusOK {
-		if authErr := checkUnauthorized(resp); authErr != nil {
-			return "", authErr
-		}
-		return "", fmt.Errorf("failed to send registration message with error code %d", resp.StatusCode())
-	}
-	body := resp.Body()
-	if len(body) > 0 {
-		type agentVersion struct {
-			Version string `json:"version"`
-		}
-		var version agentVersion
-		err = json.Unmarshal(body, &version)
-		if err != nil {
-			return "", err
-		}
-		return version.Version, nil
-	}
-
-	return "", nil
-}
-
 func (a apihubClientImpl) CheckApiKeyValid(apiKey string) (bool, error) {
 	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
@@ -240,6 +209,23 @@ func (a apihubClientImpl) CheckAuthToken(ctx context.Context, token string) (boo
 		return false, err
 	}
 	return true, nil
+}
+
+func (a apihubClientImpl) GetSystemConfiguration() (*view.ApihubSystemConfigurationInfo, error) {
+	req := a.makeRequest(secctx.CreateSystemContext())
+	resp, err := req.Get(fmt.Sprintf("%s/api/v2/system/configuration", a.apihubUrl))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get APIHUB system configuration: %s", err.Error())
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("failed to get APIHUB system configuration: status code %d", resp.StatusCode())
+	}
+	var config view.ApihubSystemConfigurationInfo
+	err = json.Unmarshal(resp.Body(), &config)
+	if err != nil {
+		return nil, err
+	}
+	return &config, nil
 }
 
 func (a apihubClientImpl) makeRequest(ctx secctx.SecurityContext) *resty.Request {

@@ -1,13 +1,13 @@
-qubership-apihub-agent-service/.idea
-qubership-apihub-agent-service/go.sum
+qubership-apihub-agent/.idea
+qubership-apihub-agent/go.sum
 .idea
 .vscode
-qubership-apihub-agent-service/data/**
-qubership-apihub-agent-service/static/**
-qubership-apihub-agent-service/logs/**
-qubership-apihub-agent-service/apihub-agent.exe
-qubership-apihub-agent-service/apihub-agent
-qubership-apihub-agent-service/bin/**
+qubership-apihub-agent/data/**
+qubership-apihub-agent/static/**
+qubership-apihub-agent/logs/**
+qubership-apihub-agent/apihub-agent.exe
+qubership-apihub-agent/apihub-agent
+qubership-apihub-agent/bin/**
 
 *.bak
 *.iml
