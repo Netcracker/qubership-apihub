@@ -96,14 +96,14 @@ export function createGraphApiTreeCrawlHook(
       }
     }
 
+    parent?.addChild(nodeCreationResult.node)
+
     /* Feature "Lazy Tree Building" */
     if (state.treeLevel >= state.maxTreeLevel) {
       return { done: true }
     }
     const nextTreeLevel = state.treeLevel + 1
     /* --- */
-
-    parent?.addChild(nodeCreationResult.node)
 
     if (nodeCreationResult.value) {
       // FIXME 02.10.25 // Get rid of it when "SyncCrawlHook<any, any>" is reverted

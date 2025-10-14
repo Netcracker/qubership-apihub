@@ -128,18 +128,18 @@ export function createGraphSchemaTreeCrawlHook(
 
     const nodeCreationResult = tree.createGraphSchemaNode(nodeCreationParams, lazyBuildingContext)
 
+    if (container) {
+      container.addNestedNode(nodeCreationResult.node)
+    } else {
+      parent?.addChild(nodeCreationResult.node)
+    }
+
     /* Feature "Lazy Tree Building" */
     if (state.treeLevel >= state.maxTreeLevel && !container) {
       return { done: true }
     }
     const nextTreeLevel = state.treeLevel + 1
     /* --- */
-
-    if (container) {
-      container.addNestedNode(nodeCreationResult.node)
-    } else {
-      parent?.addChild(nodeCreationResult.node)
-    }
 
     if (nodeCreationResult.value) {
       // FIXME 02.10.25 // Get rid of it when "SyncCrawlHook<any, any>" is reverted

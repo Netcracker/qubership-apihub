@@ -99,14 +99,14 @@ export function createGraphApiDiffTreeCrawlHook(
       }
     }
 
+    parent?.addChild(nodeCreationResult.node)
+
     /* Feature "Lazy Tree Building" */
     if (state.treeLevel >= state.maxTreeLevel) {
       return { done: true }
     }
     const nextTreeLevel = state.treeLevel + 1
     /* --- */
-
-    parent?.addChild(nodeCreationResult.node)
 
     if (nodeCreationResult.value) {
       const prevStack = state.alreadyConvertedMappingStack as GraphApiDiffCrawlState['alreadyConvertedMappingStack']
