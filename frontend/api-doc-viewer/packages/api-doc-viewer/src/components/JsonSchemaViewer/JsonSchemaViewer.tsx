@@ -76,6 +76,7 @@ const JsonSchemaViewerInner: FC<JsonSchemaViewerProps> = (props) => {
   if (isPropNodeState(root)) {
     content = (
       <JsonPropNodeViewer
+        // @ts-expect-error // TODO 14.10.25 // Fix this later
         state={root}
         overriddenKind={overriddenKind}
       />
@@ -85,6 +86,7 @@ const JsonSchemaViewerInner: FC<JsonSchemaViewerProps> = (props) => {
   if (isCombinerNodeState(root)) {
     content = (
       <JsonCombinerNodeViewer
+        // @ts-expect-error // TODO 14.10.25 // Fix this later
         state={root}
         onGlobalSelectNestedNode={() => null}
       />

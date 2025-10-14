@@ -1,10 +1,11 @@
+import { Diff, DiffMetaRecord, DiffType, isDiffReplace } from '@netcracker/qubership-apihub-api-diff';
 import { buildPointer } from '@netcracker/qubership-apihub-api-unifier';
-import { Diff, DiffMetaRecord, isDiffReplace } from '@netcracker/qubership-apihub-api-diff';
 import { isArray, syncCrawl } from '@netcracker/qubership-apihub-json-crawl';
+import { UNKNOWN_TYPE } from '../../abstract/constants';
 import { DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstract/diff';
-// import { DIFF_TREE_UTILS } from '../../abstract/diff-tree-utils';
+import { ChangesSummaryUtils } from '../../abstract/diff-tree-utils';
+import { LazyBuildingContext } from "../../abstract/model/model-tree-node.impl";
 import { IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from '../../abstract/model/types';
-import { UNKNOWN_TYPE } from "../../abstract/constants";
 import { getNodeComplexityType, isDiff, isObject, objectKeys, pick, setValueByPath } from '../../utils';
 import { jsonSchemaNodeMetaProps, jsonSchemaNodeValueProps } from '../constants';
 import { isJsonSchemaNodeType } from '../guards';
@@ -12,7 +13,6 @@ import { JsonSchemaModelTree } from '../tree/model';
 import type { JsonSchemaCreateNodeParams, JsonSchemaNodeKind, JsonSchemaNodeType } from '../tree/types';
 import { isBrokenRef, isRequired } from '../utils';
 import { JsonSchemaDiffNodeMeta, JsonSchemaDiffNodeValue } from './types';
-import { LazyBuildingContext } from "../../abstract/model/model-tree-node.impl";
 
 export class JsonSchemaModelDiffTree<
   T extends DiffNodeValue | null = JsonSchemaDiffNodeValue,
@@ -20,7 +20,11 @@ export class JsonSchemaModelDiffTree<
   M extends DiffNodeMeta = JsonSchemaDiffNodeMeta
 > extends JsonSchemaModelTree<T, K, M> {
 
-  constructor(source: unknown, public metaKey: symbol) {
+  constructor(
+    source: unknown,
+    public readonly metaKey: symbol,
+    public readonly aggregatedMetaKey: symbol
+  ) {
     super(source)
   }
 
@@ -33,8 +37,7 @@ export class JsonSchemaModelDiffTree<
     lazyBuildingContext?: LazyBuildingContext<T, K, M>,
   ) {
     const node = super.createNode(id, kind, key, isCycle, params, lazyBuildingContext)
-    // calculate $nodeChangesSummary
-    // node.meta.$nodeChangesSummary = DIFF_TREE_UTILS.totalChangesSummary(node)
+    ChangesSummaryUtils.calculateNodeChangesSummary(node, this.aggregatedMetaKey)
     return node
   }
 
@@ -47,14 +50,13 @@ export class JsonSchemaModelDiffTree<
     lazyBuildingContext?: LazyBuildingContext<T, K, M>,
   ) {
     const node = super.createComplexNode(id, kind, key, isCycle, params, lazyBuildingContext)
-    // calculate $nodeChangesSummary
-    // node.meta.$nodeChangesSummary = DIFF_TREE_UTILS.totalChangesSummary(node)
+    ChangesSummaryUtils.calculateNodeChangesSummary(node, this.aggregatedMetaKey)
     return node
   }
 
   public createCycledClone<Node extends IModelTreeNode<T, K, M>>(source: Node, id: string, key: string | number, parent: IModelTreeNode<T, K, M> | null): Node {
     const node = super.createCycledClone(source, id, key, parent) as Node
-    // node.meta.$nodeChangesSummary = DIFF_TREE_UTILS.totalChangesSummary(node)
+    ChangesSummaryUtils.calculateNodeChangesSummary(node, this.aggregatedMetaKey)
     return node
   }
 
@@ -289,7 +291,7 @@ export class JsonSchemaModelDiffTree<
       ...$nodeChange ? { $nodeChange } : {},
       ...Object.keys($metaChanges).length ? { $metaChanges } : {},
       ...Object.keys($childrenChanges).length ? { $childrenChanges } : {},
-      // $nodeChangesSummary: new Set<DiffType>(),
+      $nodeChangesSummary: new Set<DiffType>(),
       required: isRequired(key, parent),
       ...(isBrokenRef(value) ? { brokenRef: value.$ref } : {}),
       _fragment: value,
@@ -304,13 +306,13 @@ export class JsonSchemaModelDiffTree<
     const $nodeChange: NodeChange | undefined = this.getNodeChange(params)
 
     const $nestedChanges: DiffRecord = {}
-    for (const nested of objectKeys(nestedChanges)) {
-      $nestedChanges[`${id}/${complexityType}/${nested}`] = nestedChanges[nested]
+    for (const nestedId of Object.keys(nestedChanges)) {
+      $nestedChanges[`${id}/${complexityType}/${nestedId}`] = nestedChanges[nestedId]
     }
     return {
       ...Object.keys($nestedChanges).length ? { $nestedChanges } : {},
       ...$nodeChange ? { $nodeChange } : {},
-      // $nodeChangesSummary: new Set<DiffType>(),
+      $nodeChangesSummary: new Set<DiffType>(),
       required: isRequired(key, parent),
       ...(isBrokenRef(value) ? { brokenRef: value.$ref } : {}),
       _fragment: value,

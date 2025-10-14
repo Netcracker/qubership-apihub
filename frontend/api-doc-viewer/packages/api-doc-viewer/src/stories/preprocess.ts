@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-import { apiDiff, COMPARE_MODE_OPERATION, DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import {
+  aggregateDiffsWithRollup,
+  apiDiff,
+  COMPARE_MODE_OPERATION,
+  DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY,
+} from '@netcracker/qubership-apihub-api-diff'
 import { denormalize, normalize, NormalizeOptions, stringifyCyclicJso, RefErrorType } from '@netcracker/qubership-apihub-api-unifier'
 import { ObjectUtils } from '../utils/common/objects'
 import { isObject } from '@netcracker/qubership-apihub-api-data-model'
@@ -393,6 +398,7 @@ export function prepareGraphApiDiffSchema(options: GraphApiDiffSchemaOptions): u
     liftCombiners: true,
     unify: true,
   }).merged
+  aggregateDiffsWithRollup(mergedSource, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)
   if (circular && isObject(mergedSource)) {
     mergedSource.toJSON = () => stringifyCyclicJso(mergedSource)
   }

@@ -164,7 +164,7 @@ export const GraphPropNodeBody: FC<GraphPropNodeBodyProps> = (props) => {
           $changes={$nodeValue?.$changes}
           $metaChanges={$nodeMeta?.$metaChanges}
           $nodeChange={$nodeChange ?? $nodeMeta?.$nodeChange}
-          // $nodeChangesSummary={$nodeMeta?.$nodeChangesSummary}
+          $nodeChangesSummary={$nodeMeta?.$nodeChangesSummary}
         />
       )}
 

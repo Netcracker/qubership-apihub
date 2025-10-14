@@ -19,7 +19,8 @@ export type LazyBuildingContext<T, K extends string, M> = {
   nodeIdPrefix: string,
   nextLevel: number,
   nextMaxLevel: number,
-  metaKey?: symbol
+  metaKey?: symbol // key collecting value`s own diffs
+  aggregatedMetaKey?: symbol // key collecting value`s own and its children diffs
 }
 
 type LazyBuildingCrawlState<T, K extends string, M> = {

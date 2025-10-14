@@ -47,7 +47,10 @@ export type GraphQLOperationDiffViewerProps = {
   // diffs
   layoutMode?: LayoutMode,
   filters?: ReadonlyArray<DiffType>,
-  diffMetaKey: symbol
+  metaKeys: {
+    diffsMetaKey: symbol,
+    aggregatedDiffsMetaKey: symbol,
+  }
 }
 
 export const GraphQLOperationDiffViewer: FC<GraphQLOperationDiffViewerProps> = (props) => {
@@ -69,12 +72,12 @@ const GraphQLOperationDiffViewerInner: FC<GraphQLOperationDiffViewerProps> = (pr
     // diffs
     layoutMode = DEFAULT_LAYOUT_MODE,
     filters = [],
-    diffMetaKey
+    metaKeys
   } = props
 
   const tree = useMemo(
-    () => createGraphApiDiffTree(source, diffMetaKey, undefined, undefined, operationPath),
-    [diffMetaKey, operationPath, source]
+    () => createGraphApiDiffTree(source, metaKeys, undefined, undefined, operationPath),
+    [metaKeys, operationPath, source]
   )
 
   // TODO 27.12.23 // Diff State!

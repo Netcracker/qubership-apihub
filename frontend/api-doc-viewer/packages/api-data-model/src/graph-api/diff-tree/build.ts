@@ -14,11 +14,12 @@ const CRAWL_HOOKS_CACHE: Map<GraphApiModelDiffTree<GraphApiDiffNodeData, GraphAp
 export function crawlHooksGraphApiDiffTree(
   tree: GraphApiModelDiffTree<GraphApiDiffNodeData, GraphApiNodeKind, GraphApiDiffNodeMeta>,
   metaKey: symbol,
+  aggregatedMetaKey?: symbol,
 ): any[] {
   if (!CRAWL_HOOKS_CACHE.has(tree)) {
     CRAWL_HOOKS_CACHE.set(tree, [
-      createGraphApiDiffTreeCrawlHook(tree as any, metaKey) as SyncCrawlHook<any, any>,
-      createGraphSchemaTreeCrawlHook(tree as any /*because AMT not type safe*/, metaKey) as SyncCrawlHook<any, any>,
+      createGraphApiDiffTreeCrawlHook(tree as any, metaKey, aggregatedMetaKey) as SyncCrawlHook<any, any>,
+      createGraphSchemaTreeCrawlHook(tree as any /*because AMT not type safe*/, metaKey, aggregatedMetaKey) as SyncCrawlHook<any, any>,
     ])
   }
   return CRAWL_HOOKS_CACHE.get(tree)!
@@ -26,7 +27,10 @@ export function crawlHooksGraphApiDiffTree(
 
 export function createGraphApiDiffTree(
   mergedSource: unknown,
-  metaKey: symbol,
+  metaKeys: {
+    diffsMetaKey: symbol,
+    aggregatedDiffsMetaKey: symbol,
+  },
   options?: {
     rules?: CrawlRules<GraphApiDiffCrawlRule>
     state?: GraphApiDiffCrawlState
@@ -36,11 +40,13 @@ export function createGraphApiDiffTree(
 ) {
   const { rules, state } = options ?? {}
 
+  const { diffsMetaKey, aggregatedDiffsMetaKey } = metaKeys
+
   const tree = new GraphApiModelDiffTree<
     GraphApiDiffNodeData,
     GraphApiNodeKind,
     GraphApiDiffNodeMeta
-  >(mergedSource, metaKey)
+  >(mergedSource, diffsMetaKey, aggregatedDiffsMetaKey)
 
   if (maxTreeLevel < 2) {
     console.error('We do not display nodes with kind = "schema", so it will be impossible to expand such node.')
@@ -83,7 +89,7 @@ export function createGraphApiDiffTree(
 
   syncCrawl(
     mergedSource,
-    crawlHooksGraphApiDiffTree(tree, metaKey),
+    crawlHooksGraphApiDiffTree(tree, diffsMetaKey, aggregatedDiffsMetaKey),
     { state: state ?? defaultState, rules: rules ?? graphApiRules }
   )
 

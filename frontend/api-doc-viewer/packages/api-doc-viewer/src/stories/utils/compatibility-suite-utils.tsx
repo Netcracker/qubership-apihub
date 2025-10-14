@@ -20,7 +20,7 @@ import FontFaceObserver from 'fontfaceobserver'
 import { getCompatibilitySuite, TestSpecType } from '@netcracker/qubership-apihub-compatibility-suites'
 import { getCompareResult } from './merged-document'
 import { GraphQLOperationDiffViewer } from '../../components/GraphQLOperationViewer/GraphQLOperationDiffViewer'
-import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '../../types/LayoutMode'
 import { buildGraphApiSchema } from '../../mocks/utils/graph-api-transformers'
 import { buildSchema, findBreakingChanges, findDangerousChanges } from 'graphql'
@@ -62,7 +62,16 @@ export function GraphQLStoryComponent({ before, after }: GraphQLCompatibilitySui
 
   printGraphQLChanges(before, after)
 
-  return <GraphQLOperationDiffViewer layoutMode={SIDE_BY_SIDE_DIFFS_LAYOUT_MODE} diffMetaKey={DIFF_META_KEY} source={merged} />
+  return (
+    <GraphQLOperationDiffViewer 
+    layoutMode={SIDE_BY_SIDE_DIFFS_LAYOUT_MODE} 
+    metaKeys={{
+      diffsMetaKey: DIFF_META_KEY,
+      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+    }} 
+    source={merged} 
+    />
+  )
 }
 
 function printGraphQLChanges(before: string, after: string) {

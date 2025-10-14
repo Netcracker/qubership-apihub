@@ -16,7 +16,6 @@
 
 import type { FC } from 'react'
 import { useState, useMemo, useCallback } from 'react'
-import Editor from '@monaco-editor/react'
 import { DiffEditor } from '@monaco-editor/react'
 import { 
   createGraphApiTree,
@@ -103,7 +102,7 @@ export const GraphQLDebugPage: FC = () => {
             
             // Create state model exactly as GraphQLOperationViewer does  
             if (tree) {
-              const state = new GraphApiState(tree, undefined, 3) // default expanded depth
+              const state = new GraphApiState(tree, 3) // default expanded depth
               transforms.before.state = state
               
               // Console debug output like GraphQLOperationViewer for debugging
@@ -136,7 +135,7 @@ export const GraphQLDebugPage: FC = () => {
             
             // Create state model exactly as GraphQLOperationViewer does
             if (tree) {
-              const state = new GraphApiState(tree, undefined, 3) // default expanded depth
+              const state = new GraphApiState(tree, 3) // default expanded depth
               transforms.after.state = state
               
               // Console debug output like GraphQLOperationViewer for debugging

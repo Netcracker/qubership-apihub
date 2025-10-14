@@ -21,6 +21,7 @@ function shouldCrawlDiff(value: unknown): value is DiffRemove | DiffReplace {
 export function createGraphSchemaTreeCrawlHook(
   tree: GraphApiModelTree,
   metaKey?: symbol,
+  aggregatedMetaKey?: symbol,
   // FIXME 01.10.25 // Revert "any"
 ): SyncCrawlHook<any, any> {
   const graphSchemaNodeKinds = Object.keys(graphSchemaNodeKind)
@@ -60,7 +61,7 @@ export function createGraphSchemaTreeCrawlHook(
           const nextId = nodeIdPrefix + buildPointer([...path, field])
           syncCrawl(
             diff.beforeValue,
-            crawlHooksGraphApiDiffTree(tree as any, metaKey),
+            crawlHooksGraphApiDiffTree(tree as any, metaKey, aggregatedMetaKey),
             {
               state: {
                 parent: parent,
@@ -121,6 +122,7 @@ export function createGraphSchemaTreeCrawlHook(
       nextLevel: state.treeLevel,
       nextMaxLevel: state.maxTreeLevel,
       metaKey: metaKey,
+      aggregatedMetaKey: aggregatedMetaKey,
     }
     /* --- */
 

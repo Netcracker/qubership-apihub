@@ -20,10 +20,12 @@ import { areExcludedComponents } from '../../utils'
 import { GraphApiModelDiffTree } from '../model'
 import { collectSchemaChildrenChanges } from '../utils'
 import { LazyBuildingContext } from '../../../abstract/model/model-tree-node.impl'
+import { DiffType } from '@netcracker/qubership-apihub-api-diff'
 
 export function createGraphApiDiffTreeCrawlHook(
   tree: GraphApiModelDiffTree<GraphApiDiffNodeData, GraphApiNodeKind, GraphApiDiffNodeMeta>,
   metaKey: symbol,
+  aggregatedMetaKey?: symbol,
   // FIXME 06.10.25 // Revert "any"
 ): SyncCrawlHook<any, any> {
   return ({ value, state, rules, path, key }) => {
@@ -55,13 +57,14 @@ export function createGraphApiDiffTreeCrawlHook(
     const lazyBuildingContext: LazyBuildingContext<any, any, any> = {
       tree: tree,
       crawlValue: value,
-      crawlHooks: crawlHooksGraphApiDiffTree(tree, metaKey),
+      crawlHooks: crawlHooksGraphApiDiffTree(tree, metaKey, aggregatedMetaKey),
       crawlRules: rules,
       alreadyConvertedMappingStack: new Map(state.alreadyConvertedMappingStack),
       nodeIdPrefix: id,
       nextLevel: state.treeLevel,
       nextMaxLevel: state.maxTreeLevel + 1,
       metaKey: metaKey,
+      aggregatedMetaKey: aggregatedMetaKey,
     }
 
     switch (kind) {
@@ -87,7 +90,7 @@ export function createGraphApiDiffTreeCrawlHook(
             // $metaChanges: undefined,
             $childrenChanges: collectSchemaChildrenChanges(value, metaKey),
             // $nestedChanges: undefined,
-            // $nodeChangesSummary: new Set<DiffType>(),
+            $nodeChangesSummary: new Set<DiffType>(),
           },
           newDataLevel: false,
         }

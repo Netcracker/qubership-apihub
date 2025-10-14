@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import type { Meta, StoryObj } from '@storybook/react'
 import { buildGraphApiSchema } from '../../mocks/utils/graph-api-transformers'
 import { DOCUMENT_LAYOUT_MODE, INLINE_DIFFS_LAYOUT_MODE, SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '../../types/LayoutMode'
@@ -43,7 +43,10 @@ const meta = {
   },
   args: {
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
+    metaKeys: {
+      diffsMetaKey: DIFF_META_KEY,
+      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+    },
   }
 } satisfies Meta<typeof TestGraphQLOperationDiffViewer>
 

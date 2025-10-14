@@ -10,7 +10,7 @@ import { JsonSchemaDiffCrawlState } from './types';
 
 
 export const createJsonSchemaDiffTree = (mergedAndNormalizedSpec: unknown, metaKey: symbol) => {
-  const tree = new JsonSchemaModelDiffTree(mergedAndNormalizedSpec, metaKey)
+  const tree = new JsonSchemaModelDiffTree(mergedAndNormalizedSpec, metaKey, Symbol('#placeholder'))
   if (!isObject(mergedAndNormalizedSpec)) {
     return tree
   }
