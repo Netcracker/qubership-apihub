@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { apiDiff, COMPARE_MODE_OPERATION, CompareResult, DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import { aggregateDiffsWithRollup, apiDiff, COMPARE_MODE_OPERATION, CompareResult, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { NormalizeOptions, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier'
 
 const SYNTHETIC_TITLE_FLAG = Symbol('synthetic-title');
@@ -49,6 +49,8 @@ export const getCompareResult = (
     mode: COMPARE_MODE_OPERATION,
     metaKey: DIFF_META_KEY
   })
+
+  aggregateDiffsWithRollup(compareResult.merged, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)
 
   // To prevent circular reference error in Storybook
   if (isObject(compareResult.merged)) {

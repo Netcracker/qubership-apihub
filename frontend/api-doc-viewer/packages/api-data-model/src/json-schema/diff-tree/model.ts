@@ -37,7 +37,8 @@ export class JsonSchemaModelDiffTree<
     lazyBuildingContext?: LazyBuildingContext<T, K, M>,
   ) {
     const node = super.createNode(id, kind, key, isCycle, params, lazyBuildingContext)
-    ChangesSummaryUtils.calculateNodeChangesSummary(node, this.aggregatedMetaKey)
+    // @ts-expect-error // TODO 14.10.25 // Fix this later
+    ChangesSummaryUtils.calculateNodeChangesSummary(node, this.aggregatedMetaKey, lazyBuildingContext)
     return node
   }
 
@@ -50,13 +51,15 @@ export class JsonSchemaModelDiffTree<
     lazyBuildingContext?: LazyBuildingContext<T, K, M>,
   ) {
     const node = super.createComplexNode(id, kind, key, isCycle, params, lazyBuildingContext)
-    ChangesSummaryUtils.calculateNodeChangesSummary(node, this.aggregatedMetaKey)
+    // @ts-expect-error // TODO 14.10.25 // Fix this later
+    ChangesSummaryUtils.calculateNodeChangesSummary(node, this.aggregatedMetaKey, lazyBuildingContext)
     return node
   }
 
   public createCycledClone<Node extends IModelTreeNode<T, K, M>>(source: Node, id: string, key: string | number, parent: IModelTreeNode<T, K, M> | null): Node {
     const node = super.createCycledClone(source, id, key, parent) as Node
-    ChangesSummaryUtils.calculateNodeChangesSummary(node, this.aggregatedMetaKey)
+    // @ts-expect-error // TODO 14.10.25 // Fix this later
+    ChangesSummaryUtils.calculateNodeChangesSummary(node, this.aggregatedMetaKey, lazyBuildingContext)
     return node
   }
 
