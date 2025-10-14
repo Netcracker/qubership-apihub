@@ -56,7 +56,7 @@ export function useCreateSnapshot(): [CreateSnapshot, IsLoading, IsSuccess, IsEr
         workspaceKey!,
         true,
         false,
-        name,
+        encodeURI(name),
         baseline,
         serviceKeys,
         builderId,
