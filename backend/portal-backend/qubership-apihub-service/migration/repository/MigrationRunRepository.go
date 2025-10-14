@@ -25,7 +25,6 @@ import (
 
 type MigrationRunRepository interface {
 	GetMigrationRun(migrationId string) (*mEntity.MigrationRunEntity, error)
-	UpdateMigrationRun(entity *mEntity.MigrationRunEntity) error
 	GetRunningMigrations() ([]*mEntity.MigrationRunEntity, error)
 }
 
@@ -49,12 +48,6 @@ func (m migrationRunRepositoryImpl) GetMigrationRun(migrationId string) (*mEntit
 		return nil, err
 	}
 	return mRunEnt, nil
-}
-
-func (m migrationRunRepositoryImpl) UpdateMigrationRun(ent *mEntity.MigrationRunEntity) error {
-	ent.UpdatedAt = time.Now()
-	_, err := m.cp.GetConnection().Model(ent).Where("id = ?", ent.Id).Update()
-	return err
 }
 
 func (m migrationRunRepositoryImpl) GetRunningMigrations() ([]*mEntity.MigrationRunEntity, error) {

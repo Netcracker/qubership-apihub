@@ -334,6 +334,10 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities() ([]*e
 			versionComparisonEnt.PreviousPackageId,
 			versionComparisonEnt.PreviousVersion,
 			versionComparisonEnt.PreviousRevision)
+		versionComparisonEnt.Metadata = entity.Metadata{}
+		if a.PackageInfo.MigrationBuild {
+			versionComparisonEnt.Metadata.SetMigrationId(a.PackageInfo.MigrationId)
+		}
 		if !mainVersion {
 			mainVersionRefs = append(mainVersionRefs, versionComparisonEnt.ComparisonId)
 		}

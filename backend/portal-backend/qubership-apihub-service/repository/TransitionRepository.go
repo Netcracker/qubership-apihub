@@ -280,14 +280,6 @@ func copyVersions(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	}
 	objAffected += res.RowsAffected()
 
-	copyMigratedVersion := "insert into migrated_version (package_id, version, revision, error, build_id, migration_id, build_type, no_changelog) " +
-		"(select ?, version, revision, error, build_id, migration_id, build_type, no_changelog from migrated_version orig where orig.package_id = ?)  on conflict do nothing"
-	res, err = tx.Exec(copyMigratedVersion, toPkg, fromPkg)
-	if err != nil {
-		return 0, fmt.Errorf("failed to copy migrated version from %s to %s: %w", fromPkg, toPkg, err)
-	}
-	objAffected += res.RowsAffected()
-
 	copyPVOC := "insert into published_version_open_count (package_id, version, open_count) " +
 		"(select ?, version, open_count from " +
 		"published_version_open_count orig where orig.package_id = ?) on conflict do nothing"
@@ -387,10 +379,10 @@ func moveNonVersionsData(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 
 	updateVersCompIdForRefs := `
 		with comp as (
-			select 
+			select
 			comparison_id,
-			md5(package_id||'@'||version||'@'||revision||'@'||previous_package_id||'@'||previous_version||'@'||previous_revision) as new_comparison_id 
-			from version_comparison 
+			md5(package_id||'@'||version||'@'||revision||'@'||previous_package_id||'@'||previous_version||'@'||previous_revision) as new_comparison_id
+			from version_comparison
 			where package_id = ? or previous_package_id = ?
 		)
 		update version_comparison b set refs = array_replace(refs, c.comparison_id, c.new_comparison_id::varchar)
@@ -404,10 +396,10 @@ func moveNonVersionsData(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 
 	updateVersCompId := `
 		with comp as (
-			select 
+			select
 			comparison_id,
-			md5(package_id||'@'||version||'@'||revision||'@'||previous_package_id||'@'||previous_version||'@'||previous_revision) as new_comparison_id 
-			from version_comparison 
+			md5(package_id||'@'||version||'@'||revision||'@'||previous_package_id||'@'||previous_version||'@'||previous_revision) as new_comparison_id
+			from version_comparison
 			where package_id = ? or previous_package_id = ?
 		)
 		update version_comparison b set comparison_id = c.new_comparison_id::varchar
@@ -525,12 +517,6 @@ func deleteVersionsData(tx *pg.Tx, fromPkg string) error {
 		return fmt.Errorf("failed to delete orig(%s) from operation: %w", fromPkg, err)
 	}
 
-	query = "delete from migrated_version where package_id = ?"
-	_, err = tx.Exec(query, fromPkg)
-	if err != nil {
-		return fmt.Errorf("failed to delete orig(%s) from migrated_version: %w", fromPkg, err)
-	}
-
 	query = "delete from operation_comparison where package_id = ?"
 	_, err = tx.Exec(query, fromPkg)
 	if err != nil {
@@ -614,7 +600,7 @@ func (t transitionRepositoryImpl) TrackTransitionFailed(id, details string) erro
 }
 
 func (t transitionRepositoryImpl) TrackTransitionCompleted(id string, affectedObjects int) error {
-	updateQuery := `update activity_tracking_transition 
+	updateQuery := `update activity_tracking_transition
 	set status = ?, affected_objects = ?, finished_at = ?, progress_percent = 100, completed_serial_number = nextval('activity_tracking_transition_completed_seq')
 	where id=?;`
 	_, err := t.cp.GetConnection().Exec(updateQuery, string(view.StatusComplete), affectedObjects, time.Now(), id)

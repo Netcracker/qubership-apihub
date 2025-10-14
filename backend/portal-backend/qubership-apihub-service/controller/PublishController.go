@@ -597,7 +597,21 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 		return
 	}
 
-	err = r.ParseMultipartForm(1024 * 1024)
+	limit := p.publishArchiveSizeLimit * 20
+
+	r.Body = http.MaxBytesReader(w, r.Body, limit)
+
+	if r.ContentLength > limit {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.ArchiveSizeExceeded,
+			Message: exception.ArchiveSizeExceededMsg,
+			Params:  map[string]interface{}{"size": limit},
+		})
+		return
+	}
+
+	err = r.ParseMultipartForm(64 << 20) // 64mb
 	if err != nil {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,

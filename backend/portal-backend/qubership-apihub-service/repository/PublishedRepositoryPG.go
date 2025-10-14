@@ -1582,7 +1582,9 @@ func (p publishedRepositoryImpl) saveVersionChangesTx(tx *pg.Tx, operationCompar
 			refs =			EXCLUDED.refs,
 			last_active =	EXCLUDED.last_active,
 			no_content =	EXCLUDED.no_content,
-			open_count =	version_comparison.open_count+1`).Insert()
+			open_count =	version_comparison.open_count+1,
+			builder_version = EXCLUDED.builder_version,
+			metadata = EXCLUDED.metadata`).Insert()
 	if err != nil {
 		return fmt.Errorf("failed to insert version comparisons %+v: %w", versionComparisons, err)
 	}
@@ -4379,12 +4381,6 @@ func (p publishedRepositoryImpl) countRelatedDataForPackagesTx(ctx context.Conte
 
 	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.FavoritePackages),
 		`SELECT COUNT(*) FROM favorite_packages WHERE package_id IN (?)`, pg.In(packageIds))
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.MigratedVersions),
-		`SELECT COUNT(*) FROM migrated_version WHERE package_id IN (?)`, pg.In(packageIds))
 	if err != nil {
 		return err
 	}

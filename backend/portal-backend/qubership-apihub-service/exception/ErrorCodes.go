@@ -785,3 +785,6 @@ const HeadersLimitExceededMsg = "HTTP headers limit exceeded. Maximum allowed nu
 
 const HeaderValuesLimitExceeded = "7402"
 const HeaderValuesLimitExceededMsg = "HTTP header values limit exceeded for key '$key'. Maximum allowed number of values is $maxValues"
+
+const OperationsMigrationConflict = "7500"
+const OperationsMigrationConflictMsg = "Unable to start migration due to conflict: $reason, please try again later"

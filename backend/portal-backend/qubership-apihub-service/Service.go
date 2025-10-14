@@ -384,7 +384,7 @@ func main() {
 	operationController := controller.NewOperationController(roleService, operationService, buildService, monitoringService, ptHandler)
 	operationGroupController := controller.NewOperationGroupController(roleService, operationGroupService, versionService)
 	searchController := controller.NewSearchController(operationService, versionService, monitoringService)
-	tempMigrationController := mController.NewTempMigrationController(dbMigrationService, roleService.IsSysadm)
+	dataMigrationController := mController.NewTempMigrationController(dbMigrationService, roleService.IsSysadm)
 	activityTrackingController := controller.NewActivityTrackingController(activityTrackingService, roleService, ptHandler)
 	comparisonController := controller.NewComparisonController(operationService, versionService, buildService, roleService, comparisonService, monitoringService, ptHandler)
 	buildCleanupController := controller.NewBuildCleanupController(dbCleanupService, roleService.IsSysadm)
@@ -618,10 +618,11 @@ func main() {
 	r.HandleFunc("/api/v2/roles/changeOrder", security.Secure(roleController.SetRoleOrder)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/packages/{packageId}/availableRoles", security.Secure(roleController.GetAvailablePackageRoles)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/internal/migrate/operations", security.Secure(tempMigrationController.StartOpsMigration)).Methods(http.MethodPost)
-	r.HandleFunc("/api/internal/migrate/operations/{migrationId}", security.Secure(tempMigrationController.GetMigrationReport)).Methods(http.MethodGet)
-	r.HandleFunc("/api/internal/migrate/operations/{migrationId}/suspiciousBuilds", security.Secure(tempMigrationController.GetSuspiciousBuilds)).Methods(http.MethodGet)
-	r.HandleFunc("/api/internal/migrate/operations/cancel", security.Secure(tempMigrationController.CancelRunningMigrations)).Methods(http.MethodPost)
+	r.HandleFunc("/api/internal/migrate/operations", security.Secure(dataMigrationController.StartOpsMigration)).Methods(http.MethodPost)
+	r.HandleFunc("/api/internal/migrate/operations/{migrationId}", security.Secure(dataMigrationController.GetMigrationReport)).Methods(http.MethodGet)
+	r.HandleFunc("/api/internal/migrate/operations/{migrationId}/suspiciousBuilds", security.Secure(dataMigrationController.GetSuspiciousBuilds)).Methods(http.MethodGet)
+	r.HandleFunc("/api/internal/migrate/operations/{migrationId}/perf", security.Secure(dataMigrationController.GetMigrationPerfReport)).Methods(http.MethodGet)
+	r.HandleFunc("/api/internal/migrate/operations/cancel", security.Secure(dataMigrationController.CancelRunningMigrations)).Methods(http.MethodPost)
 	r.HandleFunc("/api/internal/migrate/operations/cleanup", security.Secure(buildCleanupController.StartMigrationBuildCleanup)).Methods(http.MethodPost)
 	r.HandleFunc("/api/internal/migrate/operations/cleanup/{id}", security.Secure(buildCleanupController.GetMigrationBuildCleanupResult)).Methods(http.MethodGet)
 
@@ -779,6 +780,8 @@ func main() {
 	utils.SafeAsync(func() {
 		exportService.StartCleanupOldResultsJob()
 	})
+
+	dbMigrationService.StartOpsMigrationRestoreProc(context.Background())
 
 	log.Fatalf("Http server returned error: %v", srv.ListenAndServe())
 }

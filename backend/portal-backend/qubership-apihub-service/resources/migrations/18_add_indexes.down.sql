@@ -1,0 +1,2 @@
+drop index migrated_version_changes_build_id;
+drop index grouped_operation_group_id;

@@ -21,9 +21,12 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
+	"github.com/google/uuid"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 
 	mEntity "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/entity"
 
@@ -39,11 +42,13 @@ import (
 type DBMigrationService interface {
 	Migrate(basePath string) (int, int, bool, error)
 	SoftMigrateDb(currentVersion int, newVersion int, migrationRequired bool) error
-	MigrateOperations(migrationId string, req mView.MigrationRequest) error
+	StartMigrateOperations(req mView.MigrationRequest) (string, error)
 	GetMigrationReport(migrationId string, includeBuildSamples bool) (*mView.MigrationReport, error)
 	CancelRunningMigrations() error
 	GetSuspiciousBuilds(migrationId string, changedField string, limit int, page int) ([]mView.SuspiciousMigrationBuild, error)
 	IsMigrationInProgress() (bool, error)
+	StartOpsMigrationRestoreProc(ctx context.Context)
+	GetMigrationPerfReport(migrationId string, includeHourPackageData bool, stageFilter *mView.OpsMigrationStage) (*mView.MigrPerfData, error)
 }
 
 func NewDBMigrationService(cp db.ConnectionProvider, mRRepo mRepository.MigrationRunRepository,
@@ -57,6 +62,7 @@ func NewDBMigrationService(cp db.ConnectionProvider, mRRepo mRepository.Migratio
 		transitionRepository:   transitionRepository,
 		migrationsFolder:       filepath.Join(systemInfoService.GetBasePath(), "resources", "migrations"),
 		minioStorageService:    minioStorageService,
+		instanceId:             uuid.New().String(),
 	}
 	upMigrations, downMigrations, err := service.getMigrationFilenamesMap()
 	if err != nil {
@@ -77,6 +83,7 @@ type dbMigrationServiceImpl struct {
 	upMigrations           map[int]string
 	downMigrations         map[int]string
 	minioStorageService    service.MinioStorageService
+	instanceId             string
 }
 
 const storedMigrationsTableMigrationVersion = 1 // migration table will be created at first migration
@@ -136,14 +143,6 @@ func (d *dbMigrationServiceImpl) Migrate(basePath string) (currentMigrationNum i
 	if len(upMigrations)+len(downMigrations) == 0 {
 		log.Infof("Schema Migration: no migrations required")
 		return currentMigrationNumber, newMigrationNumber, false, nil
-	}
-
-	// It's a tricky. Making table creation as a soft migration was a big mistake...
-	// Added constraint for the table in the regular migration(#91) will mess empty DB startup, so need to make sure the table is created
-	err = d.createMigrationTables()
-	if err != nil {
-		log.Errorf("Failed to create operations migration table: %s", err)
-		return currentMigrationNumber, newMigrationNumber, true, nil
 	}
 
 	err = d.applyRequiredMigrations(upMigrations, downMigrations)
@@ -390,10 +389,10 @@ func (d *dbMigrationServiceImpl) getSchemaMigrationEntity(migrationNumber int) (
 
 func (d *dbMigrationServiceImpl) CancelRunningMigrations() error {
 	_, err := d.cp.GetConnection().Exec(`
-	update build set status = ?, details = ?
-	where status in (?) and created_by = 'db migration'`,
-		view.StatusError, CancelledMigrationError,
-		pg.In([]view.BuildStatusEnum{view.StatusNotStarted, view.StatusRunning}))
+			update migration_run set status = ?
+			where status in (?) `,
+		mView.MigrationStatusCancelling, mView.MigrationStatusRunning,
+	)
 	if err != nil {
 		return err
 	}
@@ -406,4 +405,19 @@ func (d *dbMigrationServiceImpl) IsMigrationInProgress() (bool, error) {
 		return false, err
 	}
 	return len(migrations) > 0, nil
+}
+
+func (d *dbMigrationServiceImpl) StartOpsMigrationRestoreProc(ctx context.Context) {
+	utils.SafeAsync(func() {
+		ticker := time.NewTicker(time.Second * 60)
+		for {
+			select {
+			case <-ticker.C:
+				d.restartMigrations() // find stale migration and restore it
+			case <-ctx.Done():
+				ticker.Stop()
+				return
+			}
+		}
+	})
 }

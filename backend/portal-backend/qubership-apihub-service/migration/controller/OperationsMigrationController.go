@@ -25,9 +25,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/view"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
 )
 
 type OperationsMigrationController interface {
@@ -35,6 +33,7 @@ type OperationsMigrationController interface {
 	GetMigrationReport(w http.ResponseWriter, r *http.Request)
 	CancelRunningMigrations(w http.ResponseWriter, r *http.Request)
 	GetSuspiciousBuilds(w http.ResponseWriter, r *http.Request)
+	GetMigrationPerfReport(w http.ResponseWriter, r *http.Request)
 }
 
 func NewTempMigrationController(migrationService service.DBMigrationService, isSysadmFunc func(context.SecurityContext) bool) OperationsMigrationController {
@@ -85,16 +84,11 @@ func (t operationsMigrationControllerImpl) StartOpsMigration(w http.ResponseWrit
 		return
 	}
 
-	id := uuid.New().String()
-
-	utils.SafeAsync(func() {
-		err := t.migrationService.MigrateOperations(id, req)
-		if err != nil {
-			log.Errorf("Operations migration process failed: %s", err)
-		} else {
-			log.Infof("Operations migration process complete")
-		}
-	})
+	id, err := t.migrationService.StartMigrateOperations(req)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to start operations migration", err)
+		return
+	}
 
 	result := map[string]interface{}{}
 	result["id"] = id
@@ -239,4 +233,46 @@ func (t operationsMigrationControllerImpl) GetSuspiciousBuilds(w http.ResponseWr
 	}
 
 	utils.RespondWithJson(w, http.StatusOK, suspiciousBuilds)
+}
+
+func (t operationsMigrationControllerImpl) GetMigrationPerfReport(w http.ResponseWriter, r *http.Request) {
+	var err error
+	ctx := context.Create(r)
+	sufficientPrivileges := t.isSysadm(ctx)
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+
+	params := mux.Vars(r)
+	migrationId := params["migrationId"]
+
+	includeHourPackageData := false
+	inc := r.URL.Query().Get("includeHourPackageData")
+	if inc == "true" {
+		includeHourPackageData = true
+	}
+
+	var stageFilter *view.OpsMigrationStage
+
+	stStr := r.URL.Query().Get("stage")
+	if stStr != "" {
+		cast := view.OpsMigrationStage(stStr)
+		stageFilter = &cast
+	}
+
+	report, err := t.migrationService.GetMigrationPerfReport(migrationId, includeHourPackageData, stageFilter)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to get migration perf report", err)
+		return
+	}
+	
+	response, _ := json.MarshalIndent(report, "", "    ")
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(response)
 }

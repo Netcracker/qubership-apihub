@@ -15,10 +15,8 @@
 package view
 
 type MigrationRequest struct {
-	PackageIds            []string `json:"packageIds,omitempty"`
-	Versions              []string `json:"versions,omitempty"`
-	Rebuild               bool     `json:"rebuild,omitempty"`
-	CurrentBuilderVersion string   `json:"currentBuilderVersion,omitempty"`
-	RebuildChangelogOnly  bool     `json:"rebuildChangelogOnly"`
-	SkipValidation        bool     `json:"skipValidation"`
+	PackageIds           []string `json:"packageIds,omitempty"`
+	Versions             []string `json:"versions,omitempty"`
+	RebuildChangelogOnly bool     `json:"rebuildChangelogOnly"`
+	SkipValidation       bool     `json:"skipValidation"`
 }

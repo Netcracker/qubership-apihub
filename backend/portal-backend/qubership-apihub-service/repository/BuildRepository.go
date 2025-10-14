@@ -223,6 +223,7 @@ func (b buildRepositoryImpl) FindAndTakeFreeBuild(builderId string) (*entity.Bui
 					Set("builder_id = ?builder_id").
 					Set("restart_count = ?restart_count").
 					Set("last_active = now()").
+					Set("started_at = now()").
 					Where("build_id = ?", result.BuildId).
 					Update()
 				if err != nil {

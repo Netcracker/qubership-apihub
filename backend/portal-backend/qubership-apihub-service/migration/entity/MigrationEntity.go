@@ -15,8 +15,9 @@
 package entity
 
 import (
-	view2 "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"time"
+
+	view2 "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/view"
@@ -32,40 +33,38 @@ type PublishedContentMigrationEntity struct {
 type MigrationRunEntity struct {
 	tableName struct{} `pg:"migration_run"`
 
-	Id                     string    `pg:"id, type:varchar"`
-	StartedAt              time.Time `pg:"started_at, type:timestamp without time zone"`
-	Status                 string    `pg:"status, type:varchar"`
-	Stage                  string    `pg:"stage, type:varchar"`
-	PackageIds             []string  `pg:"package_ids, type:varchar[]"`
-	Versions               []string  `pg:"versions, type:varchar[]"`
-	IsRebuild              bool      `pg:"is_rebuild, type:boolean"`
-	IsRebuildChangelogOnly bool      `pg:"is_rebuild_changelog_only, type:boolean"`
-	SkipValidation         bool      `pg:"skip_validation, type:boolean"`
-	CurrentBuilderVersion  string    `pg:"current_builder_version, type:varchar"`
-	ErrorDetails           string    `pg:"error_details, type:varchar"`
-	FinishedAt             time.Time `pg:"finished_at, type:timestamp without time zone"`
-	UpdatedAt              time.Time `pg:"updated_at, type:timestamp without time zone"`
+	Id                     string                 `pg:"id, type:varchar"`
+	StartedAt              time.Time              `pg:"started_at, type:timestamp without time zone"`
+	Status                 string                 `pg:"status, type:varchar"`
+	Stage                  view.OpsMigrationStage `pg:"stage, type:varchar"`
+	PackageIds             []string               `pg:"package_ids, type:varchar[]"`
+	Versions               []string               `pg:"versions, type:varchar[]"`
+	IsRebuild              bool                   `pg:"is_rebuild, type:boolean"`
+	IsRebuildChangelogOnly bool                   `pg:"is_rebuild_changelog_only, type:boolean"`
+	SkipValidation         bool                   `pg:"skip_validation, type:boolean"`
+	CurrentBuilderVersion  string                 `pg:"current_builder_version, type:varchar"`
+	ErrorDetails           string                 `pg:"error_details, type:varchar"`
+	PostCheckResult        *PostCheckResultEntity `pg:"post_check_result, type:jsonb"`
+	FinishedAt             time.Time              `pg:"finished_at, type:timestamp without time zone"`
+	UpdatedAt              time.Time              `pg:"updated_at, type:timestamp without time zone"`
+	InstanceId             string                 `pg:"instance_id, type:varchar"`
+	SequenceNumber         int                    `pg:"sequence_number, type:integer"`
+	RetryCount             int                    `pg:"retry_count, type:integer"`
+	StagesExecution        []StageExecution       `pg:"stages_execution, type:jsonb"`
 }
 
-type MigratedVersionEntity struct {
-	tableName struct{} `pg:"migrated_version, alias:migrated_version"`
+type MigrationBuildResultEntity struct {
+	tableName struct{} `pg:"build, alias:build"`
 
-	PackageId   string          `pg:"package_id, type:varchar"`
-	Version     string          `pg:"version, type:varchar"`
-	Revision    int             `pg:"revision, type:integer"`
-	Error       string          `pg:"error, type:varchar"`
-	BuildId     string          `pg:"build_id, type:varchar"`
-	MigrationId string          `pg:"migration_id, type:varchar"`
-	BuildType   view2.BuildType `pg:"build_type, type:varchar"`
-	NoChangelog bool            `pg:"no_changelog, type:bool"`
-}
-
-type MigratedVersionResultEntity struct {
-	tableName struct{} `pg:"migrated_version, alias:migrated_version"`
-
-	MigratedVersionEntity
-	PreviousVersion          string `pg:"previous_version, type:varchar"`
-	PreviousVersionPackageId string `pg:"previous_version_package_id, type:varchar"`
+	BuildId                  string                `pg:"build_id, type:varchar"`
+	PackageId                string                `pg:"package_id, type:varchar"`
+	Version                  string                `pg:"version, type:varchar"`
+	Revision                 int                   `pg:"revision, type:integer"`
+	Status                   view2.BuildStatusEnum `pg:"status, type:varchar"`
+	Details                  string                `pg:"details, type:varchar"`
+	BuildType                view2.BuildType       `pg:"build_type, type:varchar"`
+	PreviousVersion          string                `pg:"previous_version, type:varchar"`
+	PreviousVersionPackageId string                `pg:"previous_version_package_id, type:varchar"`
 }
 
 type MigrationChangelogEntity struct {
@@ -110,6 +109,21 @@ type MigratedVersionChangesResultEntity struct {
 	PreviousVersionPackageId string `pg:"previous_version_package_id, type:varchar"`
 }
 
+type MigrationVersionEntity struct {
+	tableName struct{} `pg:"published_version, alias:published_version"`
+
+	PackageId                string `json:"packageId"`
+	Version                  string `json:"version"`
+	Revision                 int    `json:"revision"`
+	PreviousVersion          string `json:"previousVersion"`
+	PreviousVersionPackageId string `json:"previousVersionPackageId"`
+}
+
+type PostCheckResultEntity struct {
+	NotMigratedVersions    []MigrationVersionEntity   `json:"notMigratedVersions"`
+	NotMigratedComparisons []MigrationChangelogEntity `json:"notMigratedComparisons"`
+}
+
 func MakeSuspiciousBuildView(changedVersion MigratedVersionChangesResultEntity) *view.SuspiciousMigrationBuild {
 	return &view.SuspiciousMigrationBuild{
 		PackageId:                changedVersion.PackageId,
@@ -121,4 +135,41 @@ func MakeSuspiciousBuildView(changedVersion MigratedVersionChangesResultEntity) 
 		PreviousVersion:          changedVersion.PreviousVersion,
 		PreviousVersionPackageId: changedVersion.PreviousVersionPackageId,
 	}
+}
+
+func MakePostCheckResultView(entity PostCheckResultEntity) *view.PostCheckResult {
+	notMigratedVersions := make([]view.NotMigratedVersion, len(entity.NotMigratedVersions))
+	for i, version := range entity.NotMigratedVersions {
+		notMigratedVersions[i] = view.NotMigratedVersion{
+			PackageId:                version.PackageId,
+			Version:                  version.Version,
+			Revision:                 version.Revision,
+			PreviousVersion:          version.PreviousVersion,
+			PreviousVersionPackageId: version.PreviousVersionPackageId,
+		}
+	}
+
+	notMigratedComparisons := make([]view.NotMigratedComparison, len(entity.NotMigratedComparisons))
+	for i, comparison := range entity.NotMigratedComparisons {
+		notMigratedComparisons[i] = view.NotMigratedComparison{
+			PackageId:         comparison.PackageId,
+			Version:           comparison.Version,
+			Revision:          comparison.Revision,
+			PreviousPackageId: comparison.PreviousPackageId,
+			PreviousVersion:   comparison.PreviousVersion,
+			PreviousRevision:  comparison.PreviousRevision,
+		}
+	}
+
+	return &view.PostCheckResult{
+		NotMigratedVersions:    notMigratedVersions,
+		NotMigratedComparisons: notMigratedComparisons,
+	}
+}
+
+type StageExecution struct {
+	Stage       view.OpsMigrationStage `json:"stage"`
+	Start       time.Time              `json:"start"`
+	End         time.Time              `json:"end"`
+	BuildsCount int                    `json:"buildsCount"`
 }

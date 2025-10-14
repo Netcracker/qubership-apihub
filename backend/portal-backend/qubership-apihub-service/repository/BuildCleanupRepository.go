@@ -29,11 +29,11 @@ import (
 type BuildCleanupRepository interface {
 	GetLastCleanup() (*entity.BuildCleanupEntity, error)
 	RemoveOldBuildEntities(runId int, scheduledAt time.Time) error
-	RemoveMigrationBuildData() (deletedRows int, err error)
+	RemoveMigrationBuildData(ctx context.Context) (deletedRows int, err error)
 	GetRemoveCandidateOldBuildEntitiesIds() ([]string, error)
 	RemoveOldBuildSourcesByIds(ctx context.Context, ids []string, runId int, scheduledAt time.Time) error
-	GetRemoveMigrationBuildIds() ([]string, error)
-	RemoveMigrationBuildSourceData(ids []string) (deletedRows int, err error)
+	GetRemoveMigrationBuildIds(ctx context.Context) ([]string, error)
+	RemoveMigrationBuildSourceData(ctx context.Context, ids []string) (deletedRows int, err error)
 	RemoveUnreferencedOperationData(runId int) error
 	StoreCleanup(ent *entity.BuildCleanupEntity) error
 	GetCleanup(runId int) (*entity.BuildCleanupEntity, error)
@@ -234,8 +234,7 @@ func (b buildCleanUpRepositoryImpl) getRemoveCandidateOldBuildEntities(successBu
 	return result, nil
 }
 
-func (b buildCleanUpRepositoryImpl) RemoveMigrationBuildData() (deletedRows int, err error) {
-	ctx := context.Background()
+func (b buildCleanUpRepositoryImpl) RemoveMigrationBuildData(ctx context.Context) (deletedRows int, err error) {
 	err = b.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		query := `with builds as (select build_id from build where created_by = ?)
 		delete from build_result 
@@ -262,11 +261,11 @@ func (b buildCleanUpRepositoryImpl) RemoveMigrationBuildData() (deletedRows int,
 	}
 
 	// Do not run vacuum in transaction
-	_, err = b.cp.GetConnection().Exec("vacuum full build_src")
+	_, err = b.cp.GetConnection().ExecContext(ctx, "vacuum full build_src")
 	if err != nil {
 		return deletedRows, errors.Wrap(err, "failed to run vacuum for table build_src")
 	}
-	_, err = b.cp.GetConnection().Exec("vacuum full build_result")
+	_, err = b.cp.GetConnection().ExecContext(ctx, "vacuum full build_result")
 	if err != nil {
 		return deletedRows, errors.Wrap(err, "failed to run vacuum for table build_result")
 	}
@@ -274,12 +273,12 @@ func (b buildCleanUpRepositoryImpl) RemoveMigrationBuildData() (deletedRows int,
 	return deletedRows, nil
 }
 
-func (b buildCleanUpRepositoryImpl) GetRemoveMigrationBuildIds() ([]string, error) {
+func (b buildCleanUpRepositoryImpl) GetRemoveMigrationBuildIds(ctx context.Context) ([]string, error) {
 	var result []string
 	var ents []entity.BuildIdEntity
 
 	query := `select build_id from build where created_by = ?`
-	_, err := b.cp.GetConnection().Query(&ents, query, "db migration")
+	_, err := b.cp.GetConnection().QueryContext(ctx, &ents, query, "db migration")
 	if err != nil {
 		return nil, err
 	}
@@ -289,8 +288,7 @@ func (b buildCleanUpRepositoryImpl) GetRemoveMigrationBuildIds() ([]string, erro
 	return result, nil
 }
 
-func (b buildCleanUpRepositoryImpl) RemoveMigrationBuildSourceData(ids []string) (deletedRows int, err error) {
-	ctx := context.Background()
+func (b buildCleanUpRepositoryImpl) RemoveMigrationBuildSourceData(ctx context.Context, ids []string) (deletedRows int, err error) {
 	err = b.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		query := `delete from build_src 
 		where build_id in (?)`
@@ -307,7 +305,7 @@ func (b buildCleanUpRepositoryImpl) RemoveMigrationBuildSourceData(ids []string)
 	}
 
 	// Do not run vacuum in transaction
-	_, err = b.cp.GetConnection().Exec("vacuum full build_src")
+	_, err = b.cp.GetConnection().ExecContext(ctx, "vacuum full build_src")
 	if err != nil {
 		return deletedRows, errors.Wrap(err, "failed to run vacuum for table build_src")
 	}

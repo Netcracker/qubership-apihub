@@ -39,6 +39,7 @@ const INFO = "info"
 const EXTERNAL_DOCS = "external_docs"
 const VERSION = "version"
 const DOC_TAGS_KEY = "tags"
+const MIGRATION_ID_KEY = "migration_id"
 
 type Metadata map[string]interface{}
 
@@ -324,6 +325,17 @@ func (m Metadata) GetDocTags() []interface{} {
 		return tags
 	}
 	return nil
+}
+
+func (m Metadata) SetMigrationId(migrationId string) {
+	m[MIGRATION_ID_KEY] = migrationId
+}
+
+func (m Metadata) GetMigrationId() string {
+	if migrationId, ok := m[MIGRATION_ID_KEY].(string); ok {
+		return migrationId
+	}
+	return ""
 }
 
 func (m Metadata) MergeMetadata(other Metadata) {

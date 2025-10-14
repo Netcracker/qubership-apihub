@@ -332,8 +332,10 @@ func (b *buildServiceImpl) addBuild(ctx context.SecurityContext, config view.Bui
 	config = b.setValidationRulesSeverity(config)
 
 	status := view.StatusNotStarted
+	var timeNow time.Time
 	if clientBuild {
 		status = view.StatusRunning
+		timeNow = time.Now()
 	}
 
 	buildId := config.PublishId
@@ -341,7 +343,6 @@ func (b *buildServiceImpl) addBuild(ctx context.SecurityContext, config view.Bui
 		buildId = uuid.New().String()
 	}
 
-	timeNow := time.Now()
 	buildEnt := entity.BuildEntity{
 		BuildId:     buildId,
 		Status:      string(status),

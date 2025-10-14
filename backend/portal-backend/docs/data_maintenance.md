@@ -173,7 +173,6 @@ The cleanup job affects the following database tables:
 - **build_src** – related to `build`, all related records are automatically removed via cascade deletion
 - **builder_notifications** – related to `build`, all related records are automatically removed via cascade deletion
 - **favorite_packages** – related to `package_group`, all related records are automatically removed via cascade deletion
-- **migrated_version** – related to `package_group`, all related records are automatically removed via cascade deletion
 - **operation** – related to `published_version`, all related records are automatically removed via cascade deletion
 - **operation_group** – related to `published_version`, all related records are automatically removed via cascade
   deletion

@@ -116,6 +116,7 @@ type VersionComparisonEntity struct {
 	LastActive        time.Time            `pg:"last_active, type:timestamp without time zone, use_zero"`
 	NoContent         bool                 `pg:"no_content, type:boolean, use_zero"`
 	BuilderVersion    string               `pg:"builder_version, type:varchar"`
+	Metadata          Metadata             `pg:"metadata, type:jsonb"`
 }
 
 type VersionComparisonCleanupCandidateEntity struct {

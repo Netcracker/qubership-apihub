@@ -1088,6 +1088,9 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 	if buildArc.PackageInfo.BuilderVersion != "" {
 		versionMetadata.SetBuilderVersion(buildArc.PackageInfo.BuilderVersion)
 	}
+	if buildArc.PackageInfo.MigrationBuild {
+		versionMetadata.SetMigrationId(buildArc.PackageInfo.MigrationId)
+	}
 
 	publishedAt := time.Now()
 	if buildArc.PackageInfo.MigrationBuild && buildArc.PackageInfo.PublishedAt != nil &&
