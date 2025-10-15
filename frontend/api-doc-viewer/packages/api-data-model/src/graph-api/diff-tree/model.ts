@@ -395,7 +395,10 @@ export class GraphApiModelDiffTree<
     }
 
     let sourceValue: GraphApiAnyDefinition | GraphApiListDefinition | undefined
-    if (isGraphApiAnyDefinition(value)) {
+    if (
+      isGraphApiAnyDefinition(value) ||
+      isGraphApiListDefinition(value)
+    ) {
       sourceValue = value
     } else if (
       isObject(value.typeDef) && (
