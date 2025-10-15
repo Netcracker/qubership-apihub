@@ -5,12 +5,13 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/Netcracker/qubership-api-linter-service/exception"
-	"github.com/Netcracker/qubership-api-linter-service/secctx"
-	"github.com/Netcracker/qubership-api-linter-service/view"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/Netcracker/qubership-api-linter-service/exception"
+	"github.com/Netcracker/qubership-api-linter-service/secctx"
+	"github.com/Netcracker/qubership-api-linter-service/view"
 
 	"time"
 
@@ -33,6 +34,8 @@ type ApihubClient interface {
 	GetPatByPAT(ctx context.Context, token string) (*view.PersonalAccessTokenExtAuthView, error)
 
 	GetAvailableRoles(ctx context.Context, packageId string) (*view.PackageRoles, error)
+
+	GetSystemInfo(ctx context.Context) (*view.ApihubSystemInfo, error)
 }
 
 func NewApihubClient(apihubUrl, accessToken string) ApihubClient {
@@ -314,6 +317,23 @@ func (a apihubClientImpl) GetAvailableRoles(ctx context.Context, packageId strin
 	}
 
 	return &roles, nil
+}
+
+func (a apihubClientImpl) GetSystemInfo(ctx context.Context) (*view.ApihubSystemInfo, error) {
+	req := a.makeRequest(ctx)
+	resp, err := req.Get(fmt.Sprintf("%s/api/v1/system/info", a.apihubUrl))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get APIHUB system info: %s", err.Error())
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("failed to get APIHUB system info: status code %d", resp.StatusCode())
+	}
+	var config view.ApihubSystemInfo
+	err = json.Unmarshal(resp.Body(), &config)
+	if err != nil {
+		return nil, err
+	}
+	return &config, nil
 }
 
 func (a apihubClientImpl) makeRequest(ctx context.Context) *resty.Request {
