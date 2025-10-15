@@ -22,6 +22,7 @@ type ApihubClient interface {
 	GetRsaPublicKey(ctx context.Context) (*view.PublicKey, error)
 	GetApiKeyByKey(apiKey string) (*view.ApihubApiKeyView, error)
 
+	GetPackageById(ctx context.Context, id string) (*view.SimplePackage, error)
 	GetVersion(ctx context.Context, id, version string) (*view.VersionContent, error)
 
 	GetVersionDocuments(ctx context.Context, packageId, version string) (*view.VersionDocuments, error)
@@ -128,6 +129,33 @@ func (a apihubClientImpl) GetRsaPublicKey(ctx context.Context) (*view.PublicKey,
 		Value: resp.Body(),
 	}
 	return &publicKey, nil
+}
+
+func (a apihubClientImpl) GetPackageById(ctx context.Context, id string) (*view.SimplePackage, error) {
+	req := a.makeRequest(ctx)
+
+	resp, err := req.Get(fmt.Sprintf("%s/api/v2/packages/%s", a.apihubUrl, url.PathEscape(id)))
+
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode() != http.StatusOK {
+		if resp.StatusCode() == http.StatusNotFound {
+			return nil, nil
+		}
+		if authErr := checkUnauthorized(resp); authErr != nil {
+			return nil, authErr
+		}
+		return nil, fmt.Errorf("failed to get package by id -  %s : status code %d %v", id, resp.StatusCode(), err)
+	}
+
+	var pkg view.SimplePackage
+
+	err = json.Unmarshal(resp.Body(), &pkg)
+	if err != nil {
+		return nil, err
+	}
+	return &pkg, nil
 }
 
 func (a apihubClientImpl) GetVersion(ctx context.Context, id, version string) (*view.VersionContent, error) {

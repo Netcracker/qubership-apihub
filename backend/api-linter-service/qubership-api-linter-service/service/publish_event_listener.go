@@ -66,15 +66,19 @@ func (p *publishEventListenerImpl) listen(message olric.DTopicMessage) {
 
 	taskId, err := p.validationService.ValidateVersion(ctx, notification.PackageId, version, notification.EventId)
 	if err != nil {
-		dupEvent := false
+		processed := false
 		var customError *exception.CustomError
 		if errors.As(err, &customError) {
 			if customError.Code == exception.DuplicateEvent {
-				log.Infof("PublishEventListener.listen: event with id=%s is already processed", "d")
-				dupEvent = true
+				log.Infof("PublishEventListener.listen: event with id=%s is already processed", notification.EventId)
+				processed = true
+			}
+			if customError.Code == exception.LintNotSupported {
+				log.Infof("PublishEventListener.listen: event with id=%s is for not supported package kind, skipping it", notification.EventId)
+				processed = true
 			}
 		}
-		if !dupEvent {
+		if !processed {
 			log.Errorf("PublishEventListener.listen: error in version %+v validation: %v", "", err)
 		}
 		return

@@ -20,11 +20,13 @@ import (
 	"fmt"
 	"github.com/Netcracker/qubership-api-linter-service/client"
 	"github.com/Netcracker/qubership-api-linter-service/entity"
+	"github.com/Netcracker/qubership-api-linter-service/exception"
 	"github.com/Netcracker/qubership-api-linter-service/repository"
 	"github.com/Netcracker/qubership-api-linter-service/secctx"
 	"github.com/Netcracker/qubership-api-linter-service/utils"
 	"github.com/Netcracker/qubership-api-linter-service/view"
 	"github.com/google/uuid"
+	"net/http"
 	"time"
 )
 
@@ -295,6 +297,22 @@ func (v validationServiceImpl) getVersionAndRevision(ctx context.Context, packag
 }
 
 func (v validationServiceImpl) ValidateVersion(ctx context.Context, packageId string, version string, eventId string) (string, error) {
+	pkg, err := v.apihubClient.GetPackageById(ctx, packageId)
+	if err != nil {
+		return "", err
+	}
+	if pkg.Kind != string(view.KindPackage) {
+		return "", &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.LintNotSupported,
+			Message: exception.LintNotSupportedMsg,
+			Params: map[string]interface{}{
+				"$kind": pkg.Kind,
+				"$id":   pkg.Id,
+			},
+		}
+	}
+
 	ver, rev, err := v.getVersionAndRevision(ctx, packageId, version)
 	if err != nil {
 		return "", err

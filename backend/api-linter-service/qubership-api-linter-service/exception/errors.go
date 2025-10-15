@@ -78,3 +78,6 @@ const RulesetNameDuplicatedMsg = "Ruleset name $name is not unique for API type 
 
 const LintResultNotFound = "2100"
 const LintResultNotFoundMsg = "Validation result not found for packageId $packageId and version $version"
+
+const LintNotSupported = "2200"
+const LintNotSupportedMsg = "Validation is not supported for kind=$kind (id=%id), only for kind='package'"
