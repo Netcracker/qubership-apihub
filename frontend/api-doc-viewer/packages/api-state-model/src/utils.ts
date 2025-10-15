@@ -26,7 +26,12 @@ export function isExpandableTreeNode(node: IModelTreeNode<any, any, any>): boole
   let children = node.expand().children()
   let nested = node.nested
   const usedDirectivesChild = children.find(isUsedDirectivesNode)
-  const directiveUsages = usedDirectivesChild ? usedDirectivesChild.expand().children() : []
+  const directiveUsages = usedDirectivesChild
+    ? usedDirectivesChild
+      .expand()
+      .children()
+      .filter(directiveUsage => directiveUsage.key !== 'deprecated')
+    : []
   const argsChild = children.find(isArgumentsNode)
   const args = argsChild ? argsChild.expand().children() : []
   const outputChild = children.find(isOutputNode)
