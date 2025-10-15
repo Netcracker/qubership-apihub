@@ -54,7 +54,7 @@ export class GraphApiStatePropNode extends GraphSchemaStatePropNode<GraphApiTree
 
   protected buildChildrenNodes(): IModelStateNode<GraphApiTreeNode>[] {
     if (!isGraphApiSchemaNode(this.node)) {
-      return super.buildChildrenNodes(this._sort)
+      return super.buildChildrenNodes(/* this._sort*/)
     }
 
     const children = this.node

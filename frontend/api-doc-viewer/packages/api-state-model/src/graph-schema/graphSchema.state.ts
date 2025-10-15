@@ -30,7 +30,7 @@ export class GraphSchemaStatePropNode<T extends IModelTreeNode<any, any, any> = 
 
   get args(): IModelStatePropNode<T>[] {
     if (!this._argNodes) {
-      this.buildArgNodes(this._sort)
+      this.buildArgNodes(/*this._sort*/)
     }
     return this._argNodes ?? []
   }
@@ -109,7 +109,7 @@ export class GraphSchemaStatePropNode<T extends IModelTreeNode<any, any, any> = 
     }
   }
 
-  private buildDirectiveUsageNodes(sort: number) {
+  private buildDirectiveUsageNodes(/*sort: number*/) {
     const children = this.node.expand().children()
     const usedDirectivesNode = children.find(isUsedDirectivesNode)
     const outputNode = children.find(child => child.kind === graphSchemaNodeKind.output)
@@ -127,17 +127,17 @@ export class GraphSchemaStatePropNode<T extends IModelTreeNode<any, any, any> = 
       .flatMap(usedDirectives => usedDirectives.expand().children()) as T[]
     const allNodes = [...nodes, ...nodesFromOutput]
       .filter(directiveUsage => directiveUsage.key !== BUILT_IN_DIRECTIVE_DEPRECATED)
-    const sortedNodes = sort
-      ? allNodes.sort((n1, n2) => (n1.key > n2.key ? -1 * sort : sort))
-      : allNodes
+    // const sortedNodes = sort
+    //   ? allNodes.sort((n1, n2) => (n1.key > n2.key ? -1 * sort : sort))
+    //   : allNodes
 
-    this._directiveUsageNodes = sortedNodes.length
-      ? sortedNodes.map((node, i) => this.createStatePropNode(node, i === 0))
+    this._directiveUsageNodes = allNodes.length
+      ? allNodes.map((node, i) => this.createStatePropNode(node, i === 0))
       : []
     return this._directiveUsageNodes
   }
 
-  private buildArgNodes(sort: number) {
+  private buildArgNodes(/*sort: number*/) {
     const children = this.node.expand().children()
     const argsNode = children.find(isArgumentsNode)
     if (!argsNode) {
@@ -145,11 +145,11 @@ export class GraphSchemaStatePropNode<T extends IModelTreeNode<any, any, any> = 
     }
     // convert nested args to children
     const argNodes = argsNode.expand().children() as T[] ?? []
-    const sortedArgNodes = sort
-      ? argNodes.sort((n1, n2) => (n1.key > n2.key ? -1 * sort : sort))
-      : argNodes
-    this._argNodes = sortedArgNodes.length
-      ? sortedArgNodes.map((arg, i) => this.createStatePropNode(arg, i === 0))
+    // const sortedArgNodes = sort
+    //   ? argNodes.sort((n1, n2) => (n1.key > n2.key ? -1 * sort : sort))
+    //   : argNodes
+    this._argNodes = argNodes.length
+      ? argNodes.map((arg, i) => this.createStatePropNode(arg, i === 0))
       : []
     return this._argNodes
   }
@@ -182,7 +182,7 @@ export class GraphSchemaStatePropNode<T extends IModelTreeNode<any, any, any> = 
     return _combinary
   }
 
-  protected buildChildrenNodes(sort: number): IModelStateNode<T>[] {
+  protected buildChildrenNodes(/*sort: number*/): IModelStateNode<T>[] {
     const output = this.node.expand().children().find(isOutputNode)
     const children = (
       output ?
@@ -192,19 +192,19 @@ export class GraphSchemaStatePropNode<T extends IModelTreeNode<any, any, any> = 
           .children(this.selected)
           .filter(child => !isArgumentsNode(child))]
     ).filter(child => !isUsedDirectivesNode(child)) as T[]
-    const sortedChildren = sort
-      ? children.sort((n1, n2) => (n1.key > n2.key ? -1 * sort : sort))
-      : children
-    this._childrenNodes = sortedChildren.map((prop, i) => this.createStatePropNode(prop, i === 0))
+    // const sortedChildren = sort
+    //   ? children.sort((n1, n2) => (n1.key > n2.key ? -1 * sort : sort))
+    //   : children
+    this._childrenNodes = children.map((prop, i) => this.createStatePropNode(prop, i === 0))
     return this._childrenNodes
   }
 
   protected buildChildren(): IModelStateNode<T>[] {
     return [
-      ...this.buildDirectiveUsageNodes(this._sort),
-      ...this.buildArgNodes(this._sort),
+      ...this.buildDirectiveUsageNodes(/*this._sort*/),
+      ...this.buildArgNodes(/*this._sort*/),
       ...this.buildCombinaryNodes(),
-      ...this.buildChildrenNodes(this._sort)
+      ...this.buildChildrenNodes(/*this._sort*/)
     ]
   }
 
