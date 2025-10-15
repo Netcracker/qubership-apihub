@@ -1,0 +1,78 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: qubership-apihub-test-service
+  labels:
+    name: qubership-apihub-test-service
+    app.kubernetes.io/component: 'backend'
+    app.kubernetes.io/technology: 'go'
+    app.kubernetes.io/part-of: qubership-apihub-test-service
+    app.kubernetes.io/managed-by: helm
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        name: qubership-apihub-test-service
+        app.kubernetes.io/component: 'backend'
+        app.kubernetes.io/part-of: qubership-apihub-test-service
+        app.kubernetes.io/managed-by: helm
+        app.kubernetes.io/technology: 'go'
+    spec:
+      volumes:
+        - name: tmp-volume
+          emptyDir: {}
+      hostPID: false
+      hostIPC: false
+      containers:
+        - name: qubership-apihub-test-service
+          image: '{{ .Values.qubershipApihubTestService.image.repository }}:{{ .Values.qubershipApihubTestService.image.tag }}'
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+          ports:
+            - name: web
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: 'INFO'
+          resources:
+            requests:
+              cpu: '{{ .Values.qubershipApihubTestService.resource.cpu.request }}'
+              memory: '{{ .Values.qubershipApihubTestService.resource.memory.request }}'
+            limits:
+              cpu: '{{ .Values.qubershipApihubTestService.resource.cpu.limit }}'
+              memory: '{{ .Values.qubershipApihubTestService.resource.memory.limit }}'
+          livenessProbe:
+            httpGet:
+              path: /
+              port: web
+            initialDelaySeconds: 5
+            timeoutSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /
+              port: web
+            initialDelaySeconds: 5
+            timeoutSeconds: 2
+          securityContext:
+            runAsUser: 10001
+            runAsGroup: 10001
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+  selector:
+    matchLabels:
+      name: qubership-apihub-test-service
+
