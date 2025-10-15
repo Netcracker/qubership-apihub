@@ -99,7 +99,10 @@ export function createGraphApiTreeCrawlHook(
     parent?.addChild(nodeCreationResult.node)
 
     /* Feature "Lazy Tree Building" */
-    if (state.treeLevel >= state.maxTreeLevel) {
+    if (
+      state.treeLevel >= state.maxTreeLevel &&
+      nodeCreationResult.node.type === modelTreeNodeType.simple
+    ) {
       return { done: true }
     }
     const nextTreeLevel = state.treeLevel + 1

@@ -135,7 +135,10 @@ export function createGraphSchemaTreeCrawlHook(
     }
 
     /* Feature "Lazy Tree Building" */
-    if (state.treeLevel >= state.maxTreeLevel && !container) {
+    if (
+      state.treeLevel >= state.maxTreeLevel &&
+      nodeCreationResult.node.type === modelTreeNodeType.simple
+    ) {
       return { done: true }
     }
     const nextTreeLevel = state.treeLevel + 1
