@@ -171,12 +171,6 @@ func (j BuildCleanupJob) Run() {
 				return
 			}
 		}
-		//todo uncomment after improving performance of "delete" queries
-		// err = j.buildCleanupRepository.RemoveUnreferencedOperationData(lockId)
-		// if err != nil {
-		// 	log.Errorf("Failed to clean up unreferenced operation data: %v", err)
-		// 	return
-		// }
 
 		cleanupEnt, err := j.buildCleanupRepository.GetCleanup(lockId)
 		if err != nil {

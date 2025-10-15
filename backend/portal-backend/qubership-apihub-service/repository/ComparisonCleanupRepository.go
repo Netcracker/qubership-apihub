@@ -17,12 +17,12 @@ package repository
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service/cleanup/logger"
 )
 
 type ComparisonCleanupRepository interface {
@@ -70,14 +70,14 @@ func (c comparisonCleanupRepositoryImpl) VacuumComparisonTables(ctx context.Cont
 	_, err := c.cp.GetConnection().ExecContext(ctx, "VACUUM FULL version_comparison")
 	if err != nil {
 		errorMsg := fmt.Sprintf("Failed to vacuum 'version_comparison' table: %v", err)
-		log.Warn(errorMsg)
+		logger.Warn(ctx, errorMsg)
 		vacuumErrors = append(vacuumErrors, errorMsg)
 	}
 
 	_, err = c.cp.GetConnection().ExecContext(ctx, "VACUUM FULL operation_comparison")
 	if err != nil {
 		errorMsg := fmt.Sprintf("Failed to vacuum 'operation_comparison' table: %v", err)
-		log.Warn(errorMsg)
+		logger.Warn(ctx, errorMsg)
 		vacuumErrors = append(vacuumErrors, errorMsg)
 	}
 

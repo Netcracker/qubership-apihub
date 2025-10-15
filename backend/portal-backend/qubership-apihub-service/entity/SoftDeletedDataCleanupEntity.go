@@ -69,6 +69,16 @@ type PackageService struct {
 	ServiceName string `pg:"service_name" json:"serviceName"`
 }
 
+func NewDeletedItemsStats() *DeletedItemsStats {
+	return &DeletedItemsStats{
+		Packages:             []string{},
+		PackageRevisions:     []PublishedVersionKeyEntity{},
+		ApiKeys:              []ApihubApiKeyEntity{},
+		PackageMembersRoles:  []PackageMemberRoleEntity{},
+		PackageServices:      []PackageService{},
+	}
+}
+
 func (d *DeletedItemsStats) CalculateTotal() {
 	d.TotalRecords = len(d.Packages) +
 		len(d.PackageRevisions) +

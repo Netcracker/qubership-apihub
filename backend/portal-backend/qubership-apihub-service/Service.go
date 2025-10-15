@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security/idp/providers"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service/cleanup"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
@@ -242,6 +243,8 @@ func main() {
 
 	deletedDataCleanupRepository := repository.NewSoftDeletedDataCleanupRepository(cp)
 
+	unreferencedDataCleanupRepository := repository.NewUnreferencedDataCleanupRepository(cp)
+
 	lockRepo := repository.NewLockRepository(cp)
 
 	olricProvider, err := cache.NewOlricProvider(systemInfoService.GetOlricConfig())
@@ -275,7 +278,7 @@ func main() {
 
 	lockService := service.NewLockService(lockRepo, systemInfoService.GetInstanceId())
 
-	cleanupService := service.NewCleanupService(cp)
+	cleanupService := cleanup.NewCleanupService(cp)
 	if err := cleanupService.CreateRevisionsCleanupJob(publishedRepository, migrationRunRepository, versionCleanupRepository, lockService, systemInfoService.GetInstanceId(), systemInfoService.GetRevisionsCleanupSchedule(), systemInfoService.GetRevisionsCleanupDeleteLastRevision(), systemInfoService.GetRevisionsCleanupDeleteReleaseRevisions(), systemInfoService.GetRevisionsTTLDays()); err != nil {
 		log.Error("Failed to start revisions cleaning job" + err.Error())
 	}
@@ -284,6 +287,9 @@ func main() {
 	}
 	if err := cleanupService.CreateSoftDeletedDataCleanupJob(publishedRepository, migrationRunRepository, deletedDataCleanupRepository, lockService, systemInfoService.GetInstanceId(), systemInfoService.GetSoftDeletedDataCleanupSchedule(), systemInfoService.GetSoftDeletedDataCleanupTimeout(), systemInfoService.GetSoftDeletedDataTTLDays()); err != nil {
 		log.Error("Failed to start soft deleted data cleaning job" + err.Error())
+	}
+	if err := cleanupService.CreateUnreferencedDataCleanupJob(migrationRunRepository, unreferencedDataCleanupRepository, lockService, systemInfoService.GetInstanceId(), systemInfoService.GetUnreferencedDataCleanupSchedule(), systemInfoService.GetUnreferencedDataCleanupTimeout()); err != nil {
+		log.Error("Failed to start unreferenced data cleaning job" + err.Error())
 	}
 
 	monitoringService := service.NewMonitoringService(cp)

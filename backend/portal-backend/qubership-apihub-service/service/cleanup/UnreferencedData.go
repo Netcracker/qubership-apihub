@@ -1,0 +1,184 @@
+// Copyright 2024-2025 NetCracker Technology Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package cleanup
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service/cleanup/logger"
+)
+
+const (
+	unreferencedDataBatchSize = 100
+)
+
+type unreferencedDataCleanupJobProcessor struct {
+	unreferencedDataCleanupRepo repository.UnreferencedDataCleanupRepository
+}
+
+func NewUnreferencedDataJobProcessor(
+	unreferencedDataCleanupRepo repository.UnreferencedDataCleanupRepository,
+) JobProcessor {
+	return &unreferencedDataCleanupJobProcessor{
+		unreferencedDataCleanupRepo: unreferencedDataCleanupRepo,
+	}
+}
+
+func (p *unreferencedDataCleanupJobProcessor) Initialize(ctx context.Context, jobId string, instanceId string, deleteBefore time.Time) error {
+	err := p.unreferencedDataCleanupRepo.StoreCleanupRun(ctx, entity.UnreferencedDataCleanupEntity{
+		RunId:      jobId,
+		InstanceId: instanceId,
+		Status:     string(statusRunning),
+		StartedAt:  time.Now(),
+	})
+	if err != nil {
+		logger.Errorf(ctx, "Failed to initialize cleanup run: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (p *unreferencedDataCleanupJobProcessor) Process(ctx context.Context, jobId string, _ time.Time, deletedItems *int) ([]string, error) {
+	processingErrors := []string{}
+	batchSize := unreferencedDataBatchSize
+
+	logger.Info(ctx, "Starting cleanup of unreferenced operation data")
+	for {
+		select {
+		case <-ctx.Done():
+			errorMessage := getContextCancellationMessage(ctx)
+			logger.Warnf(ctx, "job interrupted during operation data cleanup - %s", errorMessage)
+			return processingErrors, fmt.Errorf("job interrupted - %s", errorMessage)
+		default:
+		}
+		deletedItemsCount, err := p.unreferencedDataCleanupRepo.DeleteUnreferencedOperationData(ctx, jobId, batchSize)
+		if err != nil {
+			logger.Warnf(ctx, "Failed to delete operation data: %v", err)
+			processingErrors = append(processingErrors, fmt.Sprintf("failed to delete operation data: %s", err.Error()))
+			continue
+		}
+
+		if deletedItemsCount == 0 {
+			logger.Debug(ctx, "No more operation data to delete")
+			break
+		}
+		*deletedItems += deletedItemsCount
+		logger.Infof(ctx, "Deleted %d items during operation data deletion", deletedItemsCount)
+	}
+
+	logger.Infof(ctx, "Starting cleanup of unreferenced operation group templates")
+	for {
+		select {
+		case <-ctx.Done():
+			errorMessage := getContextCancellationMessage(ctx)
+			logger.Warnf(ctx, "job interrupted during operation group templates cleanup - %s", errorMessage)
+			return processingErrors, fmt.Errorf("job interrupted - %s", errorMessage)
+		default:
+		}
+		deletedItemsCount, err := p.unreferencedDataCleanupRepo.DeleteUnreferencedOperationGroupTemplates(ctx, jobId, batchSize)
+		if err != nil {
+			logger.Warnf(ctx, "Failed to delete operation group templates: %v", err)
+			processingErrors = append(processingErrors, fmt.Sprintf("failed to delete operation group templates: %s", err.Error()))
+			continue
+		}
+
+		if deletedItemsCount == 0 {
+			logger.Debug(ctx, "No more operation group templates to delete")
+			break
+		}
+		*deletedItems += deletedItemsCount
+		logger.Infof(ctx, "Deleted %d items during operation group templates deletion", deletedItemsCount)
+	}
+
+	logger.Infof(ctx, "Starting cleanup of unreferenced source archives")
+	for {
+		select {
+		case <-ctx.Done():
+			errorMessage := getContextCancellationMessage(ctx)
+			logger.Warnf(ctx, "job interrupted during source archives cleanup - %s", errorMessage)
+			return processingErrors, fmt.Errorf("job interrupted - %s", errorMessage)
+		default:
+		}
+
+		deletedItemsCount, err := p.unreferencedDataCleanupRepo.DeleteUnreferencedSrcArchives(ctx, jobId, batchSize)
+		if err != nil {
+			logger.Warnf(ctx, "Failed to delete source archives: %v", err)
+			processingErrors = append(processingErrors, fmt.Sprintf("failed to delete source archives: %s", err.Error()))
+			continue
+		}
+
+		if deletedItemsCount == 0 {
+			logger.Debug(ctx, "No more source archives to delete")
+			break
+		}
+		*deletedItems += deletedItemsCount
+		logger.Infof(ctx, "Deleted %d items during source archives deletion", deletedItemsCount)
+	}
+
+	logger.Infof(ctx, "Starting cleanup of unreferenced publish data")
+	for {
+		select {
+		case <-ctx.Done():
+			errorMessage := getContextCancellationMessage(ctx)
+			logger.Warnf(ctx, "job interrupted during publish data cleanup - %s", errorMessage)
+			return processingErrors, fmt.Errorf("job interrupted - %s", errorMessage)
+		default:
+		}
+
+		deletedItemsCount, err := p.unreferencedDataCleanupRepo.DeleteUnreferencedPublishedData(ctx, jobId, batchSize)
+		if err != nil {
+			logger.Warnf(ctx, "Failed to delete publish data: %v", err)
+			processingErrors = append(processingErrors, fmt.Sprintf("failed to delete publish data: %s", err.Error()))
+			continue
+		}
+
+		if deletedItemsCount == 0 {
+			logger.Debug(ctx, "No more publish data to delete")
+			break
+		}
+		*deletedItems += deletedItemsCount
+		logger.Infof(ctx, "Deleted %d items during publish data deletion", deletedItemsCount)
+	}
+
+	return processingErrors, nil
+}
+
+func (p *unreferencedDataCleanupJobProcessor) UpdateProgress(ctx context.Context, jobId string, status jobStatus, errorMessage string, deletedItems int, finishedAt *time.Time) error {
+	updateCtx, cancel := createContextForUpdate(ctx)
+	defer cancel()
+
+	err := p.unreferencedDataCleanupRepo.UpdateCleanupRun(updateCtx, jobId, string(status), errorMessage, finishedAt)
+	if err != nil {
+		logger.Errorf(ctx, "failed to set '%s' status for cleanup job id %s: %s", status, jobId, err.Error())
+		return err
+	}
+	return nil
+}
+
+func (p *unreferencedDataCleanupJobProcessor) GetVacuumTimeout() time.Duration {
+	return 3 * time.Hour
+}
+
+func (p *unreferencedDataCleanupJobProcessor) PerformVacuum(ctx context.Context, jobId string) error {
+	err := p.unreferencedDataCleanupRepo.VacuumAffectedTables(ctx, jobId)
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service/cleanup/logger"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -3863,7 +3864,7 @@ func (p publishedRepositoryImpl) DeletePackageRevisionsBeforeDate(ctx context.Co
 	}
 
 	for idx, version := range versions {
-		log.Tracef("[revisions cleanup] Processing version %d/%d: %s", idx+1, len(versions), version)
+		logger.Tracef(ctx, "Processing version %d/%d: %s", idx+1, len(versions), version)
 		deletedCount, err := p.deleteVersionRevisions(ctx, packageId, version, deleteBefore, deleteLastRevision, deleteReleaseRevisions, deletedBy)
 		if err != nil {
 			if ctx.Err() != nil {
@@ -3884,11 +3885,11 @@ func (p publishedRepositoryImpl) DeletePackageRevisionsBeforeDate(ctx context.Co
 				combinedErr = fmt.Errorf("%v; %v", combinedErr, err)
 			}
 		}
-		log.Debugf("[revisions cleanup] Package %s revisions cleanup completed with %d errors. Total deleted: %d", packageId, len(processingErrors), totalDeletedCount)
+		logger.Debugf(ctx, "Package %s revisions cleanup completed with %d errors. Total deleted: %d", packageId, len(processingErrors), totalDeletedCount)
 		return totalDeletedCount, fmt.Errorf("cleanup completed with errors (deleted %d items): %w", totalDeletedCount, combinedErr)
 	}
 
-	log.Debugf("[revisions cleanup] Package %s revisions cleanup completed. Total deleted: %d", packageId, totalDeletedCount)
+	logger.Debugf(ctx, "Package %s revisions cleanup completed. Total deleted: %d", packageId, totalDeletedCount)
 	return totalDeletedCount, nil
 }
 
@@ -3908,15 +3909,15 @@ func (p publishedRepositoryImpl) deleteVersionRevisions(ctx context.Context, pac
 		lastRevisionIndex := len(revisions) - 1
 		for i, revision := range revisions {
 			if !revision.PublishedAt.Before(deleteBefore) {
-				log.Tracef("[revisions cleanup] package %s, version %s, revision %d is not before delete threshold %s, skipping", packageId, version, revision.Revision, deleteBefore)
+				logger.Tracef(ctx, "package %s, version %s, revision %d is not before delete threshold %s, skipping", packageId, version, revision.Revision, deleteBefore)
 				break
 			}
 			if i == lastRevisionIndex && !deleteLastRevision {
-				log.Tracef("[revisions cleanup] package %s, version %s, last revision %d, skipping because deleteLastRevision=false", packageId, version, revision.Revision)
+				logger.Tracef(ctx, "package %s, version %s, last revision %d, skipping because deleteLastRevision=false", packageId, version, revision.Revision)
 				break
 			}
 			if revision.Status == string(view.Release) && !deleteReleaseRevisions {
-				log.Tracef("[revisions cleanup] package %s, version %s, release revision %d, skipping because deleteReleaseRevisions=false", packageId, version, revision.Revision)
+				logger.Tracef(ctx, "package %s, version %s, release revision %d, skipping because deleteReleaseRevisions=false", packageId, version, revision.Revision)
 				break
 			}
 			candidates = append(candidates, &revision)
@@ -3947,7 +3948,7 @@ func (p publishedRepositoryImpl) deleteVersionRevisions(ctx context.Context, pac
 				}
 
 				if result.RowsAffected() == 0 {
-					log.Tracef("[revisions cleanup] package %s, version %s, revision %d has references or was already deleted, skipping", packageId, version, revision.Revision)
+					logger.Tracef(ctx, "package %s, version %s, revision %d has references or was already deleted, skipping", packageId, version, revision.Revision)
 					break
 				}
 
@@ -3956,7 +3957,7 @@ func (p publishedRepositoryImpl) deleteVersionRevisions(ctx context.Context, pac
 					return fmt.Errorf("failed to track revision deletion: %w", err)
 				}
 
-				err = p.clearAdHocComparisons(tx, packageId, version, revision.Revision)
+				err = p.clearAdHocComparisons(ctx, tx, packageId, version, revision.Revision)
 				if err != nil {
 					return fmt.Errorf("failed to clear ad-hoc comparisons for revision %d: %w", revision.Revision, err)
 				}
@@ -3965,7 +3966,7 @@ func (p publishedRepositoryImpl) deleteVersionRevisions(ctx context.Context, pac
 			}
 
 			if deletedCount == len(revisions) {
-				log.Tracef("[revisions cleanup] All revisions for version %s were deleted, cleaning up related data", version)
+				logger.Tracef(ctx, "All revisions for version %s were deleted, cleaning up related data", version)
 				err = p.clearDefaultReleaseVersion(tx, packageId, version)
 				if err != nil {
 					return fmt.Errorf("failed to clear default release version: %w", err)
@@ -3990,7 +3991,7 @@ func (p publishedRepositoryImpl) deleteVersionRevisions(ctx context.Context, pac
 		return 0, err
 	}
 
-	log.Tracef("[revisions cleanup] Successfully processed version %s, deleted %d revisions", version, deletedCount)
+	logger.Tracef(ctx, "Successfully processed version %s, deleted %d revisions", version, deletedCount)
 	return deletedCount, nil
 }
 
@@ -4014,8 +4015,8 @@ func (p publishedRepositoryImpl) trackDeletion(tx *pg.Tx, packageId string, vers
 	return nil
 }
 
-func (p publishedRepositoryImpl) clearAdHocComparisons(tx *pg.Tx, packageId string, version string, revision int) error {
-	log.Tracef("[revisions cleanup] Clearing ad-hoc comparisons for %s/%s@%d", packageId, version, revision)
+func (p publishedRepositoryImpl) clearAdHocComparisons(ctx context.Context, tx *pg.Tx, packageId string, version string, revision int) error {
+	logger.Tracef(ctx, "Clearing ad-hoc comparisons for %s/%s@%d", packageId, version, revision)
 
 	var deletedCount int
 	page, limit := 0, 100
@@ -4079,10 +4080,10 @@ func (p publishedRepositoryImpl) clearAdHocComparisons(tx *pg.Tx, packageId stri
 			}
 
 			if result.RowsAffected() > 0 {
-				log.Tracef("[revisions cleanup] Deleted ad-hoc comparison %s", comparisonId)
+				logger.Tracef(ctx, "Deleted ad-hoc comparison %s", comparisonId)
 				deletedCount++
 			} else {
-				log.Tracef("[revisions cleanup] Skipped ad-hoc comparison %s (referenced or already deleted)", comparisonId)
+				logger.Tracef(ctx, "Skipped ad-hoc comparison %s (referenced or already deleted)", comparisonId)
 			}
 		}
 
@@ -4093,7 +4094,7 @@ func (p publishedRepositoryImpl) clearAdHocComparisons(tx *pg.Tx, packageId stri
 	}
 
 	if deletedCount > 0 {
-		log.Tracef("[revisions cleanup] Deleted %d ad-hoc comparisons for %s/%s@%d",
+		logger.Tracef(ctx, "Deleted %d ad-hoc comparisons for %s/%s@%d",
 			deletedCount, packageId, version, revision)
 	}
 
@@ -4157,10 +4158,10 @@ func (p publishedRepositoryImpl) DeleteVersionComparison(ctx context.Context, co
 		}
 
 		if result.RowsAffected() > 0 {
-			log.Tracef("[comparisons cleanup] Deleted comparison %s", comparisonId)
+			logger.Tracef(ctx, "Deleted comparison %s", comparisonId)
 			deleted = true
 		} else {
-			log.Tracef("[comparisons cleanup] Skipped comparison %s (referenced or already deleted)", comparisonId)
+			logger.Tracef(ctx, "Skipped comparison %s (referenced or already deleted)", comparisonId)
 			deleted = false
 		}
 
@@ -4174,7 +4175,7 @@ func (p publishedRepositoryImpl) DeleteVersionComparison(ctx context.Context, co
 }
 
 func (p publishedRepositoryImpl) DeleteSoftDeletedPackagesBeforeDate(ctx context.Context, runId string, beforeDate time.Time, batchSize int) (int, error) {
-	var deletedItemsStats entity.DeletedItemsStats
+	deletedItemsStats := entity.NewDeletedItemsStats()
 
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		getPackageIdsQuery := `
@@ -4192,14 +4193,14 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackagesBeforeDate(ctx context
 		if len(packageIds) == 0 {
 			return nil
 		}
-		log.Debugf("[soft deleted data cleanup] Found %d packages to delete in current batch", len(packageIds))
+		logger.Debugf(ctx, "Found %d packages to delete in current batch", len(packageIds))
 
-		err = p.countRelatedDataForPackagesTx(ctx, tx, packageIds, &deletedItemsStats)
+		err = p.countRelatedDataForPackagesTx(ctx, tx, packageIds, deletedItemsStats)
 		if err != nil {
 			return fmt.Errorf("failed to count package related data: %w", err)
 		}
 
-		log.Trace("[soft deleted data cleanup] Deleting related API keys for packages")
+		logger.Trace(ctx, "Deleting related API keys for packages")
 		deleteApiKeysQuery := `
 			DELETE FROM apihub_api_keys
 			WHERE package_id IN (?)`
@@ -4208,7 +4209,7 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackagesBeforeDate(ctx context
 			return fmt.Errorf("failed to delete related API keys: %w", err)
 		}
 
-		log.Trace("[soft deleted data cleanup] Deleting package transitions for packages")
+		logger.Trace(ctx, "Deleting package transitions for packages")
 		deletePackageTransitionsQuery := `
 			DELETE FROM package_transition
 			WHERE new_package_id IN (?)`
@@ -4217,7 +4218,7 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackagesBeforeDate(ctx context
 			return fmt.Errorf("failed to delete related package transitions: %w", err)
 		}
 
-		log.Tracef("[soft deleted data cleanup] Deleting packages: %v", packageIds)
+		logger.Tracef(ctx, "Deleting packages: %v", packageIds)
 		deletePackagesQuery := `
 			DELETE FROM package_group
 			WHERE id IN (?)`
@@ -4237,9 +4238,10 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackagesBeforeDate(ctx context
 			return fmt.Errorf("failed to get current state of cleanup run: %w", err)
 		}
 		if cleanupRun.DeletedItems == nil {
-			cleanupRun.DeletedItems = &entity.DeletedItemsStats{}
+			cleanupRun.DeletedItems = deletedItemsStats
+		} else {
+			cleanupRun.DeletedItems.Add(deletedItemsStats)
 		}
-		cleanupRun.DeletedItems.Add(&deletedItemsStats)
 		_, err = tx.Model(&cleanupRun).
 			Column("deleted_items").
 			WherePK().
@@ -4247,7 +4249,7 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackagesBeforeDate(ctx context
 		if err != nil {
 			return fmt.Errorf("failed to update cleanup run state: %w", err)
 		}
-		log.Debugf("[soft deleted data cleanup] Deleted %d packages with %d total cascade records: %v",
+		logger.Debugf(ctx, "Deleted %d packages with %d total cascade records: %v",
 			len(deletedItemsStats.Packages), deletedItemsStats.TotalRecords-len(deletedItemsStats.Packages), deletedItemsStats.Packages)
 
 		return nil
@@ -4257,7 +4259,7 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackagesBeforeDate(ctx context
 }
 
 func (p publishedRepositoryImpl) DeleteSoftDeletedPackageRevisionsBeforeDate(ctx context.Context, runId string, beforeDate time.Time, batchSize int) (int, error) {
-	var deletedItemsStats entity.DeletedItemsStats
+	deletedItemsStats := entity.NewDeletedItemsStats()
 
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		geRevisionKeysQuery := `
@@ -4276,16 +4278,16 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackageRevisionsBeforeDate(ctx
 		if len(revisionKeys) == 0 {
 			return nil
 		}
-		log.Debugf("[soft deleted data cleanup] Found %d package revisions to delete in current batch", len(revisionKeys))
+		logger.Debugf(ctx, "Found %d package revisions to delete in current batch", len(revisionKeys))
 
 		valuesClause, args := buildRevisionKeysValuesClause(revisionKeys)
 
-		err = p.countRelatedDataForPackageRevisionsTx(ctx, tx, valuesClause, args, &deletedItemsStats)
+		err = p.countRelatedDataForPackageRevisionsTx(ctx, tx, valuesClause, args, deletedItemsStats)
 		if err != nil {
 			return fmt.Errorf("failed to count related data: %w", err)
 		}
 
-		log.Tracef("[soft deleted data cleanup] Deleting package revisions: %v", revisionKeys)
+		logger.Tracef(ctx, "Deleting package revisions: %v", revisionKeys)
 		deleteQuery := `DELETE FROM published_version WHERE (package_id, version, revision) IN (` + valuesClause + `)`
 		_, err = tx.ExecContext(ctx, deleteQuery, args...)
 		if err != nil {
@@ -4303,9 +4305,10 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackageRevisionsBeforeDate(ctx
 			return fmt.Errorf("failed to get current state of cleanup run: %w", err)
 		}
 		if cleanupRun.DeletedItems == nil {
-			cleanupRun.DeletedItems = &entity.DeletedItemsStats{}
+			cleanupRun.DeletedItems = deletedItemsStats
+		} else {
+			cleanupRun.DeletedItems.Add(deletedItemsStats)
 		}
-		cleanupRun.DeletedItems.Add(&deletedItemsStats)
 		_, err = tx.Model(&cleanupRun).
 			Column("deleted_items").
 			WherePK().
@@ -4314,7 +4317,7 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackageRevisionsBeforeDate(ctx
 			return fmt.Errorf("failed to update cleanup run state: %w", err)
 		}
 
-		log.Debugf("[soft deleted data cleanup] Deleted %d package revisions with %d total cascade records: %v",
+		logger.Debugf(ctx, "Deleted %d package revisions with %d total cascade records: %v",
 			len(deletedItemsStats.PackageRevisions), deletedItemsStats.TotalRecords-len(deletedItemsStats.PackageRevisions), deletedItemsStats.PackageRevisions)
 
 		return nil

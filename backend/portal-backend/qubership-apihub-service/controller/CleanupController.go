@@ -15,11 +15,12 @@
 package controller
 
 import (
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"net/http"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service/cleanup"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
+
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -27,14 +28,14 @@ type CleanupController interface {
 	ClearTestData(w http.ResponseWriter, r *http.Request)
 }
 
-func NewCleanupController(cleanupService service.CleanupService) CleanupController {
+func NewCleanupController(cleanupService cleanup.CleanupService) CleanupController {
 	return &cleanupControllerImpl{
 		cleanupService: cleanupService,
 	}
 }
 
 type cleanupControllerImpl struct {
-	cleanupService service.CleanupService
+	cleanupService cleanup.CleanupService
 }
 
 func (c cleanupControllerImpl) ClearTestData(w http.ResponseWriter, r *http.Request) {

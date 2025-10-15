@@ -17,6 +17,9 @@ This document describes various data maintenance features available in the APIHU
     - [Configuration](#configuration-2)
     - [How job works](#how-job-works-2)
     - [Affected Tables and Handling](#affected-tables-and-handling)
+- [Unreferenced Data Cleanup](#unreferenced-data-cleanup)
+    - [Configuration](#configuration-3)
+    - [How job works](#how-job-works-3)
 - [Cleanup Job Schedules](#cleanup-job-schedules)
 
 ## Revisions TTL
@@ -111,7 +114,7 @@ The comparisons cleanup job is configured via configuration properties:
 |--------------------------------------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `cleanup.comparisons.ttlDays`        | `30`          | Number of days to keep ad-hoc comparisons before they become eligible for deletion                                                                                                                 |
 | `cleanup.comparisons.schedule`       | `0 5 * * 0`   | Cron schedule for the cleanup job (Sunday 5:00 AM by default)                                                                                                                                      |
-| `cleanup.comparisons.timeoutMinutes` | `720`         | Maximum execution time for the cleanup in minutes. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination. |
+| `cleanup.comparisons.timeoutMinutes` | `360`         | Maximum execution time for the cleanup in minutes. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination. |
 
 The job includes a vacuum phase that runs after the main cleanup to optimize affected database tables.
 
@@ -144,7 +147,7 @@ The soft deleted data cleanup job is configured via configuration properties:
 |------------------------------------------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `cleanup.softDeletedData.ttlDays`        | `730`         | Number of days to keep soft-deleted data before permanent deletion                                                                                                                                 |
 | `cleanup.softDeletedData.schedule`       | `0 22 * * 5`  | Cron schedule for the cleanup job (Friday 10:00 PM by default)                                                                                                                                     |
-| `cleanup.softDeletedData.timeoutMinutes` | `1200`        | Maximum execution time for the cleanup in minutes. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination. |
+| `cleanup.softDeletedData.timeoutMinutes` | `600`         | Maximum execution time for the cleanup in minutes. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination. |
 
 ### How job works
 
@@ -207,18 +210,52 @@ The cleanup job affects the following database tables:
 **Note**: cascade deletion is a database feature that automatically deletes related records in other tables when a
 primary record is deleted.
 
+## Unreferenced Data Cleanup
+
+APIHUB backend implements an automatic cleanup mechanism for unreferenced data to reduce database size and improve
+performance. The system runs a scheduled job that removes data that is no longer referenced by any active entities in
+the system.
+
+### Configuration
+
+The unreferenced data cleanup job is configured via configuration properties:
+
+| Configuration property                       | Default value | Description                                                                                                                                                                                        |
+|----------------------------------------------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `cleanup.unreferencedData.schedule`          | `0 15 * * 6`  | Cron schedule for the cleanup job (Saturday 3:00 PM by default)                                                                                                                                    |
+| `cleanup.unreferencedData.timeoutMinutes`    | `360`         | Maximum execution time for the cleanup in minutes. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination. |
+
+The job includes a vacuum phase that runs after the main cleanup to optimize affected database tables.
+
+### How job works
+
+The unreferenced data cleanup job performs the following steps:
+
+1. Checks if any migrations are running - if so, it skips execution to avoid conflicts.
+2. Processes and deletes unreferenced data in batches for each data type:
+    - **Operation data** - removes `operation_data` records that are no longer referenced by any operation. Records in
+   `ts_rest_operation_data`, `ts_graphql_operation_data`, `ts_operation_data` and `fts_operation_data` will be removed by cascade deletion.
+    - **Operation group templates** - removes `operation_group_template` records that are no longer referenced by any operation group.
+    - **Source archives** - removes `published_sources_archives` records that are no longer referenced by any published source.
+    - **Published data** - removes `published_data` records that are no longer referenced by any published document.
+3. Performs VACUUM FULL on affected database tables to reclaim disk space and optimize performance.
+
+**Note**: Unlike other cleanup jobs, this job does not use a TTL (Time-To-Live) configuration. It removes all
+unreferenced data regardless of age, as unreferenced data serves no purpose in the system.
+
 ## Cleanup Job Schedules
 
 All cleanup jobs run on predefined schedules to avoid conflicts and distribute system load:
 
-| Job type                  | Default schedule | Description        | Day/Time     | Cleanup phase timeout                                   | Vacuum phase timeout       |
-|---------------------------|------------------|--------------------|--------------|---------------------------------------------------------|----------------------------|
-| Revisions Cleanup         | `0 21 * * 0`     | Sunday at 9:00 PM  | Every Sunday | Interval between runs minus one hour                    | —                          |
-| Comparisons Cleanup       | `0 5 * * 0`      | Sunday at 5:00 AM  | Every Sunday | Configured via `cleanup.comparisons.timeoutMinutes`     | 3 hours (not configurable) |
-| Soft Deleted Data Cleanup | `0 22 * * 5`     | Friday at 10:00 PM | Every Friday | Configured via `cleanup.softDeletedData.timeoutMinutes` | 6 hours (not configurable) |
-| Builds Cleanup            | `0 1 * * 0`      | Sunday at 1:00 AM  | Every Sunday | —                                                       | —                          |
+| Job type                   | Default schedule | Description          | Day/Time       | Cleanup phase timeout                                      | Vacuum phase timeout       |
+|----------------------------|------------------|----------------------|----------------|------------------------------------------------------------|----------------------------|
+| Revisions Cleanup          | `0 21 * * 0`     | Sunday at 9:00 PM    | Every Sunday   | Interval between runs minus one hour                       | —                          |
+| Comparisons Cleanup        | `0 5 * * 0`      | Sunday at 5:00 AM    | Every Sunday   | Configured via `cleanup.comparisons.timeoutMinutes`        | 3 hours (not configurable) |
+| Soft Deleted Data Cleanup  | `0 22 * * 5`     | Friday at 10:00 PM   | Every Friday   | Configured via `cleanup.softDeletedData.timeoutMinutes`    | 6 hours (not configurable) |
+| Unreferenced Data Cleanup  | `0 15 * * 6`     | Saturday at 3:00 PM  | Every Saturday | Configured via `cleanup.unreferencedData.timeoutMinutes`   | 3 hours (not configurable) |
+| Builds Cleanup             | `0 1 * * 0`      | Sunday at 1:00 AM    | Every Sunday   | —                                                          | —                          |
 
-**Note**: when scheduling `Comparisons Cleanup`, `Soft Deleted Data Cleanup` and `Builds Cleanup` jobs,
-it is important to keep in mind that each job consists of two phases: cleanup and vacuuming of the affected tables.
-Both phases of a job should be completed before the next job starts in order to avoid excessive system load and database
-table locks.
+**Note**: when scheduling `Comparisons Cleanup`, `Soft Deleted Data Cleanup`, `Unreferenced Data Cleanup` and
+`Builds Cleanup` jobs, it is important to keep in mind that each job consists of two phases: cleanup and vacuuming of
+the affected tables. Both phases of a job should be completed before the next job starts in order to avoid excessive
+system load and database table locks.

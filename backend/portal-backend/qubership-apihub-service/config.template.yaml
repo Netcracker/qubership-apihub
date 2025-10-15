@@ -176,17 +176,22 @@ cleanup:
   comparisons:
     # Optional; Schedule for the comparisons cleanup job. If not set, default value: "0 5 * * 0"; Example: "* * * * *"
     schedule: '0 5 * * 0'
-    # Optional; Timeout in minutes for comparisons cleanup. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination; If not set, default value: 720; Example: 60
-    timeoutMinutes: 720
+    # Optional; Timeout in minutes for comparisons cleanup. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination; If not set, default value: 360; Example: 60
+    timeoutMinutes: 360
     # Optional; Number of days to keep ad-hoc comparisons before cleanup; If not set, default value: 30; Example: 180
     ttlDays: 30
   softDeletedData:
     # Optional; Cron schedule for soft deleted data cleanup job; If not set default value: '0 22 * * 5'; Example: '0 4 * * *'
     schedule: '0 22 * * 5'
-    # Optional; Timeout in minutes for soft deleted data cleanup. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination; If not set, default value: 1200; Example: 120
-    timeoutMinutes: 1200
+    # Optional; Timeout in minutes for soft deleted data cleanup. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination; If not set, default value: 600; Example: 120
+    timeoutMinutes: 600
     # Optional; Number of days to keep soft deleted data before cleanup; If not set, default value: 730; Example: 700
     ttlDays: 730
+  unreferencedData:
+    # Optional; Cron schedule for unreferenced data cleanup job; If not set default value: '0 15 * * 6'; Example: '0 4 * * *'
+    schedule: '0 15 * * 6'
+    # Optional; Timeout in minutes for unreferenced data cleanup. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination; If not set, default value: 360; Example: 120
+    timeoutMinutes: 360
   builds:
     # Optional; Schedule for the builds cleanup job. If not set, default value: "0 1 * * 0"; Example: "* * * * *"
     schedule: '0 1 * * 0'

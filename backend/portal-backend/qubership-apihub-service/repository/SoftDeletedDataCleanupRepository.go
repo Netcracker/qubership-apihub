@@ -17,12 +17,12 @@ package repository
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service/cleanup/logger"
 )
 
 type SoftDeletedDataCleanupRepository interface {
@@ -77,309 +77,309 @@ func (d softDeletedDataCleanupRepositoryImpl) VacuumAffectedTables(ctx context.C
 	if cleanupEntity.DeletedItems != nil && cleanupEntity.DeletedItems.TotalRecords > 0 {
 		deletedItems := cleanupEntity.DeletedItems
 		if len(deletedItems.Packages) > 0 {
-			log.Debugf("Vacuuming 'package_group' table for %d deleted packages (runId=%s)", len(deletedItems.Packages), runId)
+			logger.Debugf(ctx, "Vacuuming 'package_group' table for %d deleted packages", len(deletedItems.Packages))
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL package_group")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'package_group' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'package_group' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'package_group' table")
 			}
 		}
 		if len(deletedItems.PackageRevisions) > 0 {
-			log.Debugf("Vacuuming 'published_version' table for %d deleted package revisions (runId=%s)", len(deletedItems.PackageRevisions), runId)
+			logger.Debugf(ctx, "Vacuuming 'published_version' table for %d deleted package revisions", len(deletedItems.PackageRevisions))
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL published_version")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'published_version' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'published_version' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'published_version' table")
 			}
 		}
 		if deletedItems.ActivityTracking > 0 {
-			log.Debugf("Vacuuming 'activity_tracking' table for %d deleted activity tracking records (runId=%s)", deletedItems.ActivityTracking, runId)
+			logger.Debugf(ctx, "Vacuuming 'activity_tracking' table for %d deleted activity tracking records", deletedItems.ActivityTracking)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL activity_tracking")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'activity_tracking' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'activity_tracking' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'activity_tracking' table")
 			}
 		}
 		if len(deletedItems.ApiKeys) > 0 {
-			log.Debugf("Vacuuming 'apihub_api_keys' table for %d deleted API keys (runId=%s)", len(deletedItems.ApiKeys), runId)
+			logger.Debugf(ctx, "Vacuuming 'apihub_api_keys' table for %d deleted API keys", len(deletedItems.ApiKeys))
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL apihub_api_keys")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'apihub_api_keys' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'apihub_api_keys' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'apihub_api_keys' table")
 			}
 		}
 		if deletedItems.Builds > 0 {
-			log.Debugf("Vacuuming 'build' table for %d deleted builds (runId=%s)", deletedItems.Builds, runId)
+			logger.Debugf(ctx, "Vacuuming 'build' table for %d deleted builds", deletedItems.Builds)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL build")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'build' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'build' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'build' table")
 			}
 		}
 		if deletedItems.BuildDepends > 0 {
-			log.Debugf("Vacuuming 'build_depends' table for %d deleted build depends (runId=%s)", deletedItems.BuildDepends, runId)
+			logger.Debugf(ctx, "Vacuuming 'build_depends' table for %d deleted build depends", deletedItems.BuildDepends)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL build_depends")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'build_depends' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'build_depends' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'build_depends' table")
 			}
 		}
 		if deletedItems.BuildResults > 0 {
-			log.Debugf("Vacuuming 'build_result' table for %d deleted build results (runId=%s)", deletedItems.BuildResults, runId)
+			logger.Debugf(ctx, "Vacuuming 'build_result' table for %d deleted build results", deletedItems.BuildResults)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL build_result")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'build_result' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'build_result' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'build_result' table")
 			}
 		}
 		if deletedItems.BuildSources > 0 {
-			log.Debugf("Vacuuming 'build_src' table for %d deleted build sources (runId=%s)", deletedItems.BuildSources, runId)
+			logger.Debugf(ctx, "Vacuuming 'build_src' table for %d deleted build sources", deletedItems.BuildSources)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL build_src")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'build_src' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'build_src' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'build_src' table")
 			}
 		}
 		if deletedItems.BuilderNotifications > 0 {
-			log.Debugf("Vacuuming 'builder_notifications' table for %d deleted builder notifications (runId=%s)", deletedItems.BuilderNotifications, runId)
+			logger.Debugf(ctx, "Vacuuming 'builder_notifications' table for %d deleted builder notifications", deletedItems.BuilderNotifications)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL builder_notifications")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'builder_notifications' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'builder_notifications' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'builder_notifications' table")
 			}
 		}
 		if deletedItems.FavoritePackages > 0 {
-			log.Debugf("Vacuuming 'favorite_packages' table for %d deleted favorite packages records (runId=%s)", deletedItems.FavoritePackages, runId)
+			logger.Debugf(ctx, "Vacuuming 'favorite_packages' table for %d deleted favorite packages records", deletedItems.FavoritePackages)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL favorite_packages")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'favorite_packages' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'favorite_packages' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'favorite_packages' table")
 			}
 		}
 		if deletedItems.Operations > 0 {
-			log.Debugf("Vacuuming 'operation' table for %d deleted operations (runId=%s)", deletedItems.Operations, runId)
+			logger.Debugf(ctx, "Vacuuming 'operation' table for %d deleted operations", deletedItems.Operations)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL operation")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'operation' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'operation' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'operation' table")
 			}
 		}
 		if deletedItems.OperationGroups > 0 {
-			log.Debugf("Vacuuming 'operation_group' table for %d deleted operation groups (runId=%s)", deletedItems.OperationGroups, runId)
+			logger.Debugf(ctx, "Vacuuming 'operation_group' table for %d deleted operation groups", deletedItems.OperationGroups)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL operation_group")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'operation_group' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'operation_group' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'operation_group' table")
 			}
 		}
 		if deletedItems.GroupedOperations > 0 {
-			log.Debugf("Vacuuming 'grouped_operation' table for %d deleted grouped operations (runId=%s)", deletedItems.GroupedOperations, runId)
+			logger.Debugf(ctx, "Vacuuming 'grouped_operation' table for %d deleted grouped operations", deletedItems.GroupedOperations)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL grouped_operation")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'grouped_operation' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'grouped_operation' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'grouped_operation' table")
 			}
 		}
 		if deletedItems.OperationOpenCounts > 0 {
-			log.Debugf("Vacuuming 'operation_open_count' table for %d deleted operation open count records (runId=%s)", deletedItems.OperationOpenCounts, runId)
+			logger.Debugf(ctx, "Vacuuming 'operation_open_count' table for %d deleted operation open count records", deletedItems.OperationOpenCounts)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL operation_open_count")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'operation_open_count' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'operation_open_count' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'operation_open_count' table")
 			}
 		}
 		if deletedItems.PackageExportConfigs > 0 {
-			log.Debugf("Vacuuming 'package_export_config' table for %d deleted package export configs (runId=%s)", deletedItems.PackageExportConfigs, runId)
+			logger.Debugf(ctx, "Vacuuming 'package_export_config' table for %d deleted package export configs", deletedItems.PackageExportConfigs)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL package_export_config")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'package_export_config' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'package_export_config' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'package_export_config' table")
 			}
 		}
 		if len(deletedItems.PackageMembersRoles) > 0 {
-			log.Debugf("Vacuuming 'package_member_role' table for %d deleted package member role records (runId=%s)", len(deletedItems.PackageMembersRoles), runId)
+			logger.Debugf(ctx, "Vacuuming 'package_member_role' table for %d deleted package member role records", len(deletedItems.PackageMembersRoles))
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL package_member_role")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'package_member_role' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'package_member_role' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'package_member_role' table")
 			}
 		}
 		if len(deletedItems.PackageServices) > 0 {
-			log.Debugf("Vacuuming 'package_service' table for %d deleted package service records (runId=%s)", len(deletedItems.PackageServices), runId)
+			logger.Debugf(ctx, "Vacuuming 'package_service' table for %d deleted package service records", len(deletedItems.PackageServices))
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL package_service")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'package_service' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'package_service' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'package_service' table")
 			}
 		}
 		if deletedItems.PackageTransitions > 0 {
-			log.Debugf("Vacuuming 'package_transition' table for %d deleted package transition records (runId=%s)", deletedItems.PackageTransitions, runId)
+			logger.Debugf(ctx, "Vacuuming 'package_transition' table for %d deleted package transition records", deletedItems.PackageTransitions)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL package_transition")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'package_transition' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'package_transition' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'package_transition' table")
 			}
 		}
 		if deletedItems.PublishedData > 0 {
-			log.Debugf("Vacuuming 'published_data' table for %d deleted published_data records (runId=%s)", deletedItems.PublishedData, runId)
+			logger.Debugf(ctx, "Vacuuming 'published_data' table for %d deleted published_data records", deletedItems.PublishedData)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL published_data")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'published_data' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'published_data' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'published_data' table")
 			}
 		}
 		if deletedItems.PublishedDocumentOpenCounts > 0 {
-			log.Debugf("Vacuuming 'published_document_open_count' table for %d deleted records (runId=%s)", deletedItems.PublishedDocumentOpenCounts, runId)
+			logger.Debugf(ctx, "Vacuuming 'published_document_open_count' table for %d deleted records", deletedItems.PublishedDocumentOpenCounts)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL published_document_open_count")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'published_document_open_count' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'published_document_open_count' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'published_document_open_count' table")
 			}
 		}
 		if deletedItems.PublishedSources > 0 {
-			log.Debugf("Vacuuming 'published_sources' table for %d deleted published sources (runId=%s)", deletedItems.PublishedSources, runId)
+			logger.Debugf(ctx, "Vacuuming 'published_sources' table for %d deleted published sources", deletedItems.PublishedSources)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL published_sources")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'published_sources' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'published_sources' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'published_sources' table")
 			}
 		}
 		if deletedItems.PublishedVersionOpenCounts > 0 {
-			log.Debugf("Vacuuming 'published_version_open_count' table for %d deleted records (runId=%s)", deletedItems.PublishedVersionOpenCounts, runId)
+			logger.Debugf(ctx, "Vacuuming 'published_version_open_count' table for %d deleted records", deletedItems.PublishedVersionOpenCounts)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL published_version_open_count")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'published_version_open_count' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'published_version_open_count' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'published_version_open_count' table")
 			}
 		}
 		if deletedItems.PublishedVersionReferences > 0 {
-			log.Debugf("Vacuuming 'published_version_reference' table for %d deleted references (runId=%s)", deletedItems.PublishedVersionReferences, runId)
+			logger.Debugf(ctx, "Vacuuming 'published_version_reference' table for %d deleted references", deletedItems.PublishedVersionReferences)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL published_version_reference")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'published_version_reference' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'published_version_reference' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'published_version_reference' table")
 			}
 		}
 		if deletedItems.PublishedVersionRevisionContent > 0 {
-			log.Debugf("Vacuuming 'published_version_revision_content' table for %d deleted records (runId=%s)", deletedItems.PublishedVersionRevisionContent, runId)
+			logger.Debugf(ctx, "Vacuuming 'published_version_revision_content' table for %d deleted records", deletedItems.PublishedVersionRevisionContent)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL published_version_revision_content")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'published_version_revision_content' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'published_version_revision_content' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'published_version_revision_content' table")
 			}
 		}
 		if deletedItems.PublishedVersionValidation > 0 {
-			log.Debugf("Vacuuming 'published_version_validation' table for %d deleted published version validations (runId=%s)", deletedItems.PublishedVersionValidation, runId)
+			logger.Debugf(ctx, "Vacuuming 'published_version_validation' table for %d deleted published version validations", deletedItems.PublishedVersionValidation)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL published_version_validation")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'published_version_validation' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'published_version_validation' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'published_version_validation' table")
 			}
 		}
 		if deletedItems.SharedUrlInfo > 0 {
-			log.Debugf("Vacuuming 'shared_url_info' table for %d deleted records (runId=%s)", deletedItems.SharedUrlInfo, runId)
+			logger.Debugf(ctx, "Vacuuming 'shared_url_info' table for %d deleted records", deletedItems.SharedUrlInfo)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL shared_url_info")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'shared_url_info' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'shared_url_info' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'shared_url_info' table")
 			}
 		}
 		if deletedItems.TransformedContentData > 0 {
-			log.Debugf("Vacuuming 'transformed_content_data' table for %d deleted records (runId=%s)", deletedItems.TransformedContentData, runId)
+			logger.Debugf(ctx, "Vacuuming 'transformed_content_data' table for %d deleted records", deletedItems.TransformedContentData)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL transformed_content_data")
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to vacuum 'transformed_content_data' table: %v", err)
-				log.Warn(errorMsg)
+				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				log.Tracef("Successfully vacuumed 'transformed_content_data' table for cleanup run %s", runId)
+				logger.Trace(ctx, "Successfully vacuumed 'transformed_content_data' table")
 			}
 		}
 	} else {
-		log.Infof("No deleted items found for cleanup run %s - skipping vacuum operations", runId)
+		logger.Info(ctx, "No deleted items found - skipping vacuum operations")
 	}
 
 	if len(vacuumErrors) > 0 {
-		log.Errorf("Vacuum operations completed with %d errors for cleanup run %s: %s",
-			len(vacuumErrors), runId, strings.Join(vacuumErrors, "; "))
+		logger.Errorf(ctx, "Vacuum operations completed with %d errors: %s",
+			len(vacuumErrors), strings.Join(vacuumErrors, "; "))
 		return fmt.Errorf("vacuum operations failed: %s", strings.Join(vacuumErrors, "; "))
 	}
 
