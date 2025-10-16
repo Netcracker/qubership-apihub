@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_3_Linter_Portal",
-        "_postman_id": "381afdff-1354-4ad4-a5d0-90c75046c99d",
+        "_postman_id": "cb0f11cb-e767-41f9-811a-b448d96386ee",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -431,7 +431,7 @@
                                 "type": "text/javascript",
                                 "exec": [
                                     "var timestamp = new Date().toISOString().replace(/[-:T.]/g, '');",
-                                    "var uniqueRulesetName = 'rulesetLinterAT_' + timestamp;",
+                                    "var uniqueRulesetName = 'QS-rulesetLinterAT_' + timestamp;",
                                     "pm.environment.set('dynamicRulesetName', uniqueRulesetName);"
                                 ]
                             }
@@ -1196,10 +1196,189 @@
             ]
         },
         {
-            "name": "5. Cleanup",
+            "name": "5.Deactivate",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ],
             "item": [
                 {
-                    "name": "4.1 Delete static test-LT data from DB",
+                    "name": "5.1 List Rulesets, finde \"default-openapi-3-0\"",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "var data = JSON.parse(responseBody);",
+                                    "pm.test(\"Rulesets list is not empty\", function () {",
+                                    "    pm.expect(data.length).to.be.above(0);",
+                                    "});",
+                                    "pm.test(\"Extract and set defaultrulesetId\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    ",
+                                    "    var targetObject = jsonData.find(function(item) {",
+                                    "        return item.name === \"default-openapi-3-0\";",
+                                    "    });",
+                                    "    ",
+                                    "    if (targetObject && targetObject.id) {",
+                                    "        pm.environment.set(\"defaultrulesetId\", targetObject.id);",
+                                    "        console.log(\"defaultrulesetId set to: \" + targetObject.id);",
+                                    "    } else {",
+                                    "        pm.test(\"Failed to find id for name: default-openapi-3-0\", function () {",
+                                    "            throw new Error(\"No object found with name 'default-openapi-3-0' or id is missing\");",
+                                    "        });",
+                                    "    }",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/rulesets",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "rulesets"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "2",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "1",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "apiType",
+                                    "value": "openapi-3-0",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "active",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Personal-Access-Token",
+                                "value": "{{personalAccessToken}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "5.2 Activate Ruleset \"default-openapi-3-0\"",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200 or 204\", function () {",
+                                    "    pm.response.to.have.status(204);",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/rulesets/{{defaultrulesetId}}/activation",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "rulesets",
+                                "{{defaultrulesetId}}",
+                                "activation"
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-Personal-Access-Token",
+                                "value": "{{personalAccessToken}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                }
+            ]
+        },
+        {
+            "name": "6. Cleanup",
+            "item": [
+                {
+                    "name": "6.1 Delete static test-LT data from DB",
                     "request": {
                         "url": {
                             "raw": "{{SERVER_HOST}}/api/internal/clear/STATIC-TEST-LT",
@@ -1226,7 +1405,7 @@
                     "protocolProfileBehavior": {}
                 },
                 {
-                    "name": "4.2 Delete Test Data from DB",
+                    "name": "6.2 Delete Test Data from DB",
                     "event": [
                         {
                             "listen": "test",
@@ -1251,15 +1430,16 @@
                     ],
                     "request": {
                         "url": {
-                            "raw": "{{SERVER_HOST}}/api/internal/clear/{{test_id}}",
+                            "raw": "{{SERVER_HOST}}/api-linter/api/internal/clear/rulesetLinterAT",
                             "host": [
                                 "{{SERVER_HOST}}"
                             ],
                             "path": [
+                                "api-linter",
                                 "api",
                                 "internal",
                                 "clear",
-                                "{{test_id}}"
+                                "rulesetLinterAT"
                             ]
                         },
                         "method": "DELETE",
@@ -1275,7 +1455,7 @@
                     "protocolProfileBehavior": {}
                 },
                 {
-                    "name": "4.4 Delete Rules from DB",
+                    "name": "6.3 Delete Rules from DB",
                     "event": [
                         {
                             "listen": "test",
