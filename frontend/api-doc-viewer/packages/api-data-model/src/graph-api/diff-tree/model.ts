@@ -21,6 +21,7 @@ import {
   GraphApiListDefinition,
   isGraphApiAnyDefinition,
   isGraphApiArgs,
+  isGraphApiArgument,
   isGraphApiDirective,
   isGraphApiDirectiveDefinition,
   isGraphApiDirectives,
@@ -251,7 +252,7 @@ export class GraphApiModelDiffTree<
     const $metaChanges: Partial<DiffRecord> = {}
 
     this.aggregateDiffsForDirective(value, $metaChanges)
-    this.aggregateDiffsForOperation(value, $metaChanges)
+    this.aggregateDiffsFromDirectives(value, $metaChanges)
 
     const $childrenChanges = this.getChildrenChanges(id, value ?? {})
     const $nodeChange = this.getNodeChange(params)
@@ -307,34 +308,34 @@ export class GraphApiModelDiffTree<
     }
   }
 
-  private aggregateDiffsForOperation(value: unknown, $metaChanges: Partial<DiffRecord>) {
-    // deprecation reason
-    if (isGraphApiOperation(value)) {
+  private aggregateDiffsFromDirectives(value: unknown, $metaChanges: Partial<DiffRecord>) {
+    if (isGraphApiOperation(value) || isGraphApiArgument(value)) {
       const directives = value.directives ?? {}
-      const path = ['deprecationReason']
       // added/removed deprecation
-      const untypedDirectives = directives as unknown
-      const directivesRawChanges = isObject(untypedDirectives) ? untypedDirectives[this.metaKey] : undefined
-      if (
-        directivesRawChanges &&
-        isDiffMetaRecord(directivesRawChanges) &&
-        'deprecated' in directivesRawChanges
-      ) {
-        const maybeDiff = directivesRawChanges.deprecated as unknown
-        const diff = isDiff(maybeDiff) ? maybeDiff : undefined
-        diff && setValueByPath($metaChanges, diff, ...path)
+      const untypedDirectives = extendToObject(directives)
+      const directivesRawChanges = untypedDirectives?.[this.metaKey]
+      if (isDiffMetaRecord(directivesRawChanges)) {
+        const { deprecated: rawChangesForDeprecated, ...otherRawChanges } = directivesRawChanges
+        if (rawChangesForDeprecated) {
+          const maybeDiff = extendToObject(rawChangesForDeprecated)
+          const diff = isDiff(maybeDiff) ? maybeDiff : undefined
+          diff && setValueByPath($metaChanges, diff, ...['deprecationReason'])
+        }
+        if (Object.keys(otherRawChanges).length > 0) {
+          setValueByPath($metaChanges, otherRawChanges, ...['directives'])
+        }
       }
       // replace deprecation reason
       const usedDirectiveDeprecated = directives.deprecated
       if (usedDirectiveDeprecated) {
         const { meta } = usedDirectiveDeprecated
         if (meta) {
-          const untypedMeta = meta as unknown
-          const metaRawChanges = isObject(untypedMeta) ? untypedMeta[this.metaKey] : undefined
+          const untypedMeta = extendToObject(meta)
+          const metaRawChanges = untypedMeta?.[this.metaKey]
           if (isDiffMetaRecord(metaRawChanges)) {
-            const maybeDiff = metaRawChanges.reason as unknown
+            const maybeDiff = extendToObject(metaRawChanges.reason)
             const diff = isDiff(maybeDiff) ? maybeDiff : undefined
-            diff && setValueByPath($metaChanges, diff, ...path)
+            diff && setValueByPath($metaChanges, diff, ...['deprecationReason'])
           }
         }
       }
