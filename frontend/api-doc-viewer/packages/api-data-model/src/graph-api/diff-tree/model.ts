@@ -18,8 +18,8 @@ import {
   GRAPH_API_NODE_KIND_OBJECT,
   GraphApiAnyDefinition,
   GraphApiDirective,
-  GraphApiListDefinition,
   isGraphApiAnyDefinition,
+  isGraphApiAnyUsage,
   isGraphApiArgs,
   isGraphApiArgument,
   isGraphApiDirective,
@@ -27,10 +27,9 @@ import {
   isGraphApiDirectives,
   isGraphApiEnumDefinition,
   isGraphApiInputObjectDefinition,
-  isGraphApiListDefinition,
   isGraphApiObjectiveDefinition,
   isGraphApiOperation,
-  isGraphApiRef,
+  isGraphApiRef
 } from '@netcracker/qubership-apihub-graphapi'
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 import { DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstract/diff'
@@ -405,24 +404,18 @@ export class GraphApiModelDiffTree<
       } as T
     }
 
-    let sourceValue: GraphApiAnyDefinition | GraphApiListDefinition | undefined
-    if (
-      isGraphApiAnyDefinition(value) ||
-      isGraphApiListDefinition(value)
-    ) {
-      sourceValue = value
-    } else if (
-      isObject(value.typeDef) && (
-        isGraphApiAnyDefinition(value.typeDef) ||
-        isGraphApiListDefinition(value.typeDef)
-      )
-    ) {
-      sourceValue = value.typeDef
+    let sourceValue: GraphApiAnyDefinition | undefined
+    if (isGraphApiAnyDefinition(value)) { // combiner item, 
+      sourceValue = !isGraphApiRef(value) ? value : undefined
+    } else if (isGraphApiAnyUsage(value)) { // argument, input property, output
+      sourceValue = !isGraphApiRef(value.typeDef) ? value.typeDef : undefined
     }
     if (sourceValue) {
+      const untypedSourceValue = extendToObject(sourceValue)
+
       const $changes: Partial<DiffRecord> = {}
 
-      const isNotUnionItem = (sourceValue as unknown) !== value
+      const isNotUnionItem = untypedSourceValue !== value
       const currentType = sourceValue.type.kind
       const valueDiffs = isObject(sourceValue) ? sourceValue[this.metaKey] : undefined
       let diffForFieldType: DiffReplace | undefined = undefined
@@ -487,20 +480,19 @@ export class GraphApiModelDiffTree<
         }
       }
 
-      if (isNotUnionItem) { // sourceValue !== value
-        const untypedValue = value as unknown
-        const valueRawChanges = isObject(untypedValue) ? untypedValue[this.metaKey] : undefined;
+      // changed common props
+      if (isNotUnionItem) { // argument/input property or output
+        const valueRawChanges = value?.[this.metaKey]
         if (isDiffMetaRecord(valueRawChanges)) {
-          ['nullable', 'default'].forEach(field => {
+          ['nullable', 'default', 'description'].forEach(field => {
             const diff = valueRawChanges?.[field]
             diff && setValueByPath($changes, diff, ...[field])
           })
         }
       }
 
-      const untypedSourceValue = extendToObject(sourceValue)
+      // any type definition common props changed
       const sourceValueRawChanges = untypedSourceValue?.[this.metaKey]
-
       if (isDiffMetaRecord(sourceValueRawChanges)) {
         ['title', 'description'].forEach(field => {
           const diff = sourceValueRawChanges[field]
@@ -508,6 +500,7 @@ export class GraphApiModelDiffTree<
         })
       }
 
+      // specific for enum type definition
       if (isGraphApiEnumDefinition(sourceValue)) {
         const values = sourceValue.type.values ?? {}
         // added/removed enum values
