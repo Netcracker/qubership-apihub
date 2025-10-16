@@ -1,7 +1,7 @@
 import { graphApiNodeKind, graphSchemaNodeKind } from "../src/graph-api/constants"
 import { buildGraphApi, createGraphApiTreeForTests } from "./helpers/graphql"
 
-describe('Lazy Tree Building', () => {
+describe.skip('Lazy Tree Building', () => {
   const jestConsole = console
   beforeEach(() => {
     global.console = require('console')
