@@ -1,6 +1,6 @@
 
 import { annotation, breaking, DiffAction, nonBreaking, unclassified } from '@netcracker/qubership-apihub-api-diff'
-import { buildGraphApi, createGraphApiDiffTreeForTests, metaKey } from './helpers/graphql'
+import { buildGraphApi, createGraphApiDiffTreeForTests, metaKey, aggregatedDiffsMetaKey } from './helpers/graphql'
 
 // Old Tests
 describe.skip('GraphAPI with diffs transformation tests', () => {
@@ -31,7 +31,7 @@ describe.skip('GraphAPI with diffs transformation tests', () => {
       const beforeSource = buildGraphApi(before)
       const afterSource = buildGraphApi(after)
 
-      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey)
+      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey, aggregatedDiffsMetaKey)
 
       expect(tree.root?.meta?.$childrenChanges?.['#/components/directives/order'])
         .toMatchObject({
@@ -68,7 +68,7 @@ describe.skip('GraphAPI with diffs transformation tests', () => {
       const beforeSource = buildGraphApi(before)
       const afterSource = buildGraphApi(after)
 
-      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey)
+      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey, aggregatedDiffsMetaKey)
 
       expect(tree.root?.meta?.$childrenChanges?.['#/components/directives/limit'])
         .toMatchObject({
@@ -108,7 +108,7 @@ describe.skip('GraphAPI with diffs transformation tests', () => {
       const beforeSource = buildGraphApi(before)
       const afterSource = buildGraphApi(after)
 
-      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey)
+      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey, aggregatedDiffsMetaKey)
 
       expect(tree.root?.children()[2]?.meta?.$nodeChange)
         .toMatchObject({
@@ -159,7 +159,7 @@ describe.skip('GraphAPI with diffs transformation tests', () => {
       const beforeSource = buildGraphApi(before)
       const afterSource = buildGraphApi(after)
 
-      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey)
+      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey, aggregatedDiffsMetaKey)
 
       expect(tree.root?.children()[1]?.meta?.$metaChanges).toMatchObject({
         locations: {
@@ -222,7 +222,7 @@ describe.skip('GraphAPI with diffs transformation tests', () => {
       const beforeSource = buildGraphApi(before)
       const afterSource = buildGraphApi(after)
 
-      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey)
+      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey, aggregatedDiffsMetaKey)
 
       expect(tree.root?.children()[1]?.id).toBe('#/queries/secondOperation')
       expect(tree.root?.children()[1]?.meta?.$nodeChange)
@@ -268,7 +268,7 @@ describe.skip('GraphAPI with diffs transformation tests', () => {
       const beforeSource = buildGraphApi(before)
       const afterSource = buildGraphApi(after)
 
-      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey)
+      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey, aggregatedDiffsMetaKey)
 
       expect(tree.root?.children()[1]?.id).toBe('#/queries/secondOperation')
       expect(tree.root?.children()[1]?.meta?.$nodeChange)
@@ -314,7 +314,7 @@ describe.skip('GraphAPI with diffs transformation tests', () => {
       const beforeSource = buildGraphApi(before)
       const afterSource = buildGraphApi(after)
 
-      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey)
+      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey, aggregatedDiffsMetaKey)
 
       const nodeChangesSummary = tree.root?.meta?.$nodeChangesSummary
 
@@ -356,7 +356,7 @@ describe.skip('GraphAPI with diffs transformation tests', () => {
       const beforeSource = buildGraphApi(before)
       const afterSource = buildGraphApi(after)
 
-      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey)
+      const tree = createGraphApiDiffTreeForTests(beforeSource, afterSource, metaKey, aggregatedDiffsMetaKey)
       const root = tree.root
 
       const target = root!.children()[0]?.children()[0]?.children()[1]

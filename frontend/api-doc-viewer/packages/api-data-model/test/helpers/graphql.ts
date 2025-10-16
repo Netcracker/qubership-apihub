@@ -36,11 +36,13 @@ export function createGraphApiTreeForTests(source: unknown) {
 }
 
 export const metaKey = Symbol('diff')
+export const aggregatedDiffsMetaKey = Symbol('aggregatedDiff')
 
 export function createGraphApiDiffTreeForTests(
   before: unknown,
   after: unknown,
-  metaKey: symbol,
+  diffsMetaKey: symbol,
+  aggregatedDiffsMetaKey: symbol,
   beforeSource: unknown = before,
   afterSource: unknown = after,
 ) {
@@ -50,5 +52,5 @@ export function createGraphApiDiffTreeForTests(
     metaKey,
     unify: true,
   }).merged
-  return createGraphApiDiffTree(mergedSource, metaKey)
+  return createGraphApiDiffTree(mergedSource, { diffsMetaKey: diffsMetaKey, aggregatedDiffsMetaKey: aggregatedDiffsMetaKey })
 }

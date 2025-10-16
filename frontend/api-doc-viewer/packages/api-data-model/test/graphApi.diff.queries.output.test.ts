@@ -1,7 +1,7 @@
 import { annotation, breaking, deprecated, DiffAction, nonBreaking, unclassified } from "@netcracker/qubership-apihub-api-diff"
 import { DiffNodeValue } from "../src/abstract/diff"
-import { IGraphSchemaEnumType, isGraphSchemaNodeEnumValue } from "../src/graph-api"
-import { createGraphApiDiffTreeForTests, graphapi, metaKey } from "./helpers/graphql"
+import { isGraphSchemaNodeEnumValue } from "../src/graph-api"
+import { aggregatedDiffsMetaKey, createGraphApiDiffTreeForTests, graphapi, metaKey } from "./helpers/graphql"
 
 function fail(message?: string): never {
   throw new Error(message)
@@ -27,7 +27,7 @@ describe('output', () => {
       }
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
     const root = tree.root
     const output = root!
       .children().find(child => child.kind === 'query')!
@@ -91,7 +91,7 @@ describe('output', () => {
       }
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
     const root = tree.root
     const output = root!
       .children().find(child => child.kind === 'query')!
@@ -146,7 +146,7 @@ describe('output', () => {
       }
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -196,7 +196,7 @@ describe('output', () => {
         test: [String!]!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!
@@ -230,7 +230,7 @@ describe('output', () => {
         test: [String!]!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!
@@ -274,7 +274,7 @@ describe('output', () => {
         test: [String!]!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!
@@ -318,7 +318,7 @@ describe('output', () => {
         test: [String!]!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!
@@ -366,7 +366,7 @@ describe('output', () => {
         name: String
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!
@@ -415,7 +415,7 @@ describe('output', () => {
         name: String
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!
@@ -470,7 +470,7 @@ describe('output', () => {
       }
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -548,7 +548,7 @@ describe('output', () => {
       }
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
     const root = tree.root
 
     const pathCommon = `#/queries/fruit/output`
@@ -610,7 +610,7 @@ describe('output', () => {
         isExotic: Boolean
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
     const queryFruitOutput = tree.root!.children()[0]?.children()[0]
 
     const pathCommon = '#/queries/fruit/output'
@@ -663,7 +663,7 @@ describe('output', () => {
         shape: String!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
     const queryFruitOutput = tree.root!.children()[0]?.children()[0]
 
     const pathCommon = '#/queries/fruit/output'
@@ -712,7 +712,7 @@ describe('output', () => {
       scalar Parallelogram
       scalar Rectangle
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
 
     const pathOutput = '#/queries/shape/output'
     const pathOneOfItem = `${pathOutput}/typeDef/type/oneOf`
@@ -778,7 +778,7 @@ describe('output', () => {
       scalar Triangle
       scalar Rectangle
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
 
     const pathOutput = '#/queries/shape/output'
     const pathOneOfItem = `${pathOutput}/typeDef/type/oneOf`
