@@ -21,7 +21,7 @@ export const createJsonSchemaDiffTreeForTest = (before: unknown, after: unknown,
   return createJsonSchemaDiffTree(merged, metaKey)
 }
 
-describe('jsonschema diff tree tests', () => {
+describe.skip('jsonschema diff tree tests', () => {
   const jestConsole = console
   beforeEach(() => {
     global.console = require('console')

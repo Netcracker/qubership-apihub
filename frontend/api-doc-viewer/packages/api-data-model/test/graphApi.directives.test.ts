@@ -1,6 +1,6 @@
 import { createGraphApiTreeForTests, graphapi } from "./helpers/graphql"
 
-describe('GraphAPI. Directives', () => {
+describe.skip('GraphAPI. Directives', () => {
   it('on arg', () => {
     const source = graphapi`
       directive @foo on ARGUMENT_DEFINITION

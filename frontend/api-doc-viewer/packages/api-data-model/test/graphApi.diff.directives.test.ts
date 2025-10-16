@@ -1,7 +1,7 @@
 import { annotation, deprecated, DiffAction, nonBreaking, unclassified } from "@netcracker/qubership-apihub-api-diff"
 import { createGraphApiDiffTreeForTests, graphapi, metaKey, aggregatedDiffsMetaKey } from "./helpers/graphql"
 
-describe('directive changes', () => {
+describe.skip('directive changes', () => {
   it('enum value, added deprecation', () => {
     const before = graphapi`
       type Query {

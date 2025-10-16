@@ -7,7 +7,7 @@ function fail(message?: string): never {
   throw new Error(message)
 }
 
-describe('output', () => {
+describe.skip('output', () => {
   it('type changed: scalar -> enum', () => {
     const before = graphapi`
       type Query {

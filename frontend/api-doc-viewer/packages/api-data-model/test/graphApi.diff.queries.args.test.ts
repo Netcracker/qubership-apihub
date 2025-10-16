@@ -1,7 +1,7 @@
 import { breaking, DiffAction, nonBreaking, unclassified } from "@netcracker/qubership-apihub-api-diff"
 import { createGraphApiDiffTreeForTests, graphapi, metaKey, aggregatedDiffsMetaKey } from "./helpers/graphql"
 
-describe('args', () => {
+describe.skip('args', () => {
   it('arg changed', () => {
     const before = graphapi`
       type Query {

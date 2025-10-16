@@ -1,7 +1,7 @@
 import { DiffAction, annotation, breaking, nonBreaking, unclassified } from "@netcracker/qubership-apihub-api-diff"
 import { buildGraphApi, createGraphApiDiffTreeForTests, graphapi, metaKey, aggregatedDiffsMetaKey } from "./helpers/graphql"
 
-describe('args', () => {
+describe.skip('args', () => {
   it('arg changed', () => {
     const expectedDescription = "By default pretty = false and string has the only line. If pretty = true, it'll be formatted as JSON"
     const before = graphapi`

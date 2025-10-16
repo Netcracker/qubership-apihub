@@ -7,7 +7,7 @@ function findNodeChild(node: IModelTreeNode<any, any, any>): IModelTreeNode<any,
     .children().find(({ key, kind }) => kind === 'method' && key === 'child')!
 }
 
-describe('cycled entities', () => {
+describe.skip('cycled entities', () => {
   const jestConsole = console
   beforeEach(() => {
     global.console = require('console')

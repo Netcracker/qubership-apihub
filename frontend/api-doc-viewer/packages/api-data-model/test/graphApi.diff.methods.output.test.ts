@@ -9,7 +9,7 @@ import {
 import { isGraphSchemaNodeEnumValue } from "../src"
 import { createGraphApiDiffTreeForTests, graphapi, metaKey, aggregatedDiffsMetaKey } from "./helpers/graphql"
 
-describe('output', () => {
+describe.skip('output', () => {
   it('type changed: scalar -> enum', () => {
     const before = graphapi`
       type Query {

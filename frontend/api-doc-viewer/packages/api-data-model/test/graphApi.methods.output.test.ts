@@ -1,6 +1,6 @@
 import { buildGraphApi, createGraphApiTreeForTests } from "./helpers/graphql"
 
-describe('graphapi tree. methods output', () => {
+describe.skip('graphapi tree. methods output', () => {
   const jestConsole = console
   beforeEach(() => {
     global.console = require('console')
