@@ -2,8 +2,8 @@ import { Diff, DiffAction } from "@netcracker/qubership-apihub-api-diff"
 import { GraphApiDirective, isGraphApiDirective, isGraphApiEnumDefinition } from "@netcracker/qubership-apihub-graphapi"
 import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
 import { isDiff, isObject, setValueByPath, wasGraphApiEnumDefinition } from "../utils"
-import { isGraphApiOperationNode } from "@netcracker/qubership-apihub-api-state-model"
 import { IModelTreeNode } from "../abstract"
+import { graphApiNodeKind } from "./constants"
 
 type GraphApiFragmentWithDirectives = {
   directives?: Record<string, GraphApiDirective>
@@ -17,6 +17,17 @@ function hasGraphApiDirectives(value: unknown): value is GraphApiFragmentWithDir
       .filter(Boolean)
       .every(isGraphApiDirective)
   )
+}
+
+export function isGraphApiOperationNode(node: IModelTreeNode<unknown, string, unknown> | undefined): boolean {
+  if (!node) {
+    return false
+  }
+  return [
+    graphApiNodeKind.query,
+    graphApiNodeKind.mutation,
+    graphApiNodeKind.subscription
+  ].some(kind => node.kind === kind)
 }
 
 export function resolveEnumValues(value: unknown, valueDiffs?: unknown) {

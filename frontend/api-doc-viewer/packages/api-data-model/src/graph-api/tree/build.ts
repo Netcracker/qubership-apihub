@@ -1,8 +1,7 @@
-import { isGraphApiOperationNode } from "@netcracker/qubership-apihub-api-state-model";
 import { syncCrawl } from '@netcracker/qubership-apihub-json-crawl';
 import { isObject } from '../../utils';
 import { graphApiRules } from '../rules';
-import { isFirstOperation } from '../utils';
+import { isFirstOperation, isGraphApiOperationNode } from '../utils';
 import { createGraphApiTreeCrawlHook } from './hooks/create-graph-api-nodes';
 import { createGraphSchemaTreeCrawlHook } from './hooks/create-graph-api-schema-nodes';
 import { GraphApiModelTree } from './model';

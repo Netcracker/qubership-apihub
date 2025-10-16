@@ -5,8 +5,7 @@ import type { GraphApiNodeKind } from '../tree/types';
 import { createGraphApiDiffTreeCrawlHook } from './hooks/create-graph-api-nodes';
 import { GraphApiModelDiffTree } from './model';
 import { GraphApiDiffCrawlRule, GraphApiDiffCrawlState, GraphApiDiffNodeData, GraphApiDiffNodeMeta } from './types';
-import { isGraphApiOperationNode } from "@netcracker/qubership-apihub-api-state-model";
-import { isFirstOperation } from '../utils';
+import { isFirstOperation, isGraphApiOperationNode } from '../utils';
 
 const DEFAULT_MAX_TREE_LEVEL = 3;
 
