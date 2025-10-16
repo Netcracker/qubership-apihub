@@ -55,7 +55,7 @@ func (d *dbMigrationServiceImpl) StartMigrateOperations(req mView.MigrationReque
 				Status:  http.StatusConflict,
 				Code:    exception.OperationsMigrationConflict,
 				Message: exception.OperationsMigrationConflictMsg,
-				Params:  map[string]interface{}{"reason": "full migration is already running"},
+				Params:  map[string]interface{}{"reason": "migration is already running"},
 			}
 		}
 
@@ -256,7 +256,7 @@ func (d *dbMigrationServiceImpl) GetMigrationPerfReport(migrationId string, incl
 		BuildId string
 		TimeSec int
 	}
-	
+
 	var buildPerHour []mView.BuildPerHour
 	var publishTime []BuildTime
 	var comparisonTime []BuildTime
