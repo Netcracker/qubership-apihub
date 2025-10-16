@@ -584,7 +584,17 @@ export class GraphApiModelDiffTree<
       } as T
     }
 
-    return pick<any>(value, graphSchemaNodeValueProps) as T
+    // all changed props in, for example, output node
+    let $changes: DiffRecord = {}
+    const rawChanges = value[this.metaKey]
+    if (isDiffMetaRecord(rawChanges)) {
+      $changes = rawChanges
+    }
+
+    return {
+      ...pick<any>(value, graphSchemaNodeValueProps),
+      ...Object.keys($changes).length ? { $changes } : {},
+    } as T
   }
 
   public createGraphSchemaNode(
