@@ -1,12 +1,12 @@
-import { Diff, DiffMetaRecord, DiffType, isDiffReplace } from '@netcracker/qubership-apihub-api-diff';
+import { Diff, DiffType, isDiffReplace } from '@netcracker/qubership-apihub-api-diff';
 import { buildPointer } from '@netcracker/qubership-apihub-api-unifier';
-import { isArray, syncCrawl } from '@netcracker/qubership-apihub-json-crawl';
+import { isArray } from '@netcracker/qubership-apihub-json-crawl';
 import { UNKNOWN_TYPE } from '../../abstract/constants';
 import { DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstract/diff';
 import { ChangesSummaryUtils } from '../../abstract/diff-tree-utils';
 import { LazyBuildingContext } from "../../abstract/model/model-tree-node.impl";
 import { IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from '../../abstract/model/types';
-import { getNodeComplexityType, isDiff, isObject, objectKeys, pick, setValueByPath } from '../../utils';
+import { getNodeComplexityType, isDiff, isDiffMetaRecord, isObject, objectKeys, pick, setValueByPath } from '../../utils';
 import { jsonSchemaNodeMetaProps, jsonSchemaNodeValueProps } from '../constants';
 import { isJsonSchemaNodeType } from '../guards';
 import { JsonSchemaModelTree } from '../tree/model';
@@ -107,36 +107,27 @@ export class JsonSchemaModelDiffTree<
     } as T
   }
 
-  protected getPropsChanges(_value: any, props: readonly string[]) {
+  protected getPropsChanges(_value: unknown, props: readonly string[]) {
     const changes: DiffRecord = {}
-    const scanned: Set<unknown> = new Set()
-    syncCrawl(_value, ({ value, path, key }) => {
-      // exit if we found loop
-      if (scanned.has(value)) {
-        return { done: true }
-      }
-      scanned.add(value)
 
-      // exit if it's not allowed branch
-      if (path.length === 1 && !props.includes(String(key))) {
-        return { done: true }
-      }
-      // go deeper if it's not an object OR there's no changes
-      if (!isObject(value) || !(this.metaKey in value)) {
-        return { value }
+    if (!isObject(_value)) {
+      return changes
+    }
+
+    for (const observedProperty of props) {
+      const maybeDiffMetaRecord = _value[this.metaKey]
+      if (!isDiffMetaRecord(maybeDiffMetaRecord)) {
+        continue
       }
 
-      // accumulate changes if we found them
-      const _changes = (
-        !path.length ?
-          pick(value[this.metaKey], props) :
-          value[this.metaKey]
-      ) as DiffMetaRecord
-      for (const key of objectKeys(_changes)) {
-        const changePath = [...path, key]
-        setValueByPath(changes, _changes[key], ...changePath)
+      const maybeDiff = maybeDiffMetaRecord[observedProperty]
+      if (!isDiff(maybeDiff)) {
+        continue
       }
-    })
+
+      const changePath = [observedProperty]
+      setValueByPath(changes, maybeDiff, ...changePath)
+    }
 
     return changes
   }
