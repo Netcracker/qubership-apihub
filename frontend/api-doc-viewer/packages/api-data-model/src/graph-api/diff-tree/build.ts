@@ -6,6 +6,7 @@ import { createGraphApiDiffTreeCrawlHook } from './hooks/create-graph-api-nodes'
 import { GraphApiModelDiffTree } from './model';
 import { GraphApiDiffCrawlRule, GraphApiDiffCrawlState, GraphApiDiffNodeData, GraphApiDiffNodeMeta } from './types';
 import { isGraphApiOperationNode } from "@netcracker/qubership-apihub-api-state-model";
+import { isFirstOperation } from '../utils';
 
 const DEFAULT_MAX_TREE_LEVEL = 3;
 
@@ -96,7 +97,7 @@ export function createGraphApiDiffTree(
   tree.root?.removeChildrenByCondition(
     operationName
       ? (node => !isGraphApiOperationNode(node) || node.key === operationName)
-      : (_, index) => index === 0
+      : (node, _, array) => !isGraphApiOperationNode(node) || isFirstOperation(node, array)
   )
 
   return tree

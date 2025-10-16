@@ -1,11 +1,12 @@
+import { isGraphApiOperationNode } from "@netcracker/qubership-apihub-api-state-model";
 import { syncCrawl } from '@netcracker/qubership-apihub-json-crawl';
 import { isObject } from '../../utils';
 import { graphApiRules } from '../rules';
+import { isFirstOperation } from '../utils';
 import { createGraphApiTreeCrawlHook } from './hooks/create-graph-api-nodes';
 import { createGraphSchemaTreeCrawlHook } from './hooks/create-graph-api-schema-nodes';
 import { GraphApiModelTree } from './model';
 import { GraphApiCrawlRule, GraphApiCrawlState, GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta } from './types';
-import { isGraphApiOperationNode } from "@netcracker/qubership-apihub-api-state-model";
 
 const DEFAULT_MAX_TREE_LEVEL = 2;
 
@@ -84,7 +85,7 @@ export const createGraphApiTree = (
   tree.root?.removeChildrenByCondition(
     operationName
       ? (node => !isGraphApiOperationNode(node) || node.key === operationName)
-      : (_, index) => index === 0
+      : (node, _, array) => !isGraphApiOperationNode(node) || isFirstOperation(node, array)
   )
 
   return tree

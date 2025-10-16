@@ -1,7 +1,9 @@
 import { Diff, DiffAction } from "@netcracker/qubership-apihub-api-diff"
 import { GraphApiDirective, isGraphApiDirective, isGraphApiEnumDefinition } from "@netcracker/qubership-apihub-graphapi"
-import { CrawlHookResponse, JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
+import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
 import { isDiff, isObject, setValueByPath, wasGraphApiEnumDefinition } from "../utils"
+import { isGraphApiOperationNode } from "@netcracker/qubership-apihub-api-state-model"
+import { IModelTreeNode } from "../abstract"
 
 type GraphApiFragmentWithDirectives = {
   directives?: Record<string, GraphApiDirective>
@@ -104,4 +106,18 @@ export function transformChangesForDirectiveDeprecated(source: unknown) {
 export function areExcludedComponents(path: JsonPath) {
   const excluded: PropertyKey[] = ['objects', 'inputObjects', 'interfaces', 'unions', 'enums']
   return path.length > 0 && path[0] === 'components' && excluded.includes(path[1])
+}
+
+export function isFirstOperation(
+  checkingNode: IModelTreeNode<any, any, any>,
+  nodes: IModelTreeNode<any, any, any>[]
+) {
+  let firstOperationFound = null;
+  for (const currentNode of nodes) {
+    if (isGraphApiOperationNode(currentNode)) {
+      firstOperationFound = currentNode;
+      break;
+    }
+  }
+  return firstOperationFound === checkingNode;
 }
