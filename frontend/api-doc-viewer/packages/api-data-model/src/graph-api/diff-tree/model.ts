@@ -404,83 +404,23 @@ export class GraphApiModelDiffTree<
       } as T
     }
 
-    let sourceValue: GraphApiAnyDefinition | undefined
-    if (isGraphApiAnyDefinition(value)) { // combiner item, 
-      sourceValue = !isGraphApiRef(value) ? value : undefined
-    } else if (isGraphApiAnyUsage(value)) { // argument, input property, output
-      sourceValue = !isGraphApiRef(value.typeDef) ? value.typeDef : undefined
+    let typeDefinition: GraphApiAnyDefinition | undefined
+    if (isGraphApiAnyDefinition(value)) { // union type item
+      typeDefinition = !isGraphApiRef(value) ? value : undefined
+    } else if (isGraphApiAnyUsage(value)) { // argument/input property or output
+      typeDefinition = !isGraphApiRef(value.typeDef) ? value.typeDef : undefined
     }
-    if (sourceValue) {
-      const untypedSourceValue = extendToObject(sourceValue)
+    if (typeDefinition) {
+      const typeDefinitionAsRawObject = extendToObject(typeDefinition)
+      const typeDefinitionRawChanges = typeDefinitionAsRawObject?.[this.metaKey]
 
       const $changes: Partial<DiffRecord> = {}
 
-      const isNotUnionItem = untypedSourceValue !== value
-      const currentType = sourceValue.type.kind
-      const valueDiffs = isObject(sourceValue) ? sourceValue[this.metaKey] : undefined
-      let diffForFieldType: DiffReplace | undefined = undefined
-      // changed node type
-      if (isObject(valueDiffs) && 'type' in valueDiffs) {
-        if (
-          isDiff(valueDiffs.type) &&
-          isDiffReplace(valueDiffs.type)
-        ) {
-          const diff = valueDiffs.type
-          diffForFieldType = { ...diff }
-        }
-        if (
-          diffForFieldType &&
-          isObject(diffForFieldType.beforeValue) &&
-          isGraphApiNodeType(diffForFieldType.beforeValue.kind)
-        ) {
-          // synthesize diffs for enum values if kind "enum" was replaced by another one or vice versa
-          const maybeEnumTypeBefore = diffForFieldType.beforeValue
-          const maybeEnumTypeAfter = diffForFieldType.afterValue
-          const enumValuesBefore =
-            isObject(maybeEnumTypeBefore) && isObject(maybeEnumTypeBefore.values)
-              ? maybeEnumTypeBefore.values
-              : undefined
-          const enumValuesAfter =
-            isObject(maybeEnumTypeAfter) && isObject(maybeEnumTypeAfter.values)
-              ? maybeEnumTypeAfter.values
-              : undefined
-          const valuesChanges: DiffMetaRecord = {}
-          if (enumValuesBefore) {
-            Object.entries(enumValuesBefore).forEach(([enumKey, enumValue]) => {
-              valuesChanges[enumKey] = {
-                ...diffForFieldType,
-                action: DiffAction.remove,
-                beforeValue: enumValue,
-                afterValue: undefined,
-                afterNormalizedValue: undefined,
-                afterDeclarationPaths: undefined,
-              } as DiffRemove
-            })
-          }
-          if (enumValuesAfter) {
-            Object.entries(enumValuesAfter).forEach(([enumKey, enumValue]) => {
-              valuesChanges[enumKey] = {
-                ...diffForFieldType,
-                action: DiffAction.add,
-                afterValue: enumValue,
-                beforeValue: undefined,
-                beforeNormalizedValue: undefined,
-                beforeDeclarationPaths: undefined,
-              } as DiffAdd
-            })
-          }
-          if (Object.keys(valuesChanges).length > 0) {
-            setValueByPath($changes, valuesChanges, ...['values'])
-          }
+      const isNotUnionItem = typeDefinitionAsRawObject !== value
 
-          // If any work with raw diff value is finished, update it
-          const previousType: GraphSchemaNodeType = diffForFieldType.beforeValue.kind
-          diffForFieldType.beforeValue = previousType
-          diffForFieldType.afterValue = currentType
-        }
-      }
+      const currentType = typeDefinition.type.kind
 
-      // changed common props
+      // common props changed
       if (isNotUnionItem) { // argument/input property or output
         const valueRawChanges = value?.[this.metaKey]
         if (isDiffMetaRecord(valueRawChanges)) {
@@ -492,17 +432,76 @@ export class GraphApiModelDiffTree<
       }
 
       // any type definition common props changed
-      const sourceValueRawChanges = untypedSourceValue?.[this.metaKey]
-      if (isDiffMetaRecord(sourceValueRawChanges)) {
+      if (isDiffMetaRecord(typeDefinitionRawChanges)) {
         ['title', 'description'].forEach(field => {
-          const diff = sourceValueRawChanges[field]
+          const diff = typeDefinitionRawChanges[field]
           diff && setValueByPath($changes, diff, ...[field])
         })
+
+        // changed node type (e.g. String -> Int)
+        let diffForFieldType: DiffReplace | undefined = undefined
+        const rawChangeForFieldType = typeDefinitionRawChanges.type
+        if (rawChangeForFieldType) {
+          if (isDiffReplace(rawChangeForFieldType)) {
+            diffForFieldType = { ...rawChangeForFieldType }
+          }
+          if (
+            diffForFieldType &&
+            isObject(diffForFieldType.beforeValue) &&
+            isGraphApiNodeType(diffForFieldType.beforeValue.kind)
+          ) {
+            // synthesize diffs for enum values if kind "enum" was replaced by another one or vice versa
+            const maybeEnumTypeBefore = diffForFieldType.beforeValue
+            const maybeEnumTypeAfter = diffForFieldType.afterValue
+            const enumValuesBefore =
+              isObject(maybeEnumTypeBefore) && isObject(maybeEnumTypeBefore.values)
+                ? maybeEnumTypeBefore.values
+                : undefined
+            const enumValuesAfter =
+              isObject(maybeEnumTypeAfter) && isObject(maybeEnumTypeAfter.values)
+                ? maybeEnumTypeAfter.values
+                : undefined
+            const valuesChanges: DiffMetaRecord = {}
+            if (enumValuesBefore) {
+              Object.entries(enumValuesBefore).forEach(([enumKey, enumValue]) => {
+                valuesChanges[enumKey] = {
+                  ...diffForFieldType,
+                  action: DiffAction.remove,
+                  beforeValue: enumValue,
+                  afterValue: undefined,
+                  afterNormalizedValue: undefined,
+                  afterDeclarationPaths: undefined,
+                } as DiffRemove
+              })
+            }
+            if (enumValuesAfter) {
+              Object.entries(enumValuesAfter).forEach(([enumKey, enumValue]) => {
+                valuesChanges[enumKey] = {
+                  ...diffForFieldType,
+                  action: DiffAction.add,
+                  afterValue: enumValue,
+                  beforeValue: undefined,
+                  beforeNormalizedValue: undefined,
+                  beforeDeclarationPaths: undefined,
+                } as DiffAdd
+              })
+            }
+            if (Object.keys(valuesChanges).length > 0) {
+              setValueByPath($changes, valuesChanges, ...['values'])
+            }
+
+            // If any work with raw diff value is finished, update it
+            const previousType: GraphSchemaNodeType = diffForFieldType.beforeValue.kind
+            diffForFieldType.beforeValue = previousType
+            diffForFieldType.afterValue = currentType
+          }
+        }
+        diffForFieldType && setValueByPath($changes, diffForFieldType, ...['type'])
       }
 
       // specific for enum type definition
-      if (isGraphApiEnumDefinition(sourceValue)) {
-        const values = sourceValue.type.values ?? {}
+      if (isGraphApiEnumDefinition(typeDefinition)) {
+        const values = typeDefinition.type.values ?? {}
         // added/removed enum values
         const rawChanges = extendToObject(values)?.[this.metaKey]
         rawChanges && setValueByPath($changes, rawChanges, ...['values'])
@@ -558,10 +557,6 @@ export class GraphApiModelDiffTree<
         diffForDirectiveUsageArgument = directiveUsageValue?.$changes?.meta?.[params.key!]
       }
       // ---
-      if (diffForFieldType) {
-        diffNodeValue.$changes ??= {}
-        diffNodeValue.$changes.type = diffForFieldType
-      }
       if (diffForDirectiveUsageArgument) {
         diffNodeValue.$changes ??= {}
         diffNodeValue.$changes.value = diffForDirectiveUsageArgument
@@ -569,9 +564,9 @@ export class GraphApiModelDiffTree<
       // @ts-expect-error // TODO // 29.10.24 // wrong types
       return {
         ...isNotUnionItem ? pick<any>(value, graphSchemaNodeValueProps) : {},
-        ...pick<any>(sourceValue, graphSchemaNodeValueProps),
+        ...pick<any>(typeDefinition, graphSchemaNodeValueProps),
         type: currentType,
-        ...resolveEnumValues(value.typeDef, valueDiffs),
+        ...resolveEnumValues(value.typeDef, typeDefinitionRawChanges),
         ...directiveUsageArgValue !== undefined ? { value: directiveUsageArgValue } : {},
         ...diffNodeValue,
       } as T
