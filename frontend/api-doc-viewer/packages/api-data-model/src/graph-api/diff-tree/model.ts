@@ -22,6 +22,7 @@ import {
   isGraphApiAnyDefinition,
   isGraphApiArgs,
   isGraphApiDirective,
+  isGraphApiDirectiveDefinition,
   isGraphApiDirectives,
   isGraphApiEnumDefinition,
   isGraphApiInputObjectDefinition,
@@ -249,34 +250,64 @@ export class GraphApiModelDiffTree<
 
     const $metaChanges: Partial<DiffRecord> = {}
 
-    if (isGraphApiDirective(value)) {
-      const directiveDefinition = value.definition
+    this.aggregateDiffsForDirective(value, $metaChanges)
+    this.aggregateDiffsForOperation(value, $metaChanges)
 
-      if (!isGraphApiRef(directiveDefinition)) {
-        // locations
-        const untypedLocations = (directiveDefinition?.locations ?? []) as unknown
-        const locationsRawChanges =
-          isObject(untypedLocations)
-            ? untypedLocations[this.metaKey]
-            : undefined
-        if (isDiffMetaRecord(locationsRawChanges)) {
-          for (const [locIndex, locDiff] of Object.entries(locationsRawChanges)) {
-            setValueByPath($metaChanges, locDiff, ...['locations', locIndex])
-          }
-        }
-        // repeatable
-        const untypedDirectiveDefinition = directiveDefinition as unknown
-        const directiveDefinitionRawChanges =
-          isObject(untypedDirectiveDefinition)
-            ? untypedDirectiveDefinition[this.metaKey]
-            : undefined
-        if (isDiffMetaRecord(directiveDefinitionRawChanges)) {
-          const repeatableDiff = directiveDefinitionRawChanges.repeatable
-          repeatableDiff && setValueByPath($metaChanges, repeatableDiff, ...['repeatable'])
+    const $childrenChanges = this.getChildrenChanges(id, value ?? {})
+    const $nodeChange = this.getNodeChange(params)
+
+    return {
+      // data
+      ...pick<any>(value, graphSchemaNodeMetaProps),
+      ...resolveDirectiveDeprecated(value),
+      // changes
+      ...$nodeChange
+        ? { $nodeChange }
+        : {},
+      ...Object.keys($metaChanges).length
+        ? { $metaChanges: $metaChanges as DiffRecord } // allowed cast because we checked keys count
+        : {},
+      ...Object.keys($childrenChanges).length
+        ? { $childrenChanges }
+        : {},
+      $nodeChangesSummary: new Set<DiffType>(),
+      _fragment: value,
+    }
+  }
+
+  private aggregateDiffsForDirective(value: unknown, $metaChanges: Partial<DiffRecord>) {
+    let directiveDefinition
+    if (isGraphApiDirective(value)) {
+      directiveDefinition = value.definition
+    } else if (isGraphApiDirectiveDefinition(value)) {
+      directiveDefinition = value
+    }
+    if (directiveDefinition && !isGraphApiRef(directiveDefinition)) {
+      // locations
+      const untypedLocations = (directiveDefinition?.locations ?? []) as unknown
+      const locationsRawChanges =
+        isObject(untypedLocations)
+          ? untypedLocations[this.metaKey]
+          : undefined
+      if (isDiffMetaRecord(locationsRawChanges)) {
+        for (const [locIndex, locDiff] of Object.entries(locationsRawChanges)) {
+          setValueByPath($metaChanges, locDiff, ...['locations', locIndex])
         }
       }
+      // repeatable
+      const untypedDirectiveDefinition = directiveDefinition as unknown
+      const directiveDefinitionRawChanges =
+        isObject(untypedDirectiveDefinition)
+          ? untypedDirectiveDefinition[this.metaKey]
+          : undefined
+      if (isDiffMetaRecord(directiveDefinitionRawChanges)) {
+        const repeatableDiff = directiveDefinitionRawChanges.repeatable
+        repeatableDiff && setValueByPath($metaChanges, repeatableDiff, ...['repeatable'])
+      }
     }
+  }
 
+  private aggregateDiffsForOperation(value: unknown, $metaChanges: Partial<DiffRecord>) {
     // deprecation reason
     if (isGraphApiOperation(value)) {
       const directives = value.directives ?? {}
@@ -307,27 +338,6 @@ export class GraphApiModelDiffTree<
           }
         }
       }
-    }
-
-    const $childrenChanges = this.getChildrenChanges(id, value ?? {})
-    const $nodeChange = this.getNodeChange(params)
-
-    return {
-      // data
-      ...pick<any>(value, graphSchemaNodeMetaProps),
-      ...resolveDirectiveDeprecated(value),
-      // changes
-      ...$nodeChange
-        ? { $nodeChange }
-        : {},
-      ...Object.keys($metaChanges).length
-        ? { $metaChanges: $metaChanges as DiffRecord } // allowed cast because we checked keys count
-        : {},
-      ...Object.keys($childrenChanges).length
-        ? { $childrenChanges }
-        : {},
-      $nodeChangesSummary: new Set<DiffType>(),
-      _fragment: value,
     }
   }
 
