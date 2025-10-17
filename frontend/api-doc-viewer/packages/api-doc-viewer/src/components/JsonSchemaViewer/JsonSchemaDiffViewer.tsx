@@ -43,13 +43,16 @@ export type JsonSchemaDiffViewerProps = {
   // diffs
   layoutMode?: LayoutMode
   filters?: ReadonlyArray<DiffType>
-  diffMetaKey: symbol
+  metaKeys: {
+    diffsMetaKey: symbol,
+    aggregatedDiffsMetaKey: symbol,
+  }
 } & PropsWithOverriddenKind & PropsWithTopLevelPropsMediaTypesMap
 
 export const JsonSchemaDiffViewer: FC<JsonSchemaDiffViewerProps> = (props) => {
   return (
-    <ErrorBoundary fallback={<ErrorBoundaryFallback componentName="JSON Schema Diff Viewer"/>}>
-      <JsonSchemaDiffViewerInner {...props}/>
+    <ErrorBoundary fallback={<ErrorBoundaryFallback componentName="JSON Schema Diff Viewer" />}>
+      <JsonSchemaDiffViewerInner {...props} />
     </ErrorBoundary>
   )
 }
@@ -63,14 +66,14 @@ const JsonSchemaDiffViewerInner: FC<JsonSchemaDiffViewerProps> = (props) => {
     layoutMode = DEFAULT_LAYOUT_MODE,
     filters = [],
     overriddenKind,
-    diffMetaKey,
+    metaKeys,
     // FIXME 18.06.24 // Get rid of it when future wonderful AMT+ADV are ready!
     topLevelPropsMediaTypes
   } = props
 
   const tree = useMemo(
-    () => createJsonSchemaDiffTree(schema, diffMetaKey),
-    [diffMetaKey, schema]
+    () => createJsonSchemaDiffTree(schema, metaKeys),
+    [metaKeys, schema]
   )
   const state = useMemo(
     // @ts-expect-error // Bad types
@@ -78,9 +81,9 @@ const JsonSchemaDiffViewerInner: FC<JsonSchemaDiffViewerProps> = (props) => {
     [expandedDepth, tree]
   )
 
-  // console.debug('Schema:', schema)
-  // console.debug('Tree Model:', tree)
-  // console.debug('State Model:', state)
+  console.debug('Schema:', schema)
+  console.debug('Tree Model:', tree)
+  console.debug('State Model:', state)
 
   const root = state.root
   let content = null

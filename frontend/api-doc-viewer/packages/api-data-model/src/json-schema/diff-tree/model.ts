@@ -126,7 +126,7 @@ export class JsonSchemaModelDiffTree<
         }
       }
     }
-    
+
     const valueEnum = extendToObject(_value.enum)
     if (valueEnum) {
       const maybeDiffMetaRecordForEnum = valueEnum[this.metaKey]

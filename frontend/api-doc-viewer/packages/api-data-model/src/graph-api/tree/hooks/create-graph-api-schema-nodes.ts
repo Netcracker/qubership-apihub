@@ -121,8 +121,6 @@ export function createGraphSchemaTreeCrawlHook(
       nodeIdPrefix: id,
       nextLevel: state.treeLevel,
       nextMaxLevel: state.maxTreeLevel,
-      metaKey: metaKey,
-      aggregatedMetaKey: aggregatedMetaKey,
     }
     /* --- */
 

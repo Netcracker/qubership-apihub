@@ -349,6 +349,9 @@ export function prepareJsonDiffSchema(options: JsonDiffSchemaOptions): unknown {
     afterSource: afterDocument,
     metaKey: DIFF_META_KEY,
   }).merged as any
+
+  aggregateDiffsWithRollup(mergedDocument, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)
+
   const mergedSchema = getSchemaByTarget(mergedDocument, target)
   if (circular && isObject(mergedSchema)) {
     mergedSchema.toJSON = () => stringifyCyclicJso(mergedSchema)

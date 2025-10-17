@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff';
 import type { Meta, StoryObj } from '@storybook/react';
 import { JsonSchemaDiffViewer } from '../components/JsonSchemaViewer/JsonSchemaDiffViewer';
-import { prepareJsonDiffSchema, RESPONSE_200_BODY_TARGET } from './preprocess';
 import { SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '../types/LayoutMode';
-import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff';
+import { prepareJsonDiffSchema, RESPONSE_200_BODY_TARGET } from './preprocess';
 
 // It's necessary because storybook doesn't render nested stories without this empty story
 // eslint-disable-next-line storybook/story-exports
@@ -44,7 +44,10 @@ export const Test: Story = {
       target: RESPONSE_200_BODY_TARGET,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
+    metaKeys: {
+      diffsMetaKey: DIFF_META_KEY,
+      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+    },
   }
 }
 
@@ -66,7 +69,10 @@ export const RenamedProperty: Story = {
       }
     },
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
+    metaKeys: {
+      diffsMetaKey: DIFF_META_KEY,
+      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+    },
   }
 }
 
@@ -122,6 +128,92 @@ export const Flags: Story = {
       target: RESPONSE_200_BODY_TARGET,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
+    metaKeys: {
+      diffsMetaKey: DIFF_META_KEY,
+      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+    },
+  }
+}
+
+export const Enum: Story = {
+  args: {
+    schema: prepareJsonDiffSchema({
+      beforeSchema: {
+        type: 'object',
+        properties: {
+          addedEnum: { type: 'string' },
+          removedEnum: { type: 'string', enum: ['value1', 'value2'] },
+          addedEnumValue: { type: 'string', enum: ['value1'] },
+          removedEnumValue: { type: 'string', enum: ['value1', 'value2'] },
+          unchangedEnumValue: { type: 'string', enum: ['value1', 'value2'] },
+        }
+      },
+      afterSchema: {
+        type: 'object',
+        properties: {
+          addedEnum: { type: 'string', enum: ['value1', 'value2'] },
+          removedEnum: { type: 'string' },
+          addedEnumValue: { type: 'string', enum: ['value1', 'value2'] },
+          removedEnumValue: { type: 'string', enum: ['value1'] },
+          unchangedEnumValue: { type: 'string', enum: ['value1', 'value2'] },
+        }
+      },
+      target: RESPONSE_200_BODY_TARGET,
+    }),
+    layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+    metaKeys: {
+      diffsMetaKey: DIFF_META_KEY,
+      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+    },
+  }
+}
+
+export const AddMinItemsInArrayProperty: Story = {
+  args: {
+    schema: prepareJsonDiffSchema({
+      beforeSchema: {
+        type: 'object',
+        properties: {
+          option1: {
+            type: 'array',
+            minItems: 0,
+            items: {
+              type: 'string',
+            },
+          },
+          option2: {
+            type: 'array',
+            items: {
+              type: 'string',
+            },
+          },
+        }
+      },
+      afterSchema: {
+        type: 'object',
+        properties: {
+          option1: {
+            type: 'array',
+            minItems: 1,
+            items: {
+              type: 'string',
+            },
+          },
+          option2: {
+            type: 'array',
+            minItems: 1,
+            items: {
+              type: 'string',
+            },
+          },
+        }
+      },
+      target: RESPONSE_200_BODY_TARGET,
+    }),
+    layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+    metaKeys: {
+      diffsMetaKey: DIFF_META_KEY,
+      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+    },
   }
 }

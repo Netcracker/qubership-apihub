@@ -30,6 +30,11 @@ export interface JsonSchemaCrawlState {
   parent: JsonSchemaTreeNode | null
   container?: JsonSchemaComplexNode
   alreadyConvertedMappingStack: Map<unknown, JsonSchemaNode>
+  /* Feature "Lazy Tree Building" */
+  nodeIdPrefix: string
+  treeLevel: number
+  maxTreeLevel: number
+  /* --- */
 }
 
 export interface JsonSchemaCreateNodeParams<T, K extends string, M extends object> {

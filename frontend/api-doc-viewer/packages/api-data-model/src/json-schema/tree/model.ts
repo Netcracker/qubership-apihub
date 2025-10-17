@@ -125,12 +125,14 @@ export class JsonSchemaModelTree<
     return result
   }
 
+  /** @deprecated */
   public createNestedNode(id: string, kind: K, key: string | number, value: any, container: any, isCycle: boolean) {
     const res = this.createJsonSchemaNode({ id, kind, key, value, container, parent: container.parent, isCycle })
     container.addNestedNode(res.node)
     return res
   }
 
+  /** @deprecated */
   public createChildNode(id: string, kind: K, key: string | number, value: any, parent: any, isCycle: boolean) {
     const res = this.createJsonSchemaNode({ id, kind, key, value, parent, isCycle })
     parent?.addChild(res.node)
