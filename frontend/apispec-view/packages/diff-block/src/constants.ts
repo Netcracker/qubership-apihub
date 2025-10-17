@@ -11,6 +11,7 @@ import {
 import { keys } from 'lodash';
 
 export const diffMetaKey = Symbol('diffMeta');
+export const aggregatedDiffMetaKey = Symbol('aggregatedDiffMeta');
 export const childrenDiffCountMetaKey = Symbol('childrenDiffCountMetaKey');
 export const selfDiffMetaKey = Symbol('selfDiffMeta');
 export const schemaIdKey = Symbol('schemaIdKey');

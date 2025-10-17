@@ -11,13 +11,14 @@ import { isEmpty, keys, sortBy, uniqBy } from 'lodash'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { SectionSubtitle, SectionTitle } from '../Sections'
-import { Parameters } from './Parameters'
+import { isDiffRename } from '@netcracker/qubership-apihub-api-diff'
 import { Description } from '@stoplight/diff-elements-core/components/Docs/HttpOperation/Description'
+import { isObject } from '@stoplight/diff-elements-core/utils/guards'
+import { useAggregatedDiffMetaKey } from '@stoplight/elements/containers/AggregatedDIffMetaKeyContext'
 import { useChangeSeverityFilters } from '@stoplight/elements/containers/ChangeSeverityFiltersContext'
 import { useDiffMetaKey } from '@stoplight/elements/containers/DIffMetaKeyContext'
-import { isObject } from '@stoplight/diff-elements-core/utils/guards'
-import { isDiffRename } from '@netcracker/qubership-apihub-api-diff'
+import { SectionSubtitle, SectionTitle } from '../Sections'
+import { Parameters } from './Parameters'
 
 interface ResponseCodeItemProps {
   response: IHttpOperationResponse;
@@ -131,7 +132,7 @@ export const Responses = (props: ResponsesProps) => {
               return (
                 <Tab key={response.code} id={response.code} intent={codeToIntentVal(response.code)}>
                   <Box p={1}>
-                    <ResponseCodeItem response={response} action={action}/>
+                    <ResponseCodeItem response={response} action={action} />
                   </Box>
                 </Tab>
               )
@@ -183,6 +184,7 @@ Responses.displayName = 'HttpOperation.Responses'
 
 const Response = ({ response, onMediaTypeChange, extensions, extensionsMeta }: ResponseProps) => {
   const diffMetaKey = useDiffMetaKey()
+  const aggregatedDiffMetaKey = useAggregatedDiffMetaKey()
 
   const { contents = [], headers = [] } = response
   const [chosenContent, setChosenContent] = useState(0)
@@ -265,10 +267,13 @@ const Response = ({ response, onMediaTypeChange, extensions, extensionsMeta }: R
         // diffs specific
         layoutMode={notSplitSchemaViewer ? 'document' : 'side-by-side-diffs'}
         filters={filters}
-        diffMetaKey={diffMetaKey}
+        metaKeys={{
+          diffsMetaKey: diffMetaKey,
+          aggregatedDiffsMetaKey: aggregatedDiffMetaKey,
+        }}
       />
     )
-  }, [defaultSchemaDepth, diffMetaKey, filters, notSplitSchemaViewer, schema, schemaViewMode, wholeContentDiff])
+  }, [defaultSchemaDepth, diffMetaKey, filters, notSplitSchemaViewer, schema, schemaViewMode, wholeContentDiff, aggregatedDiffMetaKey])
 
   return (
     <VStack spacing={8} pt={8}>
@@ -281,17 +286,17 @@ const Response = ({ response, onMediaTypeChange, extensions, extensionsMeta }: R
 
       {!isEmpty(extensions) && (
         <DiffContainer>
-          <ExtensionsDiff idPrefix={'HttpOperation__Response_Extensions'} value={extensions} meta={extensionsMeta}/>
+          <ExtensionsDiff idPrefix={'HttpOperation__Response_Extensions'} value={extensions} meta={extensionsMeta} />
         </DiffContainer>
       )}
 
       {headersWithMeta.length > 0 && (
         <VStack spacing={5}>
           <DiffContainer>
-            <SectionSubtitle title="Headers" id="response-headers"/>
+            <SectionSubtitle title="Headers" id="response-headers" />
           </DiffContainer>
           {/* @ts-expect-error // Original type definitions != real types */}
-          <Parameters parameterType="header" parameters={headersWithMeta}/>
+          <Parameters parameterType="header" parameters={headersWithMeta} />
         </VStack>
       )}
 

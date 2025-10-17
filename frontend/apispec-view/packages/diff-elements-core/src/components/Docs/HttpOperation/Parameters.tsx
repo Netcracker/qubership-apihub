@@ -8,10 +8,11 @@ import { isObject, sortBy } from 'lodash'
 import * as React from 'react'
 import { useMemo } from 'react'
 
-import { isNodeExample } from '../../../utils/http-spec/examples'
+import { DiffAction, DiffMetaRecord } from '@netcracker/qubership-apihub-api-diff'
+import { useAggregatedDiffMetaKey } from '@stoplight/elements/containers/AggregatedDIffMetaKeyContext'
 import { useChangeSeverityFilters } from '@stoplight/elements/containers/ChangeSeverityFiltersContext'
 import { useDiffMetaKey } from '@stoplight/elements/containers/DIffMetaKeyContext'
-import { DiffAction, DiffMetaRecord } from '@netcracker/qubership-apihub-api-diff'
+import { isNodeExample } from '../../../utils/http-spec/examples'
 
 type ParameterKey = string
 type ParameterMediaType = string
@@ -47,6 +48,7 @@ const defaultStyle = {
 
 export const Parameters: React.FunctionComponent<ParametersProps> = ({ parameters, parameterType }) => {
   const diffMetaKey = useDiffMetaKey()
+  const aggregatedDiffMetaKey = useAggregatedDiffMetaKey()
 
   // FIXME 18.06.24 // Get rid of "parametersMediaTypes" when future wonderful AMT+ADV are ready!
   const [schema, parametersMediaTypes] = useMemo(
@@ -67,7 +69,10 @@ export const Parameters: React.FunctionComponent<ParametersProps> = ({ parameter
       displayMode={schemaViewMode}
       expandedDepth={defaultSchemaDepth}
       overriddenKind="parameters"
-      diffMetaKey={diffMetaKey}
+      metaKeys={{
+        diffsMetaKey: diffMetaKey,
+        aggregatedDiffsMetaKey: aggregatedDiffMetaKey,
+      }}
       layoutMode={notSplitSchemaViewer ? 'document' : 'side-by-side-diffs'}
       filters={filters}
       topLevelPropsMediaTypes={parametersMediaTypes}

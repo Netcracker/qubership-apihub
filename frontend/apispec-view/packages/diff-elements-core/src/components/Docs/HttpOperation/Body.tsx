@@ -6,11 +6,12 @@ import { DiffBlock, DiffContainer, isDiff } from 'diff-block'
 import * as React from 'react'
 import { useCallback, useEffect, useState } from 'react'
 
+import { isDiffRename } from '@netcracker/qubership-apihub-api-diff'
 import { Description } from '@stoplight/diff-elements-core/components/Docs/HttpOperation/Description'
+import { useAggregatedDiffMetaKey } from '@stoplight/elements/containers/AggregatedDIffMetaKeyContext'
 import { useChangeSeverityFilters } from '@stoplight/elements/containers/ChangeSeverityFiltersContext'
 import { useDiffMetaKey } from '@stoplight/elements/containers/DIffMetaKeyContext'
 import { SectionSubtitle } from '../Sections'
-import { isDiffRename } from '@netcracker/qubership-apihub-api-diff'
 
 export type DiffBodyProps = {
   body: IHttpOperationRequestBody;
@@ -27,6 +28,8 @@ export const isBodyEmpty = (body?: DiffBodyProps['body']) => {
 
 export const Body = ({ body, onChange }: DiffBodyProps) => {
   const diffMetaKey = useDiffMetaKey()
+  const aggregatedDiffMetaKey = useAggregatedDiffMetaKey()
+
   const [chosenContent, setChosenContent] = useState(0)
 
   useEffect(() => {
@@ -107,10 +110,13 @@ export const Body = ({ body, onChange }: DiffBodyProps) => {
         // diffs specific
         layoutMode={notSplitSchemaViewer ? 'document' : 'side-by-side-diffs'}
         filters={filters}
-        diffMetaKey={diffMetaKey}
+        metaKeys={{
+          diffsMetaKey: diffMetaKey,
+          aggregatedDiffsMetaKey: aggregatedDiffMetaKey,
+        }}
       />
     )
-  }, [defaultSchemaDepth, diffMetaKey, filters, notSplitSchemaViewer, schema, schemaViewMode, wholeContentDiff])
+  }, [defaultSchemaDepth, diffMetaKey, filters, notSplitSchemaViewer, schema, schemaViewMode, wholeContentDiff, aggregatedDiffMetaKey])
 
   if (isBodyEmpty(body)) {
     return null

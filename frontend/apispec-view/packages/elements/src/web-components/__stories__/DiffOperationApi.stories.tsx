@@ -30,7 +30,7 @@ import {
   getCompareResult,
   getMergedDocument,
 } from '@stoplight/elements/web-components/__stories__/helpers/getMergedDocument'
-import { diffMetaKey } from 'diff-block'
+import { aggregatedDiffMetaKey, diffMetaKey } from 'diff-block'
 import React from 'react'
 import '../index'
 import { Meta, StoryObj } from '@storybook/react/*'
@@ -71,7 +71,16 @@ export default {
 }
 
 const Template = (props: any) => {
-  return <DiffOperationAPI {...props} diffMetaKey={diffMetaKey} filters={JSON.stringify(props.filters)} />
+  return (
+    <DiffOperationAPI
+      {...props}
+      metaKeys={{
+        diffsMetaKey: diffMetaKey,
+        aggregatedDiffsMetaKey: aggregatedDiffMetaKey
+      }}
+      filters={JSON.stringify(props.filters)}
+    />
+  )
 }
 
 export const AddNewPetToPetstoreStory: any = Template.bind({})
@@ -655,7 +664,16 @@ function StoryComponent({ before, after }: { before: object, after: object }) {
   const { diffs, merged } = getCompareResult(before, after)
   console.log(stringifyDiffs(diffs))
   console.log(diffs)
-  return <DiffOperationAPI mergedDocument={merged} filters={[]} diffMetaKey={diffMetaKey} />
+  return (
+    <DiffOperationAPI
+      mergedDocument={merged}
+      filters={[]}
+      metaKeys={{
+        diffsMetaKey: diffMetaKey,
+        aggregatedDiffsMetaKey: aggregatedDiffMetaKey
+      }}
+    />
+  )
 }
 
 const meta: Meta<{ before: object, after: object }> = {
