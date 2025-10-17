@@ -14,6 +14,8 @@ import type { JsonSchemaCreateNodeParams, JsonSchemaNodeKind, JsonSchemaNodeType
 import { isBrokenRef, isRequired } from '../utils';
 import { JsonSchemaDiffNodeMeta, JsonSchemaDiffNodeValue } from './types';
 
+const JSON_SCHEMA_SPECIFICALLY_HANDLED_PROPS = new Set<string>(['required', 'enum'])
+
 export class JsonSchemaModelDiffTree<
   T extends DiffNodeValue | null = JsonSchemaDiffNodeValue,
   K extends string = JsonSchemaNodeKind,
@@ -124,8 +126,19 @@ export class JsonSchemaModelDiffTree<
         }
       }
     }
+    
+    const valueEnum = extendToObject(_value.enum)
+    if (valueEnum) {
+      const maybeDiffMetaRecordForEnum = valueEnum[this.metaKey]
+      if (isDiffMetaRecord(maybeDiffMetaRecordForEnum)) {
+        for (const changedEnumItemIndex of Object.keys(maybeDiffMetaRecordForEnum)) {
+          const maybeDiff = maybeDiffMetaRecordForEnum[changedEnumItemIndex]
+          setValueByPath(changes, maybeDiff, ...['enum', changedEnumItemIndex])
+        }
+      }
+    }
 
-    const notHandledProps = props.filter(prop => prop !== 'required')
+    const notHandledProps = props.filter(prop => !JSON_SCHEMA_SPECIFICALLY_HANDLED_PROPS.has(prop))
 
     for (const observedProperty of notHandledProps) {
       const maybeDiffMetaRecord = _value[this.metaKey]
