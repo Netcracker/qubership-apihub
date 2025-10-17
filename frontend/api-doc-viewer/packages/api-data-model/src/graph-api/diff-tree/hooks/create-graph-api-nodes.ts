@@ -63,8 +63,6 @@ export function createGraphApiDiffTreeCrawlHook(
       nodeIdPrefix: id,
       nextLevel: state.treeLevel,
       nextMaxLevel: state.maxTreeLevel + 1,
-      metaKey: metaKey,
-      aggregatedMetaKey: aggregatedMetaKey,
     }
 
     switch (kind) {
