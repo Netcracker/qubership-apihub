@@ -4,7 +4,7 @@ import { useOperationSchemaOptionsMode } from '@stoplight/elements'
 import { HttpParamStyles, IHttpContent, IHttpParam } from '@stoplight/types'
 import { selfDiffMetaKey } from 'diff-block'
 import type { JSONSchema7Object } from 'json-schema'
-import { isObject, sortBy } from 'lodash'
+import { sortBy } from 'lodash'
 import * as React from 'react'
 import { useMemo } from 'react'
 
@@ -13,6 +13,7 @@ import { useAggregatedDiffMetaKey } from '@stoplight/elements/containers/Aggrega
 import { useChangeSeverityFilters } from '@stoplight/elements/containers/ChangeSeverityFiltersContext'
 import { useDiffMetaKey } from '@stoplight/elements/containers/DIffMetaKeyContext'
 import { isNodeExample } from '../../../utils/http-spec/examples'
+import { isObject } from '@stoplight/diff-elements-core/utils/guards'
 
 type ParameterKey = string
 type ParameterMediaType = string
@@ -125,7 +126,6 @@ const httpOperationParamsToSchema = (
         if (isNodeExample(example)) {
           return example.value
         }
-
         return example.externalValue
       }) || []
     const schemaExamples = paramSchema?.examples
@@ -139,11 +139,11 @@ const httpOperationParamsToSchema = (
 
     mergeMirrorSymbolsForDiffMeta(p, diffMetaKey)
 
-
     const paramPropsDiffMeta = {
       ...p[diffMetaKey] ?? {},
       ...paramSchema?.[diffMetaKey] ?? {},
     }
+
     schema.properties![p.name] = {
       ...paramSchema,
       ...paramDescription ? { description: paramDescription } : {},
@@ -197,11 +197,8 @@ const httpOperationParamsToSchema = (
   }
 
   const requiredArrayDiffs: DiffMetaRecord = rearrangeRequiredDiffs(sortedParams, schema.required, diffMetaKey)
-  if (Object.keys(requiredArrayDiffs).length > 0) {
-    const requiredDiffs = { required: requiredArrayDiffs }
-    schema[diffMetaKey] = diffMetaKey in schema
-      ? { ...schema[diffMetaKey], ...requiredDiffs }
-      : requiredDiffs
+  if (Object.keys(requiredArrayDiffs).length > 0 && isObject(schema.required)) {
+    schema.required[diffMetaKey] = requiredArrayDiffs
   }
 
   return [schema, parametersMediaTypesMap]
