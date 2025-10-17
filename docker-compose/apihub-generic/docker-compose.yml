@@ -59,7 +59,7 @@ services:
                 condition: service_healthy
 
     qubership-apihub-ui:
-        image: ghcr.io/netcracker/qubership-apihub-ui:feature-linter-validation-results 
+        image: ghcr.io/netcracker/qubership-apihub-ui:dev
         container_name: qubership-apihub-ui
         ports:
         - "8081:8080"
