@@ -6,7 +6,7 @@ import { DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstr
 import { ChangesSummaryUtils } from '../../abstract/diff-tree-utils';
 import { LazyBuildingContext } from "../../abstract/model/model-tree-node.impl";
 import { IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from '../../abstract/model/types';
-import { getNodeComplexityType, isDiff, isDiffMetaRecord, isObject, objectKeys, pick, setValueByPath } from '../../utils';
+import { extendToObject, getNodeComplexityType, isDiff, isDiffMetaRecord, isObject, objectKeys, pick, setValueByPath } from '../../utils';
 import { jsonSchemaNodeMetaProps, jsonSchemaNodeValueProps } from '../constants';
 import { isJsonSchemaNodeType } from '../guards';
 import { JsonSchemaModelTree } from '../tree/model';
@@ -114,7 +114,20 @@ export class JsonSchemaModelDiffTree<
       return changes
     }
 
-    for (const observedProperty of props) {
+    const valueRequired = extendToObject(_value.required)
+    if (valueRequired) {
+      const maybeDiffMetaRecordForRequired = valueRequired[this.metaKey]
+      if (isDiffMetaRecord(maybeDiffMetaRecordForRequired)) {
+        for (const changedRequiredItemIndex of Object.keys(maybeDiffMetaRecordForRequired)) {
+          const maybeDiff = maybeDiffMetaRecordForRequired[changedRequiredItemIndex]
+          setValueByPath(changes, maybeDiff, ...['required', changedRequiredItemIndex])
+        }
+      }
+    }
+
+    const notHandledProps = props.filter(prop => prop !== 'required')
+
+    for (const observedProperty of notHandledProps) {
       const maybeDiffMetaRecord = _value[this.metaKey]
       if (!isDiffMetaRecord(maybeDiffMetaRecord)) {
         continue
