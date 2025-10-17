@@ -14,7 +14,7 @@ import type { JsonSchemaCreateNodeParams, JsonSchemaNodeKind, JsonSchemaNodeType
 import { isBrokenRef, isRequired } from '../utils';
 import { JsonSchemaDiffNodeMeta, JsonSchemaDiffNodeValue } from './types';
 
-const JSON_SCHEMA_SPECIFICALLY_HANDLED_PROPS = new Set<string>(['required', 'enum'])
+const JSON_SCHEMA_SPECIFICALLY_HANDLED_PROPS = new Set<string>(['required'])
 
 export class JsonSchemaModelDiffTree<
   T extends DiffNodeValue | null = JsonSchemaDiffNodeValue,
