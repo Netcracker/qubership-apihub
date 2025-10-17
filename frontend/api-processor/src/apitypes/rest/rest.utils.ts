@@ -70,6 +70,11 @@ export const dump = (value: unknown, format: typeof FILE_FORMAT_YAML | typeof FI
   throw new Error(`Unsupported format: ${format}`)
 }
 
+export const extractOpenapiVersionDiff = (doc: OpenAPIV3.Document): Diff[] => {
+  const diff = (doc as WithDiffMetaRecord<OpenAPIV3.Document>)[DIFF_META_KEY]?.openapi
+  return diff ? [diff] : []
+}
+
 export const extractPathParamRenameDiff = (doc: OpenAPIV3.Document, path: string): Diff[] => {
   const diff = (doc.paths as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[path]
   return diff && isPathParamRenameDiff(diff) ? [diff] : []

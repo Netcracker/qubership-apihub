@@ -59,6 +59,7 @@ import { calculateObjectHash } from '../../utils/hashes'
 import { REST_API_TYPE } from './rest.consts'
 import { OpenAPIV3 } from 'openapi-types'
 import {
+  extractOpenapiVersionDiff,
   extractPathParamRenameDiff,
   extractRootSecurityDiffs,
   extractRootServersDiffs,
@@ -167,7 +168,8 @@ export const compareDocuments = async (
       let operationDiffs: Diff[] = []
       if (operationPotentiallyChanged) {
         operationDiffs = [
-          ...(methodData as WithAggregatedDiffs<OpenAPIV3.OperationObject>)[DIFFS_AGGREGATED_META_KEY]??[],
+          ...(methodData as WithAggregatedDiffs<OpenAPIV3.OperationObject>)[DIFFS_AGGREGATED_META_KEY] ?? [],
+          ...extractOpenapiVersionDiff(merged),
           ...extractRootServersDiffs(merged),
           ...extractRootSecurityDiffs(merged),
           ...extractPathParamRenameDiff(merged, path),

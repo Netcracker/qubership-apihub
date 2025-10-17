@@ -244,6 +244,13 @@ describe('Changelog build type', () => {
         [UNCLASSIFIED_CHANGE_TYPE]: 1,
       }))
     })
+
+    test('Change openapi version', async () => {
+      const result = await buildChangelogPackage('changelog/change-openapi-version')
+
+      expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+    })
   })
 
   test('Operation changes fields are correct', async () => {
