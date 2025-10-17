@@ -5,8 +5,19 @@ import { createJsonSchemaDiffTree } from '../src'
 import { ORIGINS_FLAG, SYNTHETIC_TITLE_FLAG } from '../src/abstract/constants'
 
 const metaKey = Symbol('diff')
+const aggregatedDiffsMetaKey = Symbol('aggregatedDiffs')
+const META_KEYS = {
+  diffsMetaKey: metaKey,
+  aggregatedDiffsMetaKey: aggregatedDiffsMetaKey,
+}
 
-export const createJsonSchemaDiffTreeForTest = (before: unknown, after: unknown, metaKey: symbol, beforeSource: unknown = before, afterSource: unknown = after) => {
+export const createJsonSchemaDiffTreeForTest = (
+  before: unknown, 
+  after: unknown, 
+  metaKeys: { diffsMetaKey: symbol, aggregatedDiffsMetaKey: symbol }, 
+  beforeSource: unknown = before, 
+  afterSource: unknown = after,
+) => {
   const merged = apiDiff(before, after, {
     beforeSource,
     afterSource,
@@ -18,7 +29,7 @@ export const createJsonSchemaDiffTreeForTest = (before: unknown, after: unknown,
     allowNotValidSyntheticChanges: true,
   }).merged
 
-  return createJsonSchemaDiffTree(merged, metaKey)
+  return createJsonSchemaDiffTree(merged, metaKeys)
 }
 
 describe.skip('jsonschema diff tree tests', () => {
@@ -46,7 +57,7 @@ describe.skip('jsonschema diff tree tests', () => {
         examples: ['a2'],
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
       expect(tree.root).toMatchObject({ id: '#', type: 'simple', parent: null })
       expect(tree.root?.value()?.$changes).toMatchObject({
@@ -74,7 +85,7 @@ describe.skip('jsonschema diff tree tests', () => {
         readOnly: true,
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
       expect(tree.root).toMatchObject({ id: '#', type: 'simple', parent: null })
       expect(tree.root?.meta?.$metaChanges).toMatchObject({
@@ -116,7 +127,7 @@ describe.skip('jsonschema diff tree tests', () => {
         },
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
       expect(tree.root).toMatchObject({ id: '#', type: 'simple', parent: null })
       expect(tree.root?.value()?.$changes).toMatchObject({
@@ -211,7 +222,7 @@ describe.skip('jsonschema diff tree tests', () => {
         ],
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
       expect(tree.root).toMatchObject({ id: '#', kind: 'root', type: 'oneOf', parent: null })
 
@@ -250,7 +261,7 @@ describe.skip('jsonschema diff tree tests', () => {
         },
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
       expect(tree.root).toMatchObject({ id: '#', kind: 'root', type: 'simple', parent: null })
 
@@ -303,7 +314,7 @@ describe.skip('jsonschema diff tree tests', () => {
         ],
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(schema, schema, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(schema, schema, META_KEYS)
 
       expect(tree.root).toMatchObject({ id: '#', kind: 'root', type: 'oneOf', parent: null })
 
@@ -337,7 +348,7 @@ describe.skip('jsonschema diff tree tests', () => {
         },
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
       expect(tree.root?.children()[1].value()).toMatchObject({
         $changes: {
@@ -367,7 +378,7 @@ describe.skip('jsonschema diff tree tests', () => {
         },
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
       expect(tree.root?.meta).toMatchObject({
         $childrenChanges: {
@@ -401,7 +412,7 @@ describe.skip('jsonschema diff tree tests', () => {
         },
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
       expect(tree.root?.meta).toMatchObject({
         $childrenChanges: {
@@ -429,7 +440,7 @@ describe.skip('jsonschema diff tree tests', () => {
         },
         additionalProperties: false,
       }
-      const tree = createJsonSchemaDiffTreeForTest(beforeSchema, afterSchema, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(beforeSchema, afterSchema, META_KEYS)
 
       expect(tree.root).toBeTruthy()
       expect(tree.root!.children()[2]?.id).toBe('#/additionalProperties')
@@ -453,7 +464,7 @@ describe.skip('jsonschema diff tree tests', () => {
         },
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
       expect(tree.root?.children()[0].value()).toMatchObject({ $changes: { type: { action: 'replace' } } })
     })
@@ -470,7 +481,7 @@ describe.skip('jsonschema diff tree tests', () => {
         },
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
       expect(tree.root?.value()).toMatchObject({ $changes: { type: { action: 'replace' } } })
       expect(tree.root?.children()[0].meta).toMatchObject({ $nodeChange: { action: 'add' } })
@@ -497,7 +508,7 @@ describe.skip('jsonschema diff tree tests', () => {
         ],
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
       expect(tree.root?.children()[1].meta).toMatchObject({ $nodeChange: { action: 'remove' } })
     })
@@ -518,7 +529,7 @@ describe.skip('jsonschema diff tree tests', () => {
         type: 'array',
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
       expect(tree.root?.meta).toMatchObject({
         $childrenChanges: {
           '#/items/0': { action: 'remove' },
@@ -550,6 +561,7 @@ describe.skip('jsonschema diff tree tests', () => {
       }
 
       // TODO: api-smart-diff fix needed - expected result:
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const expectedMerged = {
         type: 'array',
         items: [
@@ -572,7 +584,7 @@ describe.skip('jsonschema diff tree tests', () => {
         },
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
       expect(tree.root?.meta).toMatchObject({
         $childrenChanges: {
@@ -621,7 +633,7 @@ describe.skip('jsonschema diff tree tests', () => {
         },
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
       expect(tree.root?.meta).toMatchObject({ $childrenChanges: { '#/properties/name': { action: 'add' } } })
       expect(tree.root?.children()[0].value()).toMatchObject({ $changes: { type: { action: 'replace' } } })
       expect(tree.root?.children()[1].meta).toMatchObject({ $nodeChange: { action: 'add' } })
@@ -662,7 +674,7 @@ describe.skip('jsonschema diff tree tests', () => {
         },
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
       expect(tree.root?.children()[0].value()).toMatchObject({ $changes: { type: { action: 'replace' } } })
       expect(tree.root?.children()[1].value()).toMatchObject({ $changes: { title: { action: 'add' } } })
     })
@@ -714,7 +726,7 @@ describe.skip('jsonschema diff tree tests', () => {
         },
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
       expect(tree.root?.children()[0].meta).toMatchObject({ $childrenChanges: { '#/properties/model/properties/parent': { action: 'remove' } } })
       expect(tree.root?.children()[0].value()).toMatchObject({ $changes: { required: { 0: { action: 'add' } } } })
       expect(tree.root?.children()[0].children()[0].meta).toMatchObject({ $metaChanges: { required: { action: 'add' } } })
@@ -738,7 +750,7 @@ describe.skip('jsonschema diff tree tests', () => {
         },
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
       expect(tree.root?.children()[0].value()).toMatchObject({ type: 'string' })
       expect(tree.root?.children()[0].meta).toMatchObject({ brokenRef: '#/defs/id' })
     })
@@ -792,7 +804,7 @@ describe.skip('jsonschema diff tree tests', () => {
         },
       }
 
-      const diffTree = createJsonSchemaDiffTreeForTest(schema, schema, metaKey, source, source)
+      const diffTree = createJsonSchemaDiffTreeForTest(schema, schema, META_KEYS, source, source)
       const root = diffTree.root
       const rootMeta = root?.meta
       const rootChangesSummary = rootMeta?.$nodeChangesSummary
@@ -872,7 +884,7 @@ describe.skip('jsonschema diff tree tests', () => {
         },
       }
 
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey, beforeSource, afterSource)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS, beforeSource, afterSource)
       expect(tree.root).toBeTruthy()
       const changesSummary = tree.root!.nested[1]?.meta?.$nodeChangesSummary
       // "non-breaking" because removed 1 prop from request body
@@ -929,7 +941,7 @@ describe.skip('jsonschema diff tree tests', () => {
           }
         }
       }
-      const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey, beforeSource, afterSource)
+      const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS, beforeSource, afterSource)
       expect(tree.root).toBeTruthy()
       expect(tree.root!.value()).toMatchObject({
         type: 'string',
@@ -1049,7 +1061,7 @@ describe.skip('jsonschema diff tree tests', () => {
       },
     }
 
-    const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+    const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
     expect(tree.root!.meta?.$nodeChangesSummary).toEqual(new Set([breaking, nonBreaking, annotation]))
     expect(tree.root!.children()[0].meta?.$nodeChangesSummary).toEqual(new Set([annotation]))
@@ -1083,7 +1095,7 @@ describe.skip('jsonschema diff tree tests', () => {
       },
     }
 
-    const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+    const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
     expect(tree.root!.meta?.$nodeChangesSummary).toEqual(new Set([breaking]))
   })
@@ -1126,7 +1138,7 @@ describe.skip('jsonschema diff tree tests', () => {
       },
     }
 
-    const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+    const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
     expect(tree.root!.meta?.$nodeChangesSummary).toEqual(new Set([breaking]))
   })
@@ -1168,7 +1180,7 @@ describe.skip('jsonschema diff tree tests', () => {
       },
     }
 
-    const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+    const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
     expect(tree.root!.meta?.$nodeChangesSummary).toEqual(new Set([breaking]))
   })
@@ -1211,7 +1223,7 @@ describe.skip('jsonschema diff tree tests', () => {
       },
     }
 
-    const tree = createJsonSchemaDiffTreeForTest(before, after, metaKey)
+    const tree = createJsonSchemaDiffTreeForTest(before, after, META_KEYS)
 
     expect(tree.root!.meta?.$nodeChangesSummary).toEqual(new Set([deprecated]))
   })
