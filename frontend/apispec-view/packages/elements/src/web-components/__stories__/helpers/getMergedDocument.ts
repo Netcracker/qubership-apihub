@@ -1,7 +1,7 @@
+import { aggregateDiffsWithRollup, apiDiff, COMPARE_MODE_DEFAULT, CompareResult } from '@netcracker/qubership-apihub-api-diff';
 import { denormalize, normalize, NormalizeOptions, RefErrorType, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier';
-import { apiDiff, COMPARE_MODE_DEFAULT, CompareResult } from '@netcracker/qubership-apihub-api-diff';
 import { safeStringify } from '@stoplight/json';
-import { diffMetaKey } from 'diff-block';
+import { aggregatedDiffMetaKey, diffMetaKey } from 'diff-block';
 
 const SYNTHETIC_TITLE_FLAG = Symbol('synthetic-title');
 const NORMALIZE_OPTIONS: NormalizeOptions = {
@@ -78,6 +78,8 @@ export const getCompareResult = (
       ].join('\n'));
     },
   });
+
+  aggregateDiffsWithRollup(compareResult.merged, diffMetaKey, aggregatedDiffMetaKey)
 
   // to avoid circular serializing in storybook
   if (isObject(compareResult.merged)) {
