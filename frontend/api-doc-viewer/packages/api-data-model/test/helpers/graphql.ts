@@ -43,6 +43,7 @@ export function createGraphApiDiffTreeForTests(
   after: unknown,
   diffsMetaKey: symbol,
   aggregatedDiffsMetaKey: symbol,
+  depth?: number,
   beforeSource: unknown = before,
   afterSource: unknown = after,
 ) {
