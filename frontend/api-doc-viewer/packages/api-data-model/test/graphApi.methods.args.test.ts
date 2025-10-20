@@ -1,6 +1,6 @@
 import { buildGraphApi, createGraphApiTreeForTests } from "./helpers/graphql"
 
-describe.skip('graphapi tree. methods args', () => {
+describe('graphapi tree. methods args', () => {
   const jestConsole = console
   beforeEach(() => {
     global.console = require('console')
@@ -19,7 +19,7 @@ describe.skip('graphapi tree. methods args', () => {
         method(arg: ID!): String!
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'output')
@@ -39,7 +39,7 @@ describe.skip('graphapi tree. methods args', () => {
         method(arg: String!): String!
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'output')
@@ -59,7 +59,7 @@ describe.skip('graphapi tree. methods args', () => {
         method(arg: Int!): String!
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'output')
@@ -79,7 +79,7 @@ describe.skip('graphapi tree. methods args', () => {
         method(arg: Float!): String!
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'output')
@@ -99,7 +99,7 @@ describe.skip('graphapi tree. methods args', () => {
         method(arg: Boolean!): String!
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'output')
@@ -121,7 +121,7 @@ describe.skip('graphapi tree. methods args', () => {
 
       scalar CustomScalar
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'output')
@@ -149,7 +149,7 @@ describe.skip('graphapi tree. methods args', () => {
         Last @deprecated(reason: "my reason")
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'output')
@@ -191,7 +191,7 @@ describe.skip('graphapi tree. methods args', () => {
         hash: Int! @deprecated
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 7)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'output')
@@ -230,7 +230,7 @@ describe.skip('graphapi tree. methods args', () => {
         hash: Int! @deprecated
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 7)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'output')
@@ -265,7 +265,7 @@ describe.skip('graphapi tree. methods args', () => {
       "Description for my primitive union"
       union MyPrimitiveUnion = ID | String | Int | Float | Boolean
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'output')
@@ -303,7 +303,7 @@ describe.skip('graphapi tree. methods args', () => {
         data: String!
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 8)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'output')

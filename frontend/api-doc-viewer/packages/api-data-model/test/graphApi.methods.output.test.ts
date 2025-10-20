@@ -1,6 +1,6 @@
 import { buildGraphApi, createGraphApiTreeForTests } from "./helpers/graphql"
 
-describe.skip('graphapi tree. methods output', () => {
+describe('graphapi tree. methods output', () => {
   const jestConsole = console
   beforeEach(() => {
     global.console = require('console')
@@ -19,7 +19,7 @@ describe.skip('graphapi tree. methods output', () => {
         test: ID!
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 4)
     const propertyOutput = tree.root!
       .children()[0] // query
       ?.children()?.find(node => node.kind === 'output')
@@ -44,7 +44,7 @@ describe.skip('graphapi tree. methods output', () => {
         Second @deprecated
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 4)
     const propertyOutput = tree.root!
       .children()[0] // query
       ?.children()?.find(node => node.kind === 'output')
@@ -76,7 +76,7 @@ describe.skip('graphapi tree. methods output', () => {
         data: String!
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 6)
     const propertyOutput = tree.root!
       .children()[0] // query
       ?.children()?.find(node => node.kind === 'output')
@@ -99,7 +99,7 @@ describe.skip('graphapi tree. methods output', () => {
 
       union Primitive = ID | String | Int | Float | Boolean
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const propertyOutput = tree.root!
       .children()[0] // query
       ?.children()?.find(node => node.kind === 'output')
@@ -134,7 +134,7 @@ describe.skip('graphapi tree. methods output', () => {
         data: String!
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 7)
     const propertyOutput = tree.root!
       .children()[0] // query
       ?.children()?.find(node => node.kind === 'output')
