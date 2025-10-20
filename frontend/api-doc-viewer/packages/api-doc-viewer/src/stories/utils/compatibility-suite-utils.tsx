@@ -31,7 +31,10 @@ export type GraphQLCompatibilitySuiteStoryArgs = { before: string, after: string
 const FONT_FAMILIES: string[] = ['Inter']
 
 export function GraphQLStoryComponent({ before, after }: GraphQLCompatibilitySuiteStoryArgs) {
-  const { merged } = getCompareResult(buildGraphApiSchema(before), buildGraphApiSchema(after))
+  const { merged } = getCompareResult(
+    buildGraphApiSchema(before),
+    buildGraphApiSchema(after),
+  )
 
   const [fontLoaded, setFontLoaded] = useState(false)
 

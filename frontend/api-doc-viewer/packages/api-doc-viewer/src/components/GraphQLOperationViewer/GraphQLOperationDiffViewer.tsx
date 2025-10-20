@@ -35,7 +35,7 @@ import { LevelContext } from '../../contexts/LevelContext'
 import { ErrorBoundary } from "../services/ErrorBoundary";
 import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback";
 import { useLogRenderCompleted } from "../../hooks/debug-hook";
-import { DiffType } from "@netcracker/qubership-apihub-api-diff";
+import { aggregateDiffsWithRollup, DiffType } from "@netcracker/qubership-apihub-api-diff";
 
 // FIXME 28.09.23 // Fix generic types
 
@@ -74,6 +74,8 @@ const GraphQLOperationDiffViewerInner: FC<GraphQLOperationDiffViewerProps> = (pr
     filters = [],
     metaKeys
   } = props
+
+  aggregateDiffsWithRollup(source, metaKeys.diffsMetaKey, metaKeys.aggregatedDiffsMetaKey)
 
   const tree = useMemo(
     () => createGraphApiDiffTree(source, metaKeys, undefined, undefined, operationPath),
