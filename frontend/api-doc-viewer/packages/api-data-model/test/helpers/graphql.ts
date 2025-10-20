@@ -25,14 +25,14 @@ export function graphapi(strings: TemplateStringsArray): GraphApiSchema {
   return buildGraphApi(strings[0])
 }
 
-export function createGraphApiTreeForTests(source: unknown) {
+export function createGraphApiTreeForTests(source: unknown, depth?: number) {
   const options: NormalizeOptions = {
     validate: true,
     unify: true,
   }
   const normalizedSchema = normalize(source, options)
   const mergedSource = denormalize(normalizedSchema, options)
-  return createGraphApiTree(mergedSource)
+  return createGraphApiTree(mergedSource, depth)
 }
 
 export const metaKey = Symbol('diff')
