@@ -1,7 +1,7 @@
-import { DiffAction, annotation, breaking, nonBreaking, unclassified } from "@netcracker/qubership-apihub-api-diff"
+import { DiffAction, annotation, breaking, nonBreaking } from "@netcracker/qubership-apihub-api-diff"
 import { buildGraphApi, createGraphApiDiffTreeForTests, graphapi, metaKey, aggregatedDiffsMetaKey } from "./helpers/graphql"
 
-describe.skip('args', () => {
+describe('args', () => {
   it('arg changed', () => {
     const expectedDescription = "By default pretty = false and string has the only line. If pretty = true, it'll be formatted as JSON"
     const before = graphapi`
@@ -31,7 +31,7 @@ describe.skip('args', () => {
         ): String!
       }
     `)
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
     const queryOutput = tree.root?.children()[0]?.children().find(node => node.kind === 'output')
     const propertyWithArg = queryOutput?.children().find(node => node.key === 'asString')
     const arg = propertyWithArg
@@ -84,7 +84,7 @@ describe.skip('args', () => {
         ): String!
       }
     `)
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
     const queryOutput = tree.root?.children()[0]?.children().find(node => node.kind === 'output')
     const propertyWithArg = queryOutput?.children().find(node => node.key === 'asString')
     const arg = propertyWithArg
@@ -138,7 +138,7 @@ describe.skip('args', () => {
         asString: String!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
     const queryOutput = tree.root?.children()[0]?.children().find(node => node.kind === 'output')
     const propertyWithArg = queryOutput?.children().find(node => node.key === 'asString')
     const arg = propertyWithArg
@@ -198,7 +198,7 @@ describe.skip('args', () => {
       scalar JSON
       scalar XML
     `)
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 6)
     const queryOutput = tree.root?.children()[0]?.children().find(node => node.kind === 'output')
     const propertyWithArg = queryOutput?.children().find(node => node.key === 'asString')
     const arg = propertyWithArg

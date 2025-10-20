@@ -9,7 +9,7 @@ import {
 import { isGraphSchemaNodeEnumValue } from "../src"
 import { createGraphApiDiffTreeForTests, graphapi, metaKey, aggregatedDiffsMetaKey } from "./helpers/graphql"
 
-describe.skip('output', () => {
+describe('output', () => {
   it('type changed: scalar -> enum', () => {
     const before = graphapi`
       type Query {
@@ -34,7 +34,7 @@ describe.skip('output', () => {
       }
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
     const root = tree.root
     const output = root!
       .children().find(child => child.kind === 'query')!
@@ -107,7 +107,7 @@ describe.skip('output', () => {
 
     const pathOutput = '#/queries/fruit/output'
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
     const root = tree.root
     const output = root!
       .children().find(child => child.kind === 'query')!
@@ -157,7 +157,7 @@ describe.skip('output', () => {
         test: [String!]!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!
@@ -265,7 +265,7 @@ describe.skip('output', () => {
         test: [String!]!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!
@@ -322,7 +322,7 @@ describe.skip('output', () => {
         test: [String!]!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!
@@ -383,7 +383,7 @@ describe.skip('output', () => {
         name: String
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!
@@ -420,6 +420,7 @@ describe.skip('output', () => {
     })
   })
 
+  // FIXME 20.10.25 // Both pairs of methods are "removed", check "getPropsChanges" for field "type"
   it('type changed: object -> interface', () => {
     const before = graphapi`
       type Query {
@@ -511,7 +512,7 @@ describe.skip('output', () => {
       }
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -601,7 +602,7 @@ describe.skip('output', () => {
       }
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 6)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -666,7 +667,7 @@ describe.skip('output', () => {
         isExotic: Boolean
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
 
     const pathOutput = '#/queries/fruit/output'
     const pathMethods = `${pathOutput}/typeDef/type/methods/fruit/output/typeDef/type/methods`
@@ -693,7 +694,7 @@ describe.skip('output', () => {
     expect(fruit?.meta.$childrenChanges).toMatchObject({
       [`${pathMethods}/isExotic`]: expectedDiffAddProperty
     })
-    const props = fruit?.children()
+    const props = fruit?.children() ?? []
     expect(props.length).toBe(4)
     expect(props[0]?.id).toBe(`${pathMethods}/title`)
     expect(props[1]?.id).toBe(`${pathMethods}/flavour`)
@@ -730,7 +731,7 @@ describe.skip('output', () => {
         shape: String!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
 
     const pathOutput = '#/queries/fruit/output'
     const pathMethods = `${pathOutput}/typeDef/type/methods/fruit/output/typeDef/type/methods`
@@ -757,7 +758,7 @@ describe.skip('output', () => {
     expect(fruit?.meta.$childrenChanges).toMatchObject({
       [`${pathMethods}/isExotic`]: expectedDiffRemoveProperty
     })
-    const props = fruit?.children()
+    const props = fruit?.children() ?? []
     expect(props.length).toBe(4)
     expect(props[0]?.id).toBe(`${pathMethods}/title`)
     expect(props[1]?.id).toBe(`${pathMethods}/flavour`)
@@ -792,7 +793,7 @@ describe.skip('output', () => {
       scalar Parallelogram
       scalar Rectangle
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
 
     const pathOneOfItem = '#/queries/test/output/typeDef/type/methods/shape/output/typeDef/type/oneOf'
 
@@ -867,7 +868,7 @@ describe.skip('output', () => {
       scalar Rectangle
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
 
     const pathOneOfItem = '#/queries/test/output/typeDef/type/methods/shape/output/typeDef/type/oneOf'
 
