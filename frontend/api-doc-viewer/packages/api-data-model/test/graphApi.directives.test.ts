@@ -1,6 +1,6 @@
 import { createGraphApiTreeForTests, graphapi } from "./helpers/graphql"
 
-describe.skip('GraphAPI. Directives', () => {
+describe('GraphAPI. Directives', () => {
   it('on arg', () => {
     const source = graphapi`
       directive @foo on ARGUMENT_DEFINITION
@@ -8,7 +8,7 @@ describe.skip('GraphAPI. Directives', () => {
         test(arg: Int @foo): String
       }
     `
-    const tree = createGraphApiTreeForTests(source)
+    const tree = createGraphApiTreeForTests(source, 5)
 
     const args = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -34,7 +34,7 @@ describe.skip('GraphAPI. Directives', () => {
         field: Int @foo
       }
     `
-    const tree = createGraphApiTreeForTests(source)
+    const tree = createGraphApiTreeForTests(source, 6)
 
     const args = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -63,7 +63,7 @@ describe.skip('GraphAPI. Directives', () => {
         field: String @foo
       }
     `
-    const tree = createGraphApiTreeForTests(source)
+    const tree = createGraphApiTreeForTests(source, 5)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -91,7 +91,7 @@ describe.skip('GraphAPI. Directives', () => {
         value @foo
       }
     `
-    const tree = createGraphApiTreeForTests(source)
+    const tree = createGraphApiTreeForTests(source, 4)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -111,7 +111,7 @@ describe.skip('GraphAPI. Directives', () => {
       "Description"
       directive @foo(val: String = "Test") repeatable on FIELD_DEFINITION | ENUM_VALUE
     `
-    const tree = createGraphApiTreeForTests(source)
+    const tree = createGraphApiTreeForTests(source, 3)
     const directive = tree.root!
       .children().find(child => child.kind === 'directive')
 
@@ -137,7 +137,7 @@ describe.skip('GraphAPI. Directives', () => {
         test: String @foo(val: "My Value")
       }
     `
-    const tree = createGraphApiTreeForTests(source)
+    const tree = createGraphApiTreeForTests(source, 5)
 
     const directiveDefinition = tree.root!
       .children().find(child => child.kind === 'directive')

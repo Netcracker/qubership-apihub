@@ -60,6 +60,10 @@ export function createJsonSchemaTreeCrawlHook(
       parent?.addChild(nodeCreationResult.node);
     }
 
+    if (alreadyExisted) {
+      return { done: true }
+    }
+
     /* Feature "Lazy Tree Building" */
     if (
       state.treeLevel >= state.maxTreeLevel &&

@@ -7,7 +7,7 @@ function findNodeChild(node: IModelTreeNode<any, any, any>): IModelTreeNode<any,
     .children().find(({ key, kind }) => kind === 'method' && key === 'child')!
 }
 
-describe.skip('cycled entities', () => {
+describe('cycled entities', () => {
   const jestConsole = console
   beforeEach(() => {
     global.console = require('console')
@@ -26,17 +26,19 @@ describe.skip('cycled entities', () => {
         child: CycledEntity
       }
     `
-    const tree = createGraphApiTreeForTests(source)
+    const tree = createGraphApiTreeForTests(source, 20)
 
     const query = tree.root!.children().find(child => child.kind === 'query')!
 
     const childFirst = findNodeChild(query)
     const childSecond = findNodeChild(childFirst)
-    const childThird = findNodeChild(childSecond)
+    // const childThird = findNodeChild(childSecond)
 
     expect(childFirst!.isCycle).toBe(false)
     expect(childSecond!.isCycle).toBe(true)
-    expect(childThird).toBe(childSecond)
+    // expect(childThird).toBe(childSecond)
+    // because it is irrational to expand the same entity deeper
+    expect(childSecond.children().length).toBe(0)
 
     expect(tree).toBeTruthy()
   })
