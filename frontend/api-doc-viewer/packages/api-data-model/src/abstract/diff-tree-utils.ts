@@ -1,8 +1,8 @@
 import { Diff, DiffType } from '@netcracker/qubership-apihub-api-diff'
 import { calcChanges, isCombinerNode, isDiff, isEqualSets, isObject, mergeSets } from '../utils'
 import { DiffNodeMeta, DiffNodeValue, NodeChangesSummary } from './diff'
-import { IModelTreeNode } from './model/types'
 import { LazyBuildingContext } from './model/model-tree-node.impl'
+import { IModelTreeNode } from './model/types'
 
 // Diff Tree Utils
 
@@ -93,9 +93,17 @@ function hasAggregatedChildrenDiffs<S extends symbol>(
     return false
   }
   const maybeAggregatedDiffs = value[metaKey]
-  if (!(maybeAggregatedDiffs instanceof Set)) {
+  return isDiffsSet(maybeAggregatedDiffs)
+}
+
+function isDiffsSet(value: unknown): value is Set<Diff> {
+  if (!(value instanceof Set)) {
     return false
   }
-  const maybeAggregatedDiffsArray = Array.from(maybeAggregatedDiffs)
-  return maybeAggregatedDiffsArray.every(maybeDiff => maybeDiff && isDiff(maybeDiff))
+  for (const maybeDiff of (value as Set<unknown>)) {
+    if (!maybeDiff || !isDiff(maybeDiff)) {
+      return false
+    }
+  }
+  return true
 }
