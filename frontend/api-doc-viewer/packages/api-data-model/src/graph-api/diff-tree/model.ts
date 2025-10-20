@@ -17,7 +17,6 @@ import {
   GRAPH_API_NODE_KIND_LIST,
   GRAPH_API_NODE_KIND_OBJECT,
   GraphApiAnyDefinition,
-  GraphApiDirective,
   isGraphApiAnyDefinition,
   isGraphApiAnyUsage,
   isGraphApiArgs,
@@ -31,7 +30,6 @@ import {
   isGraphApiOperation,
   isGraphApiRef
 } from '@netcracker/qubership-apihub-graphapi'
-import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 import { DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstract/diff'
 import { LazyBuildingContext } from '../../abstract/model/model-tree-node.impl'
 import { CreateNodeResult, IModelTreeNode } from '../../abstract/model/types'
@@ -43,7 +41,6 @@ import {
   isDiff,
   isDiffMetaRecord,
   isObject,
-  PathUtils,
   pick,
   setValueByPath
 } from '../../utils'
@@ -318,6 +315,7 @@ export class GraphApiModelDiffTree<
         if (rawChangesForDeprecated) {
           const maybeDiff = extendToObject(rawChangesForDeprecated)
           const diff = isDiff(maybeDiff) ? maybeDiff : undefined
+          this.remapDeprecationReasonDiff(diff)
           diff && setValueByPath($metaChanges, diff, ...['deprecationReason'])
         }
         if (Object.keys(otherRawChanges).length > 0) {
@@ -523,6 +521,7 @@ export class GraphApiModelDiffTree<
           ) {
             const maybeDiff = maybeDirectivesRawChanges.deprecated as unknown
             const diff = isDiff(maybeDiff) ? maybeDiff : undefined
+            this.remapDeprecationReasonDiff(diff)
             diff && setValueByPath($changes, diff, ...['values', enumKey, 'deprecationReason'])
           }
           // deprecation reason (replaced)
@@ -592,143 +591,6 @@ export class GraphApiModelDiffTree<
     return this.createJsonSchemaNode(params, lazyBuildingContext)
   }
 
-  /** @deprecated
-   *
-   * @param path
-   * @param change
-   * @private
-   */
-  private transformChangeForDeprecation(path: JsonPath, change: Diff | DiffMetaRecord): Diff | DiffMetaRecord {
-    if (path.length < 2) {
-      return change
-    }
-    if (!isDiff(change)) {
-      return change
-    }
-    const pathWithUtils = new PathUtils(path)
-    if (pathWithUtils.endsWith(['directives', 'deprecated'])) {
-      if (isDiffAdd(change)) {
-        return {
-          ...change,
-          afterValue: (change.afterValue as GraphApiDirective)?.meta?.reason,
-          afterNormalizedValue: (change.afterValue as GraphApiDirective)?.meta?.reason,
-        } as DiffAdd
-      }
-      if (isDiffRemove(change)) {
-        return {
-          ...change,
-          beforeValue: (change.beforeValue as GraphApiDirective)?.meta?.reason,
-          beforeNormalizedValue: (change.beforeValue as GraphApiDirective)?.meta?.reason,
-        } as DiffRemove
-      }
-    }
-    return change
-  }
-
-  private transformPathForDeprecation(path: JsonPath): JsonPath {
-    if (path.length < 2) {
-      return path
-    }
-    const pathUtils = new PathUtils(path)
-    // add, remove
-    const pathToDirective = ['directives', 'deprecated']
-    if (pathUtils.endsWith(pathToDirective)) {
-      return [...path.slice(0, path.length - pathToDirective.length), 'deprecationReason']
-    }
-    // replace
-    const pathToReason = [...pathToDirective, 'meta', 'reason']
-    if (pathUtils.endsWith(pathToReason)) {
-      return [...path.slice(0, path.length - pathToReason.length), 'deprecationReason']
-    }
-    return path
-  }
-
-  private transformChangeForType(path: JsonPath, change: Diff | DiffMetaRecord): Diff | DiffMetaRecord {
-    if (path.length === 0) {
-      return change
-    }
-    if (!isDiff(change)) {
-      return change
-    }
-    const pathUtils = new PathUtils(path)
-    if (pathUtils.endsWith(['type']) && isDiffReplace(change)) {
-      const typeBefore = change.beforeValue
-      const typeAfter = change.afterValue
-      const isObjectBefore = isObject(typeBefore)
-      const isObjectAfter = isObject(typeAfter)
-      const kindBefore = isObjectBefore ? typeBefore.kind : undefined
-      const kindAfter = isObjectAfter ? typeAfter.kind : undefined
-
-      const newChange = { ...change }
-      newChange.beforeValue = kindBefore
-      newChange.afterValue = kindAfter
-
-      return newChange
-    }
-    return change
-  }
-
-  private extractChangeForEnumValues(path: JsonPath, change: Diff | DiffMetaRecord): [Diff | DiffMetaRecord, JsonPath] | undefined {
-    if (path.length === 0) {
-      return undefined
-    }
-    if (!isDiff(change)) {
-      return undefined
-    }
-    const pathUtils = new PathUtils(path)
-    // case: not enum <-> enum
-    if (pathUtils.endsWith(['type']) && isDiffReplace(change)) {
-      const typeBefore = change.beforeValue
-      const typeAfter = change.afterValue
-      const valuesBefore = isObject(typeBefore) && isObject(typeBefore.values) ? typeBefore.values : undefined
-      const valuesAfter = isObject(typeAfter) && isObject(typeAfter.values) ? typeAfter.values : undefined
-
-      const valuesChanges: DiffMetaRecord = {}
-      if (valuesBefore) {
-        Object.entries(valuesBefore).forEach(([enumKey, enumValue]) => {
-          valuesChanges[enumKey] = {
-            ...change,
-            action: DiffAction.remove,
-            beforeValue: enumValue,
-            afterValue: undefined,
-            afterNormalizedValue: undefined,
-            afterDeclarationPaths: undefined,
-          } as DiffRemove
-        })
-      }
-      if (valuesAfter) {
-        Object.entries(valuesAfter).forEach(([enumKey, enumValue]) => {
-          valuesChanges[enumKey] = {
-            ...change,
-            action: DiffAction.add,
-            afterValue: enumValue,
-            beforeValue: undefined,
-            beforeNormalizedValue: undefined,
-            beforeDeclarationPaths: undefined,
-          } as DiffAdd
-        })
-      }
-
-      const newPath = [...path.slice(0, path.length - 1), 'values']
-      return Object.keys(valuesChanges).length > 0
-        ? [valuesChanges, newPath]
-        : undefined
-    }
-    // case: enum values changed by itself
-    if (pathUtils.endsWith(['type', 'values', '*'])) {
-      const newPath = [...path]
-      newPath.splice(newPath.length - 3, 1)
-      return Object.keys(change).length > 0 ? [change, newPath] : undefined
-    }
-    if (pathUtils.endsWith(['type', 'values', '*', 'description']) ||
-      pathUtils.endsWith(['type', 'values', '*', 'deprecationReason'])) {
-      const newPath = [...path]
-      newPath.splice(newPath.length - 4, 1)
-      return Object.keys(change).length > 0 ? [change, newPath] : undefined
-    }
-    return undefined
-  }
-
   protected getNodeChange = (params: JsonSchemaCreateNodeParams<T, K, M>) => {
     const { id, parent = null, container = null } = params
     const inheritedChanges = container?.meta?.$nodeChange ?? parent?.meta.$nodeChange
@@ -752,5 +614,24 @@ export class GraphApiModelDiffTree<
           },
         })
         : undefined
+  }
+
+  private remapDeprecationReasonDiff(diff: Diff | undefined): void {
+    if (!diff) {
+      return
+    }
+
+    if (isDiffAdd(diff)) {
+      const afterValue = diff.afterValue
+      if (isGraphApiDirective(afterValue)) {
+        diff.afterValue = afterValue.meta?.reason
+      }
+    }
+    if (isDiffRemove(diff)) {
+      const beforeValue = diff.beforeValue
+      if (isGraphApiDirective(beforeValue)) {
+        diff.beforeValue = beforeValue.meta?.reason
+      }
+    }
   }
 }

@@ -1,13 +1,20 @@
-import { annotation, breaking, deprecated, DiffAction, nonBreaking, unclassified } from "@netcracker/qubership-apihub-api-diff"
-import { DiffNodeValue } from "../src/abstract/diff"
-import { isGraphSchemaNodeEnumValue } from "../src/graph-api"
-import { aggregatedDiffsMetaKey, createGraphApiDiffTreeForTests, graphapi, metaKey } from "./helpers/graphql"
+import {
+  annotation,
+  breaking,
+  deprecated,
+  DiffAction,
+  nonBreaking,
+  unclassified,
+} from '@netcracker/qubership-apihub-api-diff'
+import { DiffNodeValue } from '../src/abstract/diff'
+import { isGraphSchemaNodeEnumValue } from '../src/graph-api'
+import { aggregatedDiffsMetaKey, createGraphApiDiffTreeForTests, graphapi, metaKey } from './helpers/graphql'
 
 function fail(message?: string): never {
   throw new Error(message)
 }
 
-describe.skip('output', () => {
+describe('output', () => {
   it('type changed: scalar -> enum', () => {
     const before = graphapi`
       type Query {
@@ -396,6 +403,7 @@ describe.skip('output', () => {
     })
   })
 
+  // FIXME 20.10.25 // Both pairs of methods are "removed", check "getPropsChanges" for field "type"
   it('type changed: object -> interface', () => {
     const before = graphapi`
       type Query {
@@ -548,7 +556,7 @@ describe.skip('output', () => {
       }
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
     const root = tree.root
 
     const pathCommon = `#/queries/fruit/output`
@@ -630,7 +638,7 @@ describe.skip('output', () => {
     expect(queryFruitOutput?.meta.$childrenChanges).toMatchObject({
       [`${pathMethod}/isExotic`]: expectedDiffAddProperty
     })
-    const props = queryFruitOutput?.children()
+    const props = queryFruitOutput?.children() ?? []
     expect(props.length).toBe(4)
     expect(props[0]?.id).toBe(`${pathMethod}/title`)
     expect(props[1]?.id).toBe(`${pathMethod}/flavour`)
@@ -683,7 +691,7 @@ describe.skip('output', () => {
     expect(queryFruitOutput?.meta.$childrenChanges).toMatchObject({
       [`${pathMethod}/isExotic`]: expectedDiffRemoveProperty
     })
-    const props = queryFruitOutput?.children()
+    const props = queryFruitOutput?.children() ?? []
     expect(props.length).toBe(4)
     expect(props[0]?.id).toBe(`${pathMethod}/title`)
     expect(props[1]?.id).toBe(`${pathMethod}/flavour`)

@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 
 import { denormalize, normalize, NormalizeOptions } from '@netcracker/qubership-apihub-api-unifier'
-import { apiDiff } from '@netcracker/qubership-apihub-api-diff'
+import { aggregateDiffsWithRollup, apiDiff } from '@netcracker/qubership-apihub-api-diff'
 import { buildFromSchema, GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 import { buildSchema } from 'graphql'
 import { createGraphApiDiffTree } from '../../src/graph-api/diff-tree/build'
@@ -53,5 +53,16 @@ export function createGraphApiDiffTreeForTests(
     metaKey,
     unify: true,
   }).merged
-  return createGraphApiDiffTree(mergedSource, { diffsMetaKey: diffsMetaKey, aggregatedDiffsMetaKey: aggregatedDiffsMetaKey })
+
+  aggregateDiffsWithRollup(mergedSource, diffsMetaKey, aggregatedDiffsMetaKey)
+
+  return createGraphApiDiffTree(
+    mergedSource,
+    {
+      diffsMetaKey: diffsMetaKey,
+      aggregatedDiffsMetaKey: aggregatedDiffsMetaKey,
+    },
+    undefined,
+    depth,
+  )
 }

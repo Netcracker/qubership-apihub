@@ -9,7 +9,7 @@ import { LazyBuildingContext } from '../../../abstract/model/model-tree-node.imp
 import { crawlHooksGraphApiTree } from '../build'
 import { isDiff, isDiffMetaRecord, isObject } from '../../../utils'
 import { DiffRemove, DiffReplace, isDiffRemove, isDiffReplace } from '@netcracker/qubership-apihub-api-diff'
-import { crawlHooksGraphApiDiffTree } from '../../../index'
+import { crawlHooksGraphApiDiffTree } from '../../diff-tree/build'
 import { isGraphApiAnyDefinition } from '@netcracker/qubership-apihub-graphapi'
 
 function shouldCrawlDiff(value: unknown): value is DiffRemove | DiffReplace {
