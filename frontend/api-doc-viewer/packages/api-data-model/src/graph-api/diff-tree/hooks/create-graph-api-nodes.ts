@@ -49,11 +49,6 @@ export function createGraphApiDiffTreeCrawlHook(
     const id = nodeIdPrefix + buildPointer(path)
     const { kind } = rules
 
-    let nodeCreationResult: any = {
-      value,
-      node: {},
-    }
-
     const lazyBuildingContext: LazyBuildingContext<any, any, any> = {
       tree: tree,
       crawlValue: value,
@@ -65,12 +60,19 @@ export function createGraphApiDiffTreeCrawlHook(
       nextMaxLevel: state.maxTreeLevel + 1,
     }
 
+    let nodeCreationResult: any = {
+      value,
+      node: {},
+    }
+
+    const alreadyExisted = state.alreadyConvertedMappingStack.has(value)
+
     switch (kind) {
       case graphApiNodeKind.query:
       case graphApiNodeKind.mutation:
       case graphApiNodeKind.subscription: {
         nodeCreationResult = tree.createGraphSchemaNode(
-          { id, kind, key, value, parent, newDataLevel: false, isCycle: false },
+          { id, kind, key, value, parent, newDataLevel: false, isCycle: alreadyExisted },
           lazyBuildingContext,
         )
         break
@@ -92,7 +94,7 @@ export function createGraphApiDiffTreeCrawlHook(
           },
           newDataLevel: false,
         }
-        nodeCreationResult.node = tree.createNode(id, kind, key, false, params, lazyBuildingContext)
+        nodeCreationResult.node = tree.createNode(id, kind, key, alreadyExisted, params, lazyBuildingContext)
         break
       }
     }

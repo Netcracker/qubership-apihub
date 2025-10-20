@@ -42,13 +42,15 @@ export function createJsonSchemaTreeCrawlHook(
     }
     /* --- */
 
+    const alreadyExisted = state.alreadyConvertedMappingStack.has(value)
+
     const nodeCreationResult = container
       ? tree.createJsonSchemaNode(
-        { id, kind, key, value, container, parent: container.parent, isCycle: false /*TODO*/ },
+        { id, kind, key, value, container, parent: container.parent, isCycle: alreadyExisted },
         lazyBuildingContext,
       )
       : tree.createJsonSchemaNode(
-        { id, kind, key, value, parent, isCycle: false /*TODO*/ },
+        { id, kind, key, value, parent, isCycle: alreadyExisted },
         lazyBuildingContext,
       )
 

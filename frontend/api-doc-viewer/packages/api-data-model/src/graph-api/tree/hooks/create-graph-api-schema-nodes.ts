@@ -98,17 +98,6 @@ export function createGraphSchemaTreeCrawlHook(
         break
     }
 
-    const nodeCreationParams = {
-      id,
-      kind,
-      key,
-      value,
-      parent,
-      container,
-      newDataLevel: newDataLevel,
-      isCycle: false,
-    }
-
     /* Feature "Lazy Tree Building" */
     const lazyBuildingContext: LazyBuildingContext<any, any, any> = {
       tree: tree,
@@ -123,6 +112,19 @@ export function createGraphSchemaTreeCrawlHook(
       nextMaxLevel: state.maxTreeLevel,
     }
     /* --- */
+
+    const alreadyExisted = state.alreadyConvertedMappingStack.has(value)
+
+    const nodeCreationParams = {
+      id,
+      kind,
+      key,
+      value,
+      parent,
+      container,
+      newDataLevel: newDataLevel,
+      isCycle: alreadyExisted,
+    }
 
     const nodeCreationResult = tree.createGraphSchemaNode(nodeCreationParams, lazyBuildingContext)
 

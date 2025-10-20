@@ -51,6 +51,7 @@ export function createGraphApiTreeCrawlHook(
       node: {},
     }
 
+    /* Feature "Lazy Tree Building" */
     const lazyBuildingContext: LazyBuildingContext<any, any, any> = {
       tree: tree,
       crawlValue: value,
@@ -61,6 +62,9 @@ export function createGraphApiTreeCrawlHook(
       nextLevel: state.treeLevel,
       nextMaxLevel: state.maxTreeLevel,
     }
+    /* --- */
+
+    const alreadyExisted = state.alreadyConvertedMappingStack.has(value)
 
     const newDataLevel = false
     switch (kind) {
@@ -75,7 +79,7 @@ export function createGraphApiTreeCrawlHook(
           parent,
           container,
           newDataLevel: newDataLevel,
-          isCycle: false,
+          isCycle: alreadyExisted,
         }, lazyBuildingContext)
         break
       }
@@ -91,7 +95,7 @@ export function createGraphApiTreeCrawlHook(
           },
           newDataLevel: newDataLevel,
         }
-        nodeCreationResult.node = tree.createNode(id, kind, key, false, params)
+        nodeCreationResult.node = tree.createNode(id, kind, key, alreadyExisted, params)
         break
       }
     }

@@ -34,7 +34,7 @@ import { TopLevelPropsMediaTypesContext } from '../../contexts/TopLevelPropsMedi
 import { PropsWithTopLevelPropsMediaTypesMap } from '../../types/internal/PropsWithTopLevelPropsMediaTypesMap'
 import { ErrorBoundary } from "../services/ErrorBoundary";
 import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback";
-import { DiffType } from '@netcracker/qubership-apihub-api-diff'
+import { aggregateDiffsWithRollup, DiffType } from '@netcracker/qubership-apihub-api-diff'
 
 export type JsonSchemaDiffViewerProps = {
   schema: unknown,
@@ -70,6 +70,8 @@ const JsonSchemaDiffViewerInner: FC<JsonSchemaDiffViewerProps> = (props) => {
     // FIXME 18.06.24 // Get rid of it when future wonderful AMT+ADV are ready!
     topLevelPropsMediaTypes
   } = props
+
+  aggregateDiffsWithRollup(schema, metaKeys.diffsMetaKey, metaKeys.aggregatedDiffsMetaKey)
 
   const tree = useMemo(
     () => createJsonSchemaDiffTree(schema, metaKeys),

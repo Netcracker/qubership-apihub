@@ -1,6 +1,13 @@
 import { JSONSchema4 } from 'json-schema'
 
-import { annotation, apiDiff, breaking, deprecated, nonBreaking } from '@netcracker/qubership-apihub-api-diff'
+import {
+  aggregateDiffsWithRollup,
+  annotation,
+  apiDiff,
+  breaking,
+  deprecated,
+  nonBreaking,
+} from '@netcracker/qubership-apihub-api-diff'
 import { createJsonSchemaDiffTree } from '../src'
 import { ORIGINS_FLAG, SYNTHETIC_TITLE_FLAG } from '../src/abstract/constants'
 
@@ -29,10 +36,12 @@ export const createJsonSchemaDiffTreeForTest = (
     allowNotValidSyntheticChanges: true,
   }).merged
 
+  aggregateDiffsWithRollup(merged, metaKeys.diffsMetaKey, metaKeys.aggregatedDiffsMetaKey)
+
   return createJsonSchemaDiffTree(merged, metaKeys)
 }
 
-describe.skip('jsonschema diff tree tests', () => {
+describe('jsonschema diff tree tests', () => {
   const jestConsole = console
   beforeEach(() => {
     global.console = require('console')

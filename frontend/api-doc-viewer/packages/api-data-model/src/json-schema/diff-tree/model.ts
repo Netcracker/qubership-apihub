@@ -138,6 +138,17 @@ export class JsonSchemaModelDiffTree<
       }
     }
 
+    const valueExamples = extendToObject(_value.examples)
+    if (valueExamples) {
+      const maybeDiffMetaRecordForExamples = valueExamples[this.metaKey]
+      if (isDiffMetaRecord(maybeDiffMetaRecordForExamples)) {
+        for (const changedExampleItemIndex of Object.keys(maybeDiffMetaRecordForExamples)) {
+          const maybeDiff = maybeDiffMetaRecordForExamples[changedExampleItemIndex]
+          setValueByPath(changes, maybeDiff, ...['examples', changedExampleItemIndex])
+        }
+      }
+    }
+
     const notHandledProps = props.filter(prop => !JSON_SCHEMA_SPECIFICALLY_HANDLED_PROPS.has(prop))
 
     for (const observedProperty of notHandledProps) {

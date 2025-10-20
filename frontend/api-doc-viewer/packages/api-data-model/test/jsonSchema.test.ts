@@ -3,7 +3,7 @@ import { JSONSchema4 } from 'json-schema'
 import { JsonSchemaModelTree } from '../src'
 import { createJsonSchemaTreeForTests } from './helpers/json-schema'
 
-describe.skip('jsonschema transformation tests', () => {
+describe('jsonschema transformation tests', () => {
   describe('simple schema', () => {
     it('should create tree from simple jsonSchema', () => {
       const schema: JSONSchema4 = {
@@ -16,6 +16,7 @@ describe.skip('jsonschema transformation tests', () => {
       const tree = createJsonSchemaTreeForTests(schema)
 
       expect(tree.root).toMatchObject({ id: '#', type: 'simple', parent: null })
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { example, ...rest } = schema
       expect(tree.root?.meta).toMatchObject({ _fragment: { ...rest, examples: ['a'] } })
     })
@@ -50,6 +51,7 @@ describe.skip('jsonschema transformation tests', () => {
 
       const tree = createJsonSchemaTreeForTests(schema)
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { exclusiveMaximum, ...rest } = schema
 
       expect(tree.root).toMatchObject({ id: '#', type: 'simple', parent: null })
