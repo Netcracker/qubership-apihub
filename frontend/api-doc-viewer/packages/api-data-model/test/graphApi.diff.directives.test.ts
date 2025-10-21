@@ -1,7 +1,7 @@
 import { annotation, deprecated, DiffAction, nonBreaking, unclassified } from "@netcracker/qubership-apihub-api-diff"
 import { createGraphApiDiffTreeForTests, graphapi, metaKey, aggregatedDiffsMetaKey } from "./helpers/graphql"
 
-describe.skip('directive changes', () => {
+describe('directive changes', () => {
   it('enum value, added deprecation', () => {
     const before = graphapi`
       type Query {
@@ -29,8 +29,8 @@ describe.skip('directive changes', () => {
       ['values', 'deprecatedValue', 'deprecationReason'],
       'No longer supported'
     )
-    expect(output.meta.$metaChanges).toHaveProperty(
-      ['typeDef', 'values', 'deprecatedValue', 'deprecationReason'],
+    expect(output.value()?.$changes).toHaveProperty(
+      ['values', 'deprecatedValue', 'deprecationReason'],
       expect.objectContaining({
         type: deprecated,
         action: DiffAction.add,
@@ -66,8 +66,8 @@ describe.skip('directive changes', () => {
       ['values', 'deprecatedValue', 'deprecationReason'],
       'No longer supported'
     )
-    expect(output.meta.$metaChanges).toHaveProperty(
-      ['typeDef', 'values', 'deprecatedValue', 'deprecationReason'],
+    expect(output.value()?.$changes).toHaveProperty(
+      ['values', 'deprecatedValue', 'deprecationReason'],
       expect.objectContaining({
         type: deprecated,
         action: DiffAction.remove,
@@ -103,8 +103,8 @@ describe.skip('directive changes', () => {
       ['values', 'deprecatedValue', 'deprecationReason'],
       'After'
     )
-    expect(output.meta.$metaChanges).toHaveProperty(
-      ['typeDef', 'values', 'deprecatedValue', 'deprecationReason'],
+    expect(output.value()?.$changes).toHaveProperty(
+      ['values', 'deprecatedValue', 'deprecationReason'],
       expect.objectContaining({
         type: annotation,
         action: DiffAction.replace,
@@ -578,11 +578,11 @@ describe.skip('directive changes', () => {
         test: String @foo
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
 
-    const output = tree.root!
+    const query = tree.root!
       .children().find(child => child.kind === 'query')!
-    const usedDirectives = output!
+    const usedDirectives = query!
       .children().find(child => child.kind === 'usedDirectives')
     const directiveUsage = usedDirectives!.children()[0]
 
@@ -616,11 +616,11 @@ describe.skip('directive changes', () => {
         test: String @foo
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
 
-    const output = tree.root!
+    const query = tree.root!
       .children().find(child => child.kind === 'query')!
-    const usedDirectives = output!
+    const usedDirectives = query!
       .children().find(child => child.kind === 'usedDirectives')
     const directiveUsage = usedDirectives!.children()[0]
 
@@ -935,7 +935,7 @@ describe.skip('directive changes', () => {
         test: String @foo(val: "changed value")
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
 
     const arg = tree.root!
       .children().find(child => child.kind === 'query')!

@@ -943,7 +943,7 @@ export const TypeToInput: Story = {
       `),
       circular: true,
     })
-    return <GraphQLOperationDiffViewer {...args} source={processedSource}/>
+    return <GraphQLOperationDiffViewer {...args} source={processedSource} />
   },
   args: {
     expandedDepth: 2,
@@ -991,7 +991,7 @@ export const EnumChanges: Story = {
       `),
       circular: true,
     })
-    return <GraphQLOperationDiffViewer {...args} source={processedSource}/>
+    return <GraphQLOperationDiffViewer {...args} source={processedSource} />
   },
   args: {
     expandedDepth: 2,
@@ -1001,5 +1001,35 @@ export const EnumChanges: Story = {
     },
     layoutMode: 'side-by-side-diffs',
     operationPath: 'companyCount',
+  },
+}
+
+
+export const DirectiveUsageLocationsChanged: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiDiffSchema({
+      beforeSource: buildGraphApi(`
+        directive @foo on FIELD_DEFINITION
+        type Query {
+          test: String @foo
+        }
+      `),
+      afterSource: buildGraphApi(`
+        directive @foo on FIELD_DEFINITION | ENUM_VALUE
+        type Query {
+          test: String @foo
+        }
+      `),
+      circular: true,
+    })
+    return <GraphQLOperationDiffViewer {...args} source={processedSource} />
+  },
+  args: {
+    expandedDepth: 2,
+    metaKeys: {
+      diffsMetaKey: DIFF_META_KEY,
+      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+    },
+    layoutMode: 'side-by-side-diffs',
   },
 }

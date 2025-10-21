@@ -256,6 +256,7 @@ export class GraphApiModelDiffTree<
     return {
       // data
       ...pick<any>(value, graphSchemaNodeMetaProps),
+      ...isGraphApiDirective(value) ? pick<any>(value.definition, graphSchemaNodeMetaProps) : {},
       ...resolveDirectiveDeprecated(value),
       // changes
       ...$nodeChange
@@ -382,10 +383,9 @@ export class GraphApiModelDiffTree<
     // directive usage
     if (isGraphApiDirective(value)) {
       // definition changes for fields: title, description
-      const definition = value.definition
+      const definition = extendToObject(value.definition)
       const definitionChanges: Partial<DiffRecord> = {}
-      const untypedDefinition = definition as unknown
-      const definitionRawChanges = isObject(untypedDefinition) ? untypedDefinition[this.metaKey] : undefined
+      const definitionRawChanges = definition?.[this.metaKey]
       if (isDiffMetaRecord(definitionRawChanges)) {
         ['description'].forEach(field => {
           const diff = definitionRawChanges?.[field]
@@ -393,8 +393,14 @@ export class GraphApiModelDiffTree<
         })
       }
 
-      // TODO 09.10.25 // If some time we handle/display changes inside directive usage arguments, add them here
-      const $changes = { ...definitionChanges }
+      const meta = extendToObject(value.meta)
+      const metaChanges: Partial<DiffRecord> = {} // isn't the same as field $metaChanges is
+      const metaRawChanges = meta?.[this.metaKey]
+      if (isDiffMetaRecord(metaRawChanges)) {
+        setValueByPath(metaChanges, metaRawChanges, ...['meta'])
+      }
+
+      const $changes = { ...definitionChanges, ...metaChanges }
       return {
         ...pick<any>(value.definition, graphSchemaNodeValueProps),
         ...value.meta ? { meta: value.meta } : {},
