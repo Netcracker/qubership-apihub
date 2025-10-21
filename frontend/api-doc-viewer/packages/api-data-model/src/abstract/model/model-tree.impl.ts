@@ -9,6 +9,27 @@ export class ModelTree<T, K extends string, M> implements IModelTree<T, K, M> {
     return this.nodes.size ? this.nodes.get('#')! : null;
   }
 
+  /**
+   * This function adds unique numeric suffix for node ID if such ID is already exists.
+   * It is necessary for cases of changes types (e.g. object -> interface),
+   * because types may have properties/methods with the same names, and we have to differ them.
+   * @param idCandidate build ID from candidate
+   * @returns idCandidate with or without numeric suffix
+   */
+  public nextId(idCandidate: string): string {
+    if (!this.nodes.has(idCandidate)) {
+      return idCandidate
+    }
+    for (let i = 1; i < Number.MAX_SAFE_INTEGER; i++) {
+      const nextIdCandidate = `${idCandidate}$${i}`
+      if (!this.nodes.has(nextIdCandidate)) {
+        return nextIdCandidate
+      }
+    }
+    // actually, unreachable, but necessary code
+    return idCandidate
+  }
+
   public createNode(
     id: string,
     kind: K,

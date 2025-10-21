@@ -420,7 +420,6 @@ describe('output', () => {
     })
   })
 
-  // FIXME 20.10.25 // Both pairs of methods are "removed", check "getPropsChanges" for field "type"
   it('type changed: object -> interface', () => {
     const before = graphapi`
       type Query {
@@ -446,7 +445,7 @@ describe('output', () => {
         name: String
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!

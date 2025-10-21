@@ -12,6 +12,7 @@ export type ModelTreeNodeType = keyof typeof modelTreeNodeType;
 export interface IModelTree<T, K extends string, M> {
   root: IModelTreeNode<T, K, M> | null;
   nodes: Map<string, IModelTreeNode<T, K, M>>;
+  nextId(idCandidate: string): string
 }
 
 export interface IModelTreeNode<T, K extends string, M> {

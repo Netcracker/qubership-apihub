@@ -173,7 +173,11 @@ export class GraphApiModelDiffTree<
           inverDiffAction(diffForMethods) :
           diffForMethods
         for (const method of replacedMethodsKeys) {
-          childrenChanges[`${id}/typeDef/type/methods/${method}`] = {
+          let childrenKey = `${id}/typeDef/type/methods/${method}`
+          if (childrenKey in childrenChanges) {
+            childrenKey = `${childrenKey}$1`
+          }
+          childrenChanges[childrenKey] = {
             ...diffForReplacedMethods,
             ...diffForReplacedMethods!.action === DiffAction.remove ?
               { beforeValue: methods[method] } :
@@ -200,6 +204,10 @@ export class GraphApiModelDiffTree<
           inverDiffAction(diffForProps) :
           diffForProps
         for (const property of replacedPropertiesKeys) {
+          let childrenKey = `${id}/typeDef/type/properties/${property}`
+          if (childrenKey in childrenChanges) {
+            childrenKey = `${childrenKey}$1`
+          }
           childrenChanges[`${id}/typeDef/type/properties/${property}`] = {
             ...diffForReplacedProps,
             ...diffForReplacedProps!.action === DiffAction.add ?
@@ -605,7 +613,7 @@ export class GraphApiModelDiffTree<
     const nestedChanges = container?.meta?.$nestedChanges
     const descendantChanges: NodeChange | undefined = params.kind === 'args'
       ? undefined
-      : (childrenChanges?.[id] || nestedChanges?.[id]) as NodeChange
+      : (childrenChanges?.[id] || childrenChanges?.[`${id}$1`] || nestedChanges?.[id]) as NodeChange
 
     const isAllDescendantsChanged = this.isAllDescendantsChanged
 

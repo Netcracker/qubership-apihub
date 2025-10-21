@@ -38,7 +38,8 @@ export function createGraphSchemaTreeCrawlHook(
     }
 
     const { parent, container, nodeIdPrefix = '#' } = state
-    const id = nodeIdPrefix + buildPointer(path)
+    const idCandidate = nodeIdPrefix + buildPointer(path)
+    const id = tree.nextId(idCandidate)
 
     /**
      * Code fragment below is supposed to build part of the tree which contains nodes

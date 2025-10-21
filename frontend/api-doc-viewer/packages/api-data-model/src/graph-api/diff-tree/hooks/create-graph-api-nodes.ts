@@ -46,7 +46,8 @@ export function createGraphApiDiffTreeCrawlHook(
     }
 
     const { parent, /* container,  */nodeIdPrefix = '#' } = state
-    const id = nodeIdPrefix + buildPointer(path)
+    const idCandidate = nodeIdPrefix + buildPointer(path)
+    const id = tree.nextId(idCandidate)
     const { kind } = rules
 
     const lazyBuildingContext: LazyBuildingContext<any, any, any> = {
