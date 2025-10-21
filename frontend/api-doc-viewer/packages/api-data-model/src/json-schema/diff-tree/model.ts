@@ -60,8 +60,6 @@ export class JsonSchemaModelDiffTree<
 
   public createCycledClone<Node extends IModelTreeNode<T, K, M>>(source: Node, id: string, key: string | number, parent: IModelTreeNode<T, K, M> | null): Node {
     const node = super.createCycledClone(source, id, key, parent) as Node
-    // @ts-expect-error // TODO 14.10.25 // Fix this later
-    ChangesSummaryUtils.calculateNodeChangesSummary(node, this.aggregatedMetaKey, lazyBuildingContext)
     return node
   }
 

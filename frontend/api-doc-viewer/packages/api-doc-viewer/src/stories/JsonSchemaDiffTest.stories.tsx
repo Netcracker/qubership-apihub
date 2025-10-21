@@ -217,3 +217,59 @@ export const AddMinItemsInArrayProperty: Story = {
     },
   }
 }
+
+export const CycledChanged: Story = {
+  args: {
+    schema: prepareJsonDiffSchema({
+      beforeSchema: {
+        type: 'object',
+        properties: {
+          a: { $ref: '#/components/schemas/A' },
+          b: { $ref: '#/components/schemas/A' },
+        }
+      },
+      afterSchema: {
+        type: 'object',
+        description: 'Test',
+        properties: {
+          a: { $ref: '#/components/schemas/A' },
+          b: { $ref: '#/components/schemas/A' },
+        }
+      },
+      beforeAdditionalComponents: {
+        schemas: {
+          A: {
+            type: 'object',
+            properties: {
+              c: { $ref: '#/components/schemas/A' }
+            }
+          }
+        }
+      },
+      afterAdditionalComponents: {
+        schemas: {
+          A: {
+            type: 'object',
+            properties: {
+              c: { $ref: '#/components/schemas/A' },
+              d: {
+                type: 'integer',
+                description: 'numeric value',
+                minimum: 1,
+                maximum: 1000,
+                exclusiveMaximum: true,
+              }
+            }
+          }
+        }
+      },
+      target: RESPONSE_200_BODY_TARGET,
+      circular: true,
+    }),
+    layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+    metaKeys: {
+      diffsMetaKey: DIFF_META_KEY,
+      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+    },
+  }
+}

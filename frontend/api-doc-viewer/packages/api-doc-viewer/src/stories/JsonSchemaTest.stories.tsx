@@ -16,6 +16,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react';
 import { JsonSchemaViewer } from '../components/JsonSchemaViewer/JsonSchemaViewer';
+import { prepareJsonSchema, REQUEST_BODY_TARGET } from './preprocess';
 
 // It's necessary because storybook doesn't render nested stories without this empty story
 // eslint-disable-next-line storybook/story-exports
@@ -36,5 +37,31 @@ type Story = StoryObj<typeof meta>
 export const Test: Story = {
   args: {
     schema: {}
+  }
+}
+
+export const Cycled: Story = {
+  args: {
+    schema: prepareJsonSchema({
+      schema: {
+        type: 'object',
+        properties: {
+          a: { $ref: '#/components/schemas/A' },
+          b: { $ref: '#/components/schemas/A' },
+        }
+      },
+      target: REQUEST_BODY_TARGET,
+      additionalComponents: {
+        schemas: {
+          A: {
+            type: 'object',
+            properties: {
+              c: { $ref: '#/components/schemas/A' }
+            }
+          }
+        }
+      },
+      circular: true,
+    })
   }
 }
