@@ -114,8 +114,6 @@ export function createGraphSchemaTreeCrawlHook(
     }
     /* --- */
 
-    const alreadyExisted = state.alreadyConvertedMappingStack.has(value)
-
     const nodeCreationParams = {
       id,
       kind,
@@ -124,7 +122,7 @@ export function createGraphSchemaTreeCrawlHook(
       parent,
       container,
       newDataLevel: newDataLevel,
-      isCycle: alreadyExisted,
+      isCycle: false,
     }
 
     const nodeCreationResult = tree.createGraphSchemaNode(nodeCreationParams, lazyBuildingContext)
@@ -133,10 +131,6 @@ export function createGraphSchemaTreeCrawlHook(
       container.addNestedNode(nodeCreationResult.node)
     } else {
       parent?.addChild(nodeCreationResult.node)
-    }
-
-    if (alreadyExisted) {
-      return { done: true }
     }
 
     /* Feature "Lazy Tree Building" */

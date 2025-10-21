@@ -64,8 +64,6 @@ export function createGraphApiTreeCrawlHook(
     }
     /* --- */
 
-    const alreadyExisted = state.alreadyConvertedMappingStack.has(value)
-
     const newDataLevel = false
     switch (kind) {
       case graphApiNodeKind.query:
@@ -79,7 +77,7 @@ export function createGraphApiTreeCrawlHook(
           parent,
           container,
           newDataLevel: newDataLevel,
-          isCycle: alreadyExisted,
+          isCycle: false,
         }, lazyBuildingContext)
         break
       }
@@ -95,16 +93,12 @@ export function createGraphApiTreeCrawlHook(
           },
           newDataLevel: newDataLevel,
         }
-        nodeCreationResult.node = tree.createNode(id, kind, key, alreadyExisted, params)
+        nodeCreationResult.node = tree.createNode(id, kind, key, false, params)
         break
       }
     }
 
     parent?.addChild(nodeCreationResult.node)
-
-    if (alreadyExisted) {
-      return { done: true }
-    }
 
     /* Feature "Lazy Tree Building" */
     if (

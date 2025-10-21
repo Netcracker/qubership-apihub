@@ -66,14 +66,12 @@ export function createGraphApiDiffTreeCrawlHook(
       node: {},
     }
 
-    const alreadyExisted = state.alreadyConvertedMappingStack.has(value)
-
     switch (kind) {
       case graphApiNodeKind.query:
       case graphApiNodeKind.mutation:
       case graphApiNodeKind.subscription: {
         nodeCreationResult = tree.createGraphSchemaNode(
-          { id, kind, key, value, parent, newDataLevel: false, isCycle: alreadyExisted },
+          { id, kind, key, value, parent, newDataLevel: false, isCycle: false },
           lazyBuildingContext,
         )
         break
@@ -95,16 +93,12 @@ export function createGraphApiDiffTreeCrawlHook(
           },
           newDataLevel: false,
         }
-        nodeCreationResult.node = tree.createNode(id, kind, key, alreadyExisted, params, lazyBuildingContext)
+        nodeCreationResult.node = tree.createNode(id, kind, key, false, params, lazyBuildingContext)
         break
       }
     }
 
     parent?.addChild(nodeCreationResult.node)
-
-    if (alreadyExisted) {
-      return { done: true }
-    }
 
     /* Feature "Lazy Tree Building" */
     if (

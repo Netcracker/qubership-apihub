@@ -6,6 +6,7 @@ import { createGraphApiDiffTreeCrawlHook } from './hooks/create-graph-api-nodes'
 import { GraphApiModelDiffTree } from './model';
 import { GraphApiDiffCrawlRule, GraphApiDiffCrawlState, GraphApiDiffNodeData, GraphApiDiffNodeMeta } from './types';
 import { isFirstOperation, isGraphApiOperationNode } from '../utils';
+import { createCycleGuardHook } from '../../abstract/hooks/cycle-guard';
 
 const DEFAULT_MAX_TREE_LEVEL = 3;
 
@@ -18,6 +19,7 @@ export function crawlHooksGraphApiDiffTree(
 ): any[] {
   if (!CRAWL_HOOKS_CACHE.has(tree)) {
     CRAWL_HOOKS_CACHE.set(tree, [
+      createCycleGuardHook(tree),
       createGraphApiDiffTreeCrawlHook(tree as any, metaKey, aggregatedMetaKey) as SyncCrawlHook<any, any>,
       createGraphSchemaTreeCrawlHook(tree as any /*because AMT not type safe*/, metaKey, aggregatedMetaKey) as SyncCrawlHook<any, any>,
     ])

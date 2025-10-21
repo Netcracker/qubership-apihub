@@ -32,13 +32,11 @@ describe('cycled entities', () => {
 
     const childFirst = findNodeChild(query)
     const childSecond = findNodeChild(childFirst)
-    // const childThird = findNodeChild(childSecond)
+    const childThird = findNodeChild(childSecond)
 
     expect(childFirst!.isCycle).toBe(false)
     expect(childSecond!.isCycle).toBe(true)
-    // expect(childThird).toBe(childSecond)
-    // because it is irrational to expand the same entity deeper
-    expect(childSecond.children().length).toBe(0)
+    expect(childThird).toBe(childSecond)
 
     expect(tree).toBeTruthy()
   })

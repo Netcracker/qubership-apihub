@@ -5,6 +5,7 @@ import { jsonSchemaCrawlRules } from '../rules';
 import { createJsonSchemaTreeCrawlHook } from './hooks/create-json-schema-nodes';
 import { JsonSchemaModelTree } from './model';
 import type { JsonSchemaCrawlState, JsonSchemaNodeKind, JsonSchemaNodeMeta, JsonSchemaNodeValue } from './types';
+import { createCycleGuardHook } from '../../abstract/hooks/cycle-guard';
 
 const DEFAULT_MAX_TREE_LEVEL = 2;
 
@@ -13,6 +14,7 @@ export function crawlHooksJsonSchemaTree<Tree extends JsonSchemaModelTree<any, a
   preparedSchema: unknown,
 ): any[] {
   return [
+    createCycleGuardHook(tree),
     createTransformCrawlHook(preparedSchema),
     createJsonSchemaTreeCrawlHook(tree),
   ]

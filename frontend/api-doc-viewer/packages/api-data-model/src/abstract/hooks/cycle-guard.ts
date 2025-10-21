@@ -29,12 +29,11 @@ export function createCycleGuardHook<T, K extends string, M, S extends CommonSta
     const alreadyExisted = alreadyConvertedMappingStack.get(value)
     if (alreadyExisted) {
       const id = nodeIdPrefix + buildPointer(path)
+      const cycledClone = tree.createCycledClone(alreadyExisted, id, key, parent)
       if (container) {
-        container.addNestedNode(tree.createCycledClone(alreadyExisted, id, key, parent))
-        container.addNestedNode(alreadyExisted)
+        container.addNestedNode(cycledClone)
       } else {
-        parent?.addChild(tree.createCycledClone(alreadyExisted, id, key, parent))
-        parent?.addChild(alreadyExisted)
+        parent?.addChild(cycledClone)
       }
       return { done: true }
     }
