@@ -6,7 +6,6 @@ import { createGraphApiTreeCrawlHook } from './hooks/create-graph-api-nodes';
 import { createGraphSchemaTreeCrawlHook } from './hooks/create-graph-api-schema-nodes';
 import { GraphApiModelTree } from './model';
 import { GraphApiCrawlRule, GraphApiCrawlState, GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta } from './types';
-import { createCycleGuardHook } from '../../abstract/hooks/cycle-guard';
 
 const DEFAULT_MAX_TREE_LEVEL = 2;
 
@@ -15,7 +14,6 @@ const CRAWL_HOOKS_CACHE: Map<GraphApiModelTree, any[]> = new Map()
 export function crawlHooksGraphApiTree(tree: GraphApiModelTree): any[] {
   if (!CRAWL_HOOKS_CACHE.has(tree)) {
     CRAWL_HOOKS_CACHE.set(tree, [
-      createCycleGuardHook(tree),
       createGraphApiTreeCrawlHook(tree),
       createGraphSchemaTreeCrawlHook(tree),
     ])

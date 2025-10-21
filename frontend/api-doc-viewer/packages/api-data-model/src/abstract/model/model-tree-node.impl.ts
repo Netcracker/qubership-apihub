@@ -15,7 +15,7 @@ export type LazyBuildingContext<T, K extends string, M> = {
   crawlValue: CrawlValue,
   crawlHooks: SyncCrawlHook<any, any> | SyncCrawlHook<any, any>[]
   crawlRules: CrawlRules<LazyBuildingCrawlRule<T, K, M>> | undefined
-  alreadyConvertedMappingStack: Map<CrawlValue, ModelTreeNode<T, K, M> | ModelTreeComplexNode<T, K, M>>,
+  alreadyConvertedMappingStack: Map<CrawlValue, ModelTreeNode<T, K, M> | ModelTreeComplexNode<T, K, M> | null>,
   nodeIdPrefix: string,
   nextLevel: number,
   nextMaxLevel: number,
@@ -24,7 +24,7 @@ export type LazyBuildingContext<T, K extends string, M> = {
 type LazyBuildingCrawlState<T, K extends string, M> = {
   parent: IModelTreeNode<T, K, M> | null
   container?: IModelTreeNode<T, K, M>
-  alreadyConvertedMappingStack: Map<unknown, IModelTreeNode<T, K, M>>,
+  alreadyConvertedMappingStack: Map<unknown, IModelTreeNode<T, K, M> | null>,
   nodeIdPrefix: string,
   treeLevel: number, // current tree level
   maxTreeLevel: number, // this level will have no children/nested nodes until they're lazy-built

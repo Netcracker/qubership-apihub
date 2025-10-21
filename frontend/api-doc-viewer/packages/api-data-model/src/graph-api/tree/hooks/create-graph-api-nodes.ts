@@ -1,6 +1,10 @@
 import { buildPointer } from '@netcracker/qubership-apihub-api-unifier'
-import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
+import { GraphApiSchema, isGraphApiAnyDefinition, isGraphApiAnyUsage, isGraphApiOperation } from '@netcracker/qubership-apihub-graphapi'
 import { SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl'
+import { modelTreeNodeType } from '../../../abstract/constants'
+import { LazyBuildingContext } from '../../../abstract/model/model-tree-node.impl'
+import { ModelTreeNodeParams } from '../../../abstract/model/types'
+import { isBrokenRef } from '../../../json-schema/utils'
 import {
   crawlHooksGraphApiTree,
   GraphApiCrawlState,
@@ -12,12 +16,8 @@ import {
   GraphApiTreeComplexNode,
   GraphApiTreeNode,
 } from '../../index'
-import { modelTreeNodeType } from '../../../abstract/constants'
-import { ModelTreeNodeParams } from '../../../abstract/model/types'
-import { isBrokenRef } from '../../../json-schema/utils'
 import { areExcludedComponents } from '../../utils'
 import { GraphApiModelTree } from '../model'
-import { LazyBuildingContext } from '../../../abstract/model/model-tree-node.impl'
 
 export function createGraphApiTreeCrawlHook(
   tree: GraphApiModelTree,
@@ -45,6 +45,26 @@ export function createGraphApiTreeCrawlHook(
     }
 
     const { kind } = rules
+
+    let alreadyExisted = false
+    if (isGraphApiAnyDefinition(value)) {
+      alreadyExisted = state.alreadyConvertedMappingStack.has(value)
+    } else if (isGraphApiAnyUsage(value)) {
+      alreadyExisted = state.alreadyConvertedMappingStack.has(value.typeDef)
+    } else if (isGraphApiOperation(value)) {
+      alreadyExisted = state.alreadyConvertedMappingStack.has(value.output.typeDef)
+    }
+
+    // FIXME 02.10.25 // Get rid of it when "SyncCrawlHook<any, any>" is reverted
+    const prevStack = state.alreadyConvertedMappingStack as GraphApiCrawlState['alreadyConvertedMappingStack']
+    const nextStack = new Map(prevStack)
+    if (isGraphApiAnyDefinition(value)) {
+      const has = nextStack.has(value)
+      !has && nextStack.set(value, null)
+    } else if (isGraphApiAnyUsage(value)) {
+      const has = nextStack.has(value.typeDef)
+      !has && nextStack.set(value.typeDef, null)
+    }
 
     let nodeCreationResult: any = {
       value,
@@ -77,7 +97,7 @@ export function createGraphApiTreeCrawlHook(
           parent,
           container,
           newDataLevel: newDataLevel,
-          isCycle: false,
+          isCycle: alreadyExisted,
         }, lazyBuildingContext)
         break
       }
@@ -93,7 +113,7 @@ export function createGraphApiTreeCrawlHook(
           },
           newDataLevel: newDataLevel,
         }
-        nodeCreationResult.node = tree.createNode(id, kind, key, false, params)
+        nodeCreationResult.node = tree.createNode(id, kind, key, alreadyExisted, params)
         break
       }
     }
@@ -110,16 +130,13 @@ export function createGraphApiTreeCrawlHook(
     const nextTreeLevel = state.treeLevel + 1
     /* --- */
 
+    // TODO 21.10.25 // Only if "value" === null || "value" === undefined, but such "value" was rejected at the top of the hook
     if (nodeCreationResult.value) {
-      // FIXME 02.10.25 // Get rid of it when "SyncCrawlHook<any, any>" is reverted
-      const prevStack = state.alreadyConvertedMappingStack as GraphApiCrawlState['alreadyConvertedMappingStack']
-      const stack = new Map(prevStack)
-      stack.set(value, nodeCreationResult.node)
       let newState: GraphApiCrawlState
       if (nodeCreationResult.node!.type === modelTreeNodeType.simple) {
         newState = {
           parent: nodeCreationResult.node as GraphApiTreeNode,
-          alreadyConvertedMappingStack: stack,
+          alreadyConvertedMappingStack: nextStack,
           /* Feature "Lazy Tree Building" */
           nodeIdPrefix: nodeIdPrefix,
           treeLevel: nextTreeLevel,
@@ -130,7 +147,7 @@ export function createGraphApiTreeCrawlHook(
         newState = {
           parent: parent,
           container: nodeCreationResult.node as GraphApiTreeComplexNode,
-          alreadyConvertedMappingStack: stack,
+          alreadyConvertedMappingStack: nextStack,
           /* Feature "Lazy Tree Building" */
           nodeIdPrefix: nodeIdPrefix,
           treeLevel: nextTreeLevel,

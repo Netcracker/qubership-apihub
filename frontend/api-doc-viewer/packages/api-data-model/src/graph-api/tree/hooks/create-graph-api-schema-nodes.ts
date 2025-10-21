@@ -1,16 +1,16 @@
+import { DiffRemove, DiffReplace, isDiffRemove, isDiffReplace } from '@netcracker/qubership-apihub-api-diff'
 import { buildPointer } from '@netcracker/qubership-apihub-api-unifier'
+import { isGraphApiAnyDefinition, isGraphApiAnyUsage, isGraphApiOperation } from '@netcracker/qubership-apihub-graphapi'
 import { getNodeRules, syncCrawl, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl'
 import { modelTreeNodeType } from '../../../abstract/constants'
+import { LazyBuildingContext } from '../../../abstract/model/model-tree-node.impl'
+import { isDiff, isDiffMetaRecord, isObject } from '../../../utils'
 import { graphSchemaNodeKind } from '../../constants'
+import { crawlHooksGraphApiDiffTree } from '../../diff-tree/build'
 import { areExcludedComponents } from '../../utils'
+import { crawlHooksGraphApiTree } from '../build'
 import { GraphApiModelTree } from '../model'
 import { GraphApiCrawlState, GraphApiTreeComplexNode, GraphApiTreeNode } from '../types'
-import { LazyBuildingContext } from '../../../abstract/model/model-tree-node.impl'
-import { crawlHooksGraphApiTree } from '../build'
-import { isDiff, isDiffMetaRecord, isObject } from '../../../utils'
-import { DiffRemove, DiffReplace, isDiffRemove, isDiffReplace } from '@netcracker/qubership-apihub-api-diff'
-import { crawlHooksGraphApiDiffTree } from '../../diff-tree/build'
-import { isGraphApiAnyDefinition } from '@netcracker/qubership-apihub-graphapi'
 
 function shouldCrawlDiff(value: unknown): value is DiffRemove | DiffReplace {
   return isDiff(value) &&
@@ -99,6 +99,26 @@ export function createGraphSchemaTreeCrawlHook(
         break
     }
 
+    let alreadyExisted = false
+    if (isGraphApiAnyDefinition(value)) {
+      alreadyExisted = state.alreadyConvertedMappingStack.has(value)
+    } else if (isGraphApiAnyUsage(value)) {
+      alreadyExisted = state.alreadyConvertedMappingStack.has(value.typeDef)
+    } else if (isGraphApiOperation(value)) {
+      alreadyExisted = state.alreadyConvertedMappingStack.has(value.output.typeDef)
+    }
+
+    // FIXME 02.10.25 // Get rid of it when "SyncCrawlHook<any, any>" is reverted
+    const prevStack = state.alreadyConvertedMappingStack as GraphApiCrawlState['alreadyConvertedMappingStack']
+    const nextStack = new Map(prevStack)
+    if (isGraphApiAnyDefinition(value)) {
+      const has = nextStack.has(value)
+      !has && nextStack.set(value, null)
+    } else if (isGraphApiAnyUsage(value)) {
+      const has = nextStack.has(value.typeDef)
+      !has && nextStack.set(value.typeDef, null)
+    }
+
     /* Feature "Lazy Tree Building" */
     const lazyBuildingContext: LazyBuildingContext<any, any, any> = {
       tree: tree,
@@ -107,7 +127,7 @@ export function createGraphSchemaTreeCrawlHook(
         ? crawlHooksGraphApiDiffTree(tree as any, metaKey)
         : crawlHooksGraphApiTree(tree),
       crawlRules: rules,
-      alreadyConvertedMappingStack: state.alreadyConvertedMappingStack,
+      alreadyConvertedMappingStack: nextStack,
       nodeIdPrefix: id,
       nextLevel: state.treeLevel,
       nextMaxLevel: state.maxTreeLevel,
@@ -122,7 +142,7 @@ export function createGraphSchemaTreeCrawlHook(
       parent,
       container,
       newDataLevel: newDataLevel,
-      isCycle: false,
+      isCycle: alreadyExisted,
     }
 
     const nodeCreationResult = tree.createGraphSchemaNode(nodeCreationParams, lazyBuildingContext)
@@ -143,16 +163,13 @@ export function createGraphSchemaTreeCrawlHook(
     const nextTreeLevel = state.treeLevel + 1
     /* --- */
 
+    // TODO 21.10.25 // Only if "value" === null || "value" === undefined, but such "value" was rejected at the top of the hook
     if (nodeCreationResult.value) {
-      // FIXME 02.10.25 // Get rid of it when "SyncCrawlHook<any, any>" is reverted
-      const prevStack = state.alreadyConvertedMappingStack as GraphApiCrawlState['alreadyConvertedMappingStack']
-      const stack = new Map(prevStack)
-      stack.set(value, nodeCreationResult.node as GraphApiTreeNode | GraphApiTreeComplexNode)
       let newState: GraphApiCrawlState
       if (nodeCreationResult.node.type === modelTreeNodeType.simple) {
         newState = {
           parent: nodeCreationResult.node as GraphApiTreeNode,
-          alreadyConvertedMappingStack: stack,
+          alreadyConvertedMappingStack: nextStack,
           /* Feature "Lazy Tree Building" */
           nodeIdPrefix: nodeIdPrefix,
           treeLevel: nextTreeLevel,
@@ -163,7 +180,7 @@ export function createGraphSchemaTreeCrawlHook(
         newState = {
           parent: parent,
           container: nodeCreationResult.node as GraphApiTreeComplexNode,
-          alreadyConvertedMappingStack: stack,
+          alreadyConvertedMappingStack: nextStack,
           /* Feature "Lazy Tree Building" */
           nodeIdPrefix: nodeIdPrefix,
           treeLevel: nextTreeLevel,
