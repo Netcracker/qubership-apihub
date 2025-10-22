@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_1_Smoke_Portal",
-        "_postman_id": "fc9a33a8-edb3-4c90-90f5-8b553003e86d",
+        "_postman_id": "c6e44b13-f2a3-4df8-b528-3d4fe0d45f3d",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -2982,10 +2982,12 @@
                                             "\r",
                                             "var data = JSON.parse(responseBody);\r",
                                             "\r",
-                                            "pm.test(\"All events made by specified user\", function() {\r",
-                                            "    for (var i = 0; i < data.events.length; i++) {\r",
-                                            "        pm.expect(data.events[i].principal.Id).to.be.oneOf(['x_apihub', 'x_APIHUB']);\r",
-                                            "    }\r",
+                                            "pm.test(\"All events made by specified user\", function () {\r",
+                                            "    data.events.forEach((event, index) => {\r",
+                                            "        pm.expect(event).to.have.property(\"principal\");\r",
+                                            "        const id = event.principal.id;\r",
+                                            "        pm.expect([\"x_apihub\", \"x_APIHUB\"]).to.include(id, `Неправильний id у event №${index + 1}`);\r",
+                                            "    });\r",
                                             "});\r",
                                             ""
                                         ]

@@ -1,0 +1,458 @@
+{
+    "info": {
+        "name": "2_2_Negative_Agent",
+        "_postman_id": "70c03a25-ce77-4ae4-b303-3b112d5d2363",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "0.6 Login",
+            "item": [
+                {
+                    "name": "0.1.1 Local Auth",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "var data = JSON.parse(responseBody);",
+                                    "",
+                                    "pm.environment.set(\"token\", data.token)"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/v2/auth/local",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v2",
+                                "auth",
+                                "local"
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [],
+                        "auth": {
+                            "type": "basic",
+                            "basic": [
+                                {
+                                    "key": "username",
+                                    "value": "{{Username}}",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "password",
+                                    "value": "{{Password}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "0.1.2 Add role to user",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is OK\", function () {\r",
+                                    "    pm.response.to.have.status(204);\r",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/internal/users/{{Username}}/systemRole",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "users",
+                                "{{Username}}",
+                                "systemRole"
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{ \r\n    \"role\": \"System administrator\" \r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                }
+            ]
+        },
+        {
+            "name": "7.1 Get list of Agent with wrong 'getAll' query parameter",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test(\"Status code is 400\", function () {\r",
+                            "    pm.response.to.have.status(400);\r",
+                            "});"
+                        ]
+                    }
+                },
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "url": {
+                    "raw": "{{SERVER_HOST}}/agents-backend/api/v2/agents?onlyActive=test",
+                    "host": [
+                        "{{SERVER_HOST}}"
+                    ],
+                    "path": [
+                        "agents-backend",
+                        "api",
+                        "v2",
+                        "agents"
+                    ],
+                    "query": [
+                        {
+                            "key": "onlyActive",
+                            "value": "test"
+                        }
+                    ]
+                },
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "api-key",
+                        "value": "{{at-api-key}}",
+                        "type": "default"
+                    }
+                ]
+            },
+            "response": [],
+            "protocolProfileBehavior": {}
+        },
+        {
+            "name": "7.2 Start new Agent without 'backendVersion' parameter",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test(\"Status code is 400\", function () {\r",
+                            "    pm.response.to.have.status(400);\r",
+                            "});"
+                        ]
+                    }
+                },
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "url": {
+                    "raw": "{{SERVER_HOST}}/agents-backend/api/v2/agents",
+                    "host": [
+                        "{{SERVER_HOST}}"
+                    ],
+                    "path": [
+                        "agents-backend",
+                        "api",
+                        "v2",
+                        "agents"
+                    ]
+                },
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "api-key",
+                        "value": "{{at-api-key}}",
+                        "type": "default"
+                    },
+                    {
+                        "key": "api-key",
+                        "value": "14e39bd632b754a4d9a6eec521f2053a6804027d30e7ad8e62a4906270c17485",
+                        "type": "default"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\r\n    \"cloud\": \"test\",\r\n    \"namespace\": \"def\",\r\n    \"url\":\"http://qwe.ru\",\r\n    \"frontendVersion\": \"1.2.3\",\r\n    \"name\": \"abc-def\"\r\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                }
+            },
+            "response": [],
+            "protocolProfileBehavior": {}
+        },
+        {
+            "name": "7.3 Start new Agent without 'url' parameter",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test(\"Status code is 400\", function () {\r",
+                            "    pm.response.to.have.status(400);\r",
+                            "});"
+                        ]
+                    }
+                },
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "url": {
+                    "raw": "{{SERVER_HOST}}/agents-backend/api/v2/agents",
+                    "host": [
+                        "{{SERVER_HOST}}"
+                    ],
+                    "path": [
+                        "agents-backend",
+                        "api",
+                        "v2",
+                        "agents"
+                    ]
+                },
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "api-key",
+                        "value": "{{at-api-key}}",
+                        "type": "default"
+                    },
+                    {
+                        "key": "api-key",
+                        "value": "14e39bd632b754a4d9a6eec521f2053a6804027d30e7ad8e62a4906270c17485",
+                        "type": "default"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\r\n    \"cloud\": \"test\",\r\n    \"namespace\": \"def\",\r\n    \"backendVersion\": \"1.0.0\",\r\n    \"frontendVersion\": \"1.2.3\",\r\n    \"name\": \"abc-def\"\r\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                }
+            },
+            "response": [],
+            "protocolProfileBehavior": {}
+        },
+        {
+            "name": "7.4 Start new Agent without 'namespace' parameter",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test(\"Status code is 400\", function () {\r",
+                            "    pm.response.to.have.status(400);\r",
+                            "});"
+                        ]
+                    }
+                },
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "url": {
+                    "raw": "{{SERVER_HOST}}/agents-backend/api/v2/agents",
+                    "host": [
+                        "{{SERVER_HOST}}"
+                    ],
+                    "path": [
+                        "agents-backend",
+                        "api",
+                        "v2",
+                        "agents"
+                    ]
+                },
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "api-key",
+                        "value": "{{at-api-key}}",
+                        "type": "default"
+                    },
+                    {
+                        "key": "api-key",
+                        "value": "14e39bd632b754a4d9a6eec521f2053a6804027d30e7ad8e62a4906270c17485",
+                        "type": "default"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\r\n    \"cloud\": \"test\",\r\n    \"url\":\"http://qwe.ru\",\r\n    \"backendVersion\": \"1.0.0\",\r\n    \"frontendVersion\": \"1.2.3\",\r\n    \"name\": \"abc-def\"\r\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                }
+            },
+            "response": [],
+            "protocolProfileBehavior": {}
+        },
+        {
+            "name": "7.5 Start new Agent without 'cloud' parameter",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test(\"Status code is 400\", function () {\r",
+                            "    pm.response.to.have.status(400);\r",
+                            "});"
+                        ]
+                    }
+                },
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "url": {
+                    "raw": "{{SERVER_HOST}}/api/v2/agents",
+                    "host": [
+                        "{{SERVER_HOST}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v2",
+                        "agents"
+                    ]
+                },
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "api-key",
+                        "value": "{{at-api-key}}",
+                        "type": "default"
+                    },
+                    {
+                        "key": "api-key",
+                        "value": "14e39bd632b754a4d9a6eec521f2053a6804027d30e7ad8e62a4906270c17485",
+                        "type": "default"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\r\n    \"namespace\": \"def\",\r\n    \"url\":\"http://qwe.ru\",\r\n    \"backendVersion\": \"1.0.0\",\r\n    \"frontendVersion\": \"1.2.3\",\r\n    \"name\": \"abc-def\"\r\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                }
+            },
+            "response": [],
+            "protocolProfileBehavior": {}
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        }
+    ],
+    "variable": []
+}

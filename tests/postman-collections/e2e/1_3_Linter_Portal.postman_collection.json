@@ -1,0 +1,1573 @@
+{
+    "info": {
+        "name": "1_3_Linter_Portal",
+        "_postman_id": "cb0f11cb-e767-41f9-811a-b448d96386ee",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "0. Init and Login",
+            "item": [
+                {
+                    "name": "0.1 Create x_APIHUB user (if not exists)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"User exists or created\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/internal/users",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "users"
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n  \"email\": \"x_apihub\",\r\n  \"name\": \"x_APIHUB\",\r\n  \"password\": \"Tmf@c23s\",\r\n  \"privateWorkspaceId\": \"\"\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "0.2 Local Auth (Login)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "var data = JSON.parse(responseBody);",
+                                    "pm.environment.set(\"token\", data.token);",
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/v2/auth/local",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v2",
+                                "auth",
+                                "local"
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [],
+                        "auth": {
+                            "type": "basic",
+                            "basic": [
+                                {
+                                    "key": "username",
+                                    "value": "{{Username}}",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "password",
+                                    "value": "{{Password}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "0.3 Add role to user (System Admin)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 204\", function () {",
+                                    "    pm.response.to.have.status(204);",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/internal/users/{{Username}}/systemRole",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "users",
+                                "{{Username}}",
+                                "systemRole"
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{ \r\n    \"role\": \"System administrator\" \r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                }
+            ]
+        },
+        {
+            "name": "1. Delate",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ],
+            "item": [
+                {
+                    "name": "1.1 POST Create Ruleset ",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 201\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});",
+                                    "",
+                                    "var data = JSON.parse(responseBody);",
+                                    "pm.environment.set(\"ruleset-d-Id\", data.id)"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/rulesets?rulesetName=rulesetLinterATdeltate&apiType=openapi-3-0",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "rulesets"
+                            ],
+                            "query": [
+                                {
+                                    "key": "rulesetName",
+                                    "value": "rulesetLinterATdeltate"
+                                },
+                                {
+                                    "key": "apiType",
+                                    "value": "openapi-3-0"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"rulesetName\"\r\n\r\ncustom-v1\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"linter\"\r\n\r\nspectral\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\nContent-Type: application/json\r\n\r\n{\r\n    \"rulesetName\": \"crulesetLinterAT\",\r\n    \"apiType\": \"openapi-3-0\",\r\n    \"linter\": \"spectral\"\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"rulesetFile\"; filename=\"rulesetLinterAT.yaml\"\r\nContent-Type: application/yaml;base64\r\n\r\ncnVsZXM6CiAgaW5mby1jb250YWN0OgogICAgZGVzY3JpcHRpb246IEluZm8gb2JqZWN0IHNob3VsZCBjb250YWluIGBjb250YWN0YCBvYmplY3QuCiAgICBnaXZlbjogIiQuaW5mbyIKICAgIHRoZW46CiAgICAgIGZpZWxkOiBjb250YWN0CiAgICAgIGZ1bmN0aW9uOiB0cnV0aHkKICAgIHNldmVyaXR5OiB3YXJuCiAgb2FzMy1hcGktc2VydmVyczoKICAgIGRlc2NyaXB0aW9uOiBPcGVuQVBJIGBzZXJ2ZXJzYCBtdXN0IGJlIHByZXNlbnQgYW5kIG5vbi1lbXB0eSBhcnJheS4KICAgIGdpdmVuOiAkCiAgICB0aGVuOgogICAgICBmaWVsZDogc2VydmVycwogICAgICBmdW5jdGlvbjogZGVmaW5lZAogICAgc2V2ZXJpdHk6IGVycm9yCiAgb3BlcmF0aW9uLWRlc2NyaXB0aW9uOgogICAgZGVzY3JpcHRpb246IE9wZXJhdGlvbiBtdXN0IGhhdmUgYSBkZXNjcmlwdGlvbi4KICAgIGdpdmVuOiAiJC5wYXRocy4qW2dldCxwb3N0LHB1dCxwYXRjaCxkZWxldGVdIgogICAgdGhlbjoKICAgICAgZmllbGQ6IGRlc2NyaXB0aW9uCiAgICAgIGZ1bmN0aW9uOiB0cnV0aHkKICAgIHNldmVyaXR5OiBpbmZv\r\n----------------------------127308995100818139707097--",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "1.2 DELETE Ruleset Copy",
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/rulesets/{{ruleset-d-Id}}",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "rulesets",
+                                "{{ruleset-d-Id}}"
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{bearerToken}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            },
+                            {
+                                "key": "X-Personal-Access-Token",
+                                "value": "{{personalAccessToken}}",
+                                "type": "default",
+                                "disabled": true
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                }
+            ]
+        },
+        {
+            "name": "2. Ruleset Management",
+            "item": [
+                {
+                    "name": "2.1 List Rulesets",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "var data = JSON.parse(responseBody);",
+                                    "pm.test(\"Rulesets list is not empty\", function () {",
+                                    "    pm.expect(data.length).to.be.above(0);",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/rulesets",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "rulesets"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "2",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "1",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "apiType",
+                                    "value": "openapi-3-0",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "active",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Personal-Access-Token",
+                                "value": "{{personalAccessToken}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "2.2 POST Create Ruleset",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Ruleset exists or created\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                                    "});",
+                                    "",
+                                    "var data = JSON.parse(responseBody);",
+                                    "pm.environment.set(\"rulesetId\", data.id)"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "var timestamp = new Date().toISOString().replace(/[-:T.]/g, '');",
+                                    "var uniqueRulesetName = 'QS-rulesetLinterAT_' + timestamp;",
+                                    "pm.environment.set('dynamicRulesetName', uniqueRulesetName);"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/rulesets?rulesetName={{dynamicRulesetName}}&apiType=openapi-3-0",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "rulesets"
+                            ],
+                            "query": [
+                                {
+                                    "key": "rulesetName",
+                                    "value": "{{dynamicRulesetName}}"
+                                },
+                                {
+                                    "key": "apiType",
+                                    "value": "openapi-3-0"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"rulesetName\"\r\n\r\n{{dynamicRulesetName}}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"linter\"\r\n\r\nspectral\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\nContent-Type: application/json\r\n\r\n{\r\n    \"rulesetName\": \"{{dynamicRulesetName}}\",\r\n    \"apiType\": \"openapi-3-0\",\r\n    \"linter\": \"spectral\"\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"rulesetFile\"; filename=\"rulesetLinterAT.yaml\"\r\nContent-Type: application/yaml;base64\r\n\r\nZGVzY3JpcHRpb246IERlZmF1bHQgcnVsZXMgb2YgcXViZXJzaGlwLWFwaS1saW50ZXItc2VydmljZS4KcnVsZXM6CiAgaW5mby1jb250YWN0OgogICAgZGVzY3JpcHRpb246IEluZm8gb2JqZWN0IHNob3VsZCBjb250YWluIGBjb250YWN0YCBvYmplY3QuCiAgICBnaXZlbjogIiQuaW5mbyIKICAgIHRoZW46CiAgICAgIGZpZWxkOiBjb250YWN0CiAgICAgIGZ1bmN0aW9uOiB0cnV0aHkKICAgIHNldmVyaXR5OiB3YXJuCiAgb2FzMy1hcGktc2VydmVyczoKICAgIGRlc2NyaXB0aW9uOiBPcGVuQVBJIGBzZXJ2ZXJzYCBtdXN0IGJlIHByZXNlbnQgYW5kIG5vbi1lbXB0eSBhcnJheS4KICAgIGdpdmVuOiAkCiAgICB0aGVuOgogICAgICBmaWVsZDogc2VydmVycwogICAgICBmdW5jdGlvbjogZGVmaW5lZAogICAgc2V2ZXJpdHk6IGVycm9yCiAgb3BlcmF0aW9uLWRlc2NyaXB0aW9uOgogICAgZGVzY3JpcHRpb246IE9wZXJhdGlvbiBtdXN0IGhhdmUgYSBkZXNjcmlwdGlvbi4KICAgIGdpdmVuOiAiJC5wYXRocy4qW2dldCxwb3N0LHB1dCxwYXRjaCxkZWxldGVdIgogICAgdGhlbjoKICAgICAgZmllbGQ6IGRlc2NyaXB0aW9uCiAgICAgIGZ1bmN0aW9uOiB0cnV0aHkKICAgIHNldmVyaXR5OiBpbmZv\r\n----------------------------127308995100818139707097--",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "2.3 Get Ruleset Metadata",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "var data = JSON.parse(responseBody);",
+                                    "pm.test(\"Ruleset name matches\", function () {",
+                                    "    pm.expect(data).to.have.property('name');",
+                                    "    pm.expect(data.name).to.equal(pm.environment.get('dynamicRulesetName'));",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/rulesets/{{rulesetId}}",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "rulesets",
+                                "{{rulesetId}}"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Personal-Access-Token",
+                                "value": "{{personalAccessToken}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "2.4 Activate Ruleset",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200 or 204\", function () {",
+                                    "    pm.response.to.have.status(204);",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/rulesets/{{rulesetId}}/activation",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "rulesets",
+                                "{{rulesetId}}",
+                                "activation"
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-Personal-Access-Token",
+                                "value": "{{personalAccessToken}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                }
+            ]
+        },
+        {
+            "name": "3. Package Setup for Linter Testing",
+            "item": [
+                {
+                    "name": "3.1 Delete static test-LT data from DB",
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/internal/clear/STATIC-TEST-LT",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "clear",
+                                "STATIC-TEST-LT"
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "3.2 Create Static Test Group",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 201\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});",
+                                    "var data = JSON.parse(responseBody);",
+                                    "pm.environment.set(\"group_id_lt\", data.id);"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/v2/packages",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v2",
+                                "packages"
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-LT\",\r\n    \"Alias\" :\"QS-STATIC-TEST-LT\",\r\n    \"name\": \"Test Workspace\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "3.3 Create Package",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 201\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});",
+                                    "var data = JSON.parse(responseBody);",
+                                    "pm.environment.set(\"project_lt\", data.packageId);"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/v2/packages",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v2",
+                                "packages"
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-LT.PKG\",\r\n    \"Alias\" :\"LTPKG\",\r\n    \"name\": \"Test static package\",\r\n    \"parentId\": \"QS-STATIC-TEST-LT\",\r\n    \"kind\":\"package\",\r\n    \"description\": \"Package to be built\",\r\n    \"serviceName\": \"\",\r\n    \"imageUrl\": \"\",\r\n    \"releaseVersionPattern\": \"\",\r\n    \"excludeFromSearch\": true\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "3.4 Upload Package Version (using base64)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 202\", function () {\r",
+                                    "    pm.response.to.have.status(202);\r",
+                                    "});\r",
+                                    "\r",
+                                    "var data = JSON.parse(responseBody);\r",
+                                    "pm.environment.set(\"publish_id\", data.publishId)\r",
+                                    "setTimeout(function(){}, 10000)"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{project_lt}}/publish",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v2",
+                                "packages",
+                                "{{project_lt}}",
+                                "publish"
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                "type": "default"
+                            },
+                            {
+                                "key": "Content-Transfer-Encoding",
+                                "value": "base64",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"QS-STATIC-TEST-LT.LTPKG\",\r\n    \"version\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"LinterAT.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"LinterAT.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIAGdOPlsAAAAAAAAAAAAAAAANACAATGludGVyQVQueWFtbHV4CwABBAAAAAAEAAAAAFVUDQAH4n3baKLm22jhfdtohVLLbupADN3zFUe0EqtLqG57F9m1OxaVkNofmGYMDMo8OnZa8ff1JCEE3UUlpBDb5+Ecx0TBJFfj73qz3ixc2Md6AYiTlmq8GZ9awo4EbxIz4Xm31a4lbrJL4mKo8X50DP0Z8DDNlL8oFxD3mPH928kRHD2hdUFcOCiIO2LsY4YQl9JayXWWe+KH3hFwh20QCkXNtO0ZXnEFvmpiENPIChIh2R0OqmKQO/Xg9iori2TkyGWfKpGUJ5Aij/8A7rw3+Vzj2VpFBvqGzo3NmCibIrq1NYy1u6mT6VN9y0u05wsTUMyoyWsBMCm1ruk5qhPrSrOeijdH8ua2Btxn2tdY3lVN9CkGZeRqmORKHSwnC6xdJr7il4+bp+Wc7ialbfgyrbNwIXWyuJIXwMg/YHc07SDnpDcQP07UXFZPuXwWcXNhZ+eqA0gTJo1jVteUvZG+8+9xqgfj6X80a5rhMJVZjHT8y1gJxWWaefnTs+v5vI4HcxnpL241sN4cz3iYP1BLBwg2Xc99fgEAABQDAABQSwECFAMUAAgACABnTj5bNl3PfX4BAAAUAwAADQAYAAAAAAAAAAAAtoEAAAAATGludGVyQVQueWFtbHV4CwABBAAAAAAEAAAAAFVUBQAB4n3baFBLBQYAAAAAAQABAFMAAADZAQAAAAA=\r\n----------------------------127308995100818139707097--",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                }
+            ]
+        },
+        {
+            "name": "4. Validation Operations",
+            "item": [
+                {
+                    "name": "4.1 Run Manual Validation on Package",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 202\", function () {",
+                                    "    pm.response.to.have.status(202);",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/packages/{{project_lt}}/versions/0000.1/validation",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "packages",
+                                "{{project_lt}}",
+                                "versions",
+                                "0000.1",
+                                "validation"
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-Personal-Access-Token",
+                                "value": "{{personalAccessToken}}",
+                                "type": "default"
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "4.2 Get Validation Summary",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "var data = JSON.parse(responseBody);",
+                                    "pm.test(\"Validation summary exists\", function () {",
+                                    "    pm.expect(data).to.have.property('status').that.is.a('string');",
+                                    "    pm.expect(data.status).to.be.oneOf(['success', 'error'], 'Status must be either success or error');",
+                                    "    ",
+                                    "    if (data.status === 'error') {",
+                                    "        pm.expect(data).to.have.property('details').that.is.a('string', 'Error response must include details');",
+                                    "        pm.expect(data).to.have.property('documents').that.is.an('array', 'Error response must include documents array');",
+                                    "    } else if (data.status === 'success') {",
+                                    "        pm.expect(data).to.have.property('documents').that.is.an('array', 'Success response must include documents array');",
+                                    "    }",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/packages/{{project_lt}}/versions/0000.1/validation/summary",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "packages",
+                                "{{project_lt}}",
+                                "versions",
+                                "0000.1",
+                                "validation",
+                                "summary"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Personal-Access-Token",
+                                "value": "{{personalAccessToken}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "4.3 Get Validated Documents",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "var data = JSON.parse(responseBody);",
+                                    "pm.test(\"Documents list is not empty\", function () {",
+                                    "    pm.expect(data.documents.length).to.be.above(0);",
+                                    "});",
+                                    "if (data.documents.length > 0) {",
+                                    "    pm.environment.set(\"document_slug\", data.documents[0].slug);",
+                                    "}"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{project_lt}}/versions/0000.1/documents",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v2",
+                                "packages",
+                                "{{project_lt}}",
+                                "versions",
+                                "0000.1",
+                                "documents"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Personal-Access-Token",
+                                "value": "{{personalAccessToken}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "4.4 Get Document Validation Details",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "var data = JSON.parse(responseBody);",
+                                    "pm.test(\"Details include issues\", function () {",
+                                    "    pm.expect(data).to.have.property('issues');",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/packages/{{project_lt}}/versions/0000.1/validation/documents/{{document_slug}}/details",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "packages",
+                                "{{project_lt}}",
+                                "versions",
+                                "0000.1",
+                                "validation",
+                                "documents",
+                                "{{document_slug}}",
+                                "details"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Personal-Access-Token",
+                                "value": "{{personalAccessToken}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "4.5 GET Activation History",
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/rulesets/{{rulesetId}}/activation",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "rulesets",
+                                "{{rulesetId}}",
+                                "activation"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{bearerToken}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            },
+                            {
+                                "key": "X-Personal-Access-Token",
+                                "value": "{{personalAccessToken}}",
+                                "type": "default",
+                                "disabled": true
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "4.6 GET Download Ruleset",
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/rulesets/{{rulesetId}}/data?disposition=attachment",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "rulesets",
+                                "{{rulesetId}}",
+                                "data"
+                            ],
+                            "query": [
+                                {
+                                    "key": "disposition",
+                                    "value": "attachment"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{bearerToken}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            },
+                            {
+                                "key": "X-Personal-Access-Token",
+                                "value": "{{personalAccessToken}}",
+                                "type": "default",
+                                "disabled": true
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                }
+            ]
+        },
+        {
+            "name": "5.Deactivate",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ],
+            "item": [
+                {
+                    "name": "5.1 List Rulesets, finde \"default-openapi-3-0\"",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "var data = JSON.parse(responseBody);",
+                                    "pm.test(\"Rulesets list is not empty\", function () {",
+                                    "    pm.expect(data.length).to.be.above(0);",
+                                    "});",
+                                    "pm.test(\"Extract and set defaultrulesetId\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    ",
+                                    "    var targetObject = jsonData.find(function(item) {",
+                                    "        return item.name === \"default-openapi-3-0\";",
+                                    "    });",
+                                    "    ",
+                                    "    if (targetObject && targetObject.id) {",
+                                    "        pm.environment.set(\"defaultrulesetId\", targetObject.id);",
+                                    "        console.log(\"defaultrulesetId set to: \" + targetObject.id);",
+                                    "    } else {",
+                                    "        pm.test(\"Failed to find id for name: default-openapi-3-0\", function () {",
+                                    "            throw new Error(\"No object found with name 'default-openapi-3-0' or id is missing\");",
+                                    "        });",
+                                    "    }",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/rulesets",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "rulesets"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "2",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "1",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "apiType",
+                                    "value": "openapi-3-0",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "active",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Personal-Access-Token",
+                                "value": "{{personalAccessToken}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "5.2 Activate Ruleset \"default-openapi-3-0\"",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200 or 204\", function () {",
+                                    "    pm.response.to.have.status(204);",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/rulesets/{{defaultrulesetId}}/activation",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "rulesets",
+                                "{{defaultrulesetId}}",
+                                "activation"
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-Personal-Access-Token",
+                                "value": "{{personalAccessToken}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                }
+            ]
+        },
+        {
+            "name": "6. Cleanup",
+            "item": [
+                {
+                    "name": "6.1 Delete static test-LT data from DB",
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/internal/clear/STATIC-TEST-LT",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "clear",
+                                "STATIC-TEST-LT"
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "6.2 Delete Test Data from DB",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 204\", function () {",
+                                    "    pm.response.to.have.status(204);",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/internal/clear/rulesetLinterAT",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "internal",
+                                "clear",
+                                "rulesetLinterAT"
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "6.3 Delete Rules from DB",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 204\", function () {",
+                                    "    pm.response.to.have.status(204);",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/internal/clear/LT_AT-v1111",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "clear",
+                                "LT_AT-v1111"
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "default",
+                                "disabled": true
+                            },
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "SERVER_HOST",
+            "value": "http://your-server-host",
+            "type": "default",
+            "disabled": true
+        },
+        {
+            "key": "Username",
+            "value": "x_apihub",
+            "type": "default",
+            "disabled": true
+        },
+        {
+            "key": "Password",
+            "value": "Tmf@c23s",
+            "type": "default",
+            "disabled": true
+        },
+        {
+            "key": "at-api-key",
+            "value": "your-api-key",
+            "type": "default",
+            "disabled": true
+        },
+        {
+            "key": "personalAccessToken",
+            "value": "your-personal-access-token",
+            "type": "default",
+            "disabled": true
+        },
+        {
+            "key": "project_1",
+            "value": "your-project-id",
+            "type": "default",
+            "disabled": true
+        }
+    ]
+}
