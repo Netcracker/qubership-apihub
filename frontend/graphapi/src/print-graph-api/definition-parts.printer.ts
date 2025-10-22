@@ -9,13 +9,26 @@ export function printImplementedInterfaces(interfaces: GraphApiRef[] = []): stri
     : ''
 }
 
+function formatDefaultValue(defaultValue: any): string | undefined {
+  let printedDefault = defaultValue
+  if (printedDefault !== undefined) {
+    if (typeof printedDefault === 'string') {
+      printedDefault = `"${printedDefault}"`
+    } else if (Array.isArray(printedDefault)) {
+      printedDefault = `[${printedDefault.map(item =>
+        typeof item === 'string' ? `"${item}"` : String(item)
+      ).join(', ')}]`
+    } else {
+      printedDefault = String(printedDefault)
+    }
+  }
+  return printedDefault
+}
+
 export function printFields(object: GraphApiObjectDefinition<GraphApiObjectKind>): string {
   const fieldList: [string, GraphApiOperation][] = Object.entries(object.type.methods ?? {})
 
-  let printedDefault = 'default' in object ? object.default : undefined
-  if (typeof printedDefault === 'string') {
-    printedDefault = `"${printedDefault}"`
-  }
+  const printedDefault = formatDefaultValue('default' in object ? object.default : undefined)
 
   const fields = fieldList.map(([name, field], i) => {
     return (
@@ -35,10 +48,7 @@ export function printFields(object: GraphApiObjectDefinition<GraphApiObjectKind>
 export function printInputFields(object: GraphApiInputObjectDefinition): string {
   const fieldList: [string, GraphApiArgument][] = Object.entries(object.type.properties ?? {})
 
-  let printedDefault = 'default' in object ? object.default : undefined
-  if (typeof printedDefault === 'string') {
-    printedDefault = `"${printedDefault}"`
-  }
+  const printedDefault = formatDefaultValue('default' in object ? object.default : undefined)
 
   const fields = fieldList.map(([name, field], i) => {
     return (
@@ -88,10 +98,7 @@ export function printArgDefinition(
   indent: string = '',
   first: boolean = true
 ): string {
-  let printedDefault = 'default' in arg ? arg.default : undefined
-  if (typeof printedDefault === 'string') {
-    printedDefault = `"${printedDefault}"`
-  }
+  const printedDefault = formatDefaultValue('default' in arg ? arg.default : undefined)
 
   return (
     printDescription(arg.description, indent, first) +

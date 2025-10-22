@@ -81,3 +81,7 @@ export const BUILT_IN_DIRECTIVES = [
 export const BUILT_IN_DIRECTIVES_SET = new Set<string>(BUILT_IN_DIRECTIVES)
 
 export const GRAPH_API_DIRECTIVE_DEPRECATED_DEFAULT_REASON = 'No longer supported'
+
+export const GRAPH_QL_QUERY_TYPE_NAME_DEFAULT = 'Query'
+export const GRAPH_QL_MUTATION_TYPE_NAME_DEFAULT = 'Mutation'
+export const GRAPH_QL_SUBSCRIPTION_TYPE_NAME_DEFAULT = 'Subscription'

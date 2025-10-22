@@ -5,7 +5,7 @@ import { buildFromSchema } from "../../src/build-graph-api/of-schema"
 
 export const GRAPH_API_BUILD_MODE_SCHEMA = 'schema'
 export const GRAPH_API_BUILD_MODE_INTROSPECTION = 'introspection'
-type GRAPH_API_BUILD_MODE =
+export type GRAPH_API_BUILD_MODE =
   | typeof GRAPH_API_BUILD_MODE_SCHEMA
   | typeof GRAPH_API_BUILD_MODE_INTROSPECTION
 
