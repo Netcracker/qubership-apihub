@@ -68,14 +68,14 @@ http {
             return 400;
         }
 
-        # API endpoints proxifying to backend
+        # API endpoints proxifying to backend. Static upstream resolution
         location ~ ^/(?:api|ws|saml|login/gitlab|login/sso|debug|playground)(?:/.*)?$ {
             add_header Cache-Control "no-store" always;
             proxy_pass http://${APIHUB_BACKEND_ADDRESS};
         }
 
-        # Special section for apihub-nc (rewrite required)
-        location ^~ /apihub-nc {
+        # Special section for apihub-nc (rewrite required). Dynamic upstream resolution
+        location /apihub-nc {
             set $apihub_nc_upstream http://${APIHUB_NC_SERVICE_ADDRESS};
 
             add_header Cache-Control "no-store" always;
@@ -88,7 +88,7 @@ http {
             proxy_intercept_errors off;
         }
 
-        # Special section for api-linter (rewrite required)
+        # Special section for api-linter (rewrite required). Dynamic upstream resolution
         location ^~ /api-linter {
             set $api_linter_upstream http://${API_LINTER_SERVICE_ADDRESS};
 
@@ -96,6 +96,20 @@ http {
             rewrite ^/api-linter/(.*)$ /$1 break;
 
             proxy_pass $api_linter_upstream;
+
+            proxy_connect_timeout 1s;
+            proxy_next_upstream off;
+            proxy_intercept_errors off;
+        }
+
+         # Special section for agents-backend (rewrite required). Dynamic upstream resolution
+         location ^~ /agents-backend {
+            set $agents_backend_upstream http://${APIHUB_AGENTS_BACKEND_ADDRESS};
+
+            add_header Cache-Control "no-store" always;
+            rewrite ^/agents-backend/(.*)$ /$1 break;
+
+            proxy_pass $agents_backend_upstream;
 
             proxy_connect_timeout 1s;
             proxy_next_upstream off;

@@ -16,7 +16,8 @@
 
 import { Box, IconButton } from '@mui/material'
 import type { FC } from 'react'
-import { memo, useCallback } from 'react'
+import { useMemo } from 'react'
+import { memo, useCallback, useEffect } from 'react'
 import { generatePath, Outlet } from 'react-router-dom'
 import { MainPageProvider } from '../MainPage/MainPageProvider'
 import { GlobalSearchPanel } from './GlobalSearchPanel/GlobalSearchPanel'
@@ -52,18 +53,37 @@ import {
 import {
   AppHeaderDivider,
 } from '@netcracker/qubership-apihub-ui-shared/components/Dividers/AppHeaderDivider/AppHeaderDivider'
+import { PackageVersionBuilder } from '@apihub/routes/root/PortalPage/package-version-builder'
+import { SESSION_STORAGE_KEY_LAST_IDENTITY_PROVIDER_ID } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
+import { useAgentEnabled } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 
 export const BasePage: FC = memo(() => {
   const { notification: systemNotification } = useSystemInfo()
   const showErrorNotification = useShowErrorNotification()
   const isSuperAdmin = useSuperAdminCheck()
   const { frontendVersion, apiProcessorVersion } = useVersionInfo()
-
+  const agentEnabled = useAgentEnabled()
   const viewPortStyleCalculator = useCallback(
     (theme: Theme): SystemStyleObject<Theme> => {
       return cutViewPortStyleCalculator(theme, systemNotification ? NOTIFICATION_HEIGHT : 0)
     },
     [systemNotification],
+  )
+
+  useEffect(() => {
+    PackageVersionBuilder.init(localStorage.getItem(SESSION_STORAGE_KEY_LAST_IDENTITY_PROVIDER_ID)).then()
+  }, [])
+
+  const links = useMemo(
+    () => (agentEnabled
+      ? [
+        { name: 'Portal', pathname: '/portal', active: true, testId: 'PortalHeaderButton' },
+        { name: 'Agent', pathname: '/agents', testId: 'AgentHeaderButton' },
+      ]
+      : [
+        { name: 'Portal', pathname: '/portal', active: true, testId: 'PortalHeaderButton' },
+      ]),
+    [agentEnabled],
   )
 
   return (
@@ -75,23 +95,20 @@ export const BasePage: FC = memo(() => {
           height="100vh"
         >
           <AppHeader
-            logo={<LogoIcon />}
+            logo={<LogoIcon/>}
             title="APIHUB"
-            links={[
-              { name: 'Portal', pathname: '/portal', active: true, testId: 'PortalHeaderButton' },
-              { name: 'Agent', pathname: '/agents', testId: 'AgentHeaderButton' },
-            ]}
+            links={links}
             action={
               <>
-                <VsCodeExtensionButton />
-                <AppHeaderDivider />
-                <SearchButton />
-                {isSuperAdmin && <PortalSettingsButton />}
+                <VsCodeExtensionButton/>
+                <AppHeaderDivider/>
+                <SearchButton/>
+                {isSuperAdmin && <PortalSettingsButton/>}
                 <SystemInfoPopup
                   frontendVersionKey={frontendVersion}
                   apiProcessorVersion={apiProcessorVersion}
                 />
-                <UserPanel />
+                <UserPanel/>
               </>
             }
           />
@@ -101,12 +118,12 @@ export const BasePage: FC = memo(() => {
               showErrorNotification={showErrorNotification}
               redirectUrlFactory={replacePackageId}
             >
-              <Outlet />
+              <Outlet/>
             </ExceptionSituationHandler>
           </Box>
-          <Notification />
-          <GlobalSearchPanel />
-          {systemNotification && <MaintenanceNotification value={systemNotification} />}
+          <Notification/>
+          <GlobalSearchPanel/>
+          {systemNotification && <MaintenanceNotification value={systemNotification}/>}
         </Box>
       </ModuleFetchingErrorBoundary>
     </MainPageProvider>
@@ -122,7 +139,7 @@ const SearchButton: FC = memo(() => {
       color="inherit"
       onClick={showGlobalSearchPanel}
     >
-      <SearchOutlinedIcon />
+      <SearchOutlinedIcon/>
     </IconButton>
   )
 })

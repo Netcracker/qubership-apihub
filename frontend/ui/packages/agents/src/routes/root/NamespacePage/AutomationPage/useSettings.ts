@@ -21,17 +21,20 @@ import { EMPTY_SETTINGS, getSettings, toSettings } from '@apihub/entities/settin
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
+import {
+  useGetNcServicePrefix,
+} from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 
 const SETTINGS_QUERY_KEY = 'settings-query-key'
 
 export function useSettings(): [Settings, IsLoading] {
   const { agentId, namespaceKey } = useParams()
   const workspaceKey = useSearchParam(WORKSPACE_SEARCH_PARAM)
-
+  const ncServicePrefix = useGetNcServicePrefix()
   const { data, isLoading } = useQuery<SettingsDto, Error, Settings>({
     queryKey: [SETTINGS_QUERY_KEY, agentId, namespaceKey, workspaceKey],
-    queryFn: () => getSettings(agentId!, namespaceKey!, workspaceKey!),
-    enabled: !!namespaceKey,
+    queryFn: () => getSettings(agentId!, namespaceKey!, workspaceKey!, ncServicePrefix),
+    enabled: !!namespaceKey && !!ncServicePrefix,
     select: toSettings,
   })
 

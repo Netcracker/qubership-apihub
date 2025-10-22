@@ -4,6 +4,8 @@ import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/ap
 import { API_TYPE_GRAPHQL } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { FC, PropsWithChildren, ReactNode } from 'react'
 import { createContext, memo, useContext } from 'react'
+import { usePackageKind } from '@apihub/routes/root/PortalPage/usePackageKind'
+import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 
 export const ClientValidationStatuses = {
   CHECKING: 'checking',
@@ -43,10 +45,12 @@ export function useApiQualityClientValidationStatus(): [ClientValidationStatus |
 
 const NOT_LINTED_API_TYPES: ApiType[] = [API_TYPE_GRAPHQL]
 
-export function useApiQualityLinterEnabled(apiType: ApiType): boolean {
+export function useApiQualityLinterEnabled(apiType?: ApiType): boolean {
+  const [kind] = usePackageKind()
   const linterEnabled = (
     useContext(ApiQualityLinterEnabledContext) &&
-    !NOT_LINTED_API_TYPES.some(notLintedApiType => notLintedApiType === apiType)
+    (!apiType || !NOT_LINTED_API_TYPES.some(notLintedApiType => notLintedApiType === apiType)) &&
+    kind === PACKAGE_KIND
   )
   return linterEnabled
 }

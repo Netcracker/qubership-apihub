@@ -26,11 +26,15 @@ import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entit
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { v4 as uuidv4 } from 'uuid'
+import {
+  useGetAgentPrefix,
+} from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 
 export function usePromoteVersion(): [PromoteVersion, IsLoading, IsSuccess, IsError, Error | null] {
   const { agentId, namespaceKey } = useParams()
   const workspaceKey = useSearchParam(WORKSPACE_SEARCH_PARAM)
   const { setPromotePublicationOptions } = usePromoteVersionPublicationOptions()
+  const prefix = useGetAgentPrefix()
 
   const { mutate, isLoading, isSuccess, isError, error } = useMutation<PublishConfig, Error, PromoteVersionOptions>({
     mutationFn: async ({ version, previousVersion, status, serviceKeys }) => {
@@ -46,6 +50,7 @@ export function usePromoteVersion(): [PromoteVersion, IsLoading, IsSuccess, IsEr
         previousVersion,
         serviceKeys,
         builderId,
+        prefix,
         status,
       )
 

@@ -1,7 +1,11 @@
 import type { QueryObserverResult, RefetchOptions, RefetchQueryFilters, UseMutateFunction } from '@tanstack/react-query'
 import type { IdentityProviderDto, SystemConfigurationDto } from '../types/system-configuration'
 import { isInternalIdentityProvider } from '../types/system-configuration'
-import { SEARCH_PARAM_NO_AUTO_LOGIN, SESSION_STORAGE_KEY_LAST_IDENTITY_PROVIDER_ID, SESSION_STORAGE_KEY_SYSTEM_CONFIGURATION } from './constants'
+import {
+  SEARCH_PARAM_NO_AUTO_LOGIN,
+  SESSION_STORAGE_KEY_LAST_IDENTITY_PROVIDER_ID,
+  SESSION_STORAGE_KEY_SYSTEM_CONFIGURATION,
+} from './constants'
 import { getRedirectUri, redirectTo, redirectToLogin } from './redirects'
 import { optionalSearchParams } from './search-params'
 import { stopThread } from './threads'
@@ -17,6 +21,7 @@ export const TokenRefreshResults = {
   UNKNOWN: 'unknown',
 } as const
 export type TokenRefreshResult = (typeof TokenRefreshResults)[keyof typeof TokenRefreshResults]
+
 export function isTokenRefreshed(maybeTokenRefreshResult: unknown): maybeTokenRefreshResult is typeof TokenRefreshResults.TOKEN_REFRESHED {
   return maybeTokenRefreshResult === TokenRefreshResults.TOKEN_REFRESHED
 }
@@ -30,6 +35,10 @@ export class WorkerUnauthorizedError extends Error {
   }
 }
 
+export function isInWebWorker(self: unknown): self is WorkerGlobalScope {
+  return typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope
+}
+
 export async function handleAuthentication(responseStatus: number): Promise<TokenRefreshResult | undefined> {
   const searchParams = new URLSearchParams(location.search)
   // noAutoLogin = true in 2 cases:
@@ -40,18 +49,20 @@ export async function handleAuthentication(responseStatus: number): Promise<Toke
   let tokenRefreshResult: TokenRefreshResult | undefined
 
   if (responseStatus === 401 && allowedAutoLogin) {
-    // when we are in worker, we can't use algorithm below in direct way
-    // so we have to throw a specific error, catch it in main thread and handle with the same algorithm
-    if (typeof window === 'undefined') {
-      throw new WorkerUnauthorizedError()
+    let lastProviderId: string | null | undefined
+    let systemConfigurationDto: SystemConfigurationDto | undefined
+    if (isInWebWorker(self)) {
+      ({
+        systemConfigurationDto,
+        lastIdentityProviderId: lastProviderId,
+      } = self)
     }
 
-    const systemConfigurationFromStorage = sessionStorage.getItem(SESSION_STORAGE_KEY_SYSTEM_CONFIGURATION)
     // must be always present,
     // because protected API is not fetched until system configuration is loaded
-    const systemConfiguration: SystemConfigurationDto = JSON.parse(systemConfigurationFromStorage!) as SystemConfigurationDto
+    systemConfigurationDto = systemConfigurationDto || JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY_SYSTEM_CONFIGURATION)!) as SystemConfigurationDto
 
-    const { authConfig } = systemConfiguration
+    const { authConfig } = systemConfigurationDto
 
     // trying to refresh token by auto-login provider
     const { autoLogin } = authConfig
@@ -63,7 +74,7 @@ export async function handleAuthentication(responseStatus: number): Promise<Toke
       }
     } else {
       // trying to refresh token by last used provider
-      const lastProviderId = localStorage.getItem(SESSION_STORAGE_KEY_LAST_IDENTITY_PROVIDER_ID)
+      lastProviderId = lastProviderId || localStorage.getItem(SESSION_STORAGE_KEY_LAST_IDENTITY_PROVIDER_ID)
       const lastProvider = lastProviderId
         ? authConfig.identityProviders.find(idp => idp.id === lastProviderId)
         : undefined
@@ -98,7 +109,7 @@ async function handleUnauthorizedByProvider(identityProvider: IdentityProviderDt
     requestEndpoint = `${API_V3}/auth/local/refresh?${searchParamsAuthLocalRefresh}`
   } else if (identityProvider.loginStartEndpoint) {
     // In case of external identity provider, we don't have control over the redirections and we provide
-    // just "redirectUri" with value of the current page OR main page (if current page is login page), 
+    // just "redirectUri" with value of the current page OR main page (if current page is login page),
     // because internal redirections will be managed by the backend and the provider.
     const searchParamsAuthWithStartEndpoint = optionalSearchParams({ redirectUri: { value: getRedirectUri() } })
     requestEndpoint = `${identityProvider.loginStartEndpoint}?${searchParamsAuthWithStartEndpoint}`

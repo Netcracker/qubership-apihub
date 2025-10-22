@@ -23,6 +23,9 @@ import { RUNNING_DISCOVERY_STATUS } from '@apihub/entities/statuses'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { STATUS_REFETCH_INTERVAL } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import {
+  useGetAgentPrefix,
+} from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 
 const SERVICES_QUERY_KEY = 'services-query-key'
 
@@ -32,10 +35,11 @@ export function useServices(options?: {
   const { agentId, namespaceKey } = useParams()
   const { onlyWithSpecs } = options ?? {}
   const workspaceKey = useSearchParam(WORKSPACE_SEARCH_PARAM)
+  const prefix = useGetAgentPrefix()
 
   const { data, isLoading } = useQuery<ServicesDto, Error, Services>({
     queryKey: [SERVICES_QUERY_KEY, agentId, namespaceKey, workspaceKey, onlyWithSpecs],
-    queryFn: () => getServices(agentId!, namespaceKey!, workspaceKey!, onlyWithSpecs),
+    queryFn: () => getServices(agentId!, namespaceKey!, workspaceKey!, onlyWithSpecs, prefix),
     enabled: !!namespaceKey,
     refetchInterval: data => (data?.status === RUNNING_DISCOVERY_STATUS ? STATUS_REFETCH_INTERVAL : false),
     select: toServices,
