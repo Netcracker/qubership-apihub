@@ -65,7 +65,7 @@ export class GraphApiModelDiffTree<
   public getChildrenChanges(id: string, _fragment: any): DiffRecord {
     const childrenChanges: DiffRecord = {}
 
-    const rootDiffs = _fragment[this.metaKey]
+    const rootDiffs = _fragment[this.metaKeys.diffsMetaKey]
 
     // case of added/removed directives
     // case of added/removed args
@@ -95,7 +95,7 @@ export class GraphApiModelDiffTree<
     5. items -> properties
     6. items -> methods
     */
-    const diffForType = _fragment?.typeDef?.[this.metaKey]?.type
+    const diffForType = _fragment?.typeDef?.[this.metaKeys.diffsMetaKey]?.type
     if (diffForType &&
       diffForType?.type === breaking &&
       diffForType?.action === DiffAction.replace) {
@@ -235,7 +235,7 @@ export class GraphApiModelDiffTree<
       kindOfElements = 'methods'
     }
     typeDefElements ??= {}
-    const elementsDiffs = typeDefElements[this.metaKey]
+    const elementsDiffs = typeDefElements[this.metaKeys.diffsMetaKey]
     if (isObject(elementsDiffs)) {
       for (const property of Object.keys(typeDefElements)) {
         const diff = elementsDiffs[property]
@@ -293,7 +293,7 @@ export class GraphApiModelDiffTree<
       const untypedLocations = (directiveDefinition?.locations ?? []) as unknown
       const locationsRawChanges =
         isObject(untypedLocations)
-          ? untypedLocations[this.metaKey]
+          ? untypedLocations[this.metaKeys.diffsMetaKey]
           : undefined
       if (isDiffMetaRecord(locationsRawChanges)) {
         for (const [locIndex, locDiff] of Object.entries(locationsRawChanges)) {
@@ -304,7 +304,7 @@ export class GraphApiModelDiffTree<
       const untypedDirectiveDefinition = directiveDefinition as unknown
       const directiveDefinitionRawChanges =
         isObject(untypedDirectiveDefinition)
-          ? untypedDirectiveDefinition[this.metaKey]
+          ? untypedDirectiveDefinition[this.metaKeys.diffsMetaKey]
           : undefined
       if (isDiffMetaRecord(directiveDefinitionRawChanges)) {
         const repeatableDiff = directiveDefinitionRawChanges.repeatable
@@ -318,7 +318,7 @@ export class GraphApiModelDiffTree<
       const directives = value.directives ?? {}
       // added/removed deprecation
       const untypedDirectives = extendToObject(directives)
-      const directivesRawChanges = untypedDirectives?.[this.metaKey]
+      const directivesRawChanges = untypedDirectives?.[this.metaKeys.diffsMetaKey]
       if (isDiffMetaRecord(directivesRawChanges)) {
         const { deprecated: rawChangesForDeprecated, ...otherRawChanges } = directivesRawChanges
         if (rawChangesForDeprecated) {
@@ -337,7 +337,7 @@ export class GraphApiModelDiffTree<
         const { meta } = usedDirectiveDeprecated
         if (meta) {
           const untypedMeta = extendToObject(meta)
-          const metaRawChanges = untypedMeta?.[this.metaKey]
+          const metaRawChanges = untypedMeta?.[this.metaKeys.diffsMetaKey]
           if (isDiffMetaRecord(metaRawChanges)) {
             const maybeDiff = extendToObject(metaRawChanges.reason)
             const diff = isDiff(maybeDiff) ? maybeDiff : undefined
@@ -352,7 +352,7 @@ export class GraphApiModelDiffTree<
     const { value, id } = params
 
     const complexityType = getNodeComplexityType(value)
-    const nestedChanges: DiffRecord = value?.typeDef?.type?.[complexityType]?.[this.metaKey] ?? {}
+    const nestedChanges: DiffRecord = value?.typeDef?.type?.[complexityType]?.[this.metaKeys.diffsMetaKey] ?? {}
 
     const $nestedChanges: DiffRecord = {}
     for (const nestedId of Object.keys(nestedChanges)) {
@@ -393,7 +393,7 @@ export class GraphApiModelDiffTree<
       // definition changes for fields: title, description
       const definition = extendToObject(value.definition)
       const definitionChanges: Partial<DiffRecord> = {}
-      const definitionRawChanges = definition?.[this.metaKey]
+      const definitionRawChanges = definition?.[this.metaKeys.diffsMetaKey]
       if (isDiffMetaRecord(definitionRawChanges)) {
         ['description'].forEach(field => {
           const diff = definitionRawChanges?.[field]
@@ -403,7 +403,7 @@ export class GraphApiModelDiffTree<
 
       const meta = extendToObject(value.meta)
       const metaChanges: Partial<DiffRecord> = {} // isn't the same as field $metaChanges is
-      const metaRawChanges = meta?.[this.metaKey]
+      const metaRawChanges = meta?.[this.metaKeys.diffsMetaKey]
       if (isDiffMetaRecord(metaRawChanges)) {
         setValueByPath(metaChanges, metaRawChanges, ...['meta'])
       }
@@ -424,7 +424,7 @@ export class GraphApiModelDiffTree<
     }
     if (typeDefinition) {
       const typeDefinitionAsRawObject = extendToObject(typeDefinition)
-      const typeDefinitionRawChanges = typeDefinitionAsRawObject?.[this.metaKey]
+      const typeDefinitionRawChanges = typeDefinitionAsRawObject?.[this.metaKeys.diffsMetaKey]
 
       const $changes: Partial<DiffRecord> = {}
 
@@ -434,7 +434,7 @@ export class GraphApiModelDiffTree<
 
       // common props changed
       if (isNotUnionItem) { // argument/input property or output
-        const valueRawChanges = value?.[this.metaKey]
+        const valueRawChanges = value?.[this.metaKeys.diffsMetaKey]
         if (isDiffMetaRecord(valueRawChanges)) {
           ['nullable', 'default', 'description'].forEach(field => {
             const diff = valueRawChanges?.[field]
@@ -515,12 +515,12 @@ export class GraphApiModelDiffTree<
       if (isGraphApiEnumDefinition(typeDefinition)) {
         const values = typeDefinition.type.values ?? {}
         // added/removed enum values
-        const rawChanges = extendToObject(values)?.[this.metaKey]
+        const rawChanges = extendToObject(values)?.[this.metaKeys.diffsMetaKey]
         rawChanges && setValueByPath($changes, rawChanges, ...['values'])
         // changed "description" or "deprecation reason" inside enum values
         for (const [enumKey, enumValue] of Object.entries(values)) {
           // description (added/removed/replaced)
-          const maybeDiffMetaRecord = extendToObject(enumValue)?.[this.metaKey]
+          const maybeDiffMetaRecord = extendToObject(enumValue)?.[this.metaKeys.diffsMetaKey]
           const diffMetaRecord = isDiffMetaRecord(maybeDiffMetaRecord) ? maybeDiffMetaRecord : undefined
           const maybeDiff = diffMetaRecord?.description as unknown
           const diff = isDiff(maybeDiff) ? maybeDiff : undefined
@@ -528,7 +528,7 @@ export class GraphApiModelDiffTree<
           // deprecation reason (added/removed)
           const directives = enumValue.directives ?? {}
           const untypedDirectives = extendToObject(directives)
-          const maybeDirectivesRawChanges = untypedDirectives?.[this.metaKey]
+          const maybeDirectivesRawChanges = untypedDirectives?.[this.metaKeys.diffsMetaKey]
           if (
             isDiffMetaRecord(maybeDirectivesRawChanges) &&
             'deprecated' in maybeDirectivesRawChanges
@@ -543,7 +543,7 @@ export class GraphApiModelDiffTree<
           if (usedDirectiveDeprecated) {
             const { meta } = usedDirectiveDeprecated
             const untypedMeta = extendToObject(meta)
-            const maybeMetaRawChanges = untypedMeta?.[this.metaKey]
+            const maybeMetaRawChanges = untypedMeta?.[this.metaKeys.diffsMetaKey]
             if (isDiffMetaRecord(maybeMetaRawChanges)) {
               const maybeDiff = maybeMetaRawChanges.reason as unknown
               const diff = isDiff(maybeDiff) ? maybeDiff : undefined
@@ -587,7 +587,7 @@ export class GraphApiModelDiffTree<
 
     // all changed props in, for example, output node
     let $changes: DiffRecord = {}
-    const rawChanges = value[this.metaKey]
+    const rawChanges = value[this.metaKeys.diffsMetaKey]
     if (isDiffMetaRecord(rawChanges)) {
       $changes = rawChanges
     }

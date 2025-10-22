@@ -1,5 +1,5 @@
 import { breaking, DiffAction, nonBreaking, unclassified } from "@netcracker/qubership-apihub-api-diff"
-import { createGraphApiDiffTreeForTests, graphapi, metaKey, aggregatedDiffsMetaKey } from "./helpers/graphql"
+import { createGraphApiDiffTreeForTests, diffMetaKeys, graphapi } from "./helpers/graphql"
 
 describe('args', () => {
   it('arg changed', () => {
@@ -15,7 +15,7 @@ describe('args', () => {
       }
       scalar Key
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
     const root = tree.root
     const args = root!.children()[0]!.children()[0]
     const argsList = args!.children()
@@ -54,7 +54,7 @@ describe('args', () => {
         exist(id: ID!, table: String = "*"): Boolean!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
     const root = tree.root
     const args = root!.children()[0]!.children()[0]
     const argsList = args!.children()
@@ -83,7 +83,7 @@ describe('args', () => {
         exist(id: ID!): Boolean!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
     const root = tree.root
     const args = root!.children()[0]!.children()[0]
     const argsList = args!.children()

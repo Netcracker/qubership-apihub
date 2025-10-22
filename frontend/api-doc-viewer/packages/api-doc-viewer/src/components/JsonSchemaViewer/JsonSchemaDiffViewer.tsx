@@ -16,25 +16,25 @@
 
 import '../../index.css'
 
-import { FC, useMemo } from 'react'
-import { createJsonSchemaDiffTree, JsonSchemaDiffTreeNode } from '@netcracker/qubership-apihub-api-data-model'
+import { createJsonSchemaDiffTree, DiffMetaKeys, JsonSchemaDiffTreeNode } from '@netcracker/qubership-apihub-api-data-model'
+import { aggregateDiffsWithRollup, DiffType } from '@netcracker/qubership-apihub-api-diff'
 import { JsonSchemaState } from '@netcracker/qubership-apihub-api-state-model'
+import { FC, useMemo } from 'react'
 import { DEFAULT_DISPLAY_MODE, DEFAULT_EXPANDED_DEPTH, DEFAULT_LAYOUT_MODE, } from '../../consts/configuration'
-import { DisplayMode } from '../../types/DisplayMode'
-import { LayoutMode } from '../../types/LayoutMode'
-import { PropsWithOverriddenKind } from '../../types/internal/PropsWithState'
-import { isCombinerNodeState, isPropNodeState } from './types/nodes.guards'
-import { JsonPropNodeViewer } from './JsonPropNodeViewer/JsonPropNodeViewer'
-import { JsonCombinerNodeViewer } from './JsonCombinerNodeViewer/JsonCombinerNodeViewer'
+import { ChangeSeverityFiltersContext } from '../../contexts/ChangeSeverityFiltersContext'
 import { DisplayModeContext } from '../../contexts/DisplayModeContext'
 import { LayoutModeContext } from '../../contexts/LayoutModeContext'
 import { LevelContext } from '../../contexts/LevelContext'
-import { ChangeSeverityFiltersContext } from '../../contexts/ChangeSeverityFiltersContext'
 import { TopLevelPropsMediaTypesContext } from '../../contexts/TopLevelPropsMediaTypesContext'
+import { DisplayMode } from '../../types/DisplayMode'
+import { LayoutMode } from '../../types/LayoutMode'
+import { PropsWithOverriddenKind } from '../../types/internal/PropsWithState'
 import { PropsWithTopLevelPropsMediaTypesMap } from '../../types/internal/PropsWithTopLevelPropsMediaTypesMap'
-import { ErrorBoundary } from "../services/ErrorBoundary";
-import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback";
-import { aggregateDiffsWithRollup, DiffType } from '@netcracker/qubership-apihub-api-diff'
+import { ErrorBoundary } from "../services/ErrorBoundary"
+import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback"
+import { JsonCombinerNodeViewer } from './JsonCombinerNodeViewer/JsonCombinerNodeViewer'
+import { JsonPropNodeViewer } from './JsonPropNodeViewer/JsonPropNodeViewer'
+import { isCombinerNodeState, isPropNodeState } from './types/nodes.guards'
 
 export type JsonSchemaDiffViewerProps = {
   schema: unknown,
@@ -43,10 +43,7 @@ export type JsonSchemaDiffViewerProps = {
   // diffs
   layoutMode?: LayoutMode
   filters?: ReadonlyArray<DiffType>
-  metaKeys: {
-    diffsMetaKey: symbol,
-    aggregatedDiffsMetaKey: symbol,
-  }
+  metaKeys: DiffMetaKeys
 } & PropsWithOverriddenKind & PropsWithTopLevelPropsMediaTypesMap
 
 export const JsonSchemaDiffViewer: FC<JsonSchemaDiffViewerProps> = (props) => {

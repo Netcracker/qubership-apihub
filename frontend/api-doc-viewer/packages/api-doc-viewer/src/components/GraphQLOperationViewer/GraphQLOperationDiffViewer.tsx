@@ -16,26 +16,26 @@
 
 import '../../index.css'
 
+import { createGraphApiDiffTree, DiffMetaKeys, DiffNodeMeta } from '@netcracker/qubership-apihub-api-data-model'
+import { aggregateDiffsWithRollup, DiffType } from "@netcracker/qubership-apihub-api-diff"
+import { GraphApiState } from '@netcracker/qubership-apihub-api-state-model'
 import type { FC } from 'react'
 import { useMemo } from 'react'
-import { createGraphApiDiffTree, DiffNodeMeta } from '@netcracker/qubership-apihub-api-data-model'
-import { GraphApiState } from '@netcracker/qubership-apihub-api-state-model'
-import { isCombinerNodeState, isPropNodeState } from './types/nodes.guards'
 import { DEFAULT_EXPANDED_DEPTH, DEFAULT_LAYOUT_MODE } from '../../consts/configuration'
-import { DETAILED_DISPLAY_MODE, DisplayMode } from '../../types/DisplayMode'
-import { DisplayModeContext } from '../../contexts/DisplayModeContext'
-import { isDirectiveNode, isOperationNode } from './utils/nodes'
-import { GraphPropNodeViewer } from '../GraphSchemaViewer/GraphPropNodeViewer/GraphPropNodeViewer'
-import { GraphCombinerNodeViewer } from '../GraphSchemaViewer/GraphCombinerNodeViewer/GraphCombinerNodeViewer'
-import { LayoutMode } from '../../types/LayoutMode'
-import { LayoutModeContext } from '../../contexts/LayoutModeContext'
-import { CustomDirectivesSectionRow } from './CustomDirectivesSectionRow'
 import { ChangeSeverityFiltersContext } from '../../contexts/ChangeSeverityFiltersContext'
+import { DisplayModeContext } from '../../contexts/DisplayModeContext'
+import { LayoutModeContext } from '../../contexts/LayoutModeContext'
 import { LevelContext } from '../../contexts/LevelContext'
-import { ErrorBoundary } from "../services/ErrorBoundary";
-import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback";
-import { useLogRenderCompleted } from "../../hooks/debug-hook";
-import { aggregateDiffsWithRollup, DiffType } from "@netcracker/qubership-apihub-api-diff";
+import { useLogRenderCompleted } from "../../hooks/debug-hook"
+import { DETAILED_DISPLAY_MODE, DisplayMode } from '../../types/DisplayMode'
+import { LayoutMode } from '../../types/LayoutMode'
+import { GraphCombinerNodeViewer } from '../GraphSchemaViewer/GraphCombinerNodeViewer/GraphCombinerNodeViewer'
+import { GraphPropNodeViewer } from '../GraphSchemaViewer/GraphPropNodeViewer/GraphPropNodeViewer'
+import { ErrorBoundary } from "../services/ErrorBoundary"
+import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback"
+import { CustomDirectivesSectionRow } from './CustomDirectivesSectionRow'
+import { isCombinerNodeState, isPropNodeState } from './types/nodes.guards'
+import { isDirectiveNode, isOperationNode } from './utils/nodes'
 
 // FIXME 28.09.23 // Fix generic types
 
@@ -47,16 +47,13 @@ export type GraphQLOperationDiffViewerProps = {
   // diffs
   layoutMode?: LayoutMode,
   filters?: ReadonlyArray<DiffType>,
-  metaKeys: {
-    diffsMetaKey: symbol,
-    aggregatedDiffsMetaKey: symbol,
-  }
+  metaKeys: DiffMetaKeys
 }
 
 export const GraphQLOperationDiffViewer: FC<GraphQLOperationDiffViewerProps> = (props) => {
   return (
-    <ErrorBoundary fallback={<ErrorBoundaryFallback componentName="GraphQL Operation Diff Viewer"/>}>
-      <GraphQLOperationDiffViewerInner {...props}/>
+    <ErrorBoundary fallback={<ErrorBoundaryFallback componentName="GraphQL Operation Diff Viewer" />}>
+      <GraphQLOperationDiffViewerInner {...props} />
     </ErrorBoundary>
   )
 }
@@ -124,7 +121,7 @@ const GraphQLOperationDiffViewerInner: FC<GraphQLOperationDiffViewerProps> = (pr
                   if (isDirectiveNode(child.node) && child.first) {
                     return (
                       <div key={key}>
-                        <CustomDirectivesSectionRow layoutMode={layoutMode}/>
+                        <CustomDirectivesSectionRow layoutMode={layoutMode} />
                         <GraphPropNodeViewer
                           state={child}
                           $nodeChange={$childMeta?.$nodeChange}

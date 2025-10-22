@@ -36,6 +36,11 @@ export default meta;
 
 type Story = StoryObj<typeof meta>
 
+const DIFF_META_KEYS = {
+  diffsMetaKey: DIFF_META_KEY,
+  aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+}
+
 export const Test: Story = {
   args: {
     schema: prepareJsonDiffSchema({
@@ -44,10 +49,7 @@ export const Test: Story = {
       target: RESPONSE_200_BODY_TARGET,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   }
 }
 
@@ -69,10 +71,7 @@ export const RenamedProperty: Story = {
       }
     },
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   }
 }
 
@@ -128,10 +127,7 @@ export const Flags: Story = {
       target: RESPONSE_200_BODY_TARGET,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   }
 }
 
@@ -161,10 +157,7 @@ export const Enum: Story = {
       target: RESPONSE_200_BODY_TARGET,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   }
 }
 
@@ -211,10 +204,7 @@ export const AddMinItemsInArrayProperty: Story = {
       target: RESPONSE_200_BODY_TARGET,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   }
 }
 
@@ -267,9 +257,6 @@ export const CycledChanged: Story = {
       circular: true,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   }
 }

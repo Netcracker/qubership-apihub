@@ -19,3 +19,8 @@ export type DiffNodeMeta = {
 export type DiffNodeValue = {
   $changes?: DiffRecord
 }
+
+export type DiffMetaKeys = {
+  diffsMetaKey: symbol;
+  aggregatedDiffsMetaKey: symbol;
+}

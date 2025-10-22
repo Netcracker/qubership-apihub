@@ -37,6 +37,11 @@ export default meta
 
 type Story = StoryObj<typeof meta>
 
+const DIFF_META_KEYS = {
+  diffsMetaKey: DIFF_META_KEY,
+  aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+}
+
 export const Test: Story = {
   args: {
     source: prepareGraphApiDiffSchema({
@@ -44,10 +49,7 @@ export const Test: Story = {
       afterSource: {},
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -128,10 +130,7 @@ export const DeprecatedQuery: Story = {
       afterSource: deprecationAfter,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 export const UnDeprecatedQuery: Story = {
@@ -142,10 +141,7 @@ export const UnDeprecatedQuery: Story = {
     }),
     operationPath: 'unDeprecatedQuery',
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 export const DeprecatedWithReasonQuery: Story = {
@@ -156,10 +152,7 @@ export const DeprecatedWithReasonQuery: Story = {
     }),
     operationPath: 'deprecatedWithReasonQuery',
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 export const UnDeprecatedWithReasonQuery: Story = {
@@ -170,10 +163,7 @@ export const UnDeprecatedWithReasonQuery: Story = {
     }),
     operationPath: 'unDeprecatedWithReasonQuery',
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -203,10 +193,7 @@ export const SimpleEnum: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -230,10 +217,7 @@ export const WhollyAddedSimpleEnum: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -257,10 +241,7 @@ export const WhollyRemovedSimpleEnum: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -336,10 +317,7 @@ export const ComplexEnum: Story = {
       afterSource: complexEnumAfter,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -367,10 +345,7 @@ export const WhollyAddedComplexEnum: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -398,10 +373,7 @@ export const WhollyRemovedComplexEnum: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -422,10 +394,7 @@ export const WhollyAddedDirective: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -446,10 +415,7 @@ export const WhollyRemovedDirective: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -472,10 +438,7 @@ export const AppendDirective: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -498,10 +461,7 @@ export const PopDirective: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -522,10 +482,7 @@ export const AddedDirectiveLocation: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -546,10 +503,7 @@ export const RemovedDirectiveLocation: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -570,10 +524,7 @@ export const ReplacedDirectiveLocation: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -595,10 +546,7 @@ export const AddedDirectiveDescription: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -620,10 +568,7 @@ export const RemovedDirectiveDescription: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -646,10 +591,7 @@ export const ReplacedDirectiveDescription: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -669,10 +611,7 @@ export const StringToStringOrInt: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -692,10 +631,7 @@ export const StringToIntOrFloat: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -719,10 +655,7 @@ export const StringToStringOrEnum: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -750,10 +683,7 @@ export const StringToEnum1OrEnum2: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -773,10 +703,7 @@ export const ListToStringOrInt: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -797,10 +724,7 @@ export const DirectiveUsageAddedArgValue: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -821,10 +745,7 @@ export const DirectiveUsageRemovedArgValue: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -845,10 +766,7 @@ export const DirectiveUsageChangedArgValue: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -869,10 +787,7 @@ export const ChangedUnion: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -913,10 +828,7 @@ export const ChangedObjectiveUnion: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
   },
 }
 
@@ -947,10 +859,7 @@ export const TypeToInput: Story = {
   },
   args: {
     expandedDepth: 2,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
     layoutMode: 'side-by-side-diffs',
     operationPath: 'companyCount',
   },
@@ -995,10 +904,7 @@ export const EnumChanges: Story = {
   },
   args: {
     expandedDepth: 2,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
     layoutMode: 'side-by-side-diffs',
     operationPath: 'companyCount',
   },
@@ -1025,10 +931,7 @@ export const DirectiveUsageLocationsChanged: Story = {
   },
   args: {
     expandedDepth: 2,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
     layoutMode: 'side-by-side-diffs',
   },
 }
@@ -1070,10 +973,7 @@ export const ChangedCircularMethods: Story = {
   },
   args: {
     expandedDepth: 2,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
     layoutMode: 'side-by-side-diffs',
   },
 }
@@ -1115,10 +1015,7 @@ export const ChangedCircularProperties: Story = {
   },
   args: {
     expandedDepth: 2,
-    metaKeys: {
-      diffsMetaKey: DIFF_META_KEY,
-      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-    },
+    metaKeys: DIFF_META_KEYS,
     layoutMode: 'side-by-side-diffs',
   },
 }

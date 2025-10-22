@@ -2,7 +2,7 @@ import { Diff, DiffType, isDiffReplace } from '@netcracker/qubership-apihub-api-
 import { buildPointer } from '@netcracker/qubership-apihub-api-unifier';
 import { isArray } from '@netcracker/qubership-apihub-json-crawl';
 import { UNKNOWN_TYPE } from '../../abstract/constants';
-import { DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstract/diff';
+import { DiffMetaKeys, DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstract/diff';
 import { ChangesSummaryUtils } from '../../abstract/diff-tree-utils';
 import { LazyBuildingContext } from "../../abstract/model/model-tree-node.impl";
 import { IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from '../../abstract/model/types';
@@ -24,8 +24,7 @@ export class JsonSchemaModelDiffTree<
 
   constructor(
     source: unknown,
-    public readonly metaKey: symbol,
-    public readonly aggregatedMetaKey: symbol
+    public readonly metaKeys: DiffMetaKeys
   ) {
     super(source)
   }
@@ -40,7 +39,7 @@ export class JsonSchemaModelDiffTree<
   ) {
     const node = super.createNode(id, kind, key, isCycle, params, lazyBuildingContext)
     // @ts-expect-error // TODO 14.10.25 // Fix this later
-    ChangesSummaryUtils.calculateNodeChangesSummary(node, this.aggregatedMetaKey, lazyBuildingContext)
+    ChangesSummaryUtils.calculateNodeChangesSummary(node, this.metaKeys.aggregatedDiffsMetaKey, lazyBuildingContext)
     return node
   }
 
@@ -54,7 +53,7 @@ export class JsonSchemaModelDiffTree<
   ) {
     const node = super.createComplexNode(id, kind, key, isCycle, params, lazyBuildingContext)
     // @ts-expect-error // TODO 14.10.25 // Fix this later
-    ChangesSummaryUtils.calculateNodeChangesSummary(node, this.aggregatedMetaKey, lazyBuildingContext)
+    ChangesSummaryUtils.calculateNodeChangesSummary(node, this.metaKeys.aggregatedDiffsMetaKey, lazyBuildingContext)
     return node
   }
 
@@ -84,7 +83,7 @@ export class JsonSchemaModelDiffTree<
     }
     const type: JsonSchemaNodeType = isJsonSchemaNodeType(value.type) ? value.type : UNKNOWN_TYPE
     let observedProps = jsonSchemaNodeValueProps[type]
-    const valueDiffs = value[this.metaKey]
+    const valueDiffs = value[this.metaKeys.diffsMetaKey]
     if (isObject(valueDiffs) && 'type' in valueDiffs) {
       const typeDiff = valueDiffs.type
       const previousType: JsonSchemaNodeType | undefined = isDiff(typeDiff) && isDiffReplace(typeDiff) && isJsonSchemaNodeType(typeDiff.beforeValue)
@@ -116,7 +115,7 @@ export class JsonSchemaModelDiffTree<
 
     const valueRequired = extendToObject(_value.required)
     if (valueRequired) {
-      const maybeDiffMetaRecordForRequired = valueRequired[this.metaKey]
+      const maybeDiffMetaRecordForRequired = valueRequired[this.metaKeys.diffsMetaKey]
       if (isDiffMetaRecord(maybeDiffMetaRecordForRequired)) {
         for (const changedRequiredItemIndex of Object.keys(maybeDiffMetaRecordForRequired)) {
           const maybeDiff = maybeDiffMetaRecordForRequired[changedRequiredItemIndex]
@@ -127,7 +126,7 @@ export class JsonSchemaModelDiffTree<
 
     const valueEnum = extendToObject(_value.enum)
     if (valueEnum) {
-      const maybeDiffMetaRecordForEnum = valueEnum[this.metaKey]
+      const maybeDiffMetaRecordForEnum = valueEnum[this.metaKeys.diffsMetaKey]
       if (isDiffMetaRecord(maybeDiffMetaRecordForEnum)) {
         for (const changedEnumItemIndex of Object.keys(maybeDiffMetaRecordForEnum)) {
           const maybeDiff = maybeDiffMetaRecordForEnum[changedEnumItemIndex]
@@ -138,7 +137,7 @@ export class JsonSchemaModelDiffTree<
 
     const valueExamples = extendToObject(_value.examples)
     if (valueExamples) {
-      const maybeDiffMetaRecordForExamples = valueExamples[this.metaKey]
+      const maybeDiffMetaRecordForExamples = valueExamples[this.metaKeys.diffsMetaKey]
       if (isDiffMetaRecord(maybeDiffMetaRecordForExamples)) {
         for (const changedExampleItemIndex of Object.keys(maybeDiffMetaRecordForExamples)) {
           const maybeDiff = maybeDiffMetaRecordForExamples[changedExampleItemIndex]
@@ -150,7 +149,7 @@ export class JsonSchemaModelDiffTree<
     const notHandledProps = props.filter(prop => !JSON_SCHEMA_SPECIFICALLY_HANDLED_PROPS.has(prop))
 
     for (const observedProperty of notHandledProps) {
-      const maybeDiffMetaRecord = _value[this.metaKey]
+      const maybeDiffMetaRecord = _value[this.metaKeys.diffsMetaKey]
       if (!isDiffMetaRecord(maybeDiffMetaRecord)) {
         continue
       }
@@ -248,55 +247,55 @@ export class JsonSchemaModelDiffTree<
     const children: DiffRecord = {}
 
     // add/remove all properties
-    if (_fragment?.[this.metaKey]?.properties) {
+    if (_fragment?.[this.metaKeys.diffsMetaKey]?.properties) {
       for (const prop of objectKeys(_fragment.properties as object)) {
-        children[`${id}/properties/${prop}`] = _fragment?.[this.metaKey]?.properties
+        children[`${id}/properties/${prop}`] = _fragment?.[this.metaKeys.diffsMetaKey]?.properties
       }
     }
 
     // add/remove some properties
-    const properties: Record<string, any> = _fragment.properties?.[this.metaKey] ?? {}
+    const properties: Record<string, any> = _fragment.properties?.[this.metaKeys.diffsMetaKey] ?? {}
     for (const prop of objectKeys(properties)) {
       children[`${id}/properties/${prop}`] = properties[prop]
     }
 
     // add/remove additionalProperties
-    if (_fragment?.[this.metaKey]?.additionalProperties) {
-      children[`${id}/additionalProperties`] = _fragment[this.metaKey].additionalProperties
+    if (_fragment?.[this.metaKeys.diffsMetaKey]?.additionalProperties) {
+      children[`${id}/additionalProperties`] = _fragment[this.metaKeys.diffsMetaKey].additionalProperties
     }
 
     // add/remove items
-    if (_fragment?.items?.[this.metaKey]) {
-      const items: DiffRecord = _fragment?.items?.[this.metaKey] ?? {}
+    if (_fragment?.items?.[this.metaKeys.diffsMetaKey]) {
+      const items: DiffRecord = _fragment?.items?.[this.metaKeys.diffsMetaKey] ?? {}
       for (const item of objectKeys(items)) {
         children[`${id}/items/${item.toString()}`] = items[item]
       }
     }
 
-    if (_fragment?.[this.metaKey]?.items) {
+    if (_fragment?.[this.metaKeys.diffsMetaKey]?.items) {
       //if items was/will be an array that we should transform changes
       const items = _fragment?.items
       if (isArray(items)) {
         for (const item of objectKeys(items)) {
-          children[`${id}/items/${item.toString()}`] = _fragment?.[this.metaKey].items
+          children[`${id}/items/${item.toString()}`] = _fragment?.[this.metaKeys.diffsMetaKey].items
         }
       } else {
-        children[`${id}/items`] = _fragment?.[this.metaKey].items
+        children[`${id}/items`] = _fragment?.[this.metaKeys.diffsMetaKey].items
       }
     }
 
-    if (_fragment?.[this.metaKey]?.additionalItems) {
-      children[`${id}/additionalItems`] = _fragment[this.metaKey].additionalItems
+    if (_fragment?.[this.metaKeys.diffsMetaKey]?.additionalItems) {
+      children[`${id}/additionalItems`] = _fragment[this.metaKeys.diffsMetaKey].additionalItems
     }
 
     // add/remove all patternProperties
-    if (_fragment?.[this.metaKey]?.patternProperties) {
+    if (_fragment?.[this.metaKeys.diffsMetaKey]?.patternProperties) {
       for (const prop of objectKeys(_fragment.patternProperties as object)) {
-        children[`${id}/patternProperties${buildPointer([prop])}`] = _fragment?.[this.metaKey]?.patternProperties
+        children[`${id}/patternProperties${buildPointer([prop])}`] = _fragment?.[this.metaKeys.diffsMetaKey]?.patternProperties
       }
     }
 
-    const patternProperties: Record<string, any> = _fragment?.patternProperties?.[this.metaKey] ?? {}
+    const patternProperties: Record<string, any> = _fragment?.patternProperties?.[this.metaKeys.diffsMetaKey] ?? {}
     for (const prop of objectKeys(patternProperties)) {
       children[`${id}/patternProperties${buildPointer([prop])}`] = patternProperties[prop]
     }
@@ -331,7 +330,7 @@ export class JsonSchemaModelDiffTree<
     const { value, id, key = '', parent = null } = params
 
     const complexityType = getNodeComplexityType(value)
-    const nestedChanges: Record<string, any> = value?.[complexityType]?.[this.metaKey] ?? {}
+    const nestedChanges: Record<string, any> = value?.[complexityType]?.[this.metaKeys.diffsMetaKey] ?? {}
     const $nodeChange: NodeChange | undefined = this.getNodeChange(params)
 
     const $nestedChanges: DiffRecord = {}

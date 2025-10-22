@@ -25,10 +25,16 @@ import { buildGraphApiSchema } from '../../mocks/utils/graph-api-transformers'
 import { SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '../../types/LayoutMode'
 import { ArrayUtils } from '../../utils/common/arrays'
 import { getCompareResult } from './merged-document'
+import { DiffMetaKeys } from '@netcracker/qubership-apihub-api-data-model'
 
 export type GraphQLCompatibilitySuiteStoryArgs = { before: string, after: string }
 
 const FONT_FAMILIES: string[] = ['Inter']
+
+const DIFF_META_KEYS: DiffMetaKeys = {
+  diffsMetaKey: DIFF_META_KEY,
+  aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+}
 
 export function GraphQLStoryComponent({ before, after }: GraphQLCompatibilitySuiteStoryArgs) {
   const { merged } = getCompareResult(
@@ -54,10 +60,7 @@ export function GraphQLStoryComponent({ before, after }: GraphQLCompatibilitySui
   return (
     <GraphQLOperationDiffViewer
       layoutMode={SIDE_BY_SIDE_DIFFS_LAYOUT_MODE}
-      metaKeys={{
-        diffsMetaKey: DIFF_META_KEY,
-        aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
-      }}
+      metaKeys={DIFF_META_KEYS}
       source={merged}
     />
   )

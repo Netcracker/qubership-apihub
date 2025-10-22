@@ -7,7 +7,7 @@ import {
   unclassified
 } from "@netcracker/qubership-apihub-api-diff"
 import { isGraphSchemaNodeEnumValue } from "../src"
-import { createGraphApiDiffTreeForTests, graphapi, metaKey, aggregatedDiffsMetaKey } from "./helpers/graphql"
+import { createGraphApiDiffTreeForTests, diffMetaKeys, graphapi } from "./helpers/graphql"
 
 describe('output', () => {
   it('type changed: scalar -> enum', () => {
@@ -34,7 +34,7 @@ describe('output', () => {
       }
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 5)
     const root = tree.root
     const output = root!
       .children().find(child => child.kind === 'query')!
@@ -107,7 +107,7 @@ describe('output', () => {
 
     const pathOutput = '#/queries/fruit/output'
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 5)
     const root = tree.root
     const output = root!
       .children().find(child => child.kind === 'query')!
@@ -157,7 +157,7 @@ describe('output', () => {
         test: [String!]!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 5)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!
@@ -204,7 +204,7 @@ describe('output', () => {
         test: [String!]!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .expand()
@@ -265,7 +265,7 @@ describe('output', () => {
         test: [String!]!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 5)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!
@@ -322,7 +322,7 @@ describe('output', () => {
         test: [String!]!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 5)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!
@@ -383,7 +383,7 @@ describe('output', () => {
         name: String
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 5)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!
@@ -445,7 +445,7 @@ describe('output', () => {
         name: String
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 5)
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
       .children().find(child => child.kind === 'output')!
@@ -511,7 +511,7 @@ describe('output', () => {
       }
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 5)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -601,7 +601,7 @@ describe('output', () => {
       }
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 6)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 6)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -666,7 +666,7 @@ describe('output', () => {
         isExotic: Boolean
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 5)
 
     const pathOutput = '#/queries/fruit/output'
     const pathMethods = `${pathOutput}/typeDef/type/methods/fruit/output/typeDef/type/methods`
@@ -730,7 +730,7 @@ describe('output', () => {
         shape: String!
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 5)
 
     const pathOutput = '#/queries/fruit/output'
     const pathMethods = `${pathOutput}/typeDef/type/methods/fruit/output/typeDef/type/methods`
@@ -792,7 +792,7 @@ describe('output', () => {
       scalar Parallelogram
       scalar Rectangle
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 5)
 
     const pathOneOfItem = '#/queries/test/output/typeDef/type/methods/shape/output/typeDef/type/oneOf'
 
@@ -867,7 +867,7 @@ describe('output', () => {
       scalar Rectangle
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey, aggregatedDiffsMetaKey, 5)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 5)
 
     const pathOneOfItem = '#/queries/test/output/typeDef/type/methods/shape/output/typeDef/type/oneOf'
 

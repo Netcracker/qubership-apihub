@@ -1,12 +1,13 @@
 import { CrawlRules, syncCrawl, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
+import type { DiffMetaKeys } from '../../abstract/diff';
+import { createCycleGuardHook } from '../../abstract/hooks/cycle-guard';
 import { graphApiRules } from '../rules';
 import { createGraphSchemaTreeCrawlHook } from '../tree/hooks/create-graph-api-schema-nodes';
 import type { GraphApiNodeKind } from '../tree/types';
+import { createLeaveOnlyOneOperationFilter } from '../utils';
 import { createGraphApiDiffTreeCrawlHook } from './hooks/create-graph-api-nodes';
 import { GraphApiModelDiffTree } from './model';
 import { GraphApiDiffCrawlRule, GraphApiDiffCrawlState, GraphApiDiffNodeData, GraphApiDiffNodeMeta } from './types';
-import { createLeaveOnlyOneOperationFilter } from '../utils';
-import { createCycleGuardHook } from '../../abstract/hooks/cycle-guard';
 
 const DEFAULT_MAX_TREE_LEVEL = 3;
 
@@ -14,14 +15,13 @@ const CRAWL_HOOKS_CACHE: Map<GraphApiModelDiffTree<GraphApiDiffNodeData, GraphAp
 
 export function crawlHooksGraphApiDiffTree(
   tree: GraphApiModelDiffTree<GraphApiDiffNodeData, GraphApiNodeKind, GraphApiDiffNodeMeta>,
-  metaKey: symbol,
-  aggregatedMetaKey?: symbol,
+  metaKeys: DiffMetaKeys,
 ): any[] {
   if (!CRAWL_HOOKS_CACHE.has(tree)) {
     CRAWL_HOOKS_CACHE.set(tree, [
       createCycleGuardHook(tree),
-      createGraphApiDiffTreeCrawlHook(tree as any, metaKey, aggregatedMetaKey) as SyncCrawlHook<any, any>,
-      createGraphSchemaTreeCrawlHook(tree as any /*because AMT not type safe*/, metaKey, aggregatedMetaKey) as SyncCrawlHook<any, any>,
+      createGraphApiDiffTreeCrawlHook(tree as any, metaKeys) as SyncCrawlHook<any, any>,
+      createGraphSchemaTreeCrawlHook(tree as any /*because AMT not type safe*/, metaKeys) as SyncCrawlHook<any, any>,
     ])
   }
   return CRAWL_HOOKS_CACHE.get(tree)!
@@ -29,10 +29,7 @@ export function crawlHooksGraphApiDiffTree(
 
 export function createGraphApiDiffTree(
   mergedSource: unknown,
-  metaKeys: {
-    diffsMetaKey: symbol,
-    aggregatedDiffsMetaKey: symbol,
-  },
+  metaKeys: DiffMetaKeys,
   options?: {
     rules?: CrawlRules<GraphApiDiffCrawlRule>
     state?: GraphApiDiffCrawlState
@@ -42,13 +39,11 @@ export function createGraphApiDiffTree(
 ) {
   const { rules, state } = options ?? {}
 
-  const { diffsMetaKey, aggregatedDiffsMetaKey } = metaKeys
-
   const tree = new GraphApiModelDiffTree<
     GraphApiDiffNodeData,
     GraphApiNodeKind,
     GraphApiDiffNodeMeta
-  >(mergedSource, diffsMetaKey, aggregatedDiffsMetaKey)
+  >(mergedSource, metaKeys)
 
   if (maxTreeLevel < 2) {
     console.error('We do not display nodes with kind = "schema", so it will be impossible to expand such node.')
@@ -91,7 +86,7 @@ export function createGraphApiDiffTree(
 
   syncCrawl(
     mergedSource,
-    crawlHooksGraphApiDiffTree(tree, diffsMetaKey, aggregatedDiffsMetaKey),
+    crawlHooksGraphApiDiffTree(tree, metaKeys),
     { state: state ?? defaultState, rules: rules ?? graphApiRules }
   )
 

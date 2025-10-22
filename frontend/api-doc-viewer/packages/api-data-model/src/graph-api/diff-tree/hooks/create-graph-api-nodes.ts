@@ -1,5 +1,6 @@
 import { buildPointer } from '@netcracker/qubership-apihub-api-unifier'
 // import { DiffType } from '@netcracker/qubership-apihub-api-diff';
+import { DiffType } from '@netcracker/qubership-apihub-api-diff'
 import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 import { SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl'
 import {
@@ -14,18 +15,17 @@ import {
   graphApiNodeKinds,
 } from '../..'
 import { modelTreeNodeType } from '../../../abstract/constants'
+import type { DiffMetaKeys } from '../../../abstract/diff'
+import { LazyBuildingContext } from '../../../abstract/model/model-tree-node.impl'
 import { ModelTreeNodeParams } from '../../../abstract/model/types'
 import { isBrokenRef } from '../../../json-schema'
 import { areExcludedComponents } from '../../utils'
 import { GraphApiModelDiffTree } from '../model'
 import { collectSchemaChildrenChanges } from '../utils'
-import { LazyBuildingContext } from '../../../abstract/model/model-tree-node.impl'
-import { DiffType } from '@netcracker/qubership-apihub-api-diff'
 
 export function createGraphApiDiffTreeCrawlHook(
   tree: GraphApiModelDiffTree<GraphApiDiffNodeData, GraphApiNodeKind, GraphApiDiffNodeMeta>,
-  metaKey: symbol,
-  aggregatedMetaKey?: symbol,
+  metaKeys: DiffMetaKeys,
   // FIXME 06.10.25 // Revert "any"
 ): SyncCrawlHook<any, any> {
   return ({ value, state, rules, path, key }) => {
@@ -50,10 +50,12 @@ export function createGraphApiDiffTreeCrawlHook(
     const id = tree.nextId(idCandidate)
     const { kind } = rules
 
+    const { diffsMetaKey } = metaKeys
+
     const lazyBuildingContext: LazyBuildingContext<any, any, any> = {
       tree: tree,
       crawlValue: value,
-      crawlHooks: crawlHooksGraphApiDiffTree(tree, metaKey, aggregatedMetaKey),
+      crawlHooks: crawlHooksGraphApiDiffTree(tree, metaKeys),
       crawlRules: rules,
       alreadyConvertedMappingStack: new Map(state.alreadyConvertedMappingStack),
       nodeIdPrefix: id,
@@ -87,7 +89,7 @@ export function createGraphApiDiffTreeCrawlHook(
             // diffs
             // $nodeChange: undefined,
             // $metaChanges: undefined,
-            $childrenChanges: collectSchemaChildrenChanges(value, metaKey),
+            $childrenChanges: collectSchemaChildrenChanges(value, diffsMetaKey),
             // $nestedChanges: undefined,
             $nodeChangesSummary: new Set<DiffType>(),
           },

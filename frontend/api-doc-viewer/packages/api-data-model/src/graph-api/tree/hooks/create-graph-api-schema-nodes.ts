@@ -11,6 +11,7 @@ import { areExcludedComponents } from '../../utils'
 import { crawlHooksGraphApiTree } from '../build'
 import { GraphApiModelTree } from '../model'
 import { GraphApiCrawlState, GraphApiTreeComplexNode, GraphApiTreeNode } from '../types'
+import { DiffMetaKeys } from '@apihub/api-data-model/abstract-model'
 
 function shouldCrawlDiff(value: unknown): value is DiffRemove | DiffReplace {
   return isDiff(value) &&
@@ -20,8 +21,7 @@ function shouldCrawlDiff(value: unknown): value is DiffRemove | DiffReplace {
 
 export function createGraphSchemaTreeCrawlHook(
   tree: GraphApiModelTree,
-  metaKey?: symbol,
-  aggregatedMetaKey?: symbol,
+  metaKeys?: DiffMetaKeys,
   // FIXME 01.10.25 // Revert "any"
 ): SyncCrawlHook<any, any> {
   const graphSchemaNodeKinds = Object.keys(graphSchemaNodeKind)
@@ -41,6 +41,8 @@ export function createGraphSchemaTreeCrawlHook(
     const idCandidate = nodeIdPrefix + buildPointer(path)
     const id = tree.nextId(idCandidate)
 
+    const { diffsMetaKey } = metaKeys ?? {}
+
     /**
      * Code fragment below is supposed to build part of the tree which contains nodes
      * built from wholly added/removed fragments.
@@ -50,9 +52,10 @@ export function createGraphSchemaTreeCrawlHook(
      */
     if (
       isGraphApiAnyDefinition(value) &&
-      isObject(value) && metaKey && metaKey in value
+      metaKeys &&
+      isObject(value) && diffsMetaKey && diffsMetaKey in value
     ) {
-      const diffMeta = value[metaKey]
+      const diffMeta = value[diffsMetaKey]
       if (isDiffMetaRecord(diffMeta)) {
         for (const [field, diff] of Object.entries(diffMeta)) {
           if (!shouldCrawlDiff(diff)) {
@@ -62,7 +65,7 @@ export function createGraphSchemaTreeCrawlHook(
           const nextId = nodeIdPrefix + buildPointer([...path, field])
           syncCrawl(
             diff.beforeValue,
-            crawlHooksGraphApiDiffTree(tree as any, metaKey, aggregatedMetaKey),
+            crawlHooksGraphApiDiffTree(tree as any, metaKeys),
             {
               state: {
                 parent: parent,
@@ -123,8 +126,8 @@ export function createGraphSchemaTreeCrawlHook(
     const lazyBuildingContext: LazyBuildingContext<any, any, any> = {
       tree: tree,
       crawlValue: value,
-      crawlHooks: metaKey
-        ? crawlHooksGraphApiDiffTree(tree as any, metaKey)
+      crawlHooks: metaKeys
+        ? crawlHooksGraphApiDiffTree(tree as any, metaKeys)
         : crawlHooksGraphApiTree(tree),
       crawlRules: rules,
       alreadyConvertedMappingStack: nextStack,

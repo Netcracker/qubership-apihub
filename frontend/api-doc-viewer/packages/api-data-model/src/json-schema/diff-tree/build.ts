@@ -1,4 +1,5 @@
 import { syncCrawl } from '@netcracker/qubership-apihub-json-crawl';
+import type { DiffMetaKeys } from '../../abstract/diff';
 import { isObject } from '../../utils';
 import { jsonSchemaCrawlRules } from '../rules';
 import { crawlHooksJsonSchemaTree } from '../tree/build';
@@ -10,18 +11,14 @@ const DEFAULT_MAX_TREE_LEVEL = 2;
 
 export const createJsonSchemaDiffTree = (
   mergedAndNormalizedSpec: unknown,
-  metaKeys: {
-    diffsMetaKey: symbol,
-    aggregatedDiffsMetaKey: symbol,
-  },
+  metaKeys: DiffMetaKeys,
   maxTreeLevel: number = DEFAULT_MAX_TREE_LEVEL,
 ) => {
-  const { diffsMetaKey, aggregatedDiffsMetaKey } = metaKeys;
-  const tree = new JsonSchemaModelDiffTree(mergedAndNormalizedSpec, diffsMetaKey, aggregatedDiffsMetaKey)
+  const tree = new JsonSchemaModelDiffTree(mergedAndNormalizedSpec, metaKeys)
   if (!isObject(mergedAndNormalizedSpec)) {
     return tree
   }
-  
+
   const crawlState: JsonSchemaDiffCrawlState & JsonSchemaCrawlState = {
     parent: null,
     alreadyConvertedMappingStack: new Map(),

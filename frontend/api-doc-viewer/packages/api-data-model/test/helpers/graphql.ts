@@ -1,10 +1,11 @@
 import fs from 'fs'
 import path from 'path'
 
-import { denormalize, normalize, NormalizeOptions } from '@netcracker/qubership-apihub-api-unifier'
 import { aggregateDiffsWithRollup, apiDiff } from '@netcracker/qubership-apihub-api-diff'
+import { denormalize, normalize, NormalizeOptions } from '@netcracker/qubership-apihub-api-unifier'
 import { buildFromSchema, GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 import { buildSchema } from 'graphql'
+import { DiffMetaKeys } from '../../src'
 import { createGraphApiDiffTree } from '../../src/graph-api/diff-tree/build'
 import { createGraphApiTree } from '../../src/graph-api/tree/build'
 
@@ -35,22 +36,27 @@ export function createGraphApiTreeForTests(source: unknown, depth?: number) {
   return createGraphApiTree(mergedSource, depth)
 }
 
-export const metaKey = Symbol('diff')
+export const diffsMetaKey = Symbol('diff')
 export const aggregatedDiffsMetaKey = Symbol('aggregatedDiff')
+export const diffMetaKeys: DiffMetaKeys = {
+  diffsMetaKey: diffsMetaKey,
+  aggregatedDiffsMetaKey: aggregatedDiffsMetaKey
+}
 
 export function createGraphApiDiffTreeForTests(
   before: unknown,
   after: unknown,
-  diffsMetaKey: symbol,
-  aggregatedDiffsMetaKey: symbol,
+  metaKeys: DiffMetaKeys,
   depth?: number,
   beforeSource: unknown = before,
   afterSource: unknown = after,
 ) {
+  const { diffsMetaKey, aggregatedDiffsMetaKey } = metaKeys
+
   const mergedSource = apiDiff(before, after, {
     beforeSource,
     afterSource,
-    metaKey,
+    metaKey: diffsMetaKey,
     unify: true,
   }).merged
 
