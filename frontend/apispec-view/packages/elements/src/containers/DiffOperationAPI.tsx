@@ -23,14 +23,14 @@ import { flow } from 'lodash'
 import * as React from 'react'
 import { useEffect, useMemo } from 'react'
 
+import { buildOpenApiDiffCause, DiffMetaKeys } from '@netcracker/qubership-apihub-api-doc-viewer'
+import { DiffMetaKeyContext } from '@stoplight/elements/containers/DIffMetaKeyContext'
+import { DiffBlock, DiffContainer } from 'diff-block'
 import { APIWithOperation } from '../components/API/APIWithOperation'
 import { useExportDocumentProps } from '../hooks/useExportDocumentProps'
 import { transformOasToServiceNodeWithDiffMeta } from '../utils/oas'
-import { DiffBlock, DiffContainer } from 'diff-block'
-import { ChangeSeverityFiltersContext } from './ChangeSeverityFiltersContext'
-import { DiffMetaKeyContext } from '@stoplight/elements/containers/DIffMetaKeyContext'
-import { buildOpenApiDiffCause } from '@netcracker/qubership-apihub-api-doc-viewer'
 import { AggregatedDiffMetaKeyContext } from './AggregatedDIffMetaKeyContext'
+import { ChangeSeverityFiltersContext } from './ChangeSeverityFiltersContext'
 
 // import '@netcracker/qubership-apihub-api-doc-viewer/dist/style.css'
 
@@ -46,10 +46,7 @@ export type DiffAPIPropsWithOperation = {
   mergedDocument?: unknown;
   // diff specific
   filters: DiffType[];
-  metaKeys: {
-    diffsMetaKey: symbol;
-    aggregatedDiffsMetaKey: symbol;
-  }
+  metaKeys: DiffMetaKeys
 } & CommonAPIProps;
 
 export interface CommonAPIProps extends RoutingProps {
