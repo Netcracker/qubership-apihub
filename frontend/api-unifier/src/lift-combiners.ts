@@ -11,6 +11,7 @@ import {
   cleanAllOrigins,
   cleanOrigins,
   copyOrigins,
+  copyOriginsForArray,
   mergeOrigins,
   resolveOrigins,
   resolveOriginsMetaRecord,
@@ -56,65 +57,65 @@ function liftCombiners(
 ): Record<PropertyKey, unknown> {
   const ignoredKeys: Set<PropertyKey> = new Set()
   options?.inlineRefsFlag && ignoredKeys.add(options.inlineRefsFlag)
-  const { evaluationCacheService: cacheService } = options
+  const { evaluationCacheService: cacheService, originsFlag } = options
   const allValueKeys = Reflect.ownKeys(value)
     .filter(key => !ignoredKeys.has(key))//filterignre keys + origin
-    .filter(key => key !== options.originsFlag)//filterignre keys + origin
+    .filter(key => key !== originsFlag)//filterignre keys + origin
   const foundCombinerKeys = findCombinerKeys(allValueKeys)
   const isEmptySibling = !hasSiblingKeys(allValueKeys)
   if (!(foundCombinerKeys.length > 1 || !isEmptySibling && foundCombinerKeys.length > 0)) { return value }
   const [firstCombinerKey, secondCombinerKey] = foundCombinerKeys
   const [firstCombiner, secondCombiner] = [value[firstCombinerKey], value[secondCombinerKey]]
-  const firstCombinerItems: unknown[] = Array.isArray(firstCombiner) ? firstCombiner : []
-  const secondCombinerItems: unknown[] = Array.isArray(secondCombiner) ? secondCombiner : []
+  const firstCombinerItems: unknown[] = extractCombinerItemsWithOrigins(firstCombiner, originsFlag)
+  const secondCombinerItems: unknown[] = extractCombinerItemsWithOrigins(secondCombiner, originsFlag)
   return cacheService.cacheEvaluationResultByFootprint(
     [...allValueKeys, ...firstCombinerItems, '|', ...secondCombinerItems],
     () => {
       const newValue: Record<PropertyKey, unknown> = { ...value }
       const copiedFirstCombinerItems: unknown[] = [...firstCombinerItems]
-      const firstCombinerItemsOriginsRecord = resolveOriginsMetaRecord(firstCombinerItems, options.originsFlag) ?? {}
+      const firstCombinerItemsOriginsRecord = resolveOriginsMetaRecord(firstCombinerItems, originsFlag) ?? {}
       // recombine first combiner
       if (copiedFirstCombinerItems.length === 0) {
         return newValue
       }
       const sibling: Record<PropertyKey, unknown> = { ...newValue }
       delete sibling[firstCombinerKey]
-      cleanOrigins(sibling, firstCombinerKey, options.originsFlag)
+      cleanOrigins(sibling, firstCombinerKey, originsFlag)
       for (const ignoredKey of ignoredKeys) {
         delete sibling[ignoredKey]
-        cleanOrigins(sibling, ignoredKey, options.originsFlag)
+        cleanOrigins(sibling, ignoredKey, originsFlag)
       }
       for (const key of allValueKeys) {
         delete newValue[key]
-        cleanOrigins(newValue, key, options.originsFlag)
+        cleanOrigins(newValue, key, originsFlag)
       }
 
       if (!isEmptySibling) {
         firstCombinerItems.splice(0, firstCombinerItems.length)
-        cleanAllOrigins(firstCombinerItems, options.originsFlag)
+        cleanAllOrigins(firstCombinerItems, originsFlag)
         for (let i = 0; i < copiedFirstCombinerItems.length; i++) {
           const firstCombinerItem = copiedFirstCombinerItems[i]
           const item = { [JSON_SCHEMA_PROPERTY_ALL_OF]: [sibling, firstCombinerItem] }
           const firstCombinerItemsOrigins = firstCombinerItemsOriginsRecord[i] ?? []
           const combinationOrigins = uniqueItems([...(valueOrigins ?? []), ...(firstCombinerItemsOrigins)])
-          setOrigins(item, JSON_SCHEMA_PROPERTY_ALL_OF, options.originsFlag, combinationOrigins)
-          setOrigins(item[JSON_SCHEMA_PROPERTY_ALL_OF], 0, options.originsFlag, valueOrigins)
-          setOrigins(item[JSON_SCHEMA_PROPERTY_ALL_OF], 1, options.originsFlag, firstCombinerItemsOrigins)
-          setOrigins(firstCombinerItems, firstCombinerItems.length, options.originsFlag, combinationOrigins)
+          setOrigins(item, JSON_SCHEMA_PROPERTY_ALL_OF, originsFlag, combinationOrigins)
+          setOrigins(item[JSON_SCHEMA_PROPERTY_ALL_OF], 0, originsFlag, valueOrigins)
+          setOrigins(item[JSON_SCHEMA_PROPERTY_ALL_OF], 1, originsFlag, firstCombinerItemsOrigins)
+          setOrigins(firstCombinerItems, firstCombinerItems.length, originsFlag, combinationOrigins)
           firstCombinerItems.push(item)
         }
       }
 
       if (secondCombinerItems.length === 0) {
         newValue[firstCombinerKey] = firstCombinerItems
-        copyOrigins(value, newValue, firstCombinerKey, firstCombinerKey, options.originsFlag)
+        copyOrigins(value, newValue, firstCombinerKey, firstCombinerKey, originsFlag)
         return newValue
       }
       const copiedSecondCombinerItems: unknown[] = [...secondCombinerItems]
-      const secondCombinerItemsOriginsRecord = resolveOriginsMetaRecord(secondCombinerItems, options.originsFlag) ?? {}
+      const secondCombinerItemsOriginsRecord = resolveOriginsMetaRecord(secondCombinerItems, originsFlag) ?? {}
       // recombine second combiner if exists
       secondCombinerItems.splice(0, secondCombinerItems.length)
-      cleanAllOrigins(secondCombinerItems, options.originsFlag)
+      cleanAllOrigins(secondCombinerItems, originsFlag)
       for (let secondCombinerIndex = 0; secondCombinerIndex < copiedSecondCombinerItems.length; secondCombinerIndex++) {
         const secondCombinerItem = copiedSecondCombinerItems[secondCombinerIndex]
         const secondCombinerItemOrigins = secondCombinerItemsOriginsRecord[secondCombinerIndex] ?? []
@@ -124,23 +125,23 @@ function liftCombiners(
           const firstCombinerItemsOrigins = firstCombinerItemsOriginsRecord[firstCombinerIndex] ?? []
           const item = { [JSON_SCHEMA_PROPERTY_ALL_OF]: [firstCombinerItem, secondCombinerItem] }
           const combinationOrigins = uniqueItems([...firstCombinerItemsOrigins, ...secondCombinerItemOrigins])
-          setOrigins(item, JSON_SCHEMA_PROPERTY_ALL_OF, options.originsFlag, combinationOrigins)
-          setOrigins(item[JSON_SCHEMA_PROPERTY_ALL_OF], 0, options.originsFlag, firstCombinerItemsOrigins)
-          setOrigins(item[JSON_SCHEMA_PROPERTY_ALL_OF], 1, options.originsFlag, secondCombinerItemOrigins)
-          setOrigins(mergedFirstAndSecondCombinerItems, mergedFirstAndSecondCombinerItems.length, options.originsFlag, combinationOrigins)
+          setOrigins(item, JSON_SCHEMA_PROPERTY_ALL_OF, originsFlag, combinationOrigins)
+          setOrigins(item[JSON_SCHEMA_PROPERTY_ALL_OF], 0, originsFlag, firstCombinerItemsOrigins)
+          setOrigins(item[JSON_SCHEMA_PROPERTY_ALL_OF], 1, originsFlag, secondCombinerItemOrigins)
+          setOrigins(mergedFirstAndSecondCombinerItems, mergedFirstAndSecondCombinerItems.length, originsFlag, combinationOrigins)
           mergedFirstAndSecondCombinerItems.push(item)
         }
         const newSecondCombinerItem: Record<PropertyKey, unknown> = {
           [firstCombinerKey]: mergedFirstAndSecondCombinerItems,
         }
-        copyOrigins(value, newSecondCombinerItem, firstCombinerKey, firstCombinerKey, options.originsFlag)
-        setOrigins(secondCombinerItems, secondCombinerItems.length, options.originsFlag, secondCombinerItemOrigins)
+        copyOrigins(value, newSecondCombinerItem, firstCombinerKey, firstCombinerKey, originsFlag)
+        setOrigins(secondCombinerItems, secondCombinerItems.length, originsFlag, secondCombinerItemOrigins)
         secondCombinerItems.push(newSecondCombinerItem)
       }
       newValue[secondCombinerKey] = secondCombinerItems
-      copyOrigins(value, newValue, secondCombinerKey, secondCombinerKey, options.originsFlag)
+      copyOrigins(value, newValue, secondCombinerKey, secondCombinerKey, originsFlag)
       delete sibling[secondCombinerKey]
-      cleanOrigins(sibling, secondCombinerKey, options.originsFlag)
+      cleanOrigins(sibling, secondCombinerKey, originsFlag)
       return newValue
     },
   )
@@ -220,3 +221,37 @@ function hasSiblingKeys(keys: PropertyKey[]): boolean {
 function findCombinerKeys(keys: PropertyKey[]): JsonSchemaCombinerType[] {
   return keys.filter(isCombinerKey)
 }
+
+const extractCombinerItemsWithOrigins = (combiner: unknown, originsFlag: symbol | undefined): unknown[] => {
+  if (!Array.isArray(combiner)) {
+    return []
+  }
+  /**
+   * Extracts combiner items into a new array with preserved origins.
+   *
+   * Purpose:
+   * - prevents accidental mutation leaks when the same combiner array
+   *   is referenced in multiple places;
+   * - cloning breaks aliasing so local modifications (e.g. title form syntheticTitleFlag)
+   *   apply only to the resolved instance, not to the original source.
+   *
+   * Example:
+   * Options:
+   *    syntheticTitleFlag: Symbol('syntheticTitleFlag')
+   * Input:
+   *   paths...schema: { "$ref": "#/components/schemas/MySchema" }
+   *   components...MySchema: { anyOf: [{ "type": "string" }, { "type": "null" }] }
+   *
+   * Without cloning (leak):
+   *   Resolved $ref -> [{ "title": "MySchema", "type": "string"}, ...]
+   *   MySchema.anyOf -> [{ "title": "MySchema", "type": "string" }, ...]
+   *
+   * With cloning (correct):
+   *   Resolved $ref -> [{ "title": "MySchema", "type": "string"}, ...]
+   *   MySchema.anyOf -> [{ "type": "string" }, ...]
+   */
+  const items = [...combiner]
+  originsFlag && copyOriginsForArray(combiner, items, originsFlag)
+  return items
+}
+
