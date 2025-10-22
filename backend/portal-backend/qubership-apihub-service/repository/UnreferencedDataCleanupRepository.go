@@ -1,3 +1,17 @@
+// Copyright 2024-2025 NetCracker Technology Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package repository
 
 import (
@@ -79,20 +93,48 @@ func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedOperationData(c
 		}
 		logger.Debugf(ctx, "Found %d operation data entities to delete in current batch", len(dataHash))
 
-		err = u.countRelatedDataForOperationDataTx(ctx, tx, dataHash, &deletedItems)
+		logger.Tracef(ctx, "Deleting related data for operation data with hash: %v", dataHash)
+
+		logger.Debug(ctx, "Deleting related data from ts_graphql_operation_data")
+		deleteGQLDataQuery := `DELETE FROM ts_graphql_operation_data WHERE data_hash IN (?)`
+		gqlResult, err := tx.ExecContext(ctx, deleteGQLDataQuery, pg.In(dataHash))
 		if err != nil {
-			return fmt.Errorf("failed to count operation data related data: %w", err)
+			return fmt.Errorf("failed to delete records from ts_graphql_operation_data: %w", err)
 		}
+		deletedItems.TSGQLOperationData = gqlResult.RowsAffected()
+
+		logger.Debug(ctx, "Deleting related data from ts_rest_operation_data")
+		deleteRestDataQuery := `DELETE FROM ts_rest_operation_data WHERE data_hash IN (?)`
+		restResult, err := tx.ExecContext(ctx, deleteRestDataQuery, pg.In(dataHash))
+		if err != nil {
+			return fmt.Errorf("failed to delete records from ts_rest_operation_data: %w", err)
+		}
+		deletedItems.TSRestOperationData = restResult.RowsAffected()
+
+		logger.Debug(ctx, "Deleting related data from ts_operation_data")
+		deleteOpDataQuery := `DELETE FROM ts_operation_data WHERE data_hash IN (?)`
+		opResult, err := tx.ExecContext(ctx, deleteOpDataQuery, pg.In(dataHash))
+		if err != nil {
+			return fmt.Errorf("failed to delete records from ts_operation_data: %w", err)
+		}
+		deletedItems.TSOperationData = opResult.RowsAffected()
+
+		logger.Debug(ctx, "Deleting related data from fts_operation_data")
+		deleteFTSDataQuery := `DELETE FROM fts_operation_data WHERE data_hash IN (?)`
+		ftsResult, err := tx.ExecContext(ctx, deleteFTSDataQuery, pg.In(dataHash))
+		if err != nil {
+			return fmt.Errorf("failed to delete records from fts_operation_data: %w", err)
+		}
+		deletedItems.FTSOperationData = ftsResult.RowsAffected()
 
 		logger.Tracef(ctx, "Deleting operation data with hash: %v", dataHash)
-		deleteOperationDataQuery := `
-			DELETE FROM operation_data
-			WHERE data_hash IN (?)`
+
+		logger.Debug(ctx, "Deleting unreferenced data from operation_data")
+		deleteOperationDataQuery := `DELETE FROM operation_data WHERE data_hash IN (?)`
 		_, err = tx.ExecContext(ctx, deleteOperationDataQuery, pg.In(dataHash))
 		if err != nil {
 			return fmt.Errorf("failed to delete operation data: %w", err)
 		}
-
 		deletedItems.OperationData = len(dataHash)
 
 		var cleanupRun entity.UnreferencedDataCleanupEntity
@@ -125,36 +167,8 @@ func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedOperationData(c
 	return deletedItems.OperationData +
 		deletedItems.TSGQLOperationData +
 		deletedItems.TSRestOperationData +
-		deletedItems.TSRestOperationData +
+		deletedItems.TSOperationData +
 		deletedItems.FTSOperationData, err
-}
-
-func (u unreferencedDataCleanupRepositoryImpl) countRelatedDataForOperationDataTx(ctx context.Context, tx *pg.Tx, dataHash []string, deletedItems *entity.DeletedItemsCounts) error {
-	_, err := tx.QueryOneContext(ctx, pg.Scan(&deletedItems.TSGQLOperationData),
-		`SELECT COUNT(*) FROM ts_graphql_operation_data WHERE data_hash IN (?)`, pg.In(dataHash))
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.QueryOneContext(ctx, pg.Scan(&deletedItems.TSRestOperationData),
-		`SELECT COUNT(*) FROM ts_rest_operation_data WHERE data_hash IN (?)`, pg.In(dataHash))
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.QueryOneContext(ctx, pg.Scan(&deletedItems.TSOperationData),
-		`SELECT COUNT(*) FROM ts_operation_data WHERE data_hash IN (?)`, pg.In(dataHash))
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.QueryOneContext(ctx, pg.Scan(&deletedItems.FTSOperationData),
-		`SELECT COUNT(*) FROM fts_operation_data WHERE data_hash IN (?)`, pg.In(dataHash))
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedOperationGroupTemplates(ctx context.Context, runId string, batchSize int) (int, error) {
@@ -162,17 +176,18 @@ func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedOperationGroupT
 
 	err := u.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		deleteUnreferencedOperationGroupTemplatesQuery := `
-			WITH to_delete AS (
-        		SELECT ogt.checksum
-				FROM operation_group_template ogt
-				WHERE NOT EXISTS (
-    				SELECT 1 FROM operation_group og WHERE og.template_checksum = ogt.checksum
-				)
-				ORDER BY ogt.checksum
-        		LIMIT ?
-    		)
-    		DELETE FROM operation_group_template
-    		WHERE checksum IN (SELECT checksum FROM to_delete)`
+			DELETE FROM operation_group_template ogt
+			USING (
+  				SELECT checksum
+  				FROM operation_group_template ogt2
+  				WHERE NOT EXISTS (
+    				SELECT 1 FROM operation_group og WHERE og.template_checksum = ogt2.checksum
+  				)
+  				ORDER BY ogt2.checksum
+  				LIMIT ?
+			) del
+			WHERE ogt.checksum = del.checksum;`
+
 		res, err := tx.ExecContext(ctx, deleteUnreferencedOperationGroupTemplatesQuery, batchSize)
 		if err != nil {
 			return fmt.Errorf("failed to delete unreferenced operation group templates: %w", err)
@@ -214,17 +229,17 @@ func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedSrcArchives(ctx
 
 	err := u.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		deleteUnreferencedSrcArchivesQuery := `
-			WITH to_delete AS (
-        		SELECT psa.checksum
-				FROM published_sources_archives psa
-				WHERE NOT EXISTS (
-    				SELECT 1 FROM published_sources ps WHERE ps.archive_checksum = psa.checksum
-				)
-				ORDER BY psa.checksum
-        		LIMIT ?
-    		)
-    		DELETE FROM published_sources_archives
-    		WHERE checksum IN (SELECT checksum FROM to_delete)`
+			DELETE FROM published_sources_archives psa
+			USING (
+  				SELECT checksum
+  				FROM published_sources_archives psa2
+  				WHERE NOT EXISTS (
+    				SELECT 1 FROM published_sources ps WHERE ps.archive_checksum = psa2.checksum
+  				)
+  				ORDER BY psa2.checksum
+  				LIMIT ?
+			) del
+			WHERE psa.checksum = del.checksum;`
 		res, err := tx.ExecContext(ctx, deleteUnreferencedSrcArchivesQuery, batchSize)
 		if err != nil {
 			return fmt.Errorf("failed to delete unreferenced source archives: %w", err)
@@ -266,17 +281,17 @@ func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedPublishedData(c
 
 	err := u.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		deleteUnreferencedPublishDataQuery := `
-			WITH to_delete AS (
-        		SELECT pd.checksum
-				FROM published_data pd
-				WHERE NOT EXISTS (
-    				SELECT 1 FROM published_version_revision_content pvrc WHERE pvrc.checksum = pd.checksum
-				)
-				ORDER BY pd.checksum
-        		LIMIT ?
-    		)
-    		DELETE FROM published_data
-    		WHERE checksum IN (SELECT checksum FROM to_delete)`
+			DELETE FROM published_data pd
+			USING (
+  				SELECT checksum
+  				FROM published_data pd2
+  				WHERE NOT EXISTS (
+    				SELECT 1 FROM published_version_revision_content pvrc WHERE pvrc.checksum = pd2.checksum
+  				)
+  				ORDER BY pd2.checksum
+  				LIMIT ?
+			) del
+			WHERE pd.checksum = del.checksum;`
 		res, err := tx.ExecContext(ctx, deleteUnreferencedPublishDataQuery, batchSize)
 		if err != nil {
 			return fmt.Errorf("failed to delete unreferenced publish data: %w", err)
