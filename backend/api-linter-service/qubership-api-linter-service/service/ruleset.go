@@ -9,6 +9,7 @@ import (
 	"github.com/Netcracker/qubership-api-linter-service/secctx"
 	"github.com/Netcracker/qubership-api-linter-service/view"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"sort"
 	"time"
@@ -78,6 +79,7 @@ func (r rulesetServiceImpl) CreateRuleset(ctx context.Context, name string, apiT
 		return nil, fmt.Errorf("new ruleset not found")
 	}
 	result := entity.MakeRulesetView(*resEnt)
+	log.Infof("New ruleset created: %+v", result)
 	return &result, nil
 }
 
@@ -103,7 +105,13 @@ func (r rulesetServiceImpl) ActivateRuleset(ctx context.Context, id string) erro
 		return fmt.Errorf("current active ruleset for api type %s and linter %s is not found", rsToActivate.ApiType, rsToActivate.Linter)
 	}
 
-	return r.rulesetRepository.ActivateRuleset(ctx, id, currentR.Id)
+	err = r.rulesetRepository.ActivateRuleset(ctx, id, currentR.Id)
+	if err != nil {
+		return err
+	}
+	log.Infof("Ruleset %s (id = %s) was activated for API type = %s and linter = %s",
+		rsToActivate.Name, rsToActivate.Id, rsToActivate.ApiType, rsToActivate.Linter)
+	return nil
 }
 
 func (r rulesetServiceImpl) ListRulesets(ctx context.Context, limit, page int) ([]view.Ruleset, error) {
@@ -241,5 +249,10 @@ func (r rulesetServiceImpl) DeleteRuleset(ctx context.Context, id string) error 
 		}
 	}
 
-	return r.rulesetRepository.DeleteRuleset(ctx, id)
+	err = r.rulesetRepository.DeleteRuleset(ctx, id)
+	if err != nil {
+		return err
+	}
+	log.Infof("Ruleset %s (id = %s) was deleted for API type = %s", ent.Name, ent.Id, ent.ApiType)
+	return nil
 }

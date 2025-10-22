@@ -5,12 +5,13 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/Netcracker/qubership-api-linter-service/exception"
-	"github.com/Netcracker/qubership-api-linter-service/secctx"
-	"github.com/Netcracker/qubership-api-linter-service/view"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/Netcracker/qubership-api-linter-service/exception"
+	"github.com/Netcracker/qubership-api-linter-service/secctx"
+	"github.com/Netcracker/qubership-api-linter-service/view"
 
 	"time"
 
@@ -22,6 +23,7 @@ type ApihubClient interface {
 	GetRsaPublicKey(ctx context.Context) (*view.PublicKey, error)
 	GetApiKeyByKey(apiKey string) (*view.ApihubApiKeyView, error)
 
+	GetPackageById(ctx context.Context, id string) (*view.SimplePackage, error)
 	GetVersion(ctx context.Context, id, version string) (*view.VersionContent, error)
 
 	GetVersionDocuments(ctx context.Context, packageId, version string) (*view.VersionDocuments, error)
@@ -32,6 +34,8 @@ type ApihubClient interface {
 	GetPatByPAT(ctx context.Context, token string) (*view.PersonalAccessTokenExtAuthView, error)
 
 	GetAvailableRoles(ctx context.Context, packageId string) (*view.PackageRoles, error)
+
+	GetSystemInfo(ctx context.Context) (*view.ApihubSystemInfo, error)
 }
 
 func NewApihubClient(apihubUrl, accessToken string) ApihubClient {
@@ -128,6 +132,33 @@ func (a apihubClientImpl) GetRsaPublicKey(ctx context.Context) (*view.PublicKey,
 		Value: resp.Body(),
 	}
 	return &publicKey, nil
+}
+
+func (a apihubClientImpl) GetPackageById(ctx context.Context, id string) (*view.SimplePackage, error) {
+	req := a.makeRequest(ctx)
+
+	resp, err := req.Get(fmt.Sprintf("%s/api/v2/packages/%s", a.apihubUrl, url.PathEscape(id)))
+
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode() != http.StatusOK {
+		if resp.StatusCode() == http.StatusNotFound {
+			return nil, nil
+		}
+		if authErr := checkUnauthorized(resp); authErr != nil {
+			return nil, authErr
+		}
+		return nil, fmt.Errorf("failed to get package by id -  %s : status code %d %v", id, resp.StatusCode(), err)
+	}
+
+	var pkg view.SimplePackage
+
+	err = json.Unmarshal(resp.Body(), &pkg)
+	if err != nil {
+		return nil, err
+	}
+	return &pkg, nil
 }
 
 func (a apihubClientImpl) GetVersion(ctx context.Context, id, version string) (*view.VersionContent, error) {
@@ -286,6 +317,23 @@ func (a apihubClientImpl) GetAvailableRoles(ctx context.Context, packageId strin
 	}
 
 	return &roles, nil
+}
+
+func (a apihubClientImpl) GetSystemInfo(ctx context.Context) (*view.ApihubSystemInfo, error) {
+	req := a.makeRequest(ctx)
+	resp, err := req.Get(fmt.Sprintf("%s/api/v1/system/info", a.apihubUrl))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get APIHUB system info: %s", err.Error())
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("failed to get APIHUB system info: status code %d", resp.StatusCode())
+	}
+	var config view.ApihubSystemInfo
+	err = json.Unmarshal(resp.Body(), &config)
+	if err != nil {
+		return nil, err
+	}
+	return &config, nil
 }
 
 func (a apihubClientImpl) makeRequest(ctx context.Context) *resty.Request {

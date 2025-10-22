@@ -205,7 +205,7 @@ func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.Do
 	if task.Linter == view.SpectralLinter {
 		// it might take a long time due to linter lock or just long execution
 
-		log.Infof("Processing doc %s for package %s, version %s@%d by spectral", task.FileId, task.PackageId, task.Version, task.Revision)
+		log.Infof("Processing doc %s (task id = %s) for package %s, version %s@%d by spectral", task.FileId, task.Id, task.PackageId, task.Version, task.Revision)
 		resultPath, calcTime, err := d.spectralExecutor.LintLocalDoc(filePath, rulesetPath)
 		if err != nil {
 			status = view.StatusError
@@ -228,7 +228,6 @@ func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.Do
 				details = fmt.Sprintf("error unmarshalling result: %s", err)
 			}
 		}
-		log.Infof("Doc task id = %s, Processing time = %+vms", task.Id, calcTime)
 
 		if status == view.StatusSuccess {
 			summary = calculateSpectralSummary(report)
@@ -245,6 +244,12 @@ func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.Do
 				}
 			}
 		}
+
+		logDetails := ""
+		if details != "" {
+			logDetails = fmt.Sprintf("details = %s, ", details)
+		}
+		log.Infof("Lint finished for doc %s (task id = %s), status = %s, %sProcessing time = %+vms", task.FileId, task.Id, status, logDetails, calcTime)
 
 		LinterVersion := d.spectralExecutor.GetLinterVersion()
 		log.Tracef("Spectral linter version is %s", LinterVersion)
