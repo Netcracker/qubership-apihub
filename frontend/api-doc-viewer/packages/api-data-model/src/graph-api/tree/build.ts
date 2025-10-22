@@ -1,7 +1,7 @@
 import { syncCrawl } from '@netcracker/qubership-apihub-json-crawl';
 import { isObject } from '../../utils';
 import { graphApiRules } from '../rules';
-import { isFirstOperation, isGraphApiOperationNode } from '../utils';
+import { createLeaveOnlyOneOperationFilter } from '../utils';
 import { createGraphApiTreeCrawlHook } from './hooks/create-graph-api-nodes';
 import { createGraphSchemaTreeCrawlHook } from './hooks/create-graph-api-schema-nodes';
 import { GraphApiModelTree } from './model';
@@ -80,11 +80,8 @@ export const createGraphApiTree = (
     }
   )
 
-  tree.root?.removeChildrenByCondition(
-    operationName
-      ? (node => !isGraphApiOperationNode(node) || node.key === operationName)
-      : (node, _, array) => !isGraphApiOperationNode(node) || isFirstOperation(node, array)
-  )
+  const childrenFilter = createLeaveOnlyOneOperationFilter(operationName)
+  tree.root?.removeChildrenByCondition(childrenFilter)
 
   return tree
 }

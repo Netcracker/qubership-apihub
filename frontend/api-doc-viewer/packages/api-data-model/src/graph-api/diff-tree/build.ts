@@ -5,7 +5,7 @@ import type { GraphApiNodeKind } from '../tree/types';
 import { createGraphApiDiffTreeCrawlHook } from './hooks/create-graph-api-nodes';
 import { GraphApiModelDiffTree } from './model';
 import { GraphApiDiffCrawlRule, GraphApiDiffCrawlState, GraphApiDiffNodeData, GraphApiDiffNodeMeta } from './types';
-import { isFirstOperation, isGraphApiOperationNode } from '../utils';
+import { createLeaveOnlyOneOperationFilter } from '../utils';
 import { createCycleGuardHook } from '../../abstract/hooks/cycle-guard';
 
 const DEFAULT_MAX_TREE_LEVEL = 3;
@@ -95,11 +95,8 @@ export function createGraphApiDiffTree(
     { state: state ?? defaultState, rules: rules ?? graphApiRules }
   )
 
-  tree.root?.removeChildrenByCondition(
-    operationName
-      ? (node => !isGraphApiOperationNode(node) || node.key === operationName)
-      : (node, _, array) => !isGraphApiOperationNode(node) || isFirstOperation(node, array)
-  )
+  const childrenFilter = createLeaveOnlyOneOperationFilter(operationName)
+  tree.root?.removeChildrenByCondition(childrenFilter)
 
   return tree
 }

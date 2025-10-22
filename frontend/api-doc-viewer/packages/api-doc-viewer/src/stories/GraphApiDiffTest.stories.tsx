@@ -1004,7 +1004,6 @@ export const EnumChanges: Story = {
   },
 }
 
-
 export const DirectiveUsageLocationsChanged: Story = {
   render: (args) => {
     const processedSource = prepareGraphApiDiffSchema({
@@ -1018,6 +1017,96 @@ export const DirectiveUsageLocationsChanged: Story = {
         directive @foo on FIELD_DEFINITION | ENUM_VALUE
         type Query {
           test: String @foo
+        }
+      `),
+      circular: true,
+    })
+    return <GraphQLOperationDiffViewer {...args} source={processedSource} />
+  },
+  args: {
+    expandedDepth: 2,
+    metaKeys: {
+      diffsMetaKey: DIFF_META_KEY,
+      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+    },
+    layoutMode: 'side-by-side-diffs',
+  },
+}
+
+export const ChangedCircularMethods: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiDiffSchema({
+      beforeSource: buildGraphApi(`
+        type Query {
+          test: Response
+        }
+        type Response {
+          id: ID!
+          name: String
+          removedCycled: CycledEntity
+        }
+        type CycledEntity {
+          value: String
+          child: CycledEntity
+        }
+      `),
+      afterSource: buildGraphApi(`
+        type Query {
+          test: Response
+        }
+        type Response {
+          id: ID!
+          name: String
+          addedCycled: CycledEntity
+        }
+        type CycledEntity {
+          value: String
+          child: CycledEntity
+        }
+      `),
+      circular: true,
+    })
+    return <GraphQLOperationDiffViewer {...args} source={processedSource} />
+  },
+  args: {
+    expandedDepth: 2,
+    metaKeys: {
+      diffsMetaKey: DIFF_META_KEY,
+      aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+    },
+    layoutMode: 'side-by-side-diffs',
+  },
+}
+
+export const ChangedCircularProperties: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiDiffSchema({
+      beforeSource: buildGraphApi(`
+        type Query {
+          test: Response
+        }
+        input Response {
+          id: ID!
+          name: String
+          removedCycled: CycledEntity
+        }
+        type CycledEntity {
+          value: String
+          child: CycledEntity
+        }
+      `),
+      afterSource: buildGraphApi(`
+        type Query {
+          test: Response
+        }
+        input Response {
+          id: ID!
+          name: String
+          addedCycled: CycledEntity
+        }
+        type CycledEntity {
+          value: String
+          child: CycledEntity
         }
       `),
       circular: true,

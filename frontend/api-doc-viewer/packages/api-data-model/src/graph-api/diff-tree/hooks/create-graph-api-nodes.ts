@@ -102,7 +102,7 @@ export function createGraphApiDiffTreeCrawlHook(
 
     /* Feature "Lazy Tree Building" */
     if (
-      state.treeLevel >= state.maxTreeLevel && 
+      state.treeLevel >= state.maxTreeLevel &&
       nodeCreationResult.node.type === modelTreeNodeType.simple
     ) {
       return { done: true }

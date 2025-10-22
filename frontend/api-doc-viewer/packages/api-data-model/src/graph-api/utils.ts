@@ -119,16 +119,86 @@ export function areExcludedComponents(path: JsonPath) {
   return path.length > 0 && path[0] === 'components' && excluded.includes(path[1])
 }
 
-export function isFirstOperation(
-  checkingNode: IModelTreeNode<any, any, any>,
-  nodes: IModelTreeNode<any, any, any>[]
-) {
-  let firstOperationFound = null;
-  for (const currentNode of nodes) {
-    if (isGraphApiOperationNode(currentNode)) {
-      firstOperationFound = currentNode;
-      break;
+/**
+ * Create filter function to remove all children except the one with the given operation name.
+ *
+ * If operation name is not provided, we take first operation by default.
+ * If operation name is provided, but there's no operation with such name, we take the first operation by default.
+ *
+ * @param operationName - operation name to leave only this operation in the tree
+ * @returns filter function to remove all children except the one with the given operation name
+ */
+export function createLeaveOnlyOneOperationFilter(operationName?: string) {
+  return !operationName
+    ? createLeaveOnlyFirstOperationFilter()
+    : createLeaveOperationByNameOrFirstOperationFilter(operationName);
+}
+
+function createLeaveOnlyFirstOperationFilter() {
+  let operationSearchExecuted: boolean = false;
+
+  let firstOperationIndex: number = -1
+
+  return (
+    node: IModelTreeNode<unknown, string, unknown>,
+    index: number,
+    array: IModelTreeNode<unknown, string, unknown>[]
+  ) => {
+    if (!isGraphApiOperationNode(node)) {
+      return true;
     }
-  }
-  return firstOperationFound === checkingNode;
+
+
+    if (!operationSearchExecuted) {
+      operationSearchExecuted = true;
+      for (let i = 0; i < array.length; i++) {
+        const currentNode = array[i];
+        if (!isGraphApiOperationNode(currentNode)) {
+          continue;
+        }
+        firstOperationIndex = i;
+        break;
+      }
+    }
+
+    return index === firstOperationIndex;
+  };
+}
+
+function createLeaveOperationByNameOrFirstOperationFilter(operationName: string) {
+  let operationSearchExecuted: boolean = false;
+
+  let firstOperationIndex: number = -1;
+  let requiredOperationIndex: number = -1;
+
+  return (
+    node: IModelTreeNode<unknown, string, unknown>,
+    index: number,
+    array: IModelTreeNode<unknown, string, unknown>[]
+  ) => {
+    if (!isGraphApiOperationNode(node)) {
+      return true;
+    }
+
+    if (!operationSearchExecuted) {
+      operationSearchExecuted = true;
+      for (let i = 0; i < array.length; i++) {
+        const currentNode = array[i];
+        if (!isGraphApiOperationNode(currentNode)) {
+          continue;
+        }
+        if (firstOperationIndex === -1) {
+          firstOperationIndex = i;
+        }
+        if (currentNode.key === operationName) {
+          requiredOperationIndex = i;
+          break;
+        }
+      }
+    }
+
+    return requiredOperationIndex === -1
+      ? index === firstOperationIndex
+      : index === requiredOperationIndex;
+  };
 }
