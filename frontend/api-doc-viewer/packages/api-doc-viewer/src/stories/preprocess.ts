@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
+import { isObject } from '@netcracker/qubership-apihub-api-data-model'
 import {
-  aggregateDiffsWithRollup,
   apiDiff,
   COMPARE_MODE_OPERATION,
-  DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY,
+  DIFF_META_KEY
 } from '@netcracker/qubership-apihub-api-diff'
-import { denormalize, normalize, NormalizeOptions, stringifyCyclicJso, RefErrorType } from '@netcracker/qubership-apihub-api-unifier'
+import { denormalize, normalize, NormalizeOptions, RefErrorType, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier'
 import { ObjectUtils } from '../utils/common/objects'
-import { isObject } from '@netcracker/qubership-apihub-api-data-model'
 
 const syntheticTitleFlag = Symbol('syntheticTitle')
 
@@ -350,8 +349,6 @@ export function prepareJsonDiffSchema(options: JsonDiffSchemaOptions): unknown {
     metaKey: DIFF_META_KEY,
   }).merged as any
 
-  aggregateDiffsWithRollup(mergedDocument, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)
-
   const mergedSchema = getSchemaByTarget(mergedDocument, target)
   if (circular && isObject(mergedSchema)) {
     mergedSchema.toJSON = () => stringifyCyclicJso(mergedSchema)
@@ -401,7 +398,7 @@ export function prepareGraphApiDiffSchema(options: GraphApiDiffSchemaOptions): u
     liftCombiners: true,
     unify: true,
   }).merged
-  aggregateDiffsWithRollup(mergedSource, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)
+
   if (circular && isObject(mergedSource)) {
     mergedSource.toJSON = () => stringifyCyclicJso(mergedSource)
   }
