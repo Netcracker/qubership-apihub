@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-processor",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "description": "",
   "license": "Apache-2.0",
   "module": "dist/esm/src/index.js",
@@ -31,8 +31,8 @@
     "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-diff": "2.3.0",
-    "@netcracker/qubership-apihub-api-unifier": "2.4.0",
+    "@netcracker/qubership-apihub-api-diff": "2.4.0",
+    "@netcracker/qubership-apihub-api-unifier": "2.4.1",
     "@netcracker/qubership-apihub-graphapi": "1.0.8",
     "@netcracker/qubership-apihub-json-crawl": "1.0.4",
     "adm-zip": "0.5.10",
