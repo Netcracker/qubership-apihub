@@ -3,6 +3,7 @@ import { buildPointer } from '@netcracker/qubership-apihub-api-unifier'
 import { isGraphApiAnyDefinition, isGraphApiAnyUsage, isGraphApiOperation } from '@netcracker/qubership-apihub-graphapi'
 import { getNodeRules, syncCrawl, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl'
 import { modelTreeNodeType } from '../../../abstract/constants'
+import { DiffMetaKeys } from '../../../abstract/diff'
 import { LazyBuildingContext } from '../../../abstract/model/model-tree-node.impl'
 import { isDiff, isDiffMetaRecord, isObject } from '../../../utils'
 import { graphSchemaNodeKind } from '../../constants'
@@ -11,7 +12,6 @@ import { areExcludedComponents } from '../../utils'
 import { crawlHooksGraphApiTree } from '../build'
 import { GraphApiModelTree } from '../model'
 import { GraphApiCrawlState, GraphApiTreeComplexNode, GraphApiTreeNode } from '../types'
-import { DiffMetaKeys } from '@apihub/api-data-model/abstract-model'
 
 function shouldCrawlDiff(value: unknown): value is DiffRemove | DiffReplace {
   return isDiff(value) &&
