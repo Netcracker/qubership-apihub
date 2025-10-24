@@ -1,9 +1,10 @@
 import type { APIRequestContext, APIResponse } from '@playwright/test'
 import type { RestAgentConfig, RestSnapshot } from './rest.types'
 
-//TODO: change endpoints after they change on the backend (/apihub/api/ doesn't work)
+const AGENTS_BE_API_V2 = '/agents-backend/api/v2/agents'
+
 export async function rCreateSnapshot(rc: APIRequestContext, params: RestSnapshot): Promise<APIResponse> {
-  return await rc.post(`/apihub/api/v1/agents/${params.agentId}/namespaces/${params.namespace}/snapshots?clientBuild=false&promote=${params.promote}`, {
+  return await rc.post(`${AGENTS_BE_API_V2}/${params.agentId}/namespaces/${params.namespace}/snapshots?clientBuild=false&promote=${params.promote}`, {
     data: {
       version: params.version,
       previousVersion: params.previousVersion,
@@ -14,13 +15,13 @@ export async function rCreateSnapshot(rc: APIRequestContext, params: RestSnapsho
 }
 
 export async function rRunDiscovery(rc: APIRequestContext, params: RestAgentConfig): Promise<APIResponse> {
-  return await rc.post(`/apihub/api/v2/agents/${params.cloud}/namespaces/${params.namespace}/workspaces/${params.workspaceId}/discover`)
+  return await rc.post(`${AGENTS_BE_API_V2}/${params.cloud}/namespaces/${params.namespace}/workspaces/${params.workspaceId}/discover`)
 }
 
 export async function rGetServices(rc: APIRequestContext, params: RestAgentConfig): Promise<APIResponse> {
-  return await rc.get(`/apihub/api/v2/agents/${params.cloud}/namespaces/${params.namespace}/workspaces/${params.workspaceId}/services`)
+  return await rc.get(`${AGENTS_BE_API_V2}/${params.cloud}/namespaces/${params.namespace}/workspaces/${params.workspaceId}/services`)
 }
 
 export async function rGetNamespaces(rc: APIRequestContext, params: { cloud: string }): Promise<APIResponse> {
-  return await rc.get(`/apihub/api/v1/agents/${params.cloud}/namespaces`)
+  return await rc.get(`${AGENTS_BE_API_V2}/${params.cloud}/namespaces`)
 }
