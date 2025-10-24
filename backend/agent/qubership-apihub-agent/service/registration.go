@@ -24,12 +24,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const agentsBackendExtensionName = "agents-backend"
+
 type RegistrationService interface {
 	RunAgentRegistrationProcess()
 }
 
-func NewRegistrationService(cloudName string, namespace string, agentUrl string, backendVersion string, agentName string, client client.ApihubClient, disablingService DisablingService) RegistrationService {
-	return &registrationServiceImpl{cloudName: cloudName, namespace: namespace, agentUrl: agentUrl, backendVersion: backendVersion, agentName: agentName, client: client, disablingService: disablingService}
+func NewRegistrationService(cloudName string, namespace string, agentUrl string, backendVersion string, agentName string, apihubClient client.ApihubClient, agentsBackendClient client.AgentsBackendClient, disablingService DisablingService) RegistrationService {
+	return &registrationServiceImpl{cloudName: cloudName, namespace: namespace, agentUrl: agentUrl, backendVersion: backendVersion, agentName: agentName, apihubClient: apihubClient, agentsBackendClient: agentsBackendClient, disablingService: disablingService}
 }
 
 type registrationServiceImpl struct {
@@ -39,8 +41,10 @@ type registrationServiceImpl struct {
 	backendVersion string
 	agentName      string
 
-	client           client.ApihubClient
-	disablingService DisablingService
+	apihubClient            client.ApihubClient
+	agentsBackendClient     client.AgentsBackendClient
+	agentsBackendPathPrefix string
+	disablingService        DisablingService
 }
 
 const AGENT_VERSION = "1.0.0"
@@ -57,7 +61,24 @@ func (r registrationServiceImpl) RunAgentRegistrationProcess() {
 		}
 		for range time.Tick(time.Second * 10) {
 			utils.SafeAsync(func() {
-				version, err := r.client.SendKeepaliveMessage(req)
+				if r.agentsBackendPathPrefix == "" {
+					configuration, err := r.apihubClient.GetSystemConfiguration()
+					if err != nil {
+						log.Errorf("Registration failed: %s", err)
+						return
+					}
+					for _, ext := range configuration.Extensions {
+						if ext.Name == agentsBackendExtensionName {
+							r.agentsBackendPathPrefix = ext.PathPrefix
+							break
+						}
+					}
+					if r.agentsBackendPathPrefix == "" {
+						log.Errorf("Registration failed: agents-backend is not registered as an extension in APIHUB")
+						return
+					}
+				}
+				version, err := r.agentsBackendClient.SendKeepaliveMessage(r.agentsBackendPathPrefix, req)
 				if err != nil {
 					log.Errorf("Failed to send registration message: %s", err)
 					return

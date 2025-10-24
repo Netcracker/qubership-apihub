@@ -24,14 +24,14 @@ import (
 )
 
 func NewCookieTokenStrategy(apihubClient client.ApihubClient) auth.Strategy {
-	return &сookieTokenStrategyImpl{apihubClient: apihubClient}
+	return &cookieTokenStrategyImpl{apihubClient: apihubClient}
 }
 
-type сookieTokenStrategyImpl struct {
+type cookieTokenStrategyImpl struct {
 	apihubClient client.ApihubClient
 }
 
-func (a сookieTokenStrategyImpl) Authenticate(ctx context.Context, r *http.Request) (auth.Info, error) {
+func (a cookieTokenStrategyImpl) Authenticate(ctx context.Context, r *http.Request) (auth.Info, error) {
 	cookie, err := r.Cookie(view.AccessTokenCookieName)
 	if err != nil {
 		return nil, fmt.Errorf("authentication failed: access token cookie not found")

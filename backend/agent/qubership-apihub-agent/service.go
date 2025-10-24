@@ -99,6 +99,7 @@ func main() {
 	}
 
 	apihubClient := client.NewApihubClient(config.ApihubUrl, config.AccessToken, config.CloudName)
+	agentsBackendClient := client.NewAgentsBackendClient(config.ApihubUrl, config.AccessToken)
 
 	disablingSerivce := service.NewDisablingService()
 	namespaceListCache := service.NewNamespaceListCache(config.CloudName, paasCl)
@@ -109,7 +110,7 @@ func main() {
 	documentService := service.NewDocumentService(serviceListCache, config.DiscoveryTimeout)
 	systemInfoService, err := service.NewSystemInfoService()
 	regService := service.NewRegistrationService(config.CloudName, config.AgentNamespace, config.AgentUrl,
-		systemInfoService.GetBackendVersion(), config.AgentName, apihubClient, disablingSerivce)
+		systemInfoService.GetBackendVersion(), config.AgentName, apihubClient, agentsBackendClient, disablingSerivce)
 	listService := service.NewListService(config.CloudName, config.AgentNamespace, config.ExcludeLabels, config.GroupingLabels, paasCl)
 	cloudService := service.NewCloudService(discoveryService, serviceListCache, namespaceListCache)
 	routesService := service.NewRoutesService(paasCl)
