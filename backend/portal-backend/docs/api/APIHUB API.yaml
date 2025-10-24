@@ -19,6 +19,11 @@ servers:
     description: Direct API call host
   - url: http://localhost:3000
     description: Local server
+security:
+  - BearerAuth: []
+  - CookieAuth: []
+  - api-key: []
+  - PersonalAccessToken: []
 tags:
   - name: Export
     description: Export API documentation.
@@ -1653,6 +1658,7 @@ paths:
       summary: Handle gitlab event
       description: Handle gitlab event
       operationId: handleGitlabEvent
+      security: [{}]
       requestBody:
         description: Push or Tag event https://docs.gitlab.com/ee/user/project/integrations/webhook_events.html
         content:
@@ -2979,7 +2985,7 @@ components:
       bearerFormat: JWT
     CookieAuth:
       type: apiKey
-      description: Authentication via the `apihub-access-token` cookie.
+      description: Authentication via Bearer token in the `apihub-access-token` cookie (default for UI).
       in: cookie
       name: apihub-access-token
     api-key:
@@ -2991,6 +2997,11 @@ components:
       type: http
       description: Login/password authentication
       scheme: basic
+    PersonalAccessToken:
+      type: apiKey
+      description: Authentication by personal access token.
+      name: X-Personal-Access-Token
+      in: header
   responses:
     badRequest400:
       description: Bad request
@@ -3022,7 +3033,3 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-security:
-  - BearerAuth: []
-  - CookieAuth: []
-  - api-key: []

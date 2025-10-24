@@ -25,6 +25,8 @@ servers:
 security:
   - BearerAuth: []
   - CookieAuth: []
+  - api-key: []
+  - PersonalAccessToken: []
 tags:
   - name: Auth
     description: APIs for auth integrations.
@@ -67,8 +69,7 @@ paths:
       deprecated: true
       description: Global parameters of system configuration.
       operationId: getSystemConfiguration
-      security:
-        - {}
+      security: [{}]
       responses:
         "200":
           description: Success
@@ -103,8 +104,7 @@ paths:
       summary: System configuration
       description: Global parameters of system configuration.
       operationId: getSystemConfigurationV2
-      security:
-        - {}
+      security: [{}]
       responses:
         "200":
           description: Success
@@ -245,7 +245,9 @@ paths:
 
         If the request contained a valid refresh token, the authentication process will not be started and a new access token will be issued.
       operationId: ssoLogin
-      security: [{}]
+      security:
+        - {}
+        - RefreshTokenAuth: []
       parameters:
         - name: redirectUri
           in: query
@@ -356,7 +358,8 @@ paths:
 
         **Note: This endpoint is not available in production mode.**
       operationId: refreshToken
-      security: [{}]
+      security:
+        - RefreshTokenAuth: []
       parameters:
         - name: redirectUri
           in: query
@@ -391,8 +394,8 @@ paths:
       description: Logs out the authenticated user and invalidates all active sessions.
       operationId: logoutUser
       security:
-        - BearerAuth: [ ]
-        - CookieAuth: [ ]
+        - BearerAuth: []
+        - CookieAuth: []
       responses:
         "204":
           description: No content
@@ -425,11 +428,6 @@ paths:
         Export of document is currently available for documents with type openapi-3-1, openapi-3-0, or openapi-2-0 and is intended to retrieve content with some transformations. For other document types, use GET /api/v2/packages/{packageId}/versions/{version}/files/{slug} to obtain the original document content.\
         Export of operations group is currently available for groups with apiType = REST.
       operationId: postExport
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
-        - PersonalAccessToken: []
       requestBody:
         description: |
           Defines an entity that shall be exported and export settings.\
@@ -519,11 +517,6 @@ paths:
       description: |
         Get status of async export operation (POST /api/v1/export). If file for export is ready, then it will be returned. The resulting file is stored temporarily; once deleted, it needs to be re-calculated.
       operationId: getExportIdStatus
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
-        - PersonalAccessToken: []
       responses:
         '200':
           description: Success
@@ -610,10 +603,6 @@ paths:
       description: |
         Get activity history. Return the last N events in descending date order.
       operationId: getActivity
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: onlyFavorite
           description: |
@@ -882,10 +871,6 @@ paths:
       description: |
         Get activity history. Return the last N events in descending date order.
       operationId: getActivityV3
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: onlyFavorite
           description: |
@@ -1145,10 +1130,6 @@ paths:
       description: |
         Get activity history. Return the last N events in descending date order.
       operationId: getActivityV4
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: onlyFavorite
           description: |
@@ -1698,10 +1679,6 @@ paths:
       summary: Get package by Id
       description: Common information about the selected package without files and references.
       operationId: getPackagesId
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/showParents"
       responses:
@@ -1792,10 +1769,6 @@ paths:
         * If the parameter is not transmitted in request - its value stays unchanged.
         * The empty parameter value in request sets the empty value in database.
       operationId: patchPackagesId
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       requestBody:
         description: Package update parameters
         content:
@@ -1890,10 +1863,6 @@ paths:
       summary: Delete package
       description: Delete the package and all included published versions.
       operationId: deletePackagesId
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "204":
           description: No content
@@ -1950,10 +1919,6 @@ paths:
       summary: Get package configuration for documents export settings.
       description: Returns information about the configured document export settings for the current package.
       operationId: getPackageIdExportConfig
-      security:
-        - BearerAuth: []
-        - api-key: []
-        - PersonalAccessToken: []
       responses:
         "200":
           description: Success
@@ -2007,10 +1972,6 @@ paths:
           - The empty parameter value in request sets the empty value in database.
         "create_and_update_package" permission is necessary to update package export config.
       operationId: patchPackagesIdExportConfig
-      security:
-        - BearerAuth: []
-        - api-key: []
-        - PersonalAccessToken: []
       requestBody:
         description: Parameters of package export config for update.
         content:
@@ -2094,10 +2055,6 @@ paths:
       description: |
         Get activity history for specific package. Return the last N events in descending date order.
       operationId: getPackageIdActivity
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: packageId
           description: Package unique string identifier (full alias).
@@ -2363,10 +2320,6 @@ paths:
       description: |
         Get activity history for specific package. Return the last N events in descending date order.
       operationId: getPackageIdActivityV3
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: packageId
           description: Package unique string identifier (full alias).
@@ -2623,10 +2576,6 @@ paths:
       description: |
         Get activity history for specific package. Return the last N events in descending date order.
       operationId: getPackageIdActivityV4
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: packageId
           description: Package unique string identifier (full alias).
@@ -2967,10 +2916,6 @@ paths:
       summary: Get package status
       description: Get package status.
       operationId: getPackagesIdStatus
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Success
@@ -3025,9 +2970,6 @@ paths:
         The Api Key for package with kind:group is acceptable for all child groups and packages.\
         If packageId = '\*', then system tokens shall be created. Only system administrator can specify packageId = '\*'.
       operationId: postPackagesIdApiKeysV4
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
       requestBody:
         description: Create API key parameters
         content:
@@ -3111,10 +3053,6 @@ paths:
         Get a package API Keys list.\
         If packageId = '\*', then system tokens shall be returned. Only system administrator can specify packageId = '\*'.
       operationId: getPackagesIdApiKeysV4
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Success
@@ -3180,10 +3118,6 @@ paths:
         Delete package API Key.\
         If packageId = '\*', then system token with specified id shall be deleted. Only system administrator can specify packageId = '\*'.
       operationId: deletePackagesIdApiKeysId
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "204":
           description: No content
@@ -3238,9 +3172,6 @@ paths:
         Generates a new personal access token for the current user.\
         User cannot have more than 100 tokens. The limitation is applicable to active and expired tokens which are not deleted.
       operationId: postPersonalAccessToken
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
       requestBody:
         description: Create personal access token parameters
         content:
@@ -3321,9 +3252,6 @@ paths:
         Retrieve all personal access token that have been generated for the current user.\
         User cannot have more than 100 tokens. The limitation is applicable to active and expired tokens which are not deleted.
       operationId: getPersonalAccessToken
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
       responses:
         '200':
           description: Success
@@ -3374,9 +3302,6 @@ paths:
       description: >
         Delete personal access token. Deleted token cannot be used to authenticate to APIHUB.
       operationId: deletePersonalAccessToken
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
       responses:
         '204':
           description: No content
@@ -3532,10 +3457,6 @@ paths:
         * **No building** - only references publication. Files array in config and sources are empty. In this case the build process won't be started.
         The 204 response will be returned in success.
       operationId: postPackagesIdPublish
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: clientBuild
           in: query
@@ -3682,10 +3603,6 @@ paths:
       summary: Store publish status
       description: Store publish status and result.
       operationId: postPackagesIdPublishIdStatus
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       requestBody:
         description: |
           Store build result, depending on the process status.
@@ -3772,10 +3689,6 @@ paths:
       summary: Get publish process status
       description: Get publish process status.
       operationId: getPackagesIdPublishIdStatus
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Success
@@ -3848,10 +3761,6 @@ paths:
       summary: Store publish status
       description: Store publish status and result.
       operationId: postPackagesIdPublishIdStatusV3
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       requestBody:
         description: |
           Store build result, depending on the process status.
@@ -3944,7 +3853,7 @@ paths:
                   $ref: "#/components/examples/InternalServerError"
   "/api/v1/packages/{packageId}/publish/withOperationsGroup":
     parameters:
-    - $ref: '#/components/parameters/packageId'
+      - $ref: '#/components/parameters/packageId'
     post:
       tags:
         - Publish
@@ -3964,10 +3873,6 @@ paths:
         group (manual group with rest api type) in published dashboard version
         with all found operations.
       operationId: DashboardPublishWithOperationsGroup
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       requestBody:
         content:
           multipart/form-data:
@@ -4089,10 +3994,6 @@ paths:
       description: |
         Get dashboard version publication from CSV file status.
       operationId: getDashboardPublishWithOperationsGroupStatus
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         '200':
           description: Success
@@ -4171,10 +4072,6 @@ paths:
         CSV file with initial input information which is added with status and
         error messages for each row.
       operationId: getDashboardPublishWithOperationsGroupStatusReport
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         '200':
           description: Success
@@ -4229,10 +4126,6 @@ paths:
       summary: Get package versions list
       description: Get the published package's versions list.
       operationId: getPackagesIdVersions
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/limit"
         - $ref: "#/components/parameters/page"
@@ -4401,10 +4294,6 @@ paths:
       summary: Get package versions list
       description: Get the published package's versions list.
       operationId: getPackagesIdVersionsV3
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/limit"
         - $ref: "#/components/parameters/page"
@@ -4529,10 +4418,6 @@ paths:
       summary: Get package version content
       description: Get the published package's version content. Returns all content objects and folders.
       operationId: getPackagesIdVersionsId
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: version
           in: path
@@ -4699,10 +4584,6 @@ paths:
         * The empty parameter value in request sets the empty value in database.
         * The array of labels will be fully replaced as-it-send, no JSON-Patch approach for arrays is applicable.
       operationId: patchPackagesIdVersionsIdV2
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/version"
       requestBody:
@@ -4795,10 +4676,6 @@ paths:
         Delete the package's version.
         If the version was placed as a "defaultReleaseVersion" on a package, it will be cleared on this package (without the previous version restore).
       operationId: deletePackagesIdVersionsId
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/version"
       responses:
@@ -4857,10 +4734,6 @@ paths:
       summary: Get package version content
       description: Get the published package's version content. Returns all content objects and folders.
       operationId: getPackagesIdVersionsIdV4
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: version
           in: path
@@ -5048,9 +4921,6 @@ paths:
       description: |
         Get summary of changes between two packages versions.
       operationId: getPackageIdVersionChangesSummary
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
       parameters:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
@@ -5229,10 +5099,6 @@ paths:
         Get changes between two compared package versions with details by operations.\
         The result list depends on the API type.
       operationId: getPackagesIdVersionsIdApiTypeChanges
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -5460,10 +5326,6 @@ paths:
         Get changes between two compared package versions with details by operations.\
         The result list depends on the API type.
       operationId: getPackagesIdVersionsIdApiTypeChangesV3
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -5582,8 +5444,8 @@ paths:
                           - title: RestOperation
                             type: object
                             required:
-                                - path
-                                - method
+                              - path
+                              - method
                             properties:
                               path:
                                 description: Operation endpoint path.
@@ -5704,9 +5566,6 @@ paths:
         Get changes between two compared package versions with details by operations.\
         The result list depends on the API type.
       operationId: getPackagesIdVersionsIdApiTypeChangesV4
-      security:
-        - BearerAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -5985,10 +5844,6 @@ paths:
       summary: Export API changes to xlsx file
       description: Export API changes to xlsx file
       operationId: getPackageIdVersionIdChangesExportV3
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Success
@@ -6085,10 +5940,6 @@ paths:
       summary: Export API changes to xlsx file
       description: Export API changes to xlsx file
       operationId: getPackageIdVersionIdChangesExport
-      security:
-        - BearerAuth: [ ]
-        - CookieAuth: [ ]
-        - api-key: [ ]
       responses:
         "200":
           description: Success
@@ -6169,10 +6020,6 @@ paths:
       description: |
         Export sources of package version as a zip archive.
       operationId: getPackagesIdVersionsIdSources
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Success
@@ -6228,10 +6075,6 @@ paths:
       description: |
         Get content of package version config
       operationId: getPackagesIdVersionsIdConfig
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Success
@@ -6281,10 +6124,6 @@ paths:
         Publish package version in target package using sources of source package (server-side building only).\
         The final specifications will be stored using the POST /packages/{packageId}/publish/{publishId}/status. 202 response and the publish process Id will be returned in success.
       operationId: getPackageIdVersionIdCopy
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       requestBody:
         content:
           application/json:
@@ -6395,9 +6234,6 @@ paths:
 
         * **202 Accepted** will be returned after starting of the async changelog calculation.
       operationId: postCompare
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
       parameters:
         - name: clientBuild
           in: query
@@ -6568,10 +6404,6 @@ paths:
 
         * **202 Accepted** will be returned after starting process for documents transformation.
       operationId: postGenerateDocument
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
       - name: clientBuild
         in: query
@@ -6740,10 +6572,6 @@ paths:
 
         * **202 Accepted** will be returned after starting process for documents transformation.
       operationId: postGenerateDocumentV3
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
       - name: clientBuild
         in: query
@@ -6902,10 +6730,6 @@ paths:
       summary: Export operations group as OpenaAPI documents
       description: Export operation group as OpenaAPI documents
       operationId: getPackagesIdVersionsIdExportGroupName
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: format
           in: query
@@ -7022,10 +6846,6 @@ paths:
       description: |
         Export all operations from an operations group (with apiType = REST API) as OpenAPI specification(s).
       operationId: getPackagesIdVersionsIdExportGroupNameV3
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: format
           in: query
@@ -7119,10 +6939,6 @@ paths:
       summary: Get file data (published)
       description: Get the published content object in a RAW format
       operationId: getPackagesIdVersionsIdFilesSlugRaw
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Success
@@ -7195,10 +7011,6 @@ paths:
         - interactive - html document
         - raw - yaml/json document.
       operationId: getPackagesIdVersionsIdFilesSlugDoc
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: docType
           in: query
@@ -7280,10 +7092,6 @@ paths:
       description: |
         Export sources of package version as a zip archive and build configuration that was used for this version.
       operationId: getPackageVersionSourcesWithBuildConfig
-      security:
-          - BearerAuth: [ ]
-          - CookieAuth: [ ]
-          - api-key: [ ]
       responses:
         "200":
           description: Success
@@ -7358,10 +7166,6 @@ paths:
         Type of the documentation file is provided as input parameters:
         * interactive - html document.
       operationId: getPackagesIdVersionsIdDoc
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: docType
           in: query
@@ -7762,10 +7566,6 @@ paths:
       description: |
         List of available roles to change for package and current user (by access token).
       operationId: getPackagesIdAvailableRoles
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: id
           in: query
@@ -7849,10 +7649,6 @@ paths:
         Add new user (one user or multiple users) with a role to the package.
         A member may be added to the package if the assigned role is greater than the existing one.
       operationId: postPackagesIdMembers
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       requestBody:
         description: Package members assignment parameters
         content:
@@ -7929,10 +7725,6 @@ paths:
       summary: Get the package's members list
       description: List of all users and their roles, assigned to the particular package
       operationId: getPackagesIdMembers
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Success
@@ -8005,10 +7797,6 @@ paths:
       description: |
         Change the member parameters on the package
       operationId: patchPackagesIdMembersId
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       requestBody:
         description: Package member update parameters
         content:
@@ -8093,10 +7881,6 @@ paths:
         * 200 - if the user has direct role assigned to the current package AND assignment to the parent package, will be returned his inherited role.
         * 204 - if the user has only direct role assigned to the current package, this assignment will be deleted.
       operationId: deletePackagesIdMembersId
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Success
@@ -8432,10 +8216,6 @@ paths:
       description: |
         Returns empty response 204 (in case of no free build task to assign) or multipart form (src+config, matching current start build payload)
       operationId: postBuilderIdTasks
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Build task assigned
@@ -9115,6 +8895,7 @@ paths:
       security:
         - BearerAuth: []
         - CookieAuth: []
+        - PersonalAccessToken: []
       responses:
         "200":
           description: Success
@@ -9152,9 +8933,6 @@ paths:
       summary: Get users list
       description: List of all users with detailed info
       operationId: getUsers
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
       parameters:
         - name: textFilter
           in: query
@@ -9215,9 +8993,6 @@ paths:
           schema:
             type: string
             example: user1221
-      security:
-        - BearerAuth: [ ]
-        - CookieAuth: [ ]
       responses:
         "200":
           description: Success
@@ -9325,10 +9100,6 @@ paths:
       summary: Get list of ghost operations for operation group
       description: |
         Operation is considered a ghost operation if it was included in this group for previous version revision and was deleted in the current version revision
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -9500,10 +9271,6 @@ paths:
         Full list of operations without grouping by parent specification document.
         The result list depends on the API type.
       operationId: getPackagesIdVersionsIdApiTypeOperations
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -9719,9 +9486,6 @@ paths:
       description: |
         Get summary of deprecated operations in the version
       operationId: getPackageIdVersionDeprecatedSummaryV3
-      security:
-        - BearerAuth: [ ]
-        - CookieAuth: [ ]
       parameters:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
@@ -9849,10 +9613,6 @@ paths:
       description: |
         List of deprecated operations in the current version
       operationId: getPackagesIdVersionsIdApiTypeDeprecations
-      security:
-        - BearerAuth: [ ]
-        - CookieAuth: [ ]
-        - api-key: [ ]
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -10071,10 +9831,6 @@ paths:
         Get list of all deprecated items inside of the single operation.\
         Deprecated item is entity that is deprecated inside of API operation. For example for REST API it can be parameter or schema, for GraphQL API - field or enum value.
       operationId: getPackagesIdVersionsApiTypeOperationsIddeprecatedItems
-      security:
-        - BearerAuth: [ ]
-        - CookieAuth: [ ]
-        - api-key: [ ]
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -10133,10 +9889,6 @@ paths:
       description: |
         Get list of operations that have the same model
       operationId: getPackagesIdVersionsApiTypeOperationsIdModelsModelName
-      security:
-        - BearerAuth: [ ]
-        - CookieAuth: [ ]
-        - api-key: [ ]
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -10209,10 +9961,6 @@ paths:
       description: |
         Export operations of specific API type.
       operationId: getPackagesIdVersionsIdApiTypeOperationsExport
-      security:
-        - BearerAuth: [ ]
-        - CookieAuth: [ ]
-        - api-key: [ ]
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -10343,10 +10091,6 @@ paths:
       description: |
         Export operations of specific API type.
       operationId: getPackagesIdVersionsIdApiTypeDeprecatedOperationsExport
-      security:
-        - BearerAuth: [ ]
-        - CookieAuth: [ ]
-        - api-key: [ ]
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -10476,10 +10220,6 @@ paths:
         Operation's parameters and data.
         The result depends on the API type.
       operationId: getPackagesIdVersionsIdApiTypeOperationsId
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -10559,10 +10299,6 @@ paths:
         Get changes of one operation between current and previous published package version.
         The result depends on the API type.
       operationId: getPackagesIdVersionsApiTypeOperationsIdChanges
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -10645,10 +10381,6 @@ paths:
         Get list of operations tags in one published version.
         The result list depends on the API type.
       operationId: getPackagesIdVersionsIdApiTypeTags
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -10764,10 +10496,6 @@ paths:
       description: |
         Create operation group.\
         It is needed to be able to distinguish between groups created manually and groups created automatically via restPrefixGrouping.
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
@@ -10844,10 +10572,6 @@ paths:
         Create manual operation group.\
         Manual groups can be created for both packages and dashboards. One group can contain operations of one API type only.
       operationId: PostPackageIdVersionApiTypeGroupsV3
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
@@ -10928,10 +10652,6 @@ paths:
         summary: Get list of operations for operation group
         description: |
           Get list of operations from operation group. The result list depends on the API type.
-        security:
-          - BearerAuth: []
-          - CookieAuth: []
-          - api-key: []
         parameters:
           - $ref: "#/components/parameters/apiType"
           - $ref: "#/components/parameters/packageId"
@@ -11121,10 +10841,6 @@ paths:
       description: |
         Update operation group.\
         It is prohibited to update the prefix groups, only manual groups can be updated.
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -11222,10 +10938,6 @@ paths:
       description: |
         Update parameters of operation group ( in path).\
         It is prohibited to update the prefix groups, only manual groups can be updated.
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: groupName
           description: Old groupName
@@ -11311,10 +11023,6 @@ paths:
       description: |
         Delete version group.
       operationId: getPackagesIdVersionsIdApiTypeGroups
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -11374,10 +11082,6 @@ paths:
       description: |
         Update parameters of operations group.
       operationId: patchPackageIdVersionApiTypeGroupName
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: groupName
           description: Old groupName
@@ -11498,10 +11202,6 @@ paths:
       description: |
         Update operations in the group. Only operations in the manual group can be changed.
         It is prohibited to update operation in the rest path prefix group, only manual groups can be updated.
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: apiType
           description: Type of the API.
@@ -11616,10 +11316,6 @@ paths:
         Export OpenAPI specification template from an operation group (manual or rest path prefix).
         This feature is supported only for apiType = rest.
       operationId: getPackageIdVersionApiTypeGroupNameTemplate
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
@@ -11691,10 +11387,6 @@ paths:
         Calculate groups by transmitted restGroupingPrefix.
         This is in-flight calculation, i.e. calculated groups will not be saved.
       operationId: postPackagesIdCalculateGroups
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/packageId"
         - name: groupingPrefix
@@ -11760,10 +11452,6 @@ paths:
       description: |
         Recalculate package groups by specified restGroupingPrefix on the package
       operationId: postPackagesIdRecalculateGroups
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/packageId"
       responses:
@@ -11818,10 +11506,6 @@ paths:
         * For package.kind: dashboard - return the list of all referenced dashboards and their referenced packages in recursion.
           The returned list will contain only leaves - referenced packages of the lowest level with their published documents.
       operationId: getPackagesIdVersionsIdDocuments
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/limit"
         - $ref: "#/components/parameters/page"
@@ -11926,10 +11610,6 @@ paths:
       summary: Get document details
       description: Get the published content object's details by ID.
       operationId: getPackagesIdVersionsIdDocumentsSlugV2
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Success
@@ -12006,10 +11686,6 @@ paths:
       summary: Get document details
       description: Get the published content object's details by ID.
       operationId: getPackagesIdVersionsIdDocumentsSlug
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Success
@@ -12160,10 +11836,6 @@ paths:
       description: |
         Get list of documents for integration by buildType - documentGroup
       operationId: getPackagesIdVersionsIdTransformationDocuments
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/limit"
         - $ref: "#/components/parameters/page"
@@ -12321,10 +11993,6 @@ paths:
       description: |
         Get list of package version documents of operations from operation group.
       operationId: getPackagesIdVersionsIdTransformationDocumentsV3
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/limit"
         - $ref: "#/components/parameters/page"
@@ -12432,10 +12100,6 @@ paths:
         Start operation group publish process.\
         In this process all operations from operation group will be published to the selected package version.
       operationId: postOperationGroupPublish
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       requestBody:
         content:
           application/json:
@@ -12558,10 +12222,6 @@ paths:
       description: |
         Get operation group publish status.
       operationId: getOperationGroupPublishStatus
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Success
@@ -12626,10 +12286,6 @@ paths:
       description: |
         Get list of version referenced packages (lowest level by recursion, not having refs in a published version).
       operationId: getPackagesIdVersionsIdReferences
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - $ref: "#/components/parameters/limit"
         - $ref: "#/components/parameters/page"
@@ -12787,10 +12443,6 @@ paths:
       description: |
         Get flat list of all version references
       operationId: getPackagesIdVersionsIdReferencesv3
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Success
@@ -12886,10 +12538,6 @@ paths:
       description: |
         Get the list of version revisions.
       operationId: getPackagesIdVersionsIdRevisions
-      security:
-        - BearerAuth: [ ]
-        - CookieAuth: [ ]
-        - api-key: [ ]
       parameters:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
@@ -13036,10 +12684,6 @@ paths:
       description: |
         Get the list of version revisions.
       operationId: getPackagesIdVersionsIdRevisionsV3
-      security:
-        - BearerAuth: [ ]
-        - CookieAuth: [ ]
-        - api-key: [ ]
       parameters:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
@@ -13118,10 +12762,6 @@ paths:
       summary: Delete expired versions recursively
       description: Recursively delete all expired versions in 'Draft' status under group or workspace
       operationId: deleteExpiredVersionsRecursively
-      security:
-        - BearerAuth: [ ]
-        - CookieAuth: [ ]
-        - api-key: [ ]
       requestBody:
         description: Recursive delete parameters
         content:
@@ -13187,10 +12827,6 @@ paths:
         Get a list of available publish statuses for the package.
         List depends on the current user access rights.
       operationId: getPackagesIdAvailableStatuses
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Success
@@ -13249,6 +12885,7 @@ paths:
       security:
         - BearerAuth: []
         - CookieAuth: []
+        - PersonalAccessToken: []
       responses:
         "200":
           description: Success
@@ -13288,6 +12925,7 @@ paths:
       security:
         - BearerAuth: []
         - CookieAuth: []
+        - PersonalAccessToken: []
       responses:
         "201":
           description: Created
@@ -13341,9 +12979,6 @@ paths:
 
         PackageId for this workspace could be set via user creation endpoint (only for new users) or generated automatically when user first logs in to apihub
       operationId: postUsersIdAvailablePackagePromoteStatuses
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
       parameters:
         - name: userId
           description: Login of the user
@@ -13409,9 +13044,6 @@ paths:
 
         The response is a **mapped list** of statuses to the packageIds.
       operationId: getUsersIdAvailablePackagePromoteStatuses
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
       parameters:
         - name: userId
           description: Login of the user
@@ -13485,7 +13117,8 @@ paths:
       description: Allows to send any request to any address.
       operationId: getAgentsIdNamespacesIdServicesProxy
       security:
-        - {}
+        - BearerAuth: []
+        - CookieAuth: []
       tags:
         - TryIt
       parameters:
@@ -13543,10 +13176,6 @@ paths:
       description: |
         Returns collected business metrics
       operationId: getBusinessMetrics
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: format
           description: Response format
@@ -13633,10 +13262,6 @@ paths:
         Only for system administrators.
       operationId: getPublishHistory
       x-api-kind: no-BWC
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: status
           description: version status
@@ -15331,14 +14956,14 @@ components:
           description: Operation summary/title.
           type: string
         apiType:
-        #  description: Type of the API.
-        #  type: string
-        #  enum:
-        #    - rest
-        #    - kafka
-        #    - grpc
-        #    - graphql
-        #    - protobuf
+          #  description: Type of the API.
+          #  type: string
+          #  enum:
+          #    - rest
+          #    - kafka
+          #    - grpc
+          #    - graphql
+          #    - protobuf
           $ref: "#/components/schemas/ApiType"
         dataHash:
           description: Operation hash.
@@ -15528,7 +15153,7 @@ components:
         type:
           description: Operation type
           type: string
-          enum: #open questions what types shall be supported?
+          enum: # open questions what types shall be supported?
             - unary
             - serverStreaming
             - clientStreaming
@@ -17816,3 +17441,8 @@ components:
       description: Authentication by personal access token.
       name: X-Personal-Access-Token
       in: header
+    RefreshTokenAuth:
+      type: apiKey
+      in: cookie
+      name: apihub-refresh-token
+      description: Authentication via refresh token cookie

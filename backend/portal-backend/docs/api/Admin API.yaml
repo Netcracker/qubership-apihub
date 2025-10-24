@@ -25,6 +25,8 @@ servers:
 security:
   - BearerAuth: []
   - CookieAuth: []
+  - api-key: []
+  - PersonalAccessToken: []
 tags:
   - name: Transition
     description: Operations to move packages
@@ -39,10 +41,6 @@ paths:
       summary: Move package
       description: Change package id, i.e. rename it or change parent. Async operation, result is returned by id.
       operationId: movePackage
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       requestBody:
         description: Package coordinates
         content:
@@ -121,10 +119,6 @@ paths:
       description: |
         Get status of the move operation by id.
       operationId: getMoveStatus
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: id
           description: Move operation id
@@ -177,10 +171,6 @@ paths:
       description: |
         List completed transition activities
       operationId: listActivities
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       parameters:
         - name: offset
           in: query
@@ -240,10 +230,6 @@ paths:
       description: |
         List full transition mapping
       operationId: listPackageTransitions
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: Success
@@ -295,10 +281,6 @@ paths:
       description: |
         Retrieves system-wide statistics including business entities count, build statistics, and database size information.
       operationId: getSystemStats
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - api-key: []
       responses:
         "200":
           description: System statistics retrieved successfully
@@ -542,3 +524,13 @@ components:
       description: Api-key authentication.
       name: api-key
       in: header
+    PersonalAccessToken:
+      type: apiKey
+      description: Authentication by personal access token.
+      name: X-Personal-Access-Token
+      in: header
+    RefreshTokenAuth:
+      type: apiKey
+      in: cookie
+      name: apihub-refresh-token
+      description: Authentication via refresh token cookie
