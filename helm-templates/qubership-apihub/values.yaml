@@ -224,7 +224,7 @@ qubershipApihubBackend:
 qubershipApihubBuildTaskConsumer:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-build-task-consumer'
-    tag: 'latest'
+    tag: 'dev'
   replicas: 1
 
   # Section with resource limits
@@ -251,7 +251,7 @@ qubershipApihubBuildTaskConsumer:
 qubershipApihubUi:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-ui'
-    tag: 'latest'
+    tag: 'dev'
   replicas: 1
 
   # Section with resource limits
@@ -291,7 +291,7 @@ qubershipApihubUi:
 qubershipApiLinterService:
   image:
     repository: 'ghcr.io/netcracker/qubership-api-linter-service'
-    tag: 'latest'
+    tag: 'dev'
   replicas: 1
 
   # Section with resource limits
@@ -327,17 +327,17 @@ qubershipApiLinterService:
         bin_path: 'resources/spectral/linux/spectral'
     apihub:
       # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
-      url:
+      url: 'http://qubership-apihub-ui:8080'
       # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
       accessToken: ''
 
 # Section with Qubership APIHUB Agents Backend deployment configuration
 qubershipApihubAgentsBackend:
-  # Optional; QQubership APIHUB Agents Backend release version; If not set, default value: unknown; Example: 1.0.0
+  # Optional; Qubership APIHUB Agents Backend release version; If not set, default value: unknown; Example: 1.0.0
   version: ''
   image:
     repository: 'qubership-apihub-agents-backend'
-    tag: 'impl'
+    tag: 'dev'
 
   # Section with resource limits
   # Mandatory
@@ -369,7 +369,7 @@ qubershipApihubAgentsBackend:
 
     apihub:
       # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
-      url: ''
+      url: 'http://qubership-apihub-ui:8080'
       # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
       accessToken: ''
 
