@@ -76,7 +76,7 @@ import {
   OPEN_API_PROPERTY_TAGS,
 } from './openapi.const'
 
-import { pathItemsUnification } from '../unifies/openapi'
+import { pathItemsUnification, deduplicateParameters } from '../unifies/openapi'
 import {
   calculateHeaderName,
   calculateHeaderPlace,
@@ -626,6 +626,7 @@ const openApiParametersRules = (version: OpenApiSpecVersion): NormalizationRules
     hashOwner: true,
   },
   validate: checkType(TYPE_ARRAY),
+  unify: deduplicateParameters,
 })
 
 const openApiRequestRules = (version: OpenApiSpecVersion): NormalizationRules => ({

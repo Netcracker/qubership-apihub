@@ -8,4 +8,5 @@ export const ErrorMessage = {
   referenceNotAllowed: (ref: string) => `${JSON_SCHEMA_PROPERTY_REF} not allowed here: ${ref}`,
   refNotFound: (ref: string) => `${JSON_SCHEMA_PROPERTY_REF} can't be resolved: ${ref}`,
   refNotValidFormat: (ref: string) => `${JSON_SCHEMA_PROPERTY_REF} can't be parsed: ${ref}`,
+  duplicateParameter: (name: string, location: string) => `Duplicate parameter detected: name='${name}', in='${location}'`,
 } as const

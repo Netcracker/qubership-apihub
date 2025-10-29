@@ -2,7 +2,7 @@ import { TEST_DEFAULTS_FLAG, TEST_HASH_FLAG, TEST_SYNTHETIC_ALL_OF_FLAG } from '
 import { denormalize, JSON_SCHEMA_PROPERTY_DEPRECATED, normalize, OriginLeafs, resolveOrigins } from '../../src'
 import outOfMemoryCauseTooManyCombinations from '../resources/out-of-memory-cause-too-many-combinations.json'
 import bugWithWrongOrigins from '../resources/bug-with-wrong-origins.json'
-import bugWithSpearedArray from '../resources/bug-with-speared-array.json'
+import bugWithSparseArray from '../resources/bug-with-sparse-array.json'
 import { TEST_INLINE_REFS_FLAG, TEST_ORIGINS_FLAG, TEST_ORIGINS_FOR_DEFAULTS, TEST_SYNTHETIC_TITLE_FLAG } from '../helpers'
 import { isObject, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
 import 'jest-extended'
@@ -239,8 +239,8 @@ describe('Bugs', () => {
     expect(result.paths['customer'].get.parameters[0].schema).not.toHaveProperty([TEST_INLINE_REFS_FLAG])
   })
 
-  it('speared array', () => {
-    const result = normalize(bugWithSpearedArray, {
+  it('sparse array', () => {
+    const result = normalize(bugWithSparseArray, {
       validate: true,
       liftCombiners: true,
       unify: true,
@@ -250,6 +250,10 @@ describe('Bugs', () => {
       hashFlag: TEST_HASH_FLAG,
       inlineRefsFlag: TEST_INLINE_REFS_FLAG,
     }) as any
-    expect(result).toHaveProperty(['paths', '/datasets/events', 'get', 'parameters', 'length'], 10) /*1 and 3 index will be missing*/
+
+    expect(result).toHaveProperty(['paths', '/datasets/events', 'get', 'parameters', 'length'], 8)
+    // Verify all parameters are valid objects
+    const params = result.paths['/datasets/events'].get.parameters
+    expect(params.every((p: any) => p && typeof p === 'object')).toBe(true)
   })
 })
