@@ -45,6 +45,9 @@ import shouldNotMissRemoveDiffForEnumEntryInOneOfAfter from './helper/resources/
 import shouldReportSingleDiffWhenRequiredPropertyIsChangedForTheCombinerBefore from './helper/resources/should-report-single-diff-when-required-property-is-changed-for-the-combiner/before.json'
 import shouldReportSingleDiffWhenRequiredPropertyIsChangedForTheCombinerAfter from './helper/resources/should-report-single-diff-when-required-property-is-changed-for-the-combiner/after.json'
 
+import duplicateParametersBefore from './helper/resources/duplicate-parameters/before.json'
+import duplicateParametersAfter from './helper/resources/duplicate-parameters/after.json'
+
 import { diffsMatcher } from './helper/matchers'
 import { TEST_DIFF_FLAG, TEST_ORIGINS_FLAG } from './helper'
 import { JSON_SCHEMA_NODE_SYNTHETIC_TYPE_NOTHING } from '@netcracker/qubership-apihub-api-unifier'
@@ -115,7 +118,7 @@ describe('Real Data', () => {
     const after: any = infinityAfter
     const { diffs } = apiDiff(before, after, OPTIONS)
     const responseContentPath = ['paths', '/api/v1/dictionaries/dictionary/item', 'get', 'responses', '200', 'content']
-    expect(diffs).toEqual(diffsMatcher([      
+    expect(diffs).toEqual(diffsMatcher([
       expect.objectContaining({
         afterDeclarationPaths: [['components', 'schemas', 'DictionaryItem', 'x-entity']],
         afterValue: 'DictionaryItem',
@@ -232,7 +235,7 @@ describe('Real Data', () => {
     const before: any = wildcardContentSchemaMediaTypeCombinedWithSpecificMediaTypeBefore
     const after: any = wildcardContentSchemaMediaTypeCombinedWithSpecificMediaTypeAfter
     const { diffs } = apiDiff(before, after, OPTIONS)
-    
+
     expect(diffs).toEqual(diffsMatcher([
       expect.objectContaining({
         action: DiffAction.replace,
@@ -299,6 +302,20 @@ describe('Real Data', () => {
           0
         ]],
         type: nonBreaking,
+      }),
+    ]))
+  })
+
+
+  it('should not report diffs for duplicated parameters', () => {
+    const { diffs } = apiDiff(duplicateParametersBefore, duplicateParametersAfter, OPTIONS)
+
+    expect(diffs).toHaveLength(1)
+    expect(diffs).toEqual(diffsMatcher([
+      expect.objectContaining({
+        action: DiffAction.add,
+        afterDeclarationPaths: [['paths', '/api/v1/user-management/user-federations/{id}/mappers/{id}', 'get', 'description']],
+        type: annotation,
       }),
     ]))
   })
