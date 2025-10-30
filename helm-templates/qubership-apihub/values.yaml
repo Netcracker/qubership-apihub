@@ -336,7 +336,7 @@ qubershipApihubAgentsBackend:
   # Optional; Qubership APIHUB Agents Backend release version; If not set, default value: unknown; Example: 1.0.0
   version: ''
   image:
-    repository: 'qubership-apihub-agents-backend'
+    repository: 'ghcr.io/netcracker/qubership-apihub-agents-backend'
     tag: 'dev'
 
   # Section with resource limits
