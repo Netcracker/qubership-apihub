@@ -164,7 +164,7 @@ export class ApihubRegistry implements IRegistry {
     const encodedPackageKey = encodeURIComponent(packageId)
     const encodedVersionKey = encodeURIComponent(versionId)
 
-    const { data } = await this.axios.get(`/api/v2/packages/${encodedPackageKey}/versions/${encodedVersionKey}?includeOperations=${includeOperations}`)
+    const { data } = await this.axios.get(`/api/v3/packages/${encodedPackageKey}/versions/${encodedVersionKey}?includeOperations=${includeOperations}`)
     return data
   }
 

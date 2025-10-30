@@ -40,6 +40,7 @@ import {
   removeObjectDuplicates,
 } from '../../utils'
 import { asyncDebugPerformance, DebugPerformanceContext, syncDebugPerformance } from '../../utils/logs'
+import { validateApiProcessorVersion } from '../../validators'
 
 export async function compareVersionsOperations(
   prev: VersionParams,
@@ -52,9 +53,13 @@ export async function compareVersionsOperations(
 
   const { versionResolver } = ctx
 
-  // resolve all version with operation hashes
-  const prevVersionData = prev && (await versionResolver(...prev) ?? { version: prev?.[0], packageId: prev?.[1] })
-  const currVersionData = curr && (await versionResolver(...curr) ?? { version: curr?.[0], packageId: curr?.[1] })
+  // resolve both versions
+  const prevVersionData = prev && await versionResolver(...prev)
+  const currVersionData = curr && await versionResolver(...curr)
+
+  // validate api-processor version compatibility
+  validateApiProcessorVersion(prevVersionData, 'Can\'t build the changelog if previous version was built using an outdated api-processor.')
+  validateApiProcessorVersion(currVersionData, 'Can\'t build the changelog if current version was built using an outdated api-processor.')
 
   // compare operations of each type
   for (const apiType of getUniqueApiTypesFromVersions(prevVersionData, currVersionData)) {

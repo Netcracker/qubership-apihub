@@ -86,6 +86,7 @@ import { calculateTotalChangeSummary } from '../../../src/components/compare'
 import { toVersionsComparisonDto } from '../../../src/utils/transformToDto'
 import path from 'path'
 import { ResolvedPackage } from '../../../src/types/external/package'
+import { version as apiProcessorVersion } from '../../../package.json'
 
 const VERSIONS_PATH = 'test/versions'
 const DEFAULT_PROJECTS_PATH = 'test/projects'
@@ -175,6 +176,7 @@ export class LocalRegistry implements IRegistry {
       versionLabels: [],
       revision: 0,
       operationTypes: apiTypes.map(apiType => ({ apiType: apiType, changesSummary: getChangesSummary(apiType) })),
+      apiProcessorVersion: apiProcessorVersion,
     }
   }
 

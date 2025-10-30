@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { version as apiProcessorVersion } from '../package.json'
 import {
   BuildConfig,
   BuildConfigBase,
@@ -650,6 +651,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       version: this.config.version,
       revision: 0,
       operationTypes: this.operationsTypes,
+      apiProcessorVersion: apiProcessorVersion,
     }
   }
 
