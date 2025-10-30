@@ -117,8 +117,8 @@ async function compareCurrentApiType(
   const { version: prevVersion, packageId: prevPackageId } = prev ?? { version: '', packageId: '' }
   const { version: currVersion, packageId: currPackageId } = curr ?? { version: '', packageId: '' }
 
-  const { operations: prevOperations = [] } = await versionOperationsResolver(apiType, prevVersion, prevPackageId, undefined, false) || {}
-  const { operations: currOperations = [] } = await versionOperationsResolver(apiType, currVersion, currPackageId, undefined, false) || {}
+  const { operations: prevOperations = [] } = prev && await versionOperationsResolver(apiType, prevVersion, prevPackageId, undefined, false) || {}
+  const { operations: currOperations = [] } = curr && await versionOperationsResolver(apiType, currVersion, currPackageId, undefined, false) || {}
 
   const previousGroupSlug = convertToSlug(previousGroup)
   const currentGroupSlug = convertToSlug(currentGroup)

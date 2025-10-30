@@ -217,8 +217,8 @@ export const calculatePairedDocs = async (
     currentPackageId,
   } = ctx
 
-  const { documents: prevDocuments } = await versionDocumentsResolver(previousVersion, previousPackageId, apiType) ?? { documents: [] }
-  const { documents: currDocuments } = await versionDocumentsResolver(currentVersion, currentPackageId, apiType) ?? { documents: [] }
+  const { documents: prevDocuments } = previousVersion && await versionDocumentsResolver(previousVersion, previousPackageId, apiType) || { documents: [] }
+  const { documents: currDocuments } = currentVersion && await versionDocumentsResolver(currentVersion, currentPackageId, apiType) || { documents: [] }
 
   const pairedDocs: [ResolvedVersionDocument | undefined, ResolvedVersionDocument | undefined][] = []
   for (const { previous, current } of operationPairs) {
