@@ -103,6 +103,15 @@ func (j snapshotsCleanupJob) Run() {
 	ctx, cancel := context.WithTimeout(context.Background(), j.timeout)
 	defer cancel()
 	ctx = secctx.MakeSysadminContext(ctx)
+	info, err := j.apihubClient.GetSystemInfo(ctx)
+	if err != nil {
+		log.Errorf("[SnapshotsCleanup] failed to check for running migrations: %s", ctx.Err().Error())
+		return
+	}
+	if info.MigrationInProgress {
+		log.Info("[SnapshotsCleanup] migration in progress, job is being skipped")
+		return
+	}
 	workspaces, err := j.apihubClient.GetPackages(ctx, view.PackagesSearchReq{
 		Kind: string(view.KindWorkspace),
 	})
