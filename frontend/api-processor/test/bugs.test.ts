@@ -371,4 +371,17 @@ describe('Operation Bugs', () => {
       ],
     })).rejects.toThrow('Invalid path \'/res/data/{}\': path parameter name could not be empty')
   })
+
+  test('Should throw error if duplicated operation is found', async () => {
+    const pkg = LocalRegistry.openPackage('duplicated-operation')
+
+    await expect(pkg.publish(pkg.packageId, {
+      packageId: pkg.packageId,
+      version: 'v1',
+      files: [
+        { fileId: 'spec1.json' },
+        { fileId: 'spec2.json' },
+      ],
+    })).rejects.toThrow('Duplicated operation with operationId \'res-data-post\' found')
+  })
 })

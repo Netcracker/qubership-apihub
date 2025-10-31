@@ -82,12 +82,6 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
         const basePath = extractOperationBasePath(methodData?.servers || pathData?.servers || servers || [])
         const operationId = calculateOperationId(basePath, key, path)
 
-        if (ctx.operationResolver(operationId)) {
-          ctx.notifications.push({
-            severity: MESSAGE_SEVERITY.Warning,
-            message: `Duplicated operation with operationId = ${operationId} found`,
-          })
-        }
         syncDebugPerformance('[Operation]', (innerDebugCtx) =>
           logLongBuild(() => {
             const operation = buildRestOperation(

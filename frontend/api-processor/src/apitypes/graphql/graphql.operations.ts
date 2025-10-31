@@ -67,13 +67,6 @@ export const buildGraphQLOperations: OperationsBuilder<GraphApiSchema> = async (
       await asyncFunction(async () => {
         const operationId = slugify(`${GRAPHQL_TYPE[type]}-${operationKey}`)
 
-        if (ctx.operationResolver(operationId)) {
-          notifications.push({
-            severity: MESSAGE_SEVERITY.Error,
-            message: `Duplicated operation with operationId = ${operationId} found`,
-            operationId: operationId,
-          })
-        }
         syncDebugPerformance('[Operation]', (innerDebugCtx) =>
           logLongBuild(() => {
             const operation: VersionGraphQLOperation = buildGraphQLOperation(

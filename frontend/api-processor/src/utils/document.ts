@@ -76,6 +76,9 @@ export function toPackageDocument(document: VersionDocument): PackageDocument {
 export function setDocument(buildResult: BuildResult, document: VersionDocument, operations: ApiOperation[] = []): void {
   buildResult.documents.set(document.fileId, document)
   for (const operation of operations) {
+    if (buildResult.operations.has(operation.operationId)) {
+      throw new Error(`Duplicated operation with operationId '${operation.operationId}' found`)
+    }
     buildResult.operations.set(operation.operationId, operation)
   }
 }
@@ -129,11 +132,11 @@ export interface BundlingError {
 export const createBundlingErrorHandler = (ctx: BuilderContext, fileId: FileId) => (errors: BundlingError[]): void => {
   // Only throw if severity is ERROR and there's at least one critical error
   if (ctx.config.validationRulesSeverity?.brokenRefs === VALIDATION_RULES_SEVERITY_LEVEL_ERROR) {
-    const criticalError = errors.find(error => 
-      error.errorType === RefErrorTypes.REF_NOT_FOUND || 
+    const criticalError = errors.find(error =>
+      error.errorType === RefErrorTypes.REF_NOT_FOUND ||
       error.errorType === RefErrorTypes.REF_NOT_VALID_FORMAT,
     )
-    
+
     if (criticalError) {
       throw new Error(criticalError.message)
     }
