@@ -32,7 +32,7 @@ export function validateConfig(config: BuildConfig): void {
 
 export function validateApiProcessorVersion(resolvedVersion: VersionCache | null, errorPrefix?: string): void {
 
-  if (!resolvedVersion?.apiProcessorVersion) {
+  if (!resolvedVersion) {
     return
   }
 
