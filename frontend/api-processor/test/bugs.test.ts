@@ -384,4 +384,17 @@ describe('Operation Bugs', () => {
       ],
     })).rejects.toThrow('Duplicated operation with operationId \'res-data-post\' found')
   })
+
+  //TODO: need to decide how to handle this case, this affects how operationIds are calculated
+  test.skip('Should build operations if there is a path parameter path collision', async () => {
+    const pkg = LocalRegistry.openPackage('path-parameter-path-collision')
+
+    const result = await pkg.publish(pkg.packageId, {
+      packageId: pkg.packageId,
+      version: 'v1',
+      files: [
+        { fileId: 'spec.json' },
+      ],
+    })
+  })
 })
