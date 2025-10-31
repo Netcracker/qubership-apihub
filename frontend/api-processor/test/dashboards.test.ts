@@ -65,26 +65,35 @@ describe('Dashboard build', () => {
       buildType: BUILD_TYPE.CHANGELOG,
       status: VERSION_STATUS.RELEASE,
     })
-    const versionResolverSpy = jest.spyOn(editor.registry as LocalRegistry, 'versionResolver')
-    const versionDocumentsResolverSpy = jest.spyOn(editor.registry as LocalRegistry, 'versionDocumentsResolver')
-    const rawDocumentResolverSpy = jest.spyOn(editor.registry as LocalRegistry, 'rawDocumentResolver')
+
+    // spy on the builder's wrapper methods that are actually invoked
+    const versionResolverSpy = jest.spyOn(editor.builder as PackageVersionBuilder, 'versionResolver')
+    const versionDocumentsResolverSpy = jest.spyOn(editor.builder as PackageVersionBuilder, 'versionDocumentsResolver')
+    const rawDocumentResolverSpy = jest.spyOn(editor.builder as PackageVersionBuilder, 'rawDocumentResolver')
 
     await editor.run()
 
-    // versionResolver(version, packageId)
+    // versionResolver(version, packageId) - builder's method signature
+    // Should be called for v1 and v2 dashboard versions
+    expect(versionResolverSpy).toHaveBeenCalled()
     versionResolverSpy.mock.calls.forEach(args => {
-      // args: [packageId = '', version]
-      expect(args[1]).toBeTruthy()
+      expect(args[0]).toBeTruthy() // version should not be empty
+      expect(args[1]).toBeTruthy() // packageId should not be empty
     })
 
-    // versionDocumentsResolver(version, packageId)
+    // versionDocumentsResolver(version, packageId, apiType?)
+    // Should be called for referenced packages (pckg1/v1 and pckg2/v2)
+    expect(versionDocumentsResolverSpy).toHaveBeenCalled()
     versionDocumentsResolverSpy.mock.calls.forEach(args => {
-      expect(args[0]).toBeTruthy()
+      expect(args[0]).toBeTruthy() // version should not be empty
+      expect(args[1]).toBeTruthy() // packageId should not be empty
     })
 
     // rawDocumentResolver(version, packageId, slug)
+    // May or may not be called depending on if raw documents are needed
     rawDocumentResolverSpy.mock.calls.forEach(args => {
-      expect(args[0]).toBeTruthy()
+      expect(args[0]).toBeTruthy() // version should not be empty
+      expect(args[1]).toBeTruthy() // packageId should not be empty
     })
   }, 100000)
 })
