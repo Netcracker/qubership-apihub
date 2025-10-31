@@ -17,6 +17,7 @@ import { describe, test, expect, jest } from '@jest/globals'
 import { LocalRegistry } from './helpers/registry'
 import { BUILD_TYPE, VERSION_STATUS } from '../src/consts'
 import { Editor } from './helpers/editor'
+import { PackageVersionBuilder } from '../src'
 
 describe('Dashboard build', () => {
   test('dashboard should have changes', async () => {
@@ -95,5 +96,77 @@ describe('Dashboard build', () => {
       expect(args[0]).toBeTruthy() // version should not be empty
       expect(args[1]).toBeTruthy() // packageId should not be empty
     })
+  }, 100000)
+
+  test('Should fail changelog build if one of the packages was built using outdated api-processor version', async () => {
+    const pckg1Id = 'dashboards/pckg1'
+    const pckg2Id = 'dashboards/pckg2'
+
+    await LocalRegistry.openPackage(pckg1Id).publish(pckg1Id, {
+      version: 'v1',
+      packageId: pckg1Id,
+      files: [{ fileId: 'v1.yaml' }],
+    })
+
+    await LocalRegistry.openPackage(pckg1Id).publish(pckg1Id, {
+      version: 'v2',
+      packageId: pckg1Id,
+      files: [{ fileId: 'v1.yaml' }],
+    })
+
+    await LocalRegistry.openPackage(pckg2Id).publish(pckg2Id, {
+      version: 'v1',
+      packageId: pckg2Id,
+      files: [{ fileId: 'v2.yaml' }],
+    })
+
+    await LocalRegistry.openPackage(pckg2Id).publish(pckg2Id, {
+      version: 'v2',
+      packageId: pckg2Id,
+      files: [{ fileId: 'v2.yaml' }],
+    })
+
+    const dashboard = LocalRegistry.openPackage('dashboards/dashboard')
+    await dashboard.publish(dashboard.packageId, {
+      packageId: 'dashboards/dashboard',
+      version: 'v1',
+      apiType: 'rest',
+      refs: [
+        { refId: pckg1Id, version: 'v1' },
+        { refId: pckg2Id, version: 'v1' },
+      ],
+    })
+
+    await dashboard.publish(dashboard.packageId, {
+      packageId: 'dashboards/dashboard',
+      version: 'v2',
+      apiType: 'rest',
+      refs: [
+        { refId: pckg1Id, version: 'v2' },
+        { refId: pckg2Id, version: 'v2' },
+      ],
+    })
+
+    const editor = new Editor(dashboard.packageId, {
+      version: 'v2',
+      packageId: dashboard.packageId,
+      previousVersionPackageId: dashboard.packageId,
+      previousVersion: 'v1',
+      buildType: BUILD_TYPE.CHANGELOG,
+      status: VERSION_STATUS.RELEASE,
+    })
+
+    // Simulate that previous dashboard version was built with an outdated api-processor
+    // Mock the builder's versionResolver method (not the registry's)
+    const originalVersionResolver = (editor.builder as PackageVersionBuilder).versionResolver.bind(editor.builder)
+    jest.spyOn(editor.builder as PackageVersionBuilder, 'versionResolver').mockImplementation(async (version, packageId) => {
+      const resolved = await originalVersionResolver(version, packageId)
+      if (resolved && packageId === pckg1Id && version === 'v1') {
+        return { ...resolved, apiProcessorVersion: '0.0.0' }
+      }
+      return resolved
+    })
+
+    await expect(editor.run()).rejects.toThrow('Can\'t build the changelog if previous version was built using an outdated api-processor.')
   }, 100000)
 })
