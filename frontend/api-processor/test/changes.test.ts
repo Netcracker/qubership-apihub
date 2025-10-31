@@ -27,9 +27,12 @@ import {
   ANNOTATION_CHANGE_TYPE,
   BREAKING_CHANGE_TYPE,
   BUILD_TYPE,
+  PackageVersionBuilder,
   NON_BREAKING_CHANGE_TYPE,
   UNCLASSIFIED_CHANGE_TYPE,
 } from '../src'
+import { VERSION_STATUS } from '../src/consts'
+import { jest } from '@jest/globals'
 
 let beforePackage: LocalRegistry
 let afterPackage: LocalRegistry
@@ -292,4 +295,42 @@ describe('Changelog build type', () => {
       ]),
     }))
   })
+
+  test('Should fail changelog build if on of the versions was built using outdated api-processor version', async () => {
+    const pckgId = 'changelog/add-operation'
+
+    await LocalRegistry.openPackage(pckgId).publish(pckgId, {
+      version: 'v1',
+      packageId: pckgId,
+      files: [{ fileId: 'before.yaml' }],
+    })
+
+    await LocalRegistry.openPackage(pckgId).publish(pckgId, {
+      version: 'v2',
+      packageId: pckgId,
+      files: [{ fileId: 'after.yaml' }],
+    })
+
+    const editor = new Editor(pckgId, {
+      version: 'v2',
+      packageId: pckgId,
+      previousVersionPackageId: pckgId,
+      previousVersion: 'v1',
+      buildType: BUILD_TYPE.CHANGELOG,
+      status: VERSION_STATUS.RELEASE,
+    })
+
+    // Simulate that current version was built with an outdated api-processor
+    // Mock the builder's versionResolver method (not the registry's)
+    const originalVersionResolver = (editor.builder as PackageVersionBuilder).versionResolver.bind(editor.builder)
+    jest.spyOn(editor.builder as PackageVersionBuilder, 'versionResolver').mockImplementation(async (version, packageId) => {
+      const resolved = await originalVersionResolver(version, packageId)
+      if (resolved && packageId === pckgId && version === 'v2') {
+        return { ...resolved, apiProcessorVersion: '0.0.0' }
+      }
+      return resolved
+    })
+
+    await expect(editor.run()).rejects.toThrow('Can\'t build the changelog if current version was built using an outdated api-processor.')
+  }, 100000)
 })
