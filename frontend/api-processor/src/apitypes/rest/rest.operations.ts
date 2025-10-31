@@ -66,6 +66,11 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
 
   const componentsHashMap = new Map<string, string>()
   for (const path of Object.keys(paths)) {
+    // Validate path parameters: empty parameter names are not allowed
+    if (path.includes('{}')) {
+      throw new Error(`Invalid path '${path}': path parameter name could not be empty`)
+    }
+
     const pathData = paths[path]
     if (typeof pathData !== 'object' || !pathData) { continue }
 

@@ -17,6 +17,8 @@
 import { API_AUDIENCE_INTERNAL, API_KIND } from '../src'
 import { Editor, LocalRegistry } from './helpers'
 
+import { describe, test, expect } from '@jest/globals'
+
 const bugsPackage = LocalRegistry.openPackage('bugs')
 const swaggerPackage = LocalRegistry.openPackage('basic_swagger')
 const migrationBug = LocalRegistry.openPackage('migration_bug')
@@ -356,5 +358,17 @@ describe('Operation Bugs', () => {
 
     const operationKeys = Array.from(result.operations.keys())
     expect(operationKeys[0]).toEqual('paths1-get')
+  })
+
+  test('Should throw error if path parameter name is empty', async () => {
+    const pkg = LocalRegistry.openPackage('empty-path-parameter')
+
+    await expect(pkg.publish(pkg.packageId, {
+      packageId: pkg.packageId,
+      version: 'v1',
+      files: [
+        { fileId: 'spec.json' },
+      ],
+    })).rejects.toThrow('Invalid path \'/res/data/{}\': path parameter name could not be empty')
   })
 })
