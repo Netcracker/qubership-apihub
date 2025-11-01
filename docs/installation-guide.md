@@ -17,7 +17,6 @@ This guide describes Qubership APIHUB installation process
 | Name | Version | Mandatory/Optional | Comment |
 | ---- | ------- |------------------- | ------- |
 | PostgreSQL | 14+ | Mandatory |  |
-| GitLab | 14+ | Optional | For APIHUB Editor. Deprecated |
 | S3 | Any | Optional | For store cold data and reduce load to PG |
 | SAML provider | Any | Optional | For SSO |
 | LDAP | Any | Optional | For User info sync |
