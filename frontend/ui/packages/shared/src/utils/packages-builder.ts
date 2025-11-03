@@ -53,7 +53,7 @@ export async function getPackageVersionContent(
       `${generatePath(pathPattern, { packageId, versionId })}?${queryParams}`,
       { method: 'get' },
       {
-        basePath: API_V2,
+        basePath: API_V3,
         customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
       },
     )
