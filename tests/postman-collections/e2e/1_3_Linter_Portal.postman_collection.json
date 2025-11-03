@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_3_Linter_Portal",
-        "_postman_id": "cb0f11cb-e767-41f9-811a-b448d96386ee",
+        "_postman_id": "b58adb64-67d5-4f68-9118-58efad847e2c",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -903,27 +903,104 @@
                     "protocolProfileBehavior": {}
                 },
                 {
-                    "name": "4.2 Get Validation Summary",
+                    "name": "4.2 Wait for Validation to Complete",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test(\"Status code is 200\", function () {",
+                                    "pm.test(\"Wait for validation to complete\", function () {",
                                     "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "var data = JSON.parse(responseBody);",
-                                    "pm.test(\"Validation summary exists\", function () {",
-                                    "    pm.expect(data).to.have.property('status').that.is.a('string');",
-                                    "    pm.expect(data.status).to.be.oneOf(['success', 'error'], 'Status must be either success or error');",
-                                    "    ",
-                                    "    if (data.status === 'error') {",
-                                    "        pm.expect(data).to.have.property('details').that.is.a('string', 'Error response must include details');",
-                                    "        pm.expect(data).to.have.property('documents').that.is.an('array', 'Error response must include documents array');",
-                                    "    } else if (data.status === 'success') {",
-                                    "        pm.expect(data).to.have.property('documents').that.is.an('array', 'Success response must include documents array');",
+                                    "    const data = pm.response.json();",
+                                    "    const status = data.status;",
+                                    "",
+                                    "    if (status === 'inProgress') {",
+                                    "        console.log('Validation in progress, retrying in 3s...');",
+                                    "        setTimeout(() => postman.setNextRequest(pm.info.requestName), 3000);",
+                                    "        return;",
                                     "    }",
+                                    "",
+                                    "    pm.expect(status).to.be.oneOf(['success', 'error'], 'Validation must be completed');",
+                                    "    pm.environment.set('validationStatus', status);",
+                                    "    if (status === 'error') {",
+                                    "        console.log('Validation failed:', data.details);",
+                                    "    }",
+                                    "    pm.environment.unset('validationAttempts');",
+                                    "});"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "let attempts = parseInt(pm.environment.get('validationAttempts') || '0');",
+                                    "if (attempts >= 10) {",
+                                    "    console.log('Max validation attempts reached (10)');",
+                                    "    pm.environment.unset('validationAttempts');",
+                                    "    postman.setNextRequest('4.3 Get Validation Summary (Final)');",
+                                    "    return;",
+                                    "}",
+                                    "pm.environment.set('validationAttempts', attempts + 1);",
+                                    "console.log('Validation check attempt:', attempts + 1);"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/packages/{{project_lt}}/versions/0000.1/validation/summary",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "packages",
+                                "{{project_lt}}",
+                                "versions",
+                                "0000.1",
+                                "validation",
+                                "summary"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "4.3 Get Validation Summary",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Validation summary is final and valid\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "    const data = pm.response.json();",
+                                    "    const status = data.status;",
+                                    "",
+                                    "    pm.expect(status).to.be.oneOf(['success', 'error'], 'Final status must be success or error');",
+                                    "",
+                                    "    if (status === 'error') {",
+                                    "        pm.expect(data).to.have.property('details');",
+                                    "        pm.expect(data).to.have.property('documents').that.is.an('array');",
+                                    "    } else if (status === 'success') {",
+                                    "        pm.expect(data).to.have.property('documents').that.is.an('array');",
+                                    "    }",
+                                    "    pm.environment.unset('validationAttempts');",
                                     "});"
                                 ]
                             }
@@ -959,12 +1036,6 @@
                         "method": "GET",
                         "header": [
                             {
-                                "key": "X-Personal-Access-Token",
-                                "value": "{{personalAccessToken}}",
-                                "type": "default",
-                                "disabled": true
-                            },
-                            {
                                 "key": "api-key",
                                 "value": "{{at-api-key}}",
                                 "type": "default"
@@ -975,7 +1046,7 @@
                     "protocolProfileBehavior": {}
                 },
                 {
-                    "name": "4.3 Get Validated Documents",
+                    "name": "4.4 Get Validated Documents",
                     "event": [
                         {
                             "listen": "test",
@@ -1040,7 +1111,7 @@
                     "protocolProfileBehavior": {}
                 },
                 {
-                    "name": "4.4 Get Document Validation Details",
+                    "name": "4.5 Get Document Validation Details",
                     "event": [
                         {
                             "listen": "test",
@@ -1106,7 +1177,7 @@
                     "protocolProfileBehavior": {}
                 },
                 {
-                    "name": "4.5 GET Activation History",
+                    "name": "4.6 GET Activation History",
                     "request": {
                         "url": {
                             "raw": "{{SERVER_HOST}}/api-linter/api/v1/rulesets/{{rulesetId}}/activation",
@@ -1147,7 +1218,7 @@
                     "protocolProfileBehavior": {}
                 },
                 {
-                    "name": "4.6 GET Download Ruleset",
+                    "name": "4.7 GET Download Ruleset",
                     "request": {
                         "url": {
                             "raw": "{{SERVER_HOST}}/api-linter/api/v1/rulesets/{{rulesetId}}/data?disposition=attachment",
