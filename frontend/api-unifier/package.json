@@ -42,7 +42,8 @@
   "dependencies": {
     "@netcracker/qubership-apihub-json-crawl": "1.0.4",
     "object-hash": "3.0.0",
-    "fast-equals": "4.0.3"
+    "fast-equals": "4.0.3",
+    "flatted": "^3.2.9"
   },
   "devDependencies": {
     "@netcracker/qubership-apihub-graphapi": "feature-performance-optimization",
