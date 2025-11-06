@@ -77,7 +77,11 @@ export const createVersionPackage = async (
   }
 
   createDocumentsFile(zip, documents)
+  createVersionInternalDocumentsFile(zip, documents)
+
   await createDocumentDataFiles(zip, documents, ctx)
+  await createVersionInternalDocumentDataFiles(zip, documents)
+
   await createInfoFile(zip, buildResultDto.config)
 
   createOperationsFile(zip, buildResultDto.operations)
@@ -121,6 +125,28 @@ const createDocumentsFile = (zip: ZipTool, documents: VersionDocument[]): void =
   zip.file(PACKAGE.DOCUMENTS_FILE_NAME, result)
 }
 
+type VersionInternalDocuments = { id: string; filename: string }
+
+const createVersionInternalDocumentDataFiles = async (zip: ZipTool, documents: VersionDocument[]): Promise<void> => {
+  const documentsDir = zip.folder(PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME)
+  await writeInternalDocumentsToZip(documentsDir, documents)
+}
+
+const createVersionInternalDocumentsFile = (zip: ZipTool, documents: VersionDocument[]): void => {
+  const result: { documents: VersionInternalDocuments[] } = { documents: [] }
+
+  for (const document of documents.values()) {
+    if (!document.publish) { continue }
+
+    result.documents.push({
+      id: document?.internalDocumentId ?? '',
+      filename: document.filename,
+    })
+  }
+
+  zip.file(PACKAGE.VERSION_INTERNAL_FILE_NAME, result)
+}
+
 const writeDocumentsToZip = async (zip: ZipTool, documents: ZippableDocument[], ctx: BuilderContext): Promise<void> => {
   const { apiBuilders, config: { format } } = ctx
 
@@ -133,6 +159,14 @@ const writeDocumentsToZip = async (zip: ZipTool, documents: ZippableDocument[], 
     const documentFormat = EXPORT_FORMAT_TO_FILE_FORMAT.get(format!)
     const data = apiBuilder.dumpDocument(document, documentFormat)
     await zip.file(document.filename, data)
+  }
+}
+
+const writeInternalDocumentsToZip = async (zip: ZipTool, documents: ZippableDocument[]): Promise<void> => {
+  for (const document of documents) {
+    if (document.internalDocument){
+      await zip.file(document.filename, document.internalDocument)
+    }
   }
 }
 
@@ -177,6 +211,7 @@ const createOperationsFile = (zip: ZipTool, operations: Map<string, ApiOperation
       models: operation.models,
       tags: operation.tags,
       apiAudience: operation.apiAudience,
+      versionInternalDocumentId: operation.versionInternalDocumentId,
     })
   }
 

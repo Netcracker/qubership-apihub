@@ -15,7 +15,7 @@
  */
 
 import type { VersionGraphQLOperation } from './graphql.types'
-import { removeComponents, slugify } from '../../utils'
+import { denormalizeOas, serializeOas, removeComponents, slugify } from '../../utils'
 import type { OperationsBuilder } from '../../types'
 import { GRAPHQL_TYPE, GRAPHQL_TYPE_KEYS } from './graphql.consts'
 import { INLINE_REFS_FLAG, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
@@ -86,5 +86,10 @@ export const buildGraphQLOperations: OperationsBuilder<GraphApiSchema> = async (
       })
     }
   }
+  // no need Serialize document without operations
+  if(operations.length){
+    document.internalDocument = serializeOas(denormalizeOas(effectiveDocument))
+  }
+
   return operations
 }

@@ -69,21 +69,22 @@ export class MergedDocumentGroupStrategy implements BuilderStrategy {
     }
 
     const [firstDocument] = documents
-
+    const {title} = info
     buildResult.merged = {
-      fileId: info.title,
+      fileId: title,
       type: firstDocument.type,
       format: format,
       data: mergeOpenapiDocuments(specs, info, templateDocument),
-      slug: info.title,
-      title: info.title,
+      slug: title,
+      title: title,
       description: info.description || '',
       version: version,
-      filename: `${info.title}.${format}`,
+      filename: `${title}.${format}`,
       dependencies: [],
       operationIds: documents.map(doc => doc.operationIds).flat(),
       metadata: {},
       publish: true,
+      internalDocumentId: `${title}-${format}`,
     }
     return buildResult
   }

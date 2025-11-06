@@ -49,7 +49,7 @@ import {
   saveEachOperation,
   saveInfo,
   saveNotifications,
-  saveOperationsArray,
+  saveOperationsArray, saveVersionInternalDocuments, saveVersionInternalDocumentsArray,
 } from './utils'
 import { toVersionsComparisonDto } from '../../../src/utils/transformToDto'
 
@@ -120,6 +120,7 @@ export class ApihubRegistry implements IRegistry {
     await saveInfo(config, basePath)
 
     await saveDocumentsArray(documents, basePath)
+    await saveVersionInternalDocumentsArray(documents, basePath)
     await saveEachDocument(documents, basePath, builderContext)
 
     await saveOperationsArray(operations, basePath)
@@ -128,6 +129,7 @@ export class ApihubRegistry implements IRegistry {
     await saveComparisonsArray(comparisonsDto, basePath)
     await saveEachComparison(comparisonsDto, basePath)
     await saveNotifications(notifications, basePath)
+    await saveVersionInternalDocuments(documents, basePath)
   }
 
   get versionResolvers(): BuilderResolvers {

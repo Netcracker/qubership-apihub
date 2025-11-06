@@ -30,10 +30,18 @@ import {
   VersionDocument,
 } from '../types'
 import { bundle, Resolver } from 'api-ref-bundler'
-import { FILE_FORMAT_HTML, FILE_FORMAT_JSON, FILE_FORMAT_YAML, MESSAGE_SEVERITY } from '../consts'
+import {
+  FILE_FORMAT_HTML,
+  FILE_FORMAT_JSON,
+  FILE_FORMAT_YAML,
+  MESSAGE_SEVERITY,
+  NORMALIZE_OPTIONS,
+  symbolToStringMapping,
+} from '../consts'
 import { isNotEmpty } from './arrays'
 import { PATH_PARAM_UNIFIED_PLACEHOLDER } from './builder'
-import { RefErrorType, RefErrorTypes } from '@netcracker/qubership-apihub-api-unifier'
+import { denormalize, RefErrorType, RefErrorTypes, serialize } from '@netcracker/qubership-apihub-api-unifier'
+import { OpenAPIV3 } from 'openapi-types'
 
 export const EXPORT_FORMAT_TO_FILE_FORMAT = new Map<ExportFormat, typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON>([
   [FILE_FORMAT_YAML, FILE_FORMAT_YAML],
@@ -203,4 +211,12 @@ export function capitalize(string: string): string {
   }
 
   return string.charAt(0).toUpperCase() + string.slice(1)
+}
+
+export function denormalizeOas(normalizedDocument: unknown): OpenAPIV3.Document {
+  return denormalize(normalizedDocument, NORMALIZE_OPTIONS) as OpenAPIV3.Document
+}
+
+export function serializeOas(normalizedDocument: unknown): string {
+  return serialize(normalizedDocument, symbolToStringMapping)
 }

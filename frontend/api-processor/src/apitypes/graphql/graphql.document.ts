@@ -37,11 +37,11 @@ export const buildGraphQLDocument: (parsedFile: TextFile, file: BuildConfigFile)
   }
 
   const { fileId, slug = '', publish = true, apiKind, ...metadata } = file
-
+  const {format, type} = parsedFile
   return {
     fileId,
-    type: parsedFile.type,
-    format: parsedFile.format,
+    type: type,
+    format: format,
     data: graphapi,
     publish,
     apiKind,
@@ -53,6 +53,7 @@ export const buildGraphQLDocument: (parsedFile: TextFile, file: BuildConfigFile)
     operationIds: [],
     metadata,
     source: parsedFile.source,
+    internalDocumentId: `${slug}-${format}`,
   }
 }
 

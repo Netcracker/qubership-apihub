@@ -20,7 +20,7 @@ import { buildRestOperation } from './rest.operation'
 import { OperationsBuilder } from '../../types'
 import {
   calculateOperationId,
-  createBundlingErrorHandler,
+  createBundlingErrorHandler, denormalizeOas, serializeOas,
   removeComponents,
 } from '../../utils'
 import type * as TYPE from './rest.types'
@@ -105,5 +105,11 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
     }
 
   }
+
+  // no need Serialize document without operations
+  if(operations.length){
+    document.internalDocument = serializeOas(denormalizeOas(effectiveDocument))
+  }
+
   return operations
 }

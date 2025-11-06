@@ -45,4 +45,5 @@ export interface ApiOperation<T = any, M = any> {
   // changeSummary?: ChangeSummary
   hasExample?: boolean
   apiAudience?: ApiAudience
+  versionInternalDocumentId?: string
 }

@@ -66,9 +66,13 @@ export const PACKAGE = {
   DOCUMENTS_FILE_NAME: 'documents.json',
   OPERATIONS_FILE_NAME: 'operations.json',
   COMPARISONS_FILE_NAME: 'comparisons.json',
+  COMPARISON_INTERNAL_FILE_NAME: 'comparison-internal-documents.json',
+  VERSION_INTERNAL_FILE_NAME: 'version-internal-documents.json',
   DOCUMENTS_DIR_NAME: 'documents',
   OPERATIONS_DIR_NAME: 'operations',
   COMPARISONS_DIR_NAME: 'comparisons',
+  VERSION_INTERNAL_DOCUMENTS_DIR_NAME: 'version-internal-documents',
+  COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME: 'comparison-internal-documents',
 } as const
 
 export const EDITOR_MESSAGES = {
@@ -144,6 +148,14 @@ export const SYNTHETIC_TITLE_FLAG = Symbol('synthetic-title')
 export const ORIGINS_SYMBOL = Symbol('origins')
 export const HASH_FLAG = Symbol('hash')
 export const INLINE_REFS_FLAG = Symbol('inline-refs')
+
+export const symbolToStringMapping = new Map([
+  [SYNTHETIC_TITLE_FLAG, 'SYNTHETIC_TITLE_FLAG'],
+  [ORIGINS_SYMBOL, 'ORIGINS_SYMBOL'],
+  [HASH_FLAG, 'HASH_FLAG'],
+  [INLINE_REFS_FLAG, 'INLINE_REFS_FLAG'],
+])
+
 
 export const NORMALIZE_OPTIONS: NormalizeOptions = {
   validate: true,

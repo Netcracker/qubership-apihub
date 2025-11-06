@@ -71,7 +71,7 @@ import {
   saveEachOperation,
   saveInfo,
   saveNotifications,
-  saveOperationsArray,
+  saveOperationsArray, saveVersionInternalDocuments, saveVersionInternalDocumentsArray,
 } from './utils'
 import {
   getCompositeKey,
@@ -465,6 +465,7 @@ export class LocalRegistry implements IRegistry {
     await saveInfo(config, basePath)
 
     await saveDocumentsArray(documents, basePath)
+    await saveVersionInternalDocumentsArray(documents, basePath)
     await saveEachDocument(documents, basePath, builderContext)
 
     await saveOperationsArray(operations, basePath)
@@ -480,6 +481,7 @@ export class LocalRegistry implements IRegistry {
     await saveComparisonsArray(comparisonsDto, basePath)
     await saveEachComparison(comparisonsDto, basePath)
     await saveNotifications(notifications, basePath)
+    await saveVersionInternalDocuments(documents, basePath)
   }
 
   async updateOperationsHash(packageId: string, publishParams?: Partial<BuildConfig>): Promise<void> {

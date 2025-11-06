@@ -91,10 +91,10 @@ export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (par
     externalDocs,
     tags,
   }
-
+  const {format, type} = parsedFile
   return {
     fileId: parsedFile.fileId,
-    type: parsedFile.type,
+    type: type,
     format: FILE_FORMAT.JSON,
     apiKind: documentKind,
     data: bundledFileData,
@@ -109,6 +109,7 @@ export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (par
     publish,
     source: parsedFile.source,
     errors: parsedFile.errors?.length ?? 0,
+    internalDocumentId: `${slug}-${format}`,
   }
 }
 

@@ -38,6 +38,7 @@ export interface PackageOperation {
   deprecatedInPreviousVersions?: string[]
   models?: Record<string, string>       // schema models { name: hash }
   apiAudience?: ApiAudience
+  versionInternalDocumentId?: string
 }
 
 export interface RestMetadata {

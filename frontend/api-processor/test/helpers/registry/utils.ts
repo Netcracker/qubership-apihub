@@ -29,7 +29,6 @@ import {
   VersionsComparisonDto,
 } from '../../../src'
 import { PACKAGE } from '../../../src/consts'
-import objectHash from 'object-hash'
 import { toPackageDocument } from '../../../src/utils'
 
 export async function saveComparisonsArray(
@@ -40,6 +39,19 @@ export async function saveComparisonsArray(
     `${basePath}/${PACKAGE.COMPARISONS_FILE_NAME}`,
     JSON.stringify({ comparisons }, undefined, 2),
   )
+}
+
+export async function saveVersionInternalDocuments(
+  documents: Map<string, VersionDocument>,
+  basePath: string,
+): Promise<void> {
+  await fs.mkdir(`${basePath}/${PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME}`)
+  for (const document of documents.values()) {
+    document.publish && await fs.writeFile(
+      `${basePath}/${PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME}/${document.filename}`,
+      document?.internalDocument ?? '',
+    )
+  }
 }
 
 export async function saveEachComparison(
@@ -106,6 +118,28 @@ export async function saveDocumentsArray(
   await fs.writeFile(
     `${basePath}/${PACKAGE.DOCUMENTS_FILE_NAME}`,
     getDocumentsFileContent(documents),
+  )
+}
+
+type VersionInternalDocuments = {id: string; filename: string}
+export async function saveVersionInternalDocumentsArray(
+  documents: Map<string, VersionDocument>,
+  basePath: string,
+): Promise<void> {
+  const result: {documents: VersionInternalDocuments[]} = { documents: [] }
+
+  for (const document of documents.values()) {
+    if (!document.publish) { continue }
+
+    result.documents.push({
+      id: document?.internalDocumentId ?? '',
+      filename: document.filename,
+    })
+  }
+
+  await fs.writeFile(
+    `${basePath}/${PACKAGE.VERSION_INTERNAL_FILE_NAME}`,
+    JSON.stringify(result, undefined, 2),
   )
 }
 

@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@netcracker/qubership-apihub-api-diff": "feature-move-prefix-from-server-to-path",
-    "@netcracker/qubership-apihub-api-unifier": "feature-performance-optimization",
+    "@netcracker/qubership-apihub-api-unifier": "feature-performance-optimization-405",
     "@netcracker/qubership-apihub-graphapi": "feature-performance-optimization",
     "@netcracker/qubership-apihub-json-crawl": "1.0.4",
     "adm-zip": "0.5.10",
