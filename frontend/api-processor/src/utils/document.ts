@@ -77,7 +77,11 @@ export function setDocument(buildResult: BuildResult, document: VersionDocument,
   buildResult.documents.set(document.fileId, document)
   for (const operation of operations) {
     if (buildResult.operations.has(operation.operationId)) {
-      throw new Error(`Duplicated operation with operationId '${operation.operationId}' found`)
+      const existingOperation = buildResult.operations.get(operation.operationId)!
+      throw new Error(
+        `Duplicated operationId '${operation.operationId}' found in different documents: ` +
+        `'${existingOperation.documentId}' and '${operation.documentId}'`,
+      )
     }
     buildResult.operations.set(operation.operationId, operation)
   }

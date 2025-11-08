@@ -65,6 +65,9 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
   if (!paths) { return [] }
 
   const componentsHashMap = new Map<string, string>()
+  // Track operationId duplicates within the document
+  const operationIdMap = new Map<string, Array<{ path: string; method: string }>>()
+
   for (const path of Object.keys(paths)) {
     // Validate path parameters: empty parameter names are not allowed
     if (path.includes('{}')) {
@@ -81,6 +84,19 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
         const methodData = pathData[key as OpenAPIV3.HttpMethods]
         const basePath = extractOperationBasePath(methodData?.servers || pathData?.servers || servers || [])
         const operationId = calculateOperationId(basePath, key, path)
+
+        // Check for duplicates within the document
+        const existingOpoperations = operationIdMap.get(operationId)
+        if (existingOpoperations) {
+          existingOpoperations.push({ path, method: key })
+          const duplicatesInfo = existingOpoperations.map(op => `${op.method.toUpperCase()} ${op.path}`).join(', ')
+          throw new Error(
+            `Duplicated operationId '${operationId}' within document '${document.fileId}'. ` +
+            `Found ${existingOpoperations.length} operations: ${duplicatesInfo}`,
+          )
+        } else {
+          operationIdMap.set(operationId, [{ path, method: key }])
+        }
 
         syncDebugPerformance('[Operation]', (innerDebugCtx) =>
           logLongBuild(() => {
