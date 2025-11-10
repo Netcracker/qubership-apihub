@@ -392,7 +392,7 @@ describe('Operation Bugs', () => {
       files: [
         { fileId: 'duplication-within-doc.json' },
       ],
-    })).rejects.toThrow(/Duplicated operationId 'api-v1-resource-get' within document 'duplication-within-doc.json'/)
+    })).rejects.toThrow(/Duplicated operationIds found within document 'duplication-within-doc.json':/)
   })
 
   test('Should throw error for duplication within document even if second document has same operationId', async () => {
@@ -405,7 +405,35 @@ describe('Operation Bugs', () => {
         { fileId: 'duplication-within-doc.json' },
         { fileId: 'duplication-second-doc.json' },
       ],
-    })).rejects.toThrow(/Duplicated operationId 'api-v1-resource-get' within document 'duplication-within-doc.json'/)
+    })).rejects.toThrow(/Duplicated operationIds found within document 'duplication-within-doc.json':/)
+  })
+
+  test('Should detect all duplicate operationIds within document', async () => {
+    const pkg = LocalRegistry.openPackage('duplicated-operation')
+
+    await expect(pkg.publish(pkg.packageId, {
+      packageId: pkg.packageId,
+      version: 'v1',
+      files: [
+        { fileId: 'duplication-multiple.json' },
+      ],
+    })).rejects.toThrow(
+      /Duplicated operationIds found within document 'duplication-multiple.json':\n- operationId 'api-v1-resource-get': Found 2 operations: GET \/api\/v1\/resource, GET \/api\/v1\/resource\/\n- operationId 'api-v1-user-post': Found 2 operations: POST \/api\/v1\/user, POST \/api\/v1\/user\//,
+    )
+  })
+
+  test('Should detect three or more operations with same operationId', async () => {
+    const pkg = LocalRegistry.openPackage('duplicated-operation')
+
+    await expect(pkg.publish(pkg.packageId, {
+      packageId: pkg.packageId,
+      version: 'v1',
+      files: [
+        { fileId: 'duplication-three-ops.json' },
+      ],
+    })).rejects.toThrow(
+      /Duplicated operationIds found within document 'duplication-three-ops.json':\n- operationId 'api-v1-resource-get': Found 3 operations: GET \/api\/v1\/resource, GET \/api\/v1\/resource\/, GET \/api\/v1\/resource\/\//,
+    )
   })
 
   // TODO: need to decide how to handle this case, this affects how operationIds are calculated
