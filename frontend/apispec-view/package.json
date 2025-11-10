@@ -149,6 +149,6 @@
     "screenshot-test:ci": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:ci",
     "screenshot-test:docker": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:docker",
     "screenshot-test:regenerate-snapshots": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:regenerate-snapshots",
-    "update-lock-file": "update-lock-file @netcracker"
+    "update-lock-file": "update-lock-file @netcracker" 
   }
 }
