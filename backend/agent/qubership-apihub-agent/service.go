@@ -84,8 +84,6 @@ func main() {
 		basePath = "."
 	}
 
-	config := loadAgentConfig()
-
 	var paasCl paasService.PlatformService
 	var err error
 	stubPm := os.Getenv("STUB_PM")
@@ -98,20 +96,25 @@ func main() {
 		}
 	}
 
-	apihubClient := client.NewApihubClient(config.ApihubUrl, config.AccessToken, config.CloudName)
-	agentsBackendClient := client.NewAgentsBackendClient(config.ApihubUrl, config.AccessToken)
+	systemInfoService, err := service.NewSystemInfoService()
+	if err != nil {
+		log.Error("Failed to read system info: " + err.Error())
+		panic("Failed to read system info: " + err.Error())
+	}
+
+	apihubClient := client.NewApihubClient(systemInfoService.GetApihubUrl(), systemInfoService.GetAccessToken(), systemInfoService.GetCloudName())
+	agentsBackendClient := client.NewAgentsBackendClient(systemInfoService.GetApihubUrl(), systemInfoService.GetAccessToken())
 
 	disablingSerivce := service.NewDisablingService()
-	namespaceListCache := service.NewNamespaceListCache(config.CloudName, paasCl)
+	namespaceListCache := service.NewNamespaceListCache(systemInfoService.GetCloudName(), paasCl)
 	serviceListCache := service.NewServiceListCache()
-	documentsDiscoveryService := service.NewDocumentsDiscoveryService(config.DiscoveryTimeout)
-	discoveryService := service.NewDiscoveryService(config.CloudName, config.AgentNamespace, config.ApihubUrl, config.ExcludeLabels, config.GroupingLabels, namespaceListCache, serviceListCache,
+	documentsDiscoveryService := service.NewDocumentsDiscoveryService(systemInfoService.GetDiscoveryTimeout())
+	discoveryService := service.NewDiscoveryService(systemInfoService.GetCloudName(), systemInfoService.GetAgentNamespace(), systemInfoService.GetApihubUrl(), systemInfoService.GetExcludeLabels(), systemInfoService.GetGroupingLabels(), namespaceListCache, serviceListCache,
 		paasCl, documentsDiscoveryService, apihubClient)
-	documentService := service.NewDocumentService(serviceListCache, config.DiscoveryTimeout)
-	systemInfoService, err := service.NewSystemInfoService()
-	regService := service.NewRegistrationService(config.CloudName, config.AgentNamespace, config.AgentUrl,
-		systemInfoService.GetBackendVersion(), config.AgentName, apihubClient, agentsBackendClient, disablingSerivce)
-	listService := service.NewListService(config.CloudName, config.AgentNamespace, config.ExcludeLabels, config.GroupingLabels, paasCl)
+	documentService := service.NewDocumentService(serviceListCache, systemInfoService.GetDiscoveryTimeout())
+	regService := service.NewRegistrationService(systemInfoService.GetCloudName(), systemInfoService.GetAgentNamespace(), systemInfoService.GetAgentUrl(),
+		systemInfoService.GetBackendVersion(), systemInfoService.GetAgentName(), apihubClient, agentsBackendClient, disablingSerivce)
+	listService := service.NewListService(systemInfoService.GetCloudName(), systemInfoService.GetAgentNamespace(), systemInfoService.GetExcludeLabels(), systemInfoService.GetGroupingLabels(), paasCl)
 	cloudService := service.NewCloudService(discoveryService, serviceListCache, namespaceListCache)
 	routesService := service.NewRoutesService(paasCl)
 
@@ -122,11 +125,6 @@ func main() {
 	apiDocsController := controller.NewApiDocsController(basePath)
 	cloudController := controller.NewCloudController(cloudService)
 	routesController := controller.NewRoutesController(routesService)
-
-	if err != nil {
-		log.Error("Failed to read system info: " + err.Error())
-		panic("Failed to read system info: " + err.Error())
-	}
 
 	disablingMiddleware := controller.NewDisabledServicesMiddleware(disablingSerivce)
 	r := mux.NewRouter().SkipClean(true).UseEncodedPath()
