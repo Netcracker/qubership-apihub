@@ -26,7 +26,7 @@ export interface DiffAdd<T = DiffType> extends DiffBase<T> {
    */
   afterDeclarationPaths: JsonPath[]
   afterValue: unknown
-  afterNormalizedValue: unknown
+  [key: symbol]: unknown
 }
 
 export interface DiffRemove<T = DiffType> extends DiffBase<T> {
@@ -36,7 +36,7 @@ export interface DiffRemove<T = DiffType> extends DiffBase<T> {
    */
   beforeDeclarationPaths: JsonPath[]
   beforeValue: unknown
-  beforeNormalizedValue: unknown
+  [key: symbol]: unknown
 }
 
 export interface DiffReplace<T = DiffType> extends DiffBase<T> {
@@ -50,9 +50,8 @@ export interface DiffReplace<T = DiffType> extends DiffBase<T> {
    */
   afterDeclarationPaths: JsonPath[]
   afterValue: unknown
-  afterNormalizedValue: unknown
   beforeValue: unknown
-  beforeNormalizedValue: unknown
+  [key: symbol]: unknown
 }
 
 export interface DiffRename<T = DiffType> extends DiffBase<T> {
@@ -91,6 +90,8 @@ export interface CompareOptions extends Omit<NormalizeOptions, 'source'> {
   beforeSource?: unknown
   afterSource?: unknown
   onCreateDiffError?: (message: string, diff: Diff, ctx: CompareContext) => void
+  beforeValueNormalizedProperty?: symbol
+  afterValueNormalizedProperty?: symbol
 }
 
 export type DiffCallback = (diff: Diff/*, ctx: CompareContext*/) => void
