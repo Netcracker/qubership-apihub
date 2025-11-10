@@ -37,7 +37,13 @@ import {
   DIFFS_AGGREGATED_META_KEY,
   risky,
 } from '@netcracker/qubership-apihub-api-diff'
-import { MESSAGE_SEVERITY, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
+import {
+  AFTER_VALUE_NORMALIZED_PROPERTY,
+  BEFORE_VALUE_NORMALIZED_PROPERTY,
+  MESSAGE_SEVERITY,
+  NORMALIZE_OPTIONS,
+  ORIGINS_SYMBOL,
+} from '../../consts'
 import {
   BREAKING_CHANGE_TYPE,
   CompareOperationsPairContext,
@@ -127,6 +133,8 @@ export const compareDocuments = async (
       metaKey: DIFF_META_KEY,
       originsFlag: ORIGINS_SYMBOL,
       normalizedResult: true,
+      afterValueNormalizedProperty: AFTER_VALUE_NORMALIZED_PROPERTY,
+      beforeValueNormalizedProperty: BEFORE_VALUE_NORMALIZED_PROPERTY,
     },
   ) as { merged: OpenAPIV3.Document; diffs: Diff[] }
 
@@ -232,16 +240,17 @@ async function reclassifyBreakingChanges(
       continue
     }
 
-    if (!isObject(diff.beforeNormalizedValue)) {
+    const beforeValueNormalized = (diff as Record<symbol, unknown>)[BEFORE_VALUE_NORMALIZED_PROPERTY]
+    if (!isObject(beforeValueNormalized)) {
       ctx.notifications.push({
         severity: MESSAGE_SEVERITY.Error,
         message: '[Risky validation] Something wrong with beforeNormalizedValue from diff',
       })
       continue
     }
-    if (!diff.beforeNormalizedValue[JSON_SCHEMA_PROPERTY_DEPRECATED]) { continue }
+    if (!beforeValueNormalized[JSON_SCHEMA_PROPERTY_DEPRECATED]) { continue }
 
-    if (!areDeprecatedOriginsNotEmpty(diff.beforeNormalizedValue)) {
+    if (!areDeprecatedOriginsNotEmpty(beforeValueNormalized)) {
       ctx.notifications.push({
         severity: MESSAGE_SEVERITY.Error,
         message: '[Risky validation] Something wrong with origins',
@@ -249,7 +258,7 @@ async function reclassifyBreakingChanges(
       continue
     }
 
-    const beforeHash = calculateObjectHash(diff.beforeNormalizedValue)
+    const beforeHash = calculateObjectHash(beforeValueNormalized)
 
     const deprecatedItems = previousOperation?.deprecatedItems ?? []
     let deprecatedItem
@@ -259,7 +268,7 @@ async function reclassifyBreakingChanges(
       if (beforeHash !== item.hash) { continue }
       if (areDeclarationPathsEqual(
         item.declarationJsonPaths,
-        resolveOrigins(diff.beforeNormalizedValue, JSON_SCHEMA_PROPERTY_DEPRECATED, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? [],
+        resolveOrigins(beforeValueNormalized, JSON_SCHEMA_PROPERTY_DEPRECATED, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? [],
       )) {
         deprecatedItem = item
         break

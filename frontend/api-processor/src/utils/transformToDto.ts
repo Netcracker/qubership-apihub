@@ -17,6 +17,7 @@
 import { Diff, DiffAction, DiffType, risky } from '@netcracker/qubership-apihub-api-diff'
 import { calculateObjectHash } from './hashes'
 import { ArrayType, isEmpty } from './arrays'
+import { AFTER_VALUE_NORMALIZED_PROPERTY, BEFORE_VALUE_NORMALIZED_PROPERTY } from '../consts'
 import {
   ChangeMessage,
   ChangeSummary,
@@ -52,10 +53,10 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
     case DiffAction.add: {
       const {
         afterDeclarationPaths,
-        afterNormalizedValue,
       } = newDiff
-      if (afterNormalizedValue === undefined) {
-        logError('Add diff has undefined afterNormalizedValue')
+      const afterValueNormalized = (newDiff as Record<symbol, unknown>)[AFTER_VALUE_NORMALIZED_PROPERTY]
+      if (afterValueNormalized === undefined) {
+        logError('Add diff has undefined afterValueNormalized')
       }
       if (isEmpty(afterDeclarationPaths)) {
         logError('Add diff has empty afterDeclarationPaths')
@@ -64,16 +65,16 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
         ...commonChangeProps,
         action,
         currentDeclarationJsonPaths: afterDeclarationPaths,
-        currentValueHash: afterNormalizedValue !== undefined ? calculateObjectHash(afterNormalizedValue) : '',
+        currentValueHash: afterValueNormalized !== undefined ? calculateObjectHash(afterValueNormalized) : '',
       }
     }
     case DiffAction.remove: {
       const {
         beforeDeclarationPaths,
-        beforeNormalizedValue,
       } = newDiff
-      if (beforeNormalizedValue === undefined) {
-        logError('Remove diff has undefined beforeNormalizedValue')
+      const beforeValueNormalized = (newDiff as Record<symbol, unknown>)[BEFORE_VALUE_NORMALIZED_PROPERTY]
+      if (beforeValueNormalized === undefined) {
+        logError('Remove diff has undefined beforeValueNormalized')
       }
       if (isEmpty(beforeDeclarationPaths)) {
         logError('Remove diff has empty beforeDeclarationPaths')
@@ -82,18 +83,18 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
         ...commonChangeProps,
         action,
         previousDeclarationJsonPaths: beforeDeclarationPaths,
-        previousValueHash: beforeNormalizedValue !== undefined ? calculateObjectHash(beforeNormalizedValue) : '',
+        previousValueHash: beforeValueNormalized !== undefined ? calculateObjectHash(beforeValueNormalized) : '',
       }
     }
     case DiffAction.replace: {
       const {
         beforeDeclarationPaths,
         afterDeclarationPaths,
-        beforeNormalizedValue,
-        afterNormalizedValue,
       } = newDiff
-      if (afterNormalizedValue === undefined && beforeNormalizedValue === undefined) {
-        logError('Replace diff has undefined beforeNormalizedValue and afterNormalizedValue')
+      const beforeValueNormalized = (newDiff as Record<symbol, unknown>)[BEFORE_VALUE_NORMALIZED_PROPERTY]
+      const afterValueNormalized = (newDiff as Record<symbol, unknown>)[AFTER_VALUE_NORMALIZED_PROPERTY]
+      if (afterValueNormalized === undefined && beforeValueNormalized === undefined) {
+        logError('Replace diff has undefined beforeValueNormalized and afterValueNormalized')
       }
       if (isEmpty(afterDeclarationPaths) && isEmpty(beforeDeclarationPaths)) {
         logError('Replace diff has empty afterDeclarationPaths and beforeDeclarationPaths')
@@ -103,8 +104,8 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
         action,
         currentDeclarationJsonPaths: afterDeclarationPaths,
         previousDeclarationJsonPaths: beforeDeclarationPaths,
-        currentValueHash: afterNormalizedValue !== undefined ? calculateObjectHash(afterNormalizedValue) : '',
-        previousValueHash: beforeNormalizedValue !== undefined ? calculateObjectHash(beforeNormalizedValue) : '',
+        currentValueHash: afterValueNormalized !== undefined ? calculateObjectHash(afterValueNormalized) : '',
+        previousValueHash: beforeValueNormalized !== undefined ? calculateObjectHash(beforeValueNormalized) : '',
       }
     }
     case DiffAction.rename: {
