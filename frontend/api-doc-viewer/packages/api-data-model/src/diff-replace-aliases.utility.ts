@@ -41,7 +41,6 @@ export function applyDiffReplaceAlias(
           description: diff.description,
           scope: diff.scope,
           afterValue: diff.afterValue,
-          afterNormalizedValue: diff.afterNormalizedValue,
           afterDeclarationPaths: diff.afterDeclarationPaths,
         }
       case DiffAction.remove:
@@ -51,7 +50,6 @@ export function applyDiffReplaceAlias(
           description: diff.description,
           scope: diff.scope,
           beforeValue: diff.beforeValue,
-          beforeNormalizedValue: diff.beforeNormalizedValue,
           beforeDeclarationPaths: diff.beforeDeclarationPaths,
         }
     }

@@ -192,7 +192,6 @@ export function inverDiffAction(diff?: Diff): Diff | undefined {
       // inverted part
       action: DiffAction.remove,
       beforeValue: diff.afterValue,
-      beforeNormalizedValue: diff.afterNormalizedValue,
       beforeDeclarationPaths: diff.afterDeclarationPaths,
     }
     return newDiff
@@ -205,7 +204,6 @@ export function inverDiffAction(diff?: Diff): Diff | undefined {
       // inverted part
       action: DiffAction.add,
       afterValue: diff.beforeValue,
-      afterNormalizedValue: diff.beforeNormalizedValue,
       afterDeclarationPaths: diff.beforeDeclarationPaths,
     }
     return newDiff

@@ -17,7 +17,6 @@ describe('diff replace aliases', () => {
       type: breaking,
       action: DiffAction.add,
       afterValue: 0,
-      afterNormalizedValue: 0,
       afterDeclarationPaths: [],
       scope: '',
     }
@@ -30,7 +29,6 @@ describe('diff replace aliases', () => {
       type: breaking,
       action: DiffAction.remove,
       beforeValue: 0,
-      beforeNormalizedValue: 0,
       beforeDeclarationPaths: [],
       scope: '',
     }
@@ -57,20 +55,16 @@ describe('diff replace aliases', () => {
       type: breaking,
       action: DiffAction.replace,
       beforeValue: 'blabla',
-      beforeNormalizedValue: 'blabla',
       beforeDeclarationPaths: [],
       afterValue: 1234,
-      afterNormalizedValue: 1234,
       afterDeclarationPaths: [],
       scope: '',
     }
     const actual = applyDiffReplaceAlias(TEST_DIFF_REPLACE_ALIAS, diff)
     expect(actual).toHaveProperty('action', DiffAction.add)
     expect(actual).toHaveProperty('afterValue', 1234)
-    expect(actual).toHaveProperty('afterNormalizedValue', 1234)
     expect(actual).toHaveProperty('afterDeclarationPaths', [])
     expect(actual).not.toHaveProperty('beforeValue')
-    expect(actual).not.toHaveProperty('beforeNormalizedValue')
     expect(actual).not.toHaveProperty('beforeDeclarationPaths')
   })
 
@@ -79,20 +73,16 @@ describe('diff replace aliases', () => {
       type: breaking,
       action: DiffAction.replace,
       afterValue: true,
-      afterNormalizedValue: true,
       afterDeclarationPaths: [],
       beforeValue: 7777,
-      beforeNormalizedValue: 7777,
       beforeDeclarationPaths: [],
       scope: '',
     }
     const actual = applyDiffReplaceAlias(TEST_DIFF_REPLACE_ALIAS, diff)
     expect(actual).toHaveProperty('action', DiffAction.remove)
     expect(actual).toHaveProperty('beforeValue', 7777)
-    expect(actual).toHaveProperty('beforeNormalizedValue', 7777)
     expect(actual).toHaveProperty('beforeDeclarationPaths', [])
     expect(actual).not.toHaveProperty('afterValue')
-    expect(actual).not.toHaveProperty('afterNormalizedValue')
     expect(actual).not.toHaveProperty('afterDeclarationPaths')
   })
 
@@ -101,10 +91,8 @@ describe('diff replace aliases', () => {
       type: breaking,
       action: DiffAction.replace,
       beforeValue: 'abcd',
-      beforeNormalizedValue: 'abcd',
       beforeDeclarationPaths: [],
       afterValue: 1234,
-      afterNormalizedValue: 1234,
       afterDeclarationPaths: [],
       scope: '',
     }
@@ -117,10 +105,8 @@ describe('diff replace aliases', () => {
       type: breaking,
       action: DiffAction.replace,
       afterValue: true,
-      afterNormalizedValue: true,
       afterDeclarationPaths: [],
       beforeValue: 8888,
-      beforeNormalizedValue: 8888,
       beforeDeclarationPaths: [],
       scope: '',
     }

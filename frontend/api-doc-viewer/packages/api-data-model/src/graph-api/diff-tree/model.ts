@@ -419,14 +419,12 @@ export class GraphApiModelDiffTree<
         return {
           ...change,
           afterValue: (change.afterValue as GraphApiDirective)?.meta?.reason,
-          afterNormalizedValue: (change.afterValue as GraphApiDirective)?.meta?.reason,
         } as DiffAdd
       }
       if (isDiffRemove(change)) {
         return {
           ...change,
           beforeValue: (change.beforeValue as GraphApiDirective)?.meta?.reason,
-          beforeNormalizedValue: (change.beforeValue as GraphApiDirective)?.meta?.reason,
         } as DiffRemove
       }
     }
@@ -499,7 +497,6 @@ export class GraphApiModelDiffTree<
             action: DiffAction.remove,
             beforeValue: enumValue,
             afterValue: undefined,
-            afterNormalizedValue: undefined,
             afterDeclarationPaths: undefined,
           } as DiffRemove
         })
@@ -511,7 +508,6 @@ export class GraphApiModelDiffTree<
             action: DiffAction.add,
             afterValue: enumValue,
             beforeValue: undefined,
-            beforeNormalizedValue: undefined,
             beforeDeclarationPaths: undefined,
           } as DiffAdd
         })
