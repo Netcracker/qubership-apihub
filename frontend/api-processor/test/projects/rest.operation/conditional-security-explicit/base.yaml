@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: Conditional Security Test
+  version: 1.0.0
+security:
+  - bearerAuth: []
+paths:
+  /test:
+    get:
+      summary: Test operation with explicit security
+      security:
+        - apiKey: []
+      responses:
+        '200':
+          description: OK
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key

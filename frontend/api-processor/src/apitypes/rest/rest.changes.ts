@@ -65,10 +65,13 @@ import { calculateObjectHash } from '../../utils/hashes'
 import { REST_API_TYPE } from './rest.consts'
 import { OpenAPIV3 } from 'openapi-types'
 import {
+  extractOperationSecurityDiffs,
   extractOpenapiVersionDiff,
   extractPathParamRenameDiff,
   extractRootSecurityDiffs,
   extractRootServersDiffs,
+  extractSecuritySchemesDiffs,
+  extractSecuritySchemesNames,
   validateGroupPrefix,
 } from './rest.utils'
 import { createOperationChange, getOperationTags, OperationsMap } from '../../components'
@@ -175,13 +178,18 @@ export const compareDocuments = async (
 
       let operationDiffs: Diff[] = []
       if (operationPotentiallyChanged) {
+        const operationSecurityDiffs = extractOperationSecurityDiffs(methodData as OpenAPIV3.OperationObject)
+        const shouldTakeRootSecurityDiffs = operationSecurityDiffs.length === 0 && !methodData?.security
+        const relevantSecuritySchemesNames = shouldTakeRootSecurityDiffs ? extractSecuritySchemesNames(merged.security ?? []) : extractSecuritySchemesNames(methodData?.security ?? [])
         operationDiffs = [
           ...(methodData as WithAggregatedDiffs<OpenAPIV3.OperationObject>)[DIFFS_AGGREGATED_META_KEY] ?? [],
           ...extractOpenapiVersionDiff(merged),
           ...extractRootServersDiffs(merged),
-          ...extractRootSecurityDiffs(merged),
+          ...shouldTakeRootSecurityDiffs ? extractRootSecurityDiffs(merged) : [],
+          ...extractSecuritySchemesDiffs(merged.components, relevantSecuritySchemesNames),
           ...extractPathParamRenameDiff(merged, path),
           // parameters, servers, summary, description and extensionKeys are moved from path to method in pathItemsUnification during normalization in apiDiff, so no need to aggregate them here
+          // note that operation security diffs are not aggregated here, because they are in aggregated diffs for operation object
         ]
       }
       if (operationAddedOrRemoved) {
