@@ -1,6 +1,6 @@
 versions_cleanup_run
-user_integration
 user_avatar_data
+unreferenced_data_cleanup_run
 system_role
 stored_schema_migration
 soft_deleted_data_cleanup_run
@@ -14,6 +14,7 @@ migration_run
 migration_changes
 migrated_version_changes
 locks
+fts_latest_release_operation_data
 export_result
 endpoint_calls
 csv_dashboard_publication
@@ -21,8 +22,6 @@ comparisons_cleanup_run
 business_metric
 build_cleanup_run
 apihub_api_keys
-agent_config
-agent
 activity_tracking_transition
 published_version_revision_content
 grouped_operation
@@ -30,7 +29,6 @@ published_sources
 published_version_validation
 published_version_reference
 package_service
-favorite_projects
 favorite_packages
 build_depends
 ts_rest_operation_data
@@ -45,14 +43,11 @@ package_member_role
 package_export_config
 operation_open_count
 operation_comparison
-migrated_version
+fts_operation_data
 external_identity
-drafted_branches
 builder_notifications
 build_src
 build_result
-branch_draft_reference
-branch_draft_content
 activity_tracking
 operation_group
 published_data
@@ -63,5 +58,4 @@ package_group
 version_comparison
 published_sources_archives
 user_data
-project
 operation_data

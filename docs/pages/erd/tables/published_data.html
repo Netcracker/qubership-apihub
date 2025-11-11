@@ -118,9 +118,9 @@
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                             <tr>
-                                                <td title="published_version_revision_content.[checksum, package_id] references published_data.[checksum, package_id] via FK_published_data"><a href='published_version_revision_content.html'>published_version_revision_content</a><span class='relatedKey'>.package_id</span></td>
-                                                <td class="constraint detail">FK_published_data</td>
-                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                                <td title="published_version_revision_content.[checksum, package_id] references published_data.[checksum, package_id] via published_version_revision_content_published_data_fk"><a href='published_version_revision_content.html'>published_version_revision_content</a><span class='relatedKey'>.package_id</span></td>
+                                                <td class="constraint detail">published_version_revision_content_published_data_fk</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
                                             </tr>
                                         </table>
                                     </td>
@@ -145,9 +145,9 @@
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                             <tr>
-                                                <td title="published_version_revision_content.[checksum, package_id] references published_data.[checksum, package_id] via FK_published_data"><a href='published_version_revision_content.html'>published_version_revision_content</a><span class='relatedKey'>.checksum</span></td>
-                                                <td class="constraint detail">FK_published_data</td>
-                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                                <td title="published_version_revision_content.[checksum, package_id] references published_data.[checksum, package_id] via published_version_revision_content_published_data_fk"><a href='published_version_revision_content.html'>published_version_revision_content</a><span class='relatedKey'>.checksum</span></td>
+                                                <td class="constraint detail">published_version_revision_content_published_data_fk</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
                                             </tr>
                                         </table>
                                     </td>
