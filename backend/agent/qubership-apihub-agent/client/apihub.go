@@ -74,7 +74,7 @@ func checkUnauthorized(resp *resty.Response) error {
 
 func (a apihubClientImpl) GetVersions(ctx secctx.SecurityContext, id string, page, limit int) (*view.PublishedVersionsView, error) {
 	req := a.makeRequest(ctx)
-	resp, err := req.Get(fmt.Sprintf("%s/api/v2/packages/%s/versions?page=%d&limit=%d", a.apihubUrl, url.PathEscape(id), page, limit))
+	resp, err := req.Get(fmt.Sprintf("%s/api/v3/packages/%s/versions?page=%d&limit=%d", a.apihubUrl, url.PathEscape(id), page, limit))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get versions for %s: %s", id, err.Error())
 	}
