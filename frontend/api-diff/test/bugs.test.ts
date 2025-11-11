@@ -39,6 +39,8 @@ import spearedParamsAfter from './helper/resources/speared-parameters/after.json
 import wildcardContentSchemaMediaTypeCombinedWithSpecificMediaTypeBefore from './helper/resources/wildcard-content-schema-media-type-combined-with-specific-media-type/before.json'
 import wildcardContentSchemaMediaTypeCombinedWithSpecificMediaTypeAfter from './helper/resources/wildcard-content-schema-media-type-combined-with-specific-media-type/after.json'
 
+import parameterReuseOnPathItemAndOperationLevel from './helper/resources/parameter-reuse-on-path-item-and-operation-level/specification.json'
+
 import shouldNotMissRemoveDiffForEnumEntryInOneOfBefore from './helper/resources/should-not-miss-remove-diff-for-enum-entry-in-oneOf/before.json'
 import shouldNotMissRemoveDiffForEnumEntryInOneOfAfter from './helper/resources/should-not-miss-remove-diff-for-enum-entry-in-oneOf/after.json'
 
@@ -246,6 +248,13 @@ describe('Real Data', () => {
     ]))
   })
 
+  // TODO: fix
+  it.skip('should not detect any changes - parameter reuse on path item and operation level', () => {
+    const before: any = parameterReuseOnPathItemAndOperationLevel
+    const after: any = parameterReuseOnPathItemAndOperationLevel
+    const { diffs } = apiDiff(before, after, OPTIONS)
+    expect(diffs).toBeEmpty()
+  })
   it('should not miss remove diff for enum entry in oneOf', () => {
     const before: any = shouldNotMissRemoveDiffForEnumEntryInOneOfBefore
     const after: any = shouldNotMissRemoveDiffForEnumEntryInOneOfAfter

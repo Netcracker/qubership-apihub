@@ -41,30 +41,29 @@ const resolveParamCalculator = (ctx: CompareContext | undefined): DiffTemplatePa
   return resolveParamCalculator(ctx.parentContext)
 }
 
-export const calculateDefaultDiffDescription = (diff: Diff) => {
-  let declarationPaths: JsonPath[]
+export const getDeclarationPathsForDiff = (diff: Diff): JsonPath[] => {
   switch (diff.action) {
     case DiffAction.add:
-      declarationPaths = [...diff.afterDeclarationPaths]
-      break
+      return [...diff.afterDeclarationPaths]
     case DiffAction.remove:
-      declarationPaths = [...diff.beforeDeclarationPaths]
-      break
+      return [...diff.beforeDeclarationPaths]
     case DiffAction.replace:
       if (diff.afterDeclarationPaths) {
-        declarationPaths = [...diff.afterDeclarationPaths]
+        return [...diff.afterDeclarationPaths]
       } else {
-        declarationPaths = [...diff.beforeDeclarationPaths]
+        return [...diff.beforeDeclarationPaths]
       }
-      break
     case DiffAction.rename:
       if (diff.afterDeclarationPaths) {
-        declarationPaths = [...diff.afterDeclarationPaths]
+        return [...diff.afterDeclarationPaths]
       } else {
-        declarationPaths = [...diff.beforeDeclarationPaths]
+        return [...diff.beforeDeclarationPaths]
       }
-      break
   }
+}
+
+export const calculateDefaultDiffDescription = (diff: Diff) => {
+  const declarationPaths = getDeclarationPathsForDiff(diff)
   const paths = declarationPaths.map(path => `'${path.join('.')}'`).join(', ')
   if (diff.scope) {
     return `[${DIFF_ACTION_TO_ACTION_MAP[diff.action]}] ${paths} in ${diff.scope}`

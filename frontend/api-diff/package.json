@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@netcracker/qubership-apihub-api-unifier": "dev",
-    "@netcracker/qubership-apihub-json-crawl": "1.0.4",
+    "@netcracker/qubership-apihub-json-crawl": "dev",
     "fast-equals": "4.0.3"
   },
   "devDependencies": {
