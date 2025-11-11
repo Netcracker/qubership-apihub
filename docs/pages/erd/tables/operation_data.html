@@ -118,6 +118,11 @@
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                             <tr>
+                                                <td title="fts_operation_data.data_hash references operation_data.data_hash via fts_operation_data_operation_data_hash_fk"><a href='fts_operation_data.html'>fts_operation_data</a><span class='relatedKey'>.data_hash</span></td>
+                                                <td class="constraint detail">fts_operation_data_operation_data_hash_fk</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
                                                 <td title="operation.data_hash references operation_data.data_hash via FK_operation_data"><a href='operation.html'>operation</a><span class='relatedKey'>.data_hash</span></td>
                                                 <td class="constraint detail">FK_operation_data</td>
                                                 <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
@@ -125,17 +130,17 @@
                                             <tr>
                                                 <td title="ts_graphql_operation_data.data_hash references operation_data.data_hash via ts_graphql_operation_data_operation_data_hash_fk"><a href='ts_graphql_operation_data.html'>ts_graphql_operation_data</a><span class='relatedKey'>.data_hash</span></td>
                                                 <td class="constraint detail">ts_graphql_operation_data_operation_data_hash_fk</td>
-                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
                                             </tr>
                                             <tr>
                                                 <td title="ts_operation_data.data_hash references operation_data.data_hash via ts_operation_data_operation_data_hash_fk"><a href='ts_operation_data.html'>ts_operation_data</a><span class='relatedKey'>.data_hash</span></td>
                                                 <td class="constraint detail">ts_operation_data_operation_data_hash_fk</td>
-                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
                                             </tr>
                                             <tr>
-                                                <td title="ts_rest_operation_data.data_hash references operation_data.data_hash via FK_operation_data"><a href='ts_rest_operation_data.html'>ts_rest_operation_data</a><span class='relatedKey'>.data_hash</span></td>
-                                                <td class="constraint detail">FK_operation_data</td>
-                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                                <td title="ts_rest_operation_data.data_hash references operation_data.data_hash via ts_rest_operation_data_operation_data_hash_fk"><a href='ts_rest_operation_data.html'>ts_rest_operation_data</a><span class='relatedKey'>.data_hash</span></td>
+                                                <td class="constraint detail">ts_rest_operation_data_operation_data_hash_fk</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
                                             </tr>
                                         </table>
                                     </td>
