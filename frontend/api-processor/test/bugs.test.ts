@@ -17,7 +17,7 @@
 import { API_AUDIENCE_INTERNAL, API_KIND } from '../src'
 import { Editor, LocalRegistry } from './helpers'
 
-import { describe, test, expect } from '@jest/globals'
+import { describe, expect, test } from '@jest/globals'
 
 const bugsPackage = LocalRegistry.openPackage('bugs')
 const swaggerPackage = LocalRegistry.openPackage('basic_swagger')
@@ -95,8 +95,7 @@ describe('Operation Bugs', () => {
       files: [{
         fileId: 'petstore(publish_1).yaml',
         publish: true,
-      },
-      ],
+      }],
     })
 
     const result = await editor.run({
@@ -123,8 +122,7 @@ describe('Operation Bugs', () => {
       files: [{
         fileId: 'search-scope-v1.yaml',
         publish: true,
-      },
-      ],
+      }],
     })
 
     const result = await editor.run({
@@ -372,7 +370,7 @@ describe('Operation Bugs', () => {
     })).rejects.toThrow('Invalid path \'/res/data/{}\': path parameter name could not be empty')
   })
 
-  test('Should throw error if duplicated operation is found', async () => {
+  test('Should throw error if duplicated operation is found in different documents', async () => {
     const pkg = LocalRegistry.openPackage('duplicated-operation')
 
     await expect(pkg.publish(pkg.packageId, {
@@ -382,10 +380,63 @@ describe('Operation Bugs', () => {
         { fileId: 'spec1.json' },
         { fileId: 'spec2.json' },
       ],
-    })).rejects.toThrow('Duplicated operation with operationId \'res-data-post\' found')
+    })).rejects.toThrow('Duplicated operationId \'res-data-post\' found in different documents: \'spec1\' and \'spec2\'')
   })
 
-  //TODO: need to decide how to handle this case, this affects how operationIds are calculated
+  test('Should throw error if duplicated operation is found within document', async () => {
+    const pkg = LocalRegistry.openPackage('duplicated-operation')
+
+    await expect(pkg.publish(pkg.packageId, {
+      packageId: pkg.packageId,
+      version: 'v1',
+      files: [
+        { fileId: 'duplication-within-doc.json' },
+      ],
+    })).rejects.toThrow(/Duplicated operationIds found within document 'duplication-within-doc.json':/)
+  })
+
+  test('Should throw error for duplication within document even if second document has same operationId', async () => {
+    const pkg = LocalRegistry.openPackage('duplicated-operation')
+
+    await expect(pkg.publish(pkg.packageId, {
+      packageId: pkg.packageId,
+      version: 'v1',
+      files: [
+        { fileId: 'duplication-within-doc.json' },
+        { fileId: 'duplication-second-doc.json' },
+      ],
+    })).rejects.toThrow(/Duplicated operationIds found within document 'duplication-within-doc.json':/)
+  })
+
+  test('Should detect all duplicate operationIds within document', async () => {
+    const pkg = LocalRegistry.openPackage('duplicated-operation')
+
+    await expect(pkg.publish(pkg.packageId, {
+      packageId: pkg.packageId,
+      version: 'v1',
+      files: [
+        { fileId: 'duplication-multiple.json' },
+      ],
+    })).rejects.toThrow(
+      /Duplicated operationIds found within document 'duplication-multiple.json':\n- operationId 'api-v1-resource-get': Found 2 operations: GET \/api\/v1\/resource, GET \/api\/v1\/resource\/\n- operationId 'api-v1-user-post': Found 2 operations: POST \/api\/v1\/user, POST \/api\/v1\/user\//,
+    )
+  })
+
+  test('Should detect three or more operations with same operationId', async () => {
+    const pkg = LocalRegistry.openPackage('duplicated-operation')
+
+    await expect(pkg.publish(pkg.packageId, {
+      packageId: pkg.packageId,
+      version: 'v1',
+      files: [
+        { fileId: 'duplication-three-ops.json' },
+      ],
+    })).rejects.toThrow(
+      /Duplicated operationIds found within document 'duplication-three-ops.json':\n- operationId 'api-v1-resource-get': Found 3 operations: GET \/api\/v1\/resource, GET \/api\/v1\/resource\/, GET \/api\/v1\/resource\/\//,
+    )
+  })
+
+  // TODO: need to decide how to handle this case, this affects how operationIds are calculated
   test.skip('Should build operations if there is a path parameter path collision', async () => {
     const pkg = LocalRegistry.openPackage('path-parameter-path-collision')
 

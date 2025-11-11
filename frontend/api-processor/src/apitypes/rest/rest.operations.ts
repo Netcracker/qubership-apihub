@@ -23,12 +23,16 @@ import {
   createBundlingErrorHandler, denormalizeOas, serializeOas,
   removeComponents,
 } from '../../utils'
+import { isNotEmpty } from '../../utils'
 import type * as TYPE from './rest.types'
 import { HASH_FLAG, INLINE_REFS_FLAG, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
 import { asyncFunction } from '../../utils/async'
 import { logLongBuild, syncDebugPerformance } from '../../utils/logs'
 import { normalize, RefErrorType } from '@netcracker/qubership-apihub-api-unifier'
 import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
+
+type OperationInfo = { path: string; method: string }
+type DuplicateEntry = { operationId: string; operations: OperationInfo[] }
 
 export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async (document, ctx, debugCtx) => {
   const documentWithoutComponents = removeComponents(document.data)
@@ -65,6 +69,8 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
   if (!paths) { return [] }
 
   const componentsHashMap = new Map<string, string>()
+  const operationIdMap = new Map<string, OperationInfo[]>()
+
   for (const path of Object.keys(paths)) {
     // Validate path parameters: empty parameter names are not allowed
     if (path.includes('{}')) {
@@ -81,6 +87,10 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
         const methodData = pathData[key as OpenAPIV3.HttpMethods]
         const basePath = extractOperationBasePath(methodData?.servers || pathData?.servers || servers || [])
         const operationId = calculateOperationId(basePath, key, path)
+
+        const trackedOperations = operationIdMap.get(operationId) ?? []
+        trackedOperations.push({ path, method: key })
+        operationIdMap.set(operationId, trackedOperations)
 
         syncDebugPerformance('[Operation]', (innerDebugCtx) =>
           logLongBuild(() => {
@@ -106,10 +116,33 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
 
   }
 
+  const duplicates = findDuplicates(operationIdMap)
+  if (isNotEmpty(duplicates)) {
+    throw createDuplicatesError(document.fileId, duplicates)
+  }
+
   // no need Serialize document without operations
   if(operations.length){
     document.internalDocument = serializeOas(denormalizeOas(effectiveDocument))
   }
 
   return operations
+}
+
+function findDuplicates(operationIdMap: Map<string, OperationInfo[]>): DuplicateEntry[] {
+  return Array.from(operationIdMap.entries())
+    .filter(([, operations]) => operations.length > 1)
+    .map(([operationId, operations]) => ({ operationId, operations }))
+}
+
+function createDuplicatesError(fileId: string, duplicates: DuplicateEntry[]): Error {
+  const duplicatesList = duplicates
+    .map(({ operationId, operations }) => {
+      const operationsList = operations
+        .map((operation: OperationInfo) => `${operation.method.toUpperCase()} ${operation.path}`)
+        .join(', ')
+      return `- operationId '${operationId}': Found ${operations.length} operations: ${operationsList}`
+    })
+    .join('\n')
+  return new Error(`Duplicated operationIds found within document '${fileId}':\n${duplicatesList}`)
 }

@@ -149,6 +149,8 @@ export const SYNTHETIC_TITLE_FLAG = Symbol('synthetic-title')
 export const ORIGINS_SYMBOL = Symbol('origins')
 export const HASH_FLAG = Symbol('hash')
 export const INLINE_REFS_FLAG = Symbol('inline-refs')
+export const AFTER_VALUE_NORMALIZED_PROPERTY = Symbol('after-value-normalized')
+export const BEFORE_VALUE_NORMALIZED_PROPERTY = Symbol('before-value-normalized')
 
 export const symbolToStringMapping = new Map([
   [SYNTHETIC_TITLE_FLAG, 'SYNTHETIC_TITLE_FLAG'],
