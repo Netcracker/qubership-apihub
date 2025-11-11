@@ -158,9 +158,8 @@ const createVersionInternalDocumentsFile = (zip: ZipTool, documents: VersionDocu
 }
 
 const createComparisonInternalDocumentDataFiles = async (zip: ZipTool, comparisonInternalDocuments: ComparisonInternalDocuments): Promise<void> => {
-  const documentsDir = zip.folder(PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME)
   for (const [key, value] of comparisonInternalDocuments) {
-    await documentsDir.file(`${key}.${FILE_FORMAT_JSON}`, value)
+    await zip.file(`${key}.${FILE_FORMAT_JSON}`, value)
   }
 }
 
