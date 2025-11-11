@@ -63,7 +63,7 @@ import {
   ZippableDocument,
 } from '../../../src'
 import {
-  getOperationsFileContent,
+  getOperationsFileContent, saveComparisonInternalDocuments, saveComparisonInternalDocumentsArray,
   saveComparisonsArray,
   saveDocumentsArray,
   saveEachComparison,
@@ -482,6 +482,9 @@ export class LocalRegistry implements IRegistry {
     await saveEachComparison(comparisonsDto, basePath)
     await saveNotifications(notifications, basePath)
     await saveVersionInternalDocuments(documents, basePath)
+
+    await saveComparisonInternalDocumentsArray(comparisonsDto, basePath)
+    await saveComparisonInternalDocuments(comparisonsDto, basePath)
   }
 
   async updateOperationsHash(packageId: string, publishParams?: Partial<BuildConfig>): Promise<void> {

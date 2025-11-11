@@ -42,6 +42,8 @@ import { IRegistry } from './types'
 import AdmZip from 'adm-zip'
 import fs from 'fs/promises'
 import {
+  saveComparisonInternalDocuments,
+  saveComparisonInternalDocumentsArray,
   saveComparisonsArray,
   saveDocumentsArray,
   saveEachComparison,
@@ -121,6 +123,7 @@ export class ApihubRegistry implements IRegistry {
 
     await saveDocumentsArray(documents, basePath)
     await saveVersionInternalDocumentsArray(documents, basePath)
+
     await saveEachDocument(documents, basePath, builderContext)
 
     await saveOperationsArray(operations, basePath)
@@ -130,6 +133,8 @@ export class ApihubRegistry implements IRegistry {
     await saveEachComparison(comparisonsDto, basePath)
     await saveNotifications(notifications, basePath)
     await saveVersionInternalDocuments(documents, basePath)
+    await saveComparisonInternalDocuments(comparisonsDto, basePath)
+    await saveComparisonInternalDocumentsArray(comparisonsDto, basePath)
   }
 
   get versionResolvers(): BuilderResolvers {

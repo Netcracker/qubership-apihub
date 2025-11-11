@@ -22,6 +22,7 @@ import {
   BuilderContext,
   BuildResult,
   BuildResultDto,
+  ComparisonInternalDocuments,
   ExportDocument,
   PackageComparison,
   PackageComparisonOperations,
@@ -35,7 +36,7 @@ import {
   ZippableDocument,
 } from '../types'
 import { unknownApiBuilder } from '../apitypes'
-import { BUILD_TYPE, MESSAGE_SEVERITY, PACKAGE } from '../consts'
+import { BUILD_TYPE, FILE_FORMAT_JSON, MESSAGE_SEVERITY, PACKAGE } from '../consts'
 import { EXPORT_FORMAT_TO_FILE_FORMAT, takeIf, toPackageDocument } from '../utils'
 import { toVersionsComparisonDto } from '../utils/transformToDto'
 
@@ -92,12 +93,21 @@ export const createVersionPackage = async (
 
   if (buildResultDto.comparisons.length) {
     const comparisons: PackageComparison[] = buildResultDto.comparisons.map(({ data, ...rest }) => rest)
+
     createComparisonsFile(zip, { comparisons })
+    createComparisonInternalDocumentsFile(zip, comparisons)
+
     const comparisonsDir = zip.folder(PACKAGE.COMPARISONS_DIR_NAME)
+    const comparisonsInternalDocDir = zip.folder(PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME)
 
     for (const comparison of buildResultDto.comparisons) {
       if (!comparison.comparisonFileId || !comparison.data) { continue }
+
       createComparisonDataFile(comparisonsDir!, comparison.comparisonFileId, { operations: comparison.data })
+
+      if (comparison.comparisonInternalDocuments) {
+        await createComparisonInternalDocumentDataFiles(comparisonsInternalDocDir!, comparison.comparisonInternalDocuments)
+      }
     }
   }
   createNotificationsFile(zip, { notifications: buildResultDto.notifications })
@@ -147,6 +157,37 @@ const createVersionInternalDocumentsFile = (zip: ZipTool, documents: VersionDocu
   zip.file(PACKAGE.VERSION_INTERNAL_FILE_NAME, result)
 }
 
+const createComparisonInternalDocumentDataFiles = async (zip: ZipTool, comparisonInternalDocuments: ComparisonInternalDocuments): Promise<void> => {
+  const documentsDir = zip.folder(PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME)
+  for (const [key, value] of comparisonInternalDocuments) {
+    await documentsDir.file(`${key}.${FILE_FORMAT_JSON}`, value)
+  }
+}
+
+const createComparisonInternalDocumentsFile = (zip: ZipTool, comparisons: PackageComparison[]): void => {
+  if (!comparisons.length) {
+    return
+  }
+  const result: { documents: VersionInternalDocuments[] } = { documents: [] }
+  for (const comparison of comparisons) {
+    const { comparisonInternalDocuments } = comparison
+    if (!comparisonInternalDocuments) {
+      continue
+    }
+
+    for (const [key, value] of comparisonInternalDocuments) {
+      result.documents.push({
+        id: key,
+        filename: `${key}.${FILE_FORMAT_JSON}`,
+      })
+    }
+  }
+  if (!result.documents.length) {
+    return
+  }
+  zip.file(PACKAGE.COMPARISON_INTERNAL_FILE_NAME, result)
+}
+
 const writeDocumentsToZip = async (zip: ZipTool, documents: ZippableDocument[], ctx: BuilderContext): Promise<void> => {
   const { apiBuilders, config: { format } } = ctx
 
@@ -164,7 +205,7 @@ const writeDocumentsToZip = async (zip: ZipTool, documents: ZippableDocument[], 
 
 const writeInternalDocumentsToZip = async (zip: ZipTool, documents: ZippableDocument[]): Promise<void> => {
   for (const document of documents) {
-    if (document.internalDocument){
+    if (document.internalDocument) {
       await zip.file(document.filename, document.internalDocument)
     }
   }

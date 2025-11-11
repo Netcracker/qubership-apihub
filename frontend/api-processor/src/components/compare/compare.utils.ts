@@ -17,7 +17,7 @@
 import {
   ApiBuilder,
   ChangeSummary,
-  CompareOperationsPairContext,
+  CompareOperationsPairContext, ComparisonInternalDocuments,
   DIFF_TYPES,
   ImpactedOperationSummary,
   NormalizedOperationId,
@@ -234,15 +234,17 @@ export const comparePairedDocs = async (
   pairedDocs: [ResolvedVersionDocument | undefined, ResolvedVersionDocument | undefined][],
   apiBuilder: ApiBuilder,
   ctx: CompareOperationsPairContext,
-): Promise<[OperationChanges[], Set<Diff>[], string[]]> => {
+): Promise<[OperationChanges[], Set<Diff>[], string[], ComparisonInternalDocuments]> => {
   const operationChanges: OperationChanges[] = []
   const uniqueDiffsForDocPairs: Set<Diff>[] = []
+  const comparisonInternalDocuments: ComparisonInternalDocuments = new Map<string, string>()
   const tags = new Set<string>()
 
   for (const [prevDoc, currDoc] of pairedDocs) {
     const {
       operationChanges: docsPairOperationChanges,
       tags: docsPairTags,
+      comparisonInternalDocuments: docsPairComparisonInternalDocuments,
     } = await apiBuilder.compareDocuments!(operationsMap, prevDoc, currDoc, ctx)
 
     // We can remove duplicates for diffs coming from the same apiDiff call using simple identity
@@ -250,9 +252,10 @@ export const comparePairedDocs = async (
 
     operationChanges.push(...docsPairOperationChanges)
     docsPairTags.forEach(tag => tags.add(tag))
+    docsPairComparisonInternalDocuments.forEach(((value, key) => comparisonInternalDocuments.set(key, value)))
   }
 
-  return [operationChanges, uniqueDiffsForDocPairs, Array.from(tags).sort()]
+  return [operationChanges, uniqueDiffsForDocPairs, Array.from(tags).sort(), comparisonInternalDocuments]
 }
 
 export function createOperationChange(
@@ -262,6 +265,7 @@ export function createOperationChange(
   current?: ResolvedOperation,
   currentGroup?: string,
   previousGroup?: string,
+  comparisonInternalDocumentId?: string,
 ): OperationChanges {
   const reclassifiedDiffs = reclassifyNoBwcBreakingChanges(operationDiffs, previous, current)
   const changeSummary = calculateChangeSummary(reclassifiedDiffs)
@@ -278,7 +282,6 @@ export function createOperationChange(
     previousApiKind: previous.apiKind,
     previousMetadata: getOperationMetadata(previous),
   }
-
   return {
     apiType,
     diffs: reclassifiedDiffs,
@@ -286,7 +289,24 @@ export function createOperationChange(
     impactedSummary: impactedSummary,
     ...currentOperationFields,
     ...previousOperationFields,
+    ...(comparisonInternalDocumentId && { comparisonInternalDocumentId }),
   }
+}
+//todo create better name
+export function combineNames(previousName: string | undefined, currentName: string | undefined): string | undefined {
+  if (previousName && currentName) {
+    return `${previousName}-${currentName}`
+  }
+
+  if (previousName) {
+    return `${previousName}`
+  }
+
+  if (currentName) {
+    return `${currentName}`
+  }
+
+  return undefined
 }
 
 export const removeGroupPrefixFromOperationId = (operationId: string, groupPrefix: string): string => {

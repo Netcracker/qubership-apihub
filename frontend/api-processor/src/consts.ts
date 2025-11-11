@@ -28,6 +28,7 @@ import {
   ValidationRulesSeverity,
 } from './types'
 import { OpenAPIV3 } from 'openapi-types'
+import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 
 export const DEFAULT_BATCH_SIZE = 32
 
@@ -154,8 +155,9 @@ export const symbolToStringMapping = new Map([
   [ORIGINS_SYMBOL, 'ORIGINS_SYMBOL'],
   [HASH_FLAG, 'HASH_FLAG'],
   [INLINE_REFS_FLAG, 'INLINE_REFS_FLAG'],
+  [DIFF_META_KEY, 'DIFF_META_KEY'],
+  [DIFFS_AGGREGATED_META_KEY, 'DIFFS_AGGREGATED_META_KEY'],
 ])
-
 
 export const NORMALIZE_OPTIONS: NormalizeOptions = {
   validate: true,

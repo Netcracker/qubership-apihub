@@ -23,6 +23,7 @@ import {
   isValidHttpMethod,
   normalizePath,
   removeFirstSlash,
+  serializeOas,
   slugify,
   trimSlashes,
 } from '../../utils'
@@ -30,17 +31,19 @@ import {
   aggregateDiffsWithRollup,
   apiDiff,
   breaking,
-  extractOperationBasePath,
   Diff,
   DIFF_META_KEY,
   DiffAction,
   DIFFS_AGGREGATED_META_KEY,
+  extractOperationBasePath,
   risky,
 } from '@netcracker/qubership-apihub-api-diff'
 import { MESSAGE_SEVERITY, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
 import {
   BREAKING_CHANGE_TYPE,
   CompareOperationsPairContext,
+  DocumentsCompare,
+  DocumentsCompareReturn,
   OperationChanges,
   ResolvedVersionDocument,
   RISKY_CHANGE_TYPE,
@@ -65,7 +68,7 @@ import {
   extractRootServersDiffs,
   validateGroupPrefix,
 } from './rest.utils'
-import { createOperationChange, getOperationTags, OperationsMap } from '../../components'
+import { combineNames, createOperationChange, getOperationTags, OperationsMap } from '../../components'
 
 /**
  * Calculates a normalized operation ID for an operation.
@@ -79,15 +82,12 @@ function calculateNormalizedOperationId(basePath: string, path: string, method: 
   return slugify(`${normalizePath(basePath + path)}-${method}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
 }
 
-export const compareDocuments = async (
+export const compareDocuments: DocumentsCompare = async (
   operationsMap: OperationsMap,
   prevDoc: ResolvedVersionDocument | undefined,
   currDoc: ResolvedVersionDocument | undefined,
   ctx: CompareOperationsPairContext,
-): Promise<{
-  operationChanges: OperationChanges[]
-  tags: Set<string>
-}> => {
+): Promise<DocumentsCompareReturn> => {
   const {
     apiType,
     rawDocumentResolver,
@@ -131,14 +131,14 @@ export const compareDocuments = async (
   ) as { merged: OpenAPIV3.Document; diffs: Diff[] }
 
   if (isEmpty(diffs)) {
-    return { operationChanges: [], tags: new Set() }
+    return { operationChanges: [], tags: new Set(), comparisonInternalDocuments: new Map<string, string>() }
   }
 
   aggregateDiffsWithRollup(merged, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)
 
   const tags = new Set<string>()
   const operationChanges: OperationChanges[] = []
-
+  const comparisonInternalDocumentId = combineNames(prevDoc?.slug, currDoc?.slug)
   for (const path of Object.keys(merged.paths)) {
     const pathData = merged.paths[path]
     if (typeof pathData !== 'object' || !pathData) { continue }
@@ -157,7 +157,10 @@ export const compareDocuments = async (
       const prevNormalizedOperationId = calculateNormalizedOperationId(previousBasePath, path, inferredMethod)
       const currNormalizedOperationId = calculateNormalizedOperationId(currentBasePath, path, inferredMethod)
 
-      const { current, previous } = operationsMap[prevNormalizedOperationId] ?? operationsMap[currNormalizedOperationId] ?? {}
+      const {
+        current,
+        previous,
+      } = operationsMap[prevNormalizedOperationId] ?? operationsMap[currNormalizedOperationId] ?? {}
       if (!current && !previous) {
         const missingOperations = prevNormalizedOperationId === currNormalizedOperationId ? `the ${prevNormalizedOperationId} operation` : `the ${prevNormalizedOperationId} and ${currNormalizedOperationId} operations`
         throw new Error(`Can't find ${missingOperations} from documents pair ${prevDoc?.fileId} and ${currDoc?.fileId}`)
@@ -189,12 +192,15 @@ export const compareDocuments = async (
 
       await reclassifyBreakingChanges(previous?.operationId, merged, operationDiffs, ctx)
 
-      operationChanges.push(createOperationChange(apiType, operationDiffs, previous, current, currentGroup, previousGroup))
+      operationChanges.push(createOperationChange(apiType, operationDiffs, previous, current, currentGroup, previousGroup, comparisonInternalDocumentId))
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }
   }
-
-  return { operationChanges, tags }
+  const comparisonInternalDocuments = new Map<string, string>()
+  if (operationChanges.length && comparisonInternalDocumentId) {
+    comparisonInternalDocuments.set(comparisonInternalDocumentId, serializeOas(merged))
+  }
+  return { operationChanges, tags, comparisonInternalDocuments }
 }
 
 async function reclassifyBreakingChanges(

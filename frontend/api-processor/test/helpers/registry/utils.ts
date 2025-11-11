@@ -54,6 +54,29 @@ export async function saveVersionInternalDocuments(
   }
 }
 
+export async function saveComparisonInternalDocuments(
+  comparisons: VersionsComparisonDto[],
+  basePath: string,
+): Promise<void> {
+  if(!comparisons.length){
+    return
+  }
+  await fs.mkdir(`${basePath}/${PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME}`)
+  for (const comparison of comparisons) {
+    const {comparisonInternalDocuments} = comparison
+    if (!comparisonInternalDocuments) {
+      continue
+    }
+
+    for (const [key, value] of comparisonInternalDocuments) {
+      await fs.writeFile(
+        `${basePath}/${PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME}/${key}.${FILE_FORMAT_JSON}`,
+        value,
+      )
+    }
+  }
+}
+
 export async function saveEachComparison(
   comparisons: VersionsComparisonDto[],
   basePath: string,
@@ -136,9 +159,41 @@ export async function saveVersionInternalDocumentsArray(
       filename: document.filename,
     })
   }
-
+  if(!result.documents.length){
+    return
+  }
   await fs.writeFile(
     `${basePath}/${PACKAGE.VERSION_INTERNAL_FILE_NAME}`,
+    JSON.stringify(result, undefined, 2),
+  )
+}
+
+export async function saveComparisonInternalDocumentsArray(
+  comparisons: VersionsComparisonDto[],
+  basePath: string,
+): Promise<void> {
+  if(!comparisons.length){
+    return
+  }
+  const result: {documents: VersionInternalDocuments[]} = { documents: [] }
+    for (const comparison of comparisons) {
+    const {comparisonInternalDocuments} = comparison
+    if (!comparisonInternalDocuments) {
+      continue
+    }
+
+    for (const [key, value] of comparisonInternalDocuments) {
+      result.documents.push({
+        id: key,
+        filename: `${key}.${FILE_FORMAT_JSON}`,
+      })
+    }
+  }
+  if(!result.documents.length){
+    return
+  }
+  await fs.writeFile(
+    `${basePath}/${PACKAGE.COMPARISON_INTERNAL_FILE_NAME}`,
     JSON.stringify(result, undefined, 2),
   )
 }

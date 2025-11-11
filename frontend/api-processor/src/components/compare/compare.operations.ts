@@ -16,7 +16,7 @@
 import {
   ApiAudienceTransition,
   CompareContext,
-  CompareOperationsPairContext,
+  CompareOperationsPairContext, ComparisonInternalDocuments,
   OperationChanges,
   OperationsApiType,
   OperationType,
@@ -50,6 +50,7 @@ export async function compareVersionsOperations(
 ): Promise<VersionsComparison> {
   const changes: OperationChanges[] = []
   const operationTypes: OperationType[] = []
+  const comparisonInternalDocuments: ComparisonInternalDocuments = new Map<string, string>()
 
   const { versionResolver } = ctx
 
@@ -63,7 +64,7 @@ export async function compareVersionsOperations(
 
   // compare operations of each type
   for (const apiType of getUniqueApiTypesFromVersions(prevVersionData, currVersionData)) {
-    const [operationType, operationsChanges = []] = await asyncDebugPerformance(
+    const [operationType, operationsChanges = [], comparisonDocuments] = await asyncDebugPerformance(
       '[ApiType]',
       (innerDebugCtx) => compareCurrentApiType(apiType, prevVersionData, currVersionData, ctx, innerDebugCtx) ?? [],
       debugCtx,
@@ -76,6 +77,7 @@ export async function compareVersionsOperations(
 
     operationTypes.push(operationType)
     changes.push(...operationsChanges)
+    comparisonDocuments?.forEach(((value, key) => comparisonInternalDocuments.set(key, value)))
   }
 
   const comparisonFileId = [...prev || [], ...curr || []].filter(Boolean).join('_')
@@ -96,6 +98,7 @@ export async function compareVersionsOperations(
       comparisonFileId,
       data: changes,
     } : {},
+    comparisonInternalDocuments,
   }
 }
 
@@ -105,7 +108,7 @@ async function compareCurrentApiType(
   curr: VersionCache | null,
   ctx: CompareContext,
   debugCtx?: DebugPerformanceContext,
-): Promise<[OperationType, OperationChanges[]] | null> {
+): Promise<[OperationType, OperationChanges[], ComparisonInternalDocuments] | null> {
   const {
     versionOperationsResolver,
     rawDocumentResolver,
@@ -145,7 +148,7 @@ async function compareCurrentApiType(
   const operationsMap = createPairOperationsMap(previousGroupSlug, currentGroupSlug, prevOperationsWithPrefix, currOperationsWithPrefix, apiBuilder)
   const operationPairs = Object.values(operationsMap)
   const pairedDocs = await calculatePairedDocs(operationPairs, pairContext)
-  const [operationChanges, uniqueDiffsForDocPairs, tags] = await comparePairedDocs(operationsMap, pairedDocs, apiBuilder, pairContext)
+  const [operationChanges, uniqueDiffsForDocPairs, tags, comparisonInternalDocuments] = await comparePairedDocs(operationsMap, pairedDocs, apiBuilder, pairContext)
   // Duplicates could happen in rare case when document for added/deleted operation was mapped to several documents in other version
   const uniqueOperationChanges = pairedDocs.length === 1 ? operationChanges
   : removeObjectDuplicates(
@@ -179,5 +182,6 @@ async function compareCurrentApiType(
       apiAudienceTransitions,
     },
     uniqueOperationChanges,
+    comparisonInternalDocuments,
   ]
 }
