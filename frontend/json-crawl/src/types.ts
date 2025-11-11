@@ -45,8 +45,17 @@ export type CrawlRulesFunc<R extends {}> = (ctx: CrawlRulesContext) => CrawlRule
 export type CrawlRulesKey = `/${string}`
 export type CrawlChildType<R extends {}> = CrawlRules<R> | CrawlRulesFunc<R>
 
+/** 
+ * Prefix rules mapping where keys must be non-empty strings representing prefixes.
+ * Empty string keys are ignored at runtime.
+ */
+export type CrawlPrefixRules<R extends {}> = Record<string, CrawlChildType<R | {}>>
+export type CrawlPrefixRulesFunc<R extends {}> = (ctx: CrawlRulesContext) => CrawlPrefixRules<R> | undefined
+
 export type CrawlRules<R extends {} = {}> = {
-  [key: CrawlRulesKey | '/*']: CrawlChildType<R | {}>
+  [K in CrawlRulesKey | '/*' | '/**']: CrawlChildType<R | {}>
+} & {
+  '/^'?: CrawlPrefixRules<R> | CrawlPrefixRulesFunc<R>
 } & R
 
 export const JSON_ROOT_KEY = '#'
