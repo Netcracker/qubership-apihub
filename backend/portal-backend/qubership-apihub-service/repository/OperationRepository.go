@@ -32,11 +32,8 @@ type OperationRepository interface {
 	GetOperations(packageId string, version string, revision int, operationType string, skipRefs bool, searchReq view.OperationListReq) ([]entity.OperationRichEntity, error)
 	GetOperationById(packageId string, version string, revision int, operationType string, operationId string) (*entity.OperationRichEntity, error)
 	GetOperationsTags(searchQuery entity.OperationTagsSearchQueryEntity, skipRefs bool) ([]string, error)
-	GetAllOperations(packageId string, version string, revision int) ([]entity.OperationEntity, error)
 	GetOperationChanges(comparisonId string, operationId string, severities []string) (*entity.OperationComparisonEntity, error)
-	GetChangelog_deprecated(searchQuery entity.ChangelogSearchQueryEntity) ([]entity.OperationComparisonChangelogEntity_deprecated, error)
 	GetChangelog(searchQuery entity.ChangelogSearchQueryEntity) ([]entity.OperationComparisonChangelogEntity, error)
-	SearchForOperations_deprecated(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult_deprecated, error)
 	SearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult, error)
 	GetOperationsTypeCount(packageId string, version string, revision int, showOnlyDeleted bool) ([]entity.OperationsTypeCountEntity, error)
 	GetOperationsTypeDataHashes(packageId string, version string, revision int) ([]entity.OperationsTypeDataHashEntity, error)
@@ -48,7 +45,6 @@ type OperationRepository interface {
 	AddOperationGroupHistory(ent *entity.OperationGroupHistoryEntity) error
 	CreateOperationGroup(ent *entity.OperationGroupEntity, templateEntity *entity.OperationGroupTemplateEntity) error
 	DeleteOperationGroup(ent *entity.OperationGroupEntity) error
-	ReplaceOperationGroup(oldGroupEntity *entity.OperationGroupEntity, newGroupEntity *entity.OperationGroupEntity, operationEntities []entity.GroupedOperationEntity, newTemplateEntity *entity.OperationGroupTemplateEntity) error
 	UpdateOperationGroup(oldGroupEntity *entity.OperationGroupEntity, newGroupEntity *entity.OperationGroupEntity, newTemplateEntity *entity.OperationGroupTemplateEntity, newGroupedOperations *[]entity.GroupedOperationEntity) error
 	GetOperationGroup(packageId string, version string, revision int, apiType string, groupName string) (*entity.OperationGroupEntity, error)
 	GetOperationGroupTemplateFile(packageId string, version string, revision int, apiType string, groupName string) (*entity.OperationGroupTemplateFileEntity, error)
@@ -487,22 +483,6 @@ func (o operationRepositoryImpl) GetOperationsTags(searchQuery entity.OperationT
 	return result, nil
 }
 
-func (o operationRepositoryImpl) GetAllOperations(packageId string, version string, revision int) ([]entity.OperationEntity, error) {
-	var result []entity.OperationEntity
-	err := o.cp.GetConnection().Model(&result).
-		Where("package_id = ?", packageId).
-		Where("version = ?", version).
-		Where("revision = ?", revision).
-		Select()
-	if err != nil {
-		if err == pg.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return result, nil
-}
-
 func (o operationRepositoryImpl) GetOperationChanges(comparisonId string, operationId string, severities []string) (*entity.OperationComparisonEntity, error) {
 	result := new(entity.OperationComparisonEntity)
 	err := o.cp.GetConnection().Model(result).
@@ -515,128 +495,6 @@ func (o operationRepositoryImpl) GetOperationChanges(comparisonId string, operat
 		if err == pg.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
-	}
-	return result, nil
-}
-
-func (o operationRepositoryImpl) GetChangelog_deprecated(searchQuery entity.ChangelogSearchQueryEntity) ([]entity.OperationComparisonChangelogEntity_deprecated, error) {
-	var result []entity.OperationComparisonChangelogEntity_deprecated
-
-	comparisonsQuery := o.cp.GetConnection().Model(&entity.OperationComparisonChangelogEntity_deprecated{}).
-		TableExpr("operation_comparison").
-		ColumnExpr("case when data_hash is null then previous_package_id else package_id end operation_package_id").
-		ColumnExpr("case when data_hash is null then previous_version else version end operation_version").
-		ColumnExpr("case when data_hash is null then previous_revision else revision end operation_revision").
-		ColumnExpr("operation_comparison.*").
-		Where(`comparison_id in (
-			select unnest(array_append(refs, ?)) id from version_comparison where (comparison_id = ?)
-			)`, searchQuery.ComparisonId, searchQuery.ComparisonId).
-		Where(`(? = '' or package_id = ? or previous_package_id = ?)`, searchQuery.RefPackageId, searchQuery.RefPackageId, searchQuery.RefPackageId)
-
-	query := o.cp.GetConnection().Model(&result).With("comparisons", comparisonsQuery).
-		TableExpr("comparisons").
-		ColumnExpr("operation_comparison.*").
-		ColumnExpr("o.metadata").
-		ColumnExpr("o.title").
-		ColumnExpr("o.type").
-		ColumnExpr("o.kind")
-
-	query.Join("inner join operation o").
-		JoinOn("o.package_id = operation_comparison.operation_package_id").
-		JoinOn("o.version = operation_comparison.operation_version").
-		JoinOn("o.revision = operation_comparison.operation_revision").
-		JoinOn("o.operation_id = operation_comparison.operation_id")
-	if searchQuery.TextFilter != "" {
-		searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
-		query.JoinOn("o.title ilike ? or o.metadata->>? ilike ? or o.metadata->>? ilike ?", searchQuery.TextFilter, "path", searchQuery.TextFilter, "method", searchQuery.TextFilter)
-	}
-	if searchQuery.ApiType != "" {
-		query.JoinOn("o.type = ?", searchQuery.ApiType)
-	}
-	if searchQuery.ApiKind != "" {
-		query.JoinOn("o.kind = ?", searchQuery.ApiKind)
-	}
-	if searchQuery.ApiAudience != "" {
-		query.JoinOn("o.api_audience = ?", searchQuery.ApiAudience)
-	}
-	if len(searchQuery.Tags) != 0 {
-		query.JoinOn(`exists(
-			select 1 from jsonb_array_elements(o.metadata -> 'tags') a
-			where replace(a.value::text,'"','') = any(?))`, pg.Array(searchQuery.Tags))
-	}
-	if searchQuery.EmptyTag {
-		query.JoinOn(`not exists(select 1 from jsonb_array_elements(o.metadata -> 'tags') a
-            where a.value != '""') `)
-	}
-
-	if searchQuery.EmptyGroup {
-		//this filter also excludes all deleted operations
-		query.Where(`operation_comparison.data_hash is not null and o.operation_id not in (
-			select operation_id from grouped_operation go
-			inner join operation_group og
-			on go.group_id = og.group_id
-			and og.package_id = ?
-			and og.version = ?
-			and og.revision = ?
-			and og.api_type = o.type
-			where go.package_id = o.package_id
-			and go.version = o.version
-			and go.revision = o.revision)`,
-			searchQuery.GroupPackageId, searchQuery.GroupVersion, searchQuery.GroupRevision)
-	} else if searchQuery.Group != "" {
-		//this filter also excludes all deleted operations
-		query.Where(`operation_comparison.data_hash is not null and o.operation_id in (
-			select operation_id from grouped_operation go
-			inner join operation_group og
-			on go.group_id = og.group_id
-			and og.package_id = ?
-			and og.version = ?
-			and og.revision = ?
-			and og.group_name = ?
-			and og.api_type = o.type
-			where go.package_id = o.package_id
-			and go.version = o.version
-			and go.revision = o.revision)`,
-			searchQuery.GroupPackageId, searchQuery.GroupVersion, searchQuery.GroupRevision, searchQuery.Group)
-	}
-
-	if len(searchQuery.Severities) > 0 {
-		query.WhereGroup(func(query *orm.Query) (*orm.Query, error) {
-			for _, severity := range searchQuery.Severities {
-				query.WhereOr("(changes_summary->?)::int>0", severity)
-			}
-			return query, nil
-		})
-	}
-
-	if searchQuery.DocumentSlug != "" {
-		query.Join("inner join published_version_revision_content as pvrc").
-			JoinOn("o.operation_id = any(pvrc.operation_ids)").
-			JoinOn("pvrc.slug = ?", searchQuery.DocumentSlug).
-			JoinOn("o.package_id = pvrc.package_id").
-			JoinOn("o.version = pvrc.version").
-			JoinOn("o.revision = pvrc.revision")
-	}
-
-	query.OrderExpr(`(operation_comparison.changes_summary -> 'breaking')::int > 0 DESC,
-((operation_comparison.changes_summary -> 'deprecated')::int > 0 and
-(operation_comparison.changes_summary -> 'breaking')::int = 0) DESC`,
-	)
-	query.Order("o.package_id",
-		"o.version",
-		"o.revision",
-		"o.operation_id",
-		"o.data_hash ASC")
-
-	if searchQuery.Limit > 0 {
-		query.Limit(searchQuery.Limit)
-	}
-	if searchQuery.Offset > 0 {
-		query.Offset(searchQuery.Offset)
-	}
-	err := query.Select()
-	if err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -779,209 +637,6 @@ func (o operationRepositoryImpl) GetChangelog(searchQuery entity.ChangelogSearch
 	if err != nil {
 		return nil, err
 	}
-	return result, nil
-}
-
-// deprecated
-func (o operationRepositoryImpl) SearchForOperations_deprecated(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult_deprecated, error) {
-	_, err := o.cp.GetConnection().Exec("select to_tsquery(?)", searchQuery.SearchString)
-	if err != nil {
-		return nil, fmt.Errorf("invalid search string: %v", err.Error())
-	}
-	searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
-	var result []entity.OperationSearchResult_deprecated
-	operationsSearchQuery := `
-	with	maxrev as
-			(
-					select package_id, version, pg.name as package_name, max(revision) as revision
-					from published_version pv
-						inner join package_group pg
-							on pg.id = pv.package_id
-							and pg.exclude_from_search = false
-					--where (?packages = '{}' or package_id = ANY(?packages))
-					/*
-					for now packages list serves as a list of parents and packages,
-					after adding new parents list need to uncomment line above and change condition below to use parents list
-					*/
-					where (?packages = '{}' or package_id like ANY(
-						select id from unnest(?packages::text[]) id
-						union
-						select id||'.%' from unnest(?packages::text[]) id))
-					and (?versions = '{}' or version = ANY(?versions))
-					group by package_id, version, pg.name
-			),
-			versions as
-			(
-					select pv.package_id, pv.version, pv.revision, pv.published_at, pv.status, maxrev.package_name
-					from published_version pv
-					inner join maxrev
-							on pv.package_id = maxrev.package_id
-							and pv.version = maxrev.version
-							and pv.revision = maxrev.revision
-					where pv.deleted_at is null
-							and (?statuses = '{}' or pv.status = ANY(?statuses))
-							and pv.published_at >= ?start_date
-							and pv.published_at <= ?end_date
-			),
-			operations as
-			(
-					select o.*, v.status version_status, v.package_name, v.published_at version_published_at
-					from operation o
-					inner join versions v
-							on v.package_id = o.package_id
-							and v.version = o.version
-							and v.revision = o.revision
-							and (?api_type = '' or o.type = ?api_type)
-							and (?methods = '{}' or o.metadata->>'method' = ANY(?methods))
-			)
-			select
-			o.package_id,
-			o.package_name name,
-			o.version,
-			o.revision,
-			o.version_status,
-			o.operation_id,
-			o.title,
-			o.deprecated,
-			o.type as api_type,
-			o.metadata,
-			parent_package_names(o.package_id) parent_names,
-			case
-				when init_rank > 0 then init_rank + version_status_tf + operation_open_count
-				else 0
-			end rank,
-
-			--debug
-			coalesce(?scope_weight) scope_weight,
-			coalesce(?open_count_weight) open_count_weight,
-			scope_tf,
-			title_tf,
-			version_status_tf,
-			operation_open_count
-			from operations o
-			left join (
-					select ts.data_hash, max(rank) as rank from (
-							with filtered as (select data_hash from operations)
-							select
-							ts.data_hash,
-							case when scope_rank = 0 then detailed_scope_rank
-								 when detailed_scope_rank = 0 then scope_rank
-								 else scope_rank * detailed_scope_rank end rank
-							from
-							ts_rest_operation_data ts,
-							filtered f,
-							to_tsquery(?search_filter) search_query,
-							--using coalesce to skip ts_rank evaluation for scopes that are not requested
-							coalesce(case when ?filter_response then null else 0 end, ts_rank(scope_response, search_query)) resp_rank,
-							coalesce(case when ?filter_request then null else 0 end, ts_rank(scope_request, search_query)) req_rank,
-							coalesce(case when ?filter_examples then null else 0 end, ts_rank(scope_examples, search_query)) example_rank,
-							coalesce(case when ?filter_annotation then null else 0 end, ts_rank(scope_annotation, search_query)) annotation_rank,
-							coalesce(case when ?filter_properties then null else 0 end, ts_rank(scope_properties, search_query)) properties_rank,
-							coalesce(resp_rank + req_rank) scope_rank,
-							coalesce(example_rank + annotation_rank + properties_rank) detailed_scope_rank
-							where ts.data_hash = f.data_hash
-							and
-							(
-								(
-								(?filter_request = false and ?filter_response = false) or
-								(?filter_request and search_query @@ scope_request) or
-								(?filter_response and search_query @@ scope_response)
-								)
-								and
-								(
-								(?filter_annotation = false and ?filter_examples = false and ?filter_properties = false) or
-								(?filter_annotation and search_query @@ scope_annotation) or
-								(?filter_examples and search_query @@ scope_examples) or
-								(?filter_properties and search_query @@ scope_properties)
-								)
-							)
-					) ts
-					group by ts.data_hash
-					order by max(rank) desc
-					limit ?limit
-					offset ?offset
-			) rest_ts
-				on rest_ts.data_hash = o.data_hash
-				and o.type = ?rest_api_type
-				and ?filter_all = false
-			left join (
-					select ts.data_hash, max(rank) as rank from (
-							with filtered as (select data_hash from operations)
-							select
-							ts.data_hash,
-							scope_rank rank
-							from
-							ts_graphql_operation_data ts,
-							filtered f,
-							to_tsquery(?search_filter) search_query,
-							--using coalesce to skip ts_rank evaluation for scopes that are not requested
-							coalesce(case when ?filter_annotation then null else 0 end, ts_rank(scope_annotation, search_query)) annotation_rank,
-							coalesce(case when ?filter_property then null else 0 end, ts_rank(scope_property, search_query)) property_rank,
-							coalesce(case when ?filter_argument then null else 0 end, ts_rank(scope_argument, search_query)) argument_rank,
-							coalesce(annotation_rank + property_rank + argument_rank) scope_rank
-							where ts.data_hash = f.data_hash
-							and
-							(
-								(?filter_annotation = false and ?filter_property = false and ?filter_argument = false) or
-								(?filter_annotation and search_query @@ scope_annotation) or
-								(?filter_property and search_query @@ scope_property) or
-								(?filter_argument and search_query @@ scope_argument)
-							)
-					) ts
-					group by ts.data_hash
-					order by max(rank) desc
-					limit ?limit
-					offset ?offset
-			) graphql_ts
-				on graphql_ts.data_hash = o.data_hash
-				and o.type = ?graphql_api_type
-				and ?filter_all = false
-			left join (
-					select ts.data_hash, max(rank) as rank from (
-							with filtered as (select data_hash from operations)
-							select
-							ts.data_hash,
-							scope_rank rank
-							from
-							ts_operation_data ts,
-							filtered f,
-							to_tsquery(?search_filter) search_query,
-							--using coalesce to skip ts_rank evaluation for scopes that are not requested
-							coalesce(case when ?filter_all then null else 0 end, ts_rank(scope_all, search_query)) scope_rank
-							where ts.data_hash = f.data_hash
-							and search_query @@ scope_all
-					) ts
-					group by ts.data_hash
-					order by max(rank) desc
-					limit ?limit
-					offset ?offset
-			) all_ts
-				on all_ts.data_hash = o.data_hash
-				and ?filter_all = true
-			left join operation_open_count oc
-                on oc.package_id = o.package_id
-                and oc.version = o.version
-                and oc.operation_id = o.operation_id,
-			coalesce(?title_weight * (o.title ilike ?text_filter)::int, 0) title_tf,
-			coalesce(?scope_weight * (coalesce(rest_ts.rank, 0) + coalesce(graphql_ts.rank, 0) + coalesce(all_ts.rank, 0)), 0) scope_tf,
-			coalesce(title_tf + scope_tf, 0) init_rank,
-			coalesce(
-				?version_status_release_weight * (o.version_status = ?version_status_release)::int +
-				?version_status_draft_weight * (o.version_status = ?version_status_draft)::int +
-				?version_status_archived_weight * (o.version_status = ?version_status_archived)::int) version_status_tf,
-			coalesce(?open_count_weight * coalesce(oc.open_count), 0) operation_open_count
-			where init_rank > 0
-			order by rank desc, o.version_published_at desc, o.operation_id
-			limit ?limit;
-	`
-	_, err = o.cp.GetConnection().Model(searchQuery).Query(&result, operationsSearchQuery)
-	if err != nil {
-		if err == pg.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-
 	return result, nil
 }
 
@@ -1587,35 +1242,6 @@ func (o operationRepositoryImpl) DeleteOperationGroup(ent *entity.OperationGroup
 			return err
 		}
 		return o.cleanupOperationGroupTemplate(tx, ent.TemplateChecksum)
-	})
-}
-
-func (o operationRepositoryImpl) ReplaceOperationGroup(oldGroupEntity *entity.OperationGroupEntity, newGroupEntity *entity.OperationGroupEntity, operationEntities []entity.GroupedOperationEntity, newTemplateEntity *entity.OperationGroupTemplateEntity) error {
-	ctx := context.Background()
-	return o.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
-		_, err := tx.Model(oldGroupEntity).WherePK().Delete()
-		if err != nil {
-			return fmt.Errorf("failed to delete old group %+v: %w", oldGroupEntity, err)
-		}
-		_, err = tx.Model(newGroupEntity).Insert()
-		if err != nil {
-			return fmt.Errorf("failed to insert new group %+v: %w", newGroupEntity, err)
-		}
-		if len(operationEntities) > 0 {
-			_, err = tx.Model(&operationEntities).Insert()
-			if err != nil {
-				return fmt.Errorf("failed to insert grouped operations %+v: %w", operationEntities, err)
-			}
-		}
-		err = o.saveOperationGroupTemplate(tx, newTemplateEntity)
-		if err != nil {
-			return err
-		}
-		err = o.cleanupOperationGroupTemplate(tx, oldGroupEntity.TemplateChecksum)
-		if err != nil {
-			return err
-		}
-		return nil
 	})
 }
 

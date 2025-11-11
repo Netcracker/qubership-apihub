@@ -136,19 +136,6 @@ func (u userRepositoryImpl) GetUsers(usersListReq view.UsersListReq) ([]entity.U
 	return result, nil
 }
 
-func (u userRepositoryImpl) GetAllUsers() ([]entity.UserEntity, error) {
-	var result []entity.UserEntity
-	err := u.cp.GetConnection().Model(&result).
-		Select()
-	if err != nil {
-		if err == pg.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return result, nil
-}
-
 func (u userRepositoryImpl) GetUserByEmail(email string) (*entity.UserEntity, error) {
 	result := new(entity.UserEntity)
 	err := u.cp.GetConnection().Model(result).

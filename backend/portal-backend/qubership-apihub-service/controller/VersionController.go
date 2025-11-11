@@ -34,25 +34,20 @@ import (
 )
 
 type VersionController interface {
-	GetPackageVersionContent_deprecated(w http.ResponseWriter, r *http.Request)
 	GetPackageVersionContent(w http.ResponseWriter, r *http.Request)
 	GetDeletedPackageVersionContent(w http.ResponseWriter, r *http.Request)
-	GetPackageVersionsList_deprecated(w http.ResponseWriter, r *http.Request)
 	GetPackageVersionsList(w http.ResponseWriter, r *http.Request)
 	GetDeletedPackageVersionsList(w http.ResponseWriter, r *http.Request)
 	DeleteVersion(w http.ResponseWriter, r *http.Request)
 	PatchVersion(w http.ResponseWriter, r *http.Request)
 	GetVersionedContentFileRaw(w http.ResponseWriter, r *http.Request)
-	GetVersionedDocument_deprecated(w http.ResponseWriter, r *http.Request)
 	GetVersionedDocument(w http.ResponseWriter, r *http.Request)
 	GetVersionDocuments(w http.ResponseWriter, r *http.Request)
 	GetSharedContentFile(w http.ResponseWriter, r *http.Request)
 	SharePublishedFile(w http.ResponseWriter, r *http.Request)
 	GetVersionChanges(w http.ResponseWriter, r *http.Request)
 	GetVersionProblems(w http.ResponseWriter, r *http.Request)
-	GetVersionReferences(w http.ResponseWriter, r *http.Request) //deprecated
 	GetVersionReferencesV3(w http.ResponseWriter, r *http.Request)
-	GetVersionRevisionsList_deprecated(w http.ResponseWriter, r *http.Request)
 	GetVersionRevisionsList(w http.ResponseWriter, r *http.Request)
 	DeleteVersionsRecursively(w http.ResponseWriter, r *http.Request)
 	CopyVersion(w http.ResponseWriter, r *http.Request)
@@ -145,47 +140,6 @@ func (v versionControllerImpl) GetSharedContentFile(w http.ResponseWriter, r *ht
 	w.Header().Set("Content-Type", "text/plain") // For frontend it's convenient to get all types as plain text
 	w.WriteHeader(http.StatusOK)
 	w.Write(contentData)
-}
-
-// deprecated
-func (v versionControllerImpl) GetVersionedDocument_deprecated(w http.ResponseWriter, r *http.Request) {
-	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
-	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
-	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to check user privileges", err)
-		return
-	}
-	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusForbidden,
-			Code:    exception.InsufficientPrivileges,
-			Message: exception.InsufficientPrivilegesMsg,
-		})
-		return
-	}
-	versionName, err := getUnescapedStringParam(r, "version")
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "version"},
-			Debug:   err.Error(),
-		})
-		return
-	}
-	slug := getStringParam(r, "slug")
-
-	v.monitoringService.AddDocumentOpenCount(packageId, versionName, slug)
-	v.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.DocumentsCalled, packageId)
-
-	document, err := v.versionService.GetLatestDocumentBySlug_deprecated(packageId, versionName, slug)
-	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get versioned document", err)
-		return
-	}
-	utils.RespondWithJson(w, http.StatusOK, document)
 }
 
 func (v versionControllerImpl) GetVersionedDocument(w http.ResponseWriter, r *http.Request) {
@@ -463,124 +417,6 @@ func (v versionControllerImpl) PatchVersion(w http.ResponseWriter, r *http.Reque
 	utils.RespondWithJson(w, http.StatusOK, content)
 }
 
-func (v versionControllerImpl) GetPackageVersionsList_deprecated(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
-	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
-	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to check user privileges", err)
-		return
-	}
-	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusForbidden,
-			Code:    exception.InsufficientPrivileges,
-			Message: exception.InsufficientPrivilegesMsg,
-		})
-		return
-	}
-	status, err := url.QueryUnescape(r.URL.Query().Get("status"))
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "status"},
-			Debug:   err.Error(),
-		})
-		return
-	}
-
-	limit, customError := getLimitQueryParam(r)
-	if customError != nil {
-		utils.RespondWithCustomError(w, customError)
-		return
-	}
-
-	page := 0
-	if r.URL.Query().Get("page") != "" {
-		page, err = strconv.Atoi(r.URL.Query().Get("page"))
-		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.IncorrectParamType,
-				Message: exception.IncorrectParamTypeMsg,
-				Params:  map[string]interface{}{"param": "page", "type": "int"},
-				Debug:   err.Error(),
-			})
-			return
-		}
-	}
-
-	textFilter, err := url.QueryUnescape(r.URL.Query().Get("textFilter"))
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "textFilter"},
-			Debug:   err.Error(),
-		})
-		return
-	}
-
-	versionLabel, err := url.QueryUnescape(r.URL.Query().Get("versionLabel"))
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "versionLabel"},
-			Debug:   err.Error(),
-		})
-		return
-	}
-
-	checkRevisions := false
-	if r.URL.Query().Get("checkRevisions") != "" {
-		checkRevisions, err = strconv.ParseBool(r.URL.Query().Get("checkRevisions"))
-		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.IncorrectParamType,
-				Message: exception.IncorrectParamTypeMsg,
-				Params:  map[string]interface{}{"param": "checkRevisions", "type": "boolean"},
-				Debug:   err.Error(),
-			})
-			return
-		}
-	}
-	sortBy := r.URL.Query().Get("sortBy")
-	if sortBy == "" {
-		sortBy = view.VersionSortByVersion
-	}
-	sortOrder := r.URL.Query().Get("sortOrder")
-	if sortOrder == "" {
-		sortOrder = view.VersionSortOrderDesc
-	}
-
-	versionListReq := view.VersionListReq{
-		PackageId:      packageId,
-		Status:         status,
-		Limit:          limit,
-		Page:           page,
-		TextFilter:     textFilter,
-		SortBy:         sortBy,
-		SortOrder:      sortOrder,
-		Label:          versionLabel,
-		CheckRevisions: checkRevisions,
-	}
-
-	versions, err := v.versionService.GetPackageVersionsView_deprecated(versionListReq)
-	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get package versions", err)
-		return
-	}
-	utils.RespondWithJson(w, http.StatusOK, versions)
-}
-
 func (v versionControllerImpl) GetPackageVersionsList(w http.ResponseWriter, r *http.Request) {
 	var err error
 
@@ -679,7 +515,7 @@ func (v versionControllerImpl) GetDeletedPackageVersionsList(w http.ResponseWrit
 		})
 		return
 	}
-	
+
 	var err error
 	packageId := getStringParam(r, "packageId")
 	sufficientPackagePrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
@@ -719,10 +555,10 @@ func (v versionControllerImpl) GetDeletedPackageVersionsList(w http.ResponseWrit
 	}
 
 	versionListReq := view.VersionListReq{
-		PackageId:      packageId,
-		Status:         status,
-		Limit:          limit,
-		Page:           page,
+		PackageId: packageId,
+		Status:    status,
+		Limit:     limit,
+		Page:      page,
 	}
 
 	versions, err := v.versionService.GetPackageVersionsView(versionListReq, true)
@@ -731,91 +567,6 @@ func (v versionControllerImpl) GetDeletedPackageVersionsList(w http.ResponseWrit
 		return
 	}
 	utils.RespondWithJson(w, http.StatusOK, versions)
-}
-
-func (v versionControllerImpl) GetPackageVersionContent_deprecated(w http.ResponseWriter, r *http.Request) {
-	var err error
-	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
-	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
-	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to check user privileges", err)
-		return
-	}
-	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusForbidden,
-			Code:    exception.InsufficientPrivileges,
-			Message: exception.InsufficientPrivilegesMsg,
-		})
-		return
-	}
-
-	version, err := getUnescapedStringParam(r, "version")
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "version"},
-			Debug:   err.Error(),
-		})
-		return
-	}
-
-	includeSummary := false
-	if r.URL.Query().Get("includeSummary") != "" {
-		includeSummary, err = strconv.ParseBool(r.URL.Query().Get("includeSummary"))
-		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.IncorrectParamType,
-				Message: exception.IncorrectParamTypeMsg,
-				Params:  map[string]interface{}{"param": "includeSummary", "type": "boolean"},
-				Debug:   err.Error(),
-			})
-			return
-		}
-	}
-
-	includeOperations := false
-	if r.URL.Query().Get("includeOperations") != "" {
-		includeOperations, err = strconv.ParseBool(r.URL.Query().Get("includeOperations"))
-		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.IncorrectParamType,
-				Message: exception.IncorrectParamTypeMsg,
-				Params:  map[string]interface{}{"param": "includeOperations", "type": "boolean"},
-				Debug:   err.Error(),
-			})
-			return
-		}
-	}
-
-	includeGroups := false
-	if r.URL.Query().Get("includeGroups") != "" {
-		includeGroups, err = strconv.ParseBool(r.URL.Query().Get("includeGroups"))
-		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.IncorrectParamType,
-				Message: exception.IncorrectParamTypeMsg,
-				Params:  map[string]interface{}{"param": "includeGroups", "type": "boolean"},
-				Debug:   err.Error(),
-			})
-			return
-		}
-	}
-	v.monitoringService.AddVersionOpenCount(packageId, version)
-
-	content, err := v.versionService.GetPackageVersionContent_deprecated(packageId, version, includeSummary, includeOperations, includeGroups)
-	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get package version content", err)
-		return
-	}
-
-	utils.RespondWithJson(w, http.StatusOK, content)
 }
 
 func (v versionControllerImpl) GetPackageVersionContent(w http.ResponseWriter, r *http.Request) {
@@ -914,7 +665,7 @@ func (v versionControllerImpl) GetDeletedPackageVersionContent(w http.ResponseWr
 		})
 		return
 	}
-	
+
 	var err error
 	packageId := getStringParam(r, "packageId")
 	sufficientPackagePrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
@@ -1067,106 +818,6 @@ func (v versionControllerImpl) GetVersionProblems(w http.ResponseWriter, r *http
 	utils.RespondWithJson(w, http.StatusOK, problems)
 }
 
-// deprecated
-func (v versionControllerImpl) GetVersionReferences(w http.ResponseWriter, r *http.Request) {
-	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
-	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
-	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to check user privileges", err)
-		return
-	}
-	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusForbidden,
-			Code:    exception.InsufficientPrivileges,
-			Message: exception.InsufficientPrivilegesMsg,
-		})
-		return
-	}
-	versionName, err := getUnescapedStringParam(r, "version")
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "version"},
-			Debug:   err.Error(),
-		})
-		return
-	}
-	limit, customError := getLimitQueryParam(r)
-	if customError != nil {
-		utils.RespondWithCustomError(w, customError)
-		return
-	}
-	page := 0
-	if r.URL.Query().Get("page") != "" {
-		page, err = strconv.Atoi(r.URL.Query().Get("page"))
-		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.IncorrectParamType,
-				Message: exception.IncorrectParamTypeMsg,
-				Params:  map[string]interface{}{"param": "page", "type": "int"},
-				Debug:   err.Error(),
-			})
-			return
-		}
-	}
-	textFilter, err := url.QueryUnescape(r.URL.Query().Get("textFilter"))
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "textFilter"},
-			Debug:   err.Error(),
-		})
-		return
-	}
-	kind, err := url.QueryUnescape(r.URL.Query().Get("kind"))
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "kind"},
-			Debug:   err.Error(),
-		})
-		return
-	}
-	showAllDescendants := false
-	if r.URL.Query().Get("showAllDescendants") != "" {
-		showAllDescendants, err = strconv.ParseBool(r.URL.Query().Get("showAllDescendants"))
-		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.IncorrectParamType,
-				Message: exception.IncorrectParamTypeMsg,
-				Params:  map[string]interface{}{"param": "showAllDescendants", "type": "boolean"},
-				Debug:   err.Error(),
-			})
-			return
-		}
-	}
-
-	versionReferencesFilterReq := view.VersionReferencesReq{
-		Limit:              limit,
-		Page:               page,
-		TextFilter:         textFilter,
-		Kind:               kind,
-		ShowAllDescendants: showAllDescendants,
-	}
-
-	references, err := v.versionService.GetVersionReferences(packageId, versionName, versionReferencesFilterReq)
-	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get version references", err)
-		return
-	}
-	utils.RespondWithJson(w, http.StatusOK, references)
-}
-
 func (v versionControllerImpl) GetVersionReferencesV3(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
 	ctx := context.Create(r)
@@ -1203,76 +854,6 @@ func (v versionControllerImpl) GetVersionReferencesV3(w http.ResponseWriter, r *
 	utils.RespondWithJson(w, http.StatusOK, references)
 }
 
-func (v versionControllerImpl) GetVersionRevisionsList_deprecated(w http.ResponseWriter, r *http.Request) {
-	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
-	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
-	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to check user privileges", err)
-		return
-	}
-	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusForbidden,
-			Code:    exception.InsufficientPrivileges,
-			Message: exception.InsufficientPrivilegesMsg,
-		})
-		return
-	}
-	versionName, err := getUnescapedStringParam(r, "version")
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "version"},
-			Debug:   err.Error(),
-		})
-		return
-	}
-	limit, customError := getLimitQueryParam(r)
-	if customError != nil {
-		utils.RespondWithCustomError(w, customError)
-		return
-	}
-	page := 0
-	if r.URL.Query().Get("page") != "" {
-		page, err = strconv.Atoi(r.URL.Query().Get("page"))
-		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.IncorrectParamType,
-				Message: exception.IncorrectParamTypeMsg,
-				Params:  map[string]interface{}{"param": "page", "type": "int"},
-				Debug:   err.Error(),
-			})
-			return
-		}
-	}
-	textFilter, err := url.QueryUnescape(r.URL.Query().Get("textFilter"))
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "textFilter"},
-			Debug:   err.Error(),
-		})
-		return
-	}
-
-	pagingFilter := view.PagingFilterReq{
-		TextFilter: textFilter,
-		Limit:      limit,
-		Offset:     limit * page,
-	}
-	versionRevisionsList, err := v.versionService.GetVersionRevisionsList_deprecated(packageId, versionName, pagingFilter)
-	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get version revisions list", err)
-		return
-	}
-	utils.RespondWithJson(w, http.StatusOK, versionRevisionsList)
-}
 func (v versionControllerImpl) GetVersionRevisionsList(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
 	ctx := context.Create(r)

@@ -3,7 +3,6 @@
 ## Development documentation
 ### [Development guide](development_guide.md)
 ### [Local development](local_development/local_development.md)
-### [Git integration](git_integration.md)
 
 ## Onboarding guides
 ### [Onboarding](onboarding.md)
@@ -11,7 +10,6 @@
 
 ## Functionality guides
 ### [Build process](build.md)
-### [Editor](editor.md)
 ### [Data maintenance](data_maintenance.md)
 
 ## Admin guides

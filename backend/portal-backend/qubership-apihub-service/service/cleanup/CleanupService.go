@@ -51,15 +51,8 @@ type cleanupServiceImpl struct {
 
 func (c cleanupServiceImpl) ClearTestData(testId string) error {
 	idFilter := "QS%-" + utils.LikeEscaped(testId) + "%"
-	//clear tables: project, branch_draft_content, branch_draft_references, favorites, apihub_api_keys
-	_, err := c.cp.GetConnection().Model(&entity.ProjectIntEntity{}).
-		Where("id like ?", idFilter).
-		ForceDelete()
-	if err != nil {
-		return err
-	}
 	//clear tables: package_group
-	_, err = c.cp.GetConnection().Model(&entity.PackageEntity{}).
+	_, err := c.cp.GetConnection().Model(&entity.PackageEntity{}).
 		Where("id like ?", idFilter).
 		ForceDelete()
 	if err != nil {

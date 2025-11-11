@@ -30,7 +30,6 @@ import (
 )
 
 type TransitionRepository interface {
-	MoveAllData(fromPkg, toPkg string) (int, error)
 	MovePackage(fromPkg, toPkg string, overwriteHistory bool) (int, error)
 	MoveGroupingPackage(fromPkg, toPkg string) (int, error)
 
@@ -84,37 +83,6 @@ func (t transitionRepositoryImpl) MoveGroupingPackage(fromPkg, toPkg string) (in
 	})
 
 	return objAffected, err
-}
-
-func (t transitionRepositoryImpl) MoveAllData(fromPkg, toPkg string) (int, error) {
-	objAffected := 0
-	err := t.cp.GetConnection().RunInTransaction(context.Background(), func(tx *pg.Tx) error {
-		// Copy version data to satisfy constraints
-		affected, err := copyVersions(tx, fromPkg, toPkg)
-		if err != nil {
-			return err
-		}
-		objAffected += affected
-
-		affected, err = moveNonVersionsData(tx, fromPkg, toPkg)
-		if err != nil {
-			return err
-		}
-		objAffected += affected
-
-		// deleteVersionsData should affect the same rows as copy, so do not append it
-		err = deleteVersionsData(tx, fromPkg)
-		if err != nil {
-			return fmt.Errorf("MoveAllData: failed to delete orig pkg data: %w", err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return 0, err // transaction should be rolled back
-	} else {
-		return objAffected, nil
-	}
 }
 
 func (t transitionRepositoryImpl) MovePackage(fromPkg, toPkg string, overwriteHistory bool) (int, error) {
@@ -445,13 +413,6 @@ func moveNonVersionsData(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	res, err = tx.Exec(updatePkgSvc, toPkg, fromPkg)
 	if err != nil {
 		return 0, fmt.Errorf("MoveAllData: failed to update package_id in package_service from %s to %s: %w", fromPkg, toPkg, err)
-	}
-	objAffected += res.RowsAffected()
-
-	updateProject := "update project set package_id = ? where package_id=?;"
-	res, err = tx.Exec(updateProject, toPkg, fromPkg)
-	if err != nil {
-		return 0, fmt.Errorf("MoveAllData: failed to update package_id in project from %s to %s: %w", fromPkg, toPkg, err)
 	}
 	objAffected += res.RowsAffected()
 

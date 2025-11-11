@@ -25,31 +25,11 @@ const OperationGroupActionCreate = "create"
 const OperationGroupActionUpdate = "update"
 const OperationGroupActionDelete = "delete"
 
-type CreateOperationGroupReq_deprecated struct {
-	GroupName   string `json:"groupName" validate:"required"`
-	Description string `json:"description"`
-}
-
-type ReplaceOperationGroupReq_deprecated struct {
-	CreateOperationGroupReq_deprecated
-	Operations []GroupOperations `json:"operations" validate:"dive,required"`
-}
-
 type CreateOperationGroupReq struct {
 	GroupName        string `json:"groupName" validate:"required"`
 	Description      string `json:"description"`
 	Template         []byte `json:"template"`
 	TemplateFilename string `json:"templateFilename"`
-}
-
-type ReplaceOperationGroupReq struct {
-	CreateOperationGroupReq
-	Operations []GroupOperations `json:"operations" validate:"dive,required"`
-}
-
-type UpdateOperationGroupReq_deprecated struct {
-	GroupName   *string `json:"groupName"`
-	Description *string `json:"description"`
 }
 
 type UpdateOperationGroupReq struct {
@@ -68,17 +48,6 @@ type GroupOperations struct {
 	PackageId   string `json:"packageId"`
 	Version     string `json:"version"`
 	OperationId string `json:"operationId" validate:"required"`
-}
-
-type OperationGroups struct {
-	OperationGroups []OperationGroup `json:"operationGroups"`
-}
-
-type OperationGroup struct {
-	GroupName       string `json:"groupName"`
-	Description     string `json:"description,omitempty"`
-	IsPrefixGroup   bool   `json:"isPrefixGroup"`
-	OperationsCount int    `json:"operationsCount"`
 }
 
 type CalculatedOperationGroups struct {

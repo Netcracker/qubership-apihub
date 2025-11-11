@@ -150,17 +150,6 @@ type OperationRichEntity struct {
 	Data []byte `pg:"data, type:bytea"`
 }
 
-type OperationComparisonChangelogEntity_deprecated struct {
-	tableName struct{} `pg:"_, alias:operation_comparison, discard_unknown_columns"`
-	OperationComparisonEntity
-	ApiType            string   `pg:"type, type:varchar"`
-	ApiKind            string   `pg:"kind, type:varchar"`
-	Title              string   `pg:"title, type:varchar"`
-	Metadata           Metadata `pg:"metadata, type:jsonb"`
-	PackageRef         string   `pg:"package_ref, type:varchar"`
-	PreviousPackageRef string   `pg:"previous_package_ref, type:varchar"`
-}
-
 type OperationComparisonChangelogEntity struct {
 	tableName struct{} `pg:"_, alias:operation_comparison, discard_unknown_columns"`
 	OperationComparisonEntity
@@ -208,54 +197,12 @@ type OperationTagsSearchQueryEntity struct {
 	Limit       int    `pg:"limit, type:integer, use_zero"`
 	Offset      int    `pg:"offset, type:integer, use_zero"`
 }
-type OperationSearchQueryEntity struct {
-	PackageId   string `pg:"package_id, type:varchar, use_zero"`
-	Version     string `pg:"version, type:varchar, use_zero"`
-	Revision    int    `pg:"revision, type:integer, use_zero"`
-	ApiType     string `pg:"type, type:varchar, use_zero"`
-	OperationId string `pg:"operation_id, type:varchar, use_zero"`
-}
 
 type OperationModelsEntity struct {
 	tableName struct{} `pg:"operation, alias:operation"`
 
 	OperationId string   `pg:"operation_id, type:varchar"`
 	Models      []string `pg:"models, type:varchar[]"`
-}
-
-// deprecated
-func MakeDocumentsOperationView_deprecated(operationEnt OperationEntity) view.DocumentsOperation_deprecated {
-	documentsOperation := view.DocumentsOperation_deprecated{
-		OperationId: operationEnt.OperationId,
-		Title:       operationEnt.Title,
-		DataHash:    operationEnt.DataHash,
-		Deprecated:  operationEnt.Deprecated,
-		ApiKind:     operationEnt.Kind,
-		ApiType:     operationEnt.Type,
-	}
-	switch operationEnt.Type {
-	case string(view.RestApiType):
-		restOperationMetadata := view.RestOperationMetadata{
-			Path:   operationEnt.Metadata.GetPath(),
-			Method: operationEnt.Metadata.GetMethod(),
-			Tags:   operationEnt.Metadata.GetTags(),
-		}
-		documentsOperation.Metadata = restOperationMetadata
-	case string(view.GraphqlApiType):
-		graphQLOperationMetadata := view.GraphQLOperationMetadata{
-			Type:   operationEnt.Metadata.GetType(),
-			Method: operationEnt.Metadata.GetMethod(),
-			Tags:   operationEnt.Metadata.GetTags(),
-		}
-		documentsOperation.Metadata = graphQLOperationMetadata
-	case string(view.ProtobufApiType):
-		protobufOperationMetadata := view.ProtobufOperationMetadata{
-			Type:   operationEnt.Metadata.GetType(),
-			Method: operationEnt.Metadata.GetMethod(),
-		}
-		documentsOperation.Metadata = protobufOperationMetadata
-	}
-	return documentsOperation
 }
 
 func MakeDocumentsOperationView(operationEnt OperationEntity) interface{} {
@@ -471,40 +418,6 @@ func MakeOperationChangesListView(changedOperationEnt OperationComparisonEntity)
 	return result
 }
 
-func MakeOperationComparisonChangelogView_deprecated(entity OperationComparisonChangelogEntity_deprecated) interface{} {
-	operationComparisonChangelogView := view.OperationComparisonChangelogView_deprecated{
-		OperationId:               entity.OperationId,
-		Title:                     entity.Title,
-		ChangeSummary:             entity.ChangesSummary,
-		ApiKind:                   entity.ApiKind,
-		DataHash:                  entity.DataHash,
-		PreviousDataHash:          entity.PreviousDataHash,
-		PackageRef:                view.MakePackageRefKey(entity.PackageId, entity.Version, entity.Revision),
-		PreviousVersionPackageRef: view.MakePackageRefKey(entity.PreviousPackageId, entity.PreviousVersion, entity.PreviousRevision),
-	}
-	switch entity.ApiType {
-	case string(view.RestApiType):
-		return view.RestOperationComparisonChangelogView_deprecated{
-			OperationComparisonChangelogView_deprecated: operationComparisonChangelogView,
-			RestOperationMetadata: view.RestOperationMetadata{
-				Path:   entity.Metadata.GetPath(),
-				Method: entity.Metadata.GetMethod(),
-				Tags:   entity.Metadata.GetTags(),
-			},
-		}
-	case string(view.GraphqlApiType):
-		return view.GraphQLOperationComparisonChangelogView_deprecated{
-			OperationComparisonChangelogView_deprecated: operationComparisonChangelogView,
-			GraphQLOperationMetadata: view.GraphQLOperationMetadata{
-				Type:   entity.Metadata.GetType(),
-				Method: entity.Metadata.GetMethod(),
-				Tags:   entity.Metadata.GetTags(),
-			},
-		}
-	}
-	return operationComparisonChangelogView
-}
-
 func MakeOperationComparisonChangelogView(entity OperationComparisonChangelogEntity) interface{} {
 	currentGenericView := view.GenericComparisonOperationView{
 		OperationId: entity.OperationId,
@@ -618,67 +531,6 @@ func MakeOperationComparisonChangelogView(entity OperationComparisonChangelogEnt
 		return result
 	}
 	return nil
-}
-
-func MakeOperationComparisonChangelogView_deprecated_2(entity OperationComparisonChangelogEntity) interface{} {
-	var currentOperation *view.ComparisonOperationView_deprecated
-	var previousOperation *view.ComparisonOperationView_deprecated
-
-	if entity.DataHash != "" {
-		currentOperation = &view.ComparisonOperationView_deprecated{
-			Title:       entity.Title,
-			ApiKind:     entity.ApiKind,
-			ApiAudience: entity.ApiAudience,
-			DataHash:    entity.DataHash,
-			PackageRef:  view.MakePackageRefKey(entity.PackageId, entity.Version, entity.Revision),
-		}
-	}
-	if entity.PreviousDataHash != "" {
-		previousOperation = &view.ComparisonOperationView_deprecated{
-			Title:       entity.PreviousTitle,
-			ApiKind:     entity.PreviousApiKind,
-			ApiAudience: entity.PreviousApiAudience,
-			DataHash:    entity.PreviousDataHash,
-			PackageRef:  view.MakePackageRefKey(entity.PreviousPackageId, entity.PreviousVersion, entity.PreviousRevision),
-		}
-	}
-
-	operationComparisonChangelogView := view.OperationComparisonChangelogView_deprecated_2{
-		OperationId:       entity.OperationId,
-		CurrentOperation:  currentOperation,
-		PreviousOperation: previousOperation,
-		ChangeSummary:     entity.ChangesSummary,
-	}
-
-	switch entity.ApiType {
-	case string(view.RestApiType):
-		return view.RestOperationComparisonChangelogView_deprecated_2{
-			OperationComparisonChangelogView_deprecated_2: operationComparisonChangelogView,
-			RestOperationMetadata: view.RestOperationMetadata{
-				Path:   entity.Metadata.GetPath(),
-				Method: entity.Metadata.GetMethod(),
-				Tags:   entity.Metadata.GetTags(),
-			},
-		}
-	case string(view.GraphqlApiType):
-		return view.GraphQLOperationComparisonChangelogView_deprecated_2{
-			OperationComparisonChangelogView_deprecated_2: operationComparisonChangelogView,
-			GraphQLOperationMetadata: view.GraphQLOperationMetadata{
-				Type:   entity.Metadata.GetType(),
-				Method: entity.Metadata.GetMethod(),
-				Tags:   entity.Metadata.GetTags(),
-			},
-		}
-	case string(view.ProtobufApiType):
-		return view.ProtobufOperationComparisonChangelogView_deprecated_2{
-			OperationComparisonChangelogView_deprecated_2: operationComparisonChangelogView,
-			ProtobufOperationMetadata: view.ProtobufOperationMetadata{
-				Type:   entity.Metadata.GetType(),
-				Method: entity.Metadata.GetMethod(),
-			},
-		}
-	}
-	return operationComparisonChangelogView
 }
 
 func MakeOperationComparisonChangesView(entity OperationComparisonChangelogEntity) interface{} {

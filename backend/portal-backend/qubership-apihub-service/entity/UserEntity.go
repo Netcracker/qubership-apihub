@@ -49,8 +49,8 @@ func MakeUserV2View(userEntity *UserEntity) *view.User {
 	}
 }
 
-func MakeExtendedUserView(userEntity *UserEntity, gitIntegrationStatus bool, systemRole string, ttlSeconds *int) *view.ExtendedUser {
-	return &view.ExtendedUser{
+func MakeExtendedUserView_deprecated(userEntity *UserEntity, gitIntegrationStatus bool, systemRole string, ttlSeconds *int) *view.ExtendedUser_deprecated {
+	return &view.ExtendedUser_deprecated{
 		User: view.User{
 			Id:        userEntity.Id,
 			Name:      userEntity.Username,
@@ -58,6 +58,19 @@ func MakeExtendedUserView(userEntity *UserEntity, gitIntegrationStatus bool, sys
 			AvatarUrl: userEntity.AvatarUrl,
 		},
 		GitIntegrationStatus:  gitIntegrationStatus,
+		SystemRole:            systemRole,
+		AccessTokenTTLSeconds: ttlSeconds,
+	}
+}
+
+func MakeExtendedUserView(userEntity *UserEntity, systemRole string, ttlSeconds *int) *view.ExtendedUser {
+	return &view.ExtendedUser{
+		User: view.User{
+			Id:        userEntity.Id,
+			Name:      userEntity.Username,
+			Email:     userEntity.Email,
+			AvatarUrl: userEntity.AvatarUrl,
+		},
 		SystemRole:            systemRole,
 		AccessTokenTTLSeconds: ttlSeconds,
 	}

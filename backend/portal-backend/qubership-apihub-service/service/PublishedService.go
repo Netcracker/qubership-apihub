@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -48,35 +47,20 @@ import (
 )
 
 type PublishedService interface {
-	GetPackageVersions(packageId string) (*view.PublishedVersions, error)
-	GetVersion(packageId string, versionName string, importFiles bool, dependFiles bool) (*view.PublishedVersion, error)
 	GetVersionSources(packageId string, versionName string) ([]byte, error)
 	GetPublishedVersionSourceDataConfig(packageId string, versionName string) (*view.PublishedVersionSourceDataConfig, error)
 	GetPublishedVersionBuildConfig(packageId string, versionName string) (*view.BuildConfig, error)
-	GetLatestContentData_to_delete(packageId string, versionName string, contentId string) (*view.PublishedContent, *view.ContentData, error)
-	GetLatestContentBySlug(packageId string, versionName string, slug string) (*view.PublishedContent, error)
 	GetLatestContentDataBySlug(packageId string, versionName string, slug string) (*view.PublishedContent, *view.ContentData, error)
-	PackagePublished(packageId string) (bool, error)
 	VersionPublished(packageId string, versionName string) (bool, error)
 	DeleteVersion(ctx context.SecurityContext, packageId string, versionName string) error
-
-	GetSharedFile(shareId string) ([]byte, error)
-	SharePublishedFile(packageId string, versionName string, slug string) (*view.SharedUrlResult_deprecated, error)
-	GetFilteredPackages(ctx context.SecurityContext, filter string, groupId string, onlyFavorite bool) ([]view.Package, error)
-	GetPackagesByServiceName(ctx context.SecurityContext, serviceName string) ([]view.Package, error)
-	GetPackageById(ctx context.SecurityContext, id string) (*view.Package, error)
 
 	PublishPackage(buildArc *archive.BuildResultArchive, buildSrcEnt *entity.BuildSourceEntity,
 		buildConfig *view.BuildConfig, existingPackage *entity.PackageEntity) error
 	PublishChanges(buildArc *archive.BuildResultArchive, publishId string) error
 }
 
-func NewPublishedService(branchService BranchService,
-	versionRepo repository.PublishedRepository,
-	projectsRepo repository.PrjGrpIntRepository,
+func NewPublishedService(versionRepo repository.PublishedRepository,
 	buildRepository repository.BuildRepository,
-	gitClientProvider GitClientProvider,
-	websocketService WsBranchService,
 	favoritesRepo repository.FavoritesRepository,
 	operationRepo repository.OperationRepository,
 	atService ActivityTrackingService,
@@ -85,12 +69,8 @@ func NewPublishedService(branchService BranchService,
 	systemInfoService SystemInfoService,
 	publishNotificationService PublishNotificationService) PublishedService {
 	return &publishedServiceImpl{
-		branchService:              branchService,
 		publishedRepo:              versionRepo,
-		projectsRepo:               projectsRepo,
 		buildRepository:            buildRepository,
-		gitClientProvider:          gitClientProvider,
-		websocketService:           websocketService,
 		favoritesRepo:              favoritesRepo,
 		operationRepo:              operationRepo,
 		atService:                  atService,
@@ -103,12 +83,8 @@ func NewPublishedService(branchService BranchService,
 }
 
 type publishedServiceImpl struct {
-	branchService              BranchService
 	publishedRepo              repository.PublishedRepository
-	projectsRepo               repository.PrjGrpIntRepository
 	buildRepository            repository.BuildRepository
-	gitClientProvider          GitClientProvider
-	websocketService           WsBranchService
 	favoritesRepo              repository.FavoritesRepository
 	operationRepo              repository.OperationRepository
 	atService                  ActivityTrackingService
@@ -117,188 +93,6 @@ type publishedServiceImpl struct {
 	systemInfoService          SystemInfoService
 	publishedValidator         validation.PublishedValidator
 	publishNotificationService PublishNotificationService
-}
-
-func (p publishedServiceImpl) GetPackageVersions(packageId string) (*view.PublishedVersions, error) {
-	versions := make([]view.PublishedVersion, 0)
-	ents, err := p.publishedRepo.GetPackageVersions(packageId, "")
-	if err != nil {
-		return nil, err
-	}
-	for _, ent := range ents {
-		contentEnts, err := p.publishedRepo.GetRevisionContent(packageId, ent.Version, ent.Revision)
-		if err != nil {
-			return nil, err
-		}
-		refEnts, err := p.publishedRepo.GetRevisionRefs(packageId, ent.Version, ent.Revision)
-		if err != nil {
-			return nil, err
-		}
-		refViews, err := p.makeRefsView(refEnts)
-		if err != nil {
-			return nil, err
-		}
-		version := entity.MakePublishedVersionView(&ent, contentEnts, refViews)
-		versions = append(versions, *version)
-	}
-	return &view.PublishedVersions{Versions: versions}, nil
-}
-
-func (p publishedServiceImpl) GetVersion(packageId string, versionName string, importFiles bool, dependFiles bool) (*view.PublishedVersion, error) {
-	ent, err := p.getLatestRevision(packageId, versionName)
-	if err != nil {
-		return nil, err
-	}
-
-	filesEntsMap := make(map[string]entity.PublishedContentEntity)
-	packageFiles, err := p.publishedRepo.GetRevisionContent(packageId, versionName, ent.Revision)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, file := range packageFiles {
-		tmp := file
-		filesEntsMap[p.createRefFileId(file)] = tmp
-	}
-
-	refEntsInRefBlock, refEntsForFileBlock, err := p.evaluateRefsTree(packageId, versionName, ent.Revision)
-	if err != nil {
-		return nil, err
-	}
-
-	resultRefsViews, err := p.makeRefsView(refEntsInRefBlock)
-	if err != nil {
-		return nil, err
-	}
-
-	sort.Slice(resultRefsViews, func(aIndex, bIndex int) bool {
-		a := resultRefsViews[aIndex]
-		b := resultRefsViews[bIndex]
-		aKey := fmt.Sprintf("%s@@%s@@%s", a.Kind, a.PackageId, a.Version)
-		bKey := fmt.Sprintf("%s@@%s@@%s", b.Kind, b.PackageId, b.Version)
-		return aKey < bKey
-	})
-
-	for _, ref := range refEntsForFileBlock {
-		refEnt, err := p.getLatestRevision(ref.RefPackageId, ref.RefVersion)
-		if err != nil {
-			return nil, err
-		}
-
-		filesFromRefPackage, err := p.publishedRepo.GetRevisionContent(ref.RefPackageId, ref.RefVersion, refEnt.Revision)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, file := range filesFromRefPackage {
-			tmp := file
-			tmp.ReferenceId = ref.RefPackageId
-			filesEntsMap[p.createRefFileId(file)] = tmp
-		}
-	}
-
-	resultFilesEnts := make([]entity.PublishedContentEntity, 0)
-	for _, file := range filesEntsMap {
-		tmp := file
-		resultFilesEnts = append(resultFilesEnts, tmp)
-	}
-
-	sort.Slice(resultFilesEnts, func(aIndex, bIndex int) bool {
-		a := resultFilesEnts[aIndex]
-		b := resultFilesEnts[bIndex]
-		aKey := fmt.Sprintf("%s@@%v@@%s", a.ReferenceId, a.Index, a.Name)
-		bKey := fmt.Sprintf("%s@@%v@@%s", b.ReferenceId, b.Index, b.Name)
-		return aKey < bKey
-	})
-
-	version := entity.MakePublishedVersionView(ent, resultFilesEnts, resultRefsViews)
-	return version, nil
-}
-
-func (p publishedServiceImpl) getLatestRevision(packageId string, versionName string) (*entity.PublishedVersionEntity, error) {
-	ent, err := p.publishedRepo.GetVersion(packageId, versionName)
-	if err != nil {
-		return nil, err
-	}
-
-	if ent == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.PublishedVersionNotFound,
-			Message: exception.PublishedVersionNotFoundMsg,
-			Params:  map[string]interface{}{"version": versionName},
-		}
-	}
-	return ent, nil
-}
-
-func (p publishedServiceImpl) evaluateRefsTree(packageId string, versionName string, revision int) ([]entity.PublishedReferenceEntity, []entity.PublishedReferenceEntity, error) {
-	refEnts, err := p.publishedRepo.GetRevisionRefs(packageId, versionName, revision)
-	if err != nil {
-		return nil, nil, err
-	}
-	allExpandedReferences := make(map[string]entity.PublishedReferenceContainer)
-	for _, val := range refEnts {
-		if err = p.expandRefNode(val, allExpandedReferences); err != nil {
-			return nil, nil, err
-		}
-	}
-
-	refsBlock := make([]entity.PublishedReferenceEntity, 0)
-	filesBlock := make([]entity.PublishedReferenceEntity, 0)
-
-	for _, container := range allExpandedReferences {
-		for _, ref := range container.References {
-			tmp := ref
-			filesBlock = append(filesBlock, tmp)
-			refsBlock = append(refsBlock, tmp)
-		}
-	}
-	return refsBlock, filesBlock, nil
-}
-
-func (p publishedServiceImpl) expandRefNode(refNode entity.PublishedReferenceEntity, allReferences map[string]entity.PublishedReferenceContainer) error {
-	if p.addReferenceContainer(refNode, allReferences) {
-		ent, err := p.getLatestRevision(refNode.RefPackageId, refNode.RefVersion)
-		if err != nil {
-			return err
-		}
-		subReferences, err := p.publishedRepo.GetRevisionRefs(refNode.RefPackageId, refNode.RefVersion, ent.Revision)
-		if err != nil || subReferences == nil {
-			return err
-		}
-
-		for _, subRef := range subReferences {
-			if err := p.expandRefNode(subRef, allReferences); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (p publishedServiceImpl) addReferenceContainer(ref entity.PublishedReferenceEntity, refMap map[string]entity.PublishedReferenceContainer) bool {
-	key := p.createRefId(ref)
-	if c, containerExists := refMap[key]; containerExists {
-		if _, refExists := c.References[ref.RefVersion]; refExists {
-			return false
-		} else {
-			c.References[ref.RefVersion] = ref
-			return true
-		}
-	} else {
-		container := entity.PublishedReferenceContainer{References: make(map[string]entity.PublishedReferenceEntity)}
-		container.References[ref.RefVersion] = ref
-		refMap[key] = container
-		return true
-	}
-}
-
-func (p publishedServiceImpl) createRefId(ref entity.PublishedReferenceEntity) string {
-	return fmt.Sprintf("%s@@%s@@%s@@%s", ref.PackageId, ref.Version, ref.RefPackageId, ref.RefVersion)
-}
-func (p publishedServiceImpl) createRefFileId(refFile entity.PublishedContentEntity) string {
-	return fmt.Sprintf("%s@@%s@@%s@@%s", refFile.PackageId, refFile.Version, refFile.FileId, refFile.ReferenceId)
 }
 
 func (p publishedServiceImpl) GetVersionSources(packageId string, versionName string) ([]byte, error) {
@@ -474,107 +268,6 @@ func (p publishedServiceImpl) GetPublishedVersionBuildConfig(packageId string, v
 	return &buildConfig, nil
 }
 
-func (p publishedServiceImpl) makeRefsView(ents []entity.PublishedReferenceEntity) ([]view.PublishedRef, error) {
-	result := make([]view.PublishedRef, 0)
-	for _, ent := range ents {
-		packageEnt, err := p.publishedRepo.GetPackage(ent.RefPackageId)
-		if err != nil {
-			return nil, err
-		}
-		if packageEnt == nil {
-			return nil, &exception.CustomError{
-				Status:  http.StatusNotFound,
-				Code:    exception.ReferencedPackageNotFound,
-				Message: exception.ReferencedPackageNotFoundMsg,
-				Params:  map[string]interface{}{"package": ent.RefPackageId},
-			}
-		}
-
-		version, err := p.publishedRepo.GetVersion(ent.PackageId, ent.Version)
-		if err != nil {
-			return nil, err
-		}
-		if version == nil {
-			return nil, &exception.CustomError{
-				Status:  http.StatusNotFound,
-				Code:    exception.ReferencedPackageVersionNotFound,
-				Message: exception.ReferencedPackageVersionNotFoundMsg,
-				Params:  map[string]interface{}{"package": ent.PackageId, "version": ent.Version},
-			}
-		}
-		result = append(result, view.PublishedRef{
-			PackageId:     ent.RefPackageId,
-			Version:       ent.RefVersion,
-			Name:          packageEnt.Name,
-			Alias:         packageEnt.Alias,
-			VersionStatus: version.Status,
-			Kind:          packageEnt.Kind,
-		})
-	}
-	return result, nil
-}
-
-func (p publishedServiceImpl) GetLatestContentData_to_delete(packageId string, versionName string, contentId string) (*view.PublishedContent, *view.ContentData, error) {
-	ent, err := p.publishedRepo.GetVersion(packageId, versionName)
-	if err != nil {
-		return nil, nil, err
-	}
-	if ent == nil {
-		return nil, nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.PublishedVersionNotFound,
-			Message: exception.PublishedVersionNotFoundMsg,
-			Params:  map[string]interface{}{"version": versionName},
-		}
-	}
-
-	content, err := p.publishedRepo.GetLatestContent(packageId, versionName, contentId)
-	if err != nil {
-		return nil, nil, err
-	}
-	if content == nil {
-		return nil, nil, &exception.ContentNotFoundError{ContentId: contentId}
-	}
-
-	pce, err := p.publishedRepo.GetContentData(packageId, content.Checksum)
-	if err != nil {
-		return nil, nil, err
-	}
-	if pce == nil {
-		return nil, nil, &exception.ContentNotFoundError{ContentId: contentId}
-	}
-	return entity.MakePublishedContentView(content), entity.MakeContentDataViewPub(content, pce), nil
-}
-
-func (p publishedServiceImpl) GetLatestContentBySlug(packageId string, versionName string, slug string) (*view.PublishedContent, error) {
-	ent, err := p.publishedRepo.GetVersion(packageId, versionName)
-	if err != nil {
-		return nil, err
-	}
-	if ent == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.PublishedVersionNotFound,
-			Message: exception.PublishedVersionNotFoundMsg,
-			Params:  map[string]interface{}{"version": versionName},
-		}
-	}
-
-	content, err := p.publishedRepo.GetLatestContentBySlug(packageId, versionName, slug)
-	if err != nil {
-		return nil, err
-	}
-	if content == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.ContentSlugNotFound,
-			Message: exception.ContentSlugNotFoundMsg,
-			Params:  map[string]interface{}{"contentSlug": slug},
-		}
-	}
-	return entity.MakePublishedContentView(content), nil
-}
-
 func (p publishedServiceImpl) GetLatestContentDataBySlug(packageId string, versionName string, slug string) (*view.PublishedContent, *view.ContentData, error) {
 	ent, err := p.publishedRepo.GetVersion(packageId, versionName)
 	if err != nil {
@@ -617,14 +310,6 @@ func (p publishedServiceImpl) GetLatestContentDataBySlug(packageId string, versi
 	return entity.MakePublishedContentView(content), entity.MakeContentDataViewPub(content, pce), nil
 }
 
-func (p publishedServiceImpl) PackagePublished(packageId string) (bool, error) {
-	ents, err := p.publishedRepo.GetPackageVersions(packageId, "")
-	if err != nil {
-		return false, err
-	}
-	return len(ents) > 0, nil
-}
-
 func (p publishedServiceImpl) VersionPublished(packageId string, versionName string) (bool, error) {
 	ent, err := p.publishedRepo.GetVersionIncludingDeleted(packageId, versionName)
 	if err != nil {
@@ -644,238 +329,6 @@ func readZipFile(zf *zip.File) ([]byte, error) {
 
 func (p publishedServiceImpl) DeleteVersion(ctx context.SecurityContext, packageId string, versionName string) error {
 	return p.publishedRepo.MarkVersionDeleted(packageId, versionName, ctx.GetUserId())
-}
-
-func (p publishedServiceImpl) SharePublishedFile(packageId string, versionName string, slug string) (*view.SharedUrlResult_deprecated, error) {
-	version, err := p.publishedRepo.GetVersion(packageId, versionName)
-	if err != nil {
-		return nil, err
-	}
-	if version == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.PublishedVersionNotFound,
-			Message: exception.PublishedVersionNotFoundMsg,
-			Params:  map[string]interface{}{"version": versionName},
-		}
-	}
-
-	content, err := p.publishedRepo.GetLatestContentBySlug(packageId, versionName, slug)
-	if err != nil {
-		return nil, err
-	}
-
-	if content == nil {
-		return nil, &exception.ContentNotFoundError{ContentId: slug}
-	}
-
-	for attempts := 0; attempts < 100; attempts++ {
-		sharedIdInfoEntity, err := p.publishedRepo.GetFileSharedInfo(packageId, slug, versionName)
-		if err != nil {
-			return nil, err
-		}
-		if sharedIdInfoEntity != nil {
-			return entity.MakeSharedUrlInfo(sharedIdInfoEntity), nil
-		}
-
-		newSharedUrlInfoEntity := &entity.SharedUrlInfoEntity{
-			SharedId:  generateSharedId(8),
-			PackageId: packageId,
-			Version:   versionName,
-			FileId:    slug, // TODO: Slug!
-		}
-		if err := p.publishedRepo.CreateFileSharedInfo(newSharedUrlInfoEntity); err != nil {
-			if customError, ok := err.(*exception.CustomError); ok {
-				if customError.Code == exception.GeneratedSharedIdIsNotUnique {
-					continue
-				} else {
-					return nil, err
-				}
-			}
-		} else {
-			return entity.MakeSharedUrlInfo(newSharedUrlInfoEntity), nil
-		}
-	}
-	return nil, fmt.Errorf("failed to generate unique shared id")
-}
-
-func (p publishedServiceImpl) GetSharedFile(sharedId string) ([]byte, error) {
-	sharedIdInfo, err := p.publishedRepo.GetFileSharedInfoById(sharedId)
-	if err != nil {
-		return nil, err
-	}
-	if sharedIdInfo == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.SharedIdIsIncorrect,
-			Message: exception.SharedIdIsIncorrectMsg,
-			Params:  map[string]interface{}{"sharedId": sharedId},
-		}
-	}
-	version, err := p.publishedRepo.GetVersionIncludingDeleted(sharedIdInfo.PackageId, sharedIdInfo.Version)
-	if err != nil {
-		return nil, err
-	}
-	if version == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.PublishedVersionNotFound,
-			Message: exception.PublishedVersionNotFoundMsg,
-			Params:  map[string]interface{}{"version": sharedIdInfo.Version},
-		}
-	}
-	if version.DeletedAt != nil && !version.DeletedAt.IsZero() {
-		return nil, &exception.CustomError{
-			Status:  http.StatusGone,
-			Code:    exception.SharedContentUnavailable,
-			Message: exception.SharedContentUnavailableMsg,
-			Params:  map[string]interface{}{"sharedId": sharedId},
-		}
-	}
-
-	content, err := p.publishedRepo.GetLatestContentBySlug(sharedIdInfo.PackageId, sharedIdInfo.Version, sharedIdInfo.FileId)
-	if err != nil {
-		return nil, err
-	}
-	if content == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.NoContentFoundForSharedId,
-			Message: exception.NoContentFoundForSharedIdMsg,
-			Params:  map[string]interface{}{"sharedId": sharedId},
-		}
-	}
-
-	pce, err := p.publishedRepo.GetContentData(content.PackageId, content.Checksum)
-	if err != nil {
-		return nil, err
-	}
-	if pce == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.NoContentFoundForSharedId,
-			Message: exception.NoContentFoundForSharedIdMsg,
-			Params:  map[string]interface{}{"sharedId": sharedId},
-		}
-	}
-	return pce.Data, nil
-}
-
-func (p publishedServiceImpl) GetFilteredPackages(ctx context.SecurityContext, filter string, groupId string, onlyFavorite bool) ([]view.Package, error) {
-	result := make([]view.Package, 0)
-	entities, err := p.publishedRepo.GetFilteredPackages(filter, groupId)
-	if err != nil {
-		return nil, err
-	}
-	var groups []view.Group
-	if groupId != "" {
-		groups, err = p.getParentGroups(groupId)
-		if err != nil {
-			return nil, err
-		}
-	}
-	for _, ent := range entities {
-		if groupId == "" {
-			groups, err = p.getParentGroups(ent.ParentId)
-			if err != nil {
-				return nil, err
-			}
-		}
-		isFavorite, err := p.favoritesRepo.IsFavoritePackage(ctx.GetUserId(), ent.Id)
-		if err != nil {
-			return nil, err
-		}
-		versionEntity, err := p.publishedRepo.GetLastVersion(ent.Id)
-		if err != nil {
-			return nil, err
-		}
-		if versionEntity != nil {
-			ent.LastVersion = versionEntity.Version
-		}
-
-		packageView := *entity.MakePackageView(&ent, isFavorite, groups)
-
-		if !onlyFavorite || (onlyFavorite && isFavorite) { // TODO: need to handle via repository
-			result = append(result, packageView)
-		}
-	}
-	//todo paging
-	return result, nil
-}
-
-func (p publishedServiceImpl) GetPackagesByServiceName(ctx context.SecurityContext, serviceName string) ([]view.Package, error) {
-	result := make([]view.Package, 0)
-	packageEnt, err := p.publishedRepo.GetPackageForServiceName(serviceName)
-	if err != nil {
-		return nil, err
-	}
-	if packageEnt != nil {
-		groups, err := p.getParentGroups(packageEnt.ParentId)
-		if err != nil {
-			return nil, err
-		}
-		isFavorite, err := p.favoritesRepo.IsFavoritePackage(ctx.GetUserId(), packageEnt.Id)
-		if err != nil {
-			return nil, err
-		}
-		versionEntity, err := p.publishedRepo.GetLastVersion(packageEnt.Id)
-		if err != nil {
-			return nil, err
-		}
-		if versionEntity != nil {
-			packageEnt.LastVersion = versionEntity.Version
-		}
-
-		packageView := *entity.MakePackageView(packageEnt, isFavorite, groups)
-
-		result = append(result, packageView)
-	}
-	return result, nil
-}
-
-func (p publishedServiceImpl) GetPackageById(ctx context.SecurityContext, id string) (*view.Package, error) {
-	packageEnt, err := p.publishedRepo.GetPackage(id)
-	if err != nil {
-		return nil, err
-	}
-	if packageEnt == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.PackageNotFound,
-			Message: exception.PackageNotFoundMsg,
-			Params:  map[string]interface{}{"packageId": id},
-		}
-	}
-	groups, err := p.getParentGroups(packageEnt.Id)
-	if err != nil {
-		return nil, err
-	}
-	isFavorite, err := p.favoritesRepo.IsFavoritePackage(ctx.GetUserId(), packageEnt.Id)
-	if err != nil {
-		return nil, err
-	}
-	versionEntity, err := p.publishedRepo.GetLastVersion(packageEnt.Id)
-	if err != nil {
-		return nil, err
-	}
-	if versionEntity != nil {
-		packageEnt.LastVersion = versionEntity.Version
-	}
-
-	packageView := entity.MakePackageView(packageEnt, isFavorite, groups)
-	return packageView, nil
-}
-
-func (p publishedServiceImpl) getParentGroups(groupId string) ([]view.Group, error) {
-	groups, err := p.publishedRepo.GetParentPackageGroups(groupId)
-	if err != nil {
-		return nil, err
-	}
-	var result []view.Group
-	for _, grp := range groups {
-		result = append(result, *entity.MakePackageGroupView(&grp))
-	}
-	return result, err
 }
 
 func validatePublishSources(filesFromSourcesArchive map[string]struct{}, filesFromConfig []view.BCFile) error {

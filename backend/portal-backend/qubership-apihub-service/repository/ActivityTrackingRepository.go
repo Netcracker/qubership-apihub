@@ -25,7 +25,6 @@ import (
 type ActivityTrackingRepository interface {
 	CreateEvent(ent *entity.ActivityTrackingEntity) error
 
-	GetEventsForPackages_deprecated(packageIds []string, limit int, page int, textFilter string, types []string) ([]entity.EnrichedActivityTrackingEntity_deprecated, error)
 	GetEventsForPackages(packageIds []string, limit int, page int, textFilter string, types []string) ([]entity.EnrichedActivityTrackingEntity, error)
 }
 
@@ -47,40 +46,6 @@ func (a activityTrackingRepositoryImpl) CreateEvent(ent *entity.ActivityTracking
 	return nil
 }
 
-func (a activityTrackingRepositoryImpl) GetEventsForPackages_deprecated(packageIds []string, limit int, page int, textFilter string, types []string) ([]entity.EnrichedActivityTrackingEntity_deprecated, error) {
-	var result []entity.EnrichedActivityTrackingEntity_deprecated
-
-	query := a.cp.GetConnection().Model(&result).
-		ColumnExpr("at.*").ColumnExpr("get_latest_revision(at.package_id, at.data #>> '{version}') != (at.data #>> '{revision}')::int as not_latest_revision").ColumnExpr("pkg.name as pkg_name, pkg.kind as pkg_kind, usr.name as usr_name").
-		Join("inner join package_group as pkg").JoinOn("at.package_id=pkg.id").
-		Join("inner join user_data as usr").JoinOn("at.user_id=usr.user_id")
-
-	if len(packageIds) > 0 {
-		query.Where("at.package_id in (?)", pg.In(packageIds))
-	}
-	if len(types) > 0 {
-		query.Where("at.e_type in (?)", pg.In(types))
-	}
-	if textFilter != "" {
-		textFilter = "%" + utils.LikeEscaped(textFilter) + "%"
-		query.WhereGroup(func(query *orm.Query) (*orm.Query, error) {
-			return query.Where("pkg.name ilike ?", textFilter).WhereOr("usr.name ilike ?", textFilter), nil
-		})
-	}
-	query.Order("date DESC").Limit(limit).Offset(limit * page)
-
-	err := query.Select()
-	if err != nil {
-		return nil, err
-	}
-
-	if err != nil {
-		if err != pg.ErrNoRows {
-			return nil, err
-		}
-	}
-	return result, nil
-}
 func (a activityTrackingRepositoryImpl) GetEventsForPackages(packageIds []string, limit int, page int, textFilter string, types []string) ([]entity.EnrichedActivityTrackingEntity, error) {
 	var result []entity.EnrichedActivityTrackingEntity
 

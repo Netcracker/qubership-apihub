@@ -14,14 +14,6 @@
 
 package view
 
-type ApiKeyStatus struct {
-	Status string `json:"status"`
-}
-
-type ApiKeyRequest struct {
-	ApiKey string `json:"apikey"`
-}
-
 type ApiKey struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`

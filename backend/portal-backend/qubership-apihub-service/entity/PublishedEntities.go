@@ -36,7 +36,6 @@ type PackageEntity struct {
 	ParentId              string     `pg:"parent_id, type:varchar"`
 	Alias                 string     `pg:"alias, type:varchar"`
 	Description           string     `pg:"description, type:varchar"`
-	ImageUrl              string     `pg:"image_url, type:varchar"`
 	CreatedAt             time.Time  `pg:"created_at, type:timestamp without time zone"`
 	CreatedBy             string     `pg:"created_by, type:varchar"`
 	DeletedAt             *time.Time `pg:"deleted_at, type:timestamp without time zone"`
@@ -61,14 +60,6 @@ type PackageVersionRichEntity struct {
 	NotLatestRevision bool     `pg:"not_latest_revision, type:bool"`
 }
 
-type PackageVersionRevisionEntity_deprecated struct {
-	tableName struct{} `pg:"published_version, alias:published_version"`
-
-	PublishedVersionEntity
-	UserEntity
-	NotLatestRevision bool `pg:"not_latest_revision, type:bool"`
-}
-
 type PackageVersionRevisionEntity struct {
 	tableName struct{} `pg:"published_version, alias:published_version"`
 
@@ -83,14 +74,6 @@ type PackageVersionHistoryEntity struct {
 
 	PublishedVersionEntity
 	ApiTypes []string `pg:"api_types, type:varchar[]"`
-}
-
-type PackageFavEntity struct {
-	tableName struct{} `pg:"package_group, alias:package_group"`
-
-	PackageEntity
-
-	UserId string `pg:"user_id, pk, type:varchar"`
 }
 
 type PublishedVersionEntity struct {
@@ -108,15 +91,6 @@ type PublishedVersionEntity struct {
 	Metadata                 Metadata   `pg:"metadata, type:jsonb"`
 	Labels                   []string   `pg:"labels, type:varchar array, array"`
 	CreatedBy                string     `pg:"created_by, type:varchar"`
-}
-
-// todo remove this entity after migration createdBy:string -> createdBy:UserObject
-type ReadonlyPublishedVersionEntity_deprecated struct {
-	tableName struct{} `pg:"published_version, alias:published_version"`
-
-	PublishedVersionEntity
-	UserName                string `pg:"user_name, type:varchar"`
-	PreviousVersionRevision int    `pg:"previous_version_revision, type:integer"`
 }
 
 type PublishedVersionSearchQueryEntity struct {
@@ -159,16 +133,6 @@ type PackageVersionSearchQueryEntity struct {
 	Limit              int    `pg:"limit, type:integer, use_zero"`
 	Offset             int    `pg:"offset, type:integer, use_zero"`
 	ShowAllDescendants bool   `pg:"show_all_descendants, type:bool, use_zero"`
-}
-
-type PublishedShortVersionEntity struct {
-	tableName struct{} `pg:"published_version,discard_unknown_columns"`
-
-	PackageId   string    `pg:"package_id, pk, type:varchar"`
-	Version     string    `pg:"version, pk, type:varchar"`
-	Revision    int       `pg:"revision, pk, type:integer"`
-	Status      string    `pg:"status, type:varchar"`
-	PublishedAt time.Time `pg:"published_at, type:timestamp without time zone"`
 }
 
 type PublishedVersionKeyEntity struct {
@@ -250,10 +214,6 @@ type PublishedReferenceEntity struct {
 	Excluded           bool   `pg:"excluded, type:boolean, use_zero"`
 }
 
-type PublishedReferenceContainer struct {
-	References map[string]PublishedReferenceEntity
-}
-
 type SharedUrlInfoEntity struct {
 	tableName struct{} `pg:"shared_url_info"`
 
@@ -261,17 +221,6 @@ type SharedUrlInfoEntity struct {
 	Version   string `pg:"version, type:varchar"`
 	FileId    string `pg:"file_id, type:varchar"` // TODO: slug!
 	SharedId  string `pg:"shared_id, pk, type:varchar"`
-}
-
-// deprecated
-type PackageVersionPublishedReference struct {
-	tableName struct{} `pg:"published_version_reference, alias:published_version_reference"`
-	PublishedReferenceEntity
-	PackageName   string     `pg:"package_name, type:varchar"`
-	Kind          string     `pg:"kind, type:varchar"`
-	VersionStatus string     `pg:"version_status, type:varchar"`
-	DeletedAt     *time.Time `pg:"deleted_at, type:timestamp without time zone"`
-	DeletedBy     string     `pg:"deleted_by, type:varchar"`
 }
 
 type PublishedSrcEntity struct {
@@ -336,49 +285,6 @@ func MakePublishedReferenceView(entity PublishedReferenceEntity) view.VersionRef
 	}
 }
 
-func MakePublishedVersionView(versionEnt *PublishedVersionEntity, contentEnts []PublishedContentEntity, refs []view.PublishedRef) *view.PublishedVersion {
-	contents := make([]view.PublishedContent, 0)
-	for _, ent := range contentEnts {
-		contents = append(contents, *MakePublishedContentView(&ent))
-	}
-
-	status, _ := view.ParseVersionStatus(versionEnt.Status)
-	var labels []string
-	if versionEnt.Labels != nil {
-		labels = versionEnt.Labels
-	} else {
-		labels = make([]string, 0)
-	}
-
-	return &view.PublishedVersion{
-		PackageId:                versionEnt.PackageId,
-		Version:                  versionEnt.Version,
-		Revision:                 versionEnt.Revision,
-		Status:                   status,
-		PublishedAt:              versionEnt.PublishedAt,
-		PreviousVersion:          versionEnt.PreviousVersion,
-		PreviousVersionPackageId: versionEnt.PreviousVersionPackageId,
-		DeletedAt:                versionEnt.DeletedAt,
-		BranchName:               versionEnt.Metadata.GetBranchName(),
-		Contents:                 contents,
-		RelatedPackages:          refs,
-		VersionLabels:            labels,
-	}
-}
-
-// todo remove this entity after migration createdBy:string -> createdBy:UserObject
-func MakeReadonlyPublishedVersionListView2_deprecated(versionEnt *ReadonlyPublishedVersionEntity_deprecated) *view.PublishedVersionListView_deprecated_v2 {
-	return &view.PublishedVersionListView_deprecated_v2{
-		Version:                  view.MakeVersionRefKey(versionEnt.Version, versionEnt.Revision),
-		Status:                   versionEnt.Status,
-		CreatedAt:                versionEnt.PublishedAt,
-		CreatedBy:                versionEnt.UserName,
-		PreviousVersion:          view.MakeVersionRefKey(versionEnt.PreviousVersion, versionEnt.PreviousVersionRevision),
-		VersionLabels:            versionEnt.Labels,
-		PreviousVersionPackageId: versionEnt.PreviousVersionPackageId,
-	}
-}
-
 func MakeReadonlyPublishedVersionListView2(versionEnt *PackageVersionRevisionEntity) *view.PublishedVersionListView {
 	item := view.PublishedVersionListView{
 		Version:                  view.MakeVersionRefKey(versionEnt.Version, versionEnt.Revision),
@@ -406,18 +312,6 @@ func MakePublishedVersionHistoryView(ent PackageVersionHistoryEntity) view.Publi
 	}
 }
 
-func MakePublishedVersionListView(versionEnt *PublishedVersionEntity) *view.PublishedVersionListView_deprecated {
-	status, _ := view.ParseVersionStatus(versionEnt.Status)
-	return &view.PublishedVersionListView_deprecated{
-		Version:                  versionEnt.Version,
-		Revision:                 versionEnt.Revision,
-		Status:                   status,
-		PublishedAt:              versionEnt.PublishedAt,
-		PreviousVersion:          versionEnt.PreviousVersion,
-		PreviousVersionPackageId: versionEnt.PreviousVersionPackageId,
-	}
-}
-
 func MakePublishedContentView(ent *PublishedContentEntity) *view.PublishedContent {
 	return &view.PublishedContent{
 		ContentId:   ent.FileId,
@@ -431,24 +325,6 @@ func MakePublishedContentView(ent *PublishedContentEntity) *view.PublishedConten
 		Title:       ent.Title,
 		Version:     ent.Version,
 		ReferenceId: ent.ReferenceId,
-	}
-}
-
-// deprecated
-func MakePublishedDocumentView_deprecated(ent *PublishedContentEntity) *view.PublishedDocument_deprecated {
-	return &view.PublishedDocument_deprecated{
-		FieldId:      ent.FileId,
-		Type:         ent.DataType,
-		Format:       ent.Format,
-		Slug:         ent.Slug,
-		Labels:       ent.Metadata.GetLabels(),
-		Description:  ent.Metadata.GetDescription(),
-		Version:      ent.Metadata.GetVersion(),
-		Info:         ent.Metadata.GetInfo(),
-		ExternalDocs: ent.Metadata.GetExternalDocs(),
-		Title:        ent.Title,
-		Filename:     ent.Filename,
-		Tags:         ent.Metadata.GetDocTags(),
 	}
 }
 
@@ -500,27 +376,12 @@ func MakePublishedDocumentRefView2(ent *PublishedContentEntity) *view.PublishedD
 		PackageRef:  view.MakePackageRefKey(ent.PackageId, ent.Version, ent.Revision),
 	}
 }
-func MakePublishedContentChangeView(ent *PublishedContentEntity) *view.PublishedContentChange {
-	return &view.PublishedContentChange{
-		FileId:   ent.FileId,
-		Type:     view.ParseTypeFromString(ent.DataType),
-		Title:    ent.Title,
-		Slug:     ent.Slug,
-		Checksum: ent.Checksum,
-	}
-}
 
 func MakeContentDataViewPub(content *PublishedContentEntity, contentData *PublishedContentDataEntity) *view.ContentData {
 	return &view.ContentData{
 		FileId:   content.FileId,
 		Data:     contentData.Data,
 		DataType: contentData.MediaType,
-	}
-}
-
-func MakeSharedUrlInfo(sui *SharedUrlInfoEntity) *view.SharedUrlResult_deprecated {
-	return &view.SharedUrlResult_deprecated{
-		SharedId: sui.SharedId,
 	}
 }
 
@@ -538,7 +399,6 @@ func MakePackageEntity(packg *view.SimplePackage) *PackageEntity {
 		ParentId:              packg.ParentId,
 		Alias:                 packg.Alias,
 		Description:           packg.Description,
-		ImageUrl:              packg.ImageUrl,
 		DefaultRole:           packg.DefaultRole,
 		CreatedAt:             packg.CreatedAt,
 		CreatedBy:             packg.CreatedBy,
@@ -573,11 +433,6 @@ func MakeSimplePackageUpdateEntity(existingPackage *PackageEntity, packg *view.P
 	} else {
 		packageEntity.Description = existingPackage.Description
 	}
-	if packg.ImageUrl != nil {
-		packageEntity.ImageUrl = *packg.ImageUrl
-	} else {
-		packageEntity.ImageUrl = existingPackage.ImageUrl
-	}
 	if packg.ServiceName != nil {
 		packageEntity.ServiceName = *packg.ServiceName
 	} else {
@@ -611,90 +466,6 @@ func MakeSimplePackageUpdateEntity(existingPackage *PackageEntity, packg *view.P
 	return &packageEntity
 }
 
-func MakePackageGroupEntity(group *view.Group) *PackageEntity {
-	kind := KIND_GROUP
-	if group.ParentId == "" {
-		kind = KIND_WORKSPACE
-	}
-	return &PackageEntity{
-		Id:          group.Id,
-		Kind:        kind,
-		Name:        group.Name,
-		ParentId:    group.ParentId,
-		Alias:       group.Alias,
-		Description: group.Description,
-		ImageUrl:    group.ImageUrl,
-		CreatedAt:   group.CreatedAt,
-		CreatedBy:   group.CreatedBy,
-		DeletedAt:   group.DeletedAt,
-		DeletedBy:   group.DeletedBy,
-		DefaultRole: view.ViewerRoleId, //todo remove after full v2 migration
-	}
-}
-
-func MakePackageGroupUpdateEntity(existingGroup *PackageEntity, group *view.Group) *PackageEntity {
-	kind := KIND_GROUP
-	if existingGroup.ParentId == "" {
-		kind = KIND_WORKSPACE
-	}
-	return &PackageEntity{
-		Id:          existingGroup.Id,
-		Kind:        kind,
-		Name:        group.Name,
-		ParentId:    existingGroup.ParentId,
-		Alias:       existingGroup.Alias,
-		Description: group.Description,
-		ImageUrl:    group.ImageUrl,
-		CreatedAt:   existingGroup.CreatedAt,
-		CreatedBy:   existingGroup.CreatedBy,
-		DeletedAt:   existingGroup.DeletedAt,
-		DeletedBy:   existingGroup.DeletedBy,
-		DefaultRole: view.ViewerRoleId, //todo remove after full v2 migration
-		ServiceName: existingGroup.ServiceName,
-	}
-}
-
-func MakePackageGroupView(entity *PackageEntity) *view.Group {
-	return &view.Group{
-		Id:          entity.Id,
-		ParentId:    entity.ParentId,
-		Name:        entity.Name,
-		Alias:       entity.Alias,
-		Description: entity.Description,
-		ImageUrl:    entity.ImageUrl,
-		CreatedAt:   entity.CreatedAt,
-		CreatedBy:   entity.CreatedBy,
-		DeletedAt:   entity.DeletedAt,
-		DeletedBy:   entity.DeletedBy,
-		LastVersion: entity.LastVersion,
-	}
-}
-
-func MakePackageGroupFavView(entity *PackageFavEntity) *view.Group {
-	view := MakePackageGroupView(&entity.PackageEntity)
-	view.IsFavorite = entity.UserId != "" && entity.Id != ""
-	return view
-}
-
-func MakePackageGroupInfoView(entity *PackageEntity, parents []view.Group, isFavorite bool) *view.GroupInfo {
-	var parentsRes []view.Group
-	if parents == nil {
-		parentsRes = make([]view.Group, 0)
-	} else {
-		parentsRes = parents
-	}
-
-	return &view.GroupInfo{
-		GroupId:     entity.Id,
-		ParentId:    entity.ParentId,
-		Name:        entity.Name,
-		Alias:       entity.Alias,
-		ImageUrl:    entity.ImageUrl,
-		Parents:     parentsRes,
-		IsFavorite:  isFavorite,
-		LastVersion: entity.LastVersion,
-	}
-}
 func MakeSimplePackageView(entity *PackageEntity, parents []view.ParentPackageInfo, isFavorite bool, userPermissions []string) *view.SimplePackage {
 	var parentsRes []view.ParentPackageInfo
 	if parents == nil {
@@ -708,7 +479,6 @@ func MakeSimplePackageView(entity *PackageEntity, parents []view.ParentPackageIn
 		ParentId:              entity.ParentId,
 		Name:                  entity.Name,
 		Alias:                 entity.Alias,
-		ImageUrl:              entity.ImageUrl,
 		Parents:               parentsRes,
 		IsFavorite:            isFavorite,
 		ServiceName:           entity.ServiceName,
@@ -747,7 +517,6 @@ func MakePackagesInfo(entity *PackageEntity, defaultVersionDetails *view.Version
 	}
 
 	if !showOnlyDeleted {
-		packageInfo.ImageUrl = entity.ImageUrl
 		packageInfo.IsFavorite = isFavorite
 		packageInfo.UserPermissions = userPermissions
 		packageInfo.LastReleaseVersionDetails = defaultVersionDetails
@@ -759,50 +528,13 @@ func MakePackagesInfo(entity *PackageEntity, defaultVersionDetails *view.Version
 	return &packageInfo
 }
 
-func MakePackageView(packageEntity *PackageEntity, isFavorite bool, groups []view.Group) *view.Package {
-	if groups == nil {
-		groups = make([]view.Group, 0)
-	}
-	return &view.Package{
-		Id:           packageEntity.Id,
-		GroupId:      packageEntity.ParentId,
-		Name:         packageEntity.Name,
-		Alias:        packageEntity.Alias,
-		Description:  packageEntity.Description,
-		IsFavorite:   isFavorite,
-		Groups:       groups,
-		DeletionDate: packageEntity.DeletedAt,
-		DeletedBy:    packageEntity.DeletedBy,
-		ServiceName:  packageEntity.ServiceName,
-		LastVersion:  packageEntity.LastVersion,
-	}
-}
-
 func MakePackageParentView(entity *PackageEntity) *view.ParentPackageInfo {
 	return &view.ParentPackageInfo{
 		Id:       entity.Id,
 		ParentId: entity.ParentId,
 		Name:     entity.Name,
 		Alias:    entity.Alias,
-		ImageUrl: entity.ImageUrl,
 		Kind:     entity.Kind,
-	}
-}
-
-func MakePackageUpdateEntity(existingEntity *PackageEntity, packageView *view.Package) *PackageEntity {
-	return &PackageEntity{
-		Id:          existingEntity.Id,
-		Kind:        KIND_PACKAGE,
-		Name:        packageView.Name,
-		ParentId:    existingEntity.ParentId,
-		Alias:       existingEntity.Alias,
-		Description: packageView.Description,
-		CreatedAt:   existingEntity.CreatedAt,
-		CreatedBy:   existingEntity.CreatedBy,
-		DeletedAt:   existingEntity.DeletedAt,
-		DeletedBy:   existingEntity.DeletedBy,
-		DefaultRole: view.ViewerRoleId, //todo remove after full v2 migration
-		ServiceName: packageView.ServiceName,
 	}
 }
 
@@ -819,26 +551,6 @@ func MakePackageVersionRef(entity *PackageVersionRichEntity) view.PackageVersion
 		ServiceName:       entity.ServiceName,
 		NotLatestRevision: entity.NotLatestRevision,
 	}
-}
-
-func MakePackageVersionRevisionView_deprecated(ent *PackageVersionRevisionEntity_deprecated) *view.PackageVersionRevision_deprecated {
-	packageVersionRevision := view.PackageVersionRevision_deprecated{
-		Version:        view.MakeVersionRefKey(ent.Version, ent.Revision),
-		Revision:       ent.Revision,
-		Status:         ent.Status,
-		CreatedAt:      ent.PublishedAt,
-		CreatedBy:      *MakeUserV2View(&ent.UserEntity),
-		RevisionLabels: ent.Labels,
-		PublishMeta: view.BuildConfigMetadata{
-			BranchName:    ent.Metadata.GetBranchName(),
-			RepositoryUrl: ent.Metadata.GetRepositoryUrl(),
-			CloudName:     ent.Metadata.GetCloudName(),
-			CloudUrl:      ent.Metadata.GetCloudUrl(),
-			Namespace:     ent.Metadata.GetNamespace(),
-		},
-		NotLatestRevision: ent.NotLatestRevision,
-	}
-	return &packageVersionRevision
 }
 
 func MakePackageVersionRevisionView(ent *PackageVersionRevisionEntity) *view.PackageVersionRevision {

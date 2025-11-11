@@ -47,7 +47,6 @@ type SystemInfoService interface {
 	GetJwtPrivateKey() []byte
 	IsProductionMode() bool
 	GetBackendVersion() string
-	GetGitlabUrl() string
 	GetListenAddress() string
 	GetAllowedOrigins() []string
 	GetPGHost() string
@@ -55,12 +54,9 @@ type SystemInfoService interface {
 	GetPGDB() string
 	GetPGUser() string
 	GetPGPassword() string
-	GetClientID() string
-	GetClientSecret() string
 	GetAPIHubUrl() string
 	GetPublishArchiveSizeLimitMB() int64
 	GetPublishFileSizeLimitMB() int64
-	GetBranchContentSizeLimitMB() int64
 	GetReleaseVersionPattern() string
 	GetCredsFromEnv() *view.DbCredentials
 	GetLdapServer() string
@@ -85,7 +81,6 @@ type SystemInfoService interface {
 	GetAllowedHosts() []string
 	GetZeroDayAdminCreds() (string, string)
 	GetSystemApiKey() string
-	GetEditorDisabled() bool
 	FailBuildOnBrokenRefs() bool
 	GetAccessTokenDurationSec() int
 	GetRefreshTokenDurationSec() int
@@ -143,6 +138,11 @@ func NewSystemInfoService() (SystemInfoService, error) {
 type systemInfoServiceImpl struct {
 	config     config.Config
 	authConfig idp.AuthConfig
+}
+
+func (g *systemInfoServiceImpl) GetClientSecret() string {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (g *systemInfoServiceImpl) GetSystemInfo() *view.SystemInfo {
@@ -221,14 +221,12 @@ func (g *systemInfoServiceImpl) setDefaults() {
 	viper.SetDefault("technicalParameters.metricsGetterSchedule", "* * * * *") // every minute
 	viper.SetDefault("businessParameters.publishArchiveSizeLimitMb", 50)
 	viper.SetDefault("businessParameters.publishFileSizeLimitMb", 15)
-	viper.SetDefault("businessParameters.branchContentSizeLimitMb", 50)
 	viper.SetDefault("businessParameters.releaseVersionPattern", ".*")
 	viper.SetDefault("businessParameters.externalLinks", []string{})
 	viper.SetDefault("businessParameters.failBuildOnBrokenRefs", true)
 	viper.SetDefault("monitoring.enabled", false)
 	viper.SetDefault("s3Storage.enabled", false)
 	viper.SetDefault("s3Storage.storeOnlyBuildResult", false)
-	viper.SetDefault("editor.disabled", true)
 	viper.SetDefault("olric.discoveryMode", "local")
 	viper.SetDefault("olric.replicaCount", 1)
 	viper.SetDefault("cleanup.builds.schedule", "0 1 * * 0")     // at 01:00 AM on Sunday
@@ -311,10 +309,6 @@ func (g *systemInfoServiceImpl) GetBackendVersion() string {
 	return g.config.TechnicalParameters.BackendVersion
 }
 
-func (g *systemInfoServiceImpl) GetGitlabUrl() string {
-	return g.config.Editor.GitlabUrl
-}
-
 func (g *systemInfoServiceImpl) GetListenAddress() string {
 	return g.config.TechnicalParameters.ListenAddress
 }
@@ -343,24 +337,12 @@ func (g *systemInfoServiceImpl) GetPGPassword() string {
 	return g.config.Database.Password
 }
 
-func (g *systemInfoServiceImpl) GetClientID() string {
-	return g.config.Editor.ClientId
-}
-
-func (g *systemInfoServiceImpl) GetClientSecret() string {
-	return g.config.Editor.ClientSecret
-}
-
 func (g *systemInfoServiceImpl) GetAPIHubUrl() string {
 	return g.config.Security.ApihubExternalUrl
 }
 
 func (g *systemInfoServiceImpl) GetPublishArchiveSizeLimitMB() int64 {
 	return int64(g.config.BusinessParameters.PublishArchiveSizeLimitMb * bytesInMb)
-}
-
-func (g *systemInfoServiceImpl) GetBranchContentSizeLimitMB() int64 {
-	return int64(g.config.BusinessParameters.BranchContentSizeLimitMb * bytesInMb)
 }
 
 func (g *systemInfoServiceImpl) GetPublishFileSizeLimitMB() int64 {
@@ -457,10 +439,6 @@ func (g *systemInfoServiceImpl) GetZeroDayAdminCreds() (string, string) {
 
 func (g *systemInfoServiceImpl) GetSystemApiKey() string {
 	return g.config.ZeroDayConfiguration.AccessToken
-}
-
-func (g *systemInfoServiceImpl) GetEditorDisabled() bool {
-	return g.config.Editor.Disabled
 }
 
 func (g *systemInfoServiceImpl) FailBuildOnBrokenRefs() bool {

@@ -70,31 +70,6 @@ type OperationSearchQuery struct {
 	GraphqlApiType string `pg:"graphql_api_type, type:varchar, use_zero"`
 }
 
-// deprecated
-type OperationSearchResult_deprecated struct {
-	tableName struct{} `pg:",discard_unknown_columns"`
-
-	PackageId     string   `pg:"package_id, type:varchar"`
-	PackageName   string   `pg:"name, type:varchar"`
-	Version       string   `pg:"version, type:varchar"`
-	Revision      int      `pg:"revision type:integer"`
-	VersionStatus string   `pg:"status, type:varchar"`
-	OperationId   string   `pg:"operation_id, type:varchar"`
-	Title         string   `pg:"title, type:varchar"`
-	Deprecated    bool     `pg:"deprecated, type:boolean"`
-	ApiType       string   `pg:"api_type, type:varchar"`
-	Metadata      Metadata `pg:"metadata, type:jsonb"`
-	ParentNames   []string `pg:"parent_names, type:varchar[]"`
-
-	//debug
-	ScopeWeight        float64 `pg:"scope_weight, type:real"`
-	ScopeTf            float64 `pg:"scope_tf, type:real"`
-	TitleTf            float64 `pg:"title_tf, type:real"`
-	VersionStatusTf    float64 `pg:"version_status_tf, type:real"`
-	OpenCountWeight    float64 `pg:"open_count_weight, type:real"`
-	OperationOpenCount float64 `pg:"operation_open_count, type:real"`
-}
-
 type OperationSearchResult struct {
 	tableName struct{} `pg:",discard_unknown_columns"`
 
@@ -170,47 +145,6 @@ func MakeOperationSearchQueryEntity(searchQuery *view.SearchQueryReq) (*Operatio
 		searchQueryEntity.EndDate = time.Unix(2556057600, 0) //December 31, 2050
 	}
 	return searchQueryEntity, nil
-}
-
-// depreacted
-func MakeOperationSearchResultView_deprecated(ent OperationSearchResult_deprecated) view.OperationSearchResult_deprecated {
-	operationSearchResult := view.OperationSearchResult_deprecated{
-		PackageId:      ent.PackageId,
-		PackageName:    ent.PackageName,
-		ParentPackages: ent.ParentNames,
-		Version:        view.MakeVersionRefKey(ent.Version, ent.Revision),
-		VersionStatus:  ent.VersionStatus,
-		OperationId:    ent.OperationId,
-		Title:          ent.Title,
-		Deprecated:     ent.Deprecated,
-		ApiType:        ent.ApiType,
-
-		//debug
-		Debug: view.OperationSearchWeightsDebug{
-			ScopeWeight:              ent.ScopeWeight,
-			ScopeTf:                  ent.ScopeTf,
-			TitleTf:                  ent.TitleTf,
-			VersionStatusTf:          ent.VersionStatusTf,
-			OperationOpenCountWeight: ent.OpenCountWeight,
-			OperationOpenCount:       ent.OperationOpenCount,
-		},
-	}
-
-	switch operationSearchResult.ApiType {
-	case string(view.RestApiType):
-		restOperationChange := view.RestOperationMetadata{
-			Path:   ent.Metadata.GetPath(),
-			Method: ent.Metadata.GetMethod(),
-		}
-		operationSearchResult.Metadata = restOperationChange
-	case string(view.GraphqlApiType):
-		graphQLOperationMetadata := view.GraphQLOperationMetadata{
-			Type:   ent.Metadata.GetType(),
-			Method: ent.Metadata.GetMethod(),
-		}
-		operationSearchResult.Metadata = graphQLOperationMetadata
-	}
-	return operationSearchResult
 }
 
 func MakeOperationSearchResultView(ent OperationSearchResult) interface{} {

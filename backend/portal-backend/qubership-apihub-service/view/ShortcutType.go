@@ -60,17 +60,3 @@ func ParseTypeFromString(s string) ShortcutType {
 		return Unknown
 	}
 }
-
-func ComparableTypes(type1 ShortcutType, type2 ShortcutType) bool {
-	if type1 == type2 {
-		return true
-	}
-	if type1 == OpenAPI30 && type2 == OpenAPI31 {
-		return true
-	}
-	if type1 == OpenAPI31 && type2 == OpenAPI30 {
-		return true
-	}
-
-	return false
-}

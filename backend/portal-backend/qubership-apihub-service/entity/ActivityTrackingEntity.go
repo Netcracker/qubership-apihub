@@ -32,16 +32,6 @@ type ActivityTrackingEntity struct {
 	UserId    string                 `pg:"user_id, type:timestamp without time zone"`
 }
 
-type EnrichedActivityTrackingEntity_deprecated struct {
-	tableName struct{} `pg:"select:activity_tracking,alias:at"`
-
-	ActivityTrackingEntity
-	PackageName       string `pg:"pkg_name, type:varchar"`
-	PackageKind       string `pg:"pkg_kind, type:varchar"`
-	UserName          string `pg:"usr_name, type:varchar"`
-	NotLatestRevision bool   `pg:"not_latest_revision, type:bool"`
-}
-
 type EnrichedActivityTrackingEntity struct {
 	tableName struct{} `pg:"select:activity_tracking,alias:at"`
 
@@ -60,36 +50,6 @@ func MakeActivityTrackingEventEntity(event view.ActivityTrackingEvent) ActivityT
 		PackageId: event.PackageId,
 		Date:      event.Date,
 		UserId:    event.UserId,
-	}
-}
-
-func MakeActivityTrackingEventView_depracated(ent EnrichedActivityTrackingEntity_deprecated) view.PkgActivityResponseItem_depracated {
-	return view.PkgActivityResponseItem_depracated{
-		PackageName: ent.PackageName,
-		PackageKind: ent.PackageKind,
-		UserName:    ent.UserName,
-		ActivityTrackingEvent: view.ActivityTrackingEvent{
-			Type:      view.ATEventType(ent.Type),
-			Data:      ent.Data,
-			PackageId: ent.PackageId,
-			Date:      ent.Date,
-			UserId:    ent.UserId,
-		},
-	}
-
-}
-
-func MakeActivityTrackingEventView_deprecated_2(ent EnrichedActivityTrackingEntity) view.PkgActivityResponseItem {
-	return view.PkgActivityResponseItem{
-		PackageName: ent.PackageName,
-		PackageKind: ent.PackageKind,
-		Principal:   *MakePrincipalView(&ent.PrincipalEntity),
-		ActivityTrackingEvent: view.ActivityTrackingEvent{
-			Type:      view.ATEventType(ent.Type),
-			Data:      ent.Data,
-			PackageId: ent.PackageId,
-			Date:      ent.Date,
-		},
 	}
 }
 

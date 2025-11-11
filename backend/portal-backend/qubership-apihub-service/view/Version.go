@@ -18,20 +18,6 @@ import (
 	"time"
 )
 
-type VersionContent_deprecated struct {
-	PublishedAt              time.Time               `json:"createdAt"`
-	PublishedBy              string                  `json:"createdBy"`
-	PreviousVersion          string                  `json:"previousVersion,omitempty"`
-	PreviousVersionPackageId string                  `json:"previousVersionPackageId,omitempty"`
-	VersionLabels            []string                `json:"versionLabels,omitempty"`
-	Status                   string                  `json:"status"`
-	OperationTypes           []VersionOperationType  `json:"operationTypes,omitempty"`
-	PackageId                string                  `json:"packageId"`
-	Version                  string                  `json:"version"`
-	NotLatestRevision        bool                    `json:"notLatestRevision,omitempty"`
-	RevisionsCount           int                     `json:"revisionsCount,omitempty"`
-	OperationGroups          []VersionOperationGroup `json:"operationGroups,omitempty"`
-}
 type VersionContent struct {
 	PublishedAt              time.Time               `json:"createdAt"`
 	PublishedBy              map[string]interface{}  `json:"createdBy"`
@@ -76,24 +62,6 @@ type VersionDocuments struct {
 	Packages  map[string]PackageVersionRef `json:"packages,omitempty"`
 }
 
-// deprecated
-type VersionReferences struct {
-	References []VersionReference `json:"references"`
-}
-
-// deprecated
-type VersionReference struct {
-	RefId     string              `json:"refId"`
-	Kind      string              `json:"kind"`
-	Name      string              `json:"name"`
-	Version   string              `json:"version"`
-	Revision  int                 `json:"revision"`
-	Status    string              `json:"status"`
-	DeletedAt *time.Time          `json:"deletedAt,omitempty"`
-	DeletedBy string              `json:"deletedBy,omitempty"`
-	Parents   []ParentPackageInfo `json:"parents"`
-}
-
 type VersionReferencesV3 struct {
 	References []VersionReferenceV3         `json:"references"`
 	Packages   map[string]PackageVersionRef `json:"packages,omitempty"`
@@ -103,26 +71,6 @@ type VersionReferenceV3 struct {
 	PackageRef       string `json:"packageRef"`
 	ParentPackageRef string `json:"parentPackageRef,omitempty"`
 	Excluded         bool   `json:"excluded,omitempty"`
-}
-
-type File struct {
-	FieldId string   `json:"fieldId"`
-	Slug    string   `json:"slug"`
-	Type    string   `json:"type"`
-	Format  string   `json:"format"`
-	Title   string   `json:"title"`
-	Labels  []string `json:"labels"`
-}
-
-type PublishedVersionListView_deprecated_v2 struct {
-	Version                  string    `json:"version"`
-	Status                   string    `json:"status"`
-	CreatedAt                time.Time `json:"createdAt"`
-	CreatedBy                string    `json:"createdBy"`
-	VersionLabels            []string  `json:"versionLabels"`
-	PreviousVersion          string    `json:"previousVersion"`
-	PreviousVersionPackageId string    `json:"previousVersionPackageId,omitempty"`
-	NotLatestRevision        bool      `json:"notLatestRevision,omitempty"`
 }
 
 type PublishedVersionListView struct {
@@ -135,10 +83,6 @@ type PublishedVersionListView struct {
 	PreviousVersionPackageId string                 `json:"previousVersionPackageId,omitempty"`
 	NotLatestRevision        bool                   `json:"notLatestRevision,omitempty"`
 	ApiProcessorVersion      string                 `json:"apiProcessorVersion"`
-}
-
-type PublishedVersionsView_deprecated_v2 struct {
-	Versions []PublishedVersionListView_deprecated_v2 `json:"versions"`
 }
 type PublishedVersionsView struct {
 	Versions []PublishedVersionListView `json:"versions"`
@@ -170,13 +114,6 @@ type VersionListReq struct {
 	SortBy         string
 	SortOrder      string
 }
-type VersionReferencesReq struct {
-	Limit              int
-	Page               int
-	TextFilter         string
-	Kind               string
-	ShowAllDescendants bool
-}
 
 type CompareVersionsReq struct {
 	PackageId                string `json:"packageId" validate:"required"`
@@ -198,22 +135,10 @@ type PackageVersionRef struct {
 	NotLatestRevision bool       `json:"notLatestRevision,omitempty"`
 }
 
-type PackageVersionRevisions_deprecated struct {
-	Revisions []PackageVersionRevision_deprecated `json:"revisions"`
-}
 type PackageVersionRevisions struct {
 	Revisions []PackageVersionRevision `json:"revisions"`
 }
-type PackageVersionRevision_deprecated struct {
-	Version           string              `json:"version"`
-	Revision          int                 `json:"revision"`
-	Status            string              `json:"status"`
-	CreatedBy         User                `json:"createdBy"`
-	CreatedAt         time.Time           `json:"createdAt"`
-	RevisionLabels    []string            `json:"revisionLabels"`
-	PublishMeta       BuildConfigMetadata `json:"publishMeta"`
-	NotLatestRevision bool                `json:"notLatestRevision,omitempty"`
-}
+
 type PackageVersionRevision struct {
 	Version           string                 `json:"version"`
 	Revision          int                    `json:"revision"`

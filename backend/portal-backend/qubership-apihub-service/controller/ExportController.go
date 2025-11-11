@@ -18,11 +18,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 
 	log "github.com/sirupsen/logrus"
 
@@ -40,7 +41,6 @@ type ExportController interface {
 	GenerateApiChangesExcelReport(w http.ResponseWriter, r *http.Request) //deprecated
 	GenerateOperationsExcelReport(w http.ResponseWriter, r *http.Request)
 	GenerateDeprecatedOperationsExcelReport(w http.ResponseWriter, r *http.Request)
-	ExportOperationGroupAsOpenAPIDocuments_deprecated(w http.ResponseWriter, r *http.Request)   //deprecated
 	ExportOperationGroupAsOpenAPIDocuments_deprecated_2(w http.ResponseWriter, r *http.Request) //deprecated
 
 	StartAsyncExport(w http.ResponseWriter, r *http.Request)
@@ -49,7 +49,6 @@ type ExportController interface {
 
 func NewExportController(publishedService service.PublishedService,
 	portalService service.PortalService,
-	searchService service.SearchService,
 	roleService service.RoleService,
 	excelService service.ExcelService,
 	versionService service.VersionService,
@@ -59,7 +58,6 @@ func NewExportController(publishedService service.PublishedService,
 	return &exportControllerImpl{
 		publishedService:  publishedService,
 		portalService:     portalService,
-		searchService:     searchService,
 		roleService:       roleService,
 		excelService:      excelService,
 		versionService:    versionService,
@@ -72,110 +70,12 @@ func NewExportController(publishedService service.PublishedService,
 type exportControllerImpl struct {
 	publishedService  service.PublishedService
 	portalService     service.PortalService
-	searchService     service.SearchService
 	roleService       service.RoleService
 	excelService      service.ExcelService
 	versionService    service.VersionService
 	monitoringService service.MonitoringService
 	exportService     service.ExportService
 	packageService    service.PackageService
-}
-
-func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments_deprecated(w http.ResponseWriter, r *http.Request) {
-	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
-	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
-	if err != nil {
-		utils.RespondWithError(w, "Failed to check user privileges", err)
-		return
-	}
-	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusForbidden,
-			Code:    exception.InsufficientPrivileges,
-			Message: exception.InsufficientPrivilegesMsg,
-		})
-		return
-	}
-	version, err := getUnescapedStringParam(r, "version")
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "version"},
-			Debug:   err.Error(),
-		})
-		return
-	}
-	apiType, err := getUnescapedStringParam(r, "apiType")
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "apiType"},
-			Debug:   err.Error(),
-		})
-		return
-	}
-	_, err = view.ParseApiType(apiType)
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidParameterValue,
-			Message: exception.InvalidParameterValueMsg,
-			Params:  map[string]interface{}{"param": "apiType", "value": apiType},
-			Debug:   err.Error(),
-		})
-		return
-	}
-	groupName, err := getUnescapedStringParam(r, "groupName")
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "groupName"},
-			Debug:   err.Error(),
-		})
-		return
-	}
-	format, err := url.QueryUnescape(r.URL.Query().Get("format"))
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidURLEscape,
-			Message: exception.InvalidURLEscapeMsg,
-			Params:  map[string]interface{}{"param": "format"},
-			Debug:   err.Error(),
-		})
-		return
-	}
-
-	e.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.ExportsCalled, packageId)
-
-	content, err := e.versionService.GetTransformedDocuments_deprecated(packageId, version, apiType, groupName, format)
-	if err != nil {
-		log.Errorf("Failed to export api changes error - %s", err.Error())
-		utils.RespondWithError(w, "Failed to export group name openAPI", err)
-		return
-	}
-	if content == nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.TransformedDocumentsNotFound,
-			Message: exception.TransformedDocumentsNotFoundMsg,
-			Params:  map[string]interface{}{"packageId": packageId, "version": version, "apiType": apiType, "groupName": groupName},
-		})
-		return
-	}
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s_%s_%s.zip", groupName, packageId, version))
-	w.Header().Set("Content-Transfer-Encoding", "binary")
-	w.Header().Set("Expires", "0")
-	w.WriteHeader(http.StatusOK)
-	w.Write(content)
 }
 
 func (e exportControllerImpl) ExportOperationGroupAsOpenAPIDocuments_deprecated_2(w http.ResponseWriter, r *http.Request) {

@@ -14,13 +14,6 @@
 
 package view
 
-type Validation struct {
-	Summary interface{} `json:"summary,omitempty"`
-	//Data    []interface{} `json:"data,omitempty"`
-}
-
-type ValidationsMap map[string]Validation
-
 type VersionValidationChanges struct {
 	PreviousVersion          string                 `json:"previousVersion,omitempty"`
 	PreviousVersionPackageId string                 `json:"previousVersionPackageId,omitempty"`
