@@ -956,13 +956,13 @@
                                     ],
                                     "request": {
                                         "url": {
-                                            "raw": "{{SERVER_HOST}}/api/v2/packages/QS-STATIC-TEST-2.PKG1/publish/nothing123/status",
+                                            "raw": "{{SERVER_HOST}}/api/v3/packages/QS-STATIC-TEST-2.PKG1/publish/nothing123/status",
                                             "host": [
                                                 "{{SERVER_HOST}}"
                                             ],
                                             "path": [
                                                 "api",
-                                                "v2",
+                                                "v3",
                                                 "packages",
                                                 "QS-STATIC-TEST-2.PKG1",
                                                 "publish",
@@ -1360,13 +1360,13 @@
                                     ],
                                     "request": {
                                         "url": {
-                                            "raw": "{{SERVER_HOST}}/api/v2/packages/nothing123/versions",
+                                            "raw": "{{SERVER_HOST}}/api/v3/packages/nothing123/versions",
                                             "host": [
                                                 "{{SERVER_HOST}}"
                                             ],
                                             "path": [
                                                 "api",
-                                                "v2",
+                                                "v3",
                                                 "packages",
                                                 "nothing123",
                                                 "versions"
@@ -1752,13 +1752,13 @@
                                     ],
                                     "request": {
                                         "url": {
-                                            "raw": "{{SERVER_HOST}}/api/v2/packages/nothing123/versions/nothing123",
+                                            "raw": "{{SERVER_HOST}}/api/v3/packages/nothing123/versions/nothing123",
                                             "host": [
                                                 "{{SERVER_HOST}}"
                                             ],
                                             "path": [
                                                 "api",
-                                                "v2",
+                                                "v3",
                                                 "packages",
                                                 "nothing123",
                                                 "versions",
@@ -1921,13 +1921,13 @@
                                     ],
                                     "request": {
                                         "url": {
-                                            "raw": "{{SERVER_HOST}}/api/v2/packages/nothing123/versions/nothing123/documents/nothing123",
+                                            "raw": "{{SERVER_HOST}}/api/v3/packages/nothing123/versions/nothing123/documents/nothing123",
                                             "host": [
                                                 "{{SERVER_HOST}}"
                                             ],
                                             "path": [
                                                 "api",
-                                                "v2",
+                                                "v3",
                                                 "packages",
                                                 "nothing123",
                                                 "versions",
@@ -3917,13 +3917,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/search/operations",
+                                    "raw": "{{SERVER_HOST}}/api/v3/search/operations",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v2",
+                                        "v3",
                                         "search",
                                         "operations"
                                     ]
@@ -4124,7 +4124,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "0.5.9 Async document transformation without auth",
+                            "name": "0.5.9 Async export without auth",
                             "event": [
                                 {
                                     "listen": "test",
@@ -4149,89 +4149,17 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/test_1/versions/test_1/rest/groups/test_1/transform",
+                                    "raw": "{{SERVER_HOST}}/api/v1/export",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v2",
-                                        "packages",
-                                        "test_1",
-                                        "versions",
-                                        "test_1",
-                                        "rest",
-                                        "groups",
-                                        "test_1",
-                                        "transform"
+                                        "v1",
+                                        "export"
                                     ]
                                 },
                                 "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{token}}",
-                                        "type": "default",
-                                        "disabled": true
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\r\n    \"email\": \"{{$randomPhoneNumber}}@openmail.com\",\r\n    \"password\": \"password\",\r\n    \"name\": \"{{$randomPhoneNumber}}\"\r\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "0.5.10 Export operations group as OpenaAPI documents without auth",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 401\", function () {\r",
-                                            "    pm.response.to.have.status(401);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/test_1/versions/test_1/rest/export/groups/test_1",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "test_1",
-                                        "versions",
-                                        "test_1",
-                                        "rest",
-                                        "export",
-                                        "groups",
-                                        "test_1"
-                                    ]
-                                },
-                                "method": "GET",
                                 "header": [
                                     {
                                         "key": "Authorization",
@@ -6138,13 +6066,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/activity?includeRefs=new",
+                                    "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_1}}/activity?includeRefs=new",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v2",
+                                        "v4",
                                         "packages",
                                         "{{package_1}}",
                                         "activity"
@@ -6194,13 +6122,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/activity?onlyFavorite=s",
+                                    "raw": "{{SERVER_HOST}}/api/v4/activity?onlyFavorite=s",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v2",
+                                        "v4",
                                         "activity"
                                     ],
                                     "query": [
@@ -6886,13 +6814,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions",
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v2",
+                                        "v3",
                                         "packages",
                                         "{{package_1}}",
                                         "versions"
@@ -7539,13 +7467,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/ewr123/revisions",
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/ewr123/revisions",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v2",
+                                        "v3",
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
@@ -7591,13 +7519,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/nothing123/versions",
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/nothing123/versions",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v2",
+                                        "v3",
                                         "packages",
                                         "nothing123",
                                         "versions"
@@ -8396,13 +8324,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions?limit=s",
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions?limit=s",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v2",
+                                        "v3",
                                         "packages",
                                         "{{package_1}}",
                                         "versions"
@@ -8452,13 +8380,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions?checkRevisions=123",
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions?checkRevisions=123",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v2",
+                                        "v3",
                                         "packages",
                                         "{{package_1}}",
                                         "versions"
@@ -9635,13 +9563,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_1}}/rest/groups",
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_1}}/rest/groups",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v2",
+                                        "v3",
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
@@ -9688,13 +9616,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_1}}/versions/{{version_1}}/rest/groups",
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions/{{version_1}}/rest/groups",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v2",
+                                        "v3",
                                         "packages",
                                         "{{package_1}}",
                                         "versions",
