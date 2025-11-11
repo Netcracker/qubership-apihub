@@ -22,6 +22,7 @@ import { generatePath } from 'react-router-dom'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import type { OperationGroup } from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'
+import { API_V3 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 
 const OPERATIONS_GROUP_QUERY_KEY = 'operations-group-query-key'
 
@@ -55,6 +56,7 @@ export async function getOperationGroups(
       method: 'GET',
     },
     {
+      basePath: API_V3,
       customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
     })
 

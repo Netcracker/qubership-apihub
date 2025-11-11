@@ -19,7 +19,7 @@ import { NONE_PUBLISH_STATUS } from './statuses'
 import type { PackageKey, PublishKey } from './keys'
 
 import { generatePath } from 'react-router-dom'
-import { API_V2, requestJson, requestVoid } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import { API_V2, API_V3, requestJson, requestVoid } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import type { SetPublicationDetailsOptions } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 
@@ -92,7 +92,7 @@ export async function setPublicationDetails(options: SetPublicationDetailsOption
       signal: signal,
     },
     {
-      basePath: API_V2,
+      basePath: API_V3,
       ignoreNotFound: true,
       customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
     },
