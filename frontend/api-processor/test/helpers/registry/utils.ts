@@ -21,7 +21,7 @@ import {
   BuildConfig,
   BuilderContext,
   ComparisonInternalDocumentMetadata,
-  ComparisonInternalDocumentWithFileId,
+  ComparisonInternalDocument,
   FILE_FORMAT_JSON,
   InternalDocumentMetadata,
   NotificationMessage,
@@ -58,7 +58,7 @@ export async function saveVersionInternalDocuments(
 }
 
 export async function saveComparisonInternalDocuments(
-  comparisons: (ComparisonInternalDocumentWithFileId | undefined)[],
+  comparisons: ComparisonInternalDocument[],
   basePath: string,
 ): Promise<void> {
   if (!comparisons.length) {
@@ -66,9 +66,6 @@ export async function saveComparisonInternalDocuments(
   }
   await fs.mkdir(`${basePath}/${PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME}`)
   for (const document of comparisons) {
-    if(!document){
-      continue
-    }
     await fs.writeFile(
       `${basePath}/${PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME}/${document.id}.${FILE_FORMAT_JSON}`,
       document.value,
@@ -167,7 +164,7 @@ export async function saveVersionInternalDocumentsArray(
 }
 
 export async function saveComparisonInternalDocumentsArray(
-  comparisons: (ComparisonInternalDocumentWithFileId | undefined)[],
+  comparisons: ComparisonInternalDocument[],
   basePath: string,
 ): Promise<void> {
   if (!comparisons.length) {
@@ -175,9 +172,6 @@ export async function saveComparisonInternalDocumentsArray(
   }
   const result: { documents: ComparisonInternalDocumentMetadata[] } = { documents: [] }
   for (const document of comparisons) {
-    if(!document){
-      continue
-    }
     const { comparisonFileId, id } = document
     result.documents.push({
       id,

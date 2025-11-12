@@ -17,8 +17,8 @@ import {
   ApiAudienceTransition,
   CompareContext,
   CompareOperationsPairContext,
+  ComparisonDocument,
   ComparisonInternalDocument,
-  ComparisonInternalDocumentWithFileId,
   OperationChanges,
   OperationsApiType,
   OperationType,
@@ -53,7 +53,7 @@ export async function compareVersionsOperations(
 ): Promise<VersionsComparison> {
   const changes: OperationChanges[] = []
   const operationTypes: OperationType[] = []
-  const comparisonInternalDocuments: ComparisonInternalDocument[] = []
+  const comparisonInternalDocuments: ComparisonDocument[] = []
 
   const { versionResolver } = ctx
 
@@ -85,7 +85,7 @@ export async function compareVersionsOperations(
 
   const comparisonFileId = createComparisonFileId(prev, curr)
 
-  const comparisonInternalDocumentWithFileId: ComparisonInternalDocumentWithFileId[] = comparisonInternalDocuments.map(doc => ({
+  const comparisonInternalDocumentWithFileId: ComparisonInternalDocument[] = comparisonInternalDocuments.map(doc => ({
     ...doc,
     comparisonFileId,
   }))
@@ -106,7 +106,7 @@ export async function compareVersionsOperations(
       comparisonFileId,
       data: changes,
     } : {},
-    comparisonInternalDocumentWithFileId,
+    comparisonInternalDocument: comparisonInternalDocumentWithFileId,
   }
 }
 
@@ -116,7 +116,7 @@ async function compareCurrentApiType(
   curr: VersionCache | null,
   ctx: CompareContext,
   debugCtx?: DebugPerformanceContext,
-): Promise<[OperationType, OperationChanges[], ComparisonInternalDocument[]] | null> {
+): Promise<[OperationType, OperationChanges[], ComparisonDocument[]] | null> {
   const {
     versionOperationsResolver,
     rawDocumentResolver,

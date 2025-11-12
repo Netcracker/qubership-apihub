@@ -21,7 +21,7 @@ import {
   type BuildConfig,
   BuilderContext,
   BuilderResolvers,
-  BuildResult, ComparisonInternalDocumentWithFileId,
+  BuildResult, ComparisonInternalDocument,
   graphqlApiBuilder, MESSAGE_SEVERITY,
   OperationId,
   OperationsApiType,
@@ -129,7 +129,7 @@ export class ApihubRegistry implements IRegistry {
     await saveOperationsArray(operations, basePath)
     await saveEachOperation(operations, basePath)
     const comparisonsDto = comparisons.map(comparison => toVersionsComparisonDto(comparison, logError))
-    const comparisonInternalDocuments: (ComparisonInternalDocumentWithFileId | undefined)[] = comparisons.map(comparison => comparison.comparisonInternalDocumentWithFileId).flat()
+    const comparisonInternalDocuments: ComparisonInternalDocument[] = comparisons.map(comparison => comparison.comparisonInternalDocument).flat()
 
     await saveComparisonsArray(comparisonsDto, basePath)
     await saveEachComparison(comparisonsDto, basePath)

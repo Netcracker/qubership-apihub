@@ -78,12 +78,12 @@ export interface OperationChangesDto extends Omit<OperationChanges<DiffTypeDto>,
   changes?: ChangeMessage<DiffTypeDto>[]
 }
 
-export type ComparisonInternalDocument = {
+export type ComparisonDocument = {
   id: string
   value: string
 }
 
-export type ComparisonInternalDocumentWithFileId = ComparisonInternalDocument & {
+export type ComparisonInternalDocument = ComparisonDocument & {
   comparisonFileId: string
 }
 
@@ -98,10 +98,10 @@ export interface VersionsComparison<T extends DiffType | DiffTypeDto = DiffType>
   fromCache: boolean
   operationTypes: OperationType<T>[]
   data?: OperationChanges[]
-  comparisonInternalDocumentWithFileId: ComparisonInternalDocumentWithFileId[]
+  comparisonInternalDocument: ComparisonInternalDocument[]
 }
 
-export interface VersionsComparisonDto extends Omit<VersionsComparison<DiffTypeDto>, 'data' | 'comparisonInternalDocumentWithFileId'> {
+export interface VersionsComparisonDto extends Omit<VersionsComparison<DiffTypeDto>, 'data' | 'comparisonInternalDocument'> {
   data?: OperationChangesDto[]
 }
 

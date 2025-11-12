@@ -19,7 +19,7 @@ import {
   ApiDocument,
   ChangeSummary,
   CompareOperationsPairContext,
-  ComparisonInternalDocument,
+  ComparisonDocument,
   DIFF_TYPES,
   ImpactedOperationSummary,
   NormalizedOperationId,
@@ -237,10 +237,10 @@ export const comparePairedDocs = async (
   pairedDocs: [ResolvedVersionDocument | undefined, ResolvedVersionDocument | undefined][],
   apiBuilder: ApiBuilder,
   ctx: CompareOperationsPairContext,
-): Promise<[OperationChanges[], Set<Diff>[], string[], ComparisonInternalDocument[]]> => {
+): Promise<[OperationChanges[], Set<Diff>[], string[], ComparisonDocument[]]> => {
   const operationChanges: OperationChanges[] = []
   const uniqueDiffsForDocPairs: Set<Diff>[] = []
-  const comparisonDocuments: ComparisonInternalDocument[] = []
+  const comparisonDocuments: ComparisonDocument[] = []
   const tags = new Set<string>()
 
   for (const [prevDoc, currDoc] of pairedDocs) {
@@ -296,7 +296,7 @@ export function createOperationChange(
   }
 }
 
-export function createComparisonDocument(comparisonDocumentId: string, merged: ApiDocument): ComparisonInternalDocument {
+export function createComparisonDocument(comparisonDocumentId: string, merged: ApiDocument): ComparisonDocument {
   return {
     id: comparisonDocumentId,
     value: serializeDocument(merged),

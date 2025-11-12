@@ -152,7 +152,7 @@ export function toOperationChangesDto({
 export function toVersionsComparisonDto({
   data,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  comparisonInternalDocumentWithFileId,
+  comparisonInternalDocument,
   ...rest
 }: VersionsComparison, logError: (message: string) => void): VersionsComparisonDto {
   return {

@@ -47,7 +47,7 @@ import {
 import {
   BREAKING_CHANGE_TYPE,
   CompareOperationsPairContext,
-  ComparisonInternalDocument,
+  ComparisonDocument,
   DocumentsCompare,
   DocumentsCompareData,
   OperationChanges,
@@ -211,7 +211,7 @@ export const compareDocuments: DocumentsCompare = async (
     }
   }
 
-  let comparisonDocument: ComparisonInternalDocument | undefined
+  let comparisonDocument: ComparisonDocument | undefined
   if (operationChanges.length) {
     comparisonDocument = createComparisonDocument(comparisonDocumentId, merged)
   }

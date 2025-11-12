@@ -22,7 +22,7 @@ import {
   BuilderContext,
   BuilderResolvers,
   BuildResult,
-  ChangeSummary, ComparisonInternalDocumentWithFileId,
+  ChangeSummary, ComparisonInternalDocument,
   EMPTY_CHANGE_SUMMARY,
   FILE_FORMAT,
   graphqlApiBuilder,
@@ -478,7 +478,7 @@ export class LocalRegistry implements IRegistry {
       })
     }
     const comparisonsDto: VersionsComparisonDto[] = comparisons.map(comparison => toVersionsComparisonDto(comparison, logError))
-    const comparisonInternalDocuments: (ComparisonInternalDocumentWithFileId | undefined)[] = comparisons.map(comparison => comparison.comparisonInternalDocumentWithFileId).flat()
+    const comparisonInternalDocuments: ComparisonInternalDocument[] = comparisons.map(comparison => comparison.comparisonInternalDocument).flat()
 
     await saveComparisonsArray(comparisonsDto, basePath)
     await saveEachComparison(comparisonsDto, basePath)

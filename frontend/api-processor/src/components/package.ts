@@ -22,8 +22,8 @@ import {
   BuilderContext,
   BuildResult,
   BuildResultDto,
+  ComparisonInternalDocument,
   ComparisonInternalDocumentMetadata,
-  ComparisonInternalDocumentWithFileId,
   ExportDocument,
   InternalDocumentMetadata,
   PackageComparison,
@@ -65,7 +65,7 @@ export const createVersionPackage = async (
     ...buildResult,
     comparisons: buildResult.comparisons.map(comparison => toVersionsComparisonDto(comparison, logError)),
   }
-  const comparisonInternalDocuments: (ComparisonInternalDocumentWithFileId | undefined)[] = buildResult.comparisons.map(comparison => comparison?.comparisonInternalDocumentWithFileId).flat()
+  const comparisonInternalDocuments: ComparisonInternalDocument[] = buildResult.comparisons.map(comparison => comparison.comparisonInternalDocument).flat()
 
   const documents = buildResultDto.merged ? [buildResultDto.merged] : [...buildResultDto.documents.values()]
 
@@ -154,9 +154,9 @@ const createVersionInternalDocumentsFile = (zip: ZipTool, documents: VersionDocu
   zip.file(PACKAGE.VERSION_INTERNAL_FILE_NAME, result)
 }
 
-const createComparisonInternalDocumentDataFiles = async (zip: ZipTool, comparisonInternalDocuments: (ComparisonInternalDocumentWithFileId | undefined)[]): Promise<void> => {
+const createComparisonInternalDocumentDataFiles = async (zip: ZipTool, comparisonDocument: ComparisonInternalDocument[]): Promise<void> => {
   const comparisonsDir = zip.folder(PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME)
-  for (const comparisonInternalDocument of comparisonInternalDocuments) {
+  for (const comparisonInternalDocument of comparisonDocument) {
     if (!comparisonInternalDocument) {
       continue
     }
@@ -165,12 +165,12 @@ const createComparisonInternalDocumentDataFiles = async (zip: ZipTool, compariso
   }
 }
 
-const createComparisonInternalDocumentsFile = (zip: ZipTool, comparisons: (ComparisonInternalDocumentWithFileId | undefined)[]): void => {
-  if (!comparisons.length) {
+const createComparisonInternalDocumentsFile = (zip: ZipTool, comparisonDocument: ComparisonInternalDocument[]): void => {
+  if (!comparisonDocument.length) {
     return
   }
   const result: { documents: ComparisonInternalDocumentMetadata[] } = { documents: [] }
-  for (const comparisonInternalDocument of comparisons) {
+  for (const comparisonInternalDocument of comparisonDocument) {
     if (!comparisonInternalDocument) {
       continue
     }

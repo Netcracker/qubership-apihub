@@ -33,7 +33,7 @@ import { buildSchema } from 'graphql/utilities'
 import { buildGraphQLDocument } from './graphql.document'
 import {
   CompareOperationsPairContext,
-  ComparisonInternalDocument,
+  ComparisonDocument,
   DocumentsCompare,
   DocumentsCompareData,
   FILE_KIND,
@@ -140,7 +140,7 @@ export const compareDocuments: DocumentsCompare = async (
     }
   }
 
-  let comparisonDocument: ComparisonInternalDocument | undefined
+  let comparisonDocument: ComparisonDocument | undefined
   if (operationChanges.length) {
     comparisonDocument = createComparisonDocument(comparisonDocumentId, merged)
   }
