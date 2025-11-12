@@ -89,15 +89,53 @@ export const extractRootServersDiffs = (doc: OpenAPIV3.Document): Diff[] => {
   ]
 }
 
-export const extractRootSecurityDiffs = (doc: OpenAPIV3.Document): Diff[] => {
-  const addOrRemoveSecurityDiff = (doc as WithDiffMetaRecord<OpenAPIV3.Document>)[DIFF_META_KEY]?.security
-  const securityInternalDiffs = (doc.security as WithAggregatedDiffs<OpenAPIV3.SecurityRequirementObject[]> | undefined)?.[DIFFS_AGGREGATED_META_KEY] ?? []
-  const componentsSecuritySchemesDiffs = (doc.components?.securitySchemes as WithAggregatedDiffs<Record<string, OpenAPIV3.SecuritySchemeObject>>)[DIFFS_AGGREGATED_META_KEY] ?? []
+const extractSecurityDiffs = (source: WithDiffMetaRecord<{ security?: OpenAPIV3.SecurityRequirementObject[] }>): Diff[] => {
+  const addOrRemoveSecurityDiff = source[DIFF_META_KEY]?.security
+  const securityInternalDiffs = (source.security as WithAggregatedDiffs<OpenAPIV3.SecurityRequirementObject[]> | undefined)?.[DIFFS_AGGREGATED_META_KEY] ?? []
   return [
     ...(addOrRemoveSecurityDiff ? [addOrRemoveSecurityDiff] : []),
     ...securityInternalDiffs,
-    ...componentsSecuritySchemesDiffs,
   ]
+}
+
+export const extractRootSecurityDiffs = (doc: OpenAPIV3.Document): Diff[] => {
+  return extractSecurityDiffs(doc as WithDiffMetaRecord<OpenAPIV3.Document>)
+}
+
+export const extractOperationSecurityDiffs = (operation: OpenAPIV3.OperationObject): Diff[] => {
+  return extractSecurityDiffs(operation as WithDiffMetaRecord<OpenAPIV3.OperationObject>)
+}
+
+export const extractSecuritySchemesNames = (security: OpenAPIV3.SecurityRequirementObject[]): Set<string> => {
+  return new Set(security.flatMap(securityRequirement => Object.keys(securityRequirement)))
+}
+
+export const extractSecuritySchemesDiffs = (components: OpenAPIV3.ComponentsObject | undefined, securitySchemesNames: Set<string>): Diff[] => {
+  if (!components || !components.securitySchemes) {
+    return []
+  }
+  const result: Diff[] = []
+
+  const addRemoveSecuritySchemesDiffs = (components.securitySchemes as WithDiffMetaRecord<Record<string, OpenAPIV3.SecuritySchemeObject>>)?.[DIFF_META_KEY]
+  if (addRemoveSecuritySchemesDiffs) {
+    for (const schemeName of securitySchemesNames) {
+      const diff = addRemoveSecuritySchemesDiffs[schemeName]
+      if (diff) {
+        result.push(diff)
+      }
+    }
+  }
+
+  for (const schemeName of securitySchemesNames) {
+    const securityScheme = components.securitySchemes[schemeName]
+    if (securityScheme) {
+      const aggregatedDiffs = (securityScheme as WithAggregatedDiffs<OpenAPIV3.SecuritySchemeObject>)?.[DIFFS_AGGREGATED_META_KEY] ?? []
+      result.push(...aggregatedDiffs)
+    }
+  }
+
+
+  return result
 }
 
 export function validateGroupPrefix(group: unknown, paramName: string): void {

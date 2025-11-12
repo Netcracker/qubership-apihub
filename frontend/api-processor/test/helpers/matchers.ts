@@ -31,7 +31,11 @@ import {
 } from '../../src'
 import { JsonPath } from 'json-crawl'
 import { ActionType } from '@netcracker/qubership-apihub-api-diff'
-import { ArrayContaining, ObjectContaining, RecursiveMatcher } from '../../.jest/jasmin'
+import { ArrayContaining, AsymmetricMatcher, ExpectedRecursive, ObjectContaining, RecursiveMatcher } from '../../.jest/jasmin'
+import { extractSecuritySchemesNames } from '../../src/apitypes/rest/rest.utils'
+import type { OpenAPIV3 } from 'openapi-types'
+
+type SecuritySchemesObject = OpenAPIV3.ComponentsObject['securitySchemes']
 
 export type ApihubComparisonMatcher = ObjectContaining<VersionsComparison> & VersionsComparison
 export type ApihubOperationChangesMatcher = ObjectContaining<OperationChanges> & OperationChanges
@@ -60,6 +64,16 @@ export function apihubOperationChangesMatcher(
       ]),
     }),
   ])
+}
+
+export function noChangesMatcher(
+  apiType: OperationsApiType = REST_API_TYPE,
+): ApihubChangesSummaryMatcher {
+  return operationTypeMatcher({
+    apiType: apiType,
+    changesSummary: EMPTY_CHANGE_SUMMARY,
+    numberOfImpactedOperations: EMPTY_CHANGE_SUMMARY,
+  })
 }
 
 export function changesSummaryMatcher(
@@ -92,27 +106,27 @@ export function operationTypeMatcher(
   expected: RecursiveMatcher<OperationType>,
 ): ApihubChangesSummaryMatcher {
   return expect.objectContaining({
-      comparisons: expect.arrayContaining([
-        expect.objectContaining({
-          operationTypes: expect.arrayContaining([
-            expect.objectContaining(expected),
-          ]),
-        }),
-      ]),
-    },
+    comparisons: expect.arrayContaining([
+      expect.objectContaining({
+        operationTypes: expect.arrayContaining([
+          expect.objectContaining(expected),
+        ]),
+      }),
+    ]),
+  },
   )
 }
 
 export function operationChangesMatcher(
-  expected: Array<RecursiveMatcher<OperationChanges>>,
+  expected: Array<ExpectedRecursive<OperationChanges>>,
 ): ApihubOperationChangesMatcher {
   return expect.objectContaining({
-      comparisons: expect.arrayContaining([
-        expect.objectContaining({
-          data: expect.toIncludeSameMembers(expected),
-        }),
-      ]),
-    },
+    comparisons: expect.arrayContaining([
+      expect.objectContaining({
+        data: expect.toIncludeSameMembers(expected),
+      }),
+    ]),
+  },
   )
 }
 
@@ -156,8 +170,8 @@ export function notificationsMatcher(
   expected: Array<RecursiveMatcher<NotificationMessage>>,
 ): ApihubNotificationsMatcher {
   return expect.objectContaining({
-      notifications: expect.toIncludeSameMembers(expected),
-    },
+    notifications: expect.toIncludeSameMembers(expected),
+  },
   )
 }
 
@@ -174,8 +188,8 @@ export function exportDocumentsMatcher(
   expected: Array<RecursiveMatcher<ZippableDocument>>,
 ): ApihubExportDocumentsMatcher {
   return expect.objectContaining({
-      exportDocuments: expect.toIncludeSameMembers(expected),
-    },
+    exportDocuments: expect.toIncludeSameMembers(expected),
+  },
   )
 }
 
@@ -185,4 +199,32 @@ export function exportDocumentMatcher(
   return expect.objectContaining({
     filename: filename,
   })
+}
+
+/**
+ * Custom matcher to verify that security schemes in result match exactly the schemes used in security requirements
+ */
+export function securitySchemesFromRequirementsMatcher(
+  securityRequirements: OpenAPIV3.SecurityRequirementObject[],
+): AsymmetricMatcher<SecuritySchemesObject> {
+  const expectedSchemes = Array.from(extractSecuritySchemesNames(securityRequirements))
+
+  return {
+    asymmetricMatch: (actual: SecuritySchemesObject): boolean => {
+      if (!actual) {
+        return false
+      }
+
+      const actualSchemes = Object.keys(actual)
+
+      // Check that all expected schemes are present
+      const hasAllExpected = expectedSchemes.every(scheme => actualSchemes.includes(scheme))
+
+      // Check that no extra schemes are present
+      const hasOnlyExpected = actualSchemes.every(scheme => expectedSchemes.includes(scheme))
+
+      return hasAllExpected && hasOnlyExpected
+    },
+    jasmineToString: () => `securitySchemesFromRequirements(${JSON.stringify(expectedSchemes)})`,
+  }
 }

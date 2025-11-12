@@ -47,7 +47,7 @@ import {
   takeIfDefined,
 } from '../../utils'
 import { API_KIND, INLINE_REFS_FLAG, ORIGINS_SYMBOL, VERSION_STATUS } from '../../consts'
-import { getCustomTags, resolveApiAudience } from './rest.utils'
+import { extractSecuritySchemesNames, getCustomTags, resolveApiAudience } from './rest.utils'
 import { DebugPerformanceContext, syncDebugPerformance } from '../../utils/logs'
 import {
   calculateDeprecatedItems,
@@ -142,6 +142,7 @@ export const buildRestOperation = (
   const models: Record<string, string> = {}
   const apiKind = effectiveOperationObject[REST_KIND_KEY] || document.apiKind || API_KIND.BWC
   const [specWithSingleOperation] = syncDebugPerformance('[ModelsAndOperationHashing]', () => {
+    const operationSecurity = effectiveOperationObject.security
     const specWithSingleOperation = createSingleOperationSpec(
       document.data,
       path,
@@ -149,6 +150,7 @@ export const buildRestOperation = (
       openapi,
       servers,
       security,
+      operationSecurity,
       components?.securitySchemes,
     )
     calculateSpecRefs(document.data, refsOnlySingleOperationSpec, specWithSingleOperation, [operationId], models, componentsHashMap)
@@ -321,22 +323,32 @@ const isOperationPaths = (paths: JsonPath[]): boolean => {
 // todo output of this method disrupts document normalization.
 //  origin symbols are not being transferred to the resulting spec.
 //  DO NOT pass output of this method to apiDiff
-const createSingleOperationSpec = (
+export const createSingleOperationSpec = (
   document: OpenAPIV3.Document,
   path: string,
   method: OpenAPIV3.HttpMethods,
   openapi?: string,
   servers?: OpenAPIV3.ServerObject[],
   security?: OpenAPIV3.SecurityRequirementObject[],
+  operationSecurity?: OpenAPIV3.SecurityRequirementObject[],
   securitySchemes?: { [p: string]: OpenAPIV3.ReferenceObject | OpenAPIV3.SecuritySchemeObject },
 ): TYPE.RestOperationData => {
   const pathData = document.paths[path] as OpenAPIV3.PathItemObject
+
+  // Filter security schemes to only include used ones
+  const effectiveSecurity = operationSecurity ?? security ?? []
+  const usedSecuritySchemeNames = extractSecuritySchemesNames(effectiveSecurity)
+  const effectiveSecuritySchemes = securitySchemes && usedSecuritySchemeNames.size > 0
+    ? Object.fromEntries(
+      Object.entries(securitySchemes).filter(([name]) => usedSecuritySchemeNames.has(name)),
+    )
+    : undefined
 
   const isRefPathData = !!pathData.$ref
   return {
     openapi: openapi ?? '3.0.0',
     ...takeIfDefined({ servers }),
-    ...takeIfDefined({ security }), // TODO: remove duplicates in security
+    ...!operationSecurity ? takeIfDefined({ security }) : {},// Only add root security if operation security is not explicitly defined
     paths: {
       [path]: isRefPathData
         ? pathData
@@ -346,9 +358,9 @@ const createSingleOperationSpec = (
           ...extractSymbolProperty(pathData, INLINE_REFS_FLAG),
         },
     },
-    components: {
-      ...takeIfDefined({ securitySchemes }),
-    },
+    ...takeIfDefined({
+      components: effectiveSecuritySchemes ? { securitySchemes: effectiveSecuritySchemes } : undefined,
+    }),
   }
 }
 

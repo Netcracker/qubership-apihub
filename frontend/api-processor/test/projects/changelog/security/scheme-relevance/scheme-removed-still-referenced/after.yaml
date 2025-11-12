@@ -1,0 +1,14 @@
+openapi: 3.0.3
+info:
+  title: Security Test
+  version: 1.0.0
+paths:
+  /test:
+    get:
+      summary: Test operation
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: OK
+
