@@ -71,11 +71,20 @@ export interface OperationChanges<T extends DiffType | DiffTypeDto = DiffType> {
   previousMetadata?: OperationChangesMetadata & {
     [key: string]: unknown
   }
-  comparisonInternalDocumentId?: string
+  comparisonDocumentId?: string
 }
 
 export interface OperationChangesDto extends Omit<OperationChanges<DiffTypeDto>, 'diffs' | 'impactedSummary' | 'mergedJso'> {
   changes?: ChangeMessage<DiffTypeDto>[]
+}
+
+export type ComparisonInternalDocument = {
+  id: string
+  value: string
+}
+
+export type ComparisonInternalDocumentWithFileId = ComparisonInternalDocument & {
+  comparisonFileId: string
 }
 
 export interface VersionsComparison<T extends DiffType | DiffTypeDto = DiffType> {
@@ -89,26 +98,15 @@ export interface VersionsComparison<T extends DiffType | DiffTypeDto = DiffType>
   fromCache: boolean
   operationTypes: OperationType<T>[]
   data?: OperationChanges[]
-  comparisonInternalDocumentWithFileId?: ComparisonInternalDocumentWithFileId[]
+  comparisonInternalDocumentWithFileId: ComparisonInternalDocumentWithFileId[]
 }
 
 export interface VersionsComparisonDto extends Omit<VersionsComparison<DiffTypeDto>, 'data' | 'comparisonInternalDocumentWithFileId'> {
   data?: OperationChangesDto[]
 }
 
-//todo move to?
-export type ComparisonInternalDocument = {
-  id: string
-  value: string
-}
-
-export type ComparisonInternalDocumentWithFileId = ComparisonInternalDocument & {
-  comparisonFileId: string
-}
-
-export type InternalDocumentMetadata = {id: string; filename: string}
-export type ComparisonInternalDocumentMetadata = InternalDocumentMetadata & {comparisonFileId: string}
-
+export type InternalDocumentMetadata = { id: string; filename: string }
+export type ComparisonInternalDocumentMetadata = InternalDocumentMetadata & { comparisonFileId: string }
 
 export interface CompareContext {
   apiBuilders: ApiBuilder[]

@@ -16,8 +16,10 @@
 
 import {
   ApiBuilder,
+  ApiDocument,
   ChangeSummary,
-  CompareOperationsPairContext, ComparisonInternalDocument,
+  CompareOperationsPairContext,
+  ComparisonInternalDocument,
   DIFF_TYPES,
   ImpactedOperationSummary,
   NormalizedOperationId,
@@ -37,6 +39,7 @@ import {
   convertToSlug,
   difference,
   intersection,
+  serializeDocument,
   takeIfDefined,
 } from '../../utils'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
@@ -237,14 +240,14 @@ export const comparePairedDocs = async (
 ): Promise<[OperationChanges[], Set<Diff>[], string[], ComparisonInternalDocument[]]> => {
   const operationChanges: OperationChanges[] = []
   const uniqueDiffsForDocPairs: Set<Diff>[] = []
-  const comparisonInternalDocuments: ComparisonInternalDocument[] = []
+  const comparisonDocuments: ComparisonInternalDocument[] = []
   const tags = new Set<string>()
 
   for (const [prevDoc, currDoc] of pairedDocs) {
     const {
       operationChanges: docsPairOperationChanges,
       tags: docsPairTags,
-      comparisonInternalDocument: docsPairComparisonInternalDocument,
+      comparisonDocument: docsPairComparisonDocument,
     } = await apiBuilder.compareDocuments!(operationsMap, prevDoc, currDoc, ctx)
 
     // We can remove duplicates for diffs coming from the same apiDiff call using simple identity
@@ -252,20 +255,20 @@ export const comparePairedDocs = async (
 
     operationChanges.push(...docsPairOperationChanges)
     docsPairTags.forEach(tag => tags.add(tag))
-    docsPairComparisonInternalDocument && comparisonInternalDocuments.push(docsPairComparisonInternalDocument)
+    docsPairComparisonDocument && comparisonDocuments.push(docsPairComparisonDocument)
   }
 
-  return [operationChanges, uniqueDiffsForDocPairs, Array.from(tags).sort(), comparisonInternalDocuments]
+  return [operationChanges, uniqueDiffsForDocPairs, Array.from(tags).sort(), comparisonDocuments]
 }
 
 export function createOperationChange(
   apiType: OperationsApiType,
   operationDiffs: Diff[],
+  comparisonDocumentId: string,
   previous?: ResolvedOperation,
   current?: ResolvedOperation,
   currentGroup?: string,
   previousGroup?: string,
-  comparisonInternalDocumentId?: string,
 ): OperationChanges {
   const reclassifiedDiffs = reclassifyNoBwcBreakingChanges(operationDiffs, previous, current)
   const changeSummary = calculateChangeSummary(reclassifiedDiffs)
@@ -287,26 +290,33 @@ export function createOperationChange(
     diffs: reclassifiedDiffs,
     changeSummary: changeSummary,
     impactedSummary: impactedSummary,
+    comparisonDocumentId,
     ...currentOperationFields,
     ...previousOperationFields,
-    ...(comparisonInternalDocumentId && { comparisonInternalDocumentId }),
   }
 }
-//todo create better name
-export function combineNames(previousName: string | undefined, currentName: string | undefined): string | undefined {
-  if (previousName && currentName) {
-    return `${previousName}-${currentName}`
-  }
 
-  if (previousName) {
-    return `${previousName}`
+export function createComparisonDocument(comparisonDocumentId: string, merged: ApiDocument): ComparisonInternalDocument {
+  return {
+    id: comparisonDocumentId,
+    value: serializeDocument(merged),
   }
+}
 
-  if (currentName) {
-    return `${currentName}`
-  }
+type FileParam = string | undefined
+type FileParams = [FileParam, FileParam] | null
 
-  return undefined
+export function createComparisonFileId(prev: FileParams | null, curr: FileParams): string {
+  return [...prev || [], ...curr || []].filter(Boolean).join('_')
+}
+
+export function createComparisonDocumentId(
+  prevDoc: ResolvedVersionDocument | undefined,
+  currDoc: ResolvedVersionDocument | undefined,
+  previousVersion: FileParam,
+  currentVersion: FileParam,
+): string {
+  return createComparisonFileId([prevDoc?.slug, previousVersion], [currDoc?.slug, currentVersion])
 }
 
 export const removeGroupPrefixFromOperationId = (operationId: string, groupPrefix: string): string => {

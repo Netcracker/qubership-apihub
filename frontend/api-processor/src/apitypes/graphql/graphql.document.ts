@@ -24,6 +24,7 @@ import type { GraphQLSchema, IntrospectionQuery } from 'graphql'
 
 import { BuildConfigFile, DocumentDumper, TextFile, VersionDocument } from '../../types'
 import { GRAPHQL_DOCUMENT_TYPE } from './graphql.consts'
+import { createInternalDocumentId } from '../../utils'
 
 export const buildGraphQLDocument: (parsedFile: TextFile, file: BuildConfigFile) => Promise<VersionDocument<GraphApiSchema>> = async (parsedFile, file) => {
   let graphapi: GraphApiSchema
@@ -37,11 +38,11 @@ export const buildGraphQLDocument: (parsedFile: TextFile, file: BuildConfigFile)
   }
 
   const { fileId, slug = '', publish = true, apiKind, ...metadata } = file
-  const {format, type} = parsedFile
+  const { format, type, source } = parsedFile
   return {
     fileId,
-    type: type,
-    format: format,
+    type,
+    format,
     data: graphapi,
     publish,
     apiKind,
@@ -52,8 +53,8 @@ export const buildGraphQLDocument: (parsedFile: TextFile, file: BuildConfigFile)
     description: graphapi.description || '',
     operationIds: [],
     metadata,
-    source: parsedFile.source,
-    internalDocumentId: `${slug}-${format}`,
+    source,
+    internalDocumentId: createInternalDocumentId(slug, format),
   }
 }
 

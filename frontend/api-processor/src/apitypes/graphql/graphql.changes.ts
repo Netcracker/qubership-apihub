@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isEmpty, serializeOas, slugify, takeIf } from '../../utils'
+import { isEmpty, slugify, takeIf } from '../../utils'
 import {
   aggregateDiffsWithRollup,
   apiDiff,
@@ -33,8 +33,9 @@ import { buildSchema } from 'graphql/utilities'
 import { buildGraphQLDocument } from './graphql.document'
 import {
   CompareOperationsPairContext,
+  ComparisonInternalDocument,
   DocumentsCompare,
-  DocumentsCompareReturn,
+  DocumentsCompareData,
   FILE_KIND,
   OperationChanges,
   ResolvedVersionDocument,
@@ -42,14 +43,22 @@ import {
   WithDiffMetaRecord,
 } from '../../types'
 import { GRAPHQL_TYPE, GRAPHQL_TYPE_KEYS } from './graphql.consts'
-import { combineNames, createOperationChange, getOperationTags, OperationsMap } from '../../components'
+import {
+  createComparisonDocument,
+  createComparisonDocumentId,
+  createOperationChange,
+  getOperationTags,
+  OperationsMap,
+} from '../../components'
 
 export const compareDocuments: DocumentsCompare = async (
   operationsMap: OperationsMap,
   prevDoc: ResolvedVersionDocument | undefined,
   currDoc: ResolvedVersionDocument | undefined,
-  ctx: CompareOperationsPairContext): Promise<DocumentsCompareReturn> => {
+  ctx: CompareOperationsPairContext,
+): Promise<DocumentsCompareData> => {
   const { apiType, rawDocumentResolver, previousVersion, currentVersion, previousPackageId, currentPackageId } = ctx
+  const comparisonDocumentId = createComparisonDocumentId(prevDoc, currDoc, previousVersion, currentVersion)
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
   const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
   const prevDocSchema = prevFile && buildSchema(await prevFile.text(), { noLocation: true })
@@ -89,7 +98,7 @@ export const compareDocuments: DocumentsCompare = async (
   ) as { merged: GraphApiSchema; diffs: Diff[] }
 
   if (isEmpty(diffs)) {
-    return { operationChanges: [], tags: new Set()}
+    return { operationChanges: [], tags: new Set() }
   }
 
   aggregateDiffsWithRollup(merged, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)
@@ -98,7 +107,6 @@ export const compareDocuments: DocumentsCompare = async (
 
   const tags = new Set<string>()
   const operationChanges: OperationChanges[] = []
-  const comparisonInternalDocumentId = combineNames(prevDoc?.slug, currDoc?.slug)
   for (const type of GRAPHQL_TYPE_KEYS) {
     const operationsByType = merged[type]
     if (!operationsByType) { continue }
@@ -127,21 +135,20 @@ export const compareDocuments: DocumentsCompare = async (
         continue
       }
 
-      operationChanges.push(createOperationChange(apiType, operationDiffs, previous, current, currentGroup, previousGroup, comparisonInternalDocumentId))
+      operationChanges.push(createOperationChange(apiType, operationDiffs, comparisonDocumentId, previous, current, currentGroup, previousGroup))
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }
   }
+
+  let comparisonDocument: ComparisonInternalDocument | undefined
+  if (operationChanges.length) {
+    comparisonDocument = createComparisonDocument(comparisonDocumentId, merged)
+  }
+
   return {
     operationChanges,
     tags,
-    ...(operationChanges.length && comparisonInternalDocumentId
-      ? {
-        comparisonInternalDocument: {
-          id: comparisonInternalDocumentId,
-          value: serializeOas(merged),
-        },
-      }
-      : {}),
+    ...(comparisonDocument) ? { comparisonDocument } : {},
   }
 }
 

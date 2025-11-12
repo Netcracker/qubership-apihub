@@ -20,10 +20,11 @@ import { buildRestOperation } from './rest.operation'
 import { OperationsBuilder } from '../../types'
 import {
   calculateOperationId,
-  createBundlingErrorHandler, denormalizeOas, serializeOas,
+  createBundlingErrorHandler,
+  createInternalDocument,
+  isNotEmpty,
   removeComponents,
 } from '../../utils'
-import { isNotEmpty } from '../../utils'
 import type * as TYPE from './rest.types'
 import { HASH_FLAG, INLINE_REFS_FLAG, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
 import { asyncFunction } from '../../utils/async'
@@ -121,9 +122,8 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
     throw createDuplicatesError(document.fileId, duplicates)
   }
 
-  // no need Serialize document without operations
-  if(operations.length){
-    document.internalDocument = serializeOas(denormalizeOas(effectiveDocument))
+  if (operations.length) {
+    document.internalDocument = createInternalDocument(effectiveDocument)
   }
 
   return operations

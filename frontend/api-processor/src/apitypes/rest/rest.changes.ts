@@ -23,7 +23,6 @@ import {
   isValidHttpMethod,
   normalizePath,
   removeFirstSlash,
-  serializeOas,
   slugify,
   trimSlashes,
 } from '../../utils'
@@ -48,8 +47,9 @@ import {
 import {
   BREAKING_CHANGE_TYPE,
   CompareOperationsPairContext,
+  ComparisonInternalDocument,
   DocumentsCompare,
-  DocumentsCompareReturn,
+  DocumentsCompareData,
   OperationChanges,
   ResolvedVersionDocument,
   RISKY_CHANGE_TYPE,
@@ -74,7 +74,13 @@ import {
   extractRootServersDiffs,
   validateGroupPrefix,
 } from './rest.utils'
-import { combineNames, createOperationChange, getOperationTags, OperationsMap } from '../../components'
+import {
+  createComparisonDocument,
+  createComparisonDocumentId,
+  createOperationChange,
+  getOperationTags,
+  OperationsMap,
+} from '../../components'
 
 /**
  * Calculates a normalized operation ID for an operation.
@@ -93,7 +99,7 @@ export const compareDocuments: DocumentsCompare = async (
   prevDoc: ResolvedVersionDocument | undefined,
   currDoc: ResolvedVersionDocument | undefined,
   ctx: CompareOperationsPairContext,
-): Promise<DocumentsCompareReturn> => {
+): Promise<DocumentsCompareData> => {
   const {
     apiType,
     rawDocumentResolver,
@@ -104,6 +110,7 @@ export const compareDocuments: DocumentsCompare = async (
     currentGroup,
     previousGroup,
   } = ctx
+  const comparisonDocumentId = createComparisonDocumentId(prevDoc, currDoc, previousVersion, currentVersion)
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
   const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
   let prevDocData = prevFile && JSON.parse(await prevFile.text())
@@ -146,7 +153,6 @@ export const compareDocuments: DocumentsCompare = async (
 
   const tags = new Set<string>()
   const operationChanges: OperationChanges[] = []
-  const comparisonInternalDocumentId = combineNames(prevDoc?.slug, currDoc?.slug)
   for (const path of Object.keys(merged.paths)) {
     const pathData = merged.paths[path]
     if (typeof pathData !== 'object' || !pathData) { continue }
@@ -200,21 +206,20 @@ export const compareDocuments: DocumentsCompare = async (
 
       await reclassifyBreakingChanges(previous?.operationId, merged, operationDiffs, ctx)
 
-      operationChanges.push(createOperationChange(apiType, operationDiffs, previous, current, currentGroup, previousGroup, comparisonInternalDocumentId))
+      operationChanges.push(createOperationChange(apiType, operationDiffs, comparisonDocumentId, previous, current, currentGroup, previousGroup))
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }
   }
+
+  let comparisonDocument: ComparisonInternalDocument | undefined
+  if (operationChanges.length) {
+    comparisonDocument = createComparisonDocument(comparisonDocumentId, merged)
+  }
+
   return {
     operationChanges,
     tags,
-    ...(operationChanges.length && comparisonInternalDocumentId
-      ? {
-        comparisonInternalDocument: {
-          id: comparisonInternalDocumentId,
-          value: serializeOas(merged),
-        },
-      }
-      : {}),
+    ...(comparisonDocument) ? { comparisonDocument } : {},
   }
 }
 

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { ApiOperation, BuildResult, OperationIdNormalizer } from '../types'
+import { ApiDocument, ApiOperation, BuildResult, OperationIdNormalizer } from '../types'
 import { GraphApiComponents, GraphApiDirectiveDefinition } from '@netcracker/qubership-apihub-graphapi'
 import { OpenAPIV3 } from 'openapi-types'
 import { isObject } from './objects'
-import { IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER, slugify } from './document'
+import { denormalizeDocument, IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER, serializeDocument, slugify } from './document'
 import { removeFirstSlash } from './builder'
 import { Diff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import { matchPaths, OPEN_API_PROPERTY_PATHS, PREDICATE_ANY_VALUE } from '@netcracker/qubership-apihub-api-unifier'
@@ -104,4 +104,8 @@ export const calculateOperationId = (
 ): string => {
   const operationPath = basePath + path
   return slugify(`${removeFirstSlash(operationPath)}-${key}`)
+}
+
+export const createInternalDocument = (document: ApiDocument): string => {
+  return serializeDocument(denormalizeDocument(document))
 }
