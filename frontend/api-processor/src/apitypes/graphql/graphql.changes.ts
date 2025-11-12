@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-import { isEmpty,serializeOas, slugify, takeIf } from '../../utils'
-import { aggregateDiffsWithRollup, apiDiff, Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import { isEmpty, serializeOas, slugify, takeIf } from '../../utils'
+import {
+  aggregateDiffsWithRollup,
+  apiDiff,
+  Diff,
+  DIFF_META_KEY,
+  DIFFS_AGGREGATED_META_KEY,
+} from '@netcracker/qubership-apihub-api-diff'
 import {
   AFTER_VALUE_NORMALIZED_PROPERTY,
   BEFORE_VALUE_NORMALIZED_PROPERTY,
@@ -83,7 +89,7 @@ export const compareDocuments: DocumentsCompare = async (
   ) as { merged: GraphApiSchema; diffs: Diff[] }
 
   if (isEmpty(diffs)) {
-    return { operationChanges: [], tags: new Set(), comparisonInternalDocuments: new Map() }
+    return { operationChanges: [], tags: new Set()}
   }
 
   aggregateDiffsWithRollup(merged, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)
@@ -125,11 +131,18 @@ export const compareDocuments: DocumentsCompare = async (
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }
   }
-  const comparisonInternalDocuments = new Map<string, string>()
-  if (operationChanges.length && comparisonInternalDocumentId) {
-    comparisonInternalDocuments.set(comparisonInternalDocumentId, serializeOas(merged))
+  return {
+    operationChanges,
+    tags,
+    ...(operationChanges.length && comparisonInternalDocumentId
+      ? {
+        comparisonInternalDocument: {
+          id: comparisonInternalDocumentId,
+          value: serializeOas(merged),
+        },
+      }
+      : {}),
   }
-  return { operationChanges, tags, comparisonInternalDocuments}
 }
 
 function getCopyWithEmptyOperations(template: GraphApiSchema): GraphApiSchema {

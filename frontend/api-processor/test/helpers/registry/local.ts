@@ -22,7 +22,7 @@ import {
   BuilderContext,
   BuilderResolvers,
   BuildResult,
-  ChangeSummary,
+  ChangeSummary, ComparisonInternalDocumentWithFileId,
   EMPTY_CHANGE_SUMMARY,
   FILE_FORMAT,
   graphqlApiBuilder,
@@ -59,7 +59,7 @@ import {
   VersionDocument,
   VersionDocuments,
   VersionId,
-  VersionsComparison,
+  VersionsComparison, VersionsComparisonDto,
   ZippableDocument,
 } from '../../../src'
 import {
@@ -477,14 +477,16 @@ export class LocalRegistry implements IRegistry {
         message: message,
       })
     }
-    const comparisonsDto = comparisons.map(comparison => toVersionsComparisonDto(comparison, logError))
+    const comparisonsDto: VersionsComparisonDto[] = comparisons.map(comparison => toVersionsComparisonDto(comparison, logError))
+    const comparisonInternalDocuments: (ComparisonInternalDocumentWithFileId | undefined)[] = comparisons.map(comparison => comparison.comparisonInternalDocumentWithFileId).flat()
+
     await saveComparisonsArray(comparisonsDto, basePath)
     await saveEachComparison(comparisonsDto, basePath)
     await saveNotifications(notifications, basePath)
     await saveVersionInternalDocuments(documents, basePath)
 
-    await saveComparisonInternalDocumentsArray(comparisonsDto, basePath)
-    await saveComparisonInternalDocuments(comparisonsDto, basePath)
+    await saveComparisonInternalDocumentsArray(comparisonInternalDocuments, basePath)
+    await saveComparisonInternalDocuments(comparisonInternalDocuments, basePath)
   }
 
   async updateOperationsHash(packageId: string, publishParams?: Partial<BuildConfig>): Promise<void> {

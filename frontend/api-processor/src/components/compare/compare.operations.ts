@@ -16,7 +16,9 @@
 import {
   ApiAudienceTransition,
   CompareContext,
-  CompareOperationsPairContext, ComparisonInternalDocuments,
+  CompareOperationsPairContext,
+  ComparisonInternalDocument,
+  ComparisonInternalDocumentWithFileId,
   OperationChanges,
   OperationsApiType,
   OperationType,
@@ -50,7 +52,7 @@ export async function compareVersionsOperations(
 ): Promise<VersionsComparison> {
   const changes: OperationChanges[] = []
   const operationTypes: OperationType[] = []
-  const comparisonInternalDocuments: ComparisonInternalDocuments = new Map<string, string>()
+  const comparisonInternalDocuments: ComparisonInternalDocument[] = []
 
   const { versionResolver } = ctx
 
@@ -64,7 +66,7 @@ export async function compareVersionsOperations(
 
   // compare operations of each type
   for (const apiType of getUniqueApiTypesFromVersions(prevVersionData, currVersionData)) {
-    const [operationType, operationsChanges = [], comparisonDocuments] = await asyncDebugPerformance(
+    const [operationType, operationsChanges = [], comparisonDocuments = []] = await asyncDebugPerformance(
       '[ApiType]',
       (innerDebugCtx) => compareCurrentApiType(apiType, prevVersionData, currVersionData, ctx, innerDebugCtx) ?? [],
       debugCtx,
@@ -77,10 +79,12 @@ export async function compareVersionsOperations(
 
     operationTypes.push(operationType)
     changes.push(...operationsChanges)
-    comparisonDocuments?.forEach(((value, key) => comparisonInternalDocuments.set(key, value)))
+    comparisonInternalDocuments.push(...comparisonDocuments)
   }
 
   const comparisonFileId = [...prev || [], ...curr || []].filter(Boolean).join('_')
+
+  const comparisonInternalDocumentWithFileId: ComparisonInternalDocumentWithFileId[] = comparisonInternalDocuments.map(doc => ({...doc, comparisonFileId}))
 
   const [currentVersion, currentRevision] = getSplittedVersionKey(currVersionData?.version)
   const [previousVersion, previousRevision] = getSplittedVersionKey(prevVersionData?.version)
@@ -98,7 +102,7 @@ export async function compareVersionsOperations(
       comparisonFileId,
       data: changes,
     } : {},
-    comparisonInternalDocuments,
+    comparisonInternalDocumentWithFileId,
   }
 }
 
@@ -108,7 +112,7 @@ async function compareCurrentApiType(
   curr: VersionCache | null,
   ctx: CompareContext,
   debugCtx?: DebugPerformanceContext,
-): Promise<[OperationType, OperationChanges[], ComparisonInternalDocuments] | null> {
+): Promise<[OperationType, OperationChanges[], ComparisonInternalDocument[]] | null> {
   const {
     versionOperationsResolver,
     rawDocumentResolver,

@@ -15,7 +15,7 @@
  */
 
 import { BuildConfig, BuilderResolvers, FileId, PackageId, ResolvedVersion, VersionId } from '../external'
-import { VersionsComparison, VersionsComparisonDto } from './compare'
+import { ComparisonInternalDocumentWithFileId, VersionsComparison, VersionsComparisonDto } from './compare'
 import { PackageConfig } from '../package/config'
 import { NotificationMessage } from '../package/notifications'
 import { ExportDocument, VersionDocument } from './documents'
@@ -46,6 +46,7 @@ export interface BuildResult {
   exportFileName?: string
   operations: Map<string, ApiOperation>
   merged?: VersionDocument
+  comparisonInternalDocumentWithFileId?: ComparisonInternalDocumentWithFileId[]
 }
 
 export type BuilderConfiguration = {

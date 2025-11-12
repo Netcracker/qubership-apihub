@@ -22,8 +22,10 @@ import {
   BuilderContext,
   BuildResult,
   BuildResultDto,
-  ComparisonInternalDocuments,
+  ComparisonInternalDocumentMetadata,
+  ComparisonInternalDocumentWithFileId,
   ExportDocument,
+  InternalDocumentMetadata,
   PackageComparison,
   PackageComparisonOperations,
   PackageComparisons,
@@ -63,6 +65,7 @@ export const createVersionPackage = async (
     ...buildResult,
     comparisons: buildResult.comparisons.map(comparison => toVersionsComparisonDto(comparison, logError)),
   }
+  const comparisonInternalDocuments: (ComparisonInternalDocumentWithFileId | undefined)[] = buildResult.comparisons.map(comparison => comparison?.comparisonInternalDocumentWithFileId).flat()
 
   const documents = buildResultDto.merged ? [buildResultDto.merged] : [...buildResultDto.documents.values()]
 
@@ -93,23 +96,19 @@ export const createVersionPackage = async (
 
   if (buildResultDto.comparisons.length) {
     const comparisons: PackageComparison[] = buildResultDto.comparisons.map(({ data, ...rest }) => rest)
-
     createComparisonsFile(zip, { comparisons })
-    createComparisonInternalDocumentsFile(zip, comparisons)
-
     const comparisonsDir = zip.folder(PACKAGE.COMPARISONS_DIR_NAME)
-    const comparisonsInternalDocDir = zip.folder(PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME)
 
     for (const comparison of buildResultDto.comparisons) {
       if (!comparison.comparisonFileId || !comparison.data) { continue }
-
       createComparisonDataFile(comparisonsDir!, comparison.comparisonFileId, { operations: comparison.data })
-
-      if (comparison.comparisonInternalDocuments) {
-        await createComparisonInternalDocumentDataFiles(comparisonsInternalDocDir!, comparison.comparisonInternalDocuments)
-      }
+    }
+    if (comparisonInternalDocuments.length) {
+      createComparisonInternalDocumentsFile(zip, comparisonInternalDocuments)
+      await createComparisonInternalDocumentDataFiles(zip, comparisonInternalDocuments)
     }
   }
+
   createNotificationsFile(zip, { notifications: buildResultDto.notifications })
 
   return await zip.buildResult(options)
@@ -135,15 +134,13 @@ const createDocumentsFile = (zip: ZipTool, documents: VersionDocument[]): void =
   zip.file(PACKAGE.DOCUMENTS_FILE_NAME, result)
 }
 
-type VersionInternalDocuments = { id: string; filename: string }
-
 const createVersionInternalDocumentDataFiles = async (zip: ZipTool, documents: VersionDocument[]): Promise<void> => {
   const documentsDir = zip.folder(PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME)
   await writeInternalDocumentsToZip(documentsDir, documents)
 }
 
 const createVersionInternalDocumentsFile = (zip: ZipTool, documents: VersionDocument[]): void => {
-  const result: { documents: VersionInternalDocuments[] } = { documents: [] }
+  const result: { documents: InternalDocumentMetadata[] } = { documents: [] }
 
   for (const document of documents.values()) {
     if (!document.publish) { continue }
@@ -157,29 +154,32 @@ const createVersionInternalDocumentsFile = (zip: ZipTool, documents: VersionDocu
   zip.file(PACKAGE.VERSION_INTERNAL_FILE_NAME, result)
 }
 
-const createComparisonInternalDocumentDataFiles = async (zip: ZipTool, comparisonInternalDocuments: ComparisonInternalDocuments): Promise<void> => {
-  for (const [key, value] of comparisonInternalDocuments) {
-    await zip.file(`${key}.${FILE_FORMAT_JSON}`, value)
+const createComparisonInternalDocumentDataFiles = async (zip: ZipTool, comparisonInternalDocuments: (ComparisonInternalDocumentWithFileId | undefined)[]): Promise<void> => {
+  const comparisonsDir = zip.folder(PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME)
+  for (const comparisonInternalDocument of comparisonInternalDocuments) {
+    if (!comparisonInternalDocument) {
+      continue
+    }
+    const { id, value } = comparisonInternalDocument
+    await comparisonsDir.file(`${id}.${FILE_FORMAT_JSON}`, value)
   }
 }
 
-const createComparisonInternalDocumentsFile = (zip: ZipTool, comparisons: PackageComparison[]): void => {
+const createComparisonInternalDocumentsFile = (zip: ZipTool, comparisons: (ComparisonInternalDocumentWithFileId | undefined)[]): void => {
   if (!comparisons.length) {
     return
   }
-  const result: { documents: VersionInternalDocuments[] } = { documents: [] }
-  for (const comparison of comparisons) {
-    const { comparisonInternalDocuments } = comparison
-    if (!comparisonInternalDocuments) {
+  const result: { documents: ComparisonInternalDocumentMetadata[] } = { documents: [] }
+  for (const comparisonInternalDocument of comparisons) {
+    if (!comparisonInternalDocument) {
       continue
     }
-
-    for (const [key, value] of comparisonInternalDocuments) {
-      result.documents.push({
-        id: key,
-        filename: `${key}.${FILE_FORMAT_JSON}`,
-      })
-    }
+    const { id, comparisonFileId } = comparisonInternalDocument
+    result.documents.push({
+      id: id,
+      filename: `${id}.${FILE_FORMAT_JSON}`,
+      comparisonFileId: comparisonFileId,
+    })
   }
   if (!result.documents.length) {
     return

@@ -139,7 +139,7 @@ export const compareDocuments: DocumentsCompare = async (
   ) as { merged: OpenAPIV3.Document; diffs: Diff[] }
 
   if (isEmpty(diffs)) {
-    return { operationChanges: [], tags: new Set(), comparisonInternalDocuments: new Map<string, string>() }
+    return { operationChanges: [], tags: new Set() }
   }
 
   aggregateDiffsWithRollup(merged, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)
@@ -204,11 +204,18 @@ export const compareDocuments: DocumentsCompare = async (
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }
   }
-  const comparisonInternalDocuments = new Map<string, string>()
-  if (operationChanges.length && comparisonInternalDocumentId) {
-    comparisonInternalDocuments.set(comparisonInternalDocumentId, serializeOas(merged))
+  return {
+    operationChanges,
+    tags,
+    ...(operationChanges.length && comparisonInternalDocumentId
+      ? {
+        comparisonInternalDocument: {
+          id: comparisonInternalDocumentId,
+          value: serializeOas(merged),
+        },
+      }
+      : {}),
   }
-  return { operationChanges, tags, comparisonInternalDocuments }
 }
 
 async function reclassifyBreakingChanges(

@@ -32,7 +32,7 @@ import {
   VersionDocumentsResolver,
   VersionId,
 } from '../external'
-import { CompareContext, ComparisonInternalDocuments, OperationChanges } from './compare'
+import { CompareContext, ComparisonInternalDocument, OperationChanges } from './compare'
 import { BuilderConfiguration, BuilderRunOptions, VersionCache } from './builder'
 import { ExportDocument, VersionDocument, ZippableDocument } from './documents'
 import { NotificationMessage } from '../package/notifications'
@@ -111,7 +111,7 @@ export type OperationDataCompare<T> = (current: T, previous: T, ctx: CompareOper
 export type DocumentsCompareReturn = {
   operationChanges: OperationChanges[]
   tags: Set<string>
-  comparisonInternalDocuments: ComparisonInternalDocuments
+  comparisonInternalDocument?: ComparisonInternalDocument
 }
 export type DocumentsCompare = (operationsMap: OperationsMap, currDoc: ResolvedVersionDocument | undefined, prevDoc: ResolvedVersionDocument | undefined, ctx: CompareOperationsPairContext) => Promise<DocumentsCompareReturn>
 export type OperationIdNormalizer = (operation: ResolvedOperation) => NormalizedOperationId

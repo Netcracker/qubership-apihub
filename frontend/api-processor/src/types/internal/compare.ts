@@ -89,14 +89,27 @@ export interface VersionsComparison<T extends DiffType | DiffTypeDto = DiffType>
   fromCache: boolean
   operationTypes: OperationType<T>[]
   data?: OperationChanges[]
-  comparisonInternalDocuments?: ComparisonInternalDocuments
+  comparisonInternalDocumentWithFileId?: ComparisonInternalDocumentWithFileId[]
 }
 
-export interface VersionsComparisonDto extends Omit<VersionsComparison<DiffTypeDto>, 'data'> {
+export interface VersionsComparisonDto extends Omit<VersionsComparison<DiffTypeDto>, 'data' | 'comparisonInternalDocumentWithFileId'> {
   data?: OperationChangesDto[]
 }
+
 //todo move to?
-export type ComparisonInternalDocuments = Map<string, string>
+export type ComparisonInternalDocument = {
+  id: string
+  value: string
+}
+
+export type ComparisonInternalDocumentWithFileId = ComparisonInternalDocument & {
+  comparisonFileId: string
+}
+
+export type InternalDocumentMetadata = {id: string; filename: string}
+export type ComparisonInternalDocumentMetadata = InternalDocumentMetadata & {comparisonFileId: string}
+
+
 export interface CompareContext {
   apiBuilders: ApiBuilder[]
   batchSize?: number

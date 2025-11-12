@@ -17,7 +17,6 @@
 import { ChangeSummary, DiffTypeDto, OperationId, OperationType, PackageId, VersionId } from '../external'
 import { ActionType, DiffAction, DiffType } from '@netcracker/qubership-apihub-api-diff'
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
-import { ComparisonInternalDocuments } from '../internal'
 
 export type ChangeMessage<T = DiffType> = ChangeAdd<T> | ChangeRemove<T> | ChangeReplace<T> | ChangeRename<T>
 
@@ -35,7 +34,6 @@ export interface PackageComparison {
   previousVersionRevision?: number
   fromCache: boolean
   operationTypes: OperationType<DiffTypeDto>[]
-  comparisonInternalDocuments?: ComparisonInternalDocuments
 }
 
 export interface PackageComparisonOperations {
