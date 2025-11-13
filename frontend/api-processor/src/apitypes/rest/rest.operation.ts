@@ -186,7 +186,7 @@ export const buildRestOperation = (
       deprecatedInPreviousVersions: deprecatedOperationItem?.deprecatedInPreviousVersions,
     }, !!deprecatedOperationItem),
     apiAudience,
-    versionInternalDocumentId: document.internalDocumentId,
+    versionInternalDocumentId: document.internalDocumentId ?? '',
   }
 }
 

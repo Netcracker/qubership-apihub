@@ -109,7 +109,7 @@ export const buildGraphQLOperation = (
     deprecatedItems,
     models: {},
     apiAudience: API_AUDIENCE_EXTERNAL,
-    versionInternalDocumentId: document.internalDocumentId,
+    versionInternalDocumentId: document?.internalDocumentId ?? '',
   }
 }
 
