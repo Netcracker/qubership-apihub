@@ -1860,9 +1860,9 @@
       "license": "MIT"
     },
     "node_modules/@netcracker/qubership-apihub-api-processor": {
-      "version": "4.2.1-feature-performance-optimization-405.20251113073923",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/4.2.1-feature-performance-optimization-405.20251113073923/c80f3e1d32404ce37e449929b38abc29b86fc5a9",
-      "integrity": "sha512-HBWk8cedw8KqGd5tVEUdynDxhhD//KwHm4R6Bj9O5jgpQ5ERiyQfqI38MyOl5OpgOL9mg8U2cUaauiQJ+AQusw==",
+      "version": "4.2.1-feature-performance-optimization-405.20251113204629",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/4.2.1-feature-performance-optimization-405.20251113204629/3fc2096bda24cad33f80d7aa22758d015f083d57",
+      "integrity": "sha512-CjIIluY6xdha8qSObjWLexOtDMKVVqIQAK+JmpztMRqskEpCBJfMmvULdGrrDhmUQu2QSD1apsV4pVVJliFs8g==",
       "license": "Apache-2.0",
       "dependencies": {
         "@netcracker/qubership-apihub-api-diff": "feature-move-prefix-from-server-to-path",
