@@ -758,47 +758,6 @@ paths:
                   $ref: "#/components/examples/BranchNotFound"
         "500":
           $ref: "#/components/responses/internalServerError500"
-  /projects/{projectId}/branches/{branch}/history:
-    parameters:
-      - $ref: "#/components/parameters/projectId"
-      - $ref: "#/components/parameters/branch"
-    get:
-      tags:
-        - History
-        - Branch
-      summary: Get project branch commit history
-      description: Retrieve the project branch commit history
-      deprecated: true
-      operationId: getProjectsIdBranchesIdHistory
-      parameters:
-        - $ref: "#/components/parameters/limit"
-        - $ref: "#/components/parameters/page"
-      responses:
-        "200":
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                description: History items list
-                type: object
-                properties:
-                  changes:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/ChangeHistory"
-        "400":
-          $ref: "#/components/responses/badRequest400"
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/responses/notFound404"
-              examples:
-                ProjectNotFound:
-                  $ref: "#/components/examples/ProjectNotFound"
-        "500":
-          $ref: "#/components/responses/internalServerError500"
   /projects/{projectId}/branches/{branch}/upload:
     parameters:
       - $ref: "#/components/parameters/projectId"
@@ -1119,13 +1078,6 @@ paths:
       summary: Update the file metadata
       description: Update the file metadata
       operationId: patchProjectsIdBranchesIdFilesIdMeta
-      parameters:
-        - name: bulk
-          description: Bulk operation flag
-          in: query
-          schema:
-            type: boolean
-          deprecated: true
       requestBody:
         description: Meta update parameters
         content:
@@ -1875,10 +1827,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Group"
-        alias:
-          description: Group short alias (abbreviation)
-          type: string
-          deprecated: true
         name:
           description: Group full name
           type: string
@@ -2073,15 +2021,6 @@ components:
       required:
         - name
         - permissions
-    ChangeAction:
-      description: File/ref change action
-      type: string
-      deprecated: true
-      enum:
-        - add
-        - remove
-        - modify
-        - rename
     ProjectContent:
       title: ProjectContent
       description: Schema for project content
@@ -2125,12 +2064,6 @@ components:
               blobId:
                 type: string
                 description: Git blob ID of the file
-              action:
-                $ref: "#/components/schemas/ChangeAction"
-              isDraft:
-                description: File updated and not saved (committed)
-                type: boolean
-                deprecated: true
               type:
                 $ref: "#/components/schemas/ShortcutTypeEnum"
               name:
@@ -2199,8 +2132,6 @@ components:
             - deleted
             - added
             - unmodified
-        action:
-          $ref: "#/components/schemas/ChangeAction"
         kind:
           description: reference kind (group or project)
           enum:
@@ -2370,10 +2301,6 @@ components:
           type: string
         status:
           $ref: "#/components/schemas/VersionStatusEnum"
-        serviceName:
-          deprecated: true
-          type: string
-          description: Runtime serviceName
         saveSources:
           type: boolean
           default: false
@@ -2396,9 +2323,6 @@ components:
       properties:
         version:
           description: Version name
-          type: string
-        previousVersion:
-          deprecated: true
           type: string
         status:
           $ref: "#/components/schemas/VersionStatusEnum"
