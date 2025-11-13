@@ -41,7 +41,13 @@ import {
 } from '../consts'
 import { isNotEmpty } from './arrays'
 import { PATH_PARAM_UNIFIED_PLACEHOLDER } from './builder'
-import { denormalize, RefErrorType, RefErrorTypes, serialize } from '@netcracker/qubership-apihub-api-unifier'
+import {
+  denormalize,
+  NormalizeOptions,
+  RefErrorType,
+  RefErrorTypes,
+  serialize,
+} from '@netcracker/qubership-apihub-api-unifier'
 
 export const EXPORT_FORMAT_TO_FILE_FORMAT = new Map<ExportFormat, typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON>([
   [FILE_FORMAT_YAML, FILE_FORMAT_YAML],
@@ -217,8 +223,8 @@ export function capitalize(string: string): string {
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
-export function denormalizeDocument(normalizedDocument: ApiDocument): ApiDocument {
-  return denormalize(normalizedDocument, NORMALIZE_OPTIONS) as ApiDocument
+export function denormalizeDocument(normalizedDocument: ApiDocument, options: NormalizeOptions = NORMALIZE_OPTIONS): ApiDocument {
+  return denormalize(normalizedDocument, options) as ApiDocument
 }
 
 export function serializeDocument(normalizedDocument: ApiDocument): string {

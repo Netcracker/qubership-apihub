@@ -21,7 +21,12 @@ import { isObject } from './objects'
 import { denormalizeDocument, IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER, serializeDocument, slugify } from './document'
 import { removeFirstSlash } from './builder'
 import { Diff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
-import { matchPaths, OPEN_API_PROPERTY_PATHS, PREDICATE_ANY_VALUE } from '@netcracker/qubership-apihub-api-unifier'
+import {
+  matchPaths,
+  NormalizeOptions,
+  OPEN_API_PROPERTY_PATHS,
+  PREDICATE_ANY_VALUE,
+} from '@netcracker/qubership-apihub-api-unifier'
 import { DirectiveLocation } from 'graphql/language'
 import { HTTP_METHODS_SET } from '../consts'
 
@@ -106,6 +111,6 @@ export const calculateOperationId = (
   return slugify(`${removeFirstSlash(operationPath)}-${key}`)
 }
 
-export const createInternalDocument = (document: ApiDocument): string => {
-  return serializeDocument(denormalizeDocument(document))
+export const createInternalDocument = (document: ApiDocument, options: NormalizeOptions): string => {
+  return serializeDocument(denormalizeDocument(document, options))
 }

@@ -26,11 +26,12 @@ import {
   removeComponents,
 } from '../../utils'
 import type * as TYPE from './rest.types'
-import { HASH_FLAG, INLINE_REFS_FLAG, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
+import { INLINE_REFS_FLAG } from '../../consts'
 import { asyncFunction } from '../../utils/async'
 import { logLongBuild, syncDebugPerformance } from '../../utils/logs'
 import { normalize, RefErrorType } from '@netcracker/qubership-apihub-api-unifier'
 import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
+import { EFFECTIVE_NORMALIZE_OPTIONS } from './rest.consts'
 
 type OperationInfo = { path: string; method: string }
 type DuplicateEntry = { operationId: string; operations: OperationInfo[] }
@@ -38,14 +39,11 @@ type DuplicateEntry = { operationId: string; operations: OperationInfo[] }
 export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async (document, ctx, debugCtx) => {
   const documentWithoutComponents = removeComponents(document.data)
   const bundlingErrorHandler = createBundlingErrorHandler(ctx, document.fileId)
-
   const { effectiveDocument, refsOnlyDocument } = syncDebugPerformance('[NormalizeDocument]', () => {
     const effectiveDocument = normalize(
       documentWithoutComponents,
       {
-        ...NORMALIZE_OPTIONS,
-        originsFlag: ORIGINS_SYMBOL,
-        hashFlag: HASH_FLAG,
+        ...EFFECTIVE_NORMALIZE_OPTIONS,
         source: document.data,
         onRefResolveError: (message: string, _path: PropertyKey[], _ref: string, errorType: RefErrorType) =>
           bundlingErrorHandler([{ message, errorType }]),
@@ -123,7 +121,7 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
   }
 
   if (operations.length) {
-    document.internalDocument = createInternalDocument(effectiveDocument)
+    document.internalDocument = createInternalDocument(effectiveDocument, EFFECTIVE_NORMALIZE_OPTIONS)
   }
 
   return operations
