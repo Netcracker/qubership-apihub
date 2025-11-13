@@ -26,6 +26,7 @@ import {
   NormalizeOptions,
   OPEN_API_PROPERTY_PATHS,
   PREDICATE_ANY_VALUE,
+  stringifyCyclicJso,
 } from '@netcracker/qubership-apihub-api-unifier'
 import { DirectiveLocation } from 'graphql/language'
 import { HTTP_METHODS_SET } from '../consts'
@@ -117,12 +118,12 @@ export const createInternalDocument = (document: ApiDocument, options: Normalize
   }
   if (isOasDocument(document)) {
     console.log('[ORIGINAL]')
-    console.log(JSON.stringify(document.paths?.['/api/v1/system/configuration']?.get, null, 2))
+    console.log(stringifyCyclicJso(document.paths?.['/api/v1/system/configuration']?.get))
   }
   const denormalized = denormalizeDocument(document, options)
   if (isOasDocument(denormalized)) {
     console.log('[DENORMALIZED]')
-    console.log(JSON.stringify(denormalized.paths?.['/api/v1/system/configuration']?.get, null, 2))
+    console.log(stringifyCyclicJso(denormalized.paths?.['/api/v1/system/configuration']?.get))
   }
   return serializeDocument(denormalized)
 }
