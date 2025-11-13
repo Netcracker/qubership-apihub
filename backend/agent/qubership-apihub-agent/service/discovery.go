@@ -168,6 +168,24 @@ func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namesp
 			continue
 		}
 
+		containerReady := false
+		for _, svcPod := range servicePods {
+			containerStatuses := svcPod.Status.ContainerStatuses
+			for _, containerStatus := range containerStatuses {
+				if containerStatus.Ready {
+					containerReady = true
+					break
+				}
+			}
+		}
+
+		if !containerReady {
+			errMsg := fmt.Sprintf("no pod is up yet for service: %s", srv.Name)
+			d.serviceListCache.setResultStatus(namespace, workspaceId, view.StatusError, errMsg)
+			log.Error(errMsg)
+			return
+		}
+
 		discoveryUrls := view.MakeDocDiscoveryUrls(annotations)
 
 		srvTmp := srv
