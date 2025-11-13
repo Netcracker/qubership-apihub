@@ -62,7 +62,7 @@ export function isTextDocument(document: ResolvedVersionDocument): boolean {
   return Object.values(TEXT_DOCUMENT_TYPE).includes(document.type as TextDocumentType)
 }
 
-export const EFFECTIVE_NORMALIZE_OPTIONS = {
+export const REST_EFFECTIVE_NORMALIZE_OPTIONS = {
   ...NORMALIZE_OPTIONS,
   originsFlag: ORIGINS_SYMBOL,
   hashFlag: HASH_FLAG,

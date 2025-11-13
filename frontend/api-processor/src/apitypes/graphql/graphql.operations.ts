@@ -24,7 +24,7 @@ import { buildGraphQLOperation } from './graphql.operation'
 import { asyncFunction } from '../../utils/async'
 import { logLongBuild, syncDebugPerformance } from '../../utils/logs'
 import { normalize } from '@netcracker/qubership-apihub-api-unifier'
-import { EFFECTIVE_NORMALIZE_OPTIONS } from '../graphql'
+import { GRAPHQL_EFFECTIVE_NORMALIZE_OPTIONS } from '../graphql'
 
 export const buildGraphQLOperations: OperationsBuilder<GraphApiSchema> = async (document, ctx, debugCtx) => {
   const { notifications } = ctx
@@ -35,7 +35,7 @@ export const buildGraphQLOperations: OperationsBuilder<GraphApiSchema> = async (
     const effectiveDocument = normalize(
       documentWithoutComponents,
       {
-        ...EFFECTIVE_NORMALIZE_OPTIONS,
+        ...GRAPHQL_EFFECTIVE_NORMALIZE_OPTIONS,
         source: document.data,
       },
     ) as GraphApiSchema
@@ -87,7 +87,7 @@ export const buildGraphQLOperations: OperationsBuilder<GraphApiSchema> = async (
   }
 
   if (operations.length) {
-    document.internalDocument = createInternalDocument(effectiveDocument, EFFECTIVE_NORMALIZE_OPTIONS)
+    document.internalDocument = createInternalDocument(effectiveDocument, GRAPHQL_EFFECTIVE_NORMALIZE_OPTIONS)
   }
 
   return operations

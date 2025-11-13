@@ -31,7 +31,7 @@ import { asyncFunction } from '../../utils/async'
 import { logLongBuild, syncDebugPerformance } from '../../utils/logs'
 import { normalize, RefErrorType } from '@netcracker/qubership-apihub-api-unifier'
 import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
-import { EFFECTIVE_NORMALIZE_OPTIONS } from './rest.consts'
+import { REST_EFFECTIVE_NORMALIZE_OPTIONS } from './rest.consts'
 
 type OperationInfo = { path: string; method: string }
 type DuplicateEntry = { operationId: string; operations: OperationInfo[] }
@@ -43,7 +43,7 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
     const effectiveDocument = normalize(
       documentWithoutComponents,
       {
-        ...EFFECTIVE_NORMALIZE_OPTIONS,
+        ...REST_EFFECTIVE_NORMALIZE_OPTIONS,
         source: document.data,
         onRefResolveError: (message: string, _path: PropertyKey[], _ref: string, errorType: RefErrorType) =>
           bundlingErrorHandler([{ message, errorType }]),
@@ -121,7 +121,7 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
   }
 
   if (operations.length) {
-    document.internalDocument = createInternalDocument(effectiveDocument, EFFECTIVE_NORMALIZE_OPTIONS)
+    document.internalDocument = createInternalDocument(effectiveDocument, REST_EFFECTIVE_NORMALIZE_OPTIONS)
   }
 
   return operations

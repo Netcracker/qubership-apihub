@@ -50,7 +50,7 @@ export function isGraphqlDocument(document: ZippableDocument | ResolvedVersionDo
   return Object.values(GRAPHQL_DOCUMENT_TYPE).some(type => document.type === type)
 }
 
-export const EFFECTIVE_NORMALIZE_OPTIONS = {
+export const GRAPHQL_EFFECTIVE_NORMALIZE_OPTIONS = {
   ...NORMALIZE_OPTIONS,
   originsFlag: ORIGINS_SYMBOL,
 }
