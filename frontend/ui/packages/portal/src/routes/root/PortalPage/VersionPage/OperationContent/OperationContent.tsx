@@ -17,7 +17,8 @@
 import type { OpenApiData } from '@apihub/entities/operation-structure'
 import {
   useApiDiffResult,
-  useIsApiDiffResultLoading, useSetApiDiffResult,
+  useIsApiDiffResultLoading,
+  useSetApiDiffResult,
 } from '@apihub/routes/root/ApiDiffResultProvider'
 import { OperationView } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationView'
 import {
@@ -25,7 +26,6 @@ import {
 } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/CustomServersProvider'
 import { getFileDetails } from '@apihub/utils/file-details'
 import { Box } from '@mui/material'
-import { removeComponents } from '@netcracker/qubership-apihub-api-processor'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import {
   CONTENT_PLACEHOLDER_AREA,
@@ -56,7 +56,6 @@ import {
 import {
   useOperationsPairAsStrings,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationsPairAsStrings'
-import { normalizeOpenApiDocument } from '@netcracker/qubership-apihub-ui-shared/utils/normalize'
 import type { FC, ReactNode } from 'react'
 import { memo, useCallback, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
@@ -79,6 +78,11 @@ import { useSelectOperationTags } from './useSelectOperationTags'
 export type OperationContentProps = {
   changedOperation?: OperationData
   originOperation?: OperationData
+  // Feature "Internal documents"
+  normalizedChangedOperation?: unknown
+  normalizedOriginOperation?: unknown
+  mergedOperations?: unknown
+  // ---
   isOperationExist?: boolean
   displayMode?: OperationDisplayMode
   paddingBottom?: string | number
@@ -90,6 +94,11 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
   const {
     changedOperation,
     originOperation,
+    // Feature "Internal documents"
+    normalizedChangedOperation,
+    normalizedOriginOperation,
+    mergedOperations,
+    // ---
     isOperationExist = true,
     displayMode = DEFAULT_DISPLAY_MODE,
     isLoading,
@@ -162,18 +171,21 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
         return undefined
       }
 
-      //todo separate to OperationView and OperationDiffView components
+      // TODO 13.11.25 // Separate to OperationView and OperationDiffView components
       if (!comparisonMode) {
-        const existingData = changedOperation?.data ?? originOperation?.data
-        const existingOperation = removeComponents(existingData)
-        return existingOperation
-          ? normalizeOpenApiDocument(existingOperation, existingData)
-          : undefined
+        return normalizedChangedOperation ?? normalizedOriginOperation
       }
 
       return apiDiffResult?.merged
     },
-    [changedOperation?.data, comparisonMode, originOperation?.data, apiDiffResult?.merged],
+    [
+      changedOperation?.data,
+      originOperation?.data,
+      comparisonMode,
+      apiDiffResult?.merged,
+      normalizedChangedOperation,
+      normalizedOriginOperation,
+    ],
   )
 
   useEffect(() => {

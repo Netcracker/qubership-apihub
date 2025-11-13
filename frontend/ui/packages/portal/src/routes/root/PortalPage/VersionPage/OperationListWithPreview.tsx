@@ -14,36 +14,37 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo, useCallback } from 'react'
-import { useOperation } from './useOperation'
-import { getOperationLink } from './useNavigateToOperation'
-import { useOperationSearchParams } from './useOperationSearchParams'
-import { usePackageKind } from '../usePackageKind'
-import { useSelectedPreviewOperation, useSetSelectedPreviewOperation } from '../SelectedPreviewOperationProvider'
-import { usePackageParamsWithRef } from '../usePackageParamsWithRef'
-import { OperationPreview } from './VersionOperationsSubPage/OperationPreview'
-import { useOperationViewMode } from './useOperationViewMode'
-import type { ResizeCallback } from 're-resizable'
-import { useBackwardLocation } from '../../useBackwardLocation'
-import type {
-  FetchNextOperationList,
-  OperationData,
-  OperationsData,
-  PackageRef,
-} from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import { useNormalizedOperation } from '@apihub/api-hooks/InternalDocuments/useNormalizedOperation'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
 import type {
   OperationListSubComponentProps,
 } from '@netcracker/qubership-apihub-ui-shared/components/Operations/OperationWithMetaClickableList'
 import {
   OperationWithMetaClickableList,
 } from '@netcracker/qubership-apihub-ui-shared/components/Operations/OperationWithMetaClickableList'
-import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { useOperationsPairAsStrings } from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationsPairAsStrings'
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import type {
+  FetchNextOperationList,
+  OperationData,
+  OperationsData,
+  PackageRef,
+} from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
+import { useOperationsPairAsStrings } from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationsPairAsStrings'
+import type { ResizeCallback } from 're-resizable'
+import type { FC } from 'react'
+import { memo, useCallback } from 'react'
+import { useBackwardLocation } from '../../useBackwardLocation'
+import { useSelectedPreviewOperation, useSetSelectedPreviewOperation } from '../SelectedPreviewOperationProvider'
+import { usePackageKind } from '../usePackageKind'
+import { usePackageParamsWithRef } from '../usePackageParamsWithRef'
+import { OperationPreview } from './VersionOperationsSubPage/OperationPreview'
+import { getOperationLink } from './useNavigateToOperation'
+import { useOperation } from './useOperation'
+import { useOperationSearchParams } from './useOperationSearchParams'
+import { useOperationViewMode } from './useOperationViewMode'
 
 export type OperationListWithPreviewProps = {
   operations: OperationsData
@@ -91,6 +92,12 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
 
   const [changedOperationContent] = useOperationsPairAsStrings(changedOperation)
 
+  const { data: normalizedChangedOperation, isLoading: isNormalizedChangedOperationLoading } = useNormalizedOperation({
+    operation: changedOperation,
+    packageId: operationsPackageKey,
+    versionId: operationsVersionsKey,
+  })
+
   const onRowClick = useCallback((operationKey: Key, packageRef: PackageRef | undefined) => setSelectedPreviewOperation({
     operationKey,
     packageRef,
@@ -131,14 +138,17 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
       SubComponent={SubComponent}
       previewComponent={
         <OperationPreview
+          apiType={apiType}
           changedOperation={changedOperation}
           changedOperationContent={changedOperationContent}
-          apiType={apiType}
-          isLoading={isInitialLoading}
+          // Feature "Internal documents"
+          normalizedChangedOperation={normalizedChangedOperation}
+          // ---
+          isLoading={isInitialLoading || isNormalizedChangedOperationLoading}
           mode={mode}
-          maxWidthHeaderToolbar={initialSize}
           schemaViewMode={schemaViewMode}
           productionMode={productionMode}
+          maxWidthHeaderToolbar={initialSize}
         />
       }
     />

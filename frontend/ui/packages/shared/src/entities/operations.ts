@@ -47,6 +47,7 @@ export type OperationMetadataDto = Readonly<{
   deprecated?: boolean
   tags?: Readonly<Tags>
   customTags?: CustomTags
+  versionInternalDocumentId: Key
 }>
 
 export type RestOperationDto = OperationMetadataDto & Readonly<{
@@ -117,6 +118,7 @@ export interface Operation {
   readonly packageRef?: PackageRef
   readonly tags?: Readonly<Tags>
   readonly customTags?: CustomTags
+  readonly versionInternalDocumentId: Key
 }
 export interface RestOperation extends Operation {
   readonly method: MethodType

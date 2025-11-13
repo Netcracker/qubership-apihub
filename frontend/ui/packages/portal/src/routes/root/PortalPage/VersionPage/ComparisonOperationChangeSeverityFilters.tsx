@@ -55,6 +55,8 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
 
   const [changes, setChanges] = useState<ChangesSummary | undefined>(undefined)
 
+  // TODO 13.11.25 // Load pre-processed here
+
   const apiDiffResult = useMemo(() =>
     getApiDiffResult({
       beforeData: originOperation?.data,
