@@ -81,7 +81,7 @@ export const buildGraphQLOperations: OperationsBuilder<GraphApiSchema> = async (
             )
             operations.push(operation)
           }, `${ctx.config.packageId}/${ctx.config.version} ${operationId}`,
-        ),debugCtx, [operationId])
+          ), debugCtx, [operationId])
       })
     }
   }

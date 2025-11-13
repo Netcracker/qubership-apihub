@@ -112,5 +112,18 @@ export const calculateOperationId = (
 }
 
 export const createInternalDocument = (document: ApiDocument, options: NormalizeOptions): string => {
-  return serializeDocument(denormalizeDocument(document, options))
+  function isOasDocument(document: ApiDocument): document is OpenAPIV3.Document {
+    return 'paths' in document
+  }
+  if (isOasDocument(document)) {
+    console.log('[ORIGINAL]')
+    console.log(document.paths?.['/api/v1/system/configuration']?.get)
+  }
+  const denormalized = denormalizeDocument(document, options)
+  if (isOasDocument(denormalized)) {
+    console.log('[DENORMALIZED]')
+    console.log(denormalized.paths?.['/api/v1/system/configuration']?.get)
+    console.log('111111111111111111111111111111')
+  }
+  return serializeDocument(denormalized)
 }
