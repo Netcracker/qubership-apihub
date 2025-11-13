@@ -47,7 +47,7 @@ export interface ApiOperation<T = any, M = any> {
   // changeSummary?: ChangeSummary
   hasExample?: boolean
   apiAudience?: ApiAudience
-  versionInternalDocumentId?: string
+  versionInternalDocumentId: string
 }
 
 export type ApiDocument = OpenAPIV3.Document | GraphApiSchema

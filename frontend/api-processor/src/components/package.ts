@@ -65,7 +65,7 @@ export const createVersionPackage = async (
     ...buildResult,
     comparisons: buildResult.comparisons.map(comparison => toVersionsComparisonDto(comparison, logError)),
   }
-  const comparisonInternalDocuments: ComparisonInternalDocument[] = buildResult.comparisons.map(comparison => comparison.comparisonInternalDocument).flat()
+  const comparisonInternalDocuments: ComparisonInternalDocument[] = buildResult.comparisons.map(comparison => comparison.comparisonInternalDocuments).flat()
 
   const documents = buildResultDto.merged ? [buildResultDto.merged] : [...buildResultDto.documents.values()]
 
@@ -143,11 +143,11 @@ const createVersionInternalDocumentsFile = (zip: ZipTool, documents: VersionDocu
   const result: { documents: InternalDocumentMetadata[] } = { documents: [] }
 
   for (const document of documents.values()) {
-    if (!document.publish) { continue }
-
+    const {publish, internalDocumentId} = document
+    if (!publish || !internalDocumentId) { continue }
     result.documents.push({
-      id: document?.internalDocumentId ?? '',
-      filename: document.filename,
+      id: internalDocumentId,
+      filename: `${internalDocumentId}.${FILE_FORMAT_JSON}`,
     })
   }
 
@@ -155,6 +155,9 @@ const createVersionInternalDocumentsFile = (zip: ZipTool, documents: VersionDocu
 }
 
 const createComparisonInternalDocumentDataFiles = async (zip: ZipTool, comparisonDocument: ComparisonInternalDocument[]): Promise<void> => {
+  if(!comparisonDocument.length){
+    return
+  }
   const comparisonsDir = zip.folder(PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME)
   for (const comparisonInternalDocument of comparisonDocument) {
     if (!comparisonInternalDocument) {
@@ -202,11 +205,11 @@ const writeDocumentsToZip = async (zip: ZipTool, documents: ZippableDocument[], 
   }
 }
 
-const writeInternalDocumentsToZip = async (zip: ZipTool, documents: ZippableDocument[]): Promise<void> => {
+const writeInternalDocumentsToZip = async (zip: ZipTool, documents: VersionDocument[]): Promise<void> => {
   for (const document of documents) {
-    if (document.internalDocument) {
-      await zip.file(document.filename, document.internalDocument)
-    }
+    const {publish, internalDocument, internalDocumentId} = document
+    if (!publish || !internalDocument || !internalDocumentId) { continue }
+    await zip.file(`${internalDocumentId}.${FILE_FORMAT_JSON}`, internalDocument)
   }
 }
 

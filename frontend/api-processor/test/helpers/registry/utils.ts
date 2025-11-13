@@ -50,9 +50,11 @@ export async function saveVersionInternalDocuments(
 ): Promise<void> {
   await fs.mkdir(`${basePath}/${PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME}`)
   for (const document of documents.values()) {
-    document.publish && await fs.writeFile(
-      `${basePath}/${PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME}/${document.filename}`,
-      document?.internalDocument ?? '',
+    const {publish, internalDocumentId, internalDocument } = document
+    if (!publish || !internalDocumentId || !internalDocument) { continue }
+    await fs.writeFile(
+      `${basePath}/${PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME}/${internalDocumentId}.${FILE_FORMAT_JSON}`,
+      internalDocument,
     )
   }
 }
@@ -80,7 +82,7 @@ export async function saveEachComparison(
   await fs.mkdir(`${basePath}/${PACKAGE.COMPARISONS_DIR_NAME}`)
   for (const comparison of comparisons.values()) {
     comparison.comparisonFileId && await fs.writeFile(
-      `${basePath}/${PACKAGE.COMPARISONS_DIR_NAME}/${comparison.comparisonFileId}.json`,
+      `${basePath}/${PACKAGE.COMPARISONS_DIR_NAME}/${comparison.comparisonFileId}.${FILE_FORMAT_JSON}`,
       JSON.stringify({ operations: comparison.data }, undefined, 2),
     )
   }
@@ -147,11 +149,12 @@ export async function saveVersionInternalDocumentsArray(
   const result: { documents: InternalDocumentMetadata[] } = { documents: [] }
 
   for (const document of documents.values()) {
-    if (!document.publish) { continue }
+    const {publish, internalDocumentId} = document
+    if (!publish || !internalDocumentId) { continue }
 
     result.documents.push({
-      id: document?.internalDocumentId ?? '',
-      filename: document.filename,
+      id: internalDocumentId,
+      filename: `${internalDocumentId}.${FILE_FORMAT_JSON}`,
     })
   }
   if (!result.documents.length) {
@@ -233,6 +236,7 @@ export function getOperationsFileContent(
       models: operation.models,
       tags: operation.tags,
       apiAudience: operation.apiAudience,
+      versionInternalDocumentId: operation.versionInternalDocumentId,
     })
   }
 

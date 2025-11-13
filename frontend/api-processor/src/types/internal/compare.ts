@@ -71,7 +71,7 @@ export interface OperationChanges<T extends DiffType | DiffTypeDto = DiffType> {
   previousMetadata?: OperationChangesMetadata & {
     [key: string]: unknown
   }
-  comparisonDocumentId?: string
+  comparisonInternalDocumentId?: string
 }
 
 export interface OperationChangesDto extends Omit<OperationChanges<DiffTypeDto>, 'diffs' | 'impactedSummary' | 'mergedJso'> {
@@ -98,10 +98,10 @@ export interface VersionsComparison<T extends DiffType | DiffTypeDto = DiffType>
   fromCache: boolean
   operationTypes: OperationType<T>[]
   data?: OperationChanges[]
-  comparisonInternalDocument: ComparisonInternalDocument[]
+  comparisonInternalDocuments: ComparisonInternalDocument[]
 }
 
-export interface VersionsComparisonDto extends Omit<VersionsComparison<DiffTypeDto>, 'data' | 'comparisonInternalDocument'> {
+export interface VersionsComparisonDto extends Omit<VersionsComparison<DiffTypeDto>, 'data' | 'comparisonInternalDocuments'> {
   data?: OperationChangesDto[]
 }
 

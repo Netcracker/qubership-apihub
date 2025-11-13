@@ -106,7 +106,7 @@ export async function compareVersionsOperations(
       comparisonFileId,
       data: changes,
     } : {},
-    comparisonInternalDocument: comparisonInternalDocumentWithFileId,
+    comparisonInternalDocuments: comparisonInternalDocumentWithFileId,
   }
 }
 

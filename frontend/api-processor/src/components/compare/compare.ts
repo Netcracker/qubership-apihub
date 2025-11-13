@@ -75,7 +75,7 @@ export async function compareVersionsReferences(
           previousVersion: previousVersion,
           previousVersionRevision: previousVersionRevision,
           fromCache: true,
-          comparisonInternalDocument: [],
+          comparisonInternalDocuments: [],
         })
         continue
       }

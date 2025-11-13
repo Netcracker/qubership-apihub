@@ -264,7 +264,7 @@ export const comparePairedDocs = async (
 export function createOperationChange(
   apiType: OperationsApiType,
   operationDiffs: Diff[],
-  comparisonDocumentId: string,
+  comparisonInternalDocumentId: string,
   previous?: ResolvedOperation,
   current?: ResolvedOperation,
   currentGroup?: string,
@@ -290,7 +290,7 @@ export function createOperationChange(
     diffs: reclassifiedDiffs,
     changeSummary: changeSummary,
     impactedSummary: impactedSummary,
-    comparisonDocumentId,
+    comparisonInternalDocumentId,
     ...currentOperationFields,
     ...previousOperationFields,
   }

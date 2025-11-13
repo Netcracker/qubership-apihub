@@ -36,7 +36,6 @@ export interface ZippableDocument<T = any> {
 
   filename: string
   publish?: boolean
-  internalDocument?: string
 }
 
 export interface VersionDocument<T = any> extends ZippableDocument<T> {
@@ -62,6 +61,7 @@ export interface VersionDocument<T = any> extends ZippableDocument<T> {
   source?: Blob
   apiKind?: string
   internalDocumentId?: string
+  internalDocument?: string
 }
 
 export type FileFormat = KeyOfConstType<typeof FILE_FORMAT>
