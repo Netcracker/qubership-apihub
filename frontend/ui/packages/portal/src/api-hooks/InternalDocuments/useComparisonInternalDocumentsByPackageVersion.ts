@@ -3,44 +3,57 @@ import { API_V1, requestJson } from '@netcracker/qubership-apihub-ui-shared/util
 import { useQuery } from '@tanstack/react-query'
 import { generatePath } from 'react-router-dom'
 import type { InternalDocuments, QueryResult } from './useInternalDocumentsByPackageVersion'
-import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 
 const QUERY_KEY = 'query-key-comparison-internal-documents-by-package-version'
 
+type Options = {
+  currentPackageId: PackageKey | undefined
+  currentVersionId: VersionKey | undefined
+  previousPackageId: PackageKey | undefined
+  previousVersionId: VersionKey | undefined
+}
+
 export function useComparisonInternalDocumentsByPackageVersion(
-  packageId: PackageKey | undefined,
-  versionId: VersionKey | undefined,
-  previousPackageId: PackageKey | undefined,
-  previousVersionId: VersionKey | undefined,
+  options: Options,
 ): QueryResult<InternalDocuments, Error | null> {
+  const { currentPackageId, currentVersionId, previousPackageId, previousVersionId } = options
+
+  const currentPackageKey = encodeURIComponent(currentPackageId ?? '')
+  const currentPackageVersion = encodeURIComponent(currentVersionId ?? '')
+
+  const enabled = !!currentPackageKey && !!currentPackageVersion && !!previousPackageId && !!previousVersionId
+
   const { data, isLoading, error } = useQuery<InternalDocuments, Error, InternalDocuments>({
-    queryKey: [QUERY_KEY, packageId, versionId, previousPackageId, previousVersionId],
+    queryKey: [QUERY_KEY, currentPackageKey, currentPackageVersion, previousPackageId, previousVersionId],
     queryFn: () => (
-      packageId && versionId && previousPackageId && previousVersionId
+      enabled
         ? getComparisonInternalDocumentsByPackageVersion(
-          packageId,
-          versionId,
+          currentPackageKey,
+          currentPackageVersion,
           previousPackageId,
           previousVersionId,
         )
         : Promise.resolve([])
     ),
-    enabled: !!packageId && !!versionId && !!previousPackageId && !!previousVersionId,
+    enabled: enabled,
   })
 
   return { data, isLoading, error }
 }
 
 function getComparisonInternalDocumentsByPackageVersion(
-  packageId: PackageKey,
-  versionId: VersionKey,
+  currentPackageId: PackageKey,
+  currentVersionId: VersionKey,
   previousPackageId: PackageKey,
   previousVersionId: VersionKey,
 ): Promise<InternalDocuments> {
   const endpointPattern = '/packages/:packageId/versions/:versionId/comparison-internal-documents'
-  const endpoint = `${generatePath(endpointPattern, { packageId, versionId })}?${optionalSearchParams({
-    previousPackageId: { value: previousPackageId },
-    previousVersionId: { value: previousVersionId },
+  const endpoint = `${generatePath(endpointPattern, {
+    packageId: currentPackageId,
+    versionId: currentVersionId,
+  })}?${new URLSearchParams({
+    previousVersionPackageId: previousPackageId,
+    previousVersion: previousVersionId,
   })}`
   return requestJson<InternalDocuments>(
     endpoint,

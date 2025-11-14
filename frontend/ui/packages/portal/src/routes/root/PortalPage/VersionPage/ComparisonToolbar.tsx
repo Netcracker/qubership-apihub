@@ -64,12 +64,20 @@ import {
   usePackageSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
 
+export type InternalDocumentOptions = {
+  previousPackageId: Key | undefined
+  previousVersionId: Key | undefined
+  currentPackageId: Key | undefined
+  currentVersionId: Key | undefined
+}
+
 export type ComparisonPageToolbarProps = {
   compareToolbarMode: CompareToolbarMode
+  internalDocumentOptions?: InternalDocumentOptions
 } & ChangelogAvailable
 
 export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<ComparisonPageToolbarProps>((props) => {
-  const { compareToolbarMode, isChangelogAvailable } = props
+  const { compareToolbarMode, isChangelogAvailable, internalDocumentOptions } = props
   const { apiType: apiTypeSearchParam } = useApiTypeSearchParam()
   const [packageSearchParam] = usePackageSearchParam()// in case of package/dashboard comparison we don't hase apiType in url, we have it in searchParams
   const {
@@ -156,16 +164,16 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
     <Box sx={COMPARISON_PAGE_TOOLBAR_STYLES} data-testid="ComparisonToolbar">
       <Box display="flex" flexDirection="column">
         <Typography variant="body2">
-          <ComparedPackagesBreadcrumbs data={commonLinkedBreadcrumbs}/>
+          <ComparedPackagesBreadcrumbs data={commonLinkedBreadcrumbs} />
         </Typography>
         <Box display="flex" alignItems="center">
           <IconButton color="primary" onClick={handleBackClick} data-testid="BackButton">
-            <ArrowBackIcon/>
+            <ArrowBackIcon />
           </IconButton>
           <Typography sx={COMPARISON_PAGE_TOOLBAR_TEXT_STYLES}>
             {title}
           </Typography>
-          {isPackageFromDashboard && compareToolbarMode !== COMPARE_DIFFERENT_OPERATIONS_MODE && <PackageSelector/>}
+          {isPackageFromDashboard && compareToolbarMode !== COMPARE_DIFFERENT_OPERATIONS_MODE && <PackageSelector />}
         </Box>
       </Box>
       <Box sx={COMPARISON_PAGE_TOOLBAR_ACTIONS_STYLES}>
@@ -173,16 +181,19 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
           isOperationsComparison
             ? <>
               {mode !== RAW_OPERATION_VIEW_MODE && (
-                <ComparisonOperationChangeSeverityFilters isChangelogAvailable={isChangelogAvailable}/>
+                <ComparisonOperationChangeSeverityFilters
+                  isChangelogAvailable={isChangelogAvailable}
+                  internalDocumentOptions={internalDocumentOptions}
+                />
               )}
-              <OperationViewModeSelector modes={OPERATION_COMPARE_VIEW_MODES}/>
+              <OperationViewModeSelector modes={OPERATION_COMPARE_VIEW_MODES} />
             </>
             : <>
               <ComparisonChangeSeverityFilters
                 category={getChangeSeverityCategory(isDashboardsComparison, isPackagesComparison)}
                 apiType={apiType ?? API_TYPES.find(type => type.toString() === apiTypeSearchParam)}
               />
-              {isDashboardsComparison && showApiTypeSelector && <ApiTypeSegmentedSelector/>}
+              {isDashboardsComparison && showApiTypeSelector && <ApiTypeSegmentedSelector />}
             </>
         )}
       </Box>

@@ -33,6 +33,7 @@ import type {
 import {
   useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
+import { usePackageSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
 import { filterChangesBySeverity } from '@netcracker/qubership-apihub-ui-shared/utils/change-severities'
 import { safeOperationKeysPair } from '@netcracker/qubership-apihub-ui-shared/utils/operations'
 import {
@@ -51,7 +52,6 @@ import {
 import type { FC } from 'react'
 import { memo, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { usePackageSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
 import { useTextSearchParam } from '../../../useTextSearchParam'
 import { useVersionSearchParam } from '../../../useVersionSearchParam'
 import { useCompareVersions } from '../../useCompareVersions'
@@ -61,6 +61,7 @@ import { useChangesSummaryContext } from '../ChangesSummaryProvider'
 import { CompareOperationPathsDialog } from '../CompareOperationPathsDialog'
 import { ComparedOperationsContext } from '../ComparedOperationsContext'
 import { BreadcrumbsDataContext } from '../ComparedPackagesBreadcrumbsProvider'
+import type { InternalDocumentOptions } from '../ComparisonToolbar'
 import { ComparisonToolbar } from '../ComparisonToolbar'
 import { SelectedOperationTagsProvider } from '../SelectedOperationTagsProvider'
 import { ShouldAutoExpandTagsProvider, useSetShouldAutoExpandTagsContext } from '../ShouldAutoExpandTagsProvider'
@@ -130,6 +131,21 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
   })
   const flatPackageChangelog = useFlatVersionChangelog(packageChangelog)
   const packageChanges: ReadonlyArray<OperationChangeBase> = flatPackageChangelog.operations
+
+  const internalDocumentOptions: InternalDocumentOptions = useMemo(
+    () => ({
+      previousPackageId: flatPackageChangelog?.previousVersionPackageKey,
+      previousVersionId: flatPackageChangelog?.previousVersion,
+      currentPackageId: changedPackageKey,
+      currentVersionId: changedVersionKey,
+    }),
+    [
+      changedPackageKey,
+      changedVersionKey,
+      flatPackageChangelog?.previousVersionPackageKey,
+      flatPackageChangelog?.previousVersion,
+    ],
+  )
 
   const operationsFromPackageChanges = useMemo(
     () => getOperationPairsFromPackageChanges(packageChanges),
@@ -263,6 +279,7 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
                   <ComparisonToolbar
                     compareToolbarMode={COMPARE_SAME_OPERATIONS_MODE}
                     isChangelogAvailable={!!changesSummary && isContextValid}
+                    internalDocumentOptions={internalDocumentOptions}
                   />
                 }
                 navigation={

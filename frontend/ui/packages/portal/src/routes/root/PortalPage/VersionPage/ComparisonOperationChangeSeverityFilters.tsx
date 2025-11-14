@@ -14,32 +14,36 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo, useEffect, useMemo, useState } from 'react'
-import { useComparedOperationsPair } from './ComparedOperationsContext'
-import { DEFAULT_CHANGE_SEVERITY_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
-import { ChangeSeverityFilters } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityFilters'
-import { useRiskyChanges } from '@apihub/routes/root/PortalPage/VersionPage/useRiskyChanges'
-import {
-  getApiDiffResult,
-  handleRiskyChanges,
-} from '@netcracker/qubership-apihub-ui-shared/utils/api-diff-result'
-import { GLOBAL_DIFF_META_KEY } from '@netcracker/qubership-apihub-ui-shared/utils/api-diffs'
-import { BREAKING_CHANGE_TYPE } from '@netcracker/qubership-apihub-api-processor'
-import type { Diff } from '@netcracker/qubership-apihub-api-diff'
-import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import { useComparedOperations } from '@apihub/api-hooks/InternalDocuments/useComparedOperations'
 import {
   useIsApiDiffResultLoading,
   useSetApiDiffResult,
   useSetIsApiDiffResultLoading,
 } from '@apihub/routes/root/ApiDiffResultProvider'
 import type { ChangelogAvailable } from '@apihub/routes/root/PortalPage/VersionPage/common-props'
+import { useRiskyChanges } from '@apihub/routes/root/PortalPage/VersionPage/useRiskyChanges'
+import type { Diff } from '@netcracker/qubership-apihub-api-diff'
+import { BREAKING_CHANGE_TYPE } from '@netcracker/qubership-apihub-api-processor'
+import { ChangeSeverityFilters } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityFilters'
+import { DEFAULT_CHANGE_SEVERITY_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import {
+  getApiDiffResult,
+  handleRiskyChanges,
+} from '@netcracker/qubership-apihub-ui-shared/utils/api-diff-result'
+import { GLOBAL_DIFF_META_KEY } from '@netcracker/qubership-apihub-ui-shared/utils/api-diffs'
+import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import type { FC } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
+import { useComparedOperationsPair } from './ComparedOperationsContext'
+import type { InternalDocumentOptions } from './ComparisonToolbar'
 
 type ChangesSummary = typeof DEFAULT_CHANGE_SEVERITY_MAP
 
-export type ComparisonOperationChangeSeverityFiltersProps = ChangelogAvailable
+export type ComparisonOperationChangeSeverityFiltersProps = ChangelogAvailable & {
+  internalDocumentOptions?: InternalDocumentOptions
+}
 export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationChangeSeverityFiltersProps> = memo<ComparisonOperationChangeSeverityFiltersProps>(props => {
-  const { isChangelogAvailable } = props
+  const { isChangelogAvailable, internalDocumentOptions } = props
 
   const {
     previousOperation: originOperation,
@@ -55,7 +59,14 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
 
   const [changes, setChanges] = useState<ChangesSummary | undefined>(undefined)
 
-  // TODO 13.11.25 // Load pre-processed here
+  const { data: comparisonInternalDocument } = useComparedOperations({
+    previousOperation: originOperation,
+    currentOperation: changedOperation,
+    previousPackageId: internalDocumentOptions?.previousPackageId,
+    previousVersionId: internalDocumentOptions?.previousVersionId,
+    currentPackageId: internalDocumentOptions?.currentPackageId,
+    currentVersionId: internalDocumentOptions?.currentVersionId,
+  })
 
   const apiDiffResult = useMemo(() =>
     getApiDiffResult({
