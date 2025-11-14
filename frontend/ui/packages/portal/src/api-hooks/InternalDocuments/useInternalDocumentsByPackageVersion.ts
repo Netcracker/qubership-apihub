@@ -24,12 +24,13 @@ export function useInternalDocumentsByPackageVersion(
   packageId: PackageKey | undefined,
   versionId: VersionKey | undefined,
 ): QueryResult<InternalDocuments, Error> {
-  const packageKey = encodeURIComponent(packageId ?? '')
-  const versionKey = encodeURIComponent(versionId ?? '')
-
   const { data, isLoading, error } = useQuery<InternalDocuments, Error, InternalDocuments>({
-    queryKey: [QUERY_KEY, packageKey, versionKey],
-    queryFn: () => getInternalDocumentsByPackageVersion(packageKey, versionKey),
+    queryKey: [QUERY_KEY, packageId, versionId],
+    queryFn: () => (
+      packageId && versionId
+        ? getInternalDocumentsByPackageVersion(packageId, versionId)
+        : Promise.resolve([])
+    ),
     enabled: !!packageId && !!versionId,
   })
 
