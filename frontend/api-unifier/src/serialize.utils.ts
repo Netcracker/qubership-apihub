@@ -15,9 +15,9 @@ const INTERNAL_KEYS = Object.freeze({
  */
 export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, string>): string => {
   const visitedObjects = new WeakSet()
-  const objectCache  = new WeakMap<object, unknown>()
+  const objectCache = new WeakMap<object, unknown>()
 
-  const transformSymbols = (value: any): any => {
+  const transformSymbols = (value: unknown): unknown => {
     if (value === undefined) {
       return { [INTERNAL_KEYS.IS_UNDEFINED]: true }
     }
@@ -31,9 +31,9 @@ export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, strin
     visitedObjects.add(value)
 
     const symbolKeys = Object.getOwnPropertySymbols(value)
-    const  hasSymbolKeys = symbolKeys.length > 0
+    const hasSymbolKeys = symbolKeys.length > 0
 
-    let result: any
+    let result: Record<PropertyKey, unknown> | unknown[]
     if (isArray(value)) {
       result = hasSymbolKeys ? { [INTERNAL_KEYS.IS_ARRAY]: true } : []
     } else {
@@ -42,13 +42,13 @@ export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, strin
     objectCache.set(value, result)
 
     for (const [key, val] of Object.entries(value)) {
-      result[key] = transformSymbols(val)
+      (result as Record<PropertyKey, unknown>)[key] = transformSymbols(val)
     }
 
     for (const sym of symbolKeys) {
       const strKey = symbolToStringMapping.get(sym)
       if (strKey) {
-        result[strKey] = transformSymbols((value as Record<PropertyKey, any>)[sym])
+        (result as Record<PropertyKey, unknown>)[strKey] = transformSymbols((value as Record<PropertyKey, unknown>)[sym])
       }
     }
 
@@ -75,9 +75,9 @@ export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, strin
 export const deserialize = (str: string, stringToSymbolMapping: Map<string, symbol>): unknown => {
   const parsed = parse(str)
   const visitedObjects = new WeakSet<object>()
-  const objectCache = new WeakMap<object, any>()
+  const objectCache = new WeakMap<object, unknown>()
 
-  const restoreSymbols = (value: any): any => {
+  const restoreSymbols = (value: unknown): unknown => {
     if (!isObject(value)) {
       return value
     }
@@ -92,7 +92,7 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
 
     if (value[INTERNAL_KEYS.IS_ARRAY]) {
       const arrLength = value.length as number ?? 0
-      const arr = new Array(arrLength)
+      const arr: unknown[] = new Array(arrLength)
       objectCache.set(value, arr)
 
       for (let i = 0; i < arrLength; i++) {
@@ -103,8 +103,8 @@ export const deserialize = (str: string, stringToSymbolMapping: Map<string, symb
         if (key === INTERNAL_KEYS.IS_ARRAY || key === INTERNAL_KEYS.LENGTH || /^\d+$/.test(key)) {
           continue
         }
-        const symKey = stringToSymbolMapping.get(key);
-        (arr as any)[symKey ?? key] = restoreSymbols(val)
+        const symKey: symbol | unknown = stringToSymbolMapping.get(key)
+        arr[(symKey ?? key) as unknown as number] = restoreSymbols(val)
       }
       return arr
     }
