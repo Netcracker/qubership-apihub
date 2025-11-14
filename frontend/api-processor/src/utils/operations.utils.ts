@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-import { ApiDocument, ApiOperation, BuildResult, OperationIdNormalizer } from '../types'
-import { GraphApiComponents, GraphApiDirectiveDefinition } from '@netcracker/qubership-apihub-graphapi'
-import { OpenAPIV3 } from 'openapi-types'
-import { isObject } from './objects'
-import { denormalizeDocument, IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER, serializeDocument, slugify } from './document'
-import { removeFirstSlash } from './builder'
 import { Diff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import {
   matchPaths,
   NormalizeOptions,
   OPEN_API_PROPERTY_PATHS,
   PREDICATE_ANY_VALUE,
-  stringifyCyclicJso,
 } from '@netcracker/qubership-apihub-api-unifier'
+import { GraphApiComponents, GraphApiDirectiveDefinition } from '@netcracker/qubership-apihub-graphapi'
 import { DirectiveLocation } from 'graphql/language'
+import { OpenAPIV3 } from 'openapi-types'
 import { HTTP_METHODS_SET } from '../consts'
+import { ApiDocument, ApiOperation, BuildResult, OperationIdNormalizer } from '../types'
+import { removeFirstSlash } from './builder'
+import { denormalizeDocument, IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER, serializeDocument, slugify } from './document'
+import { isObject } from './objects'
 
 export function getOperationsList(buildResult: BuildResult): ApiOperation[] {
   return [...buildResult.operations.values()]
@@ -113,17 +112,6 @@ export const calculateOperationId = (
 }
 
 export const createInternalDocument = (document: ApiDocument, options: NormalizeOptions): string => {
-  function isOasDocument(document: ApiDocument): document is OpenAPIV3.Document {
-    return document && 'paths' in document
-  }
-  if (isOasDocument(document)) {
-    console.log('[ORIGINAL]')
-    console.log(stringifyCyclicJso(document.paths?.['/api/v1/system/configuration']?.get))
-  }
   const denormalized = denormalizeDocument(document, options)
-  if (isOasDocument(denormalized)) {
-    console.log('[DENORMALIZED]')
-    console.log(stringifyCyclicJso(denormalized.paths?.['/api/v1/system/configuration']?.get))
-  }
   return serializeDocument(denormalized)
 }
