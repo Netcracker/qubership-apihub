@@ -22,16 +22,13 @@ import {
 } from '@apihub/routes/root/ApiDiffResultProvider'
 import type { ChangelogAvailable } from '@apihub/routes/root/PortalPage/VersionPage/common-props'
 import { useRiskyChanges } from '@apihub/routes/root/PortalPage/VersionPage/useRiskyChanges'
-import type { Diff } from '@netcracker/qubership-apihub-api-diff'
+import { DIFFS_AGGREGATED_META_KEY, isDiffAdd, isDiffRemove, isDiffRename, isDiffReplace, type Diff } from '@netcracker/qubership-apihub-api-diff'
 import { BREAKING_CHANGE_TYPE } from '@netcracker/qubership-apihub-api-processor'
 import { ChangeSeverityFilters } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityFilters'
 import { DEFAULT_CHANGE_SEVERITY_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
-import {
-  getApiDiffResult,
-  handleRiskyChanges,
-} from '@netcracker/qubership-apihub-ui-shared/utils/api-diff-result'
-import { GLOBAL_DIFF_META_KEY } from '@netcracker/qubership-apihub-ui-shared/utils/api-diffs'
+import { handleRiskyChanges } from '@netcracker/qubership-apihub-ui-shared/utils/api-diff-result'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 import type { FC } from 'react'
 import { memo, useEffect, useMemo, useState } from 'react'
 import { useComparedOperationsPair } from './ComparedOperationsContext'
@@ -62,19 +59,34 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
   const { data: comparisonInternalDocument } = useComparedOperations({
     previousOperation: originOperation,
     currentOperation: changedOperation,
-    previousPackageId: internalDocumentOptions?.previousPackageId,
-    previousVersionId: internalDocumentOptions?.previousVersionId,
+    versionChanges: internalDocumentOptions?.versionChanges,
     currentPackageId: internalDocumentOptions?.currentPackageId,
     currentVersionId: internalDocumentOptions?.currentVersionId,
   })
 
-  const apiDiffResult = useMemo(() =>
-    getApiDiffResult({
-      beforeData: originOperation?.data,
-      afterData: changedOperation?.data,
-      metaKey: GLOBAL_DIFF_META_KEY,
-      setApiDiffLoading: setApiDiffLoading,
-    }), [changedOperation?.data, originOperation?.data])
+  const apiDiffResult = useMemo(() => {
+    let diffs: Diff[] = []
+    const maybeAggregatedDiffs =
+      isObject(comparisonInternalDocument) && DIFFS_AGGREGATED_META_KEY in comparisonInternalDocument
+        ? comparisonInternalDocument[DIFFS_AGGREGATED_META_KEY]
+        : undefined
+    if (maybeAggregatedDiffs && maybeAggregatedDiffs instanceof Set) {
+      const maybeAggregatedDiffsArray = Array.from(maybeAggregatedDiffs)
+      const aggregatedDiffsTypedArray: Diff[] = maybeAggregatedDiffsArray.filter(
+        (maybeDiff): maybeDiff is Diff => (
+          isDiffAdd(maybeDiff) ||
+          isDiffRemove(maybeDiff) ||
+          isDiffReplace(maybeDiff) ||
+          isDiffRename(maybeDiff)
+        ),
+      )
+      diffs = aggregatedDiffsTypedArray
+    }
+    return {
+      merged: comparisonInternalDocument,
+      diffs: diffs,
+    }
+  }, [comparisonInternalDocument])
 
   const [riskyChanges, isRiskyChangesLoading, isSuccess] = useRiskyChanges({
     operationKey: changedOperation?.operationKey ?? originOperation?.operationKey,
@@ -92,10 +104,12 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
       return
     }
     if (isSuccess && isNotEmpty(riskyChanges) && apiDiffResult) {
+      // @ts-expect-error TODO: fix this
       const apiDiffResultWithSemiBraking = handleRiskyChanges(riskyChanges, apiDiffResult)
       setApiDiffResultContext(apiDiffResultWithSemiBraking)
       setChanges(apiDiffResultWithSemiBraking?.diffs.reduce(changesSummaryReducer, { ...DEFAULT_CHANGE_SEVERITY_MAP }))
     } else {
+      // @ts-expect-error TODO: fix this
       setApiDiffResultContext(apiDiffResult)
       setChanges(apiDiffResult?.diffs.reduce(changesSummaryReducer, { ...DEFAULT_CHANGE_SEVERITY_MAP }))
     }

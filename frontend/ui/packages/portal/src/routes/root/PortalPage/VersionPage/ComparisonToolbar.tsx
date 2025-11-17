@@ -14,59 +14,59 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo, useCallback, useMemo } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { Box, IconButton, Typography } from '@mui/material'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
-import { ComparisonOperationChangeSeverityFilters } from './ComparisonOperationChangeSeverityFilters'
-import { useChangesLoadingStatus } from './ChangesLoadingStatusProvider'
-import { ComparisonChangeSeverityFilters } from './ComparisonChangeSeverityFilters'
-import { PackageSelector } from './PackageSelector'
-import { useIsPackageFromDashboard } from '../useIsPackageFromDashboard'
-import { useBreadcrumbsData } from './ComparedPackagesBreadcrumbsProvider'
-import { ComparedPackagesBreadcrumbs } from '../../ComparedPackagesBreadcrumbs'
-import { ApiTypeSegmentedSelector } from './VersionComparePage/ApiTypeSegmentedSelector'
-import { useChangesSummaryFromContext } from './ChangesSummaryProvider'
-import { useOperationViewMode } from './useOperationViewMode'
-import { getOverviewPath } from '../../../NavigationProvider'
-import { OperationViewModeSelector } from './OperationViewModeSelector'
 import { useBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { isLinkedComparedBreadcrumbPathItem } from '@apihub/routes/root/PortalPage/VersionPage/breadcrumbs'
+import type { ChangelogAvailable } from '@apihub/routes/root/PortalPage/VersionPage/common-props'
+import { ExportChangesMenu } from '@apihub/routes/root/PortalPage/VersionPage/ExportChangesMenu'
 import {
   COMPARE_DASHBOARDS_MODE,
   COMPARE_DIFFERENT_OPERATIONS_MODE,
   COMPARE_PACKAGES_MODE,
   COMPARE_SAME_OPERATIONS_MODE,
 } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationDisplayMode'
+import { useApiTypeSearchParam } from '@apihub/routes/root/PortalPage/VersionPage/useApiTypeSearchParam'
+import { useDownloadChangesAsExcel } from '@apihub/routes/root/PortalPage/VersionPage/useDownloadChangesAsExcel'
+import { useTagSearchFilter } from '@apihub/routes/root/PortalPage/VersionPage/useTagSearchFilter'
+import { useVersionSearchParam } from '@apihub/routes/root/useVersionSearchParam'
+import { isApiTypeSelectorShown } from '@apihub/utils/operation-types'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import { Box, IconButton, Typography } from '@mui/material'
+import type { ChangesTooltipCategory } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
+import { CATEGORY_OPERATION, CATEGORY_PACKAGE } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_TITLE_MAP, API_TYPES } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { CHANGE_SEVERITIES } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import {
   OPERATION_COMPARE_VIEW_MODES,
   RAW_OPERATION_VIEW_MODE,
 } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
+import type { VersionChanges } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
 import { isDashboardComparisonSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
-import { isApiTypeSelectorShown } from '@apihub/utils/operation-types'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_TITLE_MAP, API_TYPES } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { isLinkedComparedBreadcrumbPathItem } from '@apihub/routes/root/PortalPage/VersionPage/breadcrumbs'
-import type { ChangelogAvailable } from '@apihub/routes/root/PortalPage/VersionPage/common-props'
-import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import type { ChangesTooltipCategory } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
-import { CATEGORY_OPERATION, CATEGORY_PACKAGE } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
-import { useApiTypeSearchParam } from '@apihub/routes/root/PortalPage/VersionPage/useApiTypeSearchParam'
-import { ExportChangesMenu } from '@apihub/routes/root/PortalPage/VersionPage/ExportChangesMenu'
-import { CHANGE_SEVERITIES } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import {
   useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
-import { useTagSearchFilter } from '@apihub/routes/root/PortalPage/VersionPage/useTagSearchFilter'
-import { useVersionSearchParam } from '@apihub/routes/root/useVersionSearchParam'
-import { useDownloadChangesAsExcel } from '@apihub/routes/root/PortalPage/VersionPage/useDownloadChangesAsExcel'
 import {
   usePackageSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
+import type { FC } from 'react'
+import { memo, useCallback, useMemo } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { getOverviewPath } from '../../../NavigationProvider'
+import { ComparedPackagesBreadcrumbs } from '../../ComparedPackagesBreadcrumbs'
+import { useIsPackageFromDashboard } from '../useIsPackageFromDashboard'
+import { useChangesLoadingStatus } from './ChangesLoadingStatusProvider'
+import { useChangesSummaryFromContext } from './ChangesSummaryProvider'
+import { useBreadcrumbsData } from './ComparedPackagesBreadcrumbsProvider'
+import { ComparisonChangeSeverityFilters } from './ComparisonChangeSeverityFilters'
+import { ComparisonOperationChangeSeverityFilters } from './ComparisonOperationChangeSeverityFilters'
+import { OperationViewModeSelector } from './OperationViewModeSelector'
+import { PackageSelector } from './PackageSelector'
+import { useOperationViewMode } from './useOperationViewMode'
+import { ApiTypeSegmentedSelector } from './VersionComparePage/ApiTypeSegmentedSelector'
 
 export type InternalDocumentOptions = {
-  previousPackageId: Key | undefined
-  previousVersionId: Key | undefined
+  versionChanges: VersionChanges | undefined
   currentPackageId: Key | undefined
   currentVersionId: Key | undefined
 }

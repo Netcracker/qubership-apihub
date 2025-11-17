@@ -118,7 +118,7 @@ export interface Operation {
   readonly packageRef?: PackageRef
   readonly tags?: Readonly<Tags>
   readonly customTags?: CustomTags
-  readonly versionInternalDocumentId: Key
+  readonly versionInternalDocumentId?: Key
 }
 export interface RestOperation extends Operation {
   readonly method: MethodType
