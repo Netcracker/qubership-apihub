@@ -81,7 +81,6 @@ export type OperationContentProps = {
   // Feature "Internal documents"
   normalizedChangedOperation?: unknown
   normalizedOriginOperation?: unknown
-  mergedOperations?: unknown
   // ---
   isOperationExist?: boolean
   displayMode?: OperationDisplayMode
@@ -97,7 +96,6 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
     // Feature "Internal documents"
     normalizedChangedOperation,
     normalizedOriginOperation,
-    mergedOperations,
     // ---
     isOperationExist = true,
     displayMode = DEFAULT_DISPLAY_MODE,

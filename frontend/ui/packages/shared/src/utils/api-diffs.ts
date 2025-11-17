@@ -19,8 +19,6 @@ import { merge } from 'lodash-es'
 import { safeParse } from '@stoplight/json'
 import { isObject } from './objects'
 
-export const GLOBAL_DIFF_META_KEY = Symbol('diffMeta')
-
 //todo copy-paste from ADV and builder
 export const getJsonValue = (source: unknown, ...path: PropertyKey[]): unknown => {
   if (!isObject(source)) {
@@ -35,8 +33,8 @@ export const getJsonValue = (source: unknown, ...path: PropertyKey[]): unknown =
     }
     return undefined
   }
+  
   return result
-
 }
 
 export function getSchema(content: string | undefined): object | undefined {

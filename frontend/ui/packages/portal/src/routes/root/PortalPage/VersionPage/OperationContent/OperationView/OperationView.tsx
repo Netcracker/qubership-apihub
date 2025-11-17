@@ -14,32 +14,32 @@
  * limitations under the License.
  */
 
+import { GraphQlOperationViewer } from '@apihub/components/GraphQlOperationViewer'
+import { SchemaContextPanel } from '@apihub/components/SchemaContextPanel'
+import type { OpenApiData } from '@apihub/entities/operation-structure'
+import { OPEN_API_SECTION_PARAMETERS, OPEN_API_SECTION_REQUESTS, OPEN_API_SECTION_RESPONSES } from '@apihub/entities/operation-structure'
 import { Box } from '@mui/material'
-import type { FC, MutableRefObject, PropsWithChildren, ReactNode } from 'react'
-import { memo, Suspense, useEffect, useMemo, useRef, useState } from 'react'
-import type { OperationDisplayMode } from './OperationDisplayMode'
-import type { OpenAPIV3 } from 'openapi-types'
-import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import { GraphQLOperationDiffViewer, SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '@netcracker/qubership-apihub-api-doc-viewer'
+import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import type {
   VisitorNavigationDetails,
 } from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/oasToClassDiagramService'
-import { OPEN_API_SECTION_PARAMETERS, OPEN_API_SECTION_REQUESTS, OPEN_API_SECTION_RESPONSES } from '@apihub/entities/operation-structure'
-import type { OpenApiData } from '@apihub/entities/operation-structure'
-import { GraphQlOperationViewer } from '@apihub/components/GraphQlOperationViewer'
-import { SchemaContextPanel } from '@apihub/components/SchemaContextPanel'
-import { joinedJsonPath } from '@netcracker/qubership-apihub-ui-shared/utils/operations'
-import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
-import type { SchemaViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
-import { useSetupOperationView } from './useSetupOperationView'
-import { GLOBAL_DIFF_META_KEY } from '@netcracker/qubership-apihub-ui-shared/utils/api-diffs'
-import { GraphQLOperationDiffViewer, SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '@netcracker/qubership-apihub-api-doc-viewer'
-import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
-import type { OperationViewElementProps } from './OperationViewElement'
-import { createOperationViewElement } from './OperationViewElement'
-import { createDiffOperationViewElement } from './DiffOperationViewElement'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import type { SchemaViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
+import { joinedJsonPath } from '@netcracker/qubership-apihub-ui-shared/utils/operations'
+import type { OpenAPIV3 } from 'openapi-types'
+import type { FC, MutableRefObject, PropsWithChildren, ReactNode } from 'react'
+import { memo, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { createDiffOperationViewElement } from './DiffOperationViewElement'
+import type { OperationDisplayMode } from './OperationDisplayMode'
+import type { OperationViewElementProps } from './OperationViewElement'
+import { createOperationViewElement } from './OperationViewElement'
+import { useSetupOperationView } from './useSetupOperationView'
 
 // First Order Component //
 export type OperationViewProps = PropsWithChildren<{
@@ -121,7 +121,7 @@ export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(pr
       return createDiffOperationViewElement({
         ...options,
         filters: filters ?? [],
-        diffMetaKey: GLOBAL_DIFF_META_KEY,
+        diffMetaKey: DIFF_META_KEY,
       })
     }
 
@@ -192,7 +192,7 @@ const API_TYPE_VIEWER_MAP: Record<ApiType, ApiTypeViewerCallback> = {
         source={mergedDocument}
         displayMode={schemaViewMode as SchemaViewMode}
         filters={filters ?? []}
-        diffMetaKey={GLOBAL_DIFF_META_KEY}
+        diffMetaKey={DIFF_META_KEY}
         layoutMode={SIDE_BY_SIDE_DIFFS_LAYOUT_MODE}
       />
   ),

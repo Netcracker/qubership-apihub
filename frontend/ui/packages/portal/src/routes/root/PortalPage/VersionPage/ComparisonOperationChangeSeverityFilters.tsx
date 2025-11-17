@@ -52,11 +52,9 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
   const isApiDiffResultLoading = useIsApiDiffResultLoading()
   const setIsApiDiffResultLoadingContext = useSetIsApiDiffResultLoading()
 
-  const [apiDiffLoading, setApiDiffLoading] = useState<boolean>(true)
-
   const [changes, setChanges] = useState<ChangesSummary | undefined>(undefined)
 
-  const { data: comparisonInternalDocument } = useComparedOperations({
+  const { data: comparisonInternalDocument, isLoading: apiDiffLoading } = useComparedOperations({
     previousOperation: originOperation,
     currentOperation: changedOperation,
     versionChanges: internalDocumentOptions?.versionChanges,

@@ -29,9 +29,9 @@ export function useComparedOperations(options: Options): QueryResult<unknown, Er
   } = options
 
   const {
-    data: comparisonInternalDocuments,
-    isLoading: isComparisonInternalDocumentsLoading,
-    error: comparisonInternalDocumentsError,
+    data: listComparisonInternalDocumentsMetadata,
+    isLoading: loadingListComparisonInternalDocumentsMetadata,
+    error: errorComparisonInternalDocumentsMetadata,
   } = useComparisonInternalDocumentsByPackageVersion({
     currentPackageId: currentPackageId,
     currentVersionId: currentVersionId,
@@ -39,7 +39,7 @@ export function useComparedOperations(options: Options): QueryResult<unknown, Er
     previousVersionId: versionChanges?.previousVersion,
   })
 
-  const necessaryChange = useMemo(() => {
+  const changeRelatedToComparedOperations = useMemo(() => {
     return (versionChanges?.operations ?? []).find(
       change => {
         const currentOperationId = currentOperation?.operationKey
@@ -61,28 +61,30 @@ export function useComparedOperations(options: Options): QueryResult<unknown, Er
     )
   }, [currentOperation?.operationKey, previousOperation?.operationKey, versionChanges?.operations])
 
-  const comparisonInternalDocument = useMemo(
-    () => comparisonInternalDocuments?.find(document => document.id === necessaryChange?.comparisonInternalDocumentId),
-    [comparisonInternalDocuments, necessaryChange?.comparisonInternalDocumentId],
+  const comparisonInternalDocumentMetadata = useMemo(
+    () => listComparisonInternalDocumentsMetadata?.find(
+      document => document.id === changeRelatedToComparedOperations?.comparisonInternalDocumentId,
+    ),
+    [listComparisonInternalDocumentsMetadata, changeRelatedToComparedOperations?.comparisonInternalDocumentId],
   )
 
   const {
-    data: comparisonInternalDocumentContent,
-    isLoading: isComparisonInternalDocumentContentLoading,
-    error: comparisonInternalDocumentContentError,
-  } = useComparisonInternalDocumentContent(comparisonInternalDocument?.hash)
+    data: rawComparisonInternalDocument,
+    isLoading: loadingRawComparisonInternalDocument,
+    error: errorComparisonInternalDocument,
+  } = useComparisonInternalDocumentContent(comparisonInternalDocumentMetadata?.hash)
 
   const deserializedComparisonInternalDocument = useMemo(() => {
-    if (!comparisonInternalDocumentContent) {
+    if (!rawComparisonInternalDocument) {
       return undefined
     }
-    return deserialize(comparisonInternalDocumentContent, INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING)
-  }, [comparisonInternalDocumentContent])
+    return deserialize(rawComparisonInternalDocument, INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING)
+  }, [rawComparisonInternalDocument])
 
   const documentForOnlyPreviousOperation = previousOperation?.data as OpenAPIV3.Document | undefined
   const documentForOnlyCurrentOperation = currentOperation?.data as OpenAPIV3.Document | undefined
 
-  const [operationPath] = useMemo(
+  const [comparedOperationPath] = useMemo(
     () => {
       const previousOperationPaths = Object.keys(documentForOnlyPreviousOperation?.paths ?? {})
       const currentOperationPaths = Object.keys(documentForOnlyCurrentOperation?.paths ?? {})
@@ -95,33 +97,32 @@ export function useComparedOperations(options: Options): QueryResult<unknown, Er
     [documentForOnlyCurrentOperation, documentForOnlyPreviousOperation],
   )
 
-  const operation = useMemo(() => (
-    operationPath
-      ? (deserializedComparisonInternalDocument as OpenAPIV3.Document)?.paths?.[operationPath]
-      : undefined
-  ), [deserializedComparisonInternalDocument, operationPath])
-
-  const internalDocumentWithOnlyOperation = useMemo(() => (
-    deserializedComparisonInternalDocument ? {
-      ...deserializedComparisonInternalDocument,
-      paths: {
-        [operationPath]: operation,
-      },
-    } : undefined
-  ), [deserializedComparisonInternalDocument, operation, operationPath])
+  const comparisonInternalDocumentWithOnlyOperation = useMemo(() => {
+    if (!deserializedComparisonInternalDocument) {
+      return undefined
+    }
+    const comparisonInternalDocumentPathObjects = (deserializedComparisonInternalDocument as OpenAPIV3.Document)?.paths ?? {}
+    const paths = Object.keys(comparisonInternalDocumentPathObjects)
+    for (const path of paths) {
+      if (path !== comparedOperationPath) {
+        delete comparisonInternalDocumentPathObjects[path]
+      }
+    }
+    return deserializedComparisonInternalDocument
+  }, [deserializedComparisonInternalDocument, comparedOperationPath])
 
   return useMemo(
     () => ({
-      data: internalDocumentWithOnlyOperation,
-      isLoading: isComparisonInternalDocumentContentLoading || isComparisonInternalDocumentsLoading,
-      error: comparisonInternalDocumentContentError || comparisonInternalDocumentsError,
+      data: comparisonInternalDocumentWithOnlyOperation,
+      isLoading: loadingRawComparisonInternalDocument || loadingListComparisonInternalDocumentsMetadata,
+      error: errorComparisonInternalDocument || errorComparisonInternalDocumentsMetadata,
     }),
     [
-      comparisonInternalDocumentContentError,
-      comparisonInternalDocumentsError,
-      internalDocumentWithOnlyOperation,
-      isComparisonInternalDocumentContentLoading,
-      isComparisonInternalDocumentsLoading,
+      errorComparisonInternalDocument,
+      errorComparisonInternalDocumentsMetadata,
+      comparisonInternalDocumentWithOnlyOperation,
+      loadingRawComparisonInternalDocument,
+      loadingListComparisonInternalDocumentsMetadata,
     ],
   )
 }
