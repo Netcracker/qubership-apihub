@@ -15,20 +15,44 @@
  */
 
 import { buildPackage, DEFAULT_PROJECTS_PATH, loadFileAsString, VERSIONS_PATH } from './helpers'
-import { ApiOperation, PACKAGE, PackageOperation, PackageOperations, VersionDocument } from '../src'
+import { ApiOperation, PACKAGE, PackageOperations, VersionDocument } from '../src'
+
+const DOCUMENT_FILE_NAME = 'spec'
+const SINGLE_FILE_NAMES = [DOCUMENT_FILE_NAME]
+
+const DOCUMENT_FILE_1_NAME = 'spec1'
+const DOCUMENT_FILE_2_NAME = 'spec2'
+const SEVERAL_FILES_NAME = [DOCUMENT_FILE_1_NAME, DOCUMENT_FILE_2_NAME]
 
 describe('Version Internal Documents tests', () => {
   describe('OAS tests', () => {
     describe('Single OAS', () => {
       const packageId = 'version-internal-documents/oas'
 
-      runCommonTests(packageId)
+      runCommonTests(packageId, SINGLE_FILE_NAMES)
     })
 
     describe('Several OAS', () => {
       const packageId = 'version-internal-documents/several-oas'
+      runCommonTests(packageId, SEVERAL_FILES_NAME)
+    })
 
-      runSeveralTests(packageId)
+    it('should not create internalDocument without publish', async ()=> {
+      const packageId = 'version-internal-documents/oas-no-publish'
+      const result = await buildPackage(packageId)
+
+      const [document] = Array.from(result.documents.values())
+
+      expect(document.internalDocument).not.toBeExtensible()
+    })
+
+    it('should not create internalDocument without operations', async ()=> {
+      const packageId = 'version-internal-documents/oas-without-operations'
+      const result = await buildPackage(packageId)
+
+      const [document] = Array.from(result.documents.values())
+
+      expect(document.internalDocument).not.toBeExtensible()
     })
   })
 
@@ -36,88 +60,30 @@ describe('Version Internal Documents tests', () => {
     describe('Single Graphql', () => {
       const packageId = 'version-internal-documents/graphql'
 
-      runCommonTests(packageId)
+      runCommonTests(packageId, SINGLE_FILE_NAMES)
     })
 
     describe('Several Graphql', () => {
       const packageId = 'version-internal-documents/several-graphql'
-
-      runSeveralTests(packageId)
+      runCommonTests(packageId, SEVERAL_FILES_NAME)
     })
   })
 
-  async function runCommonTests(packageId: string): Promise<void> {
-    test('should document had internalDocumentId ', async () => {
+  async function runCommonTests(packageId: string, files: string[]): Promise<void> {
+    test('should documents have internalDocumentId', async () => {
       const result = await buildPackage(packageId)
-      const document: VersionDocument = result.documents.values().next().value
-      expect(document.internalDocumentId).toEqual('spec')
-    })
-
-    test('should operation had versionInternalDocumentId', async () => {
-      const result = await buildPackage(packageId)
-      const operation: ApiOperation = result.operations.values().next().value
-      expect(operation.versionInternalDocumentId).toEqual('spec')
-    })
-
-    test('should operation from file had versionInternalDocumentId', async () => {
-      await buildPackage(packageId)
-      const operationsFile = await loadFileAsString(
-        VERSIONS_PATH,
-        `${packageId}/v1`,
-        PACKAGE.OPERATIONS_FILE_NAME,
-      )
-      if (!operationsFile) {
-        throw new Error(`Cannot load ${PACKAGE.OPERATIONS_FILE_NAME}`)
-      }
-      const operations: PackageOperations = JSON.parse(operationsFile)
-      const operation: PackageOperation = operations.operations.values().next().value
-      expect(operation.versionInternalDocumentId).toEqual('spec')
-    })
-
-    test('should version-internal-documents.json had documents info', async () => {
-      await buildPackage(packageId)
-      const versionInternalDocumentsFile = await loadFileAsString(
-        VERSIONS_PATH,
-        `${packageId}/v1`,
-        PACKAGE.VERSION_INTERNAL_FILE_NAME,
-      )
-      const expectedVersionInternalDocumentsFile = await loadFileAsString(
-        DEFAULT_PROJECTS_PATH,
-        packageId,
-        PACKAGE.VERSION_INTERNAL_FILE_NAME,
-      )
-      if (!expectedVersionInternalDocumentsFile || !versionInternalDocumentsFile) {
-        throw new Error(`Cannot load ${PACKAGE.VERSION_INTERNAL_FILE_NAME}`)
-      }
-      expect(JSON.parse(versionInternalDocumentsFile)).toEqual(JSON.parse(expectedVersionInternalDocumentsFile))
-    })
-
-    test('should internal document had serialize data', async () => {
-      const result = await buildPackage(packageId)
-      const document: VersionDocument = result.documents.values().next().value
-      const { internalDocument } = document
-      const expectedDocument = await loadFileAsString(
-        DEFAULT_PROJECTS_PATH,
-        packageId,
-        'version-spec.json',
-      )
-      expect(internalDocument).toEqual(expectedDocument)
-    })
-  }
-
-  async function runSeveralTests(packageId: string): Promise<void> {
-    test('should documents have internal document id ', async () => {
-      const result = await buildPackage(packageId)
-      const [document1, document2]: VersionDocument[] = Array.from(result.documents.values())
-      expect(document1.internalDocumentId).toEqual('spec1')
-      expect(document2.internalDocumentId).toEqual('spec2')
+      const documents: VersionDocument[] = Array.from(result.documents.values())
+      Array.from(documents).forEach((document, i)=> {
+        expect(document.internalDocumentId).toEqual(files[i])
+      })
     })
 
     test('should operations have versionInternalDocumentId', async () => {
       const result = await buildPackage(packageId)
-      const [operation1, operation2]: ApiOperation[] = Array.from(result.operations.values())
-      expect(operation1.versionInternalDocumentId).toEqual('spec1')
-      expect(operation2.versionInternalDocumentId).toEqual('spec2')
+      const operations: ApiOperation[] = Array.from(result.operations.values())
+      Array.from(operations).forEach((operation, i)=> {
+        expect(operation.versionInternalDocumentId).toEqual(files[i])
+      })
     })
 
     test('should operations from file have versionInternalDocumentId', async () => {
@@ -130,10 +96,10 @@ describe('Version Internal Documents tests', () => {
       if (!operationsFile) {
         throw new Error(`Cannot load ${PACKAGE.OPERATIONS_FILE_NAME}`)
       }
-      const operations: PackageOperations = JSON.parse(operationsFile)
-      const [operation1, operation2]: PackageOperation[] = Array.from(operations.operations.values())
-      expect(operation1.versionInternalDocumentId).toEqual('spec1')
-      expect(operation2.versionInternalDocumentId).toEqual('spec2')
+      const packageOperations: PackageOperations = JSON.parse(operationsFile)
+      Array.from(packageOperations.operations).forEach((operation, i)=> {
+        expect(operation.versionInternalDocumentId).toEqual(files[i])
+      })
     })
 
     test('should version-internal-documents.json had documents info', async () => {
@@ -156,20 +122,15 @@ describe('Version Internal Documents tests', () => {
 
     test('should internal document had serialize data', async () => {
       const result = await buildPackage(packageId)
-      const [document1, document2]: VersionDocument[] = Array.from(result.documents.values())
-      const { internalDocument: internalDocument1 } = document1
-      const { internalDocument: internalDocument2 } = document2
-      const [versionSpec1, versionSpec2] = await Promise.all([loadFileAsString(
-        DEFAULT_PROJECTS_PATH,
-        packageId,
-        'version-spec1.json',
-      ), loadFileAsString(
-        DEFAULT_PROJECTS_PATH,
-        packageId,
-        'version-spec2.json',
-      )])
-      expect(internalDocument1).toEqual(versionSpec1)
-      expect(internalDocument2).toEqual(versionSpec2)
+      const documents: VersionDocument[] = Array.from(result.documents.values())
+      const versionSpecs = await Promise.all(
+        files.map(item =>
+          loadFileAsString(DEFAULT_PROJECTS_PATH, packageId, `version-${item}.json`),
+        ),
+      )
+      documents.forEach((document, i)=> {
+        expect(document.internalDocument).toEqual(versionSpecs[i])
+      })
     })
   }
 })
