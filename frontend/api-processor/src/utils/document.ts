@@ -223,14 +223,6 @@ export function capitalize(string: string): string {
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
-export function denormalizeDocument(normalizedDocument: ApiDocument, options: NormalizeOptions = NORMALIZE_OPTIONS): ApiDocument {
-  return denormalize(normalizedDocument, options) as ApiDocument
-}
-
 export function serializeDocument(normalizedDocument: ApiDocument): string {
   return serialize(normalizedDocument, SERIALIZE_SYMBOL_STRING_MAPPING)
-}
-
-export function createInternalDocumentId(slug: string, format: string): string {
-  return `${slug}-${format}`
 }

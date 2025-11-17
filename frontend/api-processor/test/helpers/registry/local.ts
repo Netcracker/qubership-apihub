@@ -89,7 +89,7 @@ import { ResolvedPackage } from '../../../src/types/external/package'
 import { version as apiProcessorVersion } from '../../../package.json'
 
 const VERSIONS_PATH = 'test/versions'
-const DEFAULT_PROJECTS_PATH = 'test/projects'
+export const DEFAULT_PROJECTS_PATH = 'test/projects'
 
 export interface PackageVersionCache {
   config: BuildConfig

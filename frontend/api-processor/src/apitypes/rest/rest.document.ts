@@ -24,7 +24,6 @@ import { _TemplateResolver, DocumentBuilder, DocumentDumper, ExportDocument, Exp
 import { FILE_FORMAT, FILE_FORMAT_HTML, FILE_FORMAT_JSON } from '../../consts'
 import {
   createBundlingErrorHandler,
-  createInternalDocumentId,
   EXPORT_FORMAT_TO_FILE_FORMAT,
   getBundledFileDataWithDependencies,
   getDocumentTitle,
@@ -86,7 +85,7 @@ export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (par
     externalDocs,
     tags,
   }
-  const { format, type, fileId: parsedFileId, source, errors } = parsedFile
+  const { type, fileId: parsedFileId, source, errors } = parsedFile
   return {
     fileId: parsedFileId,
     type: type,
@@ -104,7 +103,7 @@ export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (par
     publish,
     source,
     errors: errors?.length ?? 0,
-    internalDocumentId: createInternalDocumentId(slug, format),
+    internalDocumentId: slug,
   }
 }
 

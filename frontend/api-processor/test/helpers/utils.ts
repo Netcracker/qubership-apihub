@@ -192,3 +192,16 @@ export async function buildGqlChangelogPackage(
 ): Promise<BuildResult> {
   return buildChangelogPackage(packageId, [{ fileId: 'before.gql' }], [{ fileId: 'after.gql' }])
 }
+
+export async function buildPackage(
+  packageId: string,
+): Promise<BuildResult> {
+  const localRegistry: LocalRegistry = LocalRegistry.openPackage(packageId)
+  const editor: Editor = await Editor.openProject(localRegistry.packageId, localRegistry)
+  await localRegistry.publish(localRegistry.packageId, { packageId: localRegistry.packageId })
+  return await editor.run({
+    version: 'v1',
+    status: VERSION_STATUS.RELEASE,
+    buildType: BUILD_TYPE.BUILD,
+  })
+}

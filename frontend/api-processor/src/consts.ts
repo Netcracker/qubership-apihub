@@ -152,6 +152,7 @@ export const INLINE_REFS_FLAG = Symbol('inline-refs')
 export const AFTER_VALUE_NORMALIZED_PROPERTY = Symbol('after-value-normalized')
 export const BEFORE_VALUE_NORMALIZED_PROPERTY = Symbol('before-value-normalized')
 
+// todo check required flags
 export const SERIALIZE_SYMBOL_STRING_MAPPING = new Map([
   [SYNTHETIC_TITLE_FLAG, 'SYNTHETIC_TITLE_FLAG'],
   [ORIGINS_SYMBOL, 'ORIGINS_SYMBOL'],

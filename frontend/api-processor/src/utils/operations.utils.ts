@@ -18,10 +18,11 @@ import { ApiDocument, ApiOperation, BuildResult, OperationIdNormalizer } from '.
 import { GraphApiComponents, GraphApiDirectiveDefinition } from '@netcracker/qubership-apihub-graphapi'
 import { OpenAPIV3 } from 'openapi-types'
 import { isObject } from './objects'
-import { denormalizeDocument, IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER, serializeDocument, slugify } from './document'
+import { IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER, serializeDocument, slugify } from './document'
 import { removeFirstSlash } from './builder'
 import { Diff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import {
+  denormalize,
   matchPaths,
   NormalizeOptions,
   OPEN_API_PROPERTY_PATHS,
@@ -112,5 +113,5 @@ export const calculateOperationId = (
 }
 
 export const createInternalDocument = (document: ApiDocument, options: NormalizeOptions): string => {
-  return serializeDocument(denormalizeDocument(document, options))
+  return serializeDocument(denormalize(document, options) as ApiDocument)
 }
