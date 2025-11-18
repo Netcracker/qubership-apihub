@@ -1,4 +1,4 @@
-import { annotation, apiDiff, DiffAction } from '../src'
+import { annotation, apiDiff, DiffAction, nonBreaking } from '../src'
 import { loadYamlSample, OpenapiBuilder } from './helper'
 import { diffsMatcher } from './helper/matchers'
 
@@ -61,7 +61,7 @@ describe('Path and method mapping', () => {
   it('Remove mistyped slashes', () => {
     const before = openapiBuilder
       .addPath({
-        path: '//path1/',
+        path: '//path1',
         responses: { '200': { description: 'OK' } },
       })
       .getSpec()
@@ -79,11 +79,26 @@ describe('Path and method mapping', () => {
 
     expect(diffs).toEqual(diffsMatcher([
       expect.objectContaining({
-        beforeDeclarationPaths: [['paths', '//path1/']],
+        beforeDeclarationPaths: [['paths', '//path1']],
         afterDeclarationPaths: [['paths', '/path1']],
         action: DiffAction.rename,
         type: annotation,
       })
+    ]))
+  })
+
+  it('Should distinguish between path with and without trailing slash', () => {
+    const before = loadYamlSample('trailing-slash-path-mapping/before.yaml')
+    const after = loadYamlSample('trailing-slash-path-mapping/after.yaml')
+
+    const { diffs } = apiDiff(before, after)
+
+    expect(diffs).toEqual(diffsMatcher([
+      expect.objectContaining({
+        afterDeclarationPaths: [['paths', '/v1/extendedAction/{id}/']],
+        action: DiffAction.add,
+        type: nonBreaking,
+      }),
     ]))
   })
 

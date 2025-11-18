@@ -117,16 +117,16 @@ const JSON_SCHEMA_ASSIGN_TYPE_MAPPING: Record<JsonSchemaNodesNormalizedType, Set
   [JSON_SCHEMA_NODE_TYPE_NULL]: new Set([JSON_SCHEMA_NODE_TYPE_NULL]),
   [JSON_SCHEMA_NODE_SYNTHETIC_TYPE_ANY]: new Set([JSON_SCHEMA_NODE_SYNTHETIC_TYPE_ANY]),
   [JSON_SCHEMA_NODE_SYNTHETIC_TYPE_NOTHING]: new Set([
-      JSON_SCHEMA_NODE_SYNTHETIC_TYPE_NOTHING,
-      JSON_SCHEMA_NODE_TYPE_BOOLEAN,
-      JSON_SCHEMA_NODE_TYPE_OBJECT,
-      JSON_SCHEMA_NODE_TYPE_ARRAY,
-      JSON_SCHEMA_NODE_TYPE_NUMBER,
-      JSON_SCHEMA_NODE_TYPE_STRING,
-      JSON_SCHEMA_NODE_TYPE_INTEGER,
-      JSON_SCHEMA_NODE_TYPE_NULL,
-      JSON_SCHEMA_NODE_SYNTHETIC_TYPE_ANY,
-    ],
+    JSON_SCHEMA_NODE_SYNTHETIC_TYPE_NOTHING,
+    JSON_SCHEMA_NODE_TYPE_BOOLEAN,
+    JSON_SCHEMA_NODE_TYPE_OBJECT,
+    JSON_SCHEMA_NODE_TYPE_ARRAY,
+    JSON_SCHEMA_NODE_TYPE_NUMBER,
+    JSON_SCHEMA_NODE_TYPE_STRING,
+    JSON_SCHEMA_NODE_TYPE_INTEGER,
+    JSON_SCHEMA_NODE_TYPE_NULL,
+    JSON_SCHEMA_NODE_SYNTHETIC_TYPE_ANY,
+  ],
   ),
 }
 
@@ -235,9 +235,8 @@ export function difference(array1: string[], array2: string[]): string[] {
 
 export function removeExcessiveSlashes(input: string): string {
   return input
-    .replace(/\/+/g, '/') // Replace multiple consecutive slashes with single slash
+    .replace(/\/+/g, '/') // Replace multiple consecutive slashes with single slash TODO- may be it is better to remove double shashes explicitly when concatenating paths
     .replace(/^\//, '')    // Remove leading slash
-    .replace(/\/$/, '')    // Remove trailing slash
 }
 
 /**
@@ -324,10 +323,10 @@ export const extractOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): st
   try {
     const [firstServer] = servers
     let serverUrl = firstServer.url
-    if(!serverUrl) {
+    if (!serverUrl) {
       return ''
     }
-    
+
     const { variables = {} } = firstServer
 
     for (const param of Object.keys(variables)) {
