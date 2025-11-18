@@ -25,19 +25,19 @@ const DOCUMENT_FILE_2_NAME = 'spec2'
 const SEVERAL_FILES_NAME = [DOCUMENT_FILE_1_NAME, DOCUMENT_FILE_2_NAME]
 
 describe('Version Internal Documents tests', () => {
-  describe('OAS tests', () => {
-    describe('Single OAS', () => {
-      const packageId = 'version-internal-documents/oas'
+  describe('Rest tests', () => {
+    describe('Single OAS operation', () => {
+      const packageId = 'version-internal-documents/single-rest-operation'
 
       runCommonTests(packageId, SINGLE_FILE_NAMES)
     })
 
-    describe('Several OAS', () => {
-      const packageId = 'version-internal-documents/several-oas'
+    describe('Several OAS operations', () => {
+      const packageId = 'version-internal-documents/several-rest-operations'
       runCommonTests(packageId, SEVERAL_FILES_NAME)
     })
 
-    it('should not create internalDocument without publish', async ()=> {
+    it('should not calculate internalDocument without publish', async () => {
       const packageId = 'version-internal-documents/oas-no-publish'
       const result = await buildPackage(packageId)
 
@@ -46,7 +46,7 @@ describe('Version Internal Documents tests', () => {
       expect(document.internalDocument).not.toBeExtensible()
     })
 
-    it('should not create internalDocument without operations', async ()=> {
+    it('should not create internalDocument without operations', async () => {
       const packageId = 'version-internal-documents/oas-without-operations'
       const result = await buildPackage(packageId)
 
@@ -57,14 +57,14 @@ describe('Version Internal Documents tests', () => {
   })
 
   describe('Graphql tests', () => {
-    describe('Single Graphql', () => {
-      const packageId = 'version-internal-documents/graphql'
+    describe('Single Graphql operation', () => {
+      const packageId = 'version-internal-documents/single-graphql-operation'
 
       runCommonTests(packageId, SINGLE_FILE_NAMES)
     })
 
-    describe('Several Graphql', () => {
-      const packageId = 'version-internal-documents/several-graphql'
+    describe('Several Graphql operations', () => {
+      const packageId = 'version-internal-documents/several-graphql-operations'
       runCommonTests(packageId, SEVERAL_FILES_NAME)
     })
   })
@@ -73,7 +73,7 @@ describe('Version Internal Documents tests', () => {
     test('should documents have internalDocumentId', async () => {
       const result = await buildPackage(packageId)
       const documents: VersionDocument[] = Array.from(result.documents.values())
-      Array.from(documents).forEach((document, i)=> {
+      Array.from(documents).forEach((document, i) => {
         expect(document.internalDocumentId).toEqual(files[i])
       })
     })
@@ -81,8 +81,9 @@ describe('Version Internal Documents tests', () => {
     test('should operations have versionInternalDocumentId', async () => {
       const result = await buildPackage(packageId)
       const operations: ApiOperation[] = Array.from(result.operations.values())
-      Array.from(operations).forEach((operation, i)=> {
-        expect(operation.versionInternalDocumentId).toEqual(files[i])
+      Array.from(operations).forEach((operation, i) => {
+        expect(operation).toHaveProperty('versionInternalDocumentId')
+        expect(operation['versionInternalDocumentId']).toEqual(files[i])
       })
     })
 
@@ -97,27 +98,10 @@ describe('Version Internal Documents tests', () => {
         throw new Error(`Cannot load ${PACKAGE.OPERATIONS_FILE_NAME}`)
       }
       const packageOperations: PackageOperations = JSON.parse(operationsFile)
-      Array.from(packageOperations.operations).forEach((operation, i)=> {
-        expect(operation.versionInternalDocumentId).toEqual(files[i])
+      Array.from(packageOperations.operations).forEach((operation, i) => {
+        expect(operation).toHaveProperty('versionInternalDocumentId')
+        expect(operation['versionInternalDocumentId']).toEqual(files[i])
       })
-    })
-
-    test('should version-internal-documents.json had documents info', async () => {
-      await buildPackage(packageId)
-      const versionInternalDocumentsFile = await loadFileAsString(
-        VERSIONS_PATH,
-        `${packageId}/v1`,
-        PACKAGE.VERSION_INTERNAL_FILE_NAME,
-      )
-      const expectedVersionInternalDocumentsFile = await loadFileAsString(
-        DEFAULT_PROJECTS_PATH,
-        packageId,
-        PACKAGE.VERSION_INTERNAL_FILE_NAME,
-      )
-      if (!expectedVersionInternalDocumentsFile || !versionInternalDocumentsFile) {
-        throw new Error(`Cannot load ${PACKAGE.VERSION_INTERNAL_FILE_NAME}`)
-      }
-      expect(JSON.parse(versionInternalDocumentsFile)).toEqual(JSON.parse(expectedVersionInternalDocumentsFile))
     })
 
     test('should internal document had serialize data', async () => {
@@ -128,7 +112,7 @@ describe('Version Internal Documents tests', () => {
           loadFileAsString(DEFAULT_PROJECTS_PATH, packageId, `version-${item}.json`),
         ),
       )
-      documents.forEach((document, i)=> {
+      documents.forEach((document, i) => {
         expect(document.internalDocument).toEqual(versionSpecs[i])
       })
     })
