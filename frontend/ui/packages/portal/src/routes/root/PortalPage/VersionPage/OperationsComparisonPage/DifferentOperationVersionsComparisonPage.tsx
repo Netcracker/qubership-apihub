@@ -272,7 +272,6 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
                 toolbar={
                   <ComparisonToolbar
                     compareToolbarMode={COMPARE_SAME_OPERATIONS_MODE}
-                    isChangelogAvailable={!!changesSummary && isContextValid}
                     internalDocumentOptions={internalDocumentOptions}
                   />
                 }

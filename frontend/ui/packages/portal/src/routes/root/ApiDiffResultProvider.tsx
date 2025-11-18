@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
+import type { CompareResult } from '@netcracker/qubership-apihub-api-diff'
 import type { Dispatch, FC, PropsWithChildren, SetStateAction } from 'react'
 import { createContext, useContext, useState } from 'react'
-import type { CompareResult } from '@netcracker/qubership-apihub-api-diff'
 
-const ApiDiffResultContext = createContext<CompareResult | undefined>()
-const SetApiDiffResultContext = createContext<Dispatch<SetStateAction<CompareResult | undefined>>>()
+export type ApiDiffResult = Omit<CompareResult, 'ownerDiffEntry'>
 
-export function useApiDiffResult(): CompareResult | undefined {
+const ApiDiffResultContext = createContext<ApiDiffResult | undefined>()
+const SetApiDiffResultContext = createContext<Dispatch<SetStateAction<ApiDiffResult | undefined>>>()
+
+export function useApiDiffResult(): ApiDiffResult | undefined {
   return useContext(ApiDiffResultContext)
 }
 
-export function useSetApiDiffResult(): Dispatch<SetStateAction<CompareResult | undefined>> {
+export function useSetApiDiffResult(): Dispatch<SetStateAction<ApiDiffResult | undefined>> {
   return useContext(SetApiDiffResultContext)
 }
 
@@ -41,7 +43,7 @@ export function useSetIsApiDiffResultLoading(): Dispatch<SetStateAction<boolean>
 }
 
 export const ApiDiffResultProvider: FC<PropsWithChildren> = ({ children }) => {
-  const [apiDiffResult, setApiDiffResult] = useState<CompareResult>()
+  const [apiDiffResult, setApiDiffResult] = useState<ApiDiffResult>()
   const [isApiDiffResultLoading, setIsApiDiffResultLoading] = useState<boolean>(false)
 
   return (

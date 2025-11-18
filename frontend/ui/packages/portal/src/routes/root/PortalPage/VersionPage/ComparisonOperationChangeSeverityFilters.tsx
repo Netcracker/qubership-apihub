@@ -20,14 +20,10 @@ import {
   useSetApiDiffResult,
   useSetIsApiDiffResultLoading,
 } from '@apihub/routes/root/ApiDiffResultProvider'
-import type { ChangelogAvailable } from '@apihub/routes/root/PortalPage/VersionPage/common-props'
-import { useRiskyChanges } from '@apihub/routes/root/PortalPage/VersionPage/useRiskyChanges'
-import { DIFFS_AGGREGATED_META_KEY, isDiffAdd, isDiffRemove, isDiffRename, isDiffReplace, type Diff } from '@netcracker/qubership-apihub-api-diff'
-import { BREAKING_CHANGE_TYPE } from '@netcracker/qubership-apihub-api-processor'
+import type { Diff } from '@netcracker/qubership-apihub-api-diff'
+import { DIFFS_AGGREGATED_META_KEY, isDiffAdd, isDiffRemove, isDiffRename, isDiffReplace } from '@netcracker/qubership-apihub-api-diff'
 import { ChangeSeverityFilters } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityFilters'
 import { DEFAULT_CHANGE_SEVERITY_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
-import { handleRiskyChanges } from '@netcracker/qubership-apihub-ui-shared/utils/api-diff-result'
-import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 import type { FC } from 'react'
 import { memo, useEffect, useMemo, useState } from 'react'
@@ -36,11 +32,12 @@ import type { InternalDocumentOptions } from './ComparisonToolbar'
 
 type ChangesSummary = typeof DEFAULT_CHANGE_SEVERITY_MAP
 
-export type ComparisonOperationChangeSeverityFiltersProps = ChangelogAvailable & {
+export type ComparisonOperationChangeSeverityFiltersProps = {
   internalDocumentOptions?: InternalDocumentOptions
 }
+
 export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationChangeSeverityFiltersProps> = memo<ComparisonOperationChangeSeverityFiltersProps>(props => {
-  const { isChangelogAvailable, internalDocumentOptions } = props
+  const { internalDocumentOptions } = props
 
   const {
     previousOperation: originOperation,
@@ -86,32 +83,17 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
     }
   }, [comparisonInternalDocument])
 
-  const [riskyChanges, isRiskyChangesLoading, isSuccess] = useRiskyChanges({
-    operationKey: changedOperation?.operationKey ?? originOperation?.operationKey,
-    comparisonMode: true,
-    needToCheckRisky: !apiDiffLoading && apiDiffResult?.diffs.some(diff => diff.type === BREAKING_CHANGE_TYPE),
-    isChangelogAvailable: isChangelogAvailable,
-  })
+  useEffect(() => {
+    setIsApiDiffResultLoadingContext(apiDiffLoading)
+  }, [apiDiffLoading, setIsApiDiffResultLoadingContext])
 
   useEffect(() => {
-    setIsApiDiffResultLoadingContext(apiDiffLoading || isRiskyChangesLoading)
-  }, [apiDiffLoading, isRiskyChangesLoading, setIsApiDiffResultLoadingContext])
-
-  useEffect(() => {
-    if (isOperationsLoading || apiDiffLoading || isRiskyChangesLoading) {
+    if (isOperationsLoading || apiDiffLoading) {
       return
     }
-    if (isSuccess && isNotEmpty(riskyChanges) && apiDiffResult) {
-      // @ts-expect-error TODO: fix this
-      const apiDiffResultWithSemiBraking = handleRiskyChanges(riskyChanges, apiDiffResult)
-      setApiDiffResultContext(apiDiffResultWithSemiBraking)
-      setChanges(apiDiffResultWithSemiBraking?.diffs.reduce(changesSummaryReducer, { ...DEFAULT_CHANGE_SEVERITY_MAP }))
-    } else {
-      // @ts-expect-error TODO: fix this
-      setApiDiffResultContext(apiDiffResult)
-      setChanges(apiDiffResult?.diffs.reduce(changesSummaryReducer, { ...DEFAULT_CHANGE_SEVERITY_MAP }))
-    }
-  }, [apiDiffLoading, apiDiffResult, isOperationsLoading, isRiskyChangesLoading, isSuccess, riskyChanges, setApiDiffResultContext, setChanges])
+    setApiDiffResultContext(apiDiffResult)
+    setChanges(apiDiffResult?.diffs.reduce(changesSummaryReducer, { ...DEFAULT_CHANGE_SEVERITY_MAP }))
+  }, [apiDiffLoading, apiDiffResult, isOperationsLoading, setApiDiffResultContext, setChanges])
 
   //todo return after resolve
   /*const [filters, setFilters] = useSeverityFiltersSearchParam()
@@ -120,7 +102,7 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
     setFilters(selectedFilters.toString())
   }, [setFilters])*/
 
-  if (isOperationsLoading || isApiDiffResultLoading || isRiskyChangesLoading) {
+  if (isOperationsLoading || isApiDiffResultLoading) {
     return null
   }
 

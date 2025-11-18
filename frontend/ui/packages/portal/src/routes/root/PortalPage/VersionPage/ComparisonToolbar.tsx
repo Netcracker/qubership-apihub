@@ -16,7 +16,6 @@
 
 import { useBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
 import { isLinkedComparedBreadcrumbPathItem } from '@apihub/routes/root/PortalPage/VersionPage/breadcrumbs'
-import type { ChangelogAvailable } from '@apihub/routes/root/PortalPage/VersionPage/common-props'
 import { ExportChangesMenu } from '@apihub/routes/root/PortalPage/VersionPage/ExportChangesMenu'
 import {
   COMPARE_DASHBOARDS_MODE,
@@ -74,10 +73,10 @@ export type InternalDocumentOptions = {
 export type ComparisonPageToolbarProps = {
   compareToolbarMode: CompareToolbarMode
   internalDocumentOptions?: InternalDocumentOptions
-} & ChangelogAvailable
+}
 
 export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<ComparisonPageToolbarProps>((props) => {
-  const { compareToolbarMode, isChangelogAvailable, internalDocumentOptions } = props
+  const { compareToolbarMode, internalDocumentOptions } = props
   const { apiType: apiTypeSearchParam } = useApiTypeSearchParam()
   const [packageSearchParam] = usePackageSearchParam()// in case of package/dashboard comparison we don't hase apiType in url, we have it in searchParams
   const {
@@ -182,7 +181,6 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
             ? <>
               {mode !== RAW_OPERATION_VIEW_MODE && (
                 <ComparisonOperationChangeSeverityFilters
-                  isChangelogAvailable={isChangelogAvailable}
                   internalDocumentOptions={internalDocumentOptions}
                 />
               )}
