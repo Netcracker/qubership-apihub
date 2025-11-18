@@ -86,7 +86,7 @@ export const PackageBreadcrumbs: FC<PackageBreadcrumbsProps> = memo<PackageBread
   }, [fullVersion, packageObject, packageSettingsLinkHandle, showPackagePath, splittedVersionKey])
 
   return (
-    <Breadcrumbs data-testid="PackageBreadcrumbs">
+    <Breadcrumbs component="nav" data-testid="PackageBreadcrumbs">
       {links}
     </Breadcrumbs>
   )

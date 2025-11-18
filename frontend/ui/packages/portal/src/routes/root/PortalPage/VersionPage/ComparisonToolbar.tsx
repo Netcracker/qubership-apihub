@@ -162,9 +162,9 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
   return (
     <Box sx={COMPARISON_PAGE_TOOLBAR_STYLES} data-testid="ComparisonToolbar">
       <Box display="flex" flexDirection="column">
-        <Typography variant="body2">
+        <Box fontSize="0.875rem">
           <ComparedPackagesBreadcrumbs data={commonLinkedBreadcrumbs} />
-        </Typography>
+        </Box>
         <Box display="flex" alignItems="center">
           <IconButton color="primary" onClick={handleBackClick} data-testid="BackButton">
             <ArrowBackIcon />
