@@ -485,5 +485,57 @@ describe('Serialize/Deserialize Utils', () => {
 
       expect(deserialized.data).toBe(deserialized.sameInstanceData);
     })
+
+
+    it('should handle simple set', () => {
+      const setData = [1,2,3, undefined]
+      const original: any = { data: new Set(setData) }
+
+      const symbolToString = new Map<symbol, string>()
+      const stringToSymbol = new Map<string, symbol>()
+
+      const serialized = serialize(original, symbolToString)
+      const deserialized = deserialize(serialized, stringToSymbol) as any
+
+      const deserializedSym = deserialized.data
+      expect(deserializedSym instanceof Set).toBe(true);
+      expect(Array.from(deserializedSym)).toEqual(setData);
+    })
+
+
+    it('should handle set with symbol keys', () => {
+      const sym = Symbol('nestedSetProp')
+      const setData = ['data']
+      const original: any = {
+        [sym]: new Set(setData)
+      }
+
+      const symbolToString = new Map<symbol, string>([[sym, 'nestedSetProp']])
+      const stringToSymbol = new Map<string, symbol>([['nestedSetProp', sym]])
+
+      const serialized = serialize(original, symbolToString)
+      const deserialized = deserialize(serialized, stringToSymbol) as any
+
+      const deserializedSym = deserialized[sym]
+      expect(deserializedSym instanceof Set).toBe(true);
+      expect(Array.from(deserializedSym)).toEqual(setData);
+    })
+
+    // We are deliberately skipping this case, as we consider it unnecessary at the moment.
+    it.skip('should handle symbol values in Set', () => {
+      const sym1 = Symbol('symSetProp1')
+      const sym2 = Symbol('symSetProp2')
+      const original: any = {items: new Set<unknown>([sym1, sym2])}
+
+      const symbolToString = new Map<symbol, string>([[sym1, 'symSetProp1'], [sym2, 'symSetProp2']])
+      const stringToSymbol = new Map<string, symbol>([['symSetProp1', sym1], ['symSetProp2', sym2]])
+
+      const serialized = serialize(original, symbolToString)
+      const deserialized = deserialize(serialized, stringToSymbol) as any
+
+      const [deserializedSym1, deserializedSym2] = deserialized.items
+      expect(deserializedSym1 instanceof Set).toBe(sym1)
+      expect(deserializedSym2 instanceof Set).toBe(sym2)
+    })
   })
 }) 
