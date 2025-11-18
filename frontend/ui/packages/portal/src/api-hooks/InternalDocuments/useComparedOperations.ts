@@ -10,6 +10,8 @@ import { useMemo } from 'react'
 import { useComparisonInternalDocumentContent } from './useComparisonInternalDocumentContent'
 import { useComparisonInternalDocumentsByPackageVersion } from './useComparisonInternalDocumentsByPackageVersion'
 import type { QueryResult } from './useInternalDocumentsByPackageVersion'
+import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 
 type Options = {
   previousOperation: OperationData | undefined
@@ -101,11 +103,24 @@ export function useComparedOperations(options: Options): QueryResult<unknown, Er
     if (!deserializedComparisonInternalDocument) {
       return undefined
     }
+    // Leave the only operation with necessary path because ASV displays only 1 operation at the time
     const comparisonInternalDocumentPathObjects = (deserializedComparisonInternalDocument as OpenAPIV3.Document)?.paths ?? {}
     const paths = Object.keys(comparisonInternalDocumentPathObjects)
     for (const path of paths) {
       if (path !== comparedOperationPath) {
         delete comparisonInternalDocumentPathObjects[path]
+      }
+    }
+    // Leave the only change for operation with necessary path because ASV takes the first item and doesn't know which operation is there
+    if (DIFF_META_KEY in comparisonInternalDocumentPathObjects) {
+      const whollyChangedPaths: Record<string, unknown> =
+        isObject(comparisonInternalDocumentPathObjects[DIFF_META_KEY])
+          ? comparisonInternalDocumentPathObjects[DIFF_META_KEY]
+          : {}
+      for (const whollyChangedPath of Object.keys(whollyChangedPaths)) {
+        if (whollyChangedPath !== comparedOperationPath) {
+          delete whollyChangedPaths[whollyChangedPath]
+        }
       }
     }
     return deserializedComparisonInternalDocument
