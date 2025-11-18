@@ -103,19 +103,34 @@ export function useComparedOperations(options: Options): QueryResult<unknown, Er
     if (!deserializedComparisonInternalDocument) {
       return undefined
     }
+    const oasInternalDocument = deserializedComparisonInternalDocument as OpenAPIV3.Document
+    const clonedOasComparisonInternalDocument: OpenAPIV3.Document = {
+      ...oasInternalDocument,
+      paths: {
+        ...oasInternalDocument.paths,
+        [DIFF_META_KEY]:
+          (
+            isObject(oasInternalDocument.paths) &&
+            DIFF_META_KEY in oasInternalDocument.paths &&
+            isObject(oasInternalDocument.paths[DIFF_META_KEY])
+          )
+            ? { ...oasInternalDocument.paths[DIFF_META_KEY] }
+            : undefined,
+      },
+    }
     // Leave the only operation with necessary path because ASV displays only 1 operation at the time
-    const comparisonInternalDocumentPathObjects = (deserializedComparisonInternalDocument as OpenAPIV3.Document)?.paths ?? {}
-    const paths = Object.keys(comparisonInternalDocumentPathObjects)
+    const pathObjects = clonedOasComparisonInternalDocument.paths
+    const paths = Object.keys(pathObjects)
     for (const path of paths) {
       if (path !== comparedOperationPath) {
-        delete comparisonInternalDocumentPathObjects[path]
+        delete pathObjects[path]
       }
     }
     // Leave the only change for operation with necessary path because ASV takes the first item and doesn't know which operation is there
-    if (DIFF_META_KEY in comparisonInternalDocumentPathObjects) {
+    if (DIFF_META_KEY in pathObjects) {
       const whollyChangedPaths: Record<string, unknown> =
-        isObject(comparisonInternalDocumentPathObjects[DIFF_META_KEY])
-          ? comparisonInternalDocumentPathObjects[DIFF_META_KEY]
+        isObject(pathObjects[DIFF_META_KEY])
+          ? pathObjects[DIFF_META_KEY]
           : {}
       for (const whollyChangedPath of Object.keys(whollyChangedPaths)) {
         if (whollyChangedPath !== comparedOperationPath) {
@@ -123,7 +138,7 @@ export function useComparedOperations(options: Options): QueryResult<unknown, Er
         }
       }
     }
-    return deserializedComparisonInternalDocument
+    return clonedOasComparisonInternalDocument
   }, [deserializedComparisonInternalDocument, comparedOperationPath])
 
   return useMemo(
