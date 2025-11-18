@@ -8,6 +8,8 @@ import {
   nonBreaking,
   unclassified,
 } from '../src'
+
+const TEST_AFTER_NORMALIZED_VALUE = Symbol('test-after-normalized-value')
 import offeringQualificationBefore from './helper/resources/api-v2-offeringqualification-qualification-post/before.json'
 import offeringQualificationAfter from './helper/resources/api-v2-offeringqualification-qualification-post/after.json'
 import readDefaultValueOfRequiredBefore from './helper/resources/read-default-value-of-required-field/before.json'
@@ -57,6 +59,7 @@ const OPTIONS: CompareOptions = {
   unify: true,
   liftCombiners: true,
   allowNotValidSyntheticChanges: true,
+  afterValueNormalizedProperty: TEST_AFTER_NORMALIZED_VALUE,
 }
 describe('Real Data', () => {
 
@@ -115,7 +118,7 @@ describe('Real Data', () => {
     const after: any = infinityAfter
     const { diffs } = apiDiff(before, after, OPTIONS)
     const responseContentPath = ['paths', '/api/v1/dictionaries/dictionary/item', 'get', 'responses', '200', 'content']
-    expect(diffs).toEqual(diffsMatcher([      
+    expect(diffs).toEqual(diffsMatcher([
       expect.objectContaining({
         afterDeclarationPaths: [['components', 'schemas', 'DictionaryItem', 'x-entity']],
         afterValue: 'DictionaryItem',
@@ -232,7 +235,7 @@ describe('Real Data', () => {
     const before: any = wildcardContentSchemaMediaTypeCombinedWithSpecificMediaTypeBefore
     const after: any = wildcardContentSchemaMediaTypeCombinedWithSpecificMediaTypeAfter
     const { diffs } = apiDiff(before, after, OPTIONS)
-    
+
     expect(diffs).toEqual(diffsMatcher([
       expect.objectContaining({
         action: DiffAction.replace,
@@ -285,7 +288,7 @@ describe('Real Data', () => {
       expect.objectContaining({
         action: DiffAction.add,
         afterValue: "eventType",
-        afterNormalizedValue: "eventType",
+        [TEST_AFTER_NORMALIZED_VALUE]: "eventType",
         afterDeclarationPaths: [[
           "paths",
           "/path1",
