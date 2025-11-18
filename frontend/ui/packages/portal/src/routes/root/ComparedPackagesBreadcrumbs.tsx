@@ -40,7 +40,7 @@ export const ComparedPackagesBreadcrumbs: FC<ComparedPackagesBreadcrumbsProps> =
     })
 
     return (
-      <Breadcrumbs data-testid="ComparedPackagesBreadcrumbs">
+      <Breadcrumbs component="nav" data-testid="ComparedPackagesBreadcrumbs">
         {links}
       </Breadcrumbs>
     )
