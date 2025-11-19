@@ -25,19 +25,20 @@ const DOCUMENT_FILE_2_NAME = 'spec2'
 const SEVERAL_FILES_NAME = [DOCUMENT_FILE_1_NAME, DOCUMENT_FILE_2_NAME]
 
 describe('Version Internal Documents tests', () => {
-  describe('Rest tests', () => {
+  describe('OAS tests', () => {
     describe('Single OAS operation', () => {
       const packageId = 'version-internal-documents/single-rest-operation'
 
-      runCommonTests(packageId, SINGLE_FILE_NAMES)
+      runPreProcessedBuildDocumentsTests(packageId, SINGLE_FILE_NAMES)
     })
 
     describe('Several OAS operations', () => {
       const packageId = 'version-internal-documents/several-rest-operations'
-      runCommonTests(packageId, SEVERAL_FILES_NAME)
+
+      runPreProcessedBuildDocumentsTests(packageId, SEVERAL_FILES_NAME)
     })
 
-    it('should not calculate internalDocument without publish', async () => {
+    it('should not calculate internalDocument without publish flag', async () => {
       const packageId = 'version-internal-documents/oas-no-publish'
       const result = await buildPackage(packageId)
 
@@ -60,16 +61,17 @@ describe('Version Internal Documents tests', () => {
     describe('Single Graphql operation', () => {
       const packageId = 'version-internal-documents/single-graphql-operation'
 
-      runCommonTests(packageId, SINGLE_FILE_NAMES)
+      runPreProcessedBuildDocumentsTests(packageId, SINGLE_FILE_NAMES)
     })
 
     describe('Several Graphql operations', () => {
       const packageId = 'version-internal-documents/several-graphql-operations'
-      runCommonTests(packageId, SEVERAL_FILES_NAME)
+
+      runPreProcessedBuildDocumentsTests(packageId, SEVERAL_FILES_NAME)
     })
   })
 
-  async function runCommonTests(packageId: string, files: string[]): Promise<void> {
+  async function runPreProcessedBuildDocumentsTests(packageId: string, files: string[]): Promise<void> {
     test('should documents have internalDocumentId', async () => {
       const result = await buildPackage(packageId)
       const documents: VersionDocument[] = Array.from(result.documents.values())

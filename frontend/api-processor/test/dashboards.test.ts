@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { describe, test, expect, jest } from '@jest/globals'
+import { describe, expect, jest, test } from '@jest/globals'
 import { LocalRegistry } from './helpers/registry'
 import { BUILD_TYPE, VERSION_STATUS } from '../src/consts'
 import { Editor } from './helpers/editor'
 import { PackageVersionBuilder } from '../src'
+import { prepareChangelogDashboard } from './helpers'
 
 describe('Dashboard build', () => {
   test('dashboard should have changes', async () => {
@@ -27,46 +28,7 @@ describe('Dashboard build', () => {
     const pckg1Id = 'dashboards/pckg1'
     const pckg2Id = 'dashboards/pckg2'
 
-    await LocalRegistry.openPackage(pckg1Id).publish(pckg1Id, {
-      version: 'v1',
-      packageId: pckg1Id,
-      files: [{ fileId: 'v1.yaml' }],
-    })
-
-    await LocalRegistry.openPackage(pckg2Id).publish(pckg2Id, {
-      version: 'v2',
-      packageId: pckg2Id,
-      files: [{ fileId: 'v2.yaml' }],
-    })
-
-    const dashboard = LocalRegistry.openPackage('dashboards/dashboard')
-    await dashboard.publish(dashboard.packageId, {
-      packageId: 'dashboards/dashboard',
-      version: 'v1',
-      apiType: 'rest',
-      refs: [
-        { refId: pckg1Id, version: 'v1' },
-      ],
-    })
-
-    await dashboard.publish(dashboard.packageId, {
-      packageId: 'dashboards/dashboard',
-      version: 'v2',
-      apiType: 'rest',
-      refs: [
-        { refId: pckg2Id, version: 'v2' },
-      ],
-    })
-
-    const editor = new Editor(dashboard.packageId, {
-      version: 'v2',
-      packageId: dashboard.packageId,
-      previousVersionPackageId: dashboard.packageId,
-      previousVersion: 'v1',
-      buildType: BUILD_TYPE.CHANGELOG,
-      status: VERSION_STATUS.RELEASE,
-    })
-
+    const editor = await prepareChangelogDashboard(pckg1Id, pckg2Id)
     // spy on the builder's wrapper methods that are actually invoked
     const versionResolverSpy = jest.spyOn(editor.builder as PackageVersionBuilder, 'versionResolver')
     const versionDocumentsResolverSpy = jest.spyOn(editor.builder as PackageVersionBuilder, 'versionDocumentsResolver')

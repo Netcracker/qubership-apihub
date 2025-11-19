@@ -205,3 +205,64 @@ export async function buildPackage(
     buildType: BUILD_TYPE.BUILD,
   })
 }
+
+export async function buildChangelogDashboard(
+  packageId1: string,
+  packageId2: string,
+  dashboardPackageId: string = 'dashboards/dashboard',
+  filesBefore: BuildConfigFile[] = [{ fileId: 'v1.yaml' }],
+  filesAfter: BuildConfigFile[] = [{ fileId: 'v2.yaml' }],
+): Promise<BuildResult> {
+  const editor = await prepareChangelogDashboard(packageId1, packageId2, dashboardPackageId, filesBefore, filesAfter)
+  return await editor.run()
+}
+
+export async function prepareChangelogDashboard(
+  packageId1: string,
+  packageId2: string,
+  dashboardPackageId: string = 'dashboards/dashboard',
+  filesBefore: BuildConfigFile[] = [{ fileId: 'v1.yaml' }],
+  filesAfter: BuildConfigFile[] = [{ fileId: 'v2.yaml' }],
+): Promise<Editor> {
+  const pkg1 = LocalRegistry.openPackage(packageId1)
+  const pkg2 = LocalRegistry.openPackage(packageId2)
+
+  await pkg1.publish(pkg1.packageId, {
+    packageId: pkg1.packageId,
+    version: BEFORE_VERSION_ID,
+    files: filesBefore,
+  })
+  await pkg2.publish(pkg2.packageId, {
+    packageId: pkg2.packageId,
+    version: AFTER_VERSION_ID,
+    files: filesAfter,
+  })
+
+  const dashboard = LocalRegistry.openPackage(dashboardPackageId)
+  await dashboard.publish(dashboard.packageId, {
+    packageId: dashboardPackageId,
+    version: BEFORE_VERSION_ID,
+    apiType: 'rest',
+    refs: [
+      { refId: pkg1.packageId, version: BEFORE_VERSION_ID },
+    ],
+  })
+
+  await dashboard.publish(dashboard.packageId, {
+    packageId: dashboardPackageId,
+    version: AFTER_VERSION_ID,
+    apiType: 'rest',
+    refs: [
+      { refId: pkg2.packageId, version: AFTER_VERSION_ID },
+    ],
+  })
+
+  return new Editor(dashboard.packageId, {
+    version: AFTER_VERSION_ID,
+    packageId: dashboard.packageId,
+    previousVersionPackageId: dashboard.packageId,
+    previousVersion: BEFORE_VERSION_ID,
+    buildType: BUILD_TYPE.CHANGELOG,
+    status: VERSION_STATUS.RELEASE,
+  })
+}
