@@ -15,7 +15,7 @@
  */
 
 import type { FC } from 'react'
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 
 import {
@@ -36,6 +36,9 @@ import { AutomationIcon } from '@netcracker/qubership-apihub-ui-shared/icons/Aut
 import { LockOpenIcon } from '@netcracker/qubership-apihub-ui-shared/icons/LockOpenIcon'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
+import {
+  useNcServiceEnabled,
+} from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 
 export const NamespaceNavigationMenu: FC = memo(() => {
   const { agentId, namespaceKey: namespaceId } = useParams()
@@ -56,12 +59,28 @@ export const NamespaceNavigationMenu: FC = memo(() => {
     })
   }, [agentId, namespaceId, navigateToNamespace, workspace])
 
+  const ncServiceEnabled = useNcServiceEnabled()
+
+  const sidebarMenuItems = useMemo(
+    () => (!ncServiceEnabled
+        ? MENU_ITEMS
+        : [...MENU_ITEMS, {
+          id: AUTOMATION_PAGE,
+          title: 'Automation',
+          tooltip: 'Automation',
+          icon: <AutomationIcon/>,
+          testId: 'AutomationTabButton',
+        }]
+    ),
+    [ncServiceEnabled],
+  )
+
   return (
     <NavigationMenu
       open={expandMainMenu}
       setOpen={toggleExpandMainMenu}
       activeItem={currentMenuItem}
-      sidebarMenuItems={MENU_ITEMS}
+      sidebarMenuItems={sidebarMenuItems}
       onSelectItem={navigateAndSelect}
     />
   )
@@ -81,13 +100,6 @@ const MENU_ITEMS: SidebarMenu[] = [
     tooltip: 'Snapshots',
     icon: <SnapshotsIcon/>,
     testId: 'SnapshotsTabButton',
-  },
-  {
-    id: AUTOMATION_PAGE,
-    title: 'Automation',
-    tooltip: 'Automation',
-    icon: <AutomationIcon/>,
-    testId: 'AutomationTabButton',
   },
   {
     id: `${SECURITY_REPORTS_PAGE}/${AUTHENTICATION_REPORTS_PAGE}`,

@@ -21,16 +21,20 @@ import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/u
 import type { Snapshots, SnapshotsDto } from '@apihub/entities/snapshots'
 import { EMPTY_SNAPSHOTS, getSnapshots, toSnapshots } from '@apihub/entities/snapshots'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
+import {
+  useGetAgentPrefix,
+} from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 
 const SNAPSHOTS_QUERY_KEY = 'snapshots-query-key'
 
 export function useSnapshots(): [Snapshots, IsLoading] {
   const { agentId, namespaceKey } = useParams()
   const workspaceKey = useSearchParam(WORKSPACE_SEARCH_PARAM)
+  const prefix = useGetAgentPrefix()
 
   const { data, isLoading } = useQuery<SnapshotsDto, Error, Snapshots>({
     queryKey: [SNAPSHOTS_QUERY_KEY, agentId, namespaceKey, workspaceKey],
-    queryFn: () => getSnapshots(agentId!, namespaceKey!, workspaceKey!),
+    queryFn: () => getSnapshots(agentId!, namespaceKey!, workspaceKey!, prefix),
     enabled: !!namespaceKey,
     select: toSnapshots,
   })

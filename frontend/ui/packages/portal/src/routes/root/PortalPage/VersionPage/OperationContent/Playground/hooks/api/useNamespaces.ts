@@ -20,13 +20,18 @@ import type { Namespaces, NamespacesDto } from '@netcracker/qubership-apihub-ui-
 import { EMPTY_NAMESPACES, toNamespaces } from '@netcracker/qubership-apihub-ui-shared/entities/namespaces'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { portalRequestJson } from '@apihub/utils/requests'
+import {
+  useGetAgentPrefix,
+} from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
+import { API_V2 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 
 const NAMESPACES_QUERY_KEY = 'namespaces-query-key'
 
 export function useNamespaces(agentKey: Key): [Namespaces, IsLoading] {
+  const prefix = useGetAgentPrefix()
   const { data, isLoading } = useQuery<NamespacesDto, Error, Namespaces>({
     queryKey: [NAMESPACES_QUERY_KEY, agentKey],
-    queryFn: () => getNamespaces(agentKey!),
+    queryFn: () => getNamespaces(agentKey!, prefix),
     select: toNamespaces,
     enabled: !!agentKey,
   })
@@ -37,10 +42,11 @@ export function useNamespaces(agentKey: Key): [Namespaces, IsLoading] {
   ]
 }
 
-export async function getNamespaces(agentKey: Key): Promise<NamespacesDto> {
+export async function getNamespaces(agentKey: Key, prefix: string): Promise<NamespacesDto> {
   const agentId = encodeURIComponent(agentKey)
 
   return await portalRequestJson<NamespacesDto>(`/agents/${agentId}/namespaces`, {
-    method: 'get',
-  })
+      method: 'get',
+    },
+    { basePath: `${prefix}${API_V2}` })
 }

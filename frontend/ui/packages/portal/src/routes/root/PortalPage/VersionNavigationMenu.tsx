@@ -39,10 +39,11 @@ import { NavigationMenu } from '@netcracker/qubership-apihub-ui-shared/component
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
-import { useLinterEnabled } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
-import { EXPAND_NAVIGATION_MENU } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useExpandNavigationMenuSearchParam'
+import {
+  EXPAND_NAVIGATION_MENU,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useExpandNavigationMenuSearchParam'
 import { ApiIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ApiIcon'
 import { CertifiedFileIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CertifiedFileIcon'
 import { ComparisonIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ComparisonIcon'
@@ -66,8 +67,12 @@ import {
   getPackageSettingsPath,
   getVersionPath,
 } from '../../NavigationProvider'
-import type { ApiQualityTabTooltip } from './VersionPage/ApiQualityValidationSummaryProvider'
-import { useApiQualityTabTooltip } from './VersionPage/ApiQualityValidationSummaryProvider'
+import type {
+  ApiQualityTabTooltip} from './VersionPage/ApiQualityValidationSummaryProvider'
+import {
+  useApiQualityLinterEnabled,
+  useApiQualityTabTooltip,
+} from './VersionPage/ApiQualityValidationSummaryProvider'
 import { useOperationsView } from './VersionPage/useOperationsView'
 
 export type VersionNavigationMenuProps = {
@@ -81,7 +86,7 @@ export const VersionNavigationMenu: FC<VersionNavigationMenuProps> = memo<Versio
 }) => {
   const navigate = useNavigate()
   const { productionMode } = useSystemInfo()
-  const linterEnabled = useLinterEnabled()
+  const linterEnabled = useApiQualityLinterEnabled()
 
   const { packageId, versionId } = useParams()
   const { versionContent } = usePackageVersionContent({

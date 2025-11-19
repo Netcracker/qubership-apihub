@@ -19,8 +19,7 @@ import { NONE_PUBLISH_STATUS } from './statuses'
 import type { PackageKey, PublishKey } from './keys'
 
 import { generatePath } from 'react-router-dom'
-import { ncCustomAgentsRequestJson, ncCustomAgentsRequestVoid } from '@apihub/utils/requests'
-import { API_V2 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import { API_V2, API_V3, requestJson, requestVoid } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import type { SetPublicationDetailsOptions } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 
@@ -48,12 +47,12 @@ export async function getPublishDetails(
   const packageId = encodeURIComponent(packageKey)
 
   const pathPattern = '/packages/:packageId/publish/statuses'
-  return await ncCustomAgentsRequestJson<PublishDetails[]>(generatePath(pathPattern, { packageId }), {
-    method: 'post',
-    body: JSON.stringify({
-      publishIds: publishKeys,
-    }),
-  },
+  return await requestJson<PublishDetails[]>(generatePath(pathPattern, { packageId }), {
+      method: 'post',
+      body: JSON.stringify({
+        publishIds: publishKeys,
+      }),
+    },
     {
       basePath: API_V2,
       ignoreNotFound: true,
@@ -77,7 +76,6 @@ export async function setPublicationDetails(options: SetPublicationDetailsOption
   } = options
   const packageId = encodeURIComponent(packageKey)
   const publishId = encodeURIComponent(publishKey)
-
   const formData = new FormData()
   formData.append('status', status)
   builderId && formData.append('builderId', builderId)
@@ -86,7 +84,7 @@ export async function setPublicationDetails(options: SetPublicationDetailsOption
 
   const signal = abortController?.signal
   const pathPattern = '/packages/:packageId/publish/:publishId/status'
-  return await ncCustomAgentsRequestVoid(
+  return await requestVoid(
     generatePath(pathPattern, { packageId, publishId }),
     {
       method: 'post',
@@ -94,7 +92,7 @@ export async function setPublicationDetails(options: SetPublicationDetailsOption
       signal: signal,
     },
     {
-      basePath: API_V2,
+      basePath: API_V3,
       ignoreNotFound: true,
       customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
     },

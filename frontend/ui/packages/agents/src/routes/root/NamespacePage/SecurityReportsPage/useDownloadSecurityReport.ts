@@ -19,18 +19,22 @@ import fileDownload from 'js-file-download'
 import type { Key } from '@apihub/entities/keys'
 import type { SecurityReportType } from './useSecurityReports'
 import { SECURITY_REPORT_TYPE_AUTH_CHECK, SECURITY_REPORT_TYPE_GATEWAY_ROUTING } from './useSecurityReports'
-import { ncCustomAgentsRequestBlob } from '@apihub/utils/requests'
 import { generatePath } from 'react-router-dom'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { APIHUB_NC_BASE_PATH } from '@netcracker/qubership-apihub-ui-shared/utils/urls'
-import { API_V2, API_V3 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import { API_V2, API_V3, requestBlob } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import {
+  useGetAgentPrefix,
+  useGetNcServicePrefix,
+} from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 
 export function useDownloadSecurityReport(): [DownloadSecurityReportFunction, IsLoading] {
+  const agentPrefix = useGetAgentPrefix()
+  const ncServicePrefix = useGetNcServicePrefix()
   const { mutate, isLoading } = useMutation<void, Error, Options>({
     mutationFn: ({
       processKey,
       type,
-    }) => downloadSecurityReport(processKey!, type),
+    }) => downloadSecurityReport(processKey!, type, type === SECURITY_REPORT_TYPE_AUTH_CHECK ? agentPrefix : ncServicePrefix),
   })
   return [mutate, isLoading]
 }
@@ -38,17 +42,18 @@ export function useDownloadSecurityReport(): [DownloadSecurityReportFunction, Is
 export const downloadSecurityReport = async (
   processKey: Key,
   type: SecurityReportType,
+  prefix: string,
 ): Promise<void> => {
   const processId = encodeURIComponent(processKey)
 
   const [reportPath, apiPath] = reportTypeToPath[type]
   const pathPattern = '/security/:reportPath/:processId/report'
-  const response = await ncCustomAgentsRequestBlob(
+  const response = await requestBlob(
     generatePath(pathPattern, { reportPath, processId }),
     {
       method: 'GET',
     }, {
-      basePath: `${APIHUB_NC_BASE_PATH}${apiPath}`,
+      basePath: `${prefix}/${apiPath}`,
     },
   )
 

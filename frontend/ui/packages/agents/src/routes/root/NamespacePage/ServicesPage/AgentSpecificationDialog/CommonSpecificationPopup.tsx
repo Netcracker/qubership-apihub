@@ -23,11 +23,15 @@ import { useSpecViewer } from '@netcracker/qubership-apihub-ui-shared/components
 import type {
   SpecificationDialogDetail,
 } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/SpecificationDialog'
-import { SpecificationPopup } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/SpecificationDialog'
+import {
+  SpecificationPopup,
+} from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/SpecificationDialog'
 import type { Spec } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
 import type { ProxyServer } from '@netcracker/qubership-apihub-ui-shared/entities/services'
 import { isGraphQlSpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
-import { APIHUB_NC_BASE_PATH } from '@netcracker/qubership-apihub-ui-shared/utils/urls'
+import {
+  useGetNcServicePrefix,
+} from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 
 export type CommonSpecificationPopupProps = {
   spec: Spec
@@ -61,9 +65,10 @@ export const CommonSpecificationPopup: FC<CommonSpecificationPopupProps> = memo<
     specKey: spec.key,
     enabled: !isGraphQlSpecType(spec.type),
   })
+  const ncServicePrefix = useGetNcServicePrefix()
 
   const defaultProxyServer = {
-    url: APIHUB_NC_BASE_PATH + spec?.proxyServerUrl,
+    url: ncServicePrefix + spec?.proxyServerUrl,
     description: spec?.serviceKey,
   }
 

@@ -15,7 +15,7 @@
  */
 
 import type { Key } from './types'
-import { API_V2, requestJson } from './requests'
+import { API_V3, requestJson } from './requests'
 import { generatePath } from 'react-router-dom'
 import { getPackageRedirectDetails } from './redirects'
 import type { PackageVersion, PackageVersions } from '../entities/versions'
@@ -54,7 +54,7 @@ export async function getFullVersion(
       generatePath(pathPattern, { packageId, versionId }),
       { method: 'get' },
       {
-        basePath: API_V2,
+        basePath: API_V3,
         customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
       },
       signal,

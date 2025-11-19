@@ -16,7 +16,6 @@
 
 import type { Key } from './keys'
 import { requestJson } from '../utils/requests'
-import { APIHUB_NC_BASE_PATH } from '../utils/urls'
 
 export type Namespaces = ReadonlyArray<Namespace>
 
@@ -44,14 +43,14 @@ export function toNamespaces(value: NamespacesDto): Namespaces {
   }))
 }
 
-export async function getNamespaces(agentKey: Key): Promise<NamespacesDto> {
+export async function getNamespaces(agentKey: Key, prefix: string): Promise<NamespacesDto> {
   const agentId = encodeURIComponent(agentKey)
 
   return await requestJson<NamespacesDto>(`/api/v1/agents/${agentId}/namespaces`, {
       method: 'get',
     },
     {
-      basePath: APIHUB_NC_BASE_PATH,
+      basePath: prefix,
     },
   )
 }

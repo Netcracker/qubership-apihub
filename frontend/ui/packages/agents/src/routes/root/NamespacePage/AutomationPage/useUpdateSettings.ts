@@ -15,7 +15,7 @@
  */
 
 import { useMutation } from '@tanstack/react-query'
-import type { Emails, Schedules} from '@apihub/entities/settings'
+import type { Emails, Schedules } from '@apihub/entities/settings'
 import { updateSettings } from '@apihub/entities/settings'
 import { useParams } from 'react-router-dom'
 import { useSetSettings } from './useSettings'
@@ -24,11 +24,15 @@ import type { VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities
 import type { AutodiscoveryStatus } from '@apihub/entities/statuses'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
+import {
+  useGetNcServicePrefix,
+} from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 
 export function useUpdateSettings(): [UpdateSettings, IsLoading, IsSuccess, IsError] {
   const { agentId, namespaceKey } = useParams()
   const workspaceKey = useSearchParam(WORKSPACE_SEARCH_PARAM)
   const setSettings = useSetSettings()
+  const ncServicePrefix = useGetNcServicePrefix()
 
   const { mutate, isLoading, isSuccess, isError } = useMutation<void, Error, UpdateSettingsOptions>({
     mutationFn: ({
@@ -49,6 +53,7 @@ export function useUpdateSettings(): [UpdateSettings, IsLoading, IsSuccess, IsEr
         schedules,
         emailNotificationsEnabled,
         emailNotificationList,
+        ncServicePrefix,
       ),
     onSuccess: (_, {
       versionKey,
