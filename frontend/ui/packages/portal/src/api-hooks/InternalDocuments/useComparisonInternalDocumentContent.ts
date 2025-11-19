@@ -9,12 +9,16 @@ const QUERY_KEY = 'query-key-comparison-internal-document-content'
 export function useComparisonInternalDocumentContent(
   hash: InternalDocumentMetaData['hash'] | undefined,
 ): QueryResult<string, Error | null> {
-  const { data, isLoading, error } = useQuery<string, Error, string>({
+  const { data, isFetching, error } = useQuery<string, Error, string>({
     queryKey: [QUERY_KEY, hash],
     queryFn: () => (hash ? getComparisonInternalDocumentContent(hash) : Promise.resolve('')),
     enabled: !!hash,
   })
-  return { data, isLoading, error }
+  return { 
+    data: data,
+    isLoading: isFetching,
+    error: error,
+  }
 }
 
 function getComparisonInternalDocumentContent(

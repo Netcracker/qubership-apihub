@@ -213,7 +213,7 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
     packageKey: !isPackageFromDashboard ? changedPackageKey : refPackageKey,
     versionKey: !isPackageFromDashboard ? changedVersionKey : refComparisonSummary?.version,
     apiType: apiType as ApiType,
-    operationKey:operationKeyForChangedOperation,
+    operationKey: operationKeyForChangedOperation,
   })
 
   // process operations in the same way they are processed in api-processor for prefix groups comparison
@@ -221,10 +221,11 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
   const processedOriginOperation = useMemo(
     () => (
       !!originOperation && !!originOperation.data
-      ? {
+        ? {
           ...originOperation,
-          data: createCopyWithPrefixGroupOperationsOnly(originOperation.data as RestOperationData, previousGroupPrefix) }
-      : originOperation
+          data: createCopyWithPrefixGroupOperationsOnly(originOperation.data as RestOperationData, previousGroupPrefix),
+        }
+        : originOperation
     ),
     [originOperation, previousGroupPrefix],
   )
@@ -232,8 +233,12 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
   const processedChangedOperation = useMemo(
     () => (
       !!changedOperation && !!changedOperation.data
-      ? { ...changedOperation, data: createCopyWithPrefixGroupOperationsOnly(changedOperation.data as RestOperationData, currentGroupPrefix) }
-      : changedOperation),
+        ? {
+          ...changedOperation,
+          data: createCopyWithPrefixGroupOperationsOnly(changedOperation.data as RestOperationData, currentGroupPrefix),
+        }
+        : changedOperation
+    ),
     [changedOperation, currentGroupPrefix],
   )
 
@@ -397,7 +402,11 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
           <BreadcrumbsDataContext.Provider value={mergedBreadcrumbsData}>
             <ComparedOperationsContext.Provider value={comparedOperationsPair}>
               <PageLayout
-                toolbar={<ComparisonToolbar compareToolbarMode={COMPARE_SAME_OPERATIONS_MODE} />}
+                toolbar={
+                  <ComparisonToolbar
+                    compareToolbarMode={COMPARE_SAME_OPERATIONS_MODE}
+                  />
+                }
                 navigation={
                   <OperationsSidebarOnComparison
                     operationPackageKey={operationPackageKey!}
@@ -430,8 +439,6 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
   )
 })
 
-const actionForOriginalOperation = ['remove', 'replace', 'rename']
-const actionForChangedOperation = ['add', 'replace', 'rename']
 const httpMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 
 export const getGroupPrefix = (groupPrefixTemplate: string | undefined, group: string | undefined): string => {
@@ -440,4 +447,3 @@ export const getGroupPrefix = (groupPrefixTemplate: string | undefined, group: s
   }
   return groupPrefixTemplate.replace(/{group}/g, group)
 }
-

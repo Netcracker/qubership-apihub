@@ -21,9 +21,10 @@ import {
   useSetIsApiDiffResultLoading,
 } from '@apihub/routes/root/ApiDiffResultProvider'
 import type { Diff } from '@netcracker/qubership-apihub-api-diff'
-import { DIFFS_AGGREGATED_META_KEY, isDiffAdd, isDiffRemove, isDiffRename, isDiffReplace } from '@netcracker/qubership-apihub-api-diff'
+import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY, isDiffAdd, isDiffRemove, isDiffRename, isDiffReplace } from '@netcracker/qubership-apihub-api-diff'
 import { ChangeSeverityFilters } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityFilters'
 import { DEFAULT_CHANGE_SEVERITY_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import { getApiDiffResult } from '@netcracker/qubership-apihub-ui-shared/utils/api-diff-result'
 import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 import type { FC } from 'react'
 import { memo, useEffect, useMemo, useState } from 'react'
@@ -49,6 +50,7 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
   const isApiDiffResultLoading = useIsApiDiffResultLoading()
   const setIsApiDiffResultLoadingContext = useSetIsApiDiffResultLoading()
 
+  const [apiDiffExecuting, setApiDiffExecuting] = useState(false)
   const [changes, setChanges] = useState<ChangesSummary | undefined>(undefined)
 
   const { data: comparisonInternalDocument, isLoading: apiDiffLoading } = useComparedOperations({
@@ -60,6 +62,16 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
   })
 
   const apiDiffResult = useMemo(() => {
+    // prefix groups operations OR arbitary operations comparison
+    if (!internalDocumentOptions) {
+      return getApiDiffResult({
+        beforeData: originOperation?.data,
+        afterData: changedOperation?.data,
+        metaKey: DIFF_META_KEY,
+        setApiDiffLoading: setApiDiffExecuting,
+      })
+    }
+
     let diffs: Diff[] = []
     const maybeAggregatedDiffs =
       isObject(comparisonInternalDocument) && DIFFS_AGGREGATED_META_KEY in comparisonInternalDocument
@@ -81,19 +93,19 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
       merged: comparisonInternalDocument,
       diffs: diffs,
     }
-  }, [comparisonInternalDocument])
+  }, [changedOperation?.data, comparisonInternalDocument, internalDocumentOptions, originOperation?.data])
 
   useEffect(() => {
-    setIsApiDiffResultLoadingContext(apiDiffLoading)
-  }, [apiDiffLoading, setIsApiDiffResultLoadingContext])
+    setIsApiDiffResultLoadingContext(internalDocumentOptions ? apiDiffLoading : apiDiffExecuting)
+  }, [apiDiffLoading, apiDiffExecuting, setIsApiDiffResultLoadingContext, internalDocumentOptions])
 
   useEffect(() => {
-    if (isOperationsLoading || apiDiffLoading) {
+    if (isOperationsLoading || apiDiffLoading || apiDiffExecuting) {
       return
     }
     setApiDiffResultContext(apiDiffResult)
     setChanges(apiDiffResult?.diffs.reduce(changesSummaryReducer, { ...DEFAULT_CHANGE_SEVERITY_MAP }))
-  }, [apiDiffLoading, apiDiffResult, isOperationsLoading, setApiDiffResultContext, setChanges])
+  }, [apiDiffLoading, apiDiffResult, apiDiffExecuting, isOperationsLoading, setApiDiffResultContext, setChanges])
 
   //todo return after resolve
   /*const [filters, setFilters] = useSeverityFiltersSearchParam()

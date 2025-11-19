@@ -23,7 +23,7 @@ export function useComparisonInternalDocumentsByPackageVersion(
 
   const enabled = !!currentPackageKey && !!currentPackageVersion && !!previousPackageId && !!previousVersionId
 
-  const { data, isLoading, error } = useQuery<InternalDocuments, Error, InternalDocuments>({
+  const { data, isFetching, error } = useQuery<InternalDocuments, Error, InternalDocuments>({
     queryKey: [QUERY_KEY, currentPackageKey, currentPackageVersion, previousPackageId, previousVersionId],
     queryFn: () => (
       enabled
@@ -38,7 +38,11 @@ export function useComparisonInternalDocumentsByPackageVersion(
     enabled: enabled,
   })
 
-  return { data, isLoading, error }
+  return { 
+    data: data,
+    isLoading: isFetching,
+    error: error,
+  }
 }
 
 function getComparisonInternalDocumentsByPackageVersion(
