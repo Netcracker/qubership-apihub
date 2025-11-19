@@ -100,6 +100,111 @@ export function concatenateArraysInProperty(source: Jso, target: Jso, propertyKe
   })
 }
 
+export function removeDuplicates<T>(
+  array: T[],
+  getUniqueKey: (item: T) => string | undefined,
+  onDuplicate?: (item: T, index: number, firstIndex: number) => void
+): T[] {
+  const seen = new Map<string, number>() // key -> first index
+
+  for (let i = 0; i < array.length; i++) {
+    const item = array[i]
+    const key = getUniqueKey(item)
+
+    if (key === undefined) {
+      continue // Skip items without valid keys
+    }
+
+    const firstIndex = seen.get(key)
+    if (firstIndex !== undefined) {
+      // Duplicate found
+      onDuplicate?.(item, i, firstIndex)
+      delete array[i] // Create sparse array
+    } else {
+      seen.set(key, i)
+    }
+  }
+
+  return array // Returns sparse array
+}
+
+export function densify<T>(sparseArray: T[], originsFlag: symbol | undefined): T[] {
+  const dense: T[] = []
+  const originsRecord: OriginsMetaRecord = {}
+
+  for (let i = 0; i < sparseArray.length; i++) {
+    if (i in sparseArray) { // Check if index exists (not deleted)
+      const newIndex = dense.length
+      dense[newIndex] = sparseArray[i]
+
+      // Copy origins if they exist
+      if (originsFlag) {
+        const sourceOrigins = resolveOrigins(sparseArray, i, originsFlag)
+        if (sourceOrigins) {
+          originsRecord[newIndex] = sourceOrigins
+        }
+      }
+    }
+  }
+
+  // Set origins for the dense array
+  if (originsFlag && Object.keys(originsRecord).length > 0) {
+    setJsoProperty(dense as any, originsFlag, originsRecord)
+  }
+
+  return dense
+}
+
+export function addUniqueElements(
+  source: Jso,
+  target: Jso,
+  propertyKey: PropertyKey,
+  originsFlag: symbol | undefined,
+  getUniqueKey: (item: any) => string | undefined
+): void {
+  const sourceArray = getJsoProperty(source, propertyKey)
+  if (!isArray(sourceArray)) {
+    return
+  }
+
+  let targetArray = getJsoProperty(target, propertyKey)
+  if (targetArray === undefined) {
+    targetArray = []
+    copyOrigins(source, target, propertyKey, propertyKey, originsFlag)
+  }
+
+  if (!isArray(targetArray)) {
+    return
+  }
+
+  setJsoProperty(target, propertyKey, targetArray)
+
+  // Build set of existing keys in target
+  const existingKeys = new Set<string>()
+  for (const item of targetArray) {
+    const key = getUniqueKey(item)
+    if (key !== undefined) {
+      existingKeys.add(key)
+    }
+  }
+
+  // Add source items that don't exist in target
+  for (let i = 0; i < sourceArray.length; i++) {
+    const item = sourceArray[i]
+    const key = getUniqueKey(item)
+
+    // Skip if already exists in target (operation overrides path) or key is undefined
+    if (key === undefined || existingKeys.has(key)) {
+      continue
+    }
+
+    // Add to target
+    const targetIndex = targetArray.length
+    targetArray[targetIndex] = item
+    copyOrigins(sourceArray, targetArray, i, targetIndex, originsFlag)
+  }
+}
+
 export function resolveOriginsMetaRecord(source: Jso, originsFlag: symbol | undefined): OriginsMetaRecord | undefined {
   if (!originsFlag) {
     return undefined
