@@ -56,13 +56,13 @@ export type OperationPreviewProps = {
 // First Order Component //
 export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreviewProps>((props) => {
   const {
-    apiType, 
-    changedOperation, 
+    apiType,
+    changedOperation,
     changedOperationContent,
     // Feature "Internal documents"
     normalizedChangedOperation,
     // ---
-    isLoading, mode, schemaViewMode, 
+    isLoading, mode, schemaViewMode,
     productionMode, maxWidthHeaderToolbar,
   } = props
 
