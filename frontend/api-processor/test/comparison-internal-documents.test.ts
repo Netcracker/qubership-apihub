@@ -68,22 +68,19 @@ describe('Comparison Internal Documents tests', () => {
     it('should dashboards have comparison internal data', async () => {
       const result = await buildChangelogDashboard('dashboards/pckg1', 'dashboards/pckg2')
       const { comparisons } = result
-      comparisons.forEach(comparison => {
-        if (!comparison.data) {
-          return
-        }
-        const { data } = comparison
-        const [operationChanges] = data as OperationChanges[]
+      const [comparisons1, comparisons2] = comparisons
 
-        expect(comparison.comparisonInternalDocuments).not.toBeNull()
-        const [document] = comparison.comparisonInternalDocuments
-        expect(document.id).not.toBeNull()
-        expect(document.value).not.toBeNull()
-        expect(document.comparisonFileId).not.toBeNull()
+      const [internalDocument1] = comparisons1.comparisonInternalDocuments
+      const [operationChanges1] = comparisons1.data as OperationChanges[]
 
-        expect(operationChanges).toHaveProperty('comparisonInternalDocumentId')
-        expect(operationChanges).not.toBeEmpty()
-      })
+      expect(operationChanges1.comparisonInternalDocumentId).toEqual(internalDocument1.id)
+      expect(operationChanges1['comparisonInternalDocumentId']).toEqual('v1_v1')
+
+      const [internalDocument2] = comparisons2.comparisonInternalDocuments
+      const [operationChanges2] = comparisons2.data as OperationChanges[]
+
+      expect(operationChanges2.comparisonInternalDocumentId).toEqual(internalDocument2.id)
+      expect(operationChanges2['comparisonInternalDocumentId']).toEqual('v2_v2')
     })
   })
 
@@ -126,7 +123,7 @@ describe('Comparison Internal Documents tests', () => {
       comparisons.forEach(comparison => {
         const [document] = comparison.comparisonInternalDocuments
         expect(document.id).toEqual('before_v1_after_v2')
-        expect(document.value).toEqual(expectedComparisonFile)
+        expect(JSON.parse(document.value)).toEqual(JSON.parse(expectedComparisonFile as string))
         expect(document).toHaveProperty('comparisonFileId')
       })
     })
@@ -141,6 +138,33 @@ describe('Comparison Internal Documents tests', () => {
         data && data.forEach(operationChanges => {
           expect(operationChanges).toHaveProperty('comparisonInternalDocumentId')
           expect(operationChanges['comparisonInternalDocumentId']).toEqual('before_v1_after_v2')
+        })
+      })
+    })
+
+    it('should document comparisonFileId match to comparison comparisonFileId', async () => {
+      const result = isGraphql ? await buildGqlChangelogPackage(packageId) : await buildChangelogPackage(packageId)
+      const { comparisons } = result
+
+      comparisons.forEach(comparison => {
+        const { comparisonFileId, comparisonInternalDocuments } = comparison
+        const [document] = comparisonInternalDocuments
+
+        expect(document.comparisonFileId).toBe(comparisonFileId)
+      })
+    })
+
+    it('should comparisonId in operation match to comparison document id', async () => {
+      const result = isGraphql ? await buildGqlChangelogPackage(packageId) : await buildChangelogPackage(packageId)
+      const { comparisons } = result
+
+      comparisons.forEach(comparison => {
+        const { data, comparisonInternalDocuments } = comparison
+        const [document] = comparisonInternalDocuments
+
+        expect(data).not.toBeNull()
+        data && data.forEach(operationChanges => {
+          expect(operationChanges['comparisonInternalDocumentId']).toEqual(document.id)
         })
       })
     })
