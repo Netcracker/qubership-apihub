@@ -52,6 +52,7 @@ type ApihubClient interface {
 	GetPublishStatuses(ctx context.Context, packageId string, publishIds []string) ([]view.PublishStatusResponse, error)
 	GetApiKeyById(ctx context.Context, apiKeyId string) (*view.ApihubApiKeyView, error)
 	GetUserById(ctx context.Context, userId string) (*view.User, error)
+	GetSystemInfo(ctx context.Context) (*view.ApihubSystemInfo, error)
 }
 
 func NewApihubClient(apihubUrl string, accessToken string) ApihubClient {
@@ -601,6 +602,23 @@ func (a apihubClientImpl) GetUserById(ctx context.Context, userId string) (*view
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (a apihubClientImpl) GetSystemInfo(ctx context.Context) (*view.ApihubSystemInfo, error) {
+	req := a.makeRequest(ctx)
+	resp, err := req.Get(fmt.Sprintf("%s/api/v1/system/info", a.apihubUrl))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get APIHUB system info: %s", err.Error())
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("failed to get APIHUB system info: status code %d", resp.StatusCode())
+	}
+	var config view.ApihubSystemInfo
+	err = json.Unmarshal(resp.Body(), &config)
+	if err != nil {
+		return nil, err
+	}
+	return &config, nil
 }
 
 func checkUnauthorized(resp *resty.Response) error {
