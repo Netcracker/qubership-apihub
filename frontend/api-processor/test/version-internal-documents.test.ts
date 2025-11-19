@@ -115,7 +115,7 @@ describe('Version Internal Documents tests', () => {
         ),
       )
       documents.forEach((document, i) => {
-        expect(document.internalDocument).toEqual(versionSpecs[i])
+        expect(JSON.parse(document.internalDocument as string)).toEqual(JSON.parse(versionSpecs[i] as string))
       })
     })
   }
