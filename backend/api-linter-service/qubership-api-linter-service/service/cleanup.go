@@ -95,18 +95,20 @@ func (s *cleanupServiceImpl) ClearTestData(ctx context.Context, testId string) e
 			return fmt.Errorf("failed to get version_lint_task_id records: %w", err)
 		}
 
-		_, err = tx.Model((*entity.DocumentLintTask)(nil)).
-			Where("ruleset_id IN (?)", pg.In(rulesetIds)).
-			Delete()
-		if err != nil {
-			return fmt.Errorf("failed to delete document_lint_task records: %w", err)
-		}
+		if len(versionLintTaskIds) > 0 {
+			_, err = tx.Model((*entity.DocumentLintTask)(nil)).
+				Where("version_lint_task_id IN (?)", pg.In(versionLintTaskIds)).
+				Delete()
+			if err != nil {
+				return fmt.Errorf("failed to delete document_lint_task records: %w", err)
+			}
 
-		_, err = tx.Model((*entity.VersionLintTask)(nil)).
-			Where("id IN (?)", pg.In(versionLintTaskIds)).
-			Delete()
-		if err != nil {
-			return fmt.Errorf("failed to delete version_lint_task records: %w", err)
+			_, err = tx.Model((*entity.VersionLintTask)(nil)).
+				Where("id IN (?)", pg.In(versionLintTaskIds)).
+				Delete()
+			if err != nil {
+				return fmt.Errorf("failed to delete version_lint_task records: %w", err)
+			}
 		}
 
 		_, err = tx.Model((*entity.RulesetActivationHistory)(nil)).
