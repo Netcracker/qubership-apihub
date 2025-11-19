@@ -51,7 +51,7 @@ export async function getPackageVersionContent(
       `${generatePath(pathPattern, { packageId, versionId })}?${queryParams}`,
       { method: 'get' },
       {
-        basePath: API_V2,
+        basePath: API_V3,
         customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
       },
     )
@@ -134,12 +134,12 @@ export async function fetchVersionDocuments(
   const versionId = encodeURIComponent(versionKey)
   const groupName = encodeURIComponent(filterByOperationGroup)
 
-  const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/groups/:groupName/transformation/documents'
+  const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/groups/:groupName/documents'
   return await requestJson<ResolvedGroupDocuments>(
     `${generatePath(pathPattern, { packageId, versionId, apiType, groupName })}?${queryParams}`,
     { method: 'GET' },
     {
-      basePath: API_V2,
+      basePath: API_V3,
       customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
     },
   )
