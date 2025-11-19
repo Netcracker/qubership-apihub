@@ -40,7 +40,7 @@
     "simplify"
   ],
   "dependencies": {
-    "@netcracker/qubership-apihub-json-crawl": "next",
+    "@netcracker/qubership-apihub-json-crawl": "1.1.0",
     "object-hash": "3.0.0",
     "fast-equals": "4.0.3"
   },
