@@ -52,7 +52,6 @@ type ApihubClient interface {
 	GetPublishStatuses(ctx context.Context, packageId string, publishIds []string) ([]view.PublishStatusResponse, error)
 	GetApiKeyById(ctx context.Context, apiKeyId string) (*view.ApihubApiKeyView, error)
 	GetUserById(ctx context.Context, userId string) (*view.User, error)
-
 	GetSystemInfo(ctx context.Context) (*view.ApihubSystemInfo, error)
 }
 
