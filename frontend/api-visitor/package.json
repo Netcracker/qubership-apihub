@@ -25,8 +25,8 @@
     "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-json-crawl": "dev",
-    "@netcracker/qubership-apihub-api-unifier": "dev"
+    "@netcracker/qubership-apihub-json-crawl": "1.1.0",
+    "@netcracker/qubership-apihub-api-unifier": "2.4.2"
   },
   "devDependencies": {
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
