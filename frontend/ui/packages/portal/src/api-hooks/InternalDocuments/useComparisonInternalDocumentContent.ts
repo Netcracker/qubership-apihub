@@ -14,7 +14,7 @@ export function useComparisonInternalDocumentContent(
     queryFn: () => (hash ? getComparisonInternalDocumentContent(hash) : Promise.resolve('')),
     enabled: !!hash,
   })
-  return { 
+  return {
     data: data,
     isLoading: isFetching,
     error: error,

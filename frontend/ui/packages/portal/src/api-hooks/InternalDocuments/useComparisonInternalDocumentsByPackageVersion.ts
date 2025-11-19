@@ -38,7 +38,7 @@ export function useComparisonInternalDocumentsByPackageVersion(
     enabled: enabled,
   })
 
-  return { 
+  return {
     data: data,
     isLoading: isFetching,
     error: error,
