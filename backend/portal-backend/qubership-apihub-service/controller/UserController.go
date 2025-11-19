@@ -36,6 +36,7 @@ type UserController interface {
 	CreatePrivatePackageForUser(w http.ResponseWriter, r *http.Request)
 	CreatePrivateUserPackage(w http.ResponseWriter, r *http.Request)
 	GetPrivateUserPackage(w http.ResponseWriter, r *http.Request)
+	GetExtendedUser_deprecated(w http.ResponseWriter, r *http.Request)
 	GetExtendedUser(w http.ResponseWriter, r *http.Request)
 }
 
@@ -265,6 +266,25 @@ func (u userControllerImpl) GetPrivateUserPackage(w http.ResponseWriter, r *http
 		return
 	}
 	utils.RespondWithJson(w, http.StatusOK, packageView)
+}
+
+func (u userControllerImpl) GetExtendedUser_deprecated(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Create(r)
+	extendedUser, err := u.service.GetExtendedUser_deprecated(ctx)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to get user", err)
+		return
+	}
+	if extendedUser == nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.UserNotFound,
+			Message: exception.UserNotFoundMsg,
+			Params:  map[string]interface{}{"userId": ctx.GetUserId()},
+		})
+		return
+	}
+	utils.RespondWithJson(w, http.StatusOK, extendedUser)
 }
 
 func (u userControllerImpl) GetExtendedUser(w http.ResponseWriter, r *http.Request) {

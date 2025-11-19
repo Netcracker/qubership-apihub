@@ -14,13 +14,6 @@
 
 package entity
 
-type FavoriteProjectEntity struct {
-	tableName struct{} `pg:"favorite_projects"`
-
-	UserId string `pg:"user_id, pk, type:varchar"`
-	Id     string `pg:"project_id, pk, type:varchar"`
-}
-
 type FavoritePackageEntity struct {
 	tableName struct{} `pg:"favorite_packages"`
 

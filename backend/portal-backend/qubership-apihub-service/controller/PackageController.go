@@ -49,14 +49,12 @@ type PackageController interface {
 func NewPackageController(packageService service.PackageService,
 	versionService service.PublishedService,
 	portalService service.PortalService,
-	searchService service.SearchService,
 	roleService service.RoleService,
 	monitoringService service.MonitoringService,
 	ptHandler service.PackageTransitionHandler) PackageController {
 	return &packageControllerImpl{
 		publishedService:  versionService,
 		portalService:     portalService,
-		searchService:     searchService,
 		packageService:    packageService,
 		roleService:       roleService,
 		monitoringService: monitoringService,
@@ -67,7 +65,6 @@ func NewPackageController(packageService service.PackageService,
 type packageControllerImpl struct {
 	publishedService  service.PublishedService
 	portalService     service.PortalService
-	searchService     service.SearchService
 	packageService    service.PackageService
 	roleService       service.RoleService
 	monitoringService service.MonitoringService

@@ -19,26 +19,6 @@ import (
 	"strings"
 )
 
-// Returns normalised fileId
-func NormalizeFileId(fileId string) string {
-	// add prefix '/' since we are always operating from the root folder
-	filePath, fileName := SplitFileId("/" + fileId)
-
-	normalizedFileId := ConcatToFileId(filePath, fileName)
-	return strings.TrimPrefix(normalizedFileId, "/")
-}
-
-// Returns normalised file Path
-func NormalizeFilePath(filePath string) string {
-	// add prefix '/' since we are always operating from the root folder
-	filePath = path.Clean("/" + filePath)
-
-	if filePath == "." || filePath == "/" {
-		filePath = ""
-	}
-	return strings.TrimPrefix(filePath, "/")
-}
-
 // Splits fileId to normalized Path and Name
 func SplitFileId(fileId string) (string, string) {
 	filePath := path.Dir(fileId)
@@ -54,15 +34,4 @@ func SplitFileId(fileId string) (string, string) {
 	}
 
 	return filePath, fileName
-}
-
-// Concatenates file Path and Name to fileId
-func ConcatToFileId(filePath string, fileName string) string {
-	if filePath == "" {
-		return fileName
-	} else if strings.HasSuffix(filePath, "/") {
-		return filePath + fileName
-	} else {
-		return filePath + "/" + fileName
-	}
 }

@@ -21,9 +21,15 @@ type User struct {
 	AvatarUrl string `json:"avatarUrl"`
 }
 
-type ExtendedUser struct {
+type ExtendedUser_deprecated struct {
 	User
 	GitIntegrationStatus  bool   `json:"gitIntegrationStatus"`
+	SystemRole            string `json:"systemRole"`
+	AccessTokenTTLSeconds *int   `json:"accessTokenTTLSeconds,omitempty"`
+}
+
+type ExtendedUser struct {
+	User
 	SystemRole            string `json:"systemRole"`
 	AccessTokenTTLSeconds *int   `json:"accessTokenTTLSeconds,omitempty"`
 }

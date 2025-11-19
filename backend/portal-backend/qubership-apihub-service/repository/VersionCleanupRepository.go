@@ -20,11 +20,9 @@ import (
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
-	"github.com/go-pg/pg/v10"
 )
 
 type VersionCleanupRepository interface {
-	GetVersionCleanupRun(id string) (*entity.VersionCleanupEntity, error)
 	StoreVersionCleanupRun(ctx context.Context, entity entity.VersionCleanupEntity) error
 	UpdateVersionCleanupRun(ctx context.Context, runId string, status string, details string, deletedItems int, finishedAt *time.Time) error
 }
@@ -37,18 +35,6 @@ type versionCleanupRepositoryImpl struct {
 	cp db.ConnectionProvider
 }
 
-func (v versionCleanupRepositoryImpl) GetVersionCleanupRun(id string) (*entity.VersionCleanupEntity, error) {
-	var ent *entity.VersionCleanupEntity
-	err := v.cp.GetConnection().Model(ent).Where("run_id = ?", id).First()
-	if err != nil {
-		if err == pg.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return ent, nil
-}
-
 func (v versionCleanupRepositoryImpl) StoreVersionCleanupRun(ctx context.Context, entity entity.VersionCleanupEntity) error {
 	_, err := v.cp.GetConnection().ModelContext(ctx, &entity).Insert()
 	return err
@@ -57,11 +43,11 @@ func (v versionCleanupRepositoryImpl) StoreVersionCleanupRun(ctx context.Context
 func (v versionCleanupRepositoryImpl) UpdateVersionCleanupRun(ctx context.Context, runId string, status string, details string, deletedItems int, finishedAt *time.Time) error {
 	query := v.cp.GetConnection().ModelContext(ctx, &entity.VersionCleanupEntity{}).
 		Set("deleted_items=?", deletedItems)
-	
+
 	if status != "" {
 		query = query.Set("status=?", status)
 	}
-	
+
 	if details != "" {
 		query = query.Set("details=?", details)
 	}

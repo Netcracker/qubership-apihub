@@ -49,6 +49,7 @@ func (c *connectionProviderImpl) GetConnection() *pg.DB {
 	return c.db
 }
 
+//TODO: is this still needed ?
 /*
 type dbLogger struct {
 	cpi *connectionProviderImpl

@@ -39,7 +39,6 @@ type MinioStorageService interface {
 	UploadFilesToBucket() error
 	GetFile(ctx context.Context, tableName, entityId string) ([]byte, error)
 	UploadFile(ctx context.Context, tableName, entityId string, content []byte) error
-	RemoveFile(ctx context.Context, tableName, entityId string) error
 	RemoveFiles(ctx context.Context, tableName string, entityIds []string) error
 	DownloadFilesFromBucketToDatabase() error
 }
@@ -341,10 +340,6 @@ func (m minioStorageServiceImpl) getFile(ctx context.Context, fullFileName strin
 	return minioObjectContent, err
 }
 
-func (m minioStorageServiceImpl) RemoveFile(ctx context.Context, tableName, entityId string) error {
-	return m.removeFile(ctx, buildFileName(tableName, entityId))
-}
-
 func (m minioStorageServiceImpl) RemoveFiles(ctx context.Context, tableName string, entityIds []string) error {
 	minioObjectsChan := make(chan minio.ObjectInfo, len(entityIds))
 	utils.SafeAsync(func() {
@@ -360,14 +355,6 @@ func (m minioStorageServiceImpl) RemoveFiles(ctx context.Context, tableName stri
 	}
 	if len(errMsg) > 0 {
 		return errors.New(strings.Join(errMsg, ". "))
-	}
-	return nil
-}
-
-func (m minioStorageServiceImpl) removeFile(ctx context.Context, fileName string) error {
-	err := m.minioClient.client.RemoveObject(ctx, m.creds.BucketName, fileName, minio.RemoveObjectOptions{})
-	if err != nil {
-		return err
 	}
 	return nil
 }

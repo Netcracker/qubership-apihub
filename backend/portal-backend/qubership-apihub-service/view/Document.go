@@ -20,26 +20,11 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 )
 
-type DocumentTransformationReq struct {
-	PackageId string `json:"packageId" validate:"required"`
-	Version   string `json:"version" validate:"required"`
-	ApiType   string `json:"apiType" validate:"required"`
-	GroupName string `json:"groupName" validate:"required"`
-}
-
 type TransformedDocumentsFormat string
 
 const JsonDocumentFormat TransformedDocumentsFormat = "json"
 const YamlDocumentFormat TransformedDocumentsFormat = "yaml"
 const HtmlDocumentFormat TransformedDocumentsFormat = "html"
-
-func ValidTransformedDocumentsFormat_deprecated(format string) bool {
-	switch format {
-	case string(JsonDocumentFormat), string(HtmlDocumentFormat):
-		return true
-	}
-	return false
-}
 
 func ValidateTransformedDocumentsFormat(format string) error {
 	switch format {
@@ -89,14 +74,6 @@ const (
 	ProtobufFormat string = "proto"
 	UnknownFormat  string = "unknown"
 )
-
-func InvalidDocumentFormat(s string) bool {
-	switch s {
-	case JsonFormat, YamlFormat, MDFormat, GraphQLFormat, GQLFormat, ProtobufFormat, UnknownFormat:
-		return false
-	}
-	return true
-}
 
 const (
 	OpenAPI31Type     string = "openapi-3-1"

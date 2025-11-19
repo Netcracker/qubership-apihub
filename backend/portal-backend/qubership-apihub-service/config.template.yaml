@@ -115,8 +115,6 @@ businessParameters:
   publishArchiveSizeLimitMb: 50
   # Optional; Limit for uploaded file (inside package) size in order to avoid OOM; If not set, default value: 15; Example: 20
   publishFileSizeLimitMb: 15
-  # Deprecated. Required for Editor feature. Size limit for the branch content.
-  branchContentSizeLimitMb: 50
   # Optional; If set - footer with this text is shown for all APIHUB users in APIHUB UI. Designed for maintenance windows notifications.; If not set, default value: ""; Example: Maintenance scheduled on 2023-10-15
   systemNotification: ''
   # Optional; Set to true to fail build on broken refs; If not set, default value: true; Example: true
@@ -145,13 +143,6 @@ s3Storage:
   bucketName: 'apihub-bucket'
   # Optional; Set to true to store only build results (less data amout) in S3 storage; If not set, default value: false; Example: true
   storeOnlyBuildResult: false
-
-# Parameters for APIHUB Editor feature. Deprecated. Will be removed in future releases.
-editor:
-  disabled: true
-  gitlabUrl: ''
-  clientId: ''
-  clientSecret: ''
 
 # Section with Olric(distributed cache and pub-sub) configuration.
 olric:

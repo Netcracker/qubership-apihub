@@ -121,10 +121,6 @@ specification - file which contains openapi/graphql/etc content
 
 build - processing specification which includes the following stages: dereference, comparison with previous version (backward compatibility analysis), generation of search index. Performed via builder library on frontend or node service.
 
-project - a part of editor service implementation, local representation of a remote git repository(integration).
-
-draft - a part of editor service implementation, local copy of a remote git repository that holds user changes until they're committed and pushed to git or discarded. Created automatically when user opens editor and connects the some git branch.
-
 workspace - is a first-level group. Provide a logical separation for different projects, teams, or departments within the organization. Grouping of related APIs and provide a hierarchical structure for better organization and management.  
 
 group -  is an entity that allows you to logically group packages in a hierarchical view. Within a workspace, groups help further categorize APIs based on functional domains or specific areas of focus. Groups provide a flexible way to organize APIs and make them easily discoverable within the API Management portal.

@@ -47,9 +47,7 @@ type PackageService interface {
 	CalculateOperationGroups(packageId string, groupingPrefix string) (*view.CalculatedOperationGroups, error)
 }
 
-func NewPackageService(gitClientProvider GitClientProvider,
-	repo repository.PrjGrpIntRepository,
-	favoritesRepo repository.FavoritesRepository,
+func NewPackageService(favoritesRepo repository.FavoritesRepository,
 	publishedRepo repository.PublishedRepository,
 	versionService VersionService,
 	roleService RoleService,
@@ -59,8 +57,6 @@ func NewPackageService(gitClientProvider GitClientProvider,
 	ptHandler PackageTransitionHandler,
 	systemInfoService SystemInfoService) PackageService {
 	return &packageServiceImpl{
-		gitClientProvider:     gitClientProvider,
-		pRepo:                 repo,
 		favoritesRepo:         favoritesRepo,
 		publishedRepo:         publishedRepo,
 		versionService:        versionService,
@@ -74,8 +70,6 @@ func NewPackageService(gitClientProvider GitClientProvider,
 }
 
 type packageServiceImpl struct {
-	gitClientProvider     GitClientProvider
-	pRepo                 repository.PrjGrpIntRepository
 	favoritesRepo         repository.FavoritesRepository
 	publishedRepo         repository.PublishedRepository
 	versionService        VersionService
@@ -422,7 +416,7 @@ func (p packageServiceImpl) GetPackagesList(ctx context.SecurityContext, searchR
 		packagesInfo := entity.MakePackagesInfo(&ent, lastReleaseVersionDetails, parents, isFavorite, permissions, showOnlyDeleted)
 		result = append(result, *packagesInfo)
 	}
-	
+
 	if skipped != 0 {
 		searchReq.Offset = searchReq.Offset + searchReq.Limit
 		searchReq.Limit = skipped
@@ -579,9 +573,6 @@ func (p packageServiceImpl) UpdatePackage(ctx context.SecurityContext, packg *vi
 	}
 	if packg.ServiceName != nil {
 		meta = append(meta, "serviceName")
-	}
-	if packg.ImageUrl != nil {
-		meta = append(meta, "imageUrl")
 	}
 	if packg.DefaultRole != nil {
 		meta = append(meta, "defaultRole")

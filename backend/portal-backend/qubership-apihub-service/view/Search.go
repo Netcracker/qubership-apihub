@@ -73,13 +73,6 @@ type SearchQueryReq struct {
 	Page                    int                     `json:"-"`
 }
 
-// deprecated
-type SearchResult_deprecated struct {
-	Operations *[]OperationSearchResult_deprecated `json:"operations,omitempty"`
-	Packages   *[]PackageSearchResult              `json:"packages,omitempty"`
-	Documents  *[]DocumentSearchResult             `json:"documents,omitempty"`
-}
-
 type SearchResult struct {
 	Operations *[]interface{}          `json:"operations,omitempty"`
 	Packages   *[]PackageSearchResult  `json:"packages,omitempty"`
@@ -93,23 +86,6 @@ type OperationSearchWeightsDebug struct {
 	VersionStatusTf          float64 `json:"versionStatusTf"`
 	OperationOpenCountWeight float64 `json:"operationOpenCountWeight"`
 	OperationOpenCount       float64 `json:"operationOpenCount"`
-}
-
-// deprecated
-type OperationSearchResult_deprecated struct {
-	PackageId      string      `json:"packageId"`
-	PackageName    string      `json:"name"`
-	ParentPackages []string    `json:"parentPackages"`
-	Version        string      `json:"version"`
-	VersionStatus  string      `json:"status"`
-	OperationId    string      `json:"operationId"`
-	Title          string      `json:"title"`
-	Deprecated     bool        `json:"deprecated,omitempty"`
-	ApiType        string      `json:"apiType"`
-	Metadata       interface{} `json:"metadata"`
-
-	//debug
-	Debug OperationSearchWeightsDebug `json:"debug,omitempty"`
 }
 
 type CommonOperationSearchResult struct {

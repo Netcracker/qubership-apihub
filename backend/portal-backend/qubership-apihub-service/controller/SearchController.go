@@ -16,12 +16,13 @@ package controller
 
 import (
 	"encoding/json"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
@@ -30,7 +31,6 @@ import (
 )
 
 type SearchController interface {
-	Search_deprecated(w http.ResponseWriter, r *http.Request)
 	Search(w http.ResponseWriter, r *http.Request)
 }
 
@@ -46,99 +46,6 @@ type searchControllerImpl struct {
 	operationService  service.OperationService
 	versionService    service.VersionService
 	monitoringService service.MonitoringService
-}
-
-// deprecated
-func (s searchControllerImpl) Search_deprecated(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.BadRequestBody,
-			Message: exception.BadRequestBodyMsg,
-			Debug:   err.Error(),
-		})
-		return
-	}
-	var searchQuery view.SearchQueryReq
-
-	err = json.Unmarshal(body, &searchQuery)
-	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.BadRequestBody,
-			Message: exception.BadRequestBodyMsg,
-			Debug:   err.Error(),
-		})
-		return
-	}
-	validationErr := utils.ValidateObject(searchQuery)
-	if validationErr != nil {
-		if customError, ok := validationErr.(*exception.CustomError); ok {
-			utils.RespondWithCustomError(w, customError)
-			return
-		}
-	}
-	limit, customError := getLimitQueryParam(r)
-	if customError != nil {
-		utils.RespondWithCustomError(w, customError)
-		return
-	}
-	page := 0
-	if r.URL.Query().Get("page") != "" {
-		page, err = strconv.Atoi(r.URL.Query().Get("page"))
-		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.IncorrectParamType,
-				Message: exception.IncorrectParamTypeMsg,
-				Params:  map[string]interface{}{"param": "page", "type": "int"},
-				Debug:   err.Error()})
-			return
-		}
-	}
-	searchLevel := getStringParam(r, "searchLevel")
-	searchQuery.Limit = limit
-	searchQuery.Page = page
-
-	switch searchLevel {
-	case view.SearchLevelOperations:
-		{
-			result, err := s.operationService.SearchForOperations_deprecated(searchQuery)
-			if err != nil {
-				utils.RespondWithError(w, "Failed to perform search for operations", err)
-				return
-			}
-			utils.RespondWithJson(w, http.StatusOK, result)
-		}
-	case view.SearchLevelPackages:
-		{
-			result, err := s.versionService.SearchForPackages(searchQuery)
-			if err != nil {
-				utils.RespondWithError(w, "Failed to perform search for packages", err)
-				return
-			}
-			utils.RespondWithJson(w, http.StatusOK, result)
-		}
-	case view.SearchLevelDocuments:
-		{
-			result, err := s.versionService.SearchForDocuments(searchQuery)
-			if err != nil {
-				utils.RespondWithError(w, "Failed to perform search for documents", err)
-				return
-			}
-			utils.RespondWithJson(w, http.StatusOK, result)
-		}
-	default:
-		utils.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidParameterValue,
-			Message: exception.InvalidParameterValueMsg,
-			Params:  map[string]interface{}{"param": "searchLevel", "value": searchLevel},
-		})
-		return
-	}
 }
 
 func (s searchControllerImpl) Search(w http.ResponseWriter, r *http.Request) {

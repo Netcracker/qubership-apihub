@@ -41,14 +41,11 @@ import (
 type VersionService interface {
 	SetBuildService(buildService BuildService)
 
-	GetPackageVersionContent_deprecated(packageId string, versionName string, includeSummary bool, includeOperations bool, includeGroups bool) (*view.VersionContent_deprecated, error)
 	GetPackageVersionContent(packageId string, versionName string, includeSummary bool, includeOperations bool, includeGroups bool, showOnlyDeleted bool) (*view.VersionContent, error)
-	GetPackageVersionsView_deprecated(req view.VersionListReq) (*view.PublishedVersionsView_deprecated_v2, error)
 	GetPackageVersionsView(req view.VersionListReq, showOnlyDeleted bool) (*view.PublishedVersionsView, error)
 	DeleteVersion(ctx context.SecurityContext, packageId string, versionName string) error
 	PatchVersion(ctx context.SecurityContext, packageId string, versionName string, status *string, versionLabels *[]string) (*view.VersionContent, error)
 	GetLatestContentDataBySlug(packageId string, versionName string, slug string) (*view.PublishedContent, *view.ContentData, error)
-	GetLatestDocumentBySlug_deprecated(packageId string, versionName string, slug string) (*view.PublishedDocument_deprecated, error)
 	GetLatestDocumentBySlug(packageId string, versionName string, slug string) (*view.PublishedDocument, error)
 	GetLatestDocuments(packageId string, versionName string, skipRefs bool, filterReq view.DocumentsFilterReq) (*view.VersionDocuments, error)
 	GetSharedFile(sharedFileId string) ([]byte, string, error)
@@ -57,16 +54,13 @@ type VersionService interface {
 	GetVersionValidationProblems(packageId string, versionName string) (*view.VersionValidationProblems, error)
 	GetDefaultVersion(packageId string) (string, error)
 	GetVersionDetails(packageId string, versionName string) (*view.VersionDetails, error)
-	GetVersionReferences(packageId string, versionName string, filterReq view.VersionReferencesReq) (*view.VersionReferences, error) //deprecated
 	GetVersionReferencesV3(packageId string, versionName string) (*view.VersionReferencesV3, error)
 	SearchForPackages(searchReq view.SearchQueryReq) (*view.SearchResult, error)
 	SearchForDocuments(searchReq view.SearchQueryReq) (*view.SearchResult, error)
 	GetVersionStatus(packageId string, version string) (string, error)
 	GetLatestRevision(packageId string, versionName string) (int, error)
 	GetVersionChanges(packageId, version, apiType string, severities []string, changelogCalculationParams view.VersionChangesReq) (*view.VersionChangesView, error)
-	GetVersionRevisionsList_deprecated(packageId, versionName string, filterReq view.PagingFilterReq) (*view.PackageVersionRevisions_deprecated, error)
 	GetVersionRevisionsList(packageId, versionName string, filterReq view.PagingFilterReq) (*view.PackageVersionRevisions, error)
-	GetTransformedDocuments_deprecated(packageId, version, apiType, groupName, format string) ([]byte, error)
 	GetTransformedDocuments(packageId string, version string, apiType string, groupName string, buildType string, format string) ([]byte, error)
 	DeleteVersionsRecursively(ctx context.SecurityContext, packageId string, retention time.Time) (string, error)
 	CopyVersion(ctx context.SecurityContext, packageId string, version string, req view.CopyVersionReq) (string, error)
@@ -76,9 +70,7 @@ type VersionService interface {
 	GetCSVDashboardPublishReport(publishId string) ([]byte, error)
 }
 
-func NewVersionService(gitClientProvider GitClientProvider,
-	repo repository.PrjGrpIntRepository,
-	favoritesRepo repository.FavoritesRepository,
+func NewVersionService(favoritesRepo repository.FavoritesRepository,
 	publishedRepo repository.PublishedRepository,
 	publishedService PublishedService,
 	operationRepo repository.OperationRepository,
@@ -91,8 +83,6 @@ func NewVersionService(gitClientProvider GitClientProvider,
 	versionCleanupRepository repository.VersionCleanupRepository,
 	operationGroupService OperationGroupService) VersionService {
 	return &versionServiceImpl{
-		gitClientProvider:               gitClientProvider,
-		pRepo:                           repo,
 		favoritesRepo:                   favoritesRepo,
 		publishedRepo:                   publishedRepo,
 		exportRepository:                exportRepository,
@@ -109,8 +99,6 @@ func NewVersionService(gitClientProvider GitClientProvider,
 }
 
 type versionServiceImpl struct {
-	gitClientProvider               GitClientProvider
-	pRepo                           repository.PrjGrpIntRepository
 	favoritesRepo                   repository.FavoritesRepository
 	publishedRepo                   repository.PublishedRepository
 	publishedService                PublishedService
@@ -255,45 +243,6 @@ func (v versionServiceImpl) GetSharedFile(sharedFileId string) ([]byte, string, 
 	return pce.Data, attachmentFileName, nil
 }
 
-func (v versionServiceImpl) GetLatestDocumentBySlug_deprecated(packageId string, versionName string, slug string) (*view.PublishedDocument_deprecated, error) {
-	versionEnt, err := v.publishedRepo.GetVersion(packageId, versionName)
-	if err != nil {
-		return nil, err
-	}
-	if versionEnt == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.PublishedVersionNotFound,
-			Message: exception.PublishedVersionNotFoundMsg,
-			Params:  map[string]interface{}{"version": versionName},
-		}
-	}
-
-	document, err := v.publishedRepo.GetLatestContentBySlug(packageId, versionName, slug)
-	if err != nil {
-		return nil, err
-	}
-	if document == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.ContentSlugNotFound,
-			Message: exception.ContentSlugNotFoundMsg,
-			Params:  map[string]interface{}{"contentSlug": slug},
-		}
-	}
-	operationEnts, err := v.operationRepo.GetOperationsByIds(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, document.OperationIds)
-	if err != nil {
-		return nil, err
-	}
-	operations := make([]view.DocumentsOperation_deprecated, 0)
-	for _, operationEnt := range operationEnts {
-		operations = append(operations, entity.MakeDocumentsOperationView_deprecated(operationEnt))
-	}
-	documentView := entity.MakePublishedDocumentView_deprecated(document)
-	documentView.Operations = operations
-	return documentView, nil
-}
-
 func (v versionServiceImpl) GetLatestDocumentBySlug(packageId string, versionName string, slug string) (*view.PublishedDocument, error) {
 	versionEnt, err := v.publishedRepo.GetVersion(packageId, versionName)
 	if err != nil {
@@ -373,58 +322,6 @@ func (v versionServiceImpl) GetLatestDocuments(packageId string, versionName str
 	return &view.VersionDocuments{Documents: versionDocuments, Packages: packagesRefs}, nil
 }
 
-// deprecated
-func (v versionServiceImpl) GetVersionReferences(packageId string, versionName string, filterReq view.VersionReferencesReq) (*view.VersionReferences, error) {
-	version, err := v.publishedRepo.GetVersion(packageId, versionName)
-	if err != nil {
-		return nil, err
-	}
-	if version == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.PublishedVersionNotFound,
-			Message: exception.PublishedVersionNotFoundMsg,
-			Params:  map[string]interface{}{"version": versionName},
-		}
-	}
-	versionReferences := make([]view.VersionReference, 0)
-	searchQuery := entity.PackageVersionSearchQueryEntity{
-		PackageId:          packageId,
-		Version:            version.Version,
-		Revision:           version.Revision,
-		TextFilter:         filterReq.TextFilter,
-		Kind:               filterReq.Kind,
-		Limit:              filterReq.Limit,
-		Offset:             filterReq.Page * filterReq.Limit,
-		ShowAllDescendants: filterReq.ShowAllDescendants,
-	}
-
-	publishedReferences, err := v.publishedRepo.GetVersionRefs(searchQuery)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for _, ref := range publishedReferences {
-		parents, err := v.getParents(ref.PackageId)
-		if err != nil {
-			return nil, err
-		}
-		versionReferences = append(versionReferences, view.VersionReference{
-			RefId:     ref.PackageId,
-			Name:      ref.PackageName,
-			Version:   ref.Version,
-			Revision:  ref.Revision,
-			Status:    ref.VersionStatus,
-			Kind:      ref.Kind,
-			DeletedAt: ref.DeletedAt,
-			DeletedBy: ref.DeletedBy,
-			Parents:   parents,
-		})
-	}
-	return &view.VersionReferences{References: versionReferences}, nil
-}
-
 func (v versionServiceImpl) GetVersionReferencesV3(packageId string, versionName string) (*view.VersionReferencesV3, error) {
 	versionEnt, err := v.publishedRepo.GetVersion(packageId, versionName)
 	if err != nil {
@@ -456,17 +353,6 @@ func (v versionServiceImpl) GetVersionReferencesV3(packageId string, versionName
 	return &view.VersionReferencesV3{References: versionReferences, Packages: packagesRefs}, nil
 }
 
-func (v versionServiceImpl) getParents(packageId string) ([]view.ParentPackageInfo, error) {
-	parents, err := v.publishedRepo.GetParentsForPackage(packageId, false)
-	if err != nil {
-		return nil, err
-	}
-	var result []view.ParentPackageInfo
-	for _, grp := range parents {
-		result = append(result, *entity.MakePackageParentView(&grp))
-	}
-	return result, err
-}
 func (v versionServiceImpl) GetLatestContentDataBySlug(packageId string, versionName string, slug string) (*view.PublishedContent, *view.ContentData, error) {
 	ent, err := v.publishedRepo.GetVersion(packageId, versionName)
 	if err != nil {
@@ -631,60 +517,6 @@ func (v versionServiceImpl) PatchVersion(ctx context.SecurityContext, packageId 
 	return result, nil
 }
 
-func (v versionServiceImpl) GetPackageVersionsView_deprecated(req view.VersionListReq) (*view.PublishedVersionsView_deprecated_v2, error) {
-	packageEnt, err := v.publishedRepo.GetPackage(req.PackageId)
-	if err != nil {
-		return nil, err
-	}
-	if packageEnt == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.PackageNotFound,
-			Message: exception.PackageNotFoundMsg,
-			Params:  map[string]interface{}{"packageId": req.PackageId},
-		}
-	}
-	versions := make([]view.PublishedVersionListView_deprecated_v2, 0)
-	versionSortByPG := entity.GetVersionSortByPG(req.SortBy)
-	if versionSortByPG == "" {
-		return nil, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidParameterValue,
-			Message: exception.InvalidParameterValueMsg,
-			Params:  map[string]interface{}{"param": "sortBy", "value": req.SortBy},
-		}
-	}
-	versionSortOrderPG := entity.GetVersionSortOrderPG(req.SortOrder)
-	if versionSortOrderPG == "" {
-		return nil, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidParameterValue,
-			Message: exception.InvalidParameterValueMsg,
-			Params:  map[string]interface{}{"param": "sortOrder", "value": req.SortOrder},
-		}
-	}
-
-	searchQueryReq := entity.PublishedVersionSearchQueryEntity{
-		PackageId:  req.PackageId,
-		Status:     req.Status,
-		Label:      req.Label,
-		TextFilter: req.TextFilter,
-		SortBy:     versionSortByPG,
-		SortOrder:  versionSortOrderPG,
-		Limit:      req.Limit,
-		Offset:     req.Page * req.Limit,
-	}
-	ents, err := v.publishedRepo.GetReadonlyPackageVersionsWithLimit_deprecated(searchQueryReq, req.CheckRevisions)
-	if err != nil {
-		return nil, err
-	}
-	for _, ent := range ents {
-		version := entity.MakeReadonlyPublishedVersionListView2_deprecated(&ent)
-		versions = append(versions, *version)
-	}
-	return &view.PublishedVersionsView_deprecated_v2{Versions: versions}, nil
-}
-
 func (v versionServiceImpl) GetPackageVersionsView(req view.VersionListReq, showOnlyDeleted bool) (*view.PublishedVersionsView, error) {
 	var packageEnt *entity.PackageEntity
 	var err error
@@ -710,7 +542,7 @@ func (v versionServiceImpl) GetPackageVersionsView(req view.VersionListReq, show
 
 	versions := make([]view.PublishedVersionListView, 0)
 	versionSortByPG := entity.GetVersionSortByPG(req.SortBy)
-	
+
 	// sortBy and sortOrder are not request params for GetDeletedPackageVersions API -
 	// Hence, they needs not be validated when the GetDeletedPackageVersions API is invoked.
 	if versionSortByPG == "" && !showOnlyDeleted {
@@ -750,61 +582,6 @@ func (v versionServiceImpl) GetPackageVersionsView(req view.VersionListReq, show
 		versions = append(versions, *version)
 	}
 	return &view.PublishedVersionsView{Versions: versions}, nil
-}
-
-func (v versionServiceImpl) GetPackageVersionContent_deprecated(packageId string, version string, includeSummary bool, includeOperations bool, includeGroups bool) (*view.VersionContent_deprecated, error) {
-	versionEnt, err := v.publishedRepo.GetReadonlyVersion_deprecated(packageId, version)
-	if err != nil {
-		return nil, err
-	}
-	if versionEnt == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.PublishedPackageVersionNotFound,
-			Message: exception.PublishedPackageVersionNotFoundMsg,
-			Params:  map[string]interface{}{"version": version, "packageId": packageId},
-		}
-	}
-
-	latestRevision, err := v.publishedRepo.GetLatestRevision(versionEnt.PackageId, versionEnt.Version)
-	if err != nil {
-		return nil, err
-	}
-	if latestRevision == 0 {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.PublishedPackageVersionNotFound,
-			Message: exception.PublishedPackageVersionNotFoundMsg,
-			Params:  map[string]interface{}{"version": version, "packageId": packageId},
-		}
-	}
-	versionContent := &view.VersionContent_deprecated{
-		PublishedAt:              versionEnt.PublishedAt,
-		PublishedBy:              versionEnt.UserName,
-		PreviousVersion:          view.MakeVersionRefKey(versionEnt.PreviousVersion, versionEnt.PreviousVersionRevision),
-		PreviousVersionPackageId: versionEnt.PreviousVersionPackageId,
-		VersionLabels:            versionEnt.Labels,
-		Status:                   versionEnt.Status,
-		NotLatestRevision:        versionEnt.Revision != latestRevision,
-		PackageId:                versionEnt.PackageId,
-		Version:                  view.MakeVersionRefKey(versionEnt.Version, versionEnt.Revision),
-		RevisionsCount:           latestRevision,
-	}
-
-	versionOperationTypes, err := v.getVersionOperationTypes_deprecated(versionEnt, includeSummary, includeOperations)
-	if err != nil {
-		return nil, err
-	}
-	if includeGroups {
-		versionContent.OperationGroups, err = v.getVersionOperationGroups_deprecated(versionEnt)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	versionContent.OperationTypes = versionOperationTypes
-
-	return versionContent, nil
 }
 
 func (v versionServiceImpl) GetPackageVersionContent(packageId string, version string, includeSummary bool, includeOperations bool, includeGroups bool, showOnlyDeleted bool) (*view.VersionContent, error) {
@@ -868,134 +645,6 @@ func (v versionServiceImpl) GetPackageVersionContent(packageId string, version s
 	versionContent.OperationTypes = versionOperationTypes
 
 	return versionContent, nil
-}
-
-func (v versionServiceImpl) getVersionOperationTypes_deprecated(versionEnt *entity.ReadonlyPublishedVersionEntity_deprecated, includeSummary bool, includeOperations bool) ([]view.VersionOperationType, error) {
-	if !includeSummary && !includeOperations {
-		return nil, nil
-	}
-	versionSummaryMap := make(map[string]*view.VersionOperationType, 0)
-	if includeSummary {
-		operationsCountEnts, err := v.operationRepo.GetOperationsTypeCount(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, false)
-		if err != nil {
-			return nil, err
-		}
-		for _, opCount := range operationsCountEnts {
-			apiType, _ := view.ParseApiType(opCount.ApiType)
-			if apiType == "" {
-				continue
-			}
-			operationCount := opCount.OperationsCount
-			deprecatedCount := opCount.DeprecatedCount
-			noBwcOperationsCount := opCount.NoBwcOperationsCount
-			if versionApiTypeSummary, exists := versionSummaryMap[opCount.ApiType]; exists {
-				versionApiTypeSummary.OperationsCount = &operationCount
-				versionApiTypeSummary.DeprecatedCount = &deprecatedCount
-				versionApiTypeSummary.NoBwcOperationsCount = &noBwcOperationsCount
-			} else {
-				versionSummaryMap[opCount.ApiType] = &view.VersionOperationType{
-					ApiType:              opCount.ApiType,
-					OperationsCount:      &operationCount,
-					DeprecatedCount:      &deprecatedCount,
-					NoBwcOperationsCount: &noBwcOperationsCount,
-				}
-			}
-		}
-		if versionEnt.PreviousVersion != "" {
-			previousPackageId := versionEnt.PreviousVersionPackageId
-			if previousPackageId == "" {
-				previousPackageId = versionEnt.PackageId
-			}
-			previousVersionEnt, err := v.publishedRepo.GetVersion(previousPackageId, versionEnt.PreviousVersion)
-			if err != nil {
-				return nil, err
-			}
-			if previousVersionEnt != nil {
-				comparisonId := view.MakeVersionComparisonId(
-					versionEnt.PackageId, versionEnt.Version, versionEnt.Revision,
-					previousVersionEnt.PackageId, previousVersionEnt.Version, previousVersionEnt.Revision)
-				versionComparison, err := v.publishedRepo.GetVersionComparison(comparisonId)
-				if err != nil {
-					return nil, err
-				}
-				if versionComparison != nil {
-					for _, ot := range versionComparison.OperationTypes {
-						apiType, _ := view.ParseApiType(ot.ApiType)
-						if apiType == "" {
-							continue
-						}
-						changeSummary := ot.ChangesSummary
-						if versionApiTypeSummary, exists := versionSummaryMap[ot.ApiType]; exists {
-							versionApiTypeSummary.ChangesSummary = &changeSummary
-						} else {
-							versionSummaryMap[ot.ApiType] = &view.VersionOperationType{
-								ApiType:        ot.ApiType,
-								ChangesSummary: &changeSummary,
-							}
-						}
-					}
-					if len(versionComparison.Refs) > 0 {
-						refsComparisons, err := v.publishedRepo.GetVersionRefsComparisons(comparisonId)
-						if err != nil {
-							return nil, err
-						}
-						for _, comparison := range refsComparisons {
-							for _, ot := range comparison.OperationTypes {
-								apiType, _ := view.ParseApiType(ot.ApiType)
-								if apiType == "" {
-									continue
-								}
-								changeSummary := ot.ChangesSummary
-								if versionApiTypeSummary, exists := versionSummaryMap[ot.ApiType]; exists {
-									if versionApiTypeSummary.ChangesSummary != nil {
-										versionApiTypeSummary.ChangesSummary.Breaking += changeSummary.Breaking
-										versionApiTypeSummary.ChangesSummary.SemiBreaking += changeSummary.SemiBreaking
-										versionApiTypeSummary.ChangesSummary.Deprecated += changeSummary.Deprecated
-										versionApiTypeSummary.ChangesSummary.NonBreaking += changeSummary.NonBreaking
-										versionApiTypeSummary.ChangesSummary.Annotation += changeSummary.Annotation
-										versionApiTypeSummary.ChangesSummary.Unclassified += changeSummary.Unclassified
-									} else {
-										versionApiTypeSummary.ChangesSummary = &changeSummary
-									}
-								} else {
-									versionSummaryMap[ot.ApiType] = &view.VersionOperationType{
-										ApiType:        ot.ApiType,
-										ChangesSummary: &changeSummary,
-									}
-								}
-							}
-						}
-					}
-
-				}
-			}
-		}
-	}
-	if includeOperations {
-		operationTypeHashes, err := v.operationRepo.GetOperationsTypeDataHashes(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
-		if err != nil {
-			return nil, err
-		}
-		for _, ot := range operationTypeHashes {
-			apiType, _ := view.ParseApiType(ot.ApiType)
-			if apiType == "" {
-				continue
-			}
-			if versionApiTypeSummary, exists := versionSummaryMap[ot.ApiType]; exists {
-				versionApiTypeSummary.Operations = ot.OperationsHash
-			} else {
-				versionSummaryMap[ot.ApiType] = &view.VersionOperationType{
-					ApiType:    ot.ApiType,
-					Operations: ot.OperationsHash,
-				}
-			}
-		}
-	}
-	versionOperationTypes := make([]view.VersionOperationType, 0)
-	for _, v := range versionSummaryMap {
-		versionOperationTypes = append(versionOperationTypes, *v)
-	}
-	return versionOperationTypes, nil
 }
 
 func (v versionServiceImpl) getVersionOperationTypes(versionEnt *entity.PackageVersionRevisionEntity, includeSummary bool, includeOperations bool, showOnlyDeleted bool) ([]view.VersionOperationType, error) {
@@ -1220,18 +869,6 @@ func (v versionServiceImpl) getVersionOperationTypes(versionEnt *entity.PackageV
 		versionOperationTypes = append(versionOperationTypes, newOpType)
 	}
 	return versionOperationTypes, nil
-}
-
-func (v versionServiceImpl) getVersionOperationGroups_deprecated(versionEnt *entity.ReadonlyPublishedVersionEntity_deprecated) ([]view.VersionOperationGroup, error) {
-	operationGroupEntities, err := v.operationRepo.GetVersionOperationGroups(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
-	if err != nil {
-		return nil, err
-	}
-	versionOperationGroups := make([]view.VersionOperationGroup, 0)
-	for _, operationGroupEnt := range operationGroupEntities {
-		versionOperationGroups = append(versionOperationGroups, entity.MakeVersionOperationGroupView(operationGroupEnt))
-	}
-	return versionOperationGroups, nil
 }
 
 func (v versionServiceImpl) getVersionOperationGroups(versionEnt *entity.PackageVersionRevisionEntity) ([]view.VersionOperationGroup, error) {
@@ -1715,37 +1352,6 @@ func (v versionServiceImpl) GetVersionChanges(packageId, version, apiType string
 	return versionChanges, nil
 }
 
-func (v versionServiceImpl) GetVersionRevisionsList_deprecated(packageId, versionName string, filterReq view.PagingFilterReq) (*view.PackageVersionRevisions_deprecated, error) {
-	ent, err := v.publishedRepo.GetVersion(packageId, versionName)
-	if err != nil {
-		return nil, err
-	}
-	if ent == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.PublishedVersionNotFound,
-			Message: exception.PublishedVersionNotFoundMsg,
-			Params:  map[string]interface{}{"version": versionName},
-		}
-	}
-	searchQueryReq := entity.PackageVersionSearchQueryEntity{
-		PackageId:  packageId,
-		Version:    ent.Version,
-		TextFilter: filterReq.TextFilter,
-		Limit:      filterReq.Limit,
-		Offset:     filterReq.Offset,
-	}
-	versionRevisionsEnts, err := v.publishedRepo.GetVersionRevisionsList_deprecated(searchQueryReq)
-	if err != nil {
-		return nil, err
-	}
-	revisions := make([]view.PackageVersionRevision_deprecated, 0)
-
-	for _, ent := range versionRevisionsEnts {
-		revisions = append(revisions, *entity.MakePackageVersionRevisionView_deprecated(&ent))
-	}
-	return &view.PackageVersionRevisions_deprecated{Revisions: revisions}, nil
-}
 func (v versionServiceImpl) GetVersionRevisionsList(packageId, versionName string, filterReq view.PagingFilterReq) (*view.PackageVersionRevisions, error) {
 	ent, err := v.publishedRepo.GetVersion(packageId, versionName)
 	if err != nil {
@@ -1776,45 +1382,6 @@ func (v versionServiceImpl) GetVersionRevisionsList(packageId, versionName strin
 		revisions = append(revisions, *entity.MakePackageVersionRevisionView(&ent))
 	}
 	return &view.PackageVersionRevisions{Revisions: revisions}, nil
-}
-
-func (v versionServiceImpl) GetTransformedDocuments_deprecated(packageId, version, apiType, groupName, format string) ([]byte, error) {
-	if format == "" {
-		format = string(view.HtmlDocumentFormat)
-	}
-	if !view.ValidTransformedDocumentsFormat_deprecated(format) {
-		return nil, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.UnknownResponseFormat,
-			Message: exception.UnknownResponseFormatMsg,
-			Params:  map[string]interface{}{"format": format},
-		}
-	}
-	versionEnt, err := v.publishedRepo.GetVersion(packageId, version)
-	if err != nil {
-		return nil, err
-	}
-	if versionEnt == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.PublishedVersionNotFound,
-			Message: exception.PublishedVersionNotFoundMsg,
-			Params:  map[string]interface{}{"version": version},
-		}
-	}
-	groupId := view.MakeOperationGroupId(packageId, versionEnt.Version, versionEnt.Revision, apiType, groupName)
-	ent, err := v.exportRepository.GetTransformedDocuments(packageId, version, apiType, groupId, view.DocumentGroupType_deprecated, string(view.JsonDocumentFormat))
-	if err != nil {
-		return nil, err
-	}
-	if ent == nil {
-		return nil, nil
-	}
-	if format == string(view.JsonDocumentFormat) {
-		return ent.Data, nil
-	} else {
-		return v.portalService.GenerateInteractivePageForTransformedDocuments(packageId, versionEnt.Version, *ent)
-	}
 }
 
 func (v versionServiceImpl) GetTransformedDocuments(packageId string, version string, apiType string, groupName string, buildType string, format string) ([]byte, error) {
@@ -2172,7 +1739,7 @@ func (v versionServiceImpl) publishFromCSV(ctx context.SecurityContext, dashboar
 	if customSeparator != nil {
 		separator = *customSeparator
 	}
-	
+
 	report := make([][]string, len(csvOriginal))
 	for i := range csvOriginal {
 		report[i] = make([]string, len(csvOriginal[i]))
@@ -2278,8 +1845,9 @@ func (v versionServiceImpl) publishFromCSV(ctx context.SecurityContext, dashboar
 			serviceInfo = &svcInfo
 			servicesMap[serviceName] = serviceInfo
 		}
+		versionKey := fmt.Sprintf("%v%v%v", serviceInfo.PackageId, stringSeparator, serviceVersion)
 		if serviceInfo.Version == "" {
-			if _, exists := notIncludedVersions[fmt.Sprintf("%v%v%v", serviceInfo.PackageId, keySeparator, serviceVersion)]; exists {
+			if _, exists := notIncludedVersions[versionKey]; exists {
 				report[i] = append(report[i], "service version doesn't exist")
 				continue
 			}
@@ -2289,10 +1857,12 @@ func (v versionServiceImpl) publishFromCSV(ctx context.SecurityContext, dashboar
 				continue
 			}
 			if versionEnt == nil {
+				notIncludedVersions[versionKey] = struct{}{}
 				report[i] = append(report[i], "service version doesn't exist")
 				continue
 			}
 			if versionEnt.Status != string(view.Release) {
+				notIncludedVersions[versionKey] = struct{}{}
 				report[i] = append(report[i], fmt.Sprintf("service version not in '%v' status", view.Release))
 				continue
 			}
@@ -2300,6 +1870,7 @@ func (v versionServiceImpl) publishFromCSV(ctx context.SecurityContext, dashboar
 			serviceInfo.Revision = versionEnt.Revision
 		} else {
 			if serviceInfo.Version != serviceVersion {
+				notIncludedVersions[versionKey] = struct{}{}
 				report[i] = append(report[i], fmt.Sprintf("service already matched with '%v' version", serviceInfo.Version))
 				continue
 			}
@@ -2420,14 +1991,13 @@ func (v versionServiceImpl) publishFromCSV(ctx context.SecurityContext, dashboar
 	}
 	summary := ""
 	if notIncludedServicesCount > 0 {
-		summary = fmt.Sprintf(`%v services were not included into dashboard version`, notIncludedServicesCount)
+		summary = fmt.Sprintf(`%v services were not included into dashboard version; `, notIncludedServicesCount)
+	}
+	if len(notIncludedVersions) > 0 {
+		summary += fmt.Sprintf(`%v versions for services were not included into dashboard version; `, len(notIncludedVersions))
 	}
 	if notIncludedOperationsCount > 0 {
-		if summary != "" {
-			summary = fmt.Sprintf(`%v; %v operations were not included into %v operation group`, summary, notIncludedOperationsCount, dashboardName)
-		} else {
-			summary = fmt.Sprintf(`%v operations were not included into %v operation group`, notIncludedOperationsCount, dashboardName)
-		}
+		summary += fmt.Sprintf(`%v operations were not included into %v operation group`, notIncludedOperationsCount, dashboardName)
 	}
 
 	v.updateDashboardPublishProcess(publishEntity, string(view.StatusComplete), summary)

@@ -48,11 +48,6 @@ type DeprecateProtobufOperationView struct {
 	ProtobufOperationMetadata
 }
 
-type ProtobufOperationComparisonChangelogView_deprecated_2 struct {
-	OperationComparisonChangelogView_deprecated_2
-	ProtobufOperationMetadata
-}
-
 type ProtobufOperationComparisonChangesView struct {
 	OperationComparisonChangesView
 	ProtobufOperationMetadata

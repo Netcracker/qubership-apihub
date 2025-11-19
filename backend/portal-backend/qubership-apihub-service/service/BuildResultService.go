@@ -19,14 +19,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/archive"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service/validation"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"strings"
-	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
@@ -35,9 +36,7 @@ import (
 
 type BuildResultService interface {
 	StoreBuildResult(buildId string, result []byte) error
-	GetBuildResult(buildId string) ([]byte, error)
 
-	SaveBuildResult_deprecated(packageId string, archiveData []byte, publishId string, availableVersionStatuses []string) error
 	SaveBuildResult(packageId string, data []byte, fileName string, publishId string, availableVersionStatuses []string) error
 }
 
@@ -81,132 +80,6 @@ func (b buildResultServiceImpl) StoreBuildResult(buildId string, result []byte) 
 		BuildId: buildId,
 		Data:    result,
 	})
-}
-
-func (b buildResultServiceImpl) GetBuildResult(buildId string) ([]byte, error) {
-	if b.systemInfoService.IsMinioStorageActive() {
-		ctx := context.Background()
-		content, err := b.minioStorageService.GetFile(ctx, view.BUILD_RESULT_TABLE, buildId)
-		if err != nil {
-			return nil, err
-		}
-		return content, nil
-	}
-	res, err := b.buildResultRepository.GetBuildResult(buildId)
-	if err != nil {
-		return nil, err
-	}
-	return res.Data, nil
-}
-
-func (p buildResultServiceImpl) SaveBuildResult_deprecated(packageId string, data []byte, publishId string, availableVersionStatuses []string) error {
-	// Update last active time to make sure that the build won't be restarted. Assuming that publication will take < 30 seconds!
-	// TODO: another option could be different status like "result_processing" for such builds
-	err := p.buildRepository.UpdateBuildStatus(publishId, view.StatusRunning, "")
-	if err != nil {
-		log.Errorf("Failed refresh last active time before publication for build %s with err: %s", publishId, err)
-	}
-
-	start := time.Now()
-	zipReader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
-	if err != nil {
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidPackageArchive,
-			Message: exception.InvalidPackageArchiveMsg,
-			Params:  map[string]interface{}{"error": err.Error()},
-		}
-	}
-
-	buildArc := archive.NewBuildResultArchive(zipReader)
-	if err := buildArc.ReadPackageInfo(); err != nil {
-		return err
-	}
-	utils.PerfLog(time.Since(start).Milliseconds(), 50, "SaveBuildResult: archive parsing")
-
-	if buildArc.PackageInfo.PackageId != packageId {
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidPackagedFile,
-			Message: exception.InvalidPackagedFileMsg,
-			Params: map[string]interface{}{
-				"file":  "info",
-				"error": fmt.Sprintf("packageId:%v provided by %v doesn't match packageId:%v requested in path", buildArc.PackageInfo.PackageId, archive.InfoFilePath, packageId),
-			},
-		}
-	}
-
-	start = time.Now()
-	buildSrcEnt, err := p.buildRepository.GetBuildSrc(publishId)
-	if err != nil {
-		return fmt.Errorf("failed to get build src with err: %w", err)
-	}
-	if buildSrcEnt == nil {
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.BuildSourcesNotFound,
-			Message: exception.BuildSourcesNotFoundMsg,
-			Params:  map[string]interface{}{"publishId": publishId},
-		}
-	}
-
-	buildConfig, err := view.BuildConfigFromMap(buildSrcEnt.Config, publishId)
-	if err != nil {
-		return err
-	}
-	utils.PerfLog(time.Since(start).Milliseconds(), 200, "SaveBuildResult: get build src")
-
-	start = time.Now()
-	err = p.publishedValidator.ValidateBuildResultAgainstConfig(buildArc, buildConfig)
-	if err != nil {
-		return err
-	}
-	utils.PerfLog(time.Since(start).Milliseconds(), 100, "SaveBuildResult: ValidateBuildResultAgainstConfig")
-
-	start = time.Now()
-
-	existingPackage, err := p.publishedRepository.GetPackage(buildArc.PackageInfo.PackageId)
-	if err != nil {
-		return err
-	}
-	utils.PerfLog(time.Since(start).Milliseconds(), 100, "SaveBuildResult: get existing package")
-	if existingPackage == nil {
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidPackagedFile,
-			Message: exception.InvalidPackagedFileMsg,
-			Params:  map[string]interface{}{"file": "info", "error": fmt.Sprintf("package with packageId = '%v' doesn't exist", buildArc.PackageInfo.PackageId)},
-		}
-	}
-	buildArc.PackageInfo.Kind = existingPackage.Kind
-	//todo zip check for unknown files
-
-	switch buildArc.PackageInfo.BuildType {
-	case view.PublishType:
-		sufficientPrivileges := utils.SliceContains(availableVersionStatuses, buildArc.PackageInfo.Status)
-		if !sufficientPrivileges && !buildArc.PackageInfo.MigrationBuild {
-			return &exception.CustomError{
-				Status:  http.StatusForbidden,
-				Code:    exception.InsufficientPrivileges,
-				Message: exception.InsufficientPrivilegesMsg,
-			}
-		}
-
-		return p.publishService.PublishPackage(buildArc, buildSrcEnt, buildConfig, existingPackage)
-		//support view.ReducedSourceSpecificationsType_deprecated type because of node-service that is not yet ready for v3 publish
-		//we need view.ReducedSourceSpecificationsType_deprecated build on node-service for operation group publication
-	case view.DocumentGroupType_deprecated, view.ReducedSourceSpecificationsType_deprecated:
-		return p.exportService.PublishTransformedDocuments(buildArc, publishId)
-	case view.ChangelogType:
-		return p.publishService.PublishChanges(buildArc, publishId)
-	default:
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.UnknownBuildType,
-			Message: exception.UnknownBuildTypeMsg,
-			Params:  map[string]interface{}{"type": buildArc.PackageInfo.BuildType},
-		}
-	}
 }
 
 func (p buildResultServiceImpl) SaveBuildResult(packageId string, data []byte, fileName string, publishId string, availableVersionStatuses []string) error {

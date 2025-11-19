@@ -24,16 +24,6 @@ type ActivityTrackingEvent struct {
 	UserId    string                 `json:"userId,omitempty"`
 }
 
-type PkgActivityResponseItem_depracated struct {
-	PackageName string `json:"packageName"`
-	PackageKind string `json:"kind"`
-	UserName    string `json:"userName"`
-	ActivityTrackingEvent
-}
-type PkgActivityResponse_deprecated struct {
-	Events []PkgActivityResponseItem_depracated `json:"events"`
-}
-
 type PkgActivityResponseItem struct {
 	PackageName string                 `json:"packageName"`
 	PackageKind string                 `json:"kind"`
@@ -86,27 +76,6 @@ const ATETDeleteRevision ATEventType = "delete_revision"
 const ATETCreateManualGroup ATEventType = "create_manual_group"
 const ATETDeleteManualGroup ATEventType = "delete_manual_group"
 const ATETOperationsGroupParameters ATEventType = "update_operations_group_parameters"
-
-func ConvertEventTypes_deprecated(input []string) []string {
-	var output []string
-	for _, iType := range input {
-		switch iType {
-		case "package_members":
-			output = append(output, string(ATETGrantRole), string(ATETUpdateRole), string(ATETDeleteRole))
-		case "package_security":
-			output = append(output, string(ATETGenerateApiKey), string(ATETRevokeApiKey))
-		case "new_version":
-			output = append(output, string(ATETPublishNewVersion))
-		case "package_version":
-			output = append(output, string(ATETPublishNewRevision), string(ATETPatchVersionMeta), string(ATETDeleteVersion))
-		case "package_management":
-			output = append(output, string(ATETPatchPackageMeta), string(ATETCreatePackage), string(ATETDeletePackage))
-		case "operations_group":
-			output = append(output, string(ATETCreateManualGroup), string(ATETDeleteManualGroup), string(ATETOperationsGroupParameters))
-		}
-	}
-	return output
-}
 
 func ConvertEventTypes(input []string) []string {
 	var output []string

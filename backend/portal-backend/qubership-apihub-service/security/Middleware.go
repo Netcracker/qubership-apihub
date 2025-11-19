@@ -114,35 +114,6 @@ func SecureJWT(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func SecureWebsocket(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if err := recover(); err != nil {
-				log.Errorf("Request failed with panic: %v", err)
-				log.Tracef("Stacktrace: %v", string(debug.Stack()))
-				debug.PrintStack()
-				utils.RespondWithCustomError(w, &exception.CustomError{
-					Status:  http.StatusInternalServerError,
-					Message: http.StatusText(http.StatusInternalServerError),
-					Debug:   fmt.Sprintf("%v", err),
-				})
-				return
-			}
-		}()
-		//TODO: remove after frontend testing
-		token := r.URL.Query().Get("token")
-		r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-		_, user, err := fullAuthStrategy.AuthenticateRequest(r)
-		if err != nil {
-			respondWithAuthFailedError(w, err)
-			return
-		}
-
-		r = auth.RequestWithUser(user, r)
-		next.ServeHTTP(w, r)
-	}
-}
-
 func NoSecure(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {

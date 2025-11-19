@@ -93,7 +93,6 @@ type BuildType string
 
 const ChangelogType BuildType = "changelog"
 const PublishType BuildType = "build"
-const DocumentGroupType_deprecated BuildType = "documentGroup"
 const ReducedSourceSpecificationsType_deprecated BuildType = "reducedSourceSpecifications"
 const MergedSpecificationType_deprecated BuildType = "mergedSpecification"
 

@@ -17,7 +17,6 @@ type Config struct {
 	BusinessParameters   BusinessParameters
 	Monitoring           MonitoringConfig
 	S3Storage            S3Config
-	Editor               EditorConfig
 	Olric                OlricConfig
 	Cleanup              CleanupConfig
 	Extensions           []view.Extension
@@ -99,7 +98,6 @@ type BusinessParameters struct {
 	ReleaseVersionPattern     string
 	PublishArchiveSizeLimitMb int    `validate:"gt=0,lte=8796093022207"` //validation was added based on security scan results to avoid integer overflow, 8796093022207 * 1048576 is safely below MaxInt64
 	PublishFileSizeLimitMb    int    `validate:"gt=0,lte=8796093022207"` //validation was added based on security scan results to avoid integer overflow, 8796093022207 * 1048576 is safely below MaxInt64
-	BranchContentSizeLimitMb  int    `validate:"gt=0,lte=8796093022207"` //validation was added based on security scan results to avoid integer overflow, 8796093022207 * 1048576 is safely below MaxInt64
 	SystemNotification        string //TODO: replace with db impl
 	FailBuildOnBrokenRefs     bool
 }
@@ -116,13 +114,6 @@ type S3Config struct {
 	Crt                  string
 	BucketName           string
 	StoreOnlyBuildResult bool
-}
-
-type EditorConfig struct {
-	Disabled     bool
-	GitlabUrl    string
-	ClientId     string
-	ClientSecret string `sensitive:"true"`
 }
 
 type OlricConfig struct {

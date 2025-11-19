@@ -17,12 +17,13 @@ package service
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
-	"github.com/go-ldap/ldap"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
+	"github.com/go-ldap/ldap"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
@@ -36,7 +37,6 @@ import (
 
 type UserService interface {
 	GetUsers(usersListReq view.UsersListReq) (*view.Users, error)
-	GetUsersByIds(userIds []string) ([]view.User, error)
 	GetUsersIdMap(userIds []string) (map[string]view.User, error)
 	GetUsersEmailMap(emails []string) (map[string]view.User, error)
 	GetUserFromDB(userId string) (*view.User, error)
@@ -47,25 +47,22 @@ type UserService interface {
 	GetUserAvatar(userId string) (*view.UserAvatar, error)
 	AuthenticateUser(email string, password string) (*view.User, error)
 	SearchUsersInLdap(ldapSearch view.LdapSearchFilterReq, withAvatars bool) (*view.LdapUsers, error)
+	GetExtendedUser_deprecated(ctx context.SecurityContext) (*view.ExtendedUser_deprecated, error)
 	GetExtendedUser(ctx context.SecurityContext) (*view.ExtendedUser, error)
 }
 
-func NewUserService(repo repository.UserRepository, gitClientProvider GitClientProvider, systemInfoService SystemInfoService, privateUserPackageService PrivateUserPackageService, integrationService IntegrationsService) UserService {
+func NewUserService(repo repository.UserRepository, systemInfoService SystemInfoService, privateUserPackageService PrivateUserPackageService) UserService {
 	return &usersServiceImpl{
 		repo:                      repo,
-		gitClientProvider:         gitClientProvider,
 		systemInfoService:         systemInfoService,
 		privateUserPackageService: privateUserPackageService,
-		integrationService:        integrationService,
 	}
 }
 
 type usersServiceImpl struct {
 	repo                      repository.UserRepository
-	gitClientProvider         GitClientProvider
 	systemInfoService         SystemInfoService
 	privateUserPackageService PrivateUserPackageService
-	integrationService        IntegrationsService
 }
 
 func (u usersServiceImpl) saveUserAvatar(userAvatar *view.UserAvatar) error {
@@ -249,18 +246,6 @@ func (u usersServiceImpl) SearchUsersInLdap(ldapSearchFilterReq view.LdapSearchF
 	}
 
 	return &view.LdapUsers{Users: users}, nil
-}
-
-func (u usersServiceImpl) GetUsersByIds(userIds []string) ([]view.User, error) {
-	result := make([]view.User, 0)
-	userEntities, err := u.repo.GetUsersByIds(userIds)
-	if err != nil {
-		return nil, err
-	}
-	for _, userEntity := range userEntities {
-		result = append(result, *entity.MakeUserView(&userEntity))
-	}
-	return result, nil
 }
 
 func (u usersServiceImpl) GetUsersIdMap(userIds []string) (map[string]view.User, error) {
@@ -557,6 +542,23 @@ func (u usersServiceImpl) AuthenticateUser(email string, password string) (*view
 	return entity.MakeUserView(userEntity), nil
 }
 
+func (u usersServiceImpl) GetExtendedUser_deprecated(ctx context.SecurityContext) (*view.ExtendedUser_deprecated, error) {
+	userId := ctx.GetUserId()
+	userEntity, err := u.repo.GetUserById(userId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from DB: %v", err)
+	}
+	if userEntity != nil {
+		var ttlSeconds *int
+		if ctx.GetTokenExpirationTimestamp() > 0 {
+			remainingSeconds := int(utils.GetRemainingSeconds(ctx.GetTokenExpirationTimestamp()))
+			ttlSeconds = &remainingSeconds
+		}
+		return entity.MakeExtendedUserView_deprecated(userEntity, false, ctx.GetUserSystemRole(), ttlSeconds), nil
+	}
+	return nil, nil
+}
+
 func (u usersServiceImpl) GetExtendedUser(ctx context.SecurityContext) (*view.ExtendedUser, error) {
 	userId := ctx.GetUserId()
 	userEntity, err := u.repo.GetUserById(userId)
@@ -564,20 +566,12 @@ func (u usersServiceImpl) GetExtendedUser(ctx context.SecurityContext) (*view.Ex
 		return nil, fmt.Errorf("failed to get user from DB: %v", err)
 	}
 	if userEntity != nil {
-		apiKeyStatus, err := u.integrationService.GetUserApiKeyStatus(view.GitlabIntegration, userId)
-		if err != nil {
-			return nil, fmt.Errorf("failed to check gitlab integration status: %v", err)
-		}
-		gitIntegrationStatus := false
-		if apiKeyStatus.Status == ApiKeyStatusPresent {
-			gitIntegrationStatus = true
-		}
 		var ttlSeconds *int
 		if ctx.GetTokenExpirationTimestamp() > 0 {
 			remainingSeconds := int(utils.GetRemainingSeconds(ctx.GetTokenExpirationTimestamp()))
 			ttlSeconds = &remainingSeconds
 		}
-		return entity.MakeExtendedUserView(userEntity, gitIntegrationStatus, ctx.GetUserSystemRole(), ttlSeconds), nil
+		return entity.MakeExtendedUserView(userEntity, ctx.GetUserSystemRole(), ttlSeconds), nil
 	}
 	return nil, nil
 }

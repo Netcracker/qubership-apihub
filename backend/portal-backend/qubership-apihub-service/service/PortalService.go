@@ -38,15 +38,14 @@ type PortalService interface {
 	GenerateInteractivePageForTransformedDocuments(packageId, version string, transformedDocuments entity.TransformedContentDataEntity) ([]byte, error)
 }
 
-func NewPortalService(basePath string, publishedService PublishedService, publishedRepository repository.PublishedRepository, prjGrpIntRepo repository.PrjGrpIntRepository) PortalService {
-	return &portalServiceImpl{basePath: basePath, publishedService: publishedService, publishedRepository: publishedRepository, prjGrpIntRepo: prjGrpIntRepo}
+func NewPortalService(basePath string, publishedService PublishedService, publishedRepository repository.PublishedRepository) PortalService {
+	return &portalServiceImpl{basePath: basePath, publishedService: publishedService, publishedRepository: publishedRepository}
 }
 
 type portalServiceImpl struct {
 	basePath            string
 	publishedService    PublishedService
 	publishedRepository repository.PublishedRepository
-	prjGrpIntRepo       repository.PrjGrpIntRepository
 }
 
 const singlePageAssetPath = "/static/templates/single_page.html"
@@ -165,14 +164,7 @@ func (p portalServiceImpl) GenerateInteractivePageForPublishedVersion(packageId 
 		}
 	}
 
-	repoUrl := ""
-	projectEnt, err := p.prjGrpIntRepo.GetById(packageId)
-	if err != nil {
-		return nil, "", err
-	}
-	if projectEnt != nil {
-		repoUrl = projectEnt.RepositoryUrl
-	}
+	repoUrl := "" //TODO: deprecate it
 
 	version, err := p.publishedRepository.GetVersion(packageId, versionName)
 	if err != nil {

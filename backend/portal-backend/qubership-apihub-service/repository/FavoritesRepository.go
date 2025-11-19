@@ -15,10 +15,7 @@
 package repository
 
 type FavoritesRepository interface {
-	AddProjectToFavorites(userId string, id string) error
 	AddPackageToFavorites(userId string, id string) error
-	RemoveProjectFromFavorites(userId string, id string) error
 	RemovePackageFromFavorites(userId string, id string) error
-	IsFavoriteProject(userId string, id string) (bool, error)
 	IsFavoritePackage(userId string, id string) (bool, error)
 }

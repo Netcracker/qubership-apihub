@@ -30,6 +30,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const stringSeparator = "|@@|"
+
 type MonitoringService interface {
 	AddVersionOpenCount(packageId string, version string)
 	AddDocumentOpenCount(packageId string, version string, slug string)
@@ -243,7 +245,7 @@ func (m *monitoringServiceImpl) flushBusinessMetrics() error {
 			insert into business_metric
 			values (?, ?, ?, ?, ?, ?)
 			on conflict (year, month, day, user_id, metric)
-			do update 
+			do update
 			set data = coalesce(business_metric.data, '{}') || (
 				SELECT jsonb_object_agg(key, coalesce((business_metric.data ->> key)::int, 0) + coalesce(value::int, 0))
 				from jsonb_each_text(EXCLUDED.data)
@@ -309,7 +311,7 @@ func (m *monitoringServiceImpl) flushEndpointCalls() error {
 	insertQuery := `
 			insert into endpoint_calls as ec
 			values (?, ?, ?, ?)
-			on conflict (path, hash) do update 
+			on conflict (path, hash) do update
 			set count = ec.count + ?;`
 
 	ctx := context.Background()

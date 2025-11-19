@@ -14,15 +14,6 @@
 
 package utils
 
-func SliceIndex(slice []string, val string) int {
-	for i, v := range slice {
-		if v == val {
-			return i
-		}
-	}
-	return -1
-}
-
 func SliceContains(slice []string, val string) bool {
 	for _, v := range slice {
 		if v == val {
