@@ -50,11 +50,13 @@ export async function saveVersionInternalDocuments(
 ): Promise<void> {
   await fs.mkdir(`${basePath}/${PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME}`)
   for (const document of documents.values()) {
-    const {publish, internalDocumentId, internalDocument } = document
-    if (!publish || !internalDocumentId || !internalDocument) { continue }
+    const {publish, versionInternalDocument } = document as VersionDocument
+    if(!versionInternalDocument) { continue }
+    const {serializedVersionDocument, versionDocumentId} = versionInternalDocument
+    if (!publish || !versionDocumentId || !serializedVersionDocument) { continue }
     await fs.writeFile(
-      `${basePath}/${PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME}/${internalDocumentId}.${FILE_FORMAT_JSON}`,
-      internalDocument,
+      `${basePath}/${PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME}/${versionDocumentId}.${FILE_FORMAT_JSON}`,
+      serializedVersionDocument,
     )
   }
 }
@@ -69,8 +71,8 @@ export async function saveComparisonInternalDocuments(
   await fs.mkdir(`${basePath}/${PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME}`)
   for (const document of comparisons) {
     await fs.writeFile(
-      `${basePath}/${PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME}/${document.id}.${FILE_FORMAT_JSON}`,
-      document.value,
+      `${basePath}/${PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME}/${document.comparisonDocumentId}.${FILE_FORMAT_JSON}`,
+      document.serializedComparisonDocument,
     )
   }
 }
@@ -149,12 +151,14 @@ export async function saveVersionInternalDocumentsArray(
   const result: { documents: InternalDocumentMetadata[] } = { documents: [] }
 
   for (const document of documents.values()) {
-    const {publish, internalDocumentId} = document
-    if (!publish || !internalDocumentId) { continue }
+    const {publish, versionInternalDocument} = document as VersionDocument
+    if(!versionInternalDocument) { continue }
+    const {versionDocumentId: versionInternalDocumentId} = versionInternalDocument
+    if (!publish || !versionInternalDocumentId) { continue }
 
     result.documents.push({
-      id: internalDocumentId,
-      filename: `${internalDocumentId}.${FILE_FORMAT_JSON}`,
+      id: versionInternalDocumentId,
+      filename: `${versionInternalDocumentId}.${FILE_FORMAT_JSON}`,
     })
   }
   if (!result.documents.length) {
@@ -175,10 +179,10 @@ export async function saveComparisonInternalDocumentsArray(
   }
   const result: { documents: ComparisonInternalDocumentMetadata[] } = { documents: [] }
   for (const document of comparisons) {
-    const { comparisonFileId, id } = document
+    const { comparisonFileId, comparisonDocumentId: comparisonInternalDocumentId } = document
     result.documents.push({
-      id,
-      filename: `${id}.${FILE_FORMAT_JSON}`,
+      id: comparisonInternalDocumentId,
+      filename: `${comparisonInternalDocumentId}.${FILE_FORMAT_JSON}`,
       comparisonFileId,
     })
   }

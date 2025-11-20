@@ -20,10 +20,18 @@ import { convertObj } from 'swagger2openapi'
 import { REST_DOCUMENT_TYPE, REST_KIND_KEY } from './rest.consts'
 import type { RestDocumentInfo } from './rest.types'
 
-import { _TemplateResolver, DocumentBuilder, DocumentDumper, ExportDocument, ExportFormat } from '../../types'
+import {
+  _TemplateResolver,
+  DocumentBuilder,
+  DocumentDumper,
+  ExportDocument,
+  ExportFormat,
+  VersionDocument,
+} from '../../types'
 import { FILE_FORMAT, FILE_FORMAT_HTML, FILE_FORMAT_JSON } from '../../consts'
 import {
   createBundlingErrorHandler,
+  createVersionInternalDocument,
   EXPORT_FORMAT_TO_FILE_FORMAT,
   getBundledFileDataWithDependencies,
   getDocumentTitle,
@@ -57,7 +65,7 @@ const openApiDocumentMeta = (data: OpenAPIV3.Document): RestDocumentInfo => {
   }
 }
 
-export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (parsedFile, file, ctx) => {
+export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (parsedFile, file, ctx): Promise<VersionDocument> => {
   const { fileId, slug = '', publish = true, apiKind, ...fileMetadata } = file
 
   const {
@@ -103,7 +111,7 @@ export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (par
     publish,
     source,
     errors: errors?.length ?? 0,
-    internalDocumentId: slug,
+    versionInternalDocument: createVersionInternalDocument(slug),
   }
 }
 

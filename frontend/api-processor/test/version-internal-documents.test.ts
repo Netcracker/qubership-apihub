@@ -38,22 +38,22 @@ describe('Version Internal Documents tests', () => {
       runPreProcessedBuildDocumentsTests(packageId, SEVERAL_FILES_NAME)
     })
 
-    it('should not calculate internalDocument without publish flag', async () => {
+    it('should not calculate serialized document without publish flag', async () => {
       const packageId = 'version-internal-documents/oas-no-publish'
       const result = await buildPackage(packageId)
 
       const [document] = Array.from(result.documents.values())
 
-      expect(document.internalDocument).not.toBeExtensible()
+      expect(document).not.toHaveProperty(['versionInternalDocument', 'serializedVersionDocument'])
     })
 
-    it('should not create internalDocument without operations', async () => {
+    it('should not calculate serialized document without operations', async () => {
       const packageId = 'version-internal-documents/oas-without-operations'
       const result = await buildPackage(packageId)
 
       const [document] = Array.from(result.documents.values())
 
-      expect(document.internalDocument).not.toBeExtensible()
+      expect(document).not.toHaveProperty(['versionInternalDocument', 'serializedVersionDocument'])
     })
   })
 
@@ -76,7 +76,7 @@ describe('Version Internal Documents tests', () => {
       const result = await buildPackage(packageId)
       const documents: VersionDocument[] = Array.from(result.documents.values())
       Array.from(documents).forEach((document, i) => {
-        expect(document.internalDocumentId).toEqual(files[i])
+        expect(document).toHaveProperty(['versionInternalDocument', 'versionDocumentId'], files[i])
       })
     })
 
@@ -115,7 +115,7 @@ describe('Version Internal Documents tests', () => {
         ),
       )
       documents.forEach((document, i) => {
-        expect(JSON.parse(document.internalDocument as string)).toEqual(JSON.parse(versionSpecs[i] as string))
+        expect(JSON.parse(document.versionInternalDocument.serializedVersionDocument as string)).toEqual(JSON.parse(versionSpecs[i] as string))
       })
     })
   }

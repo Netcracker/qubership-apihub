@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ApiDocument, ApiOperation, BuildResult, OperationIdNormalizer } from '../types'
+import { ApiDocument, ApiOperation, BuildResult, OperationIdNormalizer, VersionDocument } from '../types'
 import { GraphApiComponents, GraphApiDirectiveDefinition } from '@netcracker/qubership-apihub-graphapi'
 import { OpenAPIV3 } from 'openapi-types'
 import { isObject } from './objects'
@@ -112,6 +112,10 @@ export const calculateOperationId = (
   return slugify(`${removeFirstSlash(operationPath)}-${key}`)
 }
 
-export const createInternalDocument = (document: ApiDocument, options: NormalizeOptions): string => {
-  return serializeDocument(denormalize(document, options) as ApiDocument)
+export const createSerializedInternalDocument = (document: VersionDocument, effectiveDocument: ApiDocument, options: NormalizeOptions): void => {
+  const {versionInternalDocument} = document
+  if(!versionInternalDocument){
+    return
+  }
+  versionInternalDocument.serializedVersionDocument = serializeDocument(denormalize(effectiveDocument, options) as ApiDocument)
 }

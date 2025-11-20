@@ -59,7 +59,8 @@ export const buildGraphQLOperation = (
   config: BuildConfig,
   debugCtx?: DebugPerformanceContext,
 ): VersionGraphQLOperation => {
-  const singleOperationSpec: GraphApiSchema = cropToSingleOperation(document.data, type, method)
+  const { apiKind: documentApiKind, data: documentData, slug: documentSlug, versionInternalDocument } = document
+  const singleOperationSpec: GraphApiSchema = cropToSingleOperation(documentData, type, method)
   const singleOperationEffectiveSpec: GraphApiSchema = cropToSingleOperation(effectiveDocument, type, method)
   const singleOperationRefsOnlySpec: GraphApiSchema = cropToSingleOperation(refsOnlyDocument, type, method)
 
@@ -86,15 +87,15 @@ export const buildGraphQLOperation = (
     return result
   }, debugCtx)
 
-  const apiKind = document.apiKind || API_KIND.BWC
+  const apiKind = documentApiKind || API_KIND.BWC
 
   syncDebugPerformance('[ModelsAndOperationHashing]', () => {
-    calculateSpecRefs(document.data, singleOperationRefsOnlySpec, singleOperationSpec)
+    calculateSpecRefs(documentData, singleOperationRefsOnlySpec, singleOperationSpec)
   }, debugCtx)
 
   return {
     operationId,
-    documentId: document.slug,
+    documentId: documentSlug,
     apiType: GRAPHQL_API_TYPE,
     apiKind: rawToApiKind(apiKind),
     deprecated: !!singleOperationEffectiveSpec[type]?.[method]?.directives?.deprecated,
@@ -109,7 +110,7 @@ export const buildGraphQLOperation = (
     deprecatedItems,
     models: {},
     apiAudience: API_AUDIENCE_EXTERNAL,
-    versionInternalDocumentId: document?.internalDocumentId ?? '',
+    versionInternalDocumentId: versionInternalDocument.versionDocumentId,
   }
 }
 

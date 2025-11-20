@@ -82,8 +82,8 @@ export const buildRestOperation = (
   componentsHashMap: Map<string, string>,
   debugCtx?: DebugPerformanceContext,
 ): TYPE.VersionRestOperation => {
-
-  const { servers, security, components, openapi } = document.data
+  const { apiKind: documentApiKind, data: documentData, slug: documentSlug, versionInternalDocument } = document
+  const { servers, security, components, openapi } = documentData
   const effectiveOperationObject = effectiveDocument.paths[path]![method]! as OpenAPIV3.OperationObject<TYPE.OperationExtension>
   const effectiveSingleOperationSpec = createSingleOperationSpec(effectiveDocument, path, method, openapi)
   const refsOnlySingleOperationSpec = createSingleOperationSpec(refsOnlyDocument, path, method, openapi)
@@ -140,11 +140,11 @@ export const buildRestOperation = (
   }, debugCtx)
 
   const models: Record<string, string> = {}
-  const apiKind = effectiveOperationObject[REST_KIND_KEY] || document.apiKind || API_KIND.BWC
+  const apiKind = effectiveOperationObject[REST_KIND_KEY] || documentApiKind || API_KIND.BWC
   const [specWithSingleOperation] = syncDebugPerformance('[ModelsAndOperationHashing]', () => {
     const operationSecurity = effectiveOperationObject.security
     const specWithSingleOperation = createSingleOperationSpec(
-      document.data,
+      documentData,
       path,
       method,
       openapi,
@@ -153,7 +153,7 @@ export const buildRestOperation = (
       operationSecurity,
       components?.securitySchemes,
     )
-    calculateSpecRefs(document.data, refsOnlySingleOperationSpec, specWithSingleOperation, [operationId], models, componentsHashMap)
+    calculateSpecRefs(documentData, refsOnlySingleOperationSpec, specWithSingleOperation, [operationId], models, componentsHashMap)
     return [specWithSingleOperation]
   }, debugCtx)
 
@@ -165,7 +165,7 @@ export const buildRestOperation = (
 
   return {
     operationId,
-    documentId: document.slug,
+    documentId: documentSlug,
     apiType: REST_API_TYPE,
     apiKind: rawToApiKind(apiKind),
     deprecated: !!effectiveOperationObject.deprecated,
@@ -186,7 +186,7 @@ export const buildRestOperation = (
       deprecatedInPreviousVersions: deprecatedOperationItem?.deprecatedInPreviousVersions,
     }, !!deprecatedOperationItem),
     apiAudience,
-    versionInternalDocumentId: document.internalDocumentId ?? '',
+    versionInternalDocumentId: versionInternalDocument.versionDocumentId,
   }
 }
 

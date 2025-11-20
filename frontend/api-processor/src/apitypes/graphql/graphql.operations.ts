@@ -15,7 +15,7 @@
  */
 
 import type { VersionGraphQLOperation } from './graphql.types'
-import { createInternalDocument, removeComponents, slugify } from '../../utils'
+import { createSerializedInternalDocument, removeComponents, slugify } from '../../utils'
 import type { OperationsBuilder } from '../../types'
 import { GRAPHQL_TYPE, GRAPHQL_TYPE_KEYS } from './graphql.consts'
 import { INLINE_REFS_FLAG } from '../../consts'
@@ -87,7 +87,7 @@ export const buildGraphQLOperations: OperationsBuilder<GraphApiSchema> = async (
   }
 
   if (operations.length) {
-    document.internalDocument = createInternalDocument(effectiveDocument, GRAPHQL_EFFECTIVE_NORMALIZE_OPTIONS)
+    createSerializedInternalDocument(document, effectiveDocument, GRAPHQL_EFFECTIVE_NORMALIZE_OPTIONS)
   }
 
   return operations

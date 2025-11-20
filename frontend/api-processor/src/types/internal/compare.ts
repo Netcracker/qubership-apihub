@@ -79,8 +79,8 @@ export interface OperationChangesDto extends Omit<OperationChanges<DiffTypeDto>,
 }
 
 export type ComparisonDocument = {
-  id: string
-  value: string
+  comparisonDocumentId: string
+  serializedComparisonDocument: string
 }
 
 export type ComparisonInternalDocument = ComparisonDocument & {

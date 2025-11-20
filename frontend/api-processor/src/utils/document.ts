@@ -29,6 +29,7 @@ import {
   ResolvedGroupDocument,
   VALIDATION_RULES_SEVERITY_LEVEL_ERROR,
   VersionDocument,
+  VersionInternalDocument,
 } from '../types'
 import { bundle, Resolver } from 'api-ref-bundler'
 import {
@@ -36,18 +37,11 @@ import {
   FILE_FORMAT_JSON,
   FILE_FORMAT_YAML,
   MESSAGE_SEVERITY,
-  NORMALIZE_OPTIONS,
   SERIALIZE_SYMBOL_STRING_MAPPING,
 } from '../consts'
 import { isNotEmpty } from './arrays'
 import { PATH_PARAM_UNIFIED_PLACEHOLDER } from './builder'
-import {
-  denormalize,
-  NormalizeOptions,
-  RefErrorType,
-  RefErrorTypes,
-  serialize,
-} from '@netcracker/qubership-apihub-api-unifier'
+import { RefErrorType, RefErrorTypes, serialize } from '@netcracker/qubership-apihub-api-unifier'
 
 export const EXPORT_FORMAT_TO_FILE_FORMAT = new Map<ExportFormat, typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON>([
   [FILE_FORMAT_YAML, FILE_FORMAT_YAML],
@@ -69,6 +63,7 @@ export function toVersionDocument(document: ResolvedGroupDocument, fileFormat: F
     dependencies: [],
     description: '',
     metadata: {},
+    versionInternalDocument: createVersionInternalDocument(''),
   }
 }
 
@@ -225,4 +220,10 @@ export function capitalize(string: string): string {
 
 export function serializeDocument(normalizedDocument: ApiDocument): string {
   return serialize(normalizedDocument, SERIALIZE_SYMBOL_STRING_MAPPING)
+}
+
+export const createVersionInternalDocument = (internalDocumentId: string): VersionInternalDocument =>  {
+  return {
+    versionDocumentId: internalDocumentId,
+  }
 }

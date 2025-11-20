@@ -24,8 +24,9 @@ import type { GraphQLSchema, IntrospectionQuery } from 'graphql'
 
 import { BuildConfigFile, DocumentDumper, TextFile, VersionDocument } from '../../types'
 import { GRAPHQL_DOCUMENT_TYPE } from './graphql.consts'
+import { createVersionInternalDocument } from '../../utils'
 
-export const buildGraphQLDocument: (parsedFile: TextFile, file: BuildConfigFile) => Promise<VersionDocument<GraphApiSchema>> = async (parsedFile, file) => {
+export const buildGraphQLDocument: (parsedFile: TextFile, file: BuildConfigFile) => Promise<VersionDocument<GraphApiSchema>> = async (parsedFile, file): Promise<VersionDocument<GraphApiSchema>> => {
   let graphapi: GraphApiSchema
   if (parsedFile.type === GRAPHQL_DOCUMENT_TYPE.INTROSPECTION) {
     const introspection = (parsedFile?.data && '__schema' in parsedFile.data ? parsedFile?.data : parsedFile.data?.data) as IntrospectionQuery
@@ -53,7 +54,7 @@ export const buildGraphQLDocument: (parsedFile: TextFile, file: BuildConfigFile)
     operationIds: [],
     metadata,
     source,
-    internalDocumentId: slug,
+    versionInternalDocument: createVersionInternalDocument(slug),
   }
 }
 

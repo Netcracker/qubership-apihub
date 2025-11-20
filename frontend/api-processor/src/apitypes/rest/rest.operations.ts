@@ -21,7 +21,7 @@ import { OperationsBuilder } from '../../types'
 import {
   calculateOperationId,
   createBundlingErrorHandler,
-  createInternalDocument,
+  createSerializedInternalDocument,
   isNotEmpty,
   removeComponents,
 } from '../../utils'
@@ -121,7 +121,7 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
   }
 
   if (operations.length) {
-    document.internalDocument = createInternalDocument(effectiveDocument, REST_EFFECTIVE_NORMALIZE_OPTIONS)
+    createSerializedInternalDocument(document, effectiveDocument, REST_EFFECTIVE_NORMALIZE_OPTIONS)
   }
 
   return operations

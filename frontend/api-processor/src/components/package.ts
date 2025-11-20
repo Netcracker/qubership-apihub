@@ -143,11 +143,13 @@ const createVersionInternalDocumentsFile = (zip: ZipTool, documents: VersionDocu
   const result: { documents: InternalDocumentMetadata[] } = { documents: [] }
 
   for (const document of documents.values()) {
-    const {publish, internalDocumentId} = document
-    if (!publish || !internalDocumentId) { continue }
+    const { publish, versionInternalDocument } = document
+    if(!versionInternalDocument) { continue }
+    const { versionDocumentId: versionInternalDocumentId } = versionInternalDocument
+    if (!publish || !versionInternalDocumentId) { continue }
     result.documents.push({
-      id: internalDocumentId,
-      filename: `${internalDocumentId}.${FILE_FORMAT_JSON}`,
+      id: versionInternalDocumentId,
+      filename: `${versionInternalDocumentId}.${FILE_FORMAT_JSON}`,
     })
   }
 
@@ -155,7 +157,7 @@ const createVersionInternalDocumentsFile = (zip: ZipTool, documents: VersionDocu
 }
 
 const createComparisonInternalDocumentDataFiles = async (zip: ZipTool, comparisonDocument: ComparisonInternalDocument[]): Promise<void> => {
-  if(!comparisonDocument.length){
+  if (!comparisonDocument.length) {
     return
   }
   const comparisonsDir = zip.folder(PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME)
@@ -163,8 +165,8 @@ const createComparisonInternalDocumentDataFiles = async (zip: ZipTool, compariso
     if (!comparisonInternalDocument) {
       continue
     }
-    const { id, value } = comparisonInternalDocument
-    await comparisonsDir.file(`${id}.${FILE_FORMAT_JSON}`, value)
+    const { comparisonDocumentId: comparisonInternalDocumentId, serializedComparisonDocument } = comparisonInternalDocument
+    await comparisonsDir.file(`${comparisonInternalDocumentId}.${FILE_FORMAT_JSON}`, serializedComparisonDocument)
   }
 }
 
@@ -177,10 +179,10 @@ const createComparisonInternalDocumentsFile = (zip: ZipTool, comparisonDocument:
     if (!comparisonInternalDocument) {
       continue
     }
-    const { id, comparisonFileId } = comparisonInternalDocument
+    const { comparisonDocumentId, comparisonFileId } = comparisonInternalDocument
     result.documents.push({
-      id: id,
-      filename: `${id}.${FILE_FORMAT_JSON}`,
+      id: comparisonDocumentId,
+      filename: `${comparisonDocumentId}.${FILE_FORMAT_JSON}`,
       comparisonFileId: comparisonFileId,
     })
   }
@@ -207,9 +209,10 @@ const writeDocumentsToZip = async (zip: ZipTool, documents: ZippableDocument[], 
 
 const writeInternalDocumentsToZip = async (zip: ZipTool, documents: VersionDocument[]): Promise<void> => {
   for (const document of documents) {
-    const {publish, internalDocument, internalDocumentId} = document
-    if (!publish || !internalDocument || !internalDocumentId) { continue }
-    await zip.file(`${internalDocumentId}.${FILE_FORMAT_JSON}`, internalDocument)
+    const { publish, versionInternalDocument } = document
+    const { versionDocumentId: versionInternalDocumentId, serializedVersionDocument } = versionInternalDocument
+    if (!publish || !serializedVersionDocument || !versionInternalDocumentId) { continue }
+    await zip.file(`${versionInternalDocumentId}.${FILE_FORMAT_JSON}`, serializedVersionDocument)
   }
 }
 
