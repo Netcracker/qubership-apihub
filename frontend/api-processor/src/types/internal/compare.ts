@@ -105,7 +105,11 @@ export interface VersionsComparisonDto extends Omit<VersionsComparison<DiffTypeD
   data?: OperationChangesDto[]
 }
 
-export type InternalDocumentMetadata = { id: string; filename: string }
+export type InternalDocumentMetadata = {
+  id: string
+  filename: string
+}
+
 export type ComparisonInternalDocumentMetadata = InternalDocumentMetadata & { comparisonFileId: string }
 
 export interface CompareContext {

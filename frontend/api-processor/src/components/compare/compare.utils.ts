@@ -296,10 +296,10 @@ export function createOperationChange(
   }
 }
 
-export function createComparisonDocument(comparisonDocumentId: string, merged: ApiDocument): ComparisonDocument {
+export function createComparisonDocument(comparisonDocumentId: string, apiDocument: ApiDocument): ComparisonDocument {
   return {
     comparisonDocumentId,
-    serializedComparisonDocument: serializeDocument(merged),
+    serializedComparisonDocument: serializeDocument(apiDocument),
   }
 }
 

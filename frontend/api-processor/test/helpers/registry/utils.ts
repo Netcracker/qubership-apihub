@@ -52,10 +52,10 @@ export async function saveVersionInternalDocuments(
   for (const document of documents.values()) {
     const {publish, versionInternalDocument } = document as VersionDocument
     if(!versionInternalDocument) { continue }
-    const {serializedVersionDocument, versionDocumentId} = versionInternalDocument
-    if (!publish || !versionDocumentId || !serializedVersionDocument) { continue }
+    const {serializedVersionDocument, versionDocumentId: versionInternalDocumentId} = versionInternalDocument
+    if (!publish || !versionInternalDocumentId || !serializedVersionDocument) { continue }
     await fs.writeFile(
-      `${basePath}/${PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME}/${versionDocumentId}.${FILE_FORMAT_JSON}`,
+      `${basePath}/${PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME}/${versionInternalDocumentId}.${FILE_FORMAT_JSON}`,
       serializedVersionDocument,
     )
   }
@@ -70,9 +70,10 @@ export async function saveComparisonInternalDocuments(
   }
   await fs.mkdir(`${basePath}/${PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME}`)
   for (const document of comparisons) {
+    const {comparisonDocumentId: comparisonInternalDocumentId, serializedComparisonDocument} = document
     await fs.writeFile(
-      `${basePath}/${PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME}/${document.comparisonDocumentId}.${FILE_FORMAT_JSON}`,
-      document.serializedComparisonDocument,
+      `${basePath}/${PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME}/${comparisonInternalDocumentId}.${FILE_FORMAT_JSON}`,
+      serializedComparisonDocument,
     )
   }
 }
@@ -153,8 +154,8 @@ export async function saveVersionInternalDocumentsArray(
   for (const document of documents.values()) {
     const {publish, versionInternalDocument} = document as VersionDocument
     if(!versionInternalDocument) { continue }
-    const {versionDocumentId: versionInternalDocumentId} = versionInternalDocument
-    if (!publish || !versionInternalDocumentId) { continue }
+    const {versionDocumentId: versionInternalDocumentId, serializedVersionDocument} = versionInternalDocument
+    if (!publish || !versionInternalDocumentId || !serializedVersionDocument) { continue }
 
     result.documents.push({
       id: versionInternalDocumentId,

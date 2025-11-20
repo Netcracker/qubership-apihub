@@ -63,7 +63,7 @@ export function toVersionDocument(document: ResolvedGroupDocument, fileFormat: F
     dependencies: [],
     description: '',
     metadata: {},
-    versionInternalDocument: createVersionInternalDocument(''),
+    versionInternalDocument: createVersionInternalDocument(document.slug),
   }
 }
 

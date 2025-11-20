@@ -200,7 +200,7 @@ export async function buildPackage(
   const editor: Editor = await Editor.openProject(localRegistry.packageId, localRegistry)
   await localRegistry.publish(localRegistry.packageId, { packageId: localRegistry.packageId })
   return await editor.run({
-    version: 'v1',
+    version: BEFORE_VERSION_ID,
     status: VERSION_STATUS.RELEASE,
     buildType: BUILD_TYPE.BUILD,
   })
