@@ -19,10 +19,10 @@
     "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-diff": "feature-move-prefix-from-server-to-path",
-    "@netcracker/qubership-apihub-api-unifier": "feature-performance-optimization",
-    "@netcracker/qubership-apihub-graphapi": "bugfix-fix-type-declarations",
-    "@netcracker/qubership-apihub-json-crawl": "feature-skip-root-level"
+    "@netcracker/qubership-apihub-api-diff": "feature-performance-optimization-405",
+    "@netcracker/qubership-apihub-api-unifier": "feature-performance-optimization-405",
+    "@netcracker/qubership-apihub-graphapi": "feature-performance-optimization-405",
+    "@netcracker/qubership-apihub-json-crawl": "feature-performance-optimization-405"
   },
   "devDependencies": {
     "@netcracker/qubership-apihub-compatibility-suites": "2.3.0",
@@ -41,3 +41,4 @@
     "extends": ".eslintrc.json"
   }
 }
+

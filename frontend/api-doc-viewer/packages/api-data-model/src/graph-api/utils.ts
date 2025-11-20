@@ -88,13 +88,11 @@ export function transformChangesForDirectiveDeprecated(source: unknown) {
           const after = rearrangedChange.afterValue
           const isDirectiveAfter = isGraphApiDirective(after)
           rearrangedChange.afterValue = isDirectiveAfter ? after.meta?.reason : after
-          rearrangedChange.afterNormalizedValue = rearrangedChange.afterValue
         }
         if (rearrangedChange.action === DiffAction.remove) {
           const before = rearrangedChange.beforeValue
           const isDirectiveBefore = isGraphApiDirective(before)
           rearrangedChange.beforeValue = isDirectiveBefore ? before.meta?.reason : before
-          rearrangedChange.beforeNormalizedValue = rearrangedChange.beforeValue
         }
         copiedChange = rearrangedChange
       }
