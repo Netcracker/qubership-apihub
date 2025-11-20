@@ -10,7 +10,7 @@ name: Automatic PR Labeler
 
 on:
   pull_request:
-    branches: [main]
+    branches: [develop]
     types:
       [opened, reopened, synchronize]
 
@@ -42,4 +42,4 @@ jobs:
             echo "⚠️ Pull request from fork! ⚠️";
             echo "Labels will not be applied to PR. Assign them manually please.";
             echo "Labels to assign: ${{ steps.action-assign-labels.outputs.labels-next }}";
-          } >> $GITHUB_STEP_SUMMARY
+          } >> "$GITHUB_STEP_SUMMARY"

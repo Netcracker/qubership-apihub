@@ -1,0 +1,40 @@
+package exposer
+
+import (
+	"github.com/qubership-apihub-commons-go/api-spec-exposer/config"
+	"github.com/qubership-apihub-commons-go/api-spec-exposer/internal/generator"
+	"github.com/qubership-apihub-commons-go/api-spec-exposer/internal/scanner"
+)
+
+// SpecExposer is the main interface for API spec exposure
+type SpecExposer interface {
+	// Discover scans directory and discovers specs
+	Discover() (config.DiscoveryResult, error)
+}
+
+type specExposer struct {
+	config config.DiscoveryConfig
+}
+
+// New creates a new SpecExposer instance
+func New(config config.DiscoveryConfig) SpecExposer {
+	return &specExposer{
+		config: config,
+	}
+}
+
+// Discover scans directory and discovers specs
+func (se *specExposer) Discover() (config.DiscoveryResult, error) {
+	var discoveryResult config.DiscoveryResult
+	specScanner := scanner.New(se.config)
+
+	specs, scanWarnings, scanErrors := specScanner.Scan()
+	discoveryResult.Warnings = append(discoveryResult.Warnings, scanWarnings...)
+	discoveryResult.Errors = append(discoveryResult.Errors, scanErrors...)
+
+	gen := generator.New(specs)
+	endpoints := gen.Generate()
+	discoveryResult.Endpoints = endpoints
+
+	return discoveryResult, nil
+}

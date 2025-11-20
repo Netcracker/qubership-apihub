@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+
+jobs:
+  build:
+    name: Build Go Modules
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        working-directory: ./api-spec-exposer
+        run: go mod download
+
+      - name: Verify dependencies
+        working-directory: ./api-spec-exposer
+        run: go mod verify
+
+      - name: Tidy dependencies
+        working-directory: ./api-spec-exposer
+        run: go mod tidy
+
+      - name: Build
+        working-directory: ./api-spec-exposer
+        run: go build ./...
+
+      - name: Run tests
+        working-directory: ./api-spec-exposer
+        run: go test ./... -v
+
+      - name: Run vet
+        working-directory: ./api-spec-exposer
+        run: go vet ./...
+
+      - name: Check for uncommitted changes
+        run: |
+          git diff --exit-code || (echo "Error: Uncommitted changes detected. Run 'go mod tidy' and commit the changes." && exit 1)
+
