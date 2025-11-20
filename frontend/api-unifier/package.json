@@ -40,13 +40,13 @@
     "simplify"
   ],
   "dependencies": {
-    "@netcracker/qubership-apihub-json-crawl": "1.1.0",
+    "@netcracker/qubership-apihub-json-crawl": "feature-performance-optimization-405",
     "object-hash": "3.0.0",
     "fast-equals": "4.0.3",
     "flatted": "^3.2.9"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-graphapi": "feature-performance-optimization",
+    "@netcracker/qubership-apihub-graphapi": "feature-performance-optimization-405",
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
     "@types/object-hash": "3.0.6",
     "@types/jest": "29.5.2",
