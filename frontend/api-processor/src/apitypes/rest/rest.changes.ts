@@ -79,7 +79,7 @@ import {
 } from './rest.utils'
 import {
   createComparisonDocument,
-  createComparisonDocumentId,
+  createComparisonInternalDocumentId,
   createOperationChange,
   getOperationTags,
   OperationsMap,
@@ -113,7 +113,7 @@ export const compareDocuments: DocumentsCompare = async (
     currentGroup,
     previousGroup,
   } = ctx
-  const comparisonDocumentId = createComparisonDocumentId(prevDoc, currDoc, previousVersion, currentVersion)
+  const comparisonInternalDocumentId = createComparisonInternalDocumentId(prevDoc, currDoc, previousVersion, currentVersion)
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
   const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
   let prevDocData = prevFile && JSON.parse(await prevFile.text())
@@ -214,14 +214,14 @@ export const compareDocuments: DocumentsCompare = async (
 
       await reclassifyBreakingChanges(previous?.operationId, merged, operationDiffs, ctx)
 
-      operationChanges.push(createOperationChange(apiType, operationDiffs, comparisonDocumentId, previous, current, currentGroup, previousGroup))
+      operationChanges.push(createOperationChange(apiType, operationDiffs, comparisonInternalDocumentId, previous, current, currentGroup, previousGroup))
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }
   }
 
   let comparisonDocument: ComparisonDocument | undefined
   if (operationChanges.length) {
-    comparisonDocument = createComparisonDocument(comparisonDocumentId, merged)
+    comparisonDocument = createComparisonDocument(comparisonInternalDocumentId, merged)
   }
 
   return {

@@ -30,7 +30,7 @@ import {
   calculatePairedDocs,
   calculateTotalImpactedSummary,
   comparePairedDocs,
-  createComparisonFileId,
+  createComparisonFileId, createComparisonInternalDocuments,
   createPairOperationsMap,
   getUniqueApiTypesFromVersions,
 } from './compare.utils'
@@ -53,7 +53,7 @@ export async function compareVersionsOperations(
 ): Promise<VersionsComparison> {
   const changes: OperationChanges[] = []
   const operationTypes: OperationType[] = []
-  const comparisonInternalDocuments: ComparisonDocument[] = []
+  const comparisonDocuments: ComparisonDocument[] = []
 
   const { versionResolver } = ctx
 
@@ -67,7 +67,7 @@ export async function compareVersionsOperations(
 
   // compare operations of each type
   for (const apiType of getUniqueApiTypesFromVersions(prevVersionData, currVersionData)) {
-    const [operationType, operationsChanges = [], comparisonDocuments = []] = await asyncDebugPerformance(
+    const [operationType, operationsChanges = [], operationsComparisonDocuments = []] = await asyncDebugPerformance(
       '[ApiType]',
       (innerDebugCtx) => compareCurrentApiType(apiType, prevVersionData, currVersionData, ctx, innerDebugCtx) ?? [],
       debugCtx,
@@ -80,15 +80,11 @@ export async function compareVersionsOperations(
 
     operationTypes.push(operationType)
     changes.push(...operationsChanges)
-    comparisonInternalDocuments.push(...comparisonDocuments)
+    comparisonDocuments.push(...operationsComparisonDocuments)
   }
 
   const comparisonFileId = createComparisonFileId(prev, curr)
-
-  const comparisonInternalDocumentWithFileId: ComparisonInternalDocument[] = comparisonInternalDocuments.map(doc => ({
-    ...doc,
-    comparisonFileId,
-  }))
+  const comparisonInternalDocuments = createComparisonInternalDocuments(comparisonDocuments, comparisonFileId)
 
   const [currentVersion, currentRevision] = getSplittedVersionKey(currVersionData?.version)
   const [previousVersion, previousRevision] = getSplittedVersionKey(prevVersionData?.version)
@@ -106,7 +102,7 @@ export async function compareVersionsOperations(
       comparisonFileId,
       data: changes,
     } : {},
-    comparisonInternalDocuments: comparisonInternalDocumentWithFileId,
+    comparisonInternalDocuments,
   }
 }
 

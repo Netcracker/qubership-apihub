@@ -19,7 +19,7 @@ import {
   ApiDocument,
   ChangeSummary,
   CompareOperationsPairContext,
-  ComparisonDocument,
+  ComparisonDocument, ComparisonInternalDocument,
   DIFF_TYPES,
   ImpactedOperationSummary,
   NormalizedOperationId,
@@ -306,19 +306,26 @@ export function createComparisonDocument(comparisonDocumentId: string, merged: A
 type FileParam = string | undefined
 type FileParams = [FileParam, FileParam] | null
 
-export function createComparisonFileId(prev: FileParams | null, curr: FileParams): string {
+export const createComparisonFileId = (prev: FileParams | null, curr: FileParams): string => {
   return [...prev || [], ...curr || []].filter(Boolean).join('_')
 }
 
-export function createComparisonDocumentId(
+export const createComparisonInternalDocumentId = (
   prevDoc: ResolvedVersionDocument | undefined,
   currDoc: ResolvedVersionDocument | undefined,
   previousVersion: FileParam,
   currentVersion: FileParam,
-): string {
+): string => {
   return createComparisonFileId([prevDoc?.slug, previousVersion], [currDoc?.slug, currentVersion])
 }
 
 export const removeGroupPrefixFromOperationId = (operationId: string, groupPrefix: string): string => {
   return takeSubstringIf(!!groupPrefix, operationId, convertToSlug(groupPrefix).length + '-'.length)
+}
+
+export const createComparisonInternalDocuments = (comparisonDocuments: ComparisonDocument[], comparisonFileId: string): ComparisonInternalDocument[] => {
+  return comparisonDocuments.map(doc => ({
+    ...doc,
+    comparisonFileId,
+  }))
 }

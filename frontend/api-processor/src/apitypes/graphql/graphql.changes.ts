@@ -45,7 +45,7 @@ import {
 import { GRAPHQL_TYPE, GRAPHQL_TYPE_KEYS } from './graphql.consts'
 import {
   createComparisonDocument,
-  createComparisonDocumentId,
+  createComparisonInternalDocumentId,
   createOperationChange,
   getOperationTags,
   OperationsMap,
@@ -58,7 +58,7 @@ export const compareDocuments: DocumentsCompare = async (
   ctx: CompareOperationsPairContext,
 ): Promise<DocumentsCompareData> => {
   const { apiType, rawDocumentResolver, previousVersion, currentVersion, previousPackageId, currentPackageId } = ctx
-  const comparisonDocumentId = createComparisonDocumentId(prevDoc, currDoc, previousVersion, currentVersion)
+  const comparisonInternalDocumentId = createComparisonInternalDocumentId(prevDoc, currDoc, previousVersion, currentVersion)
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
   const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
   const prevDocSchema = prevFile && buildSchema(await prevFile.text(), { noLocation: true })
@@ -135,14 +135,14 @@ export const compareDocuments: DocumentsCompare = async (
         continue
       }
 
-      operationChanges.push(createOperationChange(apiType, operationDiffs, comparisonDocumentId, previous, current, currentGroup, previousGroup))
+      operationChanges.push(createOperationChange(apiType, operationDiffs, comparisonInternalDocumentId, previous, current, currentGroup, previousGroup))
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }
   }
 
   let comparisonDocument: ComparisonDocument | undefined
   if (operationChanges.length) {
-    comparisonDocument = createComparisonDocument(comparisonDocumentId, merged)
+    comparisonDocument = createComparisonDocument(comparisonInternalDocumentId, merged)
   }
 
   return {
