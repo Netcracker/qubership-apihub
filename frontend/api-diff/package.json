@@ -27,13 +27,13 @@
     "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-unifier": "feature-performance-optimization",
-    "@netcracker/qubership-apihub-json-crawl": "1.1.0",
+    "@netcracker/qubership-apihub-api-unifier": "feature-performance-optimization-405",
+    "@netcracker/qubership-apihub-json-crawl": "feature-performance-optimization-405",
     "fast-equals": "4.0.3"
   },
   "devDependencies": {
     "@netcracker/qubership-apihub-compatibility-suites": "dev",
-    "@netcracker/qubership-apihub-graphapi": "feature-performance-optimization",
+    "@netcracker/qubership-apihub-graphapi": "feature-performance-optimization-405",
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
     "@types/jest": "29.5.11",
     "@types/node": "20.11.6",
