@@ -273,4 +273,43 @@ describe('unify origins', function () {
     })
 
   })
+
+  it('should preserve origins when unifying path item and deduplicating operation parameters', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {
+        'test': {
+          parameters: [
+            { name: 'id', in: 'query', schema: { type: 'string' } },
+            { name: 'id', in: 'query', schema: { type: 'string' } }, // duplicate
+            { name: 'limit', in: 'query', schema: { type: 'integer' } },
+          ],
+          get: {
+            parameters: [
+              { name: 'offset', in: 'query', schema: { type: 'string' } },
+              { name: 'offset', in: 'query', schema: { type: 'string' } }, // duplicate
+              { name: 'maxItems', in: 'query', schema: { type: 'integer' } },
+            ],
+            responses: {
+              '200': { description: 'OK' },
+            },
+          },
+        },
+      },
+    }
+
+    const result = normalize(spec, OPTIONS) as any
+
+    // Should have 2 parameters after deduplication
+    const params = result.paths?.['test']?.get?.parameters
+    expect(params).toHaveLength(4)
+
+    commonOriginsCheck(result, { source: spec })
+    const resultWithHmr = convertOriginToHumanReadable(result, TEST_ORIGINS_FLAG)
+    expect(resultWithHmr).toHaveProperty(['paths', 'test', 'get', 'parameters', TEST_ORIGINS_FLAG, 0], ['paths/test/get/parameters/0'])
+    expect(resultWithHmr).toHaveProperty(['paths', 'test', 'get', 'parameters', TEST_ORIGINS_FLAG, 1], ['paths/test/get/parameters/2'])
+    expect(resultWithHmr).toHaveProperty(['paths', 'test', 'get', 'parameters', TEST_ORIGINS_FLAG, 2], ['paths/test/parameters/0'])
+    expect(resultWithHmr).toHaveProperty(['paths', 'test', 'get', 'parameters', TEST_ORIGINS_FLAG, 3], ['paths/test/parameters/2'])
+  })
 })

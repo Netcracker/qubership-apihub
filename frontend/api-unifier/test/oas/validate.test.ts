@@ -650,4 +650,23 @@ describe('OAS 3.1 Type validations: array of types', () => {
 
     expect(result).toHaveProperty([...schemaPath, 'type'], 'string')
   })
+
+  it('validates OAS extensions of Paths Object with complex values', () => {
+    const spec = {
+      openapi: "3.0.4",
+      info: {
+        title: "Test API", 
+        version: "1.0.0"
+      },
+      paths: {
+        "x-custom-extension": {
+          key: "value"
+        }
+      }
+    }
+
+    const result = validate(spec, { validate: true, })
+
+    expect(result).toMatchObject(spec)
+  })
 })
