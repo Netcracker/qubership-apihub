@@ -8,10 +8,11 @@ import { isObject, sortBy } from 'lodash'
 import * as React from 'react'
 import { useMemo } from 'react'
 
-import { isNodeExample } from '../../../utils/http-spec/examples'
-import { useChangeSeverityFilters } from '@stoplight/elements/containers/ChangeSeverityFiltersContext'
-import { useDiffMetaKey } from '@stoplight/elements/containers/DIffMetaKeyContext'
 import { DiffAction, DiffMetaRecord } from '@netcracker/qubership-apihub-api-diff'
+import { useAggregatedDiffsMetaKey } from '@stoplight/elements/containers/AggregatedDiffsMetaKeyContext'
+import { useChangeSeverityFilters } from '@stoplight/elements/containers/ChangeSeverityFiltersContext'
+import { useDiffsMetaKey } from '@stoplight/elements/containers/DiffsMetaKeyContext'
+import { isNodeExample } from '../../../utils/http-spec/examples'
 
 type ParameterKey = string
 type ParameterMediaType = string
@@ -46,12 +47,17 @@ const defaultStyle = {
 } as const
 
 export const Parameters: React.FunctionComponent<ParametersProps> = ({ parameters, parameterType }) => {
-  const diffMetaKey = useDiffMetaKey()
+  const diffsMetaKey = useDiffsMetaKey()
+  const aggregatedDiffsMetaKey = useAggregatedDiffsMetaKey()
+  const diffMetaKeys = React.useMemo(() => ({
+    diffsMetaKey: diffsMetaKey,
+    aggregatedDiffsMetaKey: aggregatedDiffsMetaKey,
+  }), [diffsMetaKey, aggregatedDiffsMetaKey])
 
   // FIXME 18.06.24 // Get rid of "parametersMediaTypes" when future wonderful AMT+ADV are ready!
   const [schema, parametersMediaTypes] = useMemo(
-    () => httpOperationParamsToSchema({ parameters, parameterType }, diffMetaKey),
-    [parameters, parameterType, diffMetaKey],
+    () => httpOperationParamsToSchema({ parameters, parameterType }, diffsMetaKey),
+    [parameters, parameterType, diffsMetaKey],
   )
   const { schemaViewMode, defaultSchemaDepth, notSplitSchemaViewer } = useOperationSchemaOptionsMode()
 
@@ -67,7 +73,7 @@ export const Parameters: React.FunctionComponent<ParametersProps> = ({ parameter
       displayMode={schemaViewMode}
       expandedDepth={defaultSchemaDepth}
       overriddenKind="parameters"
-      diffMetaKey={diffMetaKey}
+      metaKeys={diffMetaKeys}
       layoutMode={notSplitSchemaViewer ? 'document' : 'side-by-side-diffs'}
       filters={filters}
       topLevelPropsMediaTypes={parametersMediaTypes}

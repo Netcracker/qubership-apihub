@@ -1,3 +1,11 @@
+import renameMediaTypeAndADeeperChangeInRequestBodyAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-request-body/after.yaml'
+import renameMediaTypeAndADeeperChangeInRequestBodyBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-request-body/before.yaml'
+import renameMediaTypeAndADeeperChangeInResponseAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-response/after.yaml'
+import renameMediaTypeAndADeeperChangeInResponseBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-response/before.yaml'
+import renameMediaTypeInRequestBodyAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-in-request-body/after.yaml'
+import renameMediaTypeInRequestBodyBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-in-request-body/before.yaml'
+import renameMediaTypeInResponseAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-in-response/after.yaml'
+import renameMediaTypeInResponseBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-in-response/before.yaml'
 import { AddNewPetToPetstore } from '@netcracker/qubership-apihub-apispec-view-samples/operations-new-samples/addNewPetToPetstore'
 import { AddNewPetToPetstoreCircular } from '@netcracker/qubership-apihub-apispec-view-samples/operations-new-samples/addNewPetToPetstoreCircular'
 import {
@@ -9,20 +17,12 @@ import { DeprecatedOperations } from '@netcracker/qubership-apihub-apispec-view-
 import {
   WhollyChangedRequestBodyOrResponse,
 } from '@netcracker/qubership-apihub-apispec-view-samples/operations-new-samples/operationsForWhollyChangedRequestBodyOrResponse'
-import renameMediaTypeAndADeeperChangeInResponseBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-response/before.yaml'
-import renameMediaTypeAndADeeperChangeInResponseAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-response/after.yaml'
-import renameMediaTypeInResponseBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-in-response/before.yaml'
-import renameMediaTypeInResponseAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-in-response/after.yaml'
-import renameMediaTypeAndADeeperChangeInRequestBodyBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-request-body/before.yaml'
-import renameMediaTypeAndADeeperChangeInRequestBodyAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-request-body/after.yaml'
-import renameMediaTypeInRequestBodyBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-in-request-body/before.yaml'
-import renameMediaTypeInRequestBodyAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-in-request-body/after.yaml'
-import renameMediaTypeAndADeeperChangeInPathItemParameterBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-path-item-parameter/before.yaml'
-import renameMediaTypeAndADeeperChangeInPathItemParameterAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-path-item-parameter/after.yaml'
-import renameMediaTypeAndADeeperChangeInOperationParameterBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-operation-parameter/before.yaml'
-import renameMediaTypeAndADeeperChangeInOperationParameterAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-operation-parameter/after.yaml'
-import renameMediaTypeAndADeeperChangeInResponseHeaderBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-response-header/before.yaml'
-import renameMediaTypeAndADeeperChangeInResponseHeaderAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-response-header/after.yaml'
+// import renameMediaTypeAndADeeperChangeInPathItemParameterBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-path-item-parameter/before.yaml'
+// import renameMediaTypeAndADeeperChangeInPathItemParameterAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-path-item-parameter/after.yaml'
+// import renameMediaTypeAndADeeperChangeInOperationParameterBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-operation-parameter/before.yaml'
+// import renameMediaTypeAndADeeperChangeInOperationParameterAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-operation-parameter/after.yaml'
+// import renameMediaTypeAndADeeperChangeInResponseHeaderBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-response-header/before.yaml'
+// import renameMediaTypeAndADeeperChangeInResponseHeaderAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-response-header/after.yaml'
 
 import { COMPARE_DISPLAY_MODE } from '@stoplight/elements'
 import { DiffOperationAPI } from '@stoplight/elements/containers/DiffOperationAPI'
@@ -30,11 +30,11 @@ import {
   getCompareResult,
   getMergedDocument,
 } from '@stoplight/elements/web-components/__stories__/helpers/getMergedDocument'
-import { diffMetaKey } from 'diff-block'
+import { stringifyDiffs } from '@stoplight/elements/web-components/__stories__/helpers/stringifyDiffs'
+import { Meta, StoryObj } from '@storybook/react/*'
+import { aggregatedDiffsMetaKey, diffsMetaKey } from 'diff-block'
 import React from 'react'
 import '../index'
-import { Meta, StoryObj } from '@storybook/react/*'
-import { stringifyDiffs } from '@stoplight/elements/web-components/__stories__/helpers/stringifyDiffs'
 
 declare global {
   namespace JSX {
@@ -71,7 +71,16 @@ export default {
 }
 
 const Template = (props: any) => {
-  return <DiffOperationAPI {...props} diffMetaKey={diffMetaKey} filters={JSON.stringify(props.filters)} />
+  return (
+    <DiffOperationAPI
+      {...props}
+      diffMetaKeys={{
+        diffsMetaKey: diffsMetaKey,
+        aggregatedDiffsMetaKey: aggregatedDiffsMetaKey,
+      }}
+      filters={JSON.stringify(props.filters)}
+    />
+  )
 }
 
 export const AddNewPetToPetstoreStory: any = Template.bind({})
@@ -655,7 +664,16 @@ function StoryComponent({ before, after }: { before: object, after: object }) {
   const { diffs, merged } = getCompareResult(before, after)
   console.log(stringifyDiffs(diffs))
   console.log(diffs)
-  return <DiffOperationAPI mergedDocument={merged} filters={[]} diffMetaKey={diffMetaKey} />
+  return (
+    <DiffOperationAPI 
+      mergedDocument={merged}
+      filters={[]}
+      diffMetaKeys={{
+        diffsMetaKey: diffsMetaKey,
+        aggregatedDiffsMetaKey: aggregatedDiffsMetaKey,
+      }}
+    />
+  )
 }
 
 const meta: Meta<{ before: object, after: object }> = {

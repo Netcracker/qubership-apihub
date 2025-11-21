@@ -10,7 +10,8 @@ import {
 } from '@netcracker/qubership-apihub-api-diff'
 import { keys } from 'lodash';
 
-export const diffMetaKey = Symbol('diffMeta');
+export const diffsMetaKey = Symbol('diffMeta');
+export const aggregatedDiffsMetaKey = Symbol('aggregatedDiffsMetaKey');
 export const childrenDiffCountMetaKey = Symbol('childrenDiffCountMetaKey');
 export const selfDiffMetaKey = Symbol('selfDiffMeta');
 export const schemaIdKey = Symbol('schemaIdKey');
@@ -45,5 +46,5 @@ export const DIFF_TYPE_NAME_MAP: Record<DiffType, string> = {
   [annotation]: 'annotation',
 }
 export type WithDiffMetaKey<T> = T & {
-  [diffMetaKey]: any;
+  [diffsMetaKey]: any;
 };

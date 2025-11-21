@@ -6,11 +6,12 @@ import { DiffBlock, DiffContainer, isDiff } from 'diff-block'
 import * as React from 'react'
 import { useCallback, useEffect, useState } from 'react'
 
-import { Description } from '@stoplight/diff-elements-core/components/Docs/HttpOperation/Description'
-import { useChangeSeverityFilters } from '@stoplight/elements/containers/ChangeSeverityFiltersContext'
-import { useDiffMetaKey } from '@stoplight/elements/containers/DIffMetaKeyContext'
-import { SectionSubtitle } from '../Sections'
 import { isDiffRename } from '@netcracker/qubership-apihub-api-diff'
+import { Description } from '@stoplight/diff-elements-core/components/Docs/HttpOperation/Description'
+import { useAggregatedDiffsMetaKey } from '@stoplight/elements/containers/AggregatedDiffsMetaKeyContext'
+import { useChangeSeverityFilters } from '@stoplight/elements/containers/ChangeSeverityFiltersContext'
+import { useDiffsMetaKey } from '@stoplight/elements/containers/DiffsMetaKeyContext'
+import { SectionSubtitle } from '../Sections'
 
 export type DiffBodyProps = {
   body: IHttpOperationRequestBody;
@@ -26,7 +27,14 @@ export const isBodyEmpty = (body?: DiffBodyProps['body']) => {
 }
 
 export const Body = ({ body, onChange }: DiffBodyProps) => {
-  const diffMetaKey = useDiffMetaKey()
+  const diffsMetaKey = useDiffsMetaKey()
+  const aggregatedDiffsMetaKey = useAggregatedDiffsMetaKey()
+
+  const diffMetaKeys = React.useMemo(() => ({
+    diffsMetaKey: diffsMetaKey,
+    aggregatedDiffsMetaKey: aggregatedDiffsMetaKey,
+  }), [diffsMetaKey, aggregatedDiffsMetaKey])
+
   const [chosenContent, setChosenContent] = useState(0)
 
   useEffect(() => {
@@ -50,19 +58,19 @@ export const Body = ({ body, onChange }: DiffBodyProps) => {
     if (schema && wholeContentDiff === undefined) {
       let wholeContentDiff = undefined
       // when whole body was removed
-      if (diffMetaKey in body) {
-        wholeContentDiff = body[diffMetaKey]
+      if (diffsMetaKey in body) {
+        wholeContentDiff = body[diffsMetaKey]
       }
-      if (diffMetaKey in bodyContent) {
+      if (diffsMetaKey in bodyContent) {
         // when whole schema was removed from body's media type
-        if ('schema' in bodyContent[diffMetaKey]) {
-          wholeContentDiff = bodyContent[diffMetaKey].schema
-        } else if (isDiff(bodyContent[diffMetaKey])) {
-          const diff = bodyContent[diffMetaKey]
+        if ('schema' in bodyContent[diffsMetaKey]) {
+          wholeContentDiff = bodyContent[diffsMetaKey].schema
+        } else if (isDiff(bodyContent[diffsMetaKey])) {
+          const diff = bodyContent[diffsMetaKey]
           // todo temporarily disregard rename change in order to show deeper changes
           if (!isDiffRename(diff)) {
             // when whole media type was removed from body
-            wholeContentDiff = bodyContent[diffMetaKey]
+            wholeContentDiff = bodyContent[diffsMetaKey]
           }
         }
       }
@@ -70,7 +78,7 @@ export const Body = ({ body, onChange }: DiffBodyProps) => {
         setWholeContentDiff(wholeContentDiff)
       }
     }
-  }, [body, bodyContent, diffMetaKey, schema, wholeContentDiff])
+  }, [body, bodyContent, diffsMetaKey, schema, wholeContentDiff])
 
   const renderJSV = useCallback(() => {
     if (!schema) {
@@ -107,10 +115,10 @@ export const Body = ({ body, onChange }: DiffBodyProps) => {
         // diffs specific
         layoutMode={notSplitSchemaViewer ? 'document' : 'side-by-side-diffs'}
         filters={filters}
-        diffMetaKey={diffMetaKey}
+        metaKeys={diffMetaKeys}
       />
     )
-  }, [defaultSchemaDepth, diffMetaKey, filters, notSplitSchemaViewer, schema, schemaViewMode, wholeContentDiff])
+  }, [defaultSchemaDepth, diffsMetaKey, filters, notSplitSchemaViewer, schema, schemaViewMode, wholeContentDiff])
 
   if (isBodyEmpty(body)) {
     return null

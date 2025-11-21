@@ -1,5 +1,5 @@
 import { JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer';
-import { useOperationSchemaOptionsMode } from '@stoplight/elements';
+import { useOperationSchemaOptionsMode } from '@stoplight/elements-core';
 import { HttpParamStyles, IHttpContent, IHttpParam } from '@stoplight/types';
 import type { JSONSchema7Object } from 'json-schema';
 import { JsonSchemaViewer as OldJsonSchemaViewer } from 'json-schema-viewer';
