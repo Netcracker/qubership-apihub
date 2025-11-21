@@ -1,6 +1,6 @@
 module github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer
 
-go 1.25.4
+go 1.23
 
 require (
 	github.com/gosimple/slug v1.15.0

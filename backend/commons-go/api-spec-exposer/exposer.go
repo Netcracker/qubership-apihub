@@ -8,8 +8,7 @@ import (
 
 // SpecExposer is the main interface for API spec exposure
 type SpecExposer interface {
-	// Discover scans directory and discovers specs
-	Discover() (config.DiscoveryResult, error)
+	Discover() config.DiscoveryResult
 }
 
 type specExposer struct {
@@ -23,8 +22,8 @@ func New(config config.DiscoveryConfig) SpecExposer {
 	}
 }
 
-// Discover scans directory and discovers specs
-func (se *specExposer) Discover() (config.DiscoveryResult, error) {
+// Discover scans directory and generates endpoint configurations (@config.EndpointConfig) for all discovered specs
+func (se *specExposer) Discover() config.DiscoveryResult {
 	var discoveryResult config.DiscoveryResult
 	specScanner := scanner.New(se.config)
 
@@ -36,5 +35,5 @@ func (se *specExposer) Discover() (config.DiscoveryResult, error) {
 	endpoints := gen.Generate()
 	discoveryResult.Endpoints = endpoints
 
-	return discoveryResult, nil
+	return discoveryResult
 }

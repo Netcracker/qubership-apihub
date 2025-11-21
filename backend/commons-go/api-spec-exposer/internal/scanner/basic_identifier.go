@@ -4,7 +4,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
 )
 
-// BasicIdentifier handles unknown/binary files
+// BasicIdentifier handles all files that are not identified by other identifiers
 type BasicIdentifier struct{}
 
 func (i *BasicIdentifier) CanHandle(path string) bool {

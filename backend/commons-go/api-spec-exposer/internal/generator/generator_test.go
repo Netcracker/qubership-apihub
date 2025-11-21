@@ -72,7 +72,8 @@ func TestGeneratorMakeUnique(t *testing.T) {
 		fileId   string
 		expected string
 	}{
-		{"api-spec", "api-spec-2"},
+		{"api-spec", "api-spec"},
+		{"api-spec", "api-spec-1"},
 		{"other-spec", "other-spec"},
 	}
 

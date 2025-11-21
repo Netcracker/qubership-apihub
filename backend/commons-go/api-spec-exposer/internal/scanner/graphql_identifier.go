@@ -7,7 +7,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
 )
 
-// GraphQLIdentifier identifies GraphQL specifications
+// GraphQLIdentifier identifies GraphQL specifications and introspection JSON files
 type GraphQLIdentifier struct{}
 
 func (i *GraphQLIdentifier) CanHandle(path string) bool {

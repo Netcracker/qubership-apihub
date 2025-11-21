@@ -31,7 +31,7 @@ func New(cfg config.DiscoveryConfig) *Scanner {
 	}
 }
 
-// Scan scans the directory and returns discovered specs, warnings, and errors
+// Scan scans the directory and returns spec metadata (@config.SpecMetadata), warnings, and errors
 func (s *Scanner) Scan() ([]config.SpecMetadata, []string, []error) {
 	var specs []config.SpecMetadata
 	var warnings []string
@@ -95,6 +95,15 @@ func (s *Scanner) Scan() ([]config.SpecMetadata, []string, []error) {
 }
 
 func (s *Scanner) shouldExclude(path string) bool {
+	// Never exclude the root scan directory itself
+	absPath, err := filepath.Abs(path)
+	if err == nil {
+		absScanDir, err := filepath.Abs(s.config.ScanDirectory)
+		if err == nil && absPath == absScanDir {
+			return false
+		}
+	}
+
 	// Skip hidden files/directories (starting with .)
 	base := filepath.Base(path)
 	if strings.HasPrefix(base, ".") {

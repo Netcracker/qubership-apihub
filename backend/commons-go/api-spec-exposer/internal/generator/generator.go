@@ -10,19 +10,21 @@ import (
 	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
 )
 
-// Generator generates endpoint mappings and handlers based on discovered specs
+// Generator generates endpoint configurations (@config.EndpointConfig) based on discovered specs
 type Generator struct {
-	specs []config.SpecMetadata
+	specs       []config.SpecMetadata
+	usedFileIds map[string]bool
 }
 
 // New creates a new generator
 func New(specs []config.SpecMetadata) *Generator {
 	return &Generator{
-		specs: specs,
+		specs:       specs,
+		usedFileIds: make(map[string]bool),
 	}
 }
 
-// Generate generates all endpoint configurations and their handlers
+// Generate generates endpoint configurations (@config.EndpointConfig) with handlers based on spec metadata (@config.SpecMetadata)
 func (g *Generator) Generate() []config.EndpointConfig {
 	specsByType := g.groupSpecsByType()
 
@@ -231,16 +233,18 @@ func (g *Generator) generateApihubConfig(specMap map[string]*config.SpecMetadata
 	configMap["/v3/api-docs/apihub-swagger-config"] = configURLs
 }
 func (g *Generator) makeUnique(fileId string) string {
-	count := 0
-	for _, spec := range g.specs {
-		if spec.FileId == fileId {
-			count++
+	if !g.usedFileIds[fileId] {
+		g.usedFileIds[fileId] = true
+		return fileId
+	}
+
+	suffix := 1
+	for {
+		uniqueFileId := fmt.Sprintf("%s-%d", fileId, suffix)
+		if !g.usedFileIds[uniqueFileId] {
+			g.usedFileIds[uniqueFileId] = true
+			return uniqueFileId
 		}
+		suffix++
 	}
-
-	if count > 1 {
-		return fmt.Sprintf("%s-%d", fileId, count)
-	}
-
-	return fileId
 }

@@ -21,11 +21,7 @@ func TestSpecExposerDiscoverEmptyDirectory(t *testing.T) {
 	}
 
 	exposer := New(cfg)
-	result, err := exposer.Discover()
-
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
+	result := exposer.Discover()
 
 	if len(result.Endpoints) != 0 {
 		t.Errorf("Expected 0 endpoints, got %d", len(result.Endpoints))
@@ -66,11 +62,7 @@ func TestSpecExposerDiscoverWithSingleSpec(t *testing.T) {
 	}
 
 	exposer := New(cfg)
-	result, err := exposer.Discover()
-
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
+	result := exposer.Discover()
 
 	if len(result.Endpoints) != 1 {
 		t.Fatalf("Expected 1 endpoint, got %d", len(result.Endpoints))
@@ -131,7 +123,7 @@ func TestSpecExposerDiscoverWithMultipleSpecs(t *testing.T) {
 	}
 
 	exposer := New(cfg)
-	result, err := exposer.Discover()
+	result := exposer.Discover()
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -194,11 +186,7 @@ func TestSpecExposerDiscoverWithWarnings(t *testing.T) {
 	}
 
 	exposer := New(cfg)
-	result, err := exposer.Discover()
-
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
+	result := exposer.Discover()
 
 	if len(result.Endpoints) != 1 {
 		t.Fatalf("Expected 1 endpoint, got %d", len(result.Endpoints))
@@ -233,11 +221,7 @@ func TestSpecExposerDiscoverWithErrors(t *testing.T) {
 	}
 
 	exposer := New(cfg)
-	result, err := exposer.Discover()
-
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
+	result := exposer.Discover()
 
 	if len(result.Errors) != 1 {
 		t.Errorf("Expected 1 error, got %d", len(result.Errors))
@@ -276,11 +260,7 @@ func TestSpecExposerDiscoverWithExcludePatterns(t *testing.T) {
 	}
 
 	exposer := New(cfg)
-	result, err := exposer.Discover()
-
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
+	result := exposer.Discover()
 
 	if len(result.Endpoints) != 1 {
 		t.Fatalf("Expected 1 endpoint (others excluded), got %d", len(result.Endpoints))
@@ -306,11 +286,7 @@ func TestSpecExposerDiscoverInvalidDirectory(t *testing.T) {
 	}
 
 	exposer := New(cfg)
-	result, err := exposer.Discover()
-
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
+	result := exposer.Discover()
 
 	if len(result.Endpoints) != 0 {
 		t.Errorf("Expected 0 endpoints for invalid directory, got %d", len(result.Endpoints))
@@ -352,11 +328,7 @@ func TestSpecExposerDiscoverWithNestedDirectories(t *testing.T) {
 	}
 
 	exposer := New(cfg)
-	result, err := exposer.Discover()
-
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
+	result := exposer.Discover()
 
 	// Should have: 2 REST specs + 1 swagger-config = 3 endpoints
 	if len(result.Endpoints) != 3 {
@@ -412,11 +384,7 @@ func TestSpecExposerDiscoverWithMixedTypes(t *testing.T) {
 	}
 
 	exposer := New(cfg)
-	result, err := exposer.Discover()
-
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
+	result := exposer.Discover()
 
 	if len(result.Endpoints) < 5 {
 		t.Errorf("Expected at least 5 endpoints, got %d", len(result.Endpoints))

@@ -12,7 +12,7 @@ const (
 	ApiTypeUnknown  ApiType = "unknown"
 )
 
-// DocumentType represents the specific document type (for apihub config)
+// DocumentType represents the specific document type (for apihub-swagger-config)
 type DocumentType string
 
 const (
@@ -28,7 +28,7 @@ const (
 	DocTypeUnknown DocumentType = "unknown"
 )
 
-// Format represents the file format to identify Content-Type for the response
+// Format represents the file format
 type Format string
 
 const (
@@ -50,7 +50,7 @@ type SpecMetadata struct {
 	XApiKind string
 }
 
-// EndpointConfig represents an HTTP endpoint with its handler function and related API spec metadata
+// EndpointConfig represents an HTTP endpoint configuration with its handler function and related API spec metadata
 type EndpointConfig struct {
 	SpecMetadata
 	Path    string
