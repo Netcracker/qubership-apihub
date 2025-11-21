@@ -1853,6 +1853,15 @@
         "fast-equals": "4.0.3"
       }
     },
+    "node_modules/@netcracker/qubership-apihub-api-diff/node_modules/@netcracker/qubership-apihub-json-crawl": {
+      "version": "1.0.4",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-json-crawl/1.0.4/3499de89f5f3634290cdc65d33d25dc2366c5e9a",
+      "integrity": "sha512-B7Pe5gXshDiwHyRYw7Ox3a2ZbaE/WQ5Gyrw7bopMXHiIgAE6CDaPmkGPlpIBbDFdYYA0Q+rkZ/zIEmKFxlSODA==",
+      "license": "Apache-2.0",
+      "engines": {
+        "node": ">=14.0.0"
+      }
+    },
     "node_modules/@netcracker/qubership-apihub-api-diff/node_modules/fast-equals": {
       "version": "4.0.3",
       "resolved": "https://registry.npmjs.org/fast-equals/-/fast-equals-4.0.3.tgz",
@@ -1884,6 +1893,15 @@
       },
       "engines": {
         "node": ">=18.0.0"
+      }
+    },
+    "node_modules/@netcracker/qubership-apihub-api-processor/node_modules/@netcracker/qubership-apihub-json-crawl": {
+      "version": "1.0.4",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-json-crawl/1.0.4/3499de89f5f3634290cdc65d33d25dc2366c5e9a",
+      "integrity": "sha512-B7Pe5gXshDiwHyRYw7Ox3a2ZbaE/WQ5Gyrw7bopMXHiIgAE6CDaPmkGPlpIBbDFdYYA0Q+rkZ/zIEmKFxlSODA==",
+      "license": "Apache-2.0",
+      "engines": {
+        "node": ">=14.0.0"
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-processor/node_modules/adm-zip": {
