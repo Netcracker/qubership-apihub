@@ -99,7 +99,7 @@ func (d OpsMigration) waitForBuilds(stage mView.OpsMigrationStage, round int) (i
 		return processed, nil
 	}
 	start := time.Now()
-	limitSec := time.Duration(totalCount) * time.Second * time.Duration(600) // limit per build with great reserve
+	limitSec := time.Duration(totalCount) * time.Second * time.Duration(1800) // limit per build with great reserve
 	for {
 		count, err := d.cp.GetConnection().ModelContext(d.migrationCtx, &builds).
 			WhereOrGroup(func(query *orm.Query) (*orm.Query, error) {
