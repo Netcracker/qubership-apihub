@@ -82,7 +82,10 @@ export const Parameters: React.FunctionComponent<ParametersProps> = ({ parameter
 }
 Parameters.displayName = 'HttpOperation.Parameters'
 
-const mergeMirrorSymbolsForDiffMeta = (source: object, diffMetaKey: symbol): void => {
+function mergeMirrorSymbolsForDiffMeta(
+  source: object, 
+  diffMetaKey: symbol,
+): void {
   source[mirrorDiffMetaKey] && (source[diffMetaKey] = source[mirrorDiffMetaKey])
   source[mirrorSelfDiffMetaKey] && (source[selfDiffMetaKey] = source[mirrorSelfDiffMetaKey])
 }
@@ -139,7 +142,6 @@ const httpOperationParamsToSchema = (
     const paramStyle = style && defaultStyle[parameterType] !== style ? readableStyles[style] || style : undefined
 
     mergeMirrorSymbolsForDiffMeta(p, diffMetaKey)
-
 
     const paramPropsDiffMeta = {
       ...p[diffMetaKey] ?? {},
