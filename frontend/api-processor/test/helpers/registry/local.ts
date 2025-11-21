@@ -101,6 +101,7 @@ export interface PackageVersionCache {
 
 export class LocalRegistry implements IRegistry {
   versions = new Map<string, PackageVersionCache>()
+  private versionLoadingPromises = new Map<string, Promise<PackageVersionCache | undefined>>()
   apiBuilders = [restApiBuilder, graphqlApiBuilder, textApiBuilder, unknownApiBuilder]
 
   get versionResolvers(): Omit<BuilderResolvers, 'fileResolver'> {
@@ -504,10 +505,30 @@ export class LocalRegistry implements IRegistry {
 
   async getVersion(packageId: string, versionKey: string): Promise<PackageVersionCache | undefined> {
     const compositeKey = getCompositeKey(packageId, versionKey)
+
+    // Return cached version if available
     if (this.versions.has(compositeKey)) {
       return this.versions.get(compositeKey)
     }
 
+    // If already loading, wait for that promise to prevent race conditions
+    if (this.versionLoadingPromises.has(compositeKey)) {
+      return this.versionLoadingPromises.get(compositeKey)!
+    }
+
+    // Start loading
+    const loadingPromise = this.loadVersion(packageId, versionKey, compositeKey)
+    this.versionLoadingPromises.set(compositeKey, loadingPromise)
+
+    try {
+      const result = await loadingPromise
+      return result
+    } finally {
+      this.versionLoadingPromises.delete(compositeKey)
+    }
+  }
+
+  private async loadVersion(packageId: string, versionKey: string, compositeKey: string): Promise<PackageVersionCache | undefined> {
     const versionConfig = await loadConfig(
       VERSIONS_PATH,
       `${packageId}/${versionKey}`,
