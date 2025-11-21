@@ -11,14 +11,13 @@ import { isEmpty, keys, sortBy, uniqBy } from 'lodash'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { SectionSubtitle, SectionTitle } from '../Sections'
-import { Parameters } from './Parameters'
+import { isDiffRename } from '@netcracker/qubership-apihub-api-diff'
 import { Description } from '@stoplight/diff-elements-core/components/Docs/HttpOperation/Description'
+import { isObject } from '@stoplight/diff-elements-core/utils/guards'
+import { useAggregatedDiffsMetaKey } from '@stoplight/elements/containers/AggregatedDiffsMetaKeyContext'
 import { useChangeSeverityFilters } from '@stoplight/elements/containers/ChangeSeverityFiltersContext'
 import { useDiffsMetaKey } from '@stoplight/elements/containers/DiffsMetaKeyContext'
-import { isObject } from '@stoplight/diff-elements-core/utils/guards'
-import { isDiffRename } from '@netcracker/qubership-apihub-api-diff'
-import { useAggregatedDiffsMetaKey } from '@stoplight/elements/containers/AggregatedDiffsMetaKeyContext'
+import { SectionTitle } from '../Sections'
 
 interface ResponseCodeItemProps {
   response: IHttpOperationResponse;
@@ -274,7 +273,7 @@ const Response = ({ response, onMediaTypeChange, extensions, extensionsMeta }: R
         metaKeys={diffMetaKeys}
       />
     )
-  }, [defaultSchemaDepth, diffMetaKeys, filters, notSplitSchemaViewer, schema, schemaViewMode, wholeContentDiff])
+  }, [defaultSchemaDepth, diffMetaKeys, filters, notSplitSchemaViewer, schema, schemaViewMode, wholeContentDiff, aggregatedDiffsMetaKey])
 
   return (
     <VStack spacing={8} pt={8}>

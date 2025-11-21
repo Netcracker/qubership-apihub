@@ -118,7 +118,7 @@ export const Body = ({ body, onChange }: DiffBodyProps) => {
         metaKeys={diffMetaKeys}
       />
     )
-  }, [defaultSchemaDepth, diffsMetaKey, filters, notSplitSchemaViewer, schema, schemaViewMode, wholeContentDiff])
+  }, [defaultSchemaDepth, diffsMetaKey, filters, notSplitSchemaViewer, schema, schemaViewMode, wholeContentDiff, aggregatedDiffsMetaKey])
 
   if (isBodyEmpty(body)) {
     return null

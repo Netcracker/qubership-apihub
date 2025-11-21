@@ -1,5 +1,5 @@
-import { denormalize, normalize, NormalizeOptions, RefErrorType, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier';
 import { apiDiff, COMPARE_MODE_DEFAULT, CompareResult } from '@netcracker/qubership-apihub-api-diff';
+import { denormalize, normalize, NormalizeOptions, RefErrorType, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier';
 import { safeStringify } from '@stoplight/json';
 import { diffsMetaKey } from 'diff-block';
 
