@@ -7,7 +7,6 @@ import type { JSONSchema7Object } from 'json-schema'
 import { sortBy } from 'lodash'
 import * as React from 'react'
 import { useMemo } from 'react'
-
 import { DiffAction, DiffMetaRecord } from '@netcracker/qubership-apihub-api-diff'
 import { isObject } from '@stoplight/diff-elements-core/utils/guards'
 import { useAggregatedDiffsMetaKey } from '@stoplight/elements/containers/AggregatedDiffsMetaKeyContext'
