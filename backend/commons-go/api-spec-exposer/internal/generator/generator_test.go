@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/qubership-apihub-commons-go/api-spec-exposer/config"
+	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
 )
 
 func TestGeneratorGroupSpecsByType(t *testing.T) {
@@ -407,4 +407,3 @@ func TestGeneratorMultipleGraphQLEndpoints(t *testing.T) {
 		t.Error("Expected GraphQL domains config endpoint")
 	}
 }
-

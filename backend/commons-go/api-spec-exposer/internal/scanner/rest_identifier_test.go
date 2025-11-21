@@ -3,7 +3,7 @@ package scanner
 import (
 	"testing"
 
-	"github.com/qubership-apihub-commons-go/api-spec-exposer/config"
+	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
 )
 
 func TestRestIdentifierCanHandle(t *testing.T) {
@@ -405,4 +405,3 @@ func TestRestIdentifierIdentifyInvalidYAML(t *testing.T) {
 		t.Errorf("Expected 1 error, got %d", len(errors))
 	}
 }
-

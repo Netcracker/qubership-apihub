@@ -3,7 +3,7 @@ package scanner
 import (
 	"testing"
 
-	"github.com/qubership-apihub-commons-go/api-spec-exposer/config"
+	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
 )
 
 func TestMarkdownIdentifierCanHandle(t *testing.T) {

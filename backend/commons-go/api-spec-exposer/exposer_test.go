@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/qubership-apihub-commons-go/api-spec-exposer/config"
+	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
 )
 
 func TestSpecExposerDiscoverEmptyDirectory(t *testing.T) {
@@ -460,4 +460,3 @@ func TestSpecExposerDiscoverWithMixedTypes(t *testing.T) {
 		t.Errorf("Expected 0 errors, got %d", len(result.Errors))
 	}
 }
-

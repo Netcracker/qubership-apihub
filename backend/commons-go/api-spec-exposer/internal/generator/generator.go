@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/qubership-apihub-commons-go/api-spec-exposer/config"
+	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
 )
 
 // Generator generates endpoint mappings and handlers based on discovered specs

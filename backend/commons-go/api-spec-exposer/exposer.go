@@ -1,9 +1,9 @@
 package exposer
 
 import (
-	"github.com/qubership-apihub-commons-go/api-spec-exposer/config"
-	"github.com/qubership-apihub-commons-go/api-spec-exposer/internal/generator"
-	"github.com/qubership-apihub-commons-go/api-spec-exposer/internal/scanner"
+	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
+	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/internal/generator"
+	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/internal/scanner"
 )
 
 // SpecExposer is the main interface for API spec exposure
