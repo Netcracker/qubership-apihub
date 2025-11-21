@@ -117,6 +117,7 @@ export async function saveEachOperation(
 ): Promise<void> {
   await fs.mkdir(`${basePath}/${PACKAGE.OPERATIONS_DIR_NAME}`)
   for (const operation of operations.values()) {
+    if (!operation.data) { continue }
     await fs.writeFile(
       `${basePath}/${PACKAGE.OPERATIONS_DIR_NAME}/${operation.operationId}.json`,
       JSON.stringify(operation.data, undefined, 2),

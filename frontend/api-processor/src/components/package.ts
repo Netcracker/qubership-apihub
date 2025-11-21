@@ -91,6 +91,7 @@ export const createVersionPackage = async (
   createOperationsFile(zip, buildResultDto.operations)
   const operationsDir = zip.folder(PACKAGE.OPERATIONS_DIR_NAME)!
   for (const { data, operationId } of buildResultDto.operations.values()) {
+    if (!data) { continue }
     createOperationDataFile(operationsDir, operationId, data)
   }
 

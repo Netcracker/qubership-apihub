@@ -59,10 +59,8 @@ export const buildGraphQLOperation = (
   config: BuildConfig,
   debugCtx?: DebugPerformanceContext,
 ): VersionGraphQLOperation => {
-  const { apiKind: documentApiKind, data: documentData, slug: documentSlug, versionInternalDocument } = document
-  const singleOperationSpec: GraphApiSchema = cropToSingleOperation(documentData, type, method)
+  const { apiKind: documentApiKind, slug: documentSlug, versionInternalDocument } = document
   const singleOperationEffectiveSpec: GraphApiSchema = cropToSingleOperation(effectiveDocument, type, method)
-  const singleOperationRefsOnlySpec: GraphApiSchema = cropToSingleOperation(refsOnlyDocument, type, method)
 
   const deprecatedItems: DeprecateItem[] = syncDebugPerformance('[DeprecatedItems]', () => {
     const foundedDeprecatedItems = calculateDeprecatedItems(singleOperationEffectiveSpec, ORIGINS_SYMBOL)
@@ -89,10 +87,6 @@ export const buildGraphQLOperation = (
 
   const apiKind = documentApiKind || API_KIND.BWC
 
-  syncDebugPerformance('[ModelsAndOperationHashing]', () => {
-    calculateSpecRefs(documentData, singleOperationRefsOnlySpec, singleOperationSpec)
-  }, debugCtx)
-
   return {
     operationId,
     documentId: documentSlug,
@@ -105,7 +99,7 @@ export const buildGraphQLOperation = (
       method: method,
     },
     tags: [type],
-    data: singleOperationSpec,
+    data: undefined,  // we do not want to save single-operation specs for GraphQL for performance reasons
     searchScopes: {},
     deprecatedItems,
     models: {},
@@ -124,7 +118,7 @@ const isOperationPaths = (paths: JsonPath[]): boolean => {
 // todo output of this method disrupts document normalization.
 //  origin symbols are not being transferred to the resulting spec.
 //  DO NOT pass output of this method to apiDiff
-const cropToSingleOperation = (
+export const cropToSingleOperation = (
   specification: GraphApiSchema,
   type: GraphQLSchemaType,
   method: string,
