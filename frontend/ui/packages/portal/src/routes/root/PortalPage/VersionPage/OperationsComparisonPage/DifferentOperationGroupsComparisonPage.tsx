@@ -24,7 +24,7 @@ import { groupOperationPairsByTags, isFullyAddedOperationChange, isFullyRemovedO
 import type { ActionType } from '@netcracker/qubership-apihub-api-diff'
 import { DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import type { OperationChanges } from '@netcracker/qubership-apihub-api-processor'
-import { convertToSlug } from '@netcracker/qubership-apihub-api-processor'
+import { createCopyWithPrefixGroupOperationsOnly, type RestOperationData } from '@netcracker/qubership-apihub-api-processor'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type {
@@ -189,7 +189,10 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
     })
   }, [changesSummary, isPackageFromDashboard, refPackageKey])
 
-  const restGroupingPrefix = packageObj?.restGroupingPrefix
+  const groupPrefixTemplate = packageObj?.restGroupingPrefix
+  const currentGroupPrefix = getGroupPrefix(groupPrefixTemplate, group)
+  const previousGroupPrefix = getGroupPrefix(groupPrefixTemplate, previousGroup)
+
 
   const {
     previousOperationKey: operationKeyForOriginOperation,
@@ -199,25 +202,40 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
     currentOperationKey: operationKey,
   }, operationAction)
 
-  const { data: originOperation, isLoading: isOriginOperationLoading } = useOperation({
+  const { data: originOperation, isInitialLoading: isOriginOperationLoading } = useOperation({
     packageKey: !isPackageFromDashboard ? originPackageKey : refPackageKey,
-    versionKey: !isPackageFromDashboard ? changedVersionKey : refComparisonSummary?.previousVersion,
-    enabled: !!operationAction && actionForOriginalOperation.includes(operationAction) && !!restGroupingPrefix,
+    versionKey: !isPackageFromDashboard ? originVersionKey : refComparisonSummary?.previousVersion,
     apiType: apiType as ApiType,
-    operationKey: operationAction === DiffAction.rename
-      ? `${getFullGroupForOperation(restGroupingPrefix, previousGroup!)}-${operationKeyForOriginOperation}`
-      : operationKeyForOriginOperation,
+    operationKey: operationKeyForOriginOperation,
   })
 
-  const { data: changedOperation, isLoading: isChangedOperationLoading } = useOperation({
-    packageKey: !isPackageFromDashboard ? originPackageKey : refPackageKey,
+  const { data: changedOperation, isInitialLoading: isChangedOperationLoading } = useOperation({
+    packageKey: !isPackageFromDashboard ? changedPackageKey : refPackageKey,
     versionKey: !isPackageFromDashboard ? changedVersionKey : refComparisonSummary?.version,
-    enabled: !!operationAction && actionForChangedOperation.includes(operationAction) && !!restGroupingPrefix,
     apiType: apiType as ApiType,
-    operationKey: operationAction === DiffAction.rename
-      ? `${getFullGroupForOperation(restGroupingPrefix, group!)}-${operationKeyForChangedOperation}`
-      : operationKeyForChangedOperation,
+    operationKey:operationKeyForChangedOperation,
   })
+
+  // process operations in the same way they are processed in api-processor for prefix groups comparison
+  // particularly, remove servers from the operation data
+  const processedOriginOperation = useMemo(
+    () => (
+      !!originOperation && !!originOperation.data
+      ? {
+          ...originOperation,
+          data: createCopyWithPrefixGroupOperationsOnly(originOperation.data as RestOperationData, previousGroupPrefix) }
+      : originOperation
+    ),
+    [originOperation, previousGroupPrefix],
+  )
+
+  const processedChangedOperation = useMemo(
+    () => (
+      !!changedOperation && !!changedOperation.data
+      ? { ...changedOperation, data: createCopyWithPrefixGroupOperationsOnly(changedOperation.data as RestOperationData, currentGroupPrefix) }
+      : changedOperation),
+    [changedOperation, currentGroupPrefix],
+  )
 
   const areChangesAndOperationsLoading = isOriginOperationLoading && isChangedOperationLoading
   const operationPairsGroupedByTags: OperationPairsGroupedByTag = useMemo(() => {
@@ -353,8 +371,8 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
   }, [apiType, areChangesAndOperationsLoading, changedPackageKey, changedVersionKey, filters, firstOperationPair, group, isCurrentOperationGrouped, navigateToFirstGroupOperation, previousGroup, selectedDocumentSlug])
 
   const comparedOperationsPair: OptionalOperationPair<OperationData> = {
-    previousOperation: originOperation,
-    currentOperation: changedOperation,
+    previousOperation: processedOriginOperation,
+    currentOperation: processedChangedOperation,
     isLoading: isOriginOperationLoading || isChangedOperationLoading,
   }
 
@@ -395,8 +413,8 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
                 }
                 body={
                   <OperationContent
-                    changedOperation={changedOperation}
-                    originOperation={originOperation}
+                    changedOperation={processedChangedOperation}
+                    originOperation={processedOriginOperation}
                     displayMode={COMPARE_SAME_OPERATIONS_MODE}
                     isLoading={areChangesAndOperationsLoading}
                     paddingBottom={VERSION_SWAPPER_HEIGHT}
@@ -414,12 +432,12 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
 
 const actionForOriginalOperation = ['remove', 'replace', 'rename']
 const actionForChangedOperation = ['add', 'replace', 'rename']
-
-export const getFullGroupForOperation = (restGroupingPrefix: string | undefined, group: string): string => {
-  if (!restGroupingPrefix) return group
-
-  return convertToSlug(restGroupingPrefix.replace(/{group}/g, group))
-}
-
 const httpMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+
+export const getGroupPrefix = (groupPrefixTemplate: string | undefined, group: string | undefined): string => {
+  if (!groupPrefixTemplate || !group) {
+    return ''
+  }
+  return groupPrefixTemplate.replace(/{group}/g, group)
+}
 

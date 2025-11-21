@@ -23,7 +23,7 @@ import type {
 } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { DEFAULT_TAG, EMPTY_TAG } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import { matchPaths, OPEN_API_PROPERTY_PATHS, PREDICATE_UNCLOSED_END } from '@netcracker/qubership-apihub-api-unifier'
+import { matchPaths, OPEN_API_PROPERTY_PATHS, PREDICATE_NOT_OAS_EXTENSION } from '@netcracker/qubership-apihub-api-unifier'
 import { DiffAction } from '@netcracker/qubership-apihub-api-diff'
 
 export function groupOperationsByTags<T extends Operation>(
@@ -70,8 +70,8 @@ export function groupOperationPairsByTags<T extends Operation>(
   return operationPairsGroupedByTag
 }
 
-export const getActionForOperation = (change: OperationChanges, actionType: string): string => {
-  return !isFullyAddedOrRemovedOperationChange(change)
+export const getActionForRestOperation = (change: OperationChanges, actionType: string): string => {
+  return !isFullyAddedOrRemovedRestOperationChange(change)
     ? actionType
     : change?.diffs?.[0]?.action ?? ''
 }
@@ -87,28 +87,28 @@ export function handleOperationTags(tags: readonly string[] | undefined): Set<st
   return operationTagsSet
 }
 
-export function isFullyAddedOrRemovedOperationChange(change: OperationChanges): boolean {
+export function isFullyAddedOrRemovedRestOperationChange(change: OperationChanges): boolean {
   if (change.diffs?.[0]) {
     if (change.diffs[0].action === DiffAction.remove) {
-      return isOperationChange(change.diffs[0].beforeDeclarationPaths)
+      return isRestOperationChange(change.diffs[0].beforeDeclarationPaths)
     }
     if (change.diffs[0].action === DiffAction.add) {
-      return isOperationChange(change.diffs[0].afterDeclarationPaths)
+      return isRestOperationChange(change.diffs[0].afterDeclarationPaths)
     }
   }
   return false
 }
 
 export function isFullyRemovedOperationChange(change: OperationChanges): boolean {
-  return change.diffs?.[0]?.action === DiffAction.remove && isOperationChange(change.diffs[0].beforeDeclarationPaths)
+  return change.diffs?.[0]?.action === DiffAction.remove && isRestOperationChange(change.diffs[0].beforeDeclarationPaths)
 }
 
 export function isFullyAddedOperationChange(change: OperationChanges): boolean {
-  return change.diffs?.[0]?.action === DiffAction.add && isOperationChange(change.diffs[0].afterDeclarationPaths)
+  return change.diffs?.[0]?.action === DiffAction.add && isRestOperationChange(change.diffs[0].afterDeclarationPaths)
 }
 
-function isOperationChange(paths: JsonPath[]): boolean { //check
-  return !!matchPaths(paths, [[OPEN_API_PROPERTY_PATHS, PREDICATE_UNCLOSED_END]])
+function isRestOperationChange(paths: JsonPath[]): boolean {
+  return !!matchPaths(paths, [[OPEN_API_PROPERTY_PATHS, PREDICATE_NOT_OAS_EXTENSION, PREDICATE_NOT_OAS_EXTENSION]])
 }
 
 // TODO: Remove JsonPath from shared or inline it with crawler

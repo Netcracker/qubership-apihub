@@ -18,15 +18,20 @@ import {
   fetchDeprecatedItems,
   fetchOperations,
   getPackageVersionContent,
+  getResolvedVersionDocuments,
   getVersionReferences,
   toVersionOperation,
 } from './packages-builder'
 import type {
+  RawDocumentResolver,
+  ResolvedVersionDocuments,
   VersionDeprecatedResolver,
+  VersionDocumentsResolver,
   VersionOperationsResolver,
   VersionReferencesResolver,
   VersionResolver,
 } from '@netcracker/qubership-apihub-api-processor'
+import { getPublishedDocumentRawBlob } from '../hooks/documents/usePublishedDocumentRaw'
 
 export async function packageVersionResolver(): Promise<VersionResolver> {
   return async (packageId, version, includeOperations = false) => {
@@ -88,5 +93,46 @@ export async function versionOperationsResolver(): Promise<VersionOperationsReso
 export async function versionDeprecatedResolver(): Promise<VersionDeprecatedResolver> {
   return async (apiType, version, packageId, operationsIds) => {
     return await fetchDeprecatedItems(apiType, packageId, version, operationsIds)
+  }
+}
+
+export async function versionDocumentsResolver(): Promise<VersionDocumentsResolver> {
+  return async (version, packageId, apiType) => {
+    const EMPTY_DOCUMENTS_DTO = { documents: [], packages: {} }
+    const limit = 100
+    const result: ResolvedVersionDocuments = { documents: [], packages: {} }
+    let page = 0
+    let documentsCount = 0
+
+    try {
+      while (page === 0 || documentsCount === limit) {
+        const { documents, packages } = await getResolvedVersionDocuments(packageId, version, apiType) ?? EMPTY_DOCUMENTS_DTO
+        result.documents = [...result.documents, ...documents]
+        result.packages = { ...result.packages, ...packages }
+
+        page += 1
+        documentsCount = documents.length
+      }
+      return result
+    } catch (error) {
+      console.error(error)
+      return EMPTY_DOCUMENTS_DTO
+    }
+  }
+}
+
+export async function rawDocumentResolver(): Promise<RawDocumentResolver> {
+  return async (version, packageId, slug) => {
+    try {
+      const response = await getPublishedDocumentRawBlob(packageId, version, slug)
+
+      const data = await response.blob()
+      const filename = response.headers.get('content-disposition')!.split('filename=')[1].slice(1, -1)
+      const contentType = response.headers.get('content-type')!
+      return new File([data], filename, { type: contentType })
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 }

@@ -200,7 +200,6 @@ type OperationMetadata = Readonly<{
   apiType: ApiType
   data?: object
   packageRef?: string
-  dataHash?: string
   deprecated?: boolean
   tags?: string[]
 }>
@@ -228,7 +227,7 @@ export type DeprecatedItemDto = Readonly<{
 }>
 export type DeprecatedItemsDto = ReadonlyArray<DeprecatedItemDto>
 
-export type OperationWithDeprecatedDto = Omit<OperationDto, 'dataHash' | 'data'> & Readonly<{
+export type OperationWithDeprecatedDto = Omit<OperationDto, 'data'> & Readonly<{
   deprecatedCount?: string
   deprecatedInfo?: object
   deprecatedItems?: DeprecatedItemsDto
@@ -347,8 +346,6 @@ export type OperationChangesMetadata = Readonly<{
   packageRef?: string
   previousVersionPackageRef?: string
   apiKind?: ApiKind
-  dataHash?: string
-  previousDataHash?: string
   tags?: readonly string[]
 }>
 

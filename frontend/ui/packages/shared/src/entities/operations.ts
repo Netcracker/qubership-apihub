@@ -24,7 +24,7 @@ import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstac
 import type { Key, VersionKey } from './keys'
 import type { ApiType } from './api-types'
 import { API_TYPE_REST } from './api-types'
-import type { DeprecateItem } from '@netcracker/qubership-apihub-api-processor'
+import type { DeprecateItem, ReferencedPackageKind } from '@netcracker/qubership-apihub-api-processor'
 import type { IsLoading } from '../utils/aliases'
 
 export const DEFAULT_API_TYPE: ApiType = API_TYPE_REST
@@ -37,13 +37,13 @@ export type OperationDto = RestOperationDto | GraphQlOperationDto
 
 export type OperationMetadataDto = Readonly<{
   operationId: Key
+  documentId: Key
   title: string
   apiType: ApiType
   apiKind: ApiKind
   apiAudience: ApiAudience
   data?: object
   packageRef?: string
-  dataHash: string
   deprecated?: boolean
   tags?: Readonly<Tags>
   customTags?: CustomTags
@@ -69,7 +69,7 @@ export type OperationsWithDeprecationsDto = Readonly<{
   operations: ReadonlyArray<OperationWithDeprecationsDto>
   packages: PackagesRefs
 }>
-export type OperationWithDeprecationsDto = Omit<OperationDto, 'dataHash' | 'data'> & Readonly<{
+export type OperationWithDeprecationsDto = Omit<OperationDto, 'data'> & Readonly<{
   deprecatedCount?: string
   deprecatedInfo?: object
   deprecatedItems?: DeprecatedItemsDto
@@ -114,7 +114,6 @@ export interface Operation {
   readonly title: string
   readonly apiKind: ApiKind
   readonly apiAudience: ApiAudience
-  readonly dataHash?: string
   readonly packageRef?: PackageRef
   readonly tags?: Readonly<Tags>
   readonly customTags?: CustomTags
@@ -140,7 +139,7 @@ export type PackagesRefs = {
 }
 export type PackageRefDto = {
   refId: string
-  kind?: string
+  kind?: ReferencedPackageKind
   name?: string
   version: string
   notLatestRevision?: boolean
