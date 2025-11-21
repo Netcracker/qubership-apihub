@@ -19,7 +19,7 @@ import { SchemaContextPanel } from '@apihub/components/SchemaContextPanel'
 import type { OpenApiData } from '@apihub/entities/operation-structure'
 import { OPEN_API_SECTION_PARAMETERS, OPEN_API_SECTION_REQUESTS, OPEN_API_SECTION_RESPONSES } from '@apihub/entities/operation-structure'
 import { Box } from '@mui/material'
-import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { GraphQLOperationDiffViewer, SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '@netcracker/qubership-apihub-api-doc-viewer'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import type {
@@ -40,6 +40,12 @@ import type { OperationDisplayMode } from './OperationDisplayMode'
 import type { OperationViewElementProps } from './OperationViewElement'
 import { createOperationViewElement } from './OperationViewElement'
 import { useSetupOperationView } from './useSetupOperationView'
+import type { DiffMetaKeys } from '@apihub/entities/diff-meta-keys'
+
+const DIFFS_META_KEYS: DiffMetaKeys = {
+  diffsMetaKey: DIFF_META_KEY,
+  aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+}
 
 // First Order Component //
 export type OperationViewProps = PropsWithChildren<{
@@ -95,8 +101,10 @@ export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(pr
   useEffect(() => {
     //refResolver cannot resolve ref to parameter
     const contextParameter = indexedModels?.find(
-      (model) => joinedJsonPath(model.scopeDeclarationPath) === joinedJsonPath(navigationDetails?.scopeDeclarationPath ?? []) &&
-        joinedJsonPath(model.declarationPath) === joinedJsonPath(navigationDetails?.declarationPath ?? []),
+      (model) => (
+        joinedJsonPath(model.scopeDeclarationPath) === joinedJsonPath(navigationDetails?.scopeDeclarationPath ?? []) &&
+        joinedJsonPath(model.declarationPath) === joinedJsonPath(navigationDetails?.declarationPath ?? [])
+      ),
     )?.schemaObject as OpenAPIV3.SchemaObject | undefined
     setContextParameter(contextParameter ?? {})
     setContextPanelOpen(navigationDetails ? isNavigateToModel(navigationDetails) : false)
@@ -121,7 +129,7 @@ export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(pr
       return createDiffOperationViewElement({
         ...options,
         filters: filters ?? [],
-        diffMetaKey: DIFF_META_KEY,
+        diffMetaKeys: DIFFS_META_KEYS,
       })
     }
 
@@ -192,7 +200,7 @@ const API_TYPE_VIEWER_MAP: Record<ApiType, ApiTypeViewerCallback> = {
         source={mergedDocument}
         displayMode={schemaViewMode as SchemaViewMode}
         filters={filters ?? []}
-        diffMetaKey={DIFF_META_KEY}
+        metaKeys={DIFFS_META_KEYS}
         layoutMode={SIDE_BY_SIDE_DIFFS_LAYOUT_MODE}
       />
   ),

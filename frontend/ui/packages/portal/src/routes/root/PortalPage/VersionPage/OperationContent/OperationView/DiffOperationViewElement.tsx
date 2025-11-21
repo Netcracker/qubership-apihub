@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+import type { DiffMetaKeys } from '@apihub/entities/diff-meta-keys'
 import '@netcracker/qubership-apihub-apispec-view'
 import type { DiffOperationView } from '@netcracker/qubership-apihub-apispec-view'
 import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import type { OperationViewElementProps } from '../OperationView/OperationViewElement'
-import type { DiffMetaKeys } from '@stoplight/diff-elements-core/types'
 
 export type DiffOperationViewElementProps = OperationViewElementProps & {
   filters: ChangeSeverity[]
