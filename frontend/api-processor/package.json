@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-processor",
-  "version": "4.2.1",
+  "version": "4.2.3",
   "description": "",
   "license": "Apache-2.0",
   "module": "dist/esm/src/index.js",
@@ -34,7 +34,7 @@
     "@netcracker/qubership-apihub-api-diff": "feature-move-prefix-from-server-to-path",
     "@netcracker/qubership-apihub-api-unifier": "feature-performance-optimization",
     "@netcracker/qubership-apihub-graphapi": "feature-performance-optimization",
-    "@netcracker/qubership-apihub-json-crawl": "1.0.4",
+    "@netcracker/qubership-apihub-json-crawl": "1.1.0",
     "adm-zip": "0.5.10",
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
