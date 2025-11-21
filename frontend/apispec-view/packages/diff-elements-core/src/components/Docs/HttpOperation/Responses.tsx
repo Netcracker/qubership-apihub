@@ -17,7 +17,8 @@ import { isObject } from '@stoplight/diff-elements-core/utils/guards'
 import { useAggregatedDiffsMetaKey } from '@stoplight/elements/containers/AggregatedDiffsMetaKeyContext'
 import { useChangeSeverityFilters } from '@stoplight/elements/containers/ChangeSeverityFiltersContext'
 import { useDiffsMetaKey } from '@stoplight/elements/containers/DiffsMetaKeyContext'
-import { SectionTitle } from '../Sections'
+import { SectionSubtitle, SectionTitle } from '../Sections'
+import { Parameters } from './Parameters'
 
 interface ResponseCodeItemProps {
   response: IHttpOperationResponse;
@@ -160,6 +161,11 @@ export const Responses = (props: ResponsesProps) => {
   )
 }
 
+const ACTION_COLORS: Record<'add' | 'remove', string> = {
+  add: 'rgb(107, 206, 112)',
+  remove: 'rgb(237, 74, 84)',
+}
+
 const ResponseCodeItem = ({ response, action }: ResponseCodeItemProps) => {
   return (
     <Box>
@@ -172,11 +178,6 @@ const ResponseCodeItem = ({ response, action }: ResponseCodeItemProps) => {
       )}
     </Box>
   )
-}
-
-const ACTION_COLORS: Record<'add' | 'remove', string> = {
-  add: 'rgb(107, 206, 112)',
-  remove: 'rgb(237, 74, 84)',
 }
 
 Responses.displayName = 'HttpOperation.Responses'
@@ -295,8 +296,11 @@ const Response = ({ response, onMediaTypeChange, extensions, extensionsMeta }: R
           <DiffContainer>
             <SectionSubtitle title="Headers" id="response-headers" />
           </DiffContainer>
-          {/* @ts-expect-error // Original type definitions != real types */}
-          <Parameters parameterType="header" parameters={headersWithMeta} />
+          <Parameters
+            parameterType="header"
+            // @ts-expect-error // Original type definitions != real types
+            parameters={headersWithMeta}
+          />
         </VStack>
       )}
 
