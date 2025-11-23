@@ -2,7 +2,7 @@
 
 Unify API into a normalized presentation with all reference resolved, allOf combiners merged and other aspects unified.
 
-Supports OpenAPI and GraphQL specifications processing.
+Supports OpenAPI, AsyncAPI, and GraphQL specifications processing.
 
 ## Modifications
 Modified version of [udamir/allof-merge](https://github.com/udamir/allof-merge)
@@ -39,10 +39,9 @@ Modified version of [udamir/allof-merge](https://github.com/udamir/allof-merge)
 
 - [JsonSchema](https://json-schema.org/draft/2020-12/json-schema-core.html)
 - [OpenApi 3.x](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md)
+- [AsyncApi 3.x](https://www.asyncapi.com/docs/reference/specification/v3.0.0)
 - GraphApi
 - ~~Swagger 2.x~~ (roadmap)
-- ~~AsyncApi 2.x~~ (roadmap)
-- ~~AsyncApi 3.x~~ (roadmap)
 
 ## Other libraries
 There are some libraries that can merge schemas combined with allOf. One of the most popular is [mokkabonna/json-schema-merge-allof](https://npmjs.com/package/json-schema-merge-allof), but it has some limitatons: Does not support circular $refs and no TypeScript syntax out of the box.

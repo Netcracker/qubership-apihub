@@ -5,7 +5,7 @@ export const SPEC_TYPE_JSON_SCHEMA_06 = 'json-schema-06'
 export const SPEC_TYPE_JSON_SCHEMA_07 = 'json-schema-07'
 export const SPEC_TYPE_OPEN_API_30 = 'openapi-3.0'
 export const SPEC_TYPE_OPEN_API_31 = 'openapi-3.1'
-export const SPEC_TYPE_ASYNCAPI_2 = 'asyncapi-2'
+export const SPEC_TYPE_ASYNCAPI_3 = 'asyncapi-3'
 export const SPEC_TYPE_GRAPH_API = 'graphapi'
 
 export type JsonSchemaSpecVersion =
@@ -21,7 +21,7 @@ export type SpecType =
   JsonSchemaSpecVersion
   | OpenApiSpecVersion
   | typeof SPEC_TYPE_GRAPH_API
-  | typeof SPEC_TYPE_ASYNCAPI_2
+  | typeof SPEC_TYPE_ASYNCAPI_3
 
 interface OpenApiSpec {
   openapi: string
@@ -56,8 +56,8 @@ export function resolveSpec(data: unknown): Spec {
   }
 
   if (isAsyncApi(data)) {
-    if (data.asyncapi.startsWith('2.')) {
-      return { type: SPEC_TYPE_ASYNCAPI_2, version: data.asyncapi }
+    if (data.asyncapi.startsWith('3.')) {
+      return { type: SPEC_TYPE_ASYNCAPI_3, version: data.asyncapi }
     }
     throw new Error(`AsyncApi version ${data.asyncapi} is not supported.`)
   }
