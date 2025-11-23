@@ -87,6 +87,7 @@ export default defineConfig(({ mode }) => {
         '@apihub/entities': path.resolve(__dirname, './src/entities/'),
         '@apihub/utils': path.resolve(__dirname, './src/utils/'),
         '@netcracker/qubership-apihub-ui-shared': path.resolve(__dirname, './../shared/src'),
+        '@asyncapi/parser': '@asyncapi/parser/browser', // Use browser-compatible version of AsyncAPI parser
       },
     },
     worker: {

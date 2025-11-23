@@ -37,7 +37,7 @@ import { getDefaultApiType } from '@apihub/utils/operation-types'
 import type { SidebarMenu } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
 import { NavigationMenu } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
@@ -306,4 +306,5 @@ const getAvailableSidebarServiceMenuItems = (
 const API_TYPE_DISABLE_TAB_MAP: Record<ApiType, (productionMode: boolean) => boolean> = {
   [API_TYPE_REST]: () => false,
   [API_TYPE_GRAPHQL]: (productionMode) => productionMode,
+  [API_TYPE_ASYNCAPI]: () => false,
 }

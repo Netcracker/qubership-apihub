@@ -39,7 +39,7 @@ import {
   WarningApiProcessorVersion,
 } from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { FileViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
 import { FILE_FORMAT_VIEW, YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
 import { GRAPH_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
@@ -214,7 +214,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
             swapperBreadcrumbsAfterComponent={<WarningApiProcessorVersion packageKey={changedPackageKey}
               versionKey={changedVersionKey} />}
           />
-          {isDocViewMode && !!mergedDocument && (
+          {isDocViewMode && !!mergedDocument && apiType !== API_TYPE_ASYNCAPI && (  //TODO: remove after doc view for AsyncAPI is implemented
             <OperationView
               apiType={apiType as ApiType}
               originOperation={originOperation}
@@ -227,7 +227,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
               filters={filters}
             />
           )}
-          {isRawViewMode && (
+          {(isRawViewMode || (isDocViewMode && apiType === API_TYPE_ASYNCAPI)) && (
             <RawSpecDiffView
               beforeValue={originalValue}
               afterValue={changedValue}
@@ -246,7 +246,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
                 pt={isRawViewMode || isGraphViewMode ? 0 : 1}
                 height="100%"
               >
-                {isDocViewMode && (
+                {isDocViewMode && apiType !== API_TYPE_ASYNCAPI && (  //TODO: remove after doc view for AsyncAPI is implemented
                   <OperationView
                     apiType={apiType as ApiType}
                     changedOperation={changedOperation}
@@ -260,7 +260,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
                     mergedDocument={mergedDocument}
                   />
                 )}
-                {isRawViewMode && (
+                {(isRawViewMode || (isDocViewMode && apiType === API_TYPE_ASYNCAPI)) && (
                   <Box
                     display={isRawViewMode ? 'grid' : 'inherit'}
                     height={isRawViewMode ? 'inherit' : '100%'}
@@ -314,4 +314,5 @@ const API_TYPE_RAW_VIEW_ACTIONS_MAP: Record<ApiType, (fileViewMode: FileViewMode
     />
   ),
   [API_TYPE_GRAPHQL]: () => null,
+  [API_TYPE_ASYNCAPI]: () => null,
 }

@@ -40,6 +40,7 @@ import { TemplateUpload } from './TemplateUpload'
 import { InfoContextIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoContextIcon'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import {
+  API_TYPE_ASYNCAPI,
   API_TYPE_GRAPHQL,
   API_TYPE_REST,
   API_TYPE_TITLE_MAP,
@@ -277,9 +278,11 @@ const TOOLTIP_TITLE = 'The OpenAPI specification template is the template that w
 const API_TYPE_EXPANDED_MAP: Record<ApiType, (setExpanded: Dispatch<SetStateAction<boolean>>) => void> = {
   [API_TYPE_REST]: (setExpanded) => setExpanded(true),
   [API_TYPE_GRAPHQL]: (setExpanded) => setExpanded(false),
+  [API_TYPE_ASYNCAPI]: () => {},//TODO: review and implement
 }
 
 const API_TYPE_ACCORDION_DISABLED_MAP: Record<ApiType, boolean> = {
   [API_TYPE_REST]: false,
   [API_TYPE_GRAPHQL]: true,
+  [API_TYPE_ASYNCAPI]: true,
 }

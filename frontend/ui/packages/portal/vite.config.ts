@@ -12,7 +12,7 @@ import inject from '@rollup/plugin-inject'
 import monacoWorkerHashPlugin from '../../vite-monaco-worker-hash'
 import createVersionJsonFilePlugin from '../../vite-create-version-json'
 
-const proxyServer = 'http://host.docker.internal:8081'
+const proxyServer = 'https://qubership-apihub-2.localtest.me/'
 const apiLinterProxyServer = 'http://host.docker.internal:8091'
 const devServer = 'http://localhost:3003'
 
@@ -95,6 +95,8 @@ export default defineConfig(({ mode }) => {
         '@apihub/routes': path.resolve(__dirname, './src/routes/'),
         '@apihub/utils': path.resolve(__dirname, './src/utils/'),
         '@netcracker/qubership-apihub-ui-shared': path.resolve(__dirname, './../shared/src'),
+        'buffer': require.resolve('buffer/'),
+        '@asyncapi/parser': '@asyncapi/parser/browser', // Use browser-compatible version of AsyncAPI parser
       },
     },
     worker: {

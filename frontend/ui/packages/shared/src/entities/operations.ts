@@ -33,7 +33,7 @@ export type OperationsDto = Readonly<{
   operations: ReadonlyArray<OperationDto>
   packages: PackagesRefs
 }>
-export type OperationDto = RestOperationDto | GraphQlOperationDto
+export type OperationDto = RestOperationDto | GraphQlOperationDto | AsyncApiOperationDto
 
 export type OperationMetadataDto = Readonly<{
   operationId: Key
@@ -57,6 +57,12 @@ export type RestOperationDto = OperationMetadataDto & Readonly<{
 export type GraphQlOperationDto = OperationMetadataDto & Readonly<{
   method: string
   type: GraphQlOperationType
+}>
+
+export type AsyncApiOperationDto = OperationMetadataDto & Readonly<{
+  action: string //TODO: add typing
+  channel: string
+  protocol: string
 }>
 
 export type DeprecatedItem = DeprecateItem
@@ -126,6 +132,12 @@ export interface RestOperation extends Operation {
 export interface GraphQlOperation extends Operation {
   readonly method: string
   readonly type: GraphQlOperationType
+}
+
+export interface AsyncApiOperation extends Operation {
+  readonly action: string //TODO: add typing
+  readonly channel: string
+  readonly protocol: string
 }
 
 export interface OperationData extends Operation {
@@ -272,6 +284,21 @@ export function isRestOperationDto(operation: OperationDto): operation is RestOp
 export function isGraphQlOperation(operation: Operation): operation is GraphQlOperation {
   const asGraphQlOperation = (operation as GraphQlOperation)
   return asGraphQlOperation.type !== undefined
+}
+
+export function isGraphQlOperationDto(operation: OperationDto): operation is GraphQlOperationDto {
+  const asGraphQlOperation = (operation as GraphQlOperationDto)
+  return asGraphQlOperation.type !== undefined
+}
+
+export function isAsyncApiOperation(operation: Operation): operation is AsyncApiOperation {
+  const asAsyncApiOperation = (operation as AsyncApiOperation)
+  return asAsyncApiOperation.action !== undefined && asAsyncApiOperation.channel !== undefined
+}
+
+export function isAsyncApiOperationDto(operation: OperationDto): operation is AsyncApiOperationDto {
+  const asAsyncApiOperation = (operation as AsyncApiOperationDto)
+  return asAsyncApiOperation.action !== undefined && asAsyncApiOperation.channel !== undefined
 }
 
 export function isOperation(value: unknown): value is Operation {

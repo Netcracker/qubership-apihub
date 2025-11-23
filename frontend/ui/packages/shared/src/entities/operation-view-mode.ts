@@ -15,7 +15,7 @@
  */
 
 import type { ApiType } from './api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from './api-types'
+import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from './api-types'
 
 export const DOC_OPERATION_VIEW_MODE = 'doc'
 export const SIMPLE_OPERATION_VIEW_MODE = 'simple'
@@ -45,9 +45,16 @@ export const GQL_OPERATION_VIEW_MODES: ReadonlyArray<OperationViewMode> = [
   RAW_OPERATION_VIEW_MODE,
 ]
 
+export const ASYNCAPI_OPERATION_VIEW_MODES: ReadonlyArray<OperationViewMode> = [
+  // DOC_OPERATION_VIEW_MODE, //TODO: add doc view for AsyncAPI
+  // SIMPLE_OPERATION_VIEW_MODE, //TODO: add simple view for AsyncAPI
+  RAW_OPERATION_VIEW_MODE,
+]
+
 export const OPERATION_VIEW_MODES = new Map<ApiType, ReadonlyArray<OperationViewMode>>([
   [API_TYPE_GRAPHQL, GQL_OPERATION_VIEW_MODES],
   [API_TYPE_REST, REST_OPERATION_VIEW_MODES],
+  [API_TYPE_ASYNCAPI, ASYNCAPI_OPERATION_VIEW_MODES],
 ])
 
 export const OPERATION_COMPARE_VIEW_MODES: ReadonlyArray<OperationViewMode> = [DOC_OPERATION_VIEW_MODE, RAW_OPERATION_VIEW_MODE]

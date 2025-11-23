@@ -72,6 +72,7 @@ import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/Cu
 import { CalendarIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CalendarIcon'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import {
+  API_TYPE_ASYNCAPI,
   API_TYPE_GRAPHQL,
   API_TYPE_REST,
   API_TYPE_TITLE_MAP,
@@ -255,6 +256,9 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
           scope: scope,
           operationTypes: operationTypes,
         } satisfies SearchGQLParams,
+        [API_TYPE_ASYNCAPI]: {
+          apiType: apiType,
+        } as any,// TODO: review and implement
       }
 
       applyGlobalSearchFilters({
@@ -400,6 +404,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
         />
       </>
     ),
+    [API_TYPE_ASYNCAPI]: <></>,
   }), [apiSearchMode, control, setValue])
 
   return useMemo(() => (<>

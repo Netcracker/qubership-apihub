@@ -28,7 +28,7 @@ import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/Cu
 import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { CREATE_VERSION_PERMISSIONS } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
 import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { VERSION_STATUS_MANAGE_PERMISSIONS } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
@@ -207,4 +207,5 @@ type ShowCompareGroupsCallback = (isPackage: boolean, restGroupingPrefix: string
 const API_TYPE_SHOW_COMPARE_GROUPS_MAP: Record<ApiType, ShowCompareGroupsCallback> = {
   [API_TYPE_REST]: (isPackage, restGroupingPrefix) => isPackage && !!restGroupingPrefix,
   [API_TYPE_GRAPHQL]: () => false,
+  [API_TYPE_ASYNCAPI]: () => false,
 }

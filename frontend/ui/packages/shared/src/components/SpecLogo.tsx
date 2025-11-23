@@ -34,7 +34,7 @@ import { JsonSchemaIcon } from '../icons/JsonSchemaIcon'
 import { RestApiIcon } from '../icons/RestApiIcon'
 import { GraphqlIcon } from '../icons/GraphqlIcon'
 import type { ApiType } from '../entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '../entities/api-types'
+import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '../entities/api-types'
 import { ProtobufIcon } from '../icons/ProtobufIcon'
 
 export type SpecLogoProps = {
@@ -92,4 +92,5 @@ export const SpecLogo: FC<SpecLogoProps> = memo<SpecLogoProps>(({ value }) => {
 const API_TYPE_ICON_MAP: Record<ApiType, ReactElement | null> = {
   [API_TYPE_REST]: <RestApiIcon/>,
   [API_TYPE_GRAPHQL]: null,
+  [API_TYPE_ASYNCAPI]: null,//TODO: add icon
 }

@@ -44,6 +44,8 @@ declare module '@mui/material/styles' {
     post: SimplePaletteColorOptions
     put: SimplePaletteColorOptions
     patch: SimplePaletteColorOptions
+    send: SimplePaletteColorOptions
+    receive: SimplePaletteColorOptions
     query: SimplePaletteColorOptions
     mutation: SimplePaletteColorOptions
     subscription: SimplePaletteColorOptions
@@ -83,6 +85,8 @@ declare module '@mui/material/Chip' {
     post: true
     patch: true
     delete: true
+    send: true
+    receive: true
     query: true
     mutation: true
     subscription: true

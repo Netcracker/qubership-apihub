@@ -20,7 +20,7 @@ import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entit
 import type { MethodType } from '@netcracker/qubership-apihub-ui-shared/entities/method-types'
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 export type SearchResults = Readonly<{
   packages: PackageSearchResult[]
@@ -199,6 +199,7 @@ export const GRAPHQL_SCOPES: GraphqlScope[] = [ARGUMENT_SCOPE, PROPERTY_SCOPE, A
 export const API_TYPE_SCOPES_MAP: Record<ApiType, RestScope[] | GraphqlScope[]> = {
   [API_TYPE_REST]: REST_SCOPES,
   [API_TYPE_GRAPHQL]: GRAPHQL_SCOPES,
+  [API_TYPE_ASYNCAPI]: [],//TODO: add AsyncAPI scopes
 }
 
 export const OPERATIONS_TYPES: GraphQlOperationTypes[] = [QUERY_OPERATION_TYPES, MUTATION_OPERATION_TYPES, SUBSCRIPTION_OPERATION_TYPES]

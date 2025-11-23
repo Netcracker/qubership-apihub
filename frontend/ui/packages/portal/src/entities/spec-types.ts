@@ -16,7 +16,7 @@
 
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import {
-  ASYNCAPI_2_SPEC_TYPE,
+  ASYNCAPI_3_SPEC_TYPE,
   JSON_SCHEMA_SPEC_TYPE,
   OPENAPI_3_0_SPEC_TYPE,
   OPENAPI_3_1_SPEC_TYPE,
@@ -24,7 +24,7 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 
 const ASYNCAPI_SPEC_TYPES: ReadonlyArray<SpecType> = [
-  ASYNCAPI_2_SPEC_TYPE,
+  ASYNCAPI_3_SPEC_TYPE,
 ]
 
 export function isAsyncApiSpecType(type?: SpecType): boolean {

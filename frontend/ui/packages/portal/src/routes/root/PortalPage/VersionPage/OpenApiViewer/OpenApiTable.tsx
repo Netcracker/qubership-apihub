@@ -50,8 +50,10 @@ import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/
 import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
 import { useResizeObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useResizeObserver'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_AUDIENCE_COLUMN_ID, API_KIND_COLUMN_ID, ENDPOINT_COLUMN_ID, PACKAGE_COLUMN_ID, TAGS_COLUMN_ID } from '@netcracker/qubership-apihub-ui-shared/entities/table-columns'
+import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_AUDIENCE_COLUMN_ID, API_KIND_COLUMN_ID, ENDPOINT_COLUMN_ID, PACKAGE_COLUMN_ID, PROTOCOL_COLUMN_ID, TAGS_COLUMN_ID } from '@netcracker/qubership-apihub-ui-shared/entities/table-columns'
+import { isAsyncApiOperation } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { AsyncApiTableCell } from './AsyncApiTableCell'
 
 export type OpenApiTableData = {
   operation: OperationData
@@ -358,4 +360,46 @@ const API_TYPE_COLUMNS_MAP: Record<ApiType, ColumnModelCallback> = {
     },
   }),
   [API_TYPE_GRAPHQL]: () => null,
+  [API_TYPE_ASYNCAPI]: (tableColumns, textFilter) => {
+    // Replace endpoint column with AsyncAPI-specific cell
+    const endpointColumnIndex = tableColumns.findIndex(col => col.id === ENDPOINT_COLUMN_ID)
+    if (endpointColumnIndex !== -1) {
+      tableColumns[endpointColumnIndex] = {
+        id: ENDPOINT_COLUMN_ID,
+        header: () => <CustomTableHeadCell title="Operation" />,
+        cell: ({ row }) => <AsyncApiTableCell value={row} />,
+      }
+    }
+
+    // Add Protocol column after Endpoint
+    tableColumns.splice(1, 0, {
+      id: PROTOCOL_COLUMN_ID,
+      header: () => <CustomTableHeadCell title="Protocol" />,
+      cell: ({ row: { original: { operation } } }) => {
+        if (isAsyncApiOperation(operation)) {
+          return (
+            <TextWithOverflowTooltip tooltipText={operation.protocol}>
+              {operation.protocol}
+            </TextWithOverflowTooltip>
+          )
+        }
+      },
+    })
+
+    // Add Custom Metadata column
+    tableColumns.push({
+      id: CUSTOM_METADATA_COLUMN_ID,
+      header: () => <CustomTableHeadCell title="Custom Metadata" />,
+      cell: ({ row: { original: { operation } } }) => {
+        if (operation?.customTags) {
+          return (
+            <CustomMetadataCell
+              metaData={operation.customTags as { [key: string]: JSONValue }}
+              textFilter={textFilter}
+            />
+          )
+        }
+      },
+    })
+  },
 }

@@ -20,7 +20,7 @@ import { Box, Link, Typography } from '@mui/material'
 import { NavLink } from 'react-router-dom'
 import type { Path } from '@remix-run/router'
 import type { Operation } from '../../entities/operations'
-import { isGraphQlOperation, isRestOperation } from '../../entities/operations'
+import { isAsyncApiOperation, isGraphQlOperation, isRestOperation } from '../../entities/operations'
 import { OverflowTooltip } from '../OverflowTooltip'
 import { CustomChip } from '../CustomChip'
 import { TextWithOverflowTooltip } from '../TextWithOverflowTooltip'
@@ -60,7 +60,14 @@ export const OperationTitleWithMeta: FC<OperationTitleWithMetaProps> = memo<Oper
         type: operation.type,
       }
     }
-    throw new Error('Operation must be either a REST or GraphQL operation')
+    if (isAsyncApiOperation(operation)) {
+      return {
+        title: operation.title,
+        subtitle: operation.channel,
+        type: operation.action,
+      }
+    }
+    throw new Error('Operation must be either a REST, GraphQL, or AsyncAPI operation')
   }, [operation])
 
   const titleNode = link

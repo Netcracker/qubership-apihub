@@ -30,7 +30,7 @@ import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/Cu
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { MethodType } from '@netcracker/qubership-apihub-ui-shared/entities/method-types'
 
 export type ApiOperationsSearchListProps = {
@@ -119,4 +119,5 @@ type ChipValueCallback = (method: MethodType | undefined, type: GraphQlOperation
 const API_TYPE_CHIP_VALUE_MAP: Record<ApiType, ChipValueCallback> = {
   [API_TYPE_REST]: (method) => method ?? '',
   [API_TYPE_GRAPHQL]: (_, type) => type ?? '',
+  [API_TYPE_ASYNCAPI]: (method) => method ?? '',//TODO should be action for AsyncAPI? (send/receive) 
 }

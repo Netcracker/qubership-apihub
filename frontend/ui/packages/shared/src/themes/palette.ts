@@ -77,6 +77,15 @@ export const CHIP_COLOR_OVERRIDES: Record<keyof ChipPropsColorOverrides, SimpleP
     main: '#FF5260',
     contrastText: '#FF5260',
   },
+  // AsyncAPI Action Type
+  send: {
+    main: '#5CB9CC',
+    contrastText: '#5CB9CC',
+  },
+  receive: {
+    main: '#6BCE70',
+    contrastText: '#6BCE70',
+  },
   // GraphQLOperationType
   query: {
     main: '#00BB5B',

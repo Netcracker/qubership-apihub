@@ -39,7 +39,7 @@ import type { OperationViewElementProps } from './OperationViewElement'
 import { createOperationViewElement } from './OperationViewElement'
 import { createDiffOperationViewElement } from './DiffOperationViewElement'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 // First Order Component //
 export type OperationViewProps = PropsWithChildren<{
@@ -195,6 +195,9 @@ const API_TYPE_VIEWER_MAP: Record<ApiType, ApiTypeViewerCallback> = {
         diffMetaKey={GLOBAL_DIFF_META_KEY}
         layoutMode={SIDE_BY_SIDE_DIFFS_LAYOUT_MODE}
       />
+  ),
+  [API_TYPE_ASYNCAPI]: (ref) => (
+    <Box ref={ref} />
   ),
 }
 

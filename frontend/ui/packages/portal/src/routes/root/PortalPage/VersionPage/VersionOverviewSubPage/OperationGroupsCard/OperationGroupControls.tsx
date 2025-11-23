@@ -17,7 +17,7 @@
 import { Box } from '@mui/material'
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { OperationGroup } from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'
 import {
   DISABLED_BUTTON_COLOR,
@@ -145,4 +145,5 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
 export const API_TYPE_DISABLE_ACTION_MAP: Record<ApiType, boolean> = {
   [API_TYPE_REST]: false,
   [API_TYPE_GRAPHQL]: true,
+  [API_TYPE_ASYNCAPI]: true,
 }
