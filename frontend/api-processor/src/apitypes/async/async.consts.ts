@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-export const ASYNC_OPERATIONS = {
-  publish: 'publish',
-  subscribe: 'subscribe',
-}
+import { FILE_FORMAT_JSON, FILE_FORMAT_YAML } from '../../consts'
+import { ResolvedVersionDocument, ZippableDocument } from '../../types'
+import { API_KIND_KEY, DEPRECATED_META_KEY } from '../../utils/apihubSpecificationExtensions'
+
+export const ASYNCAPI_API_TYPE = 'asyncapi' as const
 
 export const ASYNC_SCOPES = {
   all: 'all',
@@ -28,12 +29,20 @@ export const ASYNC_SCOPES = {
   examples: 'examples',
 } as const
 
+// Only AsyncAPI 3.0 is supported
 export const ASYNC_DOCUMENT_TYPE = {
-  AAS2: 'asyncapi-2-0',
   AAS3: 'asyncapi-3-0',
 } as const
 
 export const ASYNC_FILE_FORMAT = {
-  YAML: 'yaml',
-  JSON: 'json',
+  YAML: FILE_FORMAT_YAML,
+  JSON: FILE_FORMAT_JSON,
+} as const
+
+// Re-export shared constants for AsyncAPI
+export const ASYNC_KIND_KEY = API_KIND_KEY
+export { DEPRECATED_META_KEY }
+
+export function isAsyncApiDocument(document: ZippableDocument | ResolvedVersionDocument): boolean {
+  return Object.values(ASYNC_DOCUMENT_TYPE).some(type => document.type === type)
 }

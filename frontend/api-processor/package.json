@@ -31,6 +31,7 @@
     "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
+    "@asyncapi/parser": "^3.0.0",
     "@netcracker/qubership-apihub-api-diff": "feature-move-prefix-from-server-to-path",
     "@netcracker/qubership-apihub-api-unifier": "feature-performance-optimization",
     "@netcracker/qubership-apihub-graphapi": "feature-performance-optimization",

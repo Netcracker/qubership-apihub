@@ -19,10 +19,11 @@ import { OpenAPIV3 } from 'openapi-types'
 import type { ApiOperation, NotificationMessage, VersionDocument } from '../../types'
 import { REST_DOCUMENT_TYPE, REST_KIND_KEY, REST_SCOPES } from './rest.consts'
 import { NormalizedPath } from '../../utils'
+import { CustomTags } from '../../utils/apihubSpecificationExtensions'
 
 export type RestScopeType = keyof typeof REST_SCOPES
 export type RestDocumentType = (typeof REST_DOCUMENT_TYPE)[keyof typeof REST_DOCUMENT_TYPE]
-export type CustomTags = Record<string, unknown>
+export type { CustomTags }  //TODOL just use new type for REST
 
 export interface RestOperationMeta {
   path: NormalizedPath                    // `/packages/*/version/*`

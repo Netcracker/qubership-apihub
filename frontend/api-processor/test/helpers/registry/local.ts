@@ -26,6 +26,7 @@ import {
   EMPTY_CHANGE_SUMMARY,
   FILE_FORMAT,
   graphqlApiBuilder,
+  isAsyncApiDocument,
   isGraphqlDocument,
   isRestDocument,
   KIND_PACKAGE,
@@ -332,6 +333,8 @@ export class LocalRegistry implements IRegistry {
         return isRestDocument
       case 'graphql':
         return isGraphqlDocument
+      case 'asyncapi':
+        return isAsyncApiDocument
     }
   }
 

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+export * from './apihubSpecificationExtensions'
 export * from './arrays'
 export * from './base64'
 export * from './builder'

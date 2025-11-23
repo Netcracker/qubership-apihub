@@ -14,30 +14,65 @@
  * limitations under the License.
  */
 
-import type { OpenAPIV3 } from 'openapi-types'
-
-import { ApiOperation, VersionDocument } from '../../types'
+import { ApiOperation, NotificationMessage, VersionDocument } from '../../types'
 import { ASYNC_DOCUMENT_TYPE, ASYNC_SCOPES } from './async.consts'
+import { CustomTags } from '../../utils/apihubSpecificationExtensions'
 
 export type AsyncScopeType = keyof typeof ASYNC_SCOPES
 export type AsyncDocumentType = (typeof ASYNC_DOCUMENT_TYPE)[keyof typeof ASYNC_DOCUMENT_TYPE]
 
+/**
+ * AsyncAPI 3.0 operation metadata
+ */
 export interface AsyncOperationMeta {
-  path: string // /packages/*/version/*
-  method: OpenAPIV3.HttpMethods // get | post
-  tags?: string[]
+  action: 'send' | 'receive'        // Operation action //TODO add typing
+  channel: string                   // Channel name
+  protocol: string                  // Protocol (e.g., 'kafka', 'amqp', 'mqtt')
+  customTags: CustomTags            // Custom x-* extensions
 }
 
+/**
+ * AsyncAPI document info
+ */
 export interface AsyncDocumentInfo {
   title: string
   description: string
   version: string
 }
 
-export type VersionAsyncDocument = VersionDocument<any>
-export type VersionAsyncOperation = ApiOperation<AsyncOperationData, AsyncOperationMeta>
+//TODO: fix type (better yet use AsyncApiDocument type from @asyncapi/parser)
+/**
+ * AsyncAPI 3.0 document structure (plain JSON object)
+ */
+export interface AsyncApiDocument {
+  asyncapi: string                  // Version (e.g., '3.0.0')
+  info: {
+    title: string
+    version: string
+    description?: string
+    [key: string]: any
+  }
+  channels?: Record<string, any>    // Channels definition
+  operations?: Record<string, any>  // Operations definition
+  components?: Record<string, any>  // Reusable components
+  servers?: Record<string, any>     // Server definitions
+  [key: string]: any
+}
 
-export type AsyncOperationData = any
+/**
+ * AsyncAPI operation data (single operation spec)
+ */
+export interface AsyncOperationData {
+  asyncapi: string
+  info: AsyncApiDocument['info']
+  channels?: Record<string, any>
+  operations?: Record<string, any>
+  components?: Record<string, any>
+  servers?: Record<string, any>
+}
+
+export type VersionAsyncDocument = VersionDocument<AsyncApiDocument>
+export type VersionAsyncOperation = ApiOperation<AsyncOperationData, AsyncOperationMeta>
 
 export interface AsyncRefCache {
   scopes: Record<AsyncScopeType, string>
@@ -51,11 +86,5 @@ export interface AsyncOperationContext {
   operationData: AsyncOperationData
   document: VersionAsyncDocument
   refsCache: Record<string, AsyncRefCache>
-}
-
-export interface BuildAsyncOperationDataResult {
-  data: OpenAPIV3.OperationObject
-  scopes: Record<AsyncScopeType, string>
-  refs: Record<string, AsyncScopeType[]>
-  tags: string[]
+  notifications: NotificationMessage[]
 }

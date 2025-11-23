@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+export * from './async'
 export * from './graphql'
 export * from './rest'
 export * from './text'

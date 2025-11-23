@@ -37,7 +37,7 @@ import { BuilderConfiguration, BuilderRunOptions, VersionCache } from './builder
 import { ExportDocument, VersionDocument, ZippableDocument } from './documents'
 import { NotificationMessage } from '../package/notifications'
 import { RestOperationData } from '../../apitypes/rest/rest.types'
-import { GRAPHQL_API_TYPE, REST_API_TYPE, TEXT_API_TYPE, UNKNOWN_API_TYPE } from '../../apitypes'
+import { ASYNCAPI_API_TYPE, GRAPHQL_API_TYPE, REST_API_TYPE, TEXT_API_TYPE, UNKNOWN_API_TYPE } from '../../apitypes'
 import { ChangeMessage } from '../package'
 import { SourceFile, TextFile } from './internal'
 import { ApiOperation } from './operation'
@@ -51,6 +51,7 @@ import { OperationsMap } from '../../components'
 export type BuilderType =
   | typeof REST_API_TYPE
   | typeof GRAPHQL_API_TYPE
+  | typeof ASYNCAPI_API_TYPE
   | typeof TEXT_API_TYPE
   | typeof UNKNOWN_API_TYPE
 
