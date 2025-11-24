@@ -2,16 +2,17 @@ import type { VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities
 import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 
 import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@apihub/utils/internal-documents/constants'
+import { isGraphQLOperation, isRestOperation } from '@apihub/utils/internal-documents/type-guards'
+import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
 import type { PackageKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { VersionChanges } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
+import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 import type { OpenAPIV3 } from 'openapi-types'
 import { useMemo } from 'react'
 import { useComparisonInternalDocumentContent } from './useComparisonInternalDocumentContent'
 import { useComparisonInternalDocumentsByPackageVersion } from './useComparisonInternalDocumentsByPackageVersion'
 import type { QueryResult } from './useInternalDocumentsByPackageVersion'
-import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
-import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 
 type Options = {
   previousOperation: OperationData | undefined
@@ -103,42 +104,48 @@ export function useComparedOperations(options: Options): QueryResult<unknown, Er
     if (!deserializedComparisonInternalDocument) {
       return undefined
     }
-    const oasInternalDocument = deserializedComparisonInternalDocument as OpenAPIV3.Document
-    const clonedOasComparisonInternalDocument: OpenAPIV3.Document = {
-      ...oasInternalDocument,
-      paths: {
-        ...oasInternalDocument.paths,
-        [DIFF_META_KEY]:
-          (
-            isObject(oasInternalDocument.paths) &&
-            DIFF_META_KEY in oasInternalDocument.paths &&
-            isObject(oasInternalDocument.paths[DIFF_META_KEY])
-          )
-            ? { ...oasInternalDocument.paths[DIFF_META_KEY] }
-            : undefined,
-      },
-    }
-    // Leave the only operation with necessary path because ASV displays only 1 operation at the time
-    const pathObjects = clonedOasComparisonInternalDocument.paths
-    const paths = Object.keys(pathObjects)
-    for (const path of paths) {
-      if (path !== comparedOperationPath) {
-        delete pathObjects[path]
+    if (isRestOperation(deserializedComparisonInternalDocument)) {
+      const oasInternalDocument = deserializedComparisonInternalDocument
+      const clonedOasComparisonInternalDocument: OpenAPIV3.Document = {
+        ...oasInternalDocument,
+        paths: {
+          ...oasInternalDocument.paths,
+          [DIFF_META_KEY]:
+            (
+              isObject(oasInternalDocument.paths) &&
+              DIFF_META_KEY in oasInternalDocument.paths &&
+              isObject(oasInternalDocument.paths[DIFF_META_KEY])
+            )
+              ? { ...oasInternalDocument.paths[DIFF_META_KEY] }
+              : undefined,
+        },
       }
-    }
-    // Leave the only change for operation with necessary path because ASV takes the first item and doesn't know which operation is there
-    if (DIFF_META_KEY in pathObjects) {
-      const whollyChangedPaths: Record<string, unknown> =
-        isObject(pathObjects[DIFF_META_KEY])
-          ? pathObjects[DIFF_META_KEY]
-          : {}
-      for (const whollyChangedPath of Object.keys(whollyChangedPaths)) {
-        if (whollyChangedPath !== comparedOperationPath) {
-          delete whollyChangedPaths[whollyChangedPath]
+      // Leave the only operation with necessary path because ASV displays only 1 operation at the time
+      const pathObjects = clonedOasComparisonInternalDocument.paths
+      const paths = Object.keys(pathObjects)
+      for (const path of paths) {
+        if (path !== comparedOperationPath) {
+          delete pathObjects[path]
         }
       }
+      // Leave the only change for operation with necessary path because ASV takes the first item and doesn't know which operation is there
+      if (DIFF_META_KEY in pathObjects) {
+        const whollyChangedPaths: Record<string, unknown> =
+          isObject(pathObjects[DIFF_META_KEY])
+            ? pathObjects[DIFF_META_KEY]
+            : {}
+        for (const whollyChangedPath of Object.keys(whollyChangedPaths)) {
+          if (whollyChangedPath !== comparedOperationPath) {
+            delete whollyChangedPaths[whollyChangedPath]
+          }
+        }
+      }
+      return clonedOasComparisonInternalDocument
     }
-    return clonedOasComparisonInternalDocument
+    if (isGraphQLOperation(deserializedComparisonInternalDocument)) {
+      return deserializedComparisonInternalDocument
+    }
+    return undefined
   }, [deserializedComparisonInternalDocument, comparedOperationPath])
 
   return useMemo(

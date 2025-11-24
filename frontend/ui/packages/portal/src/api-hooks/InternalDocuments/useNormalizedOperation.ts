@@ -2,32 +2,19 @@ import type { VersionKey } from '@apihub/entities/keys'
 import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@apihub/utils/internal-documents/constants'
 import { removeComponents } from '@netcracker/qubership-apihub-api-processor'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
-import type { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
-import { isGraphApi } from '@netcracker/qubership-apihub-graphapi'
 import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 import type { PackageKey } from '@netcracker/qubership-apihub-ui-shared/utils/types'
 import type { OpenAPIV3 } from 'openapi-types'
 import { useMemo } from 'react'
 import { useInternalDocumentContent } from './useInternalDocumentContent'
 import type { QueryResult } from './useInternalDocumentsByPackageVersion'
 import { useInternalDocumentsByPackageVersion } from './useInternalDocumentsByPackageVersion'
+import { isRestOperation, isGraphQLOperation } from '@apihub/utils/internal-documents/type-guards'
 
 type Options = {
   operation: OperationData | undefined
   packageId: PackageKey | undefined
   versionId: VersionKey | undefined
-}
-
-function isRestOperation(specification: unknown): specification is OpenAPIV3.Document {
-  if (!isObject(specification)) {
-    return false
-  }
-  return 'openapi' in specification && typeof specification.openapi === 'string'
-}
-
-function isGraphQLOperation(specification: unknown): specification is GraphApiSchema {
-  return isGraphApi(specification)
 }
 
 export function useNormalizedOperation(options: Options): QueryResult<unknown, Error> {
