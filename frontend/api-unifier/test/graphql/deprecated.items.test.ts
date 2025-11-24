@@ -16,6 +16,7 @@ describe('test directives', () => {
 
     expect(deprecatedItems.length).toBe(1)
     expect(deprecatedItems[0].deprecatedReason).toEqual('Decided that it\'s a vegetable')
+    expect(deprecatedItems[0].description).toEqual('[Deprecated] value \'TOMATO\' of enum \'Fruit\'')
   })
 
   it('deprecated directive on field definition', () => {
@@ -31,5 +32,6 @@ describe('test directives', () => {
 
     expect(deprecatedItems.length).toBe(1)
     expect(deprecatedItems[0].deprecatedReason).toEqual('Use `newField`.')
+    expect(deprecatedItems[0].description).toEqual('[Deprecated] field \'oldField\' of object \'ExampleType\'')
   })
 })
