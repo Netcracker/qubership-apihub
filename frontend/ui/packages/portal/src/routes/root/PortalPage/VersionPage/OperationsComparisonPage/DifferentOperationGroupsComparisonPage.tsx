@@ -257,6 +257,7 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
       const hasPreviousMetadata = isObject(previousMetadata)
       const previousOperation: Operation | undefined = operationChange.previousOperationId ? {
         operationKey: operationChange.previousOperationId,
+        documentId: '', // this is not necessary for this case
         apiKind: operationChange.previousApiKind ?? NO_BWC_API_KIND, // TODO 10.04.25 // Fix it
         apiAudience: 'unknown',
         title: previousMetadata?.title ?? '',
@@ -269,6 +270,7 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
       } : undefined
       const currentOperation: Operation | undefined = operationChange.operationId ? {
         operationKey: operationChange.operationId,
+        documentId: '', // this is not necessary for this case
         apiKind: operationChange.apiKind ?? NO_BWC_API_KIND, // TODO 10.04.25 // Fix it
         apiAudience: 'unknown',
         title: currentMetadata?.title ?? '',

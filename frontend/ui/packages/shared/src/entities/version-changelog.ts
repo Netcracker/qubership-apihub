@@ -156,6 +156,7 @@ export const toOperationChange = (
       ? {
         ...dto.currentOperation,
         operationKey: dto.currentOperation.operationId,
+        documentId: '', // this is not necessary for this case
         packageRef: includePackageRefs ? toPackageRef(dto.currentOperation.packageRef, packagesRefs) : undefined,
       }
       : undefined,
@@ -163,6 +164,7 @@ export const toOperationChange = (
       ? {
         ...dto.previousOperation,
         operationKey: dto.previousOperation.operationId,
+        documentId: '', // this is not necessary for this case
         packageRef: includePackageRefs ? toPackageRef(dto.previousOperation.packageRef, packagesRefs) : undefined,
       }
       : undefined,
