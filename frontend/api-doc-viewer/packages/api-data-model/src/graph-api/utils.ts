@@ -126,10 +126,13 @@ export function areExcludedComponents(path: JsonPath) {
  * @param operationName - operation name to leave only this operation in the tree
  * @returns filter function to remove all children except the one with the given operation name
  */
-export function createLeaveOnlyOneOperationFilter(operationName?: string) {
-  return !operationName
+export function createLeaveOnlyOneOperationFilter(
+  operationType?: keyof typeof graphApiNodeKind,
+  operationName?: string,
+) {
+  return !operationName && !operationType
     ? createLeaveOnlyFirstOperationFilter()
-    : createLeaveOperationByNameOrFirstOperationFilter(operationName);
+    : createLeaveOperationByNameOrFirstOperationFilter(operationType, operationName);
 }
 
 function createLeaveOnlyFirstOperationFilter() {
@@ -163,7 +166,10 @@ function createLeaveOnlyFirstOperationFilter() {
   };
 }
 
-function createLeaveOperationByNameOrFirstOperationFilter(operationName: string) {
+function createLeaveOperationByNameOrFirstOperationFilter(
+  operationType?: keyof typeof graphApiNodeKind,
+  operationName?: string,
+) {
   let operationSearchExecuted: boolean = false;
 
   let firstOperationIndex: number = -1;
@@ -188,7 +194,7 @@ function createLeaveOperationByNameOrFirstOperationFilter(operationName: string)
         if (firstOperationIndex === -1) {
           firstOperationIndex = i;
         }
-        if (currentNode.key === operationName) {
+        if (currentNode.key === operationName && currentNode.kind === operationType) {
           requiredOperationIndex = i;
           break;
         }

@@ -16,6 +16,7 @@
 
 import '../../index.css'
 
+import { splitOperationPath } from '@apihub/utils/graphQl/split-operation-path'
 import { createGraphApiDiffTree, DiffMetaKeys, DiffNodeMeta } from '@netcracker/qubership-apihub-api-data-model'
 import { aggregateDiffsWithRollup, DiffType } from "@netcracker/qubership-apihub-api-diff"
 import { GraphApiState } from '@netcracker/qubership-apihub-api-state-model'
@@ -72,12 +73,33 @@ const GraphQLOperationDiffViewerInner: FC<GraphQLOperationDiffViewerProps> = (pr
     metaKeys
   } = props
 
+  console.debug('GraphAPI Schema:', source)
+
+  const operationPathResult = useMemo(
+    () => splitOperationPath(operationPath),
+    [operationPath],
+  )
+
   aggregateDiffsWithRollup(source, metaKeys.diffsMetaKey, metaKeys.aggregatedDiffsMetaKey)
 
   const tree = useMemo(
-    () => createGraphApiDiffTree(source, metaKeys, undefined, undefined, operationPath),
-    [metaKeys, operationPath, source]
+    () => createGraphApiDiffTree(
+      source,
+      metaKeys,
+      undefined,
+      undefined,
+      operationPathResult?.operationType,
+      operationPathResult?.operationName,
+    ),
+    [
+      metaKeys,
+      operationPathResult?.operationName,
+      operationPathResult?.operationType,
+      source,
+    ],
   )
+
+  console.debug('Diff Tree Model:', tree)
 
   // TODO 27.12.23 // Diff State!
   const state = useMemo(
@@ -86,8 +108,6 @@ const GraphQLOperationDiffViewerInner: FC<GraphQLOperationDiffViewerProps> = (pr
     [expandedDepth, tree]
   )
 
-  console.debug('GraphAPI Schema:', source)
-  console.debug('Diff Tree Model:', tree)
   console.debug('Diff State Model:', state)
 
   const root = state.root

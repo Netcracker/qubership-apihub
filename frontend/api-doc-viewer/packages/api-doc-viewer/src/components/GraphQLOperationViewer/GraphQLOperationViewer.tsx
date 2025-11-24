@@ -16,36 +16,38 @@
 
 import '../../index.css'
 
-import type { FC } from 'react'
-import { useMemo } from 'react'
+import { splitOperationPath } from '@apihub/utils/graphQl/split-operation-path'
 import {
   createGraphApiTree,
   DiffNodeMeta,
   GraphApiNodeData,
+  graphApiNodeKind,
   GraphApiNodeKind,
   GraphApiNodeMeta,
   ModelTree
 } from '@netcracker/qubership-apihub-api-data-model'
 import { GraphApiState } from '@netcracker/qubership-apihub-api-state-model'
-import { isCombinerNodeState, isPropNodeState } from './types/nodes.guards'
+import type { FC } from 'react'
+import { useMemo } from 'react'
 import { DEFAULT_EXPANDED_DEPTH } from '../../consts/configuration'
-import { DETAILED_DISPLAY_MODE, DisplayMode } from '../../types/DisplayMode'
 import { DisplayModeContext } from '../../contexts/DisplayModeContext'
-import { isDirectiveNode, isOperationNode } from './utils/nodes'
-import { GraphPropNodeViewer } from '../GraphSchemaViewer/GraphPropNodeViewer/GraphPropNodeViewer'
-import { GraphCombinerNodeViewer } from '../GraphSchemaViewer/GraphCombinerNodeViewer/GraphCombinerNodeViewer'
-import { CustomDirectivesSectionRow } from './CustomDirectivesSectionRow'
-import { DOCUMENT_LAYOUT_MODE } from '../../types/LayoutMode'
 import { LevelContext } from '../../contexts/LevelContext'
-import { ErrorBoundary } from "../services/ErrorBoundary";
-import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback";
-import { useLogRenderCompleted } from "../../hooks/debug-hook";
+import { useLogRenderCompleted } from "../../hooks/debug-hook"
+import { DETAILED_DISPLAY_MODE, DisplayMode } from '../../types/DisplayMode'
+import { DOCUMENT_LAYOUT_MODE } from '../../types/LayoutMode'
+import { GraphCombinerNodeViewer } from '../GraphSchemaViewer/GraphCombinerNodeViewer/GraphCombinerNodeViewer'
+import { GraphPropNodeViewer } from '../GraphSchemaViewer/GraphPropNodeViewer/GraphPropNodeViewer'
+import { ErrorBoundary } from "../services/ErrorBoundary"
+import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback"
+import { CustomDirectivesSectionRow } from './CustomDirectivesSectionRow'
+import { isCombinerNodeState, isPropNodeState } from './types/nodes.guards'
+import { isDirectiveNode, isOperationNode } from './utils/nodes'
 
 // FIXME 28.09.23 // Fix generic types
 
 export type GraphQLOperationViewerProps = {
   source: unknown
-  operationPath?: string // example: getFruit
+  operationPath?: string // example: query-getFruit
   expandedDepth?: number
   displayMode?: DisplayMode
 }
@@ -60,6 +62,7 @@ export const GraphQLOperationViewer: FC<GraphQLOperationViewerProps> = (props) =
 
 const set = new Set<unknown>()
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function customStringifyCyclicJso(jso: unknown, indent: string = ''): string {
   if (jso instanceof Set) {
     jso = Array.from(jso)
@@ -130,6 +133,11 @@ function customStringifyCyclicJso(jso: unknown, indent: string = ''): string {
 
 }
 
+export type SplitOperationPathResult = {
+  operationType: keyof typeof graphApiNodeKind
+  operationName: string
+}
+
 const GraphQLOperationViewerInner: FC<GraphQLOperationViewerProps> = (props) => {
   useLogRenderCompleted()
 
@@ -140,10 +148,19 @@ const GraphQLOperationViewerInner: FC<GraphQLOperationViewerProps> = (props) => 
     displayMode = DETAILED_DISPLAY_MODE,
   } = props
 
-  const tree: ModelTree<GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta> = useMemo(
-    () => createGraphApiTree(source, undefined, operationPath),
-    [operationPath, source]
+  console.debug('GraphAPI Schema:', source)
+
+  const operationPathResult = useMemo(
+    () => splitOperationPath(operationPath),
+    [operationPath],
   )
+
+  const tree: ModelTree<GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta> = useMemo(
+    () => createGraphApiTree(source, undefined, operationPathResult?.operationType, operationPathResult?.operationName),
+    [operationPathResult?.operationName, operationPathResult?.operationType, source]
+  )
+
+  console.debug('Tree Model:', tree)
 
   // TODO 27.12.23 // Diff State!
   const state = useMemo(
@@ -151,8 +168,6 @@ const GraphQLOperationViewerInner: FC<GraphQLOperationViewerProps> = (props) => 
     [expandedDepth, tree]
   )
 
-  console.debug('GraphAPI Schema:', source)
-  console.debug('Tree Model:', tree)
   console.debug('State Model:', state)
   // console.debug('GraphAPI Schema (string):', customStringifyCyclicJso(source))
   // console.debug('Tree model (string):', customStringifyCyclicJso(tree))
