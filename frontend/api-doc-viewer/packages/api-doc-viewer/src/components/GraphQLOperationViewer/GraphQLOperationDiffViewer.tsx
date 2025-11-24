@@ -16,8 +16,7 @@
 
 import '../../index.css'
 
-import { splitOperationPath } from '@apihub/utils/graphQl/split-operation-path'
-import { createGraphApiDiffTree, DiffMetaKeys, DiffNodeMeta } from '@netcracker/qubership-apihub-api-data-model'
+import { createGraphApiDiffTree, DiffMetaKeys, DiffNodeMeta, graphApiNodeKind } from '@netcracker/qubership-apihub-api-data-model'
 import { aggregateDiffsWithRollup, DiffType } from "@netcracker/qubership-apihub-api-diff"
 import { GraphApiState } from '@netcracker/qubership-apihub-api-state-model'
 import type { FC } from 'react'
@@ -42,7 +41,8 @@ import { isDirectiveNode, isOperationNode } from './utils/nodes'
 
 export type GraphQLOperationDiffViewerProps = {
   source: unknown
-  operationPath?: string // example: getFruit
+  operationType?: string // query, mutation, subscription
+  operationName?: string // e.g. getFruit
   expandedDepth?: number
   displayMode?: DisplayMode
   // diffs
@@ -64,7 +64,8 @@ const GraphQLOperationDiffViewerInner: FC<GraphQLOperationDiffViewerProps> = (pr
 
   const {
     source,
-    operationPath,
+    operationType,
+    operationName,
     expandedDepth = DEFAULT_EXPANDED_DEPTH,
     displayMode = DETAILED_DISPLAY_MODE,
     // diffs
@@ -75,11 +76,6 @@ const GraphQLOperationDiffViewerInner: FC<GraphQLOperationDiffViewerProps> = (pr
 
   console.debug('GraphAPI Schema:', source)
 
-  const operationPathResult = useMemo(
-    () => splitOperationPath(operationPath),
-    [operationPath],
-  )
-
   aggregateDiffsWithRollup(source, metaKeys.diffsMetaKey, metaKeys.aggregatedDiffsMetaKey)
 
   const tree = useMemo(
@@ -88,15 +84,10 @@ const GraphQLOperationDiffViewerInner: FC<GraphQLOperationDiffViewerProps> = (pr
       metaKeys,
       undefined,
       undefined,
-      operationPathResult?.operationType,
-      operationPathResult?.operationName,
+      operationType as keyof typeof graphApiNodeKind | undefined, // FIXME 24.11.25 // Get rid of type assertion
+      operationName,
     ),
-    [
-      metaKeys,
-      operationPathResult?.operationName,
-      operationPathResult?.operationType,
-      source,
-    ],
+    [metaKeys, operationName, operationType, source,],
   )
 
   console.debug('Diff Tree Model:', tree)
@@ -129,13 +120,13 @@ const GraphQLOperationDiffViewerInner: FC<GraphQLOperationDiffViewerProps> = (pr
                   const $childMeta = child.meta as DiffNodeMeta
 
                   if (isOperationNode(child.node)) {
-                    return operationPath || child.first
-                      ? <GraphPropNodeViewer
+                    return (
+                      <GraphPropNodeViewer
                         key={key}
                         state={child}
                         $nodeChange={$childMeta?.$nodeChange}
                       />
-                      : null
+                    )
                   }
 
                   if (isDirectiveNode(child.node) && child.first) {

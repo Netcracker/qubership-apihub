@@ -68,7 +68,8 @@ export const QueryNoArgsChangedPrimitiveOutput: Story = {
       }
     `),
     circular: true,
-    operationPath: 'getString'
+    operationType: 'query',
+    operationName: 'getString'
   },
 }
 QueryNoArgsChangedPrimitiveOutput.storyName = '[Query] No args. Changed primitive output type'
@@ -88,7 +89,8 @@ export const QueryNoArgsPrimitiveOutputMarkedAsNotNullable: Story = {
       }
     `),
     circular: true,
-    operationPath: 'getString'
+    operationType: 'query',
+    operationName: 'getString'
   },
 }
 QueryNoArgsPrimitiveOutputMarkedAsNotNullable.storyName = '[Query] No args. Primitive output marked as NOT nullable'
@@ -108,7 +110,8 @@ export const QueryNoArgsPrimitiveOutputMarkedAsNullable: Story = {
       }
     `),
     circular: true,
-    operationPath: 'getString'
+    operationType: 'query',
+    operationName: 'getString'
   },
 }
 QueryNoArgsPrimitiveOutputMarkedAsNullable.storyName = '[Query] No args. Primitive output marked as NULLABLE'
@@ -128,7 +131,8 @@ export const QueryPrimitiveOutputAddedArgs: Story = {
       }
     `),
     circular: true,
-    operationPath: 'getString'
+    operationType: 'query',
+    operationName: 'getString'
   },
 }
 QueryPrimitiveOutputAddedArgs.storyName = '[Query] Primitive output. Added args'
@@ -148,7 +152,8 @@ export const QueryPrimitiveOutputRemovedArgs: Story = {
       }
     `),
     circular: true,
-    operationPath: 'getString'
+    operationType: 'query',
+    operationName: 'getString'
   },
 }
 QueryPrimitiveOutputRemovedArgs.storyName = '[Query] Primitive output. Removed args'
@@ -168,7 +173,8 @@ export const QueryPrimitiveOutputAddedNewArg: Story = {
       }
     `),
     circular: true,
-    operationPath: 'getString'
+    operationType: 'query',
+    operationName: 'getString'
   },
 }
 QueryPrimitiveOutputAddedNewArg.storyName = '[Query] Primitive output. Added 1 arg'
@@ -188,7 +194,8 @@ export const QueryPrimitiveOutputRemovedExistingArg: Story = {
       }
     `),
     circular: true,
-    operationPath: 'getString'
+    operationType: 'query',
+    operationName: 'getString'
   },
 }
 QueryPrimitiveOutputRemovedExistingArg.storyName = '[Query] Primitive output. Removed 1 arg'
@@ -216,7 +223,8 @@ export const QueryWithArgsChangedPrimitiveToObjectOutput: Story = {
       }
     `),
     circular: true,
-    operationPath: 'getBook'
+    operationType: 'query',
+    operationName: 'getBook'
   },
 }
 QueryWithArgsChangedPrimitiveToObjectOutput.storyName = '[Query] 1 arg. Primitive output -> Object output'
@@ -244,7 +252,8 @@ export const QueryWithArgsChangedObjectToPrimitiveOutput: Story = {
       }
     `),
     circular: true,
-    operationPath: 'getBook'
+    operationType: 'query',
+    operationName: 'getBook'
   },
 }
 QueryWithArgsChangedObjectToPrimitiveOutput.storyName = '[Query] 1 arg. Object output -> Primitive output'
@@ -272,7 +281,8 @@ export const QueryWithArgsChangedArrayOfPrimitiveToArrayOfObjectOutput: Story = 
       }
     `),
     circular: true,
-    operationPath: 'getBooks'
+    operationType: 'query',
+    operationName: 'getBooks'
   },
 }
 QueryWithArgsChangedArrayOfPrimitiveToArrayOfObjectOutput.storyName = '[Query] 1 arg. Array of primitive output -> Array of objective output'
@@ -300,7 +310,8 @@ export const QueryWithArgsChangedArrayOfObjectOutputToArrayOfPrimitive: Story = 
       }
     `),
     circular: true,
-    operationPath: 'getBooks'
+    operationType: 'query',
+    operationName: 'getBooks'
   },
 }
 QueryWithArgsChangedArrayOfObjectOutputToArrayOfPrimitive.storyName = '[Query] 1 arg. Array of objective output -> Array of primitive output'
@@ -340,7 +351,8 @@ export const QueryWithArgsChangedArrayOfObjectOutputToObjectOutput: Story = {
       }
     `),
     circular: true,
-    operationPath: 'getBooks'
+    operationType: 'query',
+    operationName: 'getBooks'
   },
 }
 QueryWithArgsChangedArrayOfObjectOutputToObjectOutput.storyName = '[Query] 1 arg. Array of objective output -> Objective output'
@@ -380,7 +392,8 @@ export const QueryWithArgsChangedObjectOutputToArrayOfObjectOutput: Story = {
       }
     `),
     circular: true,
-    operationPath: 'getBooks'
+    operationType: 'query',
+    operationName: 'getBooks'
   },
 }
 QueryWithArgsChangedObjectOutputToArrayOfObjectOutput.storyName = '[Query] 1 arg. Objective output -> Array of object output'
@@ -418,7 +431,8 @@ export const QueryNoArgsChangedObjectOutputToOneOfOutput: Story = {
       union Shape = Circle | Rectangle
     `),
     circular: true,
-    operationPath: 'getRandomShape'
+    operationType: 'query',
+    operationName: 'getRandomShape'
   },
 }
 QueryNoArgsChangedObjectOutputToOneOfOutput.storyName = '[Query] 1 arg. Object output -> oneOf object output'
@@ -456,7 +470,8 @@ export const QueryNoArgsChangedOneOfOutputToObjectOutput: Story = {
       }
     `),
     circular: true,
-    operationPath: 'getRandomShape'
+    operationType: 'query',
+    operationName: 'getRandomShape'
   },
 }
 QueryNoArgsChangedOneOfOutputToObjectOutput.storyName = '[Query] 1 arg. oneOf object output -> object output'

@@ -16,7 +16,6 @@
 
 import '../../index.css'
 
-import { splitOperationPath } from '@apihub/utils/graphQl/split-operation-path'
 import {
   createGraphApiTree,
   DiffNodeMeta,
@@ -47,7 +46,8 @@ import { isDirectiveNode, isOperationNode } from './utils/nodes'
 
 export type GraphQLOperationViewerProps = {
   source: unknown
-  operationPath?: string // example: query-getFruit
+  operationType?: string // query, mutation, subscription
+  operationName?: string // e.g. getFruit
   expandedDepth?: number
   displayMode?: DisplayMode
 }
@@ -143,21 +143,22 @@ const GraphQLOperationViewerInner: FC<GraphQLOperationViewerProps> = (props) => 
 
   const {
     source,
-    operationPath,
+    operationType,
+    operationName,
     expandedDepth = DEFAULT_EXPANDED_DEPTH,
     displayMode = DETAILED_DISPLAY_MODE,
   } = props
 
   console.debug('GraphAPI Schema:', source)
 
-  const operationPathResult = useMemo(
-    () => splitOperationPath(operationPath),
-    [operationPath],
-  )
-
   const tree: ModelTree<GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta> = useMemo(
-    () => createGraphApiTree(source, undefined, operationPathResult?.operationType, operationPathResult?.operationName),
-    [operationPathResult?.operationName, operationPathResult?.operationType, source]
+    () => createGraphApiTree(
+      source,
+      undefined,
+      operationType as keyof typeof graphApiNodeKind | undefined, // FIXME 24.11.25 // Get rid of type assertion
+      operationName,
+    ),
+    [operationType, operationName, source]
   )
 
   console.debug('Tree Model:', tree)
@@ -190,13 +191,13 @@ const GraphQLOperationViewerInner: FC<GraphQLOperationViewerProps> = (props) => 
               const $childMeta = child.meta as DiffNodeMeta
 
               if (isOperationNode(child.node)) {
-                return operationPath || child.first
-                  ? <GraphPropNodeViewer
+                return (
+                  <GraphPropNodeViewer
                     key={key}
                     state={child}
                     $nodeChange={$childMeta?.$nodeChange}
                   />
-                  : null
+                )
               }
 
               if (isDirectiveNode(child.node) && child.first) {
