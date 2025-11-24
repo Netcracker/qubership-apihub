@@ -16,7 +16,8 @@
 
 import { GraphQlOperationViewer } from '@apihub/components/GraphQlOperationViewer'
 import { SchemaContextPanel } from '@apihub/components/SchemaContextPanel'
-import type { OpenApiData } from '@apihub/entities/operation-structure'
+import type { DiffMetaKeys } from '@apihub/entities/diff-meta-keys'
+import type { OpenApiData, OpenApiVisitorData } from '@apihub/entities/operation-structure'
 import { OPEN_API_SECTION_PARAMETERS, OPEN_API_SECTION_REQUESTS, OPEN_API_SECTION_RESPONSES } from '@apihub/entities/operation-structure'
 import { Box } from '@mui/material'
 import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
@@ -28,7 +29,6 @@ import type {
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
-import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { SchemaViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
 import { joinedJsonPath } from '@netcracker/qubership-apihub-ui-shared/utils/operations'
@@ -40,7 +40,7 @@ import type { OperationDisplayMode } from './OperationDisplayMode'
 import type { OperationViewElementProps } from './OperationViewElement'
 import { createOperationViewElement } from './OperationViewElement'
 import { useSetupOperationView } from './useSetupOperationView'
-import type { DiffMetaKeys } from '@apihub/entities/diff-meta-keys'
+import { GRAPHQL_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
 
 const DIFFS_META_KEYS: DiffMetaKeys = {
   diffsMetaKey: DIFF_META_KEY,
@@ -50,8 +50,6 @@ const DIFFS_META_KEYS: DiffMetaKeys = {
 // First Order Component //
 export type OperationViewProps = PropsWithChildren<{
   apiType: ApiType
-  changedOperation?: OperationData | null
-  originOperation?: OperationData | null
   displayMode?: OperationDisplayMode
   selectedUri?: string
   sidebarEnabled?: boolean
@@ -111,6 +109,10 @@ export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(pr
   }, [navigationDetails, indexedModels])
 
   const resolvedOperationViewElement = useMemo(() => {
+    if (apiType === GRAPHQL_API_TYPE) {
+      return undefined
+    }
+
     const options: OperationViewElementProps = {
       router: 'hash',
       layout: 'partial',
@@ -140,6 +142,7 @@ export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(pr
 
   useEffect(() => {
     if (
+      resolvedOperationViewElement &&
       operationViewContainerRef.current?.childNodes &&
       !operationViewContainerRef.current?.contains(resolvedOperationViewElement)
     ) {

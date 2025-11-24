@@ -24,7 +24,7 @@ function isDiffOperationView(value: OperationView | DiffOperationView): value is
 }
 
 export function useSetupOperationView(
-  operationViewElement: OperationView | DiffOperationView,
+  operationViewElement: OperationView | DiffOperationView | undefined,
   props: OperationViewProps,
 ): void {
   const {

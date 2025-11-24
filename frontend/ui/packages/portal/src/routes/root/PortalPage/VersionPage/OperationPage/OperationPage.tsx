@@ -66,6 +66,7 @@ import { OperationToolbarHeader } from './OperationToolbarHeader'
 import { useOpenApiVisitor } from './useOpenApiVisitor'
 import { useOperationsWithSameModel } from './useOperationsWithSameModel'
 import { useUpdateRecentOperations } from './useUpdateRecentOperations'
+import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 
 // High Order Component //
 export const OperationPage: FC = memo(() => {
@@ -96,15 +97,16 @@ export const OperationPage: FC = memo(() => {
   const {
     data: normalizedChangedOperation,
     isLoading: loadingNormalizedChangedOperation,
-    error: errorNormalizedChangedOperation,
   } = useNormalizedOperation({
     operation: changedOperation,
     packageId: operationPackageKey,
     versionId: operationPackageVersion,
   })
 
-  const operationData = useMemo(() => changedOperation?.data, [changedOperation?.data])
-  const visitorData: object | undefined = apiType ? API_TYPE_MODELS_MAP[apiType as ApiType](operationData) : undefined
+  const visitorData: object | undefined =
+    apiType && isObject(normalizedChangedOperation)
+      ? API_TYPE_MODELS_MAP[apiType as ApiType](normalizedChangedOperation)
+      : undefined
 
   const models = useOpenApiVisitor(visitorData)
   useUpdateRecentOperations(changedOperation)

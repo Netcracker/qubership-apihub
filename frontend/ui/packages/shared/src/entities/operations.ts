@@ -112,6 +112,7 @@ export type CustomTags = { [key: string]: object }
 
 export interface Operation {
   readonly operationKey: Key
+  readonly documentId: Key
   readonly title: string
   readonly apiKind: ApiKind
   readonly apiAudience: ApiAudience

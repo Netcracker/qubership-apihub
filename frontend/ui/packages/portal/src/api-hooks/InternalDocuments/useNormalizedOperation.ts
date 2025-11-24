@@ -2,7 +2,10 @@ import type { VersionKey } from '@apihub/entities/keys'
 import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@apihub/utils/internal-documents/constants'
 import { removeComponents } from '@netcracker/qubership-apihub-api-processor'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
+import type { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
+import { isGraphApi } from '@netcracker/qubership-apihub-graphapi'
 import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 import type { PackageKey } from '@netcracker/qubership-apihub-ui-shared/utils/types'
 import type { OpenAPIV3 } from 'openapi-types'
 import { useMemo } from 'react'
@@ -14,6 +17,17 @@ type Options = {
   operation: OperationData | undefined
   packageId: PackageKey | undefined
   versionId: VersionKey | undefined
+}
+
+function isRestOperation(specification: unknown): specification is OpenAPIV3.Document {
+  if (!isObject(specification)) {
+    return false
+  }
+  return 'openapi' in specification && typeof specification.openapi === 'string'
+}
+
+function isGraphQLOperation(specification: unknown): specification is GraphApiSchema {
+  return isGraphApi(specification)
 }
 
 export function useNormalizedOperation(options: Options): QueryResult<unknown, Error> {
@@ -46,29 +60,32 @@ export function useNormalizedOperation(options: Options): QueryResult<unknown, E
     return deserialize(internalDocumentContent, INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING)
   }, [internalDocumentContent])
 
-  const documentForOnlyOperation = operation?.data as OpenAPIV3.Document | undefined
-
-  const [operationPath] = useMemo(
-    () => Object.keys(documentForOnlyOperation?.paths ?? {}),
-    [documentForOnlyOperation],
-  )
-
   const filteredInternalDocumentForOperation = useMemo(
     () => {
-      if (!operationPath) {
-        return undefined
+      if (isRestOperation(deserializedInternalDocument)) {
+        // Truncate REST specification and leave the only necessary path
+        const [operationPath] = Object.keys((operation?.data as OpenAPIV3.Document)?.paths ?? {})
+        if (!operationPath) {
+          return undefined
+        }
+        const internalDocument = deserializedInternalDocument
+        const internalDocumentPaths = internalDocument?.paths
+        const internalDocumentPathObject = internalDocumentPaths?.[operationPath]
+        return removeComponents({
+          ...internalDocument,
+          paths: {
+            [operationPath]: internalDocumentPathObject,
+          },
+        })
       }
-      const internalDocument = deserializedInternalDocument as OpenAPIV3.Document
-      const internalDocumentPaths = internalDocument?.paths
-      const internalDocumentPathObject = internalDocumentPaths?.[operationPath]
-      return removeComponents({
-        ...internalDocument,
-        paths: {
-          [operationPath]: internalDocumentPathObject,
-        },
-      })
+      // GraphQL operations should be returned as is, because truncating is on ADV layer
+      if (isGraphQLOperation(deserializedInternalDocument)) {
+        return deserializedInternalDocument
+      }
+      // Handle unrecognized operations
+      return undefined
     },
-    [deserializedInternalDocument, operationPath],
+    [deserializedInternalDocument, operation?.data],
   )
 
   return useMemo(

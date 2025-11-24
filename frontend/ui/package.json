@@ -33,7 +33,7 @@
     "@netcracker/qubership-apihub-api-doc-viewer": "feature-performance-optimization-405",
     "@netcracker/qubership-apihub-api-processor": "feature-performance-optimization-405",
     "@netcracker/qubership-apihub-api-unifier": "feature-performance-optimization-405",
-    "@netcracker/qubership-apihub-api-visitor": "feature-performance-optimization",
+    "@netcracker/qubership-apihub-api-visitor": "feature-performance-optimization-405",
     "@netcracker/qubership-apihub-apispec-view": "feature-performance-optimization-405",
     "@netcracker/qubership-apihub-class-view": "1.0.3",
     "@netcracker/qubership-apihub-rest-playground": "1.2.0",

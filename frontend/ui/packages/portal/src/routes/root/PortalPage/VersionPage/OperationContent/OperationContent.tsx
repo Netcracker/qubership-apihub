@@ -74,6 +74,7 @@ import { DEFAULT_DISPLAY_MODE, isComparisonMode } from './OperationView/Operatio
 import { OperationWithPlayground } from './OperationWithPlayground'
 import { useIsExamplesMode, useIsPlaygroundMode, useIsPlaygroundSidebarOpen } from './usePlaygroundSidebarMode'
 import { useSelectOperationTags } from './useSelectOperationTags'
+import { usePublishedDocumentRaw } from '@netcracker/qubership-apihub-ui-shared/hooks/documents/usePublishedDocumentRaw'
 
 export type OperationContentProps = {
   changedOperation?: OperationData
@@ -103,13 +104,33 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
     paddingBottom,
     operationModels,
   } = props
-  const { packageId = '', apiType = DEFAULT_API_TYPE } = useParams<{ packageId: string; apiType: ApiType }>()
+
+  const {
+    packageId = '',
+    apiType = DEFAULT_API_TYPE,
+  } = useParams<{ packageId: string; apiType: ApiType }>()
   const {
     originPackageKey,
     changedPackageKey,
     changedVersionKey,
     originVersionKey,
   } = useVersionsComparisonGlobalParams()
+
+  const isGraphQLOperation = useMemo(() => apiType === API_TYPE_GRAPHQL, [apiType])
+
+  const [documentWithOriginOperation] = usePublishedDocumentRaw({
+    packageKey: originPackageKey,
+    versionKey: originVersionKey,
+    slug: originOperation?.documentId ?? '',
+    enabled: isGraphQLOperation,
+  })
+
+  const [documentWithChangedOperation] = usePublishedDocumentRaw({
+    packageKey: changedPackageKey,
+    versionKey: changedVersionKey,
+    slug: changedOperation?.documentId ?? '',
+    enabled: isGraphQLOperation,
+  })
 
   const { productionMode } = useSystemInfo()
 
@@ -125,7 +146,10 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
   const { mode, schemaViewMode } = useOperationViewMode()
   const [fileViewMode = YAML_FILE_VIEW_MODE, setFileViewMode] = useFileViewMode()
 
-  const [changedOperationContent, originOperationContent] = useOperationsPairAsStrings(changedOperation, originOperation)
+  const [changedOperationContent, originOperationContent] = useOperationsPairAsStrings(
+    isGraphQLOperation ? documentWithChangedOperation : changedOperation,
+    isGraphQLOperation ? documentWithOriginOperation : originOperation,
+  )
   const [, setPlaygroundViewMode] = useSidebarPlaygroundViewMode()
   const [navigationDetails] = useOperationNavigationDetails()
 
@@ -165,10 +189,6 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
 
   const mergedDocument = useMemo(
     () => {
-      if (!changedOperation?.data && !originOperation?.data) {
-        return undefined
-      }
-
       // TODO 13.11.25 // Separate to OperationView and OperationDiffView components
       if (!comparisonMode) {
         return normalizedChangedOperation ?? normalizedOriginOperation
@@ -176,14 +196,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
 
       return apiDiffResult?.merged
     },
-    [
-      changedOperation?.data,
-      originOperation?.data,
-      comparisonMode,
-      apiDiffResult?.merged,
-      normalizedChangedOperation,
-      normalizedOriginOperation,
-    ],
+    [comparisonMode, apiDiffResult?.merged, normalizedChangedOperation, normalizedOriginOperation],
   )
 
   useEffect(() => {
@@ -194,7 +207,11 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
 
   if (isLoading || isApiDiffResultLoading) {
     operationContentElement = <LoadingIndicator />
-  } else if (!changedOperationContent && !originOperationContent) {
+  } else if (
+    !normalizedChangedOperation &&
+    !normalizedOriginOperation &&
+    !apiDiffResult?.merged
+  ) {
     return (
       <Placeholder
         invisible={false}
@@ -214,38 +231,46 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
   } else {
     operationContentElement = (
       comparisonMode
-        ? <Box pl={3} pr={2} height="inherit">
-          <OperationsSwapper
-            displayMode={displayMode}
-            breadcrumbsData={breadcrumbsData}
-            actions={isRawViewMode && rawViewActions}
-            swapperBreadcrumbsBeforeComponent={<WarningApiProcessorVersion packageKey={originPackageKey}
-              versionKey={originVersionKey} />}
-            swapperBreadcrumbsAfterComponent={<WarningApiProcessorVersion packageKey={changedPackageKey}
-              versionKey={changedVersionKey} />}
-          />
-          {isDocViewMode && !!mergedDocument && (
-            <OperationView
-              apiType={apiType as ApiType}
-              originOperation={originOperation}
-              changedOperation={changedOperation}
+        ? (
+          <Box pl={3} pr={2} height="inherit">
+            <OperationsSwapper
               displayMode={displayMode}
-              comparisonMode={comparisonMode}
-              productionMode={productionMode}
-              mergedDocument={mergedDocument}
-              // diffs specific
-              filters={filters}
+              breadcrumbsData={breadcrumbsData}
+              actions={isRawViewMode && rawViewActions}
+              swapperBreadcrumbsBeforeComponent={
+                <WarningApiProcessorVersion
+                  packageKey={originPackageKey}
+                  versionKey={originVersionKey}
+                />
+              }
+              swapperBreadcrumbsAfterComponent={
+                <WarningApiProcessorVersion
+                  packageKey={changedPackageKey}
+                  versionKey={changedVersionKey}
+                />
+              }
             />
-          )}
-          {isRawViewMode && (
-            <RawSpecDiffView
-              beforeValue={originalValue}
-              afterValue={changedValue}
-              extension={extension}
-              type={type}
-            />
-          )}
-        </Box>
+            {isDocViewMode && !!mergedDocument && (
+              <OperationView
+                apiType={apiType as ApiType}
+                displayMode={displayMode}
+                comparisonMode={comparisonMode}
+                productionMode={productionMode}
+                mergedDocument={mergedDocument}
+                // diffs specific
+                filters={filters}
+              />
+            )}
+            {isRawViewMode && (
+              <RawSpecDiffView
+                beforeValue={originalValue}
+                afterValue={changedValue}
+                extension={extension}
+                type={type}
+              />
+            )}
+          </Box>
+        )
         : (
           <OperationWithPlayground
             changedOperationContent={changedOperationContent}
@@ -259,7 +284,6 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
                 {isDocViewMode && (
                   <OperationView
                     apiType={apiType as ApiType}
-                    changedOperation={changedOperation}
                     schemaViewMode={schemaViewMode}
                     hideTryIt
                     hideExamples
