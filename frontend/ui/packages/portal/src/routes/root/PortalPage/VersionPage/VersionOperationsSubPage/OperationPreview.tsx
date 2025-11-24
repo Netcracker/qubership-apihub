@@ -28,14 +28,14 @@ import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/ap
 import { YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
 import type { OperationViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import { OPERATION_PREVIEW_VIEW_MODES } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
-import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { checkIfGraphQLOperation, type OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { SchemaViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
 import {
   useIsDocOperationViewMode,
   useIsRawOperationViewMode,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationMode'
 import type { FC } from 'react'
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { OperationView } from '../OperationContent/OperationView/OperationView'
 import { OperationViewModeSelector } from '../OperationViewModeSelector'
 
@@ -65,6 +65,13 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
     isLoading, mode, schemaViewMode,
     productionMode, maxWidthHeaderToolbar,
   } = props
+
+  const [operationType, operationName] = useMemo(() => {
+    if (!checkIfGraphQLOperation(changedOperation)) {
+      return [undefined, undefined]
+    }
+    return [changedOperation.type, changedOperation.method]
+  }, [changedOperation])
 
   const isDocViewMode = useIsDocOperationViewMode(mode)
   const isRawViewMode = useIsRawOperationViewMode(mode)
@@ -123,6 +130,9 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
             productionMode={productionMode}
             comparisonMode={false}
             mergedDocument={normalizedChangedOperation}
+            // GraphQL specific
+            operationType={operationType}
+            operationName={operationName}
           />
         )}
         {isRawViewMode && (

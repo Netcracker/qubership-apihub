@@ -44,11 +44,12 @@ import type { FileViewMode } from '@netcracker/qubership-apihub-ui-shared/entiti
 import { FILE_FORMAT_VIEW, YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
 import { GRAPH_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { checkIfGraphQLOperation, DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import {
   useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
+import { usePublishedDocumentRaw } from '@netcracker/qubership-apihub-ui-shared/hooks/documents/usePublishedDocumentRaw'
 import {
   useIsDocOperationViewMode,
   useIsRawOperationViewMode,
@@ -74,7 +75,6 @@ import { DEFAULT_DISPLAY_MODE, isComparisonMode } from './OperationView/Operatio
 import { OperationWithPlayground } from './OperationWithPlayground'
 import { useIsExamplesMode, useIsPlaygroundMode, useIsPlaygroundSidebarOpen } from './usePlaygroundSidebarMode'
 import { useSelectOperationTags } from './useSelectOperationTags'
-import { usePublishedDocumentRaw } from '@netcracker/qubership-apihub-ui-shared/hooks/documents/usePublishedDocumentRaw'
 
 export type OperationContentProps = {
   changedOperation?: OperationData
@@ -116,7 +116,31 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
     originVersionKey,
   } = useVersionsComparisonGlobalParams()
 
-  const isGraphQLOperation = useMemo(() => apiType === API_TYPE_GRAPHQL, [apiType])
+  const isGraphQLOperation = useMemo(
+    () => checkIfGraphQLOperation(changedOperation) || checkIfGraphQLOperation(originOperation),
+    [changedOperation, originOperation],
+  )
+
+  const operationType = useMemo(
+    () => (
+      checkIfGraphQLOperation(changedOperation)
+        ? changedOperation.type
+        : checkIfGraphQLOperation(originOperation)
+          ? originOperation.type
+          : undefined
+    ),
+    [changedOperation, originOperation],
+  )
+  const operationName = useMemo(
+    () => (
+      checkIfGraphQLOperation(changedOperation)
+        ? changedOperation.method
+        : checkIfGraphQLOperation(originOperation)
+          ? originOperation.method
+          : undefined
+    ),
+    [changedOperation, originOperation],
+  )
 
   const [documentWithOriginOperation] = usePublishedDocumentRaw({
     packageKey: originPackageKey,
@@ -259,6 +283,9 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
                 mergedDocument={mergedDocument}
                 // diffs specific
                 filters={filters}
+                // GraphQL specific
+                operationType={operationType}
+                operationName={operationName}
               />
             )}
             {isRawViewMode && (
@@ -292,6 +319,9 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
                     navigationDetails={navigationDetails}
                     operationModels={operationModels}
                     mergedDocument={mergedDocument}
+                    // GraphQL specific
+                    operationType={operationType}
+                    operationName={operationName}
                   />
                 )}
                 {isRawViewMode && (

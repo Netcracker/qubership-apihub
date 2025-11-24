@@ -17,11 +17,12 @@
 import { GraphQlOperationViewer } from '@apihub/components/GraphQlOperationViewer'
 import { SchemaContextPanel } from '@apihub/components/SchemaContextPanel'
 import type { DiffMetaKeys } from '@apihub/entities/diff-meta-keys'
-import type { OpenApiData, OpenApiVisitorData } from '@apihub/entities/operation-structure'
+import type { OpenApiData } from '@apihub/entities/operation-structure'
 import { OPEN_API_SECTION_PARAMETERS, OPEN_API_SECTION_REQUESTS, OPEN_API_SECTION_RESPONSES } from '@apihub/entities/operation-structure'
 import { Box } from '@mui/material'
 import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { GraphQLOperationDiffViewer, SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '@netcracker/qubership-apihub-api-doc-viewer'
+import { GRAPHQL_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import type {
   VisitorNavigationDetails,
@@ -40,7 +41,6 @@ import type { OperationDisplayMode } from './OperationDisplayMode'
 import type { OperationViewElementProps } from './OperationViewElement'
 import { createOperationViewElement } from './OperationViewElement'
 import { useSetupOperationView } from './useSetupOperationView'
-import { GRAPHQL_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
 
 const DIFFS_META_KEYS: DiffMetaKeys = {
   diffsMetaKey: DIFF_META_KEY,
@@ -65,6 +65,9 @@ export type OperationViewProps = PropsWithChildren<{
   mergedDocument: unknown
   // diffs specific
   filters?: ChangeSeverity[]
+  // GraphQL specific
+  operationType?: string
+  operationName?: string
 }>
 
 export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(props => {
@@ -81,6 +84,9 @@ export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(pr
     comparisonMode,
     // diffs specific
     filters,
+    // GraphQL specific
+    operationType,
+    operationName,
   } = props
   const operationViewContainerRef = useRef<HTMLDivElement | null>(null)
 
@@ -161,6 +167,8 @@ export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(pr
           mergedDocument,
           schemaViewMode,
           filters,
+          operationType,
+          operationName,
         )}
       </Box>
       {contextPanelOpen && (
@@ -186,18 +194,22 @@ type ApiTypeViewerCallback = (
   mergedDocument?: unknown,
   schemaViewMode?: SchemaViewMode,
   filters?: ChangeSeverity[],
+  operationType?: string, // for GraphQL, variants: query, mutation, subscription
+  operationName?: string // for GraphQL, operation name
 ) => ReactNode
 
 const API_TYPE_VIEWER_MAP: Record<ApiType, ApiTypeViewerCallback> = {
   [API_TYPE_REST]: (ref) => (
     <Box ref={ref} />
   ),
-  [API_TYPE_GRAPHQL]: (_, comparisonMode, mergedDocument, schemaViewMode, filters) => (
+  [API_TYPE_GRAPHQL]: (_, comparisonMode, mergedDocument, schemaViewMode, filters, operationType, operationName) => (
     //todo need separate it to operationView and operationDiffView
     !comparisonMode
       ? <GraphQlOperationViewer
         source={mergedDocument}
         displayMode={schemaViewMode as SchemaViewMode}
+        operationType={operationType}
+        operationName={operationName}
       />
       : <GraphQLOperationDiffViewer
         source={mergedDocument}
@@ -205,6 +217,8 @@ const API_TYPE_VIEWER_MAP: Record<ApiType, ApiTypeViewerCallback> = {
         filters={filters ?? []}
         metaKeys={DIFFS_META_KEYS}
         layoutMode={SIDE_BY_SIDE_DIFFS_LAYOUT_MODE}
+        operationType={operationType}
+        operationName={operationName}
       />
   ),
 }
