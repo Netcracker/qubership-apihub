@@ -186,7 +186,7 @@ func (g *Generator) generateGraphQLEndpoints(specs []config.SpecMetadata, specMa
 		spec := &specs[i]
 		var path string
 		if spec.Type == config.DocTypeIntrospection {
-			path = "/graphql/introspection"
+			path = fmt.Sprintf("/graphql/introspection/%s", g.makeUnique(spec.FileId))
 		} else {
 			path = fmt.Sprintf("/api/graphql-server/schema/%s", g.makeUnique(spec.FileId))
 		}

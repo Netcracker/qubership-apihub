@@ -405,3 +405,5 @@ func TestRestIdentifierIdentifyInvalidYAML(t *testing.T) {
 		t.Errorf("Expected 1 error, got %d", len(errors))
 	}
 }
+
+

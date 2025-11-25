@@ -7,6 +7,8 @@ import (
 	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
 )
 
+var sdlPattern = regexp.MustCompile(`type\s+\S+\s+\{`)
+
 // GraphQLIdentifier identifies GraphQL specifications and introspection JSON files
 type GraphQLIdentifier struct{}
 
@@ -19,7 +21,6 @@ func (i *GraphQLIdentifier) Identify(path string, content []byte) (*config.SpecM
 	ext := getFileExtension(path)
 
 	if ext == "graphql" || ext == "gql" {
-		sdlPattern := regexp.MustCompile(`type\s+\S+\s+\{`)
 		if sdlPattern.Match(content) {
 			return &config.SpecMetadata{
 				Name:     getFileName(path),

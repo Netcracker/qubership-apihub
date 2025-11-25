@@ -428,3 +428,5 @@ func TestSpecExposerDiscoverWithMixedTypes(t *testing.T) {
 		t.Errorf("Expected 0 errors, got %d", len(result.Errors))
 	}
 }
+
+
