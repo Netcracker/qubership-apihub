@@ -27,13 +27,24 @@ import { stringifyOperation } from '../../utils/operations'
 export function useOperationsPairAsStrings(
   originOperation?: OperationData | string | null,
   changedOperation?: OperationData | string | null,
+  enabled: boolean = true,
 ): [string, string] {
   return useMemo(
     () => {
-      const originOperationString = typeof originOperation === 'string' ? originOperation : stringifyOperation(originOperation)
-      const changedOperationString = typeof changedOperation === 'string' ? changedOperation : stringifyOperation(changedOperation)
+      const originOperationString =
+        typeof originOperation === 'string'
+          ? originOperation
+          : enabled
+            ? stringifyOperation(originOperation)
+            : ''
+      const changedOperationString =
+        typeof changedOperation === 'string'
+          ? changedOperation
+          : enabled
+            ? stringifyOperation(changedOperation)
+            : ''
       return [originOperationString, changedOperationString]
     },
-    [originOperation, changedOperation],
+    [originOperation, enabled, changedOperation],
   )
 }

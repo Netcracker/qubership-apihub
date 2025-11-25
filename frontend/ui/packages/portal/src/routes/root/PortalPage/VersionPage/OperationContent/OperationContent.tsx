@@ -43,7 +43,6 @@ import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/ap
 import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { FileViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
 import { FILE_FORMAT_VIEW, YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
-import { GRAPH_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { checkIfGraphQLOperation, DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
@@ -53,6 +52,7 @@ import {
 import { usePublishedDocumentRaw } from '@netcracker/qubership-apihub-ui-shared/hooks/documents/usePublishedDocumentRaw'
 import {
   useIsDocOperationViewMode,
+  useIsGraphOperationViewMode,
   useIsRawOperationViewMode,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationMode'
 import {
@@ -91,6 +91,33 @@ export type OperationContentProps = {
   operationModels?: OpenApiData
 }
 
+function useRawGraphQlCroppedToSingleOperationRawGraphQl(
+  originalGraphql: string,
+  operationType?: string,
+  operationName?: string,
+): string {
+  return useMemo(() => {
+    if (originalGraphql && operationType && operationName) {
+      let operationTypeSection: 'queries' | 'mutations' | 'subscriptions' | undefined
+      switch (operationType) {
+        case 'query':
+          operationTypeSection = 'queries'
+          break
+        case 'mutation':
+          operationTypeSection = 'mutations'
+          break
+        case 'subscription':
+          operationTypeSection = 'subscriptions'
+          break
+      }
+      return operationTypeSection
+        ? cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument(originalGraphql, operationTypeSection, operationName)
+        : originalGraphql
+    }
+    return ''
+  }, [originalGraphql, operationType, operationName])
+}
+
 export const OperationContent: FC<OperationContentProps> = memo<OperationContentProps>(props => {
   const {
     changedOperation,
@@ -122,6 +149,15 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
     [changedOperation, originOperation],
   )
 
+  const { mode, schemaViewMode } = useOperationViewMode()
+  const isDocViewMode = useIsDocOperationViewMode(mode)
+  const isRawViewMode = useIsRawOperationViewMode(mode)
+  const isGraphViewMode = useIsGraphOperationViewMode(mode)
+
+  const isPlaygroundMode = useIsPlaygroundMode()
+  const isExamplesMode = useIsExamplesMode()
+  const isPlaygroundSidebarOpen = useIsPlaygroundSidebarOpen()
+
   const operationType = useMemo(
     () => (
       checkIfGraphQLOperation(changedOperation)
@@ -143,18 +179,18 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
     [changedOperation, originOperation],
   )
 
-  const [documentWithOriginOperation] = usePublishedDocumentRaw({
+  const [documentWithOriginOriginOperation] = usePublishedDocumentRaw({
     packageKey: originPackageKey,
     versionKey: originVersionKey,
     slug: originOperation?.documentId ?? '',
-    enabled: isGraphQLOperation,
+    enabled: isRawViewMode && isGraphQLOperation,
   })
 
-  const [documentWithChangedOperation] = usePublishedDocumentRaw({
+  const [documentWithChangedGraphQlOperation] = usePublishedDocumentRaw({
     packageKey: changedPackageKey,
     versionKey: changedVersionKey,
     slug: changedOperation?.documentId ?? '',
-    enabled: isGraphQLOperation,
+    enabled: isRawViewMode && isGraphQLOperation,
   })
 
   const { productionMode } = useSystemInfo()
@@ -168,78 +204,22 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
 
   const [filters] = useSeverityFiltersSearchParam()
   const comparisonMode = isComparisonMode(displayMode)
-  const { mode, schemaViewMode } = useOperationViewMode()
   const [fileViewMode = YAML_FILE_VIEW_MODE, setFileViewMode] = useFileViewMode()
 
   const [changedOperationContent, originOperationContent] = useOperationsPairAsStrings(
-    isGraphQLOperation ? documentWithChangedOperation : changedOperation,
-    isGraphQLOperation ? documentWithOriginOperation : originOperation,
+    isGraphQLOperation ? documentWithChangedGraphQlOperation : changedOperation,
+    isGraphQLOperation ? documentWithOriginOriginOperation : originOperation,
+    isPlaygroundMode || isExamplesMode, // only for REST operations!
   )
 
-  const truncatedDocumentWithOriginOperation = useMemo(() => {
-    if (originOperationContent) {
-      if (!isGraphQLOperation) {
-        return originOperationContent
-      }
-      if (operationType && operationName) {
-        let operationTypeSection: 'queries' | 'mutations' | 'subscriptions' | undefined
-        switch (operationType) {
-          case 'query':
-            operationTypeSection = 'queries'
-            break
-          case 'mutation':
-            operationTypeSection = 'mutations'
-            break
-          case 'subscription':
-            operationTypeSection = 'subscriptions'
-            break
-        }
-        return operationTypeSection
-          ? cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument(originOperationContent, operationTypeSection, operationName)
-          : originOperationContent
-      }
-    }
-    return ''
-  }, [originOperationContent, isGraphQLOperation, operationType, operationName])
-
-  const truncatedDocumentWithChangedOperation = useMemo(() => {
-    if (changedOperationContent) {
-      if (!isGraphQLOperation) {
-        return changedOperationContent
-      }
-      if (operationType && operationName) {
-        let operationTypeSection: 'queries' | 'mutations' | 'subscriptions' | undefined
-        switch (operationType) {
-          case 'query':
-            operationTypeSection = 'queries'
-            break
-          case 'mutation':
-            operationTypeSection = 'mutations'
-            break
-          case 'subscription':
-            operationTypeSection = 'subscriptions'
-            break
-        }
-        return operationTypeSection
-          ? cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument(changedOperationContent, operationTypeSection, operationName)
-          : changedOperationContent
-      }
-    }
-    return ''
-  }, [changedOperationContent, isGraphQLOperation, operationType, operationName])
+  const originGraphQlOperationContent = useRawGraphQlCroppedToSingleOperationRawGraphQl(originOperationContent, operationType, operationName)
+  const changedGraphQlOperationContent = useRawGraphQlCroppedToSingleOperationRawGraphQl(changedOperationContent, operationType, operationName)
 
   const [, setPlaygroundViewMode] = useSidebarPlaygroundViewMode()
   const [navigationDetails] = useOperationNavigationDetails()
 
   const breadcrumbsData = useBreadcrumbsData()
   let operationContentElement
-  const isDocViewMode = useIsDocOperationViewMode(mode)
-  const isRawViewMode = useIsRawOperationViewMode(mode)
-  const isGraphViewMode = mode === GRAPH_VIEW_MODE
-
-  const isPlaygroundMode = useIsPlaygroundMode()
-  const isExamplesMode = useIsExamplesMode()
-  const isPlaygroundSidebarOpen = useIsPlaygroundSidebarOpen()
 
   const graphItemSelect = useCallback((isSelected: boolean) => {
     if (isSelected) {
@@ -251,10 +231,15 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
   const currentServers = customServersPackageMap?.[packageId]
 
   const {
-    values: [originalValue, changedValue],
+    values: [originValueForRawSpecView, changedValueForRawSpecView],
     extension,
     type,
-  } = getFileDetails(apiType, fileViewMode, truncatedDocumentWithOriginOperation, truncatedDocumentWithChangedOperation)
+  } = getFileDetails(
+    apiType,
+    fileViewMode,
+    originGraphQlOperationContent || originOperationContent,
+    changedGraphQlOperationContent || changedOperationContent,
+  )
 
   const rawViewActions = useMemo(
     () => API_TYPE_RAW_VIEW_ACTIONS_MAP[apiType](fileViewMode, setFileViewMode),
@@ -344,8 +329,8 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
             )}
             {isRawViewMode && (
               <RawSpecDiffView
-                beforeValue={originalValue}
-                afterValue={changedValue}
+                beforeValue={originValueForRawSpecView}
+                afterValue={changedValueForRawSpecView}
                 extension={extension}
                 type={type}
               />
@@ -388,7 +373,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
                       <OperationSubheader actions={rawViewActions} />
                     )}
                     <RawSpecView
-                      value={changedValue}
+                      value={changedValueForRawSpecView}
                       extension={extension}
                       type={type}
                     />
