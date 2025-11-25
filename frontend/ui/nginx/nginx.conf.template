@@ -72,7 +72,6 @@ http {
         location ~ ^/api/v1/(?<doc_kind>(comparison|version)-internal-documents)/(?<doc_hash>[^/]+)$ {
             add_header Cache-Control "private, max-age=31536000" always;
             add_header ETag "\"$doc_hash\"" always;
-            expires 1y;
 
             proxy_pass http://${APIHUB_BACKEND_ADDRESS};
         }
