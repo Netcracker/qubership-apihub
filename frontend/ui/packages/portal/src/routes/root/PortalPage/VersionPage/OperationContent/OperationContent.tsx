@@ -26,6 +26,7 @@ import {
 } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/CustomServersProvider'
 import { getFileDetails } from '@apihub/utils/file-details'
 import { Box } from '@mui/material'
+import { cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument } from '@netcracker/qubership-apihub-api-processor'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import {
   CONTENT_PLACEHOLDER_AREA,
@@ -174,6 +175,59 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
     isGraphQLOperation ? documentWithChangedOperation : changedOperation,
     isGraphQLOperation ? documentWithOriginOperation : originOperation,
   )
+
+  const truncatedDocumentWithOriginOperation = useMemo(() => {
+    if (originOperationContent) {
+      if (!isGraphQLOperation) {
+        return originOperationContent
+      }
+      if (operationType && operationName) {
+        let operationTypeSection: 'queries' | 'mutations' | 'subscriptions' | undefined
+        switch (operationType) {
+          case 'query':
+            operationTypeSection = 'queries'
+            break
+          case 'mutation':
+            operationTypeSection = 'mutations'
+            break
+          case 'subscription':
+            operationTypeSection = 'subscriptions'
+            break
+        }
+        return operationTypeSection
+          ? cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument(originOperationContent, operationTypeSection, operationName)
+          : originOperationContent
+      }
+    }
+    return ''
+  }, [originOperationContent, isGraphQLOperation, operationType, operationName])
+
+  const truncatedDocumentWithChangedOperation = useMemo(() => {
+    if (changedOperationContent) {
+      if (!isGraphQLOperation) {
+        return changedOperationContent
+      }
+      if (operationType && operationName) {
+        let operationTypeSection: 'queries' | 'mutations' | 'subscriptions' | undefined
+        switch (operationType) {
+          case 'query':
+            operationTypeSection = 'queries'
+            break
+          case 'mutation':
+            operationTypeSection = 'mutations'
+            break
+          case 'subscription':
+            operationTypeSection = 'subscriptions'
+            break
+        }
+        return operationTypeSection
+          ? cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument(changedOperationContent, operationTypeSection, operationName)
+          : changedOperationContent
+      }
+    }
+    return ''
+  }, [changedOperationContent, isGraphQLOperation, operationType, operationName])
+
   const [, setPlaygroundViewMode] = useSidebarPlaygroundViewMode()
   const [navigationDetails] = useOperationNavigationDetails()
 
@@ -200,7 +254,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
     values: [originalValue, changedValue],
     extension,
     type,
-  } = getFileDetails(apiType, fileViewMode, originOperationContent, changedOperationContent)
+  } = getFileDetails(apiType, fileViewMode, truncatedDocumentWithOriginOperation, truncatedDocumentWithChangedOperation)
 
   const rawViewActions = useMemo(
     () => API_TYPE_RAW_VIEW_ACTIONS_MAP[apiType](fileViewMode, setFileViewMode),
