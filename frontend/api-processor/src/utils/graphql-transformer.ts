@@ -1,16 +1,16 @@
 import { normalize } from '@netcracker/qubership-apihub-api-unifier'
-import { buildFromSchema, GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
+import { buildFromSchema, GraphApiSchema, printGraphApi } from '@netcracker/qubership-apihub-graphapi'
 import { buildSchema } from 'graphql'
 import { calculateSpecRefs, cropToSingleOperation } from '../apitypes/graphql/graphql.operation'
 import { GraphQLSchemaType } from '../apitypes/graphql/graphql.types'
 import { INLINE_REFS_FLAG } from '../consts'
 import { removeComponents } from './operations.utils'
 
-export function transformRawGraphQlDocumentToTruncatedGraphApiSchema(
+export function cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument(
   rawGraphQlDocument: string,
   operationType: GraphQLSchemaType,
   operationKey: string,
-): GraphApiSchema {
+): string {
   const rawGraphApiSchema =
     buildFromSchema(
       buildSchema(
@@ -40,5 +40,7 @@ export function transformRawGraphQlDocumentToTruncatedGraphApiSchema(
     graphApiSchemaSingleOperation,
   )
 
-  return graphApiSchemaSingleOperation
+  const truncatedGraphQl = printGraphApi(graphApiSchemaSingleOperation)
+
+  return truncatedGraphQl
 }
