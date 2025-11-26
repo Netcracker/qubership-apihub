@@ -25,7 +25,7 @@ export {
   calculateDiffId,
   calculateImpactedSummary,
   convertToSlug,
+  cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument,
   removeComponents,
-  transformRawGraphQlDocumentToTruncatedGraphApiSchema,
 } from './utils'
 export { convertDtoFieldOperationTypes, replacePropertyInChangesSummary } from './utils/transformToDto'
