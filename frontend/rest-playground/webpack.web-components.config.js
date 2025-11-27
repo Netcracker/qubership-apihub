@@ -12,6 +12,8 @@ module.exports = {
       stream: false,
       process: require.resolve('process/browser'),
       querystring: require.resolve('querystring-es3'),
+      path: require.resolve('path-browserify'),
+      fs: require.resolve('browserify-fs'),
     },
   },
   devtool: 'source-map',
@@ -21,7 +23,7 @@ module.exports = {
   },
   output: {
     filename: 'index.js',
-    path: path.resolve(__dirname, "dist"),
+    path: path.resolve(__dirname, 'dist'),
     publicPath: 'auto',
     library: {
       name: 'qubership-apihub-rest-playground',
@@ -49,16 +51,16 @@ module.exports = {
         test: /\.css$/,
         use: ['style-loader', 'css-loader'],
         include: [
-          path.resolve(__dirname, "node_modules/monaco-editor")
+          path.resolve(__dirname, 'node_modules/monaco-editor'),
         ],
       },
       {
         test: /\.(ttf|woff|woff2|eot|otf)$/i,
         type: 'asset/inline',
         include: [
-          path.resolve(__dirname, "node_modules/monaco-editor")
+          path.resolve(__dirname, 'node_modules/monaco-editor'),
         ],
-      }
+      },
     ],
   },
   plugins: [
@@ -68,5 +70,6 @@ module.exports = {
     new webpack.ProvidePlugin({
       process: require.resolve('process/browser'),
     }),
+    new webpack.ProvidePlugin({ Buffer: ['buffer', 'Buffer'] }),
   ],
 }

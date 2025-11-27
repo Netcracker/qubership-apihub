@@ -1,4 +1,4 @@
-import $RefParser from '@stoplight/json-schema-ref-parser'
+import $RefParser from '@apidevtools/json-schema-ref-parser'
 import { isObject } from 'lodash'
 import * as React from 'react'
 
@@ -53,8 +53,8 @@ export function useBundleRefsIntoDocument(document: unknown, options?: Options) 
 const commonBundleOptions = { continueOnError: true }
 const doBundle = (data: object, baseUrl?: string) => {
   if (!baseUrl) {
-    return $RefParser.bundle(data, commonBundleOptions)
+    return $RefParser.dereference(data, commonBundleOptions)
   } else {
-    return $RefParser.bundle(baseUrl, data, commonBundleOptions)
+    return $RefParser.dereference(baseUrl, data, commonBundleOptions)
   }
 }

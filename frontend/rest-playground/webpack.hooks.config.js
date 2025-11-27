@@ -15,6 +15,8 @@ module.exports = {
       stream: false,
       process: require.resolve('process/browser'),
       querystring: require.resolve('querystring-es3'),
+      path: require.resolve('path-browserify'),
+      fs: require.resolve('browserify-fs'),
     },
   },
   devtool: 'source-map',
@@ -60,5 +62,6 @@ module.exports = {
     new webpack.ProvidePlugin({
       process: require.resolve('process/browser'),
     }),
+    new webpack.ProvidePlugin({ Buffer: ['buffer', 'Buffer'] }),
   ],
 }
