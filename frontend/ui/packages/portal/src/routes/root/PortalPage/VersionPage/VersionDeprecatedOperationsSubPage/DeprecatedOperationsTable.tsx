@@ -107,7 +107,7 @@ export const DeprecatedOperationsTable: FC<DeprecatedOperationsTabProps> = memo<
                   title={<DeprecatedInfo info={deprecatedInfo}/>}
                   placement="right"
                 >
-                  <InfoContextIcon sx={{ visibility: 'hidden' }} className="visible-on-hover"/>
+                  <InfoContextIcon />
                 </Tooltip>
               )}
             </Box>

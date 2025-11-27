@@ -136,7 +136,7 @@ export const DeprecatedItemsSubTable: FC<SubTableProps> = memo<SubTableProps>((
                     title={<DeprecatedInfo info={deprecatedInfo}/>}
                     placement="right"
                   >
-                    <InfoContextIcon sx={{ visibility: 'hidden' }} className="visible-on-hover"/>
+                    <InfoContextIcon sx={{ marginLeft: '38px' }}/>
                   </Tooltip>
                 )}
               </Box>
