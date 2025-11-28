@@ -17,15 +17,15 @@
 import { isDiff, isObject } from '@netcracker/qubership-apihub-api-data-model'
 import { DiffAction, DiffType } from '@netcracker/qubership-apihub-api-diff'
 import type { FC } from 'react'
-import { useCallback, useState } from 'react'
+import { useCallback/*, useState */ } from 'react'
 import { NODE_DIFF_COLOR_MAP } from '../../../../consts/changes'
 import { DEFAULT_LAYOUT_MODE, DEFAULT_ROW_PADDING_LEFT } from '../../../../consts/configuration'
-import {
-  COLLAPSE_ALL_MENU_ITEM,
-  EXPAND_ALL_MENU_ITEM,
-  SORT_ASC_MENU_ITEM,
-  SORT_ORIGINAL_MENU_ITEM,
-} from '../../../../consts/menuItems'
+// import {
+//   COLLAPSE_ALL_MENU_ITEM,
+//   EXPAND_ALL_MENU_ITEM,
+//   SORT_ASC_MENU_ITEM,
+//   SORT_ORIGINAL_MENU_ITEM,
+// } from '../../../../consts/menuItems'
 import { CIRCULAR_REF_TOOLTIP } from '../../../../consts/tooltips'
 import { useChangeSeverityFilters } from '../../../../contexts/ChangeSeverityFiltersContext'
 import { useNoSubHeaderSide } from '../../../../contexts/NoSubHeaderContext'
@@ -46,7 +46,7 @@ import {
   maxDiffType,
   toChangesList
 } from '../../../../utils/common/changes'
-import { defaultOnContextMenu } from '../../../../utils/common/event-handlers'
+// import { defaultOnContextMenu } from '../../../../utils/common/event-handlers'
 import { NestingIndicator } from '../../../common/NestingIndicator'
 import { NodeTitle } from '../../../common/NodeTitle'
 import { NodeType } from '../../../common/NodeType'
@@ -56,8 +56,8 @@ import { EmptyContent } from '../../../common/diffs/EmptyContent'
 import { UnsupportedContent } from '../../../common/diffs/UnsupportedContent'
 import { Expander } from '../../../common/layout/Expander/Expander'
 import { CircularRefIcon } from '../../../kit/icons/CircularRefIcon'
-import { UxContextMenu } from '../../../kit/ux/UxContextMenu/UxContextMenu'
-import { ToggleContextMenuHandlerOptions } from '../../../kit/ux/UxContextMenu/types/ToggleContextMenuHandler'
+// import { UxContextMenu } from '../../../kit/ux/UxContextMenu/UxContextMenu'
+// import { ToggleContextMenuHandlerOptions } from '../../../kit/ux/UxContextMenu/types/ToggleContextMenuHandler'
 import { UxDiffFloatingBadge } from '../../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 import { UxMarkerPanel } from '../../../kit/ux/UxMarkerPanel/UxMarkerPanel'
 import { UxTooltip } from '../../../kit/ux/UxTooltip/UxTooltip'
@@ -95,10 +95,10 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
     deprecated,
     isExpandable,
     expanded,
-    sorted,
+    // sorted,
     isRoot,
     onToggleExpander,
-    onToggleSort,
+    // onToggleSort,
     layoutMode = DEFAULT_LAYOUT_MODE,
     level = 0,
     $changes,
@@ -151,19 +151,19 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
         : ''
 
   const Content: FC<ContentProps> = ({ layoutSide }) => {
-    const [contextMenuOpen, setContextMenuOpen] = useState<boolean>(false)
-    const contextMenuItems = [
-      {
-        label: expanded ? COLLAPSE_ALL_MENU_ITEM : EXPAND_ALL_MENU_ITEM,
-        onClick: onToggleExpander
-      },
-      {
-        label: sorted ? SORT_ORIGINAL_MENU_ITEM : SORT_ASC_MENU_ITEM,
-        onClick: onToggleSort
-      }
-    ]
+    // const [contextMenuOpen, setContextMenuOpen] = useState<boolean>(false)
+    // const contextMenuItems = [
+    //   {
+    //     label: expanded ? COLLAPSE_ALL_MENU_ITEM : EXPAND_ALL_MENU_ITEM,
+    //     onClick: onToggleExpander
+    //   },
+    //   {
+    //     label: sorted ? SORT_ORIGINAL_MENU_ITEM : SORT_ASC_MENU_ITEM,
+    //     onClick: onToggleSort
+    //   }
+    // ]
     // TODO 26.10.23 // Simplify when deprecated components are removed
-    const onToggleContextMenu = (options: ToggleContextMenuHandlerOptions) => setContextMenuOpen(options.open)
+    // const onToggleContextMenu = (options: ToggleContextMenuHandlerOptions) => setContextMenuOpen(options.open)
 
     // Changes
     const width = isSideBySideDiffsLayoutMode ? 'w-1/2' : 'w-full'
@@ -234,13 +234,13 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
             isExpandable={isExpandable}
             expanded={expanded}
             onToggleExpander={onToggleExpander}
-            onToggleContextMenu={onToggleContextMenu}
+            // onToggleContextMenu={onToggleContextMenu}
           />
           <div className="flex flex-row items-center gap-2 pt-2 pb-1">
             <div
               className={`text-xs text-black font-Inter-Medium ${isExpandable ? 'hover:cursor-pointer' : ''}`}
               onClick={isExpandable ? onToggleExpander : undefined}
-              onContextMenu={defaultOnContextMenu(isExpandable, onToggleContextMenu)}
+              // onContextMenu={defaultOnContextMenu(isExpandable, onToggleContextMenu)}
             >
               <NodeTitle
                 {...nodeTitleData}
@@ -253,11 +253,11 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
               />
             </div>
             {!noSubHeader && <SubHeader />}
-            <UxContextMenu
+            {/* <UxContextMenu
               visible={contextMenuOpen}
               onClickAway={() => onToggleContextMenu({ open: false })}
               menuItems={contextMenuItems}
-            />
+            /> */}
           </div>
         </div>
       </div>

@@ -11,8 +11,8 @@
     "test": "lerna run test",
     "screenshot-test:ci": "lerna run screenshot-test:ci",
     "screenshot-test:docker": "lerna run screenshot-test:docker",
-    "development:link": "npm link --workspace @netcracker/qubership-apihub-api-doc-viewer && npm link @netcracker/qubership-apihub-graphapi --save-dev && npm link @netcracker/qubership-apihub-api-diff --save && npm link @netcracker/qubership-apihub-api-unifier --save-dev && npm link @netcracker/qubership-apihub-json-crawl --save-dev",
-    "development:uninstall": "npm uninstall @netcracker/qubership-apihub-graphapi --no-save && npm uninstall @netcracker/qubership-apihub-api-diff --no-save && npm uninstall @netcracker/qubership-apihub-api-unifier --no-save && npm uninstall @netcracker/qubership-apihub-json-crawl --no-save",
+    "development:link": "yarn link --workspace @netcracker/qubership-apihub-api-doc-viewer && yarn link @netcracker/qubership-apihub-graphapi --save-dev && yarn link @netcracker/qubership-apihub-api-diff --save && yarn link @netcracker/qubership-apihub-api-unifier --save-dev && yarn link @netcracker/qubership-apihub-json-crawl --save-dev",
+    "development:unlink": "yarn unlink @netcracker/qubership-apihub-graphapi --no-save && yarn unlink @netcracker/qubership-apihub-api-diff --no-save && yarn unlink @netcracker/qubership-apihub-api-unifier --no-save && yarn unlink @netcracker/qubership-apihub-json-crawl --no-save",
     "postinstall": "lerna run generate-stories && lerna run generate-tests",
     "lint:check": "eslint -c .eslintrc.json . --ext .js,.cjs,.ts,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
     "lint:fix": "npm run lint:check -- --fix",
@@ -21,8 +21,8 @@
   "dependencies": {
     "@netcracker/qubership-apihub-api-diff": "feature-asyncapi-basic-e2e",
     "@netcracker/qubership-apihub-api-unifier": "feature-asyncapi-basic-e2e",
-    "@netcracker/qubership-apihub-graphapi": "feature-performance-optimization",
-    "@netcracker/qubership-apihub-json-crawl": "1.0.4"
+    "@netcracker/qubership-apihub-graphapi": "feature-performance-optimization-405",
+    "@netcracker/qubership-apihub-json-crawl": "feature-performance-optimization-405"
   },
   "devDependencies": {
     "@netcracker/qubership-apihub-compatibility-suites": "2.3.0",

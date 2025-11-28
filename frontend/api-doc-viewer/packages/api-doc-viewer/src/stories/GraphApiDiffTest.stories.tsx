@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff';
-import type { Meta, StoryObj } from '@storybook/react';
-import { GraphQLOperationDiffViewer } from '../components/GraphQLOperationViewer/GraphQLOperationDiffViewer';
-import { SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '../types/LayoutMode';
-import { prepareGraphApiDiffSchema } from './preprocess';
-import { graphapi } from './utils/helpers';
+import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import type { Meta, StoryObj } from '@storybook/react'
+import { GraphQLOperationDiffViewer } from '../components/GraphQLOperationViewer/GraphQLOperationDiffViewer'
+import { SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '../types/LayoutMode'
+import { prepareGraphApiDiffSchema } from './preprocess'
+import { buildGraphApi, graphapi } from './utils/helpers'
 
 // It's necessary because storybook doesn't render nested stories without this empty story
 // eslint-disable-next-line storybook/story-exports
@@ -29,13 +29,18 @@ const meta = {
   parameters: {},
   argTypes: {},
   args: {
-    source: {}
-  }
-} satisfies Meta<typeof GraphQLOperationDiffViewer>;
+    source: {},
+  },
+} satisfies Meta<typeof GraphQLOperationDiffViewer>
 
-export default meta;
+export default meta
 
 type Story = StoryObj<typeof meta>
+
+const DIFF_META_KEYS = {
+  diffsMetaKey: DIFF_META_KEY,
+  aggregatedDiffsMetaKey: DIFFS_AGGREGATED_META_KEY,
+}
 
 export const Test: Story = {
   args: {
@@ -44,8 +49,8 @@ export const Test: Story = {
       afterSource: {},
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 const deprecationBefore = graphapi`
@@ -61,9 +66,9 @@ type Response {
   deprecatedWithReasonProperty: String
   unDeprecatedWithReasonProperty: String @deprecated(reason: "Will be removed")
   changedDeprecationReasonProperty: String @deprecated(reason: "BEFORE")
-  unchangedDeprecatedProperty: String @deprecated
-  unchangedDeprecatedWithReasonProperty: String @deprecated(reason: "Reason!!!")
-  unchangedNotDeprecatedProperty: String
+  notChangedDeprecatedProperty: String @deprecated
+  notChangedDeprecatedWithReasonProperty: String @deprecated(reason: "Reason!!!")
+  notChangedNotDeprecatedProperty: String
   enum: Enum
   bugEnum: BugEnum
 }
@@ -73,9 +78,11 @@ enum Enum {
   deprecatedWithReasonValue
   unDeprecatedWithReasonValue @deprecated(reason: "Will be removed")
   changedDeprecationReasonProperty @deprecated(reason: "BEFORE")
-  unchangedDeprecatedValue @deprecated
-  unchangedDeprecatedWithReasonValue @deprecated(reason: "Reason!!!")
-  unchangedNotDeprecatedValue
+  changedDeprecationReasonPropertyFromDefault @deprecated
+  changedDeprecationReasonPropertyToDefault @deprecated(reason: "Not default reason")
+  notChangedDeprecatedValue @deprecated
+  notChangedDeprecatedWithReasonValue @deprecated(reason: "Reason!!!")
+  notChangedNotDeprecatedValue
 }
 enum BugEnum {
   deprecated
@@ -94,9 +101,9 @@ type Response {
   deprecatedWithReasonProperty: String @deprecated(reason: "Will be removed")
   unDeprecatedWithReasonProperty: String
   changedDeprecationReasonProperty: String @deprecated(reason: "AFTER")
-  unchangedDeprecatedProperty: String @deprecated
-  unchangedDeprecatedWithReasonProperty: String @deprecated(reason: "Reason!!!")
-  unchangedNotDeprecatedProperty: String
+  notChangedDeprecatedProperty: String @deprecated
+  notChangedDeprecatedWithReasonProperty: String @deprecated(reason: "Reason!!!")
+  notChangedNotDeprecatedProperty: String
   enum: Enum
   bugEnum: BugEnum
 }
@@ -106,9 +113,11 @@ enum Enum {
   deprecatedWithReasonValue @deprecated(reason: "Will be removed")
   unDeprecatedWithReasonValue
   changedDeprecationReasonProperty @deprecated(reason: "AFTER")
-  unchangedDeprecatedValue @deprecated
-  unchangedDeprecatedWithReasonValue @deprecated(reason: "Reason!!!")
-  unchangedNotDeprecatedValue
+  changedDeprecationReasonPropertyFromDefault @deprecated(reason: "Not default reason")
+  changedDeprecationReasonPropertyToDefault @deprecated
+  notChangedDeprecatedValue @deprecated
+  notChangedDeprecatedWithReasonValue @deprecated(reason: "Reason!!!")
+  notChangedNotDeprecatedValue
 }
 enum BugEnum {
   deprecated @deprecated
@@ -121,8 +130,8 @@ export const DeprecatedQuery: Story = {
       afterSource: deprecationAfter,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 export const UnDeprecatedQuery: Story = {
   args: {
@@ -130,10 +139,11 @@ export const UnDeprecatedQuery: Story = {
       beforeSource: deprecationBefore,
       afterSource: deprecationAfter,
     }),
-    operationPath: 'unDeprecatedQuery',
+    operationType: 'query',
+    operationName: 'unDeprecatedQuery',
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 export const DeprecatedWithReasonQuery: Story = {
   args: {
@@ -141,10 +151,11 @@ export const DeprecatedWithReasonQuery: Story = {
       beforeSource: deprecationBefore,
       afterSource: deprecationAfter,
     }),
-    operationPath: 'deprecatedWithReasonQuery',
+    operationType: 'query',
+    operationName: 'deprecatedWithReasonQuery',
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 export const UnDeprecatedWithReasonQuery: Story = {
   args: {
@@ -152,10 +163,11 @@ export const UnDeprecatedWithReasonQuery: Story = {
       beforeSource: deprecationBefore,
       afterSource: deprecationAfter,
     }),
-    operationPath: 'unDeprecatedWithReasonQuery',
+    operationType: 'query',
+    operationName: 'unDeprecatedWithReasonQuery',
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const SimpleEnum: Story = {
@@ -184,10 +196,9 @@ export const SimpleEnum: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
-
 
 export const WhollyAddedSimpleEnum: Story = {
   args: {
@@ -209,8 +220,8 @@ export const WhollyAddedSimpleEnum: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const WhollyRemovedSimpleEnum: Story = {
@@ -233,8 +244,8 @@ export const WhollyRemovedSimpleEnum: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 const complexEnumBefore = graphapi`
@@ -309,8 +320,8 @@ export const ComplexEnum: Story = {
       afterSource: complexEnumAfter,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const WhollyAddedComplexEnum: Story = {
@@ -329,7 +340,7 @@ export const WhollyAddedComplexEnum: Story = {
         enum Enum {
           first
           "My Value"
-          second 
+          second
           third @deprecated
           "My value"
           fourth @foo @deprecated(reason: "Because why")
@@ -337,8 +348,8 @@ export const WhollyAddedComplexEnum: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const WhollyRemovedComplexEnum: Story = {
@@ -352,7 +363,7 @@ export const WhollyRemovedComplexEnum: Story = {
         enum Enum {
           first
           "My Value"
-          second 
+          second
           third @deprecated
           "My value"
           fourth @foo @deprecated(reason: "Because why")
@@ -365,8 +376,8 @@ export const WhollyRemovedComplexEnum: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const WhollyAddedDirective: Story = {
@@ -386,8 +397,8 @@ export const WhollyAddedDirective: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const WhollyRemovedDirective: Story = {
@@ -407,8 +418,8 @@ export const WhollyRemovedDirective: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const AppendDirective: Story = {
@@ -430,8 +441,8 @@ export const AppendDirective: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const PopDirective: Story = {
@@ -453,8 +464,8 @@ export const PopDirective: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const AddedDirectiveLocation: Story = {
@@ -474,8 +485,8 @@ export const AddedDirectiveLocation: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const RemovedDirectiveLocation: Story = {
@@ -495,8 +506,8 @@ export const RemovedDirectiveLocation: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const ReplacedDirectiveLocation: Story = {
@@ -516,8 +527,8 @@ export const ReplacedDirectiveLocation: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const AddedDirectiveDescription: Story = {
@@ -538,8 +549,8 @@ export const AddedDirectiveDescription: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const RemovedDirectiveDescription: Story = {
@@ -560,8 +571,8 @@ export const RemovedDirectiveDescription: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const ReplacedDirectiveDescription: Story = {
@@ -583,8 +594,8 @@ export const ReplacedDirectiveDescription: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const StringToStringOrInt: Story = {
@@ -603,8 +614,8 @@ export const StringToStringOrInt: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const StringToIntOrFloat: Story = {
@@ -623,8 +634,8 @@ export const StringToIntOrFloat: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const StringToStringOrEnum: Story = {
@@ -647,8 +658,8 @@ export const StringToStringOrEnum: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const StringToEnum1OrEnum2: Story = {
@@ -675,8 +686,8 @@ export const StringToEnum1OrEnum2: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const ListToStringOrInt: Story = {
@@ -695,8 +706,8 @@ export const ListToStringOrInt: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const DirectiveUsageAddedArgValue: Story = {
@@ -716,8 +727,8 @@ export const DirectiveUsageAddedArgValue: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const DirectiveUsageRemovedArgValue: Story = {
@@ -737,8 +748,8 @@ export const DirectiveUsageRemovedArgValue: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const DirectiveUsageChangedArgValue: Story = {
@@ -758,8 +769,8 @@ export const DirectiveUsageChangedArgValue: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const ChangedUnion: Story = {
@@ -779,8 +790,8 @@ export const ChangedUnion: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
 }
 
 export const ChangedObjectiveUnion: Story = {
@@ -793,7 +804,7 @@ export const ChangedObjectiveUnion: Story = {
         union Entity = A | B
         type A {
           id: ID!
-          name: String
+          name(a: Int, b: Boolean): String
         }
         type B {
           key: ID!
@@ -806,8 +817,8 @@ export const ChangedObjectiveUnion: Story = {
         }
         union Entity = A | B | C
         type A {
-          id: ID!
-          name: String
+          id(b: Boolean): ID!
+          name(a: Int): String
         }
         type B {
           key: ID!
@@ -820,6 +831,196 @@ export const ChangedObjectiveUnion: Story = {
       `,
     }),
     layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
-    diffMetaKey: DIFF_META_KEY,
-  }
+    metaKeys: DIFF_META_KEYS,
+  },
+}
+
+export const TypeToInput: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiDiffSchema({
+      beforeSource: buildGraphApi(`
+        type Query {
+          test: Type
+        }
+        
+        type Type {
+          id: ID!
+        }
+      `),
+      afterSource: buildGraphApi(`
+        type Query {
+          test: Input
+        }
+        
+        input Input {
+          id: ID!
+        }
+      `),
+      circular: true,
+    })
+    return <GraphQLOperationDiffViewer {...args} source={processedSource} />
+  },
+  args: {
+    expandedDepth: 2,
+    metaKeys: DIFF_META_KEYS,
+    layoutMode: 'side-by-side-diffs',
+    operationType: 'query',
+    operationName: 'companyCount',
+  },
+}
+
+export const EnumChanges: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiDiffSchema({
+      beforeSource: buildGraphApi(`
+        type Query {
+          test: Fruit
+        }
+        
+        enum Fruit {
+          "Removed APPLE description"
+          APPLE
+          BANANA
+          "Changed ORANGE description"
+          ORANGE
+          PINEAPPLE
+          STRAWBERRY
+        }
+      `),
+      afterSource: buildGraphApi(`
+        type Query {
+          test: Fruit
+        }
+        
+        enum Fruit {
+          APPLE
+          "Added BANANA description"
+          BANANA
+          "CHANGED ORANGE description"
+          ORANGE
+          PEAR
+          STRAWBERRY
+        }
+      `),
+      circular: true,
+    })
+    return <GraphQLOperationDiffViewer {...args} source={processedSource} />
+  },
+  args: {
+    expandedDepth: 2,
+    metaKeys: DIFF_META_KEYS,
+    layoutMode: 'side-by-side-diffs',
+    operationType: 'query',
+    operationName: 'companyCount',
+  },
+}
+
+export const DirectiveUsageLocationsChanged: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiDiffSchema({
+      beforeSource: buildGraphApi(`
+        directive @foo on FIELD_DEFINITION
+        type Query {
+          test: String @foo
+        }
+      `),
+      afterSource: buildGraphApi(`
+        directive @foo on FIELD_DEFINITION | ENUM_VALUE
+        type Query {
+          test: String @foo
+        }
+      `),
+      circular: true,
+    })
+    return <GraphQLOperationDiffViewer {...args} source={processedSource} />
+  },
+  args: {
+    expandedDepth: 2,
+    metaKeys: DIFF_META_KEYS,
+    layoutMode: 'side-by-side-diffs',
+  },
+}
+
+export const ChangedCircularMethods: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiDiffSchema({
+      beforeSource: buildGraphApi(`
+        type Query {
+          test: Response
+        }
+        type Response {
+          id: ID!
+          name: String
+          removedCycled: CycledEntity
+        }
+        type CycledEntity {
+          value: String
+          child: CycledEntity
+        }
+      `),
+      afterSource: buildGraphApi(`
+        type Query {
+          test: Response
+        }
+        type Response {
+          id: ID!
+          name: String
+          addedCycled: CycledEntity
+        }
+        type CycledEntity {
+          value: String
+          child: CycledEntity
+        }
+      `),
+      circular: true,
+    })
+    return <GraphQLOperationDiffViewer {...args} source={processedSource} />
+  },
+  args: {
+    expandedDepth: 2,
+    metaKeys: DIFF_META_KEYS,
+    layoutMode: 'side-by-side-diffs',
+  },
+}
+
+export const ChangedCircularProperties: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiDiffSchema({
+      beforeSource: buildGraphApi(`
+        type Query {
+          test: Response
+        }
+        input Response {
+          id: ID!
+          name: String
+          removedCycled: CycledEntity
+        }
+        type CycledEntity {
+          value: String
+          child: CycledEntity
+        }
+      `),
+      afterSource: buildGraphApi(`
+        type Query {
+          test: Response
+        }
+        input Response {
+          id: ID!
+          name: String
+          addedCycled: CycledEntity
+        }
+        type CycledEntity {
+          value: String
+          child: CycledEntity
+        }
+      `),
+      circular: true,
+    })
+    return <GraphQLOperationDiffViewer {...args} source={processedSource} />
+  },
+  args: {
+    expandedDepth: 2,
+    metaKeys: DIFF_META_KEYS,
+    layoutMode: 'side-by-side-diffs',
+  },
 }

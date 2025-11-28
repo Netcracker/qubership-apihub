@@ -265,3 +265,9 @@ export function wasGraphApiEnumDefinition(
   }
   return isObject(diffForType.beforeValue) && diffForType.beforeValue.kind === 'enum'
 }
+
+type TObject = Record<PropertyKey, unknown>
+
+export function extendToObject(value: unknown): TObject | undefined {
+  return isObject(value) ? value : undefined
+}

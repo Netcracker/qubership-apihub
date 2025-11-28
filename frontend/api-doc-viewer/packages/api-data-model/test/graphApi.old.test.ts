@@ -1,7 +1,7 @@
 
 import { buildGraphApi, createGraphApiTreeForTests } from './helpers/graphql'
 
-describe('old deprecated tests', () => {
+describe.skip('old deprecated tests', () => {
   const jestConsole = console
   beforeEach(() => {
     global.console = require('console')

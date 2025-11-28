@@ -43,7 +43,8 @@ export const QueryNoArgsPrimitiveNullableOutput: Story = {
       }
     `),
     circular: true,
-    operationPath: 'getString'
+    operationType: 'query',
+    operationName: 'getString'
   },
 }
 QueryNoArgsPrimitiveNullableOutput.storyName = '[Query] No args. Primitive nullable output'
@@ -57,7 +58,8 @@ export const MutationNoArgsPrimitiveNullableOutput: Story = {
       }
     `),
     circular: true,
-    operationPath: 'asString'
+    operationType: 'mutation',
+    operationName: 'asString'
   },
 }
 MutationNoArgsPrimitiveNullableOutput.storyName = '[Mutation] No args. Primitive nullable output'
@@ -83,7 +85,8 @@ export const QueryWithUnionInOutput: Story = {
       union Shape = Quadrangle | Circle
     `),
     circular: true,
-    operationPath: 'getShape'
+    operationType: 'query',
+    operationName: 'getShape'
   },
 }
 QueryWithUnionInOutput.storyName = '[Query] Union with nested union in output'
@@ -113,7 +116,8 @@ export const MethodWithUnionInOutput: Story = {
       union Shape = Quadrangle | Circle
     `),
     circular: true,
-    operationPath: 'getGeometry'
+    operationType: 'query',
+    operationName: 'getGeometry'
   },
 }
 MethodWithUnionInOutput.storyName = '[Method] Union with nested union in output'

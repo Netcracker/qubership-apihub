@@ -167,7 +167,7 @@ export class JsonSchemaStatePropNode<T extends IModelTreeNode<any, any, any> = J
   public setSelected(value: string | undefined) {
     if (value !== this._selected) {
       this._selected = value
-      this._children = [...this.buildCombinaryNodes(), ...this.buildChildrenNodes(this._sort)]
+      this._children = [...this.buildCombinaryNodes(), ...this.buildChildrenNodes(/*this._sort*/)]
     }
   }
 
@@ -186,7 +186,7 @@ export class JsonSchemaStatePropNode<T extends IModelTreeNode<any, any, any> = J
   public sort(sort = 0) {
     if (sort === this._sort) { return }
     this._sort = sort
-    this._children = [...this._combinaryNodes, ...this.buildChildrenNodes(sort)]
+    this._children = [...this._combinaryNodes, ...this.buildChildrenNodes(/*sort*/)]
   }
 
   protected buildCombinaryNodes() {
@@ -207,19 +207,19 @@ export class JsonSchemaStatePropNode<T extends IModelTreeNode<any, any, any> = J
     return _combinary
   }
 
-  protected buildChildrenNodes(sort: number): IModelStateNode<T>[] {
-    const children = [...this.node.children(this.selected)] as T[]
-    const sorted = sort
-      ? children.sort((n1, n2) => (n1.key > n2.key ? -1 * sort : sort))
-      : children
-    this._childrenNodes = sorted.length
-      ? sorted.map((prop, i) => this.createStatePropNode(prop, i === 0))
+  protected buildChildrenNodes(/*sort: number*/): IModelStateNode<T>[] {
+    const children = [...this.node.expand().children(this.selected)] as T[]
+    // const sorted = sort
+    //   ? children.sort((n1, n2) => (n1.key > n2.key ? -1 * sort : sort))
+    //   : children
+    this._childrenNodes = children.length
+      ? children.map((prop, i) => this.createStatePropNode(prop, i === 0))
       : []
     return this._childrenNodes
   }
 
   protected buildChildren(): IModelStateNode<T>[] {
-    return [...this.buildCombinaryNodes(), ...this.buildChildrenNodes(this._sort)]
+    return [...this.buildCombinaryNodes(), ...this.buildChildrenNodes(/*this._sort*/)]
   }
 
   protected createStatePropNode(node: T, first = false): IModelStatePropNode<T> {

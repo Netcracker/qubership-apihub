@@ -41,4 +41,20 @@ export default defineConfig({
       fileName: 'index',
     },
   },
+  resolve: {
+    alias: {
+      // Cross-package aliases (external dependencies)
+      '@netcracker/qubership-apihub-api-state-model': path.resolve(__dirname, '../api-state-model/src'),
+      '@netcracker/qubership-apihub-api-data-model': path.resolve(__dirname, '../api-data-model/src'),
+
+      // Internal aliases (within this package)
+      '@apihub/builders': path.resolve(__dirname, 'src/builders'),
+      '@apihub/components': path.resolve(__dirname, 'src/components'),
+      '@apihub/constants': path.resolve(__dirname, 'src/consts'),
+      '@apihub/contexts': path.resolve(__dirname, 'src/contexts'),
+      '@apihub/hooks': path.resolve(__dirname, 'src/hooks'),
+      '@apihub/types': path.resolve(__dirname, 'src/types'),
+      '@apihub/utils': path.resolve(__dirname, 'src/utils')
+    }
+  }
 })

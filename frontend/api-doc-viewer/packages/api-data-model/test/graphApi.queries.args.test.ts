@@ -15,7 +15,7 @@ describe('graphapi tree. queries args', () => {
         getData(id: ID!): String!
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 3)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'args')
@@ -29,7 +29,7 @@ describe('graphapi tree. queries args', () => {
         getData(id: String!): String!
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 3)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'args')
@@ -43,7 +43,7 @@ describe('graphapi tree. queries args', () => {
         getData(id: Int!): String!
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 3)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'args')
@@ -57,7 +57,7 @@ describe('graphapi tree. queries args', () => {
         getRandomData(seed: Float!): String!
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 3)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'args')
@@ -71,7 +71,7 @@ describe('graphapi tree. queries args', () => {
         getData(flag: Boolean!): String!
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 3)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'args')
@@ -88,7 +88,7 @@ describe('graphapi tree. queries args', () => {
       "Description of CustomScalar"
       scalar CustomScalar
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 3)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'args')
@@ -114,7 +114,7 @@ describe('graphapi tree. queries args', () => {
         Last @deprecated(reason: "my reason")
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 3)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'args')
@@ -150,7 +150,7 @@ describe('graphapi tree. queries args', () => {
         hash: Int! @deprecated
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'args')
@@ -180,7 +180,7 @@ describe('graphapi tree. queries args', () => {
         hash: Int! @deprecated
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'args')
@@ -206,7 +206,7 @@ describe('graphapi tree. queries args', () => {
       "Description for my primitive union"
       union MyPrimitiveUnion = ID | String | Int | Float | Boolean
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 3)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'args')
@@ -238,7 +238,7 @@ describe('graphapi tree. queries args', () => {
         data: String!
       }
     `)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 6)
     const arg = tree.root!
       .children()[0] // query
       ?.children().find(node => node.kind === 'args')
