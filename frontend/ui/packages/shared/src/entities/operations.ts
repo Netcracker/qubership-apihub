@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
+import type { DeprecateItem, ReferencedPackageKind } from '@netcracker/qubership-apihub-api-processor'
 import { API_AUDIENCE_EXTERNAL, API_AUDIENCE_INTERNAL, API_AUDIENCE_UNKNOWN } from '@netcracker/qubership-apihub-api-processor'
+import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstack/react-query'
+import type { IsLoading } from '../utils/aliases'
+import { isObject } from '../utils/objects'
+import type { ApiType } from './api-types'
+import { API_TYPE_GRAPHQL, API_TYPE_REST } from './api-types'
+import type { GraphQlOperationType } from './graphql-operation-types'
+import type { Key, VersionKey } from './keys'
 import type { MethodType } from './method-types'
 import type { PackageKind } from './packages'
-import type { VersionStatus } from './version-status'
-import type { GraphQlOperationType } from './graphql-operation-types'
 import type { OperationChangeBase } from './version-changelog'
-import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstack/react-query'
-import type { Key, VersionKey } from './keys'
-import type { ApiType } from './api-types'
-import { API_TYPE_REST } from './api-types'
-import type { DeprecateItem, ReferencedPackageKind } from '@netcracker/qubership-apihub-api-processor'
-import type { IsLoading } from '../utils/aliases'
+import type { VersionStatus } from './version-status'
 
 export const DEFAULT_API_TYPE: ApiType = API_TYPE_REST
 
@@ -47,6 +48,7 @@ export type OperationMetadataDto = Readonly<{
   deprecated?: boolean
   tags?: Readonly<Tags>
   customTags?: CustomTags
+  versionInternalDocumentId: Key
 }>
 
 export type RestOperationDto = OperationMetadataDto & Readonly<{
@@ -117,12 +119,14 @@ export type CustomTags = { [key: string]: object }
 
 export interface Operation {
   readonly operationKey: Key
+  readonly documentId: Key
   readonly title: string
   readonly apiKind: ApiKind
   readonly apiAudience: ApiAudience
   readonly packageRef?: PackageRef
   readonly tags?: Readonly<Tags>
   readonly customTags?: CustomTags
+  readonly versionInternalDocumentId?: Key
 }
 export interface RestOperation extends Operation {
   readonly method: MethodType
@@ -299,6 +303,10 @@ export function isAsyncApiOperation(operation: Operation): operation is AsyncApi
 export function isAsyncApiOperationDto(operation: OperationDto): operation is AsyncApiOperationDto {
   const asAsyncApiOperation = (operation as AsyncApiOperationDto)
   return asAsyncApiOperation.action !== undefined && asAsyncApiOperation.channel !== undefined
+}
+
+export function checkIfGraphQLOperation(maybeOperation: unknown): maybeOperation is GraphQlOperation {
+  return !!maybeOperation && isObject(maybeOperation) && 'apiType' in maybeOperation && maybeOperation.apiType === API_TYPE_GRAPHQL
 }
 
 export function isOperation(value: unknown): value is Operation {

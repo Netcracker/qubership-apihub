@@ -75,6 +75,7 @@ export interface OperationChangeDataDto {
   readonly changeSummary: ChangesSummary<DiffTypeDto>
   readonly currentOperation?: OperationInfoDto
   readonly previousOperation?: OperationInfoDto
+  readonly comparisonInternalDocumentId?: Key
 }
 
 // Domain Types
@@ -118,6 +119,7 @@ export interface OperationChangeBase<T extends Operation = Operation> {
   readonly action: ActionType
   readonly currentOperation?: T
   readonly previousOperation?: T
+  readonly comparisonInternalDocumentId?: Key
 }
 
 // Type aliases for specific operation types
@@ -154,6 +156,7 @@ export const toOperationChange = (
       ? {
         ...dto.currentOperation,
         operationKey: dto.currentOperation.operationId,
+        documentId: '', // this is not necessary for this case
         packageRef: includePackageRefs ? toPackageRef(dto.currentOperation.packageRef, packagesRefs) : undefined,
       }
       : undefined,
@@ -161,9 +164,11 @@ export const toOperationChange = (
       ? {
         ...dto.previousOperation,
         operationKey: dto.previousOperation.operationId,
+        documentId: '', // this is not necessary for this case
         packageRef: includePackageRefs ? toPackageRef(dto.previousOperation.packageRef, packagesRefs) : undefined,
       }
       : undefined,
+    comparisonInternalDocumentId: dto.comparisonInternalDocumentId,
     action: calculateAction(dto.currentOperation?.operationId, dto.previousOperation?.operationId),
   }
 }

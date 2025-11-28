@@ -17,7 +17,8 @@
 import type { OpenApiData } from '@apihub/entities/operation-structure'
 import {
   useApiDiffResult,
-  useIsApiDiffResultLoading, useSetApiDiffResult,
+  useIsApiDiffResultLoading,
+  useSetApiDiffResult,
 } from '@apihub/routes/root/ApiDiffResultProvider'
 import { OperationView } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationView'
 import {
@@ -25,7 +26,7 @@ import {
 } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/CustomServersProvider'
 import { getFileDetails } from '@apihub/utils/file-details'
 import { Box } from '@mui/material'
-import { removeComponents } from '@netcracker/qubership-apihub-api-processor'
+import { cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument } from '@netcracker/qubership-apihub-api-processor'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import {
   CONTENT_PLACEHOLDER_AREA,
@@ -42,21 +43,21 @@ import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/ap
 import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { FileViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
 import { FILE_FORMAT_VIEW, YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
-import { GRAPH_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { checkIfGraphQLOperation, DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import {
   useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
+import { usePublishedDocumentRaw } from '@netcracker/qubership-apihub-ui-shared/hooks/documents/usePublishedDocumentRaw'
 import {
   useIsDocOperationViewMode,
+  useIsGraphOperationViewMode,
   useIsRawOperationViewMode,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationMode'
 import {
   useOperationsPairAsStrings,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationsPairAsStrings'
-import { normalizeOpenApiDocument } from '@netcracker/qubership-apihub-ui-shared/utils/normalize'
 import type { FC, ReactNode } from 'react'
 import { memo, useCallback, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
@@ -79,6 +80,10 @@ import { useSelectOperationTags } from './useSelectOperationTags'
 export type OperationContentProps = {
   changedOperation?: OperationData
   originOperation?: OperationData
+  // Feature "Internal documents"
+  normalizedChangedOperation?: unknown
+  normalizedOriginOperation?: unknown
+  // ---
   isOperationExist?: boolean
   displayMode?: OperationDisplayMode
   paddingBottom?: string | number
@@ -86,23 +91,107 @@ export type OperationContentProps = {
   operationModels?: OpenApiData
 }
 
+function useRawGraphQlCroppedToSingleOperationRawGraphQl(
+  originalGraphql: string,
+  operationType?: string,
+  operationName?: string,
+): string {
+  return useMemo(() => {
+    if (originalGraphql && operationType && operationName) {
+      let operationTypeSection: 'queries' | 'mutations' | 'subscriptions' | undefined
+      switch (operationType) {
+        case 'query':
+          operationTypeSection = 'queries'
+          break
+        case 'mutation':
+          operationTypeSection = 'mutations'
+          break
+        case 'subscription':
+          operationTypeSection = 'subscriptions'
+          break
+      }
+      return operationTypeSection
+        ? cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument(originalGraphql, operationTypeSection, operationName)
+        : originalGraphql
+    }
+    return ''
+  }, [originalGraphql, operationType, operationName])
+}
+
 export const OperationContent: FC<OperationContentProps> = memo<OperationContentProps>(props => {
   const {
     changedOperation,
     originOperation,
+    // Feature "Internal documents"
+    normalizedChangedOperation,
+    normalizedOriginOperation,
+    // ---
     isOperationExist = true,
     displayMode = DEFAULT_DISPLAY_MODE,
     isLoading,
     paddingBottom,
     operationModels,
   } = props
-  const { packageId = '', apiType = DEFAULT_API_TYPE } = useParams<{ packageId: string; apiType: ApiType }>()
+
+  const {
+    packageId = '',
+    apiType = DEFAULT_API_TYPE,
+  } = useParams<{ packageId: string; apiType: ApiType }>()
   const {
     originPackageKey,
     changedPackageKey,
     changedVersionKey,
     originVersionKey,
   } = useVersionsComparisonGlobalParams()
+
+  const isGraphQLOperation = useMemo(
+    () => checkIfGraphQLOperation(changedOperation) || checkIfGraphQLOperation(originOperation),
+    [changedOperation, originOperation],
+  )
+
+  const { mode, schemaViewMode } = useOperationViewMode()
+  const isDocViewMode = useIsDocOperationViewMode(mode)
+  const isRawViewMode = useIsRawOperationViewMode(mode)
+  const isGraphViewMode = useIsGraphOperationViewMode(mode)
+
+  const isPlaygroundMode = useIsPlaygroundMode()
+  const isExamplesMode = useIsExamplesMode()
+  const isPlaygroundSidebarOpen = useIsPlaygroundSidebarOpen()
+
+  const operationType = useMemo(
+    () => (
+      checkIfGraphQLOperation(changedOperation)
+        ? changedOperation.type
+        : checkIfGraphQLOperation(originOperation)
+          ? originOperation.type
+          : undefined
+    ),
+    [changedOperation, originOperation],
+  )
+  const operationName = useMemo(
+    () => (
+      checkIfGraphQLOperation(changedOperation)
+        ? changedOperation.method
+        : checkIfGraphQLOperation(originOperation)
+          ? originOperation.method
+          : undefined
+    ),
+    [changedOperation, originOperation],
+  )
+
+  const [documentWithOriginOriginOperation] = usePublishedDocumentRaw({
+    packageKey: originPackageKey,
+    versionKey: originVersionKey,
+    slug: originOperation?.documentId ?? '',
+    enabled: isRawViewMode && isGraphQLOperation,
+  })
+
+  const [documentWithChangedGraphQlOperation] = usePublishedDocumentRaw({
+    packageKey: changedPackageKey,
+    versionKey: changedVersionKey,
+    slug: changedOperation?.documentId ?? '',
+    enabled: isRawViewMode && isGraphQLOperation,
+  })
 
   const { productionMode } = useSystemInfo()
 
@@ -115,22 +204,22 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
 
   const [filters] = useSeverityFiltersSearchParam()
   const comparisonMode = isComparisonMode(displayMode)
-  const { mode, schemaViewMode } = useOperationViewMode()
   const [fileViewMode = YAML_FILE_VIEW_MODE, setFileViewMode] = useFileViewMode()
 
-  const [changedOperationContent, originOperationContent] = useOperationsPairAsStrings(changedOperation, originOperation)
+  const [changedOperationContent, originOperationContent] = useOperationsPairAsStrings(
+    isGraphQLOperation ? documentWithChangedGraphQlOperation : changedOperation,
+    isGraphQLOperation ? documentWithOriginOriginOperation : originOperation,
+    isPlaygroundMode || isExamplesMode, // only for REST operations!
+  )
+
+  const originGraphQlOperationContent = useRawGraphQlCroppedToSingleOperationRawGraphQl(originOperationContent, operationType, operationName)
+  const changedGraphQlOperationContent = useRawGraphQlCroppedToSingleOperationRawGraphQl(changedOperationContent, operationType, operationName)
+
   const [, setPlaygroundViewMode] = useSidebarPlaygroundViewMode()
   const [navigationDetails] = useOperationNavigationDetails()
 
   const breadcrumbsData = useBreadcrumbsData()
   let operationContentElement
-  const isDocViewMode = useIsDocOperationViewMode(mode)
-  const isRawViewMode = useIsRawOperationViewMode(mode)
-  const isGraphViewMode = mode === GRAPH_VIEW_MODE
-
-  const isPlaygroundMode = useIsPlaygroundMode()
-  const isExamplesMode = useIsExamplesMode()
-  const isPlaygroundSidebarOpen = useIsPlaygroundSidebarOpen()
 
   const graphItemSelect = useCallback((isSelected: boolean) => {
     if (isSelected) {
@@ -142,10 +231,15 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
   const currentServers = customServersPackageMap?.[packageId]
 
   const {
-    values: [originalValue, changedValue],
+    values: [originValueForRawSpecView, changedValueForRawSpecView],
     extension,
     type,
-  } = getFileDetails(apiType, fileViewMode, originOperationContent, changedOperationContent)
+  } = getFileDetails(
+    apiType,
+    fileViewMode,
+    originGraphQlOperationContent || originOperationContent,
+    changedGraphQlOperationContent || changedOperationContent,
+  )
 
   const rawViewActions = useMemo(
     () => API_TYPE_RAW_VIEW_ACTIONS_MAP[apiType](fileViewMode, setFileViewMode),
@@ -158,22 +252,14 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
 
   const mergedDocument = useMemo(
     () => {
-      if (!changedOperation?.data && !originOperation?.data) {
-        return undefined
-      }
-
-      //todo separate to OperationView and OperationDiffView components
+      // TODO 13.11.25 // Separate to OperationView and OperationDiffView components
       if (!comparisonMode) {
-        const existingData = changedOperation?.data ?? originOperation?.data
-        const existingOperation = removeComponents(existingData)
-        return existingOperation
-          ? normalizeOpenApiDocument(existingOperation, existingData)
-          : undefined
+        return normalizedChangedOperation ?? normalizedOriginOperation
       }
 
       return apiDiffResult?.merged
     },
-    [changedOperation?.data, comparisonMode, originOperation?.data, apiDiffResult?.merged],
+    [comparisonMode, apiDiffResult?.merged, normalizedChangedOperation, normalizedOriginOperation],
   )
 
   useEffect(() => {
@@ -184,7 +270,11 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
 
   if (isLoading || isApiDiffResultLoading) {
     operationContentElement = <LoadingIndicator />
-  } else if (!changedOperationContent && !originOperationContent) {
+  } else if (
+    !normalizedChangedOperation &&
+    !normalizedOriginOperation &&
+    !apiDiffResult?.merged
+  ) {
     return (
       <Placeholder
         invisible={false}
@@ -204,38 +294,49 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
   } else {
     operationContentElement = (
       comparisonMode
-        ? <Box pl={3} pr={2} height="inherit">
-          <OperationsSwapper
-            displayMode={displayMode}
-            breadcrumbsData={breadcrumbsData}
-            actions={isRawViewMode && rawViewActions}
-            swapperBreadcrumbsBeforeComponent={<WarningApiProcessorVersion packageKey={originPackageKey}
-              versionKey={originVersionKey} />}
-            swapperBreadcrumbsAfterComponent={<WarningApiProcessorVersion packageKey={changedPackageKey}
-              versionKey={changedVersionKey} />}
-          />
-          {isDocViewMode && !!mergedDocument && apiType !== API_TYPE_ASYNCAPI && (  //TODO: remove after doc view for AsyncAPI is implemented
-            <OperationView
-              apiType={apiType as ApiType}
-              originOperation={originOperation}
-              changedOperation={changedOperation}
+        ? (
+          <Box pl={3} pr={2} height="inherit">
+            <OperationsSwapper
               displayMode={displayMode}
-              comparisonMode={comparisonMode}
-              productionMode={productionMode}
-              mergedDocument={mergedDocument}
-              // diffs specific
-              filters={filters}
+              breadcrumbsData={breadcrumbsData}
+              actions={isRawViewMode && rawViewActions}
+              swapperBreadcrumbsBeforeComponent={
+                <WarningApiProcessorVersion
+                  packageKey={originPackageKey}
+                  versionKey={originVersionKey}
+                />
+              }
+              swapperBreadcrumbsAfterComponent={
+                <WarningApiProcessorVersion
+                  packageKey={changedPackageKey}
+                  versionKey={changedVersionKey}
+                />
+              }
             />
-          )}
-          {(isRawViewMode || (isDocViewMode && apiType === API_TYPE_ASYNCAPI)) && (
-            <RawSpecDiffView
-              beforeValue={originalValue}
-              afterValue={changedValue}
-              extension={extension}
-              type={type}
-            />
-          )}
-        </Box>
+            {isDocViewMode && !!mergedDocument && (
+              <OperationView
+                apiType={apiType as ApiType}
+                displayMode={displayMode}
+                comparisonMode={comparisonMode}
+                productionMode={productionMode}
+                mergedDocument={mergedDocument}
+                // diffs specific
+                filters={filters}
+                // GraphQL specific
+                operationType={operationType}
+                operationName={operationName}
+              />
+            )}
+            {isRawViewMode && (
+              <RawSpecDiffView
+                beforeValue={originValueForRawSpecView}
+                afterValue={changedValueForRawSpecView}
+                extension={extension}
+                type={type}
+              />
+            )}
+          </Box>
+        )
         : (
           <OperationWithPlayground
             changedOperationContent={changedOperationContent}
@@ -249,7 +350,6 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
                 {isDocViewMode && apiType !== API_TYPE_ASYNCAPI && (  //TODO: remove after doc view for AsyncAPI is implemented
                   <OperationView
                     apiType={apiType as ApiType}
-                    changedOperation={changedOperation}
                     schemaViewMode={schemaViewMode}
                     hideTryIt
                     hideExamples
@@ -258,6 +358,9 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
                     navigationDetails={navigationDetails}
                     operationModels={operationModels}
                     mergedDocument={mergedDocument}
+                    // GraphQL specific
+                    operationType={operationType}
+                    operationName={operationName}
                   />
                 )}
                 {(isRawViewMode || (isDocViewMode && apiType === API_TYPE_ASYNCAPI)) && (
@@ -270,7 +373,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
                       <OperationSubheader actions={rawViewActions} />
                     )}
                     <RawSpecView
-                      value={changedValue}
+                      value={changedValueForRawSpecView}
                       extension={extension}
                       type={type}
                     />

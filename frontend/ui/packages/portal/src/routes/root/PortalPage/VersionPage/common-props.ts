@@ -17,10 +17,6 @@
 import type { ChangesTooltipCategory } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
-export type ChangelogAvailable = {
-  isChangelogAvailable?: boolean
-}
-
 export type ComparisonChangeSeverityFiltersProps = {
   category?: ChangesTooltipCategory
   apiType: ApiType | undefined

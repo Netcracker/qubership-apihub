@@ -29,7 +29,7 @@ export const NORMALIZE_OPTIONS: NormalizeOptions = {
 }
 
 // TODO: Think about generic function or add document type checking
-export function normalizeOpenApiDocument(operation: unknown, source?: unknown): OpenAPIV3.Document {
+export function normalizeOperation(operation: unknown, source?: unknown): OpenAPIV3.Document {
   const normalizedDocument = normalize(operation, {
     source: source,
     ...NORMALIZE_OPTIONS,
