@@ -28,6 +28,7 @@ import {
   ValidationRulesSeverity,
 } from './types'
 import { OpenAPIV3 } from 'openapi-types'
+import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 
 export const DEFAULT_BATCH_SIZE = 32
 
@@ -66,9 +67,13 @@ export const PACKAGE = {
   DOCUMENTS_FILE_NAME: 'documents.json',
   OPERATIONS_FILE_NAME: 'operations.json',
   COMPARISONS_FILE_NAME: 'comparisons.json',
+  COMPARISON_INTERNAL_FILE_NAME: 'comparison-internal-documents.json',
+  VERSION_INTERNAL_FILE_NAME: 'version-internal-documents.json',
   DOCUMENTS_DIR_NAME: 'documents',
   OPERATIONS_DIR_NAME: 'operations',
   COMPARISONS_DIR_NAME: 'comparisons',
+  VERSION_INTERNAL_DOCUMENTS_DIR_NAME: 'version-internal-documents',
+  COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME: 'comparison-internal-documents',
 } as const
 
 export const EDITOR_MESSAGES = {
@@ -146,6 +151,14 @@ export const HASH_FLAG = Symbol('hash')
 export const INLINE_REFS_FLAG = Symbol('inline-refs')
 export const AFTER_VALUE_NORMALIZED_PROPERTY = Symbol('after-value-normalized')
 export const BEFORE_VALUE_NORMALIZED_PROPERTY = Symbol('before-value-normalized')
+
+export const SERIALIZE_SYMBOL_STRING_MAPPING = new Map([
+  [HASH_FLAG, 'HASH_FLAG'],
+  [ORIGINS_SYMBOL, 'ORIGINS_SYMBOL'],
+  [SYNTHETIC_TITLE_FLAG, 'SYNTHETIC_TITLE_FLAG'],
+  [DIFF_META_KEY, 'DIFF_META_KEY'],
+  [DIFFS_AGGREGATED_META_KEY, 'DIFFS_AGGREGATED_META_KEY'],
+])
 
 export const NORMALIZE_OPTIONS: NormalizeOptions = {
   validate: true,

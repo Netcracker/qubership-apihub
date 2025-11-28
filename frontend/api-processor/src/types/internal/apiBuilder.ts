@@ -32,13 +32,11 @@ import {
   VersionDocumentsResolver,
   VersionId,
 } from '../external'
-import { CompareContext, OperationChanges } from './compare'
+import { CompareContext, ComparisonDocument, OperationChanges } from './compare'
 import { BuilderConfiguration, BuilderRunOptions, VersionCache } from './builder'
 import { ExportDocument, VersionDocument, ZippableDocument } from './documents'
 import { NotificationMessage } from '../package/notifications'
-import { RestOperationData } from '../../apitypes/rest/rest.types'
 import { ASYNCAPI_API_TYPE, GRAPHQL_API_TYPE, REST_API_TYPE, TEXT_API_TYPE, UNKNOWN_API_TYPE } from '../../apitypes'
-import { ChangeMessage } from '../package'
 import { SourceFile, TextFile } from './internal'
 import { ApiOperation } from './operation'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
@@ -110,10 +108,12 @@ export type DocumentBuilder<T> = (parsedFile: TextFile, file: BuildConfigFile, c
 export type OperationsBuilder<T, M = any> = (document: VersionDocument<T>, ctx: BuilderContext<T>, debugCtx?: DebugPerformanceContext) => Promise<ApiOperation<M>[]>
 export type DocumentDumper<T> = (document: ZippableDocument<T>, format?: typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON) => Blob
 export type OperationDataCompare<T> = (current: T, previous: T, ctx: CompareOperationsPairContext) => Promise<Diff[]>
-export type DocumentsCompare = (operationsMap: OperationsMap, currDoc: ResolvedVersionDocument | undefined, prevDoc: ResolvedVersionDocument | undefined, ctx: CompareOperationsPairContext) => Promise<{
+export type DocumentsCompareData = {
   operationChanges: OperationChanges[]
   tags: Set<string>
-}>
+  comparisonDocument?: ComparisonDocument
+}
+export type DocumentsCompare = (operationsMap: OperationsMap, currDoc: ResolvedVersionDocument | undefined, prevDoc: ResolvedVersionDocument | undefined, ctx: CompareOperationsPairContext) => Promise<DocumentsCompareData>
 export type OperationIdNormalizer = (operation: ResolvedOperation) => NormalizedOperationId
 export type DocumentExporter = (
   filename: string,

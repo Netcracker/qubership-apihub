@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
+import { BuilderStrategy, BuildResult, BuildTypeContexts, MergedSpecificationBuildConfig } from '../types'
 import {
-  BuilderStrategy,
-  BuildResult,
-  BuildTypeContexts,
-  MergedSpecificationBuildConfig,
-} from '../types'
-import { ExportTemplate, getSplittedVersionKey, isJson, isYaml, mergeOpenapiDocuments } from '../utils'
+  createVersionInternalDocument,
+  ExportTemplate,
+  getSplittedVersionKey,
+  isJson,
+  isYaml,
+  mergeOpenapiDocuments,
+} from '../utils'
 import { DocumentGroupStrategy } from './document-group.strategy'
 import { OpenAPIV3 } from 'openapi-types'
 import { REST_API_TYPE } from '../apitypes'
@@ -69,21 +71,22 @@ export class MergedDocumentGroupStrategy implements BuilderStrategy {
     }
 
     const [firstDocument] = documents
-
+    const {title} = info
     buildResult.merged = {
-      fileId: info.title,
+      fileId: title,
       type: firstDocument.type,
       format: format,
       data: mergeOpenapiDocuments(specs, info, templateDocument),
-      slug: info.title,
-      title: info.title,
+      slug: title,
+      title: title,
       description: info.description || '',
       version: version,
-      filename: `${info.title}.${format}`,
+      filename: `${title}.${format}`,
       dependencies: [],
       operationIds: documents.map(doc => doc.operationIds).flat(),
       metadata: {},
       publish: true,
+      versionInternalDocument: createVersionInternalDocument(title),
     }
     return buildResult
   }

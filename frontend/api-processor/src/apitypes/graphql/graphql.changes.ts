@@ -15,7 +15,13 @@
  */
 
 import { isEmpty, slugify, takeIf } from '../../utils'
-import { aggregateDiffsWithRollup, apiDiff, Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import {
+  aggregateDiffsWithRollup,
+  apiDiff,
+  Diff,
+  DIFF_META_KEY,
+  DIFFS_AGGREGATED_META_KEY,
+} from '@netcracker/qubership-apihub-api-diff'
 import {
   AFTER_VALUE_NORMALIZED_PROPERTY,
   BEFORE_VALUE_NORMALIZED_PROPERTY,
@@ -27,6 +33,9 @@ import { buildSchema } from 'graphql/utilities'
 import { buildGraphQLDocument } from './graphql.document'
 import {
   CompareOperationsPairContext,
+  ComparisonDocument,
+  DocumentsCompare,
+  DocumentsCompareData,
   FILE_KIND,
   OperationChanges,
   ResolvedVersionDocument,
@@ -34,17 +43,22 @@ import {
   WithDiffMetaRecord,
 } from '../../types'
 import { GRAPHQL_TYPE, GRAPHQL_TYPE_KEYS } from './graphql.consts'
-import { createOperationChange, getOperationTags, OperationsMap } from '../../components'
+import {
+  createComparisonDocument,
+  createComparisonInternalDocumentId,
+  createOperationChange,
+  getOperationTags,
+  OperationsMap,
+} from '../../components'
 
-export const compareDocuments = async (
+export const compareDocuments: DocumentsCompare = async (
   operationsMap: OperationsMap,
   prevDoc: ResolvedVersionDocument | undefined,
   currDoc: ResolvedVersionDocument | undefined,
-  ctx: CompareOperationsPairContext): Promise<{
-    operationChanges: OperationChanges[]
-    tags: Set<string>
-  }> => {
+  ctx: CompareOperationsPairContext,
+): Promise<DocumentsCompareData> => {
   const { apiType, rawDocumentResolver, previousVersion, currentVersion, previousPackageId, currentPackageId } = ctx
+  const comparisonInternalDocumentId = createComparisonInternalDocumentId(prevDoc, currDoc, previousVersion, currentVersion)
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
   const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
   const prevDocSchema = prevFile && buildSchema(await prevFile.text(), { noLocation: true })
@@ -93,7 +107,6 @@ export const compareDocuments = async (
 
   const tags = new Set<string>()
   const operationChanges: OperationChanges[] = []
-
   for (const type of GRAPHQL_TYPE_KEYS) {
     const operationsByType = merged[type]
     if (!operationsByType) { continue }
@@ -122,12 +135,21 @@ export const compareDocuments = async (
         continue
       }
 
-      operationChanges.push(createOperationChange(apiType, operationDiffs, previous, current, currentGroup, previousGroup))
+      operationChanges.push(createOperationChange(apiType, operationDiffs, comparisonInternalDocumentId, previous, current, currentGroup, previousGroup))
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }
   }
 
-  return { operationChanges, tags }
+  let comparisonDocument: ComparisonDocument | undefined
+  if (operationChanges.length) {
+    comparisonDocument = createComparisonDocument(comparisonInternalDocumentId, merged)
+  }
+
+  return {
+    operationChanges,
+    tags,
+    ...(comparisonDocument) ? { comparisonDocument } : {},
+  }
 }
 
 function getCopyWithEmptyOperations(template: GraphApiSchema): GraphApiSchema {

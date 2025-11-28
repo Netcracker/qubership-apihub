@@ -38,6 +38,11 @@ export interface ZippableDocument<T = any> {
   publish?: boolean
 }
 
+export interface VersionInternalDocument {
+  versionDocumentId: string
+  serializedVersionDocument?: string
+}
+
 export interface VersionDocument<T = any> extends ZippableDocument<T> {
   format: FileFormat
   slug: string
@@ -60,6 +65,7 @@ export interface VersionDocument<T = any> extends ZippableDocument<T> {
   publish?: boolean
   source?: Blob
   apiKind?: string
+  versionInternalDocument: VersionInternalDocument
 }
 
 export type FileFormat = KeyOfConstType<typeof FILE_FORMAT>

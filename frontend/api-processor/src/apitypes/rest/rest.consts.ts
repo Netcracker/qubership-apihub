@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 
-import { FILE_FORMAT_JSON, FILE_FORMAT_YAML, FILE_FORMAT_YML } from '../../consts'
+import {
+  FILE_FORMAT_JSON,
+  FILE_FORMAT_YAML,
+  FILE_FORMAT_YML,
+  HASH_FLAG,
+  NORMALIZE_OPTIONS,
+  ORIGINS_SYMBOL,
+} from '../../consts'
 import { KeyOfConstType, ResolvedVersionDocument, ZippableDocument } from '../../types'
 import { TEXT_DOCUMENT_TYPE, TextDocumentType } from '../text'
 import { API_KIND_KEY, DEPRECATED_META_KEY } from '../../utils/apihubSpecificationExtensions'
@@ -55,4 +62,10 @@ export function isRestDocument(document: ZippableDocument | ResolvedVersionDocum
 
 export function isTextDocument(document: ResolvedVersionDocument): boolean {
   return Object.values(TEXT_DOCUMENT_TYPE).includes(document.type as TextDocumentType)
+}
+
+export const REST_EFFECTIVE_NORMALIZE_OPTIONS = {
+  ...NORMALIZE_OPTIONS,
+  originsFlag: ORIGINS_SYMBOL,
+  hashFlag: HASH_FLAG,
 }

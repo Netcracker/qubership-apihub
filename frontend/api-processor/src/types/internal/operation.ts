@@ -16,6 +16,8 @@
 
 import { ApiKind, DeprecateItem, OperationsApiType } from '../external'
 import { ApiAudience } from '../package'
+import { OpenAPIV3 } from 'openapi-types'
+import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 
 export type SearchScopes<T extends string = string> = Record<T, Set<string>>
 
@@ -45,4 +47,7 @@ export interface ApiOperation<T = any, M = any> {
   // changeSummary?: ChangeSummary
   hasExample?: boolean
   apiAudience?: ApiAudience
+  versionInternalDocumentId: string
 }
+
+export type ApiDocument = OpenAPIV3.Document | GraphApiSchema

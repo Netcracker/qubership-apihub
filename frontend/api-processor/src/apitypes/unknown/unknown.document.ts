@@ -15,10 +15,15 @@
  */
 
 import { BuildConfigFile, DocumentBuilder, DocumentDumper, SourceFile, VersionDocument } from '../../types'
-import { createBundlingErrorHandler, getBundledFileDataWithDependencies, getDocumentTitle } from '../../utils'
+import {
+  createBundlingErrorHandler,
+  createVersionInternalDocument,
+  getBundledFileDataWithDependencies,
+  getDocumentTitle,
+} from '../../utils'
 import { FILE_FORMAT } from '../../consts'
 
-export const buildUnknownDocument: DocumentBuilder<string> = async (parsedFile, file, ctx) => {
+export const buildUnknownDocument: DocumentBuilder<string> = async (parsedFile, file, ctx): Promise<VersionDocument> => {
   const { fileId, slug = '', publish, ...metadata } = file
   const { type, format, source } = parsedFile
 
@@ -54,10 +59,11 @@ export const buildUnknownDocument: DocumentBuilder<string> = async (parsedFile, 
     metadata,
     errors: parsedFile.errors?.length ?? 0,
     source,
+    versionInternalDocument: createVersionInternalDocument(slug),
   }
 }
 
-export const buildBinaryDocument: (parsedFile: SourceFile, file: BuildConfigFile) => Promise<VersionDocument> = async (parsedFile, file) => {
+export const buildBinaryDocument: (parsedFile: SourceFile, file: BuildConfigFile) => Promise<VersionDocument> = async (parsedFile, file): Promise<VersionDocument> => {
   const { fileId, slug = '', publish, ...metadata } = file
   const { type, format, source } = parsedFile
 
@@ -75,6 +81,7 @@ export const buildBinaryDocument: (parsedFile: SourceFile, file: BuildConfigFile
     filename: fileId,
     metadata,
     source,
+    versionInternalDocument: createVersionInternalDocument(slug),
   }
 }
 

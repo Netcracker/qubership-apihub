@@ -26,10 +26,12 @@ import {
   DocumentDumper,
   ExportDocument,
   ExportFormat,
+  VersionDocument,
 } from '../../types'
 import { FILE_FORMAT, FILE_FORMAT_HTML, FILE_FORMAT_JSON } from '../../consts'
 import {
   createBundlingErrorHandler,
+  createVersionInternalDocument,
   EXPORT_FORMAT_TO_FILE_FORMAT,
   getBundledFileDataWithDependencies,
   getDocumentTitle,
@@ -63,7 +65,7 @@ const openApiDocumentMeta = (data: OpenAPIV3.Document): RestDocumentInfo => {
   }
 }
 
-export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (parsedFile, file, ctx) => {
+export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (parsedFile, file, ctx): Promise<VersionDocument> => {
   const { fileId, slug = '', publish = true, apiKind, ...fileMetadata } = file
 
   const {
@@ -91,10 +93,10 @@ export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (par
     externalDocs,
     tags,
   }
-
+  const { type, fileId: parsedFileId, source, errors } = parsedFile
   return {
-    fileId: parsedFile.fileId,
-    type: parsedFile.type,
+    fileId: parsedFileId,
+    type: type,
     format: FILE_FORMAT.JSON,
     apiKind: documentKind,
     data: bundledFileData,
@@ -107,8 +109,9 @@ export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (par
     version,
     metadata,
     publish,
-    source: parsedFile.source,
-    errors: parsedFile.errors?.length ?? 0,
+    source,
+    errors: errors?.length ?? 0,
+    versionInternalDocument: createVersionInternalDocument(slug),
   }
 }
 

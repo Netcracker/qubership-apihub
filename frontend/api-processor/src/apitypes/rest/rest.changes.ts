@@ -30,11 +30,11 @@ import {
   aggregateDiffsWithRollup,
   apiDiff,
   breaking,
-  extractOperationBasePath,
   Diff,
   DIFF_META_KEY,
   DiffAction,
   DIFFS_AGGREGATED_META_KEY,
+  extractOperationBasePath,
   risky,
 } from '@netcracker/qubership-apihub-api-diff'
 import {
@@ -47,6 +47,9 @@ import {
 import {
   BREAKING_CHANGE_TYPE,
   CompareOperationsPairContext,
+  ComparisonDocument,
+  DocumentsCompare,
+  DocumentsCompareData,
   OperationChanges,
   ResolvedVersionDocument,
   RISKY_CHANGE_TYPE,
@@ -74,7 +77,13 @@ import {
   extractSecuritySchemesNames,
   validateGroupPrefix,
 } from './rest.utils'
-import { createOperationChange, getOperationTags, OperationsMap } from '../../components'
+import {
+  createComparisonDocument,
+  createComparisonInternalDocumentId,
+  createOperationChange,
+  getOperationTags,
+  OperationsMap,
+} from '../../components'
 
 /**
  * Calculates a normalized operation ID for an operation.
@@ -88,15 +97,12 @@ function calculateNormalizedOperationId(basePath: string, path: string, method: 
   return slugify(`${normalizePath(basePath + path)}-${method}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
 }
 
-export const compareDocuments = async (
+export const compareDocuments: DocumentsCompare = async (
   operationsMap: OperationsMap,
   prevDoc: ResolvedVersionDocument | undefined,
   currDoc: ResolvedVersionDocument | undefined,
   ctx: CompareOperationsPairContext,
-): Promise<{
-  operationChanges: OperationChanges[]
-  tags: Set<string>
-}> => {
+): Promise<DocumentsCompareData> => {
   const {
     apiType,
     rawDocumentResolver,
@@ -107,6 +113,7 @@ export const compareDocuments = async (
     currentGroup,
     previousGroup,
   } = ctx
+  const comparisonInternalDocumentId = createComparisonInternalDocumentId(prevDoc, currDoc, previousVersion, currentVersion)
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
   const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
   let prevDocData = prevFile && JSON.parse(await prevFile.text())
@@ -149,7 +156,6 @@ export const compareDocuments = async (
 
   const tags = new Set<string>()
   const operationChanges: OperationChanges[] = []
-
   for (const path of Object.keys(merged.paths)) {
     const pathData = merged.paths[path]
     if (typeof pathData !== 'object' || !pathData) { continue }
@@ -168,7 +174,10 @@ export const compareDocuments = async (
       const prevNormalizedOperationId = calculateNormalizedOperationId(previousBasePath, path, inferredMethod)
       const currNormalizedOperationId = calculateNormalizedOperationId(currentBasePath, path, inferredMethod)
 
-      const { current, previous } = operationsMap[prevNormalizedOperationId] ?? operationsMap[currNormalizedOperationId] ?? {}
+      const {
+        current,
+        previous,
+      } = operationsMap[prevNormalizedOperationId] ?? operationsMap[currNormalizedOperationId] ?? {}
       if (!current && !previous) {
         const missingOperations = prevNormalizedOperationId === currNormalizedOperationId ? `the ${prevNormalizedOperationId} operation` : `the ${prevNormalizedOperationId} and ${currNormalizedOperationId} operations`
         throw new Error(`Can't find ${missingOperations} from documents pair ${prevDoc?.fileId} and ${currDoc?.fileId}`)
@@ -205,12 +214,21 @@ export const compareDocuments = async (
 
       await reclassifyBreakingChanges(previous?.operationId, merged, operationDiffs, ctx)
 
-      operationChanges.push(createOperationChange(apiType, operationDiffs, previous, current, currentGroup, previousGroup))
+      operationChanges.push(createOperationChange(apiType, operationDiffs, comparisonInternalDocumentId, previous, current, currentGroup, previousGroup))
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }
   }
 
-  return { operationChanges, tags }
+  let comparisonDocument: ComparisonDocument | undefined
+  if (operationChanges.length) {
+    comparisonDocument = createComparisonDocument(comparisonInternalDocumentId, merged)
+  }
+
+  return {
+    operationChanges,
+    tags,
+    ...(comparisonDocument) ? { comparisonDocument } : {},
+  }
 }
 
 async function reclassifyBreakingChanges(
