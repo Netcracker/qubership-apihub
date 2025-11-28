@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { FILE_FORMAT_JSON, FILE_FORMAT_YAML } from '../../consts'
+import { FILE_FORMAT_JSON, FILE_FORMAT_YAML, HASH_FLAG, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
+import { NormalizeOptions } from '@netcracker/qubership-apihub-api-unifier'
 import { ResolvedVersionDocument, ZippableDocument } from '../../types'
 import { API_KIND_KEY, DEPRECATED_META_KEY } from '../../utils/apihubSpecificationExtensions'
 
@@ -45,4 +46,10 @@ export { DEPRECATED_META_KEY }
 
 export function isAsyncApiDocument(document: ZippableDocument | ResolvedVersionDocument): boolean {
   return Object.values(ASYNC_DOCUMENT_TYPE).some(type => document.type === type)
+}
+
+export const ASYNC_EFFECTIVE_NORMALIZE_OPTIONS: NormalizeOptions = {
+  ...NORMALIZE_OPTIONS,
+  originsFlag: ORIGINS_SYMBOL,
+  hashFlag: HASH_FLAG,
 }

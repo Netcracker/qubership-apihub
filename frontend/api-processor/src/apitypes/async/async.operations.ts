@@ -16,14 +16,13 @@
 
 import { buildAsyncApiOperation } from './async.operation'
 import { OperationsBuilder } from '../../types'
-import { removeComponents, slugify } from '../../utils'
-import { isNotEmpty } from '../../utils'
+import { createBundlingErrorHandler, createSerializedInternalDocument, isNotEmpty, removeComponents, slugify } from '../../utils'
 import type * as TYPE from './async.types'
-import { HASH_FLAG, INLINE_REFS_FLAG, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
+import { INLINE_REFS_FLAG } from '../../consts'
 import { asyncFunction } from '../../utils/async'
 import { logLongBuild, syncDebugPerformance } from '../../utils/logs'
 import { normalize, RefErrorType } from '@netcracker/qubership-apihub-api-unifier'
-import { createBundlingErrorHandler } from '../../utils'
+import { ASYNC_EFFECTIVE_NORMALIZE_OPTIONS } from './async.consts'
 
 type OperationInfo = { channel: string; action: string }
 type DuplicateEntry = { operationId: string; operations: OperationInfo[] }
@@ -36,9 +35,7 @@ export const buildAsyncApiOperations: OperationsBuilder<TYPE.AsyncApiDocument> =
     const effectiveDocument = normalize(
       documentWithoutComponents,
       {
-        ...NORMALIZE_OPTIONS,
-        originsFlag: ORIGINS_SYMBOL,
-        hashFlag: HASH_FLAG,
+        ...ASYNC_EFFECTIVE_NORMALIZE_OPTIONS,
         source: document.data,
         onRefResolveError: (message: string, _path: PropertyKey[], _ref: string, errorType: RefErrorType) =>
           bundlingErrorHandler([{ message, errorType }]),
@@ -117,6 +114,10 @@ export const buildAsyncApiOperations: OperationsBuilder<TYPE.AsyncApiDocument> =
   const duplicates = findDuplicates(operationIdMap)
   if (isNotEmpty(duplicates)) {
     throw createDuplicatesError(document.fileId, duplicates)
+  }
+
+  if (operations.length) {
+    createSerializedInternalDocument(document, effectiveDocument, ASYNC_EFFECTIVE_NORMALIZE_OPTIONS)
   }
 
   return operations
