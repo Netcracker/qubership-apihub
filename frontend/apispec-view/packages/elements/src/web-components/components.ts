@@ -1,5 +1,5 @@
-import { OperationAPI } from '@stoplight/elements/containers/OperationAPI';
 import { createElementClass } from '@stoplight/elements-core';
+import { OperationAPI } from '@stoplight/elements/containers/OperationAPI';
 
 import fontAwesomeStyles from '!!raw-loader!@fortawesome/fontawesome-svg-core/styles.css';
 import apihubDocViewerStyles from '!!raw-loader!@netcracker/qubership-apihub-api-doc-viewer/dist/style.css';
@@ -8,8 +8,9 @@ import elementsCoreStyles from '!!raw-loader!@stoplight/elements-core/core.css';
 import mosaicStyles from '!!raw-loader!@stoplight/mosaic/styles.css';
 import mosaicThemeStyles from '!!raw-loader!@stoplight/mosaic/themes/default.css';
 
-import { API } from '../index';
 import { DiffOperationAPI } from "@stoplight/elements/containers/DiffOperationAPI";
+import { aggregatedDiffsMetaKey, diffsMetaKey } from 'diff-block';
+import { API } from '../index';
 
 const mosaicStyle = document.createElement('style');
 mosaicStyle.textContent = mosaicStyles;
@@ -137,7 +138,13 @@ export const DiffApiOperationElement = createElementClass(
     options: { type: 'object' },
     // @ts-ignore
     mergedDocument: { type: 'object' },
-    diffMetaKey: { type: 'symbol' },
+    diffMetaKeys: {
+      type: 'object',
+      defaultValue: {
+        diffsMetaKey: diffsMetaKey,
+        aggregatedDiffsMetaKey: aggregatedDiffsMetaKey,
+      },
+    },
   },
   [
     mosaicStyle,

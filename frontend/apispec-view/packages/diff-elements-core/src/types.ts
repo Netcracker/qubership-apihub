@@ -157,3 +157,8 @@ export type ParamField = {
   description: string;
   example: string;
 };
+
+export type DiffMetaKeys = {
+  diffsMetaKey: symbol;
+  aggregatedDiffsMetaKey: symbol;
+};

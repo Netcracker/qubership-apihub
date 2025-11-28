@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 import React, { FC } from 'react';
 
 import { Extension, ExtensionMeta, Extensions } from './Extensions';
-import { useDiffMetaKey } from "@stoplight/elements/containers/DIffMetaKeyContext";
+import { useDiffsMetaKey } from "@stoplight/elements/containers/DiffsMetaKeyContext";
 import { buildOpenApiDiffCause } from "@netcracker/qubership-apihub-api-doc-viewer";
 
 interface ExtensionsDiffBlockProps {
@@ -15,7 +15,7 @@ interface ExtensionsDiffBlockProps {
 }
 
 export const ExtensionsDiffBlock: FC<ExtensionsDiffBlockProps> = ({ idPrefix, value, meta, index }) => {
-  const diffMetaKey = useDiffMetaKey()
+  const diffMetaKey = useDiffsMetaKey()
 
   const extensionKeys = keys(value);
   const metas = extensionKeys.map((key: string) => meta?.[key]).filter(Boolean);
@@ -35,7 +35,7 @@ export const ExtensionsDiffBlock: FC<ExtensionsDiffBlockProps> = ({ idPrefix, va
       action={firstDiff?.action}
       cause={buildOpenApiDiffCause(firstDiff)}
     >
-      <Extensions key={nanoid(8)} value={content}/>
+      <Extensions key={nanoid(8)} value={content} />
     </DiffBlock>
   );
 };

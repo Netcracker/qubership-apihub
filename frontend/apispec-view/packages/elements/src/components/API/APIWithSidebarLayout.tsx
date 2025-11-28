@@ -1,4 +1,3 @@
-import { useSearchPhrase } from '@stoplight/elements/containers/API';
 import {
   ExportButtonProps,
   Logo,
@@ -6,6 +5,7 @@ import {
   RoutingProps,
   SidebarLayout,
   TableOfContents,
+  useSearchPhrase,
 } from '@stoplight/elements-core';
 import { IServer } from '@stoplight/elements-core/utils/http-spec/IServer';
 import { Flex, Heading } from '@stoplight/mosaic';

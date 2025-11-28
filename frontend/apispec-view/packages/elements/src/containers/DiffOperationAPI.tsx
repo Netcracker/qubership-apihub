@@ -23,13 +23,15 @@ import { flow } from 'lodash'
 import * as React from 'react'
 import { useEffect, useMemo } from 'react'
 
+import { buildOpenApiDiffCause } from '@netcracker/qubership-apihub-api-doc-viewer'
+import { DiffMetaKeys } from '@stoplight/diff-elements-core/types'
+import { DiffsMetaKeyContext } from '@stoplight/elements/containers/DiffsMetaKeyContext'
+import { DiffBlock, DiffContainer } from 'diff-block'
 import { APIWithOperation } from '../components/API/APIWithOperation'
 import { useExportDocumentProps } from '../hooks/useExportDocumentProps'
 import { transformOasToServiceNodeWithDiffMeta } from '../utils/oas'
-import { DiffBlock, DiffContainer } from 'diff-block'
+import { AggregatedDiffsMetaKeyContext } from './AggregatedDiffsMetaKeyContext'
 import { ChangeSeverityFiltersContext } from './ChangeSeverityFiltersContext'
-import { DiffMetaKeyContext } from '@stoplight/elements/containers/DIffMetaKeyContext'
-import { buildOpenApiDiffCause } from '@netcracker/qubership-apihub-api-doc-viewer'
 
 // import '@netcracker/qubership-apihub-api-doc-viewer/dist/style.css'
 
@@ -45,7 +47,7 @@ export type DiffAPIPropsWithOperation = {
   mergedDocument?: unknown;
   // diff specific
   filters: DiffType[];
-  diffMetaKey: symbol
+  diffMetaKeys: DiffMetaKeys
 } & CommonAPIProps;
 
 export interface CommonAPIProps extends RoutingProps {
@@ -130,20 +132,20 @@ export const DiffOperationAPIImpl: React.FC<DiffAPIProps> = props => {
     proxyServer,
     hideExamples = false,
     mergedDocument,
-    diffMetaKey,
+    diffMetaKeys: { diffsMetaKey, aggregatedDiffsMetaKey },
   } = props
 
   const operationNode = useMemo(() => {
-    return transformOasToServiceNodeWithDiffMeta(mergedDocument, diffMetaKey)?.children?.find(({ type }) => type === 'http_operation')
+    return transformOasToServiceNodeWithDiffMeta(mergedDocument, diffsMetaKey)?.children?.find(({ type }) => type === 'http_operation')
       ?.data as IHttpOperation | null
-  }, [diffMetaKey, mergedDocument])
+  }, [diffsMetaKey, mergedDocument])
 
   const exportProps = useExportDocumentProps({
     originalDocument: document,
     bundledDocument: mergedDocument,
   })
 
-  const metaForPath = (mergedDocument as any)?.paths?.[diffMetaKey]
+  const metaForPath = (mergedDocument as any)?.paths?.[diffsMetaKey]
   // 0 index because there is only one path in document
   const rootDiff = Object.values(metaForPath ?? {})[0] as any
   const rootDiffCause = buildOpenApiDiffCause(rootDiff)
@@ -160,7 +162,7 @@ export const DiffOperationAPIImpl: React.FC<DiffAPIProps> = props => {
   if (mergedDocument === null) {
     return (
       <Flex justify="center" alignItems="center" w="full" minH="screen" color="light">
-        <Box as={Icon} icon={['fal', 'circle-notch']} size="3x" spin/>
+        <Box as={Icon} icon={['fal', 'circle-notch']} size="3x" spin />
       </Flex>
     )
   }
@@ -213,27 +215,29 @@ export const DiffOperationAPIImpl: React.FC<DiffAPIProps> = props => {
       <SearchPhraseContext.Provider value={searchPhrase}>
         <OperationSchemaOptionsContext.Provider value={schemaOptions}>
           <OperationDisplayModeContext.Provider value={COMPARE_DISPLAY_MODE}>
-            <DiffMetaKeyContext.Provider value={diffMetaKey}>
-              <ChangeSeverityFiltersContext.Provider value={changeSeverityFilters}>
-                <Provider>
-                  <Flex
-                    style={{ isolation: 'isolate' }}
-                    justifyContent="between"
-                    color="muted"
-                    fontSize="base"
-                    pos="relative"
-                    pl={8}
-                    pr={8}
-                  >
-                    <Flex w="full" flexDirection="col" m="auto" className="sl-max-w-4xl">
-                      <Box w="full" borderB>
-                        {apiWithOperationElement}
-                      </Box>
+            <DiffsMetaKeyContext.Provider value={diffsMetaKey}>
+              <AggregatedDiffsMetaKeyContext.Provider value={aggregatedDiffsMetaKey}>
+                <ChangeSeverityFiltersContext.Provider value={changeSeverityFilters}>
+                  <Provider>
+                    <Flex
+                      style={{ isolation: 'isolate' }}
+                      justifyContent="between"
+                      color="muted"
+                      fontSize="base"
+                      pos="relative"
+                      pl={8}
+                      pr={8}
+                    >
+                      <Flex w="full" flexDirection="col" m="auto" className="sl-max-w-4xl">
+                        <Box w="full" borderB>
+                          {apiWithOperationElement}
+                        </Box>
+                      </Flex>
                     </Flex>
-                  </Flex>
-                </Provider>
-              </ChangeSeverityFiltersContext.Provider>
-            </DiffMetaKeyContext.Provider>
+                  </Provider>
+                </ChangeSeverityFiltersContext.Provider>
+              </AggregatedDiffsMetaKeyContext.Provider>
+            </DiffsMetaKeyContext.Provider>
           </OperationDisplayModeContext.Provider>
         </OperationSchemaOptionsContext.Provider>
       </SearchPhraseContext.Provider>
@@ -253,5 +257,5 @@ export const DiffOperationAPI: React.FC<DiffAPIPropsWithOperation> = flow(
 )(props => {
   const filters = typeof props.filters === 'string' ? JSON.parse(props.filters) : props.filters
   const server = typeof props.proxyServer === 'string' ? JSON.parse(props.proxyServer) : props.proxyServer
-  return <DiffOperationAPIImpl {...props} filters={filters} proxyServer={server}/>
+  return <DiffOperationAPIImpl {...props} filters={filters} proxyServer={server} />
 })

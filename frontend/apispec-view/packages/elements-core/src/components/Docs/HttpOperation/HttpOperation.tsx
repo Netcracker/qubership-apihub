@@ -1,6 +1,4 @@
-import { useSearchPhrase } from '@stoplight/elements/containers/API'; // TODO: `elements-core` must not depend on `elements`!
-import { useOperationExtensions } from '@stoplight/elements/hooks/useExtensions';
-import { useResolvedObject } from '@stoplight/elements-core';
+import { useResolvedObject, useSearchPhrase, useOperationExtensions } from '@stoplight/elements-core';
 import { Extensions } from '@stoplight/elements-core/components/Docs/Extensions';
 import { SectionSubtitle } from '@stoplight/elements-core/components/Docs/Sections';
 import { Box, Flex, Heading, HStack, isNotEmptyObject, useThemeIsDark, VStack } from '@stoplight/mosaic';

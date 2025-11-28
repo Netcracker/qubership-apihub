@@ -24,11 +24,15 @@ export { TryIt, TryItProps, TryItWithRequestSamples, TryItWithRequestSamplesProp
 export { HttpMethodColors, NodeTypeColors, NodeTypeIconDefs, NodeTypePrettyName } from './constants';
 export { MockingProvider } from './containers/MockingProvider';
 export * from './context/InlineRefResolver';
+export { OperationSchemaOptionsContext, useOperationSchemaOptionsMode } from './context/OperationSchemaOptions';
+export type { OperationSchemaOptions } from './context/OperationSchemaOptions';
 export { PersistenceContextProvider, withPersistenceBoundary } from './context/Persistence';
+export { SearchPhraseContext, useSearchPhrase } from './context/SearchPhrase';
 export { withMosaicProvider } from './hoc/withMosaicProvider';
 export { withQueryClientProvider } from './hoc/withQueryClientProvider';
 export { withRouter } from './hoc/withRouter';
 export { useBundleRefsIntoDocument } from './hooks/useBundleRefsIntoDocument';
+export { useExtensions, useOperationExtensions, useServiceExtensions } from './hooks/useExtensions';
 export { useParsedData } from './hooks/useParsedData';
 export { useParsedValue } from './hooks/useParsedValue';
 export { useRouter } from './hooks/useRouter';

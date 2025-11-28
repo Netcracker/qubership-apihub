@@ -2,6 +2,7 @@ import {
   InlineRefResolverProvider,
   NonIdealState,
   RoutingProps,
+  SearchPhraseContext,
   useBundleRefsIntoDocument,
   useParsedValue,
   withMosaicProvider,
@@ -15,7 +16,7 @@ import { Box, Flex, Icon } from '@stoplight/mosaic';
 import { SchemaViewMode } from 'json-schema-viewer';
 import { flow } from 'lodash';
 import * as React from 'react';
-import { useContext, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 
 import { APIWithPartialLayout } from '../components/API/APIWithPartialLayout';
@@ -241,11 +242,6 @@ export const APIImpl: React.FC<APIProps> = props => {
     </InlineRefResolverProvider>
   );
 };
-
-const SearchPhraseContext = React.createContext<string | undefined>(undefined);
-SearchPhraseContext.displayName = 'SearchPhraseContext';
-
-export const useSearchPhrase = () => useContext(SearchPhraseContext);
 
 export const API: React.FC<APIPropsWithDocument> = flow(
   withRouter,

@@ -87,7 +87,7 @@ export const Request: React.FunctionComponent<IRequestProps> = ({
                 return (
                   <DiffBlock
                     id={`Security-${i}`}
-                    key={i}
+                    key={`Security-${i}`}
                     type={diff?.type}
                     action={diff?.action}
                     cause={diffCause}

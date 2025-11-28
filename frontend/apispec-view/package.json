@@ -14,7 +14,7 @@
     "@chromatic-com/storybook": "1",
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
     "@netcracker/qubership-apihub-api-unifier": "feature-asyncapi-basic-e2e",
-    "@netcracker/qubership-apihub-compatibility-suites": "dev",
+    "@netcracker/qubership-apihub-compatibility-suites": "2.3.0",
     "@netcracker/qubership-apihub-api-diff": "feature-asyncapi-basic-e2e",
     "@netcracker/qubership-apihub-api-doc-viewer": "feature-asyncapi-basic-e2e",
     "@netcracker/qubership-apihub-http-spec": "5.5.9",

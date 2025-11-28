@@ -1,4 +1,5 @@
 import { DiffType } from '@netcracker/qubership-apihub-api-diff';
+import { DiffMetaKeys } from '@netcracker/qubership-apihub-api-doc-viewer';
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -101,7 +102,7 @@ export class DiffOperationView extends HTMLElement {
 
   set filters(value: DiffType[]);
 
-  set diffMetaKey(value: symbol);
+  set diffMetaKeys(value: DiffMetaKeys);
 
   constructor(props) {
     super(props);

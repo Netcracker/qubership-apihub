@@ -1,7 +1,7 @@
-import { denormalize, normalize, NormalizeOptions, RefErrorType, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier';
 import { apiDiff, COMPARE_MODE_DEFAULT, CompareResult } from '@netcracker/qubership-apihub-api-diff';
+import { denormalize, normalize, NormalizeOptions, RefErrorType, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier';
 import { safeStringify } from '@stoplight/json';
-import { diffMetaKey } from 'diff-block';
+import { diffsMetaKey } from 'diff-block';
 
 const SYNTHETIC_TITLE_FLAG = Symbol('synthetic-title');
 const NORMALIZE_OPTIONS: NormalizeOptions = {
@@ -41,7 +41,7 @@ export const getCompareResult = (
     beforeSource: before,
     afterSource: after,
     mode: COMPARE_MODE_DEFAULT, // we do not really have guarantee that we have specs with single operation as an input, hence could not use COMPARE_MODE_SINGLE
-    metaKey: diffMetaKey,
+    metaKey: diffsMetaKey,
     onRefResolveError: (message: string, path: PropertyKey[], ref: string, errorType: RefErrorType) => {
       console.debug([
         '[ASV] [Ref Resolve Error]',

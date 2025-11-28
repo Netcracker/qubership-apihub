@@ -1,7 +1,6 @@
 import { JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer';
-import { useOperationSchemaOptionsMode } from '@stoplight/elements';
-import { useSearchPhrase } from '@stoplight/elements/containers/API';
 import { Extension, Extensions } from '@stoplight/elements-core/components/Docs/Extensions';
+import { useSearchPhrase, useOperationSchemaOptionsMode } from '@stoplight/elements-core';
 import { Box, Flex, IntentVals, Tab, TabList, TabPanel, TabPanels, Tabs, VStack } from '@stoplight/mosaic';
 import { IHttpOperationResponse } from '@stoplight/types';
 import { JsonSchemaViewer as OldJsonSchemaViewer } from 'json-schema-viewer';

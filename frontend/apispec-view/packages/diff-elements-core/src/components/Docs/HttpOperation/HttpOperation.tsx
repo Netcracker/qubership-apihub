@@ -29,7 +29,7 @@ import { Summary } from "@stoplight/diff-elements-core/components/Docs/HttpOpera
 import { useState, memo, FC } from "react";
 import { Diff } from "@netcracker/qubership-apihub-api-diff";
 import { defaultErrorHandler } from "../../../../../system";
-import { useDiffMetaKey } from "@stoplight/elements/containers/DIffMetaKeyContext";
+import { useDiffsMetaKey } from "@stoplight/elements/containers/DiffsMetaKeyContext";
 import { buildOpenApiDiffCause } from "@netcracker/qubership-apihub-api-doc-viewer";
 
 interface BaseDocsProps {
@@ -146,21 +146,23 @@ export interface DocsComponentProps<T = unknown> extends BaseDocsProps {
 
 export type DiffHttpOperationProps = DocsComponentProps<IHttpOperation>;
 
+const emptyCallback = () => {};
+
 const HttpOperationComponent = memo<DiffHttpOperationProps>(props => {
   const { className, data: unresolvedData, layoutOptions } = props;
   const data = unresolvedData as WithDiffMetaKey<IHttpOperation>;
   const document = useDocument();
 
-  const diffMetaKey = useDiffMetaKey()
-  const metaForPath = (document as any)?.paths[diffMetaKey];
-  const metaForMethod = (document as any)?.paths?.[data.path]?.[diffMetaKey];
-  data[diffMetaKey] = {
-    ...data[diffMetaKey],
+  const diffsMetaKey = useDiffsMetaKey()
+  const metaForPath = (document as any)?.paths[diffsMetaKey];
+  const metaForMethod = (document as any)?.paths?.[data.path]?.[diffsMetaKey];
+  data[diffsMetaKey] = {
+    ...data[diffsMetaKey],
     method: metaForMethod?.[data.method],
     path: metaForPath?.[data.path],
   };
 
-  const diffMeta = data[diffMetaKey];
+  const diffMeta = data[diffsMetaKey];
   const metaForHeader = combineDiffMetas(pick(diffMeta, ['summary', 'iid', 'deprecated', 'internal', 'operationId']));
   const metaForMethodPath = combineDiffMetas(pick(diffMeta, ['method', 'path']));
 
@@ -169,7 +171,7 @@ const HttpOperationComponent = memo<DiffHttpOperationProps>(props => {
   const headerView = !layoutOptions?.noHeading && (
     <VStack spacing={5}>
       <DiffContainer>
-        <Summary 
+        <Summary
           data={data}
           diffMeta={metaForHeader}
           noHeading={layoutOptions?.noHeading}
@@ -188,6 +190,11 @@ const HttpOperationComponent = memo<DiffHttpOperationProps>(props => {
     data.method,
     responseStatusCode,
   );
+
+  const extensionsValue = React.useMemo(() => (
+    entries(extensions).map(([key, value]) => ({ [key]: value }))
+  ), [extensions])
+
   const descriptionView = (
     <VStack spacing={10}>
       <DiffContainer>
@@ -201,14 +208,14 @@ const HttpOperationComponent = memo<DiffHttpOperationProps>(props => {
         <DiffContainer>
           <ExtensionsDiff
             idPrefix={'HttpOperation__Extensions'}
-            value={entries(extensions).map(([key, value]) => ({ [key]: value }))}
-            meta={extensions[diffMetaKey]}
+            value={extensionsValue}
+            meta={extensions[diffsMetaKey]}
           />
         </DiffContainer>
       )}
 
       <Request
-        onChange={() => {}}
+        onChange={emptyCallback}
         operation={data}
         extensions={requestExtensions}
         extensionsMeta={operationMeta}
@@ -218,7 +225,7 @@ const HttpOperationComponent = memo<DiffHttpOperationProps>(props => {
       {data.responses && (
         <Responses
           operation={data}
-          onMediaTypeChange={() => {}}
+          onMediaTypeChange={emptyCallback}
           onStatusCodeChange={setResponseStatusCode}
           extensions={responseExtensions}
           extensionsMeta={operationMeta}
@@ -305,7 +312,7 @@ export const MethodPath: FC<MethodPathProps> = (props) => {
   );
 }
 
-const MethodPathInner: FC< MethodPathInnerProps & { chosenServerUrl: string }> = (props) => {
+const MethodPathInner: FC<MethodPathInnerProps & { chosenServerUrl: string }> = (props) => {
   const {
     method,
     path,
