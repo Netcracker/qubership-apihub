@@ -18,6 +18,7 @@ import { ApiKind, DeprecateItem, OperationsApiType } from '../external'
 import { ApiAudience } from '../package'
 import { OpenAPIV3 } from 'openapi-types'
 import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
+import { AsyncApiDocument } from '../../apitypes/async/async.types'
 
 export type SearchScopes<T extends string = string> = Record<T, Set<string>>
 
@@ -50,4 +51,4 @@ export interface ApiOperation<T = any, M = any> {
   versionInternalDocumentId: string
 }
 
-export type ApiDocument = OpenAPIV3.Document | GraphApiSchema
+export type ApiDocument = OpenAPIV3.Document | GraphApiSchema | AsyncApiDocument

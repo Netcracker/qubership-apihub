@@ -31,23 +31,28 @@ import {
 } from '../../consts'
 import {
   CompareOperationsPairContext,
+  ComparisonDocument,
+  DocumentsCompare,
+  DocumentsCompareData,
   OperationChanges,
   ResolvedVersionDocument,
   WithAggregatedDiffs,
   WithDiffMetaRecord,
 } from '../../types'
-import { createOperationChange, getOperationTags, OperationsMap } from '../../components'
-import { ASYNCAPI_API_TYPE } from './async.consts'
+import {
+  createComparisonDocument,
+  createComparisonInternalDocumentId,
+  createOperationChange,
+  getOperationTags,
+  OperationsMap,
+} from '../../components'
 
-export const compareDocuments = async (
+export const compareDocuments: DocumentsCompare = async (
   operationsMap: OperationsMap,
   prevDoc: ResolvedVersionDocument | undefined,
   currDoc: ResolvedVersionDocument | undefined,
   ctx: CompareOperationsPairContext,
-): Promise<{
-  operationChanges: OperationChanges[]
-  tags: Set<string>
-}> => {
+): Promise<DocumentsCompareData> => {
   const {
     apiType,
     rawDocumentResolver,
@@ -59,6 +64,7 @@ export const compareDocuments = async (
     previousGroup,
   } = ctx
 
+  const comparisonInternalDocumentId = createComparisonInternalDocumentId(prevDoc, currDoc, previousVersion, currentVersion)
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
   const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
   let prevDocData = prevFile && JSON.parse(await prevFile.text()) as AsyncApiDocument
@@ -144,12 +150,21 @@ export const compareDocuments = async (
 
       // Note: Skip breaking change reclassification for AsyncAPI (as per plan)
 
-      operationChanges.push(createOperationChange(apiType, operationDiffs, previous, current, currentGroup, previousGroup))
+      operationChanges.push(createOperationChange(apiType, operationDiffs, comparisonInternalDocumentId, previous, current, currentGroup, previousGroup))
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }
   }
 
-  return { operationChanges, tags }
+  let comparisonDocument: ComparisonDocument | undefined
+  if (operationChanges.length) {
+    comparisonDocument = createComparisonDocument(comparisonInternalDocumentId, merged)
+  }
+
+  return {
+    operationChanges,
+    tags,
+    ...(comparisonDocument) ? { comparisonDocument } : {},
+  }
 }
 
 /**

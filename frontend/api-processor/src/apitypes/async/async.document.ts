@@ -23,6 +23,7 @@ import {
 import { FILE_FORMAT } from '../../consts'
 import {
   createBundlingErrorHandler,
+  createVersionInternalDocument,
   getBundledFileDataWithDependencies,
   getDocumentTitle,
 } from '../../utils'
@@ -78,6 +79,7 @@ export const buildAsyncApiDocument: DocumentBuilder<AsyncApiDocument> = async (p
     publish,
     source: parsedFile.source,
     errors: parsedFile.errors?.length ?? 0,
+    versionInternalDocument: createVersionInternalDocument(slug),
   }
 }
 

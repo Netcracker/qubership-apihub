@@ -63,9 +63,10 @@ export const buildAsyncApiOperation = (
 ): TYPE.VersionAsyncOperation => {
 
   const { servers, components } = document.data
+  const { versionInternalDocument } = document
   const effectiveOperationObject = effectiveDocument.operations?.[operationKey] || {}
   const effectiveSingleOperationSpec = createSingleOperationSpec(effectiveDocument, operationKey)
-  const refsOnlySingleOperationSpec = createSingleOperationSpec(refsOnlyDocument, operationKey)
+
   const tags = effectiveOperationObject.tags || []
 
   // Extract search scopes (similar to REST)
@@ -165,6 +166,7 @@ export const buildAsyncApiOperation = (
       deprecatedInPreviousVersions: deprecatedOperationItem?.deprecatedInPreviousVersions,
     }, !!deprecatedOperationItem),
     apiAudience,
+    versionInternalDocumentId: versionInternalDocument.versionDocumentId,
   }
 }
 
