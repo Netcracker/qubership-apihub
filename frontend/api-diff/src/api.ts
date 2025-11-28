@@ -6,7 +6,7 @@ import { compareOpenApi } from './openapi'
 import {
   createEvaluationCacheService,
   resolveSpec,
-  SPEC_TYPE_ASYNCAPI_2,
+  SPEC_TYPE_ASYNCAPI_3,
   SPEC_TYPE_GRAPH_API,
   SPEC_TYPE_JSON_SCHEMA_04,
   SPEC_TYPE_JSON_SCHEMA_06,
@@ -50,7 +50,7 @@ export const COMPARE_ENGINES_MAP: Record<SpecType, CompareEngine> = {
   [SPEC_TYPE_JSON_SCHEMA_07]: compareJsonSchema(SPEC_TYPE_JSON_SCHEMA_07),
   [SPEC_TYPE_OPEN_API_30]: compareOpenApi(SPEC_TYPE_OPEN_API_30),
   [SPEC_TYPE_OPEN_API_31]: compareOpenApi(SPEC_TYPE_OPEN_API_31),
-  [SPEC_TYPE_ASYNCAPI_2]: compareAsyncApi,
+  [SPEC_TYPE_ASYNCAPI_3]: compareAsyncApi(SPEC_TYPE_ASYNCAPI_3),
   [SPEC_TYPE_GRAPH_API]: compareGraphApi,
 }
 
