@@ -13,10 +13,10 @@
     "@babel/preset-typescript": "^7.16.7",
     "@chromatic-com/storybook": "1",
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
-    "@netcracker/qubership-apihub-api-unifier": "feature-performance-optimization",
+    "@netcracker/qubership-apihub-api-unifier": "feature-asyncapi-basic-e2e",
     "@netcracker/qubership-apihub-compatibility-suites": "dev",
-    "@netcracker/qubership-apihub-api-diff": "feature-move-prefix-from-server-to-path",
-    "@netcracker/qubership-apihub-api-doc-viewer": "feature-performance-optimization",
+    "@netcracker/qubership-apihub-api-diff": "feature-asyncapi-basic-e2e",
+    "@netcracker/qubership-apihub-api-doc-viewer": "feature-asyncapi-basic-e2e",
     "@netcracker/qubership-apihub-http-spec": "5.5.9",
     "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "2.0.0",
     "@schemastore/package": "0.0.4",
@@ -149,6 +149,6 @@
     "screenshot-test:ci": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:ci",
     "screenshot-test:docker": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:docker",
     "screenshot-test:regenerate-snapshots": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:regenerate-snapshots",
-    "update-lock-file": "update-lock-file @netcracker" 
+    "update-lock-file": "update-lock-file @netcracker"
   }
 }
