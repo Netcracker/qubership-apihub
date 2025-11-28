@@ -32,8 +32,8 @@
   },
   "dependencies": {
     "@asyncapi/parser": "^3.0.0",
-    "@netcracker/qubership-apihub-api-diff": "feature-move-prefix-from-server-to-path",
-    "@netcracker/qubership-apihub-api-unifier": "feature-performance-optimization",
+    "@netcracker/qubership-apihub-api-diff": "feature-asyncapi-basic-e2e",
+    "@netcracker/qubership-apihub-api-unifier": "feature-asyncapi-basic-e2e",
     "@netcracker/qubership-apihub-graphapi": "feature-performance-optimization",
     "@netcracker/qubership-apihub-json-crawl": "1.1.0",
     "adm-zip": "0.5.10",
