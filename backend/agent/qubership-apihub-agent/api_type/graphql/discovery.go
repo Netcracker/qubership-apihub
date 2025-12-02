@@ -39,19 +39,22 @@ const DefaultGraphqlSpecName = "Graphql specification"
 const DefaultGraphqlIntSpecName = "Graphql introspection"
 
 func (r graphqlDiscoveryRunner) DiscoverDocuments(baseUrl string, urls view.DocumentDiscoveryUrls, timeout time.Duration) ([]view.Document, error) {
-	refs := make([]view.DocumentRef, len(urls.GraphqlSchema)+len(urls.GraphqlIntrospection)+len(urls.GraphqlConfig))
+	// Check for GraphQL config first
+	for _, url := range urls.GraphqlConfig {
+		configRefs := getRefsFromGraphqlConfig(baseUrl, url, timeout)
+		if len(configRefs) > 0 {
+			// Graphql config found
+			return r.GetDocumentsByRefs(baseUrl, configRefs)
+		}
+	}
+
+	// No config found, collect schema and introspection URLs
+	refs := make([]view.DocumentRef, 0, len(urls.GraphqlSchema)+len(urls.GraphqlIntrospection))
 	for _, url := range urls.GraphqlSchema {
 		refs = append(refs, view.DocumentRef{Url: url, ApiType: view.ATGraphql, Required: false, Timeout: timeout}) // TODO: Metadata: map[string]interface{}{"isIntrospection": false} ???
 	}
 	for _, url := range urls.GraphqlIntrospection {
 		refs = append(refs, view.DocumentRef{Url: url, ApiType: view.ATGraphql, Required: false, Timeout: timeout}) //TODO: Metadata: map[string]interface{}{"isIntrospection": true} ???
-	}
-	for _, url := range urls.GraphqlConfig {
-		refs = getRefsFromGraphqlConfig(baseUrl, url, timeout)
-		if len(refs) > 0 {
-			// Graphql config found
-			return r.GetDocumentsByRefs(baseUrl, refs)
-		}
 	}
 	return r.GetDocumentsByRefs(baseUrl, refs)
 }

@@ -96,7 +96,7 @@ func (c *cloudServiceImpl) runAllDiscoveryOneByOne(ctx secctx.SecurityContext, w
 
 	log.Infof("Namespaces to discover: %+v", namespaces)
 	for _, ns := range namespaces {
-		err := c.discoveryService.StartDiscovery(ctx, ns, workspaceId)
+		err := c.discoveryService.StartDiscovery(ctx, ns, workspaceId, false)
 		if err != nil {
 			log.Errorf("Failed to start discovery for namespace %s: %s", ns, err)
 			c.errors = append(c.errors, fmt.Sprintf("failed to start discovery for namespace %s: %s", ns, err))
