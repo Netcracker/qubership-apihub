@@ -218,7 +218,10 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
     {
       originOperation: originOperation,
       changedOperation: changedOperation,
-      enabled: isAsyncApiSpecification(normalizedChangedOperation) || isPlaygroundMode || isExamplesMode,
+      enabled: (
+        isAsyncApiSpecification(originOperation?.data) || isAsyncApiSpecification(changedOperation?.data) || // AsyncAPI
+        isPlaygroundMode || isExamplesMode // OpenAPI
+      ),
     },
   )
 
@@ -283,7 +286,9 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
   } else if (
     !normalizedChangedOperation &&
     !normalizedOriginOperation &&
-    !apiDiffResult?.merged
+    !apiDiffResult?.merged &&
+    !originValueForRawSpecView &&
+    !changedValueForRawSpecView
   ) {
     return (
       <Placeholder
@@ -323,7 +328,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
                 />
               }
             />
-            {isDocViewMode && !!mergedDocument && (
+            {isDocViewMode && !!mergedDocument && apiType !== API_TYPE_ASYNCAPI && (
               <OperationView
                 apiType={apiType as ApiType}
                 displayMode={displayMode}
@@ -337,7 +342,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
                 operationName={operationName}
               />
             )}
-            {isRawViewMode && (
+            {(isRawViewMode || isDocViewMode && apiType === API_TYPE_ASYNCAPI) && (
               <RawSpecDiffView
                 beforeValue={originValueForRawSpecView}
                 afterValue={changedValueForRawSpecView}

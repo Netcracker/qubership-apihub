@@ -1,11 +1,14 @@
-import type { VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import type { PackageKey, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 
 import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@apihub/utils/internal-documents/constants'
-import { isGraphQLOperation, isRestOperation } from '@apihub/utils/internal-documents/type-guards'
+import {
+  isAsyncApiSpecification,
+  isGraphQLOperation,
+  isRestOperation,
+} from '@apihub/utils/internal-documents/type-guards'
 import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
-import type { PackageKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { VersionChanges } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
 import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 import type { OpenAPIV3 } from 'openapi-types'
@@ -143,6 +146,9 @@ export function useComparedOperations(options: Options): QueryResult<unknown, Er
       return clonedOasComparisonInternalDocument
     }
     if (isGraphQLOperation(deserializedComparisonInternalDocument)) {
+      return deserializedComparisonInternalDocument
+    }
+    if (isAsyncApiSpecification(deserializedComparisonInternalDocument)) {
       return deserializedComparisonInternalDocument
     }
     return undefined
