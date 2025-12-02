@@ -16,6 +16,11 @@ on:
         required: false
         default: ""
         type: string
+      tag:
+        description: "Tag of the image to scan. By default 'latest'"
+        required: false
+        default: "latest"
+        type: string
       only-high-critical:
         description: "Scope only HIGH + CRITICAL"
         required: false
@@ -50,51 +55,40 @@ jobs:
     permissions:
       packages: read
     outputs:
-      ghcr-packages: ${{ steps.pkgs.outputs.ghcr-packages }}
+      packages: ${{ steps.ghcr.outputs.packages }}
+      has-packages: ${{ steps.ghcr.outputs.has-packages }}
     steps:
-      - name: Show raw GHCR response
-        id: pkgs
+      - name: List GHCR packages for this repo
+        id: ghcr
+        uses: Netcracker/qubership-workflow-hub/actions/ghcr-discover-repo-packages@v2.0.3
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT_PACKAGES }}
-          OWNER: ${{ github.repository_owner }}
-        run: |
-          api_url="https://api.github.com/users/${OWNER}/packages?package_type=container"
-          echo "Request: $api_url"
+          GH_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
 
-          response=$(curl -sS \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "$api_url")
+      - name: Print packages
+        run: echo '${{ steps.ghcr.outputs.packages }}' | jq '.'
 
-          packages=$(echo "$response" | jq -c --arg owner "$OWNER" '
-            [.[]
-            | select(.repository.full_name == "nookyo/qubership-monitoring-operator")
-            | { name: .name, repository: .repository.name, full_name: .repository.full_name, path: "ghcr.io/\($owner)/\(.name)" }
-            ]
-          ')
-
-          echo "ghcr-packages=$packages" >> "$GITHUB_OUTPUT"
-          echo "Raw response:"
-          echo "$packages"
+      - name: Continue only if repo has GHCR packages
+        if: ${{ steps.ghcr.outputs.has-packages == 'true' }}
+        run: echo "Packages found!"
 
   security-scan-matrix:
     needs: debug-packages
     if: ${{ inputs.image == '' || inputs.image == null }}
     strategy:
       matrix:
-        package: ${{ fromJson(needs.debug-packages.outputs.ghcr-packages) }}
+        package: ${{ fromJson(needs.debug-packages.outputs.packages) }}
 
     name: "Run Security Scan (matrix)"
-    uses: netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@main
+    uses: netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@v2.0.3
     with:
       target: ${{ inputs.target || 'docker' }}
-      image: ${{ format('{0}:main', matrix.package.path) }}
+      image: ${{ format('{0}:{1}', matrix.package.path, inputs.tag || 'latest') }}
 
   security-scan-single:
     needs: debug-packages
     if: ${{ inputs.image != '' && inputs.image != null }}
     name: "Run Security Scan (single image)"
-    uses: netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@main
+    uses: netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@v2.0.3
     with:
       target: ${{ inputs.target || 'docker' }}
       image: ${{ inputs.image }}
