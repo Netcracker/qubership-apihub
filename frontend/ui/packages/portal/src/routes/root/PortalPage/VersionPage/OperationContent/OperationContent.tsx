@@ -40,7 +40,11 @@ import {
   WarningApiProcessorVersion,
 } from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  API_TYPE_ASYNCAPI,
+  API_TYPE_GRAPHQL,
+  API_TYPE_REST,
+} from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { FileViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
 import { FILE_FORMAT_VIEW, YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
 import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
@@ -56,7 +60,7 @@ import {
   useIsRawOperationViewMode,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationMode'
 import {
-  useOperationsPairAsStrings,
+  useOperationsPairStringified,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationsPairAsStrings'
 import type { FC, ReactNode } from 'react'
 import { memo, useCallback, useEffect, useMemo } from 'react'
@@ -76,6 +80,7 @@ import { DEFAULT_DISPLAY_MODE, isComparisonMode } from './OperationView/Operatio
 import { OperationWithPlayground } from './OperationWithPlayground'
 import { useIsExamplesMode, useIsPlaygroundMode, useIsPlaygroundSidebarOpen } from './usePlaygroundSidebarMode'
 import { useSelectOperationTags } from './useSelectOperationTags'
+import { isAsyncApiSpecification } from '@apihub/utils/internal-documents/type-guards'
 
 export type OperationContentProps = {
   changedOperation?: OperationData
@@ -206,10 +211,15 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
   const comparisonMode = isComparisonMode(displayMode)
   const [fileViewMode = YAML_FILE_VIEW_MODE, setFileViewMode] = useFileViewMode()
 
-  const [changedOperationContent, originOperationContent] = useOperationsPairAsStrings(
-    isGraphQLOperation ? documentWithChangedGraphQlOperation : changedOperation,
-    isGraphQLOperation ? documentWithOriginOriginOperation : originOperation,
-    isPlaygroundMode || isExamplesMode, // only for REST operations!
+  const [originOperationContent, changedOperationContent] = useOperationsPairStringified(
+    isGraphQLOperation
+      ? { originOperation: documentWithOriginOriginOperation, changedOperation: documentWithChangedGraphQlOperation }
+      : undefined,
+    {
+      originOperation: originOperation,
+      changedOperation: changedOperation,
+      enabled: isAsyncApiSpecification(normalizedChangedOperation) || isPlaygroundMode || isExamplesMode,
+    },
   )
 
   const originGraphQlOperationContent = useRawGraphQlCroppedToSingleOperationRawGraphQl(originOperationContent, operationType, operationName)

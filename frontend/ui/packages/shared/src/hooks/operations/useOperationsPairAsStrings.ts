@@ -19,7 +19,8 @@ import type { OperationData } from '../../entities/operations'
 import { stringifyOperation } from '../../utils/operations'
 
 /**
- * Returns pair of operations as pair of strings
+ * Returns a pair of operations as a pair of strings
+ * @deprecated
  * @param originOperation - OperationData or already stringified document
  * @param changedOperation - OperationData or already stringified document
  * @returns transformed to string documents pair or just the same documents if they are already strings
@@ -47,4 +48,34 @@ export function useOperationsPairAsStrings(
     },
     [originOperation, enabled, changedOperation],
   )
+}
+
+export function useOperationsPairStringified(
+  alreadyStringified?: {
+    originOperation: string | undefined
+    changedOperation: string | undefined
+  },
+  stringifyOptions?: {
+    originOperation: OperationData | undefined
+    changedOperation: OperationData | undefined
+    enabled: boolean
+  },
+): [string, string] {
+  return useMemo(() => {
+    let originOperationString: string | undefined
+    let changedOperationString: string | undefined
+    if (alreadyStringified?.originOperation) {
+      originOperationString = alreadyStringified.originOperation
+    }
+    if (alreadyStringified?.changedOperation) {
+      changedOperationString = alreadyStringified?.changedOperation
+    }
+    if (!originOperationString) {
+      originOperationString = stringifyOptions?.enabled ? stringifyOperation(stringifyOptions?.originOperation) : undefined
+    }
+    if (!changedOperationString) {
+      changedOperationString = stringifyOptions?.enabled ? stringifyOperation(stringifyOptions?.changedOperation) : undefined
+    }
+    return [originOperationString ?? '', changedOperationString ?? '']
+  }, [alreadyStringified?.changedOperation, alreadyStringified?.originOperation, stringifyOptions?.changedOperation, stringifyOptions?.enabled, stringifyOptions?.originOperation])
 }

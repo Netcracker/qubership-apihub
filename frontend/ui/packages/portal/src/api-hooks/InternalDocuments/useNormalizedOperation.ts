@@ -9,7 +9,11 @@ import { useMemo } from 'react'
 import { useInternalDocumentContent } from './useInternalDocumentContent'
 import type { QueryResult } from './useInternalDocumentsByPackageVersion'
 import { useInternalDocumentsByPackageVersion } from './useInternalDocumentsByPackageVersion'
-import { isRestOperation, isGraphQLOperation } from '@apihub/utils/internal-documents/type-guards'
+import {
+  isAsyncApiSpecification,
+  isGraphQLOperation,
+  isRestOperation,
+} from '@apihub/utils/internal-documents/type-guards'
 
 type Options = {
   operation: OperationData | undefined
@@ -65,8 +69,12 @@ export function useNormalizedOperation(options: Options): QueryResult<unknown, E
           },
         })
       }
-      // GraphQL operations should be returned as is, because truncating is on ADV layer
+      // GraphQL operations should be returned as-is because truncating is implemented on ADV layer
       if (isGraphQLOperation(deserializedInternalDocument)) {
+        return deserializedInternalDocument
+      }
+      // AsyncAPI operations should be returned as-is because truncating will be implemented on ADV layer
+      if (isAsyncApiSpecification(deserializedInternalDocument)) {
         return deserializedInternalDocument
       }
       // Handle unrecognized operations

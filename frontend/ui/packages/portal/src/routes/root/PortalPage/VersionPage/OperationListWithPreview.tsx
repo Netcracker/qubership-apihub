@@ -32,7 +32,9 @@ import type {
 } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
-import { useOperationsPairAsStrings } from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationsPairAsStrings'
+import {
+  useOperationsPairAsStrings,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationsPairAsStrings'
 import type { ResizeCallback } from 're-resizable'
 import type { FC } from 'react'
 import { memo, useCallback } from 'react'
@@ -90,6 +92,7 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
     apiType: apiType as ApiType,
   })
 
+  // TODO 02.12.25 // Use the same approach as on OperationPage
   const [changedOperationContent] = useOperationsPairAsStrings(changedOperation)
 
   const { data: normalizedChangedOperation, isLoading: isNormalizedChangedOperationLoading } = useNormalizedOperation({

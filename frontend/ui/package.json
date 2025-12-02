@@ -18,6 +18,7 @@
     "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
+    "@asyncapi/parser": "^3.4.0",
     "@emotion/react": "11.10.6",
     "@emotion/styled": "11.10.6",
     "@graphiql/plugin-explorer": "1.0.3",
