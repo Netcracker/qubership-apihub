@@ -15,7 +15,11 @@
  */
 
 import type { DeprecateItem, ReferencedPackageKind } from '@netcracker/qubership-apihub-api-processor'
-import { API_AUDIENCE_EXTERNAL, API_AUDIENCE_INTERNAL, API_AUDIENCE_UNKNOWN } from '@netcracker/qubership-apihub-api-processor'
+import {
+  API_AUDIENCE_EXTERNAL,
+  API_AUDIENCE_INTERNAL,
+  API_AUDIENCE_UNKNOWN,
+} from '@netcracker/qubership-apihub-api-processor'
 import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstack/react-query'
 import type { IsLoading } from '../utils/aliases'
 import { isObject } from '../utils/objects'
@@ -27,6 +31,7 @@ import type { MethodType } from './method-types'
 import type { PackageKind } from './packages'
 import type { OperationChangeBase } from './version-changelog'
 import type { VersionStatus } from './version-status'
+import { AsyncApiOperationType } from './asyncapi-operation-types'
 
 export const DEFAULT_API_TYPE: ApiType = API_TYPE_REST
 
@@ -128,6 +133,7 @@ export interface Operation {
   readonly customTags?: CustomTags
   readonly versionInternalDocumentId?: Key
 }
+
 export interface RestOperation extends Operation {
   readonly method: MethodType
   readonly path: string
@@ -139,7 +145,7 @@ export interface GraphQlOperation extends Operation {
 }
 
 export interface AsyncApiOperation extends Operation {
-  readonly action: string //TODO: add typing
+  readonly action: AsyncApiOperationType //TODO: add typing
   readonly channel: string
   readonly protocol: string
 }
