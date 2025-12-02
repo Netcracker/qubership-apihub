@@ -14,6 +14,9 @@
 
 package exception
 
+const IncorrectParamType = "5"
+const IncorrectParamTypeMsg = "$param parameter should be $type"
+
 const InvalidURLEscape = "6"
 const InvalidURLEscapeMsg = "Failed to unescape parameter $param"
 

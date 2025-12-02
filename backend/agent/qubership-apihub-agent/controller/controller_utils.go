@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/Netcracker/qubership-apihub-agent/exception"
 	"github.com/gorilla/mux"
@@ -55,4 +56,21 @@ func respondWithError(w http.ResponseWriter, msg string, err error) {
 			Message: msg,
 			Debug:   err.Error()})
 	}
+}
+
+func getFailOnErrorQueryParam(r *http.Request) (bool, *exception.CustomError) {
+	if r.URL.Query().Get("failOnError") != "" {
+		val, err := strconv.ParseBool(r.URL.Query().Get("failOnError"))
+		if err != nil {
+			return false, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": "failOnError", "type": "bool"},
+				Debug:   err.Error(),
+			}
+		}
+		return val, nil
+	}
+	return false, nil
 }

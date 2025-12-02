@@ -65,7 +65,14 @@ func (s serviceControllerImpl) StartDiscovery(w http.ResponseWriter, r *http.Req
 	if workspaceId == "" {
 		workspaceId = view.DefaultWorkspaceId
 	}
-	err := s.discoveryService.StartDiscovery(secctx.Create(r), namespace, workspaceId)
+
+	failOnError, paramErr := getFailOnErrorQueryParam(r)
+	if paramErr != nil {
+		respondWithError(w, "failed to parse failOnError param", paramErr)
+		return
+	}
+
+	err := s.discoveryService.StartDiscovery(secctx.Create(r), namespace, workspaceId, failOnError)
 	if err != nil {
 		log.Error("Failed to start discovery process: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {
