@@ -37,6 +37,7 @@ import { API_TYPE_TITLE_MAP, API_TYPES } from '@netcracker/qubership-apihub-ui-s
 import { CHANGE_SEVERITIES } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import {
+  DEFAULT_OPERATION_PREVIEW_VIEW_MODE_BY_API_TYPE,
   OPERATION_COMPARE_VIEW_MODES,
   RAW_OPERATION_VIEW_MODE,
 } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
@@ -184,7 +185,10 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
                   internalDocumentOptions={internalDocumentOptions}
                 />
               )}
-              <OperationViewModeSelector modes={OPERATION_COMPARE_VIEW_MODES} />
+              <OperationViewModeSelector
+                defaultValue={DEFAULT_OPERATION_PREVIEW_VIEW_MODE_BY_API_TYPE.get(apiType)!}
+                modes={OPERATION_COMPARE_VIEW_MODES.get(apiType)!}
+              />
             </>
             : <>
               <ComparisonChangeSeverityFilters
