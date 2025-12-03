@@ -23,7 +23,7 @@ import (
 )
 
 type PublishedRepository interface {
-	MarkVersionDeleted(packageId string, versionName string, userId string) error
+	MarkVersionDeleted(packageId string, versionName string, userId string) (int, error)
 	PatchVersion(packageId string, versionName string, status *string, versionLabels *[]string) (*entity.PublishedVersionEntity, error)
 	GetVersion(packageId string, versionName string) (*entity.PublishedVersionEntity, error)
 	GetReadonlyVersion(packageId string, versionName string, showOnlyDeleted bool) (*entity.PackageVersionRevisionEntity, error)
@@ -52,7 +52,7 @@ type PublishedRepository interface {
 	GetVersionsByPreviousVersion(previousPackageId string, previousVersionName string) ([]entity.PublishedVersionEntity, error)
 	GetReadonlyPackageVersionsWithLimit(searchQuery entity.PublishedVersionSearchQueryEntity, checkRevisions bool, showOnlyDeleted bool) ([]entity.PackageVersionRevisionEntity, error)
 	GetDefaultVersion(packageId string, status string) (*entity.PublishedVersionEntity, error)
-	DeletePackageRevisionsBeforeDate(ctx context.Context, packageId string, beforeDate time.Time, deleteLastRevision bool, deleteReleaseRevisions bool, deletedBy string) (int, error)
+	DeletePackageRevisionsBeforeDate(ctx context.Context, packageId string, beforeDate time.Time, deleteLastRevision bool, deleteReleaseRevisions bool, deletedBy string) (int, int, error)
 	DeleteSoftDeletedPackageRevisionsBeforeDate(ctx context.Context, runId string, beforeDate time.Time, batchSize int) (int, error)
 
 	GetFileSharedInfo(packageId string, fileId string, versionName string) (*entity.SharedUrlInfoEntity, error)
@@ -67,7 +67,7 @@ type PublishedRepository interface {
 	GetAllChildPackageIdsIncludingParent(parentId string) ([]string, error)
 	GetParentsForPackage(id string, includeDeleted bool) ([]entity.PackageEntity, error)
 	UpdatePackage(ent *entity.PackageEntity) (*entity.PackageEntity, error)
-	DeletePackage(id string, userId string) error
+	DeletePackage(id string, userId string) (int, error)
 	DeleteSoftDeletedPackagesBeforeDate(ctx context.Context, runId string, beforeDate time.Time, batchSize int) (int, error)
 	GetFilteredPackagesWithOffset(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error)
 	GetFilteredDeletedPackages(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error)

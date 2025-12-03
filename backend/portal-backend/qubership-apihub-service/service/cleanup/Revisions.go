@@ -20,7 +20,9 @@ import (
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service/cleanup/logger"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 )
@@ -33,6 +35,7 @@ const (
 type revisionsCleanupJobProcessor struct {
 	publishedRepository      repository.PublishedRepository
 	versionCleanupRepository repository.VersionCleanupRepository
+	monitoringService        service.MonitoringService
 	deleteLastRevision       bool
 	deleteReleaseRevision    bool
 }
@@ -40,12 +43,14 @@ type revisionsCleanupJobProcessor struct {
 func NewRevisionsCleanupJobProcessor(
 	publishedRepository repository.PublishedRepository,
 	versionCleanupRepository repository.VersionCleanupRepository,
+	monitoringService service.MonitoringService,
 	deleteLastRevision bool,
 	deleteReleaseRevision bool,
 ) JobProcessor {
 	return &revisionsCleanupJobProcessor{
 		publishedRepository:      publishedRepository,
 		versionCleanupRepository: versionCleanupRepository,
+		monitoringService:        monitoringService,
 		deleteLastRevision:       deleteLastRevision,
 		deleteReleaseRevision:    deleteReleaseRevision,
 	}
@@ -114,10 +119,15 @@ func (p *revisionsCleanupJobProcessor) Process(ctx context.Context, jobId string
 			}
 
 			logger.Debugf(ctx, "Processing package %d/%d: %s", idx+1, len(packages), pkg.Id)
-			count, err := p.publishedRepository.DeletePackageRevisionsBeforeDate(ctx, pkg.Id, deleteBefore, p.deleteLastRevision, p.deleteReleaseRevision, "job_revisions_cleanup|"+jobId)
+			count, releaseCount, err := p.publishedRepository.DeletePackageRevisionsBeforeDate(ctx, pkg.Id, deleteBefore, p.deleteLastRevision, p.deleteReleaseRevision, "job_revisions_cleanup|"+jobId)
 			if err != nil {
 				logger.Warnf(ctx, "Failed to delete revisions of package %s during revisions cleanup: %v", pkg.Id, err)
 				processingErrors = append(processingErrors, fmt.Sprintf("package %s: %s", pkg.Id, err.Error()))
+			}
+			if releaseCount > 0 {
+				for i := 0; i < releaseCount; i++ {
+					p.monitoringService.IncreaseBusinessMetricCounter("job_revisions_cleanup|"+jobId, metrics.ReleaseVersionsDeleted, pkg.Id)
+				}
 			}
 			*deletedItems += count
 			packageCount++
