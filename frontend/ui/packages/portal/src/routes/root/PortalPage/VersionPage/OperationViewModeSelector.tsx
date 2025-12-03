@@ -22,10 +22,12 @@ import { useOperationViewMode } from './useOperationViewMode'
 
 type OperationViewModeSelectorProps = {
   modes: ReadonlyArray<OperationViewMode>
+  defaultValue?: OperationViewMode
 }
 
-export const OperationViewModeSelector: FC<OperationViewModeSelectorProps> = memo<OperationViewModeSelectorProps>(({ modes }) => {
-  const { mode, setMode } = useOperationViewMode()
+export const OperationViewModeSelector: FC<OperationViewModeSelectorProps> = memo<OperationViewModeSelectorProps>(props => {
+  const { modes, defaultValue } = props
+  const { mode, setMode } = useOperationViewMode(defaultValue)
   const handleMode = useCallback((mode: OperationViewMode) => setMode(mode), [setMode])
 
   return <Toggler<OperationViewMode> mode={mode} modes={modes} onChange={handleMode} />

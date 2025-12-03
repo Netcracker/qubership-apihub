@@ -20,10 +20,19 @@ import { Box, capitalize, ToggleButton } from '@mui/material'
 import { OperationViewModeSelector } from '../OperationViewModeSelector'
 import { ComparisonSelectorButton } from '../ComparisonSelectorButton'
 import { PLAYGROUND_SIDEBAR_VIEW_MODES } from '../playground-modes'
-import { OPERATION_VIEW_MODES } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
-import { CustomToggleButtonGroup } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/CustomToggleButtonGroup'
+import {
+  DEFAULT_OPERATION_PREVIEW_VIEW_MODE_BY_API_TYPE,
+  OPERATION_VIEW_MODES,
+} from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
+import {
+  CustomToggleButtonGroup,
+} from '@netcracker/qubership-apihub-ui-shared/components/Buttons/CustomToggleButtonGroup'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  API_TYPE_ASYNCAPI,
+  API_TYPE_GRAPHQL,
+  API_TYPE_REST,
+} from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 type SetMode = (value: (string | undefined)) => void
 
@@ -44,7 +53,10 @@ export const OperationToolbarActions: FC<OperationToolbarActionsProps> = memo<Op
 
   return (
     <Box sx={OPERATION_ACTIONS_STYLES}>
-      <OperationViewModeSelector modes={OPERATION_VIEW_MODES.get(apiType)!}/>
+      <OperationViewModeSelector
+        defaultValue={DEFAULT_OPERATION_PREVIEW_VIEW_MODE_BY_API_TYPE.get(apiType)!}
+        modes={OPERATION_VIEW_MODES.get(apiType)!}
+      />
       <ComparisonSelectorButton showCompareGroups={showCompareGroups}/>
       {/* todo remove after support GraphQL playground */}
       {API_TYPE_PLAYGROUND_MAP[apiType](playgroundViewMode, setPlaygroundViewMode)}

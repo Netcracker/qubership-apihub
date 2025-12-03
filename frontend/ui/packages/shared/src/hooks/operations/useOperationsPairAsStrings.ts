@@ -50,17 +50,22 @@ export function useOperationsPairAsStrings(
   )
 }
 
+type StringifiedOperationsPair = {
+  originOperation: string
+  changedOperation: string
+}
+
 export function useOperationsPairStringified(
   alreadyStringified?: {
-    originOperation: string | undefined
-    changedOperation: string | undefined
+    originOperation?: string
+    changedOperation?: string
   },
   stringifyOptions?: {
-    originOperation: OperationData | undefined
-    changedOperation: OperationData | undefined
+    originOperation?: OperationData
+    changedOperation?: OperationData
     enabled: boolean
   },
-): [string, string] {
+): StringifiedOperationsPair {
   return useMemo(() => {
     let originOperationString: string | undefined
     let changedOperationString: string | undefined
@@ -76,6 +81,9 @@ export function useOperationsPairStringified(
     if (!changedOperationString) {
       changedOperationString = stringifyOptions?.enabled ? stringifyOperation(stringifyOptions?.changedOperation) : undefined
     }
-    return [originOperationString ?? '', changedOperationString ?? '']
+    return {
+      originOperation: originOperationString ?? '',
+      changedOperation: changedOperationString ?? '',
+    }
   }, [alreadyStringified?.changedOperation, alreadyStringified?.originOperation, stringifyOptions?.changedOperation, stringifyOptions?.enabled, stringifyOptions?.originOperation])
 }

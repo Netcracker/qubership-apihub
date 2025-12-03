@@ -16,7 +16,7 @@
 
 import { useHash } from 'react-use'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import type { Key } from '@apihub/entities/keys'
 import type { OperationViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import {
@@ -38,26 +38,35 @@ type OperationViewModeState = {
 }
 
 export function useOperationViewMode(defaultValue: OperationViewMode = DOC_OPERATION_VIEW_MODE): OperationViewModeState {
-  const modeValue = useSearchParam<Key>(MODE_SEARCH_PARAM) ?? defaultValue
+  const modeValueFromUrl = useSearchParam<Key>(MODE_SEARCH_PARAM)
+  const modeValue = modeValueFromUrl ?? defaultValue
   const [hashParam] = useHash()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
 
+  const setModeValue = useCallback((value: Key) => {
+    const isDefaultValue = value === DOC_OPERATION_VIEW_MODE
+    const mode = isDefaultValue ? '' : (value ?? '')
+    if (isDefaultValue) {
+      searchParams.delete(MODE_SEARCH_PARAM)
+    } else {
+      searchParams.set(MODE_SEARCH_PARAM, mode)
+    }
+    navigate({
+      search: `${searchParams}`,
+      hash: hashParam,
+    }, { replace: true })
+  }, [hashParam, navigate, searchParams])
+
+  useEffect(() => {
+    if (!modeValueFromUrl) {
+      setModeValue(defaultValue)
+    }
+  }, [defaultValue, modeValueFromUrl, setModeValue])
+
   return {
     mode: modeValue as OperationViewMode,
-    setMode: useCallback(value => {
-      const isDefaultValue = value === DOC_OPERATION_VIEW_MODE
-      const mode = isDefaultValue ? '' : (value ?? '')
-      if (isDefaultValue) {
-        searchParams.delete(MODE_SEARCH_PARAM)
-      } else {
-        searchParams.set(MODE_SEARCH_PARAM, mode)
-      }
-      navigate({
-        search: `${searchParams}`,
-        hash: hashParam,
-      }, { replace: true })
-    }, [hashParam, navigate, searchParams]),
+    setMode: setModeValue,
 
     schemaViewMode: calculateSchemaViewMode(modeValue),
   }

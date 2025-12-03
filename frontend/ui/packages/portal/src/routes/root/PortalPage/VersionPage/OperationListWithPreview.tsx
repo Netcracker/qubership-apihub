@@ -30,14 +30,15 @@ import type {
   OperationsData,
   PackageRef,
 } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { checkIfGraphQLOperation } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import {
-  useOperationsPairAsStrings,
+  useOperationsPairStringified,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationsPairAsStrings'
 import type { ResizeCallback } from 're-resizable'
 import type { FC } from 'react'
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import { useBackwardLocation } from '../../useBackwardLocation'
 import { useSelectedPreviewOperation, useSetSelectedPreviewOperation } from '../SelectedPreviewOperationProvider'
 import { usePackageKind } from '../usePackageKind'
@@ -47,6 +48,15 @@ import { getOperationLink } from './useNavigateToOperation'
 import { useOperation } from './useOperation'
 import { useOperationSearchParams } from './useOperationSearchParams'
 import { useOperationViewMode } from './useOperationViewMode'
+import { ASYNCAPI_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
+import {
+  DOC_OPERATION_VIEW_MODE,
+  RAW_OPERATION_VIEW_MODE,
+} from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
+import { usePublishedDocumentRaw } from '@netcracker/qubership-apihub-ui-shared/hooks/documents/usePublishedDocumentRaw'
+import {
+  useRawGraphQlCroppedToSingleOperationRawGraphQl,
+} from '@apihub/routes/root/PortalPage/VersionPage/useRawGraphQlCroppedToSingleOperationRawGraphQl'
 
 export type OperationListWithPreviewProps = {
   operations: OperationsData
@@ -77,8 +87,15 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
 
   const operationSearchParams = useOperationSearchParams()
   const [kind] = usePackageKind()
-  const { mode, schemaViewMode } = useOperationViewMode()
   const { productionMode } = useSystemInfo()
+
+  const defaultViewMode = useMemo(() => {
+    if (apiType === ASYNCAPI_API_TYPE) {
+      return RAW_OPERATION_VIEW_MODE
+    }
+    return DOC_OPERATION_VIEW_MODE
+  }, [apiType])
+  const { mode, schemaViewMode } = useOperationViewMode(defaultViewMode)
 
   const selectedPreviewOperation = useSelectedPreviewOperation()
   const setSelectedPreviewOperation = useSetSelectedPreviewOperation()
@@ -92,8 +109,35 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
     apiType: apiType as ApiType,
   })
 
-  // TODO 02.12.25 // Use the same approach as on OperationPage
-  const [changedOperationContent] = useOperationsPairAsStrings(changedOperation)
+  const isGraphQLOperation = checkIfGraphQLOperation(changedOperation)
+  const isRawOperationViewMode = mode === RAW_OPERATION_VIEW_MODE
+
+  const [documentWithChangedGraphQlOperation] = usePublishedDocumentRaw({
+    packageKey: packageKey,
+    versionKey: versionKey,
+    slug: changedOperation?.documentId ?? '',
+    enabled: isRawOperationViewMode && !!changedOperation && isGraphQLOperation,
+  })
+
+  const { changedOperation: changedOperationContent } = useOperationsPairStringified(
+    isGraphQLOperation
+      ? { changedOperation: documentWithChangedGraphQlOperation }
+      : undefined,
+    {
+      changedOperation: changedOperation,
+      enabled: !isGraphQLOperation && isRawOperationViewMode,
+    },
+  )
+
+  const graphQlOperationType = useMemo(
+    () => (checkIfGraphQLOperation(changedOperation) ? changedOperation.type : undefined),
+    [changedOperation],
+  )
+  const graphQlOperationName = useMemo(
+    () => (checkIfGraphQLOperation(changedOperation) ? changedOperation.method : undefined),
+    [changedOperation],
+  )
+  const changedGraphQlOperationContent = useRawGraphQlCroppedToSingleOperationRawGraphQl(changedOperationContent, graphQlOperationType, graphQlOperationName)
 
   const { data: normalizedChangedOperation, isLoading: isNormalizedChangedOperationLoading } = useNormalizedOperation({
     operation: changedOperation,
@@ -143,7 +187,7 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
         <OperationPreview
           apiType={apiType}
           changedOperation={changedOperation}
-          changedOperationContent={changedOperationContent}
+          changedOperationContent={changedGraphQlOperationContent || changedOperationContent}
           // Feature "Internal documents"
           normalizedChangedOperation={normalizedChangedOperation}
           // ---

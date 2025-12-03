@@ -26,7 +26,6 @@ import {
 } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/CustomServersProvider'
 import { getFileDetails } from '@apihub/utils/file-details'
 import { Box } from '@mui/material'
-import { cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument } from '@netcracker/qubership-apihub-api-processor'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import {
   CONTENT_PLACEHOLDER_AREA,
@@ -81,6 +80,9 @@ import { OperationWithPlayground } from './OperationWithPlayground'
 import { useIsExamplesMode, useIsPlaygroundMode, useIsPlaygroundSidebarOpen } from './usePlaygroundSidebarMode'
 import { useSelectOperationTags } from './useSelectOperationTags'
 import { isAsyncApiSpecification } from '@apihub/utils/internal-documents/type-guards'
+import {
+  useRawGraphQlCroppedToSingleOperationRawGraphQl,
+} from '@apihub/routes/root/PortalPage/VersionPage/useRawGraphQlCroppedToSingleOperationRawGraphQl'
 
 export type OperationContentProps = {
   changedOperation?: OperationData
@@ -94,33 +96,6 @@ export type OperationContentProps = {
   paddingBottom?: string | number
   isLoading: boolean
   operationModels?: OpenApiData
-}
-
-function useRawGraphQlCroppedToSingleOperationRawGraphQl(
-  originalGraphql: string,
-  operationType?: string,
-  operationName?: string,
-): string {
-  return useMemo(() => {
-    if (originalGraphql && operationType && operationName) {
-      let operationTypeSection: 'queries' | 'mutations' | 'subscriptions' | undefined
-      switch (operationType) {
-        case 'query':
-          operationTypeSection = 'queries'
-          break
-        case 'mutation':
-          operationTypeSection = 'mutations'
-          break
-        case 'subscription':
-          operationTypeSection = 'subscriptions'
-          break
-      }
-      return operationTypeSection
-        ? cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument(originalGraphql, operationTypeSection, operationName)
-        : originalGraphql
-    }
-    return ''
-  }, [originalGraphql, operationType, operationName])
 }
 
 export const OperationContent: FC<OperationContentProps> = memo<OperationContentProps>(props => {
@@ -211,7 +186,10 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
   const comparisonMode = isComparisonMode(displayMode)
   const [fileViewMode = YAML_FILE_VIEW_MODE, setFileViewMode] = useFileViewMode()
 
-  const [originOperationContent, changedOperationContent] = useOperationsPairStringified(
+  const {
+    originOperation: originOperationContent,
+    changedOperation: changedOperationContent,
+  } = useOperationsPairStringified(
     isGraphQLOperation
       ? { originOperation: documentWithOriginOriginOperation, changedOperation: documentWithChangedGraphQlOperation }
       : undefined,
@@ -219,6 +197,7 @@ export const OperationContent: FC<OperationContentProps> = memo<OperationContent
       originOperation: originOperation,
       changedOperation: changedOperation,
       enabled: (
+        isRawViewMode || // TODO 03.12.2025 // Check how it was before refactoring
         isAsyncApiSpecification(originOperation?.data) || isAsyncApiSpecification(changedOperation?.data) || // AsyncAPI
         isPlaygroundMode || isExamplesMode // OpenAPI
       ),
