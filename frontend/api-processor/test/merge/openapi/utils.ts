@@ -18,8 +18,8 @@ import { mergeOpenapiDocuments } from '../../../src/utils'
 
 import path from 'path'
 import fs from 'fs/promises'
-import { load } from 'js-yaml'
 import { OpenAPIV3 } from 'openapi-types'
+import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 
 const TEST_DIR = 'test'
 const SUITE_ID = 'merge/openapi'
@@ -41,7 +41,7 @@ export async function getTestData(testId: string): Promise<[MergedResult, Expect
   let resultSpec
   const specsToMerge = []
   for (const fileName of fileNames) {
-    const fileData = load(await fs.readFile(path.join(pathToFolder, fileName), 'utf-8'))
+    const fileData = loadYaml(await fs.readFile(path.join(pathToFolder, fileName), 'utf-8'))
     if (fileName === EXPECTED_RESULT_FILE) {
       resultSpec = fileData
       continue

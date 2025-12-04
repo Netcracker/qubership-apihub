@@ -24,8 +24,8 @@ import { ExportTemplate, getSplittedVersionKey, isJson, isYaml, mergeOpenapiDocu
 import { DocumentGroupStrategy } from './document-group.strategy'
 import { OpenAPIV3 } from 'openapi-types'
 import { REST_API_TYPE } from '../apitypes'
-import YAML from 'js-yaml'
 import { BUILD_TYPE, FILE_FORMAT_JSON } from '../consts'
+import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 
 export class MergedDocumentGroupStrategy implements BuilderStrategy {
   async execute(config: MergedSpecificationBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
@@ -112,7 +112,7 @@ function parseTemplateDocument(rawTemplateDocument: string): unknown | undefined
   }
 
   if (isYaml(rawTemplateDocument)) {
-    return YAML.load(rawTemplateDocument)
+    return loadYaml(rawTemplateDocument)
   }
 
   throw new Error('Template is not a valid JSON or YAML document')
