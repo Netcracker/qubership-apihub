@@ -13,6 +13,7 @@ import {
 } from './types'
 import { JSON_SCHEMA_PROPERTY_REF } from './rules/jsonschema.const'
 import { resolveOrigins, setOriginsForArray } from './origins'
+import { load, JSON_SCHEMA } from 'js-yaml'
 
 export class MapArray<K, V> extends Map<K, Array<V>> {
   public add(key: K, value: V): this {
@@ -383,4 +384,8 @@ export const removeDuplicatesWithMergeOrigins = <T>(array: T[], originFlag: symb
   setOriginsForArray(uniqueItems, originFlag, itemOrigins)
 
   return uniqueItems
+}
+
+export function loadYaml(file: string){
+  return load(file, {schema:JSON_SCHEMA})
 }
