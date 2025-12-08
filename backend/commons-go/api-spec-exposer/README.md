@@ -256,10 +256,10 @@ This configuration endpoint provides a complete inventory of all API specificati
   "configUrl": "/v3/api-docs/apihub-swagger-config",
   "urls": [
     {
-      "url": "/v3/api-docs",
+      "url": "/v3/api-docs/spec",
       "name": "OpenAPI specification",
       "type": "openapi-3-0",
-      "x-api-kind": "external"
+      "x-api-kind": "BWC"
     },
     {
       "url": "/v3/api-docs/documentation",
