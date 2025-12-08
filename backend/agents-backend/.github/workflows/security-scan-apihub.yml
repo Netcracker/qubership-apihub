@@ -60,7 +60,7 @@ jobs:
     steps:
       - name: List GHCR packages for this repo
         id: ghcr
-        uses: Netcracker/qubership-workflow-hub/actions/ghcr-discover-repo-packages@1a7cc6c881a3fcd92e5607b4c267d3acd07039bb #v2.0.3
+        uses: Netcracker/qubership-workflow-hub/actions/ghcr-discover-repo-packages@396774180000abdb825cbf150b56cc59c6913db8 #v2.0.5
         env:
           GH_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
 
@@ -71,6 +71,13 @@ jobs:
         if: ${{ steps.ghcr.outputs.has-packages == 'true' }}
         run: echo "Packages found!"
 
+      - name: No packages found, fail the job
+        if: ${{ steps.ghcr.outputs.has-packages != 'true' }}
+        run: |
+          echo "No packages found in GHCR for this repository."
+          exit 1
+
+
   security-scan-matrix:
     needs: debug-packages
     if: ${{ inputs.image == '' || inputs.image == null }}
@@ -79,7 +86,7 @@ jobs:
         package: ${{ fromJson(needs.debug-packages.outputs.packages) }}
 
     name: "Run Security Scan (matrix)"
-    uses: netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@1a7cc6c881a3fcd92e5607b4c267d3acd07039bb #v2.0.3
+    uses: netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@396774180000abdb825cbf150b56cc59c6913db8 #v2.0.5
     with:
       target: ${{ inputs.target || 'docker' }}
       image: ${{ format('{0}:{1}', matrix.package.path, inputs.tag || 'dev') }}
@@ -88,7 +95,7 @@ jobs:
     needs: debug-packages
     if: ${{ inputs.image != '' && inputs.image != null }}
     name: "Run Security Scan (single image)"
-    uses: netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@1a7cc6c881a3fcd92e5607b4c267d3acd07039bb #v2.0.3
+    uses: netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@396774180000abdb825cbf150b56cc59c6913db8 #v2.0.5
     with:
       target: ${{ inputs.target || 'docker' }}
       image: ${{ inputs.image }}
