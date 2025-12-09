@@ -28,6 +28,7 @@ import (
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security/idp/providers"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service/cleanup"
+	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
@@ -50,6 +51,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 
+	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -328,7 +330,6 @@ func main() {
 	buildCleanupController := controller.NewBuildCleanupController(dbCleanupService, roleService.IsSysadm)
 	transitionController := controller.NewTransitionController(transitionService, roleService.IsSysadm)
 	businessMetricController := controller.NewBusinessMetricController(businessMetricService, excelService, roleService.IsSysadm)
-	apiDocsController := controller.NewApiDocsController(basePath)
 	transformationController := controller.NewTransformationController(roleService, buildService, versionService, transformationService, operationGroupService)
 	minioStorageController := controller.NewMinioStorageController(minioStorageCreds, minioStorageService)
 	personalAccessTokenController := controller.NewPersonalAccessTokenController(personalAccessTokenService)
@@ -533,8 +534,26 @@ func main() {
 	}
 	debug.SetGCPercent(30)
 
-	r.HandleFunc("/v3/api-docs/swagger-config", apiDocsController.GetSpecsUrls).Methods(http.MethodGet)
-	r.HandleFunc("/v3/api-docs/{specName}", apiDocsController.GetSpec).Methods(http.MethodGet)
+	discoveryConfig := config.DiscoveryConfig{
+		ScanDirectory: basePath + string(os.PathSeparator) + "api",
+	}
+	specExposer := exposer.New(discoveryConfig)
+	discoveryResult := specExposer.Discover()
+	if len(discoveryResult.Errors) > 0 {
+		for _, err := range discoveryResult.Errors {
+			log.Errorf("Error during API specifications discovery: %v", err)
+		}
+		panic("Failed to expose API specifications")
+	}
+	if len(discoveryResult.Warnings) > 0 {
+		for _, warning := range discoveryResult.Warnings {
+			log.Warnf("Warning during API specifications discovery: %s", warning)
+		}
+	}
+	for _, endpointConfig := range discoveryResult.Endpoints {
+		log.Debugf("Registering API specification endpoint with path: %s and spec metadata: %+v", endpointConfig.Path, endpointConfig.SpecMetadata)
+		r.HandleFunc(endpointConfig.Path, endpointConfig.Handler).Methods(http.MethodGet)
+	}
 
 	portalFs := http.FileServer(http.Dir(basePath + "/static/portal"))
 
