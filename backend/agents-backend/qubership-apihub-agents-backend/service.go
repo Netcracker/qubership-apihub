@@ -18,6 +18,7 @@ import (
 	"context"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
 	"runtime/debug"
 	"sync"
 	"time"
@@ -28,6 +29,8 @@ import (
 	"github.com/Netcracker/qubership-apihub-agents-backend/exception"
 	"github.com/Netcracker/qubership-apihub-agents-backend/repository"
 	"github.com/Netcracker/qubership-apihub-agents-backend/security"
+	exposer "github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer"
+	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
@@ -134,7 +137,6 @@ func main() {
 	specificationsController := controller.NewSpecificationsController(agentClient, agentService)
 	namespaceSecurityController := controller.NewNamespaceSecurityController(namespaceSecurityService, excelService)
 	agentProxyController := controller.NewAgentProxyController(agentService)
-	apiDocsController := controller.NewApiDocsController(basePath)
 
 	healthController := controller.NewHealthController(readyChan)
 
@@ -167,8 +169,26 @@ func main() {
 		r.PathPrefix(proxyPath).HandlerFunc(security.SecureProxy(agentProxyController.Proxy))
 	}
 
-	r.HandleFunc("/v3/api-docs/apihub-swagger-config", apiDocsController.GetSpecsUrls).Methods(http.MethodGet)
-	r.HandleFunc("/v3/api-docs/{specName}", apiDocsController.GetSpec).Methods(http.MethodGet)
+	discoveryConfig := config.DiscoveryConfig{
+		ScanDirectory: basePath + string(os.PathSeparator) + "api",
+	}
+	specExposer := exposer.New(discoveryConfig)
+	discoveryResult := specExposer.Discover()
+	if len(discoveryResult.Errors) > 0 {
+		for _, err := range discoveryResult.Errors {
+			log.Errorf("Error during API specifications discovery: %v", err)
+		}
+		panic("Failed to expose API specifications")
+	}
+	if len(discoveryResult.Warnings) > 0 {
+		for _, warning := range discoveryResult.Warnings {
+			log.Warnf("Warning during API specifications discovery: %s", warning)
+		}
+	}
+	for _, endpointConfig := range discoveryResult.Endpoints {
+		log.Debugf("Registering API specification endpoint with path: %s and spec metadata: %+v", endpointConfig.Path, endpointConfig.SpecMetadata)
+		r.HandleFunc(endpointConfig.Path, endpointConfig.Handler).Methods(http.MethodGet)
+	}
 
 	r.HandleFunc("/live", healthController.HandleLiveRequest).Methods(http.MethodGet)
 	r.HandleFunc("/ready", healthController.HandleReadyRequest).Methods(http.MethodGet)
