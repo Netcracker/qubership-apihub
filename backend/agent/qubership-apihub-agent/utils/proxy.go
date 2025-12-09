@@ -16,7 +16,8 @@ package utils
 
 import "strings"
 
-const ProxyPath = "/agents/{agentId}/namespaces/{name}/services/{serviceId}/proxy/"
+const ProxyPathDeprecated = "/agents/{agentId}/namespaces/{name}/services/{serviceId}/proxy/"
+const ProxyPath = "/api/v2/agents/{agentId}/namespaces/{name}/services/{serviceId}/proxy/"
 
 func MakeCustomProxyPath(agentId string, namespace string, serviceId string) string {
 	customPath := strings.ReplaceAll(ProxyPath, "{agentId}", agentId)
