@@ -43,6 +43,7 @@ WORKDIR /app/qubership-api-linter-service
 
 COPY --from=builder /workspace/qubership-api-linter-service/qubership-api-linter-service ./qubership-api-linter-service
 COPY --from=builder /workspace/qubership-api-linter-service/resources ./resources
+COPY docs/api ./api
 
 RUN chmod -R a+rwx /app
 
