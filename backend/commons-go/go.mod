@@ -1,4 +1,4 @@
-module github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer
+module github.com/Netcracker/qubership-apihub-commons-go
 
 go 1.23
 

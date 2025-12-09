@@ -3,7 +3,6 @@ setlocal enabledelayedexpansion
 
 echo Building Go modules...
 
-set "MODULE_DIR=api-spec-exposer"
 set "ERROR=0"
 
 REM Check if Go is installed
@@ -17,13 +16,6 @@ REM Check Go version
 for /f "tokens=3" %%i in ('go version') do set "GO_VERSION=%%i"
 echo [INFO] Go version: !GO_VERSION!
 
-REM Check if module directory exists
-if not exist "%MODULE_DIR%" (
-    echo [ERROR] Module directory '%MODULE_DIR%' not found.
-    exit /b 1
-)
-
-cd "%MODULE_DIR%"
 echo [INFO] Working directory: %CD%
 
 REM Download dependencies
@@ -76,4 +68,3 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo [INFO] Build completed successfully!
 exit /b 0
-

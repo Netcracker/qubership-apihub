@@ -39,17 +39,6 @@ if [ "$(printf '%s\n' "$REQUIRED_VERSION" "$GO_VERSION" | sort -V | head -n1)" !
 fi
 
 info "Go version: $(go version)"
-
-# Change to module directory
-MODULE_DIR="api-spec-exposer"
-
-if [ ! -d "$MODULE_DIR" ]; then
-    error "Module directory '$MODULE_DIR' not found."
-    exit 1
-fi
-
-cd "$MODULE_DIR"
-
 info "Working directory: $(pwd)"
 
 # Download dependencies

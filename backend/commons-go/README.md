@@ -22,7 +22,7 @@ A library for automatic discovery and exposure of API specifications.
 
 **Installation:**
 ```bash
-go get github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer
+go get github.com/Netcracker/qubership-apihub-commons-go
 ```
 
 ## Project Structure
@@ -32,12 +32,12 @@ go get github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer
 ├── api-spec-exposer/          # API specification discovery and exposure
 │   ├── README.md              # Module documentation
 │   ├── config/                # Configuration and data types
-│   ├── internal/              # Internal implementation
-│   └── go.mod                 # Module dependencies
+│   └── internal/              # Internal implementation
 ├── .github/
 │   └── workflows/             # GitHub Actions workflows
 ├── build.sh                   # Build script for Unix systems
 ├── build.cmd                  # Build script for Windows
+├── go.mod                     # Module dependencies
 └── README.md
 ```
 
@@ -72,16 +72,12 @@ The scripts perform the following actions:
 
 ### Build Individual Module
 
-To build a specific module:
+To build a specific package (module part):
 
 ```bash
-cd <module-directory>
-go mod download
-go mod verify
-go mod tidy
+cd <package-directory>
 go build ./...
-go test ./...
-go vet ./...
+go test ./... -v
 ```
 
 For module-specific build instructions, see the module's README file.

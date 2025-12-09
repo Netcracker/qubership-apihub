@@ -30,30 +30,23 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Download dependencies
-        working-directory: ./api-spec-exposer
         run: go mod download
 
       - name: Verify dependencies
-        working-directory: ./api-spec-exposer
         run: go mod verify
 
       - name: Tidy dependencies
-        working-directory: ./api-spec-exposer
         run: go mod tidy
 
       - name: Build
-        working-directory: ./api-spec-exposer
         run: go build ./...
 
       - name: Run tests
-        working-directory: ./api-spec-exposer
         run: go test ./... -v
 
       - name: Run vet
-        working-directory: ./api-spec-exposer
         run: go vet ./...
 
       - name: Check for uncommitted changes
         run: |
           git diff --exit-code || (echo "Error: Uncommitted changes detected. Run 'go mod tidy' and commit the changes." && exit 1)
-

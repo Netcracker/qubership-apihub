@@ -30,27 +30,21 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Download dependencies
-        working-directory: ./api-spec-exposer
         run: go mod download
 
       - name: Verify dependencies
-        working-directory: ./api-spec-exposer
         run: go mod verify
 
       - name: Tidy dependencies
-        working-directory: ./api-spec-exposer
         run: go mod tidy
 
       - name: Build
-        working-directory: ./api-spec-exposer
         run: go build ./...
 
       - name: Run tests
-        working-directory: ./api-spec-exposer
         run: go test ./... -v
 
       - name: Run vet
-        working-directory: ./api-spec-exposer
         run: go vet ./...
 
       - name: Get tag name
@@ -58,10 +52,9 @@ jobs:
         run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Create source archive
-        working-directory: ./api-spec-exposer
         run: |
-          mkdir -p ../artifacts
-          tar -czf ../artifacts/api-spec-exposer-${{ steps.tag.outputs.TAG_NAME }}.tar.gz \
+          mkdir -p artifacts
+          tar -czf artifacts/qubership-apihub-commons-go-${{ steps.tag.outputs.TAG_NAME }}.tar.gz \
             --exclude='.git' \
             --exclude='*.tar.gz' \
             .
@@ -81,4 +74,3 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

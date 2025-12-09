@@ -42,13 +42,13 @@ Each specification is analyzed to determine its exact type and version, enabling
 To use the library in your project, add the dependency:
 
 ```bash
-go get github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer
+go get github.com/Netcracker/qubership-apihub-commons-go
 ```
 
 Or add to your `go.mod`:
 
 ```go
-require github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer v0.0.0 //specify required version
+require github.com/Netcracker/qubership-apihub-commons-go v0.0.0 //specify required version
 ```
 
 ## Build
@@ -316,9 +316,8 @@ api-spec-exposer/
 ├── internal/
 │   ├── generator/         # HTTP endpoint generator
 │   └── scanner/           # Scanner for spec discovery
-├── exposer.go            # Main entry point
-├── exposer_test.go       # Tests
-└── go.mod
+├── exposer.go             # Main entry point
+└── exposer_test.go        # Tests
 ```
 
 ### Adding New Specification Types
