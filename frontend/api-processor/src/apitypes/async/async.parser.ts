@@ -68,6 +68,9 @@ export const parseAsyncApiFile = async (fileId: string, source: Blob): Promise<T
  * Validates AsyncAPI document using official parser
  * This provides spec validation while avoiding circular reference issues
  * by using the parser only for validation, not for the actual parsing
+ *
+ * @throws Error when critical validation errors (severity 0) are found
+ * @returns Non-critical diagnostics (warnings, info) to be collected as notifications
  */
 async function validateAsyncApiDocument(sourceString: string): Promise<any[] | undefined> {
   try {
@@ -77,24 +80,37 @@ async function validateAsyncApiDocument(sourceString: string): Promise<any[] | u
     const parser = new Parser()
     const { document, diagnostics } = await parser.parse(sourceString)
 
-    // Check for critical validation errors
-    const errors = diagnostics.filter(d => d.severity === 0) // 0 = error severity
+    // Separate critical errors from non-critical diagnostics
+    const criticalErrors = diagnostics.filter(diagnostic => diagnostic.severity === 0) // 0 = error severity
+    const nonCriticalDiagnostics = diagnostics.filter(diagnostic => diagnostic.severity > 0) // warnings, info, etc.
 
-    if (errors.length > 0) {
-      // Convert diagnostics to error format
-      return errors.map(err => ({
-        message: err.message,
-        path: err.range ? `Line ${err.range.start.line}` : undefined,
+    // Throw error if critical validation errors are found - this will fail the build
+    if (criticalErrors.length > 0) {
+      const errorMessages = criticalErrors.map(err => {
+        const location = err.range ? ` at line ${err.range.start.line}` : ''
+        return `${err.message}${location}`
+      }).join('; ')
+
+      throw new Error(`AsyncAPI validation failed: ${errorMessages}`)
+    }
+
+    // Return non-critical diagnostics to be added to notifications
+    if (nonCriticalDiagnostics.length > 0) {
+      return nonCriticalDiagnostics.map(diagnostic => ({
+        message: diagnostic.message,
+        path: diagnostic.range ? `Line ${diagnostic.range.start.line}` : undefined,
       }))
     }
 
     return undefined
   } catch (error) {
-    // If validation fails, return the error
-    // TODO: better raise JS error to fail the build
-    return [{
-      message: error instanceof Error ? error.message : 'AsyncAPI validation failed',
-    }]
+    // Re-throw validation errors to fail the build
+    if (error instanceof Error && error.message.startsWith('AsyncAPI validation failed')) {
+      throw error
+    }
+
+    // For other errors (e.g., parser crashes), also fail the build
+    throw new Error(`AsyncAPI validation error: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
