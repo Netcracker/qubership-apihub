@@ -18,7 +18,6 @@ import (
 	"context"
 	"net/http"
 	_ "net/http/pprof"
-	"os"
 	"runtime/debug"
 	"sync"
 	"time"
@@ -170,7 +169,7 @@ func main() {
 	}
 
 	discoveryConfig := config.DiscoveryConfig{
-		ScanDirectory: basePath + string(os.PathSeparator) + "api",
+		ScanDirectory: systemInfoService.GetApiSpecDir(),
 	}
 	specExposer := exposer.New(discoveryConfig)
 	discoveryResult := specExposer.Discover()
