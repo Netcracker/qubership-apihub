@@ -102,6 +102,7 @@ type SystemInfoService interface {
 	GetUnreferencedDataCleanupSchedule() string
 	GetUnreferencedDataCleanupTimeout() int
 	GetExtensions() []view.Extension
+	GetApiSpecDirectory() string
 }
 
 func (g *systemInfoServiceImpl) GetCredsFromEnv() *view.DbCredentials {
@@ -295,6 +296,13 @@ func (g *systemInfoServiceImpl) setInstanceId() {
 
 func (g *systemInfoServiceImpl) GetBasePath() string {
 	return g.config.TechnicalParameters.BasePath
+}
+
+func (g *systemInfoServiceImpl) GetApiSpecDirectory() string {
+	if g.config.TechnicalParameters.ApiSpecDirectory != "" {
+		return g.config.TechnicalParameters.ApiSpecDirectory
+	}
+	return g.config.TechnicalParameters.BasePath + string(os.PathSeparator) + "api"
 }
 
 func (g *systemInfoServiceImpl) GetJwtPrivateKey() []byte {

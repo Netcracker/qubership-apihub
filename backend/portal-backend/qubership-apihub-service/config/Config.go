@@ -90,6 +90,7 @@ type TechnicalParameters struct {
 	BackendVersion        string
 	ListenAddress         string `validate:"required"`
 	MetricsGetterSchedule string
+	ApiSpecDirectory      string
 }
 
 type BusinessParameters struct {

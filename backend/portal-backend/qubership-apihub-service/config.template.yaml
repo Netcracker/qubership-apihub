@@ -101,6 +101,8 @@ technicalParameters:
   basePath: '.'
   # Optional; Listen address for APIHUB backend, can be used to avoid port conflicts in case of run on bare metall; If not set, default value: :8080; Example: :8080
   listenAddress: ':8080'
+  # Optional; Directory containing API specifications for exposure; If not set, defaults to basePath + "/api"; Example: ./docs/api
+  apiSpecDirectory: ''
 
 # Section with various parameters related to APIHUB business logic
 businessParameters:

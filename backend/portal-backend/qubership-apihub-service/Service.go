@@ -535,7 +535,7 @@ func main() {
 	debug.SetGCPercent(30)
 
 	discoveryConfig := config.DiscoveryConfig{
-		ScanDirectory: basePath + string(os.PathSeparator) + "api",
+		ScanDirectory: systemInfoService.GetApiSpecDirectory(),
 	}
 	specExposer := exposer.New(discoveryConfig)
 	discoveryResult := specExposer.Discover()
