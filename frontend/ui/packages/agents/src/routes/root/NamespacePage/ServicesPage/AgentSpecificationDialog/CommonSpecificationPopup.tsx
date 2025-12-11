@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FC, ReactNode } from 'react'
+import type { FC, ReactNode} from 'react'
 import { memo } from 'react'
 import { CardHeader } from '@mui/material'
 import { Header } from './internal/Header'
@@ -30,8 +30,9 @@ import type { Spec } from '@netcracker/qubership-apihub-ui-shared/entities/specs
 import type { ProxyServer } from '@netcracker/qubership-apihub-ui-shared/entities/services'
 import { isGraphQlSpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import {
-  useGetNcServicePrefix,
+  useGetAgentPrefix,
 } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
+import { API_V2 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 
 export type CommonSpecificationPopupProps = {
   spec: Spec
@@ -65,10 +66,9 @@ export const CommonSpecificationPopup: FC<CommonSpecificationPopupProps> = memo<
     specKey: spec.key,
     enabled: !isGraphQlSpecType(spec.type),
   })
-  const ncServicePrefix = useGetNcServicePrefix()
-
+  const ncServicePrefix = useGetAgentPrefix()
   const defaultProxyServer = {
-    url: ncServicePrefix + spec?.proxyServerUrl,
+    url: `${ncServicePrefix}${API_V2}${spec?.proxyServerUrl}`,
     description: spec?.serviceKey,
   }
 

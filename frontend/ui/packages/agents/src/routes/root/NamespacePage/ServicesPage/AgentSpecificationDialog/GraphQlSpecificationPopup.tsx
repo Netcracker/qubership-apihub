@@ -47,7 +47,10 @@ import { useEffectOnce } from 'react-use'
 import {
   useGetAgentPrefix,
 } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
-import { API_V2 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import {
+  DEFAULT_GRAPHQL_ENDPOINT,
+  getAgentProxyServerUrl,
+} from '@netcracker/qubership-apihub-ui-shared/utils/agent-proxy'
 
 export type GraphQlSpecificationPopupProps = {
   clickedSpec: Spec
@@ -250,15 +253,6 @@ export const SpecOptionItem: FC<SpecOptionItemProps> = memo<SpecOptionItemProps>
   )
 })
 
-function getAgentProxyServerUrl(prefix: string, serviceKey?: string, agentId?: string, namespace?: string, endpoint = DEFAULT_GRAPHQL_ENDPOINT): string {
-  if (!agentId || !namespace) {
-    return ''
-  }
-
-  return `${prefix}${API_V2}/agents/${agentId}/namespaces/${namespace}/services/${serviceKey}/proxy${endpoint}`
-}
-
-const DEFAULT_GRAPHQL_ENDPOINT = '/api/graphql-server/graphql'
 const COMBINED_SCHEMA_OPTION_NAME = '<Combined Schema>'
 const COMBINED_SCHEMA_OPTION = {
   key: COMBINED_SCHEMA_OPTION_NAME,
