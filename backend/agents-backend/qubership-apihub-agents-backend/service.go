@@ -161,12 +161,14 @@ func main() {
 	r.HandleFunc("/api/v2/security/authCheck/{processId}/status", security.Secure(namespaceSecurityController.GetAuthSecurityCheckStatus)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/security/authCheck/{processId}/report", security.Secure(namespaceSecurityController.GetAuthSecurityCheckResult)).Methods(http.MethodGet)
 
-	const proxyPath = "/agents/{agentId}/namespaces/{namespace}/services/{serviceId}/proxy/"
+	const proxyPath = "/agents/{agentId}/namespaces/{namespace}/services/{serviceId}/proxy/" //deprecated
 	if systemInfoService.InsecureProxyEnabled() {
 		r.PathPrefix(proxyPath).HandlerFunc(agentProxyController.Proxy)
 	} else {
 		r.PathPrefix(proxyPath).HandlerFunc(security.SecureProxy(agentProxyController.Proxy))
 	}
+
+	r.PathPrefix("/api/v2/agents/{agentId}/namespaces/{namespace}/services/{serviceId}/proxy/").HandlerFunc(security.SecureProxy(agentProxyController.Proxy))
 
 	discoveryConfig := config.DiscoveryConfig{
 		ScanDirectory: systemInfoService.GetApiSpecDir(),

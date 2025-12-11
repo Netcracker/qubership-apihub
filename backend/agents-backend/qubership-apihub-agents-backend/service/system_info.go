@@ -37,7 +37,7 @@ const (
 	DEFAULT_WORKSPACE_ID       = "DEFAULT_WORKSPACE_ID"
 	SNAPSHOTS_CLEANUP_SCHEDULE = "SNAPSHOTS_CLEANUP_SCHEDULE"
 	SNAPSHOTS_TTL_DAYS         = "SNAPSHOTS_TTL_DAYS"
-	INSECURE_PROXY             = "INSECURE_PROXY"
+	INSECURE_PROXY             = "INSECURE_PROXY" //TODO: remove this after deprecated proxy path is removed
 	LISTEN_ADDRESS             = "LISTEN_ADDRESS"
 	ORIGIN_ALLOWED             = "ORIGIN_ALLOWED"
 	LOG_LEVEL                  = "LOG_LEVEL"
@@ -59,7 +59,7 @@ type SystemInfoService interface {
 	GetDefaultWorkspaceId() string
 	GetSnapshotsCleanupSchedule() string
 	GetSnapshotsTTLDays() int
-	InsecureProxyEnabled() bool
+	InsecureProxyEnabled() bool //TODO: remove this after deprecated proxy path is removed
 	GetListenAddress() string
 	GetOriginAllowed() string
 	GetLogLevel() string
