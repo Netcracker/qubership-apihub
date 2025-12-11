@@ -196,7 +196,7 @@ func main() {
 	r.PathPrefix("/debug/").Handler(http.DefaultServeMux) // TODO: env to config!
 
 	discoveryConfig := config.DiscoveryConfig{
-		ScanDirectory:   basePath + string(os.PathSeparator) + "api",
+		ScanDirectory:   systemInfoService.GetApiSpecDir(),
 		ExcludePatterns: []string{"*.postman_collection.json"},
 	}
 	specExposer := exposer.New(discoveryConfig)
