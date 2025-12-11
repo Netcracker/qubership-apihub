@@ -68,7 +68,7 @@ export const CommonSpecificationPopup: FC<CommonSpecificationPopupProps> = memo<
   })
   const ncServicePrefix = useGetAgentPrefix()
   const defaultProxyServer = {
-    url: `${ncServicePrefix}${API_V2}${spec?.proxyServerUrl}`,
+    url: `${ncServicePrefix}${spec?.proxyServerUrl}`,
     description: spec?.serviceKey,
   }
 
