@@ -84,6 +84,7 @@ zeroDayConfiguration:
   adminPassword: '<admin_password, example: password>'
 technicalParameters:
   listenAddress: '127.0.0.1:8090'
+  apiSpecDirectory: ../docs/api
 ```
 
 #### Run API hub
