@@ -143,7 +143,12 @@ func (p publishedRepositoryImpl) PatchVersion(packageId string, versionName stri
 			return err
 		}
 
+		statusChanged := false
 		if status != nil {
+			if ent.Status != *status {
+				statusChanged = true
+			}
+
 			ent.Status = *status
 		}
 		if versionLabels != nil {
@@ -153,6 +158,29 @@ func (p publishedRepositoryImpl) PatchVersion(packageId string, versionName stri
 		_, err = tx.Model(ent).Where("package_id = ?", ent.PackageId).Where("version = ?", ent.Version).Where("revision = ?", ent.Revision).Update()
 		if err != nil {
 			return err
+		}
+
+		// recalculate lite search index if status has changed
+		if statusChanged && ent.Status == string(view.Draft) {
+			cleanOldLiteSearchOperationsQuery := `delete from fts_latest_release_operation_data where package_id = ? and version = ? and revision = ?`
+			_, err = tx.Exec(cleanOldLiteSearchOperationsQuery,
+				ent.PackageId, ent.Version, ent.Revision)
+			if err != nil {
+				return fmt.Errorf("failed to delete fts_latest_release_operation_data: %w", err)
+			}
+		}
+		if statusChanged && ent.Status == string(view.Release) {
+			calculateLiteSearchOperationsQuery := `
+								insert into fts_latest_release_operation_data
+								select o.package_id, o.version, o.revision, o.operation_id, o.type, to_tsvector(convert_from(od.data,'UTF-8'))  data_vector from
+		                        	operation o inner join operation_data od on o.data_hash=od.data_hash
+									where package_id = ? and version = ? and revision = ?
+								on conflict (package_id, version, revision, operation_id) do update set data_vector = EXCLUDED.data_vector;`
+			_, err = tx.Exec(calculateLiteSearchOperationsQuery,
+				ent.PackageId, ent.Version, ent.Revision)
+			if err != nil {
+				return fmt.Errorf("failed to insert fts_latest_release_operation_data: %w", err)
+			}
 		}
 
 		return nil
@@ -1214,6 +1242,32 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 				utils.PerfLog(time.Since(start).Milliseconds(), 1000, "CreateVersionWithData: ts_vectors insert")
 			}
 		}
+
+		if version.Status == string(view.Release) && !packageInfo.MigrationBuild {
+			start = time.Now()
+			if version.Revision > 1 {
+				cleanOldLiteSearchOperationsQuery := `delete from fts_latest_release_operation_data where package_id = ? and version = ? and revision = ?`
+				_, err = tx.Exec(cleanOldLiteSearchOperationsQuery,
+					version.PackageId, version.Version, version.Revision-1)
+				if err != nil {
+					return fmt.Errorf("failed to cleanup old revision fts_latest_release_operation_data: %w", err)
+				}
+			}
+
+			calculateLiteSearchOperationsQuery := `
+						insert into fts_latest_release_operation_data
+						select o.package_id, o.version, o.revision, o.operation_id, o.type, to_tsvector(convert_from(od.data,'UTF-8'))  data_vector from
+                        	operation o inner join operation_data od on o.data_hash=od.data_hash
+							where package_id = ? and version = ? and revision = ?
+						on conflict (package_id, version, revision, operation_id) do update set data_vector = EXCLUDED.data_vector;`
+			_, err = tx.Exec(calculateLiteSearchOperationsQuery,
+				version.PackageId, version.Version, version.Revision)
+			if err != nil {
+				return fmt.Errorf("failed to insert fts_latest_release_operation_data: %w", err)
+			}
+			utils.PerfLog(time.Since(start).Milliseconds(), 1000, "CreateVersionWithData: fts_latest_release_operation_data insert")
+		}
+
 		if len(versionComparisons) != 0 {
 			start = time.Now()
 			err = p.saveVersionChangesTx(tx, operationComparisons, versionComparisons)

@@ -189,6 +189,26 @@ cleanup:
     # Optional; Schedule for the builds cleanup job. If not set, default value: "0 1 * * 0"; Example: "* * * * *"
     schedule: '0 1 * * 0'
 
+ai:
+  mcp:
+    # Default workspace for MCP to work with
+    workspace: ''
+  chat:
+    # Section with OpenAI configuration for AI-assisted chat
+    openAI:
+      # Mandatory; OpenAI API key for chat functionality; If not set, default value: ""; Example: sk-...
+      apiKey: ''
+      # Optional; OpenAI model to use for chat; If not set, default value: gpt-4o; Example: gpt-4o
+      model: 'gpt-5'
+      # Optional; Proxy server URL for OpenAI API requests; If not set, default value: ""; Example: 'http://proxy.example.com:8080'
+      proxyURL: ''
+      # Optional; Controls randomness of the model's output. Range: 0.0 to 2.0. Lower values (0.0-0.3) = more focused and deterministic, medium values (0.7-1.0) = balanced, higher values (1.5-2.0) = more random and creative; If not set, default value: 1.0; Example: 1.0
+      temperature: 1.0
+      # Optional; Controls depth of reasoning for reasoning models (gpt-5, o-series). Values: "minimal" (fastest), "low" (quick), "medium" (balanced, default), "high" (deep analysis, default for gpt-5-pro); If not set, default value: "medium"; Example: "medium"
+      reasoningEffort: 'medium'
+      # Optional; Controls verbosity and detail level of the model's response. Values: "low" (concise), "medium" (balanced, default), "high" (detailed with examples); If not set, default value: "medium"; Example: "medium"
+      verbosity: 'medium'
+
 # List of enabled extension services
 #extensions:
 #  - name: linter

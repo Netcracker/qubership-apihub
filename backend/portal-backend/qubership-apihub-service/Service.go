@@ -33,7 +33,6 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
-	midldleware "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
@@ -98,7 +97,7 @@ func main() {
 	migrationPassedChan := make(chan bool)
 	initSrvStoppedChan := make(chan bool)
 	r := mux.NewRouter()
-	r.Use(midldleware.PrometheusMiddleware)
+	// r.Use(midldleware.PrometheusMiddleware) todo figure out why breaks streaming
 	r.SkipClean(true)
 	r.UseEncodedPath()
 	healthController := controller.NewHealthController(readyChan)
@@ -295,6 +294,9 @@ func main() {
 	tokenRevocationService := service.NewTokenRevocationService(olricProvider, systemInfoService.GetRefreshTokenDurationSec())
 	systemStatsService := service.NewSystemStatsService(systemStatsRepository)
 
+	mcpService := service.NewMCPService(systemInfoService, operationService, packageService)
+	chatService := service.NewChatService(systemInfoService, mcpService)
+
 	idpManager, err := providers.NewIDPManager(systemInfoService.GetAuthConfig(), systemInfoService.GetAllowedHosts(), systemInfoService.IsProductionMode(), userService)
 	if err != nil {
 		log.Error("Failed to initialize external IDP: " + err.Error())
@@ -335,6 +337,8 @@ func main() {
 	personalAccessTokenController := controller.NewPersonalAccessTokenController(personalAccessTokenService)
 	packageExportConfigController := controller.NewPackageExportConfigController(roleService, packageExportConfigService, ptHandler)
 	systemStatsController := controller.NewSystemStatsController(systemStatsService, roleService)
+	mcpController := controller.NewMCPController(mcpService)
+	chatController := controller.NewChatController(chatService)
 
 	r.HandleFunc("/api/v1/system/info", security.Secure(systemInfoController.GetSystemInfo)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/system/configuration", samlAuthController.GetSystemSSOInfo_deprecated).Methods(http.MethodGet) //deprecated
@@ -531,8 +535,14 @@ func main() {
 		r.PathPrefix("/debug/").Handler(http.DefaultServeMux)
 
 		r.HandleFunc("/api/internal/minio/download", security.Secure(minioStorageController.DownloadFilesFromMinioToDatabase)).Methods(http.MethodPost)
+
+		//Chat
+		r.HandleFunc("/api/v1/ai-chat", security.Secure(chatController.Chat)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/ai-chat/stream", security.Secure(chatController.ChatStream)).Methods(http.MethodPost)
 	}
-	debug.SetGCPercent(30)
+
+	mcpHandler := mcpController.MakeMCPServer()
+	r.Handle("/api/v1/mcp/", security.SecureMCP(mcpHandler))
 
 	discoveryConfig := config.DiscoveryConfig{
 		ScanDirectory: systemInfoService.GetApiSpecDirectory(),
@@ -591,6 +601,8 @@ func main() {
 			portalFs.ServeHTTP(w, r) // portal is default app
 		}
 	})
+
+	debug.SetGCPercent(30)
 
 	err = security.SetupGoGuardian(userService, roleService, apihubApiKeyService, personalAccessTokenService, systemInfoService, tokenRevocationService)
 	if err != nil {

@@ -34,6 +34,7 @@ type OperationService interface {
 	GetOperationChanges(packageId string, version string, operationId string, previousPackageId string, previousVersion string, severities []string) (*view.OperationChangesView, error)
 	GetVersionChanges(packageId string, version string, apiType string, searchReq view.VersionChangesReq) (*view.VersionChangesView, error)
 	SearchForOperations(searchReq view.SearchQueryReq) (*view.SearchResult, error)
+	LiteSearchForOperations(searchReq view.SearchQueryReq) (*view.SearchResult, error)
 	GetDeprecatedOperations(packageId string, version string, searchReq view.DeprecatedOperationListReq) (*view.Operations, error)
 	GetOperationDeprecatedItems(searchReq view.OperationBasicSearchReq) (*view.DeprecatedItems, error)
 	GetDeprecatedOperationsSummary(packageId string, version string) (*view.DeprecatedOperationsSummary, error)
@@ -598,7 +599,49 @@ func (o operationServiceImpl) SearchForOperations(searchReq view.SearchQueryReq)
 		VersionArchivedStatus:       string(view.Archived),
 		VersionArchivedStatusWeight: 0.1,
 	}
-	operationEntities, err := o.operationRepository.SearchForOperations(searchQuery)
+
+	var operationEntities []entity.OperationSearchResult
+
+	if strings.HasPrefix(searchQuery.OriginalTextInput, "_") {
+		searchQuery.TextFilter = strings.TrimPrefix(searchQuery.TextFilter, "_")
+		searchQuery.OriginalTextInput = strings.TrimPrefix(searchQuery.OriginalTextInput, "_")
+		if strings.HasPrefix(searchQuery.OriginalTextInput, "_") {
+			// experimental 2: lite search
+			searchQuery.TextFilter = strings.TrimPrefix(searchQuery.TextFilter, "_")
+			searchQuery.OriginalTextInput = strings.TrimPrefix(searchQuery.OriginalTextInput, "_")
+			operationEntities, err = o.operationRepository.LiteSearchForOperations(searchQuery)
+		} else {
+			// experimental: full text search
+			operationEntities, err = o.operationRepository.FullTextSearchForOperations(searchQuery)
+		}
+	} else {
+		// old prod search
+		operationEntities, err = o.operationRepository.SearchForOperations(searchQuery)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	operations := make([]interface{}, 0)
+	for _, ent := range operationEntities {
+		operations = append(operations, entity.MakeOperationSearchResultView(ent))
+	}
+
+	return &view.SearchResult{Operations: &operations}, nil
+}
+
+func (o operationServiceImpl) LiteSearchForOperations(searchReq view.SearchQueryReq) (*view.SearchResult, error) {
+	searchQuery, err := entity.MakeOperationSearchQueryEntity(&searchReq)
+	if err != nil {
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidSearchParameters,
+			Message: exception.InvalidSearchParametersMsg,
+			Params:  map[string]interface{}{"error": err.Error()},
+		}
+	}
+
+	operationEntities, err := o.operationRepository.LiteSearchForOperations(searchQuery)
 	if err != nil {
 		return nil, err
 	}
