@@ -15,13 +15,19 @@
  */
 
 import YAML from 'js-yaml'
+import type { Parser, ParseOutput, Diagnostic } from '@asyncapi/parser'
 
 import { ASYNC_DOCUMENT_TYPE, ASYNC_FILE_FORMAT } from './async.consts'
 import { FILE_KIND, TextFile } from '../../types'
 import { getFileExtension } from '../../utils'
 import { AsyncApiDocument } from './async.types'
 
-export const parseAsyncApiFile = async (fileId: string, source: Blob): Promise<TextFile | undefined> => {
+interface ValidationError {
+  message: string
+  path?: string
+}
+
+export const parseAsyncApiFile = async (fileId: string, source: Blob): Promise<TextFile<AsyncApiDocument, ValidationError> | undefined> => {
   const sourceString = await source.text()
   const extension = getFileExtension(fileId)
 
@@ -72,17 +78,29 @@ export const parseAsyncApiFile = async (fileId: string, source: Blob): Promise<T
  * @throws Error when critical validation errors (severity 0) are found
  * @returns Non-critical diagnostics (warnings, info) to be collected as notifications
  */
-async function validateAsyncApiDocument(sourceString: string): Promise<any[] | undefined> {
+async function validateAsyncApiDocument(sourceString: string): Promise<ValidationError[] | undefined> {
   try {
     // Dynamic import - bundler will use appropriate version based on environment
-    // Browser builds will use @asyncapi/parser/browser automatically
-    const { Parser } = await import('@asyncapi/parser')
-    const parser = new Parser()
-    const { document, diagnostics } = await parser.parse(sourceString)
+    // Browser builds will use @asyncapi/parser/browser automatically via vite alias
+    const parserModule = await import('@asyncapi/parser')
+
+    // Handle different export formats (ESM named export vs default export)
+    // ESM: export { Parser } and export default Parser
+    // Browser (UMD converted by Vite): exposes both named and default
+    const ParserClass = (parserModule as { Parser?: typeof Parser; default?: typeof Parser }).Parser ||
+      parserModule.default as typeof Parser
+
+    if (!ParserClass) {
+      throw new Error('AsyncAPI Parser class not found in module exports')
+    }
+
+    const parser: Parser = new ParserClass()
+    const { diagnostics }: ParseOutput = await parser.parse(sourceString)
 
     // Separate critical errors from non-critical diagnostics
-    const criticalErrors = diagnostics.filter(diagnostic => diagnostic.severity === 0) // 0 = error severity
-    const nonCriticalDiagnostics = diagnostics.filter(diagnostic => diagnostic.severity > 0) // warnings, info, etc.
+    // DiagnosticSeverity.Error = 0
+    const criticalErrors: Diagnostic[] = diagnostics.filter(diagnostic => diagnostic.severity === 0)
+    const nonCriticalDiagnostics: Diagnostic[] = diagnostics.filter(diagnostic => diagnostic.severity > 0)
 
     // Throw error if critical validation errors are found - this will fail the build
     if (criticalErrors.length > 0) {
