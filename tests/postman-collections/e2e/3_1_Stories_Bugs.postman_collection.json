@@ -4501,8 +4501,8 @@
                                             "\r",
                                             "var data = pm.response.json();\r",
                                             "\r",
-                                            "pm.environment.set(\"operation_id_1\", 'api-v1-billingmanagement-billhandlingcodes-get');\r",
-                                            "pm.environment.set(\"operation_id_2\", 'api-v1-billingmanagement-bill-id-get');"
+                                            "pm.environment.set(\"operation_id_1\", data.operations[0].operationId);\r",
+                                            "pm.environment.set(\"operation_id_2\", data.operations[1].operationId);"
                                         ]
                                     }
                                 },
