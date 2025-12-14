@@ -47,13 +47,17 @@ on:
           description: "APIHUB UI docker image tag"
           type: string
           default: "dev"
+      apihub-api-linter-service-image-tag:
+          description: "APIHUB API Linter Service docker image tag"
+          type: string
+          default: "dev"
   schedule:
     - cron: '0 0 * * *'
 
 jobs:
   call-docker-compose-run-and-test-ci-workflow:
     #TODO: change to main after testing
-    uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@main
+    uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@feature/linter-service
     with:
       compose-repository-branch: ${{ github.event.inputs.compose-repository-branch || 'main'}}
       #compose-repository-compose-folder: ${{ github.event.inputs.compose-repository-compose-folder}}
@@ -66,6 +70,7 @@ jobs:
       apihub-backend-image-tag: ${{ github.event.inputs.apihub-backend-image-tag  || 'dev' }}
       apihub-build-task-consumer-image-tag: ${{ github.event.inputs.apihub-build-task-consumer-image-tag  || 'dev' }}
       apihub-ui-image-tag: ${{ github.event.inputs.apihub-ui-image-tag  || 'dev' }}
+      apihub-api-linter-service-image-tag: ${{ github.event.inputs.apihub-api-linter-service-image-tag  || 'dev' }}
     secrets:
       APIHUB_ACCESS_TOKEN: ${{ secrets.APIHUB_ACCESS_TOKEN }}
       APIHUB_ADMIN_EMAIL: ${{ secrets.APIHUB_ADMIN_EMAIL }}
