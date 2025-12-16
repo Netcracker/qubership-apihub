@@ -35,6 +35,14 @@
       "commitId": "q6"
     },
     {
+      "fileId": "date-time-field-parsing-error.yaml",
+      "publish": true,
+      "labels": [
+        "Empty field with type date in yaml if data don't have quotation marks"
+      ],
+      "commitId": "q27"
+    },
+    {
       "fileId": "test1.json",
       "publish": true,
       "labels": [

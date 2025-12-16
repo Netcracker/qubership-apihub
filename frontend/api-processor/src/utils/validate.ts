@@ -16,7 +16,7 @@
 
 import Ajv, { ErrorObject, ValidateFunction } from 'ajv'
 import addFormats from 'ajv-formats'
-import YAML from 'js-yaml'
+import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 
 const ajv = new Ajv({ strict: false })
 addFormats(ajv)
@@ -47,7 +47,7 @@ export function isJson(value: string): boolean {
 
 export function isYaml(value: string): boolean {
   try {
-    YAML.load(value)
+    loadYaml(value)
   } catch (e) {
     return false
   }

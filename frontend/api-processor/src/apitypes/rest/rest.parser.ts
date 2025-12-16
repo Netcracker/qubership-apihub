@@ -15,8 +15,6 @@
  */
 
 import { OpenAPIV2, OpenAPIV3 } from 'openapi-types'
-import YAML from 'js-yaml'
-
 import oas3 from './schemas/oas3.json'
 import oas31 from './schemas/oas31.json'
 import swagger from './schemas/swagger.json'
@@ -24,6 +22,7 @@ import swagger from './schemas/swagger.json'
 import { REST_DOCUMENT_TYPE, REST_FILE_FORMAT } from './rest.consts'
 import { getFileExtension, validateDocument } from '../../utils'
 import { FILE_KIND, TextFile } from '../../types'
+import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 
 //TODO: add unit tests for parseRestFile
 
@@ -58,7 +57,7 @@ export const parseRestFile = async (fileId: string, source: Blob): Promise<TextF
     }
   } else if (([REST_FILE_FORMAT.YAML, REST_FILE_FORMAT.YML] as string[]).includes(extension) || !extension) {
     if (/\s*?'?"?openapi'?"?\s*?:\s*?\|?\s*'?"?3\.[01]\..+?'?"?/g.test(sourceString)) {
-      const data = YAML.load(sourceString) as OpenAPIV3.Document
+      const data = loadYaml(sourceString) as OpenAPIV3.Document
 
       const type = data.openapi.startsWith('3.0') ? REST_DOCUMENT_TYPE.OAS3 : REST_DOCUMENT_TYPE.OAS31
 
@@ -68,7 +67,7 @@ export const parseRestFile = async (fileId: string, source: Blob): Promise<TextF
       return { fileId, type, format: REST_FILE_FORMAT.YAML, data, source, errors, kind: FILE_KIND.TEXT }
     }
     if (/\s*?'?"?swagger'?"?\s*?:\s*?\|?\s*'?"?2\..+?'?"?/g.test(sourceString)) {
-      const data = YAML.load(sourceString) as OpenAPIV2.Document
+      const data = loadYaml(sourceString) as OpenAPIV2.Document
 
       // validate swagger file
       const errors = validateDocument(swagger, data)

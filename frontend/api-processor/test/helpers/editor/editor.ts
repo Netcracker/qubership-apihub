@@ -29,6 +29,7 @@ import { LocalRegistry } from '../registry'
 import { IRegistry } from '../registry/types'
 import fs from 'fs/promises'
 import path from 'path'
+import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 
 export class Editor {
   state: Map<string, Blob | null> = new Map()
@@ -110,7 +111,7 @@ export class Editor {
 
   async updateYamlFile(fileId: string, modifier: (obj: any) => any): Promise<void> {
     return this.updateTextFile(fileId, (data: string) => {
-      const parsedData = YAML.load(data)
+      const parsedData = loadYaml(data)
       return YAML.dump(modifier(parsedData))
     })
   }
