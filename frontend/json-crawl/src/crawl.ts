@@ -89,11 +89,25 @@ export const crawl = async <T extends {}, R extends {} = {}>(data: any, hooks: C
   }
 }
 
-export const syncCrawl = <T extends {}, R extends {} = {}>(data: any, hooks: SyncCrawlHook<T, R> | SyncCrawlHook<T, R>[], params: CrawlParams<T, R> = {}): void => {
+export const syncCrawl = <T extends {}, R extends {} = {}>(
+  data: any,
+  hooks: SyncCrawlHook<T, R> | SyncCrawlHook<T, R>[],
+  params: CrawlParams<T, R> = {},
+  skipRootLevel: boolean = false,
+): void => {
   hooks = isArray(hooks) ? hooks : [hooks]
   const _rules = isArray(params.rules) ? mergeRules(params.rules) : params.rules
 
-  const nodes: CrawlNode<T, R>[] = [{ data, state: params.state!, path: [], keys: [], keyIndex: -1, rules: _rules! }]
+  const nodes: CrawlNode<T, R>[] = []
+  // default mode (no skip root level) OR data is not an object
+  if (!skipRootLevel || data && typeof data !== 'object') {
+    nodes.push({ data, state: params.state!, path: [], keys: [], keyIndex: -1, rules: _rules! })
+    // skip root level mode AND data is an object
+  } else {
+    const keys = isArray(data) ? anyArrayKeys(data) : Reflect.ownKeys(data)
+    nodes.push({ data, state: params.state!, path: [], keys, keyIndex: 0, rules: _rules! })
+  }
+
   while (nodes.length > 0) {
     const node = nodes[nodes.length - 1]
 
@@ -108,7 +122,7 @@ export const syncCrawl = <T extends {}, R extends {} = {}>(data: any, hooks: Syn
 
     const key = node.keys[node.keyIndex++]
 
-    const [value, path, rules] = nodes.length > 1
+    const [value, path, rules] = key !== undefined
       ? [node.data[key], [...node.path, key], getNodeRules(node.rules, key, [...node.path, key], node.data[key])]
       : [node.data, node.path, _rules] // root node
 
