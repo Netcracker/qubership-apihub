@@ -23,6 +23,7 @@ import {
   JSON_SCHEMA_NODE_TYPE_STRING,
   JsonSchemaNodesNormalizedType,
 } from '@netcracker/qubership-apihub-api-unifier'
+import { OpenAPIV3 } from 'openapi-types'
 
 export const isObject = (value: unknown): value is Record<string | symbol, unknown> => {
   return typeof value === 'object' && value !== null
@@ -116,16 +117,16 @@ const JSON_SCHEMA_ASSIGN_TYPE_MAPPING: Record<JsonSchemaNodesNormalizedType, Set
   [JSON_SCHEMA_NODE_TYPE_NULL]: new Set([JSON_SCHEMA_NODE_TYPE_NULL]),
   [JSON_SCHEMA_NODE_SYNTHETIC_TYPE_ANY]: new Set([JSON_SCHEMA_NODE_SYNTHETIC_TYPE_ANY]),
   [JSON_SCHEMA_NODE_SYNTHETIC_TYPE_NOTHING]: new Set([
-      JSON_SCHEMA_NODE_SYNTHETIC_TYPE_NOTHING,
-      JSON_SCHEMA_NODE_TYPE_BOOLEAN,
-      JSON_SCHEMA_NODE_TYPE_OBJECT,
-      JSON_SCHEMA_NODE_TYPE_ARRAY,
-      JSON_SCHEMA_NODE_TYPE_NUMBER,
-      JSON_SCHEMA_NODE_TYPE_STRING,
-      JSON_SCHEMA_NODE_TYPE_INTEGER,
-      JSON_SCHEMA_NODE_TYPE_NULL,
-      JSON_SCHEMA_NODE_SYNTHETIC_TYPE_ANY,
-    ],
+    JSON_SCHEMA_NODE_SYNTHETIC_TYPE_NOTHING,
+    JSON_SCHEMA_NODE_TYPE_BOOLEAN,
+    JSON_SCHEMA_NODE_TYPE_OBJECT,
+    JSON_SCHEMA_NODE_TYPE_ARRAY,
+    JSON_SCHEMA_NODE_TYPE_NUMBER,
+    JSON_SCHEMA_NODE_TYPE_STRING,
+    JSON_SCHEMA_NODE_TYPE_INTEGER,
+    JSON_SCHEMA_NODE_TYPE_NULL,
+    JSON_SCHEMA_NODE_SYNTHETIC_TYPE_ANY,
+  ],
   ),
 }
 
@@ -220,4 +221,121 @@ export const checkPrimitiveType = (value: unknown): PrimitiveType | undefined =>
     return value
   }
   return undefined
+}
+
+export function intersection(array1: string[], array2: string[]): string[] {
+  const set2 = new Set(array2)
+  return [...new Set(array1.filter(x => set2.has(x)))]
+}
+
+export function difference(array1: string[], array2: string[]): string[] {
+  const set2 = new Set(array2)
+  return [...new Set(array1.filter(x => !set2.has(x)))]
+}
+
+export function removeExcessiveSlashes(input: string): string {
+  return input
+    .replace(/\/+/g, '/') // Replace multiple consecutive slashes with single slash TODO- may be it is better to remove double shashes explicitly when concatenating paths
+    .replace(/^\//, '')    // Remove leading slash
+}
+
+/**
+ * Traverses the merged document starting from given obj to the bottom and aggregates the diffs with rollup from the bottom up.
+ * Each object in the tree will have aggregatedDiffProperty only if there are diffs in the object or in the children,
+ * otherwise the aggregatedDiffProperty is not added.
+ * Note, that adding/removing the object itself is not included in the aggregation for this object,
+ * you need retrieve this diffs from parent object if you need them.
+ * Supports cycled JSO, nested objects and arrays.
+ * @param obj - The object to aggregate the diffs of.
+ * @param diffProperty - The property of the object to aggregate the diffs of.
+ * @param aggregatedDiffProperty - The property of the object to store the aggregated diffs in.
+ * @returns The aggregated diffs of the given object.
+ */
+
+// TODO: generalize to other use cases (like collecting deprecated)
+export function aggregateDiffsWithRollup(obj: any, diffProperty: any, aggregatedDiffProperty: any): Set<Diff> | undefined {
+
+  const visited = new Set<any>()
+
+  function _aggregateDiffsWithRollup(obj: any): Set<Diff> | undefined {
+    if (!isObject(obj)) {
+      return undefined
+    }
+
+    if (visited.has(obj)) {
+      return obj[aggregatedDiffProperty] as Set<Diff> | undefined
+    }
+
+    visited.add(obj)
+
+    // Process all children and collect their diffs
+    const childrenDiffs = new Array<Set<Diff>>()
+    if (Array.isArray(obj)) {
+      for (const item of obj) {
+        const childDiffs = _aggregateDiffsWithRollup(item)
+        childDiffs && childDiffs.size > 0 && childrenDiffs.push(childDiffs)
+      }
+    } else {
+      for (const [_, value] of Object.entries(obj)) {
+        const childDiffs = _aggregateDiffsWithRollup(value)
+        childDiffs && childDiffs.size > 0 && childrenDiffs.push(childDiffs)
+      }
+    }
+
+    const hasOwnDiffs = diffProperty in obj
+
+    if (hasOwnDiffs || childrenDiffs.length > 1) {
+      // obj aggregated diffs are different from children diffs
+      const aggregatedDiffs = new Set<Diff>()
+      for (const childDiffs of childrenDiffs) {
+        childDiffs.forEach(diff => aggregatedDiffs.add(diff))
+      }
+      const diffs = obj[diffProperty] as Record<string, Diff>
+      for (const key in diffs) {
+        aggregatedDiffs.add(diffs[key])
+      }
+      // Store the aggregated diffs in the object
+      obj[aggregatedDiffProperty] = aggregatedDiffs
+    } else if (childrenDiffs.length === 1) {
+      // could reuse a child diffs if there is only one
+      [obj[aggregatedDiffProperty]] = childrenDiffs
+    } else {
+      // no diffs- no aggregated diffs get assigned
+    }
+
+    return obj[aggregatedDiffProperty] as Set<Diff> | undefined
+  }
+
+  return _aggregateDiffsWithRollup(obj)
+}
+
+/**
+ * Extracts the base path (path after the domain) from the first server URL in an array of OpenAPI ServerObjects.
+ * It replaces any URL variable placeholders (e.g. {host}) with their default values from the 'variables' property.
+ * The function will return the normalized pathname (without trailing slash) or an empty string on error or if the input is empty.
+ *
+ * @param {OpenAPIV3.ServerObject[]} [servers] - An array of OpenAPI ServerObject definitions.
+ * @returns {string} The base path (pathname) part of the URL, without a trailing slash, or an empty string if unavailable.
+ */
+export const extractOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): string => {
+  if (!Array.isArray(servers) || !servers.length) { return '' }
+
+  try {
+    const [firstServer] = servers
+    let serverUrl = firstServer.url
+    if (!serverUrl) {
+      return ''
+    }
+
+    const { variables = {} } = firstServer
+
+    for (const param of Object.keys(variables)) {
+      serverUrl = serverUrl.replace(new RegExp(`{${param}}`, 'g'), variables[param].default)
+    }
+
+    const { pathname } = new URL(serverUrl, 'https://localhost')
+    return pathname.slice(-1) === '/' ? pathname.slice(0, -1) : pathname
+  } catch (error) {
+    return ''
+  }
 }

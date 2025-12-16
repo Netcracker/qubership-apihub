@@ -435,17 +435,30 @@ function denormalizeWithDiffsSave(merged: unknown, options: InternalCompareOptio
   )
 }
 
-function addNormalizedValuesToDenormalizedDiff(denormalizedDiffs: Diff[], rawDiffs: Diff[]) {
+function addNormalizedValuesToDenormalizedDiff(
+  denormalizedDiffs: Diff[],
+  rawDiffs: Diff[],
+  beforeValueNormalizedProperty?: symbol,
+  afterValueNormalizedProperty?: symbol
+) {
   for (let i = 0; i < denormalizedDiffs.length && i < rawDiffs.length; i++) {
     const denormalizedDiff = denormalizedDiffs[i]
     const normalizedDiff = rawDiffs[i]
     if (isDiffAdd(normalizedDiff) && isDiffAdd(denormalizedDiff)) {
-      denormalizedDiff.afterNormalizedValue = normalizedDiff.afterNormalizedValue
+      if (afterValueNormalizedProperty && normalizedDiff[afterValueNormalizedProperty] !== undefined) {
+        denormalizedDiff[afterValueNormalizedProperty] = normalizedDiff[afterValueNormalizedProperty]
+      }
     } else if (isDiffRemove(normalizedDiff) && isDiffRemove(denormalizedDiff)) {
-      denormalizedDiff.beforeNormalizedValue = normalizedDiff.beforeNormalizedValue
+      if (beforeValueNormalizedProperty && normalizedDiff[beforeValueNormalizedProperty] !== undefined) {
+        denormalizedDiff[beforeValueNormalizedProperty] = normalizedDiff[beforeValueNormalizedProperty]
+      }
     } else if (isDiffReplace(normalizedDiff) && isDiffReplace(denormalizedDiff)) {
-      denormalizedDiff.afterNormalizedValue = normalizedDiff.afterNormalizedValue
-      denormalizedDiff.beforeNormalizedValue = normalizedDiff.beforeNormalizedValue
+      if (afterValueNormalizedProperty && normalizedDiff[afterValueNormalizedProperty] !== undefined) {
+        denormalizedDiff[afterValueNormalizedProperty] = normalizedDiff[afterValueNormalizedProperty]
+      }
+      if (beforeValueNormalizedProperty && normalizedDiff[beforeValueNormalizedProperty] !== undefined) {
+        denormalizedDiff[beforeValueNormalizedProperty] = normalizedDiff[beforeValueNormalizedProperty]
+      }
     }
   }
 }
@@ -490,7 +503,12 @@ export const compare = (before: unknown, after: unknown, options: InternalCompar
     delete merged[diffFlags]
   }
   // validateDiffs(denormalizedDiffs)
-  addNormalizedValuesToDenormalizedDiff(denormalizedDiffs, rawDiffs)
+  addNormalizedValuesToDenormalizedDiff(
+    denormalizedDiffs,
+    rawDiffs,
+    options.beforeValueNormalizedProperty,
+    options.afterValueNormalizedProperty
+  )
   return {
     diffs: denormalizedDiffs,
     ownerDiffEntry: undefined,

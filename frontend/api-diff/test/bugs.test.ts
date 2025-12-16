@@ -8,6 +8,8 @@ import {
   nonBreaking,
   unclassified,
 } from '../src'
+
+const TEST_AFTER_NORMALIZED_VALUE = Symbol('test-after-normalized-value')
 import offeringQualificationBefore from './helper/resources/api-v2-offeringqualification-qualification-post/before.json'
 import offeringQualificationAfter from './helper/resources/api-v2-offeringqualification-qualification-post/after.json'
 import readDefaultValueOfRequiredBefore from './helper/resources/read-default-value-of-required-field/before.json'
@@ -62,6 +64,7 @@ const OPTIONS: CompareOptions = {
   unify: true,
   liftCombiners: true,
   allowNotValidSyntheticChanges: true,
+  afterValueNormalizedProperty: TEST_AFTER_NORMALIZED_VALUE,
 }
 describe('Real Data', () => {
 
@@ -297,7 +300,7 @@ describe('Real Data', () => {
       expect.objectContaining({
         action: DiffAction.add,
         afterValue: "eventType",
-        afterNormalizedValue: "eventType",
+        [TEST_AFTER_NORMALIZED_VALUE]: "eventType",
         afterDeclarationPaths: [[
           "paths",
           "/path1",

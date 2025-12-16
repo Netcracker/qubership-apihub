@@ -1,5 +1,11 @@
 import { buildSchema } from "graphql"
 import { buildFromSchema, GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
+import { readFileSync } from 'fs'
+import { load } from 'js-yaml'
+
+export function loadYamlSample(path: string) {
+  return load(readFileSync(`./test/helper/resources/${path}`).toString())
+}
 
 export function takeIf(value: object, condition: boolean): object {
   return {

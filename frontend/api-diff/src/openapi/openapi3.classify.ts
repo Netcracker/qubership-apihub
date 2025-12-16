@@ -5,8 +5,8 @@ import {
   breakingIfAfterTrue,
   nonBreaking,
   PARENT_JUMP,
-  strictResolveValueFromContext,
   reverseClassifyRule,
+  strictResolveValueFromContext,
   transformClassifyRule,
   unclassified,
 } from '../core'
@@ -14,7 +14,8 @@ import { getKeyValue, isExist, isNotEmptyArray } from '../utils'
 import { emptySecurity, includeSecurity } from './openapi3.utils'
 import type { ClassifyRule, CompareContext } from '../types'
 import { DiffType } from '../types'
-import { hidePathParamNames } from './openapi3.mapping'
+import { createPathUnifier } from './openapi3.mapping'
+import { OpenAPIV3 } from 'openapi-types'
 
 export const paramClassifyRule: ClassifyRule = [
   ({ after }) => {
@@ -140,13 +141,18 @@ export const operationSecurityItemClassifyRule: ClassifyRule = [
 export const pathChangeClassifyRule: ClassifyRule = [
   nonBreaking,
   breaking,
-  ({ before, after }) => {
+  ({ before, after, parentContext }) => {
     const beforePath = before.key as string
     const afterPath = after.key as string
-    const unifiedBeforePath = hidePathParamNames(beforePath)
-    const unifiedAfterPath = hidePathParamNames(afterPath)
-    
+    const beforeRootServers = (parentContext?.before.root as OpenAPIV3.Document)?.servers
+    const beforePathItemServers = (before.value as OpenAPIV3.PathItemObject)?.servers
+
+    const afterRootServers = (parentContext?.after.root as OpenAPIV3.Document)?.servers
+    const afterPathItemServers = (after.value as OpenAPIV3.PathItemObject)?.servers
+
+    const unifiedBeforePath = createPathUnifier(beforeRootServers)(beforePath, beforePathItemServers)
+    const unifiedAfterPath = createPathUnifier(afterRootServers)(afterPath, afterPathItemServers)
     // If unified paths are the same, it means only parameter names changed
     return unifiedBeforePath === unifiedAfterPath ? annotation : breaking
-  }
+  },
 ]

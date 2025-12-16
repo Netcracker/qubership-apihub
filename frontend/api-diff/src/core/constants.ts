@@ -1,6 +1,7 @@
 import { ClassifyRule } from '../types'
 
 export const DIFF_META_KEY = Symbol('$diff')
+export const DIFFS_AGGREGATED_META_KEY = Symbol('$diffs-aggregated')
 export const DEFAULT_NORMALIZED_RESULT = false
 export const DEFAULT_OPTION_DEFAULTS_META_KEY = Symbol('$defaults')
 export const DEFAULT_OPTION_ORIGINS_META_KEY = Symbol('$origins')
