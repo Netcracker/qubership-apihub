@@ -16,7 +16,20 @@ export type ExamplesProps = {
 };
 
 export const Examples: FC<ExamplesProps> = memo<ExamplesProps>(({ document: documentData, fullScreenAvailable }) => {
+  const [activeTab, setActiveTab] = useState<ExamplesTab>(REQUEST_EXAMPLE_TAB)
+  const [disabledRequestTab, setDisabledRequestTab] = useState(false)
   const httpOperation = useTransformDocumentToNode(documentData)
+  const requestBody = httpOperation?.request?.body
+
+  useEffect(() => {
+    if (!requestBody) {
+      setActiveTab(RESPONSE_EXAMPLE_TAB)
+      setDisabledRequestTab(true)
+      return
+    }
+    setActiveTab(REQUEST_EXAMPLE_TAB)
+    setDisabledRequestTab(false)
+  }, [requestBody, httpOperation])
 
   if (!httpOperation) {
     return (
@@ -28,20 +41,6 @@ export const Examples: FC<ExamplesProps> = memo<ExamplesProps>(({ document: docu
       </Flex>
     )
   }
-
-  const [activeTab, setActiveTab] = useState<ExamplesTab>(REQUEST_EXAMPLE_TAB)
-  const [disabledRequestTab, setDisabledRequestTab] = useState(false)
-
-  const requestBody = httpOperation.request?.body
-
-  useEffect(() => {
-    if (!requestBody) {
-      setActiveTab(RESPONSE_EXAMPLE_TAB)
-      setDisabledRequestTab(true)
-      return
-    }
-    setActiveTab(REQUEST_EXAMPLE_TAB)
-  }, [])
 
   return (
     <Box ml={1} width="100%" height="100%">

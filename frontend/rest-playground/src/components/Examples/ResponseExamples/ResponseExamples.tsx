@@ -23,7 +23,7 @@ export const ResponseExamples = ({ httpOperation }: ResponseExamplesProps) => {
   const [show, setShow] = React.useState<boolean>(false)
   const [loading, setLoading] = React.useState<boolean>(false)
   const responses = httpOperation.responses
-  const firstCode = responses?.[0].code
+  const firstCode = responses?.[0]?.code
   const [responseStatusCode, setResponseStatusCode] = useState<string | undefined>(firstCode)
 
   const [currentExample, setCurrentExample] = useState<INodeExample | INodeExternalExample | undefined>()

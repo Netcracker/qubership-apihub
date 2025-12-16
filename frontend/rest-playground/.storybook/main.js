@@ -45,12 +45,14 @@ const config = {
       process: false,
       tty: false,
       querystring: require.resolve('querystring-es3'),
+      buffer: require.resolve('buffer/')
     }
 
     // Provide global polyfills
     config.plugins.push(
       new ProvidePlugin({
         process: require.resolve('process/browser'),
+        Buffer: ['buffer', 'Buffer']
       }),
     )
 
