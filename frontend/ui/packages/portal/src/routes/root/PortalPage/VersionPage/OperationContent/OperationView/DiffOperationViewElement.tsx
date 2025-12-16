@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
+import type { DiffMetaKeys } from '@apihub/entities/diff-meta-keys'
 import '@netcracker/qubership-apihub-apispec-view'
 import type { DiffOperationView } from '@netcracker/qubership-apihub-apispec-view'
-import type { OperationViewElementProps } from '../OperationView/OperationViewElement'
 import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import type { OperationViewElementProps } from '../OperationView/OperationViewElement'
 
 export type DiffOperationViewElementProps = OperationViewElementProps & {
   filters: ChangeSeverity[]
-  diffMetaKey: symbol
+  diffMetaKeys: DiffMetaKeys
 }
 
-export function createDiffOperationViewElement(props: DiffOperationViewElementProps): DiffOperationView {
+export function createDiffOperationViewElement(
+  props: DiffOperationViewElementProps,
+): DiffOperationView {
   const {
     searchPhrase,
     schemaViewMode,
@@ -39,7 +42,7 @@ export function createDiffOperationViewElement(props: DiffOperationViewElementPr
     mergedDocument,
     // diffs specific
     filters,
-    diffMetaKey,
+    diffMetaKeys,
   } = props
 
   const component = document.createElement('diff-operation-view')
@@ -57,7 +60,8 @@ export function createDiffOperationViewElement(props: DiffOperationViewElementPr
   component.mergedDocument = mergedDocument
   // diffs specific
   component.filters = filters
-  component.diffMetaKey = diffMetaKey
+  component.diffsMetaKey = diffMetaKeys.diffsMetaKey
+  component.aggregatedDiffsMetaKey = diffMetaKeys.aggregatedDiffsMetaKey
 
   return component
 }

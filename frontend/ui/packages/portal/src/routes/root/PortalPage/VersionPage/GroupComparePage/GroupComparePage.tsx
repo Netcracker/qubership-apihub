@@ -40,19 +40,24 @@ export const GroupComparePage: FC = memo(() => {
   const { originPackageKey, originVersionKey, changedPackageKey, changedVersionKey } = groupsComparisonParams
   const previousGroup = useSearchParam(GROUP_SEARCH_PARAM)
 
-  const [compareGroups] = useCompareGroups({
+  const compareGroupsOptions = useMemo(() => ({
     changedPackageKey: changedPackageKey,
     changedVersionKey: changedVersionKey,
     originPackageKey: originPackageKey,
     originVersionKey: originVersionKey,
     currentGroup: group,
     previousGroup: previousGroup,
-  })
+  }), [changedPackageKey, changedVersionKey, group, originPackageKey, originVersionKey, previousGroup])
+  const [compareGroups] = useCompareGroups(compareGroupsOptions)
 
-  const tags = useMemo(() => (isEmpty(compareGroups.operationTypes[0]?.tags)
-      ? compareGroups.operationTypes[1]?.tags ?? []
-      : compareGroups.operationTypes[0]?.tags ?? []),
-    [compareGroups.operationTypes])
+  const tags = useMemo(
+    () => (
+      isEmpty(compareGroups.operationTypes[0]?.tags)
+        ? compareGroups.operationTypes[1]?.tags ?? []
+        : compareGroups.operationTypes[0]?.tags ?? []
+    ),
+    [compareGroups.operationTypes],
+  )
   const groupChanges = useMemo(() => compareGroups.data ?? [], [compareGroups.data])
 
   const [originComparisonObject, changedComparisonObject] = useComparisonObjects({
@@ -67,18 +72,22 @@ export const GroupComparePage: FC = memo(() => {
       <BreadcrumbsDataContext.Provider value={mergedBreadcrumbsData}>
         <VersionsComparisonGlobalParamsContext.Provider value={groupsComparisonParams}>
           <PageLayout
-            toolbar={<ComparisonToolbar compareToolbarMode={COMPARE_PACKAGES_MODE}/>}
+            toolbar={
+              <ComparisonToolbar
+                compareToolbarMode={COMPARE_PACKAGES_MODE}
+              />
+            }
             body={
               <GroupCompareContent
                 groupChanges={groupChanges}
                 breadcrumbsData={mergedBreadcrumbsData}
               />
             }
-            navigation={<GroupCompareSidebar tags={tags}/>}
+            navigation={<GroupCompareSidebar tags={tags} />}
           />
         </VersionsComparisonGlobalParamsContext.Provider>
       </BreadcrumbsDataContext.Provider>
-      <CompareRestGroupsDialog/>
+      <CompareRestGroupsDialog />
     </ChangesLoadingStatusProvider>
   )
 })

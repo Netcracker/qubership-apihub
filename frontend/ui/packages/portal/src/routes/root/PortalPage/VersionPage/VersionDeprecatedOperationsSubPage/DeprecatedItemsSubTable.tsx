@@ -23,14 +23,12 @@ import { flexRender, getCoreRowModel, getFilteredRowModel, useReactTable } from 
 import type { SubTableProps } from '../OpenApiViewer/OpenApiTable'
 import { useParams } from 'react-router-dom'
 import { useOperationDeprecatedItems } from './useOperationDeprecatedItems'
-import { DEPRECATED_SINCE_COLUMN_ID, DeprecatedInfo, DETAILS_COLUMN_ID } from './DeprecatedOperationsTable'
+import { DEPRECATED_INFO_ID, DEPRECATED_SINCE_COLUMN_ID, DeprecatedInfo } from './DeprecatedOperationsTable'
 import type { DeprecatedItem } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { InfoContextIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoContextIcon'
-
-const DESCRIPTION_COLUMN_ID = 'description'
 
 export const DeprecatedItemsSubTable: FC<SubTableProps> = memo<SubTableProps>((
   {
@@ -48,7 +46,7 @@ export const DeprecatedItemsSubTable: FC<SubTableProps> = memo<SubTableProps>((
 
   const columns: ColumnDef<DeprecatedItem>[] = useMemo(() => [
     {
-      id: DESCRIPTION_COLUMN_ID,
+      id: DEPRECATED_INFO_ID,
       header: '',
       cell: ({ row: { original: { description } } }) => (
         <Box sx={{ ml: 4 }} display="flex" alignItems="center" height="32px" position="relative">
@@ -107,17 +105,17 @@ export const DeprecatedItemsSubTable: FC<SubTableProps> = memo<SubTableProps>((
     <>
       {getRowModel().rows.map(row => {
         const { deprecatedInfo } = row.original
-        const hasDeprecatedInfo = packageRef?.refId !== packageKey
+        const hasDeprecatedInfo = !!deprecatedInfo
         const isDashboard = packageRef?.refId !== packageKey
 
         const cellsToRender = row.getVisibleCells().map((cell) => (
           <TableCell
             key={cell.id}
             colSpan={
-              cell.column.id === DESCRIPTION_COLUMN_ID
+              cell.column.id === DEPRECATED_INFO_ID
                 ? hasDeprecatedInfo
-                  ? isDashboard ? 4 : 3
-                  : 5
+                  ? isDashboard ? 6 : 5
+                  : 7
                 : undefined
             }
             data-testid={`Cell-${cell.column.id}`}
@@ -128,15 +126,15 @@ export const DeprecatedItemsSubTable: FC<SubTableProps> = memo<SubTableProps>((
 
         if (hasDeprecatedInfo) {
           const deprecatedInfoCell = (
-            <TableCell key={DETAILS_COLUMN_ID}>
+            <TableCell key={DEPRECATED_INFO_ID}>
               <Box display="flex" alignItems="center" height="32px" position="relative">
-                {deprecatedInfo && (
+                {hasDeprecatedInfo && (
                   <Tooltip
                     disableHoverListener={false}
                     title={<DeprecatedInfo info={deprecatedInfo}/>}
                     placement="right"
                   >
-                    <InfoContextIcon sx={{ visibility: 'hidden' }} className="visible-on-hover"/>
+                    <InfoContextIcon />
                   </Tooltip>
                 )}
               </Box>

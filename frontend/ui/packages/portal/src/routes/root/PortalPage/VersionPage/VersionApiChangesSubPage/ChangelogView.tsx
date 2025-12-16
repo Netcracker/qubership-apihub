@@ -14,31 +14,34 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo } from 'react'
-import { usePackageKind } from '../../usePackageKind'
-import { OperationChangesSubTableWrapper } from './OperationChangesSubTableWrapper'
+import type {FC} from 'react'
+import {memo} from 'react'
+import {usePackageKind} from '../../usePackageKind'
+import {OperationChangesSubTableWrapper} from './OperationChangesSubTableWrapper'
 import {
   usePagedVersionChangelog,
 } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/api/useCommonPagedVersionChangelog'
-import { useOrderedComparisonFiltersSummary } from '../useOrderedComparisonFiltersSummary'
-import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import type { ApiAudience, ApiKind } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import type { OperationGroupName } from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'
+import {useOrderedComparisonFiltersSummary} from '../useOrderedComparisonFiltersSummary'
+import type {Key} from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import type {ApiAudience, ApiKind} from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import {DEFAULT_API_TYPE} from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import type {OperationGroupName} from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'
 import {
   useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
-import { ChangesViewTable, useFlatVersionChangelog } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget'
-import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
+import {
+  ChangesViewTable,
+  useFlatVersionChangelog
+} from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget'
+import {useCurrentPackage} from '@apihub/components/CurrentPackageProvider'
 import {
   CONTENT_PLACEHOLDER_AREA,
   NO_SEARCH_RESULTS,
   Placeholder,
 } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import { useRefSearchParam } from '@apihub/routes/root/PortalPage/useRefSearchParam'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {isNotEmpty} from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import {useRefSearchParam} from '@apihub/routes/root/PortalPage/useRefSearchParam'
+import type {ApiType} from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 export type ChangelogViewProps = {
   versionKey: Key
@@ -58,7 +61,13 @@ export const ChangelogView: FC<ChangelogViewProps> = memo<ChangelogViewProps>(pr
   const changes = useOrderedComparisonFiltersSummary({ apiType })
   const [refKey] = useRefSearchParam()
 
-  const [versionChangelog, isLoading, fetchNextPage, isNextPageFetching, hasNextPage] = usePagedVersionChangelog({
+  const {
+    data: versionChangelog,
+    isLoading,
+    fetchNextPage,
+    isFetchingNextPage: isNextPageFetching,
+    hasNextPage,
+  } = usePagedVersionChangelog({
     packageKey: packageKey,
     versionKey: versionKey,
     tag: tag,
@@ -72,7 +81,7 @@ export const ChangelogView: FC<ChangelogViewProps> = memo<ChangelogViewProps>(pr
     limit: 100,
     packageIdFilter: refKey,
   })
-  const flatVersionChangelog = useFlatVersionChangelog(versionChangelog)
+  const flatVersionChangelog = useFlatVersionChangelog(versionChangelog, true)
   const { operations: operationsChanges } = flatVersionChangelog
 
   const currentPackage = useCurrentPackage()

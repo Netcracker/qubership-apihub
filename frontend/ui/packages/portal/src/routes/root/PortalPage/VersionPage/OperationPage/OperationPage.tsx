@@ -14,57 +14,59 @@
  * limitations under the License.
  */
 
-import type { FC, ReactElement } from 'react'
-import React, { memo, useCallback, useMemo } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { useOperation } from '../useOperation'
-import { SelectedOperationTagsProvider } from '../SelectedOperationTagsProvider'
-import { usePackageParamsWithRef } from '../../usePackageParamsWithRef'
-import { useDocumentSearchParam } from '../useDocumentSearchParam'
-import { useOperationsGroupedByTags } from '../useOperationsGroupedByTags'
-import { useTextSearchParam } from '../../../useTextSearchParam'
-import { useUpdateRecentOperations } from './useUpdateRecentOperations'
-import { useNavigation } from '../../../../NavigationProvider'
-import { usePackage } from '../../../usePackage'
-import { useSidebarPlaygroundViewMode } from '../useSidebarPlaygroundViewMode'
-import { getOperationLink } from '../useNavigateToOperation'
-import { useRecentOperations } from '../../../RecentOperationsProvider'
-import { PackageBreadcrumbs } from '../../../PackageBreadcrumbs'
-import { OperationToolbarHeader } from './OperationToolbarHeader'
-import { OperationToolbarActions } from './OperationToolbarActions'
-import { useOpenApiVisitor } from './useOpenApiVisitor'
-import { useOperationSearchParams } from '../useOperationSearchParams'
-import { ModelUsagesDialog } from './ModelUsagesDialog'
-import { useOperationsWithSameModel } from './useOperationsWithSameModel'
-import { useOperationNavigationDetails } from '../../../OperationNavigationDataProvider'
-import { useOperationViewMode } from '../useOperationViewMode'
-import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
-import { groupOperationsByTags, handleOperationTags } from '@apihub/utils/operations'
-import { useBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
-import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import type {
-  VisitorNavigationDetails,
-} from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/oasToClassDiagramService'
+import { useNormalizedOperation } from '@apihub/api-hooks/InternalDocuments/useNormalizedOperation'
 import type { SectionKey } from '@apihub/components/OperationModelList/OperationModelList'
 import { OperationModelList } from '@apihub/components/OperationModelList/OperationModelList'
 import type { OpenApiData } from '@apihub/entities/operation-structure'
 import { OPEN_API_SECTION_PARAMETERS } from '@apihub/entities/operation-structure'
-import { GRAPH_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
-import {
-  CustomServersProvider,
-} from '../../../PortalPage/VersionPage/OperationContent/Playground/CustomServersProvider'
-import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
-import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
-import { SidebarPanel } from '@netcracker/qubership-apihub-ui-shared/components/Panels/SidebarPanel'
+import { useBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { useEventBus } from '@apihub/routes/EventBusProvider'
 import { OperationContent } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationContent'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST, API_TYPE_TITLE_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { groupOperationsByTags, handleOperationTags } from '@apihub/utils/operations'
+import { Box } from '@mui/material'
+import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
+import { SidebarPanel } from '@netcracker/qubership-apihub-ui-shared/components/Panels/SidebarPanel'
+import type {
+  VisitorNavigationDetails,
+} from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/oasToClassDiagramService'
+import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import {
   WarningApiProcessorVersion,
 } from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
-import { Box } from '@mui/material'
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_GRAPHQL, API_TYPE_REST, API_TYPE_TITLE_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { GRAPH_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
+import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
+import type { FC, ReactElement } from 'react'
+import { memo, useCallback, useMemo } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigation } from '../../../../NavigationProvider'
+import { useOperationNavigationDetails } from '../../../OperationNavigationDataProvider'
+import { PackageBreadcrumbs } from '../../../PackageBreadcrumbs'
+import {
+  CustomServersProvider,
+} from '../../../PortalPage/VersionPage/OperationContent/Playground/CustomServersProvider'
+import { useRecentOperations } from '../../../RecentOperationsProvider'
+import { usePackage } from '../../../usePackage'
+import { useTextSearchParam } from '../../../useTextSearchParam'
+import { usePackageParamsWithRef } from '../../usePackageParamsWithRef'
+import { SelectedOperationTagsProvider } from '../SelectedOperationTagsProvider'
+import { useDocumentSearchParam } from '../useDocumentSearchParam'
+import { getOperationLink } from '../useNavigateToOperation'
+import { useOperation } from '../useOperation'
+import { useOperationSearchParams } from '../useOperationSearchParams'
+import { useOperationsGroupedByTags } from '../useOperationsGroupedByTags'
+import { useOperationViewMode } from '../useOperationViewMode'
+import { useSidebarPlaygroundViewMode } from '../useSidebarPlaygroundViewMode'
+import { ModelUsagesDialog } from './ModelUsagesDialog'
+import { OperationToolbarActions } from './OperationToolbarActions'
+import { OperationToolbarHeader } from './OperationToolbarHeader'
+import { useOpenApiVisitor } from './useOpenApiVisitor'
+import { useOperationsWithSameModel } from './useOperationsWithSameModel'
+import { useUpdateRecentOperations } from './useUpdateRecentOperations'
 
 // High Order Component //
 export const OperationPage: FC = memo(() => {
@@ -92,10 +94,21 @@ export const OperationPage: FC = memo(() => {
     enabled: !areOperationsLoading,
   })
 
-  const operationData = useMemo(() => changedOperation?.data, [changedOperation?.data])
-  const visitorData: object | undefined = apiType ? API_TYPE_MODELS_MAP[apiType as ApiType](operationData) : undefined
+  const {
+    data: normalizedChangedOperation,
+    isLoading: loadingNormalizedChangedOperation,
+  } = useNormalizedOperation({
+    operation: changedOperation,
+    packageId: operationPackageKey,
+    versionId: operationPackageVersion,
+  })
 
-  const models = useOpenApiVisitor( visitorData )
+  const visitorData: object | undefined =
+    apiType && isObject(changedOperation?.data)
+      ? API_TYPE_MODELS_MAP[apiType as ApiType](changedOperation!.data)
+      : undefined
+
+  const models = useOpenApiVisitor(visitorData)
   useUpdateRecentOperations(changedOperation)
   const recentOperationsData = useRecentOperations()
   const recentOperations = useMemo(
@@ -190,19 +203,19 @@ export const OperationPage: FC = memo(() => {
                 />
               }
               header={
-              <Box display="flex" alignItems="center">
-                <OperationToolbarHeader
-                  title={toolbarTitle}
-                  handleBackClick={handleBackClick}
-                  isLoading={isOperationLoading}
-                  recentOperations={recentOperations}
-                  relatedOperations={relatedOperations}
-                  isRecentOperationsLoading={false}
-                  isRelatedOperationsLoading={areOperationsLoading || isOperationLoading}
-                  prepareLinkFn={prepareLinkFn}
-                />
-                <WarningApiProcessorVersion versionKey={versionId} packageKey={packageId} />
-              </Box>
+                <Box display="flex" alignItems="center">
+                  <OperationToolbarHeader
+                    title={toolbarTitle}
+                    handleBackClick={handleBackClick}
+                    isLoading={isOperationLoading}
+                    recentOperations={recentOperations}
+                    relatedOperations={relatedOperations}
+                    isRecentOperationsLoading={false}
+                    isRelatedOperationsLoading={areOperationsLoading || isOperationLoading}
+                    prepareLinkFn={prepareLinkFn}
+                  />
+                  <WarningApiProcessorVersion versionKey={versionId} packageKey={packageId} />
+                </Box>
               }
               action={
                 <OperationToolbarActions
@@ -224,13 +237,16 @@ export const OperationPage: FC = memo(() => {
           body={
             <OperationContent
               changedOperation={changedOperation}
-              isLoading={isOperationLoading}
+              // Feature "Internal documents"
+              normalizedChangedOperation={normalizedChangedOperation}
+              // ---
+              isLoading={isOperationLoading || loadingNormalizedChangedOperation}
               operationModels={models}
             />
           }
         />
       </CustomServersProvider>
-      <ModelUsagesDialog/>
+      <ModelUsagesDialog />
     </SelectedOperationTagsProvider>
   )
 })

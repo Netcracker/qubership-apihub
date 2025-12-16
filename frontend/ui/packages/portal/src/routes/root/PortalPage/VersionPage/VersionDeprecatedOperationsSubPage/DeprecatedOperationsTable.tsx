@@ -49,6 +49,7 @@ import {
 
 export const DETAILS_COLUMN_ID = 'details'
 export const DEPRECATED_SINCE_COLUMN_ID = 'deprecated-since'
+export const DEPRECATED_INFO_ID = 'deprecated-info'
 
 const DASHBOARD_COLUMNS_MODELS: ColumnModel[] = [
   { name: ENDPOINT_COLUMN_ID },
@@ -56,7 +57,8 @@ const DASHBOARD_COLUMNS_MODELS: ColumnModel[] = [
   { name: PACKAGE_COLUMN_ID, fixedWidth: 200 },
   { name: API_AUDIENCE_COLUMN_ID, width: 100 },
   { name: API_KIND_COLUMN_ID, width: 100 },
-  { name: DETAILS_COLUMN_ID, width: 100 },
+  { name: DETAILS_COLUMN_ID, width: 80 },
+  { name: DEPRECATED_INFO_ID, width: 40 },
   { name: DEPRECATED_SINCE_COLUMN_ID, width: 120 },
 ]
 
@@ -65,7 +67,8 @@ const PACKAGE_COLUMNS_MODELS: ColumnModel[] = [
   { name: TAGS_COLUMN_ID, width: 240 },
   { name: API_AUDIENCE_COLUMN_ID, width: 100 },
   { name: API_KIND_COLUMN_ID, width: 89 },
-  { name: DETAILS_COLUMN_ID, width: 140 },
+  { name: DETAILS_COLUMN_ID, width: 80 },
+  { name: DEPRECATED_INFO_ID, width: 40 },
   { name: DEPRECATED_SINCE_COLUMN_ID, width: 140 },
 ]
 
@@ -92,7 +95,7 @@ export const DeprecatedOperationsTable: FC<DeprecatedOperationsTabProps> = memo<
       id: DETAILS_COLUMN_ID,
       header: () => <CustomTableHeadCell title="Details"/>,
       cell: ({ row: { original: { operation } } }) => {
-        const { deprecatedCount, deprecatedInfo } = operation as OperationWithDeprecations
+        const { deprecatedCount } = operation as OperationWithDeprecations
         if (deprecatedCount) {
           return (
             <Box display="flex" alignItems="center">
@@ -100,14 +103,26 @@ export const DeprecatedOperationsTable: FC<DeprecatedOperationsTabProps> = memo<
               <Typography noWrap component="span" sx={{ fontSize: 12, fontWeight: 500, color: '#353C4E', mr: 1.5 }}>
                 {deprecatedCount}
               </Typography>
-
+            </Box>
+          )
+        }
+      },
+    },
+    {
+      id: DEPRECATED_INFO_ID,
+      header: () => <CustomTableHeadCell title=""/>,
+      cell: ({ row: { original: { operation } } }) => {
+        const { deprecatedInfo } = operation as OperationWithDeprecations
+        if (deprecatedInfo) {
+          return (
+            <Box display="flex" alignItems="center">
               {deprecatedInfo && (
                 <Tooltip
                   disableHoverListener={false}
                   title={<DeprecatedInfo info={deprecatedInfo}/>}
                   placement="right"
                 >
-                  <InfoContextIcon sx={{ visibility: 'hidden' }} className="visible-on-hover"/>
+                  <InfoContextIcon />
                 </Tooltip>
               )}
             </Box>

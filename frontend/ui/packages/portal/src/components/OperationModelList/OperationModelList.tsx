@@ -189,21 +189,22 @@ export const OperationModelList: FC<OperationSidebarProps> = memo<OperationSideb
               return <ErrorModelItem
                 key={`${sectionKey}-${index}`}
                 title={title}
-                label={<ErrorModelLabel title={title} error={error}/>}
+                label={<ErrorModelLabel title={title} error={error} />}
               />
             }
 
             return (
-            <ModelItem
-              key={`${sectionKey}-${index}`}
-              scopeDeclarationPath={scopeDeclarationPath}
-              declarationPath={declarationPath}
-              schemaTolerantHashWithTitle={schemaTolerantHashWithTitle}
-              schemaObject={schemaObject}
-              label={isParameters ? title : <ModelLabel title={title} onModelUsagesClick={handleOnModelUsagesClick} />}
-              onClick={handleLabelClick}
-            />
-          )})}
+              <ModelItem
+                key={`${sectionKey}-${index}`}
+                scopeDeclarationPath={scopeDeclarationPath}
+                declarationPath={declarationPath}
+                schemaTolerantHashWithTitle={schemaTolerantHashWithTitle}
+                schemaObject={schemaObject}
+                label={isParameters ? title : <ModelLabel title={title} onModelUsagesClick={handleOnModelUsagesClick} />}
+                onClick={handleLabelClick}
+              />
+            )
+          })}
         </SectionItem>
       )
     })

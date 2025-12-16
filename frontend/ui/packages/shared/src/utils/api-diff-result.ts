@@ -15,22 +15,22 @@
  */
 
 import type { CompareResult, Diff } from '@netcracker/qubership-apihub-api-diff'
-import { risky } from '@netcracker/qubership-apihub-api-diff'
 import { apiDiff, COMPARE_MODE_OPERATION } from '@netcracker/qubership-apihub-api-diff'
-import { isNotEmpty } from './arrays'
-import {
-  calculateChangeId,
-  calculateDiffId,
-  removeComponents,
-} from '@netcracker/qubership-apihub-api-processor'
-import { NORMALIZE_OPTIONS } from './normalize'
+import { removeComponents } from '@netcracker/qubership-apihub-api-processor'
 import { isObject } from 'lodash-es'
 import type { Dispatch, SetStateAction } from 'react'
 import type { OperationChange } from '../entities/operation-changelog'
-import { BREAKING_CHANGE_SEVERITY, type ChangeSeverity } from '../entities/change-severities'
+import { NORMALIZE_OPTIONS } from './normalize'
 
 //todo think about types instead any
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+type DiffResultOptions = {
+  beforeData?: object
+  afterData?: object
+  metaKey?: symbol
+  setApiDiffLoading?: Dispatch<SetStateAction<boolean>>
+}
 
 export const getApiDiffResult = (options: DiffResultOptions): CompareResult | undefined => {
   const {
@@ -73,17 +73,6 @@ export const getApiDiffResult = (options: DiffResultOptions): CompareResult | un
   return diffResult
 }
 
-type DiffResultOptions = {
-  beforeData?: object
-  afterData?: object
-  metaKey?: symbol
-  setApiDiffLoading?: Dispatch<SetStateAction<boolean>>
-}
-
-// function convertJsonPathToStringArray(path: (string | number | symbol)[]): string[] {
-//   return path.map(item => item.toString())
-// }
-
 function getCopyWithEmptyPath(template: unknown): unknown {
   if (isObject(template)) {
     // REST API
@@ -120,28 +109,6 @@ function getCopyWithEmptyPath(template: unknown): unknown {
   }
 
   return template
-}
-
-export function handleRiskyChanges(riskyChanges: OperationChange[] | undefined, diffResult: CompareResult): CompareResult {
-  if (riskyChanges && isNotEmpty(riskyChanges)) {
-
-    // turn risky changes into breaking to get matching results with diffResult.diffs
-    const riskyChangesAdaptedForComparison = riskyChanges.map((change) => ({
-      ...change,
-      severity: BREAKING_CHANGE_SEVERITY as ChangeSeverity,
-    }))
-
-    const riskyChangesAdaptedForComparisonMap = createDiffMap(riskyChangesAdaptedForComparison, calculateChangeId)
-    const apiDiffMap = createDiffMap(diffResult.diffs, calculateDiffId)
-
-    for (const [key, value] of apiDiffMap.entries()) {
-      if (riskyChangesAdaptedForComparisonMap.has(key)) {
-        (value as Diff).type = risky
-      }
-    }
-  }
-
-  return diffResult
 }
 
 export const createDiffMap = (

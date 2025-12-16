@@ -16,12 +16,13 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { generatePath, useParams } from 'react-router-dom'
-import { portalRequestText } from '@apihub/utils/requests'
-import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import type { FileContent } from '@apihub/entities/project-files'
-import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { toFormattedJsonString } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
-import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
+import type { IsLoading } from '../../utils/aliases'
+import { toFormattedJsonString } from '../../utils/strings'
+import { getPackageRedirectDetails } from '../../utils/redirects'
+import type { Key } from '../../entities/keys'
+import { API_V2, requestBlob } from '../../utils/requests'
+
+export type FileContent = string
 
 const PUBLISHED_DOCUMENT_RAW_QUERY_KEY = 'published-document-raw-query-key'
 
@@ -54,17 +55,27 @@ export async function getPublishedDocumentRaw(
   versionKey: Key,
   slug: Key,
 ): Promise<FileContent> {
+  const response = await getPublishedDocumentRawBlob(packageKey, versionKey, slug)
+  return response.text()
+}
+
+export async function getPublishedDocumentRawBlob(
+  packageKey: Key,
+  versionKey: Key,
+  slug: Key,
+): Promise<Response> {
   const packageId = encodeURIComponent(packageKey)
   const versionId = encodeURIComponent(versionKey)
   const fileId = encodeURIComponent(slug)
 
   const pathPattern = '/packages/:packageId/versions/:versionId/files/:fileId/raw'
-  return await portalRequestText(
+  return await requestBlob(
     generatePath(pathPattern, { packageId, versionId, fileId }),
     {
       method: 'get',
     },
     {
+      basePath: API_V2,
       customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
     },
   )

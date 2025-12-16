@@ -35,7 +35,6 @@ export const OPENAPI_SPEC: DocumentDto = {
       deprecated: true,
       apiKind: 'bwc',
       apiType: 'rest',
-      dataHash: 'sdfsdfsf242',
       metadata: {
         tags: ['RestControllerV1'],
         path: '/v1/pets',
@@ -48,7 +47,6 @@ export const OPENAPI_SPEC: DocumentDto = {
       deprecated: false,
       apiKind: 'no-bwc',
       apiType: 'rest',
-      dataHash: 'sdfsdfsf243',
       metadata: {
         tags: ['RestControllerV3'],
         path: '/v3/fruit',
@@ -60,7 +58,6 @@ export const OPENAPI_SPEC: DocumentDto = {
       title: 'Array Cars',
       apiKind: 'bwc',
       apiType: 'rest',
-      dataHash: 'sdfsdfsf244',
       metadata: {
         tags: ['RestControllerV5'],
         path: '/v5/cars/array',
@@ -72,7 +69,6 @@ export const OPENAPI_SPEC: DocumentDto = {
       title: 'Get Cars 2',
       apiKind: 'bwc',
       apiType: 'rest',
-      dataHash: 'sdfsdfsf245',
       metadata: {
         tags: ['A', 'B'],
         path: '/v5/cars/array',
