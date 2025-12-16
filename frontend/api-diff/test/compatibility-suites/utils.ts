@@ -1,5 +1,4 @@
 import { apiDiff, CompareOptions, CompareResult, Diff } from '../../src'
-import { load } from 'js-yaml'
 import {
   getCompatibilitySuite,
   TEST_SPEC_TYPE_GRAPH_QL,
@@ -10,7 +9,7 @@ import { buildFromSchema, GraphApiDirectiveDefinition } from '@netcracker/qubers
 import { buildSchema } from 'graphql/utilities'
 import { isArray, isObject } from '@netcracker/qubership-apihub-json-crawl'
 import { TEST_DIFF_FLAG, TEST_ORIGINS_FLAG, TEST_SYNTHETIC_TITLE_FLAG } from '../helper'
-import { OriginLeafs } from '@netcracker/qubership-apihub-api-unifier'
+import { loadYaml, OriginLeafs } from '@netcracker/qubership-apihub-api-unifier'
 import { RUNTIME_DIRECTIVE_LOCATIONS } from '../../src/graphapi'
 
 const TEST_DEFAULTS_ORIGINS: OriginLeafs = [{ parent: undefined, value: 'test-cs-defaults' }]
@@ -41,8 +40,8 @@ export async function compareFilesWithMerge(suiteId: string, testId: string, typ
 
   switch (type) {
     case TEST_SPEC_TYPE_OPEN_API: {
-      beforeObject = load(before) as object
-      afterObject = load(after) as object
+      beforeObject = loadYaml(before) as object
+      afterObject = loadYaml(after) as object
       break
     }
     case TEST_SPEC_TYPE_GRAPH_QL: {

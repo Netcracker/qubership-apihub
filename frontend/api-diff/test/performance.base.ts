@@ -4,7 +4,7 @@ import { apiDiff } from '../src'
 import { buildSchema } from 'graphql'
 import { buildFromSchema } from '@netcracker/qubership-apihub-graphapi'
 import { readFileSync } from 'fs'
-import { load } from 'js-yaml'
+import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 
 const OPTIONS = {
   unify: true,
@@ -34,8 +34,8 @@ export function qgl() {
 }
 
 export function oas30() {
-  const beforeSource = load(readFileSync('./test/helper/resources/openapi/30/before.yaml').toString())
-  const afterSource = load(readFileSync('./test/helper/resources/openapi/30/after.yaml').toString())
+  const beforeSource = loadYaml(readFileSync('./test/helper/resources/openapi/30/before.yaml').toString())
+  const afterSource = loadYaml(readFileSync('./test/helper/resources/openapi/30/after.yaml').toString())
   const before: unknown = splitSourceToComponents(beforeSource)
   const after: unknown = splitSourceToComponents(afterSource)
   const { diffs } = apiDiff(before, after,
