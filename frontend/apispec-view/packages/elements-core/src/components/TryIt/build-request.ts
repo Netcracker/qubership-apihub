@@ -58,7 +58,7 @@ export async function buildFetchRequest({
   mockData,
   auth,
   chosenServer,
-  credentials = 'omit',
+  credentials = 'same-origin',
   corsProxy,
 }: BuildRequestInput): Promise<Parameters<typeof fetch>> {
   const serverUrl = getServerUrl({ httpOperation, mockData, chosenServer, corsProxy });
