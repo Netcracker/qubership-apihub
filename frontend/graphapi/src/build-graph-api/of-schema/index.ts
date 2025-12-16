@@ -31,6 +31,10 @@ export function buildFromSchema(schema: GraphQLSchema): GraphApiSchema {
     graphapi: GRAPH_API_VERSION,
     ...schemaDefinition,
     ...operationsDefinitions,
+    // Preserve original root type names for proper schema definition printing
+    ...qType ? { queryTypeName: qType.name } : {},
+    ...mType ? { mutationTypeName: mType.name } : {},
+    ...sType ? { subscriptionTypeName: sType.name } : {},
     ...hasComponents ? { components: { ...typeDefinitions, ...directiveDefinitions } } : {},
   }
 }

@@ -18,7 +18,9 @@ import {
 export type GraphApiDirectives = Record<string, GraphApiDirective>
 
 export interface GraphApiDefinition {
+  // type description
   description?: string
+  // type directives
   directives?: GraphApiDirectives
 }
 
@@ -45,6 +47,7 @@ export type GraphApiAnyDefinition =
   | GraphApiObjectDefinition<GraphApiObjectKind>
   | GraphApiInputObjectDefinition
   | GraphApiUnionDefinition
+  | GraphApiListDefinition
 
 export type GraphApiInputDefinition =
   | GraphApiScalarDefinition
@@ -73,6 +76,11 @@ export interface GraphApiSchema {
   mutations?: Record<string, GraphApiOperation>
   subscriptions?: Record<string, GraphApiOperation>
 
+  // original root type names (for proper schema definition printing)
+  queryTypeName?: string
+  mutationTypeName?: string
+  subscriptionTypeName?: string
+
   // schema directives
   directives?: GraphApiDirectives
 
@@ -80,9 +88,13 @@ export interface GraphApiSchema {
   components?: GraphApiComponents
 }
 
-export interface GraphApiOperation extends GraphApiDefinition {
+export interface GraphApiOperation {
   args?: GraphApiArgs
   output: GraphApiAnyUsage
+  // operation description
+  description?: string
+  // operation directives
+  directives?: GraphApiDirectives
 }
 
 export interface GraphApiComponents {

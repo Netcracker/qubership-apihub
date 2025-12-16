@@ -8,22 +8,22 @@ describe('printDescription', () => {
 
   it('simple description', () => {
     const result = printDescription('Test')
-    expect(result).toBe('"Test"\n')
+    expect(result).toBe('"""Test"""\n')
   })
 
   it('simple description with indent', () => {
     const result = printDescription('Test', '  ')
-    expect(result).toBe('  "Test"\n')
+    expect(result).toBe('  """Test"""\n')
   })
 
   it('simple description, not first', () => {
     const result = printDescription('Test', undefined, false)
-    expect(result).toBe('"Test"\n')
+    expect(result).toBe('"""Test"""\n')
   })
 
   it('simple description, with indent, not first', () => {
     const result = printDescription('Test', '  ', false)
-    expect(result).toBe('\n  "Test"\n')
+    expect(result).toBe('\n  """Test"""\n')
   })
 
   it('multiline description', () => {
@@ -105,5 +105,20 @@ describe('printDescription', () => {
       indent + 'blablabla\n' +
       indent + '"""\n'
     )
+  })
+
+  it('short description with trailing quote', () => {
+    const result = printDescription('Short text"')
+    expect(result).toBe('"""\nShort text"\n"""\n')
+  })
+
+  it('short description with leading quote', () => {
+    const result = printDescription('"Short text')
+    expect(result).toBe('"""\n"Short text\n"""\n')
+  })
+
+  it('short description with both leading and trailing quotes', () => {
+    const result = printDescription('"Short text"')
+    expect(result).toBe('"""\n"Short text"\n"""\n')
   })
 })
