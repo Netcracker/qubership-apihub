@@ -37,6 +37,8 @@ type MonitoringService interface {
 	AddDocumentOpenCount(packageId string, version string, slug string)
 	AddOperationOpenCount(packageId string, version string, operationId string)
 	IncreaseBusinessMetricCounter(userId string, metric string, key string)
+	IncreaseBusinessMetricCounterForDate(userId string, metric string, key string, date time.Time) error
+	DecreaseBusinessMetricCounterForDate(userId string, metric string, key string, date time.Time) error
 	AddEndpointCall(path string, options interface{})
 }
 
@@ -333,4 +335,105 @@ func (m *monitoringServiceImpl) flushEndpointCalls() error {
 	m.endpointCalls = make(map[string]map[string]interface{})
 	m.endpointCallsCount = make(map[string]map[string]int)
 	return nil
+}
+
+func (m *monitoringServiceImpl) IncreaseBusinessMetricCounterForDate(userId string, metric string, key string, date time.Time) error {
+	year := date.Year()
+	month := date.Month()
+	day := date.Day()
+
+	// Note: This method updates the database directly and does NOT update in-memory storage.
+	// This is intentional because it's used for updating metrics for specific historical dates
+	// (e.g., when patching a version's status), not for metrics being added during the current operation.
+	// For current operation metrics, use IncreaseBusinessMetricCounter which updates in-memory storage.
+	increaseQuery := `
+		INSERT INTO business_metric (year, month, day, metric, data, user_id)
+		VALUES (?, ?, ?, ?, ?::jsonb, ?)
+		ON CONFLICT (year, month, day, user_id, metric)
+		DO UPDATE
+		SET data = coalesce(business_metric.data, '{}'::jsonb) ||
+			jsonb_build_object(?, coalesce((business_metric.data ->> ?)::int, 0) + 1)`
+
+	ctx := context.Background()
+	_, err := m.cp.GetConnection().ExecContext(ctx, increaseQuery,
+		year, int(month), day, metric, fmt.Sprintf(`{"%s": 1}`, key), userId, key, key)
+	if err != nil {
+		return fmt.Errorf("failed to increase business metric %s for key %s: %w", metric, key, err)
+	}
+
+	return nil
+}
+
+func (m *monitoringServiceImpl) DecreaseBusinessMetricCounterForDate(userId string, metric string, key string, date time.Time) error {
+	year := date.Year()
+	month := date.Month()
+	day := date.Day()
+
+	// First, check and update in-memory storage to handle the race condition where:
+	// 1. A release version is published -> metric added to in-memory storage (via IncreaseBusinessMetricCounter)
+	// 2. The version status is changed to draft -> this decrease is called
+	// 3. The in-memory metric hasn't been flushed to DB yet (flush happens every 5 minutes)
+	// By checking memory first, we ensure the decrease is applied to the same storage where the increase occurred,
+	// preventing incorrect metric values. If not found in memory, it means the metric was already flushed or
+	// was added via IncreaseBusinessMetricCounterForDate, so we update the database directly.
+	m.businessMetricsMutex.Lock()
+	if userMetrics, userExists := m.businessMetrics[userId]; userExists {
+		if metricData, metricExists := userMetrics[metric]; metricExists {
+			if count, keyExists := metricData[key]; keyExists {
+				if count > 1 {
+					m.businessMetrics[userId][metric][key]--
+				} else {
+					delete(m.businessMetrics[userId][metric], key)
+					// Clean up empty maps
+					if len(m.businessMetrics[userId][metric]) == 0 {
+						delete(m.businessMetrics[userId], metric)
+						if len(m.businessMetrics[userId]) == 0 {
+							delete(m.businessMetrics, userId)
+						}
+					}
+				}
+				m.businessMetricsMutex.Unlock()
+				return nil
+			}
+		}
+	}
+	m.businessMetricsMutex.Unlock()
+
+	// Not found in memory, update database directly
+	ctx := context.Background()
+	err := m.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		updateQuery := `
+			UPDATE business_metric
+			SET data = CASE
+				WHEN (data ->> ?)::int > 1 THEN
+					jsonb_set(data, ARRAY[?], to_jsonb((data ->> ?)::int - 1))
+				WHEN (data ->> ?)::int = 1 THEN
+					data - ?
+				ELSE data
+			END
+			WHERE year = ? AND month = ? AND day = ? AND metric = ? AND user_id = ?
+			AND (data ->> ?) IS NOT NULL`
+
+		_, err := tx.Exec(updateQuery,
+			key, key, key, key, key,
+			year, int(month), day, metric, userId, key)
+		if err != nil {
+			return fmt.Errorf("failed to decrease business metric: %w", err)
+		}
+
+		// Delete the row if data becomes empty
+		deleteEmptyQuery := `
+			DELETE FROM business_metric
+			WHERE year = ? AND month = ? AND day = ? AND metric = ? AND user_id = ?
+			AND (data IS NULL OR data = '{}'::jsonb)`
+
+		_, err = tx.Exec(deleteEmptyQuery, year, int(month), day, metric, userId)
+		if err != nil {
+			return fmt.Errorf("failed to cleanup empty business metric: %w", err)
+		}
+
+		return nil
+	})
+
+	return err
 }

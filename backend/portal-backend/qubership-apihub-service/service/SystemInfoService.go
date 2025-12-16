@@ -102,6 +102,9 @@ type SystemInfoService interface {
 	GetUnreferencedDataCleanupSchedule() string
 	GetUnreferencedDataCleanupTimeout() int
 	GetExtensions() []view.Extension
+	GetAiChatConfig() config.ChatConfig
+	GetAiMCPConfig() config.MCPConfig
+	GetApiSpecDirectory() string
 }
 
 func (g *systemInfoServiceImpl) GetCredsFromEnv() *view.DbCredentials {
@@ -242,6 +245,10 @@ func (g *systemInfoServiceImpl) setDefaults() {
 	viper.SetDefault("cleanup.softDeletedData.ttlDays", 730)            // 2 years
 	viper.SetDefault("cleanup.unreferencedData.schedule", "0 15 * * 6") //at 3 PM on Saturday
 	viper.SetDefault("cleanup.unreferencedData.timeoutMinutes", 360)    //6 hours
+	viper.SetDefault("openAI.model", "gpt-4o")
+	viper.SetDefault("openAI.temperature", 1.0)
+	viper.SetDefault("openAI.reasoningEffort", "medium")
+	viper.SetDefault("openAI.verbosity", "medium")
 }
 
 func (g *systemInfoServiceImpl) GetConfigFolder() string {
@@ -295,6 +302,13 @@ func (g *systemInfoServiceImpl) setInstanceId() {
 
 func (g *systemInfoServiceImpl) GetBasePath() string {
 	return g.config.TechnicalParameters.BasePath
+}
+
+func (g *systemInfoServiceImpl) GetApiSpecDirectory() string {
+	if g.config.TechnicalParameters.ApiSpecDirectory != "" {
+		return g.config.TechnicalParameters.ApiSpecDirectory
+	}
+	return g.config.TechnicalParameters.BasePath + string(os.PathSeparator) + "api"
 }
 
 func (g *systemInfoServiceImpl) GetJwtPrivateKey() []byte {
@@ -603,4 +617,12 @@ func (g *systemInfoServiceImpl) GetExtensions() []view.Extension {
 		return make([]view.Extension, 0)
 	}
 	return g.config.Extensions
+}
+
+func (g *systemInfoServiceImpl) GetAiChatConfig() config.ChatConfig {
+	return g.config.Ai.Chat
+}
+
+func (g *systemInfoServiceImpl) GetAiMCPConfig() config.MCPConfig {
+	return g.config.Ai.MCP
 }

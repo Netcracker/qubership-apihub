@@ -28,11 +28,11 @@ import (
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security/idp/providers"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service/cleanup"
+	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
-	midldleware "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
@@ -50,6 +50,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 
+	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -96,7 +97,7 @@ func main() {
 	migrationPassedChan := make(chan bool)
 	initSrvStoppedChan := make(chan bool)
 	r := mux.NewRouter()
-	r.Use(midldleware.PrometheusMiddleware)
+	// r.Use(midldleware.PrometheusMiddleware) todo figure out why breaks streaming
 	r.SkipClean(true)
 	r.UseEncodedPath()
 	healthController := controller.NewHealthController(readyChan)
@@ -230,8 +231,10 @@ func main() {
 
 	lockService := service.NewLockService(lockRepo, systemInfoService.GetInstanceId())
 
+	monitoringService := service.NewMonitoringService(cp)
+
 	cleanupService := cleanup.NewCleanupService(cp)
-	if err := cleanupService.CreateRevisionsCleanupJob(publishedRepository, migrationRunRepository, versionCleanupRepository, lockService, systemInfoService.GetInstanceId(), systemInfoService.GetRevisionsCleanupSchedule(), systemInfoService.GetRevisionsCleanupDeleteLastRevision(), systemInfoService.GetRevisionsCleanupDeleteReleaseRevisions(), systemInfoService.GetRevisionsTTLDays()); err != nil {
+	if err := cleanupService.CreateRevisionsCleanupJob(publishedRepository, migrationRunRepository, versionCleanupRepository, monitoringService, lockService, systemInfoService.GetInstanceId(), systemInfoService.GetRevisionsCleanupSchedule(), systemInfoService.GetRevisionsCleanupDeleteLastRevision(), systemInfoService.GetRevisionsCleanupDeleteReleaseRevisions(), systemInfoService.GetRevisionsTTLDays()); err != nil {
 		log.Error("Failed to start revisions cleaning job" + err.Error())
 	}
 	if err := cleanupService.CreateComparisonsCleanupJob(publishedRepository, migrationRunRepository, comparisonCleanupRepository, lockService, systemInfoService.GetInstanceId(), systemInfoService.GetComparisonCleanupSchedule(), systemInfoService.GetComparisonCleanupTimeout(), systemInfoService.GetComparisonsTTLDays()); err != nil {
@@ -244,7 +247,6 @@ func main() {
 		log.Error("Failed to start unreferenced data cleaning job" + err.Error())
 	}
 
-	monitoringService := service.NewMonitoringService(cp)
 	packageVersionEnrichmentService := service.NewPackageVersionEnrichmentService(publishedRepository)
 	activityTrackingService := service.NewActivityTrackingService(activityTrackingRepository, publishedRepository, userService)
 	operationService := service.NewOperationService(operationRepository, publishedRepository, packageVersionEnrichmentService)
@@ -255,8 +257,8 @@ func main() {
 	portalService := service.NewPortalService(basePath, publishedService, publishedRepository)
 
 	operationGroupService := service.NewOperationGroupService(operationRepository, publishedRepository, exportRepository, packageVersionEnrichmentService, activityTrackingService)
-	versionService := service.NewVersionService(favoritesRepository, publishedRepository, publishedService, operationRepository, exportRepository, operationService, activityTrackingService, systemInfoService, packageVersionEnrichmentService, portalService, versionCleanupRepository, operationGroupService)
-	packageService := service.NewPackageService(favoritesRepository, publishedRepository, versionService, roleService, activityTrackingService, operationGroupService, usersRepository, ptHandler, systemInfoService)
+	versionService := service.NewVersionService(favoritesRepository, publishedRepository, publishedService, operationRepository, exportRepository, operationService, activityTrackingService, systemInfoService, packageVersionEnrichmentService, portalService, versionCleanupRepository, operationGroupService, monitoringService)
+	packageService := service.NewPackageService(favoritesRepository, publishedRepository, versionService, roleService, activityTrackingService, monitoringService, operationGroupService, usersRepository, ptHandler, systemInfoService)
 
 	logsService := service.NewLogsService()
 	apihubApiKeyService := service.NewApihubApiKeyService(apihubApiKeyRepository, publishedRepository, activityTrackingService, userService, roleRepository, roleService.IsSysadm, systemInfoService)
@@ -291,6 +293,9 @@ func main() {
 
 	tokenRevocationService := service.NewTokenRevocationService(olricProvider, systemInfoService.GetRefreshTokenDurationSec())
 	systemStatsService := service.NewSystemStatsService(systemStatsRepository)
+
+	mcpService := service.NewMCPService(systemInfoService, operationService, packageService)
+	chatService := service.NewChatService(systemInfoService, mcpService)
 
 	idpManager, err := providers.NewIDPManager(systemInfoService.GetAuthConfig(), systemInfoService.GetAllowedHosts(), systemInfoService.IsProductionMode(), userService)
 	if err != nil {
@@ -327,12 +332,13 @@ func main() {
 	buildCleanupController := controller.NewBuildCleanupController(dbCleanupService, roleService.IsSysadm)
 	transitionController := controller.NewTransitionController(transitionService, roleService.IsSysadm)
 	businessMetricController := controller.NewBusinessMetricController(businessMetricService, excelService, roleService.IsSysadm)
-	apiDocsController := controller.NewApiDocsController(basePath)
 	transformationController := controller.NewTransformationController(roleService, buildService, versionService, transformationService, operationGroupService)
 	minioStorageController := controller.NewMinioStorageController(minioStorageCreds, minioStorageService)
 	personalAccessTokenController := controller.NewPersonalAccessTokenController(personalAccessTokenService)
 	packageExportConfigController := controller.NewPackageExportConfigController(roleService, packageExportConfigService, ptHandler)
 	systemStatsController := controller.NewSystemStatsController(systemStatsService, roleService)
+	mcpController := controller.NewMCPController(mcpService)
+	chatController := controller.NewChatController(chatService)
 
 	r.HandleFunc("/api/v1/system/info", security.Secure(systemInfoController.GetSystemInfo)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/system/configuration", samlAuthController.GetSystemSSOInfo_deprecated).Methods(http.MethodGet) //deprecated
@@ -529,11 +535,35 @@ func main() {
 		r.PathPrefix("/debug/").Handler(http.DefaultServeMux)
 
 		r.HandleFunc("/api/internal/minio/download", security.Secure(minioStorageController.DownloadFilesFromMinioToDatabase)).Methods(http.MethodPost)
-	}
-	debug.SetGCPercent(30)
 
-	r.HandleFunc("/v3/api-docs/swagger-config", apiDocsController.GetSpecsUrls).Methods(http.MethodGet)
-	r.HandleFunc("/v3/api-docs/{specName}", apiDocsController.GetSpec).Methods(http.MethodGet)
+		//Chat
+		r.HandleFunc("/api/v1/ai-chat", security.Secure(chatController.Chat)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/ai-chat/stream", security.Secure(chatController.ChatStream)).Methods(http.MethodPost)
+	}
+
+	mcpHandler := mcpController.MakeMCPServer()
+	r.Handle("/api/v1/mcp/", security.SecureMCP(mcpHandler))
+
+	discoveryConfig := config.DiscoveryConfig{
+		ScanDirectory: systemInfoService.GetApiSpecDirectory(),
+	}
+	specExposer := exposer.New(discoveryConfig)
+	discoveryResult := specExposer.Discover()
+	if len(discoveryResult.Errors) > 0 {
+		for _, err := range discoveryResult.Errors {
+			log.Errorf("Error during API specifications discovery: %v", err)
+		}
+		panic("Failed to expose API specifications")
+	}
+	if len(discoveryResult.Warnings) > 0 {
+		for _, warning := range discoveryResult.Warnings {
+			log.Warnf("Warning during API specifications discovery: %s", warning)
+		}
+	}
+	for _, endpointConfig := range discoveryResult.Endpoints {
+		log.Debugf("Registering API specification endpoint with path: %s and spec metadata: %+v", endpointConfig.Path, endpointConfig.SpecMetadata)
+		r.HandleFunc(endpointConfig.Path, endpointConfig.Handler).Methods(http.MethodGet)
+	}
 
 	portalFs := http.FileServer(http.Dir(basePath + "/static/portal"))
 
@@ -571,6 +601,8 @@ func main() {
 			portalFs.ServeHTTP(w, r) // portal is default app
 		}
 	})
+
+	debug.SetGCPercent(30)
 
 	err = security.SetupGoGuardian(userService, roleService, apihubApiKeyService, personalAccessTokenService, systemInfoService, tokenRevocationService)
 	if err != nil {

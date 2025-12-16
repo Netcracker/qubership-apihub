@@ -34,6 +34,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/crypto"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 )
@@ -81,7 +82,8 @@ func NewVersionService(favoritesRepo repository.FavoritesRepository,
 	packageVersionEnrichmentService PackageVersionEnrichmentService,
 	portalService PortalService,
 	versionCleanupRepository repository.VersionCleanupRepository,
-	operationGroupService OperationGroupService) VersionService {
+	operationGroupService OperationGroupService,
+	monitoringService MonitoringService) VersionService {
 	return &versionServiceImpl{
 		favoritesRepo:                   favoritesRepo,
 		publishedRepo:                   publishedRepo,
@@ -95,6 +97,7 @@ func NewVersionService(favoritesRepo repository.FavoritesRepository,
 		portalService:                   portalService,
 		versionCleanupRepository:        versionCleanupRepository,
 		operationGroupService:           operationGroupService,
+		monitoringService:               monitoringService,
 	}
 }
 
@@ -112,6 +115,7 @@ type versionServiceImpl struct {
 	versionCleanupRepository        repository.VersionCleanupRepository
 	buildService                    BuildService
 	operationGroupService           OperationGroupService
+	monitoringService               MonitoringService
 }
 
 func (v *versionServiceImpl) SetBuildService(buildService BuildService) {
@@ -514,6 +518,36 @@ func (v versionServiceImpl) PatchVersion(ctx context.SecurityContext, packageId 
 		Date:      time.Now(),
 		UserId:    ctx.GetUserId(),
 	})
+
+	if status != nil {
+		oldStatus := versionEnt.Status
+		newStatus := *status
+
+		if oldStatus != string(view.Release) && newStatus == string(view.Release) {
+			err = v.monitoringService.IncreaseBusinessMetricCounterForDate(
+				versionEnt.CreatedBy,
+				metrics.ReleaseVersionsPublished,
+				packageId,
+				versionEnt.PublishedAt,
+			)
+			if err != nil {
+				log.Errorf("Failed to increase ReleaseVersionsPublished metric: %v", err)
+			}
+		}
+
+		if oldStatus == string(view.Release) && newStatus != string(view.Release) {
+			err = v.monitoringService.DecreaseBusinessMetricCounterForDate(
+				versionEnt.CreatedBy,
+				metrics.ReleaseVersionsPublished,
+				packageId,
+				versionEnt.PublishedAt,
+			)
+			if err != nil {
+				log.Errorf("Failed to decrease ReleaseVersionsPublished metric: %v", err)
+			}
+		}
+	}
+
 	return result, nil
 }
 
@@ -1469,7 +1503,8 @@ func (v versionServiceImpl) DeleteVersionsRecursively(ctx context.SecurityContex
 			}
 			if len(packages) == 0 {
 				if rootPackage.Kind == entity.KIND_PACKAGE || rootPackage.Kind == entity.KIND_DASHBOARD {
-					deleted, err := v.publishedRepo.DeletePackageRevisionsBeforeDate(context, rootPackage.Id, deleteBefore, true, false, "cleanup_job_"+jobId)
+					// deleteReleaseRevisions is false, so only draft revisions are deleted - no need to track release_versions_deleted metric
+					deleted, _, err := v.publishedRepo.DeletePackageRevisionsBeforeDate(context, rootPackage.Id, deleteBefore, true, false, "cleanup_job_"+jobId)
 					if err != nil {
 						log.Errorf("failed to delete versions of package %s during versions cleanup %s: %s", rootPackage.Id, jobId, err.Error())
 						finishedAt := time.Now()
@@ -1492,7 +1527,8 @@ func (v versionServiceImpl) DeleteVersionsRecursively(ctx context.SecurityContex
 				return
 			}
 			for _, pkg := range packages {
-				deleted, err := v.publishedRepo.DeletePackageRevisionsBeforeDate(context, pkg.Id, deleteBefore, true, false, "cleanup_job_"+jobId)
+				// deleteReleaseRevisions is false, so only draft revisions are deleted - no need to track release_versions_deleted metric
+				deleted, _, err := v.publishedRepo.DeletePackageRevisionsBeforeDate(context, pkg.Id, deleteBefore, true, false, "cleanup_job_"+jobId)
 				if err != nil {
 					log.Errorf("failed to delete versions of package %s during versions cleanup %s: %s", pkg.Id, jobId, err.Error())
 					finishedAt := time.Now()

@@ -25,6 +25,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
@@ -52,6 +53,7 @@ func NewPackageService(favoritesRepo repository.FavoritesRepository,
 	versionService VersionService,
 	roleService RoleService,
 	atService ActivityTrackingService,
+	monitoringService MonitoringService,
 	operationGroupService OperationGroupService,
 	userRepo repository.UserRepository,
 	ptHandler PackageTransitionHandler,
@@ -62,6 +64,7 @@ func NewPackageService(favoritesRepo repository.FavoritesRepository,
 		versionService:        versionService,
 		roleService:           roleService,
 		atService:             atService,
+		monitoringService:     monitoringService,
 		operationGroupService: operationGroupService,
 		userRepo:              userRepo,
 		ptHandler:             ptHandler,
@@ -75,6 +78,7 @@ type packageServiceImpl struct {
 	versionService        VersionService
 	roleService           RoleService
 	atService             ActivityTrackingService
+	monitoringService     MonitoringService
 	operationGroupService OperationGroupService
 	userRepo              repository.UserRepository
 	ptHandler             PackageTransitionHandler
@@ -635,9 +639,15 @@ func (p packageServiceImpl) DeletePackage(ctx context.SecurityContext, id string
 			}
 		}
 	}
-	err = p.publishedRepo.DeletePackage(id, ctx.GetUserId())
+	deletedReleaseCount, err := p.publishedRepo.DeletePackage(id, ctx.GetUserId())
 	if err != nil {
 		return err
+	}
+
+	if deletedReleaseCount > 0 {
+		for i := 0; i < deletedReleaseCount; i++ {
+			p.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.ReleaseVersionsDeleted, id)
+		}
 	}
 
 	p.atService.TrackEvent(view.ActivityTrackingEvent{

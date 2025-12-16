@@ -1,0 +1,1 @@
+DROP TABLE fts_latest_release_operation_data;

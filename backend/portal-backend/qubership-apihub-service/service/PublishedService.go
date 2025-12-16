@@ -328,7 +328,16 @@ func readZipFile(zf *zip.File) ([]byte, error) {
 }
 
 func (p publishedServiceImpl) DeleteVersion(ctx context.SecurityContext, packageId string, versionName string) error {
-	return p.publishedRepo.MarkVersionDeleted(packageId, versionName, ctx.GetUserId())
+	releasedRevisionsDeleted, err := p.publishedRepo.MarkVersionDeleted(packageId, versionName, ctx.GetUserId())
+	if err != nil {
+		return err
+	}
+	if releasedRevisionsDeleted > 0 {
+		for i := 0; i < releasedRevisionsDeleted; i++ {
+			p.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.ReleaseVersionsDeleted, packageId)
+		}
+	}
+	return nil
 }
 
 func validatePublishSources(filesFromSourcesArchive map[string]struct{}, filesFromConfig []view.BCFile) error {

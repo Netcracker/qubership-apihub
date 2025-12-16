@@ -20,6 +20,7 @@ type Config struct {
 	Olric                OlricConfig
 	Cleanup              CleanupConfig
 	Extensions           []view.Extension
+	Ai                   AIConfig
 }
 
 type DatabaseConfig struct {
@@ -90,6 +91,7 @@ type TechnicalParameters struct {
 	BackendVersion        string
 	ListenAddress         string `validate:"required"`
 	MetricsGetterSchedule string
+	ApiSpecDirectory      string
 }
 
 type BusinessParameters struct {
@@ -128,6 +130,27 @@ type CleanupConfig struct {
 	SoftDeletedData  SoftDeletedDataCleanupConfig
 	UnreferencedData UnreferencedDataCleanupConfig
 	Builds           BuildsCleanupConfig
+}
+
+type AIConfig struct {
+	MCP  MCPConfig
+	Chat ChatConfig
+}
+
+type MCPConfig struct {
+	Workspace string
+}
+type ChatConfig struct {
+	OpenAI OpenAIConfig
+}
+
+type OpenAIConfig struct {
+	ApiKey          string `sensitive:"true"`
+	Model           string
+	ProxyURL        string  // Optional base URL for OpenAI API requests (replaces https://api.openai.com/v1); Example: "https://llmproxy.localdomain.com" or "https://llmproxy.localdomain.com/v1"
+	Temperature     float64 // Controls randomness of the model's output. Range: 0.0 to 2.0. Lower values = more focused, higher values = more random. Default: 1.0
+	ReasoningEffort string  // Controls depth of reasoning for reasoning models (gpt-5, o-series). Values: "minimal", "low", "medium", "high". Default: "medium"
+	Verbosity       string  // Controls verbosity and detail level of the model's response. Values: "low", "medium", "high". Default: "medium"
 }
 
 type RevisionsCleanupConfig struct {

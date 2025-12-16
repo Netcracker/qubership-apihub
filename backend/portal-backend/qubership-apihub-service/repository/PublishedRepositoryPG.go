@@ -55,9 +55,10 @@ func (p publishedRepositoryImpl) updateVersion(tx *pg.Tx, version *entity.Publis
 	return nil
 }
 
-func (p publishedRepositoryImpl) MarkVersionDeleted(packageId string, versionName string, userId string) error {
+func (p publishedRepositoryImpl) MarkVersionDeleted(packageId string, versionName string, userId string) (int, error) {
 	ctx := context.Background()
 
+	releasedRevisionsDeleted := 0
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		var ents []entity.PublishedVersionEntity
 		err := tx.Model(&ents).
@@ -71,6 +72,9 @@ func (p publishedRepositoryImpl) MarkVersionDeleted(packageId string, versionNam
 
 		timeNow := time.Now()
 		for _, ent := range ents {
+			if ent.Status == string(view.Release) {
+				releasedRevisionsDeleted++
+			}
 			tmpEnt := &ent
 			tmpEnt.DeletedAt = &timeNow
 			tmpEnt.DeletedBy = userId
@@ -92,7 +96,7 @@ func (p publishedRepositoryImpl) MarkVersionDeleted(packageId string, versionNam
 		return nil
 	})
 
-	return err
+	return releasedRevisionsDeleted, err
 }
 
 func (p publishedRepositoryImpl) clearDefaultReleaseVersion(tx *pg.Tx, packageId string, version string) error {
@@ -139,7 +143,12 @@ func (p publishedRepositoryImpl) PatchVersion(packageId string, versionName stri
 			return err
 		}
 
+		statusChanged := false
 		if status != nil {
+			if ent.Status != *status {
+				statusChanged = true
+			}
+
 			ent.Status = *status
 		}
 		if versionLabels != nil {
@@ -151,13 +160,36 @@ func (p publishedRepositoryImpl) PatchVersion(packageId string, versionName stri
 			return err
 		}
 
+		// recalculate lite search index if status has changed
+		if statusChanged && ent.Status == string(view.Draft) {
+			cleanOldLiteSearchOperationsQuery := `delete from fts_latest_release_operation_data where package_id = ? and version = ? and revision = ?`
+			_, err = tx.Exec(cleanOldLiteSearchOperationsQuery,
+				ent.PackageId, ent.Version, ent.Revision)
+			if err != nil {
+				return fmt.Errorf("failed to delete fts_latest_release_operation_data: %w", err)
+			}
+		}
+		if statusChanged && ent.Status == string(view.Release) {
+			calculateLiteSearchOperationsQuery := `
+								insert into fts_latest_release_operation_data
+								select o.package_id, o.version, o.revision, o.operation_id, o.type, to_tsvector(convert_from(od.data,'UTF-8'))  data_vector from
+		                        	operation o inner join operation_data od on o.data_hash=od.data_hash
+									where package_id = ? and version = ? and revision = ?
+								on conflict (package_id, version, revision, operation_id) do update set data_vector = EXCLUDED.data_vector;`
+			_, err = tx.Exec(calculateLiteSearchOperationsQuery,
+				ent.PackageId, ent.Version, ent.Revision)
+			if err != nil {
+				return fmt.Errorf("failed to insert fts_latest_release_operation_data: %w", err)
+			}
+		}
+
 		return nil
 	})
 
 	return ent, nil
 }
 
-func (p publishedRepositoryImpl) markAllVersionsDeletedByPackageId(tx *pg.Tx, packageId string, userId string) error {
+func (p publishedRepositoryImpl) markAllVersionsDeletedByPackageId(tx *pg.Tx, packageId string, userId string) (int, error) {
 	var ents []entity.PublishedVersionEntity
 	err := tx.Model(&ents).
 		Where("package_id = ?", packageId).
@@ -165,19 +197,23 @@ func (p publishedRepositoryImpl) markAllVersionsDeletedByPackageId(tx *pg.Tx, pa
 		Select()
 	if err != nil {
 		if err == pg.ErrNoRows {
-			return nil
+			return 0, nil
 		}
-		return err
+		return 0, err
 	}
 
+	releasedRevisionsDeleted := 0
 	timeNow := time.Now()
 	for _, ent := range ents {
+		if ent.Status == string(view.Release) {
+			releasedRevisionsDeleted++
+		}
 		tmpEnt := &ent
 		tmpEnt.DeletedAt = &timeNow
 		tmpEnt.DeletedBy = userId
 		err := p.updateVersion(tx, tmpEnt)
 		if err != nil {
-			return err
+			return 0, err
 		}
 		clearPreviousVersionQuery := `
 			UPDATE published_version
@@ -185,14 +221,14 @@ func (p publishedRepositoryImpl) markAllVersionsDeletedByPackageId(tx *pg.Tx, pa
 			WHERE previous_version = ? AND (previous_version_package_id = ? OR ((previous_version_package_id = '' or previous_version_package_id is null) and package_id = ?))`
 		_, err = tx.Exec(clearPreviousVersionQuery, ent.Version, packageId, packageId)
 		if err != nil {
-			return err
+			return 0, err
 		}
 	}
 	_, err = tx.Exec(`delete from grouped_operation where package_id = ?`, packageId)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	return releasedRevisionsDeleted, nil
 }
 
 func (p publishedRepositoryImpl) GetVersion(packageId string, versionName string) (*entity.PublishedVersionEntity, error) {
@@ -1206,6 +1242,32 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 				utils.PerfLog(time.Since(start).Milliseconds(), 1000, "CreateVersionWithData: ts_vectors insert")
 			}
 		}
+
+		if version.Status == string(view.Release) && !packageInfo.MigrationBuild {
+			start = time.Now()
+			if version.Revision > 1 {
+				cleanOldLiteSearchOperationsQuery := `delete from fts_latest_release_operation_data where package_id = ? and version = ? and revision = ?`
+				_, err = tx.Exec(cleanOldLiteSearchOperationsQuery,
+					version.PackageId, version.Version, version.Revision-1)
+				if err != nil {
+					return fmt.Errorf("failed to cleanup old revision fts_latest_release_operation_data: %w", err)
+				}
+			}
+
+			calculateLiteSearchOperationsQuery := `
+						insert into fts_latest_release_operation_data
+						select o.package_id, o.version, o.revision, o.operation_id, o.type, to_tsvector(convert_from(od.data,'UTF-8'))  data_vector from
+                        	operation o inner join operation_data od on o.data_hash=od.data_hash
+							where package_id = ? and version = ? and revision = ?
+						on conflict (package_id, version, revision, operation_id) do update set data_vector = EXCLUDED.data_vector;`
+			_, err = tx.Exec(calculateLiteSearchOperationsQuery,
+				version.PackageId, version.Version, version.Revision)
+			if err != nil {
+				return fmt.Errorf("failed to insert fts_latest_release_operation_data: %w", err)
+			}
+			utils.PerfLog(time.Since(start).Milliseconds(), 1000, "CreateVersionWithData: fts_latest_release_operation_data insert")
+		}
+
 		if len(versionComparisons) != 0 {
 			start = time.Now()
 			err = p.saveVersionChangesTx(tx, operationComparisons, versionComparisons)
@@ -2196,7 +2258,7 @@ func (p publishedRepositoryImpl) updatePackage(tx *pg.Tx, ent *entity.PackageEnt
 	return ent, nil
 }
 
-func (p publishedRepositoryImpl) deletePackage(tx *pg.Tx, packageId string, userId string) error {
+func (p publishedRepositoryImpl) deletePackage(tx *pg.Tx, packageId string, userId string) (int, error) {
 	ent := new(entity.PackageEntity)
 	err := tx.Model(ent).
 		Where("id = ?", packageId).
@@ -2205,14 +2267,14 @@ func (p publishedRepositoryImpl) deletePackage(tx *pg.Tx, packageId string, user
 
 	if err != nil {
 		if err == pg.ErrNoRows {
-			return nil
+			return 0, nil
 		}
-		return err
+		return 0, err
 	}
 
-	err = p.markAllVersionsDeletedByPackageId(tx, packageId, userId)
+	deletedReleaseCount, err := p.markAllVersionsDeletedByPackageId(tx, packageId, userId)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	timeNow := time.Now()
@@ -2222,14 +2284,14 @@ func (p publishedRepositoryImpl) deletePackage(tx *pg.Tx, packageId string, user
 
 	_, err = p.updatePackage(tx, ent)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	err = p.deletePackageServiceOwnership(tx, ent.Id)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return err
+	return deletedReleaseCount, err
 }
 
 func (p publishedRepositoryImpl) deletePackageServiceOwnership(tx *pg.Tx, packageId string) error {
@@ -2240,14 +2302,21 @@ func (p publishedRepositoryImpl) deletePackageServiceOwnership(tx *pg.Tx, packag
 	return nil
 }
 
-func (p publishedRepositoryImpl) DeletePackage(id string, userId string) error {
+func (p publishedRepositoryImpl) DeletePackage(id string, userId string) (int, error) {
 	ctx := context.Background()
-	return p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
-		return p.deleteGroup(tx, id, userId)
+	var deletedReleaseCount int
+	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		count, err := p.deleteGroup(tx, id, userId)
+		if err != nil {
+			return err
+		}
+		deletedReleaseCount = count
+		return nil
 	})
+	return deletedReleaseCount, err
 }
 
-func (p publishedRepositoryImpl) deleteGroup(tx *pg.Tx, packageId string, userId string) error {
+func (p publishedRepositoryImpl) deleteGroup(tx *pg.Tx, packageId string, userId string) (int, error) {
 	ent := new(entity.PackageEntity)
 	err := tx.Model(ent).
 		Where("id = ?", packageId).
@@ -2256,11 +2325,12 @@ func (p publishedRepositoryImpl) deleteGroup(tx *pg.Tx, packageId string, userId
 
 	if err != nil {
 		if err == pg.ErrNoRows {
-			return nil
+			return 0, nil
 		}
-		return err
+		return 0, err
 	}
 
+	totalDeletedReleaseCount := 0
 	var children []entity.PackageEntity
 	err = tx.Model(&children).
 		Where("parent_id = ?", packageId).
@@ -2268,27 +2338,30 @@ func (p publishedRepositoryImpl) deleteGroup(tx *pg.Tx, packageId string, userId
 		Select()
 	if err != nil {
 		if err != pg.ErrNoRows {
-			return err
+			return 0, err
 		}
 	}
 	for _, child := range children {
 		if child.Kind == entity.KIND_GROUP || child.Kind == entity.KIND_WORKSPACE {
-			err := p.deleteGroup(tx, child.Id, userId)
+			count, err := p.deleteGroup(tx, child.Id, userId)
 			if err != nil {
-				return err
+				return 0, err
 			}
+			totalDeletedReleaseCount += count
 		} else if child.Kind == entity.KIND_PACKAGE || child.Kind == entity.KIND_DASHBOARD {
-			err := p.deletePackage(tx, child.Id, userId)
+			count, err := p.deletePackage(tx, child.Id, userId)
 			if err != nil {
-				return err
+				return 0, err
 			}
+			totalDeletedReleaseCount += count
 		}
 	}
 
-	err = p.markAllVersionsDeletedByPackageId(tx, packageId, userId)
+	count, err := p.markAllVersionsDeletedByPackageId(tx, packageId, userId)
 	if err != nil {
-		return err
+		return 0, err
 	}
+	totalDeletedReleaseCount += count
 
 	timeNow := time.Now()
 	ent.DeletedAt = &timeNow
@@ -2297,14 +2370,14 @@ func (p publishedRepositoryImpl) deleteGroup(tx *pg.Tx, packageId string, userId
 
 	_, err = p.updatePackage(tx, ent)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	err = p.deletePackageServiceOwnership(tx, ent.Id)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return err
+	return totalDeletedReleaseCount, err
 }
 
 func (p publishedRepositoryImpl) GetFilteredPackagesWithOffset(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error) {
@@ -3142,8 +3215,9 @@ func (p publishedRepositoryImpl) GetCSVDashboardPublishReport(publishId string) 
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) DeletePackageRevisionsBeforeDate(ctx context.Context, packageId string, deleteBefore time.Time, deleteLastRevision bool, deleteReleaseRevisions bool, deletedBy string) (int, error) {
+func (p publishedRepositoryImpl) DeletePackageRevisionsBeforeDate(ctx context.Context, packageId string, deleteBefore time.Time, deleteLastRevision bool, deleteReleaseRevisions bool, deletedBy string) (int, int, error) {
 	var totalDeletedCount int
+	var totalReleaseDeletedCount int
 	var processingErrors []error
 
 	var versions []string
@@ -3154,20 +3228,21 @@ func (p publishedRepositoryImpl) DeletePackageRevisionsBeforeDate(ctx context.Co
 		Distinct().
 		Select(&versions)
 	if err != nil {
-		return 0, fmt.Errorf("failed to get versions: %w", err)
+		return 0, 0, fmt.Errorf("failed to get versions: %w", err)
 	}
 
 	for idx, version := range versions {
 		logger.Tracef(ctx, "Processing version %d/%d: %s", idx+1, len(versions), version)
-		deletedCount, err := p.deleteVersionRevisions(ctx, packageId, version, deleteBefore, deleteLastRevision, deleteReleaseRevisions, deletedBy)
+		deletedCount, releaseCount, err := p.deleteVersionRevisions(ctx, packageId, version, deleteBefore, deleteLastRevision, deleteReleaseRevisions, deletedBy)
 		if err != nil {
 			if ctx.Err() != nil {
-				return totalDeletedCount, ctx.Err()
+				return totalDeletedCount, totalReleaseDeletedCount, ctx.Err()
 			}
 			processingErrors = append(processingErrors, fmt.Errorf("failed to process version %s: %w", version, err))
 			continue
 		}
 		totalDeletedCount += deletedCount
+		totalReleaseDeletedCount += releaseCount
 	}
 
 	if len(processingErrors) > 0 {
@@ -3179,16 +3254,17 @@ func (p publishedRepositoryImpl) DeletePackageRevisionsBeforeDate(ctx context.Co
 				combinedErr = fmt.Errorf("%v; %v", combinedErr, err)
 			}
 		}
-		logger.Debugf(ctx, "Package %s revisions cleanup completed with %d errors. Total deleted: %d", packageId, len(processingErrors), totalDeletedCount)
-		return totalDeletedCount, fmt.Errorf("cleanup completed with errors (deleted %d items): %w", totalDeletedCount, combinedErr)
+		logger.Debugf(ctx, "Package %s revisions cleanup completed with %d errors. Total deleted: %d (%d release)", packageId, len(processingErrors), totalDeletedCount, totalReleaseDeletedCount)
+		return totalDeletedCount, totalReleaseDeletedCount, fmt.Errorf("cleanup completed with errors (deleted %d items): %w", totalDeletedCount, combinedErr)
 	}
 
-	logger.Debugf(ctx, "Package %s revisions cleanup completed. Total deleted: %d", packageId, totalDeletedCount)
-	return totalDeletedCount, nil
+	logger.Debugf(ctx, "Package %s revisions cleanup completed. Total deleted: %d (%d release)", packageId, totalDeletedCount, totalReleaseDeletedCount)
+	return totalDeletedCount, totalReleaseDeletedCount, nil
 }
 
-func (p publishedRepositoryImpl) deleteVersionRevisions(ctx context.Context, packageId string, version string, deleteBefore time.Time, deleteLastRevision bool, deleteReleaseRevisions bool, deletedBy string) (int, error) {
+func (p publishedRepositoryImpl) deleteVersionRevisions(ctx context.Context, packageId string, version string, deleteBefore time.Time, deleteLastRevision bool, deleteReleaseRevisions bool, deletedBy string) (int, int, error) {
 	var deletedCount int
+	var deletedReleaseCount int
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		var revisions []entity.PublishedVersionEntity
 		err := tx.Model(&revisions).
@@ -3256,6 +3332,9 @@ func (p publishedRepositoryImpl) deleteVersionRevisions(ctx context.Context, pac
 					return fmt.Errorf("failed to clear ad-hoc comparisons for revision %d: %w", revision.Revision, err)
 				}
 
+				if revision.Status == string(view.Release) {
+					deletedReleaseCount++
+				}
 				deletedCount++
 			}
 
@@ -3282,11 +3361,11 @@ func (p publishedRepositoryImpl) deleteVersionRevisions(ctx context.Context, pac
 	})
 
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 
 	logger.Tracef(ctx, "Successfully processed version %s, deleted %d revisions", version, deletedCount)
-	return deletedCount, nil
+	return deletedCount, deletedReleaseCount, nil
 }
 
 func (p publishedRepositoryImpl) trackDeletion(tx *pg.Tx, packageId string, version string, revision int, status string, eventType string, deletedBy string) error {

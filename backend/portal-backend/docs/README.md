@@ -17,10 +17,9 @@
 
 ## API documentation
 ### API specifications
-- [APIHUB API](api/APIHUB%20API.yaml)
-- [Admin API](api/Admin%20API.yaml)
-- [Public Registry API](api/Public%20Registry%20API.yaml)
-- [WebSocket API](api/apihub-ws.yaml)
+- [APIHUB API](api/APIHUB_API.yaml)
+- [APIHUB Admin API](api/Admin%20API.yaml)
+- [APIHUB Internal API](api/APIHUB_API_internal.yaml)
 ### [Postman Collections](postman_collections.md)
 
 ## Security
