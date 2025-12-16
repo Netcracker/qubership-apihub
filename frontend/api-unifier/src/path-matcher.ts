@@ -1,7 +1,5 @@
 import { isObject, JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 
-export const PREDICATE_ANY_VALUE = Symbol('?')
-export const PREDICATE_UNCLOSED_END = Symbol('**')
 
 export interface GrepValuePredicate {
   readonly name: string
@@ -11,7 +9,19 @@ export const grepValue = (name: string) => {
   return { name } as GrepValuePredicate
 }
 
-export type PathPredicate = (PropertyKey | GrepValuePredicate)[]
+export interface ValidateValuePredicate {
+  readonly validate: (value: PropertyKey) => boolean
+}
+
+export const validateValuePredicate = (validate: (value: PropertyKey) => boolean): ValidateValuePredicate => {
+  return { validate }
+}
+
+export const PREDICATE_ANY_VALUE = Symbol('?')
+export const PREDICATE_UNCLOSED_END = Symbol('**')
+export const PREDICATE_NOT_OAS_EXTENSION = validateValuePredicate((value) => !value.toString().startsWith('x-'))
+
+export type PathPredicate = (PropertyKey | GrepValuePredicate | ValidateValuePredicate)[]
 
 export type GrepValues = Record<GrepValuePredicate['name'], PropertyKey>
 
@@ -19,6 +29,14 @@ export type MatchResult = {
   path: JsonPath
   predicate: PathPredicate
   grepValues: GrepValues
+}
+
+function isGrepValuePredicate(value: unknown): value is GrepValuePredicate {
+  return isObject(value) && 'name' in (value as object)
+}
+
+function isValidateValuePredicate(value: unknown): value is ValidateValuePredicate {
+  return isObject(value) && 'validate' in (value as object)
 }
 
 function matchPath(path: JsonPath, predicates: PathPredicate[]): MatchResult | undefined {
@@ -30,10 +48,16 @@ function matchPath(path: JsonPath, predicates: PathPredicate[]): MatchResult | u
       }
       const predicateCopy = [...predicate]
       const currentItemPredicate = predicateCopy.shift()
-      if (isObject(currentItemPredicate)) {
-        const name = (currentItemPredicate as GrepValuePredicate).name
+      if (isGrepValuePredicate(currentItemPredicate)) {
+        const name = currentItemPredicate.name
         state.result[name] = pathItem
         map.set(key, predicateCopy)
+      } else if (isValidateValuePredicate(currentItemPredicate)) {
+        if (currentItemPredicate.validate(pathItem)) {
+          map.set(key, predicateCopy)
+        } else {
+          map.delete(key)
+        }
       } else {
         switch (currentItemPredicate) {
           case PREDICATE_ANY_VALUE: {

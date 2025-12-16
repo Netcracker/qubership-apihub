@@ -54,6 +54,7 @@ import {
 } from './graphapi.const'
 import { GRAPH_API_DEPRECATION_PREDICATE } from './graphapi.deprecated'
 import { notAllowedReferenceHandler, referenceObjectResolver } from '../references/ref-resolver'
+import { calculateGraphApiDeprecatedDescription } from './graphapi.deprecated-item-descriptions'
 
 const EMPTY_MARKER = Symbol('empty-items')
 
@@ -185,7 +186,7 @@ const directivesUsagesRules: NormalizationRules = {
   '/directives': {
     deprecation: {
       deprecationResolver: ctx => GRAPH_API_DEPRECATION_PREDICATE(ctx),
-      descriptionCalculator: () => '[Deprecated]',
+      descriptionCalculator: ctx => calculateGraphApiDeprecatedDescription(ctx),
     },
     '/*': {
       '/definition': () => directiveDefinitionRules,
