@@ -1,6 +1,5 @@
-import YAML from 'js-yaml'
 import { anyArrayKeys, isArray, isObject, JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
-import { ChainItem, Hash, JsonSchema, OriginLeafs, OriginsMetaRecord } from '../../src'
+import {ChainItem, Hash, JsonSchema, loadYaml, OriginLeafs, OriginsMetaRecord} from '../../src'
 import { OpenAPIV3 } from 'openapi-types'
 import 'jest-extended'
 import { deepEqual } from 'fast-equals'
@@ -8,7 +7,7 @@ import { buildFromSchema, GraphApiSchema } from '@netcracker/qubership-apihub-gr
 import { buildSchema } from 'graphql/utilities'
 
 export const yaml = (strings: TemplateStringsArray): object => {
-  return YAML.load(strings[0]) as object
+  return loadYaml(strings[0]) as object
 }
 
 export const graphapi = (strings: TemplateStringsArray): GraphApiSchema => {
