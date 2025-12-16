@@ -172,10 +172,12 @@ func main() {
 	r.HandleFunc("/startup", healthController.HandleStartupRequest).Methods(http.MethodGet)
 
 	if systemInfoService.GetSystemInfo().InsecureProxy {
-		r.PathPrefix(utils.ProxyPath).HandlerFunc(serviceProxyController.Proxy)
+		r.PathPrefix(utils.ProxyPathDeprecated).HandlerFunc(serviceProxyController.Proxy) //deprecated
 	} else {
-		r.PathPrefix(utils.ProxyPath).HandlerFunc(security.SecureProxy(serviceProxyController.Proxy))
+		r.PathPrefix(utils.ProxyPathDeprecated).HandlerFunc(security.SecureProxy(serviceProxyController.Proxy)) //deprecated
 	}
+
+	r.PathPrefix(utils.ProxyPath).HandlerFunc(security.SecureProxy(serviceProxyController.Proxy))
 
 	knownPathPrefixes := []string{
 		"/api/",
