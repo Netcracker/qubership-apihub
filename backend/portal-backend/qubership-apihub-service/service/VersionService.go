@@ -866,21 +866,20 @@ func (v versionServiceImpl) getVersionOperationTypes(versionEnt *entity.PackageV
 		}
 	}
 	if includeOperations {
-		operationTypeHashes, err := v.operationRepo.GetOperationsTypeDataHashes(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
+		operationTypes, err := v.operationRepo.GetOperationsTypes(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
 		if err != nil {
 			return nil, err
 		}
-		for _, ot := range operationTypeHashes {
+		for _, ot := range operationTypes {
 			apiType, _ := view.ParseApiType(ot.ApiType)
 			if apiType == "" {
 				continue
 			}
-			if versionApiTypeSummary, exists := versionSummaryMap[ot.ApiType]; exists {
-				versionApiTypeSummary.Operations = ot.OperationsHash
+			if _, exists := versionSummaryMap[ot.ApiType]; exists {
+				continue
 			} else {
 				versionSummaryMap[ot.ApiType] = &view.VersionOperationType{
-					ApiType:    ot.ApiType,
-					Operations: ot.OperationsHash,
+					ApiType: ot.ApiType,
 				}
 			}
 		}

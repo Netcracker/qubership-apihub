@@ -741,27 +741,7 @@ func setGraphqlOperationSearchParams(graphqlOperationParams *view.OperationSearc
 		}
 	}
 	searchQuery.OperationTypes = append(searchQuery.OperationTypes, graphqlOperationParams.OperationTypes...)
-	if len(graphqlOperationParams.Scopes) == 0 {
-		searchQuery.FilterAll = true
-	} else {
-		for _, s := range graphqlOperationParams.Scopes {
-			switch s {
-			case view.GraphqlScopeAnnotation:
-				searchQuery.FilterAnnotation = true
-			case view.GraphqlScopeArgument:
-				searchQuery.FilterArgument = true
-			case view.GraphqlScopeProperty:
-				searchQuery.FilterProperty = true
-			default:
-				return &exception.CustomError{
-					Status:  http.StatusBadRequest,
-					Code:    exception.InvalidSearchParameters,
-					Message: exception.InvalidSearchParametersMsg,
-					Params:  map[string]interface{}{"error": fmt.Sprintf("scope %v is invalid for %v apiType", s, graphqlOperationParams.ApiType)},
-				}
-			}
-		}
-	}
+	searchQuery.FilterAll = true
 	return nil
 }
 

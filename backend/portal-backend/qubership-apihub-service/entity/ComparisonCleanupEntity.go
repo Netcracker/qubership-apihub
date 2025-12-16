@@ -26,5 +26,5 @@ type ComparisonCleanupEntity struct {
 	Status       string    `pg:"status, type:varchar"`
 	Details      string    `pg:"details, type:varchar"`
 	DeleteBefore time.Time `pg:"delete_before, type:timestamp without time zone"`
-	DeletedItems int       `pg:"deleted_items, type:integer"`
+	DeletedItems int       `pg:"deleted_items, type:integer"` //TODO: do we additionally need to count deleted operation_comparison and comparison_internal_document records?
 }

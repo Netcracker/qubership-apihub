@@ -44,8 +44,6 @@ type OperationSearchScopeFilter struct {
 	FilterAnnotation bool `pg:"filter_annotation, type:boolean, use_zero"`
 	FilterExamples   bool `pg:"filter_examples, type:boolean, use_zero"`
 	FilterProperties bool `pg:"filter_properties, type:boolean, use_zero"`
-	FilterProperty   bool `pg:"filter_property, type:boolean, use_zero"`
-	FilterArgument   bool `pg:"filter_argument, type:boolean, use_zero"`
 }
 
 type OperationSearchQuery struct {

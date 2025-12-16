@@ -17,6 +17,7 @@ package stages
 import (
 	"context"
 	"fmt"
+
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
@@ -138,6 +139,14 @@ func (d OpsMigration) processStage(stage mView.OpsMigrationStage) error {
 
 	case mView.MigrationStageDependentVersionsOldRevs:
 		err = utils.SafeSync(d.StageDependentVersionsOldRevs)
+		nextStage = mView.MigrationStageDashboardVersions
+
+	case mView.MigrationStageDashboardVersions:
+		// Processes dashboards in rounds, ensuring that:
+		// - All package refs are already migrated (if not, skip the dashboard entirely - package stage is done)
+		// - All dashboard refs are already migrated (if not, wait for next iteration)
+		// - Previous version is already migrated (if exists)
+		err = utils.SafeSync(d.StageDashboardVersions)
 		nextStage = mView.MigrationStageComparisonsOther
 
 	case mView.MigrationStageComparisonsOther:
@@ -229,11 +238,11 @@ func (d OpsMigration) handleCancel() error {
 	return updErr
 }
 
-func (d OpsMigration) handleError(err error, stage mView.OpsMigrationStage) error {
+func (d OpsMigration) handleError(migrationError error, stage mView.OpsMigrationStage) error {
 	seInd := len(d.ent.StagesExecution) - 1
 	d.ent.StagesExecution[seInd].End = time.Now()
-	
-	log.Errorf("Ops migration %s: stage %s processing finished with error: %s. Processing took %s", d.ent.Id, stage, err, time.Since(d.ent.StagesExecution[seInd].Start))
+
+	log.Errorf("Ops migration %s: stage %s processing finished with error: %s. Processing took %s", d.ent.Id, stage, migrationError, time.Since(d.ent.StagesExecution[seInd].Start))
 	log.Infof("Ops migration %s: running post-migration cleanup", d.ent.Id)
 	//TODO: should we handle cancellation at this terminal stage ?
 	cleanupErr := d.StageCleanupAfter()
@@ -253,7 +262,7 @@ func (d OpsMigration) handleError(err error, stage mView.OpsMigrationStage) erro
 	_, updErr := d.cp.GetConnection().Model(&mEntity.MigrationRunEntity{}).
 		Set("finished_at=now()").
 		Set("status=?", mView.MigrationStatusFailed).
-		Set("error_details=?", fmt.Sprintf("%s", err)).
+		Set("error_details=?", fmt.Sprintf("%s", migrationError)).
 		Set("stages_execution = ?", d.ent.StagesExecution).
 		Where("id = ?", d.ent.Id).Update()
 

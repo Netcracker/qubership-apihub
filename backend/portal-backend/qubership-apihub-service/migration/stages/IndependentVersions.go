@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	mView "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/view"
 
 	"github.com/go-pg/pg/v10"
@@ -124,8 +125,8 @@ func makeIndependentVersionsQuery(packageIds []string, versionsIn []string, isLa
 		and pv.deleted_at is null
 	inner join package_group pkg on pv.package_id = pkg.id
 	where
-		pv.previous_version is null and pkg.deleted_at is null
+		pv.previous_version is null and pkg.deleted_at is null and pkg.kind = '%s'
     order by pv.published_at asc, pv.package_id asc, pv.version asc, pv.revision asc
-	`, maxrevQueryOperator) // published_at is a first order to avoid paging breakage by new entries
+	`, maxrevQueryOperator, entity.KIND_PACKAGE) // published_at is a first order to avoid paging breakage by new entries
 	return getLatestIndependentVersionsQuery, params
 }

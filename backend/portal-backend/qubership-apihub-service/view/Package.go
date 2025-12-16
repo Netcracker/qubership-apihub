@@ -208,6 +208,15 @@ type VersionComparison struct {
 	ComparisonFileId         string          `json:"comparisonFileId"`
 }
 
+type ComparisonKey struct {
+	PackageId                string
+	Version                  string
+	Revision                 int
+	PreviousVersionPackageId string
+	PreviousVersion          string
+	PreviousVersionRevision  int
+}
+
 func MakeVersionComparisonId(packageId string, version string, revision int, previousVersionPackageId string, previousVersion string, previousVersionRevision int) string {
 	uniqueString := fmt.Sprintf("%v@%v@%v@%v@%v@%v", packageId, version, revision, previousVersionPackageId, previousVersion, previousVersionRevision)
 	return utils.GetEncodedChecksum([]byte(uniqueString))

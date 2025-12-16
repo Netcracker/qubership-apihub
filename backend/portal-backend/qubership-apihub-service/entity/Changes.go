@@ -224,7 +224,7 @@ func (s PublishedSrcEntity) GetChanges(t PublishedSrcEntity) map[string]interfac
 
 func (s OperationEntity) GetChanges(t OperationEntity) map[string]interface{} {
 	changes := make(map[string]interface{}, 0)
-	if s.DataHash != t.DataHash {
+	if (s.DataHash == nil && t.DataHash != nil) || (s.DataHash != nil && t.DataHash == nil) || (s.DataHash != nil && t.DataHash != nil && *s.DataHash != *t.DataHash) {
 		changes["DataHash"] = map[string]interface{}{
 			"old": s.DataHash,
 			"new": t.DataHash,
@@ -284,6 +284,18 @@ func (s OperationEntity) GetChanges(t OperationEntity) map[string]interface{} {
 		changes["ApiAudience"] = map[string]interface{}{
 			"old": s.ApiAudience,
 			"new": t.ApiAudience,
+		}
+	}
+	if s.DocumentId != t.DocumentId {
+		changes["DocumentId"] = map[string]interface{}{
+			"old": s.DocumentId,
+			"new": t.DocumentId,
+		}
+	}
+	if s.VersionInternalDocumentId != t.VersionInternalDocumentId {
+		changes["VersionInternalDocumentId"] = map[string]interface{}{
+			"old": s.VersionInternalDocumentId,
+			"new": t.VersionInternalDocumentId,
 		}
 	}
 	return changes
@@ -398,13 +410,13 @@ func (s VersionComparisonEntity) GetChanges(t VersionComparisonEntity) map[strin
 
 func (s OperationComparisonEntity) GetChanges(t OperationComparisonEntity) map[string]interface{} {
 	changes := make(map[string]interface{}, 0)
-	if s.DataHash != t.DataHash {
+	if (s.DataHash == nil && t.DataHash != nil) || (s.DataHash != nil && t.DataHash == nil) || (s.DataHash != nil && t.DataHash != nil && *s.DataHash != *t.DataHash) {
 		changes["DataHash"] = map[string]interface{}{
 			"old": s.DataHash,
 			"new": t.DataHash,
 		}
 	}
-	if s.PreviousDataHash != t.PreviousDataHash {
+	if (s.PreviousDataHash == nil && t.PreviousDataHash != nil) || (s.PreviousDataHash != nil && t.PreviousDataHash == nil) || (s.PreviousDataHash != nil && t.PreviousDataHash != nil && *s.PreviousDataHash != *t.PreviousDataHash) {
 		changes["PreviousDataHash"] = map[string]interface{}{
 			"old": s.PreviousDataHash,
 			"new": t.PreviousDataHash,
@@ -433,5 +445,46 @@ func (s OperationComparisonEntity) GetChanges(t OperationComparisonEntity) map[s
 		}
 	}
 
+	if s.ComparisonInternalDocumentId != t.ComparisonInternalDocumentId {
+		changes["ComparisonInternalDocumentId"] = map[string]interface{}{
+			"old": s.ComparisonInternalDocumentId,
+			"new": t.ComparisonInternalDocumentId,
+		}
+	}
+
+	return changes
+}
+
+func (s VersionInternalDocumentEntity) GetChanges(t VersionInternalDocumentEntity) map[string]interface{} {
+	changes := make(map[string]interface{}, 0)
+	if s.Filename != t.Filename {
+		changes["Filename"] = map[string]interface{}{
+			"old": s.Filename,
+			"new": t.Filename,
+		}
+	}
+	if s.Hash != t.Hash {
+		changes["Hash"] = map[string]interface{}{
+			"old": s.Hash,
+			"new": t.Hash,
+		}
+	}
+	return changes
+}
+
+func (s ComparisonInternalDocumentEntity) GetChanges(t ComparisonInternalDocumentEntity) map[string]interface{} {
+	changes := make(map[string]interface{}, 0)
+	if s.Filename != t.Filename {
+		changes["Filename"] = map[string]interface{}{
+			"old": s.Filename,
+			"new": t.Filename,
+		}
+	}
+	if s.Hash != t.Hash {
+		changes["Hash"] = map[string]interface{}{
+			"old": s.Hash,
+			"new": t.Hash,
+		}
+	}
 	return changes
 }

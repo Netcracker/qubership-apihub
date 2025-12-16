@@ -38,7 +38,8 @@ type OperationRepository interface {
 	FullTextSearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult, error)
 	LiteSearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult, error)
 	GetOperationsTypeCount(packageId string, version string, revision int, showOnlyDeleted bool) ([]entity.OperationsTypeCountEntity, error)
-	GetOperationsTypeDataHashes(packageId string, version string, revision int) ([]entity.OperationsTypeDataHashEntity, error)
+	GetOperationsTypes(packageId string, version string, revision int) ([]entity.OperationsTypeEntity, error)
+	GetOperationsInfo(packageId string, version string, revision int) (entity.OperationsInfoEntity, error)
 	GetOperationDeprecatedItems(packageId string, version string, revision int, operationType string, operationId string) (*entity.OperationRichEntity, error)
 	GetDeprecatedOperationsSummary(packageId string, version string, revision int) ([]entity.DeprecatedOperationsSummaryEntity, error)
 	GetDeprecatedOperationsRefsSummary(packageId string, version string, revision int) ([]entity.DeprecatedOperationsSummaryEntity, error)
@@ -237,7 +238,7 @@ func (o operationRepositoryImpl) GetOperations(packageId string, version string,
 
 	if searchReq.EmptyTag {
 		query.Where(`not exists(select 1 from jsonb_array_elements(operation.metadata -> 'tags') a
-            where a.value != '""') `)
+			where a.value != '""') `)
 	}
 
 	if searchReq.Deprecated != nil {
@@ -248,9 +249,6 @@ func (o operationRepositoryImpl) GetOperations(packageId string, version string,
 		query.Where("operation.operation_id in (?)", pg.In(searchReq.Ids))
 	}
 
-	if len(searchReq.HashList) > 0 {
-		query.Where("operation.data_hash in (?)", pg.In(searchReq.HashList))
-	}
 	if searchReq.DocumentSlug != "" {
 		query.Join("inner join published_version_revision_content as pvrc").
 			JoinOn("operation.operation_id = any(pvrc.operation_ids)").
@@ -333,7 +331,7 @@ func (o operationRepositoryImpl) GetDeprecatedOperations(packageId string, versi
 	}
 	if searchReq.EmptyTag {
 		query.Where(`not exists(select 1 from jsonb_array_elements(operation.metadata -> 'tags') a
-            where a.value != '""') `)
+			where a.value != '""') `)
 	}
 	if searchReq.EmptyGroup {
 		//todo try to replace this 'not in' condition with join
@@ -441,7 +439,7 @@ func (o operationRepositoryImpl) GetOperationsTags(searchQuery entity.OperationT
 		from
 		(
 			(select '' as tag
-  				from operation o
+				from operation o
 				where o.package_id = ?package_id
 				and o.version = ?version
 				and o.revision = ?revision
@@ -567,7 +565,7 @@ func (o operationRepositoryImpl) GetChangelog(searchQuery entity.ChangelogSearch
 	}
 	if searchQuery.EmptyTag {
 		query.JoinOn(`not exists(select 1 from jsonb_array_elements(o.metadata -> 'tags') a
-            where a.value != '""') `)
+			where a.value != '""') `)
 	}
 
 	if searchQuery.EmptyGroup {
@@ -726,9 +724,9 @@ func (o operationRepositoryImpl) SearchForOperations(searchQuery *entity.Operati
 							with filtered as (select data_hash from operations)
 							select
 							ts.data_hash,
-							case when scope_rank = 0 then detailed_scope_rank
-								 when detailed_scope_rank = 0 then scope_rank
-								 else scope_rank * detailed_scope_rank end rank
+				case when scope_rank = 0 then detailed_scope_rank
+					when detailed_scope_rank = 0 then scope_rank
+					else scope_rank * detailed_scope_rank end rank
 							from
 							ts_rest_operation_data ts,
 							filtered f,
@@ -773,38 +771,6 @@ func (o operationRepositoryImpl) SearchForOperations(searchQuery *entity.Operati
 							ts.data_hash,
 							scope_rank rank
 							from
-							ts_graphql_operation_data ts,
-							filtered f,
-							to_tsquery(?search_filter) search_query,
-							--using coalesce to skip ts_rank evaluation for scopes that are not requested
-							coalesce(case when ?filter_annotation then null else 0 end, ts_rank(scope_annotation, search_query)) annotation_rank,
-							coalesce(case when ?filter_property then null else 0 end, ts_rank(scope_property, search_query)) property_rank,
-							coalesce(case when ?filter_argument then null else 0 end, ts_rank(scope_argument, search_query)) argument_rank,
-							coalesce(annotation_rank + property_rank + argument_rank) scope_rank
-							where ts.data_hash = f.data_hash
-							and
-							(
-								(?filter_annotation = false and ?filter_property = false and ?filter_argument = false) or
-								(?filter_annotation and search_query @@ scope_annotation) or
-								(?filter_property and search_query @@ scope_property) or
-								(?filter_argument and search_query @@ scope_argument)
-							)
-					) ts
-					group by ts.data_hash
-					order by max(rank) desc
-					limit ?limit
-					offset ?offset
-			) graphql_ts
-				on graphql_ts.data_hash = o.data_hash
-				and o.type = ?graphql_api_type
-				and ?filter_all = false
-			left join (
-					select ts.data_hash, max(rank) as rank from (
-							with filtered as (select data_hash from operations)
-							select
-							ts.data_hash,
-							scope_rank rank
-							from
 							ts_operation_data ts,
 							filtered f,
 							to_tsquery(?search_filter) search_query,
@@ -821,11 +787,11 @@ func (o operationRepositoryImpl) SearchForOperations(searchQuery *entity.Operati
 				on all_ts.data_hash = o.data_hash
 				and ?filter_all = true
 			left join operation_open_count oc
-                on oc.package_id = o.package_id
-                and oc.version = o.version
-                and oc.operation_id = o.operation_id,
+				on oc.package_id = o.package_id
+				and oc.version = o.version
+				and oc.operation_id = o.operation_id,
 			coalesce(?title_weight * (o.title ilike ?text_filter)::int, 0) title_tf,
-			coalesce(?scope_weight * (coalesce(rest_ts.rank, 0) + coalesce(graphql_ts.rank, 0) + coalesce(all_ts.rank, 0)), 0) scope_tf,
+			coalesce(?scope_weight * (coalesce(rest_ts.rank, 0) + coalesce(all_ts.rank, 0)), 0) scope_tf,
 			coalesce(title_tf + scope_tf, 0) init_rank,
 			coalesce(
 				?version_status_release_weight * (o.version_status = ?version_status_release)::int +
@@ -1059,21 +1025,21 @@ func (o operationRepositoryImpl) GetOperationsTypeCount(packageId string, versio
 
 	operationsTypeCountQuery := `
 	with versions as(
-        select s.reference_id as package_id, s.reference_version as version, s.reference_revision as revision
-        from published_version_reference s
+		select s.reference_id as package_id, s.reference_version as version, s.reference_revision as revision
+		from published_version_reference s
 		inner join published_version pv
 		on pv.package_id = s.reference_id
 		and pv.version = s.reference_version
 		and pv.revision = s.reference_revision
-		and pv.deleted_at is %s null
-        where s.package_id = ?
-        and s.version = ?
-        and s.revision = ?
-        and s.excluded = false
-        union
-        select ? as package_id, ? as version, ? as revision
-    ),
-    depr_count as (
+	and pv.deleted_at is %s null
+		where s.package_id = ?
+		and s.version = ?
+		and s.revision = ?
+		and s.excluded = false
+		union
+		select ? as package_id, ? as version, ? as revision
+	),
+	depr_count as (
 		select type, count(operation_id) cnt from operation o, versions v
 		where deprecated = true
 		and o.package_id = v.package_id
@@ -1138,18 +1104,18 @@ func (o operationRepositoryImpl) GetOperationsTypeCount(packageId string, versio
 	return result, nil
 }
 
-func (o operationRepositoryImpl) GetOperationsTypeDataHashes(packageId string, version string, revision int) ([]entity.OperationsTypeDataHashEntity, error) {
-	var result []entity.OperationsTypeDataHashEntity
-	operationsTypeOperationHashesQuery := `
-		select type, json_object_agg(operation_id, data_hash) operations_hash
+func (o operationRepositoryImpl) GetOperationsTypes(packageId string, version string, revision int) ([]entity.OperationsTypeEntity, error) {
+	var result []entity.OperationsTypeEntity
+	operationsTypesQuery := `
+		select distinct type
 		from operation
 		where package_id = ?
 		and version = ?
 		and revision = ?
-		group by type;
+		order by type;
 	`
 	_, err := o.cp.GetConnection().Query(&result,
-		operationsTypeOperationHashesQuery,
+		operationsTypesQuery,
 		packageId, version, revision,
 	)
 	if err != nil {
@@ -1157,6 +1123,32 @@ func (o operationRepositoryImpl) GetOperationsTypeDataHashes(packageId string, v
 			return nil, nil
 		}
 		return nil, err
+	}
+
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetOperationsInfo(packageId string, version string, revision int) (entity.OperationsInfoEntity, error) {
+	var result entity.OperationsInfoEntity
+	operationsInfoQuery := `
+		select json_object_agg(
+			operation_id,
+			json_build_object('apiType', type, 'dataHash', data_hash)
+		) operations_info
+		from operation
+		where package_id = ?
+		and version = ?
+		and revision = ?;
+	`
+	_, err := o.cp.GetConnection().Query(&result,
+		operationsInfoQuery,
+		packageId, version, revision,
+	)
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return result, nil
+		}
+		return result, err
 	}
 
 	return result, nil
@@ -1172,13 +1164,13 @@ func (o operationRepositoryImpl) GetDeprecatedOperationsSummary(packageId string
 		and package_id = ? and version = ? and revision = ?
 		group by type
 	),
- 	tagss as (
-		 select type, array_agg(distinct x.value) as tags from operation
+	tagss as (
+		select type, array_agg(distinct x.value) as tags from operation
 			cross join lateral jsonb_array_elements_text(metadata->'tags') as x
-		 where package_id = ? and version = ? and revision = ?
-		 and ((operation.deprecated_items is not null and jsonb_typeof(operation.deprecated_items) = 'array' and jsonb_array_length(operation.deprecated_items) != 0)
+		where package_id = ? and version = ? and revision = ?
+		and ((operation.deprecated_items is not null and jsonb_typeof(operation.deprecated_items) = 'array' and jsonb_array_length(operation.deprecated_items) != 0)
 				or operation.deprecated = true)
-		 group by type
+		group by type
 	)
 
 	select dc.type as type,
@@ -1229,12 +1221,12 @@ func (o operationRepositoryImpl) GetDeprecatedOperationsRefsSummary(packageId st
 				or r.deprecated = true)
 		group by package_id, version, revision,type
 	),
-    tagss as (
-		 select type, array_agg(distinct x.value) as tags, package_id, version,revision from refss
+	tagss as (
+		select type, array_agg(distinct x.value) as tags, package_id, version,revision from refss
 			cross join lateral jsonb_array_elements_text(metadata->'tags') as x
 		where ((deprecated_items is not null and jsonb_typeof(deprecated_items) = 'array' and jsonb_array_length(deprecated_items) != 0)
 			or deprecated = true)
-		 group by package_id, version, revision, type
+		group by package_id, version, revision, type
 	)
 
 	select dc.type as type, dc.package_id as package_id, dc.version as version, dc.revision as revision,
@@ -1551,7 +1543,7 @@ func (o operationRepositoryImpl) GetGroupedOperations(packageId string, version 
 
 	if searchReq.EmptyTag {
 		query.Where(`not exists(select 1 from jsonb_array_elements(operation.metadata -> 'tags') a
-            where a.value != '""') `)
+			where a.value != '""') `)
 	}
 
 	if searchReq.Deprecated != nil {

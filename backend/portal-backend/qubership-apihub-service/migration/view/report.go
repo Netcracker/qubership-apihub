@@ -145,6 +145,8 @@ const MigrationStageDependentVersionsLastRevs OpsMigrationStage = "dependent_ver
 const MigrationStageIndependentVersionsOldRevs OpsMigrationStage = "independent_versions_old"
 const MigrationStageDependentVersionsOldRevs OpsMigrationStage = "dependent_versions_old"
 
+const MigrationStageDashboardVersions OpsMigrationStage = "dashboard_versions"
+
 const MigrationStageComparisonsOther OpsMigrationStage = "comparisons_other"
 
 const MigrationStageComparisonsOnly OpsMigrationStage = "comparisons_only"

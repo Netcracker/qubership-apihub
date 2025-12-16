@@ -25,47 +25,59 @@ import (
 )
 
 const (
-	InfoFilePath                 = "info.json"
-	DocumentsFilePath            = "documents.json"
-	ComparisonsFilePath          = "comparisons.json"
-	OperationsFilePath           = "operations.json"
-	BuilderNotificationsFilePath = "notifications.json"
-	ChangelogFilePath            = "changelog.json"
+	InfoFilePath                        = "info.json"
+	DocumentsFilePath                   = "documents.json"
+	ComparisonsFilePath                 = "comparisons.json"
+	OperationsFilePath                  = "operations.json"
+	BuilderNotificationsFilePath        = "notifications.json"
+	ChangelogFilePath                   = "changelog.json"
+	VersionInternalDocumentsFilePath    = "version-internal-documents.json"
+	ComparisonInternalDocumentsFilePath = "comparison-internal-documents.json"
 
-	DocumentsRootFolder      = "documents/"
-	ComparisonsRootFolder    = "comparisons/"
-	OperationFilesRootFolder = "operations/"
+	DocumentsRootFolder                   = "documents/"
+	ComparisonsRootFolder                 = "comparisons/"
+	OperationFilesRootFolder              = "operations/"
+	VersionInternalDocumentsRootFolder    = "version-internal-documents/"
+	ComparisonInternalDocumentsRootFolder = "comparison-internal-documents/"
 )
 
 type BuildResultArchive struct {
 	ZipReader *zip.Reader
 
-	InfoFile                 *zip.File
-	DocumentsFile            *zip.File
-	ComparisonsFile          *zip.File
-	OperationsFile           *zip.File
-	BuilderNotificationsFile *zip.File
-	ChangelogFile            *zip.File
+	InfoFile                        *zip.File
+	DocumentsFile                   *zip.File
+	ComparisonsFile                 *zip.File
+	OperationsFile                  *zip.File
+	BuilderNotificationsFile        *zip.File
+	ChangelogFile                   *zip.File
+	VersionInternalDocumentsFile    *zip.File
+	ComparisonInternalDocumentsFile *zip.File
 
-	DocumentsHeaders         map[string]*zip.File
-	OperationFileHeaders     map[string]*zip.File
-	ComparisonsFileHeaders   map[string]*zip.File
-	UncategorizedFileHeaders map[string]*zip.File
+	DocumentsHeaders                   map[string]*zip.File
+	OperationFileHeaders               map[string]*zip.File
+	ComparisonsFileHeaders             map[string]*zip.File
+	VersionInternalDocumentsHeaders    map[string]*zip.File
+	ComparisonInternalDocumentsHeaders map[string]*zip.File
+	UncategorizedFileHeaders           map[string]*zip.File
 
-	PackageInfo          view.PackageInfoFile
-	PackageDocuments     view.PackageDocumentsFile
-	PackageOperations    view.PackageOperationsFile
-	PackageComparisons   view.PackageComparisonsFile
-	BuilderNotifications view.BuilderNotificationsFile
+	PackageInfo                 view.PackageInfoFile
+	PackageDocuments            view.PackageDocumentsFile
+	PackageOperations           view.PackageOperationsFile
+	PackageComparisons          view.PackageComparisonsFile
+	BuilderNotifications        view.BuilderNotificationsFile
+	VersionInternalDocuments    view.VersionInternalDocumentsFile
+	ComparisonInternalDocuments view.ComparisonInternalDocumentsFile
 }
 
 func NewBuildResultArchive(zipReader *zip.Reader) *BuildResultArchive {
 	result := &BuildResultArchive{
-		ZipReader:                zipReader,
-		DocumentsHeaders:         map[string]*zip.File{},
-		OperationFileHeaders:     map[string]*zip.File{},
-		ComparisonsFileHeaders:   map[string]*zip.File{},
-		UncategorizedFileHeaders: map[string]*zip.File{},
+		ZipReader:                          zipReader,
+		DocumentsHeaders:                   map[string]*zip.File{},
+		OperationFileHeaders:               map[string]*zip.File{},
+		ComparisonsFileHeaders:             map[string]*zip.File{},
+		VersionInternalDocumentsHeaders:    map[string]*zip.File{},
+		ComparisonInternalDocumentsHeaders: map[string]*zip.File{},
+		UncategorizedFileHeaders:           map[string]*zip.File{},
 	}
 	result.splitFiles()
 	return result
@@ -89,6 +101,14 @@ func (a *BuildResultArchive) ReadPackageComparisons(required bool) error {
 
 func (a *BuildResultArchive) ReadBuilderNotifications(required bool) error {
 	return a.readFile(BuilderNotificationsFilePath, a.BuilderNotificationsFile, &a.BuilderNotifications, required)
+}
+
+func (a *BuildResultArchive) ReadVersionInternalDocuments(required bool) error {
+	return a.readFile(VersionInternalDocumentsFilePath, a.VersionInternalDocumentsFile, &a.VersionInternalDocuments, required)
+}
+
+func (a *BuildResultArchive) ReadComparisonInternalDocuments(required bool) error {
+	return a.readFile(ComparisonsFilePath, a.ComparisonInternalDocumentsFile, &a.ComparisonInternalDocuments, required)
 }
 
 func (a *BuildResultArchive) readFile(filePath string, file *zip.File, v interface{}, required bool) error {
@@ -144,6 +164,10 @@ func (a *BuildResultArchive) splitFiles() {
 			a.BuilderNotificationsFile = zipFile
 		case ChangelogFilePath:
 			a.ChangelogFile = zipFile
+		case VersionInternalDocumentsFilePath:
+			a.VersionInternalDocumentsFile = zipFile
+		case ComparisonInternalDocumentsFilePath:
+			a.ComparisonInternalDocumentsFile = zipFile
 		default:
 			{
 				if strings.HasPrefix(filepath, DocumentsRootFolder) {
@@ -157,6 +181,14 @@ func (a *BuildResultArchive) splitFiles() {
 				} else if strings.HasPrefix(filepath, ComparisonsRootFolder) {
 					zipFilePtr := zipFile
 					a.ComparisonsFileHeaders[strings.TrimPrefix(filepath, ComparisonsRootFolder)] = zipFilePtr
+					continue
+				} else if strings.HasPrefix(filepath, VersionInternalDocumentsRootFolder) {
+					zipFilePtr := zipFile
+					a.VersionInternalDocumentsHeaders[strings.TrimPrefix(filepath, VersionInternalDocumentsRootFolder)] = zipFilePtr
+					continue
+				} else if strings.HasPrefix(filepath, ComparisonInternalDocumentsRootFolder) {
+					zipFilePtr := zipFile
+					a.ComparisonInternalDocumentsHeaders[strings.TrimPrefix(filepath, ComparisonInternalDocumentsRootFolder)] = zipFilePtr
 					continue
 				} else {
 					a.UncategorizedFileHeaders[filepath] = zipFile

@@ -21,7 +21,7 @@ const (
 	OpenAPI31     ShortcutType = "openapi-3-1"
 	OpenAPI30     ShortcutType = "openapi-3-0"
 	OpenAPI20     ShortcutType = "openapi-2-0"
-	AsyncAPI      ShortcutType = "asyncapi-2"
+	AsyncAPI30    ShortcutType = "asyncapi-3-0"
 	JsonSchema    ShortcutType = "json-schema"
 	MD            ShortcutType = "markdown"
 	GraphQLSchema ShortcutType = "graphql-schema"
@@ -42,8 +42,8 @@ func ParseTypeFromString(s string) ShortcutType {
 		return OpenAPI31
 	case "openapi-2-0":
 		return OpenAPI20
-	case "asyncapi-2":
-		return AsyncAPI
+	case "asyncapi-3-0":
+		return AsyncAPI30
 	case "markdown":
 		return MD
 	case "unknown":

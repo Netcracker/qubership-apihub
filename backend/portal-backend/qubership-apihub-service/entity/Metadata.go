@@ -40,6 +40,10 @@ const EXTERNAL_DOCS = "external_docs"
 const VERSION = "version"
 const DOC_TAGS_KEY = "tags"
 const MIGRATION_ID_KEY = "migration_id"
+const ACTION_KEY = "action"
+const CHANNEL_KEY = "channel"
+const PROTOCOL_KEY = "protocol"
+const OPERATION_ID_V1 = "operationIdV1"
 
 type Metadata map[string]interface{}
 
@@ -334,6 +338,50 @@ func (m Metadata) SetMigrationId(migrationId string) {
 func (m Metadata) GetMigrationId() string {
 	if migrationId, ok := m[MIGRATION_ID_KEY].(string); ok {
 		return migrationId
+	}
+	return ""
+}
+
+func (m Metadata) SetAction(action string) {
+	m[ACTION_KEY] = action
+}
+
+func (m Metadata) GetAction() string {
+	if action, ok := m[ACTION_KEY].(string); ok {
+		return action
+	}
+	return ""
+}
+
+func (m Metadata) SetChannel(channel string) {
+	m[CHANNEL_KEY] = channel
+}
+
+func (m Metadata) GetChannel() string {
+	if channel, ok := m[CHANNEL_KEY].(string); ok {
+		return channel
+	}
+	return ""
+}
+
+func (m Metadata) SetProtocol(protocol string) {
+	m[PROTOCOL_KEY] = protocol
+}
+
+func (m Metadata) GetProtocol() string {
+	if protocol, ok := m[PROTOCOL_KEY].(string); ok {
+		return protocol
+	}
+	return ""
+}
+
+func (m Metadata) SetOperationIdV1(operationIdV1 string) {
+	m[OPERATION_ID_V1] = operationIdV1
+}
+
+func (m Metadata) GetOperationIdV1() string {
+	if operationIdV1, ok := m[OPERATION_ID_V1].(string); ok {
+		return operationIdV1
 	}
 	return ""
 }

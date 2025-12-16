@@ -59,7 +59,8 @@ type GraphqlOperationComparisonChangelogView struct {
 }
 
 type GraphqlOperationPairChangesView struct {
-	CurrentOperation  *GraphqlOperationComparisonChangelogView `json:"currentOperation,omitempty"`
-	PreviousOperation *GraphqlOperationComparisonChangelogView `json:"previousOperation,omitempty"`
-	ChangeSummary     ChangeSummary                            `json:"changeSummary"`
+	CurrentOperation             *GraphqlOperationComparisonChangelogView `json:"currentOperation,omitempty"`
+	PreviousOperation            *GraphqlOperationComparisonChangelogView `json:"previousOperation,omitempty"`
+	ChangeSummary                ChangeSummary                            `json:"changeSummary"`
+	ComparisonInternalDocumentId string                                   `json:"comparisonInternalDocumentId"`
 }

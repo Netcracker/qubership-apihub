@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	mView "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/view"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 
@@ -155,8 +156,8 @@ func makeDependentVersionsQuery(packageIds []string, versionsIn []string, migrat
 			  and (string_to_array(b.version, '@'))[2]::int = pv.revision
 			  and b.metadata->>'build_type' = 'build'
 			  and b.metadata->>'migration_id' = '%s'
-		) and pkg.deleted_at is null
+		) and pkg.deleted_at is null and pkg.kind = '%s'
 		order by pv.published_at asc, pv.package_id asc, pv.version asc, pv.revision asc
-	`, maxrevQueryOperator, migrationId, view.StatusComplete, migrationId)
+	`, maxrevQueryOperator, migrationId, view.StatusComplete, migrationId, entity.KIND_PACKAGE)
 	return query, params
 }

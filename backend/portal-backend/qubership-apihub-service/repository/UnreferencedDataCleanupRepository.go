@@ -34,6 +34,8 @@ type UnreferencedDataCleanupRepository interface {
 	DeleteUnreferencedOperationGroupTemplates(ctx context.Context, runId string, batchSize int) (int, error)
 	DeleteUnreferencedSrcArchives(ctx context.Context, runId string, batchSize int) (int, error)
 	DeleteUnreferencedPublishedData(ctx context.Context, runId string, batchSize int) (int, error)
+	DeleteUnreferencedVersionInternalDocumentData(ctx context.Context, runId string, batchSize int) (int, error)
+	DeleteUnreferencedComparisonInternalDocumentData(ctx context.Context, runId string, batchSize int) (int, error)
 	VacuumAffectedTables(ctx context.Context, runId string) error
 }
 
@@ -95,14 +97,6 @@ func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedOperationData(c
 
 		logger.Tracef(ctx, "Deleting related data for operation data with hash: %v", dataHash)
 
-		logger.Debug(ctx, "Deleting related data from ts_graphql_operation_data")
-		deleteGQLDataQuery := `DELETE FROM ts_graphql_operation_data WHERE data_hash IN (?)`
-		gqlResult, err := tx.ExecContext(ctx, deleteGQLDataQuery, pg.In(dataHash))
-		if err != nil {
-			return fmt.Errorf("failed to delete records from ts_graphql_operation_data: %w", err)
-		}
-		deletedItems.TSGQLOperationData = gqlResult.RowsAffected()
-
 		logger.Debug(ctx, "Deleting related data from ts_rest_operation_data")
 		deleteRestDataQuery := `DELETE FROM ts_rest_operation_data WHERE data_hash IN (?)`
 		restResult, err := tx.ExecContext(ctx, deleteRestDataQuery, pg.In(dataHash))
@@ -148,7 +142,6 @@ func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedOperationData(c
 			cleanupRun.DeletedItems = &deletedItems
 		} else {
 			cleanupRun.DeletedItems.OperationData += deletedItems.OperationData
-			cleanupRun.DeletedItems.TSGQLOperationData += deletedItems.TSGQLOperationData
 			cleanupRun.DeletedItems.TSRestOperationData += deletedItems.TSRestOperationData
 			cleanupRun.DeletedItems.TSOperationData += deletedItems.TSOperationData
 			cleanupRun.DeletedItems.FTSOperationData += deletedItems.FTSOperationData
@@ -165,7 +158,6 @@ func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedOperationData(c
 	})
 
 	return deletedItems.OperationData +
-		deletedItems.TSGQLOperationData +
 		deletedItems.TSRestOperationData +
 		deletedItems.TSOperationData +
 		deletedItems.FTSOperationData, err
@@ -328,6 +320,110 @@ func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedPublishedData(c
 	return deletedPublishData, err
 }
 
+func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedVersionInternalDocumentData(ctx context.Context, runId string, batchSize int) (int, error) {
+	var deletedInternalDocData int
+
+	err := u.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		deleteUnreferencedVersionInternalDocumentDataQuery := `
+			DELETE FROM version_internal_document_data vidd
+			USING (
+  				SELECT hash
+  				FROM version_internal_document_data vidd2
+  				WHERE NOT EXISTS (
+    				SELECT 1 FROM version_internal_document vid WHERE vid.hash = vidd2.hash
+  				)
+  				ORDER BY vidd2.hash
+  				LIMIT ?
+			) del
+			WHERE vidd.hash = del.hash;`
+		res, err := tx.ExecContext(ctx, deleteUnreferencedVersionInternalDocumentDataQuery, batchSize)
+		if err != nil {
+			return fmt.Errorf("failed to delete unreferenced version internal document data: %w", err)
+		}
+
+		logger.Debugf(ctx, "Deleted %d unreferenced version internal document data in current batch", res.RowsAffected())
+		if res.RowsAffected() == 0 {
+			return nil
+		}
+		deletedInternalDocData = res.RowsAffected()
+
+		var cleanupRun entity.UnreferencedDataCleanupEntity
+		err = tx.Model(&cleanupRun).
+			Where("run_id = ?", runId).
+			Select()
+		if err != nil {
+			return fmt.Errorf("failed to get current state of cleanup run: %w", err)
+		}
+		if cleanupRun.DeletedItems == nil {
+			cleanupRun.DeletedItems = &entity.DeletedItemsCounts{}
+		}
+		cleanupRun.DeletedItems.VersionInternalDocumentData += deletedInternalDocData
+		_, err = tx.Model(&cleanupRun).
+			Column("deleted_items").
+			WherePK().
+			Update()
+		if err != nil {
+			return fmt.Errorf("failed to update cleanup run state: %w", err)
+		}
+
+		return nil
+	})
+
+	return deletedInternalDocData, err
+}
+
+func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedComparisonInternalDocumentData(ctx context.Context, runId string, batchSize int) (int, error) {
+	var deletedInternalDocData int
+
+	err := u.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		deleteUnreferencedComparisonInternalDocumentDataQuery := `
+			DELETE FROM comparison_internal_document_data cidd
+			USING (
+  				SELECT hash
+  				FROM comparison_internal_document_data cidd2
+  				WHERE NOT EXISTS (
+    				SELECT 1 FROM comparison_internal_document cid WHERE cid.hash = cidd2.hash
+  				)
+  				ORDER BY cidd2.hash
+  				LIMIT ?
+			) del
+			WHERE cidd.hash = del.hash;`
+		res, err := tx.ExecContext(ctx, deleteUnreferencedComparisonInternalDocumentDataQuery, batchSize)
+		if err != nil {
+			return fmt.Errorf("failed to delete unreferenced comparison internal document data: %w", err)
+		}
+
+		logger.Debugf(ctx, "Deleted %d unreferenced comparison internal document data in current batch", res.RowsAffected())
+		if res.RowsAffected() == 0 {
+			return nil
+		}
+		deletedInternalDocData = res.RowsAffected()
+
+		var cleanupRun entity.UnreferencedDataCleanupEntity
+		err = tx.Model(&cleanupRun).
+			Where("run_id = ?", runId).
+			Select()
+		if err != nil {
+			return fmt.Errorf("failed to get current state of cleanup run: %w", err)
+		}
+		if cleanupRun.DeletedItems == nil {
+			cleanupRun.DeletedItems = &entity.DeletedItemsCounts{}
+		}
+		cleanupRun.DeletedItems.ComparisonInternalDocumentData += deletedInternalDocData
+		_, err = tx.Model(&cleanupRun).
+			Column("deleted_items").
+			WherePK().
+			Update()
+		if err != nil {
+			return fmt.Errorf("failed to update cleanup run state: %w", err)
+		}
+
+		return nil
+	})
+
+	return deletedInternalDocData, err
+}
+
 func (u unreferencedDataCleanupRepositoryImpl) VacuumAffectedTables(ctx context.Context, runId string) error {
 	var cleanupEntity entity.UnreferencedDataCleanupEntity
 	err := u.cp.GetConnection().ModelContext(ctx, &cleanupEntity).
@@ -349,21 +445,10 @@ func (u unreferencedDataCleanupRepositoryImpl) VacuumAffectedTables(ctx context.
 				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				logger.Trace(ctx, "Successfully vacuumed 'operation_data' table")
-			}
+			logger.Trace(ctx, "Successfully vacuumed 'operation_data' table")
 		}
-		if deletedItems.TSGQLOperationData > 0 {
-			logger.Debugf(ctx, "Vacuuming 'ts_graphql_operation_data' table for %d deleted entries", deletedItems.TSGQLOperationData)
-			_, err = u.cp.GetConnection().ExecContext(ctx, "VACUUM FULL ts_graphql_operation_data")
-			if err != nil {
-				errorMsg := fmt.Sprintf("Failed to vacuum 'ts_graphql_operation_data' table: %v", err)
-				logger.Warn(ctx, errorMsg)
-				vacuumErrors = append(vacuumErrors, errorMsg)
-			} else {
-				logger.Trace(ctx, "Successfully vacuumed 'ts_graphql_operation_data' table")
-			}
-		}
-		if deletedItems.TSRestOperationData > 0 {
+	}
+	if deletedItems.TSRestOperationData > 0 {
 			logger.Debugf(ctx, "Vacuuming 'ts_rest_operation_data' table for %d deleted entries", deletedItems.TSRestOperationData)
 			_, err = u.cp.GetConnection().ExecContext(ctx, "VACUUM FULL ts_rest_operation_data")
 			if err != nil {
@@ -427,6 +512,28 @@ func (u unreferencedDataCleanupRepositoryImpl) VacuumAffectedTables(ctx context.
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
 				logger.Tracef(ctx, "Successfully vacuumed 'published_data' table")
+			}
+		}
+		if deletedItems.VersionInternalDocumentData > 0 {
+			logger.Debugf(ctx, "Vacuuming 'version_internal_document_data' table for %d deleted entries", deletedItems.VersionInternalDocumentData)
+			_, err = u.cp.GetConnection().ExecContext(ctx, "VACUUM FULL version_internal_document_data")
+			if err != nil {
+				errorMsg := fmt.Sprintf("Failed to vacuum 'version_internal_document_data' table: %v", err)
+				logger.Warn(ctx, errorMsg)
+				vacuumErrors = append(vacuumErrors, errorMsg)
+			} else {
+				logger.Trace(ctx, "Successfully vacuumed 'version_internal_document_data' table")
+			}
+		}
+		if deletedItems.ComparisonInternalDocumentData > 0 {
+			logger.Debugf(ctx, "Vacuuming 'comparison_internal_document_data' table for %d deleted entries", deletedItems.ComparisonInternalDocumentData)
+			_, err = u.cp.GetConnection().ExecContext(ctx, "VACUUM FULL comparison_internal_document_data")
+			if err != nil {
+				errorMsg := fmt.Sprintf("Failed to vacuum 'comparison_internal_document_data' table: %v", err)
+				logger.Warn(ctx, errorMsg)
+				vacuumErrors = append(vacuumErrors, errorMsg)
+			} else {
+				logger.Trace(ctx, "Successfully vacuumed 'comparison_internal_document_data' table")
 			}
 		}
 	} else {
