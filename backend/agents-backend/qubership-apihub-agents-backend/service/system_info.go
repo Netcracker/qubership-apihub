@@ -24,7 +24,8 @@ import (
 )
 
 const (
-	BASE_PATH = "BASE_PATH"
+	BASE_PATH    = "BASE_PATH"
+	API_SPEC_DIR = "API_SPEC_DIR"
 
 	POSTGRESQL_HOST            = "AGENTS_BACKEND_POSTGRESQL_HOST"
 	POSTGRESQL_PORT            = "AGENTS_BACKEND_POSTGRESQL_PORT"
@@ -36,7 +37,7 @@ const (
 	DEFAULT_WORKSPACE_ID       = "DEFAULT_WORKSPACE_ID"
 	SNAPSHOTS_CLEANUP_SCHEDULE = "SNAPSHOTS_CLEANUP_SCHEDULE"
 	SNAPSHOTS_TTL_DAYS         = "SNAPSHOTS_TTL_DAYS"
-	INSECURE_PROXY             = "INSECURE_PROXY"
+	INSECURE_PROXY             = "INSECURE_PROXY" //TODO: remove this after deprecated proxy path is removed
 	LISTEN_ADDRESS             = "LISTEN_ADDRESS"
 	ORIGIN_ALLOWED             = "ORIGIN_ALLOWED"
 	LOG_LEVEL                  = "LOG_LEVEL"
@@ -46,6 +47,7 @@ type SystemInfoService interface {
 	Init() error
 
 	GetBasePath() string
+	GetApiSpecDir() string
 	GetPGHost() string
 	GetPGPort() int
 	GetPGDB() string
@@ -57,7 +59,7 @@ type SystemInfoService interface {
 	GetDefaultWorkspaceId() string
 	GetSnapshotsCleanupSchedule() string
 	GetSnapshotsTTLDays() int
-	InsecureProxyEnabled() bool
+	InsecureProxyEnabled() bool //TODO: remove this after deprecated proxy path is removed
 	GetListenAddress() string
 	GetOriginAllowed() string
 	GetLogLevel() string
@@ -79,6 +81,7 @@ type systemInfoServiceImpl struct {
 
 func (s systemInfoServiceImpl) Init() error {
 	s.setBasePath()
+	s.setApiSpecDir()
 
 	s.setPGHost()
 	if err := s.setPGPort(); err != nil {
@@ -111,6 +114,18 @@ func (s systemInfoServiceImpl) setBasePath() {
 		s.systemInfoMap[BASE_PATH] = "."
 	}
 }
+
+func (s systemInfoServiceImpl) setApiSpecDir() {
+	s.systemInfoMap[API_SPEC_DIR] = os.Getenv(API_SPEC_DIR)
+	if s.systemInfoMap[API_SPEC_DIR] == "" {
+		s.systemInfoMap[API_SPEC_DIR] = s.GetBasePath() + string(os.PathSeparator) + "api"
+	}
+}
+
+func (s systemInfoServiceImpl) GetApiSpecDir() string {
+	return s.systemInfoMap[API_SPEC_DIR].(string)
+}
+
 func (s systemInfoServiceImpl) GetDBCredsFromEnv() *view.DbCredentials {
 	return &view.DbCredentials{
 		Host:     s.GetPGHost(),

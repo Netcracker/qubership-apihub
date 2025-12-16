@@ -3,6 +3,7 @@ module github.com/Netcracker/qubership-apihub-agents-backend
 go 1.25.1
 
 require (
+	github.com/Netcracker/qubership-apihub-commons-go v0.0.1
 	github.com/go-pg/pg/v10 v10.14.0
 	github.com/go-playground/validator/v10 v10.28.0
 	github.com/google/uuid v1.6.0
@@ -13,7 +14,7 @@ require (
 	github.com/shaj13/libcache v1.0.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/xuri/excelize/v2 v2.8.0
-	golang.org/x/sync v0.18.0
+	golang.org/x/sync v0.19.0
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 )
@@ -24,6 +25,8 @@ require (
 	github.com/go-pg/zerochecker v0.2.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/gosimple/slug v1.15.0 // indirect
+	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
@@ -40,5 +43,6 @@ require (
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	mellium.im/sasl v0.3.1 // indirect
 )

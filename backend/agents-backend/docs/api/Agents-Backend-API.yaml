@@ -991,6 +991,7 @@ paths:
   /agents/{agentId}/namespaces/{namespace}/services/{serviceId}/proxy/{path}:
     get:
       summary: Proxy endpoint to service
+      deprecated: true
       description: Proxy endpoint to service
       operationId: getAgentsIdNamespacesIdServicesProxy
       security:
@@ -1016,6 +1017,63 @@ paths:
             nc-service authorization:
               * if system env INSECURE_PROXY is empty or false, then X-Apihub-Authorization is **required**
               * if system env INSECURE_PROXY = true, then then X-Apihub-Authorization is optional
+      responses:
+        1XX:
+          description: Information responses
+          content:
+            "*/*":
+              schema:
+                description: Schema of any type
+        2XX:
+          description: Successful responses
+          content:
+            "*/*":
+              schema:
+                description: Schema of any type
+        3XX:
+          description: Redirection messages
+          content:
+            "*/*":
+              schema:
+                description: Schema of any type
+        4XX:
+          description: Client error responses
+          content:
+            "*/*":
+              schema:
+                description: Schema of any type
+        5XX:
+          description: Server error responses
+          content:
+            "*/*":
+              schema:
+                description: Schema of any type
+  /api/v2/agents/{agentId}/namespaces/{namespace}/services/{serviceId}/proxy/{path}:
+    get:
+      summary: Proxy endpoint to service
+      description: Proxy endpoint to service
+      operationId: getAgentsIdNamespacesIdServicesProxyV2
+      security:
+        - {}
+      tags:
+        - Agent
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+        - $ref: "#/components/parameters/Namespace"
+        - $ref: "#/components/parameters/ServiceId"
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+          description: String that includes paths and query params
+          example: api/v2/escaped/te%20xt/text/text123?escaped=te%20xt
+        - name: X-Apihub-Authorization
+          in: header
+          schema:
+            type: string
+          description: |
+            The header is a replacement for Authorization header, because original Authorization header should be passed to the target service.
       responses:
         1XX:
           description: Information responses
