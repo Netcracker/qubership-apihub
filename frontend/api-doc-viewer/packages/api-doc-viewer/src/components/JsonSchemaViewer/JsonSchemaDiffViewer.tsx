@@ -16,25 +16,25 @@
 
 import '../../index.css'
 
-import { FC, useMemo } from 'react'
-import { createJsonSchemaDiffTree, JsonSchemaDiffTreeNode } from '@netcracker/qubership-apihub-api-data-model'
+import { createJsonSchemaDiffTree, DiffMetaKeys, JsonSchemaDiffTreeNode } from '@netcracker/qubership-apihub-api-data-model'
+import { aggregateDiffsWithRollup, DiffType } from '@netcracker/qubership-apihub-api-diff'
 import { JsonSchemaState } from '@netcracker/qubership-apihub-api-state-model'
+import { FC, useMemo } from 'react'
 import { DEFAULT_DISPLAY_MODE, DEFAULT_EXPANDED_DEPTH, DEFAULT_LAYOUT_MODE, } from '../../consts/configuration'
-import { DisplayMode } from '../../types/DisplayMode'
-import { LayoutMode } from '../../types/LayoutMode'
-import { PropsWithOverriddenKind } from '../../types/internal/PropsWithState'
-import { isCombinerNodeState, isPropNodeState } from './types/nodes.guards'
-import { JsonPropNodeViewer } from './JsonPropNodeViewer/JsonPropNodeViewer'
-import { JsonCombinerNodeViewer } from './JsonCombinerNodeViewer/JsonCombinerNodeViewer'
+import { ChangeSeverityFiltersContext } from '../../contexts/ChangeSeverityFiltersContext'
 import { DisplayModeContext } from '../../contexts/DisplayModeContext'
 import { LayoutModeContext } from '../../contexts/LayoutModeContext'
 import { LevelContext } from '../../contexts/LevelContext'
-import { ChangeSeverityFiltersContext } from '../../contexts/ChangeSeverityFiltersContext'
 import { TopLevelPropsMediaTypesContext } from '../../contexts/TopLevelPropsMediaTypesContext'
+import { DisplayMode } from '../../types/DisplayMode'
+import { LayoutMode } from '../../types/LayoutMode'
+import { PropsWithOverriddenKind } from '../../types/internal/PropsWithState'
 import { PropsWithTopLevelPropsMediaTypesMap } from '../../types/internal/PropsWithTopLevelPropsMediaTypesMap'
-import { ErrorBoundary } from "../services/ErrorBoundary";
-import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback";
-import { DiffType } from '@netcracker/qubership-apihub-api-diff'
+import { ErrorBoundary } from "../services/ErrorBoundary"
+import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback"
+import { JsonCombinerNodeViewer } from './JsonCombinerNodeViewer/JsonCombinerNodeViewer'
+import { JsonPropNodeViewer } from './JsonPropNodeViewer/JsonPropNodeViewer'
+import { isCombinerNodeState, isPropNodeState } from './types/nodes.guards'
 
 export type JsonSchemaDiffViewerProps = {
   schema: unknown,
@@ -43,13 +43,13 @@ export type JsonSchemaDiffViewerProps = {
   // diffs
   layoutMode?: LayoutMode
   filters?: ReadonlyArray<DiffType>
-  diffMetaKey: symbol
+  metaKeys: DiffMetaKeys
 } & PropsWithOverriddenKind & PropsWithTopLevelPropsMediaTypesMap
 
 export const JsonSchemaDiffViewer: FC<JsonSchemaDiffViewerProps> = (props) => {
   return (
-    <ErrorBoundary fallback={<ErrorBoundaryFallback componentName="JSON Schema Diff Viewer"/>}>
-      <JsonSchemaDiffViewerInner {...props}/>
+    <ErrorBoundary fallback={<ErrorBoundaryFallback componentName="JSON Schema Diff Viewer" />}>
+      <JsonSchemaDiffViewerInner {...props} />
     </ErrorBoundary>
   )
 }
@@ -63,14 +63,16 @@ const JsonSchemaDiffViewerInner: FC<JsonSchemaDiffViewerProps> = (props) => {
     layoutMode = DEFAULT_LAYOUT_MODE,
     filters = [],
     overriddenKind,
-    diffMetaKey,
+    metaKeys,
     // FIXME 18.06.24 // Get rid of it when future wonderful AMT+ADV are ready!
     topLevelPropsMediaTypes
   } = props
 
+  aggregateDiffsWithRollup(schema, metaKeys.diffsMetaKey, metaKeys.aggregatedDiffsMetaKey)
+
   const tree = useMemo(
-    () => createJsonSchemaDiffTree(schema, diffMetaKey),
-    [diffMetaKey, schema]
+    () => createJsonSchemaDiffTree(schema, metaKeys),
+    [metaKeys, schema]
   )
   const state = useMemo(
     // @ts-expect-error // Bad types
@@ -78,9 +80,9 @@ const JsonSchemaDiffViewerInner: FC<JsonSchemaDiffViewerProps> = (props) => {
     [expandedDepth, tree]
   )
 
-  // console.debug('Schema:', schema)
-  // console.debug('Tree Model:', tree)
-  // console.debug('State Model:', state)
+  console.debug('Schema:', schema)
+  console.debug('Tree Model:', tree)
+  console.debug('State Model:', state)
 
   const root = state.root
   let content = null

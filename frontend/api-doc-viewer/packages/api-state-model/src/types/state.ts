@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { GraphApiTreeNode, IModelTreeNode } from '@netcracker/qubership-apihub-api-data-model'
+import { IModelTreeNode } from '@netcracker/qubership-apihub-api-data-model'
 import { modelStateNodeType } from '../consts'
 import { NodesChangesSummary } from '../../../api-doc-viewer/src/types/aliases/changes'
 
@@ -75,5 +75,3 @@ export interface IModelStateCombinaryNode<T extends IModelTreeNode<any, any, any
 
   select(id: string): void
 }
-
-export type GraphOperationsFilter = (node: GraphApiTreeNode) => boolean

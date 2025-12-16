@@ -12,6 +12,7 @@ export type ModelTreeNodeType = keyof typeof modelTreeNodeType;
 export interface IModelTree<T, K extends string, M> {
   root: IModelTreeNode<T, K, M> | null;
   nodes: Map<string, IModelTreeNode<T, K, M>>;
+  nextId(idCandidate: string): string
 }
 
 export interface IModelTreeNode<T, K extends string, M> {
@@ -31,7 +32,7 @@ export interface IModelTreeNode<T, K extends string, M> {
   meta: M;
   isCycle: boolean;
 
-  createCycledClone(id: string, key: string | number, parent: IModelTreeNode<T, K, M> | null): IModelTreeNode<T, K, M>;
+  createCycledClone(tree: IModelTree<T, K, M>, id: string, key: string | number, parent: IModelTreeNode<T, K, M> | null): IModelTreeNode<T, K, M>;
 
   value(nestedId?: string): T | null;
 
@@ -42,6 +43,14 @@ export interface IModelTreeNode<T, K extends string, M> {
   addChild(node: IModelTreeNode<T, K, M>): void;
 
   addNestedNode(node: IModelTreeNode<T, K, M>): void;
+
+  /* Feature "Lazy Tree Building" */
+  expand(): this;
+
+  collapse(): this;
+
+  removeChildrenByCondition(filter: FilterChildrenByCondition<T, K, M>): void
+  /* --- */
 }
 
 export type ModelTreeNodeParams<T, K extends string, M> = {
@@ -52,3 +61,10 @@ export type ModelTreeNodeParams<T, K extends string, M> = {
   container?: IModelTreeNode<T, K, M> | null;
   newDataLevel?: boolean;
 };
+
+export type FilterChildrenByCondition<T, K extends string, M> =
+  (
+    node: IModelTreeNode<T, K, M>,
+    index: number,
+    array: IModelTreeNode<T, K, M>[],
+  ) => boolean

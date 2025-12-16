@@ -1,7 +1,9 @@
 import { Diff, DiffAction } from "@netcracker/qubership-apihub-api-diff"
 import { GraphApiDirective, isGraphApiDirective, isGraphApiEnumDefinition } from "@netcracker/qubership-apihub-graphapi"
-import { CrawlHookResponse, JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
+import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
 import { isDiff, isObject, setValueByPath, wasGraphApiEnumDefinition } from "../utils"
+import { IModelTreeNode } from "../abstract"
+import { graphApiNodeKind } from "./constants"
 
 type GraphApiFragmentWithDirectives = {
   directives?: Record<string, GraphApiDirective>
@@ -15,6 +17,17 @@ function hasGraphApiDirectives(value: unknown): value is GraphApiFragmentWithDir
       .filter(Boolean)
       .every(isGraphApiDirective)
   )
+}
+
+export function isGraphApiOperationNode(node: IModelTreeNode<unknown, string, unknown> | undefined): boolean {
+  if (!node) {
+    return false
+  }
+  return [
+    graphApiNodeKind.query,
+    graphApiNodeKind.mutation,
+    graphApiNodeKind.subscription
+  ].some(kind => node.kind === kind)
 }
 
 export function resolveEnumValues(value: unknown, valueDiffs?: unknown) {
@@ -75,13 +88,11 @@ export function transformChangesForDirectiveDeprecated(source: unknown) {
           const after = rearrangedChange.afterValue
           const isDirectiveAfter = isGraphApiDirective(after)
           rearrangedChange.afterValue = isDirectiveAfter ? after.meta?.reason : after
-          rearrangedChange.afterNormalizedValue = rearrangedChange.afterValue
         }
         if (rearrangedChange.action === DiffAction.remove) {
           const before = rearrangedChange.beforeValue
           const isDirectiveBefore = isGraphApiDirective(before)
           rearrangedChange.beforeValue = isDirectiveBefore ? before.meta?.reason : before
-          rearrangedChange.beforeNormalizedValue = rearrangedChange.beforeValue
         }
         copiedChange = rearrangedChange
       }
@@ -104,4 +115,94 @@ export function transformChangesForDirectiveDeprecated(source: unknown) {
 export function areExcludedComponents(path: JsonPath) {
   const excluded: PropertyKey[] = ['objects', 'inputObjects', 'interfaces', 'unions', 'enums']
   return path.length > 0 && path[0] === 'components' && excluded.includes(path[1])
+}
+
+/**
+ * Create filter function to remove all children except the one with the given operation name.
+ *
+ * If operation name is not provided, we take first operation by default.
+ * If operation name is provided, but there's no operation with such name, we take the first operation by default.
+ *
+ * @param operationName - operation name to leave only this operation in the tree
+ * @returns filter function to remove all children except the one with the given operation name
+ */
+export function createLeaveOnlyOneOperationFilter(
+  operationType?: keyof typeof graphApiNodeKind,
+  operationName?: string,
+) {
+  return !operationName && !operationType
+    ? createLeaveOnlyFirstOperationFilter()
+    : createLeaveOperationByNameOrFirstOperationFilter(operationType, operationName);
+}
+
+function createLeaveOnlyFirstOperationFilter() {
+  let operationSearchExecuted: boolean = false;
+
+  let firstOperationIndex: number = -1
+
+  return (
+    node: IModelTreeNode<unknown, string, unknown>,
+    index: number,
+    array: IModelTreeNode<unknown, string, unknown>[]
+  ) => {
+    if (!isGraphApiOperationNode(node)) {
+      return true;
+    }
+
+
+    if (!operationSearchExecuted) {
+      operationSearchExecuted = true;
+      for (let i = 0; i < array.length; i++) {
+        const currentNode = array[i];
+        if (!isGraphApiOperationNode(currentNode)) {
+          continue;
+        }
+        firstOperationIndex = i;
+        break;
+      }
+    }
+
+    return index === firstOperationIndex;
+  };
+}
+
+function createLeaveOperationByNameOrFirstOperationFilter(
+  operationType?: keyof typeof graphApiNodeKind,
+  operationName?: string,
+) {
+  let operationSearchExecuted: boolean = false;
+
+  let firstOperationIndex: number = -1;
+  let requiredOperationIndex: number = -1;
+
+  return (
+    node: IModelTreeNode<unknown, string, unknown>,
+    index: number,
+    array: IModelTreeNode<unknown, string, unknown>[]
+  ) => {
+    if (!isGraphApiOperationNode(node)) {
+      return true;
+    }
+
+    if (!operationSearchExecuted) {
+      operationSearchExecuted = true;
+      for (let i = 0; i < array.length; i++) {
+        const currentNode = array[i];
+        if (!isGraphApiOperationNode(currentNode)) {
+          continue;
+        }
+        if (firstOperationIndex === -1) {
+          firstOperationIndex = i;
+        }
+        if (currentNode.key === operationName && currentNode.kind === operationType) {
+          requiredOperationIndex = i;
+          break;
+        }
+      }
+    }
+
+    return requiredOperationIndex === -1
+      ? index === firstOperationIndex
+      : index === requiredOperationIndex;
+  };
 }

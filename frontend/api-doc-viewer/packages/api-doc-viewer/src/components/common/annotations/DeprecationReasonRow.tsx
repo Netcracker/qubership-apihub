@@ -58,12 +58,13 @@ export const DeprecationReasonRow: FC<DeprecationReasonRowProps> = (props) => {
     value,
     layoutMode = DEFAULT_LAYOUT_MODE,
     level = DEFAULT_ROW_DEPTH,
+    $nodeChange,
     $metaChanges,
   } = props
 
   const filters = useChangeSeverityFilters()
 
-  const $change = $metaChanges?.deprecationReason as Diff
+  const $change = $nodeChange ?? $metaChanges?.deprecationReason as Diff
   const $action = $change?.action
 
   const { isDocumentLayoutMode, isInlineDiffsLayoutMode, isSideBySideDiffsLayoutMode } = getLayoutModeFlags(layoutMode)
@@ -136,7 +137,7 @@ export const DeprecationReasonRow: FC<DeprecationReasonRowProps> = (props) => {
   }
 
   if (isSideBySideDiffsLayoutMode) {
-    if (!$metaChanges) {
+    if (!$nodeChange && !$metaChanges) {
       return (
         <div className="flex flex-row">
           <Content layoutSide={ORIGIN_LAYOUT_SIDE} />

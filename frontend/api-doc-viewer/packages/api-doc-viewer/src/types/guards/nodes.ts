@@ -57,7 +57,7 @@ export function isDiffNodeMeta(
   }
 
   const castedMeta = meta as JsonSchemaDiffNodeMeta | GraphApiDiffNodeMeta
-  return !!(castedMeta.$nodeChangesSummary ||
+  return !!(/* castedMeta.$nodeChangesSummary || */
     castedMeta.$nodeChange || castedMeta.$metaChanges
     || castedMeta.$childrenChanges || castedMeta.$nestedChanges)
 }

@@ -17,8 +17,8 @@
 import type { FC } from 'react'
 import { ExpandingCaret } from './ExpandingCaret'
 import { NestingHorizontalIndicator } from '../../NestingIndicator'
-import { defaultOnContextMenu } from '../../../../utils/common/event-handlers'
-import { ToggleContextMenuHandler } from '../../../kit/ux/UxContextMenu/types/ToggleContextMenuHandler'
+// import { defaultOnContextMenu } from '../../../../utils/common/event-handlers'
+// import { ToggleContextMenuHandler } from '../../../kit/ux/UxContextMenu/types/ToggleContextMenuHandler'
 
 export type ExpanderProps = {
   isRoot: boolean
@@ -26,11 +26,11 @@ export type ExpanderProps = {
   isExpandable?: boolean
   expanded: boolean
   onToggleExpander: () => void
-  onToggleContextMenu: ToggleContextMenuHandler
+  // onToggleContextMenu: ToggleContextMenuHandler
 }
 
 export const Expander: FC<ExpanderProps> = (props) => {
-  const { isRoot, isOperation, isExpandable, expanded, onToggleExpander, onToggleContextMenu } = props
+  const { isRoot, isOperation, isExpandable, expanded, onToggleExpander/*, onToggleContextMenu */ } = props
 
   let expanderElement = null
   if (isExpandable) {
@@ -56,7 +56,7 @@ export const Expander: FC<ExpanderProps> = (props) => {
         <div
           data-name="ExpanderContainer"
           className={`${isExpandable || !isRoot ? 'w-5' : ''} flex flex-row items-center pt-1`}
-          onContextMenu={defaultOnContextMenu(isExpandable, onToggleContextMenu)}
+          // onContextMenu={defaultOnContextMenu(isExpandable, onToggleContextMenu)}
         >
           {expanderElement}
         </div>

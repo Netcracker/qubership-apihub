@@ -21,7 +21,6 @@ import {
   JsonSchemaDiffNodeMeta,
   JsonSchemaDiffNodeValue
 } from '@netcracker/qubership-apihub-api-data-model'
-import { isDirectiveNode } from '../components/GraphQLOperationViewer/utils/nodes'
 import { BADGE_KIND_ALTERNATIVE_INFO, BADGE_KIND_INFO } from '../components/kit/ux/types'
 import { UNKNOWN_TYPE_TEXT } from '../consts/types'
 import { GraphNodeTitleDataOptions, JsonNodeTitleDataOptions, NodeTitleData, } from '../types/NodeTitleData'
@@ -57,7 +56,7 @@ export function buildNodeTitleData(options: JsonNodeTitleDataOptions | GraphNode
     items: isItemsNode(node),
     additionalItem: isAdditionalItemsNode(node),
     item: isItemNode(node),
-    directive: isDirectiveNode(node) || isDirectiveUsageNode(node),
+    directive: isDirectiveUsageNode(node),
   }
 
   const data: NodeTitleData = {

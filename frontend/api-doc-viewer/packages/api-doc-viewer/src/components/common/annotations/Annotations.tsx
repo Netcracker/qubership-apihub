@@ -87,6 +87,7 @@ export const Annotations: FC<AnnotationsProps> = (props) => {
           value={deprecationReason!}
           layoutMode={layoutMode}
           level={level}
+          $nodeChange={$appliedNodeChange}
           $metaChanges={$nodeMeta?.$metaChanges}
         />
       )}

@@ -1,12 +1,19 @@
+import { modelTreeNodeType, UNKNOWN_TYPE } from "../../abstract/constants";
 import { ModelTree } from '../../abstract/model/model-tree.impl';
 import { CreateNodeResult, IModelTreeNode } from '../../abstract/model/types';
-import { UNKNOWN_TYPE, modelTreeNodeType } from "../../abstract/constants";
 import { isOpenApiExtensionKey } from '../../oas-extension-key';
 import { getNodeComplexityType, isObject, pick, pickByPredicate } from '../../utils';
 import { jsonSchemaNodeMetaProps, jsonSchemaNodeValueProps } from '../constants';
 import { isJsonSchemaNodeType } from '../guards';
 import { isBrokenRef, isRequired } from '../utils';
-import { type JsonSchemaCreateNodeParams, type JsonSchemaNodeKind, type JsonSchemaNodeMeta, JsonSchemaNodeType, type JsonSchemaNodeValue } from './types';
+import type {
+  JsonSchemaCreateNodeParams,
+  JsonSchemaNodeKind,
+  JsonSchemaNodeMeta,
+  JsonSchemaNodeValue
+} from './types';
+import { JsonSchemaNodeType } from './types';
+import { LazyBuildingContext } from "../../abstract/model/model-tree-node.impl";
 
 export class JsonSchemaModelTree<
   T = JsonSchemaNodeValue,
@@ -60,7 +67,10 @@ export class JsonSchemaModelTree<
     } as T
   }
 
-  public createJsonSchemaNode(params: JsonSchemaCreateNodeParams<T, K, M>): CreateNodeResult<IModelTreeNode<T, K, M>> {
+  public createJsonSchemaNode(
+    params: JsonSchemaCreateNodeParams<T, K, M>,
+    lazyBuildingContext?: LazyBuildingContext<any, any, any>,
+  ): CreateNodeResult<IModelTreeNode<T, K, M>> {
     const {
       id, kind, key = '', value, parent = null, container = null, newDataLevel = true, isCycle,
     } = params
@@ -74,7 +84,7 @@ export class JsonSchemaModelTree<
         newDataLevel: newDataLevel,
       }
       return {
-        node: this.createNode(id, kind, key, isCycle, _params),
+        node: this.createNode(id, kind, key, isCycle, _params, lazyBuildingContext),
         value: null,
       }
     }
@@ -94,7 +104,7 @@ export class JsonSchemaModelTree<
         meta: _nodeMeta,
         newDataLevel: newDataLevel,
       }
-      result.node = this.createComplexNode(id, kind, key, isCycle, _params)
+      result.node = this.createComplexNode(id, kind, key, isCycle, _params, lazyBuildingContext)
     } else {
       const _nodeValue = this.createNodeValue({
         ...params,
@@ -109,18 +119,20 @@ export class JsonSchemaModelTree<
         container,
         newDataLevel: newDataLevel,
       }
-      result.node = this.createNode(id, kind, key, isCycle, _params)
+      result.node = this.createNode(id, kind, key, isCycle, _params, lazyBuildingContext)
     }
 
     return result
   }
 
+  /** @deprecated */
   public createNestedNode(id: string, kind: K, key: string | number, value: any, container: any, isCycle: boolean) {
     const res = this.createJsonSchemaNode({ id, kind, key, value, container, parent: container.parent, isCycle })
     container.addNestedNode(res.node)
     return res
   }
 
+  /** @deprecated */
   public createChildNode(id: string, kind: K, key: string | number, value: any, parent: any, isCycle: boolean) {
     const res = this.createJsonSchemaNode({ id, kind, key, value, parent, isCycle })
     parent?.addChild(res.node)

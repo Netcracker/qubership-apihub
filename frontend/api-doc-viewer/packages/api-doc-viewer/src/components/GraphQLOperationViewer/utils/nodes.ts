@@ -30,10 +30,6 @@ export function isPropertyNode(node?: IModelTreeNode<any, any, any> | null): boo
   return matchNodeKind(graphSchemaNodeKind.property, node)
 }
 
-export function isDirectiveNode(node?: IModelTreeNode<any, any, any> | null): boolean {
-  return matchNodeKind(graphSchemaNodeKind.directive, node)
-}
-
 export function matchNodeKind(kind: string, node?: IModelTreeNode<any, any, any> | null): boolean {
   return !!node && !!kind && node.kind === kind
 }

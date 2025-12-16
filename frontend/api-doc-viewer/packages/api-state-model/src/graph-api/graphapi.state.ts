@@ -25,14 +25,13 @@ import {
 } from '@netcracker/qubership-apihub-api-data-model'
 import { modelStateNodeType } from '../consts'
 import { GraphSchemaStateCombinaryNode, GraphSchemaStatePropNode } from '../graph-schema'
-import { GraphOperationsFilter, IModelStateCombinaryNode, IModelStateNode, IModelStatePropNode } from '../types'
+import { IModelStateCombinaryNode, IModelStateNode, IModelStatePropNode } from '../types'
 import { isGraphApiOperationNode, isGraphApiSchemaNode } from '../utils'
 
 const GRAPH_API_KIND_PRIORITIES: Partial<Record<GraphApiNodeKind, number>> = {
   [graphApiNodeKind.query]: 2,
   [graphApiNodeKind.mutation]: 2,
   [graphApiNodeKind.subscription]: 2,
-  [graphSchemaNodeKind.directive]: 1,
 }
 
 export class GraphApiStateCombinaryNode extends GraphSchemaStateCombinaryNode<GraphApiTreeNode> {
@@ -44,7 +43,6 @@ export class GraphApiStatePropNode extends GraphSchemaStatePropNode<GraphApiTree
     node: GraphApiTreeNode,
     parent: IModelStatePropNode<GraphApiTreeNode> | null,
     first = false,
-    private _filter?: GraphOperationsFilter,
   ) {
     super(node, parent, first)
     if (isGraphApiSchemaNode(node) || isGraphApiOperationNode(node)) {
@@ -55,19 +53,18 @@ export class GraphApiStatePropNode extends GraphSchemaStatePropNode<GraphApiTree
 
   protected buildChildrenNodes(): IModelStateNode<GraphApiTreeNode>[] {
     if (!isGraphApiSchemaNode(this.node)) {
-      return super.buildChildrenNodes(this._sort)
+      return super.buildChildrenNodes(/* this._sort*/)
     }
 
     const children = this.node
+      .expand()
       .children(this.selected)
-      .filter((child) => !this._filter || this._filter(child as GraphApiTreeNode))
 
     if (children.length === 0) {
       return []
     }
 
     let firstOperation: string | null = null
-    let firstDirective: string | null = null
 
     return children
       .sort((a, b) => {
@@ -81,11 +78,6 @@ export class GraphApiStatePropNode extends GraphSchemaStatePropNode<GraphApiTree
         const { kind } = prop
         let first = false
         switch (kind) {
-          case graphSchemaNodeKind.directive:
-            // if first directive already found -> not first
-            first = !firstDirective
-            firstDirective = prop.id
-            break
           case graphApiNodeKind.query:
           case graphApiNodeKind.mutation:
           case graphApiNodeKind.subscription:
@@ -101,7 +93,7 @@ export class GraphApiStatePropNode extends GraphSchemaStatePropNode<GraphApiTree
   }
 
   protected createStatePropNode(node: GraphApiTreeNode, first = false): IModelStatePropNode<GraphApiTreeNode> {
-    return new GraphApiStatePropNode(node, this, first, this._filter)
+    return new GraphApiStatePropNode(node, this, first)
   }
 
   protected createStateCombinaryNode(node: GraphApiTreeNode): IModelStateCombinaryNode<GraphApiTreeNode> {
@@ -114,18 +106,10 @@ export class GraphApiState {
 
   constructor(
     tree: IModelTree<GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta>,
-    operationName?: string,
     expandDepth = 1,
   ) {
-    const filter: GraphOperationsFilter = (node) => !isGraphApiOperationNode(node) || node.key === operationName
-
     this.root = tree.root
-      ? new GraphApiStatePropNode(
-        tree.root as GraphApiTreeNode,
-        null,
-        true,
-        operationName ? filter : undefined
-      )
+      ? new GraphApiStatePropNode(tree.root as GraphApiTreeNode, null, true)
       : null
     this.root?.expand(expandDepth)
   }
