@@ -17,6 +17,8 @@
 import { API_AUDIENCE_INTERNAL, API_KIND } from '../src'
 import { Editor, LocalRegistry } from './helpers'
 
+import { describe, expect, test } from '@jest/globals'
+
 const bugsPackage = LocalRegistry.openPackage('bugs')
 const swaggerPackage = LocalRegistry.openPackage('basic_swagger')
 const migrationBug = LocalRegistry.openPackage('migration_bug')
@@ -72,7 +74,7 @@ describe('Operation Bugs', () => {
       ],
     })
 
-    const operationV1 = result.operations.get('v1-pet-findbystatus-get')
+    const operationV1 = result.operations.get('v1-pet-findByStatus-get')
     expect(operationV1?.title).toMatch(/(\s*)TEST(\s*)/g)
   })
 
@@ -93,14 +95,14 @@ describe('Operation Bugs', () => {
       files: [{
         fileId: 'petstore(publish_1).yaml',
         publish: true,
-      },
-      ],
+      }],
     })
 
     const result = await editor.run({
       packageId: 'config_bug',
       version: '3.0',
       previousVersion: '1.0',
+      refs: [],
       files: [{
         fileId: 'petstore(publish_2).yaml',
         publish: true,
@@ -120,8 +122,7 @@ describe('Operation Bugs', () => {
       files: [{
         fileId: 'search-scope-v1.yaml',
         publish: true,
-      },
-      ],
+      }],
     })
 
     const result = await editor.run({

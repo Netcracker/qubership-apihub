@@ -30,7 +30,7 @@ import { GroupExportTemplateResolver } from '../internal'
 import { PackageResolver } from './package'
 
 export interface BuilderResolvers {
-  fileResolver: FileResolver
+  fileResolver?: FileResolver
   packageResolver?: PackageResolver
   versionResolver?: VersionResolver
   versionOperationsResolver?: VersionOperationsResolver

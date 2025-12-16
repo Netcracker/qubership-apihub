@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { OpenAPIV3 } from 'openapi-types'
+import { OpenAPIV3 } from 'openapi-types'
 
 import type { ApiOperation, NotificationMessage, VersionDocument } from '../../types'
 import { REST_DOCUMENT_TYPE, REST_KIND_KEY, REST_SCOPES } from './rest.consts'
@@ -30,6 +30,7 @@ export interface RestOperationMeta {
   method: OpenAPIV3.HttpMethods           // `get` | `post` | ...
   tags?: string[]                         // operations tags
   customTags?: CustomTags
+  operationIdV1: string                    // operation ID (legacy V1 format)
 }
 
 export interface RestDocumentInfo {

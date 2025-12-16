@@ -1,0 +1,10 @@
+{
+  "packageId": "metadata",
+  "version": "v1",
+  "files": [
+    {
+      "fileId": "base.yaml",
+      "publish": true
+    }
+  ]
+}

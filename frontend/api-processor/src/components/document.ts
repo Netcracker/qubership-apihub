@@ -16,7 +16,7 @@
 
 import { BuildConfigFile, BuilderContext, SourceFile, FILE_KIND, TextFile, VersionDocument } from '../types'
 import { API_KIND, API_KIND_LABEL, DOCUMENT_TYPE, FILE_FORMAT_UNKNOWN } from '../consts'
-import { getDocumentTitle, getFileExtension, rawToApiKind } from '../utils'
+import { createVersionInternalDocument, getDocumentTitle, getFileExtension, rawToApiKind } from '../utils'
 import { buildBinaryDocument, unknownApiBuilder } from '../apitypes'
 
 export const buildErrorDocument = (file: BuildConfigFile, parsedFile?: TextFile): VersionDocument => {
@@ -35,6 +35,7 @@ export const buildErrorDocument = (file: BuildConfigFile, parsedFile?: TextFile)
     operationIds: [],
     metadata,
     source: parsedFile?.source,
+    versionInternalDocument: createVersionInternalDocument(slug),
   }
 }
 

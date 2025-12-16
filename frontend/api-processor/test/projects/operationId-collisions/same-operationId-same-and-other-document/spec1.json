@@ -1,0 +1,28 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "API with Duplicated Operations",
+    "description": "Test case for duplicate operationId within single document",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/v1/resource": {
+      "get": {
+        "summary": "Get resource",
+        "operationId": "getResource1",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

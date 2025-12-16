@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-import { BREAKING_CHANGE_TYPE, OperationChanges } from '../../types'
+import { BREAKING_CHANGE_TYPE, ResolvedOperation, RISKY_CHANGE_TYPE } from '../../types'
 import { API_KIND } from '../../consts'
-import { markChangeAsRisky } from '../../utils/changes'
+import { Diff } from '@netcracker/qubership-apihub-api-diff'
 
-export function validateBwcBreakingChanges(
-  operationChanges: OperationChanges,
-): void {
-  if (!operationChanges?.changeSummary?.breaking) {
-    return
+export function reclassifyNoBwcBreakingChanges(
+  operationDiffs: Diff[],
+  previous?: ResolvedOperation,
+  current?: ResolvedOperation,
+): Diff[] {
+  if (current?.apiKind === API_KIND.NO_BWC || previous?.apiKind === API_KIND.NO_BWC) {
+    return operationDiffs?.map((diff) => {
+      return diff.type === BREAKING_CHANGE_TYPE
+        ? { ...diff, type: RISKY_CHANGE_TYPE }
+        : diff
+    })
   }
-  if (operationChanges?.apiKind !== API_KIND.NO_BWC && operationChanges?.previousApiKind !== API_KIND.NO_BWC) {
-    return
-  }
-  for (const diff of operationChanges?.diffs ?? []) {
-    if (diff.type !== BREAKING_CHANGE_TYPE) {
-      continue
-    }
-    markChangeAsRisky(diff, operationChanges)
-  }
+  return operationDiffs
 }

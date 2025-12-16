@@ -1,0 +1,14 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /pet:
+    post:
+      requestBody:
+        content:
+          'application/json':
+            schema: {}
+      responses:
+        '200':
+          description: OK

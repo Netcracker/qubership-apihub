@@ -15,7 +15,7 @@
  */
 
 import { Editor, LocalRegistry } from './helpers'
-import { BREAKING_CHANGE_TYPE, BUILD_TYPE, RISKY_CHANGE_TYPE, SEMI_BREAKING_CHANGE_TYPE, VERSION_STATUS } from '../src'
+import { BREAKING_CHANGE_TYPE, BUILD_TYPE, RISKY_CHANGE_TYPE, VERSION_STATUS } from '../src'
 
 const portal = new LocalRegistry('deprecated')
 
@@ -77,7 +77,12 @@ describe('Deprecated Items test', () => {
     const deprecatedItems = Array.from(result.operations.values()).flatMap(operation => operation.deprecatedItems)
 
     expect(deprecatedItems.every(item => item?.description?.startsWith('[Deprecated]'))).toBeTruthy()
-    expect(result.operations.get('auth-saml-post')?.deprecatedItems?.[0].deprecatedInPreviousVersions.length).toBe(2)
+    expect(result.operations.get('auth-saml-post')?.deprecatedItems?.[0].deprecatedInPreviousVersions).toEqual(['v1', 'v2'])
+    expect(Array.from(result.operations.values())).toEqual(expect.toIncludeSameMembers([
+      expect.objectContaining({ deprecated: true, deprecatedInfo: 'deprecated reason', deprecatedInPreviousVersions: ['v1', 'v2'] }),
+      expect.objectContaining({ deprecated: false }),
+      expect.objectContaining({ deprecated: false }),
+    ]))
   })
 
   test('should have 1 semi-breaking changes for removed operation and property according to rules', async () => {

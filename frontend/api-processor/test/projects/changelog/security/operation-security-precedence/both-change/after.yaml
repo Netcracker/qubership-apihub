@@ -1,0 +1,30 @@
+openapi: 3.0.3
+info:
+  title: Security Test
+  version: 1.0.0
+security:
+  - BasicAuth: []
+paths:
+  /test:
+    get:
+      summary: Test operation
+      security:
+        - OAuth2:
+            - write
+      responses:
+        '200':
+          description: OK
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    OAuth2:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://example.com/oauth/authorize
+          scopes:
+            read: Read access
+            write: Write access
+

@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import type { BuildConfig, DeprecateItem, NotificationMessage } from '../../types'
-import { API_AUDIENCE_EXTERNAL } from '../../types'
+import { API_AUDIENCE_EXTERNAL, BuildConfig, DeprecateItem, NotificationMessage } from '../../types'
 import {
   getKeyValue,
   getSplittedVersionKey,
@@ -31,7 +30,6 @@ import { GraphQLSchemaType, VersionGraphQLDocument, VersionGraphQLOperation } fr
 import { GRAPHQL_API_TYPE, GRAPHQL_TYPE } from './graphql.consts'
 import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 import { toTitleCase } from '../../utils/strings'
-import { calculateObjectHash } from '../../utils/hashes'
 import {
   calculateDeprecatedItems,
   GRAPH_API_PROPERTY_COMPONENTS,
@@ -46,6 +44,7 @@ import {
 } from '@netcracker/qubership-apihub-api-unifier'
 import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
 import { DebugPerformanceContext, syncDebugPerformance } from '../../utils/logs'
+import { calculateHash, ObjectHashCache } from '../../utils/hashes'
 
 export const buildGraphQLOperation = (
   operationId: string,
@@ -57,11 +56,11 @@ export const buildGraphQLOperation = (
   refsOnlyDocument: GraphApiSchema,
   notifications: NotificationMessage[],
   config: BuildConfig,
+  normalizedSpecFragmentsHashCache: ObjectHashCache,
   debugCtx?: DebugPerformanceContext,
 ): VersionGraphQLOperation => {
-  const singleOperationSpec: GraphApiSchema = cropToSingleOperation(document.data, type, method)
+  const { apiKind: documentApiKind, slug: documentSlug, versionInternalDocument } = document
   const singleOperationEffectiveSpec: GraphApiSchema = cropToSingleOperation(effectiveDocument, type, method)
-  const singleOperationRefsOnlySpec: GraphApiSchema = cropToSingleOperation(refsOnlyDocument, type, method)
 
   const deprecatedItems: DeprecateItem[] = syncDebugPerformance('[DeprecatedItems]', () => {
     const foundedDeprecatedItems = calculateDeprecatedItems(singleOperationEffectiveSpec, ORIGINS_SYMBOL)
@@ -72,8 +71,8 @@ export const buildGraphQLOperation = (
 
       const isOperation = isOperationPaths(declarationJsonPaths)
       const [version] = getSplittedVersionKey(config.version)
+      const hash = isOperation ? undefined : calculateHash(value, normalizedSpecFragmentsHashCache)
 
-      const hash = isOperation ? undefined : calculateObjectHash(value)
       result.push({
         declarationJsonPaths,
         ...takeIfDefined({ description }),
@@ -86,20 +85,11 @@ export const buildGraphQLOperation = (
     return result
   }, debugCtx)
 
-  const apiKind = document.apiKind || API_KIND.BWC
-
-
-  const dataHash = syncDebugPerformance('[ModelsAndOperationHashing]', () => {
-    calculateSpecRefs(document.data, singleOperationRefsOnlySpec, singleOperationSpec)
-    const dataHash = calculateObjectHash(singleOperationSpec)
-    return dataHash
-  }, debugCtx)
-
-
+  const apiKind = documentApiKind || API_KIND.BWC
 
   return {
     operationId,
-    dataHash,
+    documentId: documentSlug,
     apiType: GRAPHQL_API_TYPE,
     apiKind: rawToApiKind(apiKind),
     deprecated: !!singleOperationEffectiveSpec[type]?.[method]?.directives?.deprecated,
@@ -109,11 +99,12 @@ export const buildGraphQLOperation = (
       method: method,
     },
     tags: [type],
-    data: singleOperationSpec,
+    data: undefined,  // we do not want to save single-operation specs for GraphQL for performance reasons
     searchScopes: {},
     deprecatedItems,
     models: {},
     apiAudience: API_AUDIENCE_EXTERNAL,
+    versionInternalDocumentId: versionInternalDocument.versionDocumentId,
   }
 }
 
@@ -127,7 +118,7 @@ const isOperationPaths = (paths: JsonPath[]): boolean => {
 // todo output of this method disrupts document normalization.
 //  origin symbols are not being transferred to the resulting spec.
 //  DO NOT pass output of this method to apiDiff
-const cropToSingleOperation = (
+export const cropToSingleOperation = (
   specification: GraphApiSchema,
   type: GraphQLSchemaType,
   method: string,

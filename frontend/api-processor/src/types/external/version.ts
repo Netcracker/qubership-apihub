@@ -28,6 +28,7 @@ export type ResolvedVersion = {
   previousVersionPackageId?: string
   operationTypes?: OperationTypes[]
   version: string
+  apiProcessorVersion: string
 
   // other params (not used in builder logic)
   [key: string]: unknown

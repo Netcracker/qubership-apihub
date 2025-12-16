@@ -14,13 +14,23 @@
  * limitations under the License.
  */
 
-import { Editor, LocalRegistry } from './helpers'
-import { BUILD_TYPE } from '../src'
+import {
+  buildPrefixGroupChangelogPackage,
+  changesSummaryMatcher,
+  Editor,
+  LocalRegistry,
+  numberOfImpactedOperationsMatcher,
+  operationChangesMatcher,
+} from './helpers'
+import { ANNOTATION_CHANGE_TYPE, BREAKING_CHANGE_TYPE, BUILD_TYPE, NON_BREAKING_CHANGE_TYPE } from '../src'
 
 const pkg = LocalRegistry.openPackage('apihub')
 
-describe('Prefix Groups test',  () => {
-  beforeAll(async () => {
+describe('Prefix Groups test', () => {
+
+  // this test uses too large sample (runs too long) and checks only number of operations, mostly useless
+  // todo: remove this test
+  test.skip('should compare prefix groups groups=v2,v3', async () => {
     // generate missing versions/apihub folder contents
     await pkg.publish(pkg.packageId, {
       version: 'v1',
@@ -62,18 +72,268 @@ describe('Prefix Groups test',  () => {
         { fileId: 'Public Registry API.yaml' },
       ],
     })
-  })
 
-  test('should compare prefix groups /api/{group}, groups=v2, v3', async () => {
     const editor = await Editor.openProject(pkg.packageId, pkg)
     const result = await editor.run({
       version: 'prefix2',
-      previousVersion: 'prefix1',
-      currentGroup: '/api/v3',
-      previousGroup: 'api/v2',
+      currentGroup: '/api/v3/',
+      previousGroup: '/api/v2/',
       buildType: BUILD_TYPE.PREFIX_GROUPS_CHANGELOG,
     })
 
     expect(result.comparisons?.[0].data?.length).toBe(95)
   })
+
+  test('should compare prefix groups mixed cases', async () => {
+    const result = await buildPrefixGroupChangelogPackage({ packageId: 'prefix-groups/mixed-cases' })
+
+    expect(result).toEqual(changesSummaryMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 2,
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 2,
+    }))
+  })
+
+  test('should compare prefix groups when prefix specified in server', async () => {
+    const result = await buildPrefixGroupChangelogPackage({
+      packageId: 'prefix-groups/mixed-cases-with-bulk-prefix-increment',
+      config: { files: [{ fileId: 'spec1.yaml' }, { fileId: 'spec2.yaml' }] },
+    })
+
+    expect(result).toEqual(changesSummaryMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,
+    }))
+
+    //check operation ids
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        previousOperationId: 'api-v1-removed-get',
+      }),
+      expect.objectContaining({
+        operationId: 'api-v2-added-get',
+      }),
+      expect.objectContaining({
+        operationId: 'api-v2-changed1-get',
+        previousOperationId: 'api-v1-changed1-get',
+      }),
+    ]))
+  })
+
+  test('should compare prefix groups when prefix is moved from server to path', async () => {
+    const result = await buildPrefixGroupChangelogPackage({
+      packageId: 'prefix-groups/mixed-cases-with-prefix-moved-from-server-to-path',
+      config: { files: [{ fileId: 'spec1.yaml' }, { fileId: 'spec2.yaml' }] },
+    })
+
+    expect(result).toEqual(changesSummaryMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,
+    }))
+
+    //check operation ids
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        previousOperationId: 'api-v1-removed-get',
+      }),
+      expect.objectContaining({
+        operationId: 'api-v2-changed1-get',
+        previousOperationId: 'api-v1-changed1-get',
+      }),
+      expect.objectContaining({
+        operationId: 'api-v2-added-get',
+      }),
+    ]))
+  })
+
+  // todo: case that we don't support due to shifting to the new changelog calculation approach which involves comparison of the entire docs instead of the operation vs operation comparison
+  test.skip('should compare prefix groups when prefix is overridden in method', async () => {
+    const result = await buildPrefixGroupChangelogPackage({
+      packageId: 'prefix-groups/mixed-cases-with-method-prefix-override',
+      config: { files: [{ fileId: 'spec1.yaml' }, { fileId: 'spec2.yaml' }] },
+    })
+
+    expect(result).toEqual(changesSummaryMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,// todo
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,// todo
+    }))
+  })
+
+  test('should compare prefix groups when prefix is overridden in path', async () => {
+    const result = await buildPrefixGroupChangelogPackage({
+      packageId: 'prefix-groups/mixed-cases-with-path-prefix-override',
+      config: { files: [{ fileId: 'spec1.yaml' }, { fileId: 'spec2.yaml' }] },
+    })
+
+    expect(result).toEqual(changesSummaryMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+      [ANNOTATION_CHANGE_TYPE]: 1,
+    }))
+
+    //check operation ids
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        previousOperationId: 'api-v1-removed-get',
+      }),
+      expect.objectContaining({
+        operationId: 'api-v2-changed1-get',
+        previousOperationId: 'api-v1-changed1-get',
+      }),
+      expect.objectContaining({
+        operationId: 'api-v2-added-get',
+      }),
+    ]))
+  })
+
+  test('Add method in a new version', async () => {
+    const result = await buildPrefixGroupChangelogPackage({ packageId: 'prefix-groups/add-method' })
+
+    expect(result).toEqual(changesSummaryMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }))
+
+    //check operation ids
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        operationId: 'api-v2-path1-post',
+      }),
+    ]))
+  })
+
+  test('Remove method in a new version', async () => {
+    const result = await buildPrefixGroupChangelogPackage({ packageId: 'prefix-groups/remove-method' })
+
+    expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+
+    //check operation ids
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        previousOperationId: 'api-v1-path1-post',
+      }),
+    ]))
+  })
+
+  test('Change method content in a new version', async () => {
+    const result = await buildPrefixGroupChangelogPackage({ packageId: 'prefix-groups/change-method' })
+
+    expect(result).toEqual(changesSummaryMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+    }))
+
+    //check operation ids
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        operationId: 'api-v2-path1-get',
+        previousOperationId: 'api-v1-path1-get',
+      }),
+    ]))
+  })
+
+  test('Change path parameter name in a new version', async () => {
+    const result = await buildPrefixGroupChangelogPackage({ packageId: 'prefix-groups/change-path-param-name' })
+
+    expect(result).toEqual(changesSummaryMatcher({
+      [ANNOTATION_CHANGE_TYPE]: 2,
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [ANNOTATION_CHANGE_TYPE]: 1,
+    }))
+
+    //check operation ids
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        operationId: 'api-v2-users-_id_-posts-get',
+        previousOperationId: 'api-v1-users-_userId_-posts-get',
+      }),
+    ]))
+  })
+
+  test('should compare prefix groups with different length', async () => {
+    const result = await buildPrefixGroupChangelogPackage({
+      packageId: 'prefix-groups/different-prefix-length',
+      config: {
+        previousGroup: '/api/v10/',
+        currentGroup: '/api/v1000/',
+      },
+    })
+
+    expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+
+    //check operation ids
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        operationId: 'api-v1000-packages-get',
+        previousOperationId: 'api-v10-packages-get',
+      }),
+    ]))
+  })
+
+  describe('Validation of incorrect group prefixes', () => {
+    test('should throw error for invalid currentGroup - missing ending slash', async () => {
+      await expect(buildPrefixGroupChangelogPackage({
+        packageId: 'prefix-groups/different-prefix-length',
+        config: {
+          previousGroup: '/api/v10/',
+          currentGroup: '/api/v1000',
+        },
+      })).rejects.toThrow('currentGroup must begin and end with a "/" character and contain at least one meaningful character, received: "/api/v1000"')
+    })
+
+    test('should throw error for invalid previousGroup - missing starting slash', async () => {
+      await expect(buildPrefixGroupChangelogPackage({
+        packageId: 'prefix-groups/different-prefix-length',
+        config: {
+          previousGroup: 'api/v10/',
+          currentGroup: '/api/v1000/',
+        },
+      })).rejects.toThrow('previousGroup must begin and end with a "/" character and contain at least one meaningful character, received: "api/v10/"')
+    })
+
+    test('should throw error for group that is too short', async () => {
+      await expect(buildPrefixGroupChangelogPackage({
+        packageId: 'prefix-groups/different-prefix-length',
+        config: {
+          previousGroup: '//',
+          currentGroup: '/api/v1000/',
+        },
+      })).rejects.toThrow('previousGroup must begin and end with a "/" character and contain at least one meaningful character, received: "//"')
+    })
+  })
+
+  // todo add case when api/v1 in servers and api/v2 in some paths?
 })

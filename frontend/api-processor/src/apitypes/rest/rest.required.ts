@@ -17,9 +17,10 @@
 import { isArray, isObject, syncCrawl as newSyncCrawl, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl'
 import { Diff, DIFF_META_KEY, DiffAction, DiffMetaRecord } from '@netcracker/qubership-apihub-api-diff'
 import { getJsoProperty, JSON_SCHEMA_PROPERTY_REQUIRED } from '@netcracker/qubership-apihub-api-unifier'
+import { BEFORE_VALUE_NORMALIZED_PROPERTY } from '../../consts'
 
 export function findRequiredRemovedProperties(mergedJso: unknown, diffs: Diff[]): RequiredDiff[] | undefined {
-  const removedPropDiffs = diffs.filter(diff => diff.action === DiffAction.remove && isObject(diff.beforeNormalizedValue))
+  const removedPropDiffs = diffs.filter(diff => diff.action === DiffAction.remove && isObject((diff as Record<symbol, unknown>)[BEFORE_VALUE_NORMALIZED_PROPERTY]))
 
   const requiredPropertiesState: RequiredPropertiesCrawlState = {
     crawledValues: new Set(),
@@ -81,7 +82,7 @@ export const requiredHook: RequiredPropertiesCrawlHook = ({ key, value, state })
       state.propertyDiff.push({
         propName,
         propDiff,
-        requiredDiff: requiredDiffs.find(rd => (rd.action === DiffAction.remove || rd.action === DiffAction.replace) && rd.beforeNormalizedValue === propName),
+        requiredDiff: requiredDiffs.find(rd => (rd.action === DiffAction.remove || rd.action === DiffAction.replace) && (rd as Record<symbol, unknown>)[BEFORE_VALUE_NORMALIZED_PROPERTY] === propName),
       })
     })
 

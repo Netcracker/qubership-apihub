@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { BuildConfig } from './types'
+import { BuildConfig, VersionCache } from './types'
 import { assert } from './utils'
 import { BUILD_TYPE } from './consts'
+import { version as apiProcessorVersion } from '../package.json'
 
 export function validateConfig(config: BuildConfig): void {
   assert(config.packageId, 'builder config: packageId required')
@@ -26,5 +27,17 @@ export function validateConfig(config: BuildConfig): void {
   const refsCount = config?.refs?.length
   if (!filesCount && !refsCount && config.buildType === BUILD_TYPE.BUILD) {
     throw new Error('Incorrect config. Got no files and refs')
+  }
+}
+
+export function validateApiProcessorVersion(resolvedVersion: VersionCache | null, errorPrefix?: string): void {
+
+  if (!resolvedVersion) {
+    return
+  }
+
+  if (resolvedVersion.apiProcessorVersion !== apiProcessorVersion) {
+    errorPrefix = errorPrefix ? `${errorPrefix} ` : ''
+    throw new Error(`${errorPrefix}Expected api-processor version:  ${apiProcessorVersion}, got ${resolvedVersion.apiProcessorVersion} for package ${resolvedVersion.packageId} version ${resolvedVersion.version}`)
   }
 }

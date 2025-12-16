@@ -14,23 +14,56 @@
  * limitations under the License.
  */
 
-import { buildChangelogPackage, changesSummaryMatcher, numberOfImpactedOperationsMatcher } from './helpers'
+import {
+  buildGqlChangelogPackage,
+  changesSummaryMatcher,
+  numberOfImpactedOperationsMatcher,
+  operationChangesMatcher,
+} from './helpers'
 import { BREAKING_CHANGE_TYPE, GRAPHQL_API_TYPE, NON_BREAKING_CHANGE_TYPE } from '../src'
 
 describe('Graphql changes test', () => {
-  test('add mutation', async () => {
-    const result = await buildChangelogPackage(
-      'graphql-changes-test/add-mutation', [{ fileId: 'before.gql' }], [{ fileId: 'after.gql' }],
-    )
-    expect(result).toEqual(changesSummaryMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
+  describe('Added/removed/changed operations handling', () => {
+    test('Add operation', async () => {
+      const result = await buildGqlChangelogPackage('graphql-changes/add-operation')
+      expect(result).toEqual(changesSummaryMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
+      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
+    })
+
+    test('Remove operation', async () => {
+      const result = await buildGqlChangelogPackage('graphql-changes/remove-operation')
+      expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
+      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
+    })
+
+    test('Change operation content', async () => {
+      const result = await buildGqlChangelogPackage('graphql-changes/change-inside-operation')
+      expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
+      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
+    })
   })
 
-  test('remove mutation', async () => {
-    const result = await buildChangelogPackage(
-      'graphql-changes-test/remove-mutation', [{ fileId: 'before.gql' }], [{ fileId: 'after.gql' }],
-    )
-    expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
+  test('Operation changes fields are correct', async () => {
+    const result = await buildGqlChangelogPackage('graphql-changes/operation-changes-fields')
+
+    expect(result).toEqual(operationChangesMatcher([
+      expect.objectContaining({
+        previousOperationId: 'query-fruits',
+        operationId: 'query-fruits',
+        previousMetadata: {
+          'title': 'Fruits',
+          'tags': ['queries'],
+          'method': 'fruits',
+          'type': 'query',
+        },
+        metadata: {
+          'title': 'Fruits',
+          'tags': ['queries'],
+          'method': 'fruits',
+          'type': 'query',
+        },
+        // rest of the fields are covered by dedicated tests
+      }),
+    ]))
   })
 })

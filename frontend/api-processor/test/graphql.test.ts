@@ -39,7 +39,7 @@ describe('GraphQL test', () => {
       packageId: PACKAGE_ID,
       version: 'graphql',
       files: [
-        {fileId: 'spec.gql'},
+        { fileId: 'spec.gql' },
       ],
     })
 
@@ -53,7 +53,7 @@ describe('GraphQL test', () => {
       version: 'v2',
       previousVersion: 'v1',
       files: [
-        {fileId: 'spec1.graphql'},
+        { fileId: 'spec1.graphql' },
       ],
     })
 
@@ -63,4 +63,28 @@ describe('GraphQL test', () => {
     expect(changes?.every(change => change?.description)).toBeTruthy()
     //TODO BAD PERFORMANCE!
   }, 200000)
+
+  describe('GraphQL operations', () => {
+    test('should not have data for GraphQL operations', async () => {
+      const pkg = LocalRegistry.openPackage('graphql')
+      await pkg.publish('graphql', {
+        packageId: 'graphql',
+        version: 'v1',
+        files: [{ fileId: 'spec.gql' }],
+      })
+
+      const resolvedOperations = await pkg.versionOperationsResolver('graphql', 'v1', 'graphql', undefined, true)
+      expect(resolvedOperations).toBeTruthy()
+
+      const graphqlOperations = resolvedOperations!.operations
+
+      // GraphQL operations should exist in the operations list
+      expect(graphqlOperations.length).toBeGreaterThan(0)
+
+      // GraphQL operations should have undefined data (which prevents file creation)
+      for (const operation of graphqlOperations) {
+        expect(operation.data).toBeUndefined()
+      }
+    })
+  })
 })

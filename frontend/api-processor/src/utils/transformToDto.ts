@@ -15,8 +15,9 @@
  */
 
 import { Diff, DiffAction, DiffType, risky } from '@netcracker/qubership-apihub-api-diff'
-import { calculateObjectHash } from './hashes'
+import { calculateHash, ObjectHashCache } from './hashes'
 import { ArrayType, isEmpty } from './arrays'
+import { AFTER_VALUE_NORMALIZED_PROPERTY, BEFORE_VALUE_NORMALIZED_PROPERTY } from '../consts'
 import {
   ChangeMessage,
   ChangeSummary,
@@ -29,7 +30,11 @@ import {
   VersionsComparisonDto,
 } from '../types'
 
-export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: string) => void): ChangeMessage<DiffTypeDto> {
+export function toChangeMessage(
+  diff: ArrayType<Diff[]>,
+  normalizedSpecFragmentsHashCache: ObjectHashCache,
+  logError: (message: string) => void,
+): ChangeMessage<DiffTypeDto> {
   const newDiff: ArrayType<Diff<DiffTypeDto>[]> = {
     ...diff,
     type: replaceStringDiffType(diff.type, { origin: risky, override: SEMI_BREAKING_CHANGE_TYPE }) as DiffTypeDto,
@@ -52,10 +57,10 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
     case DiffAction.add: {
       const {
         afterDeclarationPaths,
-        afterNormalizedValue,
       } = newDiff
-      if (afterNormalizedValue === undefined) {
-        logError('Add diff has undefined afterNormalizedValue')
+      const afterValueNormalized = (newDiff as Record<symbol, unknown>)[AFTER_VALUE_NORMALIZED_PROPERTY]
+      if (afterValueNormalized === undefined) {
+        logError('Add diff has undefined afterValueNormalized')
       }
       if (isEmpty(afterDeclarationPaths)) {
         logError('Add diff has empty afterDeclarationPaths')
@@ -64,16 +69,16 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
         ...commonChangeProps,
         action,
         currentDeclarationJsonPaths: afterDeclarationPaths,
-        currentValueHash: afterNormalizedValue !== undefined ? calculateObjectHash(afterNormalizedValue) : '',
+        currentValueHash: calculateHash(afterValueNormalized, normalizedSpecFragmentsHashCache),
       }
     }
     case DiffAction.remove: {
       const {
         beforeDeclarationPaths,
-        beforeNormalizedValue,
       } = newDiff
-      if (beforeNormalizedValue === undefined) {
-        logError('Remove diff has undefined beforeNormalizedValue')
+      const beforeValueNormalized = (newDiff as Record<symbol, unknown>)[BEFORE_VALUE_NORMALIZED_PROPERTY]
+      if (beforeValueNormalized === undefined) {
+        logError('Remove diff has undefined beforeValueNormalized')
       }
       if (isEmpty(beforeDeclarationPaths)) {
         logError('Remove diff has empty beforeDeclarationPaths')
@@ -82,18 +87,18 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
         ...commonChangeProps,
         action,
         previousDeclarationJsonPaths: beforeDeclarationPaths,
-        previousValueHash: beforeNormalizedValue !== undefined ? calculateObjectHash(beforeNormalizedValue) : '',
+        previousValueHash: calculateHash(beforeValueNormalized, normalizedSpecFragmentsHashCache),
       }
     }
     case DiffAction.replace: {
       const {
         beforeDeclarationPaths,
         afterDeclarationPaths,
-        beforeNormalizedValue,
-        afterNormalizedValue,
       } = newDiff
-      if (afterNormalizedValue === undefined && beforeNormalizedValue === undefined) {
-        logError('Replace diff has undefined beforeNormalizedValue and afterNormalizedValue')
+      const beforeValueNormalized = (newDiff as Record<symbol, unknown>)[BEFORE_VALUE_NORMALIZED_PROPERTY]
+      const afterValueNormalized = (newDiff as Record<symbol, unknown>)[AFTER_VALUE_NORMALIZED_PROPERTY]
+      if (afterValueNormalized === undefined && beforeValueNormalized === undefined) {
+        logError('Replace diff has undefined beforeValueNormalized and afterValueNormalized')
       }
       if (isEmpty(afterDeclarationPaths) && isEmpty(beforeDeclarationPaths)) {
         logError('Replace diff has empty afterDeclarationPaths and beforeDeclarationPaths')
@@ -103,8 +108,8 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
         action,
         currentDeclarationJsonPaths: afterDeclarationPaths,
         previousDeclarationJsonPaths: beforeDeclarationPaths,
-        currentValueHash: afterNormalizedValue !== undefined ? calculateObjectHash(afterNormalizedValue) : '',
-        previousValueHash: beforeNormalizedValue !== undefined ? calculateObjectHash(beforeNormalizedValue) : '',
+        currentValueHash: calculateHash(afterValueNormalized, normalizedSpecFragmentsHashCache),
+        previousValueHash: calculateHash(beforeValueNormalized, normalizedSpecFragmentsHashCache),
       }
     }
     case DiffAction.rename: {
@@ -137,28 +142,30 @@ export function toOperationChangesDto({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   impactedSummary,
   ...rest
-}: OperationChanges, logError: (message: string) => void): OperationChangesDto {
+}: OperationChanges, normalizedSpecFragmentsHashCache: ObjectHashCache, logError: (message: string) => void): OperationChangesDto {
   return {
     ...rest,
     changeSummary: replacePropertyInChangesSummary<DiffType, DiffTypeDto>(rest.changeSummary, {
       origin: risky,
       override: SEMI_BREAKING_CHANGE_TYPE,
     }),
-    changes: diffs?.map(diff => toChangeMessage(diff, logError)),
+    changes: diffs?.map(diff => toChangeMessage(diff, normalizedSpecFragmentsHashCache, logError)),
   }
 }
 
 export function toVersionsComparisonDto({
   data,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  comparisonInternalDocuments,
   ...rest
-}: VersionsComparison, logError: (message: string) => void): VersionsComparisonDto {
+}: VersionsComparison, normalizedSpecFragmentsHashCache: ObjectHashCache, logError: (message: string) => void): VersionsComparisonDto {
   return {
     ...rest,
     operationTypes: convertDtoFieldOperationTypes<DiffType, DiffTypeDto>(rest.operationTypes, {
       origin: risky,
       override: SEMI_BREAKING_CHANGE_TYPE,
     }),
-    data: data?.map(data => toOperationChangesDto(data, logError)),
+    data: data?.map(data => toOperationChangesDto(data, normalizedSpecFragmentsHashCache, logError)),
   }
 }
 

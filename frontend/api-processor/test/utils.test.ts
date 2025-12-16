@@ -14,49 +14,12 @@
  * limitations under the License.
  */
 
-import { findSharedPath, removeObjectDuplicates, removeSecurityDuplicates, slugify } from '../src/utils'
-import { getOperationBasePath } from '../src/apitypes/rest/rest.utils'
+import { findSharedPath, removeObjectDuplicates, removeSecurityDuplicates, SLUG_OPTIONS_DOCUMENT_ID, slugify } from '../src/utils'
 
 describe('Utils', () => {
   describe('Unit tests for \'slugify\' function', () => {
-    expect(slugify('test/test.json')).toEqual('test-test-json')
-    expect(slugify('test 123.json')).toEqual('test-123-json')
-  })
-
-  describe('Unit test for getOperationPath', () => {
-    test('Should handle Servers with parameters correctly', () => {
-      const servers = [{
-        url: '{protocol}://{host}/api',
-        description: 'Remote server',
-        variables: {
-          protocol: {
-            description: 'Request protocol.',
-            enum: ['http', 'https'],
-            default: 'https',
-          },
-          host: {
-            description: 'Name of the server, for remote development.',
-            enum: ['billing-ui-api.com'],
-            default: 'billing-ui-api.com',
-          },
-        },
-      }]
-
-      expect(getOperationBasePath(servers)).toEqual('/api')
-    })
-
-    test('Should handle Servers with absolute url correctly', () => {
-      expect(getOperationBasePath([{ url: 'https://example.com/v1' }])).toEqual('/v1')
-      expect(getOperationBasePath([{ url: 'https://example.com/v1/' }])).toEqual('/v1')
-    })
-
-    test('Should handle Servers with relative url correctly', () => {
-      expect(getOperationBasePath([{ url: '/v1' }])).toEqual('/v1')
-      expect(getOperationBasePath([{ url: 'v1' }])).toEqual('/v1')
-      expect(getOperationBasePath([{ url: 'v1/' }])).toEqual('/v1')
-      expect(getOperationBasePath([{ url: '/v1/' }])).toEqual('/v1')
-      expect(getOperationBasePath([{ url: '/' }])).toEqual('')
-    })
+    expect(slugify('test/test.json', SLUG_OPTIONS_DOCUMENT_ID)).toEqual('test-test-json')
+    expect(slugify('test 123.json', SLUG_OPTIONS_DOCUMENT_ID)).toEqual('test-123-json')
   })
 
   describe('Unit tests for \'findSharedPath\' function', () => {
