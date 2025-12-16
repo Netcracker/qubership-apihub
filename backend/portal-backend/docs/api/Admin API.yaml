@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: APIHUB system administrators API
+  title: APIHUB system administrators API – External
   description: |
-    The API is for system administrators only.
+    External API contract for system administrators.
   license:
     name: qubership
     url: https://qubership.org
@@ -32,6 +32,10 @@ tags:
     description: Operations to move packages
   - name: System
     description: System operations
+  - name: Admin
+    description: APIs for technical administration.
+  - name: Roles
+    description: APIs for role management.
 
 paths:
   "/api/v2/admin/transition/move":
@@ -273,35 +277,623 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
-  /api/v2/admin/system/stats:
-    get:
+  "/api/v2/roles":
+    post:
       tags:
-        - System
-      summary: Get system statistics
+        - Roles
+      summary: Create a new role
       description: |
-        Retrieves system-wide statistics including business entities count, build statistics, and database size information.
-      operationId: getSystemStats
+        Create a new role with the set of available permissions for this role.
+
+        The role may be assigned to the user for the specific package.
+
+        The "read content of public packages" permissions is applied for all roles by default (except the private packages with default role = **none**).
+      operationId: postRoles
+      requestBody:
+        description: Role creation parameters
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleCreate"
       responses:
-        "200":
-          description: System statistics retrieved successfully
+        "201":
+          description: Created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SystemStats"
+                allOf:
+                  - $ref: "#/components/schemas/Role"
+                  - type: object
+                    properties:
+                      permissions:
+                        type: array
+                        description: List of permissions applicable to the role.
+                        items:
+                          $ref: "#/components/schemas/Permission"
+                        example: ["read", "create_and_update_package", "delete_package"]
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
         "403":
           description: Forbidden
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  "/api/v2/roles/{roleId}":
+    parameters:
+      - name: roleId
+        in: path
+        required: true
+        description: Role identifier.
+        schema:
+          type: string
+          pattern: "^[a-z0-9-]"
+          example: editor
+    patch:
+      tags:
+        - Roles
+      summary: Update role
+      description: |
+        Change role parameters.
+
+        If the parameter is not transmitted in the request, its value remains unchanged.
+
+        Read only roles can't be updated.
+      operationId: patchRolesId
+      requestBody:
+        description: Role update parameters.
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - permissions
+              properties:
+                permissions:
+                  description: |
+                    List of role permissions.
+                    Current role permissions will be replaced by the transmitted list.
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Permission"
+                  example: ["read", "create_and_update_package", "delete_package"]
+      responses:
+        "204":
+          description: No content
+          content: {}
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+    delete:
+      tags:
+        - Roles
+      summary: Delete role
+      description: |
+        Delete a role with its permissions.
+
+        When the role is deleted, all users with that role shall be removed from packages.
+
+        Roles with **readOnly:true** flag can't be deleted.
+      operationId: deleteRolesId
+      responses:
+        "204":
+          description: No content
+          content: {}
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v2/roles/changeOrder":
+    post:
+      tags:
+        - Roles
+      summary: Update the roles order
+      description: |
+        Update the roles order.
+
+        The list of roles will be replaced, all existing roles are required in request (return an error otherwise).
+      operationId: postRolesChangeOrder
+      requestBody:
+        description: Roles list
+        content:
+          application/json:
+            schema:
+              type: object
+              description: List of roles.
+              required:
+                - roles
+              properties:
+                roles:
+                  type: array
+                  items:
+                    type: string
+                  example: [admin, owner, editor, viewer, none]
+      responses:
+        "204":
+          description: No content
+          content: {}
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  "/api/v2/admins":
+    get:
+      x-nc-api-audience: noBWC
+      tags:
+        - Roles
+      summary: Get list of system administrators
+      description: Get list of system administrators.
+      operationId: getAdmins
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admins:
+                    description: List of system administrators.
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+    post:
+      x-nc-api-audience: noBWC
+      tags:
+        - Roles
+      summary: Add a system administrator
+      description: |
+        Add an existing user as a system administrator.
+      operationId: postAdmins
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  description: Login of the user.
+                  type: string
+                  example: user1221
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admins:
+                    description: List of system administrators.
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v2/admins/{userId}":
+    delete:
+      x-nc-api-audience: noBWC
+      tags:
+        - Roles
+      summary: Delete system administrator
+      description: Delete a user from the system administrators group.
+      operationId: deleteAdminsId
+      parameters:
+        - name: userId
+          description: Login of the user.
+          in: path
+          required: true
+          schema:
+            type: string
+            example: user1221
+      responses:
+        "204":
+          description: No content
+          content: {}
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/internal/migrate/operations":
+    post:
+      tags:
+        - Admin
+      summary: Start operations migration
+      description: |
+        Start operations migration process.
+      operationId: startOpsMigration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                packageIds:
+                  type: array
+                  items:
+                    type: string
+                  description: List of package IDs to migrate
+                versions:
+                  type: array
+                  items:
+                    type: string
+                  description: List of versions to migrate
+                rebuildChangelogOnly:
+                  type: boolean
+                  description: Rebuild changelog only
+                  default: false
+                skipValidation:
+                  type: boolean
+                  description: Skip validation
+                  default: false
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Migration ID
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Conflict - migration already running
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/internal/migrate/operations/{migrationId}":
+    get:
+      tags:
+        - Admin
+      summary: Get migration status
+      description: |
+        Get migration report by migration ID.
+      operationId: getMigrationReport
+      parameters:
+        - name: migrationId
+          in: path
+          required: true
+          description: Migration ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Migration report
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/internal/migrate/operations/{migrationId}/suspiciousBuilds":
+    get:
+      tags:
+        - Admin
+      summary: Get suspicious builds
+      description: |
+        Get suspicious builds for migration.
+      operationId: getSuspiciousBuilds
+      parameters:
+        - name: migrationId
+          in: path
+          required: true
+          description: Migration ID
+          schema:
+            type: string
+        - name: changedField
+          in: query
+          required: false
+          description: Changed field filter
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: Limit
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          description: Page number
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/internal/migrate/operations/{migrationId}/perf":
+    get:
+      tags:
+        - Admin
+      summary: Get migration performance report
+      description: |
+        Get migration performance report.
+      operationId: getMigrationPerfReport
+      parameters:
+        - name: migrationId
+          in: path
+          required: true
+          description: Migration ID
+          schema:
+            type: string
+        - name: includeHourPackageData
+          in: query
+          required: false
+          description: Include hour package data
+          schema:
+            type: boolean
+        - name: stageFilter
+          in: query
+          required: false
+          description: Stage filter
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Performance report
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/internal/migrate/operations/cancel":
+    post:
+      tags:
+        - Admin
+      summary: Cancel running migrations
+      description: |
+        Cancel all running migrations.
+      operationId: cancelRunningMigrations
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: Internal Server Error
           content:
@@ -494,6 +1086,120 @@ components:
                 type: number
                 format: float
                 description: Proportion of the total database size that this table uses
+    BusinessMetric:
+      description: Business metric
+      title: BusinessMetric
+      required:
+        - packageId
+        - date
+        - metric
+        - value
+      type: object
+      properties:
+        packageId:
+          description: Package unique string identifier
+          type: string
+        date:
+          description: Date on which business metric was collected.
+          type: string
+          format: date
+          example: '2023-12-31'
+        username:
+          description: Name of the user that has been counted for a specific metric.
+          type: string
+        metric:
+          description: Name of business metric.
+          type: string
+          example: comparisons_called
+        value:
+          description: Value associated with business metric.
+          type: integer
+    VersionStatusEnum:
+      description: Package version status
+      type: string
+      enum:
+        - draft
+        - release
+        - archived
+    ApiType:
+      title: apiType
+      type: string
+      enum:
+        - rest
+        - graphql
+        - protobuf
+    User:
+      description: APIHUB user
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: Login of the user
+          type: string
+          example: user1221
+        name:
+          description: Name of the user
+          type: string
+          example: "Name Surname"
+        email:
+          description: Email address of the user
+          type: string
+          format: email
+          example: "name.surname@qubership.org"
+        avatarUrl:
+          description: Avatar of the user
+          type: string
+          format: URL
+    RoleCreate:
+      description: Role with set of permissions for creation.
+      type: object
+      title: Role
+      required:
+        - role
+        - permissions
+      properties:
+        role:
+          type: string
+          pattern: "^[a-zA-Z0-9- ]"
+          description: Role name.
+          example: Editor
+        permissions:
+          type: array
+          description: List of permissions applicable to the role.
+          items:
+            $ref: "#/components/schemas/Permission"
+          example: ["read", "create_and_update_package", "delete_package"]
+    Role:
+      description: Role details.
+      type: object
+      title: Role
+      required:
+        - roleId
+        - role
+        - permissions
+      properties:
+        roleId:
+          type: string
+          description: Unique role identifier. The value is the slug of role name.
+          example: editor
+        role:
+          type: string
+          description: Role name.
+          example: Editor
+    Permission:
+      description: Permission
+      type: string
+      enum:
+        - read
+        - create_and_update_package
+        - delete_package
+        - manage_draft_version
+        - manage_release_version
+        - manage_archived_version
+        - user_access_management
+        - access_token_management
+      example: read
   examples:
     IncorrectInputParameters:
       description: Incorrect input parameters

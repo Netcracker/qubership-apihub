@@ -4693,46 +4693,33 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
-  "/api/v2/roles":
-    post:
+  "/api/v2/permissions":
+    get:
       tags:
         - Roles
-      summary: Create a new role
-      description: |
-        Create a new role with the set of available permissions for this role.
-
-        The role may be assigned to the user for the specific package.
-
-        The "read content of public packages" permissions is applied for all roles by default (except the private packages with default role = **none**).
-      operationId: postRoles
-      requestBody:
-        description: Role creation parameters
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RoleCreate"
+      summary: Get list of permissions
+      description: List of all permissions.
+      operationId: getPermissions
       responses:
-        "201":
-          description: Created
+        "200":
+          description: Success
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/Role"
-                  - type: object
-                    properties:
-                      permissions:
-                        type: array
-                        description: List of permissions applicable to the role.
-                        items:
+                type: object
+                properties:
+                  permissions:
+                    description: List of available permissions.
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        permission:
                           $ref: "#/components/schemas/Permission"
-                        example: ["read", "create_and_update_package", "delete_package"]
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                        name:
+                          type: string
+                          description: Name of the permission
+                          example: Read content of public package
         "401":
           description: Unauthorized
           content:
@@ -4751,6 +4738,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  "/api/v2/roles":
     get:
       tags:
         - Roles
@@ -4802,221 +4790,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-  "/api/v2/roles/{roleId}":
-    parameters:
-      - name: roleId
-        in: path
-        required: true
-        description: Role identifier.
-        schema:
-          type: string
-          pattern: "^[a-z0-9-]"
-          example: editor
-    patch:
-      tags:
-        - Roles
-      summary: Update role
-      description: |
-        Change role parameters.
-
-        If the parameter is not transmitted in the request, its value remains unchanged.
-
-        Read only roles can't be updated.
-      operationId: patchRolesId
-      requestBody:
-        description: Role update parameters.
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - permissions
-              properties:
-                permissions:
-                  description: |
-                    List of role permissions.
-                    Current role permissions will be replaced by the transmitted list.
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/Permission"
-                  example: ["read", "create_and_update_package", "delete_package"]
-      responses:
-        "204":
-          description: No content
-          content: {}
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
-    delete:
-      tags:
-        - Roles
-      summary: Delete role
-      description: |
-        Delete a role with its permissions.
-
-        When the role is deleted, all users with that role shall be removed from packages.
-
-        Roles with **readOnly:true** flag can't be deleted.
-      operationId: deleteRolesId
-      responses:
-        "204":
-          description: No content
-          content: {}
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                InternalServerError:
-                  $ref: "#/components/examples/InternalServerError"
-  "/api/v2/roles/changeOrder":
-    post:
-      tags:
-        - Roles
-      summary: Update the roles order
-      description: |
-        Update the roles order.
-
-        The list of roles will be replaced, all existing roles are required in request (return an error otherwise).
-      operationId: postRolesChangeOrder
-      requestBody:
-        description: Roles list
-        content:
-          application/json:
-            schema:
-              type: object
-              description: List of roles.
-              required:
-                - roles
-              properties:
-                roles:
-                  type: array
-                  items:
-                    type: string
-                  example: [admin, owner, editor, viewer, none]
-      responses:
-        "204":
-          description: No content
-          content: {}
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  "/api/v2/permissions":
-    get:
-      tags:
-        - Roles
-      summary: Get list of permissions
-      description: List of all permissions.
-      operationId: getPermissions
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  permissions:
-                    description: List of available permissions.
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        permission:
-                          $ref: "#/components/schemas/Permission"
-                        name:
-                          type: string
-                          description: Name of the permission
-                          example: Read content of public package
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
   "/api/v2/packages/{packageId}/availableRoles":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -5504,65 +5280,6 @@ paths:
               examples:
                 PackageNotFound:
                   $ref: "#/components/examples/PackageNotFound"
-        "410":
-          description: Gone
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                InternalServerError:
-                  $ref: "#/components/examples/InternalServerError"
-  "/api/v2/builders/{builderId}/tasks":
-    parameters:
-      - $ref: "#/components/parameters/builderId"
-    post:
-      tags:
-        - Publish
-        - Admin
-      summary: Assign build task to Builder
-      description: |
-        Returns empty response 204 (in case of no free build task to assign) or multipart form (src+config, matching current start build payload)
-      operationId: postBuilderIdTasks
-      responses:
-        "200":
-          description: Build task assigned
-          content:
-            application/zip:
-              schema:
-                type: object
-                properties:
-                  sources/:
-                    type: string
-                    description: |
-                      Folder with source files for publish.
-                      **Required**, if the buidType = buid and "files" array is filled in config.
-                    format: binary
-                  config.json:
-                    oneOf:
-                      - $ref: "#/components/schemas/PublishBuildConfig"
-                      - $ref: "#/components/schemas/ExportVersionBuildConfig"
-                      - $ref: "#/components/schemas/ExportRestDocumentBuildConfig"
-                      - $ref: "#/components/schemas/ExportRestOperationsGroupBuildConfig"
-                    discriminator:
-                      propertyName: buildType
-        "204":
-          description: No content
-          content: {}
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
         "410":
           description: Gone
           content:
@@ -8278,68 +7995,6 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
-  "/api/v2/packages/{packageId}/versions/recursiveDelete":
-    parameters:
-      - $ref: "#/components/parameters/packageId"
-    post:
-      tags:
-        - Versions
-      summary: Delete expired versions recursively
-      description: Recursively delete all expired versions in 'Draft' status under group or workspace
-      operationId: deleteExpiredVersionsRecursively
-      requestBody:
-        description: Recursive delete parameters
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                olderThanDate:
-                  description: Versions published earlier than the date are going to be deleted.
-                  type: string
-                  format: 'date'
-                  example: '2023-05-12'
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  jobId:
-                    description: Id of job deleting versions.
-                    type: string
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                PackageNotFound:
-                  $ref: "#/components/examples/PackageNotFound"
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                InternalServerError:
-                  $ref: "#/components/examples/InternalServerError"
   "/api/v2/packages/{packageId}/publish/availableStatuses":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -8348,6 +8003,7 @@ paths:
         - Publish
         - Packages
       summary: Get a list of available publish statuses for the package
+      deprecated: true
       description: |
         Get a list of available publish statuses for the package.
         List depends on the current user access rights.
@@ -8555,6 +8211,455 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+  "/login/sso/saml":
+    get:
+      x-nc-api-audience: noBWC
+      tags:
+        - Auth
+      summary: SAML authentication (legacy)
+      deprecated: true
+      description: |
+        Starts the SAML authentication process in APIHUB (legacy endpoint).
+        
+        This is a deprecated endpoint. Use `/api/v1/login/sso/{idpId}` instead.
+        
+        In case of successful authentication, the request will be redirected to the **redirectUri** and
+        the response will contain cookie with access token for future API calls.
+        All subsequent APIHUB calls must use this token in a **CookieAuth** or **BearerAuth** authentication.
+      operationId: getLoginSsoSaml
+      security:
+        - {}
+        - RefreshTokenAuth: []
+      parameters:
+        - name: redirectUri
+          in: query
+          description: URI, where user must be redirected in case of successful APIHUB authentication.
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "https://apihub.qubership.org/portal"
+      responses:
+        "302":
+          description: Found - Redirect to SAML identity provider
+          headers:
+            Location:
+              description: URL of the SAML identity provider for authentication
+              schema:
+                type: string
+                format: uri
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v2/auth/saml":
+    post:
+      x-nc-api-audience: noBWC
+      tags:
+        - Auth
+      summary: SAML authentication
+      deprecated: true
+      description: |
+        Starts the SAML authentication process in APIHUB.
+
+        In case of successful authentication, the request will be redirected to the **redirectUri** and
+        the response will contain cookie with access token for future API calls.
+        All subsequent APIHUB calls must use this token in a **BearerAuth** authentication.
+      operationId: postAuthSAML
+      security: [{}]
+      parameters:
+        - name: redirectUri
+          in: query
+          description: URI, where user must be redirected in case of successful APIHUB authentication.
+          required: true
+          schema:
+            type: string
+            format: uri
+            example: "https://apihub.qubership.org/portal"
+      responses:
+        "302":
+          description: Found
+          headers:
+            Set-Cookie:
+              description: A base64 encoded userView cookie, containing the user data and access token.
+              schema:
+                type: string
+                example: "userView=eyJ0b2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW10cFpDSTZJbk5sWTNKbGRDMXBaQ0lzSW5SNWNDSTZJa3BYVkNKOS5leUpGZUhSbGJuTnBiMjV6SWpwN2ZTd2lSM0p2ZFhCeklqcGJYU3dpU1VRaU9pSmxkbVZzTURJeE9TSXNJazVoYldVaU9pSmxkbVZzTURJeE9TSXNJbUYxWkNJNld5SWlYU3dpWlhod0lqb3hOamMwTURZNU1UVTRMQ0pwWVhRaU9qRTJOelF3TWpVNU5UZ3NJbTVpWmlJNk1UWTNOREF5TlRrMU9Dd2ljM1ZpSWpvaVpYWmxiREF5TVRraWZRLk45d2poeGhLRkoyTlEzNXpCaGw0VEs4VFBOS3RoeDE5czNQQnNheTNkclEiLCJyZW5ld1Rva2VuIjoiZXlKaGJHY2lPaUpJVXpJMU5pSXNJbXRwWkNJNkluTmxZM0psZEMxcFpDSXNJblI1Y0NJNklrcFhWQ0o5LmV5SkZlSFJsYm5OcGIyNXpJanA3ZlN3aVIzSnZkWEJ6SWpwYlhTd2lTVVFpT2lKbGRtVnNNREl4T1NJc0lrNWhiV1VpT2lKbGRtVnNNREl4T1NJc0ltRjFaQ0k2V3lJaVhTd2laWGh3SWpveE5qYzJOakUzT1RVNExDSnBZWFFpT2pFMk56UXdNalU1TlRnc0ltNWlaaUk2TVRZM05EQXlOVGsxT0N3aWMzVmlJam9pWlhabGJEQXlNVGtpZlEuUnRyZEEwNkJrN2lIQnA1bVRYUE1PSnVJdmhtQ0FudHRnVlBqNGZicXN6WSIsInVzZXIiOnsiaWQiOiJldmVsMDIxOSIsImVtYWlsIjoiZXZnZW5paS5lbGl6YXJvdkBuZXRjcmFja2VyLmNvbSIsIm5hbWUiOiJFdmdlbmlpIEVsaXphcm92IiwiYXZhdGFyVXJsIjoiL2FwaS92Mi91c2Vycy9ldmVsMDIxOS9wcm9maWxlL2F2YXRhciJ9fQ==;"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v2/users/{userId}/availablePackagePromoteStatuses":
+    post:
+      x-nc-api-audience: noBWC
+      tags:
+        - Publish
+        - Users
+      summary: Get list of available package publish statuses for the user.
+      description: |
+        By collection of packages, **get** the available statuses for publish into for the particular user.
+
+        Statuses list depends on the current user access rights for the particular package.
+
+        The response is a **mapped list** of statuses to the packageIds.
+      operationId: getUsersIdAvailablePackagePromoteStatuses
+      parameters:
+        - name: userId
+          description: Login of the user
+          in: path
+          required: true
+          schema:
+            type: string
+            example: user1221
+      requestBody:
+        description: Packages list to check.
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - packages
+              properties:
+                packages:
+                  description: PackageIds list.
+                  type: array
+                  items:
+                    type: string
+                  example: ["QS.CloudQSS.CPQ.Q-TMF", "QS.CloudQSS.CPQ.QE-SRV"]
+        required: true
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                description: List of packages and available statuses.
+                additionalProperties:
+                  type: array
+                  description: Mapped list of statuses to the packageId.
+                  items:
+                    type: string
+                    enum:
+                      - draft
+                      - release
+                example:
+                  QS.CloudQSS.CPQ.Q-TMF:
+                    - draft
+                    - release
+                  QS.CloudQSS.CPQ.QE-SRV:
+                    - draft
+        "400":
+          description: default response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v2/users/{userId}/profile/avatar":
+    get:
+      x-nc-api-audience: noBWC
+      tags:
+        - Users
+        - Admin
+      summary: Get the user avatar
+      description: |
+        Get the user avatar.
+        API returns the data of photo file in a png format.
+      operationId: getUsersIdProfileAvatar
+      security: [{}]
+      parameters:
+        - name: userId
+          description: Login of the user
+          in: path
+          required: true
+          schema:
+            type: string
+            example: user1221
+      responses:
+        "200":
+          description: Success
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v3/search/{searchLevel}":
+    parameters:
+      - name: searchLevel
+        in: path
+        required: true
+        description: |
+          Level of object for search.
+        schema:
+          type: string
+          enum:
+            - operations
+            - documents
+            - packages
+    post:
+      x-nc-api-audience: noBWC
+      tags:
+        - Search
+      summary: "Global search"
+      description: Global search by text or custom parameters
+      operationId: postSearch
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      requestBody:
+        description: Filters for search
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - searchString
+              title: searchCommonParams
+              description: Common parameters for Global search
+              properties:
+                searchString:
+                  description: Search by common text fields (summary, description, title, etc.).
+                  type: string
+                  example: "Billing account"
+                packageIds:
+                  description: |
+                    List of Package Id(s).
+                    * If user specified Workspace(s), then Workspace Id(s) must be transmitted.
+                    * If user specified Workspace(s) and Group(s), then Group Id(s) must be transmitted.
+                    * If user specified Workspace(s), Group(s) and Package(s) or Workspace(s) and Package(s), then Package Id(s) must be transmitted.
+                  type: array
+                  items:
+                    type: string
+                  example: ["QS.CloudQSS.CPQ.Q-TMF", "QS.CloudQSS.CPQ.CORE"]
+                versions:
+                  description: Package version names.
+                  type: array
+                  items:
+                    type: string
+                  example: ["2022.2", "2022.3"]
+                statuses:
+                  description: List of package version statuses
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/VersionStatusEnum"
+                creationDateInterval:
+                  description: |
+                    Search interval for the package version publication date.
+                    Both dates are included.
+                  type: object
+                  properties:
+                    startDate:
+                      description: Start date of the search.
+                      type: string
+                      format: date
+                      default: "1970-01-01"
+                    endDate:
+                      description: End date of the search.
+                      type: string
+                      format: date
+                      default: "2050-12-31"
+                operationParams:
+                  type: object
+                  title: ApiSpecificParams
+                  description: Search parameters specific for particular API type.
+                  required:
+                    - apiType
+                  oneOf:
+                    - type: object
+                      description: |
+                        Search parameters specific for REST API.
+                        These params shall be used only if apiType in search request equals to REST API.
+                      title: SearchRestParams
+                      properties:
+                        apiType:
+                          description: Type of the API
+                          type: string
+                          enum:
+                            - rest
+                        scope:
+                          description: Search scope for operation
+                          type: array
+                          items:
+                            type: string
+                            enum:
+                              - request
+                              - response
+                        detailedScope:
+                          description: Detailed search scope for operation
+                          type: array
+                          items:
+                            type: string
+                            enum:
+                              - properties
+                              - annotation
+                              - examples
+                        methods:
+                          description: Operation method
+                          type: array
+                          items:
+                            type: string
+                            enum:
+                              - post
+                              - get
+                              - put
+                              - patch
+                              - delete
+                              - head
+                              - options
+                              - connect
+                              - trace
+                          example: ["post", "get"]
+                    - type: object
+                      description: |
+                        Search parameters specific for GraphQL.
+                        These params shall be used only if apiType in search request equals to GraphQL.
+                      title: SearchGQLParams
+                      properties:
+                        apiType:
+                          description: Type of the API
+                          type: string
+                          enum:
+                            - graphql
+                        scope:
+                          type: array
+                          items:
+                            type: string
+                            enum:
+                              - argument
+                              - property
+                              - annotation
+                        operationTypes:
+                          type: array
+                          items:
+                            type: string
+                            enum:
+                              - query
+                              - mutation
+                              - subscription
+            examples: {}
+        required: true
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                description: Results of the global search list
+                type: object
+                properties:
+                  operations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SearchResultOperation"
+                  documents:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SearchResultDocument"
+                  packages:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SearchResultPackage"
+              examples: {}
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
   /playground/proxy:
     get:
       summary: Proxy endpoint for try it in case of non-cloud environments.
@@ -8612,71 +8717,74 @@ paths:
             "*/*":
               schema:
                 description: Schema of any type
-  "/api/v2/businessMetrics":
+  /metrics:
     get:
       tags:
         - Admin
-      summary: Get business metrics report
+      summary: Get Prometheus metrics
       description: |
-        Returns collected business metrics
-      operationId: getBusinessMetrics
+        Returns Prometheus metrics in text format.
+      operationId: getMetrics
+      security: []
+      responses:
+        "200":
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Prometheus metrics in text format
+  "/api/v2/packages/{packageId}/publish/statuses":
+    get:
+      tags:
+        - Publish
+      summary: Get builds statuses
+      description: |
+        Get statuses for multiple publish operations.
+        Note: In Service.go this endpoint is implemented as POST, but CSV specifies GET.
+      operationId: getPublishStatuses
       parameters:
-        - name: format
-          description: Response format
+        - $ref: "#/components/parameters/packageId"
+        - name: publishIds
           in: query
           required: false
+          description: List of publish IDs to get statuses for
           schema:
-            type: string
-            default: json
-            enum:
-            - json
-            - xlsx
-        - name: parentPackageId
-          description: Return business metrics only for specific group\workspace
-          in: query
-          required: false
-          schema:
-            type: string
-            example: SD
-        - name: hierarchyLevel
-          description: Number of hierarchy levels for grouping packages (level=0 - packageId="SD.TL.TLQSS", level=1 - packageId="SD", level=2 - packageId="SD.TL")
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 0
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
       responses:
         "200":
           description: Success
           content:
             application/json:
               schema:
-                description: List of collected business metrics grouped by package
                 type: array
                 items:
-                  $ref: "#/components/schemas/BusinessMetric"
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-                description: xlsx file to download
-          headers:
-            Content-Disposition:
-              schema:
-                type: string
-                description: xlsx file name (only filled when format=xlsx)
-                example: attachment; filename="business_metrics_2023-12-31.xlsx"
+                  type: object
+                  properties:
+                    publishId:
+                      type: string
+                    status:
+                      type: string
+                    message:
+                      type: string
         "400":
           description: Bad request
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                IncorrectInputParams:
-                  $ref: "#/components/examples/IncorrectInputParameters"
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
           content:
             application/json:
               schema:
@@ -8696,78 +8804,44 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
-  "/api/v1/publishHistory":
+  "/api/v2/packages/{packageId}/versions/{version}/changes":
     get:
       tags:
-        - Admin
-      summary: Get history of published version revisions
+        - Versions
+        - Changes
+      summary: Get version changes
       description: |
-        Returns all existing version revisions sorted by publish date from oldest to newest.
-        Only for system administrators.
-      operationId: getPublishHistory
-      x-api-kind: no-BWC
+        Get validation changes for a package version.
+      operationId: getVersionChanges
+      deprecated: true
       parameters:
-        - name: status
-          description: version status
-          in: query
-          required: false
-          schema:
-            $ref: "#/components/schemas/VersionStatusEnum"
-        - name: publishedBefore
-          description: Filter to include only revisions published before specific date
-          in: query
-          required: false
+        - $ref: "#/components/parameters/packageId"
+        - name: version
+          in: path
+          required: true
+          description: Version identifier
           schema:
             type: string
-            format: date-time
-            description: RFC3339 format
-            example: "2024-03-15T12:00:13.052715Z"
-        - name: publishedAfter
-          description: Filter to include only revisions published after specific date
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
-            description: RFC3339 format
-            example: "2024-03-15T12:00:13.052715Z"
       responses:
         "200":
           description: Success
           content:
             application/json:
               schema:
-                description: List of published versions
-                type: array
-                items:
-                  type: object
-                  properties:
-                    packageId:
-                      type: string
-                    version:
-                      type: string
-                    revision:
-                      type: integer
-                    previousVersionPackageId:
-                      type: string
-                    previousVersion:
-                      type: string
-                    publishedAt:
-                      type: string
-                      format: date-time
-                    apiTypes:
-                      type: array
-                      items:
-                        $ref: "#/components/schemas/ApiType"
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                IncorrectInputParams:
-                  $ref: "#/components/examples/IncorrectInputParameters"
+                type: object
+                properties:
+                  previousVersion:
+                    type: string
+                  previousVersionPackageId:
+                    type: string
+                  changes:
+                    type: array
+                    items:
+                      type: object
+                  bwcMessages:
+                    type: array
+                    items:
+                      type: object
         "401":
           description: Unauthorized
           content:
@@ -8776,6 +8850,68 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v2/packages/{packageId}/versions/{version}/problems":
+    get:
+      tags:
+        - Versions
+      summary: Get version problems
+      description: |
+        Get validation problems for a package version.
+      operationId: getVersionProblems
+      deprecated: true
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - name: version
+          in: path
+          required: true
+          description: Version identifier
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      type: object
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
           content:
             application/json:
               schema:
@@ -10092,6 +10228,165 @@ components:
       allOf:
         - $ref: "#/components/schemas/Operation"
         - $ref: "#/components/schemas/GraphQLOperationMeta"
+    SearchResultOperation:
+      description: |
+        Global search result for API operations; must be returned when searchLevel = operation
+      title: SearchResultOperation
+      allOf:
+        - oneOf:
+          - $ref: "#/components/schemas/RestOperation"
+          - $ref: "#/components/schemas/GraphQLOperation"
+        - type: object
+          required:
+            - packageId
+            - name
+            - parentPackages
+            - version
+            - status
+          properties:
+            packageId:
+              description: Package unique string identifier (full alias)
+              type: string
+              example: "QS.CloudQSS.CPQ.Q-TMF"
+            name:
+              description: Package name
+              type: string
+              example: "Quote TMF Service"
+            parentPackages:
+              description: Array of parent package names
+              type: array
+              items:
+                type: string
+            version:
+              description: Package version name
+              type: string
+              example: "2022.2@5"
+            status:
+              $ref: "#/components/schemas/VersionStatusEnum"
+    SearchResultPackage:
+      title: SearchResultPackage
+      description: |
+        Global search result for packages with kind = package; must be returned when searchLevel = package
+        * If search term matches the package id/name/description/service name, return the latest published version only.
+        * If search term matches the version name/label, return that version.
+      type: object
+      required:
+        - packageId
+        - name
+        - parentPackages
+        - createdAt
+        - version
+        - revision
+        - status
+      properties:
+        packageId:
+          description: Package unique string identifier (full alias)
+          type: string
+          example: "QS.CloudQSS.CPQ.Q-TMF"
+        name:
+          description: Package name
+          type: string
+          example: "Quote TMF Service"
+        description:
+          description: Package description
+          type: string
+        serviceName:
+          description: Service name that package belongs to. Should be equal to service deployment name in kubernetes.
+          type: string
+        parentPackages:
+          description: Array of parent package names
+          type: array
+          items:
+            type: string
+        version:
+          description: Package version name.
+          type: string
+          example: "2022.2@5"
+        latestRevision:
+          description: |
+            true if revision is the latest one.
+          type: boolean
+          default: false
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        createdAt:
+          description: Date of the package version publication
+          type: string
+          format: date-time
+        labels:
+          description: List of package version labels
+          type: array
+          items:
+            type: string
+    SearchResultDocument:
+      description: Global search result for documents; must be returned when searchLevel = document
+      title: SearchResultDocument
+      type: object
+      required:
+        - packageId
+        - name
+        - parentPackages
+        - version
+        - status
+        - files
+        - slug
+        - type
+        - title
+      properties:
+        packageId:
+          description: Package unique string identifier (full alias)
+          type: string
+          example: "QS.CloudQSS.CPQ.Q-TMF"
+        name:
+          description: Package name
+          type: string
+          example: "Quote TMF Service"
+        parentPackages:
+          description: Array of parent package names
+          type: array
+          items:
+            type: string
+        version:
+          description: Package version name.
+          type: string
+          example: "2022.2@5"
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        slug:
+          description: Published document slug
+          type: string
+          pattern: "^[a-z0-9-]"
+          example: "qitmf-v5-11-json"
+        type:
+          description: Type of the specification notation.
+          type: string
+          enum:
+            - openapi-3-1
+            - openapi-3-0
+            - openapi-2-0
+            - json-schema
+            - markdown
+            - unknown
+        title:
+          description: Name/title of the document.
+          type: string
+          example: "Quote Integration TMForum Service"
+        labels:
+          description: List of documents labels.
+          type: array
+          items:
+            type: string
+          example: ["TMF"]
+        createdAt:
+          description: Date of the package version publication
+          type: string
+          format: date-time
+        content:
+          type: string
+          description: |
+            String with search term occurrences in the document.
+            If document content does not contain search term, then return N first characters.
+            If document is empty, then this property will be empty.
     RestOperationMeta:
       description: Specific parameters for REST operation.
       title: RestOperationMeta
