@@ -90,13 +90,13 @@ export type GraphQlOperationType =
 
 export type OperationMetadataDto = Readonly<{
   operationId: string
+  documentId: string
   title: string
   apiType: ApiType
   apiKind: ApiKind
   apiAudience: ApiAudience
   data?: object
   packageRef?: string
-  dataHash: string
   deprecated?: boolean
   tags?: Readonly<Tags>
   customTags?: CustomTags
@@ -132,8 +132,8 @@ export function toVersionOperation(value: OperationDto): ResolvedOperation {
   return {
     apiType: value.apiType,
     operationId: value.operationId,
+    documentId: value.documentId,
     data: value.data!,
-    dataHash: value.dataHash,
     // todo why cast?
     apiKind: value.apiKind as ApiKindFromProcessor,
     // todo why cast?
