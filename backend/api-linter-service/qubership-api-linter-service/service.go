@@ -27,6 +27,8 @@ import (
 	"github.com/Netcracker/qubership-api-linter-service/exception"
 	"github.com/Netcracker/qubership-api-linter-service/repository"
 	"github.com/Netcracker/qubership-api-linter-service/security"
+	exposer "github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer"
+	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
 	"github.com/google/uuid"
 
 	"github.com/Netcracker/qubership-api-linter-service/controller"
@@ -124,7 +126,7 @@ func main() {
 	}
 
 	apihubClient := client.NewApihubClient(systemInfoService.GetAPIHubUrl(), systemInfoService.GetApihubAccessToken())
-	
+
 	utils.SafeAsync(func() {
 		systemInfoService.SetProductionMode(apihubClient)
 	})
@@ -192,6 +194,28 @@ func main() {
 	r.HandleFunc("/live", healthController.HandleLiveRequest).Methods(http.MethodGet)
 	r.HandleFunc("/ready", healthController.HandleReadyRequest).Methods(http.MethodGet)
 	r.PathPrefix("/debug/").Handler(http.DefaultServeMux) // TODO: env to config!
+
+	discoveryConfig := config.DiscoveryConfig{
+		ScanDirectory:   systemInfoService.GetApiSpecDir(),
+		ExcludePatterns: []string{"*.postman_collection.json"},
+	}
+	specExposer := exposer.New(discoveryConfig)
+	discoveryResult := specExposer.Discover()
+	if len(discoveryResult.Errors) > 0 {
+		for _, err := range discoveryResult.Errors {
+			log.Errorf("Error during API specifications discovery: %v", err)
+		}
+		panic("Failed to expose API specifications")
+	}
+	if len(discoveryResult.Warnings) > 0 {
+		for _, warning := range discoveryResult.Warnings {
+			log.Warnf("Warning during API specifications discovery: %s", warning)
+		}
+	}
+	for _, endpointConfig := range discoveryResult.Endpoints {
+		log.Debugf("Registering API specification endpoint with path: %s and spec metadata: %+v", endpointConfig.Path, endpointConfig.SpecMetadata)
+		r.HandleFunc(endpointConfig.Path, endpointConfig.Handler).Methods(http.MethodGet)
+	}
 
 	publishEventListener.Start()
 	docTaskProcessor.Start()
