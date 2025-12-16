@@ -640,6 +640,10 @@ func (o operationServiceImpl) LiteSearchForOperations(searchReq view.SearchQuery
 			Params:  map[string]interface{}{"error": err.Error()},
 		}
 	}
+	err = setOperationSearchParams(searchReq.OperationSearchParams, searchQuery)
+	if err != nil {
+		return nil, err
+	}
 
 	operationEntities, err := o.operationRepository.LiteSearchForOperations(searchQuery)
 	if err != nil {
