@@ -1,6 +1,5 @@
-import { useSearchPhrase } from '@stoplight/elements/containers/API';
-import { useServiceExtensions } from '@stoplight/elements/hooks/useExtensions';
 import { Extensions } from '@stoplight/elements-core/components/Docs/Extensions';
+import { useSearchPhrase, useServiceExtensions } from '@stoplight/elements-core';
 import { SectionSubtitle } from '@stoplight/elements-core/components/Docs/Sections';
 import { Box, Flex, Heading, VStack } from '@stoplight/mosaic';
 import { withErrorBoundary } from '@stoplight/react-error-boundary';
