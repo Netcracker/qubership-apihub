@@ -6,11 +6,10 @@ on:
           description: "Compose repository branch to use"
           type: string
           default: "main"
-      # userful parameter but GitHub workflows supports only 10 inputs for workflow_dispatch event
-      #compose-repository-compose-folder:
-      #    description: "Compose repository folder with compose"
-      #    type: string
-      #    default: "docker-compose/apihub-generic"
+      compose-repository-compose-folder:
+          description: "Compose repository folder with compose"
+          type: string
+          default: "docker-compose/apihub-generic"
       postman-collections-run:
           description: "Flag for executing postman collections"
           type: boolean
@@ -22,7 +21,7 @@ on:
       postman-collections-list:
           description: "Collections to execute"
           type: string
-          default: "./e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json"
+          default: "./e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/1_3_Linter_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json"
       playwright-tests-run:
           description: "Flag for executing playwright tests"
           type: boolean
@@ -51,19 +50,22 @@ on:
           description: "APIHUB API Linter Service docker image tag"
           type: string
           default: "dev"
+      apihub-agents-backend-image-tag:
+          description: "Agents Backend docker image tag"
+          type: string
+          default: "dev"
   schedule:
     - cron: '0 0 * * *'
 
 jobs:
   call-docker-compose-run-and-test-ci-workflow:
-    #TODO: change to main after testing
-    uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@feature/linter-service
+    uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@main
     with:
       compose-repository-branch: ${{ github.event.inputs.compose-repository-branch || 'main'}}
-      #compose-repository-compose-folder: ${{ github.event.inputs.compose-repository-compose-folder}}
+      compose-repository-compose-folder: ${{ github.event.inputs.compose-repository-compose-folder || 'docker-compose/apihub-generic' }}
       postman-collections-run: ${{ github.event.inputs.postman-collections-run == null || fromJson(github.event.inputs.postman-collections-run) }}
       postman-repository-branch: ${{ github.event.inputs.postman-repository-branch  || 'develop' }}
-      postman-collections-list: ${{ github.event.inputs.postman-collections-list  || './e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json' }}
+      postman-collections-list: ${{ github.event.inputs.postman-collections-list  || './e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/1_3_Linter_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json' }}
       playwright-repository-branch: ${{ github.event.inputs.playwright-repository-branch  || 'develop' }}
       playwright-tests-run: ${{ github.event.inputs.playwright-tests-run == null || fromJson(github.event.inputs.playwright-tests-run) }}
       playwright-test-args: ${{ github.event.inputs.playwright-test-args  || '--project=Portal --workers=8 --grep-invert=@flaky' }}
@@ -71,6 +73,7 @@ jobs:
       apihub-build-task-consumer-image-tag: ${{ github.event.inputs.apihub-build-task-consumer-image-tag  || 'dev' }}
       apihub-ui-image-tag: ${{ github.event.inputs.apihub-ui-image-tag  || 'dev' }}
       apihub-api-linter-service-image-tag: ${{ github.event.inputs.apihub-api-linter-service-image-tag  || 'dev' }}
+      apihub-agents-backend-image-tag: ${{ github.event.inputs.apihub-agents-backend-image-tag  || 'dev' }}
     secrets:
       APIHUB_ACCESS_TOKEN: ${{ secrets.APIHUB_ACCESS_TOKEN }}
       APIHUB_ADMIN_EMAIL: ${{ secrets.APIHUB_ADMIN_EMAIL }}
