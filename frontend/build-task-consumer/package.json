@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-build-task-consumer",
-  "version": "3.1.7",
+  "version": "3.1.8",
   "license": "Apache-2.0",
   "files": [
     "dist",
@@ -36,9 +36,8 @@
     "adm-zip": "^0.5.10",
     "dotenv": "^16.3.1",
     "form-data": "^4.0.0",
-    "openapi-types": "^12.1.0",
-    "js-yaml": "4.1.0",
     "jszip": "^3.10.1",
+    "openapi-types": "^12.1.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^4.6.3",
@@ -48,6 +47,7 @@
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
+    "@netcracker/qubership-apihub-api-unifier": "feature-asyncapi-basic-e2e",
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
     "@types/adm-zip": "^0.5.1",
     "@types/express": "^4.17.21",
