@@ -21,8 +21,8 @@
   "dependencies": {
     "@netcracker/qubership-apihub-api-diff": "feature-asyncapi-basic-e2e",
     "@netcracker/qubership-apihub-api-unifier": "feature-asyncapi-basic-e2e",
-    "@netcracker/qubership-apihub-graphapi": "feature-performance-optimization-405",
-    "@netcracker/qubership-apihub-json-crawl": "feature-performance-optimization-405"
+    "@netcracker/qubership-apihub-graphapi": "dev",
+    "@netcracker/qubership-apihub-json-crawl": "dev"
   },
   "devDependencies": {
     "@netcracker/qubership-apihub-compatibility-suites": "2.3.0",
