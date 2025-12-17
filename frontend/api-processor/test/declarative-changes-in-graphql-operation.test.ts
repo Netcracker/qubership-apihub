@@ -15,7 +15,7 @@
  */
 
 import { buildGqlChangelogPackage, changesSummaryMatcher, numberOfImpactedOperationsMatcher } from './helpers'
-import { BREAKING_CHANGE_TYPE, GRAPHQL_API_TYPE, NON_BREAKING_CHANGE_TYPE, UNCLASSIFIED_CHANGE_TYPE } from '../src'
+import { BREAKING_CHANGE_TYPE, GRAPHQL_API_TYPE, NON_BREAKING_CHANGE_TYPE, RISKY_CHANGE_TYPE, UNCLASSIFIED_CHANGE_TYPE } from '../src'
 
 describe('Number of declarative changes in graphql operation test', () => {
   test('Multiple uses of the same type in a query response', async () => {
@@ -32,8 +32,8 @@ describe('Number of declarative changes in graphql operation test', () => {
 
   test('Multiple Uses of One Type in Both Mutation Arguments and Response Fields', async () => {
     const result = await buildGqlChangelogPackage('declarative-changes-in-graphql-operation/case3')
-    expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1, [NON_BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1, [NON_BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
+    expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1, [NON_BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [RISKY_CHANGE_TYPE]: 1, [NON_BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
   })
 
   test('Multiple uses of one type in both input (mutation argument) and output (mutation response) with the same severity of change', async () => {
