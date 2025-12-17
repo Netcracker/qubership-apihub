@@ -28,12 +28,12 @@
   },
   "dependencies": {
     "@netcracker/qubership-apihub-api-unifier": "feature-asyncapi-basic-e2e",
-    "@netcracker/qubership-apihub-json-crawl": "feature-performance-optimization-405",
+    "@netcracker/qubership-apihub-json-crawl": "dev",
     "fast-equals": "4.0.3"
   },
   "devDependencies": {
     "@netcracker/qubership-apihub-compatibility-suites": "dev",
-    "@netcracker/qubership-apihub-graphapi": "feature-performance-optimization-405",
+    "@netcracker/qubership-apihub-graphapi": "dev",
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
     "@types/jest": "29.5.11",
     "@types/node": "20.11.6",
