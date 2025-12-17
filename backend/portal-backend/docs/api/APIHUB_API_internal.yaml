@@ -2436,6 +2436,12 @@ components:
         code: "APIHUB-8000"
         reason: "InternalServerError"
         message: "InternalServerError"
+    PackageNotFound:
+      description: Package not found by ID. Response for the 404 error
+      value:
+        status: 404
+        code: "APIHUB-3020"
+        message: "package with packageId = $packageId not found"
   securitySchemes:
     BearerAuth:
       type: http
