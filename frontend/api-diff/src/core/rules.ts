@@ -11,7 +11,7 @@ import {
   RuleDiffType,
 } from '../types'
 import { isFunc, isObject, isString } from '../utils'
-import { breaking, DiffAction, nonBreaking } from './constants'
+import { breaking, DiffAction, nonBreaking, risky } from './constants'
 
 export const transformCompareRules = (rules: CompareRules, transformer: CompareRulesTransformer): CompareRules => {
   return syncClone(rules, ({ value, key, state, path }) => {
@@ -84,6 +84,7 @@ export const transformClassifyRule = ([add, remove, replace, reverseAdd, reverse
 }
 
 export const breakingIf = (v: boolean): DiffType => (v ? breaking : nonBreaking)
+export const riskyIf = (v: boolean): DiffType => (v ? risky : nonBreaking)
 export const breakingIfAfterTrue: DiffTypeClassifier = ({ after }): DiffType => breakingIf(!!after.value)
 
 export const booleanClassifier: ClassifyRule = [

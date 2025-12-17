@@ -1,6 +1,6 @@
 import { compareFiles, TEST_DEFAULTS_DECLARATION_PATHS } from '../utils'
 import { diffsMatcher } from '../../helper/matchers'
-import { annotation, breaking, DiffAction, nonBreaking } from '../../../src'
+import { annotation, breaking, DiffAction, nonBreaking, risky } from '../../../src'
 import { TEST_SPEC_TYPE_GRAPH_QL } from '@netcracker/qubership-apihub-compatibility-suites'
 import { COMPARE_SCOPE_OUTPUT } from '../../../src/graphapi'
 
@@ -70,7 +70,7 @@ describe('GraphQL Scalar output type of root type', () => {
       expect.objectContaining({
         action: DiffAction.add,
         afterDeclarationPaths: [[...FRUIT_PATH, 'type', 'values', 'orange']],
-        type: breaking,
+        type: risky,
         scope: COMPARE_SCOPE_OUTPUT
       }),
     ]))
@@ -94,7 +94,7 @@ describe('GraphQL Scalar output type of root type', () => {
     expect(result).toEqual(diffsMatcher([
       expect.objectContaining({
         action: DiffAction.add,
-        afterDeclarationPaths: [[ ...FRUIT_PATH, 'type', 'values', 'apple','description']],
+        afterDeclarationPaths: [[...FRUIT_PATH, 'type', 'values', 'apple', 'description']],
         type: annotation,
         scope: COMPARE_SCOPE_OUTPUT
       }),
@@ -106,8 +106,8 @@ describe('GraphQL Scalar output type of root type', () => {
     expect(result).toEqual(diffsMatcher([
       expect.objectContaining({
         action: DiffAction.replace,
-        beforeDeclarationPaths: [[ ...FRUIT_PATH, 'type', 'values', 'apple','description']],
-        afterDeclarationPaths: [[ ...FRUIT_PATH, 'type', 'values', 'apple','description']],
+        beforeDeclarationPaths: [[...FRUIT_PATH, 'type', 'values', 'apple', 'description']],
+        afterDeclarationPaths: [[...FRUIT_PATH, 'type', 'values', 'apple', 'description']],
         type: annotation,
         scope: COMPARE_SCOPE_OUTPUT
       }),
@@ -119,7 +119,7 @@ describe('GraphQL Scalar output type of root type', () => {
     expect(result).toEqual(diffsMatcher([
       expect.objectContaining({
         action: DiffAction.remove,
-        beforeDeclarationPaths: [[ ...FRUIT_PATH, 'type', 'values', 'apple','description']],
+        beforeDeclarationPaths: [[...FRUIT_PATH, 'type', 'values', 'apple', 'description']],
         type: annotation,
         scope: COMPARE_SCOPE_OUTPUT
       }),
