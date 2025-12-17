@@ -15,11 +15,10 @@
  */
 
 import { buildSchema } from 'graphql/utilities'
-import YAML from 'js-yaml'
-
 import { FILE_KIND, TextFile } from '../../types'
 import { getFileExtension } from '../../utils'
 import { GRAPHQL_DOCUMENT_TYPE, GRAPHQL_FILE_FORMAT } from './graphql.consts'
+import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 
 export const parseGraphQLFile = async (fileId: string, source: Blob): Promise<TextFile | undefined> => {
   const sourceString = await source.text()
@@ -52,7 +51,7 @@ export const parseGraphQLFile = async (fileId: string, source: Blob): Promise<Te
         fileId,
         type: GRAPHQL_DOCUMENT_TYPE.GRAPHAPI,
         format: GRAPHQL_FILE_FORMAT.YAML,
-        data: YAML.load(sourceString) as object,
+        data: loadYaml(sourceString) as object,
         source,
         kind: FILE_KIND.TEXT,
       }
@@ -62,7 +61,7 @@ export const parseGraphQLFile = async (fileId: string, source: Blob): Promise<Te
         fileId,
         type: GRAPHQL_DOCUMENT_TYPE.INTROSPECTION,
         format: GRAPHQL_FILE_FORMAT.YAML,
-        data: YAML.load(sourceString) as object,
+        data: loadYaml(sourceString) as object,
         source,
         kind: FILE_KIND.TEXT,
       }

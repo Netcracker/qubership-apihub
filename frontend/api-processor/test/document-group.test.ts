@@ -16,7 +16,7 @@
 
 import { Editor, loadFileAsString, LocalRegistry, VERSIONS_PATH } from './helpers'
 import { BUILD_TYPE, BuildConfigAggregator, BuildResult, PACKAGE, PackageNotifications, REST_API_TYPE } from '../src'
-import { load } from 'js-yaml'
+import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 
 const GROUP_NAME = 'manualGroup'
 const groupToOperationIdsMap = {
@@ -159,7 +159,7 @@ describe('Document Group test', () => {
         `document-group/${PATH_ITEMS_OPERATION_PATH}/second-level-object-are-the-same-when-overriding-for-response`, groupToOnePathOperationIdsMap,
       )
 
-      const expectedResult = load(
+      const expectedResult = loadYaml(
         (await loadFileAsString(pkg.projectsDir, pkg.packageId, EXPECTED_RESULT_FILE))!,
       )
       for (const document of Array.from(result.documents.values())) {
@@ -286,7 +286,7 @@ describe('Document Group test', () => {
       { buildType: BUILD_TYPE.MERGED_SPECIFICATION, apiType: REST_API_TYPE },
     )
 
-    const expectedResult = load(
+    const expectedResult = loadYaml(
       (await loadFileAsString(pkg.projectsDir, pkg.packageId, EXPECTED_RESULT_FILE))!,
     )
 

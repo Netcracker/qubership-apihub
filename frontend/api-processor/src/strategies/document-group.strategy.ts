@@ -26,7 +26,7 @@ import {
 } from '../types'
 import { REST_API_TYPE } from '../apitypes'
 import {
-  calculateOperationId,
+  calculateRestOperationId,
   EXPORT_FORMAT_TO_FILE_FORMAT,
   fromBase64,
   isValidHttpMethod,
@@ -141,7 +141,7 @@ function transformDocumentData(versionDocument: VersionDocument): OpenAPIV3.Docu
         [],
       )
 
-      const operationId = calculateOperationId(basePath, method, path)
+      const operationId = calculateRestOperationId(basePath, path, method)
 
       if (!versionDocument.operationIds.includes(operationId)) {
         continue

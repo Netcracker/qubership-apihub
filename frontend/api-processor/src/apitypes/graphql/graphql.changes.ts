@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isEmpty, slugify, takeIf } from '../../utils'
+import { calculateGraphqlOperationId, isEmpty, takeIf } from '../../utils'
 import {
   aggregateDiffsWithRollup,
   apiDiff,
@@ -112,7 +112,7 @@ export const compareDocuments: DocumentsCompare = async (
     if (!operationsByType) { continue }
 
     for (const operationKey of Object.keys(operationsByType)) {
-      const operationId = slugify(`${GRAPHQL_TYPE[type]}-${operationKey}`)
+      const operationId = calculateGraphqlOperationId(GRAPHQL_TYPE[type], operationKey)
       const methodData = operationsByType[operationKey]
 
       const { current, previous } = operationsMap[operationId] ?? {}

@@ -128,7 +128,7 @@ export class ApihubRegistry implements IRegistry {
 
     await saveOperationsArray(operations, basePath)
     await saveEachOperation(operations, basePath)
-    const comparisonsDto = comparisons.map(comparison => toVersionsComparisonDto(comparison, logError))
+    const comparisonsDto = comparisons.map(comparison => toVersionsComparisonDto(comparison, builderContext.normalizedSpecFragmentsHashCache, logError))
     const comparisonInternalDocuments: ComparisonInternalDocument[] = comparisons.map(comparison => comparison.comparisonInternalDocuments).flat()
 
     await saveComparisonsArray(comparisonsDto, basePath)

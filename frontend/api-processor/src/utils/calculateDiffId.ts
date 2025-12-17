@@ -15,7 +15,7 @@
  */
 
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
-import { calculateObjectHash } from './hashes'
+import { calculateHash } from './hashes'
 import { ChangeMessage } from '../types'
 import { AFTER_VALUE_NORMALIZED_PROPERTY, BEFORE_VALUE_NORMALIZED_PROPERTY } from '../consts'
 
@@ -38,8 +38,10 @@ export function calculateDiffId(diff: Diff): string {
     action,
     previousDeclarationJsonPaths,
     currentDeclarationJsonPaths,
-    previousValueHash: beforeValueNormalized !== undefined ? calculateObjectHash(beforeValueNormalized) : '',
-    currentValueHash: afterValueNormalized !== undefined ? calculateObjectHash(afterValueNormalized) : '',
+    // This calculateDiffId is used when deduplicating differences from different documents, therefore,
+    // caching the hash by instances will not work here, so we simply calculate the hash without using the cache.
+    previousValueHash: calculateHash(beforeValueNormalized),
+    currentValueHash: calculateHash(afterValueNormalized),
     previousKey,
     currentKey,
     severity,

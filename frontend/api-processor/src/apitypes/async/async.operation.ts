@@ -46,7 +46,7 @@ import {
   PREDICATE_UNCLOSED_END,
   resolveOrigins,
 } from '@netcracker/qubership-apihub-api-unifier'
-import { calculateObjectHash } from '../../utils/hashes'
+import { calculateHash, ObjectHashCache } from '../../utils/hashes'
 import { extractProtocol } from './async.utils'
 
 export const buildAsyncApiOperation = (
@@ -59,6 +59,7 @@ export const buildAsyncApiOperation = (
   refsOnlyDocument: TYPE.AsyncApiDocument,
   notifications: NotificationMessage[],
   config: BuildConfig,
+  normalizedSpecFragmentsHashCache: ObjectHashCache,
   debugCtx?: DebugPerformanceContext,
 ): TYPE.VersionAsyncOperation => {
 
@@ -102,7 +103,7 @@ export const buildAsyncApiOperation = (
       const [version] = getSplittedVersionKey(config.version)
 
       const tolerantHash = undefined // Skip tolerant hash for now
-      const hash = isOperation ? undefined : calculateObjectHash(value)
+      const hash = isOperation ? undefined : calculateHash(value, normalizedSpecFragmentsHashCache)
 
       deprecatedItems.push({
         declarationJsonPaths,

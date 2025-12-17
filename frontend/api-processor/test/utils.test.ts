@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { findSharedPath, removeObjectDuplicates, removeSecurityDuplicates, slugify } from '../src/utils'
+import { findSharedPath, removeObjectDuplicates, removeSecurityDuplicates, SLUG_OPTIONS_DOCUMENT_ID, slugify } from '../src/utils'
 
 describe('Utils', () => {
   describe('Unit tests for \'slugify\' function', () => {
-    expect(slugify('test/test.json')).toEqual('test-test-json')
-    expect(slugify('test 123.json')).toEqual('test-123-json')
+    expect(slugify('test/test.json', SLUG_OPTIONS_DOCUMENT_ID)).toEqual('test-test-json')
+    expect(slugify('test 123.json', SLUG_OPTIONS_DOCUMENT_ID)).toEqual('test-123-json')
   })
 
   describe('Unit tests for \'findSharedPath\' function', () => {

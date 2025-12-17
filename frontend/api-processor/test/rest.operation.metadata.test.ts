@@ -16,7 +16,7 @@
 
 import { Editor } from './helpers'
 
-describe('Custom tag test', () => {
+describe('Operation metadata test', () => {
   test('custom tag should exist in operation if provided in operationData', async () => {
     const editor = await Editor.openProject('apihub')
     const result = await editor.run({
@@ -29,8 +29,23 @@ describe('Custom tag test', () => {
     const secondOperationWithCustomTag = result.operations.get('api-v1-integrations-gitlab-apikey-put')
     expect(JSON.stringify(secondOperationWithCustomTag!.metadata.customTags['x-operation-meta']))
       .toBe(JSON.stringify({ 'message': 'Custom tag can contain objects too' }))
-    const thirdOperationWithCustomTag = result.operations.get('api-v1-integrations-integrationtype-repositories-get')
+    const thirdOperationWithCustomTag = result.operations.get('api-v1-integrations-_integrationType_-repositories-get')
     expect(JSON.stringify(thirdOperationWithCustomTag!.metadata.customTags['x-operation-meta']))
       .toBe(JSON.stringify(['There can be arrays passed too']))
+  })
+
+  test('operationIdV1 should exist in operation metadata', async () => {
+    const editor = await Editor.openProject('rest.operation/metadata')
+    const result = await editor.run({
+      version: 'v1',
+      packageId: 'metadata',
+    })
+
+    const operation = result.operations.get('test-_id_--get')
+    expect(operation).toBeDefined()
+
+    expect(operation!.metadata.operationIdV1).toBeDefined()
+    expect(typeof operation!.metadata.operationIdV1).toBe('string')
+    expect(operation!.metadata.operationIdV1.length).toBeGreaterThan(0)
   })
 })

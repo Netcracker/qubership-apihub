@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import type { BuildConfig, DeprecateItem, NotificationMessage } from '../../types'
-import { API_AUDIENCE_EXTERNAL } from '../../types'
+import { API_AUDIENCE_EXTERNAL, BuildConfig, DeprecateItem, NotificationMessage } from '../../types'
 import {
   getKeyValue,
   getSplittedVersionKey,
@@ -31,7 +30,6 @@ import { GraphQLSchemaType, VersionGraphQLDocument, VersionGraphQLOperation } fr
 import { GRAPHQL_API_TYPE, GRAPHQL_TYPE } from './graphql.consts'
 import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 import { toTitleCase } from '../../utils/strings'
-import { calculateObjectHash } from '../../utils/hashes'
 import {
   calculateDeprecatedItems,
   GRAPH_API_PROPERTY_COMPONENTS,
@@ -46,6 +44,7 @@ import {
 } from '@netcracker/qubership-apihub-api-unifier'
 import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
 import { DebugPerformanceContext, syncDebugPerformance } from '../../utils/logs'
+import { calculateHash, ObjectHashCache } from '../../utils/hashes'
 
 export const buildGraphQLOperation = (
   operationId: string,
@@ -57,6 +56,7 @@ export const buildGraphQLOperation = (
   refsOnlyDocument: GraphApiSchema,
   notifications: NotificationMessage[],
   config: BuildConfig,
+  normalizedSpecFragmentsHashCache: ObjectHashCache,
   debugCtx?: DebugPerformanceContext,
 ): VersionGraphQLOperation => {
   const { apiKind: documentApiKind, slug: documentSlug, versionInternalDocument } = document
@@ -71,8 +71,8 @@ export const buildGraphQLOperation = (
 
       const isOperation = isOperationPaths(declarationJsonPaths)
       const [version] = getSplittedVersionKey(config.version)
+      const hash = isOperation ? undefined : calculateHash(value, normalizedSpecFragmentsHashCache)
 
-      const hash = isOperation ? undefined : calculateObjectHash(value)
       result.push({
         declarationJsonPaths,
         ...takeIfDefined({ description }),

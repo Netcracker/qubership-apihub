@@ -24,7 +24,6 @@ export {
   calculateChangeId,
   calculateDiffId,
   calculateImpactedSummary,
-  convertToSlug,
   cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument,
   removeComponents,
 } from './utils'

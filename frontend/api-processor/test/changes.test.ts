@@ -261,8 +261,8 @@ describe('Changelog build type', () => {
 
     expect(result).toEqual(operationChangesMatcher([
       expect.objectContaining({
-        previousOperationId: 'order-id-post',
-        operationId: 'order-orderid-post',
+        previousOperationId: 'order-_id_-post',
+        operationId: 'order-_orderId_-post',
         previousMetadata: {
           'title': 'create order 1',
           'tags': ['tag1'],

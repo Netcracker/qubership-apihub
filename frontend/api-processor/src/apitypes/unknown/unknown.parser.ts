@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-import YAML from 'js-yaml'
-
 import { DOCUMENT_TYPE, FILE_FORMAT, SUPPORTED_FILE_FORMATS } from '../../consts'
 import { BinaryFile, FILE_KIND, FileFormat, TextFile } from '../../types/internal'
 import { getFileExtension } from '../../utils'
+import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 
 export const parseUnknownFile = async (fileId: string, source: Blob): Promise<TextFile | undefined> => {
   const sourceString = await source.text()
@@ -38,7 +37,7 @@ export const parseUnknownFile = async (fileId: string, source: Blob): Promise<Te
       fileId,
       type: DOCUMENT_TYPE.UNKNOWN,
       format: FILE_FORMAT.YAML,
-      data: YAML.load(sourceString),
+      data: loadYaml(sourceString),
       source,
       kind: FILE_KIND.TEXT,
     }

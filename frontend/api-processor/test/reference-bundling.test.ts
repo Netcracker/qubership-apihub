@@ -1,5 +1,5 @@
-import { errorNotificationMatcher, LocalRegistry, notificationsMatcher } from './helpers'
-import { VALIDATION_RULES_SEVERITY_LEVEL_ERROR } from '../src'
+import { LocalRegistry, notificationMatcher, notificationsMatcher } from './helpers'
+import { MESSAGE_SEVERITY, VALIDATION_RULES_SEVERITY_LEVEL_ERROR } from '../src'
 
 describe('Reference bundling test', () => {
   test('should bundle external references', async () => {
@@ -22,8 +22,8 @@ describe('Reference bundling test', () => {
     const result = await pkg.publish(pkg.packageId)
 
     expect(result).toEqual(notificationsMatcher([
-      errorNotificationMatcher('can\'t be resolved'),
-      errorNotificationMatcher('does not exist'),
+      notificationMatcher(MESSAGE_SEVERITY.Error,'can\'t be resolved'),
+      notificationMatcher(MESSAGE_SEVERITY.Error,'does not exist'),
     ]))
     expect(result.operations.size).toBe(1)
     expect(result.documents.get('openapi.yaml')?.dependencies.length).toBe(0)
@@ -52,8 +52,8 @@ describe('Reference bundling test', () => {
     const result = await pkg.publish(pkg.packageId)
 
     expect(result).toEqual(notificationsMatcher([
-      errorNotificationMatcher('can\'t be resolved'),
-      errorNotificationMatcher('does not exist'),
+      notificationMatcher(MESSAGE_SEVERITY.Error,'can\'t be resolved'),
+      notificationMatcher(MESSAGE_SEVERITY.Error,'does not exist'),
     ]))
     expect(result.operations.size).toBe(1)
     expect(result.documents.get('openapi.yaml')?.dependencies).toEqual(['reference.yaml'])
@@ -71,7 +71,7 @@ describe('Reference bundling test', () => {
     const pkg = LocalRegistry.openPackage('reference-bundling/case5')
     const result = await pkg.publish(pkg.packageId)
 
-    expect(result).toEqual(notificationsMatcher([errorNotificationMatcher('can\'t be resolved')]))
+    expect(result).toEqual(notificationsMatcher([notificationMatcher(MESSAGE_SEVERITY.Error,'can\'t be resolved')]))
     expect(result.operations.size).toBe(1)
   })
 
@@ -91,8 +91,8 @@ describe('Reference bundling test', () => {
     })
 
     expect(result).toEqual(notificationsMatcher([
-      errorNotificationMatcher('can\'t have siblings in this specification version'),      
+      notificationMatcher(MESSAGE_SEVERITY.Error,'can\'t have siblings in this specification version'),
     ]))
-    expect(result.operations.size).toBe(1)    
+    expect(result.operations.size).toBe(1)
   })
 })

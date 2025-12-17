@@ -45,6 +45,7 @@ import { ResolvedPackage } from '../external/package'
 import { FILE_FORMAT_JSON, FILE_FORMAT_YAML } from '../../consts'
 import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
 import { OperationsMap } from '../../components'
+import { ObjectHashCache } from '../../utils/hashes'
 
 export type BuilderType =
   | typeof REST_API_TYPE
@@ -70,6 +71,7 @@ export interface BuilderContext<T = any> {
   groupExportTemplateResolver?: GroupExportTemplateResolver
   rawDocumentResolver: _RawDocumentResolver
   versionLabels?: Array<string>
+  normalizedSpecFragmentsHashCache: ObjectHashCache
 }
 
 export type GroupExportTemplateResolver = (
@@ -99,6 +101,7 @@ export interface CompareOperationsPairContext {
   previousGroup?: string
   currentGroupSlug: string
   previousGroupSlug: string
+  normalizedSpecFragmentsHashCache: ObjectHashCache
 }
 
 export type NormalizedOperationId = string

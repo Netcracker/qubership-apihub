@@ -17,13 +17,11 @@
 import { RestOperationData } from './rest.types'
 import {
   areDeprecatedOriginsNotEmpty,
-  IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER,
+  calculateNormalizedRestOperationId,
   isEmpty,
   isOperationRemove,
   isValidHttpMethod,
-  normalizePath,
   removeFirstSlash,
-  slugify,
   trimSlashes,
 } from '../../utils'
 import {
@@ -64,12 +62,12 @@ import {
   resolveOrigins,
 } from '@netcracker/qubership-apihub-api-unifier'
 import { findRequiredRemovedProperties } from './rest.required'
-import { calculateObjectHash } from '../../utils/hashes'
+import { calculateHash } from '../../utils/hashes'
 import { REST_API_TYPE } from './rest.consts'
 import { OpenAPIV3 } from 'openapi-types'
 import {
-  extractOperationSecurityDiffs,
   extractOpenapiVersionDiff,
+  extractOperationSecurityDiffs,
   extractPathParamRenameDiff,
   extractRootSecurityDiffs,
   extractRootServersDiffs,
@@ -84,18 +82,6 @@ import {
   getOperationTags,
   OperationsMap,
 } from '../../components'
-
-/**
- * Calculates a normalized operation ID for an operation.
- *
- * @param basePath - The base path from servers configuration
- * @param path - The operation path
- * @param method - The HTTP method
- * @returns The normalized operation ID
- */
-function calculateNormalizedOperationId(basePath: string, path: string, method: string): string {
-  return slugify(`${normalizePath(basePath + path)}-${method}`, [], IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER)
-}
 
 export const compareDocuments: DocumentsCompare = async (
   operationsMap: OperationsMap,
@@ -142,7 +128,8 @@ export const compareDocuments: DocumentsCompare = async (
       ...NORMALIZE_OPTIONS,
       metaKey: DIFF_META_KEY,
       originsFlag: ORIGINS_SYMBOL,
-      normalizedResult: true,
+      // expected performance degradation, we need not normalized doc for comparisonDocument
+      normalizedResult: false,
       afterValueNormalizedProperty: AFTER_VALUE_NORMALIZED_PROPERTY,
       beforeValueNormalizedProperty: BEFORE_VALUE_NORMALIZED_PROPERTY,
     },
@@ -171,8 +158,8 @@ export const compareDocuments: DocumentsCompare = async (
       // todo if there were actually servers here, we wouldn't have handle it, add a test
       const previousBasePath = extractOperationBasePath(methodData?.servers || pathData?.servers || prevDocData.servers || [])
       const currentBasePath = extractOperationBasePath(methodData?.servers || pathData?.servers || currDocData.servers || [])
-      const prevNormalizedOperationId = calculateNormalizedOperationId(previousBasePath, path, inferredMethod)
-      const currNormalizedOperationId = calculateNormalizedOperationId(currentBasePath, path, inferredMethod)
+      const prevNormalizedOperationId = calculateNormalizedRestOperationId(previousBasePath, path, inferredMethod)
+      const currNormalizedOperationId = calculateNormalizedRestOperationId(currentBasePath, path, inferredMethod)
 
       const {
         current,
@@ -284,7 +271,7 @@ async function reclassifyBreakingChanges(
       continue
     }
 
-    const beforeHash = calculateObjectHash(beforeValueNormalized)
+    const beforeHash = calculateHash(beforeValueNormalized, ctx.normalizedSpecFragmentsHashCache)
 
     const deprecatedItems = previousOperation?.deprecatedItems ?? []
     let deprecatedItem

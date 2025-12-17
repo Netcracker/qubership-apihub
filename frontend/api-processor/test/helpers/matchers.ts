@@ -20,7 +20,7 @@ import {
   ChangeSummary,
   DeprecateItem,
   EMPTY_CHANGE_SUMMARY,
-  MESSAGE_SEVERITY,
+  MessageSeverity,
   NotificationMessage,
   OperationChanges,
   type OperationsApiType,
@@ -41,7 +41,7 @@ export type ApihubComparisonMatcher = ObjectContaining<VersionsComparison> & Ver
 export type ApihubOperationChangesMatcher = ObjectContaining<OperationChanges> & OperationChanges
 export type ApihubChangesSummaryMatcher = ObjectContaining<ChangeSummary> & ChangeSummary
 export type ApihubNotificationsMatcher = ObjectContaining<BuildResult> & BuildResult
-export type ApihubErrorNotificationMatcher = ObjectContaining<NotificationMessage> & NotificationMessage
+export type ApihubNotificationMatcher = ObjectContaining<NotificationMessage> & NotificationMessage
 export type ApihubChangeMessagesMatcher = ArrayContaining<ChangeMessage> & ChangeMessage[]
 export type ApihubExportDocumentsMatcher = ObjectContaining<BuildResult> & BuildResult
 export type ApihubExportDocumentMatcher = ObjectContaining<ZippableDocument> & ZippableDocument
@@ -175,13 +175,16 @@ export function notificationsMatcher(
   )
 }
 
-export function errorNotificationMatcher(
+export function notificationMatcher(
+  severity: MessageSeverity,
   message: string | RegExp,
-): ApihubErrorNotificationMatcher {
-  return expect.objectContaining({
+): ApihubNotificationMatcher {
+  const expected: Partial<NotificationMessage> = {
     message: expect.stringMatching(message),
-    severity: MESSAGE_SEVERITY.Error,
-  })
+    severity: severity,
+  }
+
+  return expect.objectContaining(expected)
 }
 
 export function exportDocumentsMatcher(

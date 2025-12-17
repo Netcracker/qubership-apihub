@@ -16,7 +16,7 @@
 
 import { buildAsyncApiOperation } from './async.operation'
 import { OperationsBuilder } from '../../types'
-import { createBundlingErrorHandler, createSerializedInternalDocument, isNotEmpty, removeComponents, slugify } from '../../utils'
+import { createBundlingErrorHandler, createSerializedInternalDocument, isNotEmpty, removeComponents, SLUG_OPTIONS_OPERATION_ID, slugify } from '../../utils'
 import type * as TYPE from './async.types'
 import { INLINE_REFS_FLAG } from '../../consts'
 import { asyncFunction } from '../../utils/async'
@@ -31,6 +31,7 @@ export const buildAsyncApiOperations: OperationsBuilder<TYPE.AsyncApiDocument> =
   const documentWithoutComponents = removeComponents(document.data)
   const bundlingErrorHandler = createBundlingErrorHandler(ctx, document.fileId)
 
+  const { notifications, normalizedSpecFragmentsHashCache, config } = ctx
   const { effectiveDocument, refsOnlyDocument } = syncDebugPerformance('[NormalizeDocument]', () => {
     const effectiveDocument = normalize(
       documentWithoutComponents,
@@ -84,7 +85,7 @@ export const buildAsyncApiOperations: OperationsBuilder<TYPE.AsyncApiDocument> =
         : operationKey
 
       // TODO: Consider using operationId from spec if present (operationData.operationId)
-      const operationId = slugify(`${action}-${channel}`)
+      const operationId = slugify(`${action}-${channel}`, SLUG_OPTIONS_OPERATION_ID)
 
       const trackedOperations = operationIdMap.get(operationId) ?? []
       trackedOperations.push({ channel, action })
@@ -100,13 +101,14 @@ export const buildAsyncApiOperations: OperationsBuilder<TYPE.AsyncApiDocument> =
             document,
             effectiveDocument,
             refsOnlyDocument,
-            ctx.notifications,
-            ctx.config,
+            notifications,
+            config,
+            normalizedSpecFragmentsHashCache,
             innerDebugCtx,
           )
           operations.push(operation)
         },
-          `${ctx.config.packageId}/${ctx.config.version} ${operationId}`,
+          `${config.packageId}/${config.version} ${operationId}`,
         ), debugCtx, [operationId])
     })
   }

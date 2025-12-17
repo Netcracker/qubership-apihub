@@ -15,7 +15,7 @@
  */
 
 import { Diff, DiffAction, DiffType, risky } from '@netcracker/qubership-apihub-api-diff'
-import { calculateObjectHash } from './hashes'
+import { calculateHash, ObjectHashCache } from './hashes'
 import { ArrayType, isEmpty } from './arrays'
 import { AFTER_VALUE_NORMALIZED_PROPERTY, BEFORE_VALUE_NORMALIZED_PROPERTY } from '../consts'
 import {
@@ -30,7 +30,11 @@ import {
   VersionsComparisonDto,
 } from '../types'
 
-export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: string) => void): ChangeMessage<DiffTypeDto> {
+export function toChangeMessage(
+  diff: ArrayType<Diff[]>,
+  normalizedSpecFragmentsHashCache: ObjectHashCache,
+  logError: (message: string) => void,
+): ChangeMessage<DiffTypeDto> {
   const newDiff: ArrayType<Diff<DiffTypeDto>[]> = {
     ...diff,
     type: replaceStringDiffType(diff.type, { origin: risky, override: SEMI_BREAKING_CHANGE_TYPE }) as DiffTypeDto,
@@ -65,7 +69,7 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
         ...commonChangeProps,
         action,
         currentDeclarationJsonPaths: afterDeclarationPaths,
-        currentValueHash: afterValueNormalized !== undefined ? calculateObjectHash(afterValueNormalized) : '',
+        currentValueHash: calculateHash(afterValueNormalized, normalizedSpecFragmentsHashCache),
       }
     }
     case DiffAction.remove: {
@@ -83,7 +87,7 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
         ...commonChangeProps,
         action,
         previousDeclarationJsonPaths: beforeDeclarationPaths,
-        previousValueHash: beforeValueNormalized !== undefined ? calculateObjectHash(beforeValueNormalized) : '',
+        previousValueHash: calculateHash(beforeValueNormalized, normalizedSpecFragmentsHashCache),
       }
     }
     case DiffAction.replace: {
@@ -104,8 +108,8 @@ export function toChangeMessage(diff: ArrayType<Diff[]>, logError: (message: str
         action,
         currentDeclarationJsonPaths: afterDeclarationPaths,
         previousDeclarationJsonPaths: beforeDeclarationPaths,
-        currentValueHash: afterValueNormalized !== undefined ? calculateObjectHash(afterValueNormalized) : '',
-        previousValueHash: beforeValueNormalized !== undefined ? calculateObjectHash(beforeValueNormalized) : '',
+        currentValueHash: calculateHash(afterValueNormalized, normalizedSpecFragmentsHashCache),
+        previousValueHash: calculateHash(beforeValueNormalized, normalizedSpecFragmentsHashCache),
       }
     }
     case DiffAction.rename: {
@@ -138,14 +142,14 @@ export function toOperationChangesDto({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   impactedSummary,
   ...rest
-}: OperationChanges, logError: (message: string) => void): OperationChangesDto {
+}: OperationChanges, normalizedSpecFragmentsHashCache: ObjectHashCache, logError: (message: string) => void): OperationChangesDto {
   return {
     ...rest,
     changeSummary: replacePropertyInChangesSummary<DiffType, DiffTypeDto>(rest.changeSummary, {
       origin: risky,
       override: SEMI_BREAKING_CHANGE_TYPE,
     }),
-    changes: diffs?.map(diff => toChangeMessage(diff, logError)),
+    changes: diffs?.map(diff => toChangeMessage(diff, normalizedSpecFragmentsHashCache, logError)),
   }
 }
 
@@ -154,14 +158,14 @@ export function toVersionsComparisonDto({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   comparisonInternalDocuments,
   ...rest
-}: VersionsComparison, logError: (message: string) => void): VersionsComparisonDto {
+}: VersionsComparison, normalizedSpecFragmentsHashCache: ObjectHashCache, logError: (message: string) => void): VersionsComparisonDto {
   return {
     ...rest,
     operationTypes: convertDtoFieldOperationTypes<DiffType, DiffTypeDto>(rest.operationTypes, {
       origin: risky,
       override: SEMI_BREAKING_CHANGE_TYPE,
     }),
-    data: data?.map(data => toOperationChangesDto(data, logError)),
+    data: data?.map(data => toOperationChangesDto(data, normalizedSpecFragmentsHashCache, logError)),
   }
 }
 

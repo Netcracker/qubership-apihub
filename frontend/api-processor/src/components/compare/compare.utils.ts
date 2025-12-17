@@ -36,9 +36,11 @@ import { EMPTY_CHANGE_SUMMARY } from '../../consts'
 import {
   calculateChangeSummary,
   calculateImpactedSummary,
-  convertToSlug,
   difference,
   intersection,
+  removeFirstSlash,
+  SLUG_OPTIONS_OPERATION_ID,
+  slugify,
   serializeDocument,
   takeIfDefined,
 } from '../../utils'
@@ -320,7 +322,7 @@ export const createComparisonInternalDocumentId = (
 }
 
 export const removeGroupPrefixFromOperationId = (operationId: string, groupPrefix: string): string => {
-  return takeSubstringIf(!!groupPrefix, operationId, convertToSlug(groupPrefix).length + '-'.length)
+  return takeSubstringIf(!!groupPrefix, operationId, slugify(removeFirstSlash(groupPrefix), SLUG_OPTIONS_OPERATION_ID).length)
 }
 
 export const createComparisonInternalDocuments = (comparisonDocuments: ComparisonDocument[], comparisonFileId: string): ComparisonInternalDocument[] => {

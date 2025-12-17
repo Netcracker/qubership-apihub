@@ -74,7 +74,7 @@ describe('Operation Bugs', () => {
       ],
     })
 
-    const operationV1 = result.operations.get('v1-pet-findbystatus-get')
+    const operationV1 = result.operations.get('v1-pet-findByStatus-get')
     expect(operationV1?.title).toMatch(/(\s*)TEST(\s*)/g)
   })
 
@@ -358,94 +358,13 @@ describe('Operation Bugs', () => {
     expect(operationKeys[0]).toEqual('paths1-get')
   })
 
-  test('Should throw error if path parameter name is empty', async () => {
-    const pkg = LocalRegistry.openPackage('empty-path-parameter')
-
-    await expect(pkg.publish(pkg.packageId, {
-      packageId: pkg.packageId,
-      version: 'v1',
-      files: [
-        { fileId: 'spec.json' },
-      ],
-    })).rejects.toThrow('Invalid path \'/res/data/{}\': path parameter name could not be empty')
-  })
-
-  test('Should throw error if duplicated operation is found in different documents', async () => {
-    const pkg = LocalRegistry.openPackage('duplicated-operation')
-
-    await expect(pkg.publish(pkg.packageId, {
-      packageId: pkg.packageId,
-      version: 'v1',
-      files: [
-        { fileId: 'spec1.json' },
-        { fileId: 'spec2.json' },
-      ],
-    })).rejects.toThrow('Duplicated operationId \'res-data-post\' found in different documents: \'spec1\' and \'spec2\'')
-  })
-
-  test('Should throw error if duplicated operation is found within document', async () => {
-    const pkg = LocalRegistry.openPackage('duplicated-operation')
-
-    await expect(pkg.publish(pkg.packageId, {
-      packageId: pkg.packageId,
-      version: 'v1',
-      files: [
-        { fileId: 'duplication-within-doc.json' },
-      ],
-    })).rejects.toThrow(/Duplicated operationIds found within document 'duplication-within-doc.json':/)
-  })
-
-  test('Should throw error for duplication within document even if second document has same operationId', async () => {
-    const pkg = LocalRegistry.openPackage('duplicated-operation')
-
-    await expect(pkg.publish(pkg.packageId, {
-      packageId: pkg.packageId,
-      version: 'v1',
-      files: [
-        { fileId: 'duplication-within-doc.json' },
-        { fileId: 'duplication-second-doc.json' },
-      ],
-    })).rejects.toThrow(/Duplicated operationIds found within document 'duplication-within-doc.json':/)
-  })
-
-  test('Should detect all duplicate operationIds within document', async () => {
-    const pkg = LocalRegistry.openPackage('duplicated-operation')
-
-    await expect(pkg.publish(pkg.packageId, {
-      packageId: pkg.packageId,
-      version: 'v1',
-      files: [
-        { fileId: 'duplication-multiple.json' },
-      ],
-    })).rejects.toThrow(
-      /Duplicated operationIds found within document 'duplication-multiple.json':\n- operationId 'api-v1-resource-get': Found 2 operations: GET \/api\/v1\/resource, GET \/api\/v1\/resource\/\n- operationId 'api-v1-user-post': Found 2 operations: POST \/api\/v1\/user, POST \/api\/v1\/user\//,
-    )
-  })
-
-  test('Should detect three or more operations with same operationId', async () => {
-    const pkg = LocalRegistry.openPackage('duplicated-operation')
-
-    await expect(pkg.publish(pkg.packageId, {
-      packageId: pkg.packageId,
-      version: 'v1',
-      files: [
-        { fileId: 'duplication-three-ops.json' },
-      ],
-    })).rejects.toThrow(
-      /Duplicated operationIds found within document 'duplication-three-ops.json':\n- operationId 'api-v1-resource-get': Found 3 operations: GET \/api\/v1\/resource, GET \/api\/v1\/resource\/, GET \/api\/v1\/resource\/\//,
-    )
-  })
-
-  // TODO: need to decide how to handle this case, this affects how operationIds are calculated
-  test.skip('Should build operations if there is a path parameter path collision', async () => {
-    const pkg = LocalRegistry.openPackage('path-parameter-path-collision')
-
-    const result = await pkg.publish(pkg.packageId, {
-      packageId: pkg.packageId,
-      version: 'v1',
-      files: [
-        { fileId: 'spec.json' },
-      ],
+  test('should date time field parsing without error', async () => {
+    const editor = await Editor.openProject('bugs', bugsPackage)
+    const result = await editor.run({
+      files: [{fileId: 'date-time-field-parsing-error.yaml', publish: true}],
     })
+    const data = result.operations.get('test-post')?.data
+    expect(data).toHaveProperty(['paths', '/test', 'post', 'responses', '200', 'content', 'application/json', 'schema', 'properties', 'testConnectionDate', 'example'], '2022-03-10T16:15:50Z')
   })
+
 })
