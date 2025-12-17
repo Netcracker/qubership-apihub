@@ -4,6 +4,7 @@ import {
   deprecated,
   DiffAction,
   nonBreaking,
+  risky,
   unclassified
 } from "@netcracker/qubership-apihub-api-diff"
 import { isGraphSchemaNodeEnumValue } from "../src"
@@ -546,7 +547,7 @@ describe('output', () => {
     expect(fruitValue?.$changes).toMatchObject({
       values: {
         Apple: { type: nonBreaking, action: DiffAction.remove, beforeValue: {} },
-        Pineapple: { type: breaking, action: DiffAction.add, afterValue: {} },
+        Pineapple: { type: risky, action: DiffAction.add, afterValue: {} },
         Orange: {
           description: {
             type: annotation,
