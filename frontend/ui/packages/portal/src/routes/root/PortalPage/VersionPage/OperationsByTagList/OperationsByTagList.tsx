@@ -16,7 +16,6 @@
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { Accordion, AccordionDetails, AccordionSummary, Skeleton, Typography } from '@mui/material'
-import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { OperationPairsGroupedByTag } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { GROUP_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
@@ -30,8 +29,8 @@ export type OperationsByTagListProps = {
   isLoading: boolean
   expanded: readonly string[]
   setExpanded: Dispatch<SetStateAction<readonly string[]>>
-  onOperationClick: (key: Key) => void
 }
+
 export const OperationsByTagList: FC<OperationsByTagListProps> = memo<OperationsByTagListProps>(props => {
   const {
     tag,
@@ -59,27 +58,18 @@ export const OperationsByTagList: FC<OperationsByTagListProps> = memo<Operations
     <Accordion expanded={isTagExpanded} onChange={onChange}>
       <AccordionSummary
         sx={ACCORDION_SUMMARY_STYLE}
-        expandIcon={<ExpandMoreIcon/>}
+        expandIcon={<ExpandMoreIcon />}
         data-testid="TagAccordionButton"
       >
         <Typography width="100%" noWrap variant="button">{tag}</Typography>
       </AccordionSummary>
       <AccordionDetails>
-        {
-          isTagExpanded && (
-            group ? (
-                <OperationsListOnComparison
-                  changedOperationPairs={operationsList}
-                />
-              )
-              : (
-                <OperationsListOnComparison
-                  changedOperationPairs={operationsList}
-                />
-              )
-          )
-        }
-        {isLoading && <Skeleton sx={{ ml: 4, mr: 1 }}/>}
+        {isTagExpanded && (
+          group
+            ? <OperationsListOnComparison changedOperationPairs={operationsList} />
+            : <OperationsListOnComparison changedOperationPairs={operationsList} />
+        )}
+        {isLoading && <Skeleton sx={{ ml: 4, mr: 1 }} />}
       </AccordionDetails>
     </Accordion>
   )

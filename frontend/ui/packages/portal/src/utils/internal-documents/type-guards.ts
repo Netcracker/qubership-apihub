@@ -4,14 +4,14 @@ import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 import type { OpenAPIV3 } from 'openapi-types'
 import type { AsyncAPIDocumentInterface } from '@asyncapi/parser'
 
-export function isRestOperation(specification: unknown): specification is OpenAPIV3.Document {
+export function isOpenApiSpecification(specification: unknown): specification is OpenAPIV3.Document {
   if (!isObject(specification)) {
     return false
   }
   return 'openapi' in specification && typeof specification.openapi === 'string'
 }
 
-export function isGraphQLOperation(specification: unknown): specification is GraphApiSchema {
+export function isGraphApiSpecification(specification: unknown): specification is GraphApiSchema {
   return isGraphApi(specification)
 }
 

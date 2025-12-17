@@ -40,14 +40,15 @@ export const GroupComparePage: FC = memo(() => {
   const { originPackageKey, originVersionKey, changedPackageKey, changedVersionKey } = groupsComparisonParams
   const previousGroup = useSearchParam(GROUP_SEARCH_PARAM)
 
-  const [compareGroups] = useCompareGroups({
+  const compareGroupsOptions = useMemo(() => ({
     changedPackageKey: changedPackageKey,
     changedVersionKey: changedVersionKey,
     originPackageKey: originPackageKey,
     originVersionKey: originVersionKey,
     currentGroup: group,
     previousGroup: previousGroup,
-  })
+  }), [changedPackageKey, changedVersionKey, group, originPackageKey, originVersionKey, previousGroup])
+  const [compareGroups] = useCompareGroups(compareGroupsOptions)
 
   const tags = useMemo(
     () => (

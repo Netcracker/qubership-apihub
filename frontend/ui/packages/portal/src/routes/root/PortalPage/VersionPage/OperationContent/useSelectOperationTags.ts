@@ -24,12 +24,13 @@ export function useSelectOperationTags(...operations: ReadonlyArray<Operation | 
   const operationsTags = useMemo(() => {
     const tags = operations
       .map(operation => operation?.tags ?? [])
-      .reduce((allTagList, currentTagList) => [...allTagList, ...currentTagList])
+      .reduce((allTagList, currentTagList) => [...allTagList, ...currentTagList], [])
 
     const tagSet = new Set<string>(tags)
 
     return tagSet.size === 0 ? [DEFAULT_TAG] : Array.from(tagSet)
   }, [operations])
+
   const setSelectedOperationTags = useSetSelectedOperationTags()
 
   useEffect(() => {

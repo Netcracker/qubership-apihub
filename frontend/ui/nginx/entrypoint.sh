@@ -29,7 +29,7 @@ adjust_addr() {
   var="$1"
   val="$(eval echo \$"$var")"
   case "$val" in
-    *localhost*|*host.docker.internal*) ;;
+    *localhost*|*host.docker.internal*|*qubership-*) ;;
     "")
       val="invalid.invalid.:80"
       ;;

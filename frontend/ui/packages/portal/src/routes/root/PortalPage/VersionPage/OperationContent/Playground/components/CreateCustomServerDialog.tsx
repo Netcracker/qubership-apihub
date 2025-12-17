@@ -44,6 +44,10 @@ import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/ap
 import { useOperation } from '@netcracker/qubership-apihub-ui-portal/src/routes/root/PortalPage/VersionPage/useOperation'
 import { useCustomUrls, useSpecUrls } from '../hooks/useUrls'
 import { isAbsoluteHttpUrl } from '@netcracker/qubership-apihub-ui-shared/utils/urls'
+import {
+  useGetAgentPrefix,
+} from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
+import { getAgentProxyServerUrl } from '@netcracker/qubership-apihub-ui-shared/utils/agent-proxy'
 
 const MODE_MANUAL = 'manual' as const
 const MODE_AGENT = 'agent' as const
@@ -155,22 +159,16 @@ type ControllerRenderFunctionProps<FieldName extends keyof CreateCustomServerFor
   formState: UseFormStateReturn<CreateCustomServerForm>
 }
 
-const AGENT_PROXY_URL_TEMPLATE =
-  ':baseUrl/apihub-nc/agents/:cloud/namespaces/:namespace/services/:service/proxy/:additionalPath'
-
 const buildAgentProxyUrl = (
   baseUrl: string,
+  prefixPath: string,
   cloud: string,
   namespace: string,
   service: string,
   additionalPath: string,
 ): string => {
-  return generatePath(AGENT_PROXY_URL_TEMPLATE, {
+  return generatePath(`:baseUrl/${getAgentProxyServerUrl(prefixPath, service, cloud, namespace, additionalPath)}`, {
     baseUrl,
-    cloud,
-    namespace,
-    service,
-    additionalPath,
   })
 }
 
@@ -188,7 +186,7 @@ const CreateCustomServerPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpe
   const serviceName = packageObj?.serviceName
   const packageKind = packageObj?.kind || PACKAGE_KIND
   const isServiceNameExist = !!serviceName
-
+  const prefix = useGetAgentPrefix()
   // Use reducer for related state management
   const [agentState, dispatch] = useReducer(agentReducer, initialAgentState)
   const { selectedCloud, selectedNamespace, selectedAgent, additionalPath, agentProxyUrl, agentProxyUrlError } =
@@ -269,6 +267,7 @@ const CreateCustomServerPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpe
     if (isServiceNameExist) {
       const url = buildAgentProxyUrl(
         baseUrl,
+        prefix,
         selectedAgent || '<cloud>',
         selectedNamespace || '<namespace>',
         serviceName,
@@ -280,6 +279,7 @@ const CreateCustomServerPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpe
   }, [
     selectedCloud,
     cloudAgentIdMap,
+    prefix,
     baseUrl,
     isServiceNameExist,
     selectedAgent,

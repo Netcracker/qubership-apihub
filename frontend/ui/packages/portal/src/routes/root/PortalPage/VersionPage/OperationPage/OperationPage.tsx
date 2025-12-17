@@ -113,8 +113,8 @@ export const OperationPage: FC = memo(() => {
   })
 
   const visitorData: object | undefined =
-    apiType && isObject(normalizedChangedOperation)
-      ? API_TYPE_MODELS_MAP[apiType as ApiType](normalizedChangedOperation)
+    apiType && isObject(changedOperation?.data)
+      ? API_TYPE_MODELS_MAP[apiType as ApiType](changedOperation!.data)
       : undefined
 
   const models = useOpenApiVisitor(visitorData)

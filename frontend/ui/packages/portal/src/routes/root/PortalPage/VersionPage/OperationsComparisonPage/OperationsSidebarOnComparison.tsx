@@ -44,7 +44,6 @@ export type OperationsSidebarOnComparisonProps = {
   apiType: ApiType
   operationsGroupedByTag: OperationPairsGroupedByTag
   areChangesLoading: boolean
-  onOperationClick: (key: Key) => void
 }
 
 export const OperationsSidebarOnComparison: FC<OperationsSidebarOnComparisonProps> =
@@ -58,7 +57,6 @@ export const OperationsSidebarOnComparison: FC<OperationsSidebarOnComparisonProp
       apiType,
       operationsGroupedByTag,
       areChangesLoading,
-      onOperationClick,
     } = props
 
     const [expanded, setExpanded] = useState<readonly string[]>([])
@@ -100,7 +98,6 @@ export const OperationsSidebarOnComparison: FC<OperationsSidebarOnComparisonProp
                     isLoading={areChangesLoading}
                     expanded={expanded}
                     setExpanded={setExpanded}
-                    onOperationClick={onOperationClick}
                   />,
                 )}
               </Placeholder>}

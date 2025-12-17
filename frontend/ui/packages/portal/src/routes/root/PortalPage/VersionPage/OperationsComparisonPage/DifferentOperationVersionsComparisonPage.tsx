@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { buildOperationPairKey, HandledOperationPairsProvider } from '@apihub/components/HandledOperationPairsProvider'
 import { OperationContent } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationContent'
 import {
   COMPARE_SAME_OPERATIONS_MODE,
@@ -50,7 +51,7 @@ import {
   usePagedVersionChangelog,
 } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/api/useCommonPagedVersionChangelog'
 import type { FC } from 'react'
-import { memo, useEffect, useMemo } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTextSearchParam } from '../../../useTextSearchParam'
 import { useVersionSearchParam } from '../../../useVersionSearchParam'
@@ -64,11 +65,10 @@ import { BreadcrumbsDataContext } from '../ComparedPackagesBreadcrumbsProvider'
 import type { InternalDocumentOptions } from '../ComparisonToolbar'
 import { ComparisonToolbar } from '../ComparisonToolbar'
 import { SelectedOperationTagsProvider } from '../SelectedOperationTagsProvider'
-import { ShouldAutoExpandTagsProvider, useSetShouldAutoExpandTagsContext } from '../ShouldAutoExpandTagsProvider'
+import { ShouldAutoExpandTagsProvider } from '../ShouldAutoExpandTagsProvider'
 import { VersionsComparisonGlobalParamsContext } from '../VersionsComparisonGlobalParams'
 import { VERSION_SWAPPER_HEIGHT } from '../shared-styles'
 import { useDocumentSearchParam } from '../useDocumentSearchParam'
-import { useNavigateToOperation } from '../useNavigateToOperation'
 import { useOperation } from '../useOperation'
 import { useOperationSearchParam } from '../useOperationSearchParam'
 import { OperationsSidebarOnComparison } from './OperationsSidebarOnComparison'
@@ -103,20 +103,24 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
   const { isPackageFromDashboard, refPackageKey } = useIsPackageFromDashboard()
   const [searchValue = '', setSearchValue] = useTextSearchParam()
 
-  useCompareVersions({
+  const compareVersionsOptions = useMemo(() => ({
     originPackageKey: originPackageKey,
     originVersionKey: originVersionKey,
     changedPackageKey: changedPackageKey,
     changedVersionKey: changedVersionKey,
-  })
+  }), [changedPackageKey, changedVersionKey, originPackageKey, originVersionKey])
+  useCompareVersions(compareVersionsOptions)
 
-  const [changesSummary, isContextValid] = useChangesSummaryContext({
-    changedPackageKey: changedPackageKey,
-    changedVersionKey: changedVersionKey,
-    originPackageKey: originPackageKey,
-    originVersionKey: originVersionKey,
-  })
-  const [packageChangelog, arePackageChangesLoading, fetchNextPage, isNextPageFetching, hasNextPage] = usePagedVersionChangelog({
+  const [changesSummary, isContextValid] = useChangesSummaryContext(compareVersionsOptions)
+  const {
+    data: packageChangelog,
+    isLoading: arePackageChangesLoading,
+    fetchNextPage,
+    isFetchingNextPage:
+    isNextPageFetching,
+    hasNextPage,
+    isChangelogReady,
+  } = usePagedVersionChangelog({
     packageKey: changedPackageKey!,
     versionKey: changedVersionKey!,
     previousVersionPackageKey: originPackageKey,
@@ -129,7 +133,7 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
     page: 1,
     limit: 100,
   })
-  const flatPackageChangelog = useFlatVersionChangelog(packageChangelog)
+  const flatPackageChangelog = useFlatVersionChangelog(packageChangelog, isChangelogReady)
   const packageChanges: ReadonlyArray<OperationChangeBase> = flatPackageChangelog.operations
 
   const internalDocumentOptions: InternalDocumentOptions = useMemo(
@@ -142,8 +146,8 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
   )
 
   const operationsFromPackageChanges = useMemo(
-    () => getOperationPairsFromPackageChanges(packageChanges),
-    [packageChanges],
+    () => (isChangelogReady ? getOperationPairsFromPackageChanges(packageChanges) : []),
+    [packageChanges, isChangelogReady],
   )
 
   useEffect(() => {
@@ -182,8 +186,6 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
     apiType: apiType as ApiType,
   })
 
-  const areChangesAndOperationsLoading = (arePackageChangesLoading || isOriginOperationInitialLoading || isChangedOperationInitialLoading) && !hasNextPage
-
   const filteredPackageChanges = useMemo(
     () => packageChanges.filter(item => filterChangesBySeverity(filters, item.changeSummary)),
     [packageChanges, filters])
@@ -214,42 +216,60 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
     [operationKey, operationsFromPackageChanges, searchValue],
   )
 
-  useEffect(() => {
-    if (firstOperationPair && !packageChangesHaveCurrentOperation && !areChangesAndOperationsLoading) {
-      const firstOperation = firstOperationPair.currentOperation ?? firstOperationPair.previousOperation!
-      const firstOperationId = firstOperation.operationKey
+  useEffect(
+    () => {
+      if (
+        isChangelogReady &&
+        !isOriginOperationInitialLoading && !isChangedOperationInitialLoading &&
+        firstOperationPair && !packageChangesHaveCurrentOperation
+      ) {
+        const firstOperation = firstOperationPair.currentOperation ?? firstOperationPair.previousOperation!
+        const firstOperationId = firstOperation.operationKey
 
-      const newPathName = `/portal/packages/${changedPackageKey}/${changedVersionKey}/compare/${apiType}/${firstOperationId}`
-      const searchParams = optionalSearchParams({
-        [PACKAGE_SEARCH_PARAM]: { value: originPackageKey },
-        [VERSION_SEARCH_PARAM]: { value: originVersionKey },
-        [DOCUMENT_SEARCH_PARAM]: { value: selectedDocumentSlug },
-        [REF_SEARCH_PARAM]: { value: isPackageFromDashboard && firstOperation.packageRef?.key }, // Assumption that we can't compare operations from different packages
-        [FILTERS_SEARCH_PARAM]: { value: filters.join() },
-        [OPERATION_SEARCH_PARAM]: {
-          value:
-            firstOperationPair.currentOperation
-              ? firstOperationPair.previousOperation?.operationKey
-              : undefined,
-        },
-      })
-      navigate({
-        pathname: newPathName,
-        search: `${searchParams}`,
-      })
-    }
-  }, [apiType, areChangesAndOperationsLoading, changedPackageKey, changedVersionKey, filters, firstOperationPair, packageChangesHaveCurrentOperation, isPackageFromDashboard, navigate, originPackageKey, originVersionKey, selectedDocumentSlug, hasNextPage])
+        const newPathName = `/portal/packages/${changedPackageKey}/${changedVersionKey}/compare/${apiType}/${firstOperationId}`
+        const searchParams = optionalSearchParams({
+          [PACKAGE_SEARCH_PARAM]: { value: originPackageKey },
+          [VERSION_SEARCH_PARAM]: { value: originVersionKey },
+          [DOCUMENT_SEARCH_PARAM]: { value: selectedDocumentSlug },
+          [REF_SEARCH_PARAM]: { value: isPackageFromDashboard && firstOperation.packageRef?.key }, // Assumption that we can't compare operations from different packages
+          [FILTERS_SEARCH_PARAM]: { value: filters.join() },
+          [OPERATION_SEARCH_PARAM]: {
+            value:
+              firstOperationPair.currentOperation
+                ? firstOperationPair.previousOperation?.operationKey
+                : undefined,
+          },
+        })
+        navigate({
+          pathname: newPathName,
+          search: `${searchParams}`,
+        })
+      }
+    },
+    [
+      apiType,
+      changedPackageKey,
+      changedVersionKey,
+      filters,
+      firstOperationPair,
+      packageChangesHaveCurrentOperation,
+      isPackageFromDashboard,
+      navigate,
+      originPackageKey,
+      originVersionKey,
+      selectedDocumentSlug,
+      hasNextPage,
+      isChangelogReady,
+      isOriginOperationInitialLoading,
+      isChangedOperationInitialLoading,
+    ],
+  )
 
-  const comparedOperationsPair: OptionalOperationPair<OperationData> = {
+  const comparedOperationsPair: OptionalOperationPair<OperationData> = useMemo(() => ({
     previousOperation: originOperation,
     currentOperation: changedOperation,
     isLoading: isOriginOperationInitialLoading || isChangedOperationInitialLoading,
-  }
-
-  const setShouldAutoExpand = useSetShouldAutoExpandTagsContext()
-  const handleOperationClick = useNavigateToOperation(
-    changedPackageKey!, changedVersionKey!, apiType as ApiType, setShouldAutoExpand,
-  )
+  }), [originOperation, changedOperation, isOriginOperationInitialLoading, isChangedOperationInitialLoading])
 
   // TODO 31.08.23 // Optimize it!
   // TODO 01.09.23 // Extract to hook? Can we optimize it and reuse some parameters?
@@ -261,6 +281,18 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
     changedOperationKey: operationKey,
   })
   const mergedBreadcrumbsData = useCompareBreadcrumbs(originComparisonObject, changedComparisonObject)
+
+  // Store operation pairs that are already opened into cache
+  const [handledOperationPairs] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    if (originOperation || changedOperation) {
+      handledOperationPairs.add(buildOperationPairKey({
+        currentOperation: changedOperation,
+        previousOperation: originOperation,
+      }))
+    }
+  }, [changedOperation, handledOperationPairs, originOperation])
+  // ---
 
   return (
     <ShouldAutoExpandTagsProvider>
@@ -276,17 +308,18 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
                   />
                 }
                 navigation={
-                  <OperationsSidebarOnComparison
-                    operationPackageKey={operationPackageKey!}
-                    operationPackageVersion={operationPackageVersion!}
-                    searchValue={searchValue}
-                    setSearchValue={setSearchValue}
-                    tags={tags}
-                    apiType={apiType as ApiType}
-                    operationsGroupedByTag={filteredOperationsGroupedByTags}
-                    areChangesLoading={arePackageChangesLoading}
-                    onOperationClick={handleOperationClick}
-                  />
+                  <HandledOperationPairsProvider value={handledOperationPairs}>
+                    <OperationsSidebarOnComparison
+                      operationPackageKey={operationPackageKey!}
+                      operationPackageVersion={operationPackageVersion!}
+                      searchValue={searchValue}
+                      setSearchValue={setSearchValue}
+                      tags={tags}
+                      apiType={apiType as ApiType}
+                      operationsGroupedByTag={filteredOperationsGroupedByTags}
+                      areChangesLoading={!isChangelogReady}
+                    />
+                  </HandledOperationPairsProvider>
                 }
                 body={
                   <OperationContent
@@ -294,7 +327,7 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
                     originOperation={originOperation}
                     isOperationExist={packageChangesHaveCurrentOperation}
                     displayMode={COMPARE_SAME_OPERATIONS_MODE}
-                    isLoading={areChangesAndOperationsLoading}
+                    isLoading={isOriginOperationInitialLoading || isChangedOperationInitialLoading || !isChangelogReady}
                     paddingBottom={VERSION_SWAPPER_HEIGHT}
                   />
                 }

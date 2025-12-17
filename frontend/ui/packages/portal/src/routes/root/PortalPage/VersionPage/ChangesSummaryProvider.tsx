@@ -15,7 +15,7 @@
  */
 
 import type { Dispatch, FC, PropsWithChildren, SetStateAction } from 'react'
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { UseCompareVersionsOptions } from '../useCompareVersions'
 import type { VersionChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
 
@@ -69,17 +69,21 @@ export function useChangesSummaryContext(
   const setChangesSummary = useSetChangesSummaryContext()
 
   const isContextValid = useIsChangesSummaryContextValid(actualComparisonOptions)
-  const changesSummary = useMemo(() => {
-    if (!isContextValid) {
-      const clearedChangesSummary = undefined
-      setVersionsComparisonOptions(actualComparisonOptions)
-      setChangesSummary(clearedChangesSummary)
-      return clearedChangesSummary
-    }
-    return changesSummaryFromContext
-  }, [actualComparisonOptions, changesSummaryFromContext, isContextValid, setChangesSummary, setVersionsComparisonOptions])
 
-  return [changesSummary, isContextValid, useSetChangesSummaryContext()]
+  // Update context state when validation changes - side effects in useEffect, not useMemo
+  useEffect(() => {
+    if (!isContextValid) {
+      setVersionsComparisonOptions(actualComparisonOptions)
+      setChangesSummary(undefined)
+    }
+  }, [isContextValid, actualComparisonOptions, setVersionsComparisonOptions, setChangesSummary])
+
+  // Pure calculation without side effects
+  const changesSummary = useMemo(() => {
+    return isContextValid ? changesSummaryFromContext : undefined
+  }, [isContextValid, changesSummaryFromContext])
+
+  return [changesSummary, isContextValid, setChangesSummary]
 }
 
 export const ChangesSummaryProvider: FC<PropsWithChildren> = ({ children }) => {

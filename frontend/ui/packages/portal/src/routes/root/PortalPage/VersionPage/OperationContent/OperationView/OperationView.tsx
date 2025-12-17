@@ -82,12 +82,13 @@ export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(pr
     operationModels,
     mergedDocument,
     comparisonMode,
-    // diffs specific
-    filters,
     // GraphQL specific
     operationType,
     operationName,
   } = props
+
+  const filters = useMemo(() => props.filters ?? [], [props.filters])
+
   const operationViewContainerRef = useRef<HTMLDivElement | null>(null)
 
   // const [newRestApiViewer] = useState(false)
@@ -214,7 +215,7 @@ const API_TYPE_VIEWER_MAP: Record<ApiType, ApiTypeViewerCallback> = {
       : <GraphQLOperationDiffViewer
         source={mergedDocument}
         displayMode={schemaViewMode as SchemaViewMode}
-        filters={filters ?? []}
+        filters={filters}
         metaKeys={DIFFS_META_KEYS}
         layoutMode={SIDE_BY_SIDE_DIFFS_LAYOUT_MODE}
         operationType={operationType}

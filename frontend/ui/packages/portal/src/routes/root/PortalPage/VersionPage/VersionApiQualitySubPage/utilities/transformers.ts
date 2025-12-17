@@ -2,9 +2,10 @@ import { YAML_FILE_FORMAT, JSON_FILE_FORMAT } from '@netcracker/qubership-apihub
 import type { SpecItemUri } from '@netcracker/qubership-apihub-ui-shared/utils/specifications'
 import { encodeKey } from '@netcracker/qubership-apihub-ui-shared/utils/specifications'
 import { safeParse } from '@stoplight/json'
-import YAML from 'js-yaml'
+import { dump } from 'js-yaml'
 import type { OriginalDocumentFileFormat } from '../types'
 import type { IssuePath } from '@apihub/entities/api-quality/issue-paths'
+import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 
 export function issuePathToSpecItemUri(issuePath: IssuePath): SpecItemUri {
   return `/${issuePath.map(pathItem => encodeKey(`${pathItem}`)).join('/')}`
@@ -28,7 +29,7 @@ export function transformRawDocumentByFormat(
     } catch { /* do nothing */ }
   } else {
     try {
-      parsed = YAML.load(value)
+      parsed = loadYaml(value)
       currentFormat = YAML_FILE_FORMAT
     } catch { /* do nothing */ }
   }
@@ -41,7 +42,7 @@ export function transformRawDocumentByFormat(
     case JSON_FILE_FORMAT:
       return JSON.stringify(parsed, null, 2)
     case YAML_FILE_FORMAT:
-      return YAML.dump(parsed)
+      return dump(parsed)
     default:
       return value
   }

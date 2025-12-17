@@ -91,7 +91,7 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
 
   if (isLoading) {
     return (
-      <LoadingIndicator/>
+      <LoadingIndicator />
     )
   } else if (!changedOperation?.operationKey) {
     return (
@@ -128,7 +128,7 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
             />
           }
         />
-        <Divider orientation="horizontal" variant="fullWidth"/>
+        <Divider orientation="horizontal" variant="fullWidth" />
       </Box>
 
       <Box>

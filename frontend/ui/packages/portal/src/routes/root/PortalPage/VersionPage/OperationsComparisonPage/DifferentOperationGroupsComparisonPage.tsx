@@ -43,6 +43,7 @@ import type {
 import {
   useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
+import { usePackageSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { filterChangesBySeverity } from '@netcracker/qubership-apihub-ui-shared/utils/change-severities'
@@ -59,7 +60,6 @@ import { useParams } from 'react-router-dom'
 import { safeOperationKeysPair } from '../../../../../../../shared/src/utils/operations'
 import { useNavigation } from '../../../../NavigationProvider'
 import { usePackage } from '../../../usePackage'
-import { usePackageSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
 import { useVersionSearchParam } from '../../../useVersionSearchParam'
 import { useCompareGroups } from '../../useCompareGroups'
 import { useIsPackageFromDashboard } from '../../useIsPackageFromDashboard'
@@ -70,13 +70,12 @@ import { ComparedOperationsContext } from '../ComparedOperationsContext'
 import { BreadcrumbsDataContext } from '../ComparedPackagesBreadcrumbsProvider'
 import { ComparisonToolbar } from '../ComparisonToolbar'
 import { SelectedOperationTagsProvider } from '../SelectedOperationTagsProvider'
-import { ShouldAutoExpandTagsProvider, useSetShouldAutoExpandTagsContext } from '../ShouldAutoExpandTagsProvider'
+import { ShouldAutoExpandTagsProvider } from '../ShouldAutoExpandTagsProvider'
 import { VersionsComparisonGlobalParamsContext } from '../VersionsComparisonGlobalParams'
 import { VERSION_SWAPPER_HEIGHT } from '../shared-styles'
 import { useCompareBreadcrumbs } from '../useCompareBreadcrumbs'
 import { useComparisonParams } from '../useComparisonParams'
 import { useDocumentSearchParam } from '../useDocumentSearchParam'
-import { useNavigateToOperation } from '../useNavigateToOperation'
 import { useOperation } from '../useOperation'
 import { useOperationSearchParam } from '../useOperationSearchParam'
 import { OperationsSidebarOnComparison } from './OperationsSidebarOnComparison'
@@ -128,14 +127,15 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
 
   const [searchValue, setSearchValue] = useState('')
 
-  const [compareGroups, isComparisonLoading] = useCompareGroups({
+  const compareGroupsOptions = useMemo(() => ({
     changedPackageKey: changedPackageKey,
     changedVersionKey: changedVersionKey,
     originPackageKey: originPackageKey,
     originVersionKey: originVersionKey,
     currentGroup: group,
     previousGroup: previousGroup,
-  })
+  }), [changedPackageKey, changedVersionKey, group, originPackageKey, originVersionKey, previousGroup])
+  const [compareGroups, isComparisonLoading] = useCompareGroups(compareGroupsOptions)
 
   const operationAction = useMemo((): ActionType | undefined => {
     const compareGroupsData = compareGroups?.data
@@ -171,14 +171,15 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
     return targetChange?.action ?? DiffAction.rename
   }, [compareGroups?.data, operationKey, operationSearchParam])
 
-  const [changesSummary] = useChangesSummaryContext({
+  const compareVersionsOptions = useMemo(() => ({
     changedPackageKey: changedPackageKey,
     changedVersionKey: changedVersionKey,
     originPackageKey: originPackageKey,
     originVersionKey: originVersionKey,
     currentGroup: group,
     previousGroup: previousGroup,
-  })
+  }), [changedPackageKey, changedVersionKey, group, originPackageKey, originVersionKey, previousGroup])
+  const [changesSummary] = useChangesSummaryContext(compareVersionsOptions)
 
   const refComparisonSummary: RefComparisonSummary | undefined = useMemo(() => {
     if (!isPackageFromDashboard) {
@@ -192,7 +193,6 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
   const groupPrefixTemplate = packageObj?.restGroupingPrefix
   const currentGroupPrefix = getGroupPrefix(groupPrefixTemplate, group)
   const previousGroupPrefix = getGroupPrefix(groupPrefixTemplate, previousGroup)
-
 
   const {
     previousOperationKey: operationKeyForOriginOperation,
@@ -339,7 +339,10 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
     return operationPairsGroupedByTags
   }, [filterGroupedOperations, filterOperations, operationPairsGroupedByTags, searchValue])
 
-  const filteredTagsInSidebar = useMemo(() => tags.filter(tag => filteredOperationsGroupedByTags[tag]?.length), [filteredOperationsGroupedByTags, tags])
+  const filteredTagsInSidebar = useMemo(
+    () => tags.filter(tag => filteredOperationsGroupedByTags[tag]?.length),
+    [filteredOperationsGroupedByTags, tags],
+  )
 
   const [firstOperationPair] = useMemo(
     () => (filteredTagsInSidebar.length && (filteredOperationsGroupedByTags || searchValue) ? filteredOperationsGroupedByTags[filteredTagsInSidebar[0]] : []),
@@ -377,13 +380,19 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
     }
   }, [apiType, areChangesAndOperationsLoading, changedPackageKey, changedVersionKey, filters, firstOperationPair, group, isCurrentOperationGrouped, navigateToFirstGroupOperation, previousGroup, selectedDocumentSlug])
 
-  const comparedOperationsPair: OptionalOperationPair<OperationData> = {
-    previousOperation: processedOriginOperation,
-    currentOperation: processedChangedOperation,
-    isLoading: isOriginOperationLoading || isChangedOperationLoading,
-  }
-
-  const setShouldAutoExpand = useSetShouldAutoExpandTagsContext()
+  const comparedOperationsPair: OptionalOperationPair<OperationData> = useMemo(
+    () => ({
+      previousOperation: processedOriginOperation,
+      currentOperation: processedChangedOperation,
+      isLoading: isOriginOperationLoading || isChangedOperationLoading,
+    }),
+    [
+      isChangedOperationLoading,
+      isOriginOperationLoading,
+      processedChangedOperation,
+      processedOriginOperation,
+    ],
+  )
 
   const groupsComparisonParams = useComparisonParams()
   const [originComparisonObject, changedComparisonObject] = useComparisonObjects({
@@ -392,10 +401,6 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
     previousGroup: previousGroup,
   })
   const mergedBreadcrumbsData = useCompareBreadcrumbs(originComparisonObject, changedComparisonObject)
-
-  const handleOperationClick = useNavigateToOperation(
-    changedPackageKey!, changedVersionKey!, apiType as ApiType, setShouldAutoExpand,
-  )
 
   return (
     <ShouldAutoExpandTagsProvider>
@@ -419,7 +424,6 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
                     apiType={apiType as ApiType}
                     operationsGroupedByTag={filteredOperationsGroupedByTags}
                     areChangesLoading={isComparisonLoading}
-                    onOperationClick={handleOperationClick}
                   />
                 }
                 body={

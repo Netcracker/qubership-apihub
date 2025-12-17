@@ -60,7 +60,8 @@ export function createDiffOperationViewElement(
   component.mergedDocument = mergedDocument
   // diffs specific
   component.filters = filters
-  component.diffMetaKeys = diffMetaKeys
+  component.diffsMetaKey = diffMetaKeys.diffsMetaKey
+  component.aggregatedDiffsMetaKey = diffMetaKeys.aggregatedDiffsMetaKey
 
   return component
 }

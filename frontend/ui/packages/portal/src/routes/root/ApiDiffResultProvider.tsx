@@ -31,7 +31,16 @@ export function useSetApiDiffResult(): Dispatch<SetStateAction<ApiDiffResult | u
   return useContext(SetApiDiffResultContext)
 }
 
-const IsApiDiffResultLoadingContext = createContext<boolean>()
+/*
+This is because by default it was "false" and occured "race condition" when changelog and operations
+were loaded successfully (their loading state === false), but loading/calculating of diff result
+hadn't started yat to that moment and its loading state was === false as well.
+It lead to "blinking" of doc view instead of loading indicator for a moment and changing it to loading indicator again.
+
+So the simplest way to solve the issue is to set context by default to "true".
+And when diff result is ready context will be changed to "false" by algorithm.
+*/
+const IsApiDiffResultLoadingContext = createContext<boolean>(true)
 const SetIsApiDiffResultLoadingContext = createContext<Dispatch<SetStateAction<boolean>>>()
 
 export function useIsApiDiffResultLoading(): boolean {

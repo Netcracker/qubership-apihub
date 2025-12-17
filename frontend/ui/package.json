@@ -37,7 +37,7 @@
     "@netcracker/qubership-apihub-api-visitor": "feature-asyncapi-basic-e2e",
     "@netcracker/qubership-apihub-apispec-view": "feature-asyncapi-basic-e2e",
     "@netcracker/qubership-apihub-class-view": "1.0.3",
-    "@netcracker/qubership-apihub-rest-playground": "1.2.0",
+    "@netcracker/qubership-apihub-rest-playground": "1.3.0",
     "@otjs/plaintext": "0.2.2",
     "@otjs/plaintext-editor": "0.2.2",
     "@stoplight/json": "3.21.7",
