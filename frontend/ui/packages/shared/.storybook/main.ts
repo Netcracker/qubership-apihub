@@ -61,6 +61,8 @@ const config: StorybookConfig = {
           '@netcracker/qubership-apihub-ui-shared': resolve(__dirname, '../src'),
           '@netcracker/qubership-apihub-ui-portal': resolve(__dirname, '../../portal'),
           '@netcracker/qubership-apihub-ui-agents': resolve(__dirname, '../../agents'),
+          // Alias @asyncapi/parser to empty module to prevent bundling Node.js-only code
+          '@asyncapi/parser': resolve(__dirname, '../src/utils/asyncapi-parser-stub.ts'),
         },
       },
     })
