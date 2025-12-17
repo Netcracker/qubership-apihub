@@ -24,7 +24,6 @@ import * as React from 'react'
 import { useEffect, useMemo } from 'react'
 
 import { buildOpenApiDiffCause } from '@netcracker/qubership-apihub-api-doc-viewer'
-import { DiffMetaKeys } from '@stoplight/diff-elements-core/types'
 import { DiffsMetaKeyContext } from '@stoplight/elements/containers/DiffsMetaKeyContext'
 import { DiffBlock, DiffContainer } from 'diff-block'
 import { APIWithOperation } from '../components/API/APIWithOperation'
@@ -47,7 +46,8 @@ export type DiffAPIPropsWithOperation = {
   mergedDocument?: unknown;
   // diff specific
   filters: DiffType[];
-  diffMetaKeys: DiffMetaKeys
+  diffsMetaKey: symbol;
+  aggregatedDiffsMetaKey: symbol;
 } & CommonAPIProps;
 
 export interface CommonAPIProps extends RoutingProps {
@@ -132,13 +132,16 @@ export const DiffOperationAPIImpl: React.FC<DiffAPIProps> = props => {
     proxyServer,
     hideExamples = false,
     mergedDocument,
-    diffMetaKeys: { diffsMetaKey, aggregatedDiffsMetaKey },
+    diffsMetaKey,
+    aggregatedDiffsMetaKey,
   } = props
 
-  const operationNode = useMemo(() => {
-    return transformOasToServiceNodeWithDiffMeta(mergedDocument, diffsMetaKey)?.children?.find(({ type }) => type === 'http_operation')
+  const operationNode = useMemo(() => (
+    transformOasToServiceNodeWithDiffMeta(mergedDocument, diffsMetaKey)
+      ?.children
+      ?.find(({ type }) => type === 'http_operation')
       ?.data as IHttpOperation | null
-  }, [diffsMetaKey, mergedDocument])
+  ), [diffsMetaKey, mergedDocument])
 
   const exportProps = useExportDocumentProps({
     originalDocument: document,

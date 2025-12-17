@@ -1,11 +1,11 @@
 import { getCompatibilitySuite, TestSpecType } from '@netcracker/qubership-apihub-compatibility-suites'
 import { DiffOperationAPI } from '@stoplight/elements/containers/DiffOperationAPI'
 import { getCompareResult } from '@stoplight/elements/web-components/__stories__/helpers/getMergedDocument'
+import { stringifyDiffs } from '@stoplight/elements/web-components/__stories__/helpers/stringifyDiffs'
 import { parse } from '@stoplight/yaml'
 import { aggregatedDiffsMetaKey, diffsMetaKey } from 'diff-block'
 import FontFaceObserver from 'fontfaceobserver'
 import React, { useState } from 'react'
-import { stringifyDiffs } from '@stoplight/elements/web-components/__stories__/helpers/stringifyDiffs'
 
 export type OpenapiCompatibilitySuiteStoryArgs = { before: string, after: string }
 
@@ -31,10 +31,8 @@ export function StoryComponent({ before, after }: OpenapiCompatibilitySuiteStory
     <DiffOperationAPI
       mergedDocument={merged}
       filters={[]}
-      diffMetaKeys={{
-        diffsMetaKey: diffsMetaKey,
-        aggregatedDiffsMetaKey: aggregatedDiffsMetaKey,
-      }}
+      diffsMetaKey={diffsMetaKey}
+      aggregatedDiffsMetaKey={aggregatedDiffsMetaKey}
     />
   )
 }

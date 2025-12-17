@@ -9,7 +9,6 @@ import mosaicStyles from '!!raw-loader!@stoplight/mosaic/styles.css';
 import mosaicThemeStyles from '!!raw-loader!@stoplight/mosaic/themes/default.css';
 
 import { DiffOperationAPI } from "@stoplight/elements/containers/DiffOperationAPI";
-import { aggregatedDiffsMetaKey, diffsMetaKey } from 'diff-block';
 import { API } from '../index';
 
 const mosaicStyle = document.createElement('style');
@@ -138,13 +137,8 @@ export const DiffApiOperationElement = createElementClass(
     options: { type: 'object' },
     // @ts-ignore
     mergedDocument: { type: 'object' },
-    diffMetaKeys: {
-      type: 'object',
-      defaultValue: {
-        diffsMetaKey: diffsMetaKey,
-        aggregatedDiffsMetaKey: aggregatedDiffsMetaKey,
-      },
-    },
+    diffsMetaKey: { type: 'symbol' },
+    aggregatedDiffsMetaKey: { type: 'symbol' },
   },
   [
     mosaicStyle,

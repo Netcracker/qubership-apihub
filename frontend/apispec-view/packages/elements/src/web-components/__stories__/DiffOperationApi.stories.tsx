@@ -74,10 +74,8 @@ const Template = (props: any) => {
   return (
     <DiffOperationAPI
       {...props}
-      diffMetaKeys={{
-        diffsMetaKey: diffsMetaKey,
-        aggregatedDiffsMetaKey: aggregatedDiffsMetaKey,
-      }}
+      diffsMetaKey={diffsMetaKey}
+      aggregatedDiffsMetaKey={aggregatedDiffsMetaKey}
       filters={JSON.stringify(props.filters)}
     />
   )
@@ -665,13 +663,11 @@ function StoryComponent({ before, after }: { before: object, after: object }) {
   console.log(stringifyDiffs(diffs))
   console.log(diffs)
   return (
-    <DiffOperationAPI 
+    <DiffOperationAPI
       mergedDocument={merged}
       filters={[]}
-      diffMetaKeys={{
-        diffsMetaKey: diffsMetaKey,
-        aggregatedDiffsMetaKey: aggregatedDiffsMetaKey,
-      }}
+      diffsMetaKey={diffsMetaKey}
+      aggregatedDiffsMetaKey={aggregatedDiffsMetaKey}
     />
   )
 }
