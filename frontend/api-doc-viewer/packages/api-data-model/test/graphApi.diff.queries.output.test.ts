@@ -4,6 +4,7 @@ import {
   deprecated,
   DiffAction,
   nonBreaking,
+  risky,
   unclassified,
 } from '@netcracker/qubership-apihub-api-diff'
 import { DiffNodeValue } from '../src/abstract/diff'
@@ -504,7 +505,7 @@ describe('output', () => {
     expect(outputNodeValue?.$changes).toMatchObject({
       values: {
         Apple: { type: nonBreaking, action: DiffAction.remove, beforeValue: {} },
-        Pineapple: { type: breaking, action: DiffAction.add, afterValue: {} },
+        Pineapple: { type: risky, action: DiffAction.add, afterValue: {} },
         Orange: {
           description: {
             type: annotation,
