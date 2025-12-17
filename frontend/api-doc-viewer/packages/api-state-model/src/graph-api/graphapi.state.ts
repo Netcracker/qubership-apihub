@@ -32,7 +32,6 @@ const GRAPH_API_KIND_PRIORITIES: Partial<Record<GraphApiNodeKind, number>> = {
   [graphApiNodeKind.query]: 2,
   [graphApiNodeKind.mutation]: 2,
   [graphApiNodeKind.subscription]: 2,
-  [graphSchemaNodeKind.directive]: 1,
 }
 
 export class GraphApiStateCombinaryNode extends GraphSchemaStateCombinaryNode<GraphApiTreeNode> {
@@ -66,7 +65,6 @@ export class GraphApiStatePropNode extends GraphSchemaStatePropNode<GraphApiTree
     }
 
     let firstOperation: string | null = null
-    let firstDirective: string | null = null
 
     return children
       .sort((a, b) => {
@@ -80,11 +78,6 @@ export class GraphApiStatePropNode extends GraphSchemaStatePropNode<GraphApiTree
         const { kind } = prop
         let first = false
         switch (kind) {
-          case graphSchemaNodeKind.directive:
-            // if first directive already found -> not first
-            first = !firstDirective
-            firstDirective = prop.id
-            break
           case graphApiNodeKind.query:
           case graphApiNodeKind.mutation:
           case graphApiNodeKind.subscription:

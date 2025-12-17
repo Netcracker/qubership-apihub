@@ -59,10 +59,3 @@ export const isGraphApiOperationNode = (node: IModelTreeNode<unknown, string, un
     graphApiNodeKind.subscription
   ].some(kind => node.kind === kind)
 }
-
-export const isGraphApiDirectiveDefinitionNode = (node: IModelTreeNode<unknown, string, unknown> | undefined): boolean => {
-  if (!node) {
-    return false
-  }
-  return [graphSchemaNodeKind.directive].some(kind => node.kind === kind)
-}

@@ -33,9 +33,8 @@ import { GraphCombinerNodeViewer } from '../GraphSchemaViewer/GraphCombinerNodeV
 import { GraphPropNodeViewer } from '../GraphSchemaViewer/GraphPropNodeViewer/GraphPropNodeViewer'
 import { ErrorBoundary } from "../services/ErrorBoundary"
 import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback"
-import { CustomDirectivesSectionRow } from './CustomDirectivesSectionRow'
 import { isCombinerNodeState, isPropNodeState } from './types/nodes.guards'
-import { isDirectiveNode, isOperationNode } from './utils/nodes'
+import { isOperationNode } from './utils/nodes'
 
 // FIXME 28.09.23 // Fix generic types
 
@@ -112,7 +111,14 @@ const GraphQLOperationDiffViewerInner: FC<GraphQLOperationDiffViewerProps> = (pr
       <DisplayModeContext.Provider value={displayMode}>
         <LayoutModeContext.Provider value={layoutMode}>
           <LevelContext.Provider value={0}>
-            <div style={{ marginLeft: 0 }}>
+            {/* Styles are WA due to several samples in compatibility suites */}
+            <div style={{
+              marginLeft: 0,
+              width: root.children.length ? undefined : '100%',
+              height: root.children.length ? undefined : 1,
+              minHeight: 1,
+              minWidth: 1,
+            }}>
               {root.children.map((child, index) => {
                 const key = `root-children-${index}`
 
@@ -126,18 +132,6 @@ const GraphQLOperationDiffViewerInner: FC<GraphQLOperationDiffViewerProps> = (pr
                         state={child}
                         $nodeChange={$childMeta?.$nodeChange}
                       />
-                    )
-                  }
-
-                  if (isDirectiveNode(child.node) && child.first) {
-                    return (
-                      <div key={key}>
-                        <CustomDirectivesSectionRow layoutMode={layoutMode} />
-                        <GraphPropNodeViewer
-                          state={child}
-                          $nodeChange={$childMeta?.$nodeChange}
-                        />
-                      </div>
                     )
                   }
 

@@ -74,13 +74,5 @@ export const graphApiRules: CrawlRules<GraphApiCrawlRule> = {
   '/subscriptions': {
     '/*': () => graphApiOperationRules(graphApiNodeKind.subscription)
   },
-  '/components': {
-    '/directives': {
-      '/*': {
-        '/args': graphApiArgsRules,
-        kind: graphSchemaNodeKind.directive
-      }
-    }
-  },
   kind: graphApiNodeKind.schema
 }

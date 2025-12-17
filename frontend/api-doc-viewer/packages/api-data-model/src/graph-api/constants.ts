@@ -17,7 +17,6 @@ export const graphSchemaNodeKind = {
   output: 'output',
   usedDirectives: 'usedDirectives',
   directiveUsage: 'directiveUsage',
-  directive: 'directive',
   definition: 'definition',
   property: 'property',
   method: 'method',

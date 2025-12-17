@@ -1024,3 +1024,58 @@ export const ChangedCircularProperties: Story = {
     layoutMode: 'side-by-side-diffs',
   },
 }
+
+export const BugWithDeprecationReasonDiffInWhollyRemoved: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiDiffSchema({
+      beforeSource: buildGraphApi(`
+        type Query {
+          first: Int
+          second: String @deprecated(reason: "Some reason")
+        }
+      `),
+      afterSource: buildGraphApi(`
+        type Query {
+          first: Int
+        }
+      `),
+      circular: true,
+    })
+    return <GraphQLOperationDiffViewer {...args} source={processedSource} />
+  },
+  args: {
+    expandedDepth: 2,
+    metaKeys: DIFF_META_KEYS,
+    layoutMode: 'side-by-side-diffs',
+    operationName: 'second',
+    operationType: 'query',
+  },
+}
+
+
+export const BugWithDeprecationReasonDiffInWhollyAdded: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiDiffSchema({
+      beforeSource: buildGraphApi(`
+        type Query {
+          first: Int
+        }
+      `),
+      afterSource: buildGraphApi(`
+        type Query {
+          first: Int
+          second: String @deprecated(reason: "Some reason")
+        }
+      `),
+      circular: true,
+    })
+    return <GraphQLOperationDiffViewer {...args} source={processedSource} />
+  },
+  args: {
+    expandedDepth: 2,
+    metaKeys: DIFF_META_KEYS,
+    layoutMode: 'side-by-side-diffs',
+    operationName: 'second',
+    operationType: 'query',
+  },
+}

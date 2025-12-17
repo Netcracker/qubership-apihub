@@ -72,8 +72,8 @@ export const DiffTags: FC<DiffTagsProps> = (props) => {
   const $deprecationReason = $nodeChange ?? $metaChanges?.deprecationReason
 
   const { showReadOnly, showWriteOnly, showDeprecated, showDeprecationReason } = {
-    showReadOnly: isDefined(readOnly),
-    showWriteOnly: isDefined(writeOnly),
+    showReadOnly: isDefined(readOnly) && !!$readOnly || !!readOnly,
+    showWriteOnly: isDefined(writeOnly) && !!$writeOnly || !!writeOnly,
     showDeprecated: deprecated || isDiff($deprecated) && diffReplace($deprecated) && !!$deprecated.beforeValue,
     showDeprecationReason: isDefined(deprecationReason),
   }

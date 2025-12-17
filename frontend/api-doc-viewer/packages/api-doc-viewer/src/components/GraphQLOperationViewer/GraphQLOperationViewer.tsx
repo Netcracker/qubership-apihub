@@ -33,14 +33,12 @@ import { DisplayModeContext } from '../../contexts/DisplayModeContext'
 import { LevelContext } from '../../contexts/LevelContext'
 import { useLogRenderCompleted } from "../../hooks/debug-hook"
 import { DETAILED_DISPLAY_MODE, DisplayMode } from '../../types/DisplayMode'
-import { DOCUMENT_LAYOUT_MODE } from '../../types/LayoutMode'
 import { GraphCombinerNodeViewer } from '../GraphSchemaViewer/GraphCombinerNodeViewer/GraphCombinerNodeViewer'
 import { GraphPropNodeViewer } from '../GraphSchemaViewer/GraphPropNodeViewer/GraphPropNodeViewer'
 import { ErrorBoundary } from "../services/ErrorBoundary"
 import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback"
-import { CustomDirectivesSectionRow } from './CustomDirectivesSectionRow'
 import { isCombinerNodeState, isPropNodeState } from './types/nodes.guards'
-import { isDirectiveNode, isOperationNode } from './utils/nodes'
+import { isOperationNode } from './utils/nodes'
 
 // FIXME 28.09.23 // Fix generic types
 
@@ -197,18 +195,6 @@ const GraphQLOperationViewerInner: FC<GraphQLOperationViewerProps> = (props) => 
                     state={child}
                     $nodeChange={$childMeta?.$nodeChange}
                   />
-                )
-              }
-
-              if (isDirectiveNode(child.node) && child.first) {
-                return (
-                  <div key={key}>
-                    <CustomDirectivesSectionRow layoutMode={DOCUMENT_LAYOUT_MODE} />
-                    <GraphPropNodeViewer
-                      state={child}
-                      $nodeChange={$childMeta?.$nodeChange}
-                    />
-                  </div>
                 )
               }
 
