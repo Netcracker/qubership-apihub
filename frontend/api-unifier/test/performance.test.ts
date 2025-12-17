@@ -1,12 +1,12 @@
 import {
+  loadYaml,
   normalize,
 } from '../src'
 import { readFileSync } from 'fs'
-import { load } from 'js-yaml'
 import { buildGraphApi, TEST_HASH_FLAG, TEST_ORIGINS_FLAG, TEST_SYNTHETIC_TITLE_FLAG } from './helpers'
 
 const SPECS = [
-  load(readFileSync(`./test/resources/performance/openapi_large_x6.yaml`).toString()),
+  loadYaml(readFileSync(`./test/resources/performance/openapi_large_x6.yaml`).toString()),
   buildGraphApi(readFileSync(`./test/resources/performance/qgl_large_x8.graphql`).toString()),
 ]
 

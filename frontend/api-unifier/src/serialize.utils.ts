@@ -2,7 +2,7 @@ import { parse, stringify } from 'flatted'
 import { isArray, isObject } from '@netcracker/qubership-apihub-json-crawl'
 import { isSymbol } from '../test/helpers'
 
-const isSet = (value: unknown): value is Set<any> =>
+const isSet = (value: unknown): value is Set<unknown> =>
   value instanceof Set
 
 const INTERNAL_KEYS = Object.freeze({
@@ -47,10 +47,13 @@ export const serialize = (obj: unknown, symbolToStringMapping: Map<symbol, strin
     visitedObjects.add(value)
 
     const transformSymbols = (symbolKeys: symbol[], data: unknown, result: unknown) => {
+      if(!isObject(data) || !isObject(result)) {
+        return
+      }
       for (const sym of symbolKeys) {
         const strKey = symbolToStringMapping.get(sym)
         if (strKey) {
-          (result as any)[strKey] = transform((data as any)[sym])
+          result[strKey] = transform(data[sym])
         }
       }
     }
