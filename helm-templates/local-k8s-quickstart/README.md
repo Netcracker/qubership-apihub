@@ -230,6 +230,10 @@ apihubUrl: 'qubership-apihub-2.localtest.me'
       dbUsername: 'apihub_backend_user_2'  
       dbPassword: 'apihub_backend_password_2'
 <Modify database coordinates for all other backend services as well>
+...
+    apihubNcServiceAddress: 'qubership-apihub-backend.qubership-apihub-2.svc.cluster.local.:8080'
+    apiLinterServiceAddress: 'qubership-api-linter-service.qubership-apihub-2.svc.cluster.local.:8080'
+    apihubAgentsBackendAddress: 'qubership-apihub-agents-backend.qubership-apihub-2.svc.cluster.local.:8080'
 ```
 In order to change APIHUB release modify `tag: 'dev'` for services to desired docker images tags.
 
