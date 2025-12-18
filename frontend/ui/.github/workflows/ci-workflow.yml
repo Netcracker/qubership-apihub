@@ -1,4 +1,4 @@
-name: build & unit test, build Docker image, run E2E tests 
+name: build & unit test, build Docker image, run E2E tests
 
 on:
   push:
@@ -7,17 +7,19 @@ on:
       - hotfix
       - develop
       - feature/*
-      - bugfix/*      
+      - bugfix/*
     tags:
       - '**'
   pull_request:
     types: [opened, reopened, synchronize]
     paths-ignore:
-      - 'docs/**' 
+      - 'docs/**'
 
-jobs:  
+jobs:
   build-and-unit-test:
     uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@main
+    with:
+      container: "ghcr.io/netcracker/qubership-apihub-nodejs-dev-image:1.8.0"
   build-docker-image:
     needs: build-and-unit-test
     uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@main
@@ -51,10 +53,10 @@ jobs:
     if: github.event_name == 'pull_request'
     with:
       postman-collections-run: false
-      apihub-ui-image-tag: ${{ needs.build-docker-image.outputs.image_tag }}      
+      apihub-ui-image-tag: ${{ needs.build-docker-image.outputs.image_tag }}
       apihub-build-task-consumer-image-tag: ${{ needs.calculate-build-task-consumer-tag.outputs.tag }}
       apihub-backend-image-tag: ${{ needs.calculate-backend-tag.outputs.tag }}
-      # pass PR source branch, will default to develop if corresponding branch for Playwright tests is not found 
+      # pass PR source branch, will default to develop if corresponding branch for Playwright tests is not found
       playwright-repository-branch: ${{ github.head_ref }}
       # pass PR source branch, will default to develop if corresponding branch for Postman tests is not found
       postman-repository-branch: ${{ github.head_ref }}
@@ -62,4 +64,4 @@ jobs:
       APIHUB_ACCESS_TOKEN: ${{ secrets.APIHUB_ACCESS_TOKEN }}
       APIHUB_ADMIN_EMAIL: ${{ secrets.APIHUB_ADMIN_EMAIL }}
       APIHUB_ADMIN_PASSWORD: ${{ secrets.APIHUB_ADMIN_PASSWORD }}
-      JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}   
+      JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
