@@ -3,14 +3,17 @@ info:
   title: APIHUB system administrators API – Internal
   description: |
     Internal-only API contract for system administrators.
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
   license:
     name: qubership
-    url: https://qubership.org
-  version: "2024.2"
+    url: https://github.com/Netcracker/qubership-apihub
+  version: "2025.4"
   x-nc-api-audience: BWC
 externalDocs:
   description: Find out more about package
-  url: https://qubership.org/APIHUB
+  url: https://github.com/Netcracker/qubership-apihub
 servers:
   - url: https://{apihub}.qubership.org
     description: APIHUB server
@@ -34,6 +37,8 @@ tags:
     description: Debug operations
   - name: Deleted
     description: Deleted packages operations
+  - name: Admin
+    description: APIs for technical administration.
 
 paths:
   /api/v2/admin/system/stats:

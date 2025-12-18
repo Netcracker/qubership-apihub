@@ -3,14 +3,17 @@ info:
   title: APIHUB Registry – External API
   description: |
     Public-facing API contract for APIHUB.
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
   license:
     name: qubership
-    url: https://qubership.org
-  version: "2024.2"
+    url: https://github.com/Netcracker/qubership-apihub
+  version: "2025.4"
   x-nc-api-audience: BWC
 externalDocs:
   description: Find out more about package
-  url: https://qubership.org/APIHUB
+  url: https://github.com/Netcracker/qubership-apihub
 servers:
   - url: https://{apihub}.qubership.org
     description: APIHUB server
@@ -60,6 +63,8 @@ tags:
     description: Operation groups
   - name: User profile
     description: APIs for user's personal settings.
+  - name: Custom
+    description: Custom APIs.
 paths:
   "/api/v1/system/info":
     get:
@@ -6797,6 +6802,7 @@ paths:
           - Versions
           - Operation groups
         summary: Get list of operations for operation group
+        operationId: getPackagesIdVersionsIdApiTypeGroupsGroupName
         description: |
           Get list of operations from operation group. The result list depends on the API type.
         parameters:
@@ -8987,15 +8993,6 @@ components:
       required: true
       schema:
         type: string
-    builderId:
-      name: builderId
-      in: path
-      description: Builder unique identifier (UUID)
-      required: true
-      schema:
-        type: string
-        format: UUID
-        example: QS.CloudQSS.CPQ.Q-TMF
     packageId:
       name: packageId
       in: path
@@ -9582,25 +9579,6 @@ components:
               format: int32
               nullable: true
               description: Optional access token time-to-live in seconds.
-    RoleCreate:
-      description: Role with set of permissions for creation.
-      type: object
-      title: Role
-      required:
-        - role
-        - permissions
-      properties:
-        role:
-          type: string
-          pattern: "^[a-zA-Z0-9- ]"
-          description: Role name.
-          example: Editor
-        permissions:
-          type: array
-          description: List of permissions applicable to the role.
-          items:
-            $ref: "#/components/schemas/Permission"
-          example: ["read", "create_and_update_package", "delete_package"]
     Role:
       description: Role details.
       type: object
@@ -10564,34 +10542,6 @@ components:
               description: GraphQL operation method.
               type: string
               example: getPaymentMethodSpecificationCore
-    BusinessMetric:
-      description: Business metric
-      title: BusinessMetric
-      required:
-        - packageId
-        - date
-        - metric
-        - value
-      type: object
-      properties:
-        packageId:
-          description: Package unique string identifier
-          type: string
-        date:
-          description: Date on which business metric was collected.
-          type: string
-          format: date
-          example: '2023-12-31'
-        username:
-          description: Name of the user that has been counted for a specific metric.
-          type: string
-        metric:
-          description: Name of business metric.
-          type: string
-          example: comparisons_called
-        value:
-          description: Value associated with business metric.
-          type: integer
     SingleOperationChange:
       allOf:
         - type: object
@@ -10927,285 +10877,6 @@ components:
                   Required for conflict resolution case when different versions of the same package appear in the publication config.
                   All excluded refs will be ignored (but will still be visible for package version).
                 type: boolean
-    PublishBuildConfig:
-      type: object
-      description: |
-        Configuration for publication process.\
-        Files or/and Refs are **required**.
-      required:
-        - version
-        - status
-      properties:
-        buildType:
-          description: |
-            Type of the build process.
-            "build" type means version publication process.
-          type: string
-          enum:
-            - build
-        version:
-          description: Version name for publication.
-          type: string
-          example: "2022.3"
-        previousVersion:
-          description: Name of the previous published version.
-          type: string
-          example: "2022.2"
-          default: ""
-        previousVersionPackageId:
-          description: Previous release version package id.
-          type: string
-          example: "QS.CQSS.CPQ.TMF"
-        status:
-          $ref: "#/components/schemas/VersionStatusEnum"
-        versionLabels:
-          description: List of version labels.
-          type: array
-          items:
-            type: string
-          example: ["part-of:CloudQSS-CPQBE"]
-        files:
-          description: |
-            Detailed data about files in sources archive.
-            Required in no Refs are provided.
-          type: array
-          items:
-            type: object
-            required:
-              - fileId
-            properties:
-              fileId:
-                type: string
-                description: File name.
-                example: "qitmf-v5.11.json"
-              publish:
-                description: Flag, publish the source file or not.
-                type: boolean
-                default: true
-              labels:
-                description: List of file labels.
-                type: array
-                items:
-                  type: string
-                example: ["TMF"]
-              blobId:
-                description: Git blob ID of the file.
-                type: string
-                example: a5d45af7
-              xApiKind:
-                description: Custom x-api-kind parameter.
-                type: string
-                example: "no-BWC"
-        refs:
-          description: |
-            Detailed data about referenced versions for current package version.
-            Required in no Files are provided.
-          type: array
-          items:
-            type: object
-            required:
-              - refId
-              - version
-              - type
-            properties:
-              refId:
-                description: Referenced package Id.
-                type: string
-                example: "QS.CloudQSS.CPQ.CORE"
-              version:
-                description: Referenced package version number.
-                type: string
-                example: "2022.2@5"
-    ExportVersionBuildConfig:
-      description: Build config for export of version.
-      type: object
-      required:
-        - buildType
-        - packageId
-        - version
-        - format
-      properties:
-        buildType:
-          description: Type of the build process.
-          type: string
-          enum:
-            - exportVersion
-        packageId:
-          description: Package unique identifier (full alias) of package with kind = package.
-          type: string
-          example: NC.CBSS.CPQ.TMF
-        version:
-          description: |
-            Package version.\
-            The mask <version>@<revision> will be used for return in a
-            specific revision.
-          type: string
-          example: 2022.3@3
-        format:
-          description: |
-            File format for export.\
-            * format = html: the export result includes a ZIP file containing interactive HTML for OpenAPI documents (i.e., those with types openapi-3-1, openapi-3-0, or openapi-2-0) and raw files for all other document types.
-            * format = yaml/json: the export result includes a ZIP file containing OpenAPI documents in yaml/json format accordingly, and raw files for all other document types.
-          type: string
-          enum:
-            - yaml
-            - json
-            - html
-        allowedOasExtensions:
-          description: |
-            List of OAS extensions that shall be preserverd when user
-            exports OpenAPI specification(s) with remove OAS
-            extensions options:
-              * If allowedOasExtensions is empty array, then this means
-            OAS extensions shall be removed, but there is no allowed
-            OAS exntesions, i.e. all OAS extensions shall be removed.
-              * If allowedOasExtensions is undefined, then this means
-            that OAS extensions shall **not** be removed (i.e.
-            removeOasExtensions = false).
-              * If allowedOasExtensions has some value(s), then this
-            means that OAS extensions shall be removed except for the
-            provided value(s) of allowed OAS extension(s).
-          type: array
-          uniqueItems: true
-          items:
-            type: string
-            pattern: ^x-
-          example:
-            - x-internal-info
-            - x-design-details
-    ExportRestDocumentBuildConfig:
-      description: Build config for export of one OpenAPI document.
-      type: object
-      required:
-        - buildType
-        - packageId
-        - version
-        - documentId
-        - format
-      properties:
-        buildType:
-          description: Type of the build process.
-          type: string
-          enum:
-            - exportRestDocument
-        packageId:
-          description: Package unique identifier (full alias).
-          type: string
-          example: NC.CBSS.CPQ.TMF
-        version:
-          description: |
-            Package version.\
-            The mask <version>@<revision> will be used for return in a
-            specific revision.
-          type: string
-          example: 2022.3@3
-        documentId:
-          description: Unique string identifier of document to export. Type of this document must be openapi-3-1 / openapi-3-0 / openapi-2-0.
-          type: string
-          pattern: "^[a-z0-9-]"
-          example: "qitmf-v5-11-json"
-        format:
-          type: string
-          enum:
-            - yaml
-            - json
-            - html
-        allowedOasExtensions:
-          description: |
-            List of OAS extensions that shall be preserverd when user
-            exports OpenAPI specification(s) with remove OAS
-            extensions options:
-              * If allowedOasExtensions is empty array, then this means
-            OAS extensions shall be removed, but there is no allowed
-            OAS exntesions, i.e. all OAS extensions shall be removed.
-              * If allowedOasExtensions is undefined, then this means
-            that OAS extensions shall **not** be removed (i.e.
-            removeOasExtensions = false).
-              * If allowedOasExtensions has some value(s), then this
-            means that OAS extensions shall be removed except for the
-            provided value(s) of allowed OAS extension(s).
-          type: array
-          uniqueItems: true
-          items:
-            type: string
-            pattern: ^x-
-          example:
-            - x-internal-info
-            - x-design-details
-    ExportRestOperationsGroupBuildConfig:
-      description: Build config for export of REST operations group.
-      type: object
-      required:
-        - buildType
-        - packageId
-        - version
-        - groupName
-        - operationsSpecTransformation
-        - format
-      properties:
-        buildType:
-          description: Type of the build process.
-          type: string
-          enum:
-            - exportRestOperationsGroup
-        packageId:
-          description: Package unique identifier (full alias).
-          type: string
-          example: NC.CBSS.CPQ.TMF
-        version:
-          description: |
-            Package version.\
-            The mask <version>@<revision> will be used for return in a
-            specific revision.
-          type: string
-          example: 2022.3@3
-        groupName:
-          description: Name of the group
-          type: string
-          example: v1
-        operationsSpecTransformation:
-          description: >
-            Type of OpeanAPI specification tranformation. Available options are:
-              - **reducedSourceSpecifications** - proccess that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
-              - **mergedSpecification** - process the merges all operations from an operation group into one specification.
-          type: string
-          enum:
-            - reducedSourceSpecifications
-            - mergedSpecification
-        format:
-          type: string
-          description: |
-            Format of the exported file.\
-            If operationsSpecTransformation = reducedSourceSpecifications, then export result includes a ZIP file containing files in selected format.\
-            If operationsSpecTransformation = mergedSpecification:
-              * if format = html, then export result is a ZIP file containing interactive HTML for OpenAPI document.
-              * if format = yaml/json, then export result is one OpenAPI file in the appropriate format.
-          enum:
-            - yaml
-            - json
-            - html
-        allowedOasExtensions:
-          description: |
-            List of OAS extensions that shall be preserverd when user
-            exports OpenAPI specification(s) with remove OAS
-            extensions options:
-              * If allowedOasExtensions is empty array, then this means
-            OAS extensions shall be removed, but there is no allowed
-            OAS exntesions, i.e. all OAS extensions shall be removed.
-              * If allowedOasExtensions is undefined, then this means
-            that OAS extensions shall **not** be removed (i.e.
-            removeOasExtensions = false).
-              * If allowedOasExtensions has some value(s), then this
-            means that OAS extensions shall be removed except for the
-            provided value(s) of allowed OAS extension(s).
-          type: array
-          uniqueItems: true
-          items:
-            type: string
-            pattern: ^x-
-          example:
-            - x-internal-info
-            - x-design-details
     ChangeSummary:
       description: |
         Numbers of changes between the current and previous published version.

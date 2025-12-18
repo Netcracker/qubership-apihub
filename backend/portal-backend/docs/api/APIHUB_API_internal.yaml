@@ -3,14 +3,17 @@ info:
   title: APIHUB Registry – Internal API
   description: |
     Internal-only API contract for APIHUB services.
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
   license:
     name: qubership
-    url: https://qubership.org
-  version: "2024.2"
+    url: https://github.com/Netcracker/qubership-apihub
+  version: "2025.4"
   x-nc-api-audience: BWC
 externalDocs:
   description: Find out more about package
-  url: https://qubership.org/APIHUB
+  url: https://github.com/Netcracker/qubership-apihub
 servers:
   - url: https://{apihub}.qubership.org
     description: APIHUB server
@@ -915,22 +918,6 @@ components:
       schema:
         type: string
         example: QS.CloudQSS.CPQ.Q-TMF
-    limit:
-      name: limit
-      in: query
-      description: Requested number of resources to be provided in response.
-      schema:
-        type: number
-        default: 100
-        maximum: 100
-        minimum: 1
-    page:
-      name: page
-      in: query
-      description: Page number
-      schema:
-        type: number
-        default: 0
     builderId:
       name: builderId
       in: path
@@ -1151,18 +1138,6 @@ components:
           items:
             type: string
           example: ["RestControllerV5"]
-    RestOperation:
-      description: REST operation object.
-      title: RestOperation
-      allOf:
-        - $ref: "#/components/schemas/Operation"
-        - $ref: "#/components/schemas/RestOperationMeta"
-    GraphQLOperation:
-      description: GraphQL operation object.
-      title: GraphQLOperation
-      allOf:
-        - $ref: "#/components/schemas/Operation"
-        - $ref: "#/components/schemas/GraphQLOperationMeta"
     RestOperationMeta:
       description: Specific parameters for REST operation.
       title: RestOperationMeta
