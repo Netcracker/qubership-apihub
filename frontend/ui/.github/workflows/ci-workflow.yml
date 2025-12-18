@@ -18,8 +18,6 @@ on:
 jobs:
   build-and-unit-test:
     uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@main
-    with:
-      container: "ghcr.io/netcracker/qubership-apihub-nodejs-dev-image:1.8.0"
   build-docker-image:
     needs: build-and-unit-test
     uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@main
