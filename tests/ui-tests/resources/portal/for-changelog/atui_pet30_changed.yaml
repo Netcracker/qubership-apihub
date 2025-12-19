@@ -47,7 +47,6 @@ paths:
       summary: "Get system info"
       description: "Get system info."
       operationId: getInfo
-      parameters:
       responses:
         200:
           description: "Successful execution"
@@ -78,8 +77,8 @@ paths:
                       - name: Admin
                         contact: "admin@petstore.com"
       security:
-        - BearerAuth:
-        - api_key:
+        - BearerAuth: []
+        - api_key: []
   /pet:
     put:
       tags:

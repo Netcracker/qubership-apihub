@@ -109,8 +109,8 @@ paths:
                   - code
                   - message
       security:
-        - BearerAuth:
-        - api_key:
+        - BearerAuth: []
+        - api_key: []
   /pet:
     put:
       tags:
