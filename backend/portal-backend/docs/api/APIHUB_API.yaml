@@ -670,6 +670,8 @@ paths:
                                   enum:
                                     - rest
                                     - graphql
+                                    - protobuf
+                                    - asyncapi
                             - type: object
                               title: ParamsForPatchOperationsGroup
                               description: |
@@ -1579,6 +1581,8 @@ paths:
                                   enum:
                                     - rest
                                     - graphql
+                                    - protobuf
+                                    - asyncapi
                             - type: object
                               title: ParamsForPatchOperationsGroup
                               description: |
@@ -1619,6 +1623,8 @@ paths:
                                   enum:
                                     - rest
                                     - graphql
+                                    - protobuf
+                                    - asyncapi
                             - type: object
                               title: ParamsForDeleteRevision
                               description: |
@@ -3409,6 +3415,17 @@ paths:
                                 $ref: "#/components/schemas/GqlOperationInfoFromDifferentVersions"
                               currentOperation:
                                 $ref: "#/components/schemas/GqlOperationInfoFromDifferentVersions"
+                          - title: AsyncAPIOperation
+                            type: object
+                            required:
+                              - action
+                              - channel
+                              - protocol
+                            properties:
+                              previousOperation:
+                                $ref: "#/components/schemas/AsyncAPIOperationInfoFromDifferentVersions"
+                              currentOperation:
+                                $ref: "#/components/schemas/AsyncAPIOperationInfoFromDifferentVersions"
                         - type: object
                           required:
                             - changeSummary
@@ -5629,6 +5646,7 @@ paths:
                             - $ref: "#/components/schemas/RestOperation"
                             - $ref: "#/components/schemas/GraphQLOperation"
                             - $ref: "#/components/schemas/ProtobufOperation"
+                            - $ref: "#/components/schemas/AsyncAPIOperation"
                         - type: object
                           properties:
                             data:
@@ -5996,6 +6014,7 @@ paths:
                             - $ref: "#/components/schemas/RestOperationMeta"
                             - $ref: "#/components/schemas/GraphQLOperationMeta"
                             - $ref: "#/components/schemas/ProtobufOperationMeta"
+                            - $ref: "#/components/schemas/AsyncAPIOperationMeta"
                   packages:
                     description: >
                       A mapped list of the packageId and version name
@@ -6465,6 +6484,7 @@ paths:
                       - $ref: "#/components/schemas/RestOperation"
                       - $ref: "#/components/schemas/GraphQLOperation"
                       - $ref: "#/components/schemas/ProtobufOperation"
+                      - $ref: "#/components/schemas/AsyncAPIOperation"
                   - type: object
                     required:
                       - data
@@ -6903,6 +6923,7 @@ paths:
                               - $ref: "#/components/schemas/RestOperation"
                               - $ref: "#/components/schemas/GraphQLOperation"
                               - $ref: "#/components/schemas/ProtobufOperation"
+                              - $ref: "#/components/schemas/AsyncAPIOperation"
                           - type: object
                             properties:
                               packageRef:
@@ -7491,6 +7512,7 @@ paths:
                             - $ref: "#/components/schemas/RestOperation"
                             - $ref: "#/components/schemas/GraphQLOperation"
                             - $ref: "#/components/schemas/ProtobufOperation"
+                            - $ref: "#/components/schemas/AsyncAPIOperation"
               examples: {}
         "301":
           description: Moved Permanently
@@ -8975,6 +8997,7 @@ components:
           - rest
           - graphql
           - protobuf
+          - asyncapi
     apiTypeQueryParam:
       name: apiType
       in: query
@@ -8986,6 +9009,7 @@ components:
           - rest
           - graphql
           - protobuf
+          - asyncapi
     groupName:
       name: groupName
       in: path
@@ -9139,6 +9163,7 @@ components:
         - rest
         - graphql
         - protobuf
+        - asyncapi
     ExportVersion:
       type: object
       title: Export entire version
@@ -10206,6 +10231,12 @@ components:
       allOf:
         - $ref: "#/components/schemas/Operation"
         - $ref: "#/components/schemas/GraphQLOperationMeta"
+    AsyncAPIOperation:
+      description: AsyncAPI operation object.
+      title: AsyncAPIOperation
+      allOf:
+        - $ref: "#/components/schemas/Operation"
+        - $ref: "#/components/schemas/AsyncAPIOperationMeta"
     SearchResultOperation:
       description: |
         Global search result for API operations; must be returned when searchLevel = operation
@@ -10214,6 +10245,8 @@ components:
         - oneOf:
           - $ref: "#/components/schemas/RestOperation"
           - $ref: "#/components/schemas/GraphQLOperation"
+          - $ref: "#/components/schemas/ProtobufOperation"
+          - $ref: "#/components/schemas/AsyncAPIOperation"
         - type: object
           required:
             - packageId
@@ -10445,6 +10478,39 @@ components:
           description: Operation title (same as method name but with adding spaces between capital letters)
           type: string
           example: List Action Log Items
+        customTags:
+          description: Custom tags.
+          type: object
+    AsyncAPIOperationMeta:
+      description: Specific parameters for AsyncAPI operation.
+      title: AsyncAPIOperationMeta
+      required:
+        - action
+        - channel
+        - protocol
+      type: object
+      properties:
+        action:
+          description: AsyncAPI operation action (e.g., send, receive).
+          type: string
+        channel:
+          description: AsyncAPI channel name.
+          type: string
+          example: "user/signedup"
+        protocol:
+          description: Communication protocol used (e.g., kafka, mqtt, amqp).
+          type: string
+        tags:
+          description: Operation tags.
+          type: array
+          items:
+            type: string
+        title:
+          description: Operation summary/title.
+          type: string
+        customTags:
+          description: Custom tags.
+          type: object
     OperationInfoFromDifferentVersionsV2:
       description: Operation info from previous/current version.
       type: object
@@ -10542,6 +10608,59 @@ components:
               description: GraphQL operation method.
               type: string
               example: getPaymentMethodSpecificationCore
+    AsyncAPIOperationInfoFromDifferentVersions:
+      description: Operation info from previous/current version.
+      allOf:
+        - $ref: "#/components/schemas/OperationInfoFromDifferentVersionsV2"
+        - type: object
+          required:
+            - action
+            - channel
+            - protocol
+          properties:
+            action:
+              description: AsyncAPI operation action.
+              type: string
+            channel:
+              description: AsyncAPI channel name.
+              type: string
+              example: "user/signedup"
+            protocol:
+              description: Communication protocol used.
+              type: string
+            tags:
+              description: Operation tags.
+              type: array
+              items:
+                type: string
+    BusinessMetric:
+      description: Business metric
+      title: BusinessMetric
+      required:
+        - packageId
+        - date
+        - metric
+        - value
+      type: object
+      properties:
+        packageId:
+          description: Package unique string identifier
+          type: string
+        date:
+          description: Date on which business metric was collected.
+          type: string
+          format: date
+          example: '2023-12-31'
+        username:
+          description: Name of the user that has been counted for a specific metric.
+          type: string
+        metric:
+          description: Name of business metric.
+          type: string
+          example: comparisons_called
+        value:
+          description: Value associated with business metric.
+          type: integer
     SingleOperationChange:
       allOf:
         - type: object
