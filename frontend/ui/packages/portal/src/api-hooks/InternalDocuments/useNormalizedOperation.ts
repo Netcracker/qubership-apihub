@@ -1,13 +1,11 @@
 import type { VersionKey } from '@apihub/entities/keys'
 import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@apihub/utils/internal-documents/constants'
 import { isGraphApiSpecification, isOpenApiSpecification } from '@apihub/utils/internal-documents/type-guards'
-import { removeComponents } from '@netcracker/qubership-apihub-api-processor'
+import { calculateNormalizedRestOperationId, removeComponents } from '@netcracker/qubership-apihub-api-processor'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
-import { API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { isRestOperation, type OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { PackageKey } from '@netcracker/qubership-apihub-ui-shared/utils/types'
 import { useMemo } from 'react'
-import { createMatcherArbitraryOperationPathWithCurrentOperationPath } from './matcher-arbitrary-operation-path-with-current-operation-path'
 import { useInternalDocumentContent } from './useInternalDocumentContent'
 import type { QueryResult } from './useInternalDocumentsByPackageVersion'
 import { useInternalDocumentsByPackageVersion } from './useInternalDocumentsByPackageVersion'
@@ -57,15 +55,16 @@ export function useNormalizedOperation(options: Options): QueryResult<unknown, E
         if (!operationPath || !operationMethod) {
           return undefined
         }
-        const match = createMatcherArbitraryOperationPathWithCurrentOperationPath(API_TYPE_REST, operationPath)
         const internalDocument = deserializedInternalDocument
         const { paths = {}, servers = [] } = internalDocument ?? {}
         const firstServer = servers[0]?.url
         const firstServerBasePath = firstServer ? new URL(firstServer).pathname : ''
         let foundPath
+        const currentOperationNormalizedId = calculateNormalizedRestOperationId(firstServerBasePath === '/' ? firstServerBasePath : '', operationPath, operationMethod)
         for (const path of Object.keys(paths)) {
-          const pathWithServer = firstServer ? `${firstServerBasePath}${path}` : path
-          if (match?.(pathWithServer)) {
+          const operationNormalizedId = calculateNormalizedRestOperationId(firstServerBasePath, path, operationMethod)
+          const matched = currentOperationNormalizedId === operationNormalizedId
+          if (matched) {
             foundPath = path
             break
           }

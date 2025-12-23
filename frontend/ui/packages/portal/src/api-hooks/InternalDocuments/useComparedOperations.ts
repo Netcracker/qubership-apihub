@@ -4,14 +4,13 @@ import { isRestOperation, type OperationData } from '@netcracker/qubership-apihu
 import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@apihub/utils/internal-documents/constants'
 import { isGraphApiSpecification, isOpenApiSpecification } from '@apihub/utils/internal-documents/type-guards'
 import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
-import { REST_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
+import { calculateNormalizedRestOperationId } from '@netcracker/qubership-apihub-api-processor'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
 import type { PackageKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { VersionChanges } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
 import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 import type { OpenAPIV3 } from 'openapi-types'
 import { useMemo } from 'react'
-import { createMatcherArbitraryOperationPathWithCurrentOperationPath } from './matcher-arbitrary-operation-path-with-current-operation-path'
 import { useComparisonInternalDocumentContent } from './useComparisonInternalDocumentContent'
 import { useComparisonInternalDocumentsByPackageVersion } from './useComparisonInternalDocumentsByPackageVersion'
 import type { QueryResult } from './useInternalDocumentsByPackageVersion'
@@ -120,11 +119,17 @@ export function useComparedOperations(options: Options): QueryResult<unknown, Er
       const { paths = {}, servers = [] } = oasInternalDocument
       const firstServer = servers[0]?.url
       const firstServerBasePath = firstServer ? new URL(firstServer).pathname : ''
-      const match = createMatcherArbitraryOperationPathWithCurrentOperationPath(REST_API_TYPE, comparedOperationPath)
       let foundPath: string | undefined
+      const previousOperationNormalizedId = previousOperationPath && previousOperationMethod
+        ? calculateNormalizedRestOperationId(firstServerBasePath === '/' ? firstServerBasePath : '', previousOperationPath, previousOperationMethod)
+        : ''
+      const currentOperationNormalizedId = currentOperationPath && currentOperationMethod
+        ? calculateNormalizedRestOperationId(firstServerBasePath === '/' ? firstServerBasePath : '', currentOperationPath, currentOperationMethod)
+        : ''
       for (const path of Object.keys(paths)) {
-        const pathWithServer = firstServer ? `${firstServerBasePath}${path}` : path
-        if (match(pathWithServer)) {
+        const operationNormalizedId = calculateNormalizedRestOperationId(firstServerBasePath, path, comparedOperationMethod)
+        const matched = currentOperationNormalizedId === operationNormalizedId || previousOperationNormalizedId === operationNormalizedId
+        if (matched) {
           foundPath = path
           clonedOasComparisonInternalDocument.paths![path] = {
             [comparedOperationMethod]: paths![path]![comparedOperationMethod],
@@ -142,8 +147,9 @@ export function useComparedOperations(options: Options): QueryResult<unknown, Er
           const clonedWhollyChangedPaths: Record<string, unknown> = {};
           (clonedOasComparisonInternalDocument.paths as Record<PropertyKey, unknown>)[DIFF_META_KEY] = clonedWhollyChangedPaths
           for (const whollyChangedPath of Object.keys(whollyChangedPaths)) {
-            const whollyChangedPathWithServer = firstServer ? `${firstServerBasePath}${whollyChangedPath}` : whollyChangedPath
-            if (match(whollyChangedPathWithServer)) {
+            const whollyChangedOperationNormalizedId = calculateNormalizedRestOperationId(firstServerBasePath, whollyChangedPath, comparedOperationMethod)
+            const matched = currentOperationNormalizedId === whollyChangedOperationNormalizedId || previousOperationNormalizedId === whollyChangedOperationNormalizedId
+            if (matched) {
               clonedWhollyChangedPaths[whollyChangedPath] = whollyChangedPaths[whollyChangedPath]
               break
             }
