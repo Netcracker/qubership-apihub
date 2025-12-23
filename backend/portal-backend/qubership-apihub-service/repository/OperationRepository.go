@@ -33,6 +33,7 @@ type OperationRepository interface {
 	GetOperationById(packageId string, version string, revision int, operationType string, operationId string) (*entity.OperationRichEntity, error)
 	GetOperationsTags(searchQuery entity.OperationTagsSearchQueryEntity, skipRefs bool) ([]string, error)
 	GetOperationChanges(comparisonId string, operationId string, severities []string) (*entity.OperationComparisonEntity, error)
+	GetOperationChangesSummary(comparisonId string, operationId string) (*entity.OperationComparisonSummaryEntity, error)
 	GetChangelog(searchQuery entity.ChangelogSearchQueryEntity) ([]entity.OperationComparisonChangelogEntity, error)
 	SearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult, error)
 	FullTextSearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult, error)
@@ -488,6 +489,25 @@ func (o operationRepositoryImpl) GetOperationChanges(comparisonId string, operat
 	err := o.cp.GetConnection().Model(result).
 		Where("comparison_id = ?", comparisonId).
 		Where("operation_id = ?", operationId).
+		OrderExpr("data_hash, previous_data_hash").
+		Limit(1).
+		Select()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetOperationChangesSummary(comparisonId string, operationId string) (*entity.OperationComparisonSummaryEntity, error) {
+	result := new(entity.OperationComparisonSummaryEntity)
+	err := o.cp.GetConnection().Model(result).
+		Where("comparison_id = ?", comparisonId).
+		WhereGroup(func(query *orm.Query) (*orm.Query, error) {
+			return query.Where("operation_id = ?", operationId).WhereOr("previous_operation_id = ?", operationId), nil
+		}).
 		OrderExpr("data_hash, previous_data_hash").
 		Limit(1).
 		Select()

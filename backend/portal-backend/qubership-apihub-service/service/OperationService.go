@@ -39,6 +39,7 @@ type OperationService interface {
 	GetOperationDeprecatedItems(searchReq view.OperationBasicSearchReq) (*view.DeprecatedItems, error)
 	GetDeprecatedOperationsSummary(packageId string, version string) (*view.DeprecatedOperationsSummary, error)
 	GetOperationModelUsages(packageId string, version string, apiType string, operationId string, modelName string) (*view.OperationModelUsages, error)
+	GetOperationChangesSummary(packageId string, version string, operationId string, previousPackageId string, previousVersion string) (*view.ChangeSummary, error)
 }
 
 func NewOperationService(
@@ -795,4 +796,76 @@ func (o operationServiceImpl) GetOperationModelUsages(packageId string, version 
 		})
 	}
 	return &view.OperationModelUsages{ModelUsages: modelUsages}, nil
+}
+
+func (o operationServiceImpl) GetOperationChangesSummary(packageId string, version string, operationId string, previousPackageId string, previousVersion string) (*view.ChangeSummary, error) {
+	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+	if err != nil {
+		return nil, err
+	}
+	if versionEnt == nil {
+		return nil, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.PublishedPackageVersionNotFound,
+			Message: exception.PublishedPackageVersionNotFoundMsg,
+			Params:  map[string]interface{}{"version": version, "packageId": packageId},
+		}
+	}
+
+	if previousVersion == "" || previousPackageId == "" {
+		if versionEnt.PreviousVersion == "" {
+			return nil, &exception.CustomError{
+				Status:  http.StatusNotFound,
+				Code:    exception.NoPreviousVersion,
+				Message: exception.NoPreviousVersionMsg,
+				Params:  map[string]interface{}{"version": version},
+			}
+		}
+		previousVersion = versionEnt.PreviousVersion
+		if versionEnt.PreviousVersionPackageId != "" {
+			previousPackageId = versionEnt.PreviousVersionPackageId
+		} else {
+			previousPackageId = packageId
+		}
+	}
+	previousVersionEnt, err := o.publishedRepo.GetVersion(previousPackageId, previousVersion)
+	if err != nil {
+		return nil, err
+	}
+	if previousVersionEnt == nil {
+		return nil, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.PublishedPackageVersionNotFound,
+			Message: exception.PublishedPackageVersionNotFoundMsg,
+			Params:  map[string]interface{}{"version": previousVersion, "packageId": previousPackageId},
+		}
+	}
+
+	comparisonId := view.MakeVersionComparisonId(
+		versionEnt.PackageId, versionEnt.Version, versionEnt.Revision,
+		previousVersionEnt.PackageId, previousVersionEnt.Version, previousVersionEnt.Revision,
+	)
+
+	changedOperationSummaryEnt, err := o.operationRepository.GetOperationChangesSummary(comparisonId, operationId)
+	if err != nil {
+		return nil, err
+	}
+	if changedOperationSummaryEnt == nil {
+		return nil, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.ComparisonNotFound,
+			Message: exception.ComparisonNotFoundMsg,
+			Params: map[string]interface{}{
+				"comparisonId":      comparisonId,
+				"packageId":         versionEnt.PackageId,
+				"version":           versionEnt.Version,
+				"revision":          versionEnt.Revision,
+				"previousPackageId": previousVersionEnt.PackageId,
+				"previousVersion":   previousVersionEnt.Version,
+				"previousRevision":  previousVersionEnt.Revision,
+			},
+		}
+	}
+
+	return &changedOperationSummaryEnt.ChangesSummary, nil
 }

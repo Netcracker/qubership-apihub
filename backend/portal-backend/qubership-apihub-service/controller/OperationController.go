@@ -38,6 +38,7 @@ type OperationController interface {
 	GetOperationDeprecatedItems(w http.ResponseWriter, r *http.Request)
 	GetDeprecatedOperationsSummary(w http.ResponseWriter, r *http.Request)
 	GetOperationModelUsages(w http.ResponseWriter, r *http.Request)
+	GetOperationChangesSummary(w http.ResponseWriter, r *http.Request)
 }
 
 func NewOperationController(roleService service.RoleService,
@@ -1135,4 +1136,54 @@ func (o operationControllerImpl) GetOperationModelUsages(w http.ResponseWriter, 
 		return
 	}
 	utils.RespondWithJson(w, http.StatusOK, modelUsages)
+}
+
+func (o operationControllerImpl) GetOperationChangesSummary(w http.ResponseWriter, r *http.Request) {
+	packageId := getStringParam(r, "packageId")
+	ctx := context.Create(r)
+	sufficientPrivileges, err := o.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	if err != nil {
+		handlePkgRedirectOrRespondWithError(w, r, o.ptHandler, packageId, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	versionName, err := getUnescapedStringParam(r, "version")
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "version"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	operationId, err := getUnescapedStringParam(r, "operationId")
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "operationId"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	previousVersion := r.URL.Query().Get("previousVersion")
+	previousVersionPackageId := r.URL.Query().Get("previousVersionPackageId")
+
+	changes, err := o.operationService.GetOperationChangesSummary(packageId, versionName, operationId, previousVersionPackageId, previousVersion)
+	if err != nil {
+		handlePkgRedirectOrRespondWithError(w, r, o.ptHandler, packageId, "Failed to get operation changes", err)
+		return
+	}
+	utils.RespondWithJson(w, http.StatusOK, changes)
 }

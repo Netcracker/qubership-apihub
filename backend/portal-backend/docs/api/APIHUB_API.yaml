@@ -6621,6 +6621,75 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+  "/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/changes/summary":
+    get:
+      tags:
+        - Changes
+        - Operations
+      summary: Single operation changes summary
+      description: |
+        Get summary of changes for one operation between current and previous published package version.
+        The result depends on the API type.
+      operationId: getPackagesIdVersionsApiTypeOperationsIdChangesSummary
+      parameters:
+        - $ref: "#/components/parameters/apiType"
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+        - $ref: "#/components/parameters/operationId"
+        - in: query
+          name: previousVersion
+          schema:
+            type: string
+          description: If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used.
+          example: "2022.2"
+        - in: query
+          name: previousVersionPackageId
+          schema:
+            type: string
+          description: If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used.
+          example: QS.RUNENV.K8S-SERVER.CJM-QSS-DEV-2.Q-TMF
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChangeSummary"
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
   "/api/v2/packages/{packageId}/versions/{version}/{apiType}/tags":
     get:
       tags:

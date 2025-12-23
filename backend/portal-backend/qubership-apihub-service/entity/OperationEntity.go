@@ -113,6 +113,12 @@ type OperationComparisonEntity struct {
 	ComparisonInternalDocumentId string                 `pg:"comparison_internal_document_id, type:varchar"`
 }
 
+type OperationComparisonSummaryEntity struct {
+	tableName struct{} `pg:"operation_comparison"`
+
+	ChangesSummary view.ChangeSummary `pg:"changes_summary, type:jsonb"`
+}
+
 type VersionComparisonEntity struct {
 	tableName struct{} `pg:"version_comparison, alias:version_comparison"`
 
