@@ -21,24 +21,27 @@ import {
   useSetIsApiDiffResultLoading,
 } from '@apihub/routes/root/ApiDiffResultProvider'
 import type { Diff } from '@netcracker/qubership-apihub-api-diff'
-import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY, isDiffAdd, isDiffRemove, isDiffRename, isDiffReplace } from '@netcracker/qubership-apihub-api-diff'
+import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { ChangeSeverityFilters } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityFilters'
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { DEFAULT_CHANGE_SEVERITY_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import { getApiDiffResult } from '@netcracker/qubership-apihub-ui-shared/utils/api-diff-result'
-import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 import type { FC } from 'react'
 import { memo, useEffect, useMemo, useState } from 'react'
 import { useComparedOperationsPair } from './ComparedOperationsContext'
 import type { InternalDocumentOptions } from './ComparisonToolbar'
+import { useOperationChangesSummary } from './useOperationChangesSummary'
 
 type ChangesSummary = typeof DEFAULT_CHANGE_SEVERITY_MAP
 
 export type ComparisonOperationChangeSeverityFiltersProps = {
   internalDocumentOptions?: InternalDocumentOptions
+  apiType: ApiType
 }
 
 export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationChangeSeverityFiltersProps> = memo<ComparisonOperationChangeSeverityFiltersProps>(props => {
-  const { internalDocumentOptions } = props
+  const { internalDocumentOptions, apiType } = props
+  const comparisonAlreadyDone = !!internalDocumentOptions
 
   const {
     previousOperation: originOperation,
@@ -59,11 +62,29 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
     versionChanges: internalDocumentOptions?.versionChanges,
     currentPackageId: internalDocumentOptions?.currentPackageId,
     currentVersionId: internalDocumentOptions?.currentVersionId,
+    previousPackageId: internalDocumentOptions?.previousPackageId,
+    previousVersionId: internalDocumentOptions?.previousVersionId,
   })
+
+  const { data: operationChangesSummary, isLoading: loadingOperationChangesSummary } = useOperationChangesSummary({
+    packageId: internalDocumentOptions?.currentPackageId ?? '',
+    versionId: internalDocumentOptions?.currentVersionId ?? '',
+    previousPackageId: internalDocumentOptions?.previousPackageId ?? '',
+    previousVersionId: internalDocumentOptions?.previousVersionId ?? '',
+    apiType: apiType,
+    operationId: changedOperation?.operationKey ?? originOperation?.operationKey ?? '',
+    enabled: comparisonAlreadyDone,
+  })
+
+  useEffect(() => {
+    if (!loadingOperationChangesSummary) {
+      setChanges(operationChangesSummary)
+    }
+  }, [operationChangesSummary, loadingOperationChangesSummary])
 
   const apiDiffResult = useMemo(() => {
     // prefix groups operations OR arbitary operations comparison
-    if (!internalDocumentOptions) {
+    if (!comparisonAlreadyDone) {
       return getApiDiffResult({
         beforeData: originOperation?.data,
         afterData: changedOperation?.data,
@@ -72,28 +93,8 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
       })
     }
 
-    let diffs: Diff[] = []
-    const maybeAggregatedDiffs =
-      isObject(comparisonInternalDocument) && DIFFS_AGGREGATED_META_KEY in comparisonInternalDocument
-        ? comparisonInternalDocument[DIFFS_AGGREGATED_META_KEY]
-        : undefined
-    if (maybeAggregatedDiffs && maybeAggregatedDiffs instanceof Set) {
-      const maybeAggregatedDiffsArray = Array.from(maybeAggregatedDiffs)
-      const aggregatedDiffsTypedArray: Diff[] = maybeAggregatedDiffsArray.filter(
-        (maybeDiff): maybeDiff is Diff => (
-          isDiffAdd(maybeDiff) ||
-          isDiffRemove(maybeDiff) ||
-          isDiffReplace(maybeDiff) ||
-          isDiffRename(maybeDiff)
-        ),
-      )
-      diffs = aggregatedDiffsTypedArray
-    }
-    return {
-      merged: comparisonInternalDocument,
-      diffs: diffs,
-    }
-  }, [changedOperation?.data, comparisonInternalDocument, internalDocumentOptions, originOperation?.data])
+    return { merged: comparisonInternalDocument, diffs: [] as Diff[] }
+  }, [changedOperation?.data, comparisonAlreadyDone, comparisonInternalDocument, originOperation?.data])
 
   useEffect(() => {
     setIsApiDiffResultLoadingContext(internalDocumentOptions ? apiDiffLoading : apiDiffExecuting)
@@ -104,8 +105,10 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
       return
     }
     setApiDiffResultContext(apiDiffResult)
-    setChanges(apiDiffResult?.diffs.reduce(changesSummaryReducer, { ...DEFAULT_CHANGE_SEVERITY_MAP }))
-  }, [apiDiffLoading, apiDiffResult, apiDiffExecuting, isOperationsLoading, setApiDiffResultContext, setChanges])
+    if (!comparisonAlreadyDone) {
+      setChanges(apiDiffResult?.diffs.reduce(changesSummaryReducer, { ...DEFAULT_CHANGE_SEVERITY_MAP }))
+    }
+  }, [apiDiffLoading, apiDiffResult, apiDiffExecuting, isOperationsLoading, setApiDiffResultContext, setChanges, internalDocumentOptions, comparisonAlreadyDone])
 
   //todo return after resolve
   /*const [filters, setFilters] = useSeverityFiltersSearchParam()

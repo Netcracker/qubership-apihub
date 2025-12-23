@@ -21,6 +21,8 @@ type Options = {
   versionChanges: VersionChanges | undefined
   currentPackageId: PackageKey | undefined
   currentVersionId: VersionKey | undefined
+  previousPackageId: PackageKey | undefined
+  previousVersionId: VersionKey | undefined
 }
 
 export function useComparedOperations(options: Options): QueryResult<unknown, Error> {
@@ -30,6 +32,8 @@ export function useComparedOperations(options: Options): QueryResult<unknown, Er
     versionChanges,
     currentPackageId,
     currentVersionId,
+    previousPackageId,
+    previousVersionId,
   } = options
 
   const {
@@ -39,8 +43,8 @@ export function useComparedOperations(options: Options): QueryResult<unknown, Er
   } = useComparisonInternalDocumentsByPackageVersion({
     currentPackageId: currentPackageId,
     currentVersionId: currentVersionId,
-    previousPackageId: versionChanges?.previousVersionPackageKey,
-    previousVersionId: versionChanges?.previousVersion,
+    previousPackageId: previousPackageId,
+    previousVersionId: previousVersionId,
   })
 
   const changeRelatedToComparedOperations = useMemo(() => {
