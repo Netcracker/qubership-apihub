@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-doc-viewer",
-  "version": "2.1.9",
+  "version": "2.1.10",
   "license": "Apache-2.0",
   "type": "module",
   "main": "dist/index.js",
