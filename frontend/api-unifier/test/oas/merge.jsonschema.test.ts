@@ -554,8 +554,8 @@ describe('basic allOf merge cases', function () {
         ],
       }, { allowNotValidSyntheticChanges: true })
       expect(result).toEqual({
-          type: JSON_SCHEMA_NODE_SYNTHETIC_TYPE_NOTHING,
-        },
+        type: JSON_SCHEMA_NODE_SYNTHETIC_TYPE_NOTHING,
+      },
       )
     })
 
@@ -1268,7 +1268,7 @@ describe('basic allOf merge cases', function () {
       })
 
       expect(result).toEqual({
-        pattern: '(?=fdsaf)(?=abba)',
+        pattern: '(?=abba)(?=fdsaf)',
       })
 
       const result2 = normalize({
@@ -1281,6 +1281,35 @@ describe('basic allOf merge cases', function () {
 
       expect(result2).toEqual({
         pattern: 'abba',
+      })
+    })
+
+    it('merges schemas with all identical patterns in allOf to exactly the same pattern', function () {
+      const result = normalize({
+        allOf: [
+          { pattern: 'abc' },
+          { pattern: 'abc' },
+          { pattern: 'abc' },
+        ],
+      })
+
+      expect(result).toEqual({
+        pattern: 'abc',
+      })
+    })
+
+    it('merges schemas with several identical patterns in allOf to lookahead assertions for unique patterns', function () {
+      const result = normalize({
+        allOf: [
+          { pattern: 'abc' },
+          { pattern: 'abc' },
+          { pattern: 'def' },
+          { pattern: 'def' },
+        ],
+      })
+
+      expect(result).toEqual({
+        pattern: '(?=abc)(?=def)',
       })
     })
 

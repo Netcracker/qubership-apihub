@@ -47,7 +47,16 @@ export const and: MergeResolver<boolean> = args => mergeResultWithSameValueOrigi
 export const or: MergeResolver<boolean> = args => mergeResultWithSameValueOrigins(args, args => args.reduce((r, v) => r || v, false))
 export const minValue: MergeResolver<number> = args => mergeResultWithSameValueOrigins(args, args => Math.min(...args))
 export const maxValue: MergeResolver<number> = args => mergeResultWithSameValueOrigins(args, args => Math.max(...args))
-export const mergePattern: MergeResolver<string> = args => mergeResultWithAllOrigins(args, (args) => args.reduce((r, v) => `${r}(?=${v})`, ''))
+export const mergePattern: MergeResolver<string> = args => mergeResultWithAllOrigins(args, (args) => {
+  // Collect unique patterns and sort them for deterministic results
+  const uniquePatterns = uniqueItems(args).sort()
+  // If there's only one unique pattern, return it as-is
+  if (uniquePatterns.length === 1) {
+    return uniquePatterns[0]
+  }
+  // Otherwise, merge unique patterns using lookahead assertions
+  return uniquePatterns.reduce((r, v) => `${r}(?=${v})`, '')
+})
 export const equal: MergeResolver<unknown> = args => mergeResultWithAllOrigins(args, ([one, ...others]) => others.find((v) => !deepEqual(v, one)) ? undefined : one)
 export const mergeObjects: MergeResolver<Jso> = args => mergeResultWithAllOrigins(args, ([one, ...others]) => others.reduce((r, v) => mergeValues(r, v), isArray(one) ? [...one] : { ...one }))
 export const mergeCombination: MergeResolver<unknown[]> = (args, ctx) => {
