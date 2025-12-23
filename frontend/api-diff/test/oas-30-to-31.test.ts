@@ -1,6 +1,6 @@
 import { apiDiff, CompareOptions } from '../src'
 import { TEST_DIFF_FLAG, TEST_ORIGINS_FLAG, TEST_SYNTHETIC_TITLE_FLAG } from './helper'
-import { diffsMatcher } from './helper/matchers'
+import { diffsMatcher, expectOpenApiVersionChange } from './helper/matchers'
 
 import couldCompareOverriddenDescriptionViaReferenceObjectBefore from './helper/resources/openapi-3_0-to-3_1/could-compare-overridden-description-via-reference-object/before.json'
 import couldCompareOverriddenDescriptionViaReferenceObjectAfter from './helper/resources/openapi-3_0-to-3_1/could-compare-overridden-description-via-reference-object/after.json'
@@ -20,15 +20,6 @@ import nullableIsEquivalentToUnionWithNullTypeAfter from './helper/resources/ope
 import nullableIsEquivalentToUnionWithNullTypeForSchemaViaRefBefore from './helper/resources/openapi-3_0-to-3_1/nullable-is-equivalent-to-union-with-null-type-for-schema-via-ref/before.json'
 import nullableIsEquivalentToUnionWithNullTypeForSchemaViaRefAfter from './helper/resources/openapi-3_0-to-3_1/nullable-is-equivalent-to-union-with-null-type-for-schema-via-ref/after.json'
 
-const expectOpenApiVersionChange = (fromVersion: string = '3.0.4', toVersion: string = '3.1.0') =>
-  expect.objectContaining({
-    action: 'replace',
-    afterDeclarationPaths: [['openapi']],
-    afterValue: toVersion,
-    beforeDeclarationPaths: [['openapi']],
-    beforeValue: fromVersion,
-    type: 'annotation',
-  })
 
 const TEST_NORMALIZE_OPTIONS: CompareOptions = {
   validate: true,
