@@ -1,6 +1,6 @@
 import { compareFiles, TEST_DEFAULTS_DECLARATION_PATHS } from '../utils'
 import { diffsMatcher } from '../../helper/matchers'
-import { annotation, breaking, DiffAction, nonBreaking, risky } from '../../../src'
+import { annotation, breaking, DiffAction, nonBreaking, risky, unclassified } from '../../../src'
 import { TEST_SPEC_TYPE_GRAPH_QL } from '@netcracker/qubership-apihub-compatibility-suites'
 import { COMPARE_SCOPE_OUTPUT } from '../../../src/graphapi'
 
@@ -46,6 +46,25 @@ describe('GraphQL Scalar output type of root type', () => {
         beforeDeclarationPaths: [[...QUERY_PATH, 'typeDef', 'type']],
         afterDeclarationPaths: [[...QUERY_PATH, 'typeDef', 'type']],
         type: breaking,
+        scope: COMPARE_SCOPE_OUTPUT
+      }),
+    ]))
+  })
+  test('Change output type from enum to string', async () => {
+    const testId = 'change-output-type-from-enum-to-string'
+    const result = await compareFiles(SUITE_ID, testId, TEST_SPEC_TYPE_GRAPH_QL)
+    expect(result).toEqual(diffsMatcher([
+      expect.objectContaining({
+        action: DiffAction.replace,
+        // beforeDeclarationPaths: [[...QUERY_PATH, 'typeDef', 'type']],  // TODO: fix before declaration paths
+        afterDeclarationPaths: [[...QUERY_PATH, 'typeDef', 'type']],
+        type: breaking,
+        scope: COMPARE_SCOPE_OUTPUT
+      }),
+      expect.objectContaining({
+        action: DiffAction.remove,
+        // beforeDeclarationPaths: [[...ENUM_PATH]],  // TODO: fix before declaration paths
+        type: unclassified,
         scope: COMPARE_SCOPE_OUTPUT
       }),
     ]))
