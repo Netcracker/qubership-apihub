@@ -1,0 +1,42 @@
+openapi: 3.1.0
+info:
+  title: Sample API Service
+  version: '1.0'
+  description: Sample API Service
+servers:
+  - url: /
+paths:
+  /somepath/{id}:
+    delete:
+      summary: Delete resource
+      description: This operation deletes a resource by id
+      parameters:
+        - name: id
+          in: path
+          description: Resource identifier
+          required: true
+          schema:
+            $ref: '#/components/schemas/UUID'
+            type: string
+            format: uuid
+            pattern: '[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}'
+      responses:
+        '204':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+        - OAuth2 Access Token: []
+components:
+  schemas:
+    UUID:
+      type: string
+      format: uuid
+      pattern: '[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}'
+  securitySchemes:
+    OAuth2 Access Token:
+      type: apiKey
+      name: Authorization
+      in: header

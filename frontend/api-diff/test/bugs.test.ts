@@ -10,6 +10,8 @@ import {
 } from '../src'
 
 const TEST_AFTER_NORMALIZED_VALUE = Symbol('test-after-normalized-value')
+import { loadYamlSample } from './helper/utils'
+
 import offeringQualificationBefore from './helper/resources/api-v2-offeringqualification-qualification-post/before.json'
 import offeringQualificationAfter from './helper/resources/api-v2-offeringqualification-qualification-post/after.json'
 import readDefaultValueOfRequiredBefore from './helper/resources/read-default-value-of-required-field/before.json'
@@ -52,7 +54,7 @@ import shouldReportSingleDiffWhenRequiredPropertyIsChangedForTheCombinerAfter fr
 import duplicateParametersBefore from './helper/resources/duplicate-parameters/before.json'
 import duplicateParametersAfter from './helper/resources/duplicate-parameters/after.json'
 
-import { diffsMatcher } from './helper/matchers'
+import { diffsMatcher, expectOpenApiVersionChange } from './helper/matchers'
 import { TEST_DIFF_FLAG, TEST_ORIGINS_FLAG } from './helper'
 import { JSON_SCHEMA_NODE_SYNTHETIC_TYPE_NOTHING } from '@netcracker/qubership-apihub-api-unifier'
 
@@ -329,6 +331,17 @@ describe('Real Data', () => {
         afterDeclarationPaths: [['paths', '/api/v1/user-management/user-federations/{id}/mappers/{id}', 'get', 'description']],
         type: annotation,
       }),
+    ]))
+  })
+
+  it('should not report changes for the same string pattern overriden via ref', () => {
+    const before = loadYamlSample('uuid-pattern/before.yaml')
+    const after = loadYamlSample('uuid-pattern/after.yaml')
+
+    const { diffs } = apiDiff(before, after)
+
+    expect(diffs).toEqual(diffsMatcher([
+      expectOpenApiVersionChange(),
     ]))
   })
 })
