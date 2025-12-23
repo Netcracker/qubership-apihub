@@ -31,8 +31,10 @@
     "screenshot-test:docker": "start-server-and-test development:local-server:static http://localhost:9009 screenshot-test:run-test:docker",
     "screenshot-test:run-test:ci": "jest --maxWorkers 4 -c .config/it/it-test.jest.config.cjs",
     "screenshot-test:run-test:docker": "jest --maxWorkers 4 -c .config/it/it-test-docker.jest.config.cjs",
-    "screenshot-test:regenerate-snapshots": "start-server-and-test development:local-server:static http://localhost:9009 screenshot-test:regenerate-snapshots:run",
-    "screenshot-test:regenerate-snapshots:run": "jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test-docker.jest.config.cjs"
+    "screenshot-test:regenerate-snapshots:ci": "start-server-and-test development:local-server:static http://localhost:9009 screenshot-test:regenerate-snapshots:run:ci",
+    "screenshot-test:regenerate-snapshots:docker": "start-server-and-test development:local-server:static http://localhost:9009 screenshot-test:regenerate-snapshots:run:docker",
+    "screenshot-test:regenerate-snapshots:run:ci": "jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test.jest.config.cjs",
+    "screenshot-test:regenerate-snapshots:run:docker": "jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test-docker.jest.config.cjs"
   },
   "dependencies": {
     "postcss": "8.4.29",
