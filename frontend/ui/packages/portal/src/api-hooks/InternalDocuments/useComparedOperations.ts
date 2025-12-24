@@ -3,7 +3,7 @@ import { isRestOperation, type OperationData } from '@netcracker/qubership-apihu
 
 import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@apihub/utils/internal-documents/constants'
 import { isGraphApiSpecification, isOpenApiSpecification } from '@apihub/utils/internal-documents/type-guards'
-import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import { DIFF_META_KEY, extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
 import { calculateNormalizedRestOperationId } from '@netcracker/qubership-apihub-api-processor'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
 import type { PackageKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
@@ -121,8 +121,7 @@ export function useComparedOperations(options: Options): QueryResult<unknown, Er
       }
       // Leave the only operation with necessary path because ASV displays only 1 operation at the time
       const { paths = {}, servers = [] } = oasInternalDocument
-      const firstServer = servers[0]?.url
-      const firstServerBasePath = firstServer ? new URL(firstServer).pathname : ''
+      const firstServerBasePath = extractOperationBasePath(servers)
       let foundPath: string | undefined
       const previousOperationNormalizedId = previousOperationPath && previousOperationMethod
         ? calculateNormalizedRestOperationId(firstServerBasePath === '/' ? firstServerBasePath : '', previousOperationPath, previousOperationMethod)

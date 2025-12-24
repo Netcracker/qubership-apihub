@@ -9,6 +9,7 @@ import { useMemo } from 'react'
 import { useInternalDocumentContent } from './useInternalDocumentContent'
 import type { QueryResult } from './useInternalDocumentsByPackageVersion'
 import { useInternalDocumentsByPackageVersion } from './useInternalDocumentsByPackageVersion'
+import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
 
 type Options = {
   operation: OperationData | undefined
@@ -57,8 +58,7 @@ export function useNormalizedOperation(options: Options): QueryResult<unknown, E
         }
         const internalDocument = deserializedInternalDocument
         const { paths = {}, servers = [] } = internalDocument ?? {}
-        const firstServer = servers[0]?.url
-        const firstServerBasePath = firstServer ? new URL(firstServer).pathname : ''
+        const firstServerBasePath = extractOperationBasePath(servers)
         let foundPath
         const currentOperationNormalizedId = calculateNormalizedRestOperationId(firstServerBasePath === '/' ? firstServerBasePath : '', operationPath, operationMethod)
         for (const path of Object.keys(paths)) {
