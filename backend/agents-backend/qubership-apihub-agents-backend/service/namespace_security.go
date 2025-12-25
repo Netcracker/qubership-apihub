@@ -323,12 +323,12 @@ func (n *namespaceSecurityServiceImpl) startAuthSecurityCheck(securityCheck enti
 	n.updateProcessStatus(&securityCheck, view.StatusComplete, "")
 }
 
-func (n *namespaceSecurityServiceImpl) getDiscoveryResults(сtx context.Context, namespace string, workspaceId string, agentUrl string) (*view.ServiceListResponse, error) {
+func (n *namespaceSecurityServiceImpl) getDiscoveryResults(ctx context.Context, namespace string, workspaceId string, agentUrl string) (*view.ServiceListResponse, error) {
 	start := time.Now()
 	var discoveryResult *view.ServiceListResponse
 	var err error
 	for {
-		discoveryResult, err = n.agentClient.ListServices(сtx, namespace, workspaceId, agentUrl)
+		discoveryResult, err = n.agentClient.ListServices(ctx, namespace, workspaceId, agentUrl)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get service list: %v", err.Error())
 		}
