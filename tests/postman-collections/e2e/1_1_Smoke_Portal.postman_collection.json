@@ -2986,7 +2986,7 @@
                                             "    data.events.forEach((event, index) => {\r",
                                             "        pm.expect(event).to.have.property(\"principal\");\r",
                                             "        const id = event.principal.id;\r",
-                                            "        pm.expect([\"x_apihub\", \"x_APIHUB\"]).to.include(id, `Неправильний id у event №${index + 1}`);\r",
+                                            "        pm.expect([\"x_apihub\", \"x_APIHUB\"]).to.include(id, `Invalid ID for event #${index + 1}`);\r",
                                             "    });\r",
                                             "});\r",
                                             ""
