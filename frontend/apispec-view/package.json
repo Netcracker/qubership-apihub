@@ -14,7 +14,7 @@
     "@chromatic-com/storybook": "1",
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
     "@netcracker/qubership-apihub-api-unifier": "feature-asyncapi-basic-e2e",
-    "@netcracker/qubership-apihub-compatibility-suites": "2.3.0",
+    "@netcracker/qubership-apihub-compatibility-suites": "dev",
     "@netcracker/qubership-apihub-api-diff": "feature-asyncapi-basic-e2e",
     "@netcracker/qubership-apihub-api-doc-viewer": "feature-asyncapi-basic-e2e",
     "@netcracker/qubership-apihub-http-spec": "5.5.9",
@@ -148,7 +148,8 @@
     "build:showcase": "npm run --workspace=@netcracker/qubership-apihub-apispec-view build:showcase",
     "screenshot-test:ci": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:ci",
     "screenshot-test:docker": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:docker",
-    "screenshot-test:regenerate-snapshots": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:regenerate-snapshots",
+    "screenshot-test:regenerate-snapshots:ci": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:regenerate-snapshots:ci",
+    "screenshot-test:regenerate-snapshots:docker": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:regenerate-snapshots:docker",
     "update-lock-file": "update-lock-file @netcracker"
   }
 }
