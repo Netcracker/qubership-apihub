@@ -136,15 +136,6 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
   const flatPackageChangelog = useFlatVersionChangelog(packageChangelog, isChangelogReady)
   const packageChanges: ReadonlyArray<OperationChangeBase> = flatPackageChangelog.operations
 
-  const internalDocumentOptions: InternalDocumentOptions = useMemo(
-    () => ({
-      versionChanges: flatPackageChangelog,
-      currentPackageId: changedPackageKey,
-      currentVersionId: changedVersionKey,
-    }),
-    [flatPackageChangelog, changedPackageKey, changedVersionKey],
-  )
-
   const operationsFromPackageChanges = useMemo(
     () => (isChangelogReady ? getOperationPairsFromPackageChanges(packageChanges) : []),
     [packageChanges, isChangelogReady],
@@ -214,6 +205,17 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
       operationPair.previousOperation?.operationKey === operationKey,
     ),
     [operationKey, operationsFromPackageChanges, searchValue],
+  )
+
+  const internalDocumentOptions: InternalDocumentOptions = useMemo(
+    () => ({
+      versionChanges: flatPackageChangelog,
+      currentPackageId: !isPackageFromDashboard ? changedPackageKey : refPackageKey,
+      currentVersionId: !isPackageFromDashboard ? changedVersionKey : refComparisonSummary?.version,
+      previousPackageId: !isPackageFromDashboard ? originPackageKey : refPackageKey,
+      previousVersionId: !isPackageFromDashboard ? originVersionKey : refComparisonSummary?.previousVersion,
+    }),
+    [flatPackageChangelog, isPackageFromDashboard, changedPackageKey, refPackageKey, changedVersionKey, refComparisonSummary?.version, refComparisonSummary?.previousVersion, originPackageKey, originVersionKey],
   )
 
   useEffect(

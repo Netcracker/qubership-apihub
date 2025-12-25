@@ -69,6 +69,8 @@ export type InternalDocumentOptions = {
   versionChanges: VersionChanges | undefined
   currentPackageId: Key | undefined
   currentVersionId: Key | undefined
+  previousPackageId: Key | undefined
+  previousVersionId: Key | undefined
 }
 
 export type ComparisonPageToolbarProps = {
@@ -183,6 +185,7 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
               {mode !== RAW_OPERATION_VIEW_MODE && (
                 <ComparisonOperationChangeSeverityFilters
                   internalDocumentOptions={internalDocumentOptions}
+                  apiType={apiType}
                 />
               )}
               <OperationViewModeSelector
