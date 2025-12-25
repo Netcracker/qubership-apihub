@@ -59,3 +59,13 @@ export function diffsMatcher(
 ): DiffMatcher {
   return expect.toIncludeSameMembers(expected)
 }
+
+export const expectOpenApiVersionChange = (fromVersion: string = '3.0.4', toVersion: string = '3.1.0') =>
+  expect.objectContaining({
+    action: 'replace',
+    afterDeclarationPaths: [['openapi']],
+    afterValue: toVersion,
+    beforeDeclarationPaths: [['openapi']],
+    beforeValue: fromVersion,
+    type: 'annotation',
+  })
