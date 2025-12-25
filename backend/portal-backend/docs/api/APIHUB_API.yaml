@@ -3029,13 +3029,6 @@ paths:
                                   operationsCount:
                                     type: number
                                     description: Number of operations in which the apiAudience was changed from previousAudience to currentAudience
-                            operations:
-                              type: object
-                              description: Hash map of 'operationId:dataHash value'.
-                              additionalProperties:
-                                description: Operation hash.
-                                type: string
-                                example: lkfsdkff112
                   - type: object
                     properties:
                       operationGroups:
@@ -5614,14 +5607,6 @@ paths:
             items:
               type: string
             example: ["get-quoteManagement-v5-quote", "post-quoteManagement-v5-quote"]
-        - name: hashList
-          in: query
-          description: List of the hash to filter.
-          schema:
-            type: array
-            items:
-              type: string
-            example: ["sdfsdfsf242", "fhjfjfhjfhj3212"]
         - name: refPackageId
           description: Filter by package id of ref package, shall be used in case of dashboard.
           in: query
@@ -10215,9 +10200,9 @@ components:
       type: object
       required:
         - operationId
+        - documentId
         - title
         - apiType
-        - dataHash
         - apiAudience
         - apiKind
       properties:
@@ -10225,6 +10210,11 @@ components:
           description: Operation unique identifier (slug). Not the same as operationId tag from the OpenAPI file.
           type: string
           example: get-quoteManagement-v5-quote
+        documentId:
+          description: Unique string identifier of the document from which the operation is originated
+          type: string
+          pattern: "^[a-z0-9-]"
+          example: "qitmf-v5-11-json"
         title:
           description: Operation summary/title.
           type: string
@@ -10238,10 +10228,6 @@ components:
           #    - graphql
           #    - protobuf
           $ref: "#/components/schemas/ApiType"
-        dataHash:
-          description: Operation hash.
-          type: string
-          example: sdfsdfsf242
         externalMetadata:
           description: External operation metadata.
           type: object
@@ -10587,13 +10573,18 @@ components:
         - operationId
         - title
         - apiKind
-        - dataHash
+        - documentId
         - apiAudience
       properties:
         operationId:
           description: Operation unique identifier (for rest api this operationId is not the same as operationId field from the OpenAPI file).
           type: string
           example: get-quoteManagement-v5-quote
+        documentId:
+          description: Unique string identifier of the document from which the operation is originated
+          type: string
+          pattern: "^[a-z0-9-]"
+          example: "qitmf-v5-11-json"
         title:
           description: Operation summary/title.
           type: string
@@ -10620,10 +10611,6 @@ components:
           items:
             type: string
           example: ["Access Control API, Address Management API"]
-        dataHash:
-          description: Operation hash.
-          type: string
-          example: sdfsdfsf242
         packageRef:
           description: >
             Parent package and version link. Created by
@@ -10702,34 +10689,6 @@ components:
               type: array
               items:
                 type: string
-    BusinessMetric:
-      description: Business metric
-      title: BusinessMetric
-      required:
-        - packageId
-        - date
-        - metric
-        - value
-      type: object
-      properties:
-        packageId:
-          description: Package unique string identifier
-          type: string
-        date:
-          description: Date on which business metric was collected.
-          type: string
-          format: date
-          example: '2023-12-31'
-        username:
-          description: Name of the user that has been counted for a specific metric.
-          type: string
-        metric:
-          description: Name of business metric.
-          type: string
-          example: comparisons_called
-        value:
-          description: Value associated with business metric.
-          type: integer
     SingleOperationChange:
       allOf:
         - type: object
