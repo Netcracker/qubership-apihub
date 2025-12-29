@@ -90,7 +90,7 @@ export function getApiQualitySummaryPlaceholder(
       return <>
         No validation results.
         <br />
-        <Link onClick={onManualRunLinter}>
+        <Link onClick={onManualRunLinter} data-testid="RunValidationLink">
           Run Validation
         </Link>
       </>

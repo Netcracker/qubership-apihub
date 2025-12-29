@@ -32,6 +32,7 @@ const RulesetInfoPopup: FC<PopupProps> = (props) => {
           <IconButton
             sx={{ color: '#353C4E', p: 0 }}
             onClick={onClose}
+            data-testid="CloseRulesetInfoDialogButton"
           >
             <CloseOutlinedIcon />
           </IconButton>
@@ -41,10 +42,12 @@ const RulesetInfoPopup: FC<PopupProps> = (props) => {
             <CustomChip
               value='rulesetSpecType'
               label={RULESET_API_TYPE_TITLE_MAP[ruleset.apiType]}
+              data-testid="ValidationRulesetApiTypeChip"
             />
             <CustomChip
               value={ruleset.status === RulesetStatuses.ACTIVE ? 'rulesetActive' : 'rulesetInactive'}
               label={capitalize(ruleset.status)}
+              data-testid="ValidationRulesetStatusChip"
             />
           </Box>
         )}

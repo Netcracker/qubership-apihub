@@ -17,7 +17,7 @@ export const RulesetFilePanel: FC<RulesetFilePanelProps> = (props) => {
         Spectral Ruleset
       </Typography>
       <Box display='flex' justifyContent='space-between'>
-        <Box display='flex' alignItems='center' gap={1}>
+        <Box display='flex' alignItems='center' gap={1} data-testid="RulesetFileNameContainer">
           <FileIcon color='black' />
           <Typography variant='body2'>
             {ruleset.fileName}

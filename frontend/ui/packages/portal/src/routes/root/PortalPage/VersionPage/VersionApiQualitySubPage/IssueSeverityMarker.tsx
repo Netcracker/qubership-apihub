@@ -20,6 +20,13 @@ const COLOR_BY_SEVERITY: Record<IssueSeverity, string> = {
   [IssueSeverities.HINT]: '#B4BFCF',
 }
 
+const TEST_ID_BY_SEVERITY: Record<IssueSeverity, string> = {
+  [IssueSeverities.ERROR]: 'ErrorIcon',
+  [IssueSeverities.WARNING]: 'WarningIcon',
+  [IssueSeverities.INFO]: 'InfoIcon',
+  [IssueSeverities.HINT]: 'HintIcon',
+}
+
 export const IssueSeverityMarker: FC<IssueSeverityMarkerProps> = ({ severity, size = Size.MEDIUM }) => {
   let sizePx: string
   switch (size) {
@@ -33,6 +40,7 @@ export const IssueSeverityMarker: FC<IssueSeverityMarkerProps> = ({ severity, si
   }
   return (
     <ErrorIcon
+      data-testid={TEST_ID_BY_SEVERITY[severity]}
       sx={{
         color: COLOR_BY_SEVERITY[severity],
         width: sizePx,

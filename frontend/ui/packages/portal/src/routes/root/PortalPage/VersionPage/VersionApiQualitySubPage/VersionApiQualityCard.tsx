@@ -1,5 +1,5 @@
 import { useValidationDetailsByDocument } from '@apihub/api-hooks/ApiQuality/useValidationDetailsByDocument'
-import { ValidationRulesettLink } from '@apihub/components/ApiQuality/ValidatationRulesetLink'
+import { ValidationRulesetLink } from '@apihub/components/ApiQuality/ValidatationRulesetLink'
 import type { DocumentValidationSummary } from '@apihub/entities/api-quality/package-version-validation-summary'
 import { JSON_FILE_FORMAT, YAML_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/entities/file-formats'
 import { transformIssuesToMarkers } from '@apihub/utils/api-quality/issues'
@@ -131,6 +131,7 @@ export const VersionApiQualityCard: FC = memo(() => {
         <Placeholder
           invisible={validationSummaryAvailable}
           area={CONTENT_PLACEHOLDER_AREA}
+          testId="ApiQualityNoResultsPlaceholder"
           message={
             <Typography component="div" variant="h6" color="#8F9EB4">
               API Quality results are not available
@@ -154,7 +155,7 @@ export const VersionApiQualityCard: FC = memo(() => {
                   options={validatedDocuments}
                   loading={loadingValidatedDocuments}
                 />
-                <ValidationRulesettLink
+                <ValidationRulesetLink
                   data={validationDetails?.ruleset}
                   loading={loadingValidationDetails}
                 />
