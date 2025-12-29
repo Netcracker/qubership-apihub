@@ -18,6 +18,7 @@ import type { FC, ReactElement } from 'react'
 import { memo } from 'react'
 
 import type { SpecType } from '../utils/specs'
+import { isAsyncApiSpecType } from '../utils/specs'
 import {
   isGraphQlSpecType,
   isOpenApiSpecType,
@@ -36,6 +37,7 @@ import { GraphqlIcon } from '../icons/GraphqlIcon'
 import type { ApiType } from '../entities/api-types'
 import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '../entities/api-types'
 import { ProtobufIcon } from '../icons/ProtobufIcon'
+import { AsyncApiIcon } from '../icons/AsyncApiIcon'
 
 export type SpecLogoProps = {
   // TODO 23.06.25 // Fix this type, because it has no sense
@@ -45,45 +47,35 @@ export type SpecLogoProps = {
 // todo fix usages value type to SpecType and change here
 export const SpecLogo: FC<SpecLogoProps> = memo<SpecLogoProps>(({ value }) => {
   if (!value) {
-    return (
-      <FileIcon/>
-    )
+    return (<FileIcon/>)
   }
 
   if (value === MARKDOWN_SPEC_TYPE) {
-    return (
-      <MarkdownIcon/>
-    )
+    return (<MarkdownIcon/>)
   }
 
   if (value === PROTOBUF_3_SPEC_TYPE) {
-    return (
-      <ProtobufIcon/>
-    )
+    return (<ProtobufIcon/>)
   }
 
   if (value === JSON_SCHEMA_SPEC_TYPE) {
-    return (
-      <JsonSchemaIcon/>
-    )
+    return (<JsonSchemaIcon/>)
   }
 
   if (value === OPENAPI_2_0_SPEC_TYPE) {
-    return (
-      <SwaggerIcon/>
-    )
+    return (<SwaggerIcon/>)
   }
 
   if (isOpenApiSpecType(value as SpecType)) {
-    return (
-      <OpenapiIcon/>
-    )
+    return (<OpenapiIcon/>)
   }
 
   if (isGraphQlSpecType(value as SpecType)) {
-    return (
-      <GraphqlIcon/>
-    )
+    return (<GraphqlIcon/>)
+  }
+
+  if (isAsyncApiSpecType(value as SpecType)) {
+    return (<AsyncApiIcon/>)
   }
 
   return API_TYPE_ICON_MAP[value as ApiType] ?? <FileIcon/>

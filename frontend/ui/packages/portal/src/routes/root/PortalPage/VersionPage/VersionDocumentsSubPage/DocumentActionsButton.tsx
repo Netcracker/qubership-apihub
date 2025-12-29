@@ -27,6 +27,7 @@ import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { FileFormat } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import { MD_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import { isAsyncApiSpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import { isOpenApiSpecType, UNKNOWN_SPEC_TYPE } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import type { FC, MouseEvent, ReactNode } from 'react'
 import { memo, useCallback, useState } from 'react'
@@ -87,6 +88,7 @@ export const DocumentActionsButton: FC<DocumentActionsButtonProps> = memo<Docume
 
   const isSharingAvailable = docType !== UNKNOWN_SPEC_TYPE || format === MD_FILE_FORMAT
   const isOpenApiSpecification = isOpenApiSpecType(docType)
+  const isAsyncApiSpecification = isAsyncApiSpecType(docType)
 
   const actionParams: DocumentActionParams = {
     packageKey: packageId!,
@@ -103,6 +105,7 @@ export const DocumentActionsButton: FC<DocumentActionsButtonProps> = memo<Docume
     copyToClipboard: copyToClipboard,
     showNotification: showNotification,
     createTemplate: createTemplate,
+    specType: docType,
   }
 
   const handleClick = useCallback((event: MouseEvent) => {
@@ -125,7 +128,7 @@ export const DocumentActionsButton: FC<DocumentActionsButtonProps> = memo<Docume
       data-testid="DocumentActionsButton"
     >
       {DOCUMENT_MENU_CONFIG.map((menuItem) => (
-        menuItem.condition(isOpenApiSpecification, isSharingAvailable) &&
+        menuItem.condition(isOpenApiSpecification, isSharingAvailable, isAsyncApiSpecification) &&
         <MenuItem
           key={menuItem.id}
           onClick={() => menuItem.action(actionParams)}

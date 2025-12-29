@@ -119,5 +119,5 @@ type ChipValueCallback = (method: MethodType | undefined, type: GraphQlOperation
 const API_TYPE_CHIP_VALUE_MAP: Record<ApiType, ChipValueCallback> = {
   [API_TYPE_REST]: (method) => method ?? '',
   [API_TYPE_GRAPHQL]: (_, type) => type ?? '',
-  [API_TYPE_ASYNCAPI]: (method) => method ?? '',//TODO should be action for AsyncAPI? (send/receive) 
+  [API_TYPE_ASYNCAPI]: (method) => method ?? '',//TODO should be action for AsyncAPI? (send/receive)
 }

@@ -4,6 +4,7 @@ import type { DocumentPreviewDetail } from '@apihub/routes/NavigationProvider'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { REF_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useCallback } from 'react'
+import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 
 export type DocumentActionParams = {
   packageKey: Key
@@ -20,12 +21,13 @@ export type DocumentActionParams = {
   copyToClipboard: (text: string) => void
   showNotification: (detail: NotificationDetail) => void
   createTemplate: (key?: Key) => string
+  specType?: SpecType
 }
 
 export type MenuItemConfig = {
   id: string
   label: string
-  condition: (isOpenApiSpec: boolean, isSharingAvailable: boolean) => boolean
+  condition: (isOpenApiSpec: boolean, isSharingAvailable: boolean, isAsyncApiSpec:boolean) => boolean
   action: (params: DocumentActionParams) => void
   'data-testid'?: string
 }
@@ -50,9 +52,10 @@ export const DOCUMENT_MENU_CONFIG: MenuItemConfig[] = [
   {
     id: 'export',
     label: 'Export',
-    condition: (isOpenApiSpec) => isOpenApiSpec,
-    action: ({ showExportSettingsDialog, packageKey, fullVersion, refPackageKey, refFullVersion, slug }) => {
+    condition: (isOpenApiSpec, _, isAsyncApiSpec) => isOpenApiSpec || isAsyncApiSpec,
+    action: ({ showExportSettingsDialog, packageKey, fullVersion, refPackageKey, refFullVersion, slug, specType }) => {
       showExportSettingsDialog({
+        specType: specType,
         exportedEntity: ExportedEntityKind.REST_DOCUMENT,
         packageId: refPackageKey ?? packageKey!,
         version: refFullVersion ?? fullVersion!,
@@ -64,7 +67,7 @@ export const DOCUMENT_MENU_CONFIG: MenuItemConfig[] = [
   {
     id: 'download',
     label: 'Download',
-    condition: (isOpenApiSpec) => !isOpenApiSpec,
+    condition: (isOpenApiSpec, _, isAsyncApiSpec) => !isOpenApiSpec && !isAsyncApiSpec,
     action: ({ downloadPublishedDocument }) => {
       downloadPublishedDocument()
     },

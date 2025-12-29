@@ -1,6 +1,17 @@
 import type { Key } from '@apihub/entities/keys'
 import { LoadingButton } from '@mui/lab'
-import { Box, Button, DialogActions, DialogContent, DialogTitle, FormControlLabel, Radio, RadioGroup, Tooltip, Typography } from '@mui/material'
+import {
+  Box,
+  Button,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
+  Tooltip,
+  Typography,
+} from '@mui/material'
 import { DialogForm } from '@netcracker/qubership-apihub-ui-shared/components/DialogForm'
 import type { PackageKey, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { InfoContextIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoContextIcon'
@@ -10,12 +21,27 @@ import type { Control, UseFormSetValue } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
 import type { ExportConfig } from '../../../routes/root/PortalPage/useExportConfig'
 import type { ExportedEntityTransformation, ExportedFileFormat, IRequestDataExport } from '../api/useExport'
-import { ExportedEntityKind, RequestDataExportRestDocument, RequestDataExportRestOperationsGroup, RequestDataExportVersion } from '../api/useExport'
+import {
+  ExportedEntityKind,
+  RequestDataExportRestDocument,
+  RequestDataExportRestOperationsGroup,
+  RequestDataExportVersion,
+} from '../api/useExport'
 import type { ExportSettingsFormData } from '../entities/export-settings-form'
 import { EXPORT_SETTINGS_FORM_FIELDS_BY_PLACE } from '../entities/export-settings-form'
-import type { ExportSettingsFormField } from '../entities/export-settings-form-field'
-import { ExportSettingsFormFieldKind, ExportSettingsFormFieldOptionOasExtensions } from '../entities/export-settings-form-field'
+import type {
+  ExportSettingsFormField,
+} from '../entities/export-settings-form-field'
+import {
+  SPEC_TYPE_ACCESS_VIEW_EXPORT_FIELD,
+} from '../entities/export-settings-form-field'
+import {
+  ExportSettingsFormFieldKind,
+  ExportSettingsFormFieldOptionOasExtensions,
+} from '../entities/export-settings-form-field'
 import { useLocalExportSettings } from '../storage/useLocalExportSettings'
+import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import { intersectionBy } from 'lodash-es'
 
 interface ExportSettingsFormFieldsProps {
   disabled: boolean
@@ -28,46 +54,49 @@ interface ExportSettingsFormFieldsProps {
 
 const ExportSettingsFormFields: FC<ExportSettingsFormFieldsProps> = memo(props => {
   const { disabled, fields, exportConfig, control, setValue, setCachedFormField } = props
-
   return (
     <Box component="form" display="flex" flexDirection="column" gap={2}>
       {fields.map(field => <>
-        <Typography key={`${field.kind}-label`} variant="h3">{field.label}</Typography>
-        <Controller
-          key={field.kind}
-          name={field.kind}
-          control={control}
-          render={({ field: { value } }) => (
-            <RadioGroup
+        {field.options?.length > 0 &&
+          <>
+            <Typography key={`${field.kind}-label`} variant="h3">{field.label}</Typography>
+            <Controller
               key={field.kind}
-              value={value}
-              onChange={(_, value) => {
-                setCachedFormField(field.kind, value)
-                setValue(field.kind, value)
-              }}
-            >
-              {field.options.map(option => (
-                <Box key={option.value} display="flex" alignItems="center" gap={1}>
-                  <FormControlLabel
-                    value={option.value}
-                    label={option.label}
-                    checked={!value && option.value === field.defaultValue || value === option.value}
-                    control={<Radio disabled={disabled} />}
-                  />
-                  {option.tooltip && (
-                    <Tooltip
-                      disableHoverListener={false}
-                      title={typeof option.tooltip === 'function' ? option.tooltip(exportConfig) : option.tooltip}
-                      placement="right"
-                    >
-                      <InfoContextIcon />
-                    </Tooltip>
-                  )}
-                </Box>
-              ))}
-            </RadioGroup>
-          )}
-        />
+              name={field.kind}
+              control={control}
+              render={({ field: { value } }) => (
+                <RadioGroup
+                  key={field.kind}
+                  value={value}
+                  onChange={(_, value) => {
+                    setCachedFormField(field.kind, value)
+                    setValue(field.kind, value)
+                  }}
+                >
+                  {field.options.map(option => (
+                    <Box key={option.value} display="flex" alignItems="center" gap={1}>
+                      <FormControlLabel
+                        value={option.value}
+                        label={option.label}
+                        checked={!value && option.value === field.defaultValue || value === option.value}
+                        control={<Radio disabled={disabled}/>}
+                      />
+                      {option.tooltip && (
+                        <Tooltip
+                          disableHoverListener={false}
+                          title={typeof option.tooltip === 'function' ? option.tooltip(exportConfig) : option.tooltip}
+                          placement="right"
+                        >
+                          <InfoContextIcon/>
+                        </Tooltip>
+                      )}
+                    </Box>
+                  ))}
+                </RadioGroup>
+              )}
+            />
+          </>
+        }
       </>)}
     </Box>
   )
@@ -90,6 +119,7 @@ interface ExportSettingsFormProps {
   isStartingExport: boolean
   // Action props
   setRequestDataExport: (requestData: IRequestDataExport) => void
+  specType?: SpecType
 }
 
 export const ExportSettingsForm: FC<ExportSettingsFormProps> = memo(props => {
@@ -106,10 +136,29 @@ export const ExportSettingsForm: FC<ExportSettingsFormProps> = memo(props => {
     isLoadingExportConfig,
     isStartingExport,
     setRequestDataExport,
+    specType,
   } = props
 
   // Calculate fields and default values
-  const fields = EXPORT_SETTINGS_FORM_FIELDS_BY_PLACE[exportedEntity]
+  const fields = useMemo(() => {
+    if (specType && SPEC_TYPE_ACCESS_VIEW_EXPORT_FIELD[specType]) {
+      return EXPORT_SETTINGS_FORM_FIELDS_BY_PLACE[exportedEntity]
+        .map(field => {
+          const allowedOptions = SPEC_TYPE_ACCESS_VIEW_EXPORT_FIELD[specType]!
+          return {
+            ...field,
+            options: [...intersectionBy(
+              field.options,
+              allowedOptions,
+              'value')],
+          }
+        })
+    } else {
+      return EXPORT_SETTINGS_FORM_FIELDS_BY_PLACE[exportedEntity]
+    }
+
+  }, [exportedEntity, specType])
+
   const fieldsDefaultValues = useMemo(
     () => fields.reduce((acc, field) => ({ ...acc, [field.kind]: field.defaultValue }), {}),
     [fields],
@@ -125,7 +174,7 @@ export const ExportSettingsForm: FC<ExportSettingsFormProps> = memo(props => {
       : fieldsDefaultValues,
   })
 
-  // Handle form submission 
+  // Handle form submission
   const onSubmit = (data: ExportSettingsFormData): void => {
     let requestData: IRequestDataExport | undefined
     const removeOasExtensions = data[ExportSettingsFormFieldKind.OAS_EXTENSIONS] === ExportSettingsFormFieldOptionOasExtensions.REMOVE

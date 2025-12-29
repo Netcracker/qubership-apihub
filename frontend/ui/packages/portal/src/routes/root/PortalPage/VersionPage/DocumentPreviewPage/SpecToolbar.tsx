@@ -27,9 +27,16 @@ import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggl
 import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
 import type { SchemaViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
-import { DETAILED_SCHEMA_VIEW_MODE, SCHEMA_VIEW_MODES } from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
+import {
+  DETAILED_SCHEMA_VIEW_MODE,
+  SCHEMA_VIEW_MODES,
+} from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
 import { MD_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/utils/files'
-import { isOpenApiSpecType, UNKNOWN_SPEC_TYPE } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import {
+  isAsyncApiSpecType,
+  isOpenApiSpecType,
+  UNKNOWN_SPEC_TYPE,
+} from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import type { FC } from 'react'
 import { memo, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -81,6 +88,7 @@ export const SpecToolbar: FC = memo(() => {
 
   const isSharingAvailable = type !== UNKNOWN_SPEC_TYPE || format === MD_FILE_FORMAT
   const isOpenApiSpecification = isOpenApiSpecType(type)
+  const isAsyncApiSpecification = isAsyncApiSpecType(type)
 
   const { showExportSettingsDialog } = useEventBus()
 
@@ -121,22 +129,22 @@ export const SpecToolbar: FC = memo(() => {
       header={
         <Box sx={{ alignItems: 'center', display: 'flex', gap: '8px' }}>
           <IconButton color="primary" onClick={handleBackClick} data-testid="BackButton">
-            <ArrowBackIcon />
+            <ArrowBackIcon/>
           </IconButton>
-          <ToolbarTitle value={title} />
+          <ToolbarTitle value={title}/>
         </Box>
       }
       action={
         type !== UNKNOWN_SPEC_TYPE && <>
           {specViewMode === DOC_SPEC_VIEW_MODE && (<>
-            {DOC_VIEW_COMPATIBLE_TYPES.includes(type ?? '') && (
-              <Toggler<SchemaViewMode>
-                modes={SCHEMA_VIEW_MODES}
-                mode={schemaViewMode}
-                onChange={setSchemaViewMode}
-              />
-            )}
-          </>
+              {DOC_VIEW_COMPATIBLE_TYPES.includes(type ?? '') && (
+                <Toggler<SchemaViewMode>
+                  modes={SCHEMA_VIEW_MODES}
+                  mode={schemaViewMode}
+                  onChange={setSchemaViewMode}
+                />
+              )}
+            </>
           )}
           <Toggler<SpecViewMode>
             mode={specViewMode}
@@ -149,11 +157,11 @@ export const SpecToolbar: FC = memo(() => {
           <MenuButton
             variant="outlined"
             title="Export"
-            icon={<KeyboardArrowDownOutlinedIcon />}
+            icon={<KeyboardArrowDownOutlinedIcon/>}
             data-testid="ExportDocumentMenuButton"
           >
             {DOCUMENT_MENU_CONFIG_ON_PREVIEW_PAGE.map((menuItem) => (
-              menuItem.condition(isOpenApiSpecification, isSharingAvailable) &&
+              menuItem.condition(isOpenApiSpecification, isSharingAvailable, isAsyncApiSpecification) &&
               <MenuItem
                 key={menuItem.id}
                 onClick={() => menuItem.action(actionParams)}

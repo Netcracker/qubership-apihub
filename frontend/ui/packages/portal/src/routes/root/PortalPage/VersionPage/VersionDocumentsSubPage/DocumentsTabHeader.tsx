@@ -25,6 +25,7 @@ import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/
 import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
 import type { FileFormat } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import { isAsyncApiSpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import { isGraphQlSpecType, isOpenApiSpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import type { Dispatch, FC, ReactNode, SetStateAction } from 'react'
 import { memo, useCallback } from 'react'
@@ -125,7 +126,7 @@ export const DocumentsTabHeader: FC<DocumentsTabHeaderProps> = (props) => {
       )}
       right={(
         <Box display="flex" gap={1}>
-          {(isOpenApiSpecType(type) || isGraphQlSpecType(type)) && (
+          {(isOpenApiSpecType(type) || isGraphQlSpecType(type) || isAsyncApiSpecType(type)) && (
             <>
               {selectedSubPage === OPERATIONS_SUB_PAGE && (
                 <SearchBar

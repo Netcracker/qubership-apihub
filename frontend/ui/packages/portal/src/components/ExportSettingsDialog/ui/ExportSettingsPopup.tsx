@@ -16,6 +16,7 @@ export const ExportSettingsPopup: FC<PopupProps> = ({ open, setOpen, detail }) =
     version,
     documentId,
     groupName,
+    specType,
   } = detail as ExportSettingsPopupDetail
 
   const showErrorNotification = useShowErrorNotification()
@@ -69,6 +70,7 @@ export const ExportSettingsPopup: FC<PopupProps> = ({ open, setOpen, detail }) =
       isLoadingExportConfig={isLoadingExportConfig}
       isStartingExport={isStartingExport}
       setRequestDataExport={setRequestDataExport}
+      specType={specType}
     />
   )
 }

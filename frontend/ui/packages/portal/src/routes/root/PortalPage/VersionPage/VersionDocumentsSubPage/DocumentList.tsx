@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-import type { Document } from '@apihub/entities/documents'
-import type { FC } from 'react'
+import type {Document} from '@apihub/entities/documents'
+import type {FC} from 'react'
 import * as React from 'react'
-import { memo, useCallback, useMemo } from 'react'
-import { Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText, ListSubheader } from '@mui/material'
-import type { To } from 'react-router-dom'
-import { useNavigate, useParams } from 'react-router-dom'
-import { DocumentActionsButton } from './DocumentActionsButton'
+import {memo, useCallback, useMemo} from 'react'
+import {Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText, ListSubheader} from '@mui/material'
+import type {To} from 'react-router-dom'
+import {useNavigate, useParams} from 'react-router-dom'
+import {DocumentActionsButton} from './DocumentActionsButton'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
-import { SidebarSkeleton } from '@netcracker/qubership-apihub-ui-shared/components/SidebarSkeleton'
-import { isEmpty, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import { NAVIGATION_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
-import { optionalSearchParams, REF_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
-import { SpecLogo } from '@netcracker/qubership-apihub-ui-shared/components/SpecLogo'
-import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import {SidebarSkeleton} from '@netcracker/qubership-apihub-ui-shared/components/SidebarSkeleton'
+import {isEmpty, isNotEmpty} from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import {NAVIGATION_PLACEHOLDER_AREA, Placeholder} from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+import {useSearchParam} from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
+import {optionalSearchParams, REF_SEARCH_PARAM} from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
+import {SpecLogo} from '@netcracker/qubership-apihub-ui-shared/components/SpecLogo'
+import type { SpecType} from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import {isAsyncApiSpecType} from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import {
   isGraphQlSpecType,
   isOpenApiSpecType,
@@ -37,8 +38,8 @@ import {
   MARKDOWN_SPEC_TYPE,
   PROTOBUF_3_SPEC_TYPE,
 } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
-import { groupBy } from 'lodash-es'
-import { alphabeticallyBy } from '@netcracker/qubership-apihub-ui-shared/utils/comparers'
+import {groupBy} from 'lodash-es'
+import {alphabeticallyBy} from '@netcracker/qubership-apihub-ui-shared/utils/comparers'
 
 export type DocumentListProps = {
   isLoading: boolean
@@ -50,6 +51,7 @@ const GROUP_NAME_OPENAPI = 'OpenAPI'
 const GROUP_NAME_GRAPHQL = 'GraphQL'
 const GROUP_NAME_PROTOBUF = 'Protobuf'
 const GROUP_NAME_JSON_SCHEMA = 'JSON Schema'
+const GROUP_NAME_ASYNCAPI = 'AsyncAPI'
 const GROUP_NAME_OTHER = 'Other'
 
 export type GroupName =
@@ -59,6 +61,7 @@ export type GroupName =
   | typeof GROUP_NAME_PROTOBUF
   | typeof GROUP_NAME_JSON_SCHEMA
   | typeof GROUP_NAME_OTHER
+  | typeof GROUP_NAME_ASYNCAPI
 
 const GROUPS_DISPLAY_ORDER = [
   GROUP_NAME_MARKDOWN,
@@ -67,6 +70,7 @@ const GROUPS_DISPLAY_ORDER = [
   GROUP_NAME_PROTOBUF,
   GROUP_NAME_JSON_SCHEMA,
   GROUP_NAME_OTHER,
+  GROUP_NAME_ASYNCAPI,
 ]
 
 function getGroupNameBySpecType(type: SpecType): GroupName {
@@ -85,16 +89,20 @@ function getGroupNameBySpecType(type: SpecType): GroupName {
   if (type === JSON_SCHEMA_SPEC_TYPE) {
     return GROUP_NAME_JSON_SCHEMA
   }
+  if (isAsyncApiSpecType(type)) {
+    return GROUP_NAME_ASYNCAPI
+  }
+
   return GROUP_NAME_OTHER
 }
 
-export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({ documents, isLoading }) => {
-  const { packageId: packageKey, versionId: versionKey, documentId } = useParams()
+export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({documents, isLoading}) => {
+  const {packageId: packageKey, versionId: versionKey, documentId} = useParams()
   const escapedVersionKey = encodeURIComponent(versionKey ?? '')
   const ref = useSearchParam(REF_SEARCH_PARAM)
 
   const search = optionalSearchParams({
-    [REF_SEARCH_PARAM]: { value: ref ?? '' },
+    [REF_SEARCH_PARAM]: {value: ref ?? ''},
   })
 
   const navigate = useNavigate()
@@ -104,7 +112,7 @@ export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({ do
   }, [navigate])
 
   const groupedDocuments = useMemo(() => {
-    const groupedDocuments = groupBy(documents, ({ type }) => getGroupNameBySpecType(type))
+    const groupedDocuments = groupBy(documents, ({type}) => getGroupNameBySpecType(type))
     return Object.entries(groupedDocuments)
       .sort(([groupNameA], [groupNameB]) => GROUPS_DISPLAY_ORDER.indexOf(groupNameA) - GROUPS_DISPLAY_ORDER.indexOf(groupNameB))
       .map(([groupName, documents]) => [groupName, documents.sort((it, that) => alphabeticallyBy('title', it, that))] as [GroupName, Document[]])
@@ -143,12 +151,12 @@ export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({ do
         >
           {groupName}
         </ListSubheader>
-        {documents.map(({ key, type, title, slug, version, format }) => {
+        {documents.map(({key, type, title, slug, version, format}) => {
           const displayTitle = version ? `${title} ${version}` : title
           return (
             <ListItem
               key={key}
-              sx={{ p: 0 }}
+              sx={{p: 0}}
             >
               {/*TODO: Check flexDirection in theme*/}
               <ListItemButton
@@ -172,10 +180,10 @@ export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({ do
                 }}
                 data-testid="DocumentButton"
               >
-                <ListItemIcon sx={{ minWidth: 2, mt: 0, mr: 1 }}>
+                <ListItemIcon sx={{minWidth: 2, mt: 0, mr: 1}}>
                   <SpecLogo value={type}/>
                 </ListItemIcon>
-                <ListItemText primary={displayTitle} primaryTypographyProps={{ sx: { mt: 0.25 } }}/>
+                <ListItemText primary={displayTitle} primaryTypographyProps={{sx: {mt: 0.25}}}/>
                 <DocumentActionsButton
                   slug={slug}
                   docType={type}
@@ -191,7 +199,7 @@ export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({ do
                     minWidth: 24,
                     height: 24,
                   }}
-                  icon={<MoreVertIcon sx={{ color: '#626D82' }} fontSize="small"/>}
+                  icon={<MoreVertIcon sx={{color: '#626D82'}} fontSize="small"/>}
                 />
               </ListItemButton>
             </ListItem>
