@@ -1,5 +1,5 @@
-import type { OperationsApiType, PackageApiKey, TestFile, VersionStatuses } from '@shared/entities'
 import type { AgentVersionStatuses } from '@agent/entities'
+import type { OperationsApiType, PackageApiKey, TestFile, VersionStatuses } from '@shared/entities'
 import type { PackageKind } from '@test-data/props'
 
 export type RestPublishVersion = {
@@ -88,3 +88,11 @@ export type RestSnapshot = {
 export type RestPackageApiKey = PackageApiKey & {
   packageId: string
 }
+
+export type IdRestParams = Readonly<{
+  id: string
+}>
+
+export type TestIdRestParams = Readonly<{
+  testId: string
+}>

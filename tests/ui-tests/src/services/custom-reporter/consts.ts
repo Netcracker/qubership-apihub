@@ -1,6 +1,7 @@
 export const SETUP_PROJECTS = [
   'Portal-Setup',
-  'Portal-Teardown',
+  'Apihub-Setup',
+  'Apihub-Teardown',
   'Agent-Setup',
   'Agent-Teardown',
 ]

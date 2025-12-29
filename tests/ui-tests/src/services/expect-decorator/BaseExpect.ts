@@ -1,13 +1,13 @@
 import { test } from '@fixtures'
 import { expect as expectPw } from '@playwright/test'
-import { BaseComponent } from '@shared/components/base'
 import { handlePlaywrightError, quoteName } from '@services/utils'
+import { BaseComponent } from '@shared/components/base'
 
 /**
  * List of Playwright expect methods that can be called by the BaseExpect class
  */
 type CallableExpectMethods =
-  'toBeVisible'
+  | 'toBeVisible'
   | 'toBeHidden'
   | 'toBeEnabled'
   | 'toBeDisabled'
@@ -20,6 +20,7 @@ type CallableExpectMethods =
   | 'toBeChecked'
   | 'toHaveClass'
   | 'toHaveAttribute'
+  | 'toBeInViewport'
   | 'toEqual'
   | 'toContain'
   | 'toMatch'
@@ -28,7 +29,7 @@ type CallableExpectMethods =
  * Type for accessing Playwright's expect methods
  */
 type PlaywrightExpectation = {
-  [key in CallableExpectMethods]: (...args: unknown[]) => Promise<void>;
+  [key in CallableExpectMethods]: (...args: unknown[]) => Promise<void>
 }
 
 /**
@@ -103,7 +104,9 @@ export abstract class BaseExpect<T> {
    */
   protected formatStepMessage(assertionDescription: string): string {
     if (this.actual instanceof BaseComponent) {
-      return `Expect ${quoteName(this.actual.componentName)} ${this.actual.componentType} ${this.notIndicator}${assertionDescription}`
+      return `Expect ${
+        quoteName(this.actual.componentName)
+      } ${this.actual.componentType} ${this.notIndicator}${assertionDescription}`
     }
     return `Expect "${this.actual}" ${this.notIndicator}${assertionDescription}`
   }

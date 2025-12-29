@@ -51,7 +51,13 @@
     "prefer-rest-params": "error",
     "prefer-spread": "error",
     "prefer-template": "error",
-    "prefer-destructuring": "error",
+    "prefer-destructuring": [
+      "error",
+      {
+        "object": true,
+        "array": false
+      }
+    ],
     "quotes": [
       "error",
       "single"
@@ -164,6 +170,7 @@
     }
   ],
   "ignorePatterns": [
-    "*.d.ts"
+    "*.d.ts",
+    "resources/portal/atui_playground.yaml"
   ]
 }

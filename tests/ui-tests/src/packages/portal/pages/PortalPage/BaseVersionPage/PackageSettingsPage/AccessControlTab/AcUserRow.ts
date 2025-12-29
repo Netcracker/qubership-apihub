@@ -4,7 +4,7 @@ import { BaseRemoveDialog } from '@shared/components/custom'
 
 export class AcUserRow extends TableRow {
 
-  private readonly page = this.mainLocator.page()
+  protected readonly page = this.mainLocator.page()
   readonly userCell = new TableCell(this.mainLocator.getByTestId('Cell-user'), this.componentName, 'name cell')
   readonly adminChx = new Checkbox(this.mainLocator.getByTestId('Cell-admin').getByRole('checkbox'), this.componentName, 'admin checkbox')
   readonly ownerChx = new Checkbox(this.mainLocator.getByTestId('Cell-owner').getByRole('checkbox'), this.componentName, 'owner checkbox')

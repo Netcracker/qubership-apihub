@@ -23,3 +23,5 @@ export const DISCOVERY_TIMEOUT = 120_000
 export const SNAPSHOT_TIMEOUT = 60_000
 
 export const PAGE_LOADING = 60_000
+
+export const HOOK_PUBLISH_TIMEOUT = 180_000
