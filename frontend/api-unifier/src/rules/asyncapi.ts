@@ -577,6 +577,9 @@ export const asyncApiRules = (): NormalizationRules => ({
   '/asyncapi': {
     validate: checkType(TYPE_STRING),
   },
+  '/id': {
+    validate: checkType(TYPE_STRING),
+  },
   '/info': {
     '/title': { validate: checkType(TYPE_STRING) },
     '/version': { validate: checkType(TYPE_STRING) },
@@ -607,12 +610,12 @@ export const asyncApiRules = (): NormalizationRules => ({
     ...asyncApiSpecificationExtensionRules,
     validate: checkType(TYPE_OBJECT),
   },
-  '/defaultContentType': {
-    validate: checkType(TYPE_STRING),
-  },
   '/servers': {
     '/*': asyncApiServerRules,
     validate: checkType(TYPE_OBJECT),
+  },
+  '/defaultContentType': {
+    validate: checkType(TYPE_STRING),
   },
   '/channels': {
     '/*': asyncApiChannelRules,
