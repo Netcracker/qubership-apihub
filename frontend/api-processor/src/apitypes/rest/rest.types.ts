@@ -47,10 +47,13 @@ export type VersionRestOperation = ApiOperation<RestOperationData, RestOperation
 
 export interface RestOperationData {
   openapi: string
+  info?: OpenAPIV3.InfoObject
   servers?: OpenAPIV3.ServerObject[]
   paths: OpenAPIV3.PathsObject
   components?: OpenAPIV3.ComponentsObject
   security?: OpenAPIV3.SecurityRequirementObject[]
+  externalDocs?: OpenAPIV3.ExternalDocumentationObject
+  tags?: OpenAPIV3.TagObject[]
 }
 
 export interface RestRefCache {
