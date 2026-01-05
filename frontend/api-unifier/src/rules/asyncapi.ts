@@ -87,7 +87,7 @@ const _asyncApiSpecificationExtensionPrefixRules: CrawlPrefixRules<any> = {
   'x-': {
     isExtension: true,
     validate: checkType(...TYPE_JSON_ANY),
-    merge: resolvers.last,
+    merge: resolvers.last,  //TODO: need check of merge resolver required for extensions of JSON schema
     '/*': { validate: checkType(...TYPE_JSON_ANY) },
     '/**': { validate: checkType(...TYPE_JSON_ANY) },
   },
@@ -117,24 +117,19 @@ const asyncApiServerVariableRules: NormalizationRules = {
 const asyncApiServerRules: NormalizationRules = {
   '/host': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/protocol': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/pathname': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/description': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/variables': {
     '/*': asyncApiServerVariableRules,
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/security': {
     '/*': {
@@ -154,7 +149,6 @@ const asyncApiServerRules: NormalizationRules = {
   },
   '/bindings': {
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.last,
     '/*': { validate: checkType(...TYPE_JSON_ANY) },
     '/**': { validate: checkType(...TYPE_JSON_ANY) },
   },
@@ -176,29 +170,23 @@ const asyncApiMessageRules: NormalizationRules = {
   }),
   '/correlationId': {
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.last,
     '/*': { validate: checkType(...TYPE_JSON_ANY) },
     '/**': { validate: checkType(...TYPE_JSON_ANY) },
   },
   '/contentType': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/name': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/title': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/summary': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/description': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/tags': {
     '/*': {
@@ -211,7 +199,6 @@ const asyncApiMessageRules: NormalizationRules = {
   },
   '/bindings': {
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.last,
     '/*': { validate: checkType(...TYPE_JSON_ANY) },
     '/**': { validate: checkType(...TYPE_JSON_ANY) },
   },
@@ -271,18 +258,15 @@ const asyncApiParameterRules: NormalizationRules = {
 const asyncApiChannelRules: NormalizationRules = {
   '/address': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
     hashStrategy: CURRENT_DATA_LEVEL,
   },
   '/messages': {
     '/*': asyncApiMessageRules,
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/parameters': {
     '/*': asyncApiParameterRules,
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/servers': {
     '/*': {
@@ -295,19 +279,15 @@ const asyncApiChannelRules: NormalizationRules = {
   },
   '/title': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/summary': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/description': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/bindings': {
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.last,
     '/*': { validate: checkType(...TYPE_JSON_ANY) },
     '/**': { validate: checkType(...TYPE_JSON_ANY) },
   },
@@ -337,7 +317,6 @@ const ASYNCAPI_OPERATION_REPLACES: Record<string, ReplaceMapping> = {
 const asyncApiOperationRules: NormalizationRules = {
   '/action': {
     validate: [checkType(TYPE_STRING), checkContains(ASYNCAPI_ACTION_SEND, ASYNCAPI_ACTION_RECEIVE)],
-    merge: resolvers.last,
     hashStrategy: CURRENT_DATA_LEVEL,
   },
   '/channel': {
@@ -348,15 +327,12 @@ const asyncApiOperationRules: NormalizationRules = {
   },
   '/title': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/summary': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/description': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/security': {
     '/*': {
@@ -376,7 +352,6 @@ const asyncApiOperationRules: NormalizationRules = {
   },
   '/bindings': {
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.last,
     '/*': { validate: checkType(...TYPE_JSON_ANY) },
     '/**': { validate: checkType(...TYPE_JSON_ANY) },
   },
@@ -469,27 +444,22 @@ const asyncApiComponentsRules: NormalizationRules = {
   '/schemas': {
     '/*': () => jsonSchemaRules(SPEC_TYPE_JSON_SCHEMA_07),
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/servers': {
     '/*': asyncApiServerRules,
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/channels': {
     '/*': asyncApiChannelRules,
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/operations': {
     '/*': asyncApiOperationRules,
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/messages': {
     '/*': asyncApiMessageRules,
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/securitySchemes': {
     '/*': {
@@ -513,12 +483,10 @@ const asyncApiComponentsRules: NormalizationRules = {
       validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/parameters': {
     '/*': asyncApiParameterRules,
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/correlationIds': {
     '/*': {
@@ -528,7 +496,6 @@ const asyncApiComponentsRules: NormalizationRules = {
       validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/replies': {
     '/*': {
@@ -556,7 +523,6 @@ const asyncApiComponentsRules: NormalizationRules = {
       validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/replyAddresses': {
     '/*': {
@@ -566,7 +532,6 @@ const asyncApiComponentsRules: NormalizationRules = {
       validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/messageTraits': {
     '/*': {
@@ -575,7 +540,6 @@ const asyncApiComponentsRules: NormalizationRules = {
       '/**': { validate: checkType(...TYPE_JSON_ANY) },
     },
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/operationTraits': {
     '/*': {
@@ -584,7 +548,6 @@ const asyncApiComponentsRules: NormalizationRules = {
       '/**': { validate: checkType(...TYPE_JSON_ANY) },
     },
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   ...asyncApiSpecificationExtensionRules,
   validate: checkType(TYPE_OBJECT),
@@ -646,22 +609,18 @@ export const asyncApiRules = (): NormalizationRules => ({
   },
   '/defaultContentType': {
     validate: checkType(TYPE_STRING),
-    merge: resolvers.last,
   },
   '/servers': {
     '/*': asyncApiServerRules,
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/channels': {
     '/*': asyncApiChannelRules,
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/operations': {
     '/*': asyncApiOperationRules,
     validate: checkType(TYPE_OBJECT),
-    merge: resolvers.mergeObjects,
   },
   '/components': asyncApiComponentsRules,
   ...asyncApiSpecificationExtensionRules,
