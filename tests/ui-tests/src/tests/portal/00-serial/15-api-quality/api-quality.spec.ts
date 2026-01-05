@@ -33,7 +33,7 @@ test.describe('API Quality Validation', () => {
 
   // Shared helper functions
   const {
-    activateDefaultRulesetsAndCleanup,
+    activateDefaultRulesets,
     mockSystemConfigurationToDisableLinter,
     registerTestResources,
     verifyRulesetCopyLink,
@@ -47,7 +47,7 @@ test.describe('API Quality Validation', () => {
   })
 
   test.afterAll(async ({ lintRulesetTdm }) => {
-    await activateDefaultRulesetsAndCleanup(lintRulesetTdm, testIdN)
+    await activateDefaultRulesets(lintRulesetTdm)
   })
 
   test.describe('Ruleset Management', () => {

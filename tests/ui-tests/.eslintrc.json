@@ -168,9 +168,5 @@
         ]
       }
     }
-  ],
-  "ignorePatterns": [
-    "*.d.ts",
-    "resources/portal/atui_playground.yaml"
   ]
 }

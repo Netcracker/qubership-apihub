@@ -17,7 +17,6 @@ import { ROOT_RESOURCES, TestFile } from '@shared/entities'
 import { VAR_GR } from '@test-data/portal/groups'
 import type { Version } from '@test-data/props'
 import { Group } from '@test-data/props'
-import { CLEAR_TD } from '@test-setup'
 import path from 'node:path'
 
 /**
@@ -98,10 +97,7 @@ export const registerTestResources = (
  * Why: many tests activate custom rulesets. If we leave them active, we can break subsequent suites
  * running in the same environment.
  */
-export const activateDefaultRulesetsAndCleanup = async (
-  lintRulesetTdm: LintRulesetsTestDataManager,
-  testIdN: string,
-): Promise<void> => {
+export const activateDefaultRulesets = async (lintRulesetTdm: LintRulesetsTestDataManager): Promise<void> => {
   const apiTypes = [LintRulesetApiTypes.OAS_3_0, LintRulesetApiTypes.OAS_3_1]
 
   for (const apiType of apiTypes) {
@@ -113,10 +109,6 @@ export const activateDefaultRulesetsAndCleanup = async (
     if (defaultRuleset) {
       await lintRulesetTdm.activateRuleset(defaultRuleset)
     }
-  }
-
-  if (CLEAR_TD !== 'skip') {
-    await lintRulesetTdm.deleteTestRulesets(testIdN)
   }
 }
 

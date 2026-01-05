@@ -58,6 +58,7 @@ export class RawView extends BaseComponent {
    */
   async hoverHintText(text: string): Promise<void> {
     const textLocator = this.rootLocator.locator('.view-lines').getByText(text)
+    await this.page.waitForTimeout(500) // locator stabilization
     const box = await textLocator.boundingBox()
     if (!box) {
       throw new Error(`Cannot determine bounding box for text "${text}". Element may not be visible or rendered.`)

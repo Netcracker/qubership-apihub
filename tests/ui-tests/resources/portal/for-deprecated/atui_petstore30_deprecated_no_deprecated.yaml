@@ -47,9 +47,8 @@ paths:
       summary: "Get system info"
       description: "Get system info."
       operationId: getInfo
-      parameters:
       responses:
-        200:
+        '200':
           description: "Successful execution"
           content:
             "application/json":
@@ -77,7 +76,7 @@ paths:
                     contacts:
                       - name: Admin
                         contact: "admin@petstore.com"
-        500:
+        '500':
           description: "Internal server error"
           content:
             "application/json":
@@ -91,7 +90,6 @@ paths:
                   code:
                     description: "Internal string error code. Mandatory in response."
                     type: string
-                    
                   message:
                     description: "The attribute contains an error message."
                     type: string
