@@ -171,12 +171,7 @@ const serverRules: NormalizationRules = {
 }
 
 // Message Rules
-const messageRules: NormalizationRules = {
-  '/payload': () => ({
-    ...jsonSchemaRules(SPEC_TYPE_JSON_SCHEMA_07),
-    newDataLayer: true,
-    hashStrategy: BEFORE_SECOND_DATA_LEVEL,
-  }),
+const messageTraitRules: NormalizationRules = {
   '/headers': () => ({
     ...jsonSchemaRules(SPEC_TYPE_JSON_SCHEMA_07),
     newDataLayer: true,
@@ -203,6 +198,7 @@ const messageRules: NormalizationRules = {
     validate: checkType(TYPE_STRING),
   },
   '/tags': tagsRules,
+  '/externalDocs': externalDocumentationRules,
   '/bindings': {
     validate: checkType(TYPE_OBJECT),
     '/*': { validate: checkType(...TYPE_JSON_ANY) },
@@ -226,22 +222,26 @@ const messageRules: NormalizationRules = {
     },
     validate: checkType(TYPE_ARRAY),
   },
-  '/traits': {
-    '/*': {
-      validate: checkType(TYPE_OBJECT),
-      '/*': { validate: checkType(...TYPE_JSON_ANY) },
-      '/**': { validate: checkType(...TYPE_JSON_ANY) },
-    },
-    validate: checkType(TYPE_ARRAY),
-  },
   deprecation: {
     deprecationResolver: (ctx) => ASYNCAPI_DEPRECATION_RESOLVER(ctx),
     descriptionCalculator: ctx => `[Deprecated] message ${ctx.source.name || ctx.source.title || ''}`,
   },
-  '/externalDocs': externalDocumentationRules,
   ...specificationExtensionsRules,
   referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
+}
+
+const messageRules: NormalizationRules = {
+  ...messageTraitRules,
+  '/payload': () => ({
+    ...jsonSchemaRules(SPEC_TYPE_JSON_SCHEMA_07),
+    newDataLayer: true,
+    hashStrategy: BEFORE_SECOND_DATA_LEVEL,
+  }),
+  '/traits': {
+    '/*': messageTraitRules,
+    validate: checkType(TYPE_ARRAY),
+  },
 }
 
 // Parameter Rules (for channels)
@@ -531,11 +531,7 @@ const componentsRules: NormalizationRules = {
     validate: checkType(TYPE_OBJECT),
   },
   '/messageTraits': {
-    '/*': {
-      validate: checkType(TYPE_OBJECT),
-      '/*': { validate: checkType(...TYPE_JSON_ANY) },
-      '/**': { validate: checkType(...TYPE_JSON_ANY) },
-    },
+    '/*': messageTraitRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/operationTraits': {
@@ -626,5 +622,3 @@ export const asyncApiRules = (): NormalizationRules => ({
   ],
   hashStrategy: CURRENT_DATA_LEVEL,
 })
-
-
