@@ -12,6 +12,7 @@ import {
   TYPE_ARRAY,
   TYPE_BOOLEAN,
   TYPE_JSON_ANY,
+  TYPE_NULL,
   TYPE_OBJECT,
   TYPE_STRING,
 } from '../validate/checker'
@@ -64,6 +65,7 @@ import {
   ASYNCAPI_PROPERTY_TRAITS,
   ASYNCAPI_PROPERTY_VARIABLES,
   ASYNCAPI_PROPERTY_VERSION,
+  ASYNCAPI_SECURITY_SCHEME_TYPES,
 } from './asyncapi.const'
 import { ASYNCAPI_DEPRECATION_RESOLVER } from './asyncapi.deprecated'
 import { notAllowedReferenceHandler, referenceObjectResolver } from '../references/ref-resolver'
@@ -82,7 +84,6 @@ const TO_EMPTY_ARRAY_MAPPING: ReplaceMapping = {
   }]]),
 }
 
-// Specification Extension Rules (x- prefixed properties)
 const _specificationExtensionPrefixRules: CrawlPrefixRules<any> = {
   'x-': {
     isExtension: true,
@@ -98,11 +99,11 @@ const specificationExtensionsRules: NormalizationRules = {
 }
 
 const externalDocumentationRules: NormalizationRules = {
-  validate: checkType(TYPE_OBJECT),
-  merge: resolvers.last,
   '/description': { validate: checkType(TYPE_STRING) },
   '/url': { validate: checkType(TYPE_STRING) },
   ...specificationExtensionsRules,
+  validate: checkType(TYPE_OBJECT),
+  merge: resolvers.last,  //TODO: need check of merge resolver required for extensions of JSON schema
 }
 
 const tagRules: NormalizationRules = {
@@ -118,7 +119,59 @@ const tagsRules: NormalizationRules = {
   validate: checkType(TYPE_ARRAY),
 }
 
-// Server Variable Rules
+const oAuthFlowCommonRules: NormalizationRules = {
+  '/refreshUrl': { validate: checkType(TYPE_STRING) },
+  '/availableScopes': {
+    '/*': { validate: checkType(TYPE_STRING) },
+    validate: checkType(TYPE_OBJECT),
+  },
+  ...specificationExtensionsRules,
+  validate: checkType(TYPE_OBJECT)
+}
+
+const oAuthFlowsRules: NormalizationRules = {
+  '/implicit': {
+    '/authorizationUrl': { validate: checkType(TYPE_STRING) },
+    ...oAuthFlowCommonRules,
+  },
+  '/password': {
+    '/tokenUrl': { validate: checkType(TYPE_STRING) },
+    ...oAuthFlowCommonRules,
+  },
+  '/clientCredentials': {
+    '/tokenUrl': { validate: checkType(TYPE_STRING) },
+    ...oAuthFlowCommonRules,
+  },
+  '/authorizationCode': {
+    '/authorizationUrl': { validate: checkType(TYPE_STRING) },
+    '/tokenUrl': { validate: checkType(TYPE_STRING) },
+    ...oAuthFlowCommonRules,
+  },
+  ...specificationExtensionsRules,
+  validate: checkType(TYPE_OBJECT),
+}
+
+const securitySchemeRules: NormalizationRules = {
+  '/type': {
+    validate: [
+      checkType(TYPE_STRING),
+      checkContains(...ASYNCAPI_SECURITY_SCHEME_TYPES)]
+  },
+  '/description': { validate: checkType(TYPE_STRING) },
+  '/name': { validate: checkType(TYPE_STRING) },
+  '/in': { validate: checkType(TYPE_STRING) },
+  '/scheme': { validate: checkType(TYPE_STRING) },
+  '/bearerFormat': { validate: checkType(TYPE_STRING) },
+  '/flows': oAuthFlowsRules,
+  '/openIdConnectUrl': { validate: checkType(TYPE_STRING) },
+  '/scopes': {
+    '/*': { validate: checkType(TYPE_STRING) },
+    validate: checkType(TYPE_ARRAY),
+  },
+  ...specificationExtensionsRules,
+  validate: checkType(TYPE_OBJECT),
+}
+
 const serverVariableRules: NormalizationRules = {
   '/enum': {
     '/*': { validate: checkType(TYPE_STRING) },
@@ -134,92 +187,82 @@ const serverVariableRules: NormalizationRules = {
   validate: checkType(TYPE_OBJECT),
 }
 
-// Server Rules
+const serverBindingsRules: NormalizationRules = {
+  ...specificationExtensionsRules,
+  '/*': { validate: checkType(...TYPE_JSON_ANY) },
+  '/**': { validate: checkType(...TYPE_JSON_ANY) },
+  validate: checkType(TYPE_OBJECT),
+}
+
 const serverRules: NormalizationRules = {
-  '/host': {
-    validate: checkType(TYPE_STRING),
-  },
-  '/protocol': {
-    validate: checkType(TYPE_STRING),
-  },
-  '/pathname': {
-    validate: checkType(TYPE_STRING),
-  },
-  '/description': {
-    validate: checkType(TYPE_STRING),
-  },
+  '/host': { validate: checkType(TYPE_STRING) },
+  '/protocol': { validate: checkType(TYPE_STRING) },
+  '/protocolVersion': { validate: checkType(TYPE_STRING) },
+  '/pathname': { validate: checkType(TYPE_STRING) },
+  '/description': { validate: checkType(TYPE_STRING) },
+  '/title': { validate: checkType(TYPE_STRING) },
+  '/summary': { validate: checkType(TYPE_STRING) },
   '/variables': {
     '/*': serverVariableRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/security': {
-    '/*': {
-      '/*': { validate: checkType(TYPE_STRING) },
-      validate: checkType(TYPE_ARRAY),
-    },
+    '/*': securitySchemeRules,
     validate: checkType(TYPE_ARRAY),
   },
   '/tags': tagsRules,
-  '/bindings': {
-    validate: checkType(TYPE_OBJECT),
-    '/*': { validate: checkType(...TYPE_JSON_ANY) },
-    '/**': { validate: checkType(...TYPE_JSON_ANY) },
-  },
   '/externalDocs': externalDocumentationRules,
+  '/bindings': serverBindingsRules,
+  validate: checkType(TYPE_OBJECT),
+}
+
+const correlationIdRules: NormalizationRules = {
+  '/description': { validate: checkType(TYPE_STRING) },
+  '/location': { validate: checkType(TYPE_STRING) },
   ...specificationExtensionsRules,
   validate: checkType(TYPE_OBJECT),
 }
 
-// Message Rules
+const messageBindingsRules: NormalizationRules = {
+  ...specificationExtensionsRules,
+  '/*': { validate: checkType(...TYPE_JSON_ANY) },
+  '/**': { validate: checkType(...TYPE_JSON_ANY) },
+  validate: checkType(TYPE_OBJECT),
+}
+
+const messageExampleRules: NormalizationRules = {
+  '/headers': {
+    validate: checkType(TYPE_OBJECT),
+    '/*': { validate: checkType(...TYPE_JSON_ANY) },
+    '/**': { validate: checkType(...TYPE_JSON_ANY) },
+  },
+  '/payload': {
+    validate: checkType(...TYPE_JSON_ANY),
+    '/**': { validate: checkType(...TYPE_JSON_ANY) },
+  },
+  '/name': { validate: checkType(TYPE_STRING) },
+  '/summary': { validate: checkType(TYPE_STRING) },
+  ...specificationExtensionsRules,
+  validate: checkType(TYPE_OBJECT),
+}
+
 const messageTraitRules: NormalizationRules = {
   '/headers': () => ({
     ...jsonSchemaRules(SPEC_TYPE_JSON_SCHEMA_07),
     newDataLayer: true,
     hashStrategy: BEFORE_SECOND_DATA_LEVEL,
   }),
-  '/correlationId': {
-    validate: checkType(TYPE_OBJECT),
-    '/*': { validate: checkType(...TYPE_JSON_ANY) },
-    '/**': { validate: checkType(...TYPE_JSON_ANY) },
-  },
-  '/contentType': {
-    validate: checkType(TYPE_STRING),
-  },
-  '/name': {
-    validate: checkType(TYPE_STRING),
-  },
-  '/title': {
-    validate: checkType(TYPE_STRING),
-  },
-  '/summary': {
-    validate: checkType(TYPE_STRING),
-  },
-  '/description': {
-    validate: checkType(TYPE_STRING),
-  },
+  '/correlationId': correlationIdRules,
+  '/contentType': { validate: checkType(TYPE_STRING) },
+  '/name': { validate: checkType(TYPE_STRING) },
+  '/title': { validate: checkType(TYPE_STRING) },
+  '/summary': { validate: checkType(TYPE_STRING) },
+  '/description': { validate: checkType(TYPE_STRING) },
   '/tags': tagsRules,
   '/externalDocs': externalDocumentationRules,
-  '/bindings': {
-    validate: checkType(TYPE_OBJECT),
-    '/*': { validate: checkType(...TYPE_JSON_ANY) },
-    '/**': { validate: checkType(...TYPE_JSON_ANY) },
-  },
+  '/bindings': messageBindingsRules,
   '/examples': {
-    '/*': {
-      '/headers': {
-        validate: checkType(TYPE_OBJECT),
-        '/*': { validate: checkType(...TYPE_JSON_ANY) },
-        '/**': { validate: checkType(...TYPE_JSON_ANY) },
-      },
-      '/payload': {
-        validate: checkType(...TYPE_JSON_ANY),
-        '/**': { validate: checkType(...TYPE_JSON_ANY) },
-      },
-      '/name': { validate: checkType(TYPE_STRING) },
-      '/summary': { validate: checkType(TYPE_STRING) },
-      ...specificationExtensionsRules,
-      validate: checkType(TYPE_OBJECT),
-    },
+    '/*': messageExampleRules,
     validate: checkType(TYPE_ARRAY),
   },
   deprecation: {
@@ -244,7 +287,6 @@ const messageRules: NormalizationRules = {
   },
 }
 
-// Parameter Rules (for channels)
 const parameterRules: NormalizationRules = {
   '/enum': {
     '/*': { validate: checkType(TYPE_STRING) },
@@ -261,22 +303,26 @@ const parameterRules: NormalizationRules = {
   validate: checkType(TYPE_OBJECT),
 }
 
-// Channel Rules
+const channelBindingsRules: NormalizationRules = {
+  ...specificationExtensionsRules,
+  '/*': { validate: checkType(...TYPE_JSON_ANY) },
+  '/**': { validate: checkType(...TYPE_JSON_ANY) },
+  validate: checkType(TYPE_OBJECT),
+}
+
 const channelRules: NormalizationRules = {
-  '/externalDocs': externalDocumentationRules,
   '/address': {
-    validate: checkType(TYPE_STRING),
+    validate: checkType(TYPE_STRING, TYPE_NULL),
     hashStrategy: CURRENT_DATA_LEVEL,
   },
   '/messages': {
     '/*': messageRules,
     validate: checkType(TYPE_OBJECT),
   },
-  '/parameters': {
-    '/*': parameterRules,
-    validate: checkType(TYPE_OBJECT),
-  },
-  '/servers': {
+  '/title': { validate: checkType(TYPE_STRING) },
+  '/summary': { validate: checkType(TYPE_STRING) },
+  '/description': { validate: checkType(TYPE_STRING) },
+  '/servers': { //TODO: think how to enforce [Reference Object] here as per specification
     '/*': {
       validate: checkType(TYPE_OBJECT),
       referenceHandler: referenceObjectResolver(),
@@ -285,27 +331,18 @@ const channelRules: NormalizationRules = {
     },
     validate: checkType(TYPE_ARRAY),
   },
-  '/title': {
-    validate: checkType(TYPE_STRING),
-  },
-  '/summary': {
-    validate: checkType(TYPE_STRING),
-  },
-  '/description': {
-    validate: checkType(TYPE_STRING),
-  },
-  '/bindings': {
+  '/parameters': {
+    '/*': parameterRules,
     validate: checkType(TYPE_OBJECT),
-    '/*': { validate: checkType(...TYPE_JSON_ANY) },
-    '/**': { validate: checkType(...TYPE_JSON_ANY) },
   },
   '/tags': tagsRules,
+  '/externalDocs': externalDocumentationRules,
+  '/bindings': channelBindingsRules,
   ...specificationExtensionsRules,
   referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
 }
 
-// Operation Rules
 const ASYNCAPI_OPERATION_DEFAULTS: DefaultValueMapping = {
   [ASYNCAPI_PROPERTY_TAGS]: EMPTY_MARKER,
 }
@@ -314,54 +351,53 @@ const ASYNCAPI_OPERATION_REPLACES: Record<string, ReplaceMapping> = {
   [ASYNCAPI_PROPERTY_TAGS]: TO_EMPTY_ARRAY_MAPPING,
 }
 
-const operationTraitRules: NormalizationRules = {
-  '/title': {
-    validate: checkType(TYPE_STRING),
-  },
-  '/summary': {
-    validate: checkType(TYPE_STRING),
-  },
-  '/description': {
-    validate: checkType(TYPE_STRING),
-  },
-  '/security': {
-    '/*': {
-      '/*': { validate: checkType(TYPE_STRING) },
-      validate: checkType(TYPE_ARRAY),
-    },
-    validate: checkType(TYPE_ARRAY),
-  },
-  '/tags': tagsRules,
-  '/externalDocs': externalDocumentationRules,
-  '/bindings': {
+const operationReplyAddressRules: NormalizationRules = {
+  '/description': { validate: checkType(TYPE_STRING) },
+  '/location': { validate: checkType(TYPE_STRING) },
+  ...specificationExtensionsRules,
+  validate: checkType(TYPE_OBJECT),
+}
+
+const operationReplyRules: NormalizationRules = {
+  '/address': operationReplyAddressRules,
+  '/channel': { //TODO: think how to enforce Reference Object here as per specification
     validate: checkType(TYPE_OBJECT),
+    referenceHandler: referenceObjectResolver(),
     '/*': { validate: checkType(...TYPE_JSON_ANY) },
     '/**': { validate: checkType(...TYPE_JSON_ANY) },
   },
-  '/reply': { //TODO: the spec does not explicitly specify that operation trait includes reply object, but it is not listed in exceptions
-    '/address': {
-      validate: checkType(TYPE_OBJECT),
-      '/*': { validate: checkType(...TYPE_JSON_ANY) },
-      '/**': { validate: checkType(...TYPE_JSON_ANY) },
-    },
-    '/channel': {
+  '/messages': {  //TODO: think how to enforce [Reference Object] here as per specification
+    '/*': {
       validate: checkType(TYPE_OBJECT),
       referenceHandler: referenceObjectResolver(),
       '/*': { validate: checkType(...TYPE_JSON_ANY) },
       '/**': { validate: checkType(...TYPE_JSON_ANY) },
     },
-    '/messages': {
-      '/*': {
-        validate: checkType(TYPE_OBJECT),
-        referenceHandler: referenceObjectResolver(),
-        '/*': { validate: checkType(...TYPE_JSON_ANY) },
-        '/**': { validate: checkType(...TYPE_JSON_ANY) },
-      },
-      validate: checkType(TYPE_ARRAY),
-    },
-    ...specificationExtensionsRules,
-    validate: checkType(TYPE_OBJECT),
+    validate: checkType(TYPE_ARRAY),
   },
+  ...specificationExtensionsRules,
+  validate: checkType(TYPE_OBJECT),
+}
+
+const operationBindingsRules: NormalizationRules = {
+  ...specificationExtensionsRules,
+  '/*': { validate: checkType(...TYPE_JSON_ANY) },
+  '/**': { validate: checkType(...TYPE_JSON_ANY) },
+  validate: checkType(TYPE_OBJECT),
+}
+
+const operationTraitRules: NormalizationRules = {
+  '/title': { validate: checkType(TYPE_STRING) },
+  '/summary': { validate: checkType(TYPE_STRING) },
+  '/description': { validate: checkType(TYPE_STRING) },
+  '/security': {
+    '/*': securitySchemeRules,
+    validate: checkType(TYPE_ARRAY),
+  },
+  '/tags': tagsRules,
+  '/externalDocs': externalDocumentationRules,
+  '/bindings': operationBindingsRules,
+  '/reply': operationReplyRules, //TODO: the spec does not explicitly specify that operation trait includes reply object, but it is not listed in exceptions
   deprecation: {
     deprecationResolver: (ctx) => ASYNCAPI_DEPRECATION_RESOLVER(ctx),
     descriptionCalculator: ctx => `[Deprecated] operation ${ctx.key.toString()}`,
@@ -381,14 +417,18 @@ const operationRules: NormalizationRules = {
     validate: [checkType(TYPE_STRING), checkContains(ASYNCAPI_ACTION_SEND, ASYNCAPI_ACTION_RECEIVE)],
     hashStrategy: CURRENT_DATA_LEVEL,
   },
-  '/channel': {
+  '/channel': { //TODO: think how to enforce Reference Object here as per specification
     validate: checkType(TYPE_OBJECT),
     referenceHandler: referenceObjectResolver(),
     '/*': { validate: checkType(...TYPE_JSON_ANY) },
     '/**': { validate: checkType(...TYPE_JSON_ANY) },
   },
+  '/traits': {
+    '/*': operationTraitRules,
+    validate: checkType(TYPE_ARRAY),
+  },
   '/messages': {
-    '/*': {
+    '/*': { //TODO: think how to enforce [Reference Object] here as per specification
       validate: checkType(TYPE_OBJECT),
       referenceHandler: referenceObjectResolver(),
       '/*': { validate: checkType(...TYPE_JSON_ANY) },
@@ -396,13 +436,8 @@ const operationRules: NormalizationRules = {
     },
     validate: checkType(TYPE_ARRAY),
   },
-  '/traits': {
-    '/*': operationTraitRules,
-    validate: checkType(TYPE_ARRAY),
-  },
 }
 
-// Components Rules
 const ASYNCAPI_COMPONENTS_DEFAULTS: DefaultValueMapping = {
   [ASYNCAPI_PROPERTY_SCHEMAS]: EMPTY_MARKER,
   [ASYNCAPI_PROPERTY_SERVERS]: EMPTY_MARKER,
@@ -455,26 +490,11 @@ const componentsRules: NormalizationRules = {
     validate: checkType(TYPE_OBJECT),
   },
   '/securitySchemes': {
-    '/*': {
-      '/type': { validate: checkType(TYPE_STRING) },
-      '/description': { validate: checkType(TYPE_STRING) },
-      '/name': { validate: checkType(TYPE_STRING) },
-      '/in': { validate: checkType(TYPE_STRING) },
-      '/scheme': { validate: checkType(TYPE_STRING) },
-      '/bearerFormat': { validate: checkType(TYPE_STRING) },
-      '/flows': {
-        validate: checkType(TYPE_OBJECT),
-        '/*': { validate: checkType(...TYPE_JSON_ANY) },
-        '/**': { validate: checkType(...TYPE_JSON_ANY) },
-      },
-      '/openIdConnectUrl': { validate: checkType(TYPE_STRING) },
-      '/scopes': {
-        '/*': { validate: checkType(TYPE_STRING) },
-        validate: checkType(TYPE_ARRAY),
-      },
-      ...specificationExtensionsRules,
-      validate: checkType(TYPE_OBJECT),
-    },
+    '/*': securitySchemeRules,
+    validate: checkType(TYPE_OBJECT),
+  },
+  '/serverVariables': {
+    '/*': serverVariableRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/parameters': {
@@ -482,64 +502,47 @@ const componentsRules: NormalizationRules = {
     validate: checkType(TYPE_OBJECT),
   },
   '/correlationIds': {
-    '/*': {
-      '/description': { validate: checkType(TYPE_STRING) },
-      '/location': { validate: checkType(TYPE_STRING) },
-      ...specificationExtensionsRules,
-      validate: checkType(TYPE_OBJECT),
-    },
+    '/*': correlationIdRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/replies': {
-    '/*': {
-      '/address': {
-        validate: checkType(TYPE_OBJECT),
-        '/*': { validate: checkType(...TYPE_JSON_ANY) },
-        '/**': { validate: checkType(...TYPE_JSON_ANY) },
-      },
-      '/channel': {
-        validate: checkType(TYPE_OBJECT),
-        referenceHandler: referenceObjectResolver(),
-        '/*': { validate: checkType(...TYPE_JSON_ANY) },
-        '/**': { validate: checkType(...TYPE_JSON_ANY) },
-      },
-      '/messages': {
-        '/*': {
-          validate: checkType(TYPE_OBJECT),
-          referenceHandler: referenceObjectResolver(),
-          '/*': { validate: checkType(...TYPE_JSON_ANY) },
-          '/**': { validate: checkType(...TYPE_JSON_ANY) },
-        },
-        validate: checkType(TYPE_ARRAY),
-      },
-      ...specificationExtensionsRules,
-      validate: checkType(TYPE_OBJECT),
-    },
+    '/*': operationReplyRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/replyAddresses': {
-    '/*': {
-      '/description': { validate: checkType(TYPE_STRING) },
-      '/location': { validate: checkType(TYPE_STRING) },
-      ...specificationExtensionsRules,
-      validate: checkType(TYPE_OBJECT),
-    },
+    '/*': operationReplyAddressRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/externalDocs': {
     '/*': externalDocumentationRules,
     validate: checkType(TYPE_OBJECT),
   },
-  '/messageTraits': {
-    '/*': messageTraitRules,
+  '/tags': {
+    '/*': tagRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/operationTraits': {
     '/*': operationTraitRules,
     validate: checkType(TYPE_OBJECT),
   },
-  '/tags': {
-    '/*': tagRules,
+  '/messageTraits': {
+    '/*': messageTraitRules,
+    validate: checkType(TYPE_OBJECT),
+  },
+  '/serverBindings': {
+    '/*': serverBindingsRules,
+    validate: checkType(TYPE_OBJECT),
+  },
+  '/channelBindings': {
+    '/*': channelBindingsRules,
+    validate: checkType(TYPE_OBJECT),
+  },
+  '/operationBindings': {
+    '/*': operationBindingsRules,
+    validate: checkType(TYPE_OBJECT),
+  },
+  '/messageBindings': {
+    '/*': messageBindingsRules,
     validate: checkType(TYPE_OBJECT),
   },
   ...specificationExtensionsRules,
@@ -551,7 +554,6 @@ const componentsRules: NormalizationRules = {
   hashStrategy: CURRENT_DATA_LEVEL,
 }
 
-// Root AsyncAPI Document Rules
 const ASYNCAPI_ROOT_DEFAULTS: DefaultValueMapping = {
   [ASYNCAPI_PROPERTY_SERVERS]: EMPTY_MARKER,
   [ASYNCAPI_PROPERTY_CHANNELS]: EMPTY_MARKER,
@@ -566,43 +568,43 @@ const ASYNCAPI_ROOT_REPLACES: Record<string, ReplaceMapping> = {
   [ASYNCAPI_PROPERTY_COMPONENTS]: TO_EMPTY_OBJECT_MAPPING,
 }
 
+const contactRules: NormalizationRules = {
+  '/name': { validate: checkType(TYPE_STRING) },
+  '/url': { validate: checkType(TYPE_STRING) },
+  '/email': { validate: checkType(TYPE_STRING) },
+  ...specificationExtensionsRules,
+  validate: checkType(TYPE_OBJECT),
+}
+
+const licenseRules: NormalizationRules = {
+  '/name': { validate: checkType(TYPE_STRING) },
+  '/url': { validate: checkType(TYPE_STRING) },
+  ...specificationExtensionsRules,
+  validate: checkType(TYPE_OBJECT),
+}
+
+const infoRules: NormalizationRules = {
+  '/title': { validate: checkType(TYPE_STRING) },
+  '/version': { validate: checkType(TYPE_STRING) },
+  '/description': { validate: checkType(TYPE_STRING) },
+  '/termsOfService': { validate: checkType(TYPE_STRING) },
+  '/contact': contactRules,
+  '/license': licenseRules,
+  '/tags': tagsRules,
+  '/externalDocs': externalDocumentationRules,
+  ...specificationExtensionsRules,
+  validate: checkType(TYPE_OBJECT),
+}
+
 export const asyncApiRules = (): NormalizationRules => ({
-  '/asyncapi': {
-    validate: checkType(TYPE_STRING),
-  },
-  '/id': {
-    validate: checkType(TYPE_STRING),
-  },
-  '/info': {
-    '/title': { validate: checkType(TYPE_STRING) },
-    '/version': { validate: checkType(TYPE_STRING) },
-    '/description': { validate: checkType(TYPE_STRING) },
-    '/termsOfService': { validate: checkType(TYPE_STRING) },
-    '/contact': {
-      '/name': { validate: checkType(TYPE_STRING) },
-      '/url': { validate: checkType(TYPE_STRING) },
-      '/email': { validate: checkType(TYPE_STRING) },
-      ...specificationExtensionsRules,
-      validate: checkType(TYPE_OBJECT),
-    },
-    '/license': {
-      '/name': { validate: checkType(TYPE_STRING) },
-      '/url': { validate: checkType(TYPE_STRING) },
-      ...specificationExtensionsRules,
-      validate: checkType(TYPE_OBJECT),
-    },
-    '/tags': tagsRules,
-    '/externalDocs': externalDocumentationRules,
-    ...specificationExtensionsRules,
-    validate: checkType(TYPE_OBJECT),
-  },
+  '/asyncapi': { validate: checkType(TYPE_STRING) },
+  '/id': { validate: checkType(TYPE_STRING) },
+  '/info': infoRules,
   '/servers': {
     '/*': serverRules,
     validate: checkType(TYPE_OBJECT),
   },
-  '/defaultContentType': {
-    validate: checkType(TYPE_STRING),
-  },
+  '/defaultContentType': { validate: checkType(TYPE_STRING) },
   '/channels': {
     '/*': channelRules,
     validate: checkType(TYPE_OBJECT),
@@ -612,7 +614,6 @@ export const asyncApiRules = (): NormalizationRules => ({
     validate: checkType(TYPE_OBJECT),
   },
   '/components': componentsRules,
-  '/externalDocs': externalDocumentationRules,
   ...specificationExtensionsRules,
   '/**': { referenceHandler: notAllowedReferenceHandler },
   validate: checkType(TYPE_OBJECT),
