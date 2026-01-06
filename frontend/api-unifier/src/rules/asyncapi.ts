@@ -314,17 +314,7 @@ const ASYNCAPI_OPERATION_REPLACES: Record<string, ReplaceMapping> = {
   [ASYNCAPI_PROPERTY_TAGS]: TO_EMPTY_ARRAY_MAPPING,
 }
 
-const operationRules: NormalizationRules = {
-  '/action': {
-    validate: [checkType(TYPE_STRING), checkContains(ASYNCAPI_ACTION_SEND, ASYNCAPI_ACTION_RECEIVE)],
-    hashStrategy: CURRENT_DATA_LEVEL,
-  },
-  '/channel': {
-    validate: checkType(TYPE_OBJECT),
-    referenceHandler: referenceObjectResolver(),
-    '/*': { validate: checkType(...TYPE_JSON_ANY) },
-    '/**': { validate: checkType(...TYPE_JSON_ANY) },
-  },
+const operationTraitRules: NormalizationRules = {
   '/title': {
     validate: checkType(TYPE_STRING),
   },
@@ -342,29 +332,13 @@ const operationRules: NormalizationRules = {
     validate: checkType(TYPE_ARRAY),
   },
   '/tags': tagsRules,
+  '/externalDocs': externalDocumentationRules,
   '/bindings': {
     validate: checkType(TYPE_OBJECT),
     '/*': { validate: checkType(...TYPE_JSON_ANY) },
     '/**': { validate: checkType(...TYPE_JSON_ANY) },
   },
-  '/traits': {
-    '/*': {
-      validate: checkType(TYPE_OBJECT),
-      '/*': { validate: checkType(...TYPE_JSON_ANY) },
-      '/**': { validate: checkType(...TYPE_JSON_ANY) },
-    },
-    validate: checkType(TYPE_ARRAY),
-  },
-  '/messages': {
-    '/*': {
-      validate: checkType(TYPE_OBJECT),
-      referenceHandler: referenceObjectResolver(),
-      '/*': { validate: checkType(...TYPE_JSON_ANY) },
-      '/**': { validate: checkType(...TYPE_JSON_ANY) },
-    },
-    validate: checkType(TYPE_ARRAY),
-  },
-  '/reply': {
+  '/reply': { //TODO: the spec does not explicitly specify that operation trait includes reply object, but it is not listed in exceptions
     '/address': {
       validate: checkType(TYPE_OBJECT),
       '/*': { validate: checkType(...TYPE_JSON_ANY) },
@@ -392,7 +366,6 @@ const operationRules: NormalizationRules = {
     deprecationResolver: (ctx) => ASYNCAPI_DEPRECATION_RESOLVER(ctx),
     descriptionCalculator: ctx => `[Deprecated] operation ${ctx.key.toString()}`,
   },
-  '/externalDocs': externalDocumentationRules,
   ...specificationExtensionsRules,
   referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
@@ -400,6 +373,33 @@ const operationRules: NormalizationRules = {
     valueDefaults(ASYNCAPI_OPERATION_DEFAULTS),
     valueReplaces(ASYNCAPI_OPERATION_REPLACES),
   ],
+}
+
+const operationRules: NormalizationRules = {
+  ...operationTraitRules,
+  '/action': {
+    validate: [checkType(TYPE_STRING), checkContains(ASYNCAPI_ACTION_SEND, ASYNCAPI_ACTION_RECEIVE)],
+    hashStrategy: CURRENT_DATA_LEVEL,
+  },
+  '/channel': {
+    validate: checkType(TYPE_OBJECT),
+    referenceHandler: referenceObjectResolver(),
+    '/*': { validate: checkType(...TYPE_JSON_ANY) },
+    '/**': { validate: checkType(...TYPE_JSON_ANY) },
+  },
+  '/messages': {
+    '/*': {
+      validate: checkType(TYPE_OBJECT),
+      referenceHandler: referenceObjectResolver(),
+      '/*': { validate: checkType(...TYPE_JSON_ANY) },
+      '/**': { validate: checkType(...TYPE_JSON_ANY) },
+    },
+    validate: checkType(TYPE_ARRAY),
+  },
+  '/traits': {
+    '/*': operationTraitRules,
+    validate: checkType(TYPE_ARRAY),
+  },
 }
 
 // Components Rules
@@ -539,11 +539,7 @@ const componentsRules: NormalizationRules = {
     validate: checkType(TYPE_OBJECT),
   },
   '/operationTraits': {
-    '/*': {
-      validate: checkType(TYPE_OBJECT),
-      '/*': { validate: checkType(...TYPE_JSON_ANY) },
-      '/**': { validate: checkType(...TYPE_JSON_ANY) },
-    },
+    '/*': operationTraitRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/tags': {
