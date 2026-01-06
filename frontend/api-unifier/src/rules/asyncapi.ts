@@ -83,7 +83,7 @@ const TO_EMPTY_ARRAY_MAPPING: ReplaceMapping = {
 }
 
 // Specification Extension Rules (x- prefixed properties)
-const _asyncApiSpecificationExtensionPrefixRules: CrawlPrefixRules<any> = {
+const _specificationExtensionPrefixRules: CrawlPrefixRules<any> = {
   'x-': {
     isExtension: true,
     validate: checkType(...TYPE_JSON_ANY),
@@ -93,8 +93,8 @@ const _asyncApiSpecificationExtensionPrefixRules: CrawlPrefixRules<any> = {
   },
 }
 
-const asyncApiSpecificationExtensionRules: NormalizationRules = {
-  '/^': _asyncApiSpecificationExtensionPrefixRules,
+const specificationExtensionsRules: NormalizationRules = {
+  '/^': _specificationExtensionPrefixRules,
 }
 
 const externalDocumentationRules: NormalizationRules = {
@@ -102,11 +102,11 @@ const externalDocumentationRules: NormalizationRules = {
   merge: resolvers.last,
   '/description': { validate: checkType(TYPE_STRING) },
   '/url': { validate: checkType(TYPE_STRING) },
-  ...asyncApiSpecificationExtensionRules,
+  ...specificationExtensionsRules,
 }
 
 // Server Variable Rules
-const asyncApiServerVariableRules: NormalizationRules = {
+const serverVariableRules: NormalizationRules = {
   '/enum': {
     '/*': { validate: checkType(TYPE_STRING) },
     validate: checkType(TYPE_ARRAY),
@@ -117,12 +117,12 @@ const asyncApiServerVariableRules: NormalizationRules = {
     '/*': { validate: checkType(TYPE_STRING) },
     validate: checkType(TYPE_ARRAY),
   },
-  ...asyncApiSpecificationExtensionRules,
+  ...specificationExtensionsRules,
   validate: checkType(TYPE_OBJECT),
 }
 
 // Server Rules
-const asyncApiServerRules: NormalizationRules = {
+const serverRules: NormalizationRules = {
   '/host': {
     validate: checkType(TYPE_STRING),
   },
@@ -136,7 +136,7 @@ const asyncApiServerRules: NormalizationRules = {
     validate: checkType(TYPE_STRING),
   },
   '/variables': {
-    '/*': asyncApiServerVariableRules,
+    '/*': serverVariableRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/security': {
@@ -151,7 +151,7 @@ const asyncApiServerRules: NormalizationRules = {
       '/name': { validate: checkType(TYPE_STRING) },
       '/description': { validate: checkType(TYPE_STRING) },
       '/externalDocs': externalDocumentationRules,
-      ...asyncApiSpecificationExtensionRules,
+      ...specificationExtensionsRules,
       validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_ARRAY),
@@ -162,12 +162,12 @@ const asyncApiServerRules: NormalizationRules = {
     '/**': { validate: checkType(...TYPE_JSON_ANY) },
   },
   '/externalDocs': externalDocumentationRules,
-  ...asyncApiSpecificationExtensionRules,
+  ...specificationExtensionsRules,
   validate: checkType(TYPE_OBJECT),
 }
 
 // Message Rules
-const asyncApiMessageRules: NormalizationRules = {
+const messageRules: NormalizationRules = {
   '/payload': () => ({
     ...jsonSchemaRules(SPEC_TYPE_JSON_SCHEMA_07),
     newDataLayer: true,
@@ -203,7 +203,7 @@ const asyncApiMessageRules: NormalizationRules = {
       '/name': { validate: checkType(TYPE_STRING) },
       '/description': { validate: checkType(TYPE_STRING) },
       '/externalDocs': externalDocumentationRules,
-      ...asyncApiSpecificationExtensionRules,
+      ...specificationExtensionsRules,
       validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_ARRAY),
@@ -226,7 +226,7 @@ const asyncApiMessageRules: NormalizationRules = {
       },
       '/name': { validate: checkType(TYPE_STRING) },
       '/summary': { validate: checkType(TYPE_STRING) },
-      ...asyncApiSpecificationExtensionRules,
+      ...specificationExtensionsRules,
       validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_ARRAY),
@@ -244,13 +244,13 @@ const asyncApiMessageRules: NormalizationRules = {
     descriptionCalculator: ctx => `[Deprecated] message ${ctx.source.name || ctx.source.title || ''}`,
   },
   '/externalDocs': externalDocumentationRules,
-  ...asyncApiSpecificationExtensionRules,
+  ...specificationExtensionsRules,
   referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
 }
 
 // Parameter Rules (for channels)
-const asyncApiParameterRules: NormalizationRules = {
+const parameterRules: NormalizationRules = {
   '/enum': {
     '/*': { validate: checkType(TYPE_STRING) },
     validate: checkType(TYPE_ARRAY),
@@ -262,22 +262,23 @@ const asyncApiParameterRules: NormalizationRules = {
     validate: checkType(TYPE_ARRAY),
   },
   '/location': { validate: checkType(TYPE_STRING) },
-  ...asyncApiSpecificationExtensionRules,
+  ...specificationExtensionsRules,
   validate: checkType(TYPE_OBJECT),
 }
 
 // Channel Rules
-const asyncApiChannelRules: NormalizationRules = {
+const channelRules: NormalizationRules = {
+  '/externalDocs': externalDocumentationRules,
   '/address': {
     validate: checkType(TYPE_STRING),
     hashStrategy: CURRENT_DATA_LEVEL,
   },
   '/messages': {
-    '/*': asyncApiMessageRules,
+    '/*': messageRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/parameters': {
-    '/*': asyncApiParameterRules,
+    '/*': parameterRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/servers': {
@@ -308,13 +309,12 @@ const asyncApiChannelRules: NormalizationRules = {
       '/name': { validate: checkType(TYPE_STRING) },
       '/description': { validate: checkType(TYPE_STRING) },
       '/externalDocs': externalDocumentationRules,
-      ...asyncApiSpecificationExtensionRules,
+      ...specificationExtensionsRules,
       validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_ARRAY),
   },
-  '/externalDocs': externalDocumentationRules,
-  ...asyncApiSpecificationExtensionRules,
+  ...specificationExtensionsRules,
   referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
 }
@@ -328,7 +328,7 @@ const ASYNCAPI_OPERATION_REPLACES: Record<string, ReplaceMapping> = {
   [ASYNCAPI_PROPERTY_TAGS]: TO_EMPTY_ARRAY_MAPPING,
 }
 
-const asyncApiOperationRules: NormalizationRules = {
+const operationRules: NormalizationRules = {
   '/action': {
     validate: [checkType(TYPE_STRING), checkContains(ASYNCAPI_ACTION_SEND, ASYNCAPI_ACTION_RECEIVE)],
     hashStrategy: CURRENT_DATA_LEVEL,
@@ -360,7 +360,7 @@ const asyncApiOperationRules: NormalizationRules = {
       '/name': { validate: checkType(TYPE_STRING) },
       '/description': { validate: checkType(TYPE_STRING) },
       '/externalDocs': externalDocumentationRules,
-      ...asyncApiSpecificationExtensionRules,
+      ...specificationExtensionsRules,
       validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_ARRAY),
@@ -408,7 +408,7 @@ const asyncApiOperationRules: NormalizationRules = {
       },
       validate: checkType(TYPE_ARRAY),
     },
-    ...asyncApiSpecificationExtensionRules,
+    ...specificationExtensionsRules,
     validate: checkType(TYPE_OBJECT),
   },
   deprecation: {
@@ -416,7 +416,7 @@ const asyncApiOperationRules: NormalizationRules = {
     descriptionCalculator: ctx => `[Deprecated] operation ${ctx.key.toString()}`,
   },
   '/externalDocs': externalDocumentationRules,
-  ...asyncApiSpecificationExtensionRules,
+  ...specificationExtensionsRules,
   referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
@@ -456,25 +456,25 @@ const ASYNCAPI_COMPONENTS_REPLACES: Record<string, ReplaceMapping> = {
   [ASYNCAPI_PROPERTY_OPERATION_TRAITS]: TO_EMPTY_OBJECT_MAPPING,
 }
 
-const asyncApiComponentsRules: NormalizationRules = {
+const componentsRules: NormalizationRules = {
   '/schemas': {
     '/*': () => jsonSchemaRules(SPEC_TYPE_JSON_SCHEMA_07),
     validate: checkType(TYPE_OBJECT),
   },
   '/servers': {
-    '/*': asyncApiServerRules,
+    '/*': serverRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/channels': {
-    '/*': asyncApiChannelRules,
+    '/*': channelRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/operations': {
-    '/*': asyncApiOperationRules,
+    '/*': operationRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/messages': {
-    '/*': asyncApiMessageRules,
+    '/*': messageRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/securitySchemes': {
@@ -495,20 +495,20 @@ const asyncApiComponentsRules: NormalizationRules = {
         '/*': { validate: checkType(TYPE_STRING) },
         validate: checkType(TYPE_ARRAY),
       },
-      ...asyncApiSpecificationExtensionRules,
+      ...specificationExtensionsRules,
       validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_OBJECT),
   },
   '/parameters': {
-    '/*': asyncApiParameterRules,
+    '/*': parameterRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/correlationIds': {
     '/*': {
       '/description': { validate: checkType(TYPE_STRING) },
       '/location': { validate: checkType(TYPE_STRING) },
-      ...asyncApiSpecificationExtensionRules,
+      ...specificationExtensionsRules,
       validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_OBJECT),
@@ -535,7 +535,7 @@ const asyncApiComponentsRules: NormalizationRules = {
         },
         validate: checkType(TYPE_ARRAY),
       },
-      ...asyncApiSpecificationExtensionRules,
+      ...specificationExtensionsRules,
       validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_OBJECT),
@@ -544,7 +544,7 @@ const asyncApiComponentsRules: NormalizationRules = {
     '/*': {
       '/description': { validate: checkType(TYPE_STRING) },
       '/location': { validate: checkType(TYPE_STRING) },
-      ...asyncApiSpecificationExtensionRules,
+      ...specificationExtensionsRules,
       validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_OBJECT),
@@ -569,7 +569,7 @@ const asyncApiComponentsRules: NormalizationRules = {
     },
     validate: checkType(TYPE_OBJECT),
   },
-  ...asyncApiSpecificationExtensionRules,
+  ...specificationExtensionsRules,
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_COMPONENTS_DEFAULTS),
@@ -609,13 +609,13 @@ export const asyncApiRules = (): NormalizationRules => ({
       '/name': { validate: checkType(TYPE_STRING) },
       '/url': { validate: checkType(TYPE_STRING) },
       '/email': { validate: checkType(TYPE_STRING) },
-      ...asyncApiSpecificationExtensionRules,
+      ...specificationExtensionsRules,
       validate: checkType(TYPE_OBJECT),
     },
     '/license': {
       '/name': { validate: checkType(TYPE_STRING) },
       '/url': { validate: checkType(TYPE_STRING) },
-      ...asyncApiSpecificationExtensionRules,
+      ...specificationExtensionsRules,
       validate: checkType(TYPE_OBJECT),
     },
     '/tags': {
@@ -623,33 +623,33 @@ export const asyncApiRules = (): NormalizationRules => ({
         '/name': { validate: checkType(TYPE_STRING) },
         '/description': { validate: checkType(TYPE_STRING) },
         '/externalDocs': externalDocumentationRules,
-        ...asyncApiSpecificationExtensionRules,
+        ...specificationExtensionsRules,
         validate: checkType(TYPE_OBJECT),
       },
       validate: checkType(TYPE_ARRAY),
     },
     '/externalDocs': externalDocumentationRules,
-    ...asyncApiSpecificationExtensionRules,
+    ...specificationExtensionsRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/servers': {
-    '/*': asyncApiServerRules,
+    '/*': serverRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/defaultContentType': {
     validate: checkType(TYPE_STRING),
   },
   '/channels': {
-    '/*': asyncApiChannelRules,
+    '/*': channelRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/operations': {
-    '/*': asyncApiOperationRules,
+    '/*': operationRules,
     validate: checkType(TYPE_OBJECT),
   },
-  '/components': asyncApiComponentsRules,
+  '/components': componentsRules,
   '/externalDocs': externalDocumentationRules,
-  ...asyncApiSpecificationExtensionRules,
+  ...specificationExtensionsRules,
   '/**': { referenceHandler: notAllowedReferenceHandler },
   validate: checkType(TYPE_OBJECT),
   unify: [
