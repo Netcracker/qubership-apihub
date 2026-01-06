@@ -97,14 +97,12 @@ const asyncApiSpecificationExtensionRules: NormalizationRules = {
   '/^': _asyncApiSpecificationExtensionPrefixRules,
 }
 
-const asyncApiExternalDocsRules: NormalizationRules = {
-  '/externalDocs': {
-    validate: checkType(TYPE_OBJECT),
-    merge: resolvers.last,
-    '/description': { validate: checkType(TYPE_STRING) },
-    '/url': { validate: checkType(TYPE_STRING) },
-    ...asyncApiSpecificationExtensionRules,
-  },
+const externalDocumentationRules: NormalizationRules = {
+  validate: checkType(TYPE_OBJECT),
+  merge: resolvers.last,
+  '/description': { validate: checkType(TYPE_STRING) },
+  '/url': { validate: checkType(TYPE_STRING) },
+  ...asyncApiSpecificationExtensionRules,
 }
 
 // Server Variable Rules
@@ -152,7 +150,7 @@ const asyncApiServerRules: NormalizationRules = {
     '/*': {
       '/name': { validate: checkType(TYPE_STRING) },
       '/description': { validate: checkType(TYPE_STRING) },
-      ...asyncApiExternalDocsRules,
+      '/externalDocs': externalDocumentationRules,
       ...asyncApiSpecificationExtensionRules,
       validate: checkType(TYPE_OBJECT),
     },
@@ -163,7 +161,7 @@ const asyncApiServerRules: NormalizationRules = {
     '/*': { validate: checkType(...TYPE_JSON_ANY) },
     '/**': { validate: checkType(...TYPE_JSON_ANY) },
   },
-  ...asyncApiExternalDocsRules,
+  '/externalDocs': externalDocumentationRules,
   ...asyncApiSpecificationExtensionRules,
   validate: checkType(TYPE_OBJECT),
 }
@@ -204,7 +202,7 @@ const asyncApiMessageRules: NormalizationRules = {
     '/*': {
       '/name': { validate: checkType(TYPE_STRING) },
       '/description': { validate: checkType(TYPE_STRING) },
-      ...asyncApiExternalDocsRules,
+      '/externalDocs': externalDocumentationRules,
       ...asyncApiSpecificationExtensionRules,
       validate: checkType(TYPE_OBJECT),
     },
@@ -245,7 +243,7 @@ const asyncApiMessageRules: NormalizationRules = {
     deprecationResolver: (ctx) => ASYNCAPI_DEPRECATION_RESOLVER(ctx),
     descriptionCalculator: ctx => `[Deprecated] message ${ctx.source.name || ctx.source.title || ''}`,
   },
-  ...asyncApiExternalDocsRules,
+  '/externalDocs': externalDocumentationRules,
   ...asyncApiSpecificationExtensionRules,
   referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
@@ -309,13 +307,13 @@ const asyncApiChannelRules: NormalizationRules = {
     '/*': {
       '/name': { validate: checkType(TYPE_STRING) },
       '/description': { validate: checkType(TYPE_STRING) },
-      ...asyncApiExternalDocsRules,
+      '/externalDocs': externalDocumentationRules,
       ...asyncApiSpecificationExtensionRules,
       validate: checkType(TYPE_OBJECT),
     },
     validate: checkType(TYPE_ARRAY),
   },
-  ...asyncApiExternalDocsRules,
+  '/externalDocs': externalDocumentationRules,
   ...asyncApiSpecificationExtensionRules,
   referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
@@ -361,7 +359,7 @@ const asyncApiOperationRules: NormalizationRules = {
     '/*': {
       '/name': { validate: checkType(TYPE_STRING) },
       '/description': { validate: checkType(TYPE_STRING) },
-      ...asyncApiExternalDocsRules,
+      '/externalDocs': externalDocumentationRules,
       ...asyncApiSpecificationExtensionRules,
       validate: checkType(TYPE_OBJECT),
     },
@@ -417,7 +415,7 @@ const asyncApiOperationRules: NormalizationRules = {
     deprecationResolver: (ctx) => ASYNCAPI_DEPRECATION_RESOLVER(ctx),
     descriptionCalculator: ctx => `[Deprecated] operation ${ctx.key.toString()}`,
   },
-  ...asyncApiExternalDocsRules,
+  '/externalDocs': externalDocumentationRules,
   ...asyncApiSpecificationExtensionRules,
   referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
@@ -551,6 +549,10 @@ const asyncApiComponentsRules: NormalizationRules = {
     },
     validate: checkType(TYPE_OBJECT),
   },
+  '/externalDocs': {
+    '/*': externalDocumentationRules,
+    validate: checkType(TYPE_OBJECT),
+  },
   '/messageTraits': {
     '/*': {
       validate: checkType(TYPE_OBJECT),
@@ -620,13 +622,13 @@ export const asyncApiRules = (): NormalizationRules => ({
       '/*': {
         '/name': { validate: checkType(TYPE_STRING) },
         '/description': { validate: checkType(TYPE_STRING) },
-        ...asyncApiExternalDocsRules,
+        '/externalDocs': externalDocumentationRules,
         ...asyncApiSpecificationExtensionRules,
         validate: checkType(TYPE_OBJECT),
       },
       validate: checkType(TYPE_ARRAY),
     },
-    ...asyncApiExternalDocsRules,
+    '/externalDocs': externalDocumentationRules,
     ...asyncApiSpecificationExtensionRules,
     validate: checkType(TYPE_OBJECT),
   },
@@ -646,7 +648,7 @@ export const asyncApiRules = (): NormalizationRules => ({
     validate: checkType(TYPE_OBJECT),
   },
   '/components': asyncApiComponentsRules,
-  ...asyncApiExternalDocsRules,
+  '/externalDocs': externalDocumentationRules,
   ...asyncApiSpecificationExtensionRules,
   '/**': { referenceHandler: notAllowedReferenceHandler },
   validate: checkType(TYPE_OBJECT),
