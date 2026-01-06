@@ -105,6 +105,19 @@ const externalDocumentationRules: NormalizationRules = {
   ...specificationExtensionsRules,
 }
 
+const tagRules: NormalizationRules = {
+  '/name': { validate: checkType(TYPE_STRING) },
+  '/description': { validate: checkType(TYPE_STRING) },
+  '/externalDocs': externalDocumentationRules,
+  ...specificationExtensionsRules,
+  validate: checkType(TYPE_OBJECT),
+}
+
+const tagsRules: NormalizationRules = {
+  '/*': tagRules,
+  validate: checkType(TYPE_ARRAY),
+}
+
 // Server Variable Rules
 const serverVariableRules: NormalizationRules = {
   '/enum': {
@@ -146,16 +159,7 @@ const serverRules: NormalizationRules = {
     },
     validate: checkType(TYPE_ARRAY),
   },
-  '/tags': {
-    '/*': {
-      '/name': { validate: checkType(TYPE_STRING) },
-      '/description': { validate: checkType(TYPE_STRING) },
-      '/externalDocs': externalDocumentationRules,
-      ...specificationExtensionsRules,
-      validate: checkType(TYPE_OBJECT),
-    },
-    validate: checkType(TYPE_ARRAY),
-  },
+  '/tags': tagsRules,
   '/bindings': {
     validate: checkType(TYPE_OBJECT),
     '/*': { validate: checkType(...TYPE_JSON_ANY) },
@@ -198,16 +202,7 @@ const messageRules: NormalizationRules = {
   '/description': {
     validate: checkType(TYPE_STRING),
   },
-  '/tags': {
-    '/*': {
-      '/name': { validate: checkType(TYPE_STRING) },
-      '/description': { validate: checkType(TYPE_STRING) },
-      '/externalDocs': externalDocumentationRules,
-      ...specificationExtensionsRules,
-      validate: checkType(TYPE_OBJECT),
-    },
-    validate: checkType(TYPE_ARRAY),
-  },
+  '/tags': tagsRules,
   '/bindings': {
     validate: checkType(TYPE_OBJECT),
     '/*': { validate: checkType(...TYPE_JSON_ANY) },
@@ -304,16 +299,7 @@ const channelRules: NormalizationRules = {
     '/*': { validate: checkType(...TYPE_JSON_ANY) },
     '/**': { validate: checkType(...TYPE_JSON_ANY) },
   },
-  '/tags': {
-    '/*': {
-      '/name': { validate: checkType(TYPE_STRING) },
-      '/description': { validate: checkType(TYPE_STRING) },
-      '/externalDocs': externalDocumentationRules,
-      ...specificationExtensionsRules,
-      validate: checkType(TYPE_OBJECT),
-    },
-    validate: checkType(TYPE_ARRAY),
-  },
+  '/tags': tagsRules,
   ...specificationExtensionsRules,
   referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
@@ -355,16 +341,7 @@ const operationRules: NormalizationRules = {
     },
     validate: checkType(TYPE_ARRAY),
   },
-  '/tags': {
-    '/*': {
-      '/name': { validate: checkType(TYPE_STRING) },
-      '/description': { validate: checkType(TYPE_STRING) },
-      '/externalDocs': externalDocumentationRules,
-      ...specificationExtensionsRules,
-      validate: checkType(TYPE_OBJECT),
-    },
-    validate: checkType(TYPE_ARRAY),
-  },
+  '/tags': tagsRules,
   '/bindings': {
     validate: checkType(TYPE_OBJECT),
     '/*': { validate: checkType(...TYPE_JSON_ANY) },
@@ -569,6 +546,10 @@ const componentsRules: NormalizationRules = {
     },
     validate: checkType(TYPE_OBJECT),
   },
+  '/tags': {
+    '/*': tagRules,
+    validate: checkType(TYPE_OBJECT),
+  },
   ...specificationExtensionsRules,
   validate: checkType(TYPE_OBJECT),
   unify: [
@@ -618,16 +599,7 @@ export const asyncApiRules = (): NormalizationRules => ({
       ...specificationExtensionsRules,
       validate: checkType(TYPE_OBJECT),
     },
-    '/tags': {
-      '/*': {
-        '/name': { validate: checkType(TYPE_STRING) },
-        '/description': { validate: checkType(TYPE_STRING) },
-        '/externalDocs': externalDocumentationRules,
-        ...specificationExtensionsRules,
-        validate: checkType(TYPE_OBJECT),
-      },
-      validate: checkType(TYPE_ARRAY),
-    },
+    '/tags': tagsRules,
     '/externalDocs': externalDocumentationRules,
     ...specificationExtensionsRules,
     validate: checkType(TYPE_OBJECT),
