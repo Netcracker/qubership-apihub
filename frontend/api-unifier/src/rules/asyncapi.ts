@@ -16,73 +16,49 @@ import {
   TYPE_OBJECT,
   TYPE_STRING,
 } from '../validate/checker'
-import { DefaultValueMapping, valueDefaults } from '../unifies/defaults'
-import { deepEqualsMatcher, ReplaceMapping, valueReplaces } from '../unifies/replaces'
+import { valueDefaults } from '../unifies/defaults'
+import { valueReplaces } from '../unifies/replaces'
 import { jsonSchemaRules } from './jsonschema'
 import {
   ASYNCAPI_ACTION_RECEIVE,
   ASYNCAPI_ACTION_SEND,
-  ASYNCAPI_PROPERTY_ACTION,
-  ASYNCAPI_PROPERTY_ADDRESS,
-  ASYNCAPI_PROPERTY_ASYNCAPI,
-  ASYNCAPI_PROPERTY_BINDINGS,
-  ASYNCAPI_PROPERTY_CHANNEL,
-  ASYNCAPI_PROPERTY_CHANNELS,
-  ASYNCAPI_PROPERTY_COMPONENTS,
-  ASYNCAPI_PROPERTY_CONTACT,
-  ASYNCAPI_PROPERTY_CONTENT_TYPE,
-  ASYNCAPI_PROPERTY_CORRELATION_ID,
-  ASYNCAPI_PROPERTY_CORRELATION_IDS,
-  ASYNCAPI_PROPERTY_DEFAULT,
-  ASYNCAPI_PROPERTY_DEPRECATED,
-  ASYNCAPI_PROPERTY_DESCRIPTION,
-  ASYNCAPI_PROPERTY_ENUM,
-  ASYNCAPI_PROPERTY_EXAMPLE,
-  ASYNCAPI_PROPERTY_EXAMPLES,
-  ASYNCAPI_PROPERTY_HEADERS,
-  ASYNCAPI_PROPERTY_HOST,
-  ASYNCAPI_PROPERTY_INFO,
-  ASYNCAPI_PROPERTY_LICENSE,
-  ASYNCAPI_PROPERTY_MESSAGE_TRAITS,
-  ASYNCAPI_PROPERTY_MESSAGES,
-  ASYNCAPI_PROPERTY_NAME,
-  ASYNCAPI_PROPERTY_OPERATION_TRAITS,
-  ASYNCAPI_PROPERTY_OPERATIONS,
-  ASYNCAPI_PROPERTY_PARAMETERS,
-  ASYNCAPI_PROPERTY_PATHNAME,
-  ASYNCAPI_PROPERTY_PAYLOAD,
-  ASYNCAPI_PROPERTY_PROTOCOL,
-  ASYNCAPI_PROPERTY_REPLIES,
-  ASYNCAPI_PROPERTY_REPLY,
-  ASYNCAPI_PROPERTY_REPLY_ADDRESSES,
-  ASYNCAPI_PROPERTY_SCHEMAS,
-  ASYNCAPI_PROPERTY_SECURITY,
-  ASYNCAPI_PROPERTY_SECURITY_SCHEMES,
-  ASYNCAPI_PROPERTY_SERVERS,
-  ASYNCAPI_PROPERTY_SUMMARY,
-  ASYNCAPI_PROPERTY_TAGS,
-  ASYNCAPI_PROPERTY_TITLE,
-  ASYNCAPI_PROPERTY_TRAITS,
-  ASYNCAPI_PROPERTY_VARIABLES,
-  ASYNCAPI_PROPERTY_VERSION,
   ASYNCAPI_SECURITY_SCHEME_TYPES,
 } from './asyncapi.const'
+import {
+  ASYNCAPI_TAG_DEFAULTS,
+  ASYNCAPI_TAG_REPLACES,
+  ASYNCAPI_SECURITY_SCHEME_DEFAULTS,
+  ASYNCAPI_SECURITY_SCHEME_REPLACES,
+  ASYNCAPI_SERVER_VARIABLE_DEFAULTS,
+  ASYNCAPI_SERVER_VARIABLE_REPLACES,
+  ASYNCAPI_SERVER_DEFAULTS,
+  ASYNCAPI_SERVER_REPLACES,
+  ASYNCAPI_MESSAGE_EXAMPLE_DEFAULTS,
+  ASYNCAPI_MESSAGE_EXAMPLE_REPLACES,
+  ASYNCAPI_MESSAGE_TRAIT_DEFAULTS,
+  ASYNCAPI_MESSAGE_TRAIT_REPLACES,
+  ASYNCAPI_MESSAGE_DEFAULTS,
+  ASYNCAPI_MESSAGE_REPLACES,
+  ASYNCAPI_PARAMETER_DEFAULTS,
+  ASYNCAPI_PARAMETER_REPLACES,
+  ASYNCAPI_CHANNEL_DEFAULTS,
+  ASYNCAPI_CHANNEL_REPLACES,
+  ASYNCAPI_OPERATION_REPLY_DEFAULTS,
+  ASYNCAPI_OPERATION_REPLY_REPLACES,
+  ASYNCAPI_OPERATION_TRAIT_DEFAULTS,
+  ASYNCAPI_OPERATION_TRAIT_REPLACES,
+  ASYNCAPI_OPERATION_DEFAULTS,
+  ASYNCAPI_OPERATION_REPLACES,
+  ASYNCAPI_COMPONENTS_DEFAULTS,
+  ASYNCAPI_COMPONENTS_REPLACES,
+  ASYNCAPI_INFO_DEFAULTS,
+  ASYNCAPI_INFO_REPLACES,
+  ASYNCAPI_ROOT_DEFAULTS,
+  ASYNCAPI_ROOT_REPLACES
+} from './asyncapi.defaults'
 import { ASYNCAPI_DEPRECATION_RESOLVER } from './asyncapi.deprecated'
 import { notAllowedReferenceHandler, referenceObjectResolver } from '../references/ref-resolver'
 
-const EMPTY_MARKER = Symbol('empty-items')
-const TO_EMPTY_OBJECT_MAPPING: ReplaceMapping = {
-  mapping: new Map([[EMPTY_MARKER, {
-    value: () => ({}),
-    reverseMatcher: deepEqualsMatcher({}),
-  }]]),
-}
-const TO_EMPTY_ARRAY_MAPPING: ReplaceMapping = {
-  mapping: new Map([[EMPTY_MARKER, {
-    value: () => ([]),
-    reverseMatcher: deepEqualsMatcher([]),
-  }]]),
-}
 
 const _specificationExtensionPrefixRules: CrawlPrefixRules<any> = {
   'x-': {
@@ -112,6 +88,10 @@ const tagRules: NormalizationRules = {
   '/externalDocs': externalDocumentationRules,
   ...specificationExtensionsRules,
   validate: checkType(TYPE_OBJECT),
+  unify: [
+    valueDefaults(ASYNCAPI_TAG_DEFAULTS),
+    valueReplaces(ASYNCAPI_TAG_REPLACES),
+  ],
 }
 
 const tagsRules: NormalizationRules = {
@@ -170,6 +150,10 @@ const securitySchemeRules: NormalizationRules = {
   },
   ...specificationExtensionsRules,
   validate: checkType(TYPE_OBJECT),
+  unify: [
+    valueDefaults(ASYNCAPI_SECURITY_SCHEME_DEFAULTS),
+    valueReplaces(ASYNCAPI_SECURITY_SCHEME_REPLACES),
+  ],
 }
 
 const serverVariableRules: NormalizationRules = {
@@ -185,6 +169,10 @@ const serverVariableRules: NormalizationRules = {
   },
   ...specificationExtensionsRules,
   validate: checkType(TYPE_OBJECT),
+  unify: [
+    valueDefaults(ASYNCAPI_SERVER_VARIABLE_DEFAULTS),
+    valueReplaces(ASYNCAPI_SERVER_VARIABLE_REPLACES),
+  ],
 }
 
 const serverBindingsRules: NormalizationRules = {
@@ -214,6 +202,10 @@ const serverRules: NormalizationRules = {
   '/externalDocs': externalDocumentationRules,
   '/bindings': serverBindingsRules,
   validate: checkType(TYPE_OBJECT),
+  unify: [
+    valueDefaults(ASYNCAPI_SERVER_DEFAULTS),
+    valueReplaces(ASYNCAPI_SERVER_REPLACES),
+  ],
 }
 
 const correlationIdRules: NormalizationRules = {
@@ -244,6 +236,10 @@ const messageExampleRules: NormalizationRules = {
   '/summary': { validate: checkType(TYPE_STRING) },
   ...specificationExtensionsRules,
   validate: checkType(TYPE_OBJECT),
+  unify: [
+    valueDefaults(ASYNCAPI_MESSAGE_EXAMPLE_DEFAULTS),
+    valueReplaces(ASYNCAPI_MESSAGE_EXAMPLE_REPLACES),
+  ],
 }
 
 const messageTraitRules: NormalizationRules = {
@@ -272,6 +268,10 @@ const messageTraitRules: NormalizationRules = {
   ...specificationExtensionsRules,
   referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
+  unify: [
+    valueDefaults(ASYNCAPI_MESSAGE_TRAIT_DEFAULTS),
+    valueReplaces(ASYNCAPI_MESSAGE_TRAIT_REPLACES),
+  ],
 }
 
 const messageRules: NormalizationRules = {
@@ -285,6 +285,10 @@ const messageRules: NormalizationRules = {
     '/*': messageTraitRules,
     validate: checkType(TYPE_ARRAY),
   },
+  unify: [
+    valueDefaults(ASYNCAPI_MESSAGE_DEFAULTS),
+    valueReplaces(ASYNCAPI_MESSAGE_REPLACES),
+  ],
 }
 
 const parameterRules: NormalizationRules = {
@@ -301,6 +305,10 @@ const parameterRules: NormalizationRules = {
   '/location': { validate: checkType(TYPE_STRING) },
   ...specificationExtensionsRules,
   validate: checkType(TYPE_OBJECT),
+  unify: [
+    valueDefaults(ASYNCAPI_PARAMETER_DEFAULTS),
+    valueReplaces(ASYNCAPI_PARAMETER_REPLACES),
+  ],
 }
 
 const channelBindingsRules: NormalizationRules = {
@@ -341,15 +349,12 @@ const channelRules: NormalizationRules = {
   ...specificationExtensionsRules,
   referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
+  unify: [
+    valueDefaults(ASYNCAPI_CHANNEL_DEFAULTS),
+    valueReplaces(ASYNCAPI_CHANNEL_REPLACES),
+  ],
 }
 
-const ASYNCAPI_OPERATION_DEFAULTS: DefaultValueMapping = {
-  [ASYNCAPI_PROPERTY_TAGS]: EMPTY_MARKER,
-}
-
-const ASYNCAPI_OPERATION_REPLACES: Record<string, ReplaceMapping> = {
-  [ASYNCAPI_PROPERTY_TAGS]: TO_EMPTY_ARRAY_MAPPING,
-}
 
 const operationReplyAddressRules: NormalizationRules = {
   '/description': { validate: checkType(TYPE_STRING) },
@@ -377,6 +382,10 @@ const operationReplyRules: NormalizationRules = {
   },
   ...specificationExtensionsRules,
   validate: checkType(TYPE_OBJECT),
+  unify: [
+    valueDefaults(ASYNCAPI_OPERATION_REPLY_DEFAULTS),
+    valueReplaces(ASYNCAPI_OPERATION_REPLY_REPLACES),
+  ],
 }
 
 const operationBindingsRules: NormalizationRules = {
@@ -406,8 +415,8 @@ const operationTraitRules: NormalizationRules = {
   referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
-    valueDefaults(ASYNCAPI_OPERATION_DEFAULTS),
-    valueReplaces(ASYNCAPI_OPERATION_REPLACES),
+    valueDefaults(ASYNCAPI_OPERATION_TRAIT_DEFAULTS),
+    valueReplaces(ASYNCAPI_OPERATION_TRAIT_REPLACES),
   ],
 }
 
@@ -436,37 +445,12 @@ const operationRules: NormalizationRules = {
     },
     validate: checkType(TYPE_ARRAY),
   },
+  unify: [
+    valueDefaults(ASYNCAPI_OPERATION_DEFAULTS),
+    valueReplaces(ASYNCAPI_OPERATION_REPLACES),
+  ],
 }
 
-const ASYNCAPI_COMPONENTS_DEFAULTS: DefaultValueMapping = {
-  [ASYNCAPI_PROPERTY_SCHEMAS]: EMPTY_MARKER,
-  [ASYNCAPI_PROPERTY_SERVERS]: EMPTY_MARKER,
-  [ASYNCAPI_PROPERTY_CHANNELS]: EMPTY_MARKER,
-  [ASYNCAPI_PROPERTY_OPERATIONS]: EMPTY_MARKER,
-  [ASYNCAPI_PROPERTY_MESSAGES]: EMPTY_MARKER,
-  [ASYNCAPI_PROPERTY_SECURITY_SCHEMES]: EMPTY_MARKER,
-  [ASYNCAPI_PROPERTY_PARAMETERS]: EMPTY_MARKER,
-  [ASYNCAPI_PROPERTY_CORRELATION_IDS]: EMPTY_MARKER,
-  [ASYNCAPI_PROPERTY_REPLIES]: EMPTY_MARKER,
-  [ASYNCAPI_PROPERTY_REPLY_ADDRESSES]: EMPTY_MARKER,
-  [ASYNCAPI_PROPERTY_MESSAGE_TRAITS]: EMPTY_MARKER,
-  [ASYNCAPI_PROPERTY_OPERATION_TRAITS]: EMPTY_MARKER,
-}
-
-const ASYNCAPI_COMPONENTS_REPLACES: Record<string, ReplaceMapping> = {
-  [ASYNCAPI_PROPERTY_SCHEMAS]: TO_EMPTY_OBJECT_MAPPING,
-  [ASYNCAPI_PROPERTY_SERVERS]: TO_EMPTY_OBJECT_MAPPING,
-  [ASYNCAPI_PROPERTY_CHANNELS]: TO_EMPTY_OBJECT_MAPPING,
-  [ASYNCAPI_PROPERTY_OPERATIONS]: TO_EMPTY_OBJECT_MAPPING,
-  [ASYNCAPI_PROPERTY_MESSAGES]: TO_EMPTY_OBJECT_MAPPING,
-  [ASYNCAPI_PROPERTY_SECURITY_SCHEMES]: TO_EMPTY_OBJECT_MAPPING,
-  [ASYNCAPI_PROPERTY_PARAMETERS]: TO_EMPTY_OBJECT_MAPPING,
-  [ASYNCAPI_PROPERTY_CORRELATION_IDS]: TO_EMPTY_OBJECT_MAPPING,
-  [ASYNCAPI_PROPERTY_REPLIES]: TO_EMPTY_OBJECT_MAPPING,
-  [ASYNCAPI_PROPERTY_REPLY_ADDRESSES]: TO_EMPTY_OBJECT_MAPPING,
-  [ASYNCAPI_PROPERTY_MESSAGE_TRAITS]: TO_EMPTY_OBJECT_MAPPING,
-  [ASYNCAPI_PROPERTY_OPERATION_TRAITS]: TO_EMPTY_OBJECT_MAPPING,
-}
 
 const componentsRules: NormalizationRules = {
   '/schemas': {
@@ -554,19 +538,6 @@ const componentsRules: NormalizationRules = {
   hashStrategy: CURRENT_DATA_LEVEL,
 }
 
-const ASYNCAPI_ROOT_DEFAULTS: DefaultValueMapping = {
-  [ASYNCAPI_PROPERTY_SERVERS]: EMPTY_MARKER,
-  [ASYNCAPI_PROPERTY_CHANNELS]: EMPTY_MARKER,
-  [ASYNCAPI_PROPERTY_OPERATIONS]: EMPTY_MARKER,
-  [ASYNCAPI_PROPERTY_COMPONENTS]: EMPTY_MARKER,
-}
-
-const ASYNCAPI_ROOT_REPLACES: Record<string, ReplaceMapping> = {
-  [ASYNCAPI_PROPERTY_SERVERS]: TO_EMPTY_OBJECT_MAPPING,
-  [ASYNCAPI_PROPERTY_CHANNELS]: TO_EMPTY_OBJECT_MAPPING,
-  [ASYNCAPI_PROPERTY_OPERATIONS]: TO_EMPTY_OBJECT_MAPPING,
-  [ASYNCAPI_PROPERTY_COMPONENTS]: TO_EMPTY_OBJECT_MAPPING,
-}
 
 const contactRules: NormalizationRules = {
   '/name': { validate: checkType(TYPE_STRING) },
@@ -594,6 +565,10 @@ const infoRules: NormalizationRules = {
   '/externalDocs': externalDocumentationRules,
   ...specificationExtensionsRules,
   validate: checkType(TYPE_OBJECT),
+  unify: [
+    valueDefaults(ASYNCAPI_INFO_DEFAULTS),
+    valueReplaces(ASYNCAPI_INFO_REPLACES),
+  ],
 }
 
 export const asyncApiRules = (): NormalizationRules => ({

@@ -36,6 +36,7 @@ export const ASYNCAPI_PROPERTY_SCHEMAS = 'schemas'
 export const ASYNCAPI_PROPERTY_CHANNELS = 'channels'
 export const ASYNCAPI_PROPERTY_OPERATIONS = 'operations'
 export const ASYNCAPI_PROPERTY_SECURITY_SCHEMES = 'securitySchemes'
+export const ASYNCAPI_PROPERTY_SERVER_VARIABLES = 'serverVariables'
 export const ASYNCAPI_PROPERTY_CORRELATION_IDS = 'correlationIds'
 export const ASYNCAPI_PROPERTY_REPLIES = 'replies'
 export const ASYNCAPI_PROPERTY_REPLY_ADDRESSES = 'replyAddresses'
@@ -51,6 +52,12 @@ export const ASYNCAPI_PROPERTY_COMPONENTS = 'components'
 export const ASYNCAPI_PROPERTY_VERSION = 'version'
 export const ASYNCAPI_PROPERTY_CONTACT = 'contact'
 export const ASYNCAPI_PROPERTY_LICENSE = 'license'
+export const ASYNCAPI_PROPERTY_EXTERNAL_DOCS = 'externalDocs'
+
+export const ASYNCAPI_PROPERTY_SERVER_BINDINGS = 'serverBindings'
+export const ASYNCAPI_PROPERTY_CHANNEL_BINDINGS = 'channelBindings'
+export const ASYNCAPI_PROPERTY_OPERATION_BINDINGS = 'operationBindings'
+export const ASYNCAPI_PROPERTY_MESSAGE_BINDINGS = 'messageBindings'
 
 // Action types
 export const ASYNCAPI_ACTION_SEND = 'send'
@@ -59,6 +66,10 @@ export const ASYNCAPI_ACTION_RECEIVE = 'receive'
 export type AsyncApiAction =
   typeof ASYNCAPI_ACTION_SEND
   | typeof ASYNCAPI_ACTION_RECEIVE
+
+// Security scheme properties
+export const ASYNCAPI_PROPERTY_SCOPES = 'scopes'
+export const ASYNCAPI_PROPERTY_FLOWS = 'flows'
 
 // Security scheme types
 export const ASYNCAPI_SECURITY_SCHEME_TYPE_USER_PASSWORD = 'userPassword'
@@ -112,5 +123,3 @@ export const ASYNCAPI_PROPERTY_EXAMPLE = 'example'
 export const ASYNCAPI_PROPERTY_EXAMPLES = 'examples'
 export const ASYNCAPI_PROPERTY_ENUM = 'enum'
 export const ASYNCAPI_PROPERTY_DEFAULT = 'default'
-
-
