@@ -52,7 +52,7 @@ import {
 } from '../validate/checker'
 import { DefaultValueMapping, JsonPrimitiveValue, valueDefaults } from '../unifies/defaults'
 import { jsonSchemaTypeInfer, jsonSchemaTypeInferWithRestriction } from '../unifies/type'
-import { deepEqualsMatcher, ReplaceMapping, valueReplaces } from '../unifies/replaces'
+import { EMPTY_MARKER, ReplaceMapping, TO_EMPTY_ARRAY_MAPPING, TO_EMPTY_OBJECT_MAPPING, valueReplaces } from '../unifies/replaces'
 import {
   OPEN_API_JSON_SCHEMA_PROPERTY_ATTRIBUTE,
   OPEN_API_JSON_SCHEMA_PROPERTY_WRAPPED,
@@ -101,19 +101,6 @@ const OPEN_API_30_JSON_SCHEMA_NODE_TYPES = [
   JSON_SCHEMA_NODE_TYPE_ARRAY,
 ] satisfies JsonSchemaNodeType[]
 
-const EMPTY_MARKER = Symbol('empty-items')
-const TO_EMPTY_OBJECT_MAPPING: ReplaceMapping = {
-  mapping: new Map([[EMPTY_MARKER, {
-    value: () => ({}),
-    reverseMatcher: deepEqualsMatcher({}),
-  }]]),
-}
-const TO_EMPTY_ARRAY_MAPPING: ReplaceMapping = {
-  mapping: new Map([[EMPTY_MARKER, {
-    value: () => ([]),
-    reverseMatcher: deepEqualsMatcher([]),
-  }]]),
-}
 
 const OPEN_API_30_JSON_SCHEMA_DEFAULTS: DefaultValueMapping = {
   ...JSON_SCHEMA_DEFAULTS[SPEC_TYPE_JSON_SCHEMA_04],
@@ -261,7 +248,7 @@ const OPEN_API_COMPONENTS_REPLACES: Record<string, ReplaceMapping> = {
   [OPEN_API_PROPERTY_EXAMPLES]: TO_EMPTY_OBJECT_MAPPING,
 }
 
-// extracted to facilitate type checking  
+// extracted to facilitate type checking
 const _openApiSpecificationExtensionPrefixRules: CrawlPrefixRules<NormalizationRule> = {
   'x-': {
     isExtension: true,
