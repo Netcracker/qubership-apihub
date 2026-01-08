@@ -186,6 +186,130 @@ describe('AsyncAPI unify', () => {
         expect(result).toHaveProperty(['servers', 'production', 'variables', 'env', 'enum'], [])
         expect(result).toHaveProperty(['servers', 'production', 'variables', 'env', 'examples'], [])
       })
+
+      it('removes duplicate values from server variable enum', () => {
+        const result = unify({
+          asyncapi: '3.0.0',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          servers: {
+            production: {
+              host: '{env}.example.com',
+              protocol: 'mqtt',
+              variables: {
+                env: {
+                  enum: ['dev', 'staging', 'prod', 'dev', 'staging'],
+                  default: 'prod',
+                },
+              },
+            },
+          },
+        }, { unify: true })
+
+        expect(result).toHaveProperty(['servers', 'production', 'variables', 'env', 'enum'], ['dev', 'staging', 'prod'])
+      })
+
+      it('removes duplicates from component server variable enum', () => {
+        const result = unify({
+          asyncapi: '3.0.0',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          components: {
+            serverVariables: {
+              env: {
+                enum: ['dev', 'staging', 'prod', 'dev', 'prod'],
+                default: 'prod',
+                description: 'Environment variable',
+              },
+            },
+          },
+        }, { unify: true })
+
+        expect(result).toHaveProperty(['components', 'serverVariables', 'env', 'enum'], ['dev', 'staging', 'prod'])
+      })
+
+      it('preserves enum order when removing duplicates', () => {
+        const result = unify({
+          asyncapi: '3.0.0',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          servers: {
+            production: {
+              host: '{env}.example.com',
+              protocol: 'mqtt',
+              variables: {
+                env: {
+                  enum: ['prod', 'staging', 'dev', 'staging', 'prod'],
+                  default: 'prod',
+                },
+              },
+            },
+          },
+        }, { unify: true })
+
+        expect(result).toHaveProperty(['servers', 'production', 'variables', 'env', 'enum'], ['prod', 'staging', 'dev'])
+      })
+
+      it('handles server variable enum with no duplicates', () => {
+        const result = unify({
+          asyncapi: '3.0.0',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          servers: {
+            production: {
+              host: '{env}.example.com',
+              protocol: 'mqtt',
+              variables: {
+                env: {
+                  enum: ['dev', 'staging', 'prod'],
+                  default: 'prod',
+                },
+              },
+            },
+          },
+        }, { unify: true })
+
+        expect(result).toHaveProperty(['servers', 'production', 'variables', 'env', 'enum'], ['dev', 'staging', 'prod'])
+      })
+
+      it('merges origins when removing duplicates from server variable enum ', () => {
+        const source = {
+          asyncapi: '3.0.0',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          servers: {
+            production: {
+              host: '{env}.example.com',
+              protocol: 'mqtt',
+              variables: {
+                env: {
+                  enum: ['dev', 'staging', 'prod', 'dev'],
+                  default: 'prod',
+                },
+              },
+            },
+          },
+        }
+        const result = normalize(source, NORMALIZATION_OPTIONS) as any
+
+        commonOriginsCheck(result, { source })
+        const resultWithHmr = convertOriginToHumanReadable(result, TEST_ORIGINS_FLAG)
+        expect(resultWithHmr).toHaveProperty(
+          ['servers', 'production', 'variables', 'env', 'enum', TEST_ORIGINS_FLAG, 0],
+          ['servers/production/variables/env/enum/0',
+            'servers/production/variables/env/enum/3']
+        )
+      })
     })
 
     describe('Channel object', () => {

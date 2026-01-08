@@ -18,6 +18,7 @@ import {
 } from '../validate/checker'
 import { valueDefaults } from '../unifies/defaults'
 import { valueReplaces } from '../unifies/replaces'
+import { unifyEnum } from '../unifies/enums'
 import { jsonSchemaRules } from './jsonschema'
 import {
   ASYNCAPI_ACTION_RECEIVE,
@@ -161,6 +162,7 @@ const serverVariableRules: NormalizationRules = {
   '/enum': {
     '/*': { validate: checkType(TYPE_STRING) },
     validate: checkType(TYPE_ARRAY),
+    unify: unifyEnum,
   },
   '/default': { validate: checkType(TYPE_STRING) },
   '/description': { validate: checkType(TYPE_STRING) },
