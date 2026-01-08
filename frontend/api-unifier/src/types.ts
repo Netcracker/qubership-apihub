@@ -100,6 +100,7 @@ export interface InternalValidationOptions extends Omit<ValidateOptions, 'valida
 export type PropertySkipFunction = (value: unknown, path: JsonPath) => boolean
 
 export interface InternalUnifyOptions extends Omit<UnifyOptions, 'unify' | 'allowNotValidSyntheticChanges' | 'createOriginsForDefaults'>, InternalLiftCombinersOptions, HasInternalIgnoreSymbols {
+  source: unknown
   syntheticMetaDefinitions: MetaDefinitions
   nativeMetaDefinitions: MetaDefinitions
   allowNotValidSyntheticChanges: boolean
@@ -107,6 +108,7 @@ export interface InternalUnifyOptions extends Omit<UnifyOptions, 'unify' | 'allo
 }
 
 export interface InternalDeUnifyOptions extends Omit<DeUnifyOptions, 'unify' | 'allowNotValidSyntheticChanges' | 'createOriginsForDefaults'>, InternalLiftCombinersOptions, HasInternalIgnoreSymbols {
+  source: unknown
   syntheticMetaDefinitions: MetaDefinitions
   nativeMetaDefinitions: MetaDefinitions
   allowNotValidSyntheticChanges: boolean

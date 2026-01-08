@@ -1,6 +1,18 @@
-import { unify } from '../../src/unify'
+import { denormalize, normalize } from '../../src/normalize'
+import { convertOriginToHumanReadable } from '../../src/origins'
+import { NormalizeOptions } from '../../src/types'
+import { unify, deUnify } from '../../src/unify'
+import { commonOriginsCheck, TEST_DEFAULTS_FLAG, TEST_ORIGINS_FLAG, TEST_ORIGINS_FOR_DEFAULTS } from '../helpers'
 
 describe('AsyncAPI unify', () => {
+
+  const NORMALIZATION_OPTIONS: NormalizeOptions = {
+    defaultsFlag: TEST_DEFAULTS_FLAG,
+    originsFlag: TEST_ORIGINS_FLAG,
+    createOriginsForDefaults: () => TEST_ORIGINS_FOR_DEFAULTS,
+    unify: true,
+  }
+
   describe('defaults', () => {
     describe('Root object', () => {
       it('sets default empty objects for root properties', () => {
@@ -227,6 +239,36 @@ describe('AsyncAPI unify', () => {
         expect(result).toHaveProperty(['channels', 'userSignup', 'messages', 'userSignedUp', 'examples'], [])
         expect(result).toHaveProperty(['channels', 'userSignup', 'messages', 'userSignedUp', 'traits'], [])
       })
+
+      // just basic test here to check that rule is specified for the message object,
+      // defaultContentType logic is tested extensively in Message Trait Object tests
+      it('defaults contentType to root defaultContentType', () => {
+        const source = {
+          asyncapi: '3.0.0',
+          defaultContentType: 'application/json',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          channels: {
+            userChannel: {
+              messages: {
+                userMessage: {
+                  payload: {
+                    type: 'object',
+                  },
+                },
+              },
+            },
+          },
+        }
+        const result = unify(source, { unify: true })
+
+        expect(result).toHaveProperty(
+          ['channels', 'userChannel', 'messages', 'userMessage', 'contentType'],
+          'application/json'
+        )
+      })
     })
 
     describe('Message Trait object', () => {
@@ -250,6 +292,193 @@ describe('AsyncAPI unify', () => {
         expect(result).toHaveProperty(['components', 'messageTraits', 'commonTrait', 'externalDocs'], {})
         expect(result).toHaveProperty(['components', 'messageTraits', 'commonTrait', 'bindings'], {})
         expect(result).toHaveProperty(['components', 'messageTraits', 'commonTrait', 'examples'], [])
+      })
+
+      it('defaults contentType to root defaultContentType', () => {
+        const source = {
+          asyncapi: '3.0.0',
+          defaultContentType: 'application/json',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          components: {
+            messageTraits: {
+              commonTrait: {
+                summary: 'Common message trait',
+              },
+            },
+          },
+        }
+        const result = unify(source, { unify: true })
+
+        expect(result).toHaveProperty(
+          ['components', 'messageTraits', 'commonTrait', 'contentType'],
+          'application/json'
+        )
+      })
+
+      it('preserves explicit contentType over root defaultContentType', () => {
+        const source = {
+          asyncapi: '3.0.0',
+          defaultContentType: 'application/json',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          components: {
+            messageTraits: {
+              commonTrait: {
+                contentType: 'application/xml',
+              },
+            },
+          },
+        }
+        const result = unify(source, { unify: true })
+
+        expect(result).toHaveProperty(
+          ['components', 'messageTraits', 'commonTrait', 'contentType'],
+          'application/xml'
+        )
+      })
+
+      it('does not set contentType when root has no defaultContentType', () => {
+        const source = {
+          asyncapi: '3.0.0',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          components: {
+            messageTraits: {
+              commonTrait: {
+                summary: 'Common message trait',
+              },
+            },
+          },
+        }
+        const result = unify(source, { unify: true })
+
+        // Should not have contentType property
+        expect(result).not.toHaveProperty(
+          ['components', 'messageTraits', 'commonTrait', 'contentType']
+        )
+      })
+
+      it('sets correct origin for synthetic contentType', () => {
+        const source = {
+          asyncapi: '3.0.0',
+          defaultContentType: 'application/json',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          components: {
+            messageTraits: {
+              commonTrait: {
+                summary: 'Common message trait',
+              },
+            },
+          },
+        }
+        const result = normalize(source, NORMALIZATION_OPTIONS)
+
+        commonOriginsCheck(result, { source })
+        const resultWithHmr = convertOriginToHumanReadable(result, TEST_ORIGINS_FLAG)
+        expect(resultWithHmr).toHaveProperty(['components', 'messageTraits', 'commonTrait', TEST_ORIGINS_FLAG, 'contentType'], ['defaultContentType'])
+      })
+    })
+
+    describe('Message Trait object - reversibility', () => {
+      it('removes synthetic contentType during deUnify', () => {
+        const source = {
+          asyncapi: '3.0.0',
+          defaultContentType: 'application/json',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          components: {
+            messageTraits: {
+              commonTrait: {
+                summary: 'Common message trait',
+                // No contentType property
+              },
+            },
+          },
+        }
+
+        const unified = unify(source, { unify: true })
+        const result = deUnify(unified, { unify: true })
+
+        // Synthetic contentType should be removed
+        expect(result).not.toHaveProperty(['components', 'messageTraits', 'commonTrait', 'contentType'])
+      })
+
+      it('preserves pure contentType during deUnify', () => {
+        const source = {
+          asyncapi: '3.0.0',
+          defaultContentType: 'application/json',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          components: {
+            messageTraits: {
+              commonTrait: {
+                summary: 'Common message trait',
+                contentType: 'application/json',  // Explicitly set to match default
+              },
+            },
+          },
+        }
+
+        const unified = unify(source, NORMALIZATION_OPTIONS)
+        const result = deUnify(unified, NORMALIZATION_OPTIONS)
+
+        // Pure contentType should be preserved
+        expect(result).toHaveProperty(['components', 'messageTraits', 'commonTrait', 'contentType'], 'application/json')
+      })
+      it('removes defaults and origins metadata after de-normalization', () => {
+        const source = {
+          asyncapi: '3.0.0',
+          defaultContentType: 'application/json',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          components: {
+            messageTraits: {
+              commonTrait: {
+                summary: 'Common message trait',
+                // No explicit contentType, tags, externalDocs, bindings, examples
+              },
+            },
+          },
+        }
+
+        const normalized = normalize(source, NORMALIZATION_OPTIONS)
+
+        // Verify defaults were added
+        expect(normalized).toHaveProperty(['components', 'messageTraits', 'commonTrait', 'contentType'], 'application/json')
+        expect(normalized).toHaveProperty(['components', 'messageTraits', 'commonTrait', 'tags'], [])
+        expect(normalized).toHaveProperty(['components', 'messageTraits', 'commonTrait', 'externalDocs'], {})
+        expect(normalized).toHaveProperty(['components', 'messageTraits', 'commonTrait', 'bindings'], {})
+        expect(normalized).toHaveProperty(['components', 'messageTraits', 'commonTrait', 'examples'], [])
+
+        const result = denormalize(normalized, NORMALIZATION_OPTIONS)
+
+        // Verify defaults and origins metadata are removed
+        expect(result).not.toHaveProperty(['components', 'messageTraits', 'commonTrait', 'contentType'])
+        expect(result).not.toHaveProperty(['components', 'messageTraits', 'commonTrait', 'tags'])
+        expect(result).not.toHaveProperty(['components', 'messageTraits', 'commonTrait', 'externalDocs'])
+        expect(result).not.toHaveProperty(['components', 'messageTraits', 'commonTrait', 'bindings'])
+        expect(result).not.toHaveProperty(['components', 'messageTraits', 'commonTrait', 'examples'])
+        expect(result).not.toHaveProperty(['components', 'messageTraits', 'commonTrait', TEST_DEFAULTS_FLAG])
+        expect(result).not.toHaveProperty(['components', 'messageTraits', 'commonTrait', TEST_ORIGINS_FLAG])
+
+        // Verify original property is preserved
+        expect(result).toHaveProperty(['components', 'messageTraits', 'commonTrait', 'summary'], 'Common message trait')
       })
     })
 

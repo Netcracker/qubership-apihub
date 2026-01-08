@@ -32,9 +32,14 @@ import {
   ASYNCAPI_PROPERTY_OPERATION_BINDINGS,
   ASYNCAPI_PROPERTY_LICENSE,
   ASYNCAPI_PROPERTY_INFO,
-  ASYNCAPI_PROPERTY_SERVER_VARIABLES
+  ASYNCAPI_PROPERTY_SERVER_VARIABLES,
+  ASYNCAPI_PROPERTY_CONTENT_TYPE
 } from "./asyncapi.const"
 import { EMPTY_MARKER, TO_EMPTY_ARRAY_MAPPING, TO_EMPTY_OBJECT_MAPPING, ReplaceMapping } from "../unifies/replaces"
+import { UnifyFunction, DefaultMetaRecord, DEFAULT_TYPE_FLAG_SYNTHETIC, DEFAULT_TYPE_FLAG_PURE } from '../types'
+import { isObject, isArray } from '@netcracker/qubership-apihub-json-crawl'
+import { setJsoProperty } from '../utils'
+import { resolveOriginsMetaRecord } from '../origins'
 
 export const ASYNCAPI_TAG_DEFAULTS: DefaultValueMapping = {
   [ASYNCAPI_PROPERTY_EXTERNAL_DOCS]: EMPTY_MARKER,
@@ -252,3 +257,112 @@ export const ASYNCAPI_ROOT_REPLACES: Record<string, ReplaceMapping> = {
   [ASYNCAPI_PROPERTY_COMPONENTS]: TO_EMPTY_OBJECT_MAPPING,
 }
 
+export const contentTypeDefault: UnifyFunction = {
+  forward: (jso, ctx) => {
+    const { options } = ctx
+
+    // Only applies to objects
+    if (!isObject(jso) || isArray(jso)) {
+      return jso
+    }
+
+    // Get defaultContentType from root document
+    const rootDoc = options.source
+    if (!isObject(rootDoc) || isArray(rootDoc)) {
+      return jso
+    }
+
+    const defaultContentType = rootDoc.defaultContentType
+    if (typeof defaultContentType !== 'string') {
+      return jso
+    }
+
+    const CONTENT_TYPE_KEY = ASYNCAPI_PROPERTY_CONTENT_TYPE
+    let shallowJso = jso
+    let needsUpdate = false
+
+    // Handle synthetic default (property missing)
+    if (!(CONTENT_TYPE_KEY in jso)) {
+      shallowJso = { ...jso, [CONTENT_TYPE_KEY]: defaultContentType }
+      needsUpdate = true
+
+      // Mark as synthetic
+      if (options.defaultsFlag) {
+        const defaultsMeta = { ...shallowJso[options.defaultsFlag] ?? {} }
+        defaultsMeta[CONTENT_TYPE_KEY] = DEFAULT_TYPE_FLAG_SYNTHETIC
+        shallowJso[options.defaultsFlag] = defaultsMeta
+      }
+
+      // Set custom origin pointing to root's defaultContentType
+      if (options.originsFlag) {
+        const originsRecord = resolveOriginsMetaRecord(shallowJso, options.originsFlag) ?? {}
+
+        // Get the origin from the root document's defaultContentType property
+        const rootOriginsRecord = resolveOriginsMetaRecord(rootDoc, options.originsFlag)
+        if (rootOriginsRecord && 'defaultContentType' in rootOriginsRecord) {
+          originsRecord[CONTENT_TYPE_KEY] = rootOriginsRecord['defaultContentType']
+        }
+
+        setJsoProperty(shallowJso, options.originsFlag, originsRecord)
+      }
+    }
+    // Handle pure default (property exists with default value)
+    else if (jso[CONTENT_TYPE_KEY] === defaultContentType) {
+      if (options.defaultsFlag) {
+        shallowJso = { ...jso }
+        needsUpdate = true
+        const defaultsMeta = { ...shallowJso[options.defaultsFlag] ?? {} }
+        defaultsMeta[CONTENT_TYPE_KEY] = DEFAULT_TYPE_FLAG_PURE
+        shallowJso[options.defaultsFlag] = defaultsMeta
+      }
+    }
+
+    return needsUpdate ? shallowJso : jso
+  },
+
+  backward: (jso, ctx) => {
+    const { options } = ctx
+    if (!isObject(jso) || isArray(jso)) {
+      return
+    }
+
+    // Get defaultContentType from root document
+    const rootDoc = options.source
+    if (!isObject(rootDoc) || isArray(rootDoc)) {
+      return
+    }
+
+    const defaultContentType = rootDoc.defaultContentType
+    if (typeof defaultContentType !== 'string') {
+      return
+    }
+
+    const CONTENT_TYPE_KEY = ASYNCAPI_PROPERTY_CONTENT_TYPE
+
+    // Only remove if it matches the default AND was synthetic (not pure)
+    if (jso[CONTENT_TYPE_KEY] === defaultContentType) {
+      // Check if it's marked as synthetic (not pure)
+      let shouldRemove = true
+
+      if (options.defaultsFlag && options.defaultsFlag in jso) {
+        const defaultsMeta = jso[options.defaultsFlag] as DefaultMetaRecord
+        delete jso[options.defaultsFlag]
+        if (defaultsMeta[CONTENT_TYPE_KEY] === DEFAULT_TYPE_FLAG_PURE) {
+          shouldRemove = false  // Keep pure defaults (explicitly set in original)
+        }
+      }
+
+      if (shouldRemove) {
+        delete jso[CONTENT_TYPE_KEY]
+
+        // Clean up origins
+        if (options.originsFlag) {
+          const originsRecord = resolveOriginsMetaRecord(jso, options.originsFlag)
+          if (originsRecord && CONTENT_TYPE_KEY in originsRecord) {
+            delete originsRecord[CONTENT_TYPE_KEY]
+          }
+        }
+      }
+    }
+  }
+}

@@ -62,7 +62,7 @@ const createUnifyHook: (options: InternalUnifyOptions, mandatoryOnly: boolean) =
       return { value, state: { ...state, parentValue: value } }
     }
     try {
-      const parentValue = state.parentValue      
+      const parentValue = state.parentValue
       const context: UnifyContext<InternalUnifyOptions> = {
         origins: state.selfOriginResolver(key),
         options,
@@ -109,12 +109,12 @@ const createDeUnifyHook: (options: InternalDeUnifyOptions, mandatoryOnly: boolea
       value: value,
       exitHook: () => {
         try {
-          const parentValue = state.parentValue          
+          const parentValue = state.parentValue
           const context: UnifyContext<InternalDeUnifyOptions> = {
             origins: state.selfOriginResolver(key),
             options,
             path,
-            parentValue,            
+            parentValue,
           }
           const copiedValue = state.node[safeKey]
           deUnifiesFunctionsArray.forEach(f => f(copiedValue, context))
@@ -138,6 +138,7 @@ export const cleanUpSynthetic = (value: unknown, options?: UnifyOptions & LiftCo
 
 const unifyImpl = (value: unknown, mandatoryOnly: boolean, options?: UnifyOptions & LiftCombinersOptions & ResolveOptions) => {
   const spec = resolveSpec(value)
+  const source = options?.source ?? value
   const internalOptions = {
     resolveRef: DEFAULT_OPTION_RESOLVE_REF,
     originsAlreadyDefined: DEFAULT_OPTION_ORIGINS_ALREADY_DEFINED,
@@ -146,6 +147,7 @@ const unifyImpl = (value: unknown, mandatoryOnly: boolean, options?: UnifyOption
     allowNotValidSyntheticChanges: DEFAULT_OPTION_ALLOW_NOT_VALID_SYNTHETIC_CHANGES,
     createOriginsForDefaults: (() => DEFAULT_OPTION_ORIGINS_FOR_DEFAULTS),
     ...options,
+    source,
     evaluationCacheService: createEvaluationCacheService(),
     spreadAllOfCache: createPropertySpreadWithCacheService(JSON_SCHEMA_PROPERTY_ALL_OF),
     syntheticMetaDefinitions: createSyntheticMetaDefinitions(spec.type, options?.originsFlag),
@@ -187,6 +189,7 @@ export const deCleanUpSynthetic = (value: unknown, options?: DeUnifyOptions & Li
 
 const deUnifyImpl = (value: unknown, mandatoryOnly: boolean, options?: DeUnifyOptions & LiftCombinersOptions & ResolveOptions) => {
   const spec = resolveSpec(value)
+  const source = options?.source ?? value
   const internalOptions = {
     resolveRef: DEFAULT_OPTION_RESOLVE_REF,
     originsAlreadyDefined: DEFAULT_OPTION_ORIGINS_ALREADY_DEFINED,
@@ -195,6 +198,7 @@ const deUnifyImpl = (value: unknown, mandatoryOnly: boolean, options?: DeUnifyOp
     allowNotValidSyntheticChanges: DEFAULT_OPTION_ALLOW_NOT_VALID_SYNTHETIC_CHANGES,
     createOriginsForDefaults: (() => DEFAULT_OPTION_ORIGINS_FOR_DEFAULTS),
     ...options,
+    source,
     evaluationCacheService: createEvaluationCacheService(),
     spreadAllOfCache: createPropertySpreadWithCacheService(JSON_SCHEMA_PROPERTY_ALL_OF),
     syntheticMetaDefinitions: createSyntheticMetaDefinitions(spec.type, options?.originsFlag),

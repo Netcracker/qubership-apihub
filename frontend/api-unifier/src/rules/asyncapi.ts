@@ -54,7 +54,8 @@ import {
   ASYNCAPI_INFO_DEFAULTS,
   ASYNCAPI_INFO_REPLACES,
   ASYNCAPI_ROOT_DEFAULTS,
-  ASYNCAPI_ROOT_REPLACES
+  ASYNCAPI_ROOT_REPLACES,
+  contentTypeDefault
 } from './asyncapi.defaults'
 import { ASYNCAPI_DEPRECATION_RESOLVER } from './asyncapi.deprecated'
 import { notAllowedReferenceHandler, referenceObjectResolver } from '../references/ref-resolver'
@@ -271,6 +272,7 @@ const messageTraitRules: NormalizationRules = {
   unify: [
     valueDefaults(ASYNCAPI_MESSAGE_TRAIT_DEFAULTS),
     valueReplaces(ASYNCAPI_MESSAGE_TRAIT_REPLACES),
+    contentTypeDefault,
   ],
 }
 
@@ -288,6 +290,7 @@ const messageRules: NormalizationRules = {
   unify: [
     valueDefaults(ASYNCAPI_MESSAGE_DEFAULTS),
     valueReplaces(ASYNCAPI_MESSAGE_REPLACES),
+    contentTypeDefault,
   ],
 }
 
