@@ -300,6 +300,7 @@ const parameterRules: NormalizationRules = {
   '/enum': {
     '/*': { validate: checkType(TYPE_STRING) },
     validate: checkType(TYPE_ARRAY),
+    unify: unifyEnum,
   },
   '/default': { validate: checkType(TYPE_STRING) },
   '/description': { validate: checkType(TYPE_STRING) },

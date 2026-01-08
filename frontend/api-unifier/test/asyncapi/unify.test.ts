@@ -661,6 +661,121 @@ describe('AsyncAPI unify', () => {
         expect(result).toHaveProperty(['channels', 'userChannel', 'parameters', 'userId', 'enum'], [])
         expect(result).toHaveProperty(['channels', 'userChannel', 'parameters', 'userId', 'examples'], [])
       })
+
+      it('removes duplicate values from parameter enum', () => {
+        const result = unify({
+          asyncapi: '3.0.0',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          channels: {
+            userChannel: {
+              parameters: {
+                userId: {
+                  enum: ['user1', 'user2', 'user3', 'user1', 'user2'],
+                  description: 'User ID',
+                },
+              },
+            },
+          },
+        }, { unify: true })
+
+        expect(result).toHaveProperty(['channels', 'userChannel', 'parameters', 'userId', 'enum'], ['user1', 'user2', 'user3'])
+      })
+
+      it('removes duplicates from component parameter enum', () => {
+        const result = unify({
+          asyncapi: '3.0.0',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          components: {
+            parameters: {
+              userId: {
+                enum: ['admin', 'user', 'guest', 'admin', 'user'],
+                description: 'User role parameter',
+              },
+            },
+          },
+        }, { unify: true })
+
+        expect(result).toHaveProperty(['components', 'parameters', 'userId', 'enum'], ['admin', 'user', 'guest'])
+      })
+
+      it('preserves enum order when removing duplicates from parameter', () => {
+        const result = unify({
+          asyncapi: '3.0.0',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          channels: {
+            userChannel: {
+              parameters: {
+                status: {
+                  enum: ['active', 'inactive', 'pending', 'inactive', 'active'],
+                  description: 'Status parameter',
+                },
+              },
+            },
+          },
+        }, { unify: true })
+
+        expect(result).toHaveProperty(['channels', 'userChannel', 'parameters', 'status', 'enum'], ['active', 'inactive', 'pending'])
+      })
+
+      it('handles parameter enum with no duplicates', () => {
+        const result = unify({
+          asyncapi: '3.0.0',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          channels: {
+            userChannel: {
+              parameters: {
+                type: {
+                  enum: ['type1', 'type2', 'type3'],
+                  description: 'Type parameter',
+                },
+              },
+            },
+          },
+        }, { unify: true })
+
+        expect(result).toHaveProperty(['channels', 'userChannel', 'parameters', 'type', 'enum'], ['type1', 'type2', 'type3'])
+      })
+
+      it('merges origins when removing duplicates from parameter enum', () => {
+        const source = {
+          asyncapi: '3.0.0',
+          info: {
+            title: 'Test API',
+            version: '1.0.0',
+          },
+          channels: {
+            userChannel: {
+              parameters: {
+                userId: {
+                  enum: ['user1', 'user2', 'user3', 'user1'],
+                  description: 'User ID',
+                },
+              },
+            },
+          },
+        }
+        const result = normalize(source, NORMALIZATION_OPTIONS) as any
+
+        commonOriginsCheck(result, { source })
+        const resultWithHmr = convertOriginToHumanReadable(result, TEST_ORIGINS_FLAG)
+        expect(resultWithHmr).toHaveProperty(
+          ['channels', 'userChannel', 'parameters', 'userId', 'enum', TEST_ORIGINS_FLAG, 0],
+          ['channels/userChannel/parameters/userId/enum/0',
+            'channels/userChannel/parameters/userId/enum/3']
+        )
+      })
     })
 
     describe('Security Scheme object', () => {
