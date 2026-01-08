@@ -202,7 +202,7 @@ export const JSON_SCHEMA_DEFAULTS: Record<JsonSchemaSpecVersion, DefaultValueMap
 Direct transformation without backward operation:
 
 ```typescript
-export const unifyJsonSchemaEnums: UnifyFunction = (jso, ctx) => {
+export const unifyEnum: UnifyFunction = (jso, ctx) => {
   if (!isArray(jso)) {
     return jso
   }

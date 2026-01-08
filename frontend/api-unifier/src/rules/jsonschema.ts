@@ -51,7 +51,7 @@ import {
 } from '../validate/checker'
 import { concatArrays, insertIntoArrayByInstruction, replaceValue } from '../utils'
 import { unifyJsonSchemaRequired } from '../unifies/required'
-import { unifyJsonSchemaEnums } from '../unifies/enums'
+import { unifyEnum } from '../unifies/enums'
 import {
   cleanUpSyntheticJsonSchemaTypes,
   forwardOnlyCleanUpSyntheticJsonSchemaTypes,
@@ -430,7 +430,7 @@ export const jsonSchemaRules: (
   '/enum': {
     validate: checkType(TYPE_ARRAY),
     merge: resolvers.mergeEnum,
-    unify: unifyJsonSchemaEnums,
+    unify: unifyEnum,
     '/**': {
       validate: checkType(...TYPE_JSON_ANY),
       hashStrategy: CURRENT_DATA_LEVEL,
