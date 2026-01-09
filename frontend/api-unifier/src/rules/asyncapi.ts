@@ -1,16 +1,11 @@
 import {
-  BEFORE_SECOND_DATA_LEVEL,
   CURRENT_DATA_LEVEL,
   NormalizationRules,
 } from '../types'
-import { CrawlPrefixRules } from '@netcracker/qubership-apihub-json-crawl'
-import { SPEC_TYPE_JSON_SCHEMA_07 } from '../spec-type'
-import * as resolvers from '../resolvers'
 import {
   checkContains,
   checkType,
   TYPE_ARRAY,
-  TYPE_BOOLEAN,
   TYPE_JSON_ANY,
   TYPE_NULL,
   TYPE_OBJECT,
@@ -19,12 +14,16 @@ import {
 import { valueDefaults } from '../unifies/defaults'
 import { valueReplaces } from '../unifies/replaces'
 import { unifyEnum } from '../unifies/enums'
-import { jsonSchemaRules } from './jsonschema'
 import {
   ASYNCAPI_ACTION_RECEIVE,
   ASYNCAPI_ACTION_SEND,
   ASYNCAPI_SECURITY_SCHEME_TYPES,
 } from './asyncapi.const'
+import { schemaOrMultiFormatSchemaRules } from './asyncapi.jsonschema'
+import {
+  externalDocumentationRules,
+  specificationExtensionsRules,
+} from './asyncapi.jsonschema.common'
 import {
   ASYNCAPI_TAG_DEFAULTS,
   ASYNCAPI_TAG_REPLACES,
@@ -60,29 +59,6 @@ import {
 } from './asyncapi.defaults'
 import { ASYNCAPI_DEPRECATION_RESOLVER } from './asyncapi.deprecated'
 import { notAllowedReferenceHandler, referenceObjectResolver } from '../references/ref-resolver'
-
-
-const _specificationExtensionPrefixRules: CrawlPrefixRules<any> = {
-  'x-': {
-    isExtension: true,
-    validate: checkType(...TYPE_JSON_ANY),
-    merge: resolvers.last,  //TODO: need check of merge resolver required for extensions of JSON schema
-    '/*': { validate: checkType(...TYPE_JSON_ANY) },
-    '/**': { validate: checkType(...TYPE_JSON_ANY) },
-  },
-}
-
-const specificationExtensionsRules: NormalizationRules = {
-  '/^': _specificationExtensionPrefixRules,
-}
-
-const externalDocumentationRules: NormalizationRules = {
-  '/description': { validate: checkType(TYPE_STRING) },
-  '/url': { validate: checkType(TYPE_STRING) },
-  ...specificationExtensionsRules,
-  validate: checkType(TYPE_OBJECT),
-  merge: resolvers.last,  //TODO: need check of merge resolver required for extensions of JSON schema
-}
 
 const tagRules: NormalizationRules = {
   '/name': { validate: checkType(TYPE_STRING) },
@@ -246,11 +222,7 @@ const messageExampleRules: NormalizationRules = {
 }
 
 const messageTraitRules: NormalizationRules = {
-  '/headers': () => ({
-    ...jsonSchemaRules(SPEC_TYPE_JSON_SCHEMA_07),
-    newDataLayer: true,
-    hashStrategy: BEFORE_SECOND_DATA_LEVEL,
-  }),
+  '/headers': schemaOrMultiFormatSchemaRules,
   '/correlationId': correlationIdRules,
   '/contentType': { validate: checkType(TYPE_STRING) },
   '/name': { validate: checkType(TYPE_STRING) },
@@ -280,11 +252,7 @@ const messageTraitRules: NormalizationRules = {
 
 const messageRules: NormalizationRules = {
   ...messageTraitRules,
-  '/payload': () => ({
-    ...jsonSchemaRules(SPEC_TYPE_JSON_SCHEMA_07),
-    newDataLayer: true,
-    hashStrategy: BEFORE_SECOND_DATA_LEVEL,
-  }),
+  '/payload': schemaOrMultiFormatSchemaRules,
   '/traits': {
     '/*': messageTraitRules,
     validate: checkType(TYPE_ARRAY),
@@ -460,7 +428,7 @@ const operationRules: NormalizationRules = {
 
 const componentsRules: NormalizationRules = {
   '/schemas': {
-    '/*': () => jsonSchemaRules(SPEC_TYPE_JSON_SCHEMA_07),
+    '/*': schemaOrMultiFormatSchemaRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/servers': {

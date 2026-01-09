@@ -117,6 +117,8 @@ export const ASYNCAPI_SECURITY_SCHEME_TYPES: readonly AsyncApiSecuritySchemeType
   ASYNCAPI_SECURITY_SCHEME_TYPE_GSSAPI,
 ]
 
+export const ASYNCAPI_PROPERTY_SCHEMA_FORMAT = 'schemaFormat'
+
 // Common properties (also in JSON Schema)
 export const ASYNCAPI_PROPERTY_DEPRECATED = 'deprecated'
 export const ASYNCAPI_PROPERTY_EXAMPLE = 'example'

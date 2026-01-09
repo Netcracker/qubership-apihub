@@ -1,48 +1,16 @@
 import {
   BEFORE_SECOND_DATA_LEVEL,
   CURRENT_DATA_LEVEL,
-  InternalUnifyOptions,
-  NormalizationRule,
   NormalizationRules,
   ReferenceHandler,
-  UnifyContext,
-  UnifyFunction,
 } from '../types'
-import { CrawlPrefixRules } from '@netcracker/qubership-apihub-json-crawl'
 import {
   OpenApiSpecVersion,
-  SPEC_TYPE_JSON_SCHEMA_04,
-  SPEC_TYPE_JSON_SCHEMA_07,
   SPEC_TYPE_OPEN_API_30,
   SPEC_TYPE_OPEN_API_31,
 } from '../spec-type'
 import * as resolvers from '../resolvers'
 import {
-  JSON_SCHEMA_NODE_TYPE_ARRAY,
-  JSON_SCHEMA_NODE_TYPE_BOOLEAN,
-  JSON_SCHEMA_NODE_TYPE_INTEGER,
-  JSON_SCHEMA_NODE_TYPE_NUMBER,
-  JSON_SCHEMA_NODE_TYPE_OBJECT,
-  JSON_SCHEMA_NODE_TYPE_STRING,
-  JSON_SCHEMA_PROPERTY_DEPRECATED,
-  JSON_SCHEMA_PROPERTY_ITEMS,
-  JSON_SCHEMA_PROPERTY_NULLABLE,
-  JSON_SCHEMA_PROPERTY_PATTERN_PROPERTIES,
-  JSON_SCHEMA_PROPERTY_READ_ONLY,
-  JSON_SCHEMA_PROPERTY_WRITE_ONLY,
-  JsonSchemaNodeType,
-} from './jsonschema.const'
-import {
-  deepEqualsWithEmptySchema,
-  JSON_SCHEMA_DEFAULTS,
-  JSON_SCHEMA_DEFAULTS_UNIFY_FUNCTION,
-  JSON_SCHEMA_REPLACES,
-  JSON_SCHEMA_REPLACES_UNIFY_FUNCTION,
-  jsonSchemaRules,
-} from './jsonschema'
-import { concatArrays, insertIntoArrayByInstruction, replaceValue } from '../utils'
-import {
-  checkContains,
   checkType,
   TYPE_ARRAY,
   TYPE_BOOLEAN,
@@ -50,13 +18,9 @@ import {
   TYPE_OBJECT,
   TYPE_STRING,
 } from '../validate/checker'
-import { DefaultValueMapping, JsonPrimitiveValue, valueDefaults } from '../unifies/defaults'
-import { jsonSchemaTypeInfer, jsonSchemaTypeInferWithRestriction } from '../unifies/type'
+import { DefaultValueMapping, valueDefaults } from '../unifies/defaults'
 import { EMPTY_MARKER, ReplaceMapping, TO_EMPTY_ARRAY_MAPPING, TO_EMPTY_OBJECT_MAPPING, valueReplaces } from '../unifies/replaces'
 import {
-  OPEN_API_JSON_SCHEMA_PROPERTY_ATTRIBUTE,
-  OPEN_API_JSON_SCHEMA_PROPERTY_WRAPPED,
-  OPEN_API_JSON_SCHEMA_PROPERTY_XML,
   OPEN_API_PROPERTY_ALLOW_EMPTY_VALUE,
   OPEN_API_PROPERTY_ALLOW_RESERVED,
   OPEN_API_PROPERTY_COMPONENTS,
@@ -86,47 +50,14 @@ import {
   nonEmptyString,
 } from '../deprecated-item-description'
 import { OPEN_API_DEPRECATION_RESOLVER } from './openapi.deprecated'
+
 import {
   notAllowedReferenceHandler,
   referenceObjectResolver,
   ReferenceObjectRuleConfig,
 } from '../references/ref-resolver'
-
-const OPEN_API_30_JSON_SCHEMA_NODE_TYPES = [
-  JSON_SCHEMA_NODE_TYPE_BOOLEAN,
-  JSON_SCHEMA_NODE_TYPE_STRING,
-  JSON_SCHEMA_NODE_TYPE_NUMBER,
-  JSON_SCHEMA_NODE_TYPE_INTEGER,
-  JSON_SCHEMA_NODE_TYPE_OBJECT,
-  JSON_SCHEMA_NODE_TYPE_ARRAY,
-] satisfies JsonSchemaNodeType[]
-
-
-const OPEN_API_30_JSON_SCHEMA_DEFAULTS: DefaultValueMapping = {
-  ...JSON_SCHEMA_DEFAULTS[SPEC_TYPE_JSON_SCHEMA_04],
-  [JSON_SCHEMA_PROPERTY_NULLABLE]: false,
-  [JSON_SCHEMA_PROPERTY_READ_ONLY]: false,
-  [JSON_SCHEMA_PROPERTY_WRITE_ONLY]: false,
-  [JSON_SCHEMA_PROPERTY_DEPRECATED]: false,
-  [JSON_SCHEMA_PROPERTY_ITEMS]: EMPTY_MARKER,
-  [OPEN_API_JSON_SCHEMA_PROPERTY_XML]: EMPTY_MARKER,
-}
-delete OPEN_API_30_JSON_SCHEMA_DEFAULTS[JSON_SCHEMA_PROPERTY_PATTERN_PROPERTIES]
-
-const OPEN_API_30_JSON_SCHEMA_REPLACES: Record<string, ReplaceMapping> = {
-  ...JSON_SCHEMA_REPLACES[SPEC_TYPE_JSON_SCHEMA_04],
-  [JSON_SCHEMA_PROPERTY_ITEMS]: {
-    mapping: new Map([
-      [EMPTY_MARKER, {
-        value: (origins, opts) => opts.syntheticMetaDefinitions.emptyJsonSchema(origins),
-        reverseMatcher: deepEqualsWithEmptySchema,
-      }],
-    ]),
-  },
-  [OPEN_API_JSON_SCHEMA_PROPERTY_XML]: TO_EMPTY_OBJECT_MAPPING,
-}
-
-delete OPEN_API_30_JSON_SCHEMA_REPLACES[JSON_SCHEMA_PROPERTY_PATTERN_PROPERTIES]
+import { openApiJsonSchemaRules } from './openapi.jsonschema'
+import { openApiExternalDocsRules, openApiSpecificationExtensionRules } from './openapi.jsonschema.common'
 
 const OPEN_API_OPERATION_DEFAULTS: DefaultValueMapping = {
   [OPEN_API_PROPERTY_PARAMETERS]: EMPTY_MARKER,
@@ -156,7 +87,7 @@ const OPEN_API_ENCODING_REPLACES: Record<string, ReplaceMapping> = {
   [OPEN_API_PROPERTY_HEADERS]: TO_EMPTY_OBJECT_MAPPING,
 }
 
-const getOperationParameterStyleDefault = (parameter: Record<string, any>): string | undefined => {
+const getOperationParameterStyleDefault = (parameter: Record<string, unknown>): string | undefined => {
   const inValue = parameter.in
 
   switch (inValue) {
@@ -167,13 +98,6 @@ const getOperationParameterStyleDefault = (parameter: Record<string, any>): stri
     case 'header':
       return 'simple'
   }
-}
-
-const getXmlWrappedDefault = (jso: Record<string, any>, ctx: UnifyContext<InternalUnifyOptions>): JsonPrimitiveValue | undefined => {
-  if (ctx.parentValue && typeof ctx.parentValue === 'object' && 'type' in ctx.parentValue && ctx.parentValue.type === JSON_SCHEMA_NODE_TYPE_ARRAY) {
-    return false
-  }
-  return undefined
 }
 
 const OPEN_API_PARAMETER_DEFAULTS: DefaultValueMapping = {
@@ -211,11 +135,6 @@ const OPEN_API_REQUEST_BODY_DEFAULTS: DefaultValueMapping = {
   [OPEN_API_PROPERTY_REQUIRED]: false,
 }
 
-const OPEN_API_XML_DEFAULTS: DefaultValueMapping = {
-  [OPEN_API_JSON_SCHEMA_PROPERTY_WRAPPED]: getXmlWrappedDefault,
-  [OPEN_API_JSON_SCHEMA_PROPERTY_ATTRIBUTE]: false,
-}
-
 const OPEN_API_ROOT_DEFAULTS: DefaultValueMapping = {
   [OPEN_API_PROPERTY_PATHS]: EMPTY_MARKER,
   [OPEN_API_PROPERTY_COMPONENTS]: EMPTY_MARKER,
@@ -248,20 +167,7 @@ const OPEN_API_COMPONENTS_REPLACES: Record<string, ReplaceMapping> = {
   [OPEN_API_PROPERTY_EXAMPLES]: TO_EMPTY_OBJECT_MAPPING,
 }
 
-// extracted to facilitate type checking
-const _openApiSpecificationExtensionPrefixRules: CrawlPrefixRules<NormalizationRule> = {
-  'x-': {
-    isExtension: true,
-    validate: checkType(...TYPE_JSON_ANY),
-    merge: resolvers.last,
-    '/*': { validate: checkType(...TYPE_JSON_ANY) },
-    '/**': { validate: checkType(...TYPE_JSON_ANY) },
-  },
-}
 
-const openApiSpecificationExtensionRules: NormalizationRules = {
-  '/^': _openApiSpecificationExtensionPrefixRules,
-}
 
 export function referenceObjectRuleFunction({
   version,
@@ -275,16 +181,6 @@ export function referenceObjectRuleFunction({
     default:
       return notAllowedReferenceHandler
   }
-}
-
-const openApiExternalDocsRules: NormalizationRules = {
-  '/externalDocs': {
-    validate: checkType(TYPE_OBJECT),
-    merge: resolvers.last,
-    '/description': { validate: checkType(TYPE_STRING) },
-    '/url': { validate: checkType(TYPE_STRING) },
-    ...openApiSpecificationExtensionRules,
-  },
 }
 
 const openApiExampleRules: NormalizationRules = {
@@ -376,116 +272,6 @@ const openApiLinksRules = (version: OpenApiSpecVersion): NormalizationRules => (
   },
   validate: checkType(TYPE_OBJECT),
 })
-
-const openApiJsonSchemaExtensionRules = (): NormalizationRules => ({
-  '/xml': {
-    validate: checkType(...TYPE_JSON_ANY),
-    merge: resolvers.mergeObjects,
-    unify: [
-      valueDefaults(OPEN_API_XML_DEFAULTS),
-    ],
-    '/*': { validate: checkType(...TYPE_JSON_ANY) },
-    '/**': { validate: checkType(...TYPE_JSON_ANY) },
-    ...openApiSpecificationExtensionRules,
-  },
-  '/discriminator': {
-    validate: checkType(TYPE_OBJECT),
-    merge: resolvers.last, //todo need check
-    '/propertyName': {
-      validate: checkType(TYPE_STRING),
-      merge: resolvers.last, //todo need check
-    },
-    '/mapping': {
-      validate: checkType(TYPE_OBJECT),
-      merge: resolvers.last, //todo need check
-      '/*': {
-        validate: checkType(TYPE_STRING),
-        merge: resolvers.last, //todo need check
-      },
-    },
-  },
-  ...openApiExternalDocsRules,
-  ...openApiSpecificationExtensionRules,
-})
-
-const customFor30JsonSchemaRulesFactory = (): NormalizationRules => {
-  const baseJsonSchemaVersion = SPEC_TYPE_JSON_SCHEMA_04
-  const core = jsonSchemaRules(baseJsonSchemaVersion, () => customFor30JsonSchemaRules)
-  const extension = openApiJsonSchemaExtensionRules()
-  return ({
-    ...core,
-    ...extension,
-    '/type': {
-      validate: [checkType(TYPE_STRING), checkContains(...OPEN_API_30_JSON_SCHEMA_NODE_TYPES)],
-      merge: resolvers.mergeTypes,
-      hashStrategy: BEFORE_SECOND_DATA_LEVEL,
-    },
-    '/items': () => ({
-      ...customFor30JsonSchemaRules,
-      merge: resolvers.itemsMergeResolver,
-      hashStrategy: CURRENT_DATA_LEVEL,
-      newDataLayer: true,
-    }),
-    '/additionalItems': {
-      validate: () => false,
-      hashStrategy: BEFORE_SECOND_DATA_LEVEL,
-      newDataLayer: true,
-    },
-    '/patternProperties': {
-      validate: () => false,
-      hashStrategy: BEFORE_SECOND_DATA_LEVEL,
-      newDataLayer: true,
-    },
-    '/readOnly': {
-      validate: checkType(TYPE_BOOLEAN),
-      merge: resolvers.or,
-      hashStrategy: CURRENT_DATA_LEVEL,
-    },
-    '/writeOnly': {
-      validate: checkType(TYPE_BOOLEAN),
-      merge: resolvers.or,
-      hashStrategy: CURRENT_DATA_LEVEL,
-    },
-    '/deprecated': {
-      validate: checkType(TYPE_BOOLEAN),
-      merge: resolvers.or,
-      hashStrategy: CURRENT_DATA_LEVEL,
-    },
-    '/nullable': {
-      validate: checkType(TYPE_BOOLEAN),
-      merge: resolvers.or, //todo need check
-      hashStrategy: CURRENT_DATA_LEVEL,
-    },
-    '/example': {
-      validate: checkType(...TYPE_JSON_ANY),
-      merge: resolvers.last,
-      '/**': { validate: checkType(...TYPE_JSON_ANY) },
-      hashStrategy: CURRENT_DATA_LEVEL,
-    },
-    unify: insertIntoArrayByInstruction(
-      concatArrays<UnifyFunction>(core.unify, extension.unify),
-      replaceValue(JSON_SCHEMA_DEFAULTS_UNIFY_FUNCTION[baseJsonSchemaVersion], valueDefaults(OPEN_API_30_JSON_SCHEMA_DEFAULTS)),
-      replaceValue(JSON_SCHEMA_REPLACES_UNIFY_FUNCTION[baseJsonSchemaVersion], valueReplaces(OPEN_API_30_JSON_SCHEMA_REPLACES)),
-      replaceValue(jsonSchemaTypeInfer, jsonSchemaTypeInferWithRestriction(OPEN_API_30_JSON_SCHEMA_NODE_TYPES)),
-    ),
-  })
-}
-const customFor30JsonSchemaRules: NormalizationRules = customFor30JsonSchemaRulesFactory()
-
-const customFor31JsonSchemaRulesFactory = (): NormalizationRules => ({
-  ...jsonSchemaRules(SPEC_TYPE_JSON_SCHEMA_07, () => customFor31JsonSchemaRules),
-  ...openApiJsonSchemaExtensionRules(),
-})
-const customFor31JsonSchemaRules = customFor31JsonSchemaRulesFactory()
-
-const openApiJsonSchemaRules = (version: OpenApiSpecVersion): NormalizationRules => {
-  switch (version) {
-    case SPEC_TYPE_OPEN_API_30:
-      return customFor30JsonSchemaRules
-    case SPEC_TYPE_OPEN_API_31:
-      return customFor31JsonSchemaRules
-  }
-}
 
 const openApiMediaTypesRules = (version: OpenApiSpecVersion): NormalizationRules => ({
   '/*': {
