@@ -16,7 +16,7 @@ import { DefaultValueMapping, valueDefaults } from '../unifies/defaults'
 import { concatArrays, insertIntoArrayByInstruction } from '../utils'
 import { jsonSchemaRules } from './jsonschema'
 import { JSON_SCHEMA_PROPERTY_DEPRECATED } from './jsonschema.const'
-import { jsonSchemaReferenceResolver } from '../references/ref-resolver'
+import { jsonSchemaReferenceResolver, referenceObjectResolver } from '../references/ref-resolver'
 import {
   externalDocumentationRules,
   specificationExtensionsRules,
@@ -156,6 +156,7 @@ function multiFormatSchemaRules(schemaFormat: string): NormalizationRules {
     },
     '/schema': getSchemaRulesByFormat(schemaFormat),
     ...specificationExtensionsRules,
+    referenceHandler: referenceObjectResolver(),
     validate: checkType(TYPE_OBJECT),
     unify: valueDefaults(MULTI_FORMAT_SCHEMA_DEFAULTS),
   }

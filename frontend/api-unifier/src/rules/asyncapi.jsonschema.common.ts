@@ -7,6 +7,7 @@ import {
   TYPE_OBJECT,
   TYPE_STRING,
 } from '../validate/checker'
+import { referenceObjectResolver } from '../references/ref-resolver'
 
 // Specification Extension Prefix Rules (x-* properties)
 // Shared across AsyncAPI and can be reused by other specifications
@@ -38,6 +39,7 @@ export const externalDocumentationRules: NormalizationRules = {
   '/description': { validate: checkType(TYPE_STRING) },
   '/url': { validate: checkType(TYPE_STRING) },
   ...specificationExtensionsRules,
+  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   merge: resolvers.last,  // used only for JSON schema
 }

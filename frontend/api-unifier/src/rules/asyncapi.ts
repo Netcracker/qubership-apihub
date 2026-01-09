@@ -65,6 +65,7 @@ const tagRules: NormalizationRules = {
   '/description': { validate: checkType(TYPE_STRING) },
   '/externalDocs': externalDocumentationRules,
   ...specificationExtensionsRules,
+  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_TAG_DEFAULTS),
@@ -127,6 +128,7 @@ const securitySchemeRules: NormalizationRules = {
     validate: checkType(TYPE_ARRAY),
   },
   ...specificationExtensionsRules,
+  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_SECURITY_SCHEME_DEFAULTS),
@@ -147,6 +149,7 @@ const serverVariableRules: NormalizationRules = {
     validate: checkType(TYPE_ARRAY),
   },
   ...specificationExtensionsRules,
+  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_SERVER_VARIABLE_DEFAULTS),
@@ -158,6 +161,7 @@ const serverBindingsRules: NormalizationRules = {
   ...specificationExtensionsRules,
   '/*': { validate: checkType(...TYPE_JSON_ANY) },
   '/**': { validate: checkType(...TYPE_JSON_ANY) },
+  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
 }
 
@@ -180,6 +184,7 @@ const serverRules: NormalizationRules = {
   '/tags': tagsRules,
   '/externalDocs': externalDocumentationRules,
   '/bindings': serverBindingsRules,
+  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_SERVER_DEFAULTS),
@@ -191,6 +196,7 @@ const correlationIdRules: NormalizationRules = {
   '/description': { validate: checkType(TYPE_STRING) },
   '/location': { validate: checkType(TYPE_STRING) },
   ...specificationExtensionsRules,
+  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
 }
 
@@ -198,6 +204,7 @@ const messageBindingsRules: NormalizationRules = {
   ...specificationExtensionsRules,
   '/*': { validate: checkType(...TYPE_JSON_ANY) },
   '/**': { validate: checkType(...TYPE_JSON_ANY) },
+  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
 }
 
@@ -278,6 +285,7 @@ const parameterRules: NormalizationRules = {
   },
   '/location': { validate: checkType(TYPE_STRING) },
   ...specificationExtensionsRules,
+  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_PARAMETER_DEFAULTS),
@@ -289,6 +297,7 @@ const channelBindingsRules: NormalizationRules = {
   ...specificationExtensionsRules,
   '/*': { validate: checkType(...TYPE_JSON_ANY) },
   '/**': { validate: checkType(...TYPE_JSON_ANY) },
+  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
 }
 
@@ -304,13 +313,8 @@ const channelRules: NormalizationRules = {
   '/title': { validate: checkType(TYPE_STRING) },
   '/summary': { validate: checkType(TYPE_STRING) },
   '/description': { validate: checkType(TYPE_STRING) },
-  '/servers': { //TODO: think how to enforce [Reference Object] here as per specification
-    '/*': {
-      validate: checkType(TYPE_OBJECT),
-      referenceHandler: referenceObjectResolver(),
-      '/*': { validate: checkType(...TYPE_JSON_ANY) },
-      '/**': { validate: checkType(...TYPE_JSON_ANY) },
-    },
+  '/servers': {
+    '/*': serverRules, //TODO: think how to enforce [Reference Object] here as per specification
     validate: checkType(TYPE_ARRAY),
   },
   '/parameters': {
@@ -329,32 +333,23 @@ const channelRules: NormalizationRules = {
   ],
 }
 
-
 const operationReplyAddressRules: NormalizationRules = {
   '/description': { validate: checkType(TYPE_STRING) },
   '/location': { validate: checkType(TYPE_STRING) },
   ...specificationExtensionsRules,
+  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
 }
 
 const operationReplyRules: NormalizationRules = {
   '/address': operationReplyAddressRules,
-  '/channel': { //TODO: think how to enforce Reference Object here as per specification
-    validate: checkType(TYPE_OBJECT),
-    referenceHandler: referenceObjectResolver(),
-    '/*': { validate: checkType(...TYPE_JSON_ANY) },
-    '/**': { validate: checkType(...TYPE_JSON_ANY) },
-  },
-  '/messages': {  //TODO: think how to enforce [Reference Object] here as per specification
-    '/*': {
-      validate: checkType(TYPE_OBJECT),
-      referenceHandler: referenceObjectResolver(),
-      '/*': { validate: checkType(...TYPE_JSON_ANY) },
-      '/**': { validate: checkType(...TYPE_JSON_ANY) },
-    },
+  '/channel': channelRules, //TODO: think how to enforce Reference Object here as per specification
+  '/messages': {
+    '/*': messageRules, //TODO: think how to enforce [Reference Object] here as per specification
     validate: checkType(TYPE_ARRAY),
   },
   ...specificationExtensionsRules,
+  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_OPERATION_REPLY_DEFAULTS),
@@ -366,6 +361,7 @@ const operationBindingsRules: NormalizationRules = {
   ...specificationExtensionsRules,
   '/*': { validate: checkType(...TYPE_JSON_ANY) },
   '/**': { validate: checkType(...TYPE_JSON_ANY) },
+  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
 }
 
@@ -400,23 +396,13 @@ const operationRules: NormalizationRules = {
     validate: [checkType(TYPE_STRING), checkContains(ASYNCAPI_ACTION_SEND, ASYNCAPI_ACTION_RECEIVE)],
     hashStrategy: CURRENT_DATA_LEVEL,
   },
-  '/channel': { //TODO: think how to enforce Reference Object here as per specification
-    validate: checkType(TYPE_OBJECT),
-    referenceHandler: referenceObjectResolver(),
-    '/*': { validate: checkType(...TYPE_JSON_ANY) },
-    '/**': { validate: checkType(...TYPE_JSON_ANY) },
-  },
+  '/channel': channelRules, //TODO: think how to enforce Reference Object here as per specification
   '/traits': {
     '/*': operationTraitRules,
     validate: checkType(TYPE_ARRAY),
   },
   '/messages': {
-    '/*': { //TODO: think how to enforce [Reference Object] here as per specification
-      validate: checkType(TYPE_OBJECT),
-      referenceHandler: referenceObjectResolver(),
-      '/*': { validate: checkType(...TYPE_JSON_ANY) },
-      '/**': { validate: checkType(...TYPE_JSON_ANY) },
-    },
+    '/*': messageRules, //TODO: think how to enforce [Reference Object] here as per specification
     validate: checkType(TYPE_ARRAY),
   },
   unify: [
