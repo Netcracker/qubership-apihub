@@ -37,7 +37,11 @@ import { getDefaultApiType } from '@apihub/utils/operation-types'
 import type { SidebarMenu } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
 import { NavigationMenu } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  API_TYPE_ASYNCAPI,
+  API_TYPE_GRAPHQL,
+  API_TYPE_REST,
+} from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
@@ -69,6 +73,8 @@ import {
 } from '../../NavigationProvider'
 import type {
   ApiQualityTabTooltip} from './VersionPage/ApiQualityValidationSummaryProvider'
+import { NotLintedApiTypes,
+} from './VersionPage/ApiQualityValidationSummaryProvider'
 import {
   useApiQualityLinterEnabled,
   useApiQualityTabTooltip,
@@ -103,16 +109,17 @@ export const VersionNavigationMenu: FC<VersionNavigationMenuProps> = memo<Versio
 
   const [currentMenuItem] = useActiveTabs()
   const sidebarMenuItems = useMemo(
-    () => getAvailableSidebarMenuItems(
-      previousVersion,
-      defaultApiType,
-      productionMode,
-      {
-        linterEnabled: linterEnabled,
-        tooltip: apiQualityTabTooltip,
-        tabDisabled: !!apiQualityTabTooltip,
-      },
-    ).filter(({ id }) => menuItems.includes(id)),
+    () =>
+      getAvailableSidebarMenuItems(
+        previousVersion,
+        defaultApiType,
+        productionMode,
+        {
+          linterEnabled: linterEnabled,
+          tooltip: apiQualityTabTooltip,
+          tabDisabled: !NotLintedApiTypes(defaultApiType),
+        },
+      ).filter(({ id }) => menuItems.includes(id)),
     [defaultApiType, menuItems, previousVersion, productionMode, linterEnabled, apiQualityTabTooltip],
   )
   const sidebarServiceMenuItems = useMemo(

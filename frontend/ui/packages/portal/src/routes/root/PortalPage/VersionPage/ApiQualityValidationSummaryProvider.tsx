@@ -1,6 +1,7 @@
 import { type ValidationSummary } from '@apihub/entities/api-quality/package-version-validation-summary'
 import { Link } from '@mui/material'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_ASYNCAPI } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { API_TYPE_GRAPHQL } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { FC, PropsWithChildren, ReactNode } from 'react'
 import { createContext, memo, useContext } from 'react'
@@ -43,13 +44,17 @@ export function useApiQualityClientValidationStatus(): [ClientValidationStatus |
   ]
 }
 
-const NOT_LINTED_API_TYPES: ApiType[] = [API_TYPE_GRAPHQL]
+const NOT_LINTED_API_TYPES: ApiType[] = [API_TYPE_GRAPHQL, API_TYPE_ASYNCAPI]
+
+export function NotLintedApiTypes(apiType?: ApiType): boolean {
+  return !apiType || !NOT_LINTED_API_TYPES.some(notLintedApiType => notLintedApiType === apiType)
+}
 
 export function useApiQualityLinterEnabled(apiType?: ApiType): boolean {
   const [kind] = usePackageKind()
   const linterEnabled = (
     useContext(ApiQualityLinterEnabledContext) &&
-    (!apiType || !NOT_LINTED_API_TYPES.some(notLintedApiType => notLintedApiType === apiType)) &&
+    NotLintedApiTypes(apiType) &&
     kind === PACKAGE_KIND
   )
   return linterEnabled
