@@ -29,7 +29,7 @@ import (
 )
 
 type DiscoveryService interface {
-	StartDiscovery(ctx context.Context, agentId string, namespace string, workspaceId string) error
+	StartDiscovery(ctx context.Context, agentId string, namespace string, workspaceId string, failOnError bool) error
 	GetDiscoveredServices(ctx context.Context, agentId string, namespace string, workspaceId string) (*view.ServiceListResponse, error)
 }
 
@@ -51,7 +51,7 @@ type discoveryServiceImpl struct {
 	permissionService  PermissionService
 }
 
-func (d discoveryServiceImpl) StartDiscovery(ctx context.Context, agentId string, namespace string, workspaceId string) error {
+func (d discoveryServiceImpl) StartDiscovery(ctx context.Context, agentId string, namespace string, workspaceId string, failOnError bool) error {
 	agent, err := d.agentService.GetAgent(agentId)
 	if err != nil {
 		return exception.CustomError{
@@ -126,7 +126,7 @@ func (d discoveryServiceImpl) StartDiscovery(ctx context.Context, agentId string
 		}
 	}
 
-	return d.agentClient.StartDiscovery(ctx, namespace, workspaceId, agent.AgentUrl)
+	return d.agentClient.StartDiscovery(ctx, namespace, workspaceId, agent.AgentUrl, failOnError)
 }
 
 func (d discoveryServiceImpl) copyWorkspaceServicesStructure(ctx context.Context, srcWorkspaceId string, dstWorkspaceId string, serviceNames []string, defaultRole string) error {

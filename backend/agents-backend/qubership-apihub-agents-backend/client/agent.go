@@ -33,7 +33,7 @@ import (
 type AgentClient interface {
 	GetNamespaces(ctx context.Context, agentUrl string) (*view.AgentNamespaces, error)
 	ListServiceNames(ctx context.Context, agentUrl string, namespace string) (*view.ServiceNamesResponse, error)
-	StartDiscovery(ctx context.Context, namespace string, workspaceId string, agentUrl string) error
+	StartDiscovery(ctx context.Context, namespace string, workspaceId string, agentUrl string, failOnError bool) error
 	ListServices(ctx context.Context, namespace string, workspaceId string, agentUrl string) (*view.ServiceListResponse, error)
 	GetServiceSpecification(ctx context.Context, namespace string, workspaceId string, serviceId string, fileId string, agentUrl string) ([]byte, error)
 	SendEmptyServiceRequest(namespace string, serviceId string, agentUrl string, requestMethod string, requestPath string) (int, error)
@@ -106,9 +106,9 @@ func (a agentClientImpl) ListServiceNames(ctx context.Context, agentUrl string, 
 	return &serviceNames, nil
 }
 
-func (a agentClientImpl) StartDiscovery(ctx context.Context, namespace string, workspaceId string, agentUrl string) error {
+func (a agentClientImpl) StartDiscovery(ctx context.Context, namespace string, workspaceId string, agentUrl string, failOnError bool) error {
 	req := a.makeRequest(ctx)
-	resp, err := req.Post(fmt.Sprintf("%s/api/v2/namespaces/%s/workspaces/%s/discover", agentUrl, namespace, workspaceId))
+	resp, err := req.Post(fmt.Sprintf("%s/api/v2/namespaces/%s/workspaces/%s/discover?failOnError=%v", agentUrl, namespace, workspaceId, failOnError))
 	if err != nil {
 		return fmt.Errorf("failed to start discovery for namespace - %s. Error - %s", namespace, err.Error())
 	}

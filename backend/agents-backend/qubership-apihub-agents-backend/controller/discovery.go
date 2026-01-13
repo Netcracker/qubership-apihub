@@ -41,7 +41,12 @@ func (d discoveryControllerImpl) StartDiscovery(w http.ResponseWriter, r *http.R
 	agentId := getStringParam(r, "agentId")
 	workspaceId := getStringParam(r, "workspaceId")
 
-	err := d.discoveryService.StartDiscovery(secctx.MakeUserContext(r), agentId, namespace, workspaceId)
+	failOnError, queryParamErr := getFailOnErrorQueryParam(r)
+	if queryParamErr != nil {
+		respondWithError(w, "failed to parse failOnError query param", queryParamErr)
+	}
+
+	err := d.discoveryService.StartDiscovery(secctx.MakeUserContext(r), agentId, namespace, workspaceId, failOnError)
 	if err != nil {
 		respondWithError(w, "failed to start discovery process", err)
 		return

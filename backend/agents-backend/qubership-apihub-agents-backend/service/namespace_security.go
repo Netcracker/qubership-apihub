@@ -140,7 +140,7 @@ func (n *namespaceSecurityServiceImpl) StartAuthSecurityCheckProcess(ctx context
 
 func (n *namespaceSecurityServiceImpl) startAuthSecurityCheck(securityCheck entity.NamespaceSecurityCheckEntity, agentUrl string) {
 	systemCtx := secctx.MakeSysadminContext(context.Background())
-	err := n.agentClient.StartDiscovery(systemCtx, securityCheck.Namespace, securityCheck.WorkspaceId, agentUrl)
+	err := n.agentClient.StartDiscovery(systemCtx, securityCheck.Namespace, securityCheck.WorkspaceId, agentUrl, false)
 	if err != nil {
 		n.updateProcessStatus(&securityCheck, view.StatusError, fmt.Sprintf("failed to start service discovery: %v", err.Error()))
 		return
