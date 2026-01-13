@@ -15364,8 +15364,8 @@
                                             "    pm.expect(title).to.include('Inline Semi-Breaking change by deprecated mark'),\r",
                                             "    pm.expect(title).to.include('Semi-Breaking change in reusable schema \\\"User\\\" by deprecated mark'),\r",
                                             "    pm.expect(title).to.include('Semi-Breaking change in reusable schema \\\"Pet\\\" by x-api-kind tag'),\r",
-                                            "    pm.expect(title).to.include('Laconiccactus0p Iot 1 0 0 Devices Get'),\r",
-                                            "    pm.expect(title).to.include('Laconiccactus0p Iot 1 0 0 Devices Post')\r",
+                                            "    pm.expect(title).to.include('LACONICCACTUS0P IOT 1.0.0 Devices Get'),\r",
+                                            "    pm.expect(title).to.include('LACONICCACTUS0P IOT 1.0.0 Devices Post')\r",
                                             "});\r",
                                             "\r",
                                             "pm.environment.set(\"operation_id_1\", data.operations[0].operationId)"
