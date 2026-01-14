@@ -6,16 +6,16 @@
     "packages/*"
   ],
   "scripts": {
+    "generate-compatibility-suite": "lerna run generate-stories && lerna run generate-tests",
     "build": "lerna run build",
     "build:showcase": "lerna run build:showcase",
     "test": "lerna run test",
     "screenshot-test:ci": "lerna run screenshot-test:ci",
     "screenshot-test:docker": "lerna run screenshot-test:docker",
-    "screenshot-test:regenerate-snapshots:ci": "lerna run screenshot-test:regenerate-snapshots:ci",
-    "screenshot-test:regenerate-snapshots:docker": "lerna run screenshot-test:regenerate-snapshots:docker",
+    "regenerate-screenshots:ci": "lerna run regenerate-screenshots:ci",
+    "regenerate-screenshots:docker": "lerna run regenerate-screenshots:docker",
     "development:link": "yarn link --workspace @netcracker/qubership-apihub-api-doc-viewer && yarn link @netcracker/qubership-apihub-graphapi --save-dev && yarn link @netcracker/qubership-apihub-api-diff --save && yarn link @netcracker/qubership-apihub-api-unifier --save-dev && yarn link @netcracker/qubership-apihub-json-crawl --save-dev",
     "development:unlink": "yarn unlink @netcracker/qubership-apihub-graphapi --no-save && yarn unlink @netcracker/qubership-apihub-api-diff --no-save && yarn unlink @netcracker/qubership-apihub-api-unifier --no-save && yarn unlink @netcracker/qubership-apihub-json-crawl --no-save",
-    "postinstall": "lerna run generate-stories && lerna run generate-tests",
     "lint:check": "eslint -c .eslintrc.json . --ext .js,.cjs,.ts,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
     "lint:fix": "npm run lint:check -- --fix",
     "update-lock-file": "update-lock-file @netcracker"
