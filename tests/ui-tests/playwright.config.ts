@@ -69,7 +69,6 @@ export default defineConfig<Fixtures>({
       testDir: './src/tests/portal',
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chromium',
         launchOptions: {
           // slowMo: 150,
         },
@@ -129,7 +128,6 @@ export default defineConfig<Fixtures>({
       timeout: 130_000,
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chromium',
         actionTimeout: 120_000,
         trace: 'off',
         screenshot: 'off',
@@ -142,7 +140,6 @@ export default defineConfig<Fixtures>({
       timeout: 190_000,
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chromium',
         actionTimeout: 180_000,
         trace: 'off',
         screenshot: 'off',
