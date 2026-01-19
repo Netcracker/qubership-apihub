@@ -429,6 +429,7 @@ type OperationBasicSearchReq struct {
 	Offset      int
 	TextFilter  string
 	ApiAudience string
+	IncludeData bool
 }
 
 type VersionChangesReq struct {

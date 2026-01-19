@@ -30,7 +30,7 @@ import (
 type OperationRepository interface {
 	GetOperationsByIds(packageId string, version string, revision int, operationIds []string) ([]entity.OperationEntity, error)
 	GetOperations(packageId string, version string, revision int, operationType string, skipRefs bool, searchReq view.OperationListReq) ([]entity.OperationRichEntity, error)
-	GetOperationById(packageId string, version string, revision int, operationType string, operationId string) (*entity.OperationRichEntity, error)
+	GetOperationById(packageId string, version string, revision int, operationType string, operationId string, includeData bool) (*entity.OperationRichEntity, error)
 	GetOperationsTags(searchQuery entity.OperationTagsSearchQueryEntity, skipRefs bool) ([]string, error)
 	GetOperationChanges(comparisonId string, operationId string, severities []string) (*entity.OperationComparisonEntity, error)
 	GetOperationChangesSummary(comparisonId string, operationId string) (*entity.OperationComparisonSummaryEntity, error)
@@ -87,19 +87,23 @@ func (o operationRepositoryImpl) GetOperationsByIds(packageId string, version st
 	return result, nil
 }
 
-func (o operationRepositoryImpl) GetOperationById(packageId string, version string, revision int, operationType string, operationId string) (*entity.OperationRichEntity, error) {
+func (o operationRepositoryImpl) GetOperationById(packageId string, version string, revision int, operationType string, operationId string, includeData bool) (*entity.OperationRichEntity, error) {
 	result := new(entity.OperationRichEntity)
-	err := o.cp.GetConnection().Model(result).
+	query := o.cp.GetConnection().Model(result).
 		ColumnExpr("operation.*").
 		Where("package_id = ?", packageId).
 		Where("version = ?", version).
 		Where("revision = ?", revision).
 		Where("type = ?", operationType).
-		Where("operation_id = ?", operationId).
-		Join("LEFT JOIN operation_data as op_data").
-		JoinOn("operation.data_hash = op_data.data_hash").
-		ColumnExpr("op_data.data").
-		First()
+		Where("operation_id = ?", operationId)
+	
+	if includeData {
+		query.Join("LEFT JOIN operation_data as op_data").
+			JoinOn("operation.data_hash = op_data.data_hash").
+			ColumnExpr("op_data.data")
+	}
+	
+	err := query.First()
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil

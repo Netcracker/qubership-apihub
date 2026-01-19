@@ -363,11 +363,27 @@ func (o operationControllerImpl) GetOperation(w http.ResponseWriter, r *http.Req
 
 	o.monitoringService.AddOperationOpenCount(packageId, versionName, operationId)
 
+	includeData := true
+	if r.URL.Query().Get("includeData") != "" {
+		includeData, err = strconv.ParseBool(r.URL.Query().Get("includeData"))
+		if err != nil {
+			utils.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": "includeData", "type": "boolean"},
+				Debug:   err.Error(),
+			})
+			return
+		}
+	}
+
 	basicSearchFilter := view.OperationBasicSearchReq{
 		PackageId:   packageId,
 		Version:     versionName,
 		ApiType:     apiType,
 		OperationId: operationId,
+		IncludeData:  includeData,
 	}
 
 	operation, err := o.operationService.GetOperation(basicSearchFilter)

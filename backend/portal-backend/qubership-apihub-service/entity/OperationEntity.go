@@ -403,8 +403,9 @@ func MakeDeprecatedOperationView(operationEnt OperationRichEntity, includeDeprec
 }
 
 func MakeSingleOperationView(operationEnt OperationRichEntity) interface{} {
-	data := orderedmap.New()
+	var data *orderedmap.OrderedMap
 	if len(operationEnt.Data) > 0 {
+		data = orderedmap.New()
 		err := json.Unmarshal(operationEnt.Data, &data)
 		if err != nil {
 			log.Errorf("Failed to unmarshal data (dataHash: %v): %v", operationEnt.DataHash, err)

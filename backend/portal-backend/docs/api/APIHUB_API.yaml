@@ -6458,6 +6458,12 @@ paths:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
         - $ref: "#/components/parameters/operationId"
+        - name: includeData
+          in: query
+          description: Include the operation's content data.
+          schema:
+            type: boolean
+            default: true
       responses:
         "200":
           description: Success

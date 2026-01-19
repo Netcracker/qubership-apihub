@@ -284,7 +284,7 @@ func (o operationServiceImpl) GetOperation(searchReq view.OperationBasicSearchRe
 			Params:  map[string]interface{}{"version": searchReq.Version, "packageId": searchReq.PackageId},
 		}
 	}
-	operationEnt, err := o.operationRepository.GetOperationById(searchReq.PackageId, versionEnt.Version, versionEnt.Revision, searchReq.ApiType, searchReq.OperationId)
+	operationEnt, err := o.operationRepository.GetOperationById(searchReq.PackageId, versionEnt.Version, versionEnt.Revision, searchReq.ApiType, searchReq.OperationId, searchReq.IncludeData)
 	if err != nil {
 		return nil, err
 	}
@@ -763,7 +763,7 @@ func (o operationServiceImpl) GetOperationModelUsages(packageId string, version 
 			Params:  map[string]interface{}{"version": version, "packageId": packageId},
 		}
 	}
-	operationEnt, err := o.operationRepository.GetOperationById(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, operationId)
+	operationEnt, err := o.operationRepository.GetOperationById(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, operationId, false)
 	if err != nil {
 		return nil, err
 	}
