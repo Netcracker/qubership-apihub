@@ -1447,119 +1447,28 @@ components:
                                     type: string
                                   url:
                                     type: string
+            version-internal-documents.json:
+              type: object
+              description: List of version internal documents data. Only provided for packages of kind `package`.
+              properties:
+                documents:
+                  description: List of version internal documents
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/InternalDocumentMetadata"
+            comparison-internal-documents.json:
+              type: object
+              description: List of comparison internal documents data. Could be present for packages of kind `package` or `dashboard`.
+              properties:
+                documents:
+                  description: List of comparison internal documents
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/ComparisonInternalDocumentMetadata"
             comparisons.json:
-              type: object
-              properties:
-                comparisons:
-                  type: array
-                  items:
-                    type: object
-                    required:
-                      - operationTypes
-                    properties:
-                      comparisonFileId:
-                        type: string
-                        description: Pointer to the file with changes. Optional, required only if package contains documents. Not required in case of refs only (dashboard).
-                        example: "comparisonFile1.json"
-                      packageId:
-                        description: Package unique string identifier (full alias).
-                        type: string
-                        example: "QS.CloudQSS.CPQ.Q-TMF"
-                      version:
-                        description: Version name for publication.
-                        type: string
-                        example: "2022.3"
-                      revision:
-                        type: number
-                      previousVersion:
-                        description: |
-                          Name of the previous published version.
-                        type: string
-                        example: "2022.2"
-                        default: ""
-                      previousVersionPackageId:
-                        description: Previous release version package id.
-                        type: string
-                        example: "QS.CloudQSS.CPQ.Q-TMF"
-                      previousVersionRevision:
-                        type: number
-                      operationTypes:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            apiType:
-                              type: string
-                            changesSummary:
-                              $ref: "#/components/schemas/ChangeSummary"
-                            numberOfImpactedOperations:
-                              allOf:
-                                - $ref: '#/components/schemas/ChangeSummary'
-                                - type: object
-                                  description: Number of operations impacted by each severity type.
-                            apiAudienceTransitions:
-                                  type: array
-                                  description: Shows transitions of operations' apiAudience value (compared to the previous release version) and number of operations in which this transition occurred. The array contains only records of transitions that actually occurred in operations.
-                                  items:
-                                    type: object
-                                    properties:
-                                      currentAudience:
-                                        type: string
-                                        description: Current apiAudience value (currentAudience must not be equal to previousAudience)
-                                        enum:
-                                          - internal
-                                          - external
-                                          - unknown
-                                      previousAudience:
-                                        type: string
-                                        description: Previous apiAudience value
-                                        enum:
-                                          - internal
-                                          - external
-                                          - unknown
-                                      operationsCount:
-                                        type: number
-                                        description: Number of operations in which the apiAudience was changed from previousAudience to currentAudience
-                            tags:
-                              type: array
-                              items:
-                                type: string
-                              example: ["a", "b"]
-                      fromCache:
-                        description: True if the changes were retrieved from BE (not calculated)
-                        type: boolean
+              $ref: "#/components/schemas/BuildResultComparisons"
             comparisons/{comparisonFileId}:
-              type: object
-              description: List of changes data.
-              properties:
-                operations:
-                  description: Collection of changes depend on apiType.
-                  type: array
-                  items:
-                    type: object
-                    required:
-                      - changes
-                      - changesSummary
-                    properties:
-                      operationId:
-                        description: >-
-                          Operation unique identifier (not the same as operationId tag from the OpenAPI file).\
-                          Parameter is required if operation was added or modified.
-                        type: string
-                        example: get-quoteManagement-v5-quote-quoteId
-                      previousOperationId:
-                        description: >-
-                          Operation unique identifier from previous version (not the same as operationId tag from the OpenAPI file).\
-                          Parameter is required if operation was deleted or modified.
-                        type: string
-                        example: get-quoteManagement-v5-quote-id
-                      changeSummary:
-                        $ref: "#/components/schemas/ChangeSummary"
-                      changes:
-                        description: Collection of changes for each operation.
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/SingleOperationChange"
+              $ref: "#/components/schemas/BuildResultComparisonsData"
             operations.json:
               description: List of operations for publish.
               type: object
@@ -1693,114 +1602,12 @@ components:
                       description: Namespace of Agent's publication.
                       type: string
                       example: "cloudQSS-release2"
+            comparison-internal-documents.json:
+              $ref: "#/components/schemas/BuildResultInternalDocuments"
             comparisons.json:
-              type: object
-              properties:
-                comparisons:
-                  type: array
-                  items:
-                    type: object
-                    required:
-                      - operationTypes
-                    properties:
-                      comparisonFileId:
-                        type: string
-                        description: Pointer to the file with changes. Optional, required only if package contains documents. Not required in case of refs only (dashboard).
-                        example: "comparisonFile1.json"
-                      packageId:
-                        description: Package unique string identifier (full alias).
-                        type: string
-                        example: "QS.CloudQSS.CPQ.Q-TMF"
-                      version:
-                        description: Version name for publication.
-                        type: string
-                        example: "2022.3"
-                      revision:
-                        type: number
-                      previousVersion:
-                        description: |
-                          Name of the previous published version.
-                        type: string
-                        example: "2022.2"
-                        default: ""
-                      previousVersionPackageId:
-                        description: Previous release version package id.
-                        type: string
-                        example: "QS.CloudQSS.CPQ.Q-TMF"
-                      previousVersionRevision:
-                        type: number
-                      operationTypes:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            apiType:
-                              type: string
-                            changesSummary:
-                              $ref: "#/components/schemas/ChangeSummary"
-                            numberOfImpactedOperations:
-                              allOf:
-                                - $ref: '#/components/schemas/ChangeSummary'
-                                - type: object
-                                  description: Number of operations impacted by each severety type.
-                            apiAudienceTransitions:
-                                  type: array
-                                  description: Shows transitions of operations' apiAudience value (compared to the previous release version) and number of operations in which this transition occurred. The array contains only records of transitions that actually occurred in operations.
-                                  items:
-                                    type: object
-                                    properties:
-                                      currentAudience:
-                                        type: string
-                                        description: Current apiAudience value (currentAudience must not be equal to previousAudience)
-                                        enum:
-                                          - internal
-                                          - external
-                                          - unknown
-                                      previousAudience:
-                                        type: string
-                                        description: Previous apiAudience value
-                                        enum:
-                                          - internal
-                                          - external
-                                          - unknown
-                                      operationsCount:
-                                        type: number
-                                        description: Number of operations in which the apiAudience was changed from previousAudience to currentAudience
-                            tags:
-                              type: array
-                              items:
-                                type: string
-                              example: ["a", "b"]
-                      fromCache:
-                        description: True if the changes were retrieved from BE (not calculated)
-                        type: boolean
+              $ref: "#/components/schemas/BuildResultComparisons"
             comparisons/{comparisonFileId}:
-              type: object
-              description: List of changed data.
-              properties:
-                operations:
-                  description: Collection of changes depend on apiType.
-                  type: array
-                  items:
-                    type: object
-                    required:
-                      - operationId
-                      - changes
-                      - changesSummary
-                    properties:
-                      operationId:
-                        description: >-
-                          Operation unique identifier (slug). Not the same as
-                          operationId tag from the OpenAPI file.
-                        type: string
-                        example: get-quoteManagement-v5-quote
-                      changeSummary:
-                        $ref: "#/components/schemas/ChangeSummary"
-                      changes:
-                        description: Collection of changes for each operation.
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/SingleOperationChange"
+              $ref: "#/components/schemas/BuildResultComparisonsData"
         - title: Build result for mergedSpecification and reducedSourceSpecifications
           description: |
             Build result for the following buildType:
@@ -2236,7 +2043,7 @@ components:
             OAS extensions shall be removed, but there is no allowed
             OAS exntesions, i.e. all OAS extensions shall be removed.
               * If allowedOasExtensions is undefined, then this means
-            that OAS extensions shall **not** be removed (i.e. 
+            that OAS extensions shall **not** be removed (i.e.
             removeOasExtensions = false).
               * If allowedOasExtensions has some value(s), then this
             means that OAS extensions shall be removed except for the
@@ -2382,6 +2189,174 @@ components:
           example:
             - x-internal-info
             - x-design-details
+    InternalDocumentMetadata:
+      type: object
+      required:
+        - id
+        - fileName
+      properties:
+        id:
+          description: Published file id.
+          type: string
+          pattern: "^[a-z0-9-]"
+          example: "qitmf-v5-11-json"
+        fileName:
+          type: string
+          description: File name (slug+extension).
+          example: "qitmf-v5.11.json"
+    ComparisonInternalDocumentMetadata:
+      allOf:
+        - $ref: "#/components/schemas/InternalDocumentMetadata"
+        - type: object
+          required:
+          - comparisonFileId
+          properties:
+            comparisonFileId:
+              type: string
+              description: Identifier of the comparison for which this internal document belongs.
+                Will be the same for all internal documents for package of kind `package`.
+                Could be different for package of kind `dashboard`.
+              example: "comparisonFile1.json"
+    BuildResultInternalDocuments:
+      type: object
+      description: List of internal documents data.
+      properties:
+        documents:
+          description: List of internal documents
+          type: array
+          items:
+            $ref: "#/components/schemas/InternalDocumentMetadata"
+    BuildResultComparisons:
+      type: object
+      properties:
+        comparisons:
+          type: array
+          items:
+            type: object
+            required:
+              - operationTypes
+            properties:
+              comparisonFileId:
+                type: string
+                description: Pointer to the file with changes. Optional, required only if package contains documents. Not required in case of refs only (dashboard).
+                example: "comparisonFile1.json"
+              packageId:
+                description: Package unique string identifier (full alias).
+                type: string
+                example: "QS.CloudQSS.CPQ.Q-TMF"
+              version:
+                description: Version name for publication.
+                type: string
+                example: "2022.3"
+              revision:
+                type: number
+              previousVersion:
+                description: |
+                  Name of the previous published version.
+                type: string
+                example: "2022.2"
+                default: ""
+              previousVersionPackageId:
+                description: Previous release version package id.
+                type: string
+                example: "QS.CloudQSS.CPQ.Q-TMF"
+              previousVersionRevision:
+                type: number
+              operationTypes:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    apiType:
+                      type: string
+                    changesSummary:
+                      $ref: "#/components/schemas/ChangeSummary"
+                    numberOfImpactedOperations:
+                      allOf:
+                        - $ref: '#/components/schemas/ChangeSummary'
+                        - type: object
+                          description: Number of operations impacted by each severety type.
+                    apiAudienceTransitions:
+                          type: array
+                          description: Shows transitions of operations' apiAudience value (compared to the previous release version) and number of operations in which this transition occurred. The array contains only records of transitions that actually occurred in operations.
+                          items:
+                            type: object
+                            properties:
+                              currentAudience:
+                                type: string
+                                description: Current apiAudience value (currentAudience must not be equal to previousAudience)
+                                enum:
+                                  - internal
+                                  - external
+                                  - unknown
+                              previousAudience:
+                                type: string
+                                description: Previous apiAudience value
+                                enum:
+                                  - internal
+                                  - external
+                                  - unknown
+                              operationsCount:
+                                type: number
+                                description: Number of operations in which the apiAudience was changed from previousAudience to currentAudience
+                    tags:
+                      type: array
+                      items:
+                        type: string
+                      example:
+                        ["a", "b"]
+              fromCache:
+                description: True if the changes were retrieved from BE (not calculated)
+                type: boolean
+    BuildResultComparisonsData:
+      type: object
+      description: List of changes data.
+      properties:
+        operations:
+          description: Collection of changes depend on apiType.
+          type: array
+          items:
+            type: object
+            required:
+              - changes
+              - changesSummary
+              - comparisonInternalDocumentId
+            properties:
+              operationId:
+                description: >-
+                  Operation unique identifier (not the same as operationId tag from the OpenAPI file).\
+                  Parameter is required if operation was added or modified.
+                type: string
+                example: get-quoteManagement-v5-quote-quoteId
+              previousOperationId:
+                description: >-
+                  Operation unique identifier from previous version (not the same as operationId tag from the OpenAPI file).\
+                  Parameter is required if operation was deleted or modified.
+                type: string
+                example: get-quoteManagement-v5-quote-id
+              dataHash:
+                description: Operation hash.
+                type: string
+                example: sdfsdfsf242
+              previousDataHash:
+                description: Hash of the previous published version operation.
+                type: string
+                example: sdfsdfsf24dds2
+              changeSummary:
+                $ref: "#/components/schemas/ChangeSummary"
+              changes:
+                description: Collection of changes for each operation.
+                type: array
+                items:
+                  $ref: "#/components/schemas/SingleOperationChange"
+              comparisonInternalDocumentId:
+                description: >
+                  Unique string identifier of the internal merged document,
+                  where diffs between operation and previous operation are present.
+                  Corresponds to `id` field for the document in `comparison-internal-documents.json`
+                type: string
+                pattern: "^[a-z0-9-]"
+                example: "qitmf-v5-11-qitmf-v5-12-merged-json"
   examples:
     IncorrectInputParameters:
       description: Incorrect input parameters

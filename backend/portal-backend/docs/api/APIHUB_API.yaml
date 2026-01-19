@@ -3422,12 +3422,21 @@ paths:
                         - type: object
                           required:
                             - changeSummary
+                            - comparisonInternalDocumentId
                           properties:
                             changeSummary:
                               allOf:
                                 - $ref: "#/components/schemas/ChangeSummary"
                                 - type: object
                                   description: Number of declarative changes in one specific operation.
+                            comparisonInternalDocumentId:
+                              description: >
+                                Unique string identifier of the internal merged document,
+                                where diffs between operation and previous operation are present.
+                                Corresponds to `id` field for the document in `comparison-internal-documents.json`
+                              type: string
+                              pattern: "^[a-z0-9-]"
+                              example: "qitmf-v5-11-qitmf-v5-12-merged-json"
                   packages:
                     description: >
                       A mapped list of the packageId and version name
@@ -4699,6 +4708,120 @@ paths:
                   $ref: "#/components/examples/PackageNotFound"
                 VersionNotFound:
                   $ref: "#/components/examples/VersionNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/version-internal-documents/{hash}":
+    parameters:
+      - name: hash
+        in: path
+        description: Document hash
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - Internal Documents
+      summary: Get version internal document content
+      description: Get version internal document content
+      operationId: getVersionInternalDocumentsHash
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - api-key: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                description: Text file content
+                type: string
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                description: Indicates inline content and file name
+                example: inline; filename="qitmf-v5.11.json"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/comparison-internal-documents/{hash}":
+    parameters:
+      - name: hash
+        in: path
+        description: Document hash
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - Internal Documents
+      summary: Get comparison internal document content
+      description: Get comparison internal document content
+      operationId: getComparisonInternalDocumentsHash
+      security:
+        - BearerAuth: [ ]
+        - CookieAuth: [ ]
+        - api-key: [ ]
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                description: Text file content
+                type: string
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                description: Indicates inline content and file name
+                example: inline; filename="qitmf-v5.11.json"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: { }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
         "500":
           description: Internal Server Error
           content:
@@ -7610,6 +7733,162 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+  "/api/v1/packages/{packageId}/versions/{version}/version-internal-documents":
+    parameters:
+      - $ref: "#/components/parameters/packageId"
+      - $ref: "#/components/parameters/version"
+    get:
+      tags:
+        - Internal Documents
+        - Versions
+      summary: Get version internal documents
+      description: |
+        Get list of version internal documents for the version. Version internal documents are only supported for packages of kind `package`
+      operationId: getPackagesIdVersionsIdVersionInternalDocuments
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - api-key: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                description: List of internal documents in a package version.
+                type: array
+                items:
+                  allOf:
+                    - $ref: "#/components/schemas/InternalDocumentMetadata"
+                    - type: object
+                      required:
+                        - hash
+                      properties:
+                        hash:
+                          description: Hash of the corresponding document content.
+                          type: string
+        "301":
+            description: Moved Permanently
+            headers:
+              Location:
+                schema:
+                  type: string
+                description: Current endpoint with new packageId of moved package
+              X-New-Package-Id:
+                schema:
+                  type: string
+                description: New packageId of moved package
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/packages/{packageId}/versions/{version}/comparison-internal-documents":
+    parameters:
+      - $ref: "#/components/parameters/packageId"
+      - $ref: "#/components/parameters/version"
+      - name: previousVersionPackageId
+        in: query
+        description: |
+          Package unique identifier for previous version.\
+          If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used
+        schema:
+          type: string
+          example: "QS.RUNENV.K8S-SERVER.CJM-QSS-DEV-2.Q-TMF"
+      - name: previousVersion
+        in: query
+        description: |
+          Package previous version.\
+          If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used
+        schema:
+          type: string
+          example: "2022.3"
+    get:
+      tags:
+        - Internal Documents
+        - Changes
+      summary: Get version comparison internal documents
+      description: |
+        Get list of internal documents for the version comparison. Internal documents are only supported for packages of kind `package`
+      operationId: getPackagesIdVersionsIdComparisonInternalDocuments
+      security:
+        - BearerAuth: [ ]
+        - CookieAuth: [ ]
+        - api-key: [ ]
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                description: List of internal documents in a version comparison.
+                type: array
+                items:
+                  allOf:
+                    - $ref: "#/components/schemas/InternalDocumentMetadata"
+                    - type: object
+                      required:
+                        - hash
+                      properties:
+                        hash:
+                          description: Hash of the corresponding document content.
+                          type: string
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current endpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: { }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
   "/api/v3/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/documents":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -8308,9 +8587,9 @@ paths:
       deprecated: true
       description: |
         Starts the SAML authentication process in APIHUB (legacy endpoint).
-        
+
         This is a deprecated endpoint. Use `/api/v1/login/sso/{idpId}` instead.
-        
+
         In case of successful authentication, the request will be redirected to the **redirectUri** and
         the response will contain cookie with access token for future API calls.
         All subsequent APIHUB calls must use this token in a **CookieAuth** or **BearerAuth** authentication.
@@ -10211,6 +10490,7 @@ components:
         - apiType
         - apiAudience
         - apiKind
+        - versionInternalDocumentId
       properties:
         operationId:
           description: Operation unique identifier (slug). Not the same as operationId tag from the OpenAPI file.
@@ -10274,6 +10554,14 @@ components:
           items:
             type: string
           example: ["RestControllerV5"]
+        versionInternalDocumentId:
+          description: >
+            Unique string identifier of the preprocessed (validated, references resolved) internal document,
+            where the operation is present.
+            Corresponds to `id` field for the document in `version-internal-documents.json`
+          type: string
+          pattern: "^[a-z0-9-]"
+          example: "qitmf-v5-11-ref-resolved-json"
     RestOperation:
       description: REST operation object.
       title: RestOperation
@@ -11158,6 +11446,21 @@ components:
               description: Namespace of Agent's publication.
               type: string
               example: cloudQSS-release2
+    InternalDocumentMetadata:
+      type: object
+      required:
+        - id
+        - fileName
+      properties:
+        id:
+          description: Published file id.
+          type: string
+          pattern: "^[a-z0-9-]"
+          example: "qitmf-v5-11-json"
+        fileName:
+          type: string
+          description: File name (slug+extension).
+          example: "qitmf-v5.11.json"
   examples:
     SystemInfo:
       description: Example of the system description
