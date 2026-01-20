@@ -16,7 +16,7 @@
 
 import type {
   ApiAudience,
-  ApiKind,
+  ApihubApiCompatibilityKind,
   BuildConfig,
   ResolvedDeprecatedOperations,
   ResolvedGroupDocuments,
@@ -280,7 +280,7 @@ export function toVersionOperation(value: OperationDto): ResolvedOperation {
     operationId: value.operationId,
     documentId: value.documentId,
     data: value.data!,
-    apiKind: value.apiKind as ApiKind,
+    apiKind: value.apiKind as ApihubApiCompatibilityKind,
     apiAudience: value.apiAudience as ApiAudience,
     deprecated: value.deprecated ?? false,
     title: value.title,
