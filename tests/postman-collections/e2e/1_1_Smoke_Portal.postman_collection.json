@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_1_Smoke_Portal",
-        "_postman_id": "77d3238c-1c40-4c8e-a2cc-6671edc78069",
+        "_postman_id": "c6e44b13-f2a3-4df8-b528-3d4fe0d45f3d",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -13052,71 +13052,6 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "5.3.23 Get list of operations filtered by hash",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test(\"Status code is 200\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "\r",
-                                            "pm.test(\"List of operations displayed\", () => {\r",
-                                            "    pm.expect(data.operations.length).to.eql(4);\r",
-                                            "});"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/versions/{{version_1}}/rest/operations?hashList={{hash_1}}",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "{{dashboard_1}}",
-                                        "versions",
-                                        "{{version_1}}",
-                                        "rest",
-                                        "operations"
-                                    ],
-                                    "query": [
-                                        {
-                                            "key": "hashList",
-                                            "value": "{{hash_1}}"
-                                        }
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
                             "name": "5.3.24 Validation filter results of document versions",
                             "event": [
                                 {
@@ -14729,8 +14664,8 @@
                                             "    pm.expect(title).to.include('Inline Semi-Breaking change by deprecated mark'),\r",
                                             "    pm.expect(title).to.include('Semi-Breaking change in reusable schema \\\"User\\\" by deprecated mark'),\r",
                                             "    pm.expect(title).to.include('Semi-Breaking change in reusable schema \\\"Pet\\\" by x-api-kind tag'),\r",
-                                            "    pm.expect(title).to.include('LACONICCACTUS0P IOT 1.0.0 Devices Get');\r",
-                                            "    pm.expect(title).to.include('LACONICCACTUS0P IOT 1.0.0 Devices Post');\r",
+                                            "    pm.expect(title).to.include('LACONICCACTUS0P IOT 1.0.0 Devices Get'),\r",
+                                            "    pm.expect(title).to.include('LACONICCACTUS0P IOT 1.0.0 Devices Post')\r",
                                             "});\r",
                                             "\r",
                                             "pm.environment.set(\"operation_id_1\", data.operations[0].operationId)"
