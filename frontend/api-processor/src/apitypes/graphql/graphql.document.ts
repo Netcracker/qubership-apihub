@@ -22,7 +22,7 @@ import {
 } from '@netcracker/qubership-apihub-graphapi'
 import type { GraphQLSchema, IntrospectionQuery } from 'graphql'
 
-import { BuildConfigFile, DocumentBuilder, DocumentDumper, TextFile, VersionDocument } from '../../types'
+import { BuildConfigFile, DocumentDumper, TextFile, VersionDocument } from '../../types'
 import { GRAPHQL_DOCUMENT_TYPE } from './graphql.consts'
 import { createVersionInternalDocument } from '../../utils'
 

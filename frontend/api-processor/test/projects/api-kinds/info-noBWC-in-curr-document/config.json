@@ -1,0 +1,13 @@
+{
+  "packageId": "api-kinds",
+  "files": [
+    {
+      "fileId": "1.yaml",
+      "publish": true
+    },
+    {
+      "fileId": "2.yaml",
+      "publish": true
+    }
+  ]
+}

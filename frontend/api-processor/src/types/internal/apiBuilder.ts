@@ -21,6 +21,7 @@ import {
   ExportFormat,
   FileId,
   GroupDocumentsResolver,
+  Labels,
   OperationId,
   OperationsApiType,
   PackageId,
@@ -101,6 +102,8 @@ export interface CompareOperationsPairContext {
   currentGroupSlug: string
   previousGroupSlug: string
   normalizedSpecFragmentsHashCache: ObjectHashCache
+  previousVersionLabels?: Labels
+  currentVersionLabels?: Labels
 }
 
 export type NormalizedOperationId = string

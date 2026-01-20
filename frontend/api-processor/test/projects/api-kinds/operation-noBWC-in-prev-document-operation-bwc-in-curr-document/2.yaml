@@ -1,0 +1,15 @@
+openapi: 3.1.0
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    post:
+      x-api-kind: BWC
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string

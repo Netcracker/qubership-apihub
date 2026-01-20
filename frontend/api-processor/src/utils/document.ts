@@ -77,6 +77,7 @@ export function toPackageDocument(document: VersionDocument): PackageDocument {
     operationIds: document.operationIds,
     metadata: document.metadata,
     version: document.version,
+    apiKind: document.apiKind,
   }
 }
 

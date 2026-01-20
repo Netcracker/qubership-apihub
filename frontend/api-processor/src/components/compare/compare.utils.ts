@@ -45,7 +45,6 @@ import {
   takeIfDefined,
 } from '../../utils'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
-import { reclassifyNoBwcBreakingChanges } from './bwc.validation'
 
 export function calculateTotalChangeSummary(
   summaries: ChangeSummary[],
@@ -272,8 +271,7 @@ export function createOperationChange(
   currentGroup?: string,
   previousGroup?: string,
 ): OperationChanges {
-  const reclassifiedDiffs = reclassifyNoBwcBreakingChanges(operationDiffs, previous, current)
-  const changeSummary = calculateChangeSummary(reclassifiedDiffs)
+  const changeSummary = calculateChangeSummary(operationDiffs)
   const impactedSummary = calculateImpactedSummary([changeSummary])
 
   const currentOperationFields = current && {
@@ -289,7 +287,7 @@ export function createOperationChange(
   }
   return {
     apiType,
-    diffs: reclassifiedDiffs,
+    diffs: operationDiffs,
     changeSummary: changeSummary,
     impactedSummary: impactedSummary,
     comparisonInternalDocumentId,
@@ -297,6 +295,7 @@ export function createOperationChange(
     ...previousOperationFields,
   }
 }
+
 
 export function createComparisonDocument(comparisonDocumentId: string, apiDocument: ApiDocument): ComparisonDocument {
   return {

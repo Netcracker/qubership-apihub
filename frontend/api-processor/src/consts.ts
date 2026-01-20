@@ -36,6 +36,7 @@ export const DEFAULT_VALIDATION_RULES_SEVERITY_CONFIG: ValidationRulesSeverity =
   brokenRefs: VALIDATION_RULES_SEVERITY_LEVEL_WARNING,
 }
 
+export const SPECIFICATION_EXTENSION_PREFIX = 'x-'
 export const REVISION_DELIMITER = '@'
 
 export const VERSION_DIFFERENCE_ACTION = {
@@ -108,11 +109,13 @@ export const VERSION_STATUS = {
   NONE: '', // non-existent status for changelog builds
 } as const
 
-export const API_KIND = {
-  BWC: 'bwc',
-  NO_BWC: 'no-bwc',
-  EXPERIMENTAL: 'experimental',
-} as const
+export const APIHUB_API_COMPATIBILITY_KIND_BWC = 'bwc'
+export const APIHUB_API_COMPATIBILITY_KIND_NO_BWC = 'no-bwc'
+export const APIHUB_API_COMPATIBILITY_KIND_EXPERIMENTAL = 'experimental'
+
+export type ApihubApiCompatibilityKind = typeof APIHUB_API_COMPATIBILITY_KIND_BWC
+  | typeof APIHUB_API_COMPATIBILITY_KIND_NO_BWC
+  | typeof APIHUB_API_COMPATIBILITY_KIND_EXPERIMENTAL
 
 export const API_KIND_LABEL = 'apihub/x-api-kind'
 

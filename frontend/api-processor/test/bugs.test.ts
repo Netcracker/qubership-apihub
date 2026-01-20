@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { API_AUDIENCE_INTERNAL, API_KIND } from '../src'
+import { API_AUDIENCE_INTERNAL, APIHUB_API_COMPATIBILITY_KIND_BWC, APIHUB_API_COMPATIBILITY_KIND_NO_BWC } from '../src'
 import { Editor, LocalRegistry } from './helpers'
 
 import { describe, expect, test } from '@jest/globals'
@@ -62,7 +62,7 @@ describe('Operation Bugs', () => {
       ],
     })
 
-    expect([...result.operations.values()].every(operation => operation.apiKind === API_KIND.NO_BWC)).toBeTruthy()
+    expect([...result.operations.values()].every(operation => operation.apiKind === APIHUB_API_COMPATIBILITY_KIND_NO_BWC)).toBeTruthy()
   })
 
   test('duplicated operations in document and component should publish only document operations', async () => {
@@ -329,7 +329,7 @@ describe('Operation Bugs', () => {
       ],
     })
 
-    expect(editor.builder.operationList.every(operation => operation.apiKind === API_KIND.BWC)).toBeTruthy()
+    expect(editor.builder.operationList.every(operation => operation.apiKind === APIHUB_API_COMPATIBILITY_KIND_BWC)).toBeTruthy()
   })
 
   test('apiKind of operations should be no-BWC (defined in info)', async () => {
@@ -341,7 +341,7 @@ describe('Operation Bugs', () => {
       ],
     })
 
-    expect(editor.builder.operationList.every(operation => operation.apiKind === API_KIND.NO_BWC)).toBeTruthy()
+    expect(editor.builder.operationList.every(operation => operation.apiKind === APIHUB_API_COMPATIBILITY_KIND_NO_BWC)).toBeTruthy()
   })
 
   test('should correctly calculate operationId for servers with incorrect URL', async () => {

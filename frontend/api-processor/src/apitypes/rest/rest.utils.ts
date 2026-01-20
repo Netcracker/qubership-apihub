@@ -25,7 +25,12 @@ import {
   WithDiffMetaRecord,
 } from '../../types'
 import { isObject } from '@netcracker/qubership-apihub-json-crawl'
-import { CUSTOM_PARAMETER_API_AUDIENCE, FILE_FORMAT_JSON, FILE_FORMAT_YAML } from '../../consts'
+import {
+  CUSTOM_PARAMETER_API_AUDIENCE,
+  FILE_FORMAT_JSON,
+  FILE_FORMAT_YAML,
+  SPECIFICATION_EXTENSION_PREFIX,
+} from '../../consts'
 import YAML from 'js-yaml'
 import { Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { isPathParamRenameDiff } from '../../utils'
@@ -38,7 +43,7 @@ export function getCustomTags(data: object): CustomTags {
   }
 
   return Object.entries(data)
-    .filter(([key]) => key.startsWith('x-'))
+    .filter(([key]) => key.startsWith(SPECIFICATION_EXTENSION_PREFIX))
     .reduce((acc, [key, value]) => {
       acc[key] = value
 

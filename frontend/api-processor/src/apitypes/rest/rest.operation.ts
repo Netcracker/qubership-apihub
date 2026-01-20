@@ -16,7 +16,7 @@
 
 import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
 import { OpenAPIV3 } from 'openapi-types'
-import { REST_API_TYPE, REST_KIND_KEY } from './rest.consts'
+import { REST_API_TYPE } from './rest.consts'
 import { operationRules } from './rest.rules'
 import type * as TYPE from './rest.types'
 import { RestOperationData } from './rest.types'
@@ -30,9 +30,9 @@ import {
   SearchScopes,
 } from '../../types'
 import {
+  _calculateRestOperationIdV1,
   buildSearchScope,
   calculateRestOperationId,
-  _calculateRestOperationIdV1,
   capitalize,
   extractSymbolProperty,
   getKeyValue,
@@ -42,13 +42,12 @@ import {
   isOperationDeprecated,
   isValidHttpMethod,
   normalizePath,
-  rawToApiKind,
   setValueByPath,
   takeIf,
   takeIfDefined,
 } from '../../utils'
 import { getUsedTags } from '../../utils/mergeOpenapiDocuments'
-import { API_KIND, INLINE_REFS_FLAG, ORIGINS_SYMBOL, VERSION_STATUS } from '../../consts'
+import { APIHUB_API_COMPATIBILITY_KIND_BWC, INLINE_REFS_FLAG, ORIGINS_SYMBOL, VERSION_STATUS } from '../../consts'
 import { extractSecuritySchemesNames, getCustomTags, resolveApiAudience } from './rest.utils'
 import { DebugPerformanceContext, syncDebugPerformance } from '../../utils/logs'
 import {
@@ -69,6 +68,7 @@ import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
 import { calculateHash, ObjectHashCache } from '../../utils/hashes'
 import { calculateTolerantHash } from '../../components/deprecated'
 import { getValueByPath } from '../../utils/path'
+import { getApiKindProperty } from '../../components/document'
 
 export const buildRestOperation = (
   operationId: string,
@@ -143,7 +143,7 @@ export const buildRestOperation = (
   }, debugCtx)
 
   const models: Record<string, string> = {}
-  const apiKind = effectiveOperationObject[REST_KIND_KEY] || documentApiKind || API_KIND.BWC
+  const operationApiKind = getApiKindProperty(effectiveOperationObject) || documentApiKind || APIHUB_API_COMPATIBILITY_KIND_BWC
   const [specWithSingleOperation] = syncDebugPerformance('[ModelsAndOperationHashing]', () => {
     const operationSecurity = effectiveOperationObject.security
     const specWithSingleOperation = createSingleOperationSpec(
@@ -172,7 +172,7 @@ export const buildRestOperation = (
     operationId,
     documentId: documentSlug,
     apiType: REST_API_TYPE,
-    apiKind: rawToApiKind(apiKind),
+    apiKind: operationApiKind,
     deprecated: !!effectiveOperationObject.deprecated,
     title: effectiveOperationObject.summary || operationId.split('-').map(str => capitalize(str)).join(' '),
     metadata: {

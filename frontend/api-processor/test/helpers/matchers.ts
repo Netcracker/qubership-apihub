@@ -18,6 +18,7 @@ import {
   BuildResult,
   ChangeMessage,
   ChangeSummary,
+  ComparisonInternalDocument,
   DeprecateItem,
   EMPTY_CHANGE_SUMMARY,
   MessageSeverity,
@@ -30,10 +31,18 @@ import {
   ZippableDocument,
 } from '../../src'
 import { JsonPath } from 'json-crawl'
-import { ActionType } from '@netcracker/qubership-apihub-api-diff'
-import { ArrayContaining, AsymmetricMatcher, ExpectedRecursive, ObjectContaining, RecursiveMatcher } from '../../.jest/jasmin'
+import { ActionType, Diff, DIFFS_AGGREGATED_META_KEY, DiffType } from '@netcracker/qubership-apihub-api-diff'
+import {
+  ArrayContaining,
+  AsymmetricMatcher,
+  ExpectedRecursive,
+  ObjectContaining,
+  RecursiveMatcher,
+} from '../../.jest/jasmin'
 import { extractSecuritySchemesNames } from '../../src/apitypes/rest/rest.utils'
+import { isObject } from '../../src/utils'
 import type { OpenAPIV3 } from 'openapi-types'
+import { deserializeDocument } from './utils'
 
 type SecuritySchemesObject = OpenAPIV3.ComponentsObject['securitySchemes']
 
@@ -45,6 +54,7 @@ export type ApihubNotificationMatcher = ObjectContaining<NotificationMessage> & 
 export type ApihubChangeMessagesMatcher = ArrayContaining<ChangeMessage> & ChangeMessage[]
 export type ApihubExportDocumentsMatcher = ObjectContaining<BuildResult> & BuildResult
 export type ApihubExportDocumentMatcher = ObjectContaining<ZippableDocument> & ZippableDocument
+export type ApihubComparisonDocumentMatcher = ObjectContaining<ComparisonInternalDocument> & ComparisonInternalDocument
 
 export function apihubComparisonMatcher(
   expected: RecursiveMatcher<VersionsComparison>,
@@ -114,6 +124,21 @@ export function operationTypeMatcher(
       }),
     ]),
   },
+  )
+}
+
+export function comparisonDocumentDiffMatcher(
+  expected: RecursiveMatcher<{ serializedComparisonDocument: AsymmetricMatcher<string> }>,
+): ApihubComparisonDocumentMatcher {
+  return expect.objectContaining({
+      comparisons: expect.arrayContaining([
+        expect.objectContaining({
+          comparisonInternalDocuments: expect.arrayContaining([
+            expect.objectContaining(expected),
+          ]),
+        }),
+      ]),
+    },
   )
 }
 
@@ -230,4 +255,39 @@ export function securitySchemesFromRequirementsMatcher(
     },
     jasmineToString: () => `securitySchemesFromRequirements(${JSON.stringify(expectedSchemes)})`,
   }
+}
+
+export function serializedComparisonDocumentMatcher(
+  apiKinds: DiffType[],
+): AsymmetricMatcher<string> {
+  const extractAllDiffsFromDocument = (deserializedDoc: unknown): Diff[] => {
+    if (!isObject(deserializedDoc)) {
+      return []
+    }
+    const diffs: Diff[] = []
+    if (DIFFS_AGGREGATED_META_KEY in deserializedDoc) {
+      const aggregatedDiffs = (deserializedDoc as Record<symbol, unknown>)[DIFFS_AGGREGATED_META_KEY]
+      if (aggregatedDiffs instanceof Set) {
+        return Array.from(aggregatedDiffs)
+      }
+    }
+    return diffs
+  }
+
+  return comparisonDocumentDiffMatcher({
+    serializedComparisonDocument: {
+      asymmetricMatch: (actual: string): boolean => {
+        try {
+          const deserializedDoc = deserializeDocument(actual)
+          const diffs = extractAllDiffsFromDocument(deserializedDoc)
+
+          // TODO: It works, but it is too specialized (only works if there's exactly one diff). Would be better to do it by diffsMatcher
+          const diffTypes = new Set(diffs.map(diff => diff.type))
+          return apiKinds.every(apiKind => diffTypes.has(apiKind))
+        } catch (error) {
+          return false
+        }
+      },
+    },
+  })
 }

@@ -15,6 +15,7 @@
  */
 
 import { FileId, OperationId } from '../external'
+import { ApihubApiCompatibilityKind } from '../../consts'
 
 export type PackageDocuments = {
   documents: PackageDocument[]
@@ -36,4 +37,5 @@ export interface PackageDocument {
 
   // items should be passthrough from buildConfig.files
   metadata?: Record<string, unknown>
+  apiKind?: ApihubApiCompatibilityKind
 }
