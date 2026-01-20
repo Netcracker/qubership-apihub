@@ -80,7 +80,6 @@ export const transformClassifyRule = ([add, remove, replace, reverseAdd, reverse
     transformedRule(remove, DiffAction.remove),
     transformedRule(replace, DiffAction.replace),
   ]
-
 }
 
 export const breakingIf = (v: boolean): DiffType => (v ? breaking : nonBreaking)

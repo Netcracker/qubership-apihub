@@ -1,9 +1,11 @@
-import { MapKeysResult, MappingResolver, NodeContext } from '../types'
+import { MapKeysResult, MappingResolver, SyntheticDiffsResolver } from '../types'
 import {
   difference,
   extractOperationBasePath,
   getStringValue,
   intersection,
+  isObject,
+  isValidHttpMethod,
   objectKeys,
   onlyExistedArrayIndexes,
   removeExcessiveSlashes,
@@ -227,3 +229,53 @@ export function hidePathParamNames(path: string): string {
 
 const PATH_PARAMETER_REGEXP = /\{.*?\}/g
 const PATH_PARAM_UNIFIED_PLACEHOLDER = '*'
+
+/**
+ * Special resolver for OpenAPI `paths`:
+ * when a whole PathItem (e.g. `/pets`) is removed, we want to
+ * generate separate diffs for each HTTP operation (get/post/...)
+ * instead of a single diff for the whole PathItem.
+ *
+ * To achieve this we:
+ * 1. Detect removed paths that actually contain HTTP operations.
+ * 2. Synthesize an empty PathItem for the same key in `afterValue`.
+ * 3. Mark that key as "mapped" so the comparer will go inside it.
+ * 4. Remove that key from `removedKeys` so no PathItem-level diff is created.
+ */
+export const syntheticDiffsResolver: SyntheticDiffsResolver<string> = <T extends Exclude<PropertyKey, number>>(
+  mapKeysResult: MapKeysResult<T>,
+  beforeValue: Record<T, unknown>,
+  afterValue: Record<T, unknown>,
+): void => {
+  const { removed: removedKeys, mapped: mappedKeys } = mapKeysResult
+  const removedPathItemsWithOperations: string[] = []
+  for (const removedKey of removedKeys as string[]) {
+    const beforePaths = beforeValue as Record<string, unknown>
+    const beforePathItem = beforePaths[removedKey]
+
+    if (!isObject(beforePathItem)) {
+      continue
+    }
+
+    const hasHttpOperations = Object.keys(beforePathItem as Record<string, unknown>)
+      .some(propertyKey => isValidHttpMethod(propertyKey))
+
+    if (!hasHttpOperations) {
+      continue
+    }
+
+    removedPathItemsWithOperations.push(removedKey)
+
+    const afterPaths = afterValue as Record<string, unknown>
+    if (!isObject(afterPaths[removedKey])) {
+      afterPaths[removedKey] = {}
+    }
+
+    (mappedKeys as Record<string, PropertyKey>)[removedKey] = removedKey
+  }
+
+  if (removedPathItemsWithOperations.length > 0) {
+    mapKeysResult.removed = (removedKeys as string[])
+      .filter(key => !removedPathItemsWithOperations.includes(key)) as T[]
+  }
+}
