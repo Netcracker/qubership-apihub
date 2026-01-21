@@ -5,7 +5,7 @@ go 1.25.1
 require (
 	github.com/Netcracker/qubership-apihub-commons-go v0.0.1
 	github.com/go-pg/pg/v10 v10.14.0
-	github.com/go-playground/validator/v10 v10.30.0
+	github.com/go-playground/validator/v10 v10.30.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
