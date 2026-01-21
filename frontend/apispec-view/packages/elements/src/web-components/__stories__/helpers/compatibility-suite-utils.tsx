@@ -1,4 +1,8 @@
-import { getCompatibilitySuite, TestSpecType } from '@netcracker/qubership-apihub-compatibility-suites'
+import {
+  getCompatibilitySuite,
+  SpecificationVersionPair,
+  TestSpecType,
+} from '@netcracker/qubership-apihub-compatibility-suites'
 import { DiffOperationAPI } from '@stoplight/elements/containers/DiffOperationAPI'
 import { getCompareResult } from '@stoplight/elements/web-components/__stories__/helpers/getMergedDocument'
 import { stringifyDiffs } from '@stoplight/elements/web-components/__stories__/helpers/stringifyDiffs'
@@ -7,7 +11,7 @@ import { aggregatedDiffsMetaKey, diffsMetaKey } from 'diff-block'
 import FontFaceObserver from 'fontfaceobserver'
 import React, { useState } from 'react'
 
-export type OpenapiCompatibilitySuiteStoryArgs = { before: string, after: string }
+export type OpenapiCompatibilitySuiteStoryArgs = { before: string; after: string }
 
 const FONT_FAMILIES: string[] = ['Inter']
 
@@ -37,7 +41,12 @@ export function StoryComponent({ before, after }: OpenapiCompatibilitySuiteStory
   )
 }
 
-export function getStoryArgs(suiteType: TestSpecType, suitId: string, testId: string): OpenapiCompatibilitySuiteStoryArgs {
-  const [before, after] = getCompatibilitySuite(suiteType, suitId, testId)
+export function getStoryArgs(
+  suiteType: TestSpecType,
+  suiteId: string,
+  testId: string,
+  specificationVersionPair?: SpecificationVersionPair,
+): OpenapiCompatibilitySuiteStoryArgs {
+  const [before, after] = getCompatibilitySuite(suiteType, suiteId, testId, specificationVersionPair)
   return { before, after }
 }
