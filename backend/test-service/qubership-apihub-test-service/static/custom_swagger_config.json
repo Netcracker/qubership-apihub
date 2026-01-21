@@ -3,13 +3,13 @@
     "urls": [
         {
             "url":"/v3/api-docs",
-            "name":"Config /v3/api-docs name",
+            "name":"OpenAPI json specification",
             "x-api-kind":"no-BWC",
             "type":"openapi-3-0"
         },
         {
             "url":"/v3/api-docs/yaml",
-            "name":"Yaml specification",
+            "name":"OpenAPI yaml specification",
             "x-api-kind":"no-BWC",
             "type":"openapi-3-0"
         },
@@ -39,9 +39,15 @@
         },
         {
             "url":"/v3/api-docs/async",
-            "name":"asyncapi",
+            "name":"AsyncAPI yaml specification",
             "x-api-kind":"no-BWC",
-            "type":"asyncapi-2"
+            "type":"asyncapi-3-0"
+        },
+        {
+          "url":"/v3/api-docs/async/json",
+          "name":"AsyncAPI json specification",
+          "x-api-kind":"no-BWC",
+          "type":"asyncapi-3-0"
         }
     ]
 }

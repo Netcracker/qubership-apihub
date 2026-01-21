@@ -1,0 +1,3663 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Document Storage Service AsyncAPI Specification",
+    "version": "1.0.0"
+  },
+  "servers": {
+    "kafka-manual": {
+      "host": "/",
+      "protocol": "kafka",
+      "description": "Kafka Broker",
+      "tags": [
+        {
+          "name": "manual"
+        }
+      ]
+    },
+    "rabbitmq-maas": {
+      "host": "/",
+      "protocol": "amqp",
+      "description": "AMQP MaaS server",
+      "tags": [
+        {
+          "name": "maas"
+        }
+      ]
+    },
+    "rabbitmq-manual": {
+      "host": "/",
+      "protocol": "amqp",
+      "description": "AMQP server",
+      "tags": [
+        {
+          "name": "manual"
+        }
+      ]
+    }
+  },
+  "channels": {
+    "${service_name}-cache-reload-v2.*": {
+      "address": "${service_name}-cache-reload-v2.*",
+      "title": "${service_name}-cache-reload-v2.*",
+      "description": "Queue to receive catalog cache reload messaged",
+      "servers": [
+        {
+          "$ref": "#/servers/rabbitmq-manual"
+        }
+      ],
+      "parameters": {
+        "service_name": {
+          "description": "Service Name"
+        }
+      },
+      "messages": {
+        "reload-cache-message": {
+          "$ref": "#/components/messages/reload-cache-message"
+        }
+      },
+      "bindings": {
+        "amqp": {
+          "bindingVersion": "0.3.0",
+          "is": "queue",
+          "queue": {
+            "durable": false,
+            "exclusive": false,
+            "autoDelete": true,
+            "vhost": "/",
+            "x-type": "quorum"
+          }
+        }
+      }
+    },
+    "<archive_confirm_topic>": {
+      "address": "<archive_confirm_topic>",
+      "title": "<archive_confirm_topic>",
+      "description": "Archive system Kafka Confirm Topic, where Archive sends confirmation messages for document-snapshot entity",
+      "servers": [
+        {
+          "$ref": "#/servers/kafka-manual"
+        }
+      ],
+      "messages": {
+        "CleanupEvent": {
+          "$ref": "#/components/messages/CleanupEvent"
+        }
+      }
+    },
+    "<archive_tracking_topic>": {
+      "address": "<archive_tracking_topic>",
+      "title": "<archive_tracking_topic>",
+      "description": "Archive system Kafka Topic. Used for archiving document-tracking entity",
+      "servers": [
+        {
+          "$ref": "#/servers/kafka-manual"
+        }
+      ],
+      "messages": {
+        "ArchivingTrackingStoreEvent": {
+          "$ref": "#/components/messages/ArchivingTrackingStoreEvent"
+        }
+      }
+    },
+    "<archive_data_topic>": {
+      "address": "<archive_data_topic>",
+      "title": "<archive_data_topic>",
+      "description": "Archive system Kafka Topic. Used for archiving document-snapshot entity",
+      "servers": [
+        {
+          "$ref": "#/servers/kafka-manual"
+        }
+      ],
+      "messages": {
+        "ArchivingStoreEvent": {
+          "$ref": "#/components/messages/ArchivingStoreEvent"
+        }
+      }
+    },
+    "document-snapshot-created-v2": {
+      "address": "document-snapshot-created-v2",
+      "title": "document-snapshot-created-v2",
+      "description": "Exchange for document snapshot creation",
+      "servers": [
+        {
+          "$ref": "#/servers/rabbitmq-maas"
+        }
+      ],
+      "messages": {
+        "DocumentSnapshotNotification": {
+          "$ref": "#/components/messages/DocumentSnapshotNotification"
+        }
+      },
+      "bindings": {
+        "amqp": {
+          "bindingVersion": "0.3.0",
+          "is": "routingKey",
+          "exchange": {
+            "type": "fanout",
+            "durable": true,
+            "autoDelete": false,
+            "vhost": "/"
+          }
+        }
+      }
+    },
+    "cache-reload-dlq-v2": {
+      "address": "cache-reload-dlq-v2",
+      "title": "cache-reload-dlq-v2",
+      "description": "DQL Queue for catalog cache reload messaged",
+      "servers": [
+        {
+          "$ref": "#/servers/rabbitmq-manual"
+        }
+      ],
+      "bindings": {
+        "amqp": {
+          "bindingVersion": "0.3.0",
+          "is": "queue",
+          "queue": {
+            "durable": true,
+            "exclusive": false,
+            "autoDelete": false,
+            "vhost": "/",
+            "x-type": "quorum",
+            "x-dead-letter": true,
+            "x-channel-bindings": [
+              {
+                "channelAddress": "cache-reload-dlx-v2"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "document-modify-v2": {
+      "address": "document-modify-v2",
+      "title": "document-modify-v2",
+      "servers": [
+        {
+          "$ref": "#/servers/rabbitmq-maas"
+        }
+      ],
+      "bindings": {
+        "amqp": {
+          "bindingVersion": "0.3.0",
+          "is": "routingKey",
+          "exchange": {
+            "vhost": "/",
+            "x-channel-bindings": [
+              {
+                "channelAddress": "document-storage.indexation-v2"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "document-save-v2": {
+      "address": "document-save-v2",
+      "title": "document-save-v2",
+      "description": "Exchange for document save",
+      "servers": [
+        {
+          "$ref": "#/servers/rabbitmq-maas"
+        }
+      ],
+      "messages": {
+        "SnapshotSaveEvent": {
+          "$ref": "#/components/messages/SnapshotSaveEvent"
+        }
+      },
+      "bindings": {
+        "amqp": {
+          "bindingVersion": "0.3.0",
+          "is": "routingKey",
+          "exchange": {
+            "type": "fanout",
+            "durable": true,
+            "autoDelete": false,
+            "vhost": "/"
+          }
+        }
+      }
+    },
+    "document-state-change-v2": {
+      "address": "document-state-change-v2",
+      "title": "document-state-change-v2",
+      "servers": [
+        {
+          "$ref": "#/servers/rabbitmq-maas"
+        }
+      ],
+      "bindings": {
+        "amqp": {
+          "bindingVersion": "0.3.0",
+          "is": "routingKey",
+          "exchange": {
+            "vhost": "/",
+            "x-channel-bindings": [
+              {
+                "channelAddress": "document-storage.snapshoting-v2"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "document-state-change-v2-dlx": {
+      "address": "document-state-change-v2-dlx",
+      "title": "document-state-change-v2-dlx",
+      "servers": [
+        {
+          "$ref": "#/servers/rabbitmq-maas"
+        }
+      ],
+      "bindings": {
+        "amqp": {
+          "bindingVersion": "0.3.0",
+          "is": "routingKey",
+          "exchange": {
+            "vhost": "/",
+            "x-dead-letter": true,
+            "x-channel-bindings": [
+              {
+                "channelAddress": "document-storage.snapshoting-v2-dlq"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "document-storage.indexation-v2": {
+      "address": "document-storage.indexation-v2",
+      "title": "document-storage.indexation-v2",
+      "description": "Queue for document modification",
+      "servers": [
+        {
+          "$ref": "#/servers/rabbitmq-maas"
+        }
+      ],
+      "messages": {
+        "DeltaMessage": {
+          "$ref": "#/components/messages/DeltaMessage"
+        }
+      },
+      "bindings": {
+        "amqp": {
+          "bindingVersion": "0.3.0",
+          "is": "queue",
+          "queue": {
+            "durable": true,
+            "exclusive": false,
+            "autoDelete": false,
+            "vhost": "/",
+            "x-type": "quorum",
+            "x-channel-bindings": [
+              {
+                "channelAddress": "document-modify-v2"
+              }
+            ]
+          }
+        }
+      },
+      "x-non-bwc": true
+    },
+    "document-storage.snapshoting-v2": {
+      "address": "document-storage.snapshoting-v2",
+      "title": "document-storage.snapshoting-v2",
+      "description": "Queue for document state change",
+      "servers": [
+        {
+          "$ref": "#/servers/rabbitmq-maas"
+        }
+      ],
+      "messages": {
+        "ChangeDocumentStateDto": {
+          "$ref": "#/components/messages/ChangeDocumentStateDto"
+        }
+      },
+      "bindings": {
+        "amqp": {
+          "bindingVersion": "0.3.0",
+          "is": "queue",
+          "queue": {
+            "durable": true,
+            "exclusive": false,
+            "autoDelete": false,
+            "vhost": "/",
+            "x-type": "quorum",
+            "x-channel-bindings": [
+              {
+                "channelAddress": "document-state-change-v2"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "document-storage.snapshoting-v2-dlq": {
+      "address": "document-storage.snapshoting-v2-dlq",
+      "title": "document-storage.snapshoting-v2-dlq",
+      "servers": [
+        {
+          "$ref": "#/servers/rabbitmq-maas"
+        }
+      ],
+      "bindings": {
+        "amqp": {
+          "bindingVersion": "0.3.0",
+          "is": "queue",
+          "queue": {
+            "durable": true,
+            "exclusive": false,
+            "autoDelete": false,
+            "vhost": "/",
+            "x-type": "quorum",
+            "x-exported": true,
+            "x-dead-letter": true,
+            "x-channel-bindings": [
+              {
+                "channelAddress": "document-state-change-v2-dlx"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "<archive_confirm_topic>_consumer_receive": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/<archive_confirm_topic>"
+      },
+      "title": "<archive_confirm_topic> receive",
+      "description": "Listens and process cleaning confirmation message for document-snapshot entity",
+      "messages": [
+        {
+          "$ref": "#/channels/<archive_confirm_topic>/messages/CleanupEvent"
+        }
+      ]
+    },
+    "<archive_tracking_topic>_trackingPublisher_send": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/<archive_tracking_topic>"
+      },
+      "title": "<archive_tracking_topic> send",
+      "description": "Send data to Archive for archiving document-tracking entity",
+      "messages": [
+        {
+          "$ref": "#/channels/<archive_tracking_topic>/messages/ArchivingTrackingStoreEvent"
+        }
+      ]
+    },
+    "<archive_data_topic>_publisher_send": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/<archive_data_topic>"
+      },
+      "title": "<archive_data_topic> send",
+      "description": "Send data to Archive for archiving document-snapshot entity",
+      "messages": [
+        {
+          "$ref": "#/channels/<archive_data_topic>/messages/ArchivingStoreEvent"
+        }
+      ]
+    },
+    "document-snapshot-created-v2_documentSnapshotSavedEventPublisher_send": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/document-snapshot-created-v2"
+      },
+      "title": "document-snapshot-created-v2 send",
+      "description": "Document snapshot saved event message publisher",
+      "messages": [
+        {
+          "$ref": "#/channels/document-snapshot-created-v2/messages/DocumentSnapshotNotification"
+        }
+      ]
+    },
+    "document-save-v2_initEventPublisher_send": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/document-save-v2"
+      },
+      "title": "document-save-v2 send",
+      "description": "Snapshot save event message publisher",
+      "messages": [
+        {
+          "$ref": "#/channels/document-save-v2/messages/SnapshotSaveEvent"
+        }
+      ]
+    },
+    "document-storage.indexation-v2_documentChangeConsumer_receive": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/document-storage.indexation-v2"
+      },
+      "title": "document-storage.indexation-v2 receive",
+      "description": "Document change message listener",
+      "messages": [
+        {
+          "$ref": "#/channels/document-storage.indexation-v2/messages/DeltaMessage"
+        }
+      ],
+      "x-non-bwc": true
+    },
+    "document-storage.snapshoting-v2_documentStateChangeConsumer_receive": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/document-storage.snapshoting-v2"
+      },
+      "title": "document-storage.snapshoting-v2 receive",
+      "description": "Document state change message listener",
+      "messages": [
+        {
+          "$ref": "#/channels/document-storage.snapshoting-v2/messages/ChangeDocumentStateDto"
+        }
+      ]
+    },
+    "reload-cache-message-listener": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/${service_name}-cache-reload-v2.*"
+      },
+      "title": "${service_name}-cache-reload-v2.* receive",
+      "description": "Catalog cache reload messaged listener",
+      "messages": [
+        {
+          "$ref": "#/channels/${service_name}-cache-reload-v2.*/messages/reload-cache-message"
+        }
+      ]
+    }
+  },
+  "components": {
+    "schemas": {
+      "ArchivingTrackingStoreEvent": {
+        "title": "ArchivingTrackingStoreEvent",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "values": {
+            "description": "An array of entities to be stored in the Archive system",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchivingTrackingStoreEvent:Value",
+              "description": "An array of entities to be stored in the Archive system"
+            }
+          }
+        }
+      },
+      "ArchivingStoreEvent": {
+        "title": "ArchivingStoreEvent",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "values": {
+            "description": "An array of entities to be stored in the Archive system",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchivingStoreEvent:Value",
+              "description": "An array of entities to be stored in the Archive system"
+            }
+          }
+        }
+      },
+      "ChangeDocumentStateDto": {
+        "title": "ChangeDocumentStateDto",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "businessId": {
+            "type": "string",
+            "description": "Business Id. This can be a Customer identifier from the Document, for example"
+          },
+          "documentId": {
+            "type": "string",
+            "description": "Unique identifier of the Document"
+          },
+          "documentVersion": {
+            "type": "string",
+            "description": "Version of the Document"
+          },
+          "sourceState": {
+            "type": "string",
+            "description": "Source state of the Document"
+          },
+          "targetState": {
+            "type": "string",
+            "description": "Target state of the Document"
+          }
+        },
+        "description": "This event is used to change state of the Document"
+      },
+      "CleanupEvent": {
+        "title": "CleanupEvent",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "values": {
+            "description": "List of object IDs that Archive has archived and these objects can be safely deleted by the MS",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CleanupEvent:Entity",
+              "description": "List of object IDs that Archive has archived and these objects can be safely deleted by the MS"
+            }
+          }
+        }
+      },
+      "DeltaMessage": {
+        "title": "DeltaMessage",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "errors": {
+            "description": "errors",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:ErrorEntry"
+            }
+          },
+          "event": {
+            "$ref": "#/components/schemas/DeltaMessage:DeltaDto"
+          },
+          "externalBusinessRulesTracing": {
+            "description": "Optional part of the response that contain payload provided by project via external business rules. NOTE: The section is always included to the response if provided, even for the case when OOB tracing is not requested (see 'businessRulesToTrace' query parameter description above).",
+            "type": "array",
+            "items": {}
+          },
+          "metaData": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.Object_",
+            "description": "Technical metadata"
+          },
+          "notifications": {
+            "description": "notification",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:BaseNotification"
+            }
+          }
+        },
+        "description": "delta response"
+      },
+      "Header-Entity-Type": {
+        "type": "string",
+        "title": "Entity-Type",
+        "description": "Entity type",
+        "examples": [
+          "document-tracking"
+        ]
+      },
+      "Header-Entity-Type-Snapshot": {
+        "type": "string",
+        "title": "Entity-Type",
+        "description": "Entity type",
+        "examples": [
+          "document-snapshot"
+        ]
+      },
+      "Header-Session-ID": {
+        "type": "string",
+        "title": "Session-ID",
+        "description": "Job ID (Archive Session ID)"
+      },
+      "Header-Tenant": {
+        "type": "string",
+        "title": "Tenant",
+        "description": "Unique identifier of Tenant"
+      },
+      "Header-X-Idempotency-Key": {
+        "type": "string",
+        "title": "X-Idempotency-Key",
+        "description": "Idempotency key (in form of concatenation {{document.id}} + '_' + {{document.version}})",
+        "examples": [
+          "e654a9f9-686f-4d7d-9d93-c900cd697b73_15"
+        ]
+      },
+      "Header-X-Request-Id": {
+        "type": "string",
+        "title": "X-Request-Id",
+        "description": "Unique identifier of the execution process"
+      },
+      "DocumentSnapshotNotification": {
+        "title": "DocumentSnapshotNotification",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "businessId": {
+            "type": "string"
+          },
+          "destinationState": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "previousState": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "ReloadCacheMessage": {
+        "title": "ReloadCacheMessage",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "reloadCatalogInfo": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReloadCacheMessage:CacheId"
+            }
+          }
+        }
+      },
+      "SnapshotSaveEvent": {
+        "title": "SnapshotSaveEvent",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "businessId": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "documentVersion": {
+            "type": "integer"
+          }
+        }
+      },
+      "ReloadCacheMessage:CacheId": {
+        "type": "object",
+        "properties": {
+          "catalogType": {
+            "$ref": "#/components/schemas/ReloadCacheMessage:CatalogType"
+          },
+          "loadTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "title": "CacheId"
+      },
+      "ReloadCacheMessage:CatalogType": {
+        "type": "string",
+        "enum": [
+          "PRODUCT",
+          "MARKETING",
+          "TESTING"
+        ],
+        "description": "List of catalog types",
+        "title": "CatalogType"
+      },
+      "ArchivingTrackingStoreEvent:Value": {
+        "type": "object",
+        "properties": {
+          "creationDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Entity creation date (format - RFC 7493)"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "The unique identifier of the customer that owns the entity"
+          },
+          "entityId": {
+            "type": "string",
+            "description": "Unique identifier of entity"
+          },
+          "entityName": {
+            "type": "string",
+            "description": "Text field describing the entity"
+          },
+          "entitySummary": {
+            "type": "string",
+            "description": "Field for custom domain data"
+          },
+          "lastModificationDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The date the entity was last modified (format - RFC 7493)"
+          },
+          "parentID": {
+            "type": "string",
+            "description": "The unique identifier of parent entity (if defined)"
+          },
+          "schemaVersion": {
+            "type": "string",
+            "description": "MS-specific data model version"
+          },
+          "value": {
+            "description": "Entity data in JSON format."
+          }
+        },
+        "title": "Value"
+      },
+      "ArchivingStoreEvent:Value": {
+        "type": "object",
+        "properties": {
+          "creationDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Entity creation date (format - RFC 7493)"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "The unique identifier of the customer that owns the entity"
+          },
+          "entityId": {
+            "type": "string",
+            "description": "Unique identifier of entity"
+          },
+          "entityName": {
+            "type": "string",
+            "description": "Text field describing the entity"
+          },
+          "entitySummary": {
+            "type": "string",
+            "description": "Field for custom domain data"
+          },
+          "lastModificationDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The date the entity was last modified (format - RFC 7493)"
+          },
+          "parentID": {
+            "type": "string",
+            "description": "The unique identifier of parent entity (if defined)"
+          },
+          "schemaVersion": {
+            "type": "string",
+            "description": "MS-specific data model version"
+          },
+          "value": {
+            "type": "string",
+            "description": "Entity data in JSON format. Used for the small objects transfer scenario (<1-2 MB)"
+          }
+        },
+        "title": "Value"
+      },
+      "CleanupEvent:Entity": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "description": "Unique identifier of entity"
+          }
+        },
+        "title": "Entity"
+      },
+      "DeltaMessage:AgreementItem-1": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Flag indicates that the agreement item was accepted by the customer. Each change in the agreement should be accept by the customer"
+          },
+          "action": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Agreement action defined by the Document content. Possible values are: ADD (a new agreement to be created as result of Document submission), DASH (no change to existing Agreement to be triggered on Document submission), MODIFY (modification of Agreement on Document submission), TERMINATE (termination of Agreement on Document submission)"
+          },
+          "agreementId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Agreement object from external master system."
+          },
+          "agreementType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Agreement type"
+          },
+          "associates": {
+            "description": "List of Customer Ids that are associated with corresponding Agreement with 'Associate' role.",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_Object__",
+            "description": "Map of extended parameters"
+          },
+          "expirationDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "The attributes holds information on when the agreement associated to exact Document Item is going to expire"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier ot document item"
+          },
+          "agreementBaselineDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "A special Agreement related date that is used to define active Offerings, Discounts and priceKeys during Agreement consumption."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of the Agreement"
+          },
+          "type": {
+            "type": "string",
+            "description": "Document item type"
+          }
+        },
+        "description": "Agreement reference. An agreement represents a contract or arrangement between the parties (e.g. between a service provider and a customer). An agreement involves a number of other business entities, such as products, services, and resources and/or their specifications",
+        "title": "AgreementItem-1"
+      },
+      "DeltaMessage:AgreementItem-2": {
+        "$ref": "#/components/schemas/DeltaMessage:AgreementItem-1",
+        "type": "object",
+        "properties": {
+          "type": {
+            "const": "agreementItem"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "AgreementItem-2"
+      },
+      "DeltaMessage:AgreementItemRef": {
+        "type": "object",
+        "properties": {
+          "agreementType": {
+            "type": "string",
+            "description": "Type of the Agreement: Master, Customer"
+          },
+          "externalAgreementId": {
+            "type": "string",
+            "description": "Agreement Id from external master system"
+          },
+          "externalAgreementItemId": {
+            "type": "string",
+            "description": "Agreement Item Id from external master system"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the Agreement Item"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "description": "The entity represents reference to agreement item",
+        "title": "AgreementItemRef"
+      },
+      "DeltaMessage:AlertItem-1": {
+        "type": "object",
+        "properties": {
+          "alertLevel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Indicates the level of the Alert (e.g. Error, Warning, Info...)"
+          },
+          "alertType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Indicates the type of the Alert (e.g. Structure, Content, Financial, Eligibility, Concurrency...)"
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_Object__",
+            "description": "Map of extended parameters"
+          },
+          "boundaryType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Shows boundaries of the overridden Price. Enum: More, Less."
+          },
+          "categoryId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Category"
+          },
+          "characteristicId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Characteristic"
+          },
+          "discountId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Unique identifier of the Discount"
+          },
+          "domain": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Domain name"
+          },
+          "locationGroupItemId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Id of LocationGroupItem"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier ot document item"
+          },
+          "message": {
+            "$ref": "#/components/schemas/DeltaMessage:Message-nullable"
+          },
+          "offerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of Product Offering associated with current alert item"
+          },
+          "priceAlterationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Id of the Price Alteration"
+          },
+          "priceType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Indicates the type of the Price"
+          },
+          "promotionGroupId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of Promotion Group"
+          },
+          "refId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Alert Item attribute: id of referred entity (e.g. Document Item Id)"
+          },
+          "refType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Alert Item attribute: type of referred entity (e.g. Document Item, Document)"
+          },
+          "ruleId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Rule"
+          },
+          "ruleType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Type of the Rule"
+          },
+          "type": {
+            "type": "string",
+            "description": "Document item type"
+          }
+        },
+        "description": "An entity that represents a rule violation",
+        "title": "AlertItem-1"
+      },
+      "DeltaMessage:AlertItem-2": {
+        "$ref": "#/components/schemas/DeltaMessage:AlertItem-1",
+        "type": "object",
+        "properties": {
+          "type": {
+            "const": "alertItem"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "AlertItem-2"
+      },
+      "DeltaMessage:AnonymousCustomerData": {
+        "type": "object",
+        "properties": {
+          "attributes": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_Object__",
+            "description": "Attributes"
+          },
+          "invoiceAttributes": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_Object__",
+            "description": "Invoice attributes"
+          },
+          "invoicePresentationMedia": {
+            "type": "string",
+            "description": "invoicePresentationMedia"
+          },
+          "invoiceTemplateName": {
+            "type": "string",
+            "description": "Name of the template, that will be used for Payment Account creation"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Birth date"
+          },
+          "consentInfo": {
+            "description": "Represents necessary Consent data for anonymous Quotation process",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:ConsentInfo"
+            }
+          },
+          "firstName": {
+            "type": "string",
+            "description": "First name"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name"
+          },
+          "middleName": {
+            "type": "string",
+            "description": "Middle name"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the object"
+          },
+          "notificationPreference": {
+            "description": "List of notification preferences",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:NotificationPreference"
+            }
+          },
+          "templateName": {
+            "type": "string",
+            "description": "Name of the template, that will be used for Customer creation"
+          }
+        },
+        "description": "Object that unites necessary Customer data for Anonymous Quotation process",
+        "title": "AnonymousCustomerData"
+      },
+      "DeltaMessage:AnonymousCustomerData-nullable": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "$ref": "#/components/schemas/DeltaMessage:AnonymousCustomerData"
+          }
+        ],
+        "title": "AnonymousCustomerData-nullable"
+      },
+      "DeltaMessage:AppointmentRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Id of the Appointment"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the Appointment"
+          },
+          "timeSlotEndDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "End of a time slot"
+          },
+          "timeSlotId": {
+            "type": "string",
+            "description": "Id of a time slot from external system"
+          },
+          "timeSlotStartDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Start of a time slot"
+          }
+        },
+        "description": "Refers an appointment, such as a Customer presentation or internal meeting or location visit.",
+        "title": "AppointmentRef"
+      },
+      "DeltaMessage:BaseNotification": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "notification type"
+          }
+        },
+        "description": "base notification",
+        "title": "BaseNotification"
+      },
+      "DeltaMessage:BatchRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Id of an external bulk request for Product Instances modification"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of an external bulk request for Product Instances modification"
+          }
+        },
+        "description": "Reference to an external bulk request for Product Instances modification",
+        "title": "BatchRef"
+      },
+      "DeltaMessage:BatchRef-nullable": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "$ref": "#/components/schemas/DeltaMessage:BatchRef"
+          }
+        ],
+        "title": "BatchRef-nullable"
+      },
+      "DeltaMessage:PaymentAccountRef": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "description": "Code of currency (e.g. ISO 4217 code) of Payment Account"
+          },
+          "id": {
+            "type": "string",
+            "description": "Payment Account Ref ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Payment Account Ref Name"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of the Payment Account Ref"
+          }
+        },
+        "description": "PaymentAccount reference. A Payment Account is a detailed description of a bill structure",
+        "title": "PaymentAccountRef"
+      },
+      "DeltaMessage:BusinessBarringRecord": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Action value for the Business Barring record (ADD, DASH, DISCONNECT)"
+          },
+          "businessBarringSpecificationId": {
+            "type": "string",
+            "description": "Id of the referred Business Barring Specification."
+          },
+          "expirationDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The date reflects defined expiration date of the Business Barring Record. Note: this date may not match the date of the record removing"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique Id of the Business Barring Record."
+          }
+        },
+        "description": "This entity represents financial barring record",
+        "title": "BusinessBarringRecord"
+      },
+      "DeltaMessage:BusinessGroup-1": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Action to be performed on this Business Group. Enum: ADD, MODIFY, DISCONNECT, DASH."
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_Object__",
+            "description": "Map of extended parameters"
+          },
+          "financialName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Financial Name of Business Group used in the Financial system"
+          },
+          "groupType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Type of a business group. The attribute is introduced for future use (not populated in Ehn6)."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier ot document item"
+          },
+          "marketingBundleId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of a certain marketing bundle (POC entity)"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of business group"
+          },
+          "subAction": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Sub-action to be performed on this Business Group, e.g.: ROLLBACK. Attribute is used for in-flight Document."
+          },
+          "type": {
+            "type": "string",
+            "description": "Document item type"
+          }
+        },
+        "description": "An entity that represents a business group",
+        "title": "BusinessGroup-1"
+      },
+      "DeltaMessage:BusinessGroup-2": {
+        "$ref": "#/components/schemas/DeltaMessage:BusinessGroup-1",
+        "type": "object",
+        "properties": {
+          "type": {
+            "const": "businessGroup"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "BusinessGroup-2"
+      },
+      "DeltaMessage:ConsentInfo": {
+        "type": "object",
+        "properties": {
+          "consentSpecificationId": {
+            "type": "string",
+            "description": "Unique identifier of the Consent Specification"
+          },
+          "consentState": {
+            "type": "string",
+            "description": "State of the Consent(e.g. Granted, Rejected, Revoked)"
+          },
+          "endDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "End of the validity period"
+          },
+          "extendedParameters": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_String__",
+            "description": "Project-specific consent parameters"
+          },
+          "startDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Start of the validity period"
+          }
+        },
+        "description": "Represents necessary Consent data for anonymous Quotation process",
+        "title": "ConsentInfo"
+      },
+      "DeltaMessage:ContactMedium": {
+        "type": "object",
+        "properties": {
+          "baseType": {
+            "type": "string",
+            "description": "Generic attribute indicating the base class type of the extension class of the current object. Useful only when the class type of the current object is unknown to the implementation"
+          },
+          "characteristicAtType": {
+            "type": "string",
+            "description": "characteristicAtType"
+          },
+          "characteristicType": {
+            "type": "string",
+            "description": "Type of contact characteristic (home, business)"
+          },
+          "city": {
+            "type": "string",
+            "description": "The city"
+          },
+          "country": {
+            "type": "string",
+            "description": "The country"
+          },
+          "countryCode": {
+            "type": "string",
+            "description": "The country code"
+          },
+          "emailAddress": {
+            "type": "string",
+            "description": "Full email address in standard format"
+          },
+          "endDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The time period that the contact medium is valid for - end date"
+          },
+          "extendedAttributes": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_String__",
+            "description": "Extended parameters"
+          },
+          "faxNumber": {
+            "type": "string",
+            "description": "The fax number of the contact"
+          },
+          "isVerified": {
+            "type": "boolean"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "The primary phone number of the contact"
+          },
+          "postCode": {
+            "type": "string",
+            "description": "Postcode"
+          },
+          "preferred": {
+            "type": "boolean",
+            "description": "If true, indicates that is the preferred contact medium"
+          },
+          "preferredNotification": {
+            "type": "boolean",
+            "description": "If true, indicates that ContactMedium is preferred as notification"
+          },
+          "schemaLocation": {
+            "type": "string",
+            "description": "Generic attribute containing the link to the schema that defines the structure of the class type of the current object"
+          },
+          "startDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The time period that the contact medium is valid for - start date"
+          },
+          "stateOrProvince": {
+            "type": "string",
+            "description": "State or province"
+          },
+          "street1": {
+            "type": "string",
+            "description": "Describes the street"
+          },
+          "street2": {
+            "type": "string",
+            "description": "Complementary street description"
+          },
+          "type": {
+            "type": "string",
+            "description": "type"
+          }
+        },
+        "description": "Indicates the contact medium that could be used to contact",
+        "title": "ContactMedium"
+      },
+      "DeltaMessage:ContactMedium-nullable": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "$ref": "#/components/schemas/DeltaMessage:ContactMedium"
+          }
+        ],
+        "title": "ContactMedium-nullable"
+      },
+      "DeltaMessage:DeliveryItem-1": {
+        "type": "object",
+        "properties": {
+          "attributes": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_Object__",
+            "description": "Map of extended parameters"
+          },
+          "contactMedium": {
+            "$ref": "#/components/schemas/DeltaMessage:ContactMedium-nullable"
+          },
+          "deliveryMethodId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional. Id of the Delivery Method (from the Delivery Method list)."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier ot document item"
+          },
+          "requestedDeliveryDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Expected delivery date and time."
+          },
+          "type": {
+            "type": "string",
+            "description": "Document item type"
+          }
+        },
+        "description": "The entity represents the delivery info.",
+        "title": "DeliveryItem-1"
+      },
+      "DeltaMessage:DeliveryItem-2": {
+        "$ref": "#/components/schemas/DeltaMessage:DeliveryItem-1",
+        "type": "object",
+        "properties": {
+          "type": {
+            "const": "deliveryItem"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "DeliveryItem-2"
+      },
+      "DeltaMessage:DeltaDto": {
+        "type": "object",
+        "properties": {
+          "created": {
+            "type": "boolean",
+            "description": "true, if document was created in this delta"
+          },
+          "id": {
+            "type": "string",
+            "description": "document id"
+          },
+          "itemsAdd": {
+            "description": "document items which have been added",
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:AgreementItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:AlertItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:BusinessGroup-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:DeliveryItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:GroupItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:HorizontalLink-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:LocationItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:ProductItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:DocumentItem-2"
+                }
+              ]
+            }
+          },
+          "itemsDelete": {
+            "description": "document items which have been deleted",
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:AgreementItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:AlertItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:BusinessGroup-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:DeliveryItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:GroupItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:HorizontalLink-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:LocationItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:ProductItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:DocumentItem-2"
+                }
+              ]
+            }
+          },
+          "itemsUpdate": {
+            "description": "updates for document items",
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:AgreementItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:AlertItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:BusinessGroup-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:DeliveryItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:GroupItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:HorizontalLink-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:LocationItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:ProductItem-2"
+                },
+                {
+                  "$ref": "#/components/schemas/DeltaMessage:DocumentItem-2"
+                }
+              ]
+            }
+          },
+          "documentCmd": {
+            "$ref": "#/components/schemas/DeltaMessage:Document-2"
+          },
+          "sourceVersion": {
+            "type": "integer",
+            "description": "source version",
+            "format": "int64"
+          },
+          "targetVersion": {
+            "type": "integer",
+            "description": "target version",
+            "format": "int64"
+          }
+        },
+        "description": "delta entry",
+        "title": "DeltaDto"
+      },
+      "DeltaMessage:ErrorEntry": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The attribute contains internal error code. Mandatory in response."
+          },
+          "debugDetail": {
+            "type": "string",
+            "description": "The attribute contains debug details (e.g. stack-trace). Presented in the error response only on Dev/Test environments if corresponding logging level is enabled."
+          },
+          "extra": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.String_",
+            "description": "The attribute contains key-value map with dynamic fields of the message."
+          },
+          "message": {
+            "type": "string",
+            "description": "The attribute contains an error message."
+          },
+          "originatingService": {
+            "type": "string",
+            "description": "Contains abbreviation of service that produces error in shared business library."
+          },
+          "reason": {
+            "type": "string",
+            "description": "The attribute contains generic description of an error. Mandatory in response."
+          },
+          "source": {
+            "$ref": "#/components/schemas/DeltaMessage:ErrorSource"
+          },
+          "status": {
+            "type": "string",
+            "description": "The attribute contains HTTP Status Code."
+          }
+        },
+        "description": "The object represents an error.",
+        "title": "ErrorEntry"
+      },
+      "DeltaMessage:ErrorSource": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "The attribute contains description of the invalid request parameter."
+          },
+          "example": {
+            "type": "string",
+            "description": "The attribute contains valid value example of the invalid request parameter."
+          },
+          "parameter": {
+            "type": "string",
+            "description": "The attribute contains information about the invalid request parameter."
+          },
+          "pointer": {
+            "type": "string",
+            "description": "The attribute contains information about the invalid entity in the request. Based on JsonPath format."
+          },
+          "value": {
+            "description": "The attribute contains value of the invalid request parameter."
+          }
+        },
+        "description": "The object contains information about the exact part of the request where the error has occurred.",
+        "title": "ErrorSource"
+      },
+      "DeltaMessage:ExtEligibilityParams": {
+        "type": "object",
+        "properties": {
+          "params": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_String__",
+            "description": "Extended Eligibility Parameters"
+          }
+        },
+        "description": "Extended Eligibility Parameters",
+        "title": "ExtEligibilityParams"
+      },
+      "DeltaMessage:ExtEligibilityParams-nullable": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "$ref": "#/components/schemas/DeltaMessage:ExtEligibilityParams"
+          }
+        ],
+        "title": "ExtEligibilityParams-nullable"
+      },
+      "DeltaMessage:ExternalRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "id"
+          },
+          "name": {
+            "type": "string",
+            "description": "name"
+          },
+          "type": {
+            "type": "string",
+            "description": "type"
+          }
+        },
+        "description": "In case ExternalRef received with ExternalRef.refType = 'Product Order' from Document TMF Service - save/update the ExternalRef.refId to Document.salesOrderId, otherwise create identical ExternalRef object (ExternalRef.refId =ExternalRef.id, ExternalRef.refType = ExternalRef.type, ExternalRef.name = ExternalRef.name). Note! Only a single ExternalRef with ExternalRef.type = 'Product Order' is allowed.",
+        "title": "ExternalRef"
+      },
+      "DeltaMessage:GroupItem-1": {
+        "type": "object",
+        "properties": {
+          "attributes": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_Object__",
+            "description": "Map of extended parameters"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier ot document item"
+          },
+          "sequenceNum": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Sequence number of the group",
+            "format": "int32"
+          },
+          "type": {
+            "type": "string",
+            "description": "Document item type"
+          }
+        },
+        "description": "Group Item",
+        "title": "GroupItem-1"
+      },
+      "DeltaMessage:GroupItem-2": {
+        "$ref": "#/components/schemas/DeltaMessage:GroupItem-1",
+        "type": "object",
+        "properties": {
+          "type": {
+            "const": "groupItem"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "GroupItem-2"
+      },
+      "DeltaMessage:HorizontalLink-1": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Action to be performed on the Horizontal Link: ADD, DASH, DISCONNECT."
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_Object__",
+            "description": "Map of extended parameters"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier ot document item"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of the Horizontal Link"
+          },
+          "documentItemIdFrom": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Id of the source Document Item from which the Horizontal Link originates"
+          },
+          "documentItemIdTo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Id of the target Document Item to which the Horizontal Link points"
+          },
+          "specificationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of Horizontal Link Specification in Product Catalog"
+          },
+          "type": {
+            "type": "string",
+            "description": "Document item type"
+          }
+        },
+        "required": [
+          "documentItemIdFrom",
+          "documentItemIdTo",
+          "specificationId"
+        ],
+        "description": "Entity which represents special type of connection between two Document Items which are not in the same hierarchy. Note: only root Document Items of the same Customer can be connected via Horizontal Link.",
+        "title": "HorizontalLink-1"
+      },
+      "DeltaMessage:HorizontalLink-2": {
+        "$ref": "#/components/schemas/DeltaMessage:HorizontalLink-1",
+        "type": "object",
+        "properties": {
+          "type": {
+            "const": "horizontalLink"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "HorizontalLink-2"
+      },
+      "DeltaMessage:LocationItem-1": {
+        "type": "object",
+        "properties": {
+          "addedToDocument": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Place reference details"
+          },
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Address of the Place"
+          },
+          "addressLine1": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Parameter is used to capture a complete address data and is intended to hold a portion of the address"
+          },
+          "addressLine2": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Parameter is used to capture a complete address data and is intended to hold a portion of the address"
+          },
+          "addressLine3": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Parameter is used to capture a complete address data and is intended to hold a portion of the address"
+          },
+          "associatedLocationGroup": {
+            "description": "List of Location Group that includes current Location.",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_Object__",
+            "description": "Map of extended parameters"
+          },
+          "belongsToHousingAssociation": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Flag indicating if the Location belongs to a Housing Association"
+          },
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "City that the address is in"
+          },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Country that the address is in"
+          },
+          "geoAddressId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the address unit from AM."
+          },
+          "housingAssociationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of Housing association"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier ot document item"
+          },
+          "locationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Location"
+          },
+          "marketId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Market"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of the location"
+          },
+          "ownedByHousingAssociation": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Flag indicating if the Location is owned by a housing association (b2b customer)"
+          },
+          "postCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Descriptor for a postal delivery area, used to speed and simplify the delivery of mail (also known as zipcode)"
+          },
+          "relatedLocationItem": {
+            "description": "Related Location items list",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:LocationItemRef"
+            }
+          },
+          "state": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "State that the address is in"
+          },
+          "type": {
+            "type": "string",
+            "description": "Document item type"
+          },
+          "updateMasterSystemData": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "The flag is used to highlight those Location Items that are supposed to be updated in the master system as part of Document submission procedure."
+          }
+        },
+        "description": "Location Item",
+        "title": "LocationItem-1"
+      },
+      "DeltaMessage:LocationItem-2": {
+        "$ref": "#/components/schemas/DeltaMessage:LocationItem-1",
+        "type": "object",
+        "properties": {
+          "type": {
+            "const": "locationItem"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "LocationItem-2"
+      },
+      "DeltaMessage:LocationItemRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "description": "Related Location items list",
+        "title": "LocationItemRef"
+      },
+      "DeltaMessage:Map_String.List_Object__": {
+        "type": "object",
+        "title": "Map_String.List_Object__"
+      },
+      "DeltaMessage:Map_String.List_String__": {
+        "type": "object",
+        "title": "Map_String.List_String__"
+      },
+      "DeltaMessage:Map_String.List_String__-nullable": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_String__"
+          }
+        ],
+        "title": "Map_String.List_String__-nullable"
+      },
+      "DeltaMessage:Map_String.Map_String.List_String___": {
+        "type": "object",
+        "title": "Map_String.Map_String.List_String___"
+      },
+      "DeltaMessage:Map_String.Map_String.List_String___-nullable": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.Map_String.List_String___"
+          }
+        ],
+        "title": "Map_String.Map_String.List_String___-nullable"
+      },
+      "DeltaMessage:Map_String.Object_": {
+        "type": "object",
+        "title": "Map_String.Object_"
+      },
+      "DeltaMessage:Map_String.ProductPrice_": {
+        "type": "object",
+        "title": "Map_String.ProductPrice_"
+      },
+      "DeltaMessage:Map_String.ProductPrice_-nullable": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.ProductPrice_"
+          }
+        ],
+        "title": "Map_String.ProductPrice_-nullable"
+      },
+      "DeltaMessage:Map_String.String_": {
+        "type": "object",
+        "title": "Map_String.String_"
+      },
+      "DeltaMessage:Message": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Code of the message"
+          },
+          "defaultMessage": {
+            "type": "string",
+            "description": "Default message"
+          },
+          "params": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.String_",
+            "description": "Message parameters"
+          }
+        },
+        "required": [
+          "defaultMessage"
+        ],
+        "description": "Message",
+        "title": "Message"
+      },
+      "DeltaMessage:Message-nullable": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "$ref": "#/components/schemas/DeltaMessage:Message"
+          }
+        ],
+        "title": "Message-nullable"
+      },
+      "DeltaMessage:NotificationPreference": {
+        "type": "object",
+        "properties": {
+          "contactMedium": {
+            "$ref": "#/components/schemas/DeltaMessage:ContactMedium"
+          },
+          "endDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "End of the validity period"
+          },
+          "extendedParameters": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_String__",
+            "description": "Project-specific parameters"
+          },
+          "notificationCategory": {
+            "type": "string",
+            "description": "Category of events which initiate notification (e.g. Payment Account Notifications)"
+          },
+          "startDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Start of the validity period"
+          }
+        },
+        "description": "Represents necessary Notification Preference data for anonymous Quotation process",
+        "title": "NotificationPreference"
+      },
+      "DeltaMessage:ProductItem-1": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Action to be performed on this Document Item. Enum: ADD, MODIFY, DISCONNECT, DASH,SUSPEND, RESUME"
+          },
+          "agreementItemIds": {
+            "description": "A list of agreementRefs (Agreement Item in Quotation Engine model) Ids",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "agreementItems": {
+            "description": "Contains references to Agreement Items",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:AgreementItemRef"
+            }
+          },
+          "amount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Allows to sell multiple Offerings with the same configuration",
+            "format": "int32"
+          },
+          "appliedBusinessBarringId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Id of Business Barring which was applied when this product offering added in document."
+          },
+          "appliedByBusinessRuleId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of Business Policy Rule (from Product Catalog) by which this document item was automatically added to document"
+          },
+          "appointments": {
+            "description": "Contains references to appointments",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:AppointmentRef"
+            }
+          },
+          "approvalLevel": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Approval level",
+            "format": "int32"
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_Object__",
+            "description": "Map of extended parameters"
+          },
+          "availabilityCheckResult": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Result of availability Check"
+          },
+          "availabilityCheckResultMessage": {
+            "$ref": "#/components/schemas/DeltaMessage:Message-nullable"
+          },
+          "baselineDocumentItem": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Attribute is used to mark in-flight Document Item."
+          },
+          "paymentAccounts": {
+            "description": "Referred to Payment Account(s)",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:PaymentAccountRef"
+            }
+          },
+          "financialName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Financial Name of Product Offering used in the Financial system"
+          },
+          "businessAction": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Business Action"
+          },
+          "businessBarringRecords": {
+            "description": "Associated with Product Item Business Barring Records",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:BusinessBarringRecord"
+            }
+          },
+          "businessGroupId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Id of the business group"
+          },
+          "categoryId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Category"
+          },
+          "conditionSetId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Condition set Id value. Auto-populated only in Agreement related scenarios."
+          },
+          "contractedDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Date and TIme that used to freeze prices on this date (The system allows to freeze Price Value + version for the Product Instance in order to ignore versioning)"
+          },
+          "corrupted": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "TRUE when the Document item is corrupted"
+          },
+          "instanceAgreementExternalIds": {
+            "description": "A list of unique external identifiers of the Agreements on Product Instance",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "instancePaymentAccountId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Payment Account that is propagated from Product Instance during init procedure."
+          },
+          "instanceBusinessGroupId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Id of the business group that is propagated from Product Instance during init procedure"
+          },
+          "instanceOfferId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Product from Catalog that is propogated from Product Instance during init procedure."
+          },
+          "instancePlaceExternalId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Place from Location Management that is propogated from Product Instance during init procedure."
+          },
+          "instanceSourceDocumentItemId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Document Item which was used as a source for Product Instance configuration that is propagated from Product Instance during init procedure."
+          },
+          "instanceState": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "State that is propagated from Product Instance during init procedure"
+          },
+          "instanceVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Version of the Product Instance from Inventory",
+            "format": "int64"
+          },
+          "creationTime": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Time of creation"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Currency (ISO 4217 code) in which price of the Product Item shall be created. Filled via propagation from Document (for root Product Items) or from root Product Item (for child Product Items)"
+          },
+          "deliveryItemId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Delivery item id"
+          },
+          "discoReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Reason of disconnection of the Product"
+          },
+          "discoReasonDescription": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Description of disconnection reason"
+          },
+          "distributionChannelId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Distribution Channel provided within Document creation or Patch"
+          },
+          "downPaymentOverrideAmount": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Amount of Down Payment Override"
+          },
+          "fulfillmentState": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Fulfillment state of Product Order Item, e.g.: ponrPassed, ponrNotPassed, completed. Attribute is used for in-flight Document."
+          },
+          "locationGroupItemId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Id of a Location Group"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier ot document item"
+          },
+          "installmentPlanId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of Installment Plan"
+          },
+          "locationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "External Id of the location"
+          },
+          "locationItemId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Id of the Location Item"
+          },
+          "logicalGroupItemId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Id of the logical group item"
+          },
+          "mandatoryForAgreement": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Parameter used to override min cardinality of an Offering for Agreement."
+          },
+          "marketId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the market"
+          },
+          "marketingBundleComponentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Unique identifier of a marketing bundle component automatically populated by the system from the Product Catalog"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of Product Item"
+          },
+          "numberOfInstallments": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Number of Installments",
+            "format": "int32"
+          },
+          "numberOfMonthsTillExpiration": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Number of month between plannedDisconnectionDate and Agreement.complitionDate.endDate",
+            "format": "int32"
+          },
+          "offerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Product from Catalog"
+          },
+          "originalContractEndDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "This date reflects the contract end date originally captured during initial sales process. The value does not propagate automatically and does not change in response to extensions or renewals of the contract."
+          },
+          "overrideMode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Indicates which kind of price is overridable (GROSS or NET)."
+          },
+          "parentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Id of parent item (It is top If empty)"
+          },
+          "plannedDisconnectionDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Planned disconnection date that is calculated by Inventory service for temporal Product Instance, i.e. that represents Product Offering with duration. It is automatically populated by the system from Product Instance during init procedure."
+          },
+          "prepaymentRequired": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "This flag indicates whether prepayment is required for this Product Item. Null value to be considered as False. Note: The payment is recorded on the Document (document.paymentId attribute)."
+          },
+          "pricePlanId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ID of Price Plan related to price of the Document Item"
+          },
+          "priceRecalculationDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Alternative date that used for price definition (instead of Contracted date). Example, used for definition of Price Key for calculation Disconnection fee"
+          },
+          "prices": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.ProductPrice_-nullable",
+            "description": "Map containing prices. The key is Price Specification Id"
+          },
+          "productRelationships": {
+            "description": "Product Relationships list",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:ProductRelationship"
+            }
+          },
+          "prohibitManualRemoval": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Flag defines that a document item can't be removed manually from a document, because it was added to a document automatically by Business Policy Rule of 'AutoAppliedRequiresRule' or 'AutoAppliedRequiresRuleWithRemove' type."
+          },
+          "quantity": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Indicates the quantity of the Product to be documentd",
+            "format": "int32"
+          },
+          "relatedParties": {
+            "description": "Related party ref list",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:RelatedPartyRef"
+            }
+          },
+          "requestedPricePlanId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ID of Price Plan related to the Document Item's price, which was selected by user. This Price Plan Id is used in Price-plan-first concept."
+          },
+          "rootId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Id of the root (top) Product Item"
+          },
+          "salesDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Date is used to freeze hierarchy and check saleability on this date."
+          },
+          "sequenceNum": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Sequence number of the product item",
+            "format": "int32"
+          },
+          "startDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Start date"
+          },
+          "state": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Product item state"
+          },
+          "subAction": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Sub-action to be performed on this Document Item, e.g.: ROLLBACK. Attribute is used for in-flight Document."
+          },
+          "suspended": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Flag that indicates whether a Document Item is regarded as suspended."
+          },
+          "type": {
+            "type": "string",
+            "description": "Document item type"
+          },
+          "validFor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Valid for"
+          },
+          "virtual": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "This flag indicates whether this Product Item is virtual (initied to the Document just for Business Rule calculation) or not. Such Product Item can be inited only via system rules. Null value to be considered as False."
+          }
+        },
+        "description": "Represents a Product Offering",
+        "title": "ProductItem-1"
+      },
+      "DeltaMessage:ProductItem-2": {
+        "$ref": "#/components/schemas/DeltaMessage:ProductItem-1",
+        "type": "object",
+        "properties": {
+          "type": {
+            "const": "productItem"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "ProductItem-2"
+      },
+      "DeltaMessage:ProductRelationship": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "relationshipType": {
+            "type": "string"
+          }
+        },
+        "description": "Product Relationships list",
+        "title": "ProductRelationship"
+      },
+      "DeltaMessage:Document-1": {
+        "type": "object",
+        "properties": {
+          "anonymousCustomerData": {
+            "$ref": "#/components/schemas/DeltaMessage:AnonymousCustomerData-nullable"
+          },
+          "approvalLevel": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Level of approval for the Document. The system automatically calculates approval level - maximal value of approval level on the Document Items.",
+            "format": "int32"
+          },
+          "assignTo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Reference to the 'assign to' person"
+          },
+          "assignedUsers": {
+            "description": "List of Users, to whom the Document is assigned",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:UserData"
+            }
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_Object__",
+            "description": "Map of extended parameters"
+          },
+          "autoAppliedReferences": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.Map_String.List_String___-nullable",
+            "description": "Target to auto-applied offerings items, caused by auto-application rules. Map items: targetItem.id>relatedItem.id > IDs of causal rules. This Map can be filled by the system only."
+          },
+          "bannedRuleIds": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_String__-nullable",
+            "description": "Maps top product items to the rule IDs, where the rule auto-applied offerings were removed manually. This Map can be filled by the system only."
+          },
+          "baselineDocumentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Unique identifier of baseline Document. Attribute is used for in-flight Document"
+          },
+          "batch": {
+            "$ref": "#/components/schemas/DeltaMessage:BatchRef-nullable"
+          },
+          "brandId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Brand"
+          },
+          "businessAction": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Business action"
+          },
+          "cancellationReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The reason (from a list of Cancellation Reasons) why the Document has been cancelled"
+          },
+          "cancellationReasonDescription": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The reason (from the free text field) why the Document has been cancelled"
+          },
+          "contactMediums": {
+            "description": "Contact medium list",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:ContactMedium"
+            }
+          },
+          "contractedDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Date and Time that used to freeze prices on this date (The system allows to freeze Price Value version for the Product Instance in order to ignore versioning)"
+          },
+          "corrupted": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "TRUE when the Document contains corrupted items"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/DeltaMessage:UserData-nullable"
+          },
+          "creationTime": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Document creation time"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Currency (ISO 4217 code) in which prices of Product Items added within the Document shall be created. Propagated to root Product Items"
+          },
+          "customerCategoryId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Customer Category. Note: Changing of Customer Category doesn't lead to price recalculation and eligibility check execution."
+          },
+          "customerCommittedDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "The date provided by the service provider when the Document will be fulfilled"
+          },
+          "customerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the customer"
+          },
+          "customerRequestedDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "The date when the customer requests the Document to be fulfilled"
+          },
+          "deliveryMethod": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "(Optional) Id of the Delivery Method (from the Delivery Method list) for Document"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Description of the Document"
+          },
+          "distributionChannelId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Distribution Channel provided within Document creation or Patch"
+          },
+          "effectiveDocumentComplitionDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Date when the Document was fulfilled"
+          },
+          "expectedFullfilmentStartDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "The date when the customer expects fulfillment of the Document to be started"
+          },
+          "extEligibilityParams": {
+            "$ref": "#/components/schemas/DeltaMessage:ExtEligibilityParams-nullable"
+          },
+          "externalId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ID given by the consumer and only understandable by him (to facilitate his searches afterwards)"
+          },
+          "externalPaymentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Attribute that holds Id of the payment taken from external system."
+          },
+          "externalProjectState": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "State of the Project to which the Document belongs"
+          },
+          "externalRefs": {
+            "description": "External ref list",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:ExternalRef"
+            }
+          },
+          "initialBaselineDocumentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Document when it is created in the system"
+          },
+          "initialDistributionChannelId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Distribution Channel used for Document creation"
+          },
+          "lastUpdatedDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Time of last modification"
+          },
+          "lifecycleId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of Document Lifecycle"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of the Document"
+          },
+          "newAgreement": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Flag that is used to specify 'newAgreement' quotation mode. This mode implies use of additional logic and a separate document state model."
+          },
+          "number": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Sequential number of the Document",
+            "format": "int64"
+          },
+          "opportunityId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Unique identifier of the Opportunity"
+          },
+          "overrideMode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Indicates which kind of price is editable (Gross or Net)"
+          },
+          "owner": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Sales person that owns the Document and intends to receive incentives"
+          },
+          "paymentDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Date when payment is made and Document moves to PAID state"
+          },
+          "paymentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of Payment"
+          },
+          "paymentReceived": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "The flag indicates whether payment for this Document is received. Null value to be considered as False."
+          },
+          "paymentRequired": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "The flag indicates whether payment is required for this Document. Null value to be considered as False."
+          },
+          "priceListId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of Price List"
+          },
+          "ratesBound": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "If true, shows that rates are frozen (used for a Conversion Currency)"
+          },
+          "relatedParties": {
+            "description": "Related party ref list",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:RelatedPartyRef"
+            }
+          },
+          "removedTopProductItems": {
+            "description": "List of top product items that were removed from the Document in case of In-flight",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeltaMessage:RemovedTopProductItem"
+            }
+          },
+          "revision": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Attribute is used to mark in-flight Document. Increased in case changes are done to the Document after submission"
+          },
+          "sales": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of the sales user"
+          },
+          "salesDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Date is used to freeze hierarchy and check saleability on this date"
+          },
+          "salesEmail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "E-mail of the sales user"
+          },
+          "salesId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the sales user"
+          },
+          "salesId2": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id2 of the sales user"
+          },
+          "salesId3": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id3 of the sales user"
+          },
+          "salesLandline": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Sales Landline"
+          },
+          "salesMobile": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Mobile of the sales user"
+          },
+          "salesOrderId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "SalesOrderId ID"
+          },
+          "state": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "State of the Document"
+          },
+          "stateChangeDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Date and Time of the last Document State Change"
+          },
+          "stateChangeReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The reason why the Document state has been changed"
+          },
+          "stateChangeReasonDescription": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The reason (from the free text field) why the Document state has been changed"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DeltaMessage:Message-nullable"
+          },
+          "submittedBy": {
+            "$ref": "#/components/schemas/DeltaMessage:UserData-nullable"
+          },
+          "submittedWhen": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Represents date and time of Document submitting."
+          },
+          "suppressLocationEnrichment": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "The flag is used to suppress automatic calls to Location Management executed by the system in order to fetch additional data relevant to Location Items in the Document."
+          },
+          "target": {
+            "description": "Parameter based on which the system provides the ability to test new Product Offerings and Promotions on production environment earlier these Product Offerings and Promotions will be saleable for end-customers",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "type": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "$ref": "#/components/schemas/DeltaMessage:UserData-nullable"
+          },
+          "validUntilDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Document expiration time"
+          }
+        },
+        "description": "Represents common information about a customer's request",
+        "title": "Document-1"
+      },
+      "DeltaMessage:Document-2": {
+        "$ref": "#/components/schemas/DeltaMessage:Document-1",
+        "type": "object",
+        "properties": {
+          "type": {
+            "const": "document"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "Document-2"
+      },
+      "DeltaMessage:DocumentItem-1": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Action to be performed on this Document Item. Enum: ADD, MODIFY, DISCONNECT, DASH,SUSPEND, RESUME"
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/DeltaMessage:Map_String.List_Object__",
+            "description": "Map of extended parameters"
+          },
+          "financialName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Financial Name of Product Offering used in the Financial system"
+          },
+          "businessAction": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Business Action"
+          },
+          "categoryId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Category"
+          },
+          "corrupted": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "TRUE when the Document item is corrupted"
+          },
+          "instancePlaceExternalId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Place from Location Management that is propogated from Product Instance during init procedure."
+          },
+          "instanceState": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "State that is propagated from Product Instance during init procedure"
+          },
+          "discoReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Reason of disconnection of the Product"
+          },
+          "discoReasonDescription": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Description of disconnection reason"
+          },
+          "distributionChannelId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the Distribution Channel provided within Document creation or Patch"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier ot document item"
+          },
+          "marketId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the market"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of Product Item"
+          },
+          "parentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Id of parent item (It is top If empty)"
+          },
+          "rootId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Id of the root (top) Product Item"
+          },
+          "startDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Start date"
+          },
+          "type": {
+            "type": "string",
+            "description": "Document item type"
+          },
+          "validFor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Valid for"
+          }
+        },
+        "description": "Represents a Product Offering",
+        "title": "DocumentItem-1"
+      },
+      "DeltaMessage:DocumentItem-2": {
+        "$ref": "#/components/schemas/DeltaMessage:DocumentItem-1",
+        "type": "object",
+        "properties": {
+          "type": {
+            "const": "documentItem"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "DocumentItem-2"
+      },
+      "DeltaMessage:RelatedPartyRef": {
+        "type": "object",
+        "properties": {
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "End date for related party validity period"
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of Related Party"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the Related Party"
+          },
+          "role": {
+            "type": "string",
+            "description": "Role of the Related Rarty"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Start date for related party validity period"
+          },
+          "type": {
+            "type": "string",
+            "description": "Indicates the (class) type of Related Party: 'Individual', 'Organization', 'PartyRole', 'Customer'"
+          },
+          "userOfService": {
+            "type": "boolean",
+            "description": "Is used to show that Related Party is a user of service (the Individual use this product on their own or only manages). Can be empty."
+          }
+        },
+        "description": "The party which the product is related with",
+        "title": "RelatedPartyRef"
+      },
+      "DeltaMessage:RemovedTopProductItem": {
+        "type": "object",
+        "properties": {
+          "paymentAccountId": {
+            "type": "string",
+            "description": "Id of the Payment Account that was associated with removed Product Item"
+          },
+          "creationDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The date and time of record creation, i.e. the date of Product Items removing"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "Id of the Related Party with type = Customer that was associated with removed Product Item"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id of the entity"
+          },
+          "locationId": {
+            "type": "string",
+            "description": "External Id of the location that was associated with removed Product Item"
+          },
+          "offerId": {
+            "type": "string",
+            "description": "Id of the Product Offering of the removed Product Item"
+          },
+          "documentId": {
+            "type": "string",
+            "description": "Id of the Document from which Product Items were removed"
+          }
+        },
+        "description": "The entity holds the information about Top Product Item that was removed from the Document in case of In-flight",
+        "title": "RemovedTopProductItem"
+      },
+      "DeltaMessage:UserData": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time of changes"
+          },
+          "impersonatedUserId": {
+            "type": "string",
+            "description": "Unique identifier of the impersonated User."
+          },
+          "impersonatedUserName": {
+            "type": "string",
+            "description": "Name of the impersonated User."
+          },
+          "userId": {
+            "type": "string",
+            "description": "Unique identifier of the User"
+          },
+          "userName": {
+            "type": "string",
+            "description": "Name of the User"
+          },
+          "userRole": {
+            "type": "string",
+            "description": "Role of the User within the Document (e.g. financial approver, technical approver etc)"
+          }
+        },
+        "description": "Contains information about the user who updated/created the record. In case of X-User-Id and X-User-Name provided in the event header, userId and userName will be filled. In case of X-Service(M2M operations) provided in the event header, userName will be filled(userId remains empty).",
+        "title": "UserData"
+      },
+      "DeltaMessage:UserData-nullable": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "$ref": "#/components/schemas/DeltaMessage:UserData"
+          }
+        ],
+        "title": "UserData-nullable"
+      }
+    },
+    "messages": {
+      "ArchivingTrackingStoreEvent": {
+        "headers": {
+          "anyOf": [
+            {
+              "$ref": "#/components/schemas/Header-X-Request-Id"
+            },
+            {
+              "$ref": "#/components/schemas/Header-Tenant"
+            },
+            {
+              "$ref": "#/components/schemas/Header-Entity-Type"
+            },
+            {
+              "$ref": "#/components/schemas/Header-Session-ID"
+            }
+          ]
+        },
+        "payload": {
+          "$ref": "#/components/schemas/ArchivingTrackingStoreEvent"
+        },
+        "name": "ArchivingTrackingStoreEvent",
+        "title": "ArchivingTrackingStoreEvent"
+      },
+      "ArchivingStoreEvent": {
+        "headers": {
+          "anyOf": [
+            {
+              "$ref": "#/components/schemas/Header-X-Request-Id"
+            },
+            {
+              "$ref": "#/components/schemas/Header-Tenant"
+            },
+            {
+              "$ref": "#/components/schemas/Header-Entity-Type-Snapshot"
+            },
+            {
+              "$ref": "#/components/schemas/Header-Session-ID"
+            }
+          ]
+        },
+        "payload": {
+          "$ref": "#/components/schemas/ArchivingStoreEvent"
+        },
+        "name": "ArchivingStoreEvent",
+        "title": "ArchivingStoreEvent"
+      },
+      "ChangeDocumentStateDto": {
+        "headers": {
+          "anyOf": [
+            {
+              "$ref": "#/components/schemas/Header-X-Idempotency-Key"
+            }
+          ]
+        },
+        "payload": {
+          "$ref": "#/components/schemas/ChangeDocumentStateDto"
+        },
+        "name": "ChangeDocumentStateDto",
+        "title": "ChangeDocumentStateDto",
+        "description": "This event is used to change state of the Document"
+      },
+      "CleanupEvent": {
+        "headers": {
+          "anyOf": [
+            {
+              "$ref": "#/components/schemas/Header-Entity-Type-Snapshot"
+            }
+          ]
+        },
+        "payload": {
+          "$ref": "#/components/schemas/CleanupEvent"
+        },
+        "name": "CleanupEvent",
+        "title": "CleanupEvent"
+      },
+      "DeltaMessage": {
+        "headers": {
+          "anyOf": [
+            {
+              "$ref": "#/components/schemas/Header-X-Idempotency-Key"
+            }
+          ]
+        },
+        "payload": {
+          "$ref": "#/components/schemas/DeltaMessage"
+        },
+        "name": "DeltaMessage",
+        "title": "DeltaMessage",
+        "description": "Delta message model"
+      },
+      "DocumentSnapshotNotification": {
+        "payload": {
+          "$ref": "#/components/schemas/DocumentSnapshotNotification"
+        },
+        "name": "DocumentSnapshotNotification",
+        "title": "DocumentSnapshotNotification",
+        "description": "DocumentSnapshotNotification message"
+      },
+      "SnapshotSaveEvent": {
+        "payload": {
+          "$ref": "#/components/schemas/SnapshotSaveEvent"
+        },
+        "name": "SnapshotSaveEvent",
+        "title": "SnapshotSaveEvent",
+        "description": "SnapshotSaveEvent message"
+      },
+      "reload-cache-message": {
+        "payload": {
+          "$ref": "#/components/schemas/ReloadCacheMessage"
+        },
+        "name": "ReloadCacheMessage",
+        "title": "ReloadCacheMessage"
+      }
+    }
+  }
+}

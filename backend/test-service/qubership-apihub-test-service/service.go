@@ -75,6 +75,7 @@ func main() {
 	r.HandleFunc("/v3/api-docs/md", openapiController.GetMdFile).Methods(http.MethodGet)
 	r.HandleFunc("/v3/api-docs/json", openapiController.GetJsonSample).Methods(http.MethodGet)
 	r.HandleFunc("/v3/api-docs/async", asyncapiController.GetAsyncapiYamlSpec).Methods(http.MethodGet)
+	r.HandleFunc("/v3/api-docs/async/json", asyncapiController.GetAsyncapiJsonSpec).Methods(http.MethodGet)
 	r.HandleFunc("/graphql", graphqlController.GetGraphqlSpec).Methods(http.MethodGet)
 	r.HandleFunc("/api/graphql-server/schema", graphqlController.GetGraphqlIntrospection).Methods(http.MethodPost)
 
