@@ -25,7 +25,7 @@ require (
 	github.com/russellhaering/goxmldsig v1.5.0
 	github.com/shaj13/go-guardian/v2 v2.11.6
 	github.com/shaj13/libcache v1.0.0
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.11.1
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
