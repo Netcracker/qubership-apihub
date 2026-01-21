@@ -1,0 +1,17 @@
+openapi: 3.0.0
+info:
+  title: Nullable equivalent to null
+  version: 1.0.0
+paths:
+  /path1:
+    post:
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              type: string
+              nullable: true
+      responses:
+        '200':
+          description: OK
+          content: {}

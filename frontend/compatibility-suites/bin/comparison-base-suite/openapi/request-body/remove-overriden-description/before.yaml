@@ -26,8 +26,6 @@ components:
               id:
                 type: integer
                 format: int64
-                example: 10
               petId:
                 type: integer
                 format: int64
-                example: 198772
