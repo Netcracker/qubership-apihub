@@ -142,16 +142,20 @@ func (j BuildCleanupJob) Run() {
 				log.Errorf("Failed to get up remove candidate old build ids: %v", err)
 				return
 			}
-			err = j.minioStorageService.RemoveFiles(ctx, view.BUILD_RESULT_TABLE, ids)
-			if err != nil {
-				log.Errorf("Failed to remove old build results from minio storage: %v", err)
-				return
-			}
+			if len(ids) == 0 {
+				log.Info("No old build entities to clean up")
+			} else {
+				err = j.minioStorageService.RemoveFiles(ctx, view.BUILD_RESULT_TABLE, ids)
+				if err != nil {
+					log.Errorf("Failed to remove old build results from minio storage: %v", err)
+					return
+				}
 
-			err = j.buildCleanupRepository.RemoveOldBuildSourcesByIds(ctx, ids, lockId, scheduledAt)
-			if err != nil {
-				log.Errorf("Failed to clean up old builds sources: %v", err)
-				return
+				err = j.buildCleanupRepository.RemoveOldBuildSourcesByIds(ctx, ids, lockId, scheduledAt)
+				if err != nil {
+					log.Errorf("Failed to clean up old builds sources: %v", err)
+					return
+				}
 			}
 		} else {
 			err = j.buildCleanupRepository.RemoveOldBuildEntities(lockId, scheduledAt)

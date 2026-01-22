@@ -33,15 +33,19 @@ func (d OpsMigration) StageCleanupBefore() error {
 			if err != nil {
 				return err
 			}
-			err = d.minioStorageService.RemoveFiles(d.migrationCtx, view.BUILD_RESULT_TABLE, ids)
-			if err != nil {
-				return err
+			if len(ids) == 0 {
+				log.Infof("ops migration %s: No migration build data to clean up", d.ent.Id)
+			} else {
+				err = d.minioStorageService.RemoveFiles(d.migrationCtx, view.BUILD_RESULT_TABLE, ids)
+				if err != nil {
+					return err
+				}
+				deleted, err := d.buildCleanupRepository.RemoveMigrationBuildSourceData(d.migrationCtx, ids)
+				if err != nil {
+					return err
+				}
+				log.Infof("ops migration %s: Cleanup before full migration cleaned up %d entries", d.ent.Id, deleted)
 			}
-			deleted, err := d.buildCleanupRepository.RemoveMigrationBuildSourceData(d.migrationCtx, ids)
-			if err != nil {
-				return err
-			}
-			log.Infof("ops migration %s: Cleanup before full migration cleaned up %d entries", d.ent.Id, deleted)
 		} else {
 			deleted, err := d.buildCleanupRepository.RemoveMigrationBuildData(d.migrationCtx)
 			if err != nil {
