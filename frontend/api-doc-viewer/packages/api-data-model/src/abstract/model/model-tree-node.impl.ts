@@ -1,4 +1,4 @@
-import { CrawlRules, JsonPath, syncCrawl, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
+import { CrawlRules, isObject, JsonPath, syncCrawl, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
 import { modelTreeNodeType } from "../constants";
 import { ModelTreeComplexNode } from './model-tree-complex-node.impl';
 import { FilterChildrenByCondition, IModelTree, IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from './types';
@@ -107,27 +107,29 @@ export class ModelTreeNode<T, K extends string, M> implements IModelTreeNode<T, 
         nextLevel,
         nextMaxLevel,
       } = lazyBuildingContext
-      this._expandingCallback = () => {
-        syncCrawl<
-          LazyBuildingCrawlState<T, K, M>,
-          LazyBuildingCrawlRule<T, K, M>
-        >(
-          crawlValue,
-          crawlHooks,
-          {
-            state: {
-              parent: isSimpleNode ? this : this.parent,
-              container: !isSimpleNode ? this : undefined,
-              alreadyConvertedMappingStack: alreadyConvertedMappingStack,
-              nodeIdPrefix: nodeIdPrefix,
-              treeLevel: nextLevel + 1,
-              maxTreeLevel: nextMaxLevel + 1,
+      if (isObject(crawlValue)) {
+        this._expandingCallback = () => {
+          syncCrawl<
+            LazyBuildingCrawlState<T, K, M>,
+            LazyBuildingCrawlRule<T, K, M>
+          >(
+            crawlValue,
+            crawlHooks,
+            {
+              state: {
+                parent: isSimpleNode ? this : this.parent,
+                container: !isSimpleNode ? this : undefined,
+                alreadyConvertedMappingStack: alreadyConvertedMappingStack,
+                nodeIdPrefix: nodeIdPrefix,
+                treeLevel: nextLevel + 1,
+                maxTreeLevel: nextMaxLevel + 1,
+              },
+              rules: crawlRules,
             },
-            rules: crawlRules,
-          },
-          true, // enable "skip root level" mode
-        )
-      };
+            true, // enable "skip root level" mode
+          )
+        };
+      }
     }
     /* --- */
   }
