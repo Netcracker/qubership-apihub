@@ -14,10 +14,10 @@
 
 openapi: 3.0.3
 info:
-  title: APIHUB agent API
+  title: APIHUB Agent Internal API
   version: 1.0.0
   description: |
-    The API contract for APIHUB agent UI.
+    Internal API contract for APIHUB agent. Contains operations for service discovery and namespace info retrieval.
 servers:
   - url: "https://{agentUrl}/api"
     description: Agent backend address
@@ -30,12 +30,8 @@ security:
   - ApiKeyAuth: []
   - CookieAuth: []
 tags:
-  - name: Package Versions
-    description: Published package versions API
   - name: Cloud Services
     description: Cloud Services API
-  - name: Client Publish
-    description: Client publish API
 paths:
   /v1/namespaces:
     get:
@@ -385,195 +381,6 @@ paths:
           $ref: "#/components/responses/internalServerError500"
         "503":
           $ref: "#/components/responses/serviceUnavailable503"
-  /v1/discover:
-    post:
-      summary: Run discover for whole cloud
-      description: |
-        Run discover for the whole cloud.
-      operationId: postCloudDiscover
-      deprecated: true
-      x-deprecation-reason: New version of API is created - POST /v2/workspaces/{workspaceId}/discover
-      tags:
-        - Cloud Services
-      responses:
-        "202":
-          description: Success
-          content: {}
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "500":
-          $ref: "#/components/responses/internalServerError500"
-        "503":
-          $ref: "#/components/responses/serviceUnavailable503"
-  /v2/workspaces/{workspaceId}/discover:
-    parameters:
-      - name: workspaceId
-        in: path
-        description: Workspace unique identifier. Workspace determines scope within which packages are searched by service names.
-        required: true
-        schema:
-          type: string
-        example: NC
-    post:
-      summary: Run discover for whole cloud
-      description: |
-        Run discover for the whole cloud.
-      operationId: postCloudDiscoverV2
-      tags:
-        - Cloud Services
-      responses:
-        "202":
-          description: Success
-          content: {}
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "500":
-          $ref: "#/components/responses/internalServerError500"
-        "503":
-          $ref: "#/components/responses/serviceUnavailable503"
-  /v1/services:
-    get:
-      summary: Get namespaces summary for the whole cloud
-      description: |
-        Get namespaces summary for the whole cloud.
-      operationId: getCloudNamespaces
-      deprecated: true
-      x-deprecation-reason: New version of API is created - GET /v2/workspaces/{workspaceId}/services
-      tags:
-        - Cloud Services
-      responses:
-        "200":
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    description: Overall status of the discovery process
-                    type: string
-                    enum:
-                      - none
-                      - running
-                      - complete
-                      - error
-                  progress:
-                    description: Total number of namespaces / Number of discovered namespaces
-                    type: number
-                  elapsedSec:
-                    description: Time spent (in sec)
-                    type: number
-                  totalNamespaces:
-                    description: Total number of discovered cloud namespaces
-                    type: number
-                  totalServices:
-                    description: Total number of discovered cloud services
-                    type: number
-                  totalServicesWithBaselines:
-                    description: Total number of discovered cloud services with baseline
-                    type: number
-                  totalDocuments:
-                    description: Total number of documents
-                    type: number
-                  namespaceData:
-                    type: object
-                    properties:
-                      namespace:
-                        description: Discovered namespaces
-                        type: object
-                        properties:
-                          services:
-                            description: The list of found services
-                            type: array
-                            items:
-                              $ref: "#/components/schemas/ServiceV1"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "500":
-          $ref: "#/components/responses/internalServerError500"
-        "503":
-          $ref: "#/components/responses/serviceUnavailable503"
-  /v2/workspaces/{workspaceId}/services:
-    parameters:
-      - name: workspaceId
-        in: path
-        description: Workspace unique identifier. Workspace determines scope within which packages are searched by service names.
-        required: true
-        schema:
-          type: string
-        example: NC
-    get:
-      summary: Get namespaces summary for the whole cloud
-      description: |
-        Get namespaces summary for the whole cloud.
-      operationId: getCloudNamespacesV2
-      tags:
-        - Cloud Services
-      responses:
-        "200":
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    description: Overall status of the discovery process
-                    type: string
-                    enum:
-                      - none
-                      - running
-                      - complete
-                      - error
-                  progress:
-                    description: Total number of namespaces / Number of discovered namespaces
-                    type: number
-                  elapsedSec:
-                    description: Time spent (in sec)
-                    type: number
-                  totalNamespaces:
-                    description: Total number of discovered cloud namespaces
-                    type: number
-                  totalServices:
-                    description: Total number of discovered cloud services
-                    type: number
-                  totalServicesWithBaselines:
-                    description: Total number of discovered cloud services with baseline
-                    type: number
-                  totalDocuments:
-                    description: Total number of documents
-                    type: number
-                  namespaceData:
-                    type: object
-                    properties:
-                      namespace:
-                        $ref: "#/components/schemas/namespaceData"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
-        "500":
-          $ref: "#/components/responses/internalServerError500"
-        "503":
-          $ref: "#/components/responses/serviceUnavailable503"
   /api/v1/namespaces/{name}/routes/{routeName}:
     parameters:
       - $ref: "#/components/parameters/Namespace"
@@ -729,7 +536,6 @@ components:
         - json-schema
         - markdown
         - graphql-schema
-        # is graphapi used anywhere?
         - graphapi
         - introspection
         - protobuf-3
@@ -970,15 +776,6 @@ components:
         error:
           type: string
           description: Discovery error(s)
-    namespaceData:
-      description: Discovered namespaces
-      type: object
-      properties:
-        services:
-          description: The list of found services
-          type: array
-          items:
-            $ref: "#/components/schemas/Service"
     ErrorResponse:
       description: An error description
       type: object
@@ -1008,8 +805,8 @@ components:
         - code
         - message
   responses:
-    badRequest400:
-      description: Bad request
+    unauthorized401:
+      description: Unauthorized
       content:
         application/json:
           schema:

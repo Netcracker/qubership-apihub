@@ -26,8 +26,8 @@ import (
 )
 
 type CloudService interface {
-	StartAllDiscovery(ctx secctx.SecurityContext, workspaceId string) error
-	GetAllServicesList(workspaceId string) view.AllServiceListResponse
+	StartAllDiscovery_deprecated(ctx secctx.SecurityContext, workspaceId string) error
+	GetAllServicesList_deprecated(workspaceId string) view.AllServiceListResponse_deprecated
 }
 
 func NewCloudService(discoveryService DiscoveryService, serviceListCache ServiceListCache, namespaceListCache NamespaceListCache) CloudService {
@@ -54,7 +54,7 @@ type cloudServiceImpl struct {
 	finished   time.Time
 }
 
-func (c *cloudServiceImpl) StartAllDiscovery(ctx secctx.SecurityContext, workspaceId string) error {
+func (c *cloudServiceImpl) StartAllDiscovery_deprecated(ctx secctx.SecurityContext, workspaceId string) error {
 	c.startMutex.Lock()
 	defer c.startMutex.Unlock()
 
@@ -150,8 +150,8 @@ func (c *cloudServiceImpl) waitForNamespace(ns string, workspaceId string) {
 	}
 }
 
-func (c *cloudServiceImpl) GetAllServicesList(workspaceId string) view.AllServiceListResponse {
-	result := view.AllServiceListResponse{}
+func (c *cloudServiceImpl) GetAllServicesList_deprecated(workspaceId string) view.AllServiceListResponse_deprecated {
+	result := view.AllServiceListResponse_deprecated{}
 	result.Status = c.status
 
 	if c.status == view.StatusNone {

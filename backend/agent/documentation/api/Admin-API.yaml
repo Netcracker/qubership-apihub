@@ -1,0 +1,165 @@
+# Copyright 2024-2025 NetCracker Technology Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+openapi: 3.0.3
+info:
+  title: APIHUB Agent Admin API
+  version: 1.0.0
+  description: External API contract for system administrators.
+servers:
+  - url: "https://{agentUrl}/api"
+    description: Agent backend address
+    variables:
+      agentUrl:
+        default: localhost
+        description: Local server
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+  - CookieAuth: []
+tags:
+  - name: Debug
+    description: Debug and logging management API
+paths:
+  /api/v1/debug/logs/checkLevel:
+    get:
+      tags:
+        - Debug
+      summary: Check log level
+      description: |
+        Check current log level.
+      operationId: checkLogLevel
+      responses:
+        "200":
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Current log level
+        "401":
+          $ref: "#/components/responses/unauthorized401"
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+  /api/v1/debug/logs/setLevel:
+    post:
+      tags:
+        - Debug
+      summary: Set log level
+      description: |
+        Set log level.
+      operationId: setLogLevel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - level
+              properties:
+                level:
+                  type: string
+                  description: Log level to set
+                  enum:
+                    - panic
+                    - fatal
+                    - error
+                    - warn
+                    - info
+                    - debug
+                    - trace
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  level:
+                    type: string
+                    description: Current log level
+        "400":
+          $ref: "#/components/responses/badRequest400"
+        "401":
+          $ref: "#/components/responses/unauthorized401"
+        "500":
+          $ref: "#/components/responses/internalServerError500"
+
+components:
+  schemas:
+    ErrorResponse:
+      description: An error description
+      type: object
+      properties:
+        status:
+          description: HTTP Status Code
+          type: number
+        code:
+          description: Internal string error code. Mandatory in response.
+          type: string
+        message:
+          description: The attribute contains an error message.
+          type: string
+        params:
+          description: Message parameters
+          type: object
+          example:
+            "id": "12345"
+            "type": "string"
+        debug:
+          description: |
+            The attribute contains debug details (e.g. stack-trace).
+            Presented in the error response only on Dev/Test environments if corresponding logging level is enabled.
+          type: string
+      required:
+        - status
+        - code
+        - message
+  responses:
+    badRequest400:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    unauthorized401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    internalServerError500:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: api-key
+      description: APIHUB API Key authentication
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: apihub-access-token
+      description: Cookie-based authentication

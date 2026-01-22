@@ -14,7 +14,7 @@
 
 package view
 
-type AllServiceListResponse struct {
+type AllServiceListResponse_deprecated struct {
 	Status                     StatusEnum                     `json:"status"`
 	Debug                      string                         `json:"debug,omitempty"`
 	Progress                   string                         `json:"progress,omitempty"`

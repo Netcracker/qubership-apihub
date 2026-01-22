@@ -20,6 +20,7 @@ import (
 	"net/http"
 
 	"github.com/Netcracker/qubership-apihub-agent/client"
+	"github.com/Netcracker/qubership-apihub-agent/secctx"
 
 	"github.com/shaj13/go-guardian/v2/auth"
 )
@@ -33,18 +34,22 @@ type apihubApiKeyStrategyImpl struct {
 }
 
 func (a apihubApiKeyStrategyImpl) Authenticate(ctx context.Context, r *http.Request) (auth.Info, error) {
-	apiKey := r.Header.Get("api-key")
-	if apiKey == "" {
+	apiKeyHeader := r.Header.Get("api-key")
+	if apiKeyHeader == "" {
 		return nil, fmt.Errorf("authentication failed: %v is empty", "api-key")
 	}
 
-	valid, err := a.apihubClient.CheckApiKeyValid(apiKey)
+	apiKey, err := a.apihubClient.GetApiKeyByKey(ctx, apiKeyHeader)
 	if err != nil {
 		return nil, err
 	}
-	if valid {
-		return auth.NewDefaultUser("", "api-key", []string{}, auth.Extensions{}), nil
-	} else {
-		return nil, fmt.Errorf("authentication failed: %v is invalid", "api-key")
+	if apiKey == nil || apiKey.Revoked {
+		return nil, fmt.Errorf("authentication failed: %v is not valid", "api-key")
 	}
+	userExtensions := auth.Extensions{}
+	for _, sysRole := range apiKey.Roles {
+		userExtensions.Add(secctx.SystemRoleExt, sysRole)
+	}
+
+	return auth.NewDefaultUser(apiKey.Name, apiKey.Id, []string{}, userExtensions), nil
 }
