@@ -31,10 +31,10 @@
     "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-diff": "dev",
-    "@netcracker/qubership-apihub-api-unifier": "dev",
-    "@netcracker/qubership-apihub-graphapi": "dev",
-    "@netcracker/qubership-apihub-json-crawl": "dev",
+    "@netcracker/qubership-apihub-api-diff": "next",
+    "@netcracker/qubership-apihub-api-unifier": "next",
+    "@netcracker/qubership-apihub-graphapi": "next",
+    "@netcracker/qubership-apihub-json-crawl": "next",
     "adm-zip": "0.5.10",
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
