@@ -1,0 +1,159 @@
+openapi: 3.0.3
+info:
+  title: Qubership APIHUB Agents Backend Internal API
+  description: Internal REST API for Qubership APIHUB Agents Backend.
+  license:
+    name: qubership
+    url: https://qubership.org
+  version: "2024.2"
+  x-api-audience: internal
+
+servers:
+  - url: https://{apihubAgentsBackend}.qubership.org
+    description: APIHUB server
+    variables:
+      apihubAgentsBackend:
+        description: Name of the APIHUB Agents Backend server.
+        enum:
+          - apihub-agents-backend
+          - dev.apihub-agents-backend
+          - staging.apihub-agents-backend
+        default: apihub-agents-backend
+security:
+  - BearerAuth: []
+  - CookieAuth: []
+  - ApiKeyAuth: []
+  - PersonalAccessToken: []
+tags:
+  - name: Agents
+    description: Agent management operations
+paths:
+  /api/v2/agents:
+    post:
+      tags:
+        - Agents
+      summary: Process agent signal
+      description: Process registration/keepalive message from an agent
+      operationId: processAgentSignal
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cloud
+                - namespace
+                - url
+                - backendVersion
+              properties:
+                cloud:
+                  type: string
+                  description: Cloud where agent is deployed
+                namespace:
+                  type: string
+                  description: Namespace where agent is deployed
+                url:
+                  type: string
+                  description: Agent URL
+                backendVersion:
+                  type: string
+                  description: Backend version
+                name:
+                  type: string
+                  description: Agent name
+                agentVersion:
+                  type: string
+                  description: Agent version
+      responses:
+        '200':
+          description: Message successfully processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    type: string
+                    description: Expected agent version
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    CustomError:
+      type: object
+      description: An error description
+      properties:
+        status:
+          type: integer
+          description: HTTP status code
+        code:
+          type: string
+          description: Internal string error code. Mandatory in response.
+        message:
+          type: string
+          description: Error message
+        debug:
+          type: string
+          description: Debug information
+        params:
+          type: object
+          additionalProperties: true
+          description: Error parameters
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CustomError'
+    Unauthorized:
+      description: Unauthorized access
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CustomError'
+    Forbidden:
+      description: Access forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CustomError'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CustomError'
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication.
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: apihub-access-token
+      description: Authentication via the `apihub-access-token` cookie.
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: api-key
+      description: API key authentication.
+    PersonalAccessToken:
+      type: apiKey
+      in: header
+      name: X-Personal-Access-Token
+      description: Personal Access Token authentication
