@@ -44,6 +44,8 @@ export type RecursiveMatcher<T> = {
 
 export type DiffMatcher = ArrayContaining<Diff> & Diff[]
 
+const DIFF_MATCHER_SKIP = Symbol('DIFF_MATCHER_SKIP')
+
 export function diffDescriptionMatcher(
   description: string
 ): DiffMatcher {
@@ -55,13 +57,21 @@ export function diffDescriptionMatcher(
 }
 
 export function diffsMatcher(
-  expected: Array<RecursiveMatcher<Diff>>,
+  expected: Array<RecursiveMatcher<Diff> | typeof DIFF_MATCHER_SKIP>,
 ): DiffMatcher {
-  return expect.toIncludeSameMembers(expected)
+  const compactExpected = expected.filter(
+    (value): value is RecursiveMatcher<Diff> => value !== DIFF_MATCHER_SKIP,
+  )
+  return expect.toIncludeSameMembers(compactExpected)
 }
 
-export const expectOpenApiVersionChange = (fromVersion: string = '3.0.4', toVersion: string = '3.1.0') =>
-  expect.objectContaining({
+export const expectOpenApiVersionChange = (fromVersion: string = '3.0.4', toVersion: string = '3.1.0') => {
+  if (fromVersion === toVersion)
+    {
+      return DIFF_MATCHER_SKIP
+    }
+
+  return expect.objectContaining({
     action: 'replace',
     afterDeclarationPaths: [['openapi']],
     afterValue: toVersion,
@@ -69,3 +79,4 @@ export const expectOpenApiVersionChange = (fromVersion: string = '3.0.4', toVers
     beforeValue: fromVersion,
     type: 'annotation',
   })
+}

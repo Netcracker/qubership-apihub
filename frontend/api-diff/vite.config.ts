@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [
     dts({
       insertTypesEntry: true,
+      tsconfigPath: path.resolve(__dirname, 'tsconfig.build.json'),
     }),
   ],
   build: {

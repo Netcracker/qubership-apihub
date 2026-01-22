@@ -1,5 +1,5 @@
 import { compareFiles, compareFilesWithMerge, TEST_DEFAULTS_DECLARATION_PATHS } from '../utils'
-import { diffsMatcher } from '../../helper/matchers'
+import { diffsMatcher, expectOpenApiVersionChange } from '../../helper/matchers'
 import { annotation, breaking, DiffAction, nonBreaking, risky } from '../../../src'
 import { JSON_SCHEMA_NODE_SYNTHETIC_TYPE_ANY } from '@netcracker/qubership-apihub-api-unifier'
 import { runAddRemoveDefaultValuesSchemaTests } from './templates/schema'
@@ -101,46 +101,40 @@ describe('Openapi3 ResponseBody.Schema ', () => {
     expect(result).toEqual([])
   })
 
-  test('Mark schema value as nullable', async () => {
-    const testId = 'mark-schema-value-as-nullable'
-    const result = await compareFiles(SUITE_ID, testId)
-    expect(result).toEqual(diffsMatcher(
-      [
-        expect.objectContaining({
-          action: DiffAction.replace,
-          beforeDeclarationPaths: TEST_DEFAULTS_DECLARATION_PATHS,
-          afterDeclarationPaths: [[...RESPONSE_SCHEMA_PATH, 'properties', 'option1', 'nullable']],
-          type: breaking,
-        }),
-        expect.objectContaining({
-          action: DiffAction.replace,
-          beforeDeclarationPaths: [[...RESPONSE_SCHEMA_PATH, 'properties', 'option2', 'nullable']],
-          afterDeclarationPaths: [[...RESPONSE_SCHEMA_PATH, 'properties', 'option2', 'nullable']],
-          type: breaking,
-        }),
-      ],
-    ))
+  test.caseForOpenApiVersionPairs('mark-schema-value-as-nullable', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
+    expect(diffs).toEqual(diffsMatcher([
+      expectOpenApiVersionChange(beforeVersion, afterVersion),
+      expect.objectContaining({
+        action: DiffAction.replace,
+        beforeDeclarationPaths: TEST_DEFAULTS_DECLARATION_PATHS,
+        afterDeclarationPaths: [[...RESPONSE_SCHEMA_PATH, 'properties', 'option1', 'nullable']],
+        type: breaking,
+      }),
+      expect.objectContaining({
+        action: DiffAction.replace,
+        beforeDeclarationPaths: [[...RESPONSE_SCHEMA_PATH, 'properties', 'option2', 'nullable']],
+        afterDeclarationPaths: [[...RESPONSE_SCHEMA_PATH, 'properties', 'option2', 'nullable']],
+        type: breaking,
+      }),
+    ]))
   })
 
-  test('Mark schema value as non-nullable', async () => {
-    const testId = 'mark-schema-value-as-non-nullable'
-    const result = await compareFiles(SUITE_ID, testId)
-    expect(result).toEqual(diffsMatcher(
-      [
-        expect.objectContaining({
-          action: DiffAction.replace,
-          beforeDeclarationPaths: [[...RESPONSE_SCHEMA_PATH, 'properties', 'option1', 'nullable']],
-          afterDeclarationPaths: [[...RESPONSE_SCHEMA_PATH, 'properties', 'option1', 'nullable']],
-          type: nonBreaking,
-        }),
-        expect.objectContaining({
-          action: DiffAction.replace,
-          beforeDeclarationPaths: [[...RESPONSE_SCHEMA_PATH, 'properties', 'option2', 'nullable']],
-          afterDeclarationPaths: TEST_DEFAULTS_DECLARATION_PATHS,
-          type: nonBreaking,
-        }),
-      ],
-    ))
+  test.caseForOpenApiVersionPairs('mark-schema-value-as-non-nullable', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
+    expect(diffs).toEqual(diffsMatcher([
+      expectOpenApiVersionChange(beforeVersion, afterVersion),
+      expect.objectContaining({
+        action: DiffAction.replace,
+        beforeDeclarationPaths: [[...RESPONSE_SCHEMA_PATH, 'properties', 'option1', 'nullable']],
+        afterDeclarationPaths: [[...RESPONSE_SCHEMA_PATH, 'properties', 'option1', 'nullable']],
+        type: nonBreaking,
+      }),
+      expect.objectContaining({
+        action: DiffAction.replace,
+        beforeDeclarationPaths: [[...RESPONSE_SCHEMA_PATH, 'properties', 'option2', 'nullable']],
+        afterDeclarationPaths: TEST_DEFAULTS_DECLARATION_PATHS,
+        type: nonBreaking,
+      }),
+    ]))
   })
 
   test('Add enum', async () => {

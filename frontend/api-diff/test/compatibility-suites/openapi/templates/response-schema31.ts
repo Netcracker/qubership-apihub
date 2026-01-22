@@ -1,16 +1,14 @@
-import { compareFiles } from '../../utils'
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 import { annotation, breaking, DiffAction, nonBreaking, risky } from '../../../../src'
-import { diffsMatcher } from '../../../helper/matchers'
+import { diffsMatcher, expectOpenApiVersionChange } from '../../../helper/matchers'
 
 const COMPONENTS_SCHEMAS = ['components', 'schemas']
 
 export function runCommonResponseSchema31Tests(suiteId: string, commonPath: JsonPath): void {
   describe('Union type', () => {
-    test('Add union type', async () => {
-      const testId = 'add-union-type'
-      const result = await compareFiles(suiteId, testId)
-      expect(result).toEqual(diffsMatcher([
+    test.caseForOpenApiVersionPairs('add-union-type', suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
+      expect(diffs).toEqual(diffsMatcher([
+        expectOpenApiVersionChange(beforeVersion, afterVersion),
         expect.objectContaining({
           action: DiffAction.add,
           afterDeclarationPaths: [[...commonPath, 'type', 1]],
@@ -19,10 +17,9 @@ export function runCommonResponseSchema31Tests(suiteId: string, commonPath: Json
       ]))
     })
 
-    test('Add null to union type', async () => {
-      const testId = 'add-null-to-union-type'
-      const result = await compareFiles(suiteId, testId)
-      expect(result).toEqual(diffsMatcher([
+    test.caseForOpenApiVersionPairs('add-null-to-union-type', suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
+      expect(diffs).toEqual(diffsMatcher([
+        expectOpenApiVersionChange(beforeVersion, afterVersion),
         expect.objectContaining({
           action: DiffAction.add,
           afterDeclarationPaths: [[...commonPath, 'type', 2]],
@@ -31,10 +28,9 @@ export function runCommonResponseSchema31Tests(suiteId: string, commonPath: Json
       ]))
     })
 
-    test('Remove union type', async () => {
-      const testId = 'remove-union-type'
-      const result = await compareFiles(suiteId, testId)
-      expect(result).toEqual(diffsMatcher([
+    test.caseForOpenApiVersionPairs('remove-union-type', suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
+      expect(diffs).toEqual(diffsMatcher([
+        expectOpenApiVersionChange(beforeVersion, afterVersion),
         expect.objectContaining({
           action: DiffAction.remove,
           beforeDeclarationPaths: [[...commonPath, 'type', 1]],
@@ -43,10 +39,9 @@ export function runCommonResponseSchema31Tests(suiteId: string, commonPath: Json
       ]))
     })
 
-    test('Remove null from union type', async () => {
-      const testId = 'remove-null-from-union-type'
-      const result = await compareFiles(suiteId, testId)
-      expect(result).toEqual(diffsMatcher([
+    test.caseForOpenApiVersionPairs('remove-null-from-union-type', suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
+      expect(diffs).toEqual(diffsMatcher([
+        expectOpenApiVersionChange(beforeVersion, afterVersion),
         expect.objectContaining({
           action: DiffAction.remove,
           beforeDeclarationPaths: [[...commonPath, 'type', 2]],
@@ -55,18 +50,17 @@ export function runCommonResponseSchema31Tests(suiteId: string, commonPath: Json
       ]))
     })
 
-    test('Reorder types in union type', async () => {
-      const testId = 'reorder-types-in-union-type'
-      const result = await compareFiles(suiteId, testId)
-      expect(result).toBeEmpty()
+    test.caseForOpenApiVersionPairs('reorder-types-in-union-type', suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
+      expect(diffs).toEqual(diffsMatcher([
+        expectOpenApiVersionChange(beforeVersion, afterVersion),
+      ]))
     })
   })
 
   describe('$ref sibling properties', () => {
-    test('Add sibling description for ref', async () => {
-      const testId = 'add-sibling-description-for-ref'
-      const result = await compareFiles(suiteId, testId)
-      expect(result).toEqual(diffsMatcher([
+    test.caseForOpenApiVersionPairs('add-sibling-description-for-ref', suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
+      expect(diffs).toEqual(diffsMatcher([
+        expectOpenApiVersionChange(beforeVersion, afterVersion),
         expect.objectContaining({
           action: DiffAction.replace,
           afterDeclarationPaths: [[...commonPath, 'description']],
@@ -76,16 +70,15 @@ export function runCommonResponseSchema31Tests(suiteId: string, commonPath: Json
       ]))
     })
 
-    test('Change sibling enum for ref', async () => {
-      const testId = 'change-sibling-enum-for-ref'
-      const diffs = await compareFiles(suiteId, testId)
-      expect(diffs).toBeEmpty()
+    test.caseForOpenApiVersionPairs('change-sibling-enum-for-ref', suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
+      expect(diffs).toEqual(diffsMatcher([
+        expectOpenApiVersionChange(beforeVersion, afterVersion),
+      ]))
     })
 
-    test('Change referenced enum when sibling exists for ref', async () => {
-      const testId = 'change-referenced-enum-when-sibling-exists-for-ref'
-      const result = await compareFiles(suiteId, testId)
-      expect(result).toEqual(diffsMatcher([
+    test.caseForOpenApiVersionPairs('change-referenced-enum-when-sibling-exists-for-ref', suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
+      expect(diffs).toEqual(diffsMatcher([
+        expectOpenApiVersionChange(beforeVersion, afterVersion),
         expect.objectContaining({
           action: DiffAction.add,
           afterDeclarationPaths: [
@@ -97,16 +90,29 @@ export function runCommonResponseSchema31Tests(suiteId: string, commonPath: Json
       ]))
     })
 
-    test('Remove sibling maxLength for ref', async () => {
-      const testId = 'remove-sibling-maxLength-for-ref'
-      const result = await compareFiles(suiteId, testId)
-      expect(result).toEqual(diffsMatcher([
+    test.caseForOpenApiVersionPairs('remove-sibling-maxLength-for-ref', suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
+      expect(diffs).toEqual(diffsMatcher([
+        expectOpenApiVersionChange(beforeVersion, afterVersion),
         expect.objectContaining({
           action: DiffAction.replace,
           beforeDeclarationPaths: [[...commonPath, 'maxLength']],
           afterDeclarationPaths: [[...COMPONENTS_SCHEMAS, 'Color', 'maxLength']],
           type: breaking,
         }),
+      ]))
+    })
+  })
+
+  describe('Cross-version equivalency', () => {
+    test.caseForOpenApiVersionPairs('nullable-equivalent-to-null', suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
+      expect(diffs).toEqual(diffsMatcher([
+        expectOpenApiVersionChange(beforeVersion, afterVersion),
+      ]))
+    })
+
+    test.caseForOpenApiVersionPairs('union-type-equivalent-to-any-of', suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
+      expect(diffs).toEqual(diffsMatcher([
+        expectOpenApiVersionChange(beforeVersion, afterVersion),
       ]))
     })
   })

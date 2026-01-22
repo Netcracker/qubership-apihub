@@ -339,3 +339,10 @@ export const extractOperationBasePath = (servers?: OpenAPIV3.ServerObject[]): st
     return ''
   }
 }
+
+const HTTP_METHODS_SET = new Set(Object.values(OpenAPIV3.HttpMethods) as string[])
+
+export const isValidHttpMethod = (method: string): method is OpenAPIV3.HttpMethods => {
+  return HTTP_METHODS_SET.has(method)
+}
+

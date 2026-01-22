@@ -9,6 +9,7 @@ export const compareOpenApi = (version: OpenApiSpecVersion) => (before: unknown,
       rules: openApi3Rules({
         mode: options.mode,
         version: version,
+        operationSyntheticDiffs: options.openApiPathItemPerOperationDiffs
       }),
     },
   )

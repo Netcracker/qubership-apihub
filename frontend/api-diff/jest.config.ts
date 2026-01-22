@@ -25,5 +25,8 @@ module.exports = {
   //    "^@netcracker/qubership-apihub-graphapi$":'<rootDir>/../qubership-apihub-graphapi/src',
   //    "^@netcracker/qubership-apihub-compatibility-suites$":'<rootDir>/../apihub-compatibility-suites/generation/suite-service',
   // },
-  setupFilesAfterEnv: ['jest-extended/all'],
+  setupFilesAfterEnv: [
+    'jest-extended/all',
+    '<rootDir>/test/setup/jest-wrappers.ts',
+  ],
 }
