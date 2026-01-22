@@ -1,0 +1,421 @@
+openapi: 3.0.3
+info:
+  title: Linter Service Admin API
+  version: "1.0"
+  description: The Linter Service Admin API provides administrative operations for managing validation rulesets and service debugging. These operations require system administrator privileges.
+servers:
+  - url: /
+security:
+  - BearerAuth: []
+  - api-key: []
+  - PersonalAccessToken: []
+tags:
+  - name: Ruleset Management
+    description: API related to management of validation rulesets.
+  - name: Debug
+    description: API for debugging and log management.
+paths:
+  /api/v1/rulesets:
+    get:
+      tags:
+        - Ruleset Management
+      summary: Get a list of rulesets
+      description: >
+        Returns a sorted list of rulesets.
+          The sorting follows a strict order:
+            1. The currently active ruleset (always appears first).
+            2. Rulesets that have never been activated (in order of creation).
+            3. All other rulesets, sorted by the latest activation date (most recent first).
+
+        There is always one active ruleset in the system for each supported API type and linter.
+        This operation is available only to users with the `system administrator` role.
+      operationId: getRulesets
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          example: 1
+        - name: limit
+          in: query
+          description: Number of items per page (max 100).
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 100
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 1
+                items:
+                  $ref: "#/components/schemas/Ruleset"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - Ruleset Management
+      summary: Create a new ruleset
+      description: >
+        Allows an admin to create a new ruleset by uploading a YAML file.
+        The new ruleset is set to 'Inactive' by default.
+        This operation is available only to users with the `system administrator` role.
+      operationId: postRuleset
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/RulesetCreate"
+      responses:
+        "201":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ruleset"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/rulesets/{id}:
+    delete:
+      tags:
+        - Ruleset Management
+      summary: Delete a ruleset
+      description: >
+        Delete a ruleset.
+        Ruleset can be deleted if it is in inactive status and no version validated against this ruleset exist.
+        This operation is available only to users with the `system administrator` role.
+      operationId: deleteRuleset
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique ruleset identifier
+      responses:
+        "204":
+          description: Success
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/rulesets/{id}/activation:
+    post:
+      tags:
+        - Ruleset Management
+      summary: Activate a ruleset
+      description: >
+        Activate an inactive ruleset. Currently active ruleset is automatically deactivated after new ruleset is activated.
+        This operation is available only to users with the `system administrator` role.
+      operationId: postRulesetsActivate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique ruleset ID.
+      responses:
+        "204":
+          description: Success
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/debug/logs/checkLevel:
+    get:
+      tags:
+        - Debug
+      summary: Check log level
+      description: |
+        Check current log level.
+      operationId: checkLogLevel
+      responses:
+        "200":
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Current log level
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/debug/logs/setLevel:
+    post:
+      tags:
+        - Debug
+      summary: Set log level
+      description: |
+        Set log level.
+      operationId: setLogLevel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - level
+              properties:
+                level:
+                  type: string
+                  description: Log level to set
+                  enum:
+                    - panic
+                    - fatal
+                    - error
+                    - warn
+                    - info
+                    - debug
+                    - trace
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  level:
+                    type: string
+                    description: Current log level
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    ErrorResponse:
+      description: An error description
+      type: object
+      required:
+        - status
+        - code
+        - message
+      properties:
+        status:
+          description: HTTP Status Code
+          type: integer
+        code:
+          description: Internal string error code. Mandatory in response.
+          type: string
+        message:
+          description: The attribute contains an error message.
+          type: string
+        params:
+          type: object
+          description: Optional message parameters
+        debug:
+          description: Debug details
+          type: string
+    Ruleset:
+      description: Ruleset's parameters
+      type: object
+      required:
+        - id
+        - name
+        - fileName
+        - status
+        - apiType
+        - linter
+        - createdAt
+        - canBeDeleted
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the ruleset.
+        name:
+          type: string
+          description: Unique name of the ruleset.
+          example: "OpenAPI Quality Ruleset"
+        fileName:
+          type: string
+          description: Filename of the ruleset file.
+          example: "R2025Ruleset.yaml"
+        status:
+          description: Status of the ruleset.
+          type: string
+          enum:
+            - active
+            - inactive
+        apiType:
+          description: API type which is going to be checked against the ruleset.
+          type: string
+          enum:
+            - openapi-2-0
+            - openapi-3-0
+            - openapi-3-1
+        linter:
+          description: Name of the linter for which this ruleset suitable to.
+          type: string
+          enum:
+            - spectral
+        createdAt:
+          description: Date of ruleset creation.
+          type: string
+          format: date-time
+        canBeDeleted:
+          description: |
+            Indicates whether the ruleset can be deleted:
+              - canBeDeleted = true - if both of the following conditins are met:
+                  - ruleset is in inactive status
+                  - there is no existing version revision that was validated against current ruleset.
+          type: boolean
+          example: true
+    RulesetCreate:
+      description: Parameters for creating a ruleset
+      type: object
+      required:
+        - rulesetName
+        - apiType
+        - linter
+        - rulesetFile
+      properties:
+        rulesetName:
+          description: Unique name of the ruleset.
+          type: string
+          example: "New Ruleset"
+        apiType:
+          description: API type which is going to be checked against the ruleset.
+          type: string
+          enum:
+            - openapi-2-0
+            - openapi-3-0
+            - openapi-3-1
+        linter:
+          description: Name of the linter for which this ruleset suitable to.
+          type: string
+          enum:
+            - spectral
+        rulesetFile:
+          description: YAML file with Spectral rules.
+          type: string
+          format: binary
+  securitySchemes:
+    BearerAuth:
+      type: http
+      description: Bearer token authentication. Default security scheme for API usage.
+      scheme: bearer
+      bearerFormat: JWT
+    api-key:
+      type: apiKey
+      description: Api-key authentication.
+      name: api-key
+      in: header
+    PersonalAccessToken:
+      type: apiKey
+      description: Authentication by personal access token.
+      name: X-Personal-Access-Token
+      in: header
