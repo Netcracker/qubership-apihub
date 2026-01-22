@@ -14,24 +14,24 @@
 
 package view
 
-type VersionValidationChanges struct {
-	PreviousVersion          string                 `json:"previousVersion,omitempty"`
-	PreviousVersionPackageId string                 `json:"previousVersionPackageId,omitempty"`
-	Changes                  []VersionChangelogData `json:"changes"`
-	Bwc                      []VersionBwcData       `json:"bwcMessages"`
+type VersionValidationChanges_deprecated struct {
+	PreviousVersion          string                            `json:"previousVersion,omitempty"`
+	PreviousVersionPackageId string                            `json:"previousVersionPackageId,omitempty"`
+	Changes                  []VersionChangelogData_deprecated `json:"changes"`
+	Bwc                      []VersionBwcData_deprecated       `json:"bwcMessages"`
 }
 
-type VersionValidationProblems struct {
-	Spectral []VersionSpectralData `json:"messages"`
+type VersionValidationProblems_deprecated struct {
+	Spectral []VersionSpectralData_deprecated `json:"messages"`
 }
 
 // changelog.json
-type VersionChangelog struct {
-	Summary VersionChangelogSummary `json:"summary,omitempty"`
-	Data    []VersionChangelogData  `json:"data,omitempty"`
+type VersionChangelog_deprecated struct {
+	Summary VersionChangelogSummary_deprecated `json:"summary,omitempty"`
+	Data    []VersionChangelogData_deprecated  `json:"data,omitempty"`
 }
 
-type VersionChangelogSummary struct {
+type VersionChangelogSummary_deprecated struct {
 	Breaking     int `json:"breaking"`
 	NonBreaking  int `json:"non-breaking"`
 	Unclassified int `json:"unclassified"`
@@ -40,7 +40,7 @@ type VersionChangelogSummary struct {
 	Deprecate    int `json:"deprecate"`
 }
 
-type VersionChangelogData struct {
+type VersionChangelogData_deprecated struct {
 	FileId         string             `json:"fileId,omitempty"`
 	Slug           string             `json:"slug,omitempty"`
 	PreviousFileId string             `json:"previousFileId,omitempty"`
@@ -53,17 +53,17 @@ type VersionChangelogData struct {
 }
 
 // spectral.json
-type VersionSpectral struct {
-	Summary VersionSpectralSummary `json:"summary,omitempty"`
-	Data    []VersionSpectralData  `json:"data,omitempty"`
+type VersionSpectral_deprecated struct {
+	Summary VersionSpectralSummary_deprecated `json:"summary,omitempty"`
+	Data    []VersionSpectralData_deprecated  `json:"data,omitempty"`
 }
 
-type VersionSpectralSummary struct {
+type VersionSpectralSummary_deprecated struct {
 	Errors   int `json:"error"`
 	Warnings int `json:"warnings"`
 }
 
-type VersionSpectralData struct {
+type VersionSpectralData_deprecated struct {
 	FileId           string   `json:"fileId,omitempty"`
 	Slug             string   `json:"slug,omitempty"`
 	JsonPath         []string `json:"jsonPath,omitempty"`
@@ -73,17 +73,17 @@ type VersionSpectralData struct {
 }
 
 // bwc.json
-type VersionBwc struct {
-	Summary VersionBwcSummary `json:"summary,omitempty"`
-	Data    []VersionBwcData  `json:"data,omitempty"`
+type VersionBwc_deprecated struct {
+	Summary VersionBwcSummary_deprecated `json:"summary,omitempty"`
+	Data    []VersionBwcData_deprecated  `json:"data,omitempty"`
 }
 
-type VersionBwcSummary struct {
+type VersionBwcSummary_deprecated struct {
 	Errors   int `json:"error"`
 	Warnings int `json:"warnings"`
 }
 
-type VersionBwcData struct {
+type VersionBwcData_deprecated struct {
 	FileId           string   `json:"fileId,omitempty"`
 	PreviousFileId   string   `json:"previousFileId,omitempty"`
 	Slug             string   `json:"slug,omitempty"`

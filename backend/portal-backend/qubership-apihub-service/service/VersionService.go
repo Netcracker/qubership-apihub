@@ -51,8 +51,8 @@ type VersionService interface {
 	GetLatestDocuments(packageId string, versionName string, skipRefs bool, filterReq view.DocumentsFilterReq) (*view.VersionDocuments, error)
 	GetSharedFile(sharedFileId string) ([]byte, string, error)
 	SharePublishedFile(packageId string, versionName string, slug string) (*view.SharedUrlResult, error)
-	GetVersionValidationChanges(packageId string, versionName string) (*view.VersionValidationChanges, error)
-	GetVersionValidationProblems(packageId string, versionName string) (*view.VersionValidationProblems, error)
+	GetVersionValidationChanges_deprecated(packageId string, versionName string) (*view.VersionValidationChanges_deprecated, error)
+	GetVersionValidationProblems_deprecated(packageId string, versionName string) (*view.VersionValidationProblems_deprecated, error)
 	GetDefaultVersion(packageId string) (string, error)
 	GetVersionDetails(packageId string, versionName string) (*view.VersionDetails, error)
 	GetVersionReferencesV3(packageId string, versionName string) (*view.VersionReferencesV3, error)
@@ -975,7 +975,7 @@ func (v versionServiceImpl) getVersionChangeSummary(packageId string, versionNam
 	return changeSummary, nil
 }
 
-func (p versionServiceImpl) GetVersionValidationChanges(packageId string, versionName string) (*view.VersionValidationChanges, error) {
+func (p versionServiceImpl) GetVersionValidationChanges_deprecated(packageId string, versionName string) (*view.VersionValidationChanges_deprecated, error) {
 	version, err := p.publishedRepo.GetVersion(packageId, versionName)
 	if err != nil {
 		return nil, err
@@ -988,12 +988,12 @@ func (p versionServiceImpl) GetVersionValidationChanges(packageId string, versio
 			Params:  map[string]interface{}{"version": versionName, "packageId": packageId},
 		}
 	}
-	versionChanges, err := p.publishedRepo.GetVersionValidationChanges(packageId, version.Version, version.Revision)
+	versionChanges, err := p.publishedRepo.GetVersionValidationChanges_deprecated(packageId, version.Version, version.Revision)
 	if err != nil {
 		return nil, err
 	}
-	changelog := make([]view.VersionChangelogData, 0)
-	bwc := make([]view.VersionBwcData, 0)
+	changelog := make([]view.VersionChangelogData_deprecated, 0)
+	bwc := make([]view.VersionBwcData_deprecated, 0)
 	if versionChanges != nil {
 		if versionChanges.Changelog != nil && len(versionChanges.Changelog.Data) != 0 {
 			changelog = versionChanges.Changelog.Data
@@ -1002,7 +1002,7 @@ func (p versionServiceImpl) GetVersionValidationChanges(packageId string, versio
 			bwc = versionChanges.Bwc.Data
 		}
 	}
-	return &view.VersionValidationChanges{
+	return &view.VersionValidationChanges_deprecated{
 		PreviousVersion:          version.PreviousVersion,
 		PreviousVersionPackageId: version.PreviousVersionPackageId,
 		Changes:                  changelog,
@@ -1010,7 +1010,7 @@ func (p versionServiceImpl) GetVersionValidationChanges(packageId string, versio
 	}, nil
 }
 
-func (p versionServiceImpl) GetVersionValidationProblems(packageId string, versionName string) (*view.VersionValidationProblems, error) {
+func (p versionServiceImpl) GetVersionValidationProblems_deprecated(packageId string, versionName string) (*view.VersionValidationProblems_deprecated, error) {
 	version, err := p.publishedRepo.GetVersion(packageId, versionName)
 	if err != nil {
 		return nil, err
@@ -1023,17 +1023,17 @@ func (p versionServiceImpl) GetVersionValidationProblems(packageId string, versi
 			Params:  map[string]interface{}{"version": versionName, "packageId": packageId},
 		}
 	}
-	versionProblems, err := p.publishedRepo.GetVersionValidationProblems(packageId, version.Version, version.Revision)
+	versionProblems, err := p.publishedRepo.GetVersionValidationProblems_deprecated(packageId, version.Version, version.Revision)
 	if err != nil {
 		return nil, err
 	}
-	spectral := make([]view.VersionSpectralData, 0)
+	spectral := make([]view.VersionSpectralData_deprecated, 0)
 	if versionProblems != nil {
 		if len(versionProblems.Spectral.Data) != 0 {
 			spectral = versionProblems.Spectral.Data
 		}
 	}
-	return &view.VersionValidationProblems{
+	return &view.VersionValidationProblems_deprecated{
 		Spectral: spectral,
 	}, nil
 }

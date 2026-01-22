@@ -173,7 +173,7 @@ func (p publishedRepositoryImpl) PatchVersion(packageId string, versionName stri
 			calculateLiteSearchOperationsQuery := `
 								insert into fts_latest_release_operation_data
 								select o.package_id, o.version, o.revision, o.operation_id, o.type, to_tsvector(convert_from(od.data,'UTF-8'))  data_vector from
-		                        	operation o inner join operation_data od on o.data_hash=od.data_hash
+								operation o inner join operation_data od on o.data_hash=od.data_hash
 									where package_id = ? and version = ? and revision = ?
 								on conflict (package_id, version, revision, operation_id) do update set data_vector = EXCLUDED.data_vector;`
 			_, err = tx.Exec(calculateLiteSearchOperationsQuery,
@@ -1450,7 +1450,7 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 			calculateLiteSearchOperationsQuery := `
 						insert into fts_latest_release_operation_data
 						select o.package_id, o.version, o.revision, o.operation_id, o.type, to_tsvector(convert_from(od.data,'UTF-8'))  data_vector from
-                        	operation o inner join operation_data od on o.data_hash=od.data_hash
+						operation o inner join operation_data od on o.data_hash=od.data_hash
 							where package_id = ? and version = ? and revision = ?
 						on conflict (package_id, version, revision, operation_id) do update set data_vector = EXCLUDED.data_vector;`
 			_, err = tx.Exec(calculateLiteSearchOperationsQuery,
@@ -2740,8 +2740,8 @@ func (p publishedRepositoryImpl) GetFilteredDeletedPackages(ctx context.Context,
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetVersionValidationChanges(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity, error) {
-	result := new(entity.PublishedVersionValidationEntity)
+func (p publishedRepositoryImpl) GetVersionValidationChanges_deprecated(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity_deprecated, error) {
+	result := new(entity.PublishedVersionValidationEntity_deprecated)
 	err := p.cp.GetConnection().Model(result).
 		ExcludeColumn("spectral").
 		Where("package_id = ?", packageId).
@@ -2757,8 +2757,8 @@ func (p publishedRepositoryImpl) GetVersionValidationChanges(packageId string, v
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetVersionValidationProblems(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity, error) {
-	result := new(entity.PublishedVersionValidationEntity)
+func (p publishedRepositoryImpl) GetVersionValidationProblems_deprecated(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity_deprecated, error) {
+	result := new(entity.PublishedVersionValidationEntity_deprecated)
 	err := p.cp.GetConnection().Model(result).
 		ExcludeColumn("changelog", "bwc").
 		Where("package_id = ?", packageId).

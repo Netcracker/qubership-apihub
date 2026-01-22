@@ -45,8 +45,8 @@ type VersionController interface {
 	GetVersionDocuments(w http.ResponseWriter, r *http.Request)
 	GetSharedContentFile(w http.ResponseWriter, r *http.Request)
 	SharePublishedFile(w http.ResponseWriter, r *http.Request)
-	GetVersionChanges(w http.ResponseWriter, r *http.Request)
-	GetVersionProblems(w http.ResponseWriter, r *http.Request)
+	GetVersionChanges_deprecated(w http.ResponseWriter, r *http.Request)
+	GetVersionProblems_deprecated(w http.ResponseWriter, r *http.Request)
 	GetVersionReferencesV3(w http.ResponseWriter, r *http.Request)
 	GetVersionRevisionsList(w http.ResponseWriter, r *http.Request)
 	DeleteVersionsRecursively(w http.ResponseWriter, r *http.Request)
@@ -746,7 +746,7 @@ func (v versionControllerImpl) GetVersionedContentFileRaw(w http.ResponseWriter,
 	w.Write(contentData.Data)
 }
 
-func (v versionControllerImpl) GetVersionChanges(w http.ResponseWriter, r *http.Request) {
+func (v versionControllerImpl) GetVersionChanges_deprecated(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
 	ctx := context.Create(r)
 	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
@@ -773,7 +773,7 @@ func (v versionControllerImpl) GetVersionChanges(w http.ResponseWriter, r *http.
 		})
 		return
 	}
-	changes, err := v.versionService.GetVersionValidationChanges(packageId, versionName)
+	changes, err := v.versionService.GetVersionValidationChanges_deprecated(packageId, versionName)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get version changes", err)
 		return
@@ -782,7 +782,7 @@ func (v versionControllerImpl) GetVersionChanges(w http.ResponseWriter, r *http.
 	utils.RespondWithJson(w, http.StatusOK, changes)
 }
 
-func (v versionControllerImpl) GetVersionProblems(w http.ResponseWriter, r *http.Request) {
+func (v versionControllerImpl) GetVersionProblems_deprecated(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
 	ctx := context.Create(r)
 	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
@@ -809,7 +809,7 @@ func (v versionControllerImpl) GetVersionProblems(w http.ResponseWriter, r *http
 		})
 		return
 	}
-	problems, err := v.versionService.GetVersionValidationProblems(packageId, versionName)
+	problems, err := v.versionService.GetVersionValidationProblems_deprecated(packageId, versionName)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to get version problems", err)
 		return

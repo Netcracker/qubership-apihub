@@ -18,6 +18,6 @@ type Status struct {
 	Status string `json:"status"`
 }
 
-type Statuses struct {
+type Statuses_deprecated struct {
 	Statuses []string `json:"statuses"`
 }

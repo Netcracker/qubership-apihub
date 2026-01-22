@@ -73,8 +73,8 @@ type PublishedRepository interface {
 	DeleteSoftDeletedPackagesBeforeDate(ctx context.Context, runId string, beforeDate time.Time, batchSize int) (int, error)
 	GetFilteredPackagesWithOffset(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error)
 	GetFilteredDeletedPackages(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error)
-	GetVersionValidationChanges(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity, error)
-	GetVersionValidationProblems(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity, error)
+	GetVersionValidationChanges_deprecated(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity_deprecated, error)
+	GetVersionValidationProblems_deprecated(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity_deprecated, error)
 	SearchForVersions(searchQuery *entity.PackageSearchQuery) ([]entity.PackageSearchResult, error)
 	SearchForDocuments(searchQuery *entity.DocumentSearchQuery) ([]entity.DocumentSearchResult, error)
 

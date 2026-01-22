@@ -329,11 +329,10 @@ func main() {
 	dataMigrationController := mController.NewTempMigrationController(dbMigrationService, roleService.IsSysadm)
 	activityTrackingController := controller.NewActivityTrackingController(activityTrackingService, roleService, ptHandler)
 	comparisonController := controller.NewComparisonController(operationService, versionService, buildService, roleService, comparisonService, monitoringService, ptHandler)
-	buildCleanupController := controller.NewBuildCleanupController(dbCleanupService, roleService.IsSysadm)
 	transitionController := controller.NewTransitionController(transitionService, roleService.IsSysadm)
 	businessMetricController := controller.NewBusinessMetricController(businessMetricService, excelService, roleService.IsSysadm)
 	transformationController := controller.NewTransformationController(roleService, buildService, versionService, transformationService, operationGroupService)
-	minioStorageController := controller.NewMinioStorageController(minioStorageCreds, minioStorageService)
+	minioStorageController := controller.NewMinioStorageController(minioStorageCreds, minioStorageService, roleService)
 	personalAccessTokenController := controller.NewPersonalAccessTokenController(personalAccessTokenService)
 	packageExportConfigController := controller.NewPackageExportConfigController(roleService, packageExportConfigService, ptHandler)
 	systemStatsController := controller.NewSystemStatsController(systemStatsService, roleService)
@@ -362,7 +361,7 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}", security.Secure(packageController.GetPackage)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/status", security.Secure(packageController.GetPackageStatus)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages", security.Secure(packageController.GetPackagesList)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/packages/{packageId}/publish/availableStatuses", security.Secure(packageController.GetAvailableVersionStatusesForPublish)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/publish/availableStatuses", security.Secure(packageController.GetAvailableVersionStatusesForPublish_deprecated)).Methods(http.MethodGet) // deprecated
 
 	r.HandleFunc("/api/v4/packages/{packageId}/apiKeys", security.Secure(apihubApiKeyController.GetApiKeys)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v4/packages/{packageId}/apiKeys", security.Secure(apihubApiKeyController.CreateApiKey)).Methods(http.MethodPost)
@@ -395,15 +394,15 @@ func main() {
 
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/files/{slug}/raw", security.Secure(versionController.GetVersionedContentFileRaw)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/sharedFiles/{sharedFileId}", security.NoSecure(versionController.GetSharedContentFile)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/changes", security.Secure(versionController.GetVersionChanges)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/problems", security.Secure(versionController.GetVersionProblems)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/changes", security.Secure(versionController.GetVersionChanges_deprecated)).Methods(http.MethodGet)   // deprecated
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/problems", security.Secure(versionController.GetVersionProblems_deprecated)).Methods(http.MethodGet) // deprecated
 	r.HandleFunc("/api/v2/sharedFiles", security.Secure(versionController.SharePublishedFile)).Methods(http.MethodPost)
 
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/doc", security.Secure(exportController.GenerateVersionDoc)).Methods(http.MethodGet)           // deprecated
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/files/{slug}/doc", security.Secure(exportController.GenerateFileDoc)).Methods(http.MethodGet) // deprecated
 
-	r.HandleFunc("/api/v2/auth/saml", security.NoSecure(samlAuthController.StartSamlAuthentication_deprecated)).Methods(http.MethodGet) // deprecated.
-	r.HandleFunc("/login/sso/saml", security.RefreshToken(samlAuthController.StartSamlAuthentication_deprecated)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/auth/saml", security.NoSecure(samlAuthController.StartSamlAuthentication_deprecated)).Methods(http.MethodGet)   // deprecated
+	r.HandleFunc("/login/sso/saml", security.RefreshToken(samlAuthController.StartSamlAuthentication_deprecated)).Methods(http.MethodGet) // deprecated
 	r.HandleFunc("/saml/acs", security.NoSecure(samlAuthController.AssertionConsumerHandler_deprecated)).Methods(http.MethodPost)
 	r.HandleFunc("/saml/metadata", security.NoSecure(samlAuthController.ServeMetadata_deprecated)).Methods(http.MethodGet)
 
@@ -481,8 +480,6 @@ func main() {
 	r.HandleFunc("/api/internal/migrate/operations/{migrationId}/suspiciousBuilds", security.Secure(dataMigrationController.GetSuspiciousBuilds)).Methods(http.MethodGet)
 	r.HandleFunc("/api/internal/migrate/operations/{migrationId}/perf", security.Secure(dataMigrationController.GetMigrationPerfReport)).Methods(http.MethodGet)
 	r.HandleFunc("/api/internal/migrate/operations/cancel", security.Secure(dataMigrationController.CancelRunningMigrations)).Methods(http.MethodPost)
-	r.HandleFunc("/api/internal/migrate/operations/cleanup", security.Secure(buildCleanupController.StartMigrationBuildCleanup)).Methods(http.MethodPost)
-	r.HandleFunc("/api/internal/migrate/operations/cleanup/{id}", security.Secure(buildCleanupController.GetMigrationBuildCleanupResult)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v2/admin/transition/move", security.Secure(transitionController.MoveOrRenamePackage)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/admin/transition/move/{id}", security.Secure(transitionController.GetMoveStatus)).Methods(http.MethodGet)
