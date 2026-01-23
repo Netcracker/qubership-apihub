@@ -15,24 +15,17 @@
  */
 
 import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
-import { ASYNC_KIND_KEY } from './async.consts'
 import type * as TYPE from './async.types'
-import {
-  BuildConfig,
-  DeprecateItem,
-  NotificationMessage,
-  SearchScopes,
-} from '../../types'
+import { BuildConfig, DeprecateItem, NotificationMessage, SearchScopes } from '../../types'
 import {
   capitalize,
   getSplittedVersionKey,
   isDeprecatedOperationItem,
   isOperationDeprecated,
-  rawToApiKind,
   takeIf,
   takeIfDefined,
 } from '../../utils'
-import { API_KIND, INLINE_REFS_FLAG, ORIGINS_SYMBOL, VERSION_STATUS } from '../../consts'
+import { APIHUB_API_COMPATIBILITY_KIND_BWC, ORIGINS_SYMBOL, VERSION_STATUS } from '../../consts'
 import { getCustomTags, resolveApiAudience } from '../../utils/apihubSpecificationExtensions'
 import { DebugPerformanceContext, syncDebugPerformance } from '../../utils/logs'
 import {
@@ -40,14 +33,13 @@ import {
   JSON_SCHEMA_PROPERTY_DEPRECATED,
   matchPaths,
   OPEN_API_PROPERTY_PATHS,
-  parseRef,
   pathItemToFullPath,
   PREDICATE_ANY_VALUE,
-  PREDICATE_UNCLOSED_END,
   resolveOrigins,
 } from '@netcracker/qubership-apihub-api-unifier'
 import { calculateHash, ObjectHashCache } from '../../utils/hashes'
 import { extractProtocol } from './async.utils'
+import { getApiKindProperty } from '../../components/document'
 
 export const buildAsyncApiOperation = (
   operationId: string,
@@ -63,7 +55,7 @@ export const buildAsyncApiOperation = (
   debugCtx?: DebugPerformanceContext,
 ): TYPE.VersionAsyncOperation => {
 
-  const { servers, components } = document.data
+  const { apiKind: documentApiKind, servers, components } = document.data
   const { versionInternalDocument } = document
   const effectiveOperationObject = effectiveDocument.operations?.[operationKey] || {}
   const effectiveSingleOperationSpec = createSingleOperationSpec(effectiveDocument, operationKey)
@@ -118,7 +110,7 @@ export const buildAsyncApiOperation = (
   }, debugCtx)
 
   // Extract API kind
-  const apiKind = effectiveOperationObject[ASYNC_KIND_KEY] || document.apiKind || API_KIND.BWC
+  const operationApiKind = getApiKindProperty(effectiveOperationObject) || documentApiKind || APIHUB_API_COMPATIBILITY_KIND_BWC
 
   // Build operation data with models
   const models: Record<string, string> = {}
@@ -148,7 +140,7 @@ export const buildAsyncApiOperation = (
     operationId,
     documentId: document.slug,
     apiType: 'asyncapi',
-    apiKind: rawToApiKind(apiKind),
+    apiKind: operationApiKind,
     deprecated: !!effectiveOperationObject.deprecated,
     title: effectiveOperationObject.title || effectiveOperationObject.summary || operationKey.split('-').map(str => capitalize(str)).join(' '),
     metadata: {

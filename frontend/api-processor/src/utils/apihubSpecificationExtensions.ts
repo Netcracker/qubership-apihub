@@ -15,7 +15,12 @@
  */
 
 import { isObject } from '@netcracker/qubership-apihub-json-crawl'
-import { CUSTOM_PARAMETER_API_AUDIENCE, FILE_FORMAT_JSON, FILE_FORMAT_YAML } from '../consts'
+import {
+  CUSTOM_PARAMETER_API_AUDIENCE,
+  FILE_FORMAT_JSON,
+  FILE_FORMAT_YAML,
+  SPECIFICATION_EXTENSION_PREFIX,
+} from '../consts'
 import { API_AUDIENCE_EXTERNAL, API_AUDIENCE_INTERNAL, API_AUDIENCE_UNKNOWN, ApiAudience } from '../types'
 import YAML from 'js-yaml'
 
@@ -33,7 +38,7 @@ export function getCustomTags(data: object): CustomTags {
   }
 
   return Object.entries(data)
-    .filter(([key]) => key.startsWith('x-'))
+    .filter(([key]) => key.startsWith(SPECIFICATION_EXTENSION_PREFIX))
     .reduce((acc, [key, value]) => {
       acc[key] = value
       return acc
