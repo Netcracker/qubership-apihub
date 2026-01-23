@@ -16,7 +16,7 @@
 
 import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
 import { OpenAPIV3 } from 'openapi-types'
-import { REST_API_TYPE, REST_KIND_KEY } from './rest.consts'
+import { REST_API_TYPE } from './rest.consts'
 import { operationRules } from './rest.rules'
 import type * as TYPE from './rest.types'
 import { RestOperationData } from './rest.types'
@@ -30,9 +30,9 @@ import {
   SearchScopes,
 } from '../../types'
 import {
+  _calculateRestOperationIdV1,
   buildSearchScope,
   calculateRestOperationId,
-  _calculateRestOperationIdV1,
   capitalize,
   extractSymbolProperty,
   getKeyValue,
@@ -42,12 +42,12 @@ import {
   isOperationDeprecated,
   isValidHttpMethod,
   normalizePath,
-  rawToApiKind,
   setValueByPath,
   takeIf,
   takeIfDefined,
 } from '../../utils'
-import { API_KIND, INLINE_REFS_FLAG, ORIGINS_SYMBOL, VERSION_STATUS } from '../../consts'
+import { getUsedTags } from '../../utils/mergeOpenapiDocuments'
+import { APIHUB_API_COMPATIBILITY_KIND_BWC, INLINE_REFS_FLAG, ORIGINS_SYMBOL, VERSION_STATUS } from '../../consts'
 import { extractSecuritySchemesNames, getCustomTags, resolveApiAudience } from './rest.utils'
 import { DebugPerformanceContext, syncDebugPerformance } from '../../utils/logs'
 import {
@@ -68,6 +68,7 @@ import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
 import { calculateHash, ObjectHashCache } from '../../utils/hashes'
 import { calculateTolerantHash } from '../../components/deprecated'
 import { getValueByPath } from '../../utils/path'
+import { getApiKindProperty } from '../../components/document'
 
 export const buildRestOperation = (
   operationId: string,
@@ -142,7 +143,7 @@ export const buildRestOperation = (
   }, debugCtx)
 
   const models: Record<string, string> = {}
-  const apiKind = effectiveOperationObject[REST_KIND_KEY] || documentApiKind || API_KIND.BWC
+  const operationApiKind = getApiKindProperty(effectiveOperationObject) || documentApiKind || APIHUB_API_COMPATIBILITY_KIND_BWC
   const [specWithSingleOperation] = syncDebugPerformance('[ModelsAndOperationHashing]', () => {
     const operationSecurity = effectiveOperationObject.security
     const specWithSingleOperation = createSingleOperationSpec(
@@ -171,7 +172,7 @@ export const buildRestOperation = (
     operationId,
     documentId: documentSlug,
     apiType: REST_API_TYPE,
-    apiKind: rawToApiKind(apiKind),
+    apiKind: operationApiKind,
     deprecated: !!effectiveOperationObject.deprecated,
     title: effectiveOperationObject.summary || operationId.split('-').map(str => capitalize(str)).join(' '),
     metadata: {
@@ -328,6 +329,9 @@ const isOperationPaths = (paths: JsonPath[]): boolean => {
 // todo output of this method disrupts document normalization.
 //  origin symbols are not being transferred to the resulting spec.
 //  DO NOT pass output of this method to apiDiff
+// TODO: conceptually, this method does processing which is very similar
+// is very similar to the reducedSourceSpecifications transformation.
+// We should merge these two functions into one.
 export const createSingleOperationSpec = (
   document: OpenAPIV3.Document,
   path: string,
@@ -350,8 +354,12 @@ export const createSingleOperationSpec = (
     : undefined
 
   const isRefPathData = !!pathData.$ref
-  return {
+
+  // Construct the single operation document
+  const singleOperationDocument: TYPE.RestOperationData = {
     openapi: openapi ?? '3.0.0',
+    ...takeIfDefined({ info: document.info }),
+    ...takeIfDefined({ externalDocs: document.externalDocs }),
     ...takeIfDefined({ servers }),
     ...!operationSecurity ? takeIfDefined({ security }) : {},// Only add root security if operation security is not explicitly defined
     paths: {
@@ -367,8 +375,20 @@ export const createSingleOperationSpec = (
       components: effectiveSecuritySchemes ? { securitySchemes: effectiveSecuritySchemes } : undefined,
     }),
   }
-}
 
+  // Filter tags to only include those used by this operation
+  if (document.tags) {
+    const filteredTags = getUsedTags([{
+      ...singleOperationDocument,
+      tags: document.tags,
+    } as OpenAPIV3.Document])
+    if (filteredTags) {
+      singleOperationDocument.tags = filteredTags
+    }
+  }
+
+  return singleOperationDocument
+}
 export const extractCommonPathItemProperties = (
   pathData: OpenAPIV3.PathItemObject,
 ): Pick<OpenAPIV3.PathItemObject, 'summary' | 'description' | 'servers' | 'parameters'> => ({

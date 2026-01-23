@@ -21,6 +21,7 @@ import {
 } from '../../types'
 import { Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { isPathParamRenameDiff } from '../../utils'
+
 import { dump, getCustomTags, resolveApiAudience } from '../../utils/apihubSpecificationExtensions'
 
 // Re-export shared utilities for backward compatibility

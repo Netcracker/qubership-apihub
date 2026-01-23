@@ -122,5 +122,46 @@ describe('REST Operation Unit Tests', () => {
         expect(result.security).toEqual(document.security)
       })
     })
+
+    describe('Info, ExternalDocs, and Tags Handling', () => {
+      test('should include info object from source document', async () => {
+        const document = await loadYamlFile('rest.operation/info-externaldocs-tags-filtering/base.yaml')
+
+        const result = createTestSingleOperationSpec(document)
+
+        expect(result.info).toBeDefined()
+        expect(result.info).toEqual(document.info)
+      })
+
+      test('should include externalDocs object from source document', async () => {
+        const document = await loadYamlFile('rest.operation/info-externaldocs-tags-filtering/base.yaml')
+
+        const result = createTestSingleOperationSpec(document)
+
+        expect(result.externalDocs).toBeDefined()
+        expect(result.externalDocs).toEqual(document.externalDocs)
+      })
+
+      test('should filter tags to only include those used by the operation', async () => {
+        const document = await loadYamlFile('rest.operation/info-externaldocs-tags-filtering/base.yaml')
+
+        const result = createTestSingleOperationSpec(document)
+
+        expect(result.tags).toEqual([
+          {
+            name: 'pet',
+            description: 'Pet operations',
+          },
+        ])
+      })
+
+      test('should handle document with no tags', async () => {
+        const document = await loadYamlFile('rest.operation/info-externaldocs-no-tags/base.yaml')
+
+        const result = createTestSingleOperationSpec(document)
+
+        expect(result.tags).toBeUndefined()
+      })
+    })
   })
 })
