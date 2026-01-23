@@ -21,7 +21,7 @@ import {
   GRAPHQL_API_TYPE,
   ResolvedOperation,
   REST_API_TYPE,
-  ApiKind as ApiKindFromProcessor,
+  ApihubApiCompatibilityKind as ApiKindFromProcessor,
   ApiAudience as ApiAudienceFromProcessor,
 } from '@netcracker/qubership-apihub-api-processor'
 
