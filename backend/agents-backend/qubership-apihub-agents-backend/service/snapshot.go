@@ -269,7 +269,7 @@ func filterService(allService []view.Service, requiredServices []string, promote
 	filterByList := len(requiredServices) > 0
 	for _, svc := range allService {
 		if filterByList {
-			if _, exists := filter[svc.Id]; exists && len(svc.Specs) > 0 {
+			if _, exists := filter[svc.Id]; exists && len(svc.Documents) > 0 {
 				if promote {
 					if svc.Baseline != nil && svc.Baseline.PackageId != "" {
 						result = append(result, svc)
@@ -279,7 +279,7 @@ func filterService(allService []view.Service, requiredServices []string, promote
 				}
 			}
 		} else {
-			if len(svc.Specs) > 0 {
+			if len(svc.Documents) > 0 {
 				if promote {
 					if svc.Baseline != nil && svc.Baseline.PackageId != "" {
 						result = append(result, svc)
@@ -397,7 +397,7 @@ func (s *snapshotServiceImpl) startSnapshot(ctx context.Context, namespace strin
 			buildConfig.Metadata["cloudName"] = snapshotDTO.CloudName
 			buildConfig.Metadata["namespace"] = namespace
 
-			for _, spec := range svc.Specs {
+			for _, spec := range svc.Documents {
 				buildConfig.Files = append(buildConfig.Files,
 					view.BCFile{
 						FileId:   spec.FileId,
@@ -456,7 +456,7 @@ func (s *snapshotServiceImpl) startSnapshot(ctx context.Context, namespace strin
 				zipBuf := bytes.Buffer{}
 				zw := zip.NewWriter(&zipBuf)
 
-				for specInd, spec := range svc.Specs {
+				for specInd, spec := range svc.Documents {
 					specBytes, err := s.agentClient.GetServiceSpecification(ctx, namespace, workspaceId, svc.Id, spec.FileId, snapshotDTO.AgentUrl)
 					if err != nil {
 						log.Errorf("error: unable to get specification %s: %s", svc.Id, err.Error())
