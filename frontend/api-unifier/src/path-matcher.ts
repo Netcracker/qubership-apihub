@@ -100,7 +100,7 @@ export const matchPaths: (paths: JsonPath[], predicated: PathPredicate[]) => Mat
 
 export const calculateMatchingDepth = ({ predicate }: MatchResult): number => {
   let gap = 1
-  if (predicate[predicate.length - 1] === PREDICATE_UNCLOSED_END) {
+  if (predicate.at(-1) === PREDICATE_UNCLOSED_END) {
     gap += 1
   }
   return predicate.length - gap

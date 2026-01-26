@@ -41,7 +41,7 @@ export const mergeResultWithAllOrigins: <T>(array: ValueWithOrigins<T>[], f: (ar
 }
 
 export const first: MergeResolver<unknown> = ([a]) => a
-export const last: MergeResolver<unknown> = args => args[args.length - 1]
+export const last: MergeResolver<unknown> = args => args.at(-1)
 
 export const and: MergeResolver<boolean> = args => mergeResultWithSameValueOrigins(args, args => args.reduce((r, v) => r && v, true))
 export const or: MergeResolver<boolean> = args => mergeResultWithSameValueOrigins(args, args => args.reduce((r, v) => r || v, false))

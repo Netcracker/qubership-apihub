@@ -26,6 +26,7 @@ export interface ResolveOptions {
   inlineRefsFlag?: symbol         // flag on JSO with array of JsonPath for resolve that object. Array for all of case
   originsFlag?: symbol            // used in JSO as anchor to chained declaration path (contains link to parent in declarationPath)
   originsAlreadyDefined?: boolean // are there already origins in the spec
+  referenceNameProperty?: symbol  // capture last reference name in chain for reference object resolver
   ignoreSymbols?: symbol[],       // symbols to ignore scan
   onRefResolveError?: (message: string, path: JsonPath, ref: string, errorType: RefErrorType) => void
 }
@@ -77,7 +78,7 @@ export interface HashOptions {
   hashFlag?: symbol
 }
 
-export interface InternalHashOptions extends HashOptions {}
+export interface InternalHashOptions extends HashOptions { }
 
 const OPEN_API_EXTENSION_PREFIX = 'x-'
 
@@ -88,7 +89,7 @@ export interface RemoveOasExtensionsOptions {
   shouldRemoveOasExtension?: (extensionKey: OpenApiExtensionKey) => boolean
 }
 
-export interface InternalRemoveOasExtensionsOptions extends RemoveOasExtensionsOptions {}
+export interface InternalRemoveOasExtensionsOptions extends RemoveOasExtensionsOptions { }
 
 export interface InternalLiftCombinersOptions extends Omit<LiftCombinersOptions, never>, InternalMergeOptions, HasInternalIgnoreSymbols {
   liftCombiners: boolean

@@ -50,7 +50,7 @@ export function evaluateSyntheticTitle(
     return {}
   }
   const result = {
-    [targetPropertyKey]: path[path.length - 1].toString(),
+    [targetPropertyKey]: path.at(-1)?.toString(),
     [syntheticTitleFlag]: true,
   }
   return result
@@ -73,6 +73,7 @@ export const defineOriginsAndResolveRef = (value: unknown, options?: ResolveOpti
       ...(options?.inlineRefsFlag ? [options.inlineRefsFlag] : []),
       ...(options?.syntheticTitleFlag ? [options.syntheticTitleFlag] : []),
       ...(options?.syntheticAllOfFlag ? [options.syntheticAllOfFlag] : []),
+      ...(options?.referenceNameProperty ? [options.referenceNameProperty] : []),
       ...(options?.ignoreSymbols ? options.ignoreSymbols : []),
     ]),
   } satisfies InternalResolveOptions
@@ -319,6 +320,7 @@ const createDefineOriginsAndResolveRefHook: (rootJso: unknown, options: Internal
                 ? (value, parentChain, parentValue, propertyKey) =>
                   getOrSimpleCreateOrigin(value, parentChain, propertyKey, state.originCache/*, item => updateLazyParentChainItem(item, parentValue, propertyKey) proof by test*/)
                 : undefined,
+              options.referenceNameProperty,
             )
             if (refInResultedJso?.refValue !== undefined && refInResultedJso?.refValue !== null) {
               const resolvedRefWithRules = referenceHandler({
@@ -357,6 +359,7 @@ const createDefineOriginsAndResolveRefHook: (rootJso: unknown, options: Internal
                     },
                     state.originCache)
                 : undefined,
+              options.referenceNameProperty,
             )
             if (refInSourceJso?.refValue !== undefined && refInSourceJso?.refValue !== null) {
               const resolvedRefWithRules = referenceHandler({
@@ -434,6 +437,7 @@ const resolveRefNode = (
   state: CloneState<DefineOriginsAndResolveRefState>,
   rules: CrawlRules<NormalizationRule> | undefined,
   originResolver?: (value: unknown, parentChain: ChainItem | undefined, parentValue: unknown | undefined, propertyKey: PropertyKey) => ChainItem,
+  referenceNameProperty?: symbol,
 ): ResolvedRef | undefined => {
   if (!isObject(source)) {
     return undefined
@@ -445,6 +449,10 @@ const resolveRefNode = (
   let parentValue: unknown = undefined
   let pathChain: ChainItem | undefined = undefined
   const path = parsePointer(reference.pointer)
+  // Initialize with the name from the initial reference
+  let lastReferenceName: string | undefined = reference.jsonPath.length > 0
+    ? reference.jsonPath.at(-1)?.toString()
+    : undefined
   let isRefValue: boolean
   while ((isRefValue = isRefNode(value)) || path.length) {
     const key = path[0]
@@ -452,6 +460,14 @@ const resolveRefNode = (
       //when ref go to the object that contains not yet resolved ref
       const originCollector: OriginsMetaRecord = {}
       parentValue = value
+      // Track the reference name from the $ref
+      const refString = isObject(value) ? value.$ref : undefined
+      if (typeof refString === 'string') {
+        const parsedRef = parseRef(refString)
+        if (parsedRef.jsonPath.length > 0) {
+          lastReferenceName = parsedRef.jsonPath.at(-1)?.toString()
+        }
+      }
       value = syncClone<DefineOriginsAndResolveRefState, NormalizationRule>(value, [cycleJsoHook, resolveRefHook, cycleJsoHook], {
         state: {
           ...state,
@@ -461,6 +477,10 @@ const resolveRefNode = (
       })
       if (isRefNode(value)) { //it possible only for broken refs
         return undefined
+      }
+      // If the resolved object has a reference name property set by nested resolution, use it
+      if (referenceNameProperty && isObject(value) && referenceNameProperty in value) {
+        lastReferenceName = value[referenceNameProperty]
       }
       pathChain = originResolver?.(value, pathChain, parentValue, key)
       continue
@@ -489,6 +509,7 @@ const resolveRefNode = (
   return {
     refValue: value,
     origin: pathChain,
+    lastReferenceName,
   }
 }
 
@@ -531,4 +552,5 @@ function cleanupRootOrigin(origins: ChainItem[]): void {
 export interface ResolvedRef {
   refValue: unknown
   origin: ChainItem | undefined
+  lastReferenceName?: string
 }

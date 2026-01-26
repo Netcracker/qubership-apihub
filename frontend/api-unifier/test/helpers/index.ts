@@ -1,5 +1,5 @@
 import { anyArrayKeys, isArray, isObject, JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
-import {ChainItem, Hash, JsonSchema, loadYaml, OriginLeafs, OriginsMetaRecord} from '../../src'
+import { ChainItem, Hash, JsonSchema, loadYaml, OriginLeafs, OriginsMetaRecord } from '../../src'
 import { OpenAPIV3 } from 'openapi-types'
 import 'jest-extended'
 import { deepEqual } from 'fast-equals'
@@ -41,7 +41,7 @@ export const TEST_HEADER_NAME = 'header1'
 export const TEST_RESPONSE_NAME = 'response1'
 export const TEST_REQUEST_NAME = 'request1'
 
-export const createOas: (schema: JsonSchema, version?: string) => Record<PropertyKey,unknown> = (schema, version = '3.0.0') => {
+export const createOas: (schema: JsonSchema, version?: string) => Record<PropertyKey, unknown> = (schema, version = '3.0.0') => {
   return {
     openapi: version,
     components: {
@@ -52,7 +52,7 @@ export const createOas: (schema: JsonSchema, version?: string) => Record<Propert
   }
 }
 
-export const createOasWithParameters: (parameter: OpenAPIV3.ParameterObject) => Record<PropertyKey,unknown> = (parameter) => {
+export const createOasWithParameters: (parameter: OpenAPIV3.ParameterObject) => Record<PropertyKey, unknown> = (parameter) => {
   return {
     openapi: '3.0.0',
     components: {
@@ -197,6 +197,7 @@ export const TEST_ORIGINS_FLAG = Symbol('test-origin')
 export const TEST_ORIGINS_FOR_DEFAULTS: OriginLeafs = [{ parent: undefined, value: 'test-origins-defaults' }]
 export const TEST_DEFAULTS_FLAG = Symbol('test-defaults')
 export const TEST_HASH_FLAG = Symbol('test-hash')
+export const TEST_REFERENCE_NAME_PROPERTY = Symbol('test-reference-name')
 
 export const isSymbol = (value: unknown): value is symbol => {
   return typeof value === 'symbol'
