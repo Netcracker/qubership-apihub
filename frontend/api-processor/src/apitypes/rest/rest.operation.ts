@@ -32,8 +32,7 @@ import {
 import {
   _calculateRestOperationIdV1,
   buildSearchScope,
-  calculateRestOperationId,
-  capitalize,
+  calculateRestOperationId, calculateRestOperationTitle,
   extractSymbolProperty,
   getKeyValue,
   getSplittedVersionKey,
@@ -174,7 +173,7 @@ export const buildRestOperation = (
     apiType: REST_API_TYPE,
     apiKind: operationApiKind,
     deprecated: !!effectiveOperationObject.deprecated,
-    title: effectiveOperationObject.summary || operationId.split('-').map(str => capitalize(str)).join(' '),
+    title: effectiveOperationObject.summary || calculateRestOperationTitle(basePath, method, path),
     metadata: {
       customTags: customTags,
       path: normalizePath(basePath + path),

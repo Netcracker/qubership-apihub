@@ -35,7 +35,6 @@ import YAML from 'js-yaml'
 import { Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { isPathParamRenameDiff } from '../../utils'
 
-
 export function getCustomTags(data: object): CustomTags {
   const initialValue: CustomTags = {}
   if (!data || typeof data !== 'object') {
