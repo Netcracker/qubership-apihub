@@ -399,7 +399,7 @@ paths:
                         url:
                           type: string
                           description: Service URL
-                        docs:
+                        documents:
                           type: array
                           items:
                             type: object
@@ -458,7 +458,7 @@ paths:
                         error:
                           type: string
                           description: Error message if service discovery failed
-                        diagnostic:
+                        diagnosticInfo:
                           type: object
                           description: Diagnostic information for service discovery
                           properties:
@@ -477,12 +477,6 @@ paths:
                                   errorSummary:
                                     type: string
                                     description: Summary of error if occurred
-                            skipped:
-                              type: boolean
-                              description: Whether service was skipped during discovery
-                            skipReason:
-                              type: string
-                              description: Reason why service was skipped
                   status:
                     type: string
                     enum:

@@ -29,13 +29,13 @@ type Service struct {
 	Id                       string             `json:"id"`
 	Name                     string             `json:"serviceName"`
 	Url                      string             `json:"url"`
-	Documents                []Document         `json:"docs"`
+	Documents                []Document         `json:"documents"`
 	Baseline                 *Baseline          `json:"baseline,omitempty"`
 	Labels                   map[string]string  `json:"serviceLabels,omitempty"`
 	AvailablePromoteStatuses []string           `json:"availablePromoteStatuses"`
 	ProxyServerUrl           string             `json:"proxyServerUrl,omitempty"`
 	Error                    string             `json:"error,omitempty"`
-	Diagnostic               *ServiceDiagnostic `json:"diagnostic,omitempty"`
+	DiagnosticInfo           *ServiceDiagnostic `json:"diagnosticInfo,omitempty"`
 }
 
 type EndpointCallInfo struct {
