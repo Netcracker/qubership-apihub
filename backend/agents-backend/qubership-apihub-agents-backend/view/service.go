@@ -46,8 +46,6 @@ type EndpointCallInfo struct {
 
 type ServiceDiagnostic struct {
 	EndpointCalls []EndpointCallInfo `json:"endpointCalls,omitempty"`
-	Skipped       bool               `json:"skipped,omitempty"`
-	SkipReason    string             `json:"skipReason,omitempty"`
 }
 type Status string
 
