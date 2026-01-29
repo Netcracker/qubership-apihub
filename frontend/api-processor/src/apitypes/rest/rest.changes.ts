@@ -103,7 +103,7 @@ export const compareDocuments: DocumentsCompare = async (
     previousVersionLabels,
     currentVersionLabels,
   } = ctx
-  const comparisonInternalDocumentId = createComparisonInternalDocumentId(prevDoc, currDoc, previousVersion, currentVersion)
+  const comparisonInternalDocumentId = createComparisonInternalDocumentId(previousVersion, previousPackageId, prevDoc?.slug, currentVersion, currentPackageId, currDoc?.slug)
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
   const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
   let prevDocData = prevFile && JSON.parse(await prevFile.text())
