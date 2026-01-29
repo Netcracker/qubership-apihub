@@ -37,5 +37,5 @@ func (l logsServiceImpl) StoreLogs(obj map[string]interface{}) {
 	for key, value := range obj {
 		fields = append(fields, fmt.Sprintf("%v: %v", key, value))
 	}
-	log.Error(strings.Join(fields, ", ")) //todo maybe log.Info?
+	log.Infof("logs received: " + strings.Join(fields, ", "))
 }
