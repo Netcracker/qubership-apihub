@@ -9,7 +9,7 @@ import {
 import 'jest-extended'
 import { defineOriginsAndResolveRef } from '../../src/define-origins-and-resolve-ref'
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
-import { TEST_ORIGINS_FLAG, TEST_REFERENCE_NAME_PROPERTY } from '../helpers'
+import { TEST_INLINE_REFS_FLAG, TEST_ORIGINS_FLAG, TEST_REFERENCE_NAME_PROPERTY, TEST_SYNTHETIC_TITLE_FLAG } from '../helpers'
 import defineResponseViaReferenceObjectChain
   from '../resources/reference-object/define-response-via-reference-object-chain.json'
 import secondLevelObjectSameWhenOverridingDescriptionForResponse
@@ -653,6 +653,44 @@ describe('OAS Reference Object', () => {
       }
 
       const result = defineOriginsAndResolveRef(source, { referenceNameProperty: TEST_REFERENCE_NAME_PROPERTY }) as any
+      expect(result.paths['/test'].get.responses['200']).toBe(result.components.responses.SuccessResponse)
+      expect(result.paths['/test'].get.responses['200'][TEST_REFERENCE_NAME_PROPERTY]).toBe('SuccessResponse')
+    })
+
+    it('should capture reference name when various normalize options are used', () => {
+      const source = {
+        openapi: '3.1.0',
+        paths: {
+          '/test': {
+            get: {
+              responses: {
+                '200': {
+                  $ref: '#/components/responses/SuccessResponse',
+                },
+              },
+            },
+          },
+        },
+        components: {
+          responses: {
+            SuccessResponse: {
+              description: 'Success response',
+            },
+          },
+        },
+      }
+
+      const result = normalize(source,
+        {
+          referenceNameProperty: TEST_REFERENCE_NAME_PROPERTY,
+          mergeAllOf: true,
+          syntheticTitleFlag: TEST_SYNTHETIC_TITLE_FLAG,
+          inlineRefsFlag: TEST_INLINE_REFS_FLAG,
+          unify: true,
+          validate: true,
+          liftCombiners: true,
+        }
+      ) as any
       expect(result.paths['/test'].get.responses['200']).toBe(result.components.responses.SuccessResponse)
       expect(result.paths['/test'].get.responses['200'][TEST_REFERENCE_NAME_PROPERTY]).toBe('SuccessResponse')
     })
