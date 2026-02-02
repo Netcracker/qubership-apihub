@@ -1195,8 +1195,9 @@ func (o operationControllerImpl) GetOperationChangesSummary(w http.ResponseWrite
 
 	previousVersion := r.URL.Query().Get("previousVersion")
 	previousVersionPackageId := r.URL.Query().Get("previousVersionPackageId")
+	refPackageId := r.URL.Query().Get("refPackageId")
 
-	changes, err := o.operationService.GetOperationChangesSummary(packageId, versionName, operationId, previousVersionPackageId, previousVersion)
+	changes, err := o.operationService.GetOperationChangesSummary(packageId, versionName, operationId, previousVersionPackageId, previousVersion, refPackageId)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, o.ptHandler, packageId, "Failed to get operation changes", err)
 		return

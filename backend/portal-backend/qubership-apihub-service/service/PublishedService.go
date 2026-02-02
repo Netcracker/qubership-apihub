@@ -60,7 +60,7 @@ type PublishedService interface {
 
 	GetVersionInternalDocuments(packageId string, version string) ([]view.InternalDocument, error)
 	GetVersionInternalDocumentData(hash string) ([]byte, string, error)
-	GetComparisonInternalDocuments(packageId string, version string, previousPackageId string, previousVersion string) ([]view.InternalDocument, error)
+	GetComparisonInternalDocuments(packageId string, version string, previousPackageId string, previousVersion string, refPackageId string) ([]view.InternalDocument, error)
 	GetComparisonInternalDocumentData(hash string) ([]byte, string, error)
 }
 
@@ -955,7 +955,7 @@ func (p publishedServiceImpl) GetVersionInternalDocumentData(hash string) ([]byt
 	return docData.Data, docData.Filename, nil
 }
 
-func (p publishedServiceImpl) GetComparisonInternalDocuments(packageId string, version string, previousPackageId string, previousVersion string) ([]view.InternalDocument, error) {
+func (p publishedServiceImpl) GetComparisonInternalDocuments(packageId string, version string, previousPackageId string, previousVersion string, refPackageId string) ([]view.InternalDocument, error) {
 	versionEnt, err := p.publishedRepo.GetVersion(packageId, version)
 	if err != nil {
 		return nil, err
@@ -1024,14 +1024,23 @@ func (p publishedServiceImpl) GetComparisonInternalDocuments(packageId string, v
 		}
 	}
 
-	comparisons := []entity.VersionComparisonEntity{*versionComparison}
-
+	var comparisons []entity.VersionComparisonEntity
 	if len(versionComparison.Refs) > 0 {
 		refsComparisons, err := p.publishedRepo.GetVersionRefsComparisons(comparisonId)
 		if err != nil {
 			return nil, err
 		}
-		comparisons = append(comparisons, refsComparisons...)
+		if refPackageId != "" {
+			for _, comparison := range refsComparisons {
+				if refPackageId == comparison.PackageId || refPackageId == comparison.PreviousPackageId {
+					comparisons = append(comparisons, comparison)
+				}
+			}
+		} else {
+			comparisons = append(comparisons, refsComparisons...)
+		}
+	} else {
+		comparisons = append(comparisons, *versionComparison)
 	}
 
 	docs, err := p.publishedRepo.GetComparisonInternalDocumentsByComparisons(comparisons)

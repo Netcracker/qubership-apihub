@@ -33,7 +33,7 @@ type OperationRepository interface {
 	GetOperationById(packageId string, version string, revision int, operationType string, operationId string, includeData bool) (*entity.OperationRichEntity, error)
 	GetOperationsTags(searchQuery entity.OperationTagsSearchQueryEntity, skipRefs bool) ([]string, error)
 	GetOperationChanges(comparisonId string, operationId string, severities []string) (*entity.OperationComparisonEntity, error)
-	GetOperationChangesSummary(comparisonId string, operationId string) (*entity.OperationComparisonSummaryEntity, error)
+	GetOperationChangesSummary(comparisonId string, operationId string, refPackageId string) (*entity.OperationComparisonSummaryEntity, error)
 	GetChangelog(searchQuery entity.ChangelogSearchQueryEntity) ([]entity.OperationComparisonChangelogEntity, error)
 	SearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult, error)
 	FullTextSearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult, error)
@@ -96,13 +96,13 @@ func (o operationRepositoryImpl) GetOperationById(packageId string, version stri
 		Where("revision = ?", revision).
 		Where("type = ?", operationType).
 		Where("operation_id = ?", operationId)
-	
+
 	if includeData {
 		query.Join("LEFT JOIN operation_data as op_data").
 			JoinOn("operation.data_hash = op_data.data_hash").
 			ColumnExpr("op_data.data")
 	}
-	
+
 	err := query.First()
 	if err != nil {
 		if err == pg.ErrNoRows {
@@ -505,10 +505,13 @@ func (o operationRepositoryImpl) GetOperationChanges(comparisonId string, operat
 	return result, nil
 }
 
-func (o operationRepositoryImpl) GetOperationChangesSummary(comparisonId string, operationId string) (*entity.OperationComparisonSummaryEntity, error) {
+func (o operationRepositoryImpl) GetOperationChangesSummary(comparisonId string, operationId string, refPackageId string) (*entity.OperationComparisonSummaryEntity, error) {
 	result := new(entity.OperationComparisonSummaryEntity)
 	err := o.cp.GetConnection().Model(result).
-		Where("comparison_id = ?", comparisonId).
+		Where(`comparison_id in (
+			select unnest(array_append(refs, ?)) id from version_comparison where (comparison_id = ?)
+		)`, comparisonId, comparisonId).
+		Where("(? = '' or package_id = ? or previous_package_id = ?)", refPackageId, refPackageId, refPackageId).
 		WhereGroup(func(query *orm.Query) (*orm.Query, error) {
 			return query.Where("operation_id = ?", operationId).WhereOr("previous_operation_id = ?", operationId), nil
 		}).

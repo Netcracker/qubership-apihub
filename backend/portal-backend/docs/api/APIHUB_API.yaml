@@ -6762,6 +6762,11 @@ paths:
             type: string
           description: If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used.
           example: QS.RUNENV.K8S-SERVER.CJM-QSS-DEV-2.Q-TMF
+        - name: refPackageId
+          description: Filter by package id of ref package and previous ref package.
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: Success
@@ -7835,6 +7840,12 @@ paths:
         - BearerAuth: [ ]
         - CookieAuth: [ ]
         - api-key: [ ]
+      parameters:
+        - name: refPackageId
+          description: Filter by package id of ref package and previous ref package.
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: Success

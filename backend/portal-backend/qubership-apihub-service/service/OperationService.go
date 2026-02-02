@@ -39,7 +39,7 @@ type OperationService interface {
 	GetOperationDeprecatedItems(searchReq view.OperationBasicSearchReq) (*view.DeprecatedItems, error)
 	GetDeprecatedOperationsSummary(packageId string, version string) (*view.DeprecatedOperationsSummary, error)
 	GetOperationModelUsages(packageId string, version string, apiType string, operationId string, modelName string) (*view.OperationModelUsages, error)
-	GetOperationChangesSummary(packageId string, version string, operationId string, previousPackageId string, previousVersion string) (*view.ChangeSummary, error)
+	GetOperationChangesSummary(packageId string, version string, operationId string, previousPackageId string, previousVersion string, refPackageId string) (*view.ChangeSummary, error)
 }
 
 func NewOperationService(
@@ -798,7 +798,7 @@ func (o operationServiceImpl) GetOperationModelUsages(packageId string, version 
 	return &view.OperationModelUsages{ModelUsages: modelUsages}, nil
 }
 
-func (o operationServiceImpl) GetOperationChangesSummary(packageId string, version string, operationId string, previousPackageId string, previousVersion string) (*view.ChangeSummary, error) {
+func (o operationServiceImpl) GetOperationChangesSummary(packageId string, version string, operationId string, previousPackageId string, previousVersion string, refPackageId string) (*view.ChangeSummary, error) {
 	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
 	if err != nil {
 		return nil, err
@@ -846,7 +846,7 @@ func (o operationServiceImpl) GetOperationChangesSummary(packageId string, versi
 		previousVersionEnt.PackageId, previousVersionEnt.Version, previousVersionEnt.Revision,
 	)
 
-	changedOperationSummaryEnt, err := o.operationRepository.GetOperationChangesSummary(comparisonId, operationId)
+	changedOperationSummaryEnt, err := o.operationRepository.GetOperationChangesSummary(comparisonId, operationId, refPackageId)
 	if err != nil {
 		return nil, err
 	}

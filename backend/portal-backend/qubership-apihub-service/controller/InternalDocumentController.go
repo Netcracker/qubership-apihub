@@ -127,8 +127,9 @@ func (c *internalDocumentControllerImpl) GetComparisonInternalDocuments(w http.R
 	}
 	previousVersion := r.URL.Query().Get("previousVersion")
 	previousVersionPackageId := r.URL.Query().Get("previousVersionPackageId")
+	refPackageId := r.URL.Query().Get("refPackageId")
 
-	response, err := c.publishedService.GetComparisonInternalDocuments(packageId, version, previousVersionPackageId, previousVersion)
+	response, err := c.publishedService.GetComparisonInternalDocuments(packageId, version, previousVersionPackageId, previousVersion, refPackageId)
 	if err != nil {
 		utils.RespondWithError(w, "Failed to get internal documents for comparison", err)
 		return
