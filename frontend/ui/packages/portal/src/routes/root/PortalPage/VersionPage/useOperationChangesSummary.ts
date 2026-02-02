@@ -1,11 +1,17 @@
 import type { DiffType } from '@netcracker/qubership-apihub-api-diff'
-import { replacePropertyInChangesSummary, type DiffTypeDto } from '@netcracker/qubership-apihub-api-processor'
+import { type DiffTypeDto, replacePropertyInChangesSummary } from '@netcracker/qubership-apihub-api-processor'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { ChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import { API_V2, requestJson } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useQuery } from '@tanstack/react-query'
-import { generatePath } from 'react-router-dom'
+import { generatePath, useParams } from 'react-router-dom'
+import { usePackageKind } from '@apihub/routes/root/PortalPage/usePackageKind'
+import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { useVersionSearchParam } from '@apihub/routes/root/useVersionSearchParam'
+import {
+  usePackageSearchParam,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
 
 type Options = {
   packageId: string | undefined
@@ -15,6 +21,7 @@ type Options = {
   apiType: ApiType
   operationId: string
   enabled: boolean
+  refPackageId?: string
 }
 
 type Result = {
@@ -37,6 +44,21 @@ const EMPTY_CHANGES_SUMMARY: ChangesSummary = {
 type ChangesSummaryDto = ChangesSummary<DiffTypeDto>
 
 export function useOperationChangesSummary(options: Options): Result {
+  const [previousDashboardVersion] = useVersionSearchParam()
+  const [previousDashboardId] = usePackageSearchParam()
+  const { packageId: currentDashboardId, versionId: currentDashboardVersion } = useParams()
+  const [packageKind] = usePackageKind()
+  const isDashboard = packageKind === DASHBOARD_KIND
+  if (isDashboard) {
+    options = {
+      ...options,
+      packageId: currentDashboardId,
+      versionId: currentDashboardVersion,
+      previousPackageId: previousDashboardId || currentDashboardId,
+      previousVersionId: previousDashboardVersion,
+      refPackageId: options.packageId,
+    }
+  }
   const { packageId, versionId, previousPackageId, previousVersionId, apiType, operationId, enabled } = options
   const {
     data: operationChangesSummary,
@@ -56,7 +78,7 @@ export function useOperationChangesSummary(options: Options): Result {
 }
 
 function getOperationChangesSummary(options: Options): Promise<ChangesSummaryDto> {
-  const { packageId, versionId, previousPackageId, previousVersionId, apiType, operationId } = options
+  const { packageId, versionId, previousPackageId, previousVersionId, apiType, operationId, refPackageId } = options
 
   const packageKey = packageId ?? ''
   const versionKey = versionId ?? ''
@@ -67,6 +89,7 @@ function getOperationChangesSummary(options: Options): Promise<ChangesSummaryDto
   const queryParams = optionalSearchParams({
     previousVersion: { value: previousVersionKey },
     previousVersionPackageId: { value: previousPackageKey },
+    refPackageId: { value: refPackageId },
   })
   const endpoint = generatePath(
     endpointPattern,
