@@ -336,10 +336,11 @@ func (s *snapshotServiceImpl) startSnapshot(ctx context.Context, namespace strin
 						log.Errorf("Failed to get previous version %s for package %s", svcPreviousVersion, svc.Baseline.PackageId)
 						return
 					}
-					if baselinePkgVersionEnt == nil {
+					if baselinePkgVersionEnt == nil || baselinePkgVersionEnt.Status == string(view.DraftStatus) {
+						invalidVersion := svcPreviousVersion
 						svcPreviousVersion = ""
 						for i, ver := range svc.Baseline.Versions {
-							if ver == svcPreviousVersion {
+							if ver == invalidVersion {
 								svc.Baseline.Versions = append(svc.Baseline.Versions[:i], svc.Baseline.Versions[i+1:]...)
 								break
 							}
