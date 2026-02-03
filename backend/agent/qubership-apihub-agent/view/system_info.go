@@ -28,5 +28,7 @@ type SystemInfo struct {
 	ExcludeLabels    []string      `json:"-"`
 	GroupingLabels   []string      `json:"-"`
 	AgentName        string        `json:"-"`
-	DiscoveryTimeout time.Duration `json:"-"`
+	DiscoveryTimeout   time.Duration `json:"-"`
+	NamespacesCacheTTL time.Duration `json:"-"`
+	ServicesCacheTTL   time.Duration `json:"-"`
 }

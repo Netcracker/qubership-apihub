@@ -30,37 +30,46 @@ func NewSmartplugDiscoveryRunner() generic.DiscoveryRunner {
 type smartplugDiscoveryRunner struct {
 }
 
-func (m smartplugDiscoveryRunner) DiscoverDocuments(baseUrl string, urls view.DocumentDiscoveryUrls, timeout time.Duration) ([]view.Document, error) {
-	var refs []view.DocumentRef
+func (m smartplugDiscoveryRunner) DiscoverDocuments(baseUrl string, urls view.DocumentDiscoveryUrls, timeout time.Duration) ([]view.Document, []view.EndpointCallInfo, error) {
+	var allCallResults []view.EndpointCallInfo
+
 	for _, url := range urls.SmartplugConfig {
-		refs = m.getRefsFromSmartplugConfig(baseUrl, url, timeout)
+		refs, configPath, callResult := m.getRefsFromSmartplugConfig(baseUrl, url, timeout)
+		if callResult != nil {
+			allCallResults = append(allCallResults, *callResult)
+		}
 		if len(refs) > 0 {
 			// config found
-			return m.GetDocumentsByRefs(baseUrl, refs)
+			docs, callResults, err := m.GetDocumentsByRefs(baseUrl, refs, configPath)
+			allCallResults = append(allCallResults, callResults...)
+			return docs, allCallResults, err
 		}
 	}
-	return nil, nil
+	return nil, allCallResults, nil
 }
 
-func (m smartplugDiscoveryRunner) getRefsFromSmartplugConfig(baseUrl string, swaggerConfigUrl string, timeout time.Duration) []view.DocumentRef {
-	swaggerSpecRefs := generic.GetRefsFromConfig(baseUrl, swaggerConfigUrl, timeout)
-	for i := range swaggerSpecRefs {
-		swaggerSpecRefs[i].ApiType = view.ATSmartplug
+func (m smartplugDiscoveryRunner) getRefsFromSmartplugConfig(baseUrl string, smartplugConfigUrl string, timeout time.Duration) ([]view.DocumentRef, string, *view.EndpointCallInfo) {
+	smartplugSpecRefs, callResult := generic.GetRefsFromConfig(baseUrl, smartplugConfigUrl, timeout)
+	if callResult != nil {
+		return nil, "", callResult
 	}
-	return swaggerSpecRefs
+	for i := range smartplugSpecRefs {
+		smartplugSpecRefs[i].ApiType = view.ATSmartplug
+	}
+	return smartplugSpecRefs, smartplugConfigUrl, nil
 }
 
-func (m smartplugDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.DocumentRef) ([]view.Document, error) {
-	docs, err := generic.GetAnyDocsByRefs(baseUrl, m.FilterRefsForApiType(refs))
+func (m smartplugDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.DocumentRef, configPath string) ([]view.Document, []view.EndpointCallInfo, error) {
+	docs, callResults, err := generic.GetAnyDocsByRefs(baseUrl, m.FilterRefsForApiType(refs), configPath)
 	if err != nil {
-		return docs, err
+		return docs, callResults, err
 	}
 	fileIds := sync.Map{}
 	for i := range docs {
 		docs[i].Format = view.MarkdownExtension
 		docs[i].FileId = utils.GenerateFileId(&fileIds, docs[i].Name, docs[i].Format)
 	}
-	return docs, nil
+	return docs, callResults, nil
 }
 
 func (m smartplugDiscoveryRunner) FilterRefsForApiType(refs []view.DocumentRef) []view.DocumentRef {

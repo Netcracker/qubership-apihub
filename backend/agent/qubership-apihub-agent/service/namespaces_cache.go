@@ -16,10 +16,12 @@ package service
 
 import (
 	goctx "context"
-	"sync"
+	"time"
 
 	"github.com/netcracker/qubership-core-lib-go-paas-mediation-client/v8/filter"
 	"github.com/netcracker/qubership-core-lib-go-paas-mediation-client/v8/service"
+	"github.com/shaj13/libcache"
+	_ "github.com/shaj13/libcache/lru"
 )
 
 type NamespaceListCache interface {
@@ -29,31 +31,31 @@ type NamespaceListCache interface {
 	retrieveNamespaces() ([]string, error)
 }
 
-func NewNamespaceListCache(cloudName string, paasClient service.PlatformService) NamespaceListCache {
-	return &namespaceListCacheImpl{cloudName: cloudName, cache: []string{}, cacheMutex: sync.RWMutex{}, paasClient: paasClient}
+func NewNamespaceListCache(cloudName string, paasClient service.PlatformService, ttl time.Duration) NamespaceListCache {
+	cache := libcache.LRU.New(1)
+	cache.SetTTL(ttl)
+	cache.RegisterOnExpired(func(key, _ interface{}) {
+		cache.Delete(key)
+	})
+	return &namespaceListCacheImpl{cloudName: cloudName, cache: cache, paasClient: paasClient}
 }
 
 type namespaceListCacheImpl struct {
-	cloudName  string
-	cache      []string
-	cacheMutex sync.RWMutex
+	cloudName string
+	cache     libcache.Cache
 
 	paasClient service.PlatformService
 }
 
-func (n *namespaceListCacheImpl) NamespaceExists(namespace string) (bool, error) {
-	n.cacheMutex.Lock()
-	defer n.cacheMutex.Unlock()
+const namespacesKey = "namespaces"
 
-	var err error
-	if len(n.cache) == 0 {
-		n.cache, err = n.retrieveNamespaces()
-		if err != nil {
-			return false, err
-		}
+func (n *namespaceListCacheImpl) NamespaceExists(namespace string) (bool, error) {
+	namespaces, err := n.ListNamespaces()
+	if err != nil {
+		return false, err
 	}
 
-	for _, ns := range n.cache {
+	for _, ns := range namespaces {
 		if ns == namespace {
 			return true, nil
 		}
@@ -62,18 +64,17 @@ func (n *namespaceListCacheImpl) NamespaceExists(namespace string) (bool, error)
 }
 
 func (n *namespaceListCacheImpl) ListNamespaces() ([]string, error) {
-	n.cacheMutex.Lock()
-	defer n.cacheMutex.Unlock()
-
-	var err error
-	if len(n.cache) == 0 {
-		n.cache, err = n.retrieveNamespaces()
-		if err != nil {
-			return nil, err
-		}
+	val, exists := n.cache.Peek(namespacesKey)
+	if exists {
+		return val.([]string), nil
 	}
 
-	return n.cache, nil
+	namespaces, err := n.retrieveNamespaces()
+	if err != nil {
+		return nil, err
+	}
+	n.cache.Store(namespacesKey, namespaces)
+	return namespaces, nil
 }
 
 func (n *namespaceListCacheImpl) GetCloudName() string {

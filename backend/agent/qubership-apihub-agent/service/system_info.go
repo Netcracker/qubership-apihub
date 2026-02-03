@@ -41,6 +41,8 @@ type SystemInfoService interface {
 	GetGroupingLabels() []string
 	GetAgentName() string
 	GetDiscoveryTimeout() time.Duration
+	GetNamespacesCacheTTL() time.Duration
+	GetServicesCacheTTL() time.Duration
 }
 
 func NewSystemInfoService() (SystemInfoService, error) {
@@ -71,7 +73,9 @@ func NewSystemInfoService() (SystemInfoService, error) {
 		ExcludeLabels:    getExcludeLabels(),
 		GroupingLabels:   getGroupingLabels(),
 		AgentName:        agentName,
-		DiscoveryTimeout: getDiscoveryTimeout(),
+		DiscoveryTimeout:   getDiscoveryTimeout(),
+		NamespacesCacheTTL: getNamespacesCacheTTL(),
+		ServicesCacheTTL:   getServicesCacheTTL(),
 	}
 	return &systemInfoServiceImpl{
 		systemInfo: systemInfo}, nil
@@ -127,6 +131,14 @@ func (g systemInfoServiceImpl) GetAgentName() string {
 
 func (g systemInfoServiceImpl) GetDiscoveryTimeout() time.Duration {
 	return g.systemInfo.DiscoveryTimeout
+}
+
+func (g systemInfoServiceImpl) GetNamespacesCacheTTL() time.Duration {
+	return g.systemInfo.NamespacesCacheTTL
+}
+
+func (g systemInfoServiceImpl) GetServicesCacheTTL() time.Duration {
+	return g.systemInfo.ServicesCacheTTL
 }
 
 func getInsecureProxy() bool {
@@ -244,6 +256,32 @@ func getDiscoveryTimeout() time.Duration {
 		return time.Second * 15
 	}
 	return time.Second * time.Duration(discoveryTimeoutSec)
+}
+
+func getNamespacesCacheTTL() time.Duration {
+	ttlMinStr := os.Getenv("NAMESPACES_CACHE_TTL_MIN")
+	if ttlMinStr == "" {
+		return time.Minute * 1440
+	}
+	ttlMin, err := strconv.ParseInt(ttlMinStr, 10, 64)
+	if err != nil {
+		log.Errorf("Failed to parse NAMESPACES_CACHE_TTL_MIN value = '%s' with err = '%s', using default = %dm", ttlMinStr, err, 1440)
+		return time.Minute * 1440
+	}
+	return time.Minute * time.Duration(ttlMin)
+}
+
+func getServicesCacheTTL() time.Duration {
+	ttlMinStr := os.Getenv("SERVICES_CACHE_TTL_MIN")
+	if ttlMinStr == "" {
+		return time.Minute * 480
+	}
+	ttlMin, err := strconv.ParseInt(ttlMinStr, 10, 64)
+	if err != nil {
+		log.Errorf("Failed to parse SERVICES_CACHE_TTL_MIN value = '%s' with err = '%s', using default = %dm", ttlMinStr, err, 480)
+		return time.Minute * 480
+	}
+	return time.Minute * time.Duration(ttlMin)
 }
 
 func validateSlugOnlyCharacters(value string) error {

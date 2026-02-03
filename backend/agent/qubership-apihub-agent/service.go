@@ -106,8 +106,8 @@ func main() {
 	agentsBackendClient := client.NewAgentsBackendClient(systemInfoService.GetApihubUrl(), systemInfoService.GetAccessToken())
 
 	disablingSerivce := service.NewDisablingService()
-	namespaceListCache := service.NewNamespaceListCache(systemInfoService.GetCloudName(), paasCl)
-	serviceListCache := service.NewServiceListCache()
+	namespaceListCache := service.NewNamespaceListCache(systemInfoService.GetCloudName(), paasCl, systemInfoService.GetNamespacesCacheTTL())
+	serviceListCache := service.NewServiceListCache(systemInfoService.GetServicesCacheTTL())
 	documentsDiscoveryService := service.NewDocumentsDiscoveryService(systemInfoService.GetDiscoveryTimeout())
 	discoveryService := service.NewDiscoveryService(systemInfoService.GetCloudName(), systemInfoService.GetAgentNamespace(), systemInfoService.GetApihubUrl(), systemInfoService.GetExcludeLabels(), systemInfoService.GetGroupingLabels(), namespaceListCache, serviceListCache,
 		paasCl, documentsDiscoveryService, apihubClient)
@@ -136,15 +136,17 @@ func main() {
 	r.HandleFunc("/api/v1/namespaces/{name}/serviceItems", security.Secure(serviceController.ListServiceItems)).Methods(http.MethodGet)
 
 	//deprecated
-	r.HandleFunc("/api/v1/namespaces/{name}/services", security.Secure(serviceController.ListServices)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/namespaces/{name}/services", security.Secure(serviceController.ListServices_deprecated)).Methods(http.MethodGet)
 	//deprecated
 	r.HandleFunc("/api/v1/namespaces/{name}/discover", security.Secure(serviceController.StartDiscovery)).Methods(http.MethodPost)
 	//deprecated
 	r.HandleFunc("/api/v1/namespaces/{name}/services/{serviceId}/specs/{fileId}", security.Secure(documentController.GetServiceDocument)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v2/namespaces/{name}/workspaces/{workspaceId}/services", security.Secure(serviceController.ListServices)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/namespaces/{name}/workspaces/{workspaceId}/services", security.Secure(serviceController.ListServices_deprecated)).Methods(http.MethodGet) //deprecated
 	r.HandleFunc("/api/v2/namespaces/{name}/workspaces/{workspaceId}/discover", security.Secure(serviceController.StartDiscovery)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/namespaces/{name}/workspaces/{workspaceId}/services/{serviceId}/specs/{fileId}", security.Secure(documentController.GetServiceDocument)).Methods(http.MethodGet)
+
+	r.HandleFunc("/api/v3/namespaces/{name}/workspaces/{workspaceId}/services", security.Secure(serviceController.ListServices)).Methods(http.MethodGet)
 
 	//deprecated
 	r.HandleFunc("/api/v1/discover", security.Secure(cloudController.StartAllDiscovery_deprecated)).Methods(http.MethodPost)

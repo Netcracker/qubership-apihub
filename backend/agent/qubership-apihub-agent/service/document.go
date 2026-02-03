@@ -51,7 +51,7 @@ func (d documentServiceImpl) GetDocumentById(namespace, workspaceId, serviceId, 
 	}
 	for _, document := range svc.Documents {
 		if document.FileId == fileId {
-			relPath = document.Path
+			relPath = document.DocPath
 			documentType = document.Type
 			format = document.Format
 			break

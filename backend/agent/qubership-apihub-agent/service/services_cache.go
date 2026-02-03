@@ -18,8 +18,11 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/Netcracker/qubership-apihub-agent/view"
+	"github.com/shaj13/libcache"
+	_ "github.com/shaj13/libcache/lru"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -31,32 +34,36 @@ type ServiceListCache interface {
 	clearResultsForNamespace(namespace string, workspaceId string)
 }
 
-func NewServiceListCache() ServiceListCache {
-	return &serviceListCacheImpl{cache: sync.Map{}, cacheMutex: sync.RWMutex{}, status: sync.Map{}, details: map[string]string{}}
+type serviceCacheEntry struct {
+	services []view.Service
+	status   view.StatusEnum
+	details  string
+}
+
+func NewServiceListCache(ttl time.Duration) ServiceListCache {
+	cache := libcache.LRU.New(1000)
+	cache.SetTTL(ttl)
+	cache.RegisterOnExpired(func(key, _ interface{}) {
+		cache.Delete(key)
+	})
+	return &serviceListCacheImpl{cache: cache}
 }
 
 type serviceListCacheImpl struct {
-	// cache per namespace+workspace
-	cache      sync.Map // TODO: replace with regular map
-	cacheMutex sync.RWMutex
-	// status per namespace+workspace
-	status sync.Map // TODO: replace with regular map
-	// details per namespace+workspace
-	details map[string]string
+	cache      libcache.Cache
+	cacheMutex sync.Mutex
 }
 
 func (s *serviceListCacheImpl) GetServicesList(namespace string, workspaceId string) ([]view.Service, view.StatusEnum, string) {
-	s.cacheMutex.RLock()
-	defer s.cacheMutex.RUnlock()
 	id := getNamespaceWithWorkspaceId(namespace, workspaceId)
 
-	val, exists := s.cache.Load(id)
+	val, exists := s.cache.Peek(id)
 	if !exists {
 		return make([]view.Service, 0), view.StatusNone, ""
 	}
-	sVal, _ := s.status.Load(id)
 
-	return val.([]view.Service), sVal.(view.StatusEnum), s.details[id]
+	entry := val.(*serviceCacheEntry)
+	return entry.services, entry.status, entry.details
 }
 
 func (s *serviceListCacheImpl) handleDiscoveryStart(namespace string, workspaceId string) {
@@ -65,9 +72,10 @@ func (s *serviceListCacheImpl) handleDiscoveryStart(namespace string, workspaceI
 
 	id := getNamespaceWithWorkspaceId(namespace, workspaceId)
 
-	s.status.Store(id, view.StatusRunning)
-	s.cache.Store(id, []view.Service{})
-	delete(s.details, id)
+	s.cache.Store(id, &serviceCacheEntry{
+		services: []view.Service{},
+		status:   view.StatusRunning,
+	})
 }
 
 func (s *serviceListCacheImpl) clearResultsForNamespace(namespace string, workspaceId string) {
@@ -76,9 +84,10 @@ func (s *serviceListCacheImpl) clearResultsForNamespace(namespace string, worksp
 
 	id := getNamespaceWithWorkspaceId(namespace, workspaceId)
 
-	s.status.Store(id, view.StatusNone)
-	s.cache.Store(id, []view.Service{})
-	delete(s.details, id)
+	s.cache.Store(id, &serviceCacheEntry{
+		services: []view.Service{},
+		status:   view.StatusNone,
+	})
 }
 
 func (s *serviceListCacheImpl) addService(namespace string, workspaceId string, service view.Service) {
@@ -87,20 +96,20 @@ func (s *serviceListCacheImpl) addService(namespace string, workspaceId string, 
 
 	id := getNamespaceWithWorkspaceId(namespace, workspaceId)
 
-	val, exists := s.cache.Load(id)
+	val, exists := s.cache.Peek(id)
 	if !exists {
-		services := []view.Service{service}
-		s.cache.Store(id, services)
-	} else {
-		services := val.([]view.Service)
-		services = append(services, service)
-
-		sort.Slice(services, func(i, j int) bool {
-			return services[i].Name < services[j].Name
+		s.cache.Store(id, &serviceCacheEntry{
+			services: []view.Service{service},
 		})
-
-		s.cache.Store(id, services) // TODO: Need or not???
+		return
 	}
+
+	entry := val.(*serviceCacheEntry)
+	entry.services = append(entry.services, service)
+
+	sort.Slice(entry.services, func(i, j int) bool {
+		return entry.services[i].Name < entry.services[j].Name
+	})
 }
 
 func (s *serviceListCacheImpl) setResultStatus(namespace string, workspaceId string, status view.StatusEnum, details string) {
@@ -109,14 +118,16 @@ func (s *serviceListCacheImpl) setResultStatus(namespace string, workspaceId str
 
 	id := getNamespaceWithWorkspaceId(namespace, workspaceId)
 
-	val, exists := s.status.Load(id)
+	val, exists := s.cache.Peek(id)
 	if !exists {
 		log.Warnf("Trying to update missing entry cache status for namespace %s and workspaceId %s", namespace, workspaceId)
 		return
 	}
-	if val.(view.StatusEnum) == view.StatusRunning {
-		s.status.Store(id, status)
-		s.details[id] = details
+
+	entry := val.(*serviceCacheEntry)
+	if entry.status == view.StatusRunning {
+		entry.status = status
+		entry.details = details
 	}
 }
 

@@ -164,10 +164,14 @@ func (c *cloudServiceImpl) GetAllServicesList_deprecated(workspaceId string) vie
 		result.Debug = fmt.Sprintf("Unable to get all discovery status: failed to list namespaces: %s", err)
 		return result
 	}
-	namespacesData := map[string]view.ServiceListResponse{}
+	namespacesData := map[string]view.ServiceListResponse_deprecated{}
 	for _, ns := range namespaces {
 		services, status, details := c.serviceListCache.GetServicesList(ns, workspaceId)
-		namespacesData[ns] = view.ServiceListResponse{Services: services, Status: status, Debug: details}
+		servicesDeprecated := make([]view.Service_deprecated, len(services))
+		for i, svc := range services {
+			servicesDeprecated[i] = svc.ToDeprecated()
+		}
+		namespacesData[ns] = view.ServiceListResponse_deprecated{Services: servicesDeprecated, Status: status, Debug: details}
 	}
 	result.NamespaceData = namespacesData
 
