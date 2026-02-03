@@ -25,6 +25,7 @@ import (
 
 type BuildResultRepository interface {
 	StoreBuildResult(ent entity.BuildResultEntity) error
+	GetBuildResult(buildId string) (*entity.BuildResultEntity, error)
 	GetBuildResultWithOffset(offset int) (*entity.BuildResultEntity, error)
 	DeleteBuildResults(buildIds []string) error
 }
@@ -35,6 +36,20 @@ func NewBuildResultRepository(cp db.ConnectionProvider) BuildResultRepository {
 
 type buildResultRepositoryImpl struct {
 	cp db.ConnectionProvider
+}
+
+func (b buildResultRepositoryImpl) GetBuildResult(buildId string) (*entity.BuildResultEntity, error) {
+	result := new(entity.BuildResultEntity)
+	err := b.cp.GetConnection().Model(result).
+		Where("build_id = ?", buildId).
+		First()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result, nil
 }
 
 func (b buildResultRepositoryImpl) StoreBuildResult(ent entity.BuildResultEntity) error {

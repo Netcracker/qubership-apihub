@@ -654,6 +654,106 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+  "/api/v2/admin/builds/{buildId}/result":
+    get:
+      tags:
+        - Admin
+      summary: Get build result archive
+      description: |
+        Download build result archive by build ID.
+      operationId: getBuildResult
+      parameters:
+        - name: buildId
+          in: path
+          required: true
+          description: Build ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Build result not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v2/admin/builds/{buildId}/sources":
+    get:
+      tags:
+        - Admin
+      summary: Get build sources archive
+      description: |
+        Download build sources archive by build ID. The archive includes an apihub_build_config.json file with the build configuration.
+      operationId: getBuildSources
+      parameters:
+        - name: buildId
+          in: path
+          required: true
+          description: Build ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Build sources not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
   "/api/internal/migrate/operations":
     post:
       tags:

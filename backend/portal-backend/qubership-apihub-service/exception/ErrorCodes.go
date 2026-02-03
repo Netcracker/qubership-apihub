@@ -797,3 +797,6 @@ const ComparisonInternalDocumentNotFoundMsg = "Comparison internal document with
 
 const InvalidAsyncAPIOperationAction = "7700"
 const InvalidAsyncAPIOperationActionMsg = "Unexpected async API operation action '$action'"
+
+const BuildResultNotFound = "7800"
+const BuildResultNotFoundMsg = "Build result for '$buildId' build not found"

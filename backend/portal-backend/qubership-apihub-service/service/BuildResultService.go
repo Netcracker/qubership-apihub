@@ -36,6 +36,7 @@ import (
 
 type BuildResultService interface {
 	StoreBuildResult(buildId string, result []byte) error
+	GetBuildResultData(buildId string) ([]byte, error)
 
 	SaveBuildResult(packageId string, data []byte, fileName string, publishId string, availableVersionStatuses []string) error
 }
@@ -65,6 +66,21 @@ type buildResultServiceImpl struct {
 	exportService         ExportService
 
 	publishedValidator validation.PublishedValidator
+}
+
+func (b buildResultServiceImpl) GetBuildResultData(buildId string) ([]byte, error) {
+	if b.systemInfoService.IsMinioStorageActive() {
+		ctx := context.Background()
+		return b.minioStorageService.GetFile(ctx, view.BUILD_RESULT_TABLE, buildId)
+	}
+	ent, err := b.buildResultRepository.GetBuildResult(buildId)
+	if err != nil {
+		return nil, err
+	}
+	if ent == nil {
+		return nil, nil
+	}
+	return ent.Data, nil
 }
 
 func (b buildResultServiceImpl) StoreBuildResult(buildId string, result []byte) error {
