@@ -260,6 +260,8 @@ paths:
       tags:
         - Discovery
       summary: List discovered services
+      deprecated: true
+      x-deprecation-reason: New version of API is created - /api/v3/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services
       description: Retrieves the list of services discovered in the specified workspace
       operationId: listDiscoveredServices
       security:
@@ -343,6 +345,138 @@ paths:
                         proxyServerUrl:
                           type: string
                           description: Proxy server URL
+                  status:
+                    type: string
+                    enum:
+                      - none
+                      - running
+                      - complete
+                      - error
+                      - failed
+                    description: Service processing status
+                  debug:
+                    type: string
+                    description: Debug information
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v3/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services:
+    get:
+      tags:
+        - Discovery
+      summary: List discovered services
+      description: Retrieves the list of services discovered in the specified workspace
+      operationId: listDiscoveredServicesV3
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - $ref: '#/components/parameters/AgentId'
+        - $ref: '#/components/parameters/Namespace'
+        - $ref: '#/components/parameters/WorkspaceId'
+      responses:
+        '200':
+          description: List of discovered services
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  services:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: Service ID
+                        serviceName:
+                          type: string
+                          description: Service name
+                        url:
+                          type: string
+                          description: Service URL
+                        documents:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: Document name
+                              format:
+                                type: string
+                                description: Document format (json or yaml)
+                              fileId:
+                                type: string
+                                description: File identifier
+                              type:
+                                type: string
+                                description: Document type
+                              xApiKind:
+                                type: string
+                                description: API kind metadata
+                              docPath:
+                                type: string
+                                description: Document path
+                              configPath:
+                                type: string
+                                description: Configuration path
+                        baseline:
+                          type: object
+                          properties:
+                            packageId:
+                              type: string
+                              description: Package ID
+                            name:
+                              type: string
+                              description: Baseline name
+                            url:
+                              type: string
+                              description: Baseline URL
+                            versions:
+                              type: array
+                              items:
+                                type: string
+                              description: Available versions
+                        serviceLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          description: Service labels
+                        availablePromoteStatuses:
+                          type: array
+                          items:
+                            type: string
+                          description: Available promotion statuses
+                        proxyServerUrl:
+                          type: string
+                          description: Proxy server URL
+                        error:
+                          type: string
+                          description: Error message if service discovery failed
+                        diagnosticInfo:
+                          type: object
+                          description: Diagnostic information for service discovery
+                          properties:
+                            endpointCalls:
+                              type: array
+                              description: List of endpoint calls made during discovery
+                              items:
+                                type: object
+                                properties:
+                                  path:
+                                    type: string
+                                    description: Endpoint path
+                                  statusCode:
+                                    type: integer
+                                    description: HTTP status code returned
+                                  errorSummary:
+                                    type: string
+                                    description: Summary of error if occurred
                   status:
                     type: string
                     enum:

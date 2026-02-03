@@ -159,7 +159,7 @@ func (n *namespaceSecurityServiceImpl) startAuthSecurityCheck(securityCheck enti
 	serviceEnts := make([]entity.NamespaceSecurityCheckServiceEntity, 0)
 	for _, svc := range discoveryResult.Services {
 		serviceSupported := false
-		for _, spec := range svc.Specs {
+		for _, spec := range svc.Documents {
 			if spec.Type == view.OpenAPI20Type || spec.Type == view.OpenAPI30Type || spec.Type == view.OpenAPI31Type {
 				serviceSupported = true
 				supportedServiceIds = append(supportedServiceIds, svc.Id)

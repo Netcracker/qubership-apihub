@@ -149,7 +149,9 @@ func main() {
 	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/serviceNames", security.Secure(agentController.ListServiceNames)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/discover", security.Secure(discoveryController.StartDiscovery)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services", security.Secure(discoveryController.ListDiscoveredServices)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services", security.Secure(discoveryController.ListDiscoveredServices_deprecated)).Methods(http.MethodGet) //deprecated
+
+	r.HandleFunc("/api/v3/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services", security.Secure(discoveryController.ListDiscoveredServices)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services/{serviceId}/specs/{fileId}", security.Secure(specificationsController.GetServiceSpecification)).Methods(http.MethodGet)
 
