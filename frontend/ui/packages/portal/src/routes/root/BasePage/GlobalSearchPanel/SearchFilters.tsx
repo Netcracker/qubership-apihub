@@ -43,7 +43,7 @@ import { OPERATIONS_TAB, useGlobalSearchActiveTab } from './GlobalSearchTextProv
 import type {
   GraphQlOperationTypes,
   OptionRestDetailedScope,
-  Scopes,
+  Scopes, SearchAsyncApiParams,
   SearchGQLParams,
   SearchRestParams,
 } from '@apihub/entities/global-search'
@@ -258,7 +258,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
         } satisfies SearchGQLParams,
         [API_TYPE_ASYNCAPI]: {
           apiType: apiType,
-        } as any,// TODO: review and implement
+        } as SearchAsyncApiParams,
       }
 
       applyGlobalSearchFilters({

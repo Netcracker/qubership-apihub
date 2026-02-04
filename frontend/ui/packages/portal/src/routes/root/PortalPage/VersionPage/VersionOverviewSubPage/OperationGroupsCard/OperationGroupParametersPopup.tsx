@@ -278,7 +278,7 @@ const TOOLTIP_TITLE = 'The OpenAPI specification template is the template that w
 const API_TYPE_EXPANDED_MAP: Record<ApiType, (setExpanded: Dispatch<SetStateAction<boolean>>) => void> = {
   [API_TYPE_REST]: (setExpanded) => setExpanded(true),
   [API_TYPE_GRAPHQL]: (setExpanded) => setExpanded(false),
-  [API_TYPE_ASYNCAPI]: () => {},//TODO: review and implement
+  [API_TYPE_ASYNCAPI]: (setExpanded) => setExpanded(false),
 }
 
 const API_TYPE_ACCORDION_DISABLED_MAP: Record<ApiType, boolean> = {

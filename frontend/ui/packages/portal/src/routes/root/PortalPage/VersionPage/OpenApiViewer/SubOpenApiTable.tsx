@@ -21,7 +21,7 @@ import { TableCell, TableRow } from '@mui/material'
 import type { ColumnFiltersState, VisibilityState } from '@tanstack/react-table'
 import { flexRender, getCoreRowModel, getFilteredRowModel, useReactTable } from '@tanstack/react-table'
 import { EndpointTableCell } from './EndpointTableCell'
-import { COLUMNS_SIZES_MAP } from './openapi-table'
+import { COLUMNS_SIZES_MAP } from './operation-table'
 import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { API_AUDIENCE_COLUMN_ID, API_KIND_COLUMN_ID, ENDPOINT_COLUMN_ID } from '@netcracker/qubership-apihub-ui-shared/entities/table-columns'
 

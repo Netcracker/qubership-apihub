@@ -31,7 +31,7 @@ import type { MethodType } from './method-types'
 import type { PackageKind } from './packages'
 import type { OperationChangeBase } from './version-changelog'
 import type { VersionStatus } from './version-status'
-import { AsyncApiOperationType } from './asyncapi-operation-types'
+import type { AsyncApiOperationType } from './asyncapi-operation-types'
 
 export const DEFAULT_API_TYPE: ApiType = API_TYPE_REST
 
@@ -67,7 +67,7 @@ export type GraphQlOperationDto = OperationMetadataDto & Readonly<{
 }>
 
 export type AsyncApiOperationDto = OperationMetadataDto & Readonly<{
-  action: string //TODO: add typing
+  action: AsyncApiOperationType
   channel: string
   protocol: string
 }>
@@ -145,7 +145,7 @@ export interface GraphQlOperation extends Operation {
 }
 
 export interface AsyncApiOperation extends Operation {
-  readonly action: AsyncApiOperationType //TODO: add typing
+  readonly action: AsyncApiOperationType
   readonly channel: string
   readonly protocol: string
 }

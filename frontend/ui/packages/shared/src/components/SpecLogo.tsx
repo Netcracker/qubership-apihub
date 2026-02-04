@@ -83,6 +83,6 @@ export const SpecLogo: FC<SpecLogoProps> = memo<SpecLogoProps>(({ value }) => {
 
 const API_TYPE_ICON_MAP: Record<ApiType, ReactElement | null> = {
   [API_TYPE_REST]: <RestApiIcon/>,
-  [API_TYPE_GRAPHQL]: null,
-  [API_TYPE_ASYNCAPI]: null,//TODO: add icon
+  [API_TYPE_GRAPHQL]: <GraphqlIcon/>,
+  [API_TYPE_ASYNCAPI]: <AsyncApiIcon/>,
 }

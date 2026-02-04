@@ -22,7 +22,7 @@ import { flexRender, getCoreRowModel, getExpandedRowModel, useReactTable } from 
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import KeyboardArrowRightOutlinedIcon from '@mui/icons-material/KeyboardArrowRightOutlined'
 import { SubOpenApiTable } from './SubOpenApiTable'
-import { COLUMNS_SIZES_MAP } from './openapi-table'
+import { COLUMNS_SIZES_MAP } from './operation-table'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import { groupOperationsByTags } from '@apihub/utils/operations'
 import type { OperationData, OperationsData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'

@@ -24,7 +24,7 @@ import { useStatusSearchFilter } from '../useStatusSearchFIlter'
 import { useRefSearchParam } from '../../useRefSearchParam'
 import { useOperationGroupSearchFilter } from '../useOperationGroupSearchFilter'
 import { useOperations } from '../useOperations'
-import { OpenApiTable } from '../OpenApiViewer/OpenApiTable'
+import { OperationTable } from '../OpenApiViewer/OperationTable'
 import { OperationListWithPreview } from '../OperationListWithPreview'
 import { useSetSelectedPreviewOperation } from '../../SelectedPreviewOperationProvider'
 import type { NumberSize, ResizeDirection } from 're-resizable'
@@ -112,7 +112,7 @@ export const VersionOperationsSubPage: FC = memo(() => {
       toggleHideFiltersPanel={toggleHideFiltersPanel}
       operationsViewMode={operationsViewMode}
       toggleOperationsViewMode={toggleOperationsViewMode}
-      table={<OpenApiTable
+      table={<OperationTable
         value={operations}
         fetchNextPage={fetchNextPage}
         isNextPageFetching={isFetchingNextPage}

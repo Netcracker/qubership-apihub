@@ -16,7 +16,7 @@ import { DialogForm } from '@netcracker/qubership-apihub-ui-shared/components/Di
 import type { PackageKey, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { InfoContextIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoContextIcon'
 import type { FC } from 'react'
-import { memo, useMemo } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import type { Control, UseFormSetValue } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
 import type { ExportConfig } from '../../../routes/root/PortalPage/useExportConfig'
@@ -29,15 +29,11 @@ import {
 } from '../api/useExport'
 import type { ExportSettingsFormData } from '../entities/export-settings-form'
 import { EXPORT_SETTINGS_FORM_FIELDS_BY_PLACE } from '../entities/export-settings-form'
-import type {
-  ExportSettingsFormField,
-} from '../entities/export-settings-form-field'
-import {
-  SPEC_TYPE_ACCESS_VIEW_EXPORT_FIELD,
-} from '../entities/export-settings-form-field'
+import type { ExportSettingsFormField } from '../entities/export-settings-form-field'
 import {
   ExportSettingsFormFieldKind,
   ExportSettingsFormFieldOptionOasExtensions,
+  SPEC_TYPE_ACCESS_VIEW_EXPORT_FIELD,
 } from '../entities/export-settings-form-field'
 import { useLocalExportSettings } from '../storage/useLocalExportSettings'
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
@@ -139,25 +135,29 @@ export const ExportSettingsForm: FC<ExportSettingsFormProps> = memo(props => {
     specType,
   } = props
 
+  const getFilteredFields = useCallback((specType: SpecType): ExportSettingsFormField[] => {
+    return EXPORT_SETTINGS_FORM_FIELDS_BY_PLACE[exportedEntity]
+      .map(field => {
+        const allowedOptions = SPEC_TYPE_ACCESS_VIEW_EXPORT_FIELD[specType]!
+        return {
+          ...field,
+          options: [...intersectionBy(
+            field.options,
+            allowedOptions,
+            'value')],
+        }
+      })
+  }, [exportedEntity])
+
   // Calculate fields and default values
   const fields = useMemo(() => {
     if (specType && SPEC_TYPE_ACCESS_VIEW_EXPORT_FIELD[specType]) {
-      return EXPORT_SETTINGS_FORM_FIELDS_BY_PLACE[exportedEntity]
-        .map(field => {
-          const allowedOptions = SPEC_TYPE_ACCESS_VIEW_EXPORT_FIELD[specType]!
-          return {
-            ...field,
-            options: [...intersectionBy(
-              field.options,
-              allowedOptions,
-              'value')],
-          }
-        })
+      return getFilteredFields(specType)
     } else {
       return EXPORT_SETTINGS_FORM_FIELDS_BY_PLACE[exportedEntity]
     }
 
-  }, [exportedEntity, specType])
+  }, [exportedEntity, getFilteredFields, specType])
 
   const fieldsDefaultValues = useMemo(
     () => fields.reduce((acc, field) => ({ ...acc, [field.kind]: field.defaultValue }), {}),

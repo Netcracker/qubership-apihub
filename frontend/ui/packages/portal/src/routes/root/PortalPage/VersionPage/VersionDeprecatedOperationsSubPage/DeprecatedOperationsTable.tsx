@@ -18,8 +18,8 @@ import type { FC } from 'react'
 import * as React from 'react'
 import { memo, useCallback, useMemo } from 'react'
 
-import type { OpenApiTableData } from '../OpenApiViewer/OpenApiTable'
-import { OpenApiTable } from '../OpenApiViewer/OpenApiTable'
+import type { OperationTableData } from '../OpenApiViewer/OperationTable'
+import { OperationTable } from '../OpenApiViewer/OperationTable'
 
 import { DeprecatedItemsSubTable } from './DeprecatedItemsSubTable'
 import type { ColumnDef } from '@tanstack/table-core'
@@ -90,7 +90,7 @@ export const DeprecatedOperationsTable: FC<DeprecatedOperationsTabProps> = memo<
   const currentPackage = useCurrentPackage()
   const isDashboard = currentPackage?.kind === DASHBOARD_KIND
 
-  const deprecatedInfoColumns: ColumnDef<OpenApiTableData>[] = useMemo(() => [
+  const deprecatedInfoColumns: ColumnDef<OperationTableData>[] = useMemo(() => [
     {
       id: DETAILS_COLUMN_ID,
       header: () => <CustomTableHeadCell title="Details"/>,
@@ -146,14 +146,14 @@ export const DeprecatedOperationsTable: FC<DeprecatedOperationsTabProps> = memo<
     },
   ], [])
 
-  const isDeprecatedItemsShown = useCallback(({ original: { operation } }: Row<OpenApiTableData>) => {
+  const isDeprecatedItemsShown = useCallback(({ original: { operation } }: Row<OperationTableData>) => {
     const operationWithDeprecations = (operation as OperationWithDeprecations)
     const onlyDeprecatedOperationItem = operationWithDeprecations.deprecated && Number(operationWithDeprecations?.deprecatedCount ?? 0) === 1
     return !onlyDeprecatedOperationItem
   }, [])
 
   return (
-    <OpenApiTable
+    <OperationTable
       value={operations}
       fetchNextPage={fetchNextPage}
       isNextPageFetching={isFetchingNextPage}
