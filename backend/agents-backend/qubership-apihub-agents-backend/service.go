@@ -136,6 +136,7 @@ func main() {
 	specificationsController := controller.NewSpecificationsController(agentClient, agentService)
 	namespaceSecurityController := controller.NewNamespaceSecurityController(namespaceSecurityService, excelService)
 	agentProxyController := controller.NewAgentProxyController(agentService)
+	logsController := controller.NewLogsController()
 
 	healthController := controller.NewHealthController(readyChan)
 
@@ -148,7 +149,9 @@ func main() {
 	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/serviceNames", security.Secure(agentController.ListServiceNames)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/discover", security.Secure(discoveryController.StartDiscovery)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services", security.Secure(discoveryController.ListDiscoveredServices)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services", security.Secure(discoveryController.ListDiscoveredServices_deprecated)).Methods(http.MethodGet) //deprecated
+
+	r.HandleFunc("/api/v3/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services", security.Secure(discoveryController.ListDiscoveredServices)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services/{serviceId}/specs/{fileId}", security.Secure(specificationsController.GetServiceSpecification)).Methods(http.MethodGet)
 
@@ -160,6 +163,9 @@ func main() {
 	r.HandleFunc("/api/v3/security/authCheck", security.Secure(namespaceSecurityController.GetAuthSecurityCheckReports)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/security/authCheck/{processId}/status", security.Secure(namespaceSecurityController.GetAuthSecurityCheckStatus)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/security/authCheck/{processId}/report", security.Secure(namespaceSecurityController.GetAuthSecurityCheckResult)).Methods(http.MethodGet)
+
+	r.HandleFunc("/api/v1/debug/logs/setLevel", security.Secure(logsController.SetLogLevel)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/debug/logs/checkLevel", security.Secure(logsController.CheckLogLevel)).Methods(http.MethodGet)
 
 	const proxyPath = "/agents/{agentId}/namespaces/{namespace}/services/{serviceId}/proxy/" //deprecated
 	if systemInfoService.InsecureProxyEnabled() {

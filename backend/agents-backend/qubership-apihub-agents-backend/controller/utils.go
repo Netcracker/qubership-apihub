@@ -112,3 +112,20 @@ func getPageQueryParam(r *http.Request) (int, *exception.CustomError) {
 	}
 	return defaultPage, nil
 }
+
+func getFailOnErrorQueryParam(r *http.Request) (bool, *exception.CustomError) {
+	if r.URL.Query().Get("failOnError") != "" {
+		val, err := strconv.ParseBool(r.URL.Query().Get("failOnError"))
+		if err != nil {
+			return false, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": "failOnError", "type": "bool"},
+				Debug:   err.Error(),
+			}
+		}
+		return val, nil
+	}
+	return false, nil
+}

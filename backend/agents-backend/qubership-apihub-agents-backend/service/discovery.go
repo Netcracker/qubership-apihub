@@ -29,7 +29,8 @@ import (
 )
 
 type DiscoveryService interface {
-	StartDiscovery(ctx context.Context, agentId string, namespace string, workspaceId string) error
+	StartDiscovery(ctx context.Context, agentId string, namespace string, workspaceId string, failOnError bool) error
+	GetDiscoveredServices_deprecated(ctx context.Context, agentId string, namespace string, workspaceId string) (*view.ServiceListResponse_deprecated, error)
 	GetDiscoveredServices(ctx context.Context, agentId string, namespace string, workspaceId string) (*view.ServiceListResponse, error)
 }
 
@@ -51,7 +52,7 @@ type discoveryServiceImpl struct {
 	permissionService  PermissionService
 }
 
-func (d discoveryServiceImpl) StartDiscovery(ctx context.Context, agentId string, namespace string, workspaceId string) error {
+func (d discoveryServiceImpl) StartDiscovery(ctx context.Context, agentId string, namespace string, workspaceId string, failOnError bool) error {
 	agent, err := d.agentService.GetAgent(agentId)
 	if err != nil {
 		return exception.CustomError{
@@ -126,7 +127,7 @@ func (d discoveryServiceImpl) StartDiscovery(ctx context.Context, agentId string
 		}
 	}
 
-	return d.agentClient.StartDiscovery(ctx, namespace, workspaceId, agent.AgentUrl)
+	return d.agentClient.StartDiscovery(ctx, namespace, workspaceId, agent.AgentUrl, failOnError)
 }
 
 func (d discoveryServiceImpl) copyWorkspaceServicesStructure(ctx context.Context, srcWorkspaceId string, dstWorkspaceId string, serviceNames []string, defaultRole string) error {
@@ -344,6 +345,38 @@ func getOrderedParentPackageIds(packageId string) []string {
 		parentIds = append(parentIds, parentIds[i-1]+"."+part)
 	}
 	return parentIds
+}
+
+func (d discoveryServiceImpl) GetDiscoveredServices_deprecated(ctx context.Context, agentId string, namespace string, workspaceId string) (*view.ServiceListResponse_deprecated, error) {
+	agent, err := d.agentService.GetAgent(agentId)
+	if err != nil {
+		return nil, exception.CustomError{
+			Status:  http.StatusInternalServerError,
+			Message: "Failed to get agent by id - '$id'",
+			Params:  map[string]interface{}{"id": agentId},
+			Debug:   err.Error(),
+		}
+	}
+	if agent == nil {
+		return nil, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.AgentNotFound,
+			Message: exception.AgentNotFoundMsg,
+			Params:  map[string]interface{}{"id": agentId}}
+	}
+
+	serviceList, err := d.agentClient.ListServices_deprecated(ctx, namespace, workspaceId, agent.AgentUrl)
+	if err != nil {
+		return nil, fmt.Errorf("agent failed to list services: %v", err.Error())
+	}
+	if serviceList != nil && len(serviceList.Services) > 0 {
+		err = d.permissionService.SetPermissionsForServices_deprecated(ctx, serviceList.Services)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set permissions for services: %v", err.Error())
+		}
+	}
+
+	return serviceList, nil
 }
 
 func (d discoveryServiceImpl) GetDiscoveredServices(ctx context.Context, agentId string, namespace string, workspaceId string) (*view.ServiceListResponse, error) {

@@ -140,7 +140,7 @@ func (n *namespaceSecurityServiceImpl) StartAuthSecurityCheckProcess(ctx context
 
 func (n *namespaceSecurityServiceImpl) startAuthSecurityCheck(securityCheck entity.NamespaceSecurityCheckEntity, agentUrl string) {
 	systemCtx := secctx.MakeSysadminContext(context.Background())
-	err := n.agentClient.StartDiscovery(systemCtx, securityCheck.Namespace, securityCheck.WorkspaceId, agentUrl)
+	err := n.agentClient.StartDiscovery(systemCtx, securityCheck.Namespace, securityCheck.WorkspaceId, agentUrl, false)
 	if err != nil {
 		n.updateProcessStatus(&securityCheck, view.StatusError, fmt.Sprintf("failed to start service discovery: %v", err.Error()))
 		return
@@ -159,7 +159,7 @@ func (n *namespaceSecurityServiceImpl) startAuthSecurityCheck(securityCheck enti
 	serviceEnts := make([]entity.NamespaceSecurityCheckServiceEntity, 0)
 	for _, svc := range discoveryResult.Services {
 		serviceSupported := false
-		for _, spec := range svc.Specs {
+		for _, spec := range svc.Documents {
 			if spec.Type == view.OpenAPI20Type || spec.Type == view.OpenAPI30Type || spec.Type == view.OpenAPI31Type {
 				serviceSupported = true
 				supportedServiceIds = append(supportedServiceIds, svc.Id)
@@ -323,12 +323,12 @@ func (n *namespaceSecurityServiceImpl) startAuthSecurityCheck(securityCheck enti
 	n.updateProcessStatus(&securityCheck, view.StatusComplete, "")
 }
 
-func (n *namespaceSecurityServiceImpl) getDiscoveryResults(сtx context.Context, namespace string, workspaceId string, agentUrl string) (*view.ServiceListResponse, error) {
+func (n *namespaceSecurityServiceImpl) getDiscoveryResults(ctx context.Context, namespace string, workspaceId string, agentUrl string) (*view.ServiceListResponse, error) {
 	start := time.Now()
 	var discoveryResult *view.ServiceListResponse
 	var err error
 	for {
-		discoveryResult, err = n.agentClient.ListServices(сtx, namespace, workspaceId, agentUrl)
+		discoveryResult, err = n.agentClient.ListServices(ctx, namespace, workspaceId, agentUrl)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get service list: %v", err.Error())
 		}

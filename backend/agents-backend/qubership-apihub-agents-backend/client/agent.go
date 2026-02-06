@@ -33,7 +33,8 @@ import (
 type AgentClient interface {
 	GetNamespaces(ctx context.Context, agentUrl string) (*view.AgentNamespaces, error)
 	ListServiceNames(ctx context.Context, agentUrl string, namespace string) (*view.ServiceNamesResponse, error)
-	StartDiscovery(ctx context.Context, namespace string, workspaceId string, agentUrl string) error
+	StartDiscovery(ctx context.Context, namespace string, workspaceId string, agentUrl string, failOnError bool) error
+	ListServices_deprecated(ctx context.Context, namespace string, workspaceId string, agentUrl string) (*view.ServiceListResponse_deprecated, error)
 	ListServices(ctx context.Context, namespace string, workspaceId string, agentUrl string) (*view.ServiceListResponse, error)
 	GetServiceSpecification(ctx context.Context, namespace string, workspaceId string, serviceId string, fileId string, agentUrl string) ([]byte, error)
 	SendEmptyServiceRequest(namespace string, serviceId string, agentUrl string, requestMethod string, requestPath string) (int, error)
@@ -106,9 +107,9 @@ func (a agentClientImpl) ListServiceNames(ctx context.Context, agentUrl string, 
 	return &serviceNames, nil
 }
 
-func (a agentClientImpl) StartDiscovery(ctx context.Context, namespace string, workspaceId string, agentUrl string) error {
+func (a agentClientImpl) StartDiscovery(ctx context.Context, namespace string, workspaceId string, agentUrl string, failOnError bool) error {
 	req := a.makeRequest(ctx)
-	resp, err := req.Post(fmt.Sprintf("%s/api/v2/namespaces/%s/workspaces/%s/discover", agentUrl, namespace, workspaceId))
+	resp, err := req.Post(fmt.Sprintf("%s/api/v2/namespaces/%s/workspaces/%s/discover?failOnError=%v", agentUrl, namespace, workspaceId, failOnError))
 	if err != nil {
 		return fmt.Errorf("failed to start discovery for namespace - %s. Error - %s", namespace, err.Error())
 	}
@@ -125,9 +126,33 @@ func (a agentClientImpl) StartDiscovery(ctx context.Context, namespace string, w
 	return nil
 }
 
-func (a agentClientImpl) ListServices(ctx context.Context, namespace string, workspaceId string, agentUrl string) (*view.ServiceListResponse, error) {
+func (a agentClientImpl) ListServices_deprecated(ctx context.Context, namespace string, workspaceId string, agentUrl string) (*view.ServiceListResponse_deprecated, error) {
 	req := a.makeRequest(ctx)
 	resp, err := req.Get(fmt.Sprintf("%s/api/v2/namespaces/%s/workspaces/%s/services", agentUrl, namespace, workspaceId))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get service for namespace - %s. Error - %s", namespace, err.Error())
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		if resp.StatusCode() == http.StatusNotFound {
+			return nil, nil
+		}
+		if authErr := checkUnauthorized(resp); authErr != nil {
+			return nil, authErr
+		}
+		return nil, fmt.Errorf("failed to get service for namespace - %s: status code %d %v", namespace, resp.StatusCode(), err)
+	}
+	var serviceListResponse view.ServiceListResponse_deprecated
+	err = json.Unmarshal(resp.Body(), &serviceListResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &serviceListResponse, nil
+}
+
+func (a agentClientImpl) ListServices(ctx context.Context, namespace string, workspaceId string, agentUrl string) (*view.ServiceListResponse, error) {
+	req := a.makeRequest(ctx)
+	resp, err := req.Get(fmt.Sprintf("%s/api/v3/namespaces/%s/workspaces/%s/services", agentUrl, namespace, workspaceId))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service for namespace - %s. Error - %s", namespace, err.Error())
 	}

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Qubership APIHUB Agents Backend API
-  description: REST API for managing agents, discovery, snapshots, security checks, and service specifications in Qubership APIHUB agents backend
+  description: REST API for managing agents, discovery, snapshots, security checks, and service specifications in Qubership APIHUB Agents Backend
   license:
     name: qubership
     url: https://qubership.org
@@ -76,66 +76,6 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-    post:
-      tags:
-        - Agents
-      summary: Process agent signal
-      description: Process registration/keepalive message from an agent
-      operationId: processAgentSignal
-      security:
-        - BearerAuth: []
-        - CookieAuth: []
-        - ApiKeyAuth: []
-        - PersonalAccessToken: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - cloud
-                - namespace
-                - url
-                - backendVersion
-              properties:
-                cloud:
-                  type: string
-                  description: Cloud where agent is deployed
-                namespace:
-                  type: string
-                  description: Namespace where agent is deployed
-                url:
-                  type: string
-                  description: Agent URL
-                backendVersion:
-                  type: string
-                  description: Backend version
-                name:
-                  type: string
-                  description: Agent name
-                agentVersion:
-                  type: string
-                  description: Agent version
-      responses:
-        '200':
-          description: Message successfully processed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  version:
-                    type: string
-                    description: Expected agent version
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v2/agents/{id}:
@@ -320,6 +260,8 @@ paths:
       tags:
         - Discovery
       summary: List discovered services
+      deprecated: true
+      x-deprecation-reason: New version of API is created - /api/v3/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services
       description: Retrieves the list of services discovered in the specified workspace
       operationId: listDiscoveredServices
       security:
@@ -403,6 +345,138 @@ paths:
                         proxyServerUrl:
                           type: string
                           description: Proxy server URL
+                  status:
+                    type: string
+                    enum:
+                      - none
+                      - running
+                      - complete
+                      - error
+                      - failed
+                    description: Service processing status
+                  debug:
+                    type: string
+                    description: Debug information
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v3/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services:
+    get:
+      tags:
+        - Discovery
+      summary: List discovered services
+      description: Retrieves the list of services discovered in the specified workspace
+      operationId: listDiscoveredServicesV3
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      parameters:
+        - $ref: '#/components/parameters/AgentId'
+        - $ref: '#/components/parameters/Namespace'
+        - $ref: '#/components/parameters/WorkspaceId'
+      responses:
+        '200':
+          description: List of discovered services
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  services:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: Service ID
+                        serviceName:
+                          type: string
+                          description: Service name
+                        url:
+                          type: string
+                          description: Service URL
+                        documents:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: Document name
+                              format:
+                                type: string
+                                description: Document format (json or yaml)
+                              fileId:
+                                type: string
+                                description: File identifier
+                              type:
+                                type: string
+                                description: Document type
+                              xApiKind:
+                                type: string
+                                description: API kind metadata
+                              docPath:
+                                type: string
+                                description: Document path
+                              configPath:
+                                type: string
+                                description: Configuration path
+                        baseline:
+                          type: object
+                          properties:
+                            packageId:
+                              type: string
+                              description: Package ID
+                            name:
+                              type: string
+                              description: Baseline name
+                            url:
+                              type: string
+                              description: Baseline URL
+                            versions:
+                              type: array
+                              items:
+                                type: string
+                              description: Available versions
+                        serviceLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          description: Service labels
+                        availablePromoteStatuses:
+                          type: array
+                          items:
+                            type: string
+                          description: Available promotion statuses
+                        proxyServerUrl:
+                          type: string
+                          description: Proxy server URL
+                        error:
+                          type: string
+                          description: Error message if service discovery failed
+                        diagnosticInfo:
+                          type: object
+                          description: Diagnostic information for service discovery
+                          properties:
+                            endpointCalls:
+                              type: array
+                              description: List of endpoint calls made during discovery
+                              items:
+                                type: object
+                                properties:
+                                  path:
+                                    type: string
+                                    description: Endpoint path
+                                  statusCode:
+                                    type: integer
+                                    description: HTTP status code returned
+                                  errorSummary:
+                                    type: string
+                                    description: Summary of error if occurred
                   status:
                     type: string
                     enum:
