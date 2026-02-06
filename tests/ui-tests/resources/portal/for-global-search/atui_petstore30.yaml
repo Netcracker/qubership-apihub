@@ -51,9 +51,8 @@ paths:
       summary: "atuiOperationTitle Get system info"
       description: "atuiOperationDescription Get system info."
       operationId: getInfo
-      parameters:
       responses:
-        200:
+        '200':
           description: "atuiResponseDescription Successful execution"
           content:
             "application/json":
@@ -84,7 +83,7 @@ paths:
                       - name: Admin
                         contact: "admin@petstore.com"
                     atuiExampleProperty: atuiExamplePropertyValue
-        500:
+        '500':
           description: "Internal server error"
           content:
             "application/json":
@@ -98,7 +97,6 @@ paths:
                   code:
                     description: "Internal string error code. Mandatory in response."
                     type: string
-                    
                   message:
                     description: "The attribute contains an error message."
                     type: string
@@ -116,8 +114,8 @@ paths:
                   - code
                   - message
       security:
-        - BearerAuth:
-        - api_key:
+        - BearerAuth: []
+        - api_key: []
   /pet:
     put:
       tags:

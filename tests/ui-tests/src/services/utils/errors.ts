@@ -14,8 +14,12 @@ export const stringifyError = (error: unknown): string => {
   }
 }
 
-export const getRestFailMsg = async (message: string, response: APIResponse): Promise<string> => {
-  return `${message} has been failed\n${await getResponseDebugMsg(response)}`
+export const getRestFailMsg = async (message: string, response?: APIResponse): Promise<string> => {
+  let resultMessage = `${message} has been failed`
+  if (response) {
+    resultMessage += `\n${await getResponseDebugMsg(response)}`
+  }
+  return resultMessage
 }
 
 export const handlePlaywrightError = (error: unknown, message: string): void => {

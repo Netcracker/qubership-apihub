@@ -1,7 +1,6 @@
 import { test } from '@fixtures'
 import { createApihubTDM } from '@services/test-data-manager'
-import { CREATE_TD } from '@test-setup'
-import { isReusableTestDataExist } from '@test-data/utils'
+import { TEST_USER_1, TEST_USER_2, TEST_USER_3, TEST_USER_4, TEST_USER_AUTH } from '@test-data'
 import {
   COPYING_REST_GR,
   D11,
@@ -47,7 +46,6 @@ import {
   GRP_P_UAC_R,
   GRP_P_VIEWER_R,
   GRP_P_VIEWER_ROOT_R,
-  IMM_GR,
   OGR_DMGR_ADD_TO_EMPTY_N,
   OGR_DMGR_CHANGE_DESCRIPTION_N,
   OGR_DMGR_CHANGE_NAME_N,
@@ -357,15 +355,14 @@ import {
   V_PKG_PPGR_REST_BASE_R,
   V_PKG_PPGR_REST_CHANGED_R,
   V_PKG_PPGR_SETTINGS_R,
-  VAR_GR,
   WSP_P_UAC_GENERAL_N,
 } from '@test-data/portal'
-import { TEST_USER_1, TEST_USER_2, TEST_USER_3, TEST_USER_4, TEST_USER_AUTH } from '@test-data'
+import { isReusableTestDataExist } from '@test-data/utils'
+import { CREATE_TD } from '@test-setup'
 
-test.describe.configure({ mode: 'serial', retries: 0 })
+test.describe.configure({ mode: 'serial' })
 
 test.describe('Users', async () => {
-
   test('Create Users', async ({ usersTDM: tdm }) => {
     const users = [TEST_USER_1, TEST_USER_2, TEST_USER_3, TEST_USER_4, TEST_USER_AUTH]
     for (const user of users) {
@@ -384,23 +381,16 @@ test.describe('Reusable Test Data creation', async () => {
   })
 
   test.describe('General', async () => {
-    test('Test Entities creation', async ({ apihubTDM: tdm }) => {
-      test.skip(isReusableTdExist, 'Reusable Test Data is already exist')
-
+    test('Test Packages creation', async ({ apihubTDM: tdm }) => {
       await test.step('Create Workspaces', async () => {
-        const workspaces = [
-          P_WS_MAIN_R,
+        await tdm.createPackage([
           P_WS_DSH_COMPARISON1_R,
           P_WS_DSH_COMPARISON2_R,
-        ]
-        for (const workspace of workspaces) {
-          await tdm.createPackage(workspace)
-        }
+        ])
       })
 
       await test.step('Create Groups', async () => {
-        const groups = [
-          IMM_GR,
+        await tdm.createPackage([
           GRP_P_HIERARCHY_R,
           GRP_P_UAC_R,
           GRP_P_VIEWER_ROOT_R,
@@ -414,14 +404,11 @@ test.describe('Reusable Test Data creation', async () => {
           P_GRP_GROUPING_R,
           G_REV_IMM,
           P_GR_COPYING_IMM,
-        ]
-        for (const group of groups) {
-          await tdm.createPackage(group)
-        }
+        ])
       })
 
       await test.step('Create Packages', async () => {
-        const packages = [
+        await tdm.createPackage([
           PK11,
           PK12,
           PK13,
@@ -442,18 +429,28 @@ test.describe('Reusable Test Data creation', async () => {
           P_PK_CP_PATTERN,
           P_PK_PGND,
           PKG_P_VIEWER_R,
-        ]
-        for (const pkg of packages) {
-          await tdm.createPackage(pkg)
-        }
+        ])
       })
 
       await test.step('Create Dashboards', async () => {
-        const dashboards = [D11, D12, D_REV_IMM, P_DSH_DIFF_111_R, P_DSH_DIFF_222_R, P_DSH_DIFF_333_R, P_DSH_DIFF_444_R, P_DSH_DMGR_R, P_DSH_CP_PATTERN, P_DSH_CP_SOURCE, DSH_P_VIEWER_R]
-        for (const dashboard of dashboards) {
-          await tdm.createPackage(dashboard)
-        }
+        await tdm.createPackage([
+          D11,
+          D12,
+          D_REV_IMM,
+          P_DSH_DIFF_111_R,
+          P_DSH_DIFF_222_R,
+          P_DSH_DIFF_333_R,
+          P_DSH_DIFF_444_R,
+          P_DSH_DMGR_R,
+          P_DSH_CP_PATTERN,
+          P_DSH_CP_SOURCE,
+          DSH_P_VIEWER_R,
+        ])
       })
+    })
+
+    test('Test Packages preparation', async ({ apihubTDM: tdm }) => {
+      test.skip(isReusableTdExist, 'Reusable Test Data is already exist')
 
       await test.step('Favor Workspace', async () => {
         await tdm.favorPackage(P_WS_MAIN_R)
@@ -514,7 +511,9 @@ test.describe('Reusable Test Data creation', async () => {
 
       await test.step('Publish Versions', async () => {
         const versions = [
-          V_P_PKG_DRAFT_R, V_P_PKG_ARCHIVED_R, V_P_PKG_WITHOUT_LABELS_R,
+          V_P_PKG_DRAFT_R,
+          V_P_PKG_ARCHIVED_R,
+          V_P_PKG_WITHOUT_LABELS_R,
           V_P_PKG_WITHOUT_OPERATIONS_R,
           V_P_PKG_OPERATIONS_MULTI_TYPE_R,
           V_P_PKG_OPERATIONS_REST_R,
@@ -652,15 +651,12 @@ test.describe('Reusable Test Data creation', async () => {
   })
 
   test.describe('Hierarchy', async () => {
-
     test('Create Groups', async ({ apihubTDM: tdm }) => {
       test.skip(isReusableTdExist, 'Reusable Test Data is already exist')
       const groups = [
         GRP_P_HIERARCHY_R,
       ]
-      for (const group of groups) {
-        await tdm.createPackage(group)
-      }
+      await tdm.createPackage(groups)
     })
 
     test('Create Packages', async ({ apihubTDM: tdm }) => {
@@ -670,9 +666,7 @@ test.describe('Reusable Test Data creation', async () => {
         PKG_P_HIERARCHY_NON_BREAKING_R,
         PKG_P_HIERARCHY_NO_CHANGES_R,
       ]
-      for (const pkg of packages) {
-        await tdm.createPackage(pkg)
-      }
+      await tdm.createPackage(packages)
     })
 
     test('Create Dashboards', async ({ apihubTDM: tdm }) => {
@@ -682,9 +676,7 @@ test.describe('Reusable Test Data creation', async () => {
         DSH_P_HIERARCHY_NON_BREAKING_R,
         DSH_P_HIERARCHY_NO_CHANGES_R,
       ]
-      for (const dashboard of dashboards) {
-        await tdm.createPackage(dashboard)
-      }
+      await tdm.createPackage(dashboards)
     })
 
     test('Publish Versions', async ({ apihubTDM: tdm }) => {
@@ -715,9 +707,8 @@ test.describe('Non-Reusable Test Data creation', async () => {
 
   test.describe('General', async () => {
     test('Test Entities creation', async ({ apihubTDM: tdm }) => {
-
       await test.step('Create Workspaces', async () => {
-        const workspaces = [
+        await tdm.createPackage([
           P_WS_UPDATE_N,
           P_WS_DELETE_N,
           P_WS_FAV_LIST_N,
@@ -725,15 +716,12 @@ test.describe('Non-Reusable Test Data creation', async () => {
           P_WS_UNFAV_LIST_N,
           P_WS_UNFAV_TITLE_N,
           WSP_P_UAC_GENERAL_N,
-        ]
-        for (const workspace of workspaces) {
-          await tdm.createPackage(workspace)
-        }
+        ])
       })
 
       await test.step('Create Groups', async () => {
-        const groups = [
-          VAR_GR, G_REV_VAR,
+        await tdm.createPackage([
+          G_REV_VAR,
           P_GRP_GROUPING_N,
           G_PUBLISH_VAR,
           G_SETTINGS_VAR,
@@ -752,14 +740,11 @@ test.describe('Non-Reusable Test Data creation', async () => {
           GRP_P_UAC_G1_N,
           GRP_P_UAC_G2_N,
           GRP_P_UAC_GENERAL_N,
-        ]
-        for (const group of groups) {
-          await tdm.createPackage(group)
-        }
+        ])
       })
 
       await test.step('Create Packages', async () => {
-        const packages = [
+        await tdm.createPackage([
           PK_GS,
           PK_REV_VAR,
           PK_PUB_VAR_1,
@@ -782,14 +767,11 @@ test.describe('Non-Reusable Test Data creation', async () => {
           PKG_P_UAC_G_MULT2_N,
           PKG_P_UAC_G_MULT3_N,
           PKG_P_UAC_G_TOKENS_N,
-        ]
-        for (const pkg of packages) {
-          await tdm.createPackage(pkg)
-        }
+        ])
       })
 
       await test.step('Create Dashboards', async () => {
-        const dashboards = [
+        await tdm.createPackage([
           D121,
           D122,
           D123,
@@ -803,10 +785,7 @@ test.describe('Non-Reusable Test Data creation', async () => {
           P_DSH_DMGR2_N,
           P_DSH_CP_EMPTY,
           P_DSH_CP_RELEASE,
-        ]
-        for (const dashboard of dashboards) {
-          await tdm.createPackage(dashboard)
-        }
+        ])
       })
 
       await test.step('Favor Workspaces', async () => {
@@ -956,35 +935,20 @@ test.describe('Non-Reusable Test Data creation', async () => {
   })
 
   test.describe('UAC', async () => {
-
     test.describe('Editor', async () => {
-
       test('Create Groups', async ({ apihubTDM: tdm }) => {
-        const groups = [
+        await tdm.createPackage([
           GRP_P_EDITOR_ROOT_N,
           GRP_P_EDITOR_N,
-        ]
-        for (const group of groups) {
-          await tdm.createPackage(group)
-        }
+        ])
       })
 
       test('Create Packages', async ({ apihubTDM: tdm }) => {
-        const packages = [
-          PKG_P_EDITOR_N,
-        ]
-        for (const pkg of packages) {
-          await tdm.createPackage(pkg)
-        }
+        await tdm.createPackage(PKG_P_EDITOR_N)
       })
 
       test('Create Dashboards', async ({ apihubTDM: tdm }) => {
-        const dashboards = [
-          DSH_P_EDITOR_N,
-        ]
-        for (const dashboard of dashboards) {
-          await tdm.createPackage(dashboard)
-        }
+        await tdm.createPackage(DSH_P_EDITOR_N)
       })
 
       test('Create API Keys', async ({ apihubTDM: tdm }) => {
@@ -1057,40 +1021,30 @@ test.describe('Non-Reusable Test Data creation', async () => {
     })
 
     test.describe('Owner', async () => {
-
       test('Create Groups', async ({ apihubTDM: tdm }) => {
-        const groups = [
+        await tdm.createPackage([
           GRP_P_OWNER_ROOT_N,
           GRP_P_OWNER_N,
           GRP_P_OWNER_CRUD_N,
           GRP_P_OWNER_EDITING_N,
           GRP_P_OWNER_DELETING_N,
-        ]
-        for (const group of groups) {
-          await tdm.createPackage(group)
-        }
+        ])
       })
 
       test('Create Packages', async ({ apihubTDM: tdm }) => {
-        const packages = [
+        await tdm.createPackage([
           PKG_P_OWNER_N,
           PKG_P_OWNER_EDITING_N,
           PKG_P_OWNER_DELETING_N,
-        ]
-        for (const pkg of packages) {
-          await tdm.createPackage(pkg)
-        }
+        ])
       })
 
       test('Create Dashboards', async ({ apihubTDM: tdm }) => {
-        const dashboards = [
+        await tdm.createPackage([
           DSH_P_OWNER_N,
           DSH_P_OWNER_EDITING_N,
           DSH_P_OWNER_DELETING_N,
-        ]
-        for (const dashboard of dashboards) {
-          await tdm.createPackage(dashboard)
-        }
+        ])
       })
 
       test('Create API Keys', async ({ apihubTDM: tdm }) => {
@@ -1169,40 +1123,30 @@ test.describe('Non-Reusable Test Data creation', async () => {
     })
 
     test.describe('Admin', async () => {
-
       test('Create Groups', async ({ apihubTDM: tdm }) => {
-        const groups = [
+        await tdm.createPackage([
           GRP_P_ADMIN_ROOT_N,
           GRP_P_ADMIN_N,
           GRP_P_ADMIN_CRUD_N,
           GRP_P_ADMIN_EDITING_N,
           GRP_P_ADMIN_DELETING_N,
-        ]
-        for (const group of groups) {
-          await tdm.createPackage(group)
-        }
+        ])
       })
 
       test('Create Packages', async ({ apihubTDM: tdm }) => {
-        const packages = [
+        await tdm.createPackage([
           PKG_P_ADMIN_N,
           PKG_P_ADMIN_EDITING_N,
           PKG_P_ADMIN_DELETING_N,
-        ]
-        for (const pkg of packages) {
-          await tdm.createPackage(pkg)
-        }
+        ])
       })
 
       test('Create Dashboards', async ({ apihubTDM: tdm }) => {
-        const dashboards = [
+        await tdm.createPackage([
           DSH_P_ADMIN_N,
           DSH_P_ADMIN_EDITING_N,
           DSH_P_ADMIN_DELETING_N,
-        ]
-        for (const dashboard of dashboards) {
-          await tdm.createPackage(dashboard)
-        }
+        ])
       })
 
       test('Create API Keys', async ({ apihubTDM: tdm }) => {

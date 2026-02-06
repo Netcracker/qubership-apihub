@@ -1,4 +1,3 @@
-import { test } from '@fixtures'
 import type { Page } from '@playwright/test'
 import { Button } from '@shared/components/base'
 import { BaseCancelDialog } from './BaseCancelDialog'
@@ -10,11 +9,5 @@ export abstract class BaseAddDialog extends BaseCancelDialog {
 
   protected constructor(page: Page) {
     super(page)
-  }
-
-  async clickAdd(): Promise<void> {
-    await test.step('Click \'Add\' button', async () => {
-      await this.addBtn.click()
-    })
   }
 }

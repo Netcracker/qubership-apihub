@@ -12,7 +12,7 @@ export const GET_SYSTEM_INFO: Operation = {
 }
 
 export const GET_PET_BY_TAG_V1: Operation = {
-  operationId: 'api-v1-pet-findbytags-get',
+  operationId: 'api-v1-pet-findByTags-get',
   title: 'Finds Pets by tags',
   apiType: 'rest',
   apiKind: 'no-bwc',
@@ -27,7 +27,7 @@ export const GET_PET_BY_TAG_V1: Operation = {
 }
 
 export const GET_PET_BY_TAG_V2: Operation = {
-  operationId: 'api-v2-pet-findbytags-get',
+  operationId: 'api-v2-pet-findByTags-get',
   title: 'Finds Pets by tags',
   apiType: 'rest',
   apiKind: 'no-bwc',
@@ -37,7 +37,7 @@ export const GET_PET_BY_TAG_V2: Operation = {
 }
 
 export const GET_PET_BY_STATUS_V1: Operation = {
-  operationId: 'api-v1-pet-findbystatus-get',
+  operationId: 'api-v1-pet-findByStatus-get',
   title: 'Finds Pets by status',
   apiType: 'rest',
   apiKind: 'bwc',
@@ -47,7 +47,7 @@ export const GET_PET_BY_STATUS_V1: Operation = {
 }
 
 export const GET_PET_BY_STATUS_2_V1: Operation = {
-  operationId: 'api-v1-pet-findbystatus2-get',
+  operationId: 'api-v1-pet-findByStatus2-get',
   title: 'Finds Pets by status 2',
   apiType: 'rest',
   apiKind: 'bwc',
@@ -57,7 +57,7 @@ export const GET_PET_BY_STATUS_2_V1: Operation = {
 }
 
 export const GET_PET_BY_STATUS_3_V1: Operation = {
-  operationId: 'api-v1-pet-findbystatus3-get',
+  operationId: 'api-v1-pet-findByStatus3-get',
   title: 'Finds Pets by status 3',
   apiType: 'rest',
   apiKind: 'bwc',
@@ -67,7 +67,7 @@ export const GET_PET_BY_STATUS_3_V1: Operation = {
 }
 
 export const GET_PET_BY_TAG_V2_SWAGGER: Operation = {
-  operationId: 'v2-pet-findbytags-get',
+  operationId: 'v2-pet-findByTags-get',
   title: 'Finds Pets by tags',
   apiType: 'rest',
   apiKind: 'bwc',
@@ -90,7 +90,7 @@ export const UPDATE_PET_V1: Operation = {
 }
 
 export const DEL_PET_V1: Operation = {
-  operationId: 'api-v1-pet-petid-delete',
+  operationId: 'api-v1-pet-_petId_-delete',
   title: 'Deletes a pet',
   apiType: 'rest',
   apiKind: 'bwc',
@@ -100,7 +100,7 @@ export const DEL_PET_V1: Operation = {
 }
 
 export const DEL_PET_V3: Operation = {
-  operationId: 'api-v3-pet-petid-delete',
+  operationId: 'api-v3-pet-_petId_-delete',
   title: 'Deletes a pet',
   apiType: 'rest',
   apiKind: 'bwc',
@@ -110,7 +110,7 @@ export const DEL_PET_V3: Operation = {
 }
 
 export const UPDATE_USER_V1: Operation = {
-  operationId: 'api-v1-user-username-put',
+  operationId: 'api-v1-user-_username_-put',
   title: 'Update user',
   apiType: 'rest',
   apiKind: 'no-bwc',
@@ -124,7 +124,7 @@ export const UPDATE_USER_V1: Operation = {
 }
 
 export const CREATE_LIST_OF_USERS_V1: Operation = {
-  operationId: 'api-v1-user-createwithlist-post',
+  operationId: 'api-v1-user-createWithList-post',
   title: 'Creates list of users with given input array',
   apiType: 'rest',
   apiKind: 'bwc',
@@ -134,7 +134,7 @@ export const CREATE_LIST_OF_USERS_V1: Operation = {
 }
 
 export const CREATE_LIST_OF_USERS_V2: Operation = {
-  operationId: 'api-v2-user-createwithlist-post',
+  operationId: 'api-v2-user-createWithList-post',
   title: 'Creates list of users with given input array',
   apiType: 'rest',
   apiKind: 'bwc',
@@ -144,7 +144,7 @@ export const CREATE_LIST_OF_USERS_V2: Operation = {
 }
 
 export const CREATE_LIST_OF_USERS_V1_UPDATED: Operation = {
-  operationId: 'api-v1-user-createwithlist-post',
+  operationId: 'api-v1-user-createWithList-post',
   title: 'Creates list of users with given input array UPDATED',
   apiType: 'rest',
   apiKind: 'bwc',
@@ -198,7 +198,7 @@ export const LOGS_USER_V1: Operation = {
 }
 
 export const GET_USER_BY_NAME_V1: Operation = {
-  operationId: 'api-v1-user-username-get',
+  operationId: 'api-v1-user-_username_-get',
   title: 'Get user by user name',
   apiType: 'rest',
   apiKind: 'bwc',
@@ -208,7 +208,7 @@ export const GET_USER_BY_NAME_V1: Operation = {
 }
 
 export const UPLOADS_IMAGE_V1: Operation = {
-  operationId: 'api-v1-pet-petid-uploadimage-post',
+  operationId: 'api-v1-pet-_petId_-uploadImage-post',
   title: 'uploads an image',
   apiType: 'rest',
   apiKind: 'bwc',
@@ -228,7 +228,7 @@ export const GET_INVENTORY_V1: Operation = {
 }
 
 export const DEL_ORDER_V1: Operation = {
-  operationId: 'api-v1-store-order-orderid-delete',
+  operationId: 'api-v1-store-order-_orderId_-delete',
   title: 'Delete purchase order by ID',
   apiType: 'rest',
   apiKind: 'no-bwc',
@@ -243,7 +243,7 @@ export const DEL_ORDER_V1: Operation = {
 }
 
 export const GQL_LIST_PETS: GraphQlOperationTest = {
-  operationId: 'query-listpets',
+  operationId: 'query-listPets',
   title: 'List Pets',
   apiType: 'graphql',
   apiKind: 'bwc',
@@ -253,7 +253,7 @@ export const GQL_LIST_PETS: GraphQlOperationTest = {
 }
 
 export const GQL_GET_USER: GraphQlOperationTest = {
-  operationId: 'query-getuser',
+  operationId: 'query-getUser',
   title: 'Get User',
   apiType: 'graphql',
   apiKind: 'bwc',

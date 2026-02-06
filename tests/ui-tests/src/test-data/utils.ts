@@ -1,15 +1,15 @@
-import type { ApihubApps } from '@shared/entities'
 import { createRestWithCredentials, rGetPackageById } from '@services/rest'
-import { BASE_URL } from '@test-setup'
-import { P_WS_MAIN_R } from '@test-data/portal'
 import { getRestFailMsg } from '@services/utils'
+import type { ApihubApps } from '@shared/entities'
+import { GRP_P_HIERARCHY_R } from '@test-data/portal'
 import { SYSADMIN } from '@test-data/users'
+import { BASE_URL } from '@test-setup'
 
 export const isReusableTestDataExist = async (app: ApihubApps): Promise<boolean> => {
   let id!: string
   switch (app) {
     case 'portal': {
-      id = P_WS_MAIN_R.packageId
+      id = GRP_P_HIERARCHY_R.packageId
       break
     }
   }

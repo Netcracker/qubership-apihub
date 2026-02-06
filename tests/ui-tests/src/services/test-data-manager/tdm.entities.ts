@@ -8,6 +8,8 @@ import type {
 } from '@services/rest/rest.types'
 import type { TestFile } from '@shared/entities'
 
+export type IdNameTdmParams = Readonly<{ id: string; name?: string }>
+
 export type TdmPublishVersion = {
   pkg: {
     packageId: string

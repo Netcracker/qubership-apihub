@@ -1,7 +1,12 @@
 import type { Fixtures } from '@fixtures'
 import { defineConfig, devices } from '@playwright/test'
+import dayjs from 'dayjs'
 import 'dotenv/config'
 import process from 'node:process'
+
+const formatReportTimestamp = (date: Date): string => {
+  return dayjs(date).locale('en').format('DD MMM YYYY HH:mm')
+}
 
 /**
  * Read environment variables from file.
@@ -15,7 +20,7 @@ export default defineConfig<Fixtures>({
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   outputDir: 'temp/test-results',
   /* Timeout for the whole test run */
-  globalTimeout: 60_000 * 50,
+  globalTimeout: 60_000 * 60,
   /* Maximum time one test can run for. */
   timeout: 70_000,
   expect: {
@@ -29,7 +34,6 @@ export default defineConfig<Fixtures>({
   fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
   retries: 2,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 10 : 3,
@@ -40,11 +44,12 @@ export default defineConfig<Fixtures>({
     ['html', {
       open: 'never',
       outputFolder: 'reports/playwright',
+      title: `${process.env.CI ? 'CI' : 'Local'} - ${formatReportTimestamp(new Date())}`,
+      noCopyPrompt: true,
     }],
     ['list'],
     ['./src/services/custom-reporter/CustomReporter.ts', { reportType: 'apihub-styled-html' }],
   ],
-  globalSetup: './src/tests/global-setup.ts',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
@@ -64,31 +69,50 @@ export default defineConfig<Fixtures>({
       testDir: './src/tests/portal',
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chromium',
         launchOptions: {
           // slowMo: 150,
         },
-        viewport: { width: 1320, height: 768 },
+        viewport: { width: 1440, height: 810 },
       },
       dependencies: ['Portal-Setup'],
+    },
+    {
+      name: 'Apihub-Setup',
+      testDir: './src/tests',
+      testMatch: /apihub-setup\.ts/,
+      teardown: 'Apihub-Teardown',
+    },
+    {
+      name: 'Apihub-Teardown',
+      testDir: './src/tests',
+      testMatch: /apihub-teardown\.ts/,
+      timeout: 360_000,
     },
     {
       name: 'Portal-Setup',
       testDir: './src/tests/portal',
       testMatch: /setup\.ts/,
       timeout: 1200_000,
-      teardown: 'Portal-Teardown',
-    },
-    {
-      name: 'Portal-Teardown',
-      testDir: './src/tests/portal',
-      testMatch: /teardown\.ts/,
-      timeout: 360_000,
+      retries: 0,
+      dependencies: ['Apihub-Setup'],
     },
     {
       name: 'Utils',
       testDir: './src/tests/utils',
       testMatch: [/tools\.ts/, /cleanup\.ts/, /debug\.spec\.ts/],
+    },
+    {
+      name: 'Component',
+      testDir: './src',
+      testMatch: [/spec\.component\.ts/],
+      retries: 0,
+      dependencies: ['Apihub-Setup'],
+    },
+    {
+      name: 'Unit',
+      testDir: './src',
+      testMatch: [/spec\.unit\.ts/],
+      retries: 0,
     },
     {
       name: 'Cleanup',
@@ -104,7 +128,6 @@ export default defineConfig<Fixtures>({
       timeout: 130_000,
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chromium',
         actionTimeout: 120_000,
         trace: 'off',
         screenshot: 'off',
@@ -117,14 +140,12 @@ export default defineConfig<Fixtures>({
       timeout: 190_000,
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chromium',
         actionTimeout: 180_000,
         trace: 'off',
         screenshot: 'off',
       },
     },
   ],
-
   /* Run your local dev server before starting the tests */
   // webServer: {
   //   command: 'npm run start',

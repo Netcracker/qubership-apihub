@@ -154,17 +154,17 @@ test.describe('12.1.4 Prefix grouping: Viewing', () => {
         })
         await compareSelectDialog.compareBtn.click()
 
-        /*! await expect(comparePage.toolbar.breakingChangesFilterBtn).toHaveText('2') //Issue TestCase-B-1442
+        await expect(comparePage.toolbar.breakingChangesFilterBtn).toHaveText('2') //Issue TestCase-B-1442
         await expect(comparePage.toolbar.riskyChangesFilterBtn).toHaveText('0')
         await expect(comparePage.toolbar.deprecatedChangesFilterBtn).toHaveText('2')
-        await expect(comparePage.toolbar.nonBreakingChangesFilterBtn).toHaveText('2')
+        await expect(comparePage.toolbar.nonBreakingChangesFilterBtn).toHaveText('4')
         await expect(comparePage.toolbar.annotationChangesFilterBtn).toHaveText('1')
-        await expect(comparePage.toolbar.unclassifiedChangesFilterBtn).toHaveText('1')*/
+        await expect(comparePage.toolbar.unclassifiedChangesFilterBtn).toHaveText('1')
 
         await expect(comparePage.swapper.leftTitle).toHaveText('path prefix: /api/v1/')
         await expect(comparePage.swapper.rightTitle).toHaveText('path prefix: /api/v2/')
 
-        //! await expect(comparePage.compareContent.getOperationRow()).toHaveCount(4) //Issue TestCase-B-1442
+        await expect(comparePage.compareContent.getOperationRow()).toHaveCount(6) //Issue TestCase-B-1442
         await expect.soft(getUserV1Row.changeSeverityIndicator).toHaveText('breaking')
         await expect.soft(getUserV1Row.leftSummary.path).toHaveText(`${GET_USER_BY_NAME_V1.method}${GET_USER_BY_NAME_V1.path}`)
         await expect.soft(getUserV1Row.leftSummary.changes).toBeHidden()
@@ -178,25 +178,25 @@ test.describe('12.1.4 Prefix grouping: Viewing', () => {
         await expect.soft(createListV1Row.rightSummary.changes.breaking).toHaveText('Breaking: 1')
         await expect.soft(createListV1Row.rightSummary.changes.risky).toBeHidden()
         await expect.soft(createListV1Row.rightSummary.changes.deprecated).toHaveText('Deprecated: 1')
-        //! await expect.soft(createListV1Row.rightSummary.changes.nonBreaking).toHaveText('Non-breaking: 1') //Issue TestCase-B-1442
-        await expect.soft(createListV1Row.rightSummary.changes.annotation).toHaveText('Annotation: 2')
+        await expect.soft(createListV1Row.rightSummary.changes.nonBreaking).toHaveText('Non-breaking: 1') //Issue TestCase-B-1442
+        await expect.soft(createListV1Row.rightSummary.changes.annotation).toHaveText('Annotation: 1')
         await expect.soft(createListV1Row.rightSummary.changes.unclassified).toHaveText('Unclassified: 1')
       })
 
       await test.step('Swap', async () => {
         await comparePage.swapper.swapBtn.click()
 
-        // await expect(comparePage.toolbar.breakingChangesFilterBtn).toHaveText('2')
-        // await expect(comparePage.toolbar.riskyChangesFilterBtn).toHaveText('0')
-        // await expect(comparePage.toolbar.deprecatedChangesFilterBtn).toHaveText('2')
-        // await expect(comparePage.toolbar.nonBreakingChangesFilterBtn).toHaveText('2')
-        // await expect(comparePage.toolbar.annotationChangesFilterBtn).toHaveText('1')
-        // await expect(comparePage.toolbar.unclassifiedChangesFilterBtn).toHaveText('1')
+        await expect(comparePage.toolbar.breakingChangesFilterBtn).toHaveText('2')
+        await expect(comparePage.toolbar.riskyChangesFilterBtn).toHaveText('2')
+        await expect(comparePage.toolbar.deprecatedChangesFilterBtn).toHaveText('2')
+        await expect(comparePage.toolbar.nonBreakingChangesFilterBtn).toHaveText('2')
+        await expect(comparePage.toolbar.annotationChangesFilterBtn).toHaveText('1')
+        await expect(comparePage.toolbar.unclassifiedChangesFilterBtn).toHaveText('1')
 
         await expect(comparePage.swapper.leftTitle).toHaveText('path prefix: /api/v2/')
         await expect(comparePage.swapper.rightTitle).toHaveText('path prefix: /api/v1/')
 
-        //! await expect(comparePage.compareContent.getOperationRow()).toHaveCount(4) //Issue TestCase-B-1442
+        await expect(comparePage.compareContent.getOperationRow()).toHaveCount(6) //Issue TestCase-B-1442
         await expect.soft(getUserV1Row.changeSeverityIndicator).toHaveText('non-breaking')
         await expect.soft(getUserV1Row.leftSummary.path).toBeHidden()
         await expect.soft(getUserV1Row.leftSummary.changes).toBeHidden()
@@ -210,14 +210,28 @@ test.describe('12.1.4 Prefix grouping: Viewing', () => {
         await expect.soft(createListV1Row.rightSummary.changes.breaking).toHaveText('Breaking: 1')
         await expect.soft(createListV1Row.rightSummary.changes.risky).toBeHidden
         await expect.soft(createListV1Row.rightSummary.changes.deprecated).toHaveText('Deprecated: 1')
-        //! await expect.soft(createListV1Row.rightSummary.changes.nonBreaking).toHaveText('Non-breaking: 1') //Issue TestCase-B-1442
-        await expect.soft(createListV1Row.rightSummary.changes.annotation).toHaveText('Annotation: 2')
+        await expect.soft(createListV1Row.rightSummary.changes.nonBreaking).toHaveText('Non-breaking: 1') //Issue TestCase-B-1442
+        await expect.soft(createListV1Row.rightSummary.changes.annotation).toHaveText('Annotation: 1')
         await expect.soft(createListV1Row.rightSummary.changes.unclassified).toHaveText('Unclassified: 1')
       })
 
       //Cover TestCase-A-10265 defect - operation comparison opening
-      await test.step('Open operation comparison', async () => {
+      await test.step('Open operation comparison for modified operation', async () => {
         await comparePage.compareContent.getOperationRow(CREATE_LIST_OF_USERS_V1_UPDATED).click()
+
+        await expect(compareOperationsPage.docView).toBeVisible()
+        await expect(compareOperationsPage.swapper.leftTitle).toHaveText('path prefix: /api/v2/')
+        await expect(compareOperationsPage.swapper.rightTitle).toHaveText('path prefix: /api/v1/')
+      })
+
+      await test.step('Navigate back', async () => {
+        await compareOperationsPage.toolbar.backBtn.click()
+
+        await expect(comparePage.compareContent.getOperationRow()).toHaveCount(6)
+      })
+
+      await test.step('Open operation comparison for added operation', async () => {
+        await comparePage.compareContent.getOperationRow(GET_USER_BY_NAME_V1).click()
 
         await expect(compareOperationsPage.docView).toBeVisible()
         await expect(compareOperationsPage.swapper.leftTitle).toHaveText('path prefix: /api/v2/')

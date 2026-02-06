@@ -8,21 +8,19 @@ export const randomString = (length: number, range?: string): string => {
   return result
 }
 
+// Надо переименовать в ordinalPostfix
 export const nthPostfix = (nth: number): string => {
-  const lastNumber = nth % 10
-  if ([11, 12, 13].includes(nth)) {
-    return ('th')
+  if ((nth % 100) >= 11 && (nth % 100) <= 13) return 'th'
+  switch (nth % 10) {
+    case 1:
+      return 'st'
+    case 2:
+      return 'nd'
+    case 3:
+      return 'rd'
+    default:
+      return 'th'
   }
-  if (lastNumber === 1) {
-    return 'st'
-  }
-  if (lastNumber === 2) {
-    return 'nd'
-  }
-  if (lastNumber === 3) {
-    return 'rd'
-  }
-  return ('th')
 }
 
 export const quoteName = (name?: string): string => {

@@ -1,0 +1,118 @@
+rules:
+  # =================================================================
+  # 1. Rules by Severity (2 of each type)
+  # Triggered if summary contains specific keywords
+  # =================================================================
+
+  # Error 1
+  synth-error-1:
+    description: "Synthetic Error Rule 1"
+    message: "Synthetic Error 1 Found"
+    severity: error
+    given: $.paths.*.*.summary
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: Error1
+
+  # Error 2
+  synth-error-2:
+    description: "Synthetic Error Rule 2"
+    message: "Synthetic Error 2 Found"
+    severity: error
+    given: $.paths.*.*.summary
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: Error2
+
+  # Warning 1
+  synth-warn-1:
+    description: "Synthetic Warning Rule 1"
+    message: "Synthetic Warning 1 Found"
+    severity: warn
+    given: $.paths.*.*.summary
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: Warn1
+
+  # Warning 2
+  synth-warn-2:
+    description: "Synthetic Warning Rule 2"
+    message: "Synthetic Warning 2 Found"
+    severity: warn
+    given: $.paths.*.*.summary
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: Warn2
+
+  # Info 1
+  synth-info-1:
+    description: "Synthetic Info Rule 1"
+    message: "Synthetic Info 1 Found"
+    severity: info
+    given: $.paths.*.*.summary
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: Info1
+
+  # Info 2
+  synth-info-2:
+    description: "Synthetic Info Rule 2"
+    message: "Synthetic Info 2 Found"
+    severity: info
+    given: $.paths.*.*.summary
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: Info2
+
+  # Hint 1
+  synth-hint-1:
+    description: "Synthetic Hint Rule 1"
+    message: "Synthetic Hint 1 Found"
+    severity: hint
+    given: $.paths.*.*.summary
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: Hint1
+
+  # Hint 2
+  synth-hint-2:
+    description: "Synthetic Hint Rule 2"
+    message: "Synthetic Hint 2 Found"
+    severity: hint
+    given: $.paths.*.*.summary
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: Hint2
+
+  # =================================================================
+  # 2. Rules for Overlapping Errors
+  # Two rules triggering on the same keyword "OverlapErr"
+  # =================================================================
+
+  synth-overlap-error-1:
+    description: "Synthetic Overlap Error Rule 1"
+    message: "Synthetic Overlap Error 1 Found"
+    severity: error
+    given: $.paths.*.*.summary
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: OverlapErr
+
+  synth-overlap-error-2:
+    description: "Synthetic Overlap Error Rule 2"
+    message: "Synthetic Overlap Error 2 Found"
+    severity: error
+    given: $.paths.*.*.summary
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: OverlapErr

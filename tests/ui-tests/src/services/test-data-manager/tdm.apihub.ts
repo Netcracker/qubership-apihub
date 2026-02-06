@@ -1,7 +1,5 @@
 import { type APIResponse, expect, test } from '@playwright/test'
-import type { RestPublishConfig, RestPublishFile } from '@services/rest/rest.types'
-import type { Credentials, PackageApiKey, TestFile, VersionStatuses } from '@shared/entities'
-import type { TdmOperationGroup, TdmPackageCreate, TdmPackageUpdate, TdmPublishFile, TdmPublishVersion } from './tdm.entities'
+import { getAuthDataFromApi } from '@services/auth'
 import {
   createRestWithToken,
   getRootGroupsList,
@@ -27,20 +25,30 @@ import {
   rUpdatePackage,
   rUpdatePackageVersion,
 } from '@services/rest'
-import { BASE_URL } from '@test-setup'
-import { TEST_PREFIX } from '@test-data'
-import { packToZip } from '@services/utils/files'
+import type { RestPublishConfig, RestPublishFile } from '@services/rest/rest.types'
 import { asyncTimeout, getResponseDebugMsg, getRestFailMsg, getTestIdFromName } from '@services/utils'
-import { getAuthDataFromApi } from '@services/auth'
+import { packToZip } from '@services/utils/files'
+import type { Credentials, PackageApiKey, TestFile, VersionStatuses } from '@shared/entities'
+import { TEST_PREFIX } from '@test-data'
+import { BASE_URL } from '@test-setup'
+import type {
+  TdmOperationGroup,
+  TdmPackageCreate,
+  TdmPackageUpdate,
+  TdmPublishFile,
+  TdmPublishVersion,
+} from './tdm.entities'
 
-export const createApihubTDM = async (credentials: Credentials, requestTimeout?: number): Promise<ApihubTestDataManager> => {
+export const createApihubTDM = async (
+  credentials: Credentials,
+  requestTimeout?: number,
+): Promise<ApihubTestDataManager> => {
   const { token } = await getAuthDataFromApi(BASE_URL, credentials)
   const rest = await createRestWithToken(BASE_URL, token, requestTimeout)
   return new ApihubTestDataManager(rest)
 }
 
 export class ApihubTestDataManager {
-
   private readonly rest: Rest
 
   constructor(rest: Rest) {
@@ -73,7 +81,9 @@ export class ApihubTestDataManager {
     emails: string[]
     roleIds: string[]
   }): Promise<void> {
-    const message = `Adding "${params.emails}" to the "${params.name || params.packageId}" package as "${params.roleIds}"`
+    const message = `Adding "${params.emails}" to the "${
+      params.name || params.packageId
+    }" package as "${params.roleIds}"`
 
     await test.step(message, async () => {
       const response = await this.rest.send(rAddMembersToPackage, [201], params)
@@ -83,21 +93,27 @@ export class ApihubTestDataManager {
     }, { box: true })
   }
 
-  async createPackage(params: TdmPackageCreate): Promise<void> {
-    const { name, alias, parentId } = params
-    const packageId = parentId ? `${parentId}.${alias}` : alias
-    const message = `"${name}" package creation`
+  async createPackage(params: TdmPackageCreate | TdmPackageCreate[]): Promise<void> {
+    const packagesParams = Array.isArray(params) ? params : [params]
 
-    await test.step(message, async () => {
-      if (!await this.isPackageExist(packageId)) {
+    for (const params of packagesParams) {
+      const { name, alias, parentId } = params
+      const packageId = parentId ? `${parentId}.${alias}` : alias
+      const message = `"${name}" package creation`
+
+      await test.step(message, async () => {
+        if (await this.isPackageExist(packageId)) {
+          return
+        }
+
         const response = await this.rest.send(rCreatePackage, [201, 409], params)
         if (response.status() !== 201 && response.status() !== 409) {
           throw Error(await getRestFailMsg(message, response))
         }
-      }
-    }, { box: true })
+      }, { box: true })
+    }
 
-    //TODO need another way of package creation, do not use 409 code and enable creation check (now uses for skipping hidden packages)
+    // TODO need another way of package creation, do not use 409 code and enable creation check (now uses for skipping hidden packages)
     /*await test.step(`Checking <${name}> package creation`, async () => {
       if (!await this.isPackageExist(packageId)) {
         await failTest(`<${name}> package has not been created`, { soft: false })
@@ -178,7 +194,6 @@ export class ApihubTestDataManager {
   }
 
   async publishVersion(params: TdmPublishVersion): Promise<void> {
-
     const message = `"${params.version}" version publishing into "${params.pkg.name || params.pkg.packageId}" package`
     let config: string
     let startPublishResponse!: APIResponse
@@ -225,7 +240,12 @@ export class ApihubTestDataManager {
           }
           await asyncTimeout(2000)
         }
-        throw Error(`${message} has not been completed\nPublish config: ${config}\n${await getResponseDebugMsg(startPublishResponse, 'Publish')}\n${await getResponseDebugMsg(getPublishStatusResponse, 'Get status')}`)
+        throw Error(
+          `${message} has not been completed\nPublish config: ${config}\n${await getResponseDebugMsg(
+            startPublishResponse,
+            'Publish',
+          )}\n${await getResponseDebugMsg(getPublishStatusResponse, 'Get status')}`,
+        )
       }, { box: true })
     }, { box: true })
   }
@@ -239,7 +259,9 @@ export class ApihubTestDataManager {
     status?: VersionStatuses
     versionLabels?: string[]
   }): Promise<void> {
-    const message = `Updating the "${params.version}" version in the "${params.pkg.name || params.pkg.packageId}" package`
+    const message = `Updating the "${params.version}" version in the "${
+      params.pkg.name || params.pkg.packageId
+    }" package`
 
     await test.step(message, async () => {
       const response = await this.rest.send(rUpdatePackageVersion, [200], {
@@ -389,7 +411,6 @@ export class ApihubTestDataManager {
   }
 
   private buildConfig(params: TdmPublishVersion): string {
-
     function resolveRestPublishFiles(files: TdmPublishFile[]): RestPublishFile[] {
       return files.map((file) => (file.fileId ? file as RestPublishFile : {
         fileId: file.file.name,

@@ -13,7 +13,6 @@ import type {
 export type ExpectInput = Locator | BaseComponent
 
 export class CommonExpect<T extends ExpectInput> extends BaseExpect<T> {
-
   constructor(
     actual: T,
     isNot = false,
@@ -47,11 +46,17 @@ export class CommonExpect<T extends ExpectInput> extends BaseExpect<T> {
     await this.executeExpectation('to be empty', 'toBeEmpty', [options])
   }
 
-  async toHaveText(expected: string | RegExp | Array<string | RegExp>, options?: HaveContainTextOptions): Promise<void> {
+  async toHaveText(
+    expected: string | RegExp | Array<string | RegExp>,
+    options?: HaveContainTextOptions,
+  ): Promise<void> {
     await this.executeExpectation(`to have text "${expected}"`, 'toHaveText', [expected, options])
   }
 
-  async toContainText(expected: string | RegExp | Array<string | RegExp>, options?: HaveContainTextOptions): Promise<void> {
+  async toContainText(
+    expected: string | RegExp | Array<string | RegExp>,
+    options?: HaveContainTextOptions,
+  ): Promise<void> {
     await this.executeExpectation(`to contain text "${expected}"`, 'toContainText', [expected, options])
   }
 
@@ -80,9 +85,19 @@ export class CommonExpect<T extends ExpectInput> extends BaseExpect<T> {
   }
 
   async toHaveAttribute(name: string, value: string | RegExp, options?: HaveAttributeOptions): Promise<void> {
-    await this.executeExpectation(`to have attribute "${name}" with value "${value}"`, 'toHaveAttribute', [name, value, options])
+    await this.executeExpectation(`to have attribute "${name}" with value "${value}"`, 'toHaveAttribute', [
+      name,
+      value,
+      options,
+    ])
   }
 
+  /**
+   * Verifies that an element contains an icon with the specified test ID.
+   * Searches for the first SVG element within the component and checks its data-testid attribute.
+   * @param expected - The data-testid of the icon to verify (e.g., 'ErrorIcon', 'WarningIcon')
+   * @param options - Optional timeout options
+   */
   async toHaveIcon(expected: string, options?: TimeoutOption): Promise<void> {
     const customLocator = this.actual instanceof BaseComponent
       ? this.actual.mainLocator.locator('svg').first()
@@ -93,5 +108,25 @@ export class CommonExpect<T extends ExpectInput> extends BaseExpect<T> {
       ['data-testid', expected, options],
       customLocator,
     )
+  }
+
+  /**
+   * Verifies that an element contains an icon with the specified CSS class.
+   * Checks if the element itself has the specified class (used for Monaco codicon icons).
+   * Uses regex pattern matching to check if the class is present among other classes.
+   * @param expected - The CSS class to verify (e.g., 'codicon-error', 'codicon-warning')
+   * @param options - Optional timeout options
+   */
+  async toHaveIconClass(expected: string, options?: TimeoutOption): Promise<void> {
+    const regex = new RegExp(expected)
+    await this.executeExpectation(
+      `to have icon class "${expected}"`,
+      'toHaveClass',
+      [regex, options],
+    )
+  }
+
+  async toBeInViewport(options?: TimeoutOption): Promise<void> {
+    await this.executeExpectation('to be in viewport', 'toBeInViewport', [options])
   }
 }

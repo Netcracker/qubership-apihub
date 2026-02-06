@@ -6,6 +6,8 @@ import type {
   VersionViewParams,
   VersionViewTabs,
 } from '@portal/entities'
+import type { GotoOptions, OperationsApiType } from '@shared/entities'
+import { Placeholder } from '@shared/components/base'
 import { MainPage } from '@shared/pages'
 import { GlobalSearchPanel } from './PortalPage/GlobalSearchPanel'
 import { OperationPage } from './PortalPage/OperationPage'
@@ -13,12 +15,11 @@ import { PortalCreatePackageDialog } from './PortalPage/PortalCreatePackageDialo
 import { PortalPageSidebar } from './PortalPage/PortalPageSidebar'
 import { PortalPageTable } from './PortalPage/PortalPageTable'
 import { PortalPageToolbar } from './PortalPage/PortalPageToolbar'
+import { PortalSettingsPage } from './PortalPage/PortalSettingsPage/PortalSettingsPage'
 import { VersionDashboardPage } from './PortalPage/VersionPage/VersionDashboardPage'
 import { VersionPackagePage } from './PortalPage/VersionPage/VersionPackagePage'
-import type { GotoOptions, OperationsApiType } from '@shared/entities'
 
 export class PortalPage extends MainPage {
-
   readonly sidebar = new PortalPageSidebar(this.page)
   readonly toolbar = new PortalPageToolbar(this.page)
   readonly table = new PortalPageTable(this.page)
@@ -26,9 +27,11 @@ export class PortalPage extends MainPage {
   readonly globalSearchPanel = new GlobalSearchPanel(this.page)
   readonly versionPackagePage = new VersionPackagePage(this.page)
   readonly versionDashboardPage = new VersionDashboardPage(this.page)
+  readonly portalSettingsPage = new PortalSettingsPage(this.page)
   readonly createPackageDialog = new PortalCreatePackageDialog(this.page)
+  readonly noPermissionPlaceholder = new Placeholder(this.page.getByTestId('NoPermissionPlaceholder'), 'No permission')
 
-  constructor(protected readonly page: Page) {
+  constructor(readonly page: Page) {
     super(page)
   }
 
@@ -76,10 +79,14 @@ export class PortalPage extends MainPage {
     await this.navigationStep(stepTitle, path)
   }
 
-  async gotoDocument({
-    pkg,
-    version,
-  }: VersionViewParams, fileSlug: string, preview?: boolean): Promise<void> {
+  async gotoDocument(
+    {
+      pkg,
+      version,
+    }: VersionViewParams,
+    fileSlug: string,
+    preview?: boolean,
+  ): Promise<void> {
     let stepTitle = `Open "${fileSlug}" document from "${pkg.name || pkg.packageId} / ${version}" version`
     let path = `/portal/packages/${pkg.packageId}/${version}/documents/${fileSlug}`
     if (preview) {
@@ -233,17 +240,23 @@ export class PortalPage extends MainPage {
   ): Promise<void> {
     const currentPackageTitle = currentPackage.name || currentPackage.packageId
     const previousVersionOption = previousVersion ? `version=${previousVersion}` : ''
-    const previousPackageTitle = previousPackage ? previousPackage.name || previousPackage.packageId : currentPackageTitle
+    const previousPackageTitle = previousPackage
+      ? previousPackage.name || previousPackage.packageId
+      : currentPackageTitle
     const previousPackageOption = previousPackage ? `&package=${previousPackage.packageId}` : ''
     const refPackageTitle = refPackage ? `"${refPackage.name || refPackage.packageId}" in ` : ''
     const refPackageOption = refPackage ? `&ref=${refPackage.packageId}` : ''
     const currentOperationTitle = currentOperation ? `"${currentOperation.operationId}" in ` : ''
-    const currentOperationOption = currentOperation ? `/${currentOperation.apiType}/${currentOperation.operationId}` : ''
+    const currentOperationOption = currentOperation
+      ? `/${currentOperation.apiType}/${currentOperation.operationId}`
+      : ''
     const previousOperationTitle = previousOperation ? `"${previousOperation.operationId}" vs ` : ''
     const previousOperationOption = previousOperation ? `operation=${previousOperation.operationId}` : ''
     const apiTypeOption = apiType ? `&apiType=${apiType}` : ''
-    const stepTitle = `Open ${previousOperationTitle}${currentOperationTitle}${refPackageTitle}"${previousPackageTitle}/${previousVersion}" vs "${currentPackageTitle}/${currentVersion}" comparison`
-    const path = `/portal/packages/${currentPackage.packageId}/${currentVersion}/compare${currentOperationOption}?${previousOperationOption}${previousVersionOption}${previousPackageOption}${refPackageOption}${apiTypeOption}`
+    const stepTitle =
+      `Open ${previousOperationTitle}${currentOperationTitle}${refPackageTitle}"${previousPackageTitle}/${previousVersion}" vs "${currentPackageTitle}/${currentVersion}" comparison`
+    const path =
+      `/portal/packages/${currentPackage.packageId}/${currentVersion}/compare${currentOperationOption}?${previousOperationOption}${previousVersionOption}${previousPackageOption}${refPackageOption}${apiTypeOption}`
     await this.navigationStep(stepTitle, path)
   }
 }
