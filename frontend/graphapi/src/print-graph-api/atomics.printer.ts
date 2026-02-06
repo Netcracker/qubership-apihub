@@ -66,9 +66,7 @@ export function printOriginalType(schema?: GraphApiRef | GraphApiListDefinition 
 export function printDescription(value?: string, indent = '', firstInBlock = true): string {
   if (!value) { return '' }
 
-  const result = isPrintableMultilineString(value)
-    ? printMultilineString(value)
-    : printString(value)
+  const result = printMultilineString(value)
 
   const prefix = indent && !firstInBlock ? '\n' + indent : indent
 
@@ -76,9 +74,32 @@ export function printDescription(value?: string, indent = '', firstInBlock = tru
 }
 
 export function printString(str: string): string {
-  return `"${str}"`
+  // Escape all control characters according to GraphQL string literal specification
+  // See: https://spec.graphql.org/October2021/#sec-String-Value
+  
+  // Chained replace() calls are actually fastest due to V8 optimizations
+  const escaped = str
+    .replace(/\\/g, '\\\\')           // Escape backslashes first (must be first to avoid double-escaping)
+    .replace(/"/g, '\\"')             // Escape quotes
+    .replace(/\n/g, '\\n')            // Escape newlines (line feed)
+    .replace(/\r/g, '\\r')            // Escape carriage returns
+    .replace(/\t/g, '\\t')            // Escape tabs (horizontal tab)
+    .replace(/[\b]/g, '\\b')          // Escape backspace (using character class to avoid \b word boundary)
+    .replace(/\f/g, '\\f')            // Escape form feed
+  
+  return `"${escaped}"`
 }
 
 export function printMultilineString(str: string): string {
-  return '"""\n' + `${str}\n` + '"""'
+  const hasNewlines = str.includes('\n')
+  const startsOrEndsWithQuote = str.startsWith('"') || str.endsWith('"')
+  const isLong = str.length > 70
+  
+  if (hasNewlines || startsOrEndsWithQuote || isLong) {
+    // Newline format: triple quotes on separate lines
+    return '"""\n' + str + '\n"""'
+  } else {
+    // Inline format: triple quotes on same line
+    return '"""' + str + '"""'
+  }
 }

@@ -459,6 +459,7 @@ describe('Directives', () => {
     `
     expect(graphApi).toEqual({
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: {
           output: {
@@ -488,6 +489,7 @@ describe('Directives', () => {
     `
     expect(graphApi).toEqual({
       graphapi: GRAPH_API_VERSION,
+      mutationTypeName: "Mutation",
       mutations: {
         test: {
           output: {
@@ -517,6 +519,7 @@ describe('Directives', () => {
     `
     expect(graphApi).toEqual({
       graphapi: GRAPH_API_VERSION,
+      subscriptionTypeName: "Subscription",
       subscriptions: {
         test: {
           output: {
@@ -595,6 +598,7 @@ describe('Directives', () => {
     `
     expect(graphApi).toEqual({
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: { output: { typeDef: { type: { kind: 'ID' } }, nullable: false } }
       },
@@ -622,6 +626,7 @@ describe('Directives', () => {
     `
     expect(graphApi).toEqual({
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: {
           output: { typeDef: { type: { kind: 'ID' } }, nullable: false }
@@ -651,6 +656,7 @@ describe('Directives', () => {
     `
     expect(graphApi).toEqual({
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: {
           output: { typeDef: { type: { kind: 'ID' } }, nullable: false }
@@ -680,6 +686,7 @@ describe('Directives', () => {
     `
     expect(graphApi).toEqual({
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: {
           output: { typeDef: { type: { kind: 'ID' } }, nullable: false }
@@ -709,6 +716,7 @@ describe('Directives', () => {
     `
     expect(graphApi).toEqual({
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: {
           output: { typeDef: { type: { kind: 'ID' } }, nullable: false }
@@ -733,6 +741,7 @@ describe('Directives', () => {
     `
     expect(graphApi).toEqual({
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: {
           output: { typeDef: { type: { kind: 'ID' } }, nullable: false }
@@ -751,6 +760,7 @@ describe('Directives', () => {
     `
     expect(graphApi).toEqual({
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: {
           output: { typeDef: { type: { kind: 'ID' } }, nullable: false }
@@ -777,6 +787,7 @@ describe('Directives', () => {
     `
     expect(graphApi).toEqual({
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: {
           output: { typeDef: { type: { kind: 'ID' } }, nullable: false }

@@ -3,7 +3,7 @@ import { BUILT_IN_DIRECTIVES_SET, GRAPH_API_NODE_KIND_ENUM, GRAPH_API_NODE_KIND_
 import { getScalarType } from "../utils";
 import { GraphApiAnyDefinition, GraphApiAnyUsage, GraphApiArgument, GraphApiDirectiveDefinition, GraphApiEnumDefinition, GraphApiInputObjectDefinition, GraphApiInputUsage, GraphApiObjectDefinition, GraphApiObjectKind, GraphApiOperation, GraphApiScalarDefinition, GraphApiUnionDefinition, GraphEnumValue } from '../../types';
 import { transformBaseType, transformNamedType } from './atomics.transformer';
-import { USED_BUILT_IN_DIRECTIVES } from './declarations';
+import { USED_BUILT_IN_DIRECTIVES, OVERRIDDEN_BUILT_IN_DIRECTIVES } from './declarations';
 import { transformArgs, transformType2Definition, transformType2Usage, transformUsedDirectives } from './definition-parts.transformer';
 import { createRef } from './utils';
 
@@ -21,7 +21,10 @@ export function directiveType2DefinitionReducer(
   result: Record<string, GraphApiDirectiveDefinition>,
   directive: GraphQLDirective
 ) {
-  const isOverridenBuiltInDirective = directive.astNode !== undefined
+  const isOverridenBuiltInDirective = directive.astNode !== undefined && BUILT_IN_DIRECTIVES_SET.has(directive.name)
+  if (isOverridenBuiltInDirective) {
+    OVERRIDDEN_BUILT_IN_DIRECTIVES.add(directive.name)
+  }
   if (!BUILT_IN_DIRECTIVES_SET.has(directive.name) || isOverridenBuiltInDirective || USED_BUILT_IN_DIRECTIVES.has(directive.name)) {
     result[directive.name] = transformDirectiveType2Definition(directive)
   }

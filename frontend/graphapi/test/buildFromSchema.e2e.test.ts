@@ -57,6 +57,7 @@ describe('Build GraphApi', () => {
     `
     expect(graphApi).toEqual({
       graphapi: GRAPH_API_VERSION,
+      queryTypeName: "Query",
       queries: {
         test: {
           output: {

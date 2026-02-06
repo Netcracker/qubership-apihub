@@ -176,7 +176,8 @@ export function isGraphApiAnyDefinition(value: unknown): value is GraphApiAnyDef
     isGraphApiObjectDefinition(value) ||
     isGraphApiInterfaceDefinition(value) ||
     isGraphApiInputObjectDefinition(value) ||
-    isGraphApiUnionDefinition(value)
+    isGraphApiUnionDefinition(value) ||
+    isGraphApiListDefinition(value)
   )
 }
 

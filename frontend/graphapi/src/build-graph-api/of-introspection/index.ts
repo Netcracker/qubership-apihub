@@ -84,6 +84,10 @@ export function buildFromIntrospection({ __schema }: IntrospectionQuery): GraphA
   const graphApi = types.reduce(typeReducer, {
     graphapi: "1.0.0",
     ...description ? { description } : {},
+    // Preserve original root type names for proper schema definition printing
+    ...queryType ? { queryTypeName: queryType.name } : {},
+    ...mutationType ? { mutationTypeName: mutationType.name } : {},
+    ...subscriptionType ? { subscriptionTypeName: subscriptionType.name } : {},
     components: {
       ...filteredDirectives.length ? { directives: filteredDirectives } : {}
     }
