@@ -1,6 +1,6 @@
 import { compareFiles, TEST_DEFAULTS_DECLARATION_PATHS } from '../utils'
 import { diffsMatcher } from '../../helper/matchers'
-import { annotation, breaking, DiffAction, nonBreaking } from '../../../src'
+import { annotation, breaking, DiffAction, nonBreaking, risky, unclassified } from '../../../src'
 import { TEST_SPEC_TYPE_GRAPH_QL } from '@netcracker/qubership-apihub-compatibility-suites'
 import { COMPARE_SCOPE_OUTPUT } from '../../../src/graphapi'
 
@@ -49,13 +49,32 @@ describe('GraphQL Interface Output Type of Root Type', () => {
       }),
     ]))
   })
+  test('Change field type of output interface from enum to string', async () => {
+    const testId = 'change-field-type-of-output-interface-from-enum-to-string'
+    const result = await compareFiles(SUITE_ID, testId, TEST_SPEC_TYPE_GRAPH_QL)
+    expect(result).toEqual(diffsMatcher([
+      expect.objectContaining({
+        action: DiffAction.replace,
+        //beforeDeclarationPaths: [[...COMPONENT_PATH, 'type', 'methods', 'name', 'output', 'typeDef', 'type']],  // TODO: fix before declaration paths
+        afterDeclarationPaths: [[...COMPONENT_PATH, 'type', 'methods', 'name', 'output', 'typeDef', 'type']],
+        type: breaking,
+        scope: COMPARE_SCOPE_OUTPUT
+      }),
+      expect.objectContaining({
+        action: DiffAction.remove,
+        // beforeDeclarationPaths: [[...ENUM_PATH]],  // TODO: fix before declaration paths
+        type: unclassified,
+        scope: COMPARE_SCOPE_OUTPUT
+      }),
+    ]))
+  })
   test('Add new field in output interface', async () => {
     const testId = 'add-new-field-in-output-interface'
     const result = await compareFiles(SUITE_ID, testId, TEST_SPEC_TYPE_GRAPH_QL)
     expect(result).toEqual(diffsMatcher([
       expect.objectContaining({
         action: DiffAction.add,
-        afterDeclarationPaths: [[...COMPONENT_PATH, 'type','methods', 'name']],
+        afterDeclarationPaths: [[...COMPONENT_PATH, 'type', 'methods', 'name']],
         type: nonBreaking,
         scope: COMPARE_SCOPE_OUTPUT
       }),
@@ -67,7 +86,7 @@ describe('GraphQL Interface Output Type of Root Type', () => {
     expect(result).toEqual(diffsMatcher([
       expect.objectContaining({
         action: DiffAction.remove,
-        beforeDeclarationPaths: [[...COMPONENT_PATH, 'type','methods', 'name']],
+        beforeDeclarationPaths: [[...COMPONENT_PATH, 'type', 'methods', 'name']],
         type: breaking,
         scope: COMPARE_SCOPE_OUTPUT
       }),
@@ -154,7 +173,7 @@ describe('GraphQL Interface Output Type of Root Type', () => {
       expect.objectContaining({
         action: DiffAction.add,
         afterDeclarationPaths: [[...ENUM_PATH, 'type', 'values', 'banana']],
-        type: breaking,
+        type: risky,
         scope: COMPARE_SCOPE_OUTPUT
       }),
     ]))

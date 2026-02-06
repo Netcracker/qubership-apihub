@@ -26,7 +26,7 @@ export interface DiffAdd<T = DiffType> extends DiffBase<T> {
    */
   afterDeclarationPaths: JsonPath[]
   afterValue: unknown
-  afterNormalizedValue: unknown
+  [key: symbol]: unknown
 }
 
 export interface DiffRemove<T = DiffType> extends DiffBase<T> {
@@ -36,7 +36,7 @@ export interface DiffRemove<T = DiffType> extends DiffBase<T> {
    */
   beforeDeclarationPaths: JsonPath[]
   beforeValue: unknown
-  beforeNormalizedValue: unknown
+  [key: symbol]: unknown
 }
 
 export interface DiffReplace<T = DiffType> extends DiffBase<T> {
@@ -50,9 +50,8 @@ export interface DiffReplace<T = DiffType> extends DiffBase<T> {
    */
   afterDeclarationPaths: JsonPath[]
   afterValue: unknown
-  afterNormalizedValue: unknown
   beforeValue: unknown
-  beforeNormalizedValue: unknown
+  [key: symbol]: unknown
 }
 
 export interface DiffRename<T = DiffType> extends DiffBase<T> {
@@ -84,6 +83,14 @@ export const COMPARE_MODE_OPERATION = 'operation'
 
 export type CompareMode = typeof COMPARE_MODE_DEFAULT | typeof COMPARE_MODE_OPERATION
 
+export const API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE = 'BACKWARD_COMPATIBLE'
+export const API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE = 'NOT_BACKWARD_COMPATIBLE'
+
+export type ApiCompatibilityKind = typeof API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE
+  | typeof API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE
+
+export type ApiCompatibilityScopeFunction = (path?: JsonPath, beforeJso?: unknown, afterJso?: unknown) => ApiCompatibilityKind | undefined
+
 export interface CompareOptions extends Omit<NormalizeOptions, 'source'> {
   mode?: CompareMode
   normalizedResult?: boolean
@@ -91,6 +98,26 @@ export interface CompareOptions extends Omit<NormalizeOptions, 'source'> {
   beforeSource?: unknown
   afterSource?: unknown
   onCreateDiffError?: (message: string, diff: Diff, ctx: CompareContext) => void
+  beforeValueNormalizedProperty?: symbol
+  afterValueNormalizedProperty?: symbol
+  /**
+   * Function that marks specific paths/values as backward compatible
+   * or non-backward compatible. Use it to mark a specific path or object,
+   * so diffs under it are treated as risky when needed.
+   * Returns
+   * `NOT_BACKWARD_COMPATIBLE` when any change under the matched path must be considered risky.
+   * `BACKWARD_COMPATIBLE` when it should inherit/allow backward-compatible way.
+   * `undefined` to inherit the parent scope.
+   */
+  apiCompatibilityScopeFunction?: ApiCompatibilityScopeFunction
+  /**
+   * For OpenAPI specs:
+   * If a whole PathItem is removed, generate separate diffs for each HTTP operation (get/post/...)
+   * instead of a single diff for the whole PathItem.
+   * 
+   * Default: `false`
+   */
+  openApiPathItemPerOperationDiffs?: boolean
 }
 
 export type DiffCallback = (diff: Diff/*, ctx: CompareContext*/) => void
@@ -132,6 +159,7 @@ export interface MergeState<T extends PropertyKey = string> {
   diffUniquenessCache: EvaluationCacheService,
   createdMergedJso: Set<JsonNode>,
   compareScope: CompareScope
+  apiCompatibilityScope: ApiCompatibilityKind
 }
 
 export type JsonNode<Key extends PropertyKey = string> = Key extends (string | symbol) ? Record<string | symbol, unknown> : Record<number, unknown> | Array<unknown>

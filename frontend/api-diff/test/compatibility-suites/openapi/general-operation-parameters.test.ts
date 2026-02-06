@@ -1,5 +1,5 @@
 import { compareFiles, TEST_DEFAULTS_DECLARATION_PATHS } from '../utils'
-import { diffsMatcher } from '../../helper/matchers'
+import { diffsMatcher, expectOpenApiVersionChange } from '../../helper/matchers'
 import { annotation, breaking, deprecated, DiffAction, nonBreaking } from '../../../src'
 
 const SUITE_ID = 'general-operation-parameters'
@@ -775,10 +775,9 @@ const PATH_ITEM_PATH = [
 ]
 
 describe('Openapi3.1 PathItems', () => {
-  test('Add method in path item', async () => {
-    const testId = 'add-method-in-path-item'
-    const result = await compareFiles(SUITE_ID, testId)
-    expect(result).toEqual(diffsMatcher([
+  test.caseForOpenApiVersionPairs('add-method-in-path-item', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
+    expect(diffs).toEqual(diffsMatcher([
+      expectOpenApiVersionChange(beforeVersion, afterVersion),
       expect.objectContaining({
         action: DiffAction.add,
         afterDeclarationPaths: [[...PATH_ITEM_PATH, 'post']],
@@ -787,22 +786,21 @@ describe('Openapi3.1 PathItems', () => {
     ]))
   })
 
-  test('Remove unused method in path item', async () => {
-    const testId = 'remove-unused-method-in-path-item'
-    const result = await compareFiles(SUITE_ID, testId)
-    expect(result).toEqual([])
+  test.caseForOpenApiVersionPairs('remove-unused-method-in-path-item', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
+    expect(diffs).toEqual(diffsMatcher([
+      expectOpenApiVersionChange(beforeVersion, afterVersion),
+    ]))
   })
 
-  test('Add unused method in path item', async () => {
-    const testId = 'add-unused-method-in-path-item'
-    const result = await compareFiles(SUITE_ID, testId)
-    expect(result).toEqual([])
+  test.caseForOpenApiVersionPairs('add-unused-method-in-path-item', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
+    expect(diffs).toEqual(diffsMatcher([
+      expectOpenApiVersionChange(beforeVersion, afterVersion),
+    ]))
   })
 
-  test('Remove method in path item', async () => {
-    const testId = 'remove-method-in-path-item'
-    const result = await compareFiles(SUITE_ID, testId)
-    expect(result).toEqual(diffsMatcher([
+  test.caseForOpenApiVersionPairs('remove-method-in-path-item', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
+    expect(diffs).toEqual(diffsMatcher([
+      expectOpenApiVersionChange(beforeVersion, afterVersion),
       expect.objectContaining({
         action: DiffAction.remove,
         beforeDeclarationPaths: [[...PATH_ITEM_PATH, 'post']],
@@ -811,15 +809,15 @@ describe('Openapi3.1 PathItems', () => {
     ]))
   })
 
-  test('Replace inline path item to ref', async () => {
-    const testId = 'replace-inline-path-item-to-ref'
-    const result = await compareFiles(SUITE_ID, testId)
-    expect(result).toEqual([])
+  test.caseForOpenApiVersionPairs('replace-inline-path-item-to-ref', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
+    expect(diffs).toEqual(diffsMatcher([
+      expectOpenApiVersionChange(beforeVersion, afterVersion),
+    ]))
   })
 
-  test('Replace ref path item to inline', async () => {
-    const testId = 'replace-ref-path-item-to-inline'
-    const result = await compareFiles(SUITE_ID, testId)
-    expect(result).toEqual([])
+  test.caseForOpenApiVersionPairs('replace-ref-path-item-to-inline', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
+    expect(diffs).toEqual(diffsMatcher([
+      expectOpenApiVersionChange(beforeVersion, afterVersion),
+    ]))
   })
 })

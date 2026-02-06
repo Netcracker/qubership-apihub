@@ -1,7 +1,20 @@
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 
-import { CompareContext, Diff, DiffEntry, DiffFactory, DiffMetaRecord, NodeContext } from '../types'
-import { allUnclassified, DiffAction, unclassified } from './constants'
+import {
+  CompareContext,
+  Diff,
+  DiffAdd,
+  DiffEntry,
+  DiffFactory,
+  DiffMetaRecord,
+  DiffRemove,
+  DiffRename,
+  DiffReplace,
+  DiffType,
+  NodeContext,
+  API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE,
+} from '../types'
+import { allUnclassified, breaking, DiffAction, risky, unclassified } from './constants'
 import { getKeyValue, isFunc } from '../utils'
 import { calculateDefaultDiffDescription } from './description'
 
@@ -18,7 +31,8 @@ export const createDiff = <D extends Diff>(diff: Omit<D, 'type'>, ctx: CompareCo
     const changeType = classifier[index]
 
     try {
-      mutableDiffCopy.type = isFunc(changeType) ? changeType(ctx) : changeType
+      const type = isFunc(changeType) ? changeType(ctx) : changeType
+      mutableDiffCopy.type = reclassifyBreakingToRisky(type, ctx)
     } catch (error) {
       ctx.options.onCreateDiffError?.(`Unable to find diff type. ${error instanceof Error ? error.message : ''}`, mutableDiffCopy, ctx)
     }
@@ -31,6 +45,10 @@ export const createDiff = <D extends Diff>(diff: Omit<D, 'type'>, ctx: CompareCo
   return mutableDiffCopy
 }
 
+export const reclassifyBreakingToRisky = (type: DiffType, ctx: CompareContext): DiffType => {
+  return type === breaking && ctx.apiCompatibilityScope === API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE ? risky : type
+}
+
 export function createDiffEntry(ctx: CompareContext, diff: Diff): DiffEntry<Diff> {
   return ({
     propertyKey: ctx.mergeKey,
@@ -39,30 +57,47 @@ export function createDiffEntry(ctx: CompareContext, diff: Diff): DiffEntry<Diff
 }
 
 export const diffFactory: DiffFactory = {
-  added: (ctx) => createDiff({
-    afterValue: ctx.after?.value,
-    afterNormalizedValue: ctx.after?.value,
-    action: DiffAction.add,
-    afterDeclarationPaths: ctx.after.declarativePaths,
-    scope: ctx.scope,
-  }, ctx),
-  removed: (ctx) => createDiff({
-    beforeValue: ctx.before.value,
-    beforeNormalizedValue: ctx.before.value,
-    action: DiffAction.remove,
-    beforeDeclarationPaths: ctx.before.declarativePaths,
-    scope: ctx.scope,
-  }, ctx),
-  replaced: (ctx) => createDiff({
-    beforeValue: ctx.before.value,
-    beforeNormalizedValue: ctx.before.value,
-    afterValue: ctx.after.value,
-    afterNormalizedValue: ctx.after.value,
-    action: DiffAction.replace,
-    afterDeclarationPaths: ctx.after.declarativePaths,
-    beforeDeclarationPaths: ctx.before.declarativePaths,
-    scope: ctx.scope,
-  }, ctx),
+  added: (ctx) => {
+    const diff = createDiff({
+      afterValue: ctx.after?.value,
+      action: DiffAction.add,
+      afterDeclarationPaths: ctx.after.declarativePaths,
+      scope: ctx.scope,
+    }, ctx) as DiffAdd
+    if (ctx.options.afterValueNormalizedProperty) {
+      diff[ctx.options.afterValueNormalizedProperty] = ctx.after?.value
+    }
+    return diff
+  },
+  removed: (ctx) => {
+    const diff = createDiff({
+      beforeValue: ctx.before.value,
+      action: DiffAction.remove,
+      beforeDeclarationPaths: ctx.before.declarativePaths,
+      scope: ctx.scope,
+    }, ctx) as DiffRemove
+    if (ctx.options.beforeValueNormalizedProperty) {
+      diff[ctx.options.beforeValueNormalizedProperty] = ctx.before.value
+    }
+    return diff
+  },
+  replaced: (ctx) => {
+    const diff = createDiff({
+      beforeValue: ctx.before.value,
+      afterValue: ctx.after.value,
+      action: DiffAction.replace,
+      afterDeclarationPaths: ctx.after.declarativePaths,
+      beforeDeclarationPaths: ctx.before.declarativePaths,
+      scope: ctx.scope,
+    }, ctx) as DiffReplace
+    if (ctx.options.beforeValueNormalizedProperty) {
+      diff[ctx.options.beforeValueNormalizedProperty] = ctx.before.value
+    }
+    if (ctx.options.afterValueNormalizedProperty) {
+      diff[ctx.options.afterValueNormalizedProperty] = ctx.after.value
+    }
+    return diff
+  },
   renamed: (ctx) => createDiff({
     beforeKey: ctx.before?.key,
     afterKey: ctx.after?.key,
@@ -70,7 +105,7 @@ export const diffFactory: DiffFactory = {
     afterDeclarationPaths: ctx.after?.declarativePaths ?? [],
     beforeDeclarationPaths: ctx.before?.declarativePaths ?? [],
     scope: ctx.scope,
-  }, ctx),
+  }, ctx) as DiffRename,
 }
 
 export const addDiffObjectToContainer = (

@@ -1,0 +1,18 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Test API
+servers:
+  - url: https://example.com/api/v2
+paths:
+  /users:
+    servers:
+      - url: https://example.com/api/v1
+    get:
+      summary: Get users
+      responses:
+        '200':
+          description: OK
+
+
+

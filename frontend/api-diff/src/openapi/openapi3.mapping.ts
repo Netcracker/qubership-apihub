@@ -1,6 +1,17 @@
-import type { MapKeysResult, MappingResolver } from '../types'
-import { getStringValue, objectKeys, onlyExistedArrayIndexes } from '../utils'
+import { MapKeysResult, MappingResolver, SyntheticDiffsResolver } from '../types'
+import {
+  difference,
+  extractOperationBasePath,
+  getStringValue,
+  intersection,
+  isObject,
+  isValidHttpMethod,
+  objectKeys,
+  onlyExistedArrayIndexes,
+  removeExcessiveSlashes,
+} from '../utils'
 import { mapPathParams } from './openapi3.utils'
+import { OpenAPIV3 } from 'openapi-types'
 
 export const singleOperationPathMappingResolver: MappingResolver<string> = (before, after) => {
 
@@ -23,32 +34,61 @@ export const singleOperationPathMappingResolver: MappingResolver<string> = (befo
   return result
 }
 
-export const pathMappingResolver: MappingResolver<string> = (before, after) => {
+/**
+ * Maps OpenAPI path keys between two versions of the spec by considering possible base path changes
+ * defined in the root object `servers` field and path item object `servers` field.
+ * This mapping normalizes (unifies) paths by removing any basePath prefixes
+ * so that equivalent endpoints are recognized and correctly mapped even if the base path (URL prefix)
+ * has changed. It does *not* handle server base paths defined at the operation level.
+ * It also maps paths even if path parameters have changed.
+ *
+ * @param before - The "before" object representing a set of OpenAPI paths (mapping string keys to PathItemObject)
+ * @param after - The "after" object representing a set of OpenAPI paths (mapping string keys to PathItemObject)
+ * @param ctx - The NodeContext, used here to access the root OpenAPI Document for both "before" and "after"
+ * @returns {MapKeysResult<string>} An object containing arrays of `added` and `removed` path keys, and
+ *   a mapping between old and new keys for matched paths.
+ *
+ * @remarks
+ * This method does not support mapping when the base path is defined in the operation-level `servers`.
+ * See related test: "Should match operation when prefix moved from operation object servers to path".
+ */
+export const pathMappingResolver: MappingResolver<string> = (before, after, ctx) => {
 
   const result: MapKeysResult<string> = { added: [], removed: [], mapped: {} }
 
-  const originalBeforeKeys = objectKeys(before)
-  const originalAfterKeys = objectKeys(after)
-  const unifiedAfterKeys = originalAfterKeys.map(hidePathParamNames)
+  // current approach for mapping does not allow to match operations between versions
+  // if base path is specified in the servers array of the operation object, so this case is not supported
+  // see test "Should match operation when prefix moved from operation object servers to path"
+  const unifyBeforePath = createPathUnifier((ctx.before.root as OpenAPIV3.Document).servers)
+  const unifyAfterPath = createPathUnifier((ctx.after.root as OpenAPIV3.Document).servers)
 
-  const notMappedAfterIndices = new Set(originalAfterKeys.keys())
+  const unifiedBeforeKeyToKey = Object.fromEntries(objectKeys(before).map(key => [unifyBeforePath(key, (before[key] as OpenAPIV3.PathItemObject)?.servers), key]))
+  const unifiedAfterKeyToKey = Object.fromEntries(objectKeys(after).map(key => [unifyAfterPath(key, (after[key] as OpenAPIV3.PathItemObject)?.servers), key]))
 
-  originalBeforeKeys.forEach(beforeKey => {
-    const unifiedBeforePath = hidePathParamNames(beforeKey)
-    const index = unifiedAfterKeys.indexOf(unifiedBeforePath)
+  const unifiedBeforeKeys = Object.keys(unifiedBeforeKeyToKey)
+  const unifiedAfterKeys = Object.keys(unifiedAfterKeyToKey)
 
-    if (index < 0) {
-      // removed item
-      result.removed.push(beforeKey)
-    } else {
-      // mapped items
-      result.mapped[beforeKey] = originalAfterKeys[index]
-      notMappedAfterIndices.delete(index)
-    }
-  })
+  result.added = difference(unifiedAfterKeys, unifiedBeforeKeys).map(key => unifiedAfterKeyToKey[key])
+  result.removed = difference(unifiedBeforeKeys, unifiedAfterKeys).map(key => unifiedBeforeKeyToKey[key])
+  result.mapped = Object.fromEntries(
+    intersection(unifiedBeforeKeys, unifiedAfterKeys).map(key => [unifiedBeforeKeyToKey[key], unifiedAfterKeyToKey[key]]),
+  )
 
-  // added items
-  notMappedAfterIndices.forEach((notMappedIndex) => result.added.push(originalAfterKeys[notMappedIndex]))
+  return result
+}
+
+export const methodMappingResolver: MappingResolver<string> = (before, after) => {
+
+  const result: MapKeysResult<string> = { added: [], removed: [], mapped: {} }
+
+  const beforeKeys = objectKeys(before)
+  const afterKeys = objectKeys(after)
+
+  result.added = difference(afterKeys, beforeKeys)
+  result.removed = difference(beforeKeys, afterKeys)
+
+  const mapped = intersection(beforeKeys, afterKeys)
+  mapped.forEach(key => result.mapped[key] = key)
 
   return result
 }
@@ -100,10 +140,10 @@ export const contentMediaTypeMappingResolver: MappingResolver<string> = (before,
   function mapExactMatches(
     getComparisonKey: (key: string) => string
   ): void {
-    
+
     for (const beforeIndex of unmappedBeforeIndices) {
       const beforeKey = getComparisonKey(beforeKeys[beforeIndex])
-      
+
       // Find matching after index by iterating over the after indices set
       let matchingAfterIndex: number | undefined
       for (const afterIndex of unmappedAfterIndices) {
@@ -175,9 +215,67 @@ function isWildcardCompatible(beforeType: string, afterType: string): boolean {
   return true
 }
 
+export function createPathUnifier(rootServers?: OpenAPIV3.ServerObject[]): (path: string, pathServers?: OpenAPIV3.ServerObject[]) => string {
+  return (path, pathServers) => {
+    // Prioritize path-level servers over root-level servers
+    const serverPrefix = extractOperationBasePath(pathServers || rootServers)
+    return removeExcessiveSlashes(`${serverPrefix}${hidePathParamNames(path)}`)
+  }
+}
+
 export function hidePathParamNames(path: string): string {
   return path.replace(PATH_PARAMETER_REGEXP, PATH_PARAM_UNIFIED_PLACEHOLDER)
 }
 
 const PATH_PARAMETER_REGEXP = /\{.*?\}/g
 const PATH_PARAM_UNIFIED_PLACEHOLDER = '*'
+
+/**
+ * Special resolver for OpenAPI `paths`:
+ * when a whole PathItem (e.g. `/pets`) is removed, we want to
+ * generate separate diffs for each HTTP operation (get/post/...)
+ * instead of a single diff for the whole PathItem.
+ *
+ * To achieve this we:
+ * 1. Detect removed paths that actually contain HTTP operations.
+ * 2. Synthesize an empty PathItem for the same key in `afterValue`.
+ * 3. Mark that key as "mapped" so the comparer will go inside it.
+ * 4. Remove that key from `removedKeys` so no PathItem-level diff is created.
+ */
+export const syntheticDiffsResolver: SyntheticDiffsResolver<string> = <T extends Exclude<PropertyKey, number>>(
+  mapKeysResult: MapKeysResult<T>,
+  beforeValue: Record<T, unknown>,
+  afterValue: Record<T, unknown>,
+): void => {
+  const { removed: removedKeys, mapped: mappedKeys } = mapKeysResult
+  const removedPathItemsWithOperations: string[] = []
+  for (const removedKey of removedKeys as string[]) {
+    const beforePaths = beforeValue as Record<string, unknown>
+    const beforePathItem = beforePaths[removedKey]
+
+    if (!isObject(beforePathItem)) {
+      continue
+    }
+
+    const hasHttpOperations = Object.keys(beforePathItem as Record<string, unknown>)
+      .some(propertyKey => isValidHttpMethod(propertyKey))
+
+    if (!hasHttpOperations) {
+      continue
+    }
+
+    removedPathItemsWithOperations.push(removedKey)
+
+    const afterPaths = afterValue as Record<string, unknown>
+    if (!isObject(afterPaths[removedKey])) {
+      afterPaths[removedKey] = {}
+    }
+
+    (mappedKeys as Record<string, PropertyKey>)[removedKey] = removedKey
+  }
+
+  if (removedPathItemsWithOperations.length > 0) {
+    mapKeysResult.removed = (removedKeys as string[])
+      .filter(key => !removedPathItemsWithOperations.includes(key)) as T[]
+  }
+}

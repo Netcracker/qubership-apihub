@@ -6,6 +6,7 @@ import {
   allUnclassified,
   breaking,
   breakingIfAfterTrue,
+  deepEqualsUniqueItemsArrayMappingResolver,
   diffDescription,
   GREP_TEMPLATE_PARAM_ENCODING_NAME,
   GREP_TEMPLATE_PARAM_EXAMPLE_NAME,
@@ -27,7 +28,6 @@ import {
   TEMPLATE_PARAM_RESPONSE_PATH,
   TEMPLATE_PARAM_SCOPE,
   unclassified,
-  deepEqualsUniqueItemsArrayMappingResolver,
 } from '../core'
 import {
   COMPARE_MODE_OPERATION,
@@ -54,14 +54,16 @@ import {
 } from './openapi3.classify'
 import {
   contentMediaTypeMappingResolver,
+  methodMappingResolver,
   paramMappingResolver,
   pathMappingResolver,
   singleOperationPathMappingResolver,
+  syntheticDiffsResolver,
 } from './openapi3.mapping'
 import { isResponseSchema } from './openapi3.utils'
 import { apihubCaseInsensitiveKeyMappingResolver } from './mapping'
 import { nonBreakingIf } from '../utils'
-import { COMPARE_SCOPE_COMPONENTS, COMPARE_SCOPE_RESPONSE, COMPARE_SCOPE_REQUEST } from './openapi3.const'
+import { COMPARE_SCOPE_COMPONENTS, COMPARE_SCOPE_REQUEST, COMPARE_SCOPE_RESPONSE } from './openapi3.const'
 import { parameterParamsCalculator } from './openapi3.description.parameter'
 import { requestParamsCalculator } from './openapi3.description.request'
 import { responseParamsCalculator } from './openapi3.description.response'
@@ -424,7 +426,7 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
   }
   const pathItemObjectRules = (options: OpenApi3RulesOptions): CompareRules => ({
     $: pathChangeClassifyRule,
-    mapping: options.mode === COMPARE_MODE_OPERATION ? singleOperationPathMappingResolver : pathMappingResolver,
+    mapping: options.mode === COMPARE_MODE_OPERATION ? singleOperationPathMappingResolver : methodMappingResolver,
     '/description': { $: allAnnotation },
     '/parameters': {
       $: [nonBreaking, breaking, breaking],
@@ -501,6 +503,7 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
     '/paths': {
       $: allUnclassified,
       mapping: options.mode === COMPARE_MODE_OPERATION ? singleOperationPathMappingResolver : pathMappingResolver,
+      syntheticDiffs: options.operationSyntheticDiffs && syntheticDiffsResolver,
       '/*': pathItemObjectRules(options),
       ...openApiSpecificationExtensionRulesFunction(),
     },

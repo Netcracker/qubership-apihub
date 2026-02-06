@@ -8,6 +8,9 @@ import { JSON_SCHEMA_PROPERTY_READ_ONLY } from '@netcracker/qubership-apihub-api
 import ResponsesObject = OpenAPIV3.ResponsesObject
 import Document = OpenAPIV3.Document
 
+const TEST_BEFORE_NORMALIZED_VALUE = Symbol('test-before-normalized-value')
+const TEST_AFTER_NORMALIZED_VALUE = Symbol('test-after-normalized-value')
+
 describe('Openapi3 compare options', () => {
   let openapiBuilder: OpenapiBuilder
 
@@ -72,17 +75,19 @@ describe('Openapi3 compare options', () => {
       originsFlag: TEST_ORIGINS_FLAG,
       defaultsFlag: TEST_DEFAULTS_FLAG,
       unify: true,
+      beforeValueNormalizedProperty: TEST_BEFORE_NORMALIZED_VALUE,
+      afterValueNormalizedProperty: TEST_AFTER_NORMALIZED_VALUE,
     })
     expect(diffs).toIncludeSameMembers([
       expect.objectContaining({
         action: 'add',
         afterValue: expect.not.toContainKeys<Record<PropertyKey, unknown>>([TEST_ORIGINS_FLAG]),
-        afterNormalizedValue: expect.toContainKeys<Record<PropertyKey, unknown>>([TEST_ORIGINS_FLAG, JSON_SCHEMA_PROPERTY_READ_ONLY/*defaults*/]),
+        [TEST_AFTER_NORMALIZED_VALUE]: expect.toContainKeys<Record<PropertyKey, unknown>>([TEST_ORIGINS_FLAG, JSON_SCHEMA_PROPERTY_READ_ONLY/*defaults*/]),
       }),
       expect.objectContaining({
         action: 'remove',
         beforeValue: expect.not.toContainKeys<Record<PropertyKey, unknown>>([TEST_ORIGINS_FLAG]),
-        beforeNormalizedValue: expect.toContainKeys<Record<PropertyKey, unknown>>([TEST_ORIGINS_FLAG]),
+        [TEST_BEFORE_NORMALIZED_VALUE]: expect.toContainKeys<Record<PropertyKey, unknown>>([TEST_ORIGINS_FLAG]),
       }),
     ])
   })
