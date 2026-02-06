@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import type { FC, ReactNode } from 'react'
+import type { FC, ReactNode} from 'react'
+import { useEffect } from 'react'
 import { useMemo, useState } from 'react'
 import type { OpenApiSpecViewerProps } from './OpenApiSpecViewer'
 import { OPEN_API_VIEW_MODES, OpenApiSpecViewer } from './OpenApiSpecViewer'
@@ -32,6 +33,7 @@ import { DOC_SPEC_VIEW_MODE } from '../SpecViewToggler'
 import type { Spec } from '../../entities/specs'
 import type { ProxyServer } from '../../entities/services'
 import type { SpecType } from '../../utils/specs'
+import { ASYNCAPI_3_SPEC_TYPE } from '../../utils/specs'
 import {
   GRAPHAPI_SPEC_TYPE,
   GRAPHQL_INTROSPECTION_SPEC_TYPE,
@@ -46,6 +48,7 @@ import {
 import type { FileExtension } from '../../utils/files'
 import { JSON_FILE_EXTENSION, YAML_FILE_EXTENSION } from '../../utils/files'
 import { isFastJsonSchema, toJsonSchema } from '../../utils/specifications'
+import { RAW_OPERATION_VIEW_MODE } from '../../entities/operation-view-mode'
 
 export type SpecViewerResult = {
   viewer: ReactNode
@@ -72,6 +75,12 @@ export function useSpecViewer({
   header,
 }: UseSpecViewerOptions): SpecViewerResult {
   const [viewMode, setViewMode] = useState<SpecViewMode>(defaultViewMode)
+
+  useEffect(() => {
+    if (spec.type === ASYNCAPI_3_SPEC_TYPE) {
+      setViewMode(RAW_OPERATION_VIEW_MODE)
+    }
+  }, [spec])
 
   const [viewer, viewModes] = useMemo(() => {
     if (isLoading) {
@@ -105,6 +114,8 @@ export const specTypeViewers: Partial<Record<SpecType, [SpecViewers, SpecViewMod
   [GRAPHQL_SCHEMA_SPEC_TYPE]: graphQlView,
   [GRAPHAPI_SPEC_TYPE]: graphQlView,
   [GRAPHQL_INTROSPECTION_SPEC_TYPE]: graphQlView,
+
+  [ASYNCAPI_3_SPEC_TYPE]: [JsonSchemaSpecViewer, []],
 
   [MARKDOWN_SPEC_TYPE]: [MarkdownViewer, []],
 }
