@@ -2,12 +2,13 @@ import { GraphQLSchema } from "graphql"
 import { GRAPH_API_VERSION } from "../../constants"
 import { GraphApiSchema } from "../../types"
 import { transformBaseType } from "./atomics.transformer"
-import { USED_BUILT_IN_DIRECTIVES } from "./declarations"
+import { USED_BUILT_IN_DIRECTIVES, OVERRIDDEN_BUILT_IN_DIRECTIVES } from "./declarations"
 import { transformDirectiveTypes2Definitions } from "./definitions.transformer"
 import { transformDefinitions, transformOperations } from "./root-level.transformer"
 
 export function buildFromSchema(schema: GraphQLSchema): GraphApiSchema {
   USED_BUILT_IN_DIRECTIVES.clear()
+  OVERRIDDEN_BUILT_IN_DIRECTIVES.clear()
 
   const qType = schema.getQueryType()
   const mType = schema.getMutationType()

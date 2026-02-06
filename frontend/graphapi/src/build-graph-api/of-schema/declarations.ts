@@ -1,4 +1,5 @@
 export const USED_BUILT_IN_DIRECTIVES = new Set<string>()
+export const OVERRIDDEN_BUILT_IN_DIRECTIVES = new Set<string>()
 
 export const SCHEMA_COMPONENT_TO_GRAPHAPI_COMPONENT_MAP = {
   ScalarTypeDefinition: 'scalars',

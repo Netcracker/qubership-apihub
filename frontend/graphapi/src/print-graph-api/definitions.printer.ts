@@ -1,11 +1,15 @@
-import { GRAPH_API_NODE_KIND_OBJECT, GRAPH_API_NODE_KIND_INTERFACE, BUILT_IN_DIRECTIVES } from "../constants"
+import { GRAPH_API_NODE_KIND_OBJECT, GRAPH_API_NODE_KIND_INTERFACE, BUILT_IN_DIRECTIVES_SET } from "../constants"
 import { GraphApiDirectiveDefinition, GraphApiScalarDefinition, GraphApiObjectDefinition, GraphApiUnionDefinition, GraphApiEnumDefinition, GraphApiInputObjectDefinition } from "../types"
 import { printDescription, typeName, printBlock } from "./atomics.printer"
 import { BUILT_IN_SCALARS, GRAPH_API_DEFAULT_INDENT } from "./declarations"
 import { printArgsDefinition, printUsedDirectives, printImplementedInterfaces, printFields, printInputFields } from "./definition-parts.printer"
+import { OVERRIDDEN_BUILT_IN_DIRECTIVES } from "../build-graph-api/of-schema/declarations"
 
 export function printDirectiveDefinition(name: string, directive: GraphApiDirectiveDefinition): string {
-  if (BUILT_IN_DIRECTIVES.some(builtInDirectiveName => builtInDirectiveName === name)) { return "" }
+  // Don't print built-in directives unless they're overridden
+  if (BUILT_IN_DIRECTIVES_SET.has(name) && !OVERRIDDEN_BUILT_IN_DIRECTIVES.has(name)) {
+    return ""
+  }
 
   return (
     printDescription(directive.description) +
