@@ -1,29 +1,38 @@
-import { existsSync, mkdirSync, writeFileSync } from 'fs'
 import path from 'path'
 import { exit } from 'process'
+import { fileURLToPath } from 'url'
 
-if (import.meta.dirname.split(path.sep).at(-2) !== 'elements') {
-  exit() 
+// Prevent running generators from an installed package in node_modules.
+// We only generate when executing from the repo workspace at: packages/elements/bin/*
+const __filename = fileURLToPath(import.meta.url)
+const binDir = path.dirname(__filename) // .../packages/elements/bin
+const elementsDir = path.dirname(binDir) // .../packages/elements
+if (path.basename(elementsDir) !== 'elements') {
+  exit()
 }
+
+const { default: camelCase } = await import('lodash/camelCase.js')
+const { default: upperFirst } = await import('lodash/upperFirst.js')
+const { storyMetaId, writeOpenApiGeneratedFilesByPairGroup } = await import(
+  './compatibility-suite-generation-utils.mjs'
+)
+
 console.log('Generate stories')
 
-const COMPATIBILITY_SUITE_STORIES_PATH = `./src/web-components/__stories__/compatibility-suite`
-const { getCompatibilitySuites, TEST_SPEC_TYPE_OPEN_API } = await import('@netcracker/qubership-apihub-compatibility-suites')
+const COMPATIBILITY_SUITE_STORIES_PATH = 'src/web-components/__stories__/compatibility-suite'
 
-const toPascalCase = str =>
-  str
-    .match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g)
-    .map(x => x.slice(0, 1).toUpperCase() + x.slice(1).toLowerCase())
-    .join('')
+const toPascalCase = (str) => upperFirst(camelCase(str))
 
-const printFileHeader = (suiteId) => {
+const printFileHeader = (suiteId, group) => {
   return `import '../../index'
 import { Meta, StoryObj } from '@storybook/react/*'
 import { StoryComponent, getStoryArgs, OpenapiCompatibilitySuiteStoryArgs } from '@stoplight/elements/web-components/__stories__/helpers/compatibility-suite-utils'
 import { TEST_SPEC_TYPE_OPEN_API } from '@netcracker/qubership-apihub-compatibility-suites'
 
 const meta: Meta<OpenapiCompatibilitySuiteStoryArgs> = {
-  title: 'openapi-compatibility-suite/${suiteId}',
+  title: 'OAS Compatibility Suite ${group}/${suiteId}',
+  id: '${storyMetaId(group, suiteId)}',
+  render: StoryComponent,
 }
 
 export default meta
@@ -31,37 +40,32 @@ type Story = StoryObj<typeof meta>
 `
 }
 
-const printStory = (suiteId, testId) => {
+const printStory = (suiteId, testId, openApiVersionPair) => {
   const storyName = toPascalCase(testId)
+  const argsCall = openApiVersionPair
+    ? `getStoryArgs(TEST_SPEC_TYPE_OPEN_API, '${suiteId}', '${testId}', ['${openApiVersionPair[0]}', '${
+      openApiVersionPair[1]
+    }'])`
+    : `getStoryArgs(TEST_SPEC_TYPE_OPEN_API, '${suiteId}', '${testId}')`
+
   return `export const ${storyName}: Story = {
   name: '${testId}',
-  render: StoryComponent,
-  args: getStoryArgs(TEST_SPEC_TYPE_OPEN_API, '${suiteId}', '${testId}'),
+  args: ${argsCall},
 }
 `
 }
 
-const printStoryFile = (suiteId, testIds) => {
-  return `${printFileHeader(suiteId)}
-${testIds.map(testId => printStory(suiteId, testId)).join('\n')}
+const printStoryFile = (suiteId, group, stories) => {
+  const storyStrings = stories.map((s) => printStory(suiteId, s.testId, s.openApiVersionPair))
+  return `${printFileHeader(suiteId, group)}
+${storyStrings.join('\n')}
 `
 }
 
-const EXCLUDED_SUITE_IDS = ['human-readable']
+const { totalFiles, groupCount } = writeOpenApiGeneratedFilesByPairGroup(
+  COMPATIBILITY_SUITE_STORIES_PATH,
+  (suiteId, group) => `${storyMetaId(group, suiteId)}.generated.stories.tsx`,
+  (suiteId, group, stories) => printStoryFile(suiteId, group, stories),
+)
 
-const printStoryFiles = () => {
-  return [...getCompatibilitySuites(TEST_SPEC_TYPE_OPEN_API).entries()]
-    .filter(([suiteId]) => !EXCLUDED_SUITE_IDS.includes(suiteId))
-    .map(([suiteId, testIds]) => [suiteId, printStoryFile(suiteId, testIds)])
-}
-
-if (!existsSync(COMPATIBILITY_SUITE_STORIES_PATH)) {
-  mkdirSync(COMPATIBILITY_SUITE_STORIES_PATH)
-}
-
-for (let [suiteId, value] of printStoryFiles()) {
-  writeFileSync(
-    `${COMPATIBILITY_SUITE_STORIES_PATH}/${suiteId}.generated.stories.tsx`,
-    value,
-  )
-}
+console.log(`Generated ${totalFiles} story files across ${groupCount} groups`)

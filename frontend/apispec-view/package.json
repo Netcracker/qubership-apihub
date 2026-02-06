@@ -6,6 +6,16 @@
   "workspaces": [
     "packages/*"
   ],
+  "scripts": {
+    "generate-compatibility-suite": "lerna run generate-stories && lerna run generate-tests",
+    "build": "lerna run build",
+    "build:showcase": "lerna run build:showcase",
+    "screenshot-test:ci": "lerna run screenshot-test:ci",
+    "screenshot-test:docker": "lerna run screenshot-test:docker",
+    "regenerate-screenshots:ci": "lerna run regenerate-screenshots:ci",
+    "regenerate-screenshots:docker": "lerna run regenerate-screenshots:docker",
+    "update-lock-file": "update-lock-file @netcracker"
+  },
   "devDependencies": {
     "@babel/core": "^7.17.9",
     "@babel/preset-env": "^7.16.11",
@@ -13,12 +23,13 @@
     "@babel/preset-typescript": "^7.16.7",
     "@chromatic-com/storybook": "1",
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
-    "@netcracker/qubership-apihub-api-unifier": "2.4.4",
-    "@netcracker/qubership-apihub-compatibility-suites": "2.3.0",
-    "@netcracker/qubership-apihub-api-diff": "2.5.2",
-    "@netcracker/qubership-apihub-api-doc-viewer": "2.1.9",
+    "@netcracker/qubership-apihub-api-diff": "3.0.0",
+    "@netcracker/qubership-apihub-api-doc-viewer": "3.0.0",
+    "@netcracker/qubership-apihub-api-unifier": "2.5.0",
+    "@netcracker/qubership-apihub-compatibility-suites": "2.4.0",
     "@netcracker/qubership-apihub-http-spec": "5.5.9",
     "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "2.0.0",
+    "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
     "@schemastore/package": "0.0.4",
     "@stoplight/eslint-config": "2.1.0",
     "@stoplight/json": "^3.18.1",
@@ -34,7 +45,6 @@
     "@stoplight/scripts": "^9.2.0",
     "@stoplight/types": "^13.0.0",
     "@stoplight/yaml": "^4.2.3",
-    "@storybook/addons": "^7.6.20",
     "@storybook/addon-controls": "^8.2.1",
     "@storybook/addon-docs": "^8.2.1",
     "@storybook/addon-interactions": "^8.2.1",
@@ -42,6 +52,7 @@
     "@storybook/addon-toolbars": "^8.2.1",
     "@storybook/addon-viewport": "^8.2.1",
     "@storybook/addon-webpack5-compiler-babel": "3.0.3",
+    "@storybook/addons": "^7.6.20",
     "@storybook/react": "^8.1.11",
     "@storybook/react-webpack5": "8.1.11",
     "@storybook/test": "^8.2.1",
@@ -114,6 +125,7 @@
     "process": "0.11.10",
     "prop-types": "^15.7.2",
     "puppeteer": "21.11.0",
+    "raw-loader": "^4.0.2",
     "react": "^17.0.0",
     "react-dom": "^17.0.0",
     "react-mark.js": "^9.0.7",
@@ -123,7 +135,7 @@
     "resolve-url-loader": "^3.1.2",
     "rollup-plugin-terser": "^5.3.0",
     "size-limit": "^4.11.0",
-    "start-server-and-test": "^1.11.6",
+    "start-server-and-test": "2.1.3",
     "storybook": "^8.2.1",
     "style-loader": "^2.0.0",
     "treeify": "^1.1.0",
@@ -138,17 +150,6 @@
     "webpack-cli": "4.7.2",
     "webpack-dev-server": "3.11.2",
     "xml-formatter": "^2.4.0",
-    "raw-loader": "^4.0.2",
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
     "yaml-loader": "^0.8.1"
-  },
-  "scripts": {
-    "build": "npm run build:dist",
-    "build:dist": "npm run --workspace=@netcracker/qubership-apihub-apispec-view build",
-    "build:showcase": "npm run --workspace=@netcracker/qubership-apihub-apispec-view build:showcase",
-    "screenshot-test:ci": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:ci",
-    "screenshot-test:docker": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:docker",
-    "screenshot-test:regenerate-snapshots": "npm run --workspace=@netcracker/qubership-apihub-apispec-view screenshot-test:regenerate-snapshots",
-    "update-lock-file": "update-lock-file @netcracker"
   }
 }

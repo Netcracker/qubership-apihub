@@ -1,8 +1,6 @@
 import { JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer';
-import { useOperationSchemaOptionsMode } from '@stoplight/elements';
-import { useSearchPhrase } from '@stoplight/elements/containers/API';
-import { useExtensions } from '@stoplight/elements/hooks/useExtensions';
 import { Extensions } from '@stoplight/elements-core/components/Docs/Extensions';
+import { useSearchPhrase, useExtensions, useOperationSchemaOptionsMode } from '@stoplight/elements-core';
 import { SectionSubtitle } from '@stoplight/elements-core/components/Docs/Sections';
 import { Box, CopyButton, Flex, Heading, HStack, isNotEmptyObject, Panel, Text, VStack } from '@stoplight/mosaic';
 import { CodeViewer } from '@stoplight/mosaic-code-viewer';

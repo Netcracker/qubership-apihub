@@ -2,27 +2,27 @@ import { Extension, ExtensionMeta } from '@stoplight/diff-elements-core/componen
 import { useDocument } from '@stoplight/elements-core/context/InlineRefResolver';
 import { entries, mergeWith } from 'lodash';
 import * as React from 'react';
-import { useDiffMetaKey } from "@stoplight/elements/containers/DIffMetaKeyContext";
+import { useDiffsMetaKey } from "@stoplight/elements/containers/DiffsMetaKeyContext";
 
 // If you have OVERWRITING original specification, look at this place
 
 function getExtensions(data: any, depth: number, level: number, diffMetaKey: symbol): [Extension[], ExtensionMeta] {
   const result = data
     ? entries(data)
-        .filter(([key]) => key.startsWith('x-') && key !== 'x-stoplight')
-        .map(([key, value]) => ({ [key]: value }))
+      .filter(([key]) => key.startsWith('x-') && key !== 'x-stoplight')
+      .map(([key, value]) => ({ [key]: value }))
     : [];
   let currentMeta = data?.[diffMetaKey] ?? {};
   const lowerLevelExtensions: Extension[] =
     level < depth
       ? entries(data)
-          .map(([, extension]) => {
-            const [lowerLevelResult, lowerLevelMeta] =
-              getExtensions(extension, depth, level + 1, diffMetaKey);
-            currentMeta = mergeWith({}, currentMeta, lowerLevelMeta);
-            return lowerLevelResult;
-          })
-          .flat()
+        .map(([, extension]) => {
+          const [lowerLevelResult, lowerLevelMeta] =
+            getExtensions(extension, depth, level + 1, diffMetaKey);
+          currentMeta = mergeWith({}, currentMeta, lowerLevelMeta);
+          return lowerLevelResult;
+        })
+        .flat()
       : [];
 
   const extensions = lowerLevelExtensions.length > 0 ? [...result, ...lowerLevelExtensions] : result;
@@ -35,7 +35,7 @@ export function useExtensions(data: unknown, depth = 0): Extension[] {
 }
 
 export function useExtensionsWithDiff(data: unknown, depth = 0): [Extension[], ExtensionMeta] {
-  const diffMetaKey = useDiffMetaKey()
+  const diffMetaKey = useDiffsMetaKey()
   return React.useMemo(() => getExtensions(data, depth, 0, diffMetaKey), [data, depth]);
 }
 

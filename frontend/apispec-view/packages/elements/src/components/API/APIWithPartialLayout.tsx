@@ -1,5 +1,4 @@
-import { useSearchPhrase } from '@stoplight/elements/containers/API';
-import { ExportButtonProps, ParsedDocs, PartialLayout, RoutingProps } from '@stoplight/elements-core';
+import { ExportButtonProps, ParsedDocs, PartialLayout, RoutingProps, useSearchPhrase } from '@stoplight/elements-core';
 import { NodeType } from '@stoplight/types';
 import { SchemaViewMode } from 'json-schema-viewer';
 import * as React from 'react';

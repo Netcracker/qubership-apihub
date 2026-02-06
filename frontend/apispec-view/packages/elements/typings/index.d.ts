@@ -101,7 +101,9 @@ export class DiffOperationView extends HTMLElement {
 
   set filters(value: DiffType[]);
 
-  set diffMetaKey(value: symbol);
+  set diffsMetaKey(value: symbol);
+
+  set aggregatedDiffsMetaKey(value: symbol);
 
   constructor(props) {
     super(props);
