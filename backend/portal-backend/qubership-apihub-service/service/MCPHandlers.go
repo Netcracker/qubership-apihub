@@ -34,6 +34,7 @@ func (m mcpService) ExecuteGetSpecTool(ctx context.Context, req mcp.CallToolRequ
 		Version:     version,
 		OperationId: operationId,
 		ApiType:     string(view.RestApiType),
+		IncludeData: true,
 	}
 
 	operationViewInterface, err := m.operationService.GetOperation(searchReq)
