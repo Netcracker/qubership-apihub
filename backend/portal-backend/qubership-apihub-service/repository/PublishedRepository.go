@@ -45,7 +45,9 @@ type PublishedRepository interface {
 		data []*entity.PublishedContentDataEntity, refs []*entity.PublishedReferenceEntity, src *entity.PublishedSrcEntity, srcArchive *entity.PublishedSrcArchiveEntity,
 		operations []*entity.OperationEntity, operationsData []*entity.OperationDataEntity,
 		operationComparisons []*entity.OperationComparisonEntity, builderNotifications []*entity.BuilderNotificationsEntity,
-		versionComparisonEntities []*entity.VersionComparisonEntity, serviceName string, pkg *entity.PackageEntity, versionComparisonsFromCache []string) error
+		versionComparisonEntities []*entity.VersionComparisonEntity, serviceName string, pkg *entity.PackageEntity, versionComparisonsFromCache []string,
+		versionInternalDocEntities []*entity.VersionInternalDocumentEntity, versionInternalDocDataEntities []*entity.VersionInternalDocumentDataEntity,
+		comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity) error
 	GetContentData(packageId string, checksum string) (*entity.PublishedContentDataEntity, error)
 
 	GetVersionRefsV3(packageId string, version string, revision int) ([]entity.PublishedReferenceEntity, error)
@@ -71,8 +73,8 @@ type PublishedRepository interface {
 	DeleteSoftDeletedPackagesBeforeDate(ctx context.Context, runId string, beforeDate time.Time, batchSize int) (int, error)
 	GetFilteredPackagesWithOffset(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error)
 	GetFilteredDeletedPackages(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error)
-	GetVersionValidationChanges(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity, error)
-	GetVersionValidationProblems(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity, error)
+	GetVersionValidationChanges_deprecated(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity_deprecated, error)
+	GetVersionValidationProblems_deprecated(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity_deprecated, error)
 	SearchForVersions(searchQuery *entity.PackageSearchQuery) ([]entity.PackageSearchResult, error)
 	SearchForDocuments(searchQuery *entity.DocumentSearchQuery) ([]entity.DocumentSearchResult, error)
 
@@ -83,7 +85,7 @@ type PublishedRepository interface {
 	GetVersionRefsComparisons(comparisonId string) ([]entity.VersionComparisonEntity, error)
 	GetVersionComparisonsCleanupCandidates(ctx context.Context, limit int, offset int) ([]entity.VersionComparisonCleanupCandidateEntity, error)
 	DeleteVersionComparison(ctx context.Context, comparisonId string) (bool, error)
-	SaveVersionChanges(packageInfo view.PackageInfoFile, publishId string, operationComparisons []*entity.OperationComparisonEntity, versionComparisons []*entity.VersionComparisonEntity, versionComparisonsFromCache []string) error
+	SaveVersionChanges(packageInfo view.PackageInfoFile, publishId string, operationComparisons []*entity.OperationComparisonEntity, versionComparisons []*entity.VersionComparisonEntity, versionComparisonsFromCache []string, comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity) error
 	GetLatestRevision(packageId, version string) (int, error)
 	GetDeletedPackageLatestRevision(packageId, version string) (int, error)
 
@@ -102,4 +104,9 @@ type PublishedRepository interface {
 	UpdateCSVDashboardPublishProcess(ent *entity.CSVDashboardPublishEntity) error
 	GetCSVDashboardPublishProcess(publishId string) (*entity.CSVDashboardPublishEntity, error)
 	GetCSVDashboardPublishReport(publishId string) (*entity.CSVDashboardPublishEntity, error)
+
+	GetVersionInternalDocuments(packageId string, version string, revision int) ([]entity.VersionInternalDocumentEntity, error)
+	GetVersionInternalDocumentData(hash string) (*entity.EnrichedVersionInternalDocumentDataEntity, error)
+	GetComparisonInternalDocumentsByComparisons(comparisons []entity.VersionComparisonEntity) ([]entity.ComparisonInternalDocumentEntity, error)
+	GetComparisonInternalDocumentData(hash string) (*entity.EnrichedComparisonInternalDocumentDataEntity, error)
 }

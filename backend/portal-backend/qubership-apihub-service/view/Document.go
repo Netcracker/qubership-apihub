@@ -79,6 +79,7 @@ const (
 	OpenAPI31Type     string = "openapi-3-1"
 	OpenAPI30Type     string = "openapi-3-0"
 	OpenAPI20Type     string = "openapi-2-0"
+	Asyncapi30Type    string = "asyncapi-3-0"
 	Protobuf3Type     string = "protobuf-3"
 	JsonSchemaType    string = "json-schema"
 	MDType            string = "markdown"
@@ -90,7 +91,7 @@ const (
 
 func InvalidDocumentType(documentType string) bool {
 	switch documentType {
-	case OpenAPI31Type, OpenAPI30Type, OpenAPI20Type, Protobuf3Type, JsonSchemaType, MDType, GraphQLSchemaType, GraphAPIType, IntrospectionType, UnknownType:
+	case OpenAPI31Type, OpenAPI30Type, OpenAPI20Type, Asyncapi30Type, Protobuf3Type, JsonSchemaType, MDType, GraphQLSchemaType, GraphAPIType, IntrospectionType, UnknownType:
 		return false
 	}
 	return true

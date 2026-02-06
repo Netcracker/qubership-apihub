@@ -59,7 +59,8 @@ type ProtobufOperationComparisonChangelogView struct {
 }
 
 type ProtobufOperationPairChangesView struct {
-	CurrentOperation  *ProtobufOperationComparisonChangelogView `json:"currentOperation,omitempty"`
-	PreviousOperation *ProtobufOperationComparisonChangelogView `json:"previousOperation,omitempty"`
-	ChangeSummary     ChangeSummary                             `json:"changeSummary"`
+	CurrentOperation             *ProtobufOperationComparisonChangelogView `json:"currentOperation,omitempty"`
+	PreviousOperation            *ProtobufOperationComparisonChangelogView `json:"previousOperation,omitempty"`
+	ChangeSummary                ChangeSummary                             `json:"changeSummary"`
+	ComparisonInternalDocumentId string                                    `json:"comparisonInternalDocumentId"`
 }

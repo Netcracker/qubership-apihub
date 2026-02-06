@@ -20,6 +20,7 @@ import (
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/archive"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 )
 
 func ValidatePublishSources(srcArc *archive.SourcesArchive) error {
@@ -60,17 +61,25 @@ func ValidatePublishSources(srcArc *archive.SourcesArchive) error {
 }
 
 func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
-	var documentsFileIds, operationsFileIds, comparisonsFileIds []string
+	var documentsFileIds, operationsFileIds, comparisonsFileIds, versionInternalDocumentsFileIds, comparisonInternalDocumentsFileIds []string
 	for _, configFile := range buildArc.PackageDocuments.Documents {
 		documentsFileIds = append(documentsFileIds, configFile.Filename)
 	}
 	for _, configFile := range buildArc.PackageOperations.Operations {
-		operationsFileIds = append(operationsFileIds, configFile.OperationId)
+		if configFile.ApiType != string(view.GraphqlApiType) {
+			operationsFileIds = append(operationsFileIds, configFile.OperationId)
+		}
 	}
 	for _, configFile := range buildArc.PackageComparisons.Comparisons {
 		if configFile.ComparisonFileId != "" {
 			comparisonsFileIds = append(comparisonsFileIds, configFile.ComparisonFileId)
 		}
+	}
+	for _, configFile := range buildArc.VersionInternalDocuments.Documents {
+		versionInternalDocumentsFileIds = append(versionInternalDocumentsFileIds, configFile.Filename)
+	}
+	for _, configFile := range buildArc.ComparisonInternalDocuments.Documents {
+		comparisonInternalDocumentsFileIds = append(comparisonInternalDocumentsFileIds, configFile.Filename)
 	}
 
 	var fullUnknownList []string
@@ -145,6 +154,52 @@ func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
 
 	for _, u := range unknown {
 		fullUnknownList = append(fullUnknownList, archive.ComparisonsRootFolder+u)
+	}
+
+	duplicates, missing, unknown = validateFiles(buildArc.VersionInternalDocumentsHeaders, versionInternalDocumentsFileIds)
+	if len(duplicates) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileDuplicate,
+			Message: exception.FileDuplicateMsg,
+			Params:  map[string]interface{}{"fileIds": duplicates, "configName": archive.VersionInternalDocumentsFilePath + " config"},
+		}
+	}
+
+	if len(missing) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileMissing,
+			Message: exception.FileMissingMsg,
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.VersionInternalDocumentsRootFolder + " folder in achive"},
+		}
+	}
+
+	for _, u := range unknown {
+		fullUnknownList = append(fullUnknownList, archive.VersionInternalDocumentsRootFolder+u)
+	}
+
+	duplicates, missing, unknown = validateFiles(buildArc.ComparisonInternalDocumentsHeaders, comparisonInternalDocumentsFileIds)
+	if len(duplicates) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileDuplicate,
+			Message: exception.FileDuplicateMsg,
+			Params:  map[string]interface{}{"fileIds": duplicates, "configName": archive.ComparisonInternalDocumentsFilePath + " config"},
+		}
+	}
+
+	if len(missing) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileMissing,
+			Message: exception.FileMissingMsg,
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ComparisonInternalDocumentsRootFolder + " folder in achive"},
+		}
+	}
+
+	for _, u := range unknown {
+		fullUnknownList = append(fullUnknownList, archive.ComparisonInternalDocumentsRootFolder+u)
 	}
 
 	if len(fullUnknownList) != 0 {

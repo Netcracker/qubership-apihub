@@ -16,26 +16,19 @@ package service
 
 import (
 	"context"
-	"net/http"
-	"sync"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	mRepository "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
-	"github.com/google/uuid"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 )
 
 type DBCleanupService interface {
 	CreateCleanupJob(schedule string) error
-	StartMigrationBuildDataCleanup() (string, error)
-	GetMigrationBuildDataCleanupResult(id string) (interface{}, error)
 }
 
 func NewDBCleanupService(cleanUpRepository repository.BuildCleanupRepository,
@@ -43,25 +36,21 @@ func NewDBCleanupService(cleanUpRepository repository.BuildCleanupRepository,
 	minioStorageService MinioStorageService,
 	infoService SystemInfoService) DBCleanupService {
 	return &dbCleanupServiceImpl{
-		cleanUpRepository:            cleanUpRepository,
-		migrationRepository:          migrationRepository,
-		cron:                         cron.New(),
-		rmMigrationBuildDataRes:      map[string]interface{}{},
-		rmMigrationBuildDataResMutex: sync.RWMutex{},
-		systemInfoService:            infoService,
-		minioStorageService:          minioStorageService,
+		cleanUpRepository:   cleanUpRepository,
+		migrationRepository: migrationRepository,
+		cron:                cron.New(),
+		systemInfoService:   infoService,
+		minioStorageService: minioStorageService,
 	}
 }
 
 type dbCleanupServiceImpl struct {
-	cleanUpRepository            repository.BuildCleanupRepository
-	migrationRepository          mRepository.MigrationRunRepository
-	connectionProvider           db.ConnectionProvider
-	cron                         *cron.Cron
-	rmMigrationBuildDataRes      map[string]interface{}
-	rmMigrationBuildDataResMutex sync.RWMutex
-	minioStorageService          MinioStorageService
-	systemInfoService            SystemInfoService
+	cleanUpRepository   repository.BuildCleanupRepository
+	migrationRepository mRepository.MigrationRunRepository
+	connectionProvider  db.ConnectionProvider
+	cron                *cron.Cron
+	minioStorageService MinioStorageService
+	systemInfoService   SystemInfoService
 }
 
 func (c *dbCleanupServiceImpl) CreateCleanupJob(schedule string) error {
@@ -153,16 +142,20 @@ func (j BuildCleanupJob) Run() {
 				log.Errorf("Failed to get up remove candidate old build ids: %v", err)
 				return
 			}
-			err = j.minioStorageService.RemoveFiles(ctx, view.BUILD_RESULT_TABLE, ids)
-			if err != nil {
-				log.Errorf("Failed to remove old build results from minio storage: %v", err)
-				return
-			}
+			if len(ids) == 0 {
+				log.Info("No old build entities to clean up")
+			} else {
+				err = j.minioStorageService.RemoveFiles(ctx, view.BUILD_RESULT_TABLE, ids)
+				if err != nil {
+					log.Errorf("Failed to remove old build results from minio storage: %v", err)
+					return
+				}
 
-			err = j.buildCleanupRepository.RemoveOldBuildSourcesByIds(ctx, ids, lockId, scheduledAt)
-			if err != nil {
-				log.Errorf("Failed to clean up old builds sources: %v", err)
-				return
+				err = j.buildCleanupRepository.RemoveOldBuildSourcesByIds(ctx, ids, lockId, scheduledAt)
+				if err != nil {
+					log.Errorf("Failed to clean up old builds sources: %v", err)
+					return
+				}
 			}
 		} else {
 			err = j.buildCleanupRepository.RemoveOldBuildEntities(lockId, scheduledAt)
@@ -181,69 +174,4 @@ func (j BuildCleanupJob) Run() {
 	} else {
 		log.Infof("Cleanup was skipped at %s", scheduledAt)
 	}
-}
-
-func (c *dbCleanupServiceImpl) StartMigrationBuildDataCleanup() (string, error) {
-	id := uuid.New().String()
-
-	result := map[string]interface{}{}
-	result["status"] = "running"
-
-	c.rmMigrationBuildDataResMutex.Lock()
-	c.rmMigrationBuildDataRes[id] = result
-	c.rmMigrationBuildDataResMutex.Unlock()
-
-	utils.SafeAsync(func() {
-		var err error
-		var removedRowsCount int
-		ctx := context.Background()
-		if c.systemInfoService.IsMinioStorageActive() {
-			ids, err := c.cleanUpRepository.GetRemoveMigrationBuildIds(ctx)
-			if err != nil {
-				c.saveErrorInfo(result, err, id, removedRowsCount)
-			}
-			err = c.minioStorageService.RemoveFiles(ctx, view.BUILD_RESULT_TABLE, ids)
-			if err != nil {
-				c.saveErrorInfo(result, err, id, removedRowsCount)
-			}
-			removedRowsCount, err = c.cleanUpRepository.RemoveMigrationBuildSourceData(ctx, ids)
-			if err != nil {
-				c.saveErrorInfo(result, err, id, removedRowsCount)
-			}
-		} else {
-			removedRowsCount, err = c.cleanUpRepository.RemoveMigrationBuildData(ctx)
-		}
-		c.saveErrorInfo(result, err, id, removedRowsCount)
-	})
-
-	return id, nil
-}
-
-func (c *dbCleanupServiceImpl) saveErrorInfo(result map[string]interface{}, err error, id string, removedRowsCount int) {
-	c.rmMigrationBuildDataResMutex.Lock()
-	if err != nil {
-		log.Errorf("Failed to remove migration build data: %s", err)
-		result["status"] = "error"
-		result["error"] = err
-		c.rmMigrationBuildDataRes[id] = result
-	} else {
-		log.Infof("Removed %d migration build data rows", removedRowsCount)
-		result["status"] = "success"
-		result["removedRowsCount"] = removedRowsCount
-		c.rmMigrationBuildDataRes[id] = result
-	}
-	c.rmMigrationBuildDataResMutex.Unlock()
-}
-func (c *dbCleanupServiceImpl) GetMigrationBuildDataCleanupResult(id string) (interface{}, error) {
-	c.rmMigrationBuildDataResMutex.RLock()
-	defer c.rmMigrationBuildDataResMutex.RUnlock()
-	result, exists := c.rmMigrationBuildDataRes[id]
-	if !exists {
-		return 0, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.UnableToGetMigrationDataCleanupResult,
-			Message: exception.UnableToGetMigrationDataCleanupResultMsg,
-		}
-	}
-	return result, nil
 }

@@ -59,6 +59,7 @@ type DeletedItemsStats struct {
 	PublishedVersionValidation      int                         `json:"publishedVersionValidation"`
 	SharedUrlInfo                   int                         `json:"sharedUrlInfo"`
 	TransformedContentData          int                         `json:"transformedContentData"`
+	VersionInternalDocument         int                         `json:"versionInternalDocument"`
 	TotalRecords                    int                         `json:"totalRecords"`
 }
 
@@ -106,7 +107,8 @@ func (d *DeletedItemsStats) CalculateTotal() {
 		d.PublishedVersionValidation +
 		d.SharedUrlInfo +
 		d.TransformedContentData +
-		d.PackageTransitions
+		d.PackageTransitions +
+		d.VersionInternalDocument
 }
 
 func (d *DeletedItemsStats) Add(other *DeletedItemsStats) {
@@ -137,5 +139,6 @@ func (d *DeletedItemsStats) Add(other *DeletedItemsStats) {
 	d.SharedUrlInfo += other.SharedUrlInfo
 	d.TransformedContentData += other.TransformedContentData
 	d.PackageTransitions += other.PackageTransitions
+	d.VersionInternalDocument += other.VersionInternalDocument
 	d.CalculateTotal()
 }

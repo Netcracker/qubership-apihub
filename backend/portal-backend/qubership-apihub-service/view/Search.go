@@ -28,21 +28,9 @@ const RestScopeAnnotation = "annotation"
 const RestScopeExamples = "examples"
 const RestScopeProperties = "properties"
 
-const GraphqlScopeAnnotation = "annotation"
-const GraphqlScopeArgument = "argument"
-const GraphqlScopeProperty = "property"
-
 func ValidRestOperationScope(scope string) bool {
 	switch scope {
 	case ScopeAll, RestScopeRequest, RestScopeResponse, RestScopeAnnotation, RestScopeExamples, RestScopeProperties:
-		return true
-	}
-	return false
-}
-
-func ValidGraphqlOperationScope(scope string) bool {
-	switch scope {
-	case ScopeAll, GraphqlScopeAnnotation, GraphqlScopeArgument, GraphqlScopeProperty:
 		return true
 	}
 	return false

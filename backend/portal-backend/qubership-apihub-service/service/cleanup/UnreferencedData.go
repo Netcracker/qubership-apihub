@@ -156,6 +156,56 @@ func (p *unreferencedDataCleanupJobProcessor) Process(ctx context.Context, jobId
 		logger.Infof(ctx, "Deleted %d items during publish data deletion", deletedItemsCount)
 	}
 
+	logger.Infof(ctx, "Starting cleanup of unreferenced version internal document data")
+	for {
+		select {
+		case <-ctx.Done():
+			errorMessage := getContextCancellationMessage(ctx)
+			logger.Warnf(ctx, "job interrupted during version internal document data cleanup - %s", errorMessage)
+			return processingErrors, fmt.Errorf("job interrupted - %s", errorMessage)
+		default:
+		}
+
+		deletedItemsCount, err := p.unreferencedDataCleanupRepo.DeleteUnreferencedVersionInternalDocumentData(ctx, jobId, batchSize)
+		if err != nil {
+			logger.Warnf(ctx, "Failed to delete version internal document data: %v", err)
+			processingErrors = append(processingErrors, fmt.Sprintf("failed to delete version internal document data: %s", err.Error()))
+			continue
+		}
+
+		if deletedItemsCount == 0 {
+			logger.Debug(ctx, "No more version internal document data to delete")
+			break
+		}
+		*deletedItems += deletedItemsCount
+		logger.Infof(ctx, "Deleted %d items during version internal document data deletion", deletedItemsCount)
+	}
+
+	logger.Infof(ctx, "Starting cleanup of unreferenced comparison internal document data")
+	for {
+		select {
+		case <-ctx.Done():
+			errorMessage := getContextCancellationMessage(ctx)
+			logger.Warnf(ctx, "job interrupted during comparison internal document data cleanup - %s", errorMessage)
+			return processingErrors, fmt.Errorf("job interrupted - %s", errorMessage)
+		default:
+		}
+
+		deletedItemsCount, err := p.unreferencedDataCleanupRepo.DeleteUnreferencedComparisonInternalDocumentData(ctx, jobId, batchSize)
+		if err != nil {
+			logger.Warnf(ctx, "Failed to delete comparison internal document data: %v", err)
+			processingErrors = append(processingErrors, fmt.Sprintf("failed to delete comparison internal document data: %s", err.Error()))
+			continue
+		}
+
+		if deletedItemsCount == 0 {
+			logger.Debug(ctx, "No more comparison internal document data to delete")
+			break
+		}
+		*deletedItems += deletedItemsCount
+		logger.Infof(ctx, "Deleted %d items during comparison internal document data deletion", deletedItemsCount)
+	}
+
 	return processingErrors, nil
 }
 

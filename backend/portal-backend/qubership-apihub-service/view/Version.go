@@ -44,7 +44,6 @@ type VersionOperationType struct {
 	InternalAudienceOperationsCount *int                    `json:"internalAudienceOperationsCount,omitempty"`
 	UnknownAudienceOperationsCount  *int                    `json:"unknownAudienceOperationsCount,omitempty"`
 	ApiAudienceTransitions          []ApiAudienceTransition `json:"apiAudienceTransitions,omitempty"`
-	Operations                      map[string]string       `json:"operations,omitempty"`
 }
 
 type VersionOperationGroup struct {

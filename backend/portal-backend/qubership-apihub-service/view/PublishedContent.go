@@ -106,7 +106,8 @@ type Asyncapi struct {
 }
 
 type AsyncapiOperation struct {
-	Channel string   `json:"channel"`
-	Method  string   `json:"method"`
-	Tags    []string `json:"tags"`
+	Channel  string   `json:"channel"`
+	Action   string   `json:"action"`
+	Protocol string   `json:"protocol"`
+	Tags     []string `json:"tags"`
 }

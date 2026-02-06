@@ -58,36 +58,6 @@ func (d OpsMigration) StageTSRecalculate() error {
 		return fmt.Errorf("failed to calculate ts_rest_operation_data: %w", err)
 	}
 
-	log.Info("Calculating ts_graphql_operation_data")
-	calculateGraphqlTextSearchDataQuery := fmt.Sprintf(`
-	insert into ts_graphql_operation_data
-		select data_hash,
-		to_tsvector(jsonb_extract_path_text(search_scope, ?)) scope_argument,
-		to_tsvector(jsonb_extract_path_text(search_scope, ?)) scope_property,
-		to_tsvector(jsonb_extract_path_text(search_scope, ?)) scope_annotation
-		from operation_data
-		where data_hash in (
-			select distinct o.data_hash
-			from operation o
-			inner join migration."expired_ts_operation_data_%s"  exp
-			on exp.package_id = o.package_id
-			and exp.version = o.version
-			and exp.revision = o.revision
-			where o.type = ?
-		)
-        order by 1
-        for update skip locked
-	on conflict (data_hash) do update
-	set scope_argument = EXCLUDED.scope_argument,
-	scope_property = EXCLUDED.scope_property,
-	scope_annotation = EXCLUDED.scope_annotation;`, d.ent.Id)
-	_, err = d.cp.GetConnection().ExecContext(d.migrationCtx, calculateGraphqlTextSearchDataQuery,
-		view.GraphqlScopeArgument, view.GraphqlScopeProperty, view.GraphqlScopeAnnotation,
-		view.GraphqlApiType)
-	if err != nil {
-		return fmt.Errorf("failed to calculate ts_grahpql_operation_data: %w", err)
-	}
-
 	log.Info("Calculating ts_operation_data")
 	calculateAllTextSearchDataQuery := fmt.Sprintf(`
 	insert into ts_operation_data

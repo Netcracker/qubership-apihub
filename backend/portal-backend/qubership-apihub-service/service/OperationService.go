@@ -39,6 +39,7 @@ type OperationService interface {
 	GetOperationDeprecatedItems(searchReq view.OperationBasicSearchReq) (*view.DeprecatedItems, error)
 	GetDeprecatedOperationsSummary(packageId string, version string) (*view.DeprecatedOperationsSummary, error)
 	GetOperationModelUsages(packageId string, version string, apiType string, operationId string, modelName string) (*view.OperationModelUsages, error)
+	GetOperationChangesSummary(packageId string, version string, operationId string, previousPackageId string, previousVersion string, refPackageId string) (*view.ChangeSummary, error)
 }
 
 func NewOperationService(
@@ -283,7 +284,7 @@ func (o operationServiceImpl) GetOperation(searchReq view.OperationBasicSearchRe
 			Params:  map[string]interface{}{"version": searchReq.Version, "packageId": searchReq.PackageId},
 		}
 	}
-	operationEnt, err := o.operationRepository.GetOperationById(searchReq.PackageId, versionEnt.Version, versionEnt.Revision, searchReq.ApiType, searchReq.OperationId)
+	operationEnt, err := o.operationRepository.GetOperationById(searchReq.PackageId, versionEnt.Version, versionEnt.Revision, searchReq.ApiType, searchReq.OperationId, searchReq.IncludeData)
 	if err != nil {
 		return nil, err
 	}
@@ -745,27 +746,7 @@ func setGraphqlOperationSearchParams(graphqlOperationParams *view.OperationSearc
 		}
 	}
 	searchQuery.OperationTypes = append(searchQuery.OperationTypes, graphqlOperationParams.OperationTypes...)
-	if len(graphqlOperationParams.Scopes) == 0 {
-		searchQuery.FilterAll = true
-	} else {
-		for _, s := range graphqlOperationParams.Scopes {
-			switch s {
-			case view.GraphqlScopeAnnotation:
-				searchQuery.FilterAnnotation = true
-			case view.GraphqlScopeArgument:
-				searchQuery.FilterArgument = true
-			case view.GraphqlScopeProperty:
-				searchQuery.FilterProperty = true
-			default:
-				return &exception.CustomError{
-					Status:  http.StatusBadRequest,
-					Code:    exception.InvalidSearchParameters,
-					Message: exception.InvalidSearchParametersMsg,
-					Params:  map[string]interface{}{"error": fmt.Sprintf("scope %v is invalid for %v apiType", s, graphqlOperationParams.ApiType)},
-				}
-			}
-		}
-	}
+	searchQuery.FilterAll = true
 	return nil
 }
 
@@ -782,7 +763,7 @@ func (o operationServiceImpl) GetOperationModelUsages(packageId string, version 
 			Params:  map[string]interface{}{"version": version, "packageId": packageId},
 		}
 	}
-	operationEnt, err := o.operationRepository.GetOperationById(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, operationId)
+	operationEnt, err := o.operationRepository.GetOperationById(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, operationId, false)
 	if err != nil {
 		return nil, err
 	}
@@ -815,4 +796,76 @@ func (o operationServiceImpl) GetOperationModelUsages(packageId string, version 
 		})
 	}
 	return &view.OperationModelUsages{ModelUsages: modelUsages}, nil
+}
+
+func (o operationServiceImpl) GetOperationChangesSummary(packageId string, version string, operationId string, previousPackageId string, previousVersion string, refPackageId string) (*view.ChangeSummary, error) {
+	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+	if err != nil {
+		return nil, err
+	}
+	if versionEnt == nil {
+		return nil, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.PublishedPackageVersionNotFound,
+			Message: exception.PublishedPackageVersionNotFoundMsg,
+			Params:  map[string]interface{}{"version": version, "packageId": packageId},
+		}
+	}
+
+	if previousVersion == "" || previousPackageId == "" {
+		if versionEnt.PreviousVersion == "" {
+			return nil, &exception.CustomError{
+				Status:  http.StatusNotFound,
+				Code:    exception.NoPreviousVersion,
+				Message: exception.NoPreviousVersionMsg,
+				Params:  map[string]interface{}{"version": version},
+			}
+		}
+		previousVersion = versionEnt.PreviousVersion
+		if versionEnt.PreviousVersionPackageId != "" {
+			previousPackageId = versionEnt.PreviousVersionPackageId
+		} else {
+			previousPackageId = packageId
+		}
+	}
+	previousVersionEnt, err := o.publishedRepo.GetVersion(previousPackageId, previousVersion)
+	if err != nil {
+		return nil, err
+	}
+	if previousVersionEnt == nil {
+		return nil, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.PublishedPackageVersionNotFound,
+			Message: exception.PublishedPackageVersionNotFoundMsg,
+			Params:  map[string]interface{}{"version": previousVersion, "packageId": previousPackageId},
+		}
+	}
+
+	comparisonId := view.MakeVersionComparisonId(
+		versionEnt.PackageId, versionEnt.Version, versionEnt.Revision,
+		previousVersionEnt.PackageId, previousVersionEnt.Version, previousVersionEnt.Revision,
+	)
+
+	changedOperationSummaryEnt, err := o.operationRepository.GetOperationChangesSummary(comparisonId, operationId, refPackageId)
+	if err != nil {
+		return nil, err
+	}
+	if changedOperationSummaryEnt == nil {
+		return nil, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.ComparisonNotFound,
+			Message: exception.ComparisonNotFoundMsg,
+			Params: map[string]interface{}{
+				"comparisonId":      comparisonId,
+				"packageId":         versionEnt.PackageId,
+				"version":           versionEnt.Version,
+				"revision":          versionEnt.Revision,
+				"previousPackageId": previousVersionEnt.PackageId,
+				"previousVersion":   previousVersionEnt.Version,
+				"previousRevision":  previousVersionEnt.Revision,
+			},
+		}
+	}
+
+	return &changedOperationSummaryEnt.ChangesSummary, nil
 }

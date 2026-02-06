@@ -41,7 +41,7 @@ type PackageController interface {
 	GetPackageStatus(w http.ResponseWriter, r *http.Request)
 	GetPackagesList(w http.ResponseWriter, r *http.Request)
 	GetDeletedPackagesList(w http.ResponseWriter, r *http.Request)
-	GetAvailableVersionStatusesForPublish(w http.ResponseWriter, r *http.Request)
+	GetAvailableVersionStatusesForPublish_deprecated(w http.ResponseWriter, r *http.Request)
 	RecalculateOperationGroups(w http.ResponseWriter, r *http.Request)
 	CalculateOperationGroups(w http.ResponseWriter, r *http.Request)
 }
@@ -544,7 +544,7 @@ func (p packageControllerImpl) UpdatePackage(w http.ResponseWriter, r *http.Requ
 	utils.RespondWithJson(w, http.StatusOK, updatedPackage)
 }
 
-func (p packageControllerImpl) GetAvailableVersionStatusesForPublish(w http.ResponseWriter, r *http.Request) {
+func (p packageControllerImpl) GetAvailableVersionStatusesForPublish_deprecated(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
 	ctx := context.Create(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
@@ -560,7 +560,7 @@ func (p packageControllerImpl) GetAvailableVersionStatusesForPublish(w http.Resp
 		})
 		return
 	}
-	availableVersionStatusesForPublish, err := p.packageService.GetAvailableVersionPublishStatuses(ctx, packageId)
+	availableVersionStatusesForPublish, err := p.packageService.GetAvailableVersionPublishStatuses_deprecated(ctx, packageId)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to get available version statuses for publish", err)
 		return

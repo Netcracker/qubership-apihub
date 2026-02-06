@@ -51,6 +51,7 @@ type BuildService interface {
 	AwaitBuildCompletion(buildId string) error
 
 	GetBuild(buildId string) (*view.BuildView, error)
+	GetBuildSourceData(buildId string) ([]byte, error)
 }
 
 func NewBuildService(
@@ -587,4 +588,47 @@ func (b *buildServiceImpl) GetBuild(buildId string) (*view.BuildView, error) {
 	}
 	result := entity.MakeBuildView(build)
 	return result, nil
+}
+
+func (b *buildServiceImpl) GetBuildSourceData(buildId string) ([]byte, error) {
+	src, err := b.buildRepository.GetBuildSrc(buildId)
+	if err != nil {
+		return nil, err
+	}
+	if src == nil {
+		return nil, nil
+	}
+	configBytes, err := json.Marshal(src.Config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal build config: %w", err)
+	}
+	srcReader, err := zip.NewReader(bytes.NewReader(src.Source), int64(len(src.Source)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read sources archive: %w", err)
+	}
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	for _, entry := range srcReader.File {
+		header := entry.FileHeader
+		w, err := zw.CreateHeader(&header)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zip entry %s: %w", entry.Name, err)
+		}
+		r, err := entry.Open()
+		if err != nil {
+			return nil, fmt.Errorf("failed to open zip entry %s: %w", entry.Name, err)
+		}
+		_, err = io.Copy(w, r)
+		r.Close()
+		if err != nil {
+			return nil, fmt.Errorf("failed to copy zip entry %s: %w", entry.Name, err)
+		}
+	}
+	if err := archive.AddFileToZip(zw, "apihub_build_config.json", configBytes); err != nil {
+		return nil, fmt.Errorf("failed to add build config to archive: %w", err)
+	}
+	if err := zw.Close(); err != nil {
+		return nil, fmt.Errorf("failed to finalize archive: %w", err)
+	}
+	return buf.Bytes(), nil
 }

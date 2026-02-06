@@ -184,7 +184,7 @@ const (
 IMPORTANT: The search is not full-text. For example, a query "create customer" may not find an operation "create new customer". Therefore, it is important to try different search query variations.
 
 LLM INSTRUCTIONS:
-- For the first call, use a large limit (100) to find as many options as possible
+- For the first call, use a large limit (100) to find as many options as possible. Paging starts from 0
 - Consider simplifying the query to a single keyword (e.g., if query is "create customer", also try "customer")
 - Query string has special features: -word to force exclude a word from the search - it can help if search results are flooded with irrelevant results; "something certain"  - double quotes to strict search of a phrase/word
 - Group results by packageId when displaying
@@ -224,7 +224,7 @@ const (
 IMPORTANT: The search is not full-text. For example, a query "create customer" may not find an operation "create new customer". Therefore, it is important to try different search query variations.
 
 LLM INSTRUCTIONS:
-- For the first call, use a large limit (100) to find as many options as possible
+- For the first call, use a large limit (100) to find as many options as possible. Paging starts from 0
 - Consider simplifying the query to a single keyword (e.g., if query is "create customer", also try "customer")
 - Query string has special features: -word to force exclude a word from the search - it can help if search results are flooded with irrelevant results; "something certain"  - double quotes to strict search of a phrase/word
 - Group results by packageId when displaying in markdown format
@@ -277,7 +277,8 @@ var (
 				"maximum": 100
 			},
 			"page": {
-			    "type": "integer"
+			    "type": "integer",
+				"minimum": 0
 			},
 			"release": {
 				"type": "string"

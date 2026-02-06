@@ -15,8 +15,10 @@
 package controller
 
 import (
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"net/http"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
@@ -28,19 +30,31 @@ type MinioStorageController interface {
 	DownloadFilesFromMinioToDatabase(w http.ResponseWriter, r *http.Request)
 }
 
-func NewMinioStorageController(minioCreds *view.MinioStorageCreds, minioStorageService service.MinioStorageService) MinioStorageController {
+func NewMinioStorageController(minioCreds *view.MinioStorageCreds, minioStorageService service.MinioStorageService, roleService service.RoleService) MinioStorageController {
 	return &minioStorageControllerImpl{
 		minioStorageService: minioStorageService,
+		roleService:         roleService,
 		minioCreds:          minioCreds,
 	}
 }
 
 type minioStorageControllerImpl struct {
 	minioStorageService service.MinioStorageService
+	roleService         service.RoleService
 	minioCreds          *view.MinioStorageCreds
 }
 
 func (m minioStorageControllerImpl) DownloadFilesFromMinioToDatabase(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Create(r)
+	sufficientPrivileges := m.roleService.IsSysadm(ctx)
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
 	if !m.minioCreds.IsActive {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusMethodNotAllowed,

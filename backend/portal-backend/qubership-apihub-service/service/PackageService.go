@@ -43,7 +43,7 @@ type PackageService interface {
 	GetPackageStatus(id string) (*view.Status, error)
 	GetPackageName(id string) (string, error)
 	PackageExists(packageId string) (bool, error)
-	GetAvailableVersionPublishStatuses(ctx context.SecurityContext, packageId string) (*view.Statuses, error)
+	GetAvailableVersionPublishStatuses_deprecated(ctx context.SecurityContext, packageId string) (*view.Statuses_deprecated, error)
 	RecalculateOperationGroups(ctx context.SecurityContext, packageId string) error
 	CalculateOperationGroups(packageId string, groupingPrefix string) (*view.CalculatedOperationGroups, error)
 }
@@ -801,12 +801,12 @@ func validatePackageGroupingPrefix(groupingPrefix string) error {
 	return nil
 }
 
-func (p packageServiceImpl) GetAvailableVersionPublishStatuses(ctx context.SecurityContext, packageId string) (*view.Statuses, error) {
+func (p packageServiceImpl) GetAvailableVersionPublishStatuses_deprecated(ctx context.SecurityContext, packageId string) (*view.Statuses_deprecated, error) {
 	statusesForPublish, err := p.roleService.GetAvailableVersionPublishStatuses(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
-	return &view.Statuses{Statuses: statusesForPublish}, err
+	return &view.Statuses_deprecated{Statuses: statusesForPublish}, err
 }
 
 func (p packageServiceImpl) RecalculateOperationGroups(ctx context.SecurityContext, packageId string) error {

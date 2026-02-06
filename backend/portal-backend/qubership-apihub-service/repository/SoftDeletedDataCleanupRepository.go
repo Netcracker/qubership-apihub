@@ -373,6 +373,17 @@ func (d softDeletedDataCleanupRepositoryImpl) VacuumAffectedTables(ctx context.C
 				logger.Trace(ctx, "Successfully vacuumed 'transformed_content_data' table")
 			}
 		}
+		if deletedItems.VersionInternalDocument > 0 {
+			logger.Debugf(ctx, "Vacuuming 'version_internal_document' table for %d deleted records", deletedItems.VersionInternalDocument)
+			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL version_internal_document")
+			if err != nil {
+				errorMsg := fmt.Sprintf("Failed to vacuum 'version_internal_document' table: %v", err)
+				logger.Warn(ctx, errorMsg)
+				vacuumErrors = append(vacuumErrors, errorMsg)
+			} else {
+				logger.Trace(ctx, "Successfully vacuumed 'version_internal_document' table")
+			}
+		}
 	} else {
 		logger.Info(ctx, "No deleted items found - skipping vacuum operations")
 	}

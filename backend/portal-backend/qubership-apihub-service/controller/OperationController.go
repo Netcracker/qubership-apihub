@@ -38,6 +38,7 @@ type OperationController interface {
 	GetOperationDeprecatedItems(w http.ResponseWriter, r *http.Request)
 	GetDeprecatedOperationsSummary(w http.ResponseWriter, r *http.Request)
 	GetOperationModelUsages(w http.ResponseWriter, r *http.Request)
+	GetOperationChangesSummary(w http.ResponseWriter, r *http.Request)
 }
 
 func NewOperationController(roleService service.RoleService,
@@ -181,12 +182,6 @@ func (o operationControllerImpl) GetOperationList(w http.ResponseWriter, r *http
 		}
 	}
 
-	hashList, customErr := getListFromParam(r, "hashList")
-	if customErr != nil {
-		utils.RespondWithCustomError(w, customErr)
-		return
-	}
-
 	ids, customErr := getListFromParam(r, "ids")
 	if customErr != nil {
 		utils.RespondWithCustomError(w, customErr)
@@ -292,7 +287,6 @@ func (o operationControllerImpl) GetOperationList(w http.ResponseWriter, r *http
 
 	restOperationListReq := view.OperationListReq{
 		Deprecated:   deprecated,
-		HashList:     hashList,
 		Ids:          ids,
 		IncludeData:  includeData,
 		Kind:         kind,
@@ -369,11 +363,27 @@ func (o operationControllerImpl) GetOperation(w http.ResponseWriter, r *http.Req
 
 	o.monitoringService.AddOperationOpenCount(packageId, versionName, operationId)
 
+	includeData := true
+	if r.URL.Query().Get("includeData") != "" {
+		includeData, err = strconv.ParseBool(r.URL.Query().Get("includeData"))
+		if err != nil {
+			utils.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": "includeData", "type": "boolean"},
+				Debug:   err.Error(),
+			})
+			return
+		}
+	}
+
 	basicSearchFilter := view.OperationBasicSearchReq{
 		PackageId:   packageId,
 		Version:     versionName,
 		ApiType:     apiType,
 		OperationId: operationId,
+		IncludeData:  includeData,
 	}
 
 	operation, err := o.operationService.GetOperation(basicSearchFilter)
@@ -1142,4 +1152,55 @@ func (o operationControllerImpl) GetOperationModelUsages(w http.ResponseWriter, 
 		return
 	}
 	utils.RespondWithJson(w, http.StatusOK, modelUsages)
+}
+
+func (o operationControllerImpl) GetOperationChangesSummary(w http.ResponseWriter, r *http.Request) {
+	packageId := getStringParam(r, "packageId")
+	ctx := context.Create(r)
+	sufficientPrivileges, err := o.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	if err != nil {
+		handlePkgRedirectOrRespondWithError(w, r, o.ptHandler, packageId, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	versionName, err := getUnescapedStringParam(r, "version")
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "version"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	operationId, err := getUnescapedStringParam(r, "operationId")
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "operationId"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	previousVersion := r.URL.Query().Get("previousVersion")
+	previousVersionPackageId := r.URL.Query().Get("previousVersionPackageId")
+	refPackageId := r.URL.Query().Get("refPackageId")
+
+	changes, err := o.operationService.GetOperationChangesSummary(packageId, versionName, operationId, previousVersionPackageId, previousVersion, refPackageId)
+	if err != nil {
+		handlePkgRedirectOrRespondWithError(w, r, o.ptHandler, packageId, "Failed to get operation changes", err)
+		return
+	}
+	utils.RespondWithJson(w, http.StatusOK, changes)
 }

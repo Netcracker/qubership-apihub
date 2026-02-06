@@ -788,3 +788,15 @@ const HeaderValuesLimitExceededMsg = "HTTP header values limit exceeded for key 
 
 const OperationsMigrationConflict = "7500"
 const OperationsMigrationConflictMsg = "Unable to start migration due to conflict: $reason, please try again later"
+
+const VersionInternalDocumentNotFound = "7600"
+const VersionInternalDocumentNotFoundMsg = "Version internal document with hash $hash not found"
+
+const ComparisonInternalDocumentNotFound = "7601"
+const ComparisonInternalDocumentNotFoundMsg = "Comparison internal document with hash $hash not found"
+
+const InvalidAsyncAPIOperationAction = "7700"
+const InvalidAsyncAPIOperationActionMsg = "Unexpected async API operation action '$action'"
+
+const BuildResultNotFound = "7800"
+const BuildResultNotFoundMsg = "Build result for '$buildId' build not found"
