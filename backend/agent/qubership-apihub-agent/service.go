@@ -106,8 +106,8 @@ func main() {
 	agentsBackendClient := client.NewAgentsBackendClient(systemInfoService.GetApihubUrl(), systemInfoService.GetAccessToken())
 
 	disablingSerivce := service.NewDisablingService()
-	namespaceListCache := service.NewNamespaceListCache(systemInfoService.GetCloudName(), paasCl)
-	serviceListCache := service.NewServiceListCache()
+	namespaceListCache := service.NewNamespaceListCache(systemInfoService.GetCloudName(), paasCl, systemInfoService.GetNamespacesCacheTTL())
+	serviceListCache := service.NewServiceListCache(systemInfoService.GetServicesCacheTTL())
 	documentsDiscoveryService := service.NewDocumentsDiscoveryService(systemInfoService.GetDiscoveryTimeout())
 	discoveryService := service.NewDiscoveryService(systemInfoService.GetCloudName(), systemInfoService.GetAgentNamespace(), systemInfoService.GetApihubUrl(), systemInfoService.GetExcludeLabels(), systemInfoService.GetGroupingLabels(), namespaceListCache, serviceListCache,
 		paasCl, documentsDiscoveryService, apihubClient)
@@ -125,6 +125,7 @@ func main() {
 	apiDocsController := controller.NewApiDocsController(basePath)
 	cloudController := controller.NewCloudController(cloudService)
 	routesController := controller.NewRoutesController(routesService)
+	logsController := controller.NewLogsController()
 
 	disablingMiddleware := controller.NewDisabledServicesMiddleware(disablingSerivce)
 	r := mux.NewRouter().SkipClean(true).UseEncodedPath()
@@ -135,25 +136,30 @@ func main() {
 	r.HandleFunc("/api/v1/namespaces/{name}/serviceItems", security.Secure(serviceController.ListServiceItems)).Methods(http.MethodGet)
 
 	//deprecated
-	r.HandleFunc("/api/v1/namespaces/{name}/services", security.Secure(serviceController.ListServices)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/namespaces/{name}/services", security.Secure(serviceController.ListServices_deprecated)).Methods(http.MethodGet)
 	//deprecated
 	r.HandleFunc("/api/v1/namespaces/{name}/discover", security.Secure(serviceController.StartDiscovery)).Methods(http.MethodPost)
 	//deprecated
 	r.HandleFunc("/api/v1/namespaces/{name}/services/{serviceId}/specs/{fileId}", security.Secure(documentController.GetServiceDocument)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v2/namespaces/{name}/workspaces/{workspaceId}/services", security.Secure(serviceController.ListServices)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/namespaces/{name}/workspaces/{workspaceId}/services", security.Secure(serviceController.ListServices_deprecated)).Methods(http.MethodGet) //deprecated
 	r.HandleFunc("/api/v2/namespaces/{name}/workspaces/{workspaceId}/discover", security.Secure(serviceController.StartDiscovery)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/namespaces/{name}/workspaces/{workspaceId}/services/{serviceId}/specs/{fileId}", security.Secure(documentController.GetServiceDocument)).Methods(http.MethodGet)
 
-	//deprecated
-	r.HandleFunc("/api/v1/discover", security.Secure(cloudController.StartAllDiscovery)).Methods(http.MethodPost)
-	//deprecated
-	r.HandleFunc("/api/v1/services", security.Secure(cloudController.ListAllServices)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v3/namespaces/{name}/workspaces/{workspaceId}/services", security.Secure(serviceController.ListServices)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v2/workspaces/{workspaceId}/discover", security.Secure(cloudController.StartAllDiscovery)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v2/workspaces/{workspaceId}/services", security.Secure(cloudController.ListAllServices)).Methods(http.MethodGet)
+	//deprecated
+	r.HandleFunc("/api/v1/discover", security.Secure(cloudController.StartAllDiscovery_deprecated)).Methods(http.MethodPost)
+	//deprecated
+	r.HandleFunc("/api/v1/services", security.Secure(cloudController.ListAllServices_deprecated)).Methods(http.MethodGet)
+
+	r.HandleFunc("/api/v2/workspaces/{workspaceId}/discover", security.Secure(cloudController.StartAllDiscovery_deprecated)).Methods(http.MethodPost) //deprecated
+	r.HandleFunc("/api/v2/workspaces/{workspaceId}/services", security.Secure(cloudController.ListAllServices_deprecated)).Methods(http.MethodGet)    //deprecated
 
 	r.HandleFunc("/v3/api-docs", apiDocsController.GetSpec).Methods(http.MethodGet)
+
+	r.HandleFunc("/api/v1/debug/logs/setLevel", security.Secure(logsController.SetLogLevel)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/debug/logs/checkLevel", security.Secure(logsController.CheckLogLevel)).Methods(http.MethodGet)
 
 	healthController := controller.NewHealthController()
 	healthController.AddStartupCheck(func() bool {

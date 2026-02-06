@@ -16,6 +16,7 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"sync"
 
@@ -34,7 +35,7 @@ import (
 )
 
 type DocumentsDiscoveryService interface {
-	RetrieveDocuments(baseUrl string, serviceName string, urls view.DocumentDiscoveryUrls) ([]view.Document, error)
+	RetrieveDocuments(baseUrl string, serviceName string, urls view.DocumentDiscoveryUrls) (*view.DiscoveryResult, error)
 }
 
 const ConfigUrlField = "url"
@@ -63,17 +64,18 @@ type documentsDiscoveryServiceImpl struct {
 	discoveryTimeout time.Duration
 }
 
-func (d documentsDiscoveryServiceImpl) RetrieveDocuments(baseUrl string, serviceName string, urls view.DocumentDiscoveryUrls) ([]view.Document, error) {
+func (d documentsDiscoveryServiceImpl) RetrieveDocuments(baseUrl string, serviceName string, urls view.DocumentDiscoveryUrls) (*view.DiscoveryResult, error) {
 	// check apihub config first
 	var refsFromApihubConfig []view.DocumentRef
 
-	apihubConfig := getApihubConfigFromUrls(baseUrl, urls.ApihubConfig, d.discoveryTimeout)
+	apihubConfig, configPath, apihubConfigCallResults := getApihubConfigFromUrls(baseUrl, urls.ApihubConfig, d.discoveryTimeout)
 	if apihubConfig != nil {
 		refsFromApihubConfig = getDocumentRefsFromApihubConfig(apihubConfig, d.discoveryTimeout*3) // We know that this endpoint should contain the spec, so it's not a guess, increase timeout
 	}
 
 	// process each supported type in parallel
 	docsByRunners := map[int][]view.Document{}
+	callsByRunners := map[int][]view.EndpointCallInfo{}
 	errsByRunners := map[int]error{}
 	docsMutex := sync.RWMutex{}
 
@@ -88,16 +90,18 @@ func (d documentsDiscoveryServiceImpl) RetrieveDocuments(baseUrl string, service
 			log.Debugf("Starting runner %s", runner.GetName())
 
 			var docs []view.Document
+			var callResults []view.EndpointCallInfo
 			var err error
 
 			if len(refsFromApihubConfig) > 0 {
-				docs, err = runner.GetDocumentsByRefs(baseUrl, refsFromApihubConfig) // just get documents from known urls
+				docs, callResults, err = runner.GetDocumentsByRefs(baseUrl, refsFromApihubConfig, configPath) // just get documents from known urls
 			} else {
-				docs, err = runner.DiscoverDocuments(baseUrl, urls, d.discoveryTimeout)
+				docs, callResults, err = runner.DiscoverDocuments(baseUrl, urls, d.discoveryTimeout)
 			}
 
 			docsMutex.Lock()
 			docsByRunners[i] = docs
+			callsByRunners[i] = callResults
 			errsByRunners[i] = err
 			docsMutex.Unlock()
 			log.Debugf("Runner %s finished", runner.GetName())
@@ -107,25 +111,32 @@ func (d documentsDiscoveryServiceImpl) RetrieveDocuments(baseUrl string, service
 	wg.Wait()
 
 	// required to maintain order of documents
-	var result []view.Document
-	for i, _ := range d.runners {
-		result = append(result, docsByRunners[i]...)
+	var resultDocs []view.Document
+	var resultCalls []view.EndpointCallInfo
+
+	resultCalls = append(resultCalls, apihubConfigCallResults...)
+	for i := range d.runners {
+		resultDocs = append(resultDocs, docsByRunners[i]...)
+		resultCalls = append(resultCalls, callsByRunners[i]...)
 	}
 
-	result = removeDuplicateDocuments(result) // TODO: required or not???
+	resultDocs = removeDuplicateDocuments(resultDocs) // TODO: required or not???
 
-	return result, utils.FilterResultErrorsMap(errsByRunners)
+	return &view.DiscoveryResult{
+		Documents:     resultDocs,
+		EndpointCalls: resultCalls,
+	}, utils.FilterResultErrorsMap(errsByRunners)
 }
 
 func removeDuplicateDocuments(specs []view.Document) []view.Document {
 	result := make([]view.Document, 0)
 	uniqueIds := make(map[string]string)
 	for _, spec := range specs {
-		if _, exists := uniqueIds[spec.Path]; exists {
+		if _, exists := uniqueIds[spec.DocPath]; exists {
 			continue
 		}
 		result = append(result, spec)
-		uniqueIds[spec.Path] = spec.Path
+		uniqueIds[spec.DocPath] = spec.DocPath
 	}
 	return result
 }
@@ -174,36 +185,59 @@ func getDocumentRefsFromApihubConfig(apihubConfig view.JsonMap, timeout time.Dur
 	return documentRefs
 }
 
-func getApihubConfigFromUrls(baseUrl string, paths []string, timeout time.Duration) view.JsonMap {
+func getApihubConfigFromUrls(baseUrl string, paths []string, timeout time.Duration) (view.JsonMap, string, []view.EndpointCallInfo) {
 	client := utils.MakeDiscoveryHttpClient(timeout)
+	var callResults []view.EndpointCallInfo
+
 	for _, path := range paths {
 		url := baseUrl + path
 		log.Debugf("Trying to get apihub config from url: %s", url)
 		resp, err := client.Get(url)
 		if err != nil {
-			return nil
+			callResults = append(callResults, view.EndpointCallInfo{
+				Path:         path,
+				ErrorSummary: fmt.Sprintf("Failed to get APIHUB config: %s", err.Error()),
+			})
+			continue
 		}
 		if resp.StatusCode != 200 {
 			log.Debugf("Failed to get apihub config from url: %s with code %d", url, resp.StatusCode)
+			callResults = append(callResults, view.EndpointCallInfo{
+				Path:         path,
+				StatusCode:   resp.StatusCode,
+				ErrorSummary: "Failed to get APIHUB config",
+			})
 			resp.Body.Close()
 			continue
 		}
 		bytes, err := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
 		if err != nil {
 			log.Debugf("Failed to read apihub config from url: %s with error: %s", url, err)
-			resp.Body.Close()
+			callResults = append(callResults, view.EndpointCallInfo{
+				Path:         path,
+				ErrorSummary: fmt.Sprintf("Failed to get APIHUB config: failed to read response body: %s", err.Error()),
+			})
 			continue
 		}
-		resp.Body.Close()
-
+		if len(bytes) == 0 {
+			callResults = append(callResults, view.EndpointCallInfo{
+				Path:         path,
+				ErrorSummary: "Failed to get APIHUB config: response body is empty",
+			})
+			continue
+		}
 		var jmap view.JsonMap
 		err = json.Unmarshal(bytes, &jmap)
 		if err != nil {
 			log.Debugf("Failed to unmarshall apihub config from url %s with error: %s", url, err.Error())
+			callResults = append(callResults, view.EndpointCallInfo{
+				Path:         path,
+				ErrorSummary: fmt.Sprintf("Failed to get APIHUB config: invalid JSON: %s", err.Error()),
+			})
 			continue
-		} else {
-			return jmap
 		}
+		return jmap, path, callResults
 	}
-	return nil
+	return nil, "", callResults
 }

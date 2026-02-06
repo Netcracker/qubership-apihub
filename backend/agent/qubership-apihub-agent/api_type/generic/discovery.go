@@ -17,10 +17,12 @@ package generic
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/Netcracker/qubership-apihub-agent/exception"
 	"gopkg.in/yaml.v2"
 
 	"github.com/Netcracker/qubership-apihub-agent/client"
@@ -30,8 +32,8 @@ import (
 )
 
 type DiscoveryRunner interface {
-	DiscoverDocuments(baseUrl string, urls view.DocumentDiscoveryUrls, timeout time.Duration) ([]view.Document, error)
-	GetDocumentsByRefs(baseUrl string, refs []view.DocumentRef) ([]view.Document, error)
+	DiscoverDocuments(baseUrl string, urls view.DocumentDiscoveryUrls, timeout time.Duration) ([]view.Document, []view.EndpointCallInfo, error)
+	GetDocumentsByRefs(baseUrl string, refs []view.DocumentRef, configPath string) ([]view.Document, []view.EndpointCallInfo, error)
 	FilterRefsForApiType(refs []view.DocumentRef) []view.DocumentRef
 	GetName() string
 }
@@ -41,15 +43,20 @@ const ConfigNameField = "name"
 const ConfigXApiKindField = "x-api-kind"
 const ConfigUrlsField = "urls"
 
-func GetRefsFromConfig(baseUrl string, configUrl string, timeout time.Duration) []view.DocumentRef {
+func GetRefsFromConfig(baseUrl string, configUrl string, timeout time.Duration) ([]view.DocumentRef, *view.EndpointCallInfo) {
 	specRefs := make([]view.DocumentRef, 0)
 	spec, _, err := GetGenericObjectFromUrl(baseUrl+configUrl, timeout) // TODO: refactor??
 	if err != nil {
 		log.Debugf("Failed to read spec from %v: %v", baseUrl+configUrl, err.Error())
-		return nil
-	}
-	if spec == nil {
-		return nil
+		var statusCode int
+		if customError, ok := err.(*exception.CustomError); ok {
+			statusCode, _ = strconv.Atoi(customError.Params["code"].(string))
+		}
+		return nil, &view.EndpointCallInfo{
+			Path:         configUrl,
+			StatusCode:   statusCode,
+			ErrorSummary: fmt.Sprintf("Failed to get config: %s", err.Error()),
+		}
 	}
 	// single url case
 	url := spec.GetValueAsString(ConfigUrlField)
@@ -63,7 +70,7 @@ func GetRefsFromConfig(baseUrl string, configUrl string, timeout time.Duration) 
 				Name:     name,
 				Timeout:  timeout * 10, // We know that this endpoint should contain the spec, so it's not a guess, increase timeout
 			})
-		return specRefs
+		return specRefs, nil
 	}
 	// multiple urls case
 	urls := spec.GetObjectsArray(ConfigUrlsField)
@@ -79,15 +86,22 @@ func GetRefsFromConfig(baseUrl string, configUrl string, timeout time.Duration) 
 				Timeout:  timeout * 10, // We know that this endpoint should contain the spec, so it's not a guess, increase timeout
 			})
 	}
-	return specRefs
+	if len(specRefs) == 0 {
+		return nil, &view.EndpointCallInfo{
+			Path:         configUrl,
+			ErrorSummary: "Config found but contains no spec URLs",
+		}
+	}
+	return specRefs, nil
 }
 
-func GetAnyDocsByRefs(baseUrl string, refs []view.DocumentRef) ([]view.Document, error) {
+func GetAnyDocsByRefs(baseUrl string, refs []view.DocumentRef, configPath string) ([]view.Document, []view.EndpointCallInfo, error) {
 	if len(refs) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	result := make([]view.Document, len(refs))
+	callResults := make([]view.EndpointCallInfo, len(refs))
 	errors := make([]string, len(refs))
 
 	wg := sync.WaitGroup{}
@@ -109,32 +123,46 @@ func GetAnyDocsByRefs(baseUrl string, refs []view.DocumentRef) ([]view.Document,
 				name = parts[len(parts)-1]
 			}
 
-			doc := view.Document{
-				Name:     name,
-				Path:     url,
-				Type:     string(ref.ApiType),
-				XApiKind: ref.XApiKind,
-			}
-
 			fullUrl := baseUrl + url
 
 			data, err := client.GetRawDocumentFromUrl(fullUrl, string(ref.ApiType), ref.Timeout)
 			if err != nil {
 				log.Debugf("Failed to get document from url %s: %s", fullUrl, err)
+				var statusCode int
+				if customError, ok := err.(*exception.CustomError); ok {
+					statusCode, _ = strconv.Atoi(customError.Params["code"].(string))
+				}
+				callResults[i] = view.EndpointCallInfo{
+					Path:         url,
+					StatusCode:   statusCode,
+					ErrorSummary: fmt.Sprintf("Failed to get document: %s", err.Error()),
+				}
 				if ref.Required {
 					errors[i] = fmt.Sprintf("Failed to get required document from url %s: %s", url, err)
 				}
 				return
 			}
 			if len(data) > 0 {
-				doc.Format = view.GetDocExtensionByType(doc.Type)
-				doc.FileId = utils.GenerateFileId(&fileIds, doc.Name, doc.Format)
-				result[i] = doc
+				format := view.GetDocExtensionByType(string(ref.ApiType))
+				result[i] = view.Document{
+					Name:       name,
+					Format:     format,
+					FileId:     utils.GenerateFileId(&fileIds, name, format),
+					Type:       string(ref.ApiType),
+					XApiKind:   ref.XApiKind,
+					DocPath:    url,
+					ConfigPath: configPath,
+				}
+			} else {
+				callResults[i] = view.EndpointCallInfo{
+					Path:         url,
+					ErrorSummary: "Document contains no data",
+				}
 			}
 		})
 	}
 	wg.Wait()
-	return utils.FilterResultDocuments(result), utils.FilterResultErrors(errors)
+	return utils.FilterResultDocuments(result), utils.FilterEndpointCallResults(callResults), utils.FilterResultErrors(errors)
 }
 
 func GetGenericObjectFromUrl(url string, timeout time.Duration) (view.JsonMap, string, error) {
@@ -142,19 +170,23 @@ func GetGenericObjectFromUrl(url string, timeout time.Duration) (view.JsonMap, s
 	if err != nil {
 		return nil, "", err
 	}
+	if len(specBytes) == 0 {
+		return nil, "", fmt.Errorf("response body is empty")
+	}
 	var spec view.JsonMap
-	err = json.Unmarshal(specBytes, &spec)
-	if err == nil {
+	jsonErr := json.Unmarshal(specBytes, &spec)
+	if jsonErr == nil {
 		return spec, view.FormatJson, nil
 	}
 	var body map[interface{}]interface{}
-	if err := yaml.Unmarshal(specBytes, &body); err != nil {
-		return nil, "", err
+	yamlErr := yaml.Unmarshal(specBytes, &body)
+	if yamlErr != nil {
+		// TODO: Both failed - what error should be in this case ?
+		return nil, "", fmt.Errorf("invalid JSON: %v", jsonErr)
 	}
-
 	spec = view.ConvertYamlToJsonMap(body)
-	if spec != nil {
-		return spec, view.FormatYaml, nil
+	if spec == nil {
+		return nil, "", fmt.Errorf("YAML structure cannot be converted to JSON map")
 	}
-	return nil, "", err
+	return spec, view.FormatYaml, nil
 }

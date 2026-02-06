@@ -17,10 +17,13 @@ package security
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/Netcracker/qubership-apihub-agent/client"
 	"github.com/Netcracker/qubership-apihub-agent/view"
 	"github.com/shaj13/go-guardian/v2/auth"
-	"net/http"
+
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 func NewCookieTokenStrategy(apihubClient client.ApihubClient) auth.Strategy {
@@ -44,7 +47,15 @@ func (a cookieTokenStrategyImpl) Authenticate(ctx context.Context, r *http.Reque
 		return nil, err
 	}
 	if success {
-		return auth.NewDefaultUser("", "", []string{}, auth.Extensions{}), nil
+		jt, err := jwt.ParseSigned(cookie.Value)
+		if err != nil {
+			return nil, fmt.Errorf("token parse error: %w", err)
+		}
+		userInfo := auth.NewDefaultUser("", "", []string{}, auth.Extensions{})
+		if err := jt.UnsafeClaimsWithoutVerification(userInfo); err != nil {
+			return nil, fmt.Errorf("claims extraction error: %w", err)
+		}
+		return userInfo, nil
 	} else {
 		return nil, fmt.Errorf("authentication failed, token from cookie is incorrect")
 	}

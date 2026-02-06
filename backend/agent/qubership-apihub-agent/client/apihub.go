@@ -46,6 +46,7 @@ type ApihubClient interface {
 	GetRsaPublicKey(ctx secctx.SecurityContext) (*view.PublicKey, error)
 	CheckApiKeyValid(apiKey string) (bool, error)
 	CheckAuthToken(ctx context.Context, token string) (bool, error)
+	GetApiKeyByKey(ctx context.Context, apiKey string) (*view.ApihubApiKeyView, error)
 }
 
 func NewApihubClient(apihubUrl string, accessToken string, cloudName string) ApihubClient {
@@ -226,6 +227,32 @@ func (a apihubClientImpl) GetSystemConfiguration() (*view.ApihubSystemConfigurat
 		return nil, err
 	}
 	return &config, nil
+}
+
+func (a apihubClientImpl) GetApiKeyByKey(ctx context.Context, apiKey string) (*view.ApihubApiKeyView, error) {
+	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
+
+	client := resty.NewWithClient(&cl)
+	req := client.R()
+	req.SetContext(ctx)
+	req.SetHeader("api-key", apiKey)
+
+	resp, err := req.Get(fmt.Sprintf("%s/api/v2/auth/apiKey", a.apihubUrl))
+	if err != nil || resp.StatusCode() != http.StatusOK {
+		if resp != nil && resp.StatusCode() == http.StatusNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	var apiKeyView view.ApihubApiKeyView
+	err = json.Unmarshal(resp.Body(), &apiKeyView)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiKeyView, nil
 }
 
 func (a apihubClientImpl) makeRequest(ctx secctx.SecurityContext) *resty.Request {

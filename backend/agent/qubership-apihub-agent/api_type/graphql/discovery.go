@@ -16,13 +16,16 @@ package graphql
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-agent/api_type/generic"
 	"github.com/Netcracker/qubership-apihub-agent/client"
+	"github.com/Netcracker/qubership-apihub-agent/exception"
 	"github.com/Netcracker/qubership-apihub-agent/utils"
 	"github.com/Netcracker/qubership-apihub-agent/view"
 	log "github.com/sirupsen/logrus"
@@ -38,13 +41,20 @@ type graphqlDiscoveryRunner struct {
 const DefaultGraphqlSpecName = "Graphql specification"
 const DefaultGraphqlIntSpecName = "Graphql introspection"
 
-func (r graphqlDiscoveryRunner) DiscoverDocuments(baseUrl string, urls view.DocumentDiscoveryUrls, timeout time.Duration) ([]view.Document, error) {
+func (r graphqlDiscoveryRunner) DiscoverDocuments(baseUrl string, urls view.DocumentDiscoveryUrls, timeout time.Duration) ([]view.Document, []view.EndpointCallInfo, error) {
+	var allCallResults []view.EndpointCallInfo
+
 	// Check for GraphQL config first
 	for _, url := range urls.GraphqlConfig {
-		configRefs := getRefsFromGraphqlConfig(baseUrl, url, timeout)
+		configRefs, callResult := getRefsFromGraphqlConfig(baseUrl, url, timeout)
+		if callResult != nil {
+			allCallResults = append(allCallResults, *callResult)
+		}
 		if len(configRefs) > 0 {
 			// Graphql config found
-			return r.GetDocumentsByRefs(baseUrl, configRefs)
+			docs, callResults, err := r.GetDocumentsByRefs(baseUrl, configRefs, url)
+			allCallResults = append(allCallResults, callResults...)
+			return docs, allCallResults, err
 		}
 	}
 
@@ -56,17 +66,20 @@ func (r graphqlDiscoveryRunner) DiscoverDocuments(baseUrl string, urls view.Docu
 	for _, url := range urls.GraphqlIntrospection {
 		refs = append(refs, view.DocumentRef{Url: url, ApiType: view.ATGraphql, Required: false, Timeout: timeout}) //TODO: Metadata: map[string]interface{}{"isIntrospection": true} ???
 	}
-	return r.GetDocumentsByRefs(baseUrl, refs)
+	docs, callResults, err := r.GetDocumentsByRefs(baseUrl, refs, "")
+	allCallResults = append(allCallResults, callResults...)
+	return docs, allCallResults, err
 }
 
-func (r graphqlDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.DocumentRef) ([]view.Document, error) {
+func (r graphqlDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.DocumentRef, configPath string) ([]view.Document, []view.EndpointCallInfo, error) {
 	filteredRefs := r.FilterRefsForApiType(refs) // take only appropriate api type
 	if len(filteredRefs) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	result := make([]view.Document, len(filteredRefs))
-	errors := make([]string, len(filteredRefs))
+	callResults := make([]view.EndpointCallInfo, len(filteredRefs))
+	errs := make([]string, len(filteredRefs))
 
 	wg := sync.WaitGroup{}
 	wg.Add(len(filteredRefs))
@@ -81,11 +94,9 @@ func (r graphqlDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.D
 		utils.SafeAsync(func() {
 			defer wg.Done()
 
-			spec := view.Document{
-				Path: currentSpecUrl,
-			}
-
 			url := baseUrl + currentSpecUrl
+
+			var name, format, fileId string
 
 			err := checkGraphqlIntrospection(url, ref.Timeout)
 			if err != nil {
@@ -94,41 +105,54 @@ func (r graphqlDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.D
 				err := checkGraphqlSpec(url, ref.Timeout)
 				if err != nil {
 					log.Debugf("Failed to read graphql spec from %v: %v", url, err.Error())
+					var customErr *exception.CustomError
+					var statusCode int
+					if errors.As(err, &customErr) {
+						statusCode, _ = strconv.Atoi(customErr.Params["code"].(string))
+					}
+					callResults[i] = view.EndpointCallInfo{
+						Path:         currentSpecUrl,
+						StatusCode:   statusCode,
+						ErrorSummary: err.Error(),
+					}
 					if ref.Required {
-						// this is an error in this case!
-						errors[i] = fmt.Sprintf("Failed to read required openapi spec from %s: %s", url, err)
+						errs[i] = fmt.Sprintf("Failed to read required graphql spec from %s: %s", url, err)
 					}
 					return
 				} else {
 					if currentSpecRef.Name != "" {
-						spec.Name = currentSpecRef.Name
+						name = currentSpecRef.Name
 					} else {
-						spec.Name = DefaultGraphqlSpecName
+						name = DefaultGraphqlSpecName
 					}
-					spec.Format = view.FormatGraphql
-					spec.FileId = utils.GenerateFileId(&fileIds, spec.Name, view.GraphQLExtension)
-					spec.Type = view.GraphQLType
+					format = view.FormatGraphql
+					fileId = utils.GenerateFileId(&fileIds, name, view.GraphQLExtension)
 				}
 			} else {
 				if currentSpecRef.Name != "" {
-					spec.Name = currentSpecRef.Name
+					name = currentSpecRef.Name
 				} else {
-					spec.Name = DefaultGraphqlSpecName
+					name = DefaultGraphqlSpecName
 				}
-				spec.Format = view.FormatJson
-				spec.FileId = utils.GenerateFileId(&fileIds, spec.Name, view.JsonExtension)
-				spec.Type = view.GraphQLType // what about introspection?
+				format = view.FormatJson
+				fileId = utils.GenerateFileId(&fileIds, name, view.JsonExtension)
 			}
 
-			spec.XApiKind = currentSpecRef.XApiKind
-
-			result[i] = spec
+			result[i] = view.Document{
+				Name:       name,
+				Format:     format,
+				FileId:     fileId,
+				Type:       view.GraphQLType,
+				XApiKind:   currentSpecRef.XApiKind,
+				DocPath:    currentSpecUrl,
+				ConfigPath: configPath,
+			}
 		})
 	}
 
 	wg.Wait()
 
-	return utils.FilterResultDocuments(result), utils.FilterResultErrors(errors)
+	return utils.FilterResultDocuments(result), utils.FilterEndpointCallResults(callResults), utils.FilterResultErrors(errs)
 }
 
 func (r graphqlDiscoveryRunner) FilterRefsForApiType(refs []view.DocumentRef) []view.DocumentRef {
@@ -178,7 +202,7 @@ func checkGraphqlIntrospection(specUrl string, timeout time.Duration) error {
 func checkGraphqlSpec(specUrl string, timeout time.Duration) error {
 	spec, err := getGraphqlSpecFromUrl(specUrl, timeout)
 	if err != nil {
-		return fmt.Errorf("failed to get graphql specification from '%v': %v", specUrl, err.Error())
+		return fmt.Errorf("failed to get graphql specification from '%v': %w", specUrl, err)
 	}
 	if spec != nil {
 		match, err := regexp.Match("type\\s+?\\S+?\\s+?{", spec)
@@ -198,15 +222,20 @@ const GraphqlConfigUrlField = "url"
 const GraphqlConfigUrlsField = "urls"
 const GraphqlConfigNameField = "name"
 
-func getRefsFromGraphqlConfig(baseUrl string, graphqlConfigUrl string, timeout time.Duration) []view.DocumentRef {
+func getRefsFromGraphqlConfig(baseUrl string, graphqlConfigUrl string, timeout time.Duration) ([]view.DocumentRef, *view.EndpointCallInfo) {
 	graphqlSpecRefs := make([]view.DocumentRef, 0)
 	spec, _, err := generic.GetGenericObjectFromUrl(baseUrl+graphqlConfigUrl, timeout) // TODO: refactor
 	if err != nil {
 		log.Debugf("Failed to read json spec from %v: %v", baseUrl+graphqlConfigUrl, err.Error())
-		return nil
-	}
-	if spec == nil {
-		return nil
+		var statusCode int
+		if customError, ok := err.(*exception.CustomError); ok {
+			statusCode, _ = strconv.Atoi(customError.Params["code"].(string))
+		}
+		return nil, &view.EndpointCallInfo{
+			Path:         graphqlConfigUrl,
+			StatusCode:   statusCode,
+			ErrorSummary: fmt.Sprintf("Failed to get GraphQL config: %s", err.Error()),
+		}
 	}
 	// single url case
 	url := spec.GetValueAsString(GraphqlConfigUrlField)
@@ -220,7 +249,7 @@ func getRefsFromGraphqlConfig(baseUrl string, graphqlConfigUrl string, timeout t
 				Required: true,
 				Timeout:  timeout * 10, // We know that this endpoint should contain the spec, so it's not a guess, increase timeout
 			})
-		return graphqlSpecRefs
+		return graphqlSpecRefs, nil
 	}
 	// multiple urls case
 	urls := spec.GetObjectsArray(GraphqlConfigUrlsField)
@@ -236,5 +265,11 @@ func getRefsFromGraphqlConfig(baseUrl string, graphqlConfigUrl string, timeout t
 				Timeout:  timeout * 10, // We know that this endpoint should contain the spec, so it's not a guess, increase timeout
 			})
 	}
-	return graphqlSpecRefs
+	if len(graphqlSpecRefs) == 0 {
+		return nil, &view.EndpointCallInfo{
+			Path:         graphqlConfigUrl,
+			ErrorSummary: "Config found but contains no spec URLs",
+		}
+	}
+	return graphqlSpecRefs, nil
 }

@@ -25,8 +25,8 @@ import (
 )
 
 type CloudController interface {
-	ListAllServices(w http.ResponseWriter, r *http.Request)
-	StartAllDiscovery(w http.ResponseWriter, r *http.Request)
+	ListAllServices_deprecated(w http.ResponseWriter, r *http.Request)
+	StartAllDiscovery_deprecated(w http.ResponseWriter, r *http.Request)
 }
 
 func NewCloudController(cloudService service.CloudService) CloudController {
@@ -37,23 +37,23 @@ type cloudControllerImpl struct {
 	cloudService service.CloudService
 }
 
-func (c cloudControllerImpl) ListAllServices(w http.ResponseWriter, r *http.Request) {
+func (c cloudControllerImpl) ListAllServices_deprecated(w http.ResponseWriter, r *http.Request) {
 	workspaceId := getStringParam(r, "workspaceId")
 	//v1 support
 	if workspaceId == "" {
 		workspaceId = view.DefaultWorkspaceId
 	}
-	result := c.cloudService.GetAllServicesList(workspaceId)
+	result := c.cloudService.GetAllServicesList_deprecated(workspaceId)
 	respondWithJson(w, http.StatusOK, result)
 }
 
-func (c cloudControllerImpl) StartAllDiscovery(w http.ResponseWriter, r *http.Request) {
+func (c cloudControllerImpl) StartAllDiscovery_deprecated(w http.ResponseWriter, r *http.Request) {
 	workspaceId := getStringParam(r, "workspaceId")
 	//v1 support
 	if workspaceId == "" {
 		workspaceId = view.DefaultWorkspaceId
 	}
-	err := c.cloudService.StartAllDiscovery(secctx.Create(r), workspaceId)
+	err := c.cloudService.StartAllDiscovery_deprecated(secctx.Create(r), workspaceId)
 	if err != nil {
 		log.Error("Failed to start discovery all process: ", err.Error())
 		if customError, ok := err.(*exception.CustomError); ok {

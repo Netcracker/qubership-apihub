@@ -16,16 +16,47 @@ package view
 
 import "fmt"
 
+type Service_deprecated struct {
+	Id                       string                `json:"id"`
+	Name                     string                `json:"serviceName"`
+	Url                      string                `json:"url"`
+	Documents                []Document_deprecated `json:"specs"`
+	Baseline                 *Baseline             `json:"baseline,omitempty"`
+	Labels                   map[string]string     `json:"serviceLabels,omitempty"`
+	AvailablePromoteStatuses []string              `json:"availablePromoteStatuses"`
+	ProxyServerUrl           string                `json:"proxyServerUrl,omitempty"`
+	Error                    string                `json:"error,omitempty"`
+}
+
 type Service struct {
-	Id                       string            `json:"id"`
-	Name                     string            `json:"serviceName"`
-	Url                      string            `json:"url"`
-	Documents                []Document        `json:"specs"` //todo change json name
-	Baseline                 *Baseline         `json:"baseline,omitempty"`
-	Labels                   map[string]string `json:"serviceLabels,omitempty"`
-	AvailablePromoteStatuses []string          `json:"availablePromoteStatuses"`
-	ProxyServerUrl           string            `json:"proxyServerUrl,omitempty"`
-	Error                    string            `json:"error,omitempty"`
+	Id                       string             `json:"id"`
+	Name                     string             `json:"serviceName"`
+	Url                      string             `json:"url"`
+	Documents                []Document         `json:"documents"`
+	Baseline                 *Baseline          `json:"baseline,omitempty"`
+	Labels                   map[string]string  `json:"serviceLabels,omitempty"`
+	AvailablePromoteStatuses []string           `json:"availablePromoteStatuses"`
+	ProxyServerUrl           string             `json:"proxyServerUrl,omitempty"`
+	Error                    string             `json:"error,omitempty"`
+	DiagnosticInfo           *ServiceDiagnostic `json:"diagnosticInfo,omitempty"`
+}
+
+func (s *Service) ToDeprecated() Service_deprecated {
+	docs := make([]Document_deprecated, len(s.Documents))
+	for i, doc := range s.Documents {
+		docs[i] = doc.ToDeprecated()
+	}
+	return Service_deprecated{
+		Id:                       s.Id,
+		Name:                     s.Name,
+		Url:                      s.Url,
+		Documents:                docs,
+		Baseline:                 s.Baseline,
+		Labels:                   s.Labels,
+		AvailablePromoteStatuses: s.AvailablePromoteStatuses,
+		ProxyServerUrl:           s.ProxyServerUrl,
+		Error:                    s.Error,
+	}
 }
 
 type ServiceItem struct {
@@ -45,6 +76,12 @@ const StatusNone StatusEnum = "none"
 const StatusRunning StatusEnum = "running"
 const StatusComplete StatusEnum = "complete"
 const StatusError StatusEnum = "error"
+
+type ServiceListResponse_deprecated struct {
+	Services []Service_deprecated `json:"services"`
+	Status   StatusEnum           `json:"status"`
+	Debug    string               `json:"debug"`
+}
 
 type ServiceListResponse struct {
 	Services []Service  `json:"services"`

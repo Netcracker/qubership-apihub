@@ -29,13 +29,13 @@ func NewUnknownDiscoveryRunner() generic.DiscoveryRunner {
 type unknownDiscoveryRunner struct {
 }
 
-func (m unknownDiscoveryRunner) DiscoverDocuments(baseUrl string, urls view.DocumentDiscoveryUrls, timeout time.Duration) ([]view.Document, error) {
+func (m unknownDiscoveryRunner) DiscoverDocuments(baseUrl string, urls view.DocumentDiscoveryUrls, timeout time.Duration) ([]view.Document, []view.EndpointCallInfo, error) {
 	// No default paths for this type
-	return []view.Document{}, nil
+	return []view.Document{}, nil, nil
 }
 
-func (m unknownDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.DocumentRef) ([]view.Document, error) {
-	return generic.GetAnyDocsByRefs(baseUrl, m.FilterRefsForApiType(refs))
+func (m unknownDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.DocumentRef, configPath string) ([]view.Document, []view.EndpointCallInfo, error) {
+	return generic.GetAnyDocsByRefs(baseUrl, m.FilterRefsForApiType(refs), configPath)
 }
 
 func (m unknownDiscoveryRunner) FilterRefsForApiType(refs []view.DocumentRef) []view.DocumentRef {
