@@ -34,7 +34,7 @@ export type ChangesViewAgentWidgetProps = {
 export const ChangesViewAgentWidget: FC<ChangesViewAgentWidgetProps> = memo<ChangesViewAgentWidgetProps>(props => {
   const { versionKey, packageKey, searchValue, apiType } = props
 
-  const [versionChangelog, isLoading, fetchNextPage, isNextPageFetching, hasNextPage] = usePagedVersionChangelog({
+  const { data: versionChangelog, isLoading, fetchNextPage, isFetchingNextPage, hasNextPage } = usePagedVersionChangelog({
     versionKey: versionKey,
     packageKey: packageKey,
     searchValue: searchValue,
@@ -51,7 +51,7 @@ export const ChangesViewAgentWidget: FC<ChangesViewAgentWidgetProps> = memo<Chan
       versionKey={versionKey}
       apiType={apiType}
       fetchNextPage={fetchNextPage}
-      isNextPageFetching={isNextPageFetching}
+      isNextPageFetching={isFetchingNextPage}
       hasNextPage={hasNextPage}
     />
   )

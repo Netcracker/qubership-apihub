@@ -68,10 +68,10 @@ export const RulesetActivationHistoryTable: FC<RulesetActivationHistoryTableProp
           ))}
         </TableHead>
         <TableBody>
-          {getRowModel().rows.map(row => (
+          {getRowModel().rows.map((row) => (
             <TableRow key={row.id}>
               {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.column.id}>
+                <TableCell key={cell.column.id} data-testid={`Cell-${cell.column.id}`}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
               ))}

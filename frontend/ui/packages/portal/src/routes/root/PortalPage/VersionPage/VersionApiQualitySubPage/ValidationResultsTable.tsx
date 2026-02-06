@@ -146,6 +146,7 @@ export const ValidationResultsTable: FC<ValidationResultsTableProps> = memo<Vali
               {row.getVisibleCells().map(cell => (
                 <TableCell
                   key={cell.column.id}
+                  data-testid={`Cell-${cell.column.id}`}
                   sx={{
                     textAlign: TABLE_COLUMNS_LAYOUT_CONFIG[cell.column.id].textAlign,
                   }}

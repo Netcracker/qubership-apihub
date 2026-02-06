@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useHash } from 'react-use'
 import type { ChangeSeverity } from '../../entities/change-severities'
@@ -23,7 +23,10 @@ import { FILTERS_SEARCH_PARAM } from '../../utils/search-params'
 
 export function useSeverityFiltersSearchParam(): [ChangeSeverity[], SetChangeSeverity] {
   const filters = useSearchParam(FILTERS_SEARCH_PARAM)
-  const changeSeverityFilters = (filters?.split(',') ?? []) as ChangeSeverity[]
+  const changeSeverityFilters = useMemo(
+    () => (filters?.split(',') ?? []) as ChangeSeverity[],
+    [filters],
+  )
 
   const [searchParams] = useSearchParams()
   const [hashParam] = useHash()

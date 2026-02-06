@@ -45,11 +45,15 @@ export function useApiQualityClientValidationStatus(): [ClientValidationStatus |
 
 const NOT_LINTED_API_TYPES: ApiType[] = [API_TYPE_GRAPHQL]
 
+export function NotLintedApiTypes(apiType?: ApiType): boolean {
+  return !apiType || !NOT_LINTED_API_TYPES.some(notLintedApiType => notLintedApiType === apiType)
+}
+
 export function useApiQualityLinterEnabled(apiType?: ApiType): boolean {
   const [kind] = usePackageKind()
   const linterEnabled = (
     useContext(ApiQualityLinterEnabledContext) &&
-    (!apiType || !NOT_LINTED_API_TYPES.some(notLintedApiType => notLintedApiType === apiType)) &&
+    NotLintedApiTypes(apiType) &&
     kind === PACKAGE_KIND
   )
   return linterEnabled
@@ -90,7 +94,7 @@ export function getApiQualitySummaryPlaceholder(
       return <>
         No validation results.
         <br />
-        <Link onClick={onManualRunLinter}>
+        <Link onClick={onManualRunLinter} data-testid="RunValidationLink">
           Run Validation
         </Link>
       </>

@@ -16,12 +16,13 @@
 
 import type {
   ApiAudience,
-  ApiKind,
+  ApihubApiCompatibilityKind,
   BuildConfig,
   ResolvedDeprecatedOperations,
   ResolvedGroupDocuments,
   ResolvedOperation,
   ResolvedReferences,
+  ResolvedVersionDocuments,
 } from '@netcracker/qubership-apihub-api-processor'
 import { generatePath } from 'react-router-dom'
 import type { ApiType } from '../entities/api-types'
@@ -32,6 +33,7 @@ import { getPackageRedirectDetails } from './redirects'
 import { API_V1, API_V2, API_V3, requestBlob, requestJson, requestVoid } from './requests'
 import { optionalSearchParams } from './search-params'
 import type { Key } from './types'
+import type { DocumentsDto } from '../entities/documents'
 
 export async function getPackageVersionContent(
   packageKey: Key,
@@ -276,9 +278,9 @@ export function toVersionOperation(value: OperationDto): ResolvedOperation {
     }
   return {
     operationId: value.operationId,
+    documentId: value.documentId,
     data: value.data!,
-    dataHash: value.dataHash,
-    apiKind: value.apiKind as ApiKind,
+    apiKind: value.apiKind as ApihubApiCompatibilityKind,
     apiAudience: value.apiAudience as ApiAudience,
     deprecated: value.deprecated ?? false,
     title: value.title,
@@ -316,4 +318,49 @@ export async function fetchExportTemplate(
     .split(';')[0]
 
   return [await data.text(), getFilename()]
+}
+
+export async function getDocuments(
+  packageKey: Key,
+  versionKey: Key,
+  apiType?: ApiType,
+  signal?: AbortSignal,
+): Promise<DocumentsDto> {
+  const packageId = encodeURIComponent(packageKey)
+  const versionId = encodeURIComponent(versionKey)
+
+  const queryParams = optionalSearchParams({ apiType: { value: apiType } })
+  const pathPattern = '/packages/:packageId/versions/:versionId/documents'
+  return await requestJson<DocumentsDto>(
+    `${generatePath(pathPattern, { packageId, versionId })}?${queryParams}`,
+    { method: 'get' },
+    {
+      basePath: API_V2,
+      customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
+    },
+    signal,
+  )
+}
+
+// todo fix api-processor and ui types incompatibility. Only one getDocuments should be left
+export async function getResolvedVersionDocuments(
+  packageKey: Key,
+  versionKey: Key,
+  apiType?: ApiType,
+  signal?: AbortSignal,
+): Promise<ResolvedVersionDocuments> {
+  const packageId = encodeURIComponent(packageKey)
+  const versionId = encodeURIComponent(versionKey)
+
+  const queryParams = optionalSearchParams({ apiType: { value: apiType } })
+  const pathPattern = '/packages/:packageId/versions/:versionId/documents'
+  return await requestJson<ResolvedVersionDocuments>(
+    `${generatePath(pathPattern, { packageId, versionId })}?${queryParams}`,
+    { method: 'get' },
+    {
+      basePath: API_V2,
+      customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
+    },
+    signal,
+  )
 }

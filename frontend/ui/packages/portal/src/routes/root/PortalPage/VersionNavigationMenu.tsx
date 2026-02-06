@@ -69,6 +69,8 @@ import {
 } from '../../NavigationProvider'
 import type {
   ApiQualityTabTooltip} from './VersionPage/ApiQualityValidationSummaryProvider'
+import { NotLintedApiTypes,
+} from './VersionPage/ApiQualityValidationSummaryProvider'
 import {
   useApiQualityLinterEnabled,
   useApiQualityTabTooltip,
@@ -110,7 +112,7 @@ export const VersionNavigationMenu: FC<VersionNavigationMenuProps> = memo<Versio
       {
         linterEnabled: linterEnabled,
         tooltip: apiQualityTabTooltip,
-        tabDisabled: !!apiQualityTabTooltip,
+        tabDisabled: !NotLintedApiTypes(defaultApiType) || !!apiQualityTabTooltip,
       },
     ).filter(({ id }) => menuItems.includes(id)),
     [defaultApiType, menuItems, previousVersion, productionMode, linterEnabled, apiQualityTabTooltip],

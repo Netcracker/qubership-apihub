@@ -14,22 +14,33 @@
  * limitations under the License.
  */
 
+import type { CompareResult } from '@netcracker/qubership-apihub-api-diff'
 import type { Dispatch, FC, PropsWithChildren, SetStateAction } from 'react'
 import { createContext, useContext, useState } from 'react'
-import type { CompareResult } from '@netcracker/qubership-apihub-api-diff'
 
-const ApiDiffResultContext = createContext<CompareResult | undefined>()
-const SetApiDiffResultContext = createContext<Dispatch<SetStateAction<CompareResult | undefined>>>()
+export type ApiDiffResult = Omit<CompareResult, 'ownerDiffEntry'>
 
-export function useApiDiffResult(): CompareResult | undefined {
+const ApiDiffResultContext = createContext<ApiDiffResult | undefined>()
+const SetApiDiffResultContext = createContext<Dispatch<SetStateAction<ApiDiffResult | undefined>>>()
+
+export function useApiDiffResult(): ApiDiffResult | undefined {
   return useContext(ApiDiffResultContext)
 }
 
-export function useSetApiDiffResult(): Dispatch<SetStateAction<CompareResult | undefined>> {
+export function useSetApiDiffResult(): Dispatch<SetStateAction<ApiDiffResult | undefined>> {
   return useContext(SetApiDiffResultContext)
 }
 
-const IsApiDiffResultLoadingContext = createContext<boolean>()
+/*
+This is because by default it was "false" and occured "race condition" when changelog and operations
+were loaded successfully (their loading state === false), but loading/calculating of diff result
+hadn't started yat to that moment and its loading state was === false as well.
+It lead to "blinking" of doc view instead of loading indicator for a moment and changing it to loading indicator again.
+
+So the simplest way to solve the issue is to set context by default to "true".
+And when diff result is ready context will be changed to "false" by algorithm.
+*/
+const IsApiDiffResultLoadingContext = createContext<boolean>(true)
 const SetIsApiDiffResultLoadingContext = createContext<Dispatch<SetStateAction<boolean>>>()
 
 export function useIsApiDiffResultLoading(): boolean {
@@ -41,7 +52,7 @@ export function useSetIsApiDiffResultLoading(): Dispatch<SetStateAction<boolean>
 }
 
 export const ApiDiffResultProvider: FC<PropsWithChildren> = ({ children }) => {
-  const [apiDiffResult, setApiDiffResult] = useState<CompareResult>()
+  const [apiDiffResult, setApiDiffResult] = useState<ApiDiffResult>()
   const [isApiDiffResultLoading, setIsApiDiffResultLoading] = useState<boolean>(false)
 
   return (

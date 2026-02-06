@@ -59,6 +59,7 @@ export const ValidatedDocumentSelector: FC<ValidatedDocumentSelectorProps> = mem
       }}
       variant="text"
       onClick={({ currentTarget }) => setAnchor(currentTarget)}
+      data-testid="ValidatedDocumentSelectorButton"
     >
       <Box display='flex' alignItems='center' gap={1} width='100%'>
         <SpecLogo value={selectedDocument.apiType} />

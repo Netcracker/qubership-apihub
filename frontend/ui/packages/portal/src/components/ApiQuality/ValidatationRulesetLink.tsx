@@ -14,7 +14,7 @@ type ValidationRulesetLinkProps = {
 }
 
 // First Order Component
-export const ValidationRulesettLink: FC<ValidationRulesetLinkProps> = memo<ValidationRulesetLinkProps>(props => {
+export const ValidationRulesetLink: FC<ValidationRulesetLinkProps> = memo<ValidationRulesetLinkProps>(props => {
   const { data, loading, showLabel = true } = props
 
   const { showRulesetInfoDialog } = useEventBus()
@@ -40,7 +40,7 @@ export const ValidationRulesettLink: FC<ValidationRulesetLinkProps> = memo<Valid
       variant='body2'
       onClick={onClickRulesetName}
     >
-      <Link>
+      <Link data-testid="ValidationRulesetLinkName">
         {data.name}
       </Link>
     </Typography>,
@@ -52,6 +52,7 @@ export const ValidationRulesettLink: FC<ValidationRulesetLinkProps> = memo<Valid
       value='rulesetSpecType'
       sx={{ m: 0 }}
       label={RULESET_API_TYPE_TITLE_MAP[data.apiType]}
+      data-testid="ValidationRulesetApiTypeChip"
     />,
   )
 
@@ -61,6 +62,7 @@ export const ValidationRulesettLink: FC<ValidationRulesetLinkProps> = memo<Valid
       value={data.status === RulesetStatuses.ACTIVE ? 'rulesetActive' : 'rulesetInactive'}
       sx={{ m: 0 }}
       label={capitalize(data.status)}
+      data-testid="ValidationRulesetStatusChip"
     />,
   )
 

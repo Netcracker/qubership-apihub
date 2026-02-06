@@ -114,15 +114,23 @@ export const VersionCompareContent: FC = memo(() => {
     ? showCompareRevisionsDialog
     : showCompareVersionsDialog
 
-  const [changesSummary, isContextValid] = useChangesSummaryContext({
+  const compareVersionsOptions = useMemo(() => ({
     changedPackageKey: changedPackageKey,
     changedVersionKey: changedVersionKey,
     originPackageKey: originPackageKey,
     originVersionKey: originVersionKey,
-  })
+  }), [changedPackageKey, changedVersionKey, originPackageKey, originVersionKey])
+  const [changesSummary, isContextValid] = useChangesSummaryContext(compareVersionsOptions)
   const breadcrumbsData = useBreadcrumbsData()
 
-  const [packageChangelog, isLoading, fetchNextPage, isNextPageFetching, hasNextPage] = usePagedDetailedVersionChangelog({
+  const {
+    data: packageChangelog,
+    isLoading,
+    fetchNextPage,
+    isFetchingNextPage: isNextPageFetching,
+    hasNextPage,
+    isChangelogReady,
+  } = usePagedDetailedVersionChangelog({
     packageKey: changedPackageKey!,
     versionKey: changedVersionKey!,
     previousVersionPackageKey: originPackageKey,
@@ -182,7 +190,7 @@ export const VersionCompareContent: FC = memo(() => {
 
   if (changesLoadingStatus) {
     return (
-      <LoadingIndicator/>
+      <LoadingIndicator />
     )
   }
 
@@ -192,8 +200,8 @@ export const VersionCompareContent: FC = memo(() => {
         breadcrumbsData={breadcrumbsData}
         handleSwap={handleSwap}
         showCompareDialog={showCompareDialog}
-        customComponentBeforeSwapperBreadcrumbs={<WarningApiProcessorVersion packageKey={originPackageKey} versionKey={originVersionKey}/>}
-        customComponentAfterSwapperBreadcrumbs={<WarningApiProcessorVersion packageKey={changedPackageKey} versionKey={changedVersionKey}/>}
+        customComponentBeforeSwapperBreadcrumbs={<WarningApiProcessorVersion packageKey={originPackageKey} versionKey={originVersionKey} />}
+        customComponentAfterSwapperBreadcrumbs={<WarningApiProcessorVersion packageKey={changedPackageKey} versionKey={changedVersionKey} />}
       />
       <Placeholder
         invisible={isNotEmpty(filteredPackageChanges)}
@@ -340,9 +348,9 @@ const OperationChangesSummary: FC<OperationChangesSummaryProps> = memo<Operation
         gap: '2px',
       }}
     >
-      {operation && <OperationTitleWithMeta operation={operation}/>}
+      {operation && <OperationTitleWithMeta operation={operation} />}
       {changes && (
-        <Changes value={changes} mode="compact"/>
+        <Changes value={changes} mode="compact" />
       )}
     </ListItem>
   )

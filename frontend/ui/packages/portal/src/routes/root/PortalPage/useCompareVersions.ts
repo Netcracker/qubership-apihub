@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { useEffect, useMemo, useState } from 'react'
-import { useChangesSummary, useRefetchChangesSummary } from './VersionPage/VersionComparePage/useChangesSummary'
-import { useVersionsComparisons } from './VersionPage/useVersionsComparisons'
+import { useChangesSummaryContext } from '@apihub/routes/root/PortalPage/VersionPage/ChangesSummaryProvider'
+import type { Key, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { VersionChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
 import { hasNoContent } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
-import type { Key, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { useChangesSummaryContext } from '@apihub/routes/root/PortalPage/VersionPage/ChangesSummaryProvider'
+import { useEffect, useMemo, useRef } from 'react'
+import { useChangesSummary } from './VersionPage/VersionComparePage/useChangesSummary'
+import { useVersionsComparisons } from './VersionPage/useVersionsComparisons'
 
 export type UseCompareVersionsOptions = Partial<{
   changedPackageKey: Key
@@ -41,54 +41,78 @@ export function useCompareVersions(options: UseCompareVersionsOptions): [Version
     originVersionKey,
   } = options
 
-  const [refetchCounter, setRefetchCounter] = useState(0)
-  const refetchChangesSummary = useRefetchChangesSummary()
+  const refetchCounter = useRef(MAX_CHANGES_SUMMARY_REFETCHES)
 
-  const [changesSummary, isContextValid, setChangesSummary] = useChangesSummaryContext(options)
+  const [changesSummaryFromContext, isContextValid, saveChangesSummaryToContext] = useChangesSummaryContext(options)
+
   useEffect(() => {
     // if versions swapped, re-fetches counter must be reset
     if (!isContextValid) {
-      setRefetchCounter(0)
+      refetchCounter.current = MAX_CHANGES_SUMMARY_REFETCHES
     }
   }, [isContextValid])
-  const [cachedChangesSummary, areChangesSummaryLoading, areChangesSummaryFetching, error] = useChangesSummary({
+
+  const {
+    data: changesSummaryFromBackend,
+    isLoading: areChangesSummaryLoading,
+    isFetching: areChangesSummaryFetching,
+    error,
+    refetch: refetchChangesSummary,
+  } = useChangesSummary({
     packageKey: changedPackageKey!,
     versionKey: changedVersionKey!,
     previousVersionPackageKey: originPackageKey!,
     previousVersionKey: originVersionKey!,
   })
-  const hasCache = useMemo(
-    () => !!cachedChangesSummary && !error || areChangesSummaryLoading || areChangesSummaryFetching,
-    [areChangesSummaryFetching, areChangesSummaryLoading, cachedChangesSummary, error],
+  const hasChangesSummaryOnBackend = useMemo(
+    () => !!changesSummaryFromBackend && !error || areChangesSummaryLoading || areChangesSummaryFetching,
+    [areChangesSummaryFetching, areChangesSummaryLoading, changesSummaryFromBackend, error],
   )
-  const isCacheValid = useMemo(
-    () => hasCache && !hasNoContent(cachedChangesSummary!),
-    [cachedChangesSummary, hasCache],
+  const isChangesSummaryOnBackendValid = useMemo(
+    () => hasChangesSummaryOnBackend && !!changesSummaryFromBackend && !hasNoContent(changesSummaryFromBackend),
+    [changesSummaryFromBackend, hasChangesSummaryOnBackend],
   )
 
-  if (isCacheValid && !changesSummary && isContextValid) {
-    setChangesSummary(cachedChangesSummary)
-  }
+  useEffect(() => {
+    if (isChangesSummaryOnBackendValid && !changesSummaryFromContext && isContextValid) {
+      saveChangesSummaryToContext(changesSummaryFromBackend)
+    }
+  }, [changesSummaryFromBackend, changesSummaryFromContext, isChangesSummaryOnBackendValid, isContextValid, saveChangesSummaryToContext])
 
   const [versionsComparisons, areVersionChangesLoading, isSuccess] = useVersionsComparisons({
-    hasCache: hasCache && isCacheValid,
+    hasCache: hasChangesSummaryOnBackend && isChangesSummaryOnBackendValid,
     changedPackageKey: changedPackageKey,
     changedVersionKey: changedVersionKey,
     originPackageKey: originPackageKey,
     originVersionKey: originVersionKey,
   })
 
-  if (
-    refetchCounter < MAX_CHANGES_SUMMARY_REFETCHES &&
-    !cachedChangesSummary &&
-    !areChangesSummaryLoading &&
-    versionsComparisons &&
-    !areVersionChangesLoading &&
-    isSuccess
-  ) {
-    refetchChangesSummary()
-    setRefetchCounter(refetchCounter + 1)
-  }
+  useEffect(
+    () => {
+      if (
+        refetchCounter.current > 0 &&
+        !changesSummaryFromBackend &&
+        !areChangesSummaryLoading &&
+        versionsComparisons &&
+        !areVersionChangesLoading &&
+        isSuccess
+      ) {
+        refetchChangesSummary()
+        refetchCounter.current--
+      }
+    },
+    [
+      areChangesSummaryLoading,
+      areVersionChangesLoading,
+      changesSummaryFromBackend,
+      isSuccess,
+      refetchChangesSummary,
+      versionsComparisons,
+    ],
+  )
 
-  return [changesSummary]
+  return useMemo(
+    () => ([changesSummaryFromContext]),
+    [changesSummaryFromContext],
+  )
 }

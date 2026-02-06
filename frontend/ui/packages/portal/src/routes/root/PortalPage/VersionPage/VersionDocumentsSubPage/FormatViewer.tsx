@@ -18,7 +18,6 @@ import type { FC } from 'react'
 import { memo } from 'react'
 import { useParams } from 'react-router-dom'
 import { Box } from '@mui/material'
-import { usePublishedDocumentRaw } from '../usePublishedDocumentRaw'
 import { usePackageParamsWithRef } from '../../usePackageParamsWithRef'
 import { UnsupportedView } from './UnsupportedView'
 import { JsonSchemaViewer } from '@netcracker/qubership-apihub-ui-shared/components/JsonSchemaViewer'
@@ -27,6 +26,7 @@ import { JSON_FILE_FORMAT, MD_FILE_FORMAT, YAML_FILE_FORMAT } from '@netcracker/
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { MarkdownViewer } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/MarkdownViewer'
 import { isFastJsonSchema, toJsonSchema } from '@netcracker/qubership-apihub-ui-shared/utils/specifications'
+import { usePublishedDocumentRaw } from '@netcracker/qubership-apihub-ui-shared/hooks/documents/usePublishedDocumentRaw'
 
 export type FormatViewerProps = {
   format: FileFormat

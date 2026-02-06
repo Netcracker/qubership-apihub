@@ -29,7 +29,7 @@ export const ActivationHistoryTooltip: FC<ActivationHistoryTooltipProps> = memo(
 
   return (
     <List sx={STYLE_TOOLTIP_LIST}>
-      <ListSubheader>
+      <ListSubheader data-testid="ActivationHistoryTooltipTitle">
         <Typography variant="subtitle1" sx={STYLE_TOOLTIP_LIST_SUBHEADER_TEXT}>
           Activation History
         </Typography>
@@ -37,7 +37,7 @@ export const ActivationHistoryTooltip: FC<ActivationHistoryTooltipProps> = memo(
       {historicalActivations.map(({ activeFrom, activeTo }) => {
         const key = `${activeFrom}-${activeTo}`
         return (
-          <ListItem key={key}>
+          <ListItem key={key} data-testid="ActivationHistoryTooltipRecord">
             <Typography variant="body2">
               {toDateFormat(activeFrom)} - {toDateFormat(activeTo)}
             </Typography>

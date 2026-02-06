@@ -27,6 +27,7 @@ import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/ut
 import type { Key, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { Package, PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { useMemo } from 'react'
 
 type UseComparisonObjectsOptions = Partial<{
   originPackage: Package | null
@@ -73,32 +74,49 @@ export function useComparisonObjects(
     revisionKey: changedRevisionKey,
   } = getSplittedVersionKey(fullChangedVersion)
 
-  if (!originPackage || !changedPackage || !originPackageKey || !changedPackageKey || !originSplittedVersionKey || !changedSplittedVersionKey) {
-    return [null, null]
-  }
+  return useMemo(() => {
+    if (!originPackage || !changedPackage || !originPackageKey || !changedPackageKey || !originSplittedVersionKey || !changedSplittedVersionKey) {
+      return [null, null]
+    }
 
-  return [
-    getComparisonObject({
-      kind: originPackage.kind,
-      id: originPackageKey,
-      version: originSplittedVersionKey,
-      revision: originRevisionKey,
-      operationId: originOperationKey,
-      refVersion: refVersion,
-      refId: refId,
-      group: previousGroup,
-    }),
-    getComparisonObject({
-      kind: changedPackage.kind,
-      id: changedPackageKey,
-      version: changedSplittedVersionKey,
-      revision: changedRevisionKey,
-      operationId: changedOperationKey,
-      refVersion: refVersion,
-      refId: refId,
-      group: currentGroup,
-    }),
-  ]
+    return [
+      getComparisonObject({
+        kind: originPackage.kind,
+        id: originPackageKey,
+        version: originSplittedVersionKey,
+        revision: originRevisionKey,
+        operationId: originOperationKey,
+        refVersion: refVersion,
+        refId: refId,
+        group: previousGroup,
+      }),
+      getComparisonObject({
+        kind: changedPackage.kind,
+        id: changedPackageKey,
+        version: changedSplittedVersionKey,
+        revision: changedRevisionKey,
+        operationId: changedOperationKey,
+        refVersion: refVersion,
+        refId: refId,
+        group: currentGroup,
+      }),
+    ]
+  }, [
+    originPackage,
+    changedPackage,
+    originPackageKey,
+    changedPackageKey,
+    originSplittedVersionKey,
+    changedSplittedVersionKey,
+    originRevisionKey,
+    changedRevisionKey,
+    originOperationKey,
+    changedOperationKey,
+    refVersion,
+    refId,
+    previousGroup,
+    currentGroup,
+  ])
 }
 
 export const getComparisonObject = (

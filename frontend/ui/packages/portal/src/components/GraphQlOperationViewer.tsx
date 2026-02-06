@@ -25,12 +25,16 @@ export type GraphQlOperationViewerProps = GraphQLOperationViewerProps
 export const GraphQlOperationViewer: FC<GraphQlOperationViewerProps> = memo<GraphQlOperationViewerProps>(({
   source,
   displayMode,
+  operationType,
+  operationName,
 }) => {
   return (
     <Box lineHeight={1.5} height="100%">
       <GraphQLOperationViewer
         source={source}
         displayMode={displayMode}
+        operationType={operationType}
+        operationName={operationName}
       />
     </Box>
   )

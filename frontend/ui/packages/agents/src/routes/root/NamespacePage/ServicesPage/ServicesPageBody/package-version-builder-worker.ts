@@ -23,7 +23,9 @@ import { COMPLETE_PUBLISH_STATUS, ERROR_PUBLISH_STATUS } from '@apihub/entities/
 import { BUILD_TYPE, PackageVersionBuilder } from '@netcracker/qubership-apihub-api-processor'
 import {
   packageVersionResolver,
+  rawDocumentResolver,
   versionDeprecatedResolver,
+  versionDocumentsResolver,
   versionOperationsResolver,
   versionReferencesResolver,
 } from '@netcracker/qubership-apihub-ui-shared/utils/builder-resolvers'
@@ -77,6 +79,8 @@ const worker: PackageVersionBuilderWorker = {
           versionReferencesResolver: await versionReferencesResolver(),
           versionOperationsResolver: await versionOperationsResolver(),
           versionDeprecatedResolver: await versionDeprecatedResolver(),
+          versionDocumentsResolver: await versionDocumentsResolver(),
+          rawDocumentResolver: await rawDocumentResolver(),
         },
       })
 

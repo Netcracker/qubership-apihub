@@ -67,7 +67,6 @@ export function usePagedOperations(options?: Partial<{
   versionKey: Key
   refPackageKey: PackageKey
   deprecated: DeprecatedQueryStatus
-  hashList: string[]
   ids: string[]
   includeData: boolean
   kind: ApiKind
@@ -90,7 +89,6 @@ export function usePagedOperations(options?: Partial<{
     tag,
     ids,
     includeData,
-    hashList,
     label,
     deprecated,
     kind,
@@ -122,7 +120,6 @@ export function usePagedOperations(options?: Partial<{
       versionKey: fullVersion!,
       refPackageKey: refPackageKey,
       deprecated: deprecated,
-      hashList: hashList,
       ids: ids,
       includeData: includeData,
       kind: kind,
@@ -161,7 +158,6 @@ export function useOperations(options?: Partial<{
   packageKey: Key
   versionKey: Key
   deprecated: DeprecatedQueryStatus
-  hashList: string[]
   ids: string[]
   includeData: boolean
   kind: ApiKind
@@ -186,7 +182,6 @@ export function useOperations(options?: Partial<{
     tag,
     ids,
     includeData,
-    hashList,
     label,
     deprecated,
     kind,
@@ -218,7 +213,6 @@ export function useOperations(options?: Partial<{
         packageKey: packageKey!,
         versionKey: fullVersion!,
         deprecated: deprecated,
-        hashList: hashList,
         ids: ids,
         includeData: includeData,
         kind: kind,
@@ -260,7 +254,6 @@ export async function getOperations(
     versionKey: Key
     refPackageKey?: PackageKey
     deprecated?: DeprecatedQueryStatus
-    hashList?: string[]
     ids?: string[]
     includeData?: boolean
     kind?: ApiKind
@@ -283,7 +276,6 @@ export async function getOperations(
     versionKey,
     refPackageKey,
     deprecated = ALL_DEPRECATED_QUERY_STATUS,
-    hashList,
     ids,
     includeData = false,
     kind = ALL_API_KIND,
@@ -307,7 +299,6 @@ export async function getOperations(
     textFilter: { value: textFilter },
     documentSlug: { value: documentId },
     deprecated: { value: deprecated.toString() },
-    hashList: { value: hashList ? encodeURIComponent(JSON.stringify(hashList)).toString() : '' },
     ids: { value: ids ? encodeURIComponent(ids.join()).toString() : '' },
     includeData: { value: includeData.toString() },
     kind: { value: kind },

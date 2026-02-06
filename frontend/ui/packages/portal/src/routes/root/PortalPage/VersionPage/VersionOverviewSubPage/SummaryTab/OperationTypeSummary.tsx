@@ -16,7 +16,7 @@
 
 import { useAggregatedValidationSummaryByPackageVersion } from '@apihub/api-hooks/ApiQuality/useAggregatedValidationSummaryByPackageVersion'
 import { useManualRunApiQualityValidation } from '@apihub/api-hooks/ApiQuality/useManualRunApiQualityValidation'
-import { ValidationRulesettLink } from '@apihub/components/ApiQuality/ValidatationRulesetLink'
+import { ValidationRulesetLink } from '@apihub/components/ApiQuality/ValidatationRulesetLink'
 import { ValidationIssuesTooltip } from '@apihub/components/ApiQuality/ValidationIssuesTooltip'
 import { ISSUE_SEVERITIES_LIST, ISSUE_SEVERITY_COLOR_MAP } from '@apihub/entities/api-quality/issue-severities'
 import type { IssuesSummary } from '@apihub/entities/api-quality/package-version-validation-summary'
@@ -303,7 +303,7 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
           {linterEnabled && (
             <>
               <Box display="flex" alignItems="center" gap={1} gridArea="linterValidationTitle">
-                <Typography sx={{ fontWeight: 500 }} variant="body2">
+                <Typography sx={{ fontWeight: 500 }} variant="body2" data-testid="QualityValidationTitle">
                   Quality Validation
                 </Typography>
                 {validationFailed && (
@@ -321,7 +321,7 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
               <Box sx={{ gridArea: 'empty3' }} />
 
               {showApiQualityPlaceholder && (
-                <Typography sx={{ gridArea: 'linterValidationPlaceholder' }} variant="subtitle2">
+                <Typography sx={{ gridArea: 'linterValidationPlaceholder' }} variant="subtitle2" data-testid="QualityValidationPlaceholder">
                   {apiQualitySummaryPlaceholder}
                 </Typography>
               )}
@@ -347,13 +347,13 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
                     gap={1}
                   >
                     {validationRulesets.map(ruleset => (
-                      <Box key={ruleset.id} display='flex' alignItems='center'>
-                        <ValidationRulesettLink data={ruleset} loading={false} showLabel={false} />
+                      <Box key={ruleset.id} display='flex' alignItems='center' data-testid="ValidationRulesetContainer">
+                        <ValidationRulesetLink data={ruleset} loading={false} showLabel={false} />
                       </Box>
                     ))}
                     {hasInactiveRulesets && (
                       <Typography variant="body2">
-                        <Link onClick={onManualRunLinter}>
+                        <Link onClick={onManualRunLinter} data-testid="RunValidationLink">
                           Run Validation
                         </Link>
                       </Typography>
@@ -368,7 +368,7 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
                   <Box sx={{ gridArea: 'qualityIssuesNumber' }} display="flex" alignItems="center" gap={1.5}>
                     {ISSUE_SEVERITIES_LIST.map(severity => (
                       <ValidationIssuesTooltip key={severity} issueSeverity={severity}>
-                        <Box key={severity} display="flex" alignItems="center" gap={1}>
+                        <Box key={severity} display="flex" alignItems="center" gap={1} data-testid={`IssueCount-${severity}`}>
                           <Box
                             component="span"
                             sx={{ backgroundColor: ISSUE_SEVERITY_COLOR_MAP[severity], width: 8, height: 8, borderRadius: '50%' }}
@@ -386,7 +386,7 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
                   <Typography sx={{ gridArea: 'failedDocumentsNumberTitle' }} variant="subtitle2">
                     Number of failed documents
                   </Typography>
-                  <Box display="flex" alignItems="center" gap={1} gridArea="failedDocumentsNumber">
+                  <Box display="flex" alignItems="center" gap={1} gridArea="failedDocumentsNumber" data-testid="FailedDocumentsContainer">
                     <Typography variant="body2">
                       {documentsWithFailedValidation.length}
                     </Typography>

@@ -16,30 +16,33 @@
 
 import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstack/react-query'
 import { useInfiniteQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
+import type { DifferentVersionChanges, VersionChanges, VersionChangesDto } from '../../../entities/version-changelog'
+import { toDiffVersionChanges, toVersionChanges } from '../../../entities/version-changelog'
+import { useResolvedOperationGroupParameters } from '../../../hooks/operation-groups/useResolvedOperationGroupParameters'
+import type { HasNextPage, IsFetchingNextPage, IsLoading } from '../../../utils/aliases'
 import type { VersionChangelogOptions } from './getVersionChangelog'
 import { getVersionChangelog } from './getVersionChangelog'
-import { useMemo } from 'react'
-import type {
-  DifferentVersionChanges,
-  PagedDiffVersionChanges,
-  PagedVersionChanges,
-  VersionChanges,
-  VersionChangesDto,
-} from '../../../entities/version-changelog'
-import { toDiffVersionChanges, toVersionChanges } from '../../../entities/version-changelog'
-import type { HasNextPage, IsFetchingNextPage, IsLoading } from '../../../utils/aliases'
-import {
-  useResolvedOperationGroupParameters,
-} from '../../../hooks/operation-groups/useResolvedOperationGroupParameters'
 
 const VERSION_CHANGELOG = 'version-changelog-query-key'
 
 export type FetchNextPage = (options?: FetchNextPageOptions) => Promise<InfiniteQueryObserverResult<VersionChangesDto, Error>>
 
+type IsChangelogReady = boolean
+
+type QueryResult<T> = {
+  data: ReadonlyArray<T>
+  isLoading: IsLoading
+  fetchNextPage: FetchNextPage
+  isFetchingNextPage: IsFetchingNextPage
+  hasNextPage: HasNextPage
+  isChangelogReady: IsChangelogReady
+}
+
 function useCommonPagedVersionChangelog<T>(
   options: VersionChangelogOptions,
   toChanges: (data: VersionChangesDto) => T,
-): [ReadonlyArray<T>, IsLoading, FetchNextPage, IsFetchingNextPage, HasNextPage] {
+): QueryResult<T> {
   const {
     packageKey,
     versionKey,
@@ -106,23 +109,24 @@ function useCommonPagedVersionChangelog<T>(
     [data?.pages, toChanges],
   )
 
-  return [
-    versionChanges,
-    isLoading,
-    fetchNextPage,
-    isFetchingNextPage,
-    hasNextPage,
-  ]
+  return {
+    data: versionChanges,
+    isLoading: isLoading,
+    fetchNextPage: fetchNextPage,
+    isFetchingNextPage: isFetchingNextPage,
+    hasNextPage: hasNextPage,
+    isChangelogReady: !isLoading && !isFetchingNextPage && !hasNextPage,
+  }
 }
 
 export function usePagedVersionChangelog(
   options: VersionChangelogOptions,
-): [PagedVersionChanges, IsLoading, FetchNextPage, IsFetchingNextPage, HasNextPage] {
+): QueryResult<VersionChanges> {
   return useCommonPagedVersionChangelog<VersionChanges>(options, toVersionChanges)
 }
 
 export function usePagedDetailedVersionChangelog(
   options: VersionChangelogOptions,
-): [PagedDiffVersionChanges, IsLoading, FetchNextPage, IsFetchingNextPage, HasNextPage] {
+): QueryResult<DifferentVersionChanges> {
   return useCommonPagedVersionChangelog<DifferentVersionChanges>(options, toDiffVersionChanges)
 }

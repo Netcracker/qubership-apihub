@@ -87,7 +87,11 @@ export const DifferentOperationsComparisonPage: FC = memo(() => {
           <ChangesLoadingStatusProvider>
             <SelectedOperationTagsProvider>
               <LayoutWithToolbar
-                toolbar={<ComparisonToolbar compareToolbarMode={COMPARE_DIFFERENT_OPERATIONS_MODE} />}
+                toolbar={
+                  <ComparisonToolbar
+                    compareToolbarMode={COMPARE_DIFFERENT_OPERATIONS_MODE}
+                  />
+                }
                 body={
                   <OperationContent
                     changedOperation={changedOperation}

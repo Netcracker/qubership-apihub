@@ -144,7 +144,6 @@ export const OPERATIONS: Writeable<OperationsDto> = {
       deprecated: true,
       apiKind: 'bwc',
       apiType: 'rest',
-      dataHash: 'sdfsdfsf242',
       path: '/quoteManagement/v5/quote',
       tags: ['RestControllerV5'],
       method: 'get',
@@ -157,7 +156,6 @@ export const OPERATIONS: Writeable<OperationsDto> = {
       deprecated: true,
       apiKind: 'bwc',
       apiType: 'rest',
-      dataHash: 'sdfsdfsf242',
       path: '/quoteManagement/v5/quote',
       tags: ['RestControllerV5'],
       method: 'patch',
@@ -170,7 +168,6 @@ export const OPERATIONS: Writeable<OperationsDto> = {
       deprecated: false,
       apiKind: 'no-bwc',
       apiType: 'rest',
-      dataHash: 'sdfsdfsf243',
       tags: ['TMF'],
       path: '/quoteManagement/v3/pets',
       method: 'get',
@@ -182,7 +179,6 @@ export const OPERATIONS: Writeable<OperationsDto> = {
       title: 'Array Quote',
       apiKind: 'bwc',
       apiType: 'rest',
-      dataHash: 'sdfsdfsf244',
       tags: ['RestControllerV5', 'TMF'],
       path: '/quoteManagement/v5/array',
       method: 'get',
@@ -194,7 +190,6 @@ export const OPERATIONS: Writeable<OperationsDto> = {
       title: 'Get Pets2',
       apiKind: 'bwc',
       apiType: 'rest',
-      dataHash: 'sdfsdfsf245',
       tags: ['TMF', 'RestControllerV5'],
       path: '/quoteManagement/v5/array',
       method: 'post',
@@ -206,7 +201,6 @@ export const OPERATIONS: Writeable<OperationsDto> = {
       data: graphQlOperationData,
       operationId: 'query-fulltextquotesearch',
       title: 'fullTextQuoteSearch',
-      dataHash: '3a2a746b578324e016ddbcdc4c3b462288fabc55',
       apiKind: 'bwc',
       apiType: 'graphql',
       type: 'query',
@@ -218,7 +212,6 @@ export const OPERATIONS: Writeable<OperationsDto> = {
       data: graphQlOperationData,
       operationId: 'mutation-createorupdatesessioncontext',
       title: 'createOrUpdateSessionContext',
-      dataHash: '045efe99015262f164d740e00e0b110e8a110fbb',
       apiKind: 'bwc',
       apiType: 'graphql',
       type: 'mutation',
@@ -230,7 +223,6 @@ export const OPERATIONS: Writeable<OperationsDto> = {
       data: graphQlOperationData,
       operationId: 'subscription-postwaspublished',
       title: 'postWasPublished',
-      dataHash: 'f202090d17c30e85b4170e23994746132c711891',
       apiKind: 'bwc',
       apiType: 'graphql',
       type: 'subscription',
@@ -282,7 +274,7 @@ export const OPERATIONS: Writeable<OperationsDto> = {
 export const DEPRECATED_OPERATIONS: Writeable<OperationsWithDeprecatedDto> = {
   operations: OPERATIONS.operations.map((operation) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { data, dataHash, ...operationBaseProps } = operation
+    const { data, ...operationBaseProps } = operation
     return {
       deprecatedCount: operationBaseProps.deprecated ? '1' : '5',
       deprecatedInPreviousVersions: operationBaseProps.deprecated ? ['2022.1', '2021.4'] : undefined,

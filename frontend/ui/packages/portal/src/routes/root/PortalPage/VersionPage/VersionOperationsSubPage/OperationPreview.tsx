@@ -14,37 +14,38 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import React, { memo, useMemo } from 'react'
-import { OperationView } from '../OperationContent/OperationView/OperationView'
+import { getFileDetails } from '@apihub/utils/file-details'
 import { Box, Divider } from '@mui/material'
-import { OperationViewModeSelector } from '../OperationViewModeSelector'
-import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
+import {
+  OperationTitleWithMeta,
+} from '@netcracker/qubership-apihub-ui-shared/components/Operations/OperationTitleWithMeta'
+import { NAVIGATION_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+import { RawSpecView } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/RawSpecView'
+import { SMALL_TOOLBAR_SIZE, Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
+import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
 import type { OperationViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import { OPERATION_PREVIEW_VIEW_MODES } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
+import { checkIfGraphQLOperation, type OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { SchemaViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
 import {
   useIsDocOperationViewMode,
   useIsRawOperationViewMode,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationMode'
-import { getFileDetails } from '@apihub/utils/file-details'
-import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
-import { NAVIGATION_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import { SMALL_TOOLBAR_SIZE, Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
-import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
-import {
-  OperationTitleWithMeta,
-} from '@netcracker/qubership-apihub-ui-shared/components/Operations/OperationTitleWithMeta'
-import { RawSpecView } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/RawSpecView'
-import { normalizeOpenApiDocument } from '@netcracker/qubership-apihub-ui-shared/utils/normalize'
-import { YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { removeComponents } from '@netcracker/qubership-apihub-api-processor'
+import type { FC } from 'react'
+import { memo, useMemo } from 'react'
+import { OperationView } from '../OperationContent/OperationView/OperationView'
+import { OperationViewModeSelector } from '../OperationViewModeSelector'
 
 export type OperationPreviewProps = {
   apiType: ApiType
   changedOperation: OperationData | undefined
   changedOperationContent: string
+  // Feature "Internal documents"
+  normalizedChangedOperation?: unknown
+  // ---
   isLoading: boolean
   mode: OperationViewMode
   schemaViewMode: SchemaViewMode | undefined
@@ -55,9 +56,22 @@ export type OperationPreviewProps = {
 // First Order Component //
 export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreviewProps>((props) => {
   const {
-    apiType, changedOperation, changedOperationContent,
-    isLoading, mode, schemaViewMode, productionMode, maxWidthHeaderToolbar,
+    apiType,
+    changedOperation,
+    changedOperationContent,
+    // Feature "Internal documents"
+    normalizedChangedOperation,
+    // ---
+    isLoading, mode, schemaViewMode,
+    productionMode, maxWidthHeaderToolbar,
   } = props
+
+  const [operationType, operationName] = useMemo(() => {
+    if (!checkIfGraphQLOperation(changedOperation)) {
+      return [undefined, undefined]
+    }
+    return [changedOperation.type, changedOperation.method]
+  }, [changedOperation])
 
   const isDocViewMode = useIsDocOperationViewMode(mode)
   const isRawViewMode = useIsRawOperationViewMode(mode)
@@ -68,16 +82,9 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
     type,
   } = getFileDetails(apiType, YAML_FILE_VIEW_MODE, changedOperationContent)
 
-  const mergedDocument = useMemo(() => {
-    const existingOperation = removeComponents(changedOperation?.data)
-    return existingOperation
-      ? normalizeOpenApiDocument(existingOperation, changedOperation?.data)
-      : undefined
-  }, [changedOperation])
-
   if (isLoading) {
     return (
-      <LoadingIndicator/>
+      <LoadingIndicator />
     )
   } else if (!changedOperation?.operationKey) {
     return (
@@ -107,9 +114,9 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
               }
             />
           }
-          action={<OperationViewModeSelector modes={OPERATION_PREVIEW_VIEW_MODES}/>}
+          action={<OperationViewModeSelector modes={OPERATION_PREVIEW_VIEW_MODES} />}
         />
-        <Divider orientation="horizontal" variant="fullWidth"/>
+        <Divider orientation="horizontal" variant="fullWidth" />
       </Box>
 
       <Box>
@@ -122,7 +129,10 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
             noHeading
             productionMode={productionMode}
             comparisonMode={false}
-            mergedDocument={mergedDocument}
+            mergedDocument={normalizedChangedOperation}
+            // GraphQL specific
+            operationType={operationType}
+            operationName={operationName}
           />
         )}
         {isRawViewMode && (
