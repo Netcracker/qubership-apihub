@@ -66,6 +66,10 @@ export const isObject = (value: unknown): value is Record<string | symbol, unkno
   return typeof value === 'object' && value !== null
 }
 
+export function isNonNullable<T>(value: T): value is NonNullable<T> {
+  return value !== undefined && value !== null
+}
+
 export const getSymbolValueIfDefined = <T extends object>(
   obj: T,
   symbol: symbol,

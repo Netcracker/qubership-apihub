@@ -14,10 +14,23 @@
  * limitations under the License.
  */
 
-import { BuildConfigFile, BuilderContext, SourceFile, FILE_KIND, TextFile, VersionDocument } from '../types'
-import { API_KIND, API_KIND_LABEL, DOCUMENT_TYPE, FILE_FORMAT_UNKNOWN } from '../consts'
-import { getDocumentTitle, getFileExtension, rawToApiKind } from '../utils'
-import { buildBinaryDocument, unknownApiBuilder } from '../apitypes'
+import { BuildConfigFile, BuilderContext, FILE_KIND, SourceFile, TextFile, VersionDocument } from '../types'
+import {
+  API_KIND_LABEL,
+  APIHUB_API_COMPATIBILITY_KIND_BWC,
+  ApihubApiCompatibilityKind,
+  DOCUMENT_TYPE,
+  FILE_FORMAT_UNKNOWN,
+} from '../consts'
+import {
+  createVersionInternalDocument,
+  getDocumentTitle,
+  getFileExtension,
+  isObject,
+  isString,
+  rawToApiKind,
+} from '../utils'
+import { buildBinaryDocument, REST_KIND_KEY, unknownApiBuilder } from '../apitypes'
 
 export const buildErrorDocument = (file: BuildConfigFile, parsedFile?: TextFile): VersionDocument => {
   const { fileId, slug = '', publish = true, ...metadata } = file
@@ -35,6 +48,7 @@ export const buildErrorDocument = (file: BuildConfigFile, parsedFile?: TextFile)
     operationIds: [],
     metadata,
     source: parsedFile?.source,
+    versionInternalDocument: createVersionInternalDocument(slug),
   }
 }
 
@@ -47,11 +61,7 @@ export const buildDocument = async (parsedFile: SourceFile, file: BuildConfigFil
   const apiBuilder = ctx.apiBuilders.find(({ types }) => types.includes(parsedFile.type)) || unknownApiBuilder
 
   try {
-    const labels = [
-      ...(Array.isArray(file.labels) ? file.labels : []),
-      ...(Array.isArray(ctx.versionLabels) ? ctx.versionLabels : []),
-    ]
-    file.apiKind = findApiKindLabel(labels)
+    file.apiKind = calculateApiKindFromLabels(file.labels, ctx.versionLabels)
 
     return await apiBuilder.buildDocument(parsedFile, file, ctx)
   } catch (error) {
@@ -59,10 +69,15 @@ export const buildDocument = async (parsedFile: SourceFile, file: BuildConfigFil
   }
 }
 
-const findApiKindLabel = (labels: unknown[]): string => {
-  if (!Array.isArray(labels)) {
-    return API_KIND.BWC
+export const calculateApiKindFromLabels = (fileLabels: unknown, versionLabels: unknown): ApihubApiCompatibilityKind => {
+  if (!Array.isArray(fileLabels) && !Array.isArray(versionLabels)) {
+    return APIHUB_API_COMPATIBILITY_KIND_BWC
   }
+
+  const labels = [
+    ...(Array.isArray(fileLabels) ? fileLabels : []),
+    ...(Array.isArray(versionLabels) ? versionLabels : []),
+  ]
 
   for (const label of labels) {
     if (!label || typeof label !== 'string') {
@@ -71,8 +86,18 @@ const findApiKindLabel = (labels: unknown[]): string => {
 
     const match = new RegExp(`${API_KIND_LABEL}:`).exec(label)
     if (match) {
-      return rawToApiKind(label.slice(match[0].length).trim())
+      return rawToApiKind(label.slice(match[0].length).trim(), APIHUB_API_COMPATIBILITY_KIND_BWC)
     }
   }
-  return API_KIND.BWC
+  return APIHUB_API_COMPATIBILITY_KIND_BWC
+}
+
+export const getApiKindProperty = (obj: unknown, defaultApiKind?: ApihubApiCompatibilityKind): ApihubApiCompatibilityKind | undefined => {
+  if (isObject(obj)) {
+    const apiKindLike = obj?.[REST_KIND_KEY]
+    if (isString(apiKindLike)) {
+      return rawToApiKind(apiKindLike, defaultApiKind)
+    }
+  }
+  return defaultApiKind
 }

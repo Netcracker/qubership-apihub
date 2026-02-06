@@ -63,3 +63,14 @@ export function keyBy<T>(array: Array<T>, keyFn: (value: T) => string): Record<s
 }
 
 export type ArrayType<T> = T extends (infer U)[] ? U : T
+
+
+export function intersection(array1: string[], array2: string[]): string[] {
+  const set2 = new Set(array2)
+  return [...new Set(array1.filter(x => set2.has(x)))]
+}
+
+export function difference(array1: string[], array2: string[]): string[] {
+  const set2 = new Set(array2)
+  return [...new Set(array1.filter(x => !set2.has(x)))]
+}

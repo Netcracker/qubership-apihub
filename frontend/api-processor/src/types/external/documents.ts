@@ -17,6 +17,7 @@
 import { FileId, OperationsApiType, PackageId, TemplatePath, VersionId } from './types'
 import { ResolvedReferenceMap } from './references'
 import { FileFormat } from '../internal'
+import { ApihubApiCompatibilityKind } from '../../consts'
 
 export type ResolvedDocument = {
   fileId: string
@@ -42,6 +43,7 @@ export type ResolvedVersionDocuments = {
 
 export type ResolvedVersionDocument = ResolvedDocument & {
   packageRef?: string
+  apiKind?: ApihubApiCompatibilityKind
 }
 
 export type Labels = string[]

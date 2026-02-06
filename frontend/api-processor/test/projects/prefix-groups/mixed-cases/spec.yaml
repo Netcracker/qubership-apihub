@@ -1,0 +1,45 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /api/v2/added:
+    get:
+      responses:
+        '200':
+          description: OK
+  /api/v1/removed:
+    get:
+      responses:
+        '200':
+          description: OK
+  /api/v1/changed1:
+    get:
+      responses:
+        '200':
+          description: a1
+  /api/v2/changed1:
+    get:
+      responses:
+        '200':
+          description: a2
+  /api/v1/changed2:
+    get:
+      responses:
+        '200':
+          description: a1
+  /api/v2/changed2:
+    get:
+      responses:
+        '200':
+          description: a2
+  /api/v1/untouched:
+    get:
+      responses:
+        '200':
+          description: OK
+  /api/v2/untouched:
+    get:
+      responses:
+        '200':
+          description: OK

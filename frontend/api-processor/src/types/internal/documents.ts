@@ -15,7 +15,7 @@
  */
 
 import { FileId, KeyOfConstType, OperationId } from '../external'
-import { FILE_FORMAT } from '../../consts'
+import { ApihubApiCompatibilityKind, FILE_FORMAT } from '../../consts'
 
 export interface VersionDocuments {
   documents: VersionDocument[]
@@ -36,6 +36,11 @@ export interface ZippableDocument<T = any> {
 
   filename: string
   publish?: boolean
+}
+
+export interface VersionInternalDocument {
+  versionDocumentId: string
+  serializedVersionDocument?: string
 }
 
 export interface VersionDocument<T = any> extends ZippableDocument<T> {
@@ -59,7 +64,8 @@ export interface VersionDocument<T = any> extends ZippableDocument<T> {
   */
   publish?: boolean
   source?: Blob
-  apiKind?: string
+  apiKind?: ApihubApiCompatibilityKind
+  versionInternalDocument: VersionInternalDocument
 }
 
 export type FileFormat = KeyOfConstType<typeof FILE_FORMAT>

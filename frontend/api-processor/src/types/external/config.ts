@@ -15,7 +15,14 @@
  */
 
 import { FileId, KeyOfConstType, OperationsApiType, PackageId, VersionId } from './types'
-import { BUILD_TYPE, FILE_FORMAT_HTML, FILE_FORMAT_JSON, FILE_FORMAT_YAML, VERSION_STATUS } from '../../consts'
+import {
+  ApihubApiCompatibilityKind,
+  BUILD_TYPE,
+  FILE_FORMAT_HTML,
+  FILE_FORMAT_JSON,
+  FILE_FORMAT_YAML,
+  VERSION_STATUS,
+} from '../../consts'
 import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
 
 export type BuildType = KeyOfConstType<typeof BUILD_TYPE>
@@ -144,8 +151,7 @@ export interface ChangelogBuildConfig extends BuildConfigBase {
   buildType: typeof BUILD_TYPE.CHANGELOG
   packageId: PackageId
   version: VersionId
-  status: VersionStatus
-  previousVersion?: VersionId
+  previousVersion: VersionId
   previousVersionPackageId?: PackageId
 
   format: ExportFormat
@@ -157,8 +163,6 @@ export interface PrefixGroupsChangelogBuildConfig extends BuildConfigBase {
   packageId: PackageId
   version: VersionId
   status: VersionStatus
-  previousVersion?: VersionId
-  previousVersionPackageId?: PackageId
   currentGroup?: string
   previousGroup?: string
 
@@ -187,7 +191,7 @@ export type OperationsSpecTransformation =
 export interface BuildConfigFile {
   fileId: FileId
   slug?: string // for rebuild
-  apiKind?: string
+  apiKind?: ApihubApiCompatibilityKind
 
   // deprecated
   publish?: boolean

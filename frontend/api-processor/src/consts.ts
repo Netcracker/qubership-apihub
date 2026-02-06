@@ -28,6 +28,7 @@ import {
   ValidationRulesSeverity,
 } from './types'
 import { OpenAPIV3 } from 'openapi-types'
+import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 
 export const DEFAULT_BATCH_SIZE = 32
 
@@ -35,6 +36,7 @@ export const DEFAULT_VALIDATION_RULES_SEVERITY_CONFIG: ValidationRulesSeverity =
   brokenRefs: VALIDATION_RULES_SEVERITY_LEVEL_WARNING,
 }
 
+export const SPECIFICATION_EXTENSION_PREFIX = 'x-'
 export const REVISION_DELIMITER = '@'
 
 export const VERSION_DIFFERENCE_ACTION = {
@@ -66,9 +68,13 @@ export const PACKAGE = {
   DOCUMENTS_FILE_NAME: 'documents.json',
   OPERATIONS_FILE_NAME: 'operations.json',
   COMPARISONS_FILE_NAME: 'comparisons.json',
+  COMPARISON_INTERNAL_FILE_NAME: 'comparison-internal-documents.json',
+  VERSION_INTERNAL_FILE_NAME: 'version-internal-documents.json',
   DOCUMENTS_DIR_NAME: 'documents',
   OPERATIONS_DIR_NAME: 'operations',
   COMPARISONS_DIR_NAME: 'comparisons',
+  VERSION_INTERNAL_DOCUMENTS_DIR_NAME: 'version-internal-documents',
+  COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME: 'comparison-internal-documents',
 } as const
 
 export const EDITOR_MESSAGES = {
@@ -93,6 +99,8 @@ export const EXPORT_BUILD_TYPES = [
   BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP,
 ]
 
+export type ExportBuildType = typeof EXPORT_BUILD_TYPES[number]
+
 export const VERSION_STATUS = {
   RELEASE: 'release',
   DRAFT: 'draft',
@@ -101,11 +109,13 @@ export const VERSION_STATUS = {
   NONE: '', // non-existent status for changelog builds
 } as const
 
-export const API_KIND = {
-  BWC: 'bwc',
-  NO_BWC: 'no-bwc',
-  EXPERIMENTAL: 'experimental',
-} as const
+export const APIHUB_API_COMPATIBILITY_KIND_BWC = 'bwc'
+export const APIHUB_API_COMPATIBILITY_KIND_NO_BWC = 'no-bwc'
+export const APIHUB_API_COMPATIBILITY_KIND_EXPERIMENTAL = 'experimental'
+
+export type ApihubApiCompatibilityKind = typeof APIHUB_API_COMPATIBILITY_KIND_BWC
+  | typeof APIHUB_API_COMPATIBILITY_KIND_NO_BWC
+  | typeof APIHUB_API_COMPATIBILITY_KIND_EXPERIMENTAL
 
 export const API_KIND_LABEL = 'apihub/x-api-kind'
 
@@ -142,6 +152,16 @@ export const SYNTHETIC_TITLE_FLAG = Symbol('synthetic-title')
 export const ORIGINS_SYMBOL = Symbol('origins')
 export const HASH_FLAG = Symbol('hash')
 export const INLINE_REFS_FLAG = Symbol('inline-refs')
+export const AFTER_VALUE_NORMALIZED_PROPERTY = Symbol('after-value-normalized')
+export const BEFORE_VALUE_NORMALIZED_PROPERTY = Symbol('before-value-normalized')
+
+export const SERIALIZE_SYMBOL_STRING_MAPPING = new Map([
+  [HASH_FLAG, 'HASH_FLAG'],
+  [ORIGINS_SYMBOL, 'ORIGINS_SYMBOL'],
+  [SYNTHETIC_TITLE_FLAG, 'SYNTHETIC_TITLE_FLAG'],
+  [DIFF_META_KEY, 'DIFF_META_KEY'],
+  [DIFFS_AGGREGATED_META_KEY, 'DIFFS_AGGREGATED_META_KEY'],
+])
 
 export const NORMALIZE_OPTIONS: NormalizeOptions = {
   validate: true,

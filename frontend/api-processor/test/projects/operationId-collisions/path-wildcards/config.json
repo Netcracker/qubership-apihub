@@ -1,0 +1,8 @@
+{
+  "packageId": "path-wildcards",
+  "version": "v1",
+  "files": [
+    { "fileId": "spec.json", "publish": true }
+  ]
+}
+

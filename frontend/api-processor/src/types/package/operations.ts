@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { ApiKind, OperationId, OperationsApiType } from '../external'
+import { OperationId, OperationsApiType } from '../external'
 import { PackageDeprecatedItem } from './deprecated'
+import { ApihubApiCompatibilityKind } from '../../consts'
 
 export type PackageOperations = {
   operations: PackageOperation[]
@@ -23,11 +24,11 @@ export type PackageOperations = {
 
 export interface PackageOperation {
   operationId: OperationId
+  documentId: string
   title: string
   apiType: OperationsApiType
-  dataHash: string
   deprecated: boolean
-  apiKind: ApiKind
+  apiKind: ApihubApiCompatibilityKind
   metadata: RestMetadata | GraphQLMetaData
   searchScopes: Record<string, string>
   tags: string[]
@@ -38,6 +39,7 @@ export interface PackageOperation {
   deprecatedInPreviousVersions?: string[]
   models?: Record<string, string>       // schema models { name: hash }
   apiAudience?: ApiAudience
+  versionInternalDocumentId: string
 }
 
 export interface RestMetadata {

@@ -19,18 +19,21 @@ import path from 'path'
 import mime from 'mime-types'
 
 import {
+  ApiDocument,
   BUILD_TYPE,
   BuildConfig,
   BuildConfigFile,
   BuildResult,
   ChangeSummary,
   EMPTY_CHANGE_SUMMARY,
+  SERIALIZE_SYMBOL_STRING_MAPPING,
   VERSION_STATUS,
 } from '../../src'
 import { buildSchema, introspectionFromSchema } from 'graphql/utilities'
 import { LocalRegistry } from './registry'
 import { Editor } from './editor'
 import { getFileExtension } from '../../src/utils'
+import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
 
 export const loadFileAsString = async (filePath: string, folder: string, fileName: string): Promise<string | null> => {
   return (await loadFile(filePath, folder, fileName))?.text() ?? null
@@ -155,8 +158,126 @@ export async function buildChangelogPackage(
   return await editor.run()
 }
 
+export async function buildPrefixGroupChangelogPackage(options: {
+  packageId: string
+  config?: Partial<BuildConfig>
+}): Promise<BuildResult> {
+  const {
+    packageId,
+    config: {
+      files = [{ fileId: 'spec.yaml' }],
+      currentGroup = '/api/v2/',
+      previousGroup = '/api/v1/',
+    } = {},
+  } = options ?? {}
+
+  const pkg = LocalRegistry.openPackage(packageId)
+
+  await pkg.publish(pkg.packageId, {
+    packageId: pkg.packageId,
+    version: BEFORE_VERSION_ID,
+    files: files,
+  })
+
+  const editor = new Editor(pkg.packageId, {
+    version: BEFORE_VERSION_ID,
+    packageId: pkg.packageId,
+    currentGroup: currentGroup,
+    previousGroup: previousGroup,
+    buildType: BUILD_TYPE.PREFIX_GROUPS_CHANGELOG,
+    status: VERSION_STATUS.RELEASE,
+  })
+  return await editor.run()
+}
+
 export async function buildGqlChangelogPackage(
   packageId: string,
 ): Promise<BuildResult> {
   return buildChangelogPackage(packageId, [{ fileId: 'before.gql' }], [{ fileId: 'after.gql' }])
+}
+
+export async function buildPackage(
+  packageId: string,
+): Promise<BuildResult> {
+  const localRegistry: LocalRegistry = LocalRegistry.openPackage(packageId)
+  const editor: Editor = await Editor.openProject(localRegistry.packageId, localRegistry)
+  await localRegistry.publish(localRegistry.packageId, { packageId: localRegistry.packageId })
+  return await editor.run({
+    version: BEFORE_VERSION_ID,
+    status: VERSION_STATUS.RELEASE,
+    buildType: BUILD_TYPE.BUILD,
+  })
+}
+
+export async function buildChangelogDashboard(
+  packageId1: string,
+  packageId2: string,
+  dashboardPackageId: string = 'dashboards/dashboard',
+  filesBefore: BuildConfigFile[] = [{ fileId: 'v1.yaml' }],
+  filesAfter: BuildConfigFile[] = [{ fileId: 'v2.yaml' }],
+): Promise<BuildResult> {
+  const editor = await prepareChangelogDashboard(packageId1, packageId2, dashboardPackageId, filesBefore, filesAfter)
+  return await editor.run()
+}
+
+export async function prepareChangelogDashboard(
+  packageId1: string,
+  packageId2: string,
+  dashboardPackageId: string = 'dashboards/dashboard',
+  filesBefore: BuildConfigFile[] = [{ fileId: 'v1.yaml' }],
+  filesAfter: BuildConfigFile[] = [{ fileId: 'v2.yaml' }],
+): Promise<Editor> {
+  const pkg1 = LocalRegistry.openPackage(packageId1)
+  const pkg2 = LocalRegistry.openPackage(packageId2)
+
+  await pkg1.publish(pkg1.packageId, {
+    packageId: pkg1.packageId,
+    version: BEFORE_VERSION_ID,
+    files: filesBefore,
+  })
+  await pkg2.publish(pkg2.packageId, {
+    packageId: pkg2.packageId,
+    version: AFTER_VERSION_ID,
+    files: filesAfter,
+  })
+
+  const dashboard = LocalRegistry.openPackage(dashboardPackageId)
+  await dashboard.publish(dashboard.packageId, {
+    packageId: dashboardPackageId,
+    version: BEFORE_VERSION_ID,
+    apiType: 'rest',
+    refs: [
+      { refId: pkg1.packageId, version: BEFORE_VERSION_ID },
+    ],
+  })
+
+  await dashboard.publish(dashboard.packageId, {
+    packageId: dashboardPackageId,
+    version: AFTER_VERSION_ID,
+    apiType: 'rest',
+    refs: [
+      { refId: pkg2.packageId, version: AFTER_VERSION_ID },
+    ],
+  })
+
+  return new Editor(dashboard.packageId, {
+    version: AFTER_VERSION_ID,
+    packageId: dashboard.packageId,
+    previousVersionPackageId: dashboard.packageId,
+    previousVersion: BEFORE_VERSION_ID,
+    buildType: BUILD_TYPE.CHANGELOG,
+    status: VERSION_STATUS.RELEASE,
+  })
+}
+
+const invertMap = <K, V>(map: Map<K, V>): Map<V, K> => {
+  return new Map(
+    [...map].map(([key, value]: [K, V]) => [value, key]),
+  )
+}
+
+const DESERIALIZE_SYMBOL_STRING_MAPPING = invertMap(SERIALIZE_SYMBOL_STRING_MAPPING)
+
+export function deserializeDocument(serializedDocument: string): ApiDocument {
+  return deserialize(serializedDocument, DESERIALIZE_SYMBOL_STRING_MAPPING) as ApiDocument
 }

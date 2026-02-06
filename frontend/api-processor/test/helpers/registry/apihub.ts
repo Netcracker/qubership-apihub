@@ -21,7 +21,7 @@ import {
   type BuildConfig,
   BuilderContext,
   BuilderResolvers,
-  BuildResult,
+  BuildResult, ComparisonInternalDocument,
   graphqlApiBuilder, MESSAGE_SEVERITY,
   OperationId,
   OperationsApiType,
@@ -42,6 +42,8 @@ import { IRegistry } from './types'
 import AdmZip from 'adm-zip'
 import fs from 'fs/promises'
 import {
+  saveComparisonInternalDocuments,
+  saveComparisonInternalDocumentsArray,
   saveComparisonsArray,
   saveDocumentsArray,
   saveEachComparison,
@@ -49,7 +51,7 @@ import {
   saveEachOperation,
   saveInfo,
   saveNotifications,
-  saveOperationsArray,
+  saveOperationsArray, saveVersionInternalDocuments, saveVersionInternalDocumentsArray,
 } from './utils'
 import { toVersionsComparisonDto } from '../../../src/utils/transformToDto'
 
@@ -120,14 +122,21 @@ export class ApihubRegistry implements IRegistry {
     await saveInfo(config, basePath)
 
     await saveDocumentsArray(documents, basePath)
+    await saveVersionInternalDocumentsArray(documents, basePath)
+
     await saveEachDocument(documents, basePath, builderContext)
 
     await saveOperationsArray(operations, basePath)
     await saveEachOperation(operations, basePath)
-    const comparisonsDto = comparisons.map(comparison => toVersionsComparisonDto(comparison, logError))
+    const comparisonsDto = comparisons.map(comparison => toVersionsComparisonDto(comparison, builderContext.normalizedSpecFragmentsHashCache, logError))
+    const comparisonInternalDocuments: ComparisonInternalDocument[] = comparisons.map(comparison => comparison.comparisonInternalDocuments).flat()
+
     await saveComparisonsArray(comparisonsDto, basePath)
     await saveEachComparison(comparisonsDto, basePath)
     await saveNotifications(notifications, basePath)
+    await saveVersionInternalDocuments(documents, basePath)
+    await saveComparisonInternalDocuments(comparisonInternalDocuments, basePath)
+    await saveComparisonInternalDocumentsArray(comparisonInternalDocuments, basePath)
   }
 
   get versionResolvers(): BuilderResolvers {
@@ -164,7 +173,7 @@ export class ApihubRegistry implements IRegistry {
     const encodedPackageKey = encodeURIComponent(packageId)
     const encodedVersionKey = encodeURIComponent(versionId)
 
-    const { data } = await this.axios.get(`/api/v2/packages/${encodedPackageKey}/versions/${encodedVersionKey}?includeOperations=${includeOperations}`)
+    const { data } = await this.axios.get(`/api/v3/packages/${encodedPackageKey}/versions/${encodedVersionKey}?includeOperations=${includeOperations}`)
     return data
   }
 

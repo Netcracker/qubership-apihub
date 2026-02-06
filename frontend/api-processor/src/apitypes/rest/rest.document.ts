@@ -17,7 +17,7 @@
 import type { OpenAPIV2, OpenAPIV3 } from 'openapi-types'
 import { convertObj } from 'swagger2openapi'
 
-import { REST_DOCUMENT_TYPE, REST_KIND_KEY } from './rest.consts'
+import { REST_DOCUMENT_TYPE } from './rest.consts'
 import type { RestDocumentInfo } from './rest.types'
 
 import {
@@ -26,10 +26,12 @@ import {
   DocumentDumper,
   ExportDocument,
   ExportFormat,
+  VersionDocument,
 } from '../../types'
 import { FILE_FORMAT, FILE_FORMAT_HTML, FILE_FORMAT_JSON } from '../../consts'
 import {
   createBundlingErrorHandler,
+  createVersionInternalDocument,
   EXPORT_FORMAT_TO_FILE_FORMAT,
   getBundledFileDataWithDependencies,
   getDocumentTitle,
@@ -38,6 +40,7 @@ import { dump } from './rest.utils'
 import { generateHtmlPage } from '../../utils/export'
 import { removeOasExtensions } from '../../utils/removeOasExtensions'
 import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
+import { getApiKindProperty } from '../../components/document'
 
 const openApiDocumentMeta = (data: OpenAPIV3.Document): RestDocumentInfo => {
   if (typeof data !== 'object' || !data) {
@@ -63,7 +66,7 @@ const openApiDocumentMeta = (data: OpenAPIV3.Document): RestDocumentInfo => {
   }
 }
 
-export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (parsedFile, file, ctx) => {
+export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (parsedFile, file, ctx): Promise<VersionDocument> => {
   const { fileId, slug = '', publish = true, apiKind, ...fileMetadata } = file
 
   const {
@@ -73,7 +76,7 @@ export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (par
 
   let bundledFileData = data
 
-  const documentKind = bundledFileData?.info?.[REST_KIND_KEY] || apiKind
+  const documentApiKind = getApiKindProperty(bundledFileData?.info) || apiKind
 
   if (parsedFile.type === REST_DOCUMENT_TYPE.SWAGGER) {
     try {
@@ -91,12 +94,12 @@ export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (par
     externalDocs,
     tags,
   }
-
+  const { type, fileId: parsedFileId, source, errors } = parsedFile
   return {
-    fileId: parsedFile.fileId,
-    type: parsedFile.type,
+    fileId: parsedFileId,
+    type: type,
     format: FILE_FORMAT.JSON,
-    apiKind: documentKind,
+    apiKind: documentApiKind,
     data: bundledFileData,
     slug, // unique slug should be already generated
     filename: `${slug}.${FILE_FORMAT.JSON}`,
@@ -107,8 +110,9 @@ export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (par
     version,
     metadata,
     publish,
-    source: parsedFile.source,
-    errors: parsedFile.errors?.length ?? 0,
+    source,
+    errors: errors?.length ?? 0,
+    versionInternalDocument: createVersionInternalDocument(slug),
   }
 }
 

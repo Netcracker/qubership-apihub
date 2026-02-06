@@ -22,12 +22,13 @@ import {
   BuilderContext,
   BuilderResolvers,
   BuildResult,
-  ChangeSummary,
+  ChangeSummary, ComparisonInternalDocument,
   EMPTY_CHANGE_SUMMARY,
   FILE_FORMAT,
-  GRAPHQL_API_TYPE,
   graphqlApiBuilder,
-  KIND_PACKAGE,
+  isGraphqlDocument,
+  isRestDocument,
+  KIND_PACKAGE, Labels,
   MESSAGE_SEVERITY,
   NotificationMessage,
   OperationId,
@@ -48,8 +49,8 @@ import {
   ResolvedReferenceMap,
   ResolvedReferences,
   ResolvedVersion,
+  ResolvedVersionDocument,
   ResolvedVersionDocuments,
-  REST_API_TYPE,
   restApiBuilder,
   REVISION_DELIMITER,
   textApiBuilder,
@@ -58,10 +59,11 @@ import {
   VersionDocument,
   VersionDocuments,
   VersionId,
-  VersionsComparison,
+  VersionsComparison, VersionsComparisonDto,
+  ZippableDocument,
 } from '../../../src'
 import {
-  getOperationsFileContent,
+  getOperationsFileContent, saveComparisonInternalDocuments, saveComparisonInternalDocumentsArray,
   saveComparisonsArray,
   saveDocumentsArray,
   saveEachComparison,
@@ -69,17 +71,25 @@ import {
   saveEachOperation,
   saveInfo,
   saveNotifications,
-  saveOperationsArray,
+  saveOperationsArray, saveVersionInternalDocuments, saveVersionInternalDocumentsArray,
 } from './utils'
-import { getCompositeKey, getDocumentTitle, getSplittedVersionKey, isNotEmpty, takeIfDefined, toBase64 } from '../../../src/utils'
+import {
+  getCompositeKey,
+  getDocumentTitle,
+  getSplittedVersionKey,
+  isNotEmpty,
+  takeIfDefined,
+  toBase64,
+} from '../../../src/utils'
 import { IRegistry } from './types'
 import { calculateTotalChangeSummary } from '../../../src/components/compare'
 import { toVersionsComparisonDto } from '../../../src/utils/transformToDto'
 import path from 'path'
 import { ResolvedPackage } from '../../../src/types/external/package'
+import { version as apiProcessorVersion } from '../../../package.json'
 
 const VERSIONS_PATH = 'test/versions'
-const DEFAULT_PROJECTS_PATH = 'test/projects'
+export const DEFAULT_PROJECTS_PATH = 'test/projects'
 
 export interface PackageVersionCache {
   config: BuildConfig
@@ -149,6 +159,8 @@ export class LocalRegistry implements IRegistry {
       return null
     }
 
+    const apiTypes = Array.from(operations.values()).map(({ apiType }) => apiType)
+
     const getChangesSummary = (apiType: OperationsApiType): ChangeSummary => {
       return calculateTotalChangeSummary(
         comparisons.map(
@@ -159,21 +171,13 @@ export class LocalRegistry implements IRegistry {
 
     return {
       ...config,
-      apiTypes: [REST_API_TYPE, GRAPHQL_API_TYPE],
+      apiTypes: apiTypes,
       createdAt: 'unknown',
       createdBy: 'builder',
-      versionLabels: [],
+      versionLabels: config.metadata?.versionLabels as Labels ?? [],
       revision: 0,
-      operationTypes: [
-        {
-          apiType: REST_API_TYPE,
-          changesSummary: getChangesSummary(REST_API_TYPE),
-        },
-        {
-          apiType: GRAPHQL_API_TYPE,
-          changesSummary: getChangesSummary(GRAPHQL_API_TYPE),
-        },
-      ],
+      operationTypes: apiTypes.map(apiType => ({ apiType: apiType, changesSummary: getChangesSummary(apiType) })),
+      apiProcessorVersion: apiProcessorVersion,
     }
   }
 
@@ -251,7 +255,7 @@ export class LocalRegistry implements IRegistry {
 
     if (isNotEmpty(documentsFromVersion)) {
       return {
-        documents: this.resolveDocuments(documentsFromVersion),
+        documents: this.resolveDocuments(documentsFromVersion, undefined, undefined, apiType),
         packages: {},
       }
     }
@@ -302,8 +306,9 @@ export class LocalRegistry implements IRegistry {
     return (id: string): boolean => this.groupToOperationIdsMap[filterByOperationGroup]?.includes(id)
   }
 
-  private resolveDocuments(documents: VersionDocument[], filterOperationIdsByGroup?: (id: string) => boolean, refId?: string): ResolvedGroupDocument[] {
+  private resolveDocuments(documents: VersionDocument[], filterOperationIdsByGroup?: (id: string) => boolean, refId?: string, apiType?: OperationsApiType): ResolvedGroupDocument[] {
     return documents
+      .filter(versionDocument => (apiType ? this.getDocApiTypeGuard(apiType)(versionDocument) : true))
       .filter(versionDocument => (filterOperationIdsByGroup ? versionDocument.operationIds.some(filterOperationIdsByGroup) : true))
       .map(document => ({
         version: document.version,
@@ -312,13 +317,23 @@ export class LocalRegistry implements IRegistry {
         type: document.type,
         format: document.format,
         filename: document.filename,
-        labels: [],
+        labels: document?.metadata?.labels as Labels ?? [],
         title: document.title,
-        ...(filterOperationIdsByGroup ? { includedOperationIds: document.operationIds.filter(filterOperationIdsByGroup!) } : {}),
+        apiKind: document.apiKind,
+        includedOperationIds: filterOperationIdsByGroup ? document.operationIds.filter(filterOperationIdsByGroup!) : document.operationIds,
         description: document.description,
         data: toBase64(JSON.stringify(document.data)),
         ...takeIfDefined({ packageRef: refId }),
       }))
+  }
+
+  private getDocApiTypeGuard(apiType: OperationsApiType): (document: ZippableDocument | ResolvedVersionDocument) => void {
+    switch (apiType) {
+      case 'rest':
+        return isRestDocument
+      case 'graphql':
+        return isGraphqlDocument
+    }
   }
 
   async versionDeprecatedResolver(
@@ -452,6 +467,7 @@ export class LocalRegistry implements IRegistry {
     await saveInfo(config, basePath)
 
     await saveDocumentsArray(documents, basePath)
+    await saveVersionInternalDocumentsArray(documents, basePath)
     await saveEachDocument(documents, basePath, builderContext)
 
     await saveOperationsArray(operations, basePath)
@@ -463,10 +479,16 @@ export class LocalRegistry implements IRegistry {
         message: message,
       })
     }
-    const comparisonsDto = comparisons.map(comparison => toVersionsComparisonDto(comparison, logError))
+    const comparisonsDto: VersionsComparisonDto[] = comparisons.map(comparison => toVersionsComparisonDto(comparison, builderContext.normalizedSpecFragmentsHashCache, logError))
+    const comparisonInternalDocuments: ComparisonInternalDocument[] = comparisons.map(comparison => comparison.comparisonInternalDocuments).flat()
+
     await saveComparisonsArray(comparisonsDto, basePath)
     await saveEachComparison(comparisonsDto, basePath)
     await saveNotifications(notifications, basePath)
+    await saveVersionInternalDocuments(documents, basePath)
+
+    await saveComparisonInternalDocumentsArray(comparisonInternalDocuments, basePath)
+    await saveComparisonInternalDocuments(comparisonInternalDocuments, basePath)
   }
 
   async updateOperationsHash(packageId: string, publishParams?: Partial<BuildConfig>): Promise<void> {

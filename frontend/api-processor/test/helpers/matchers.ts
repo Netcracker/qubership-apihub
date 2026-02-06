@@ -18,9 +18,10 @@ import {
   BuildResult,
   ChangeMessage,
   ChangeSummary,
+  ComparisonInternalDocument,
   DeprecateItem,
   EMPTY_CHANGE_SUMMARY,
-  MESSAGE_SEVERITY,
+  MessageSeverity,
   NotificationMessage,
   OperationChanges,
   type OperationsApiType,
@@ -30,17 +31,30 @@ import {
   ZippableDocument,
 } from '../../src'
 import { JsonPath } from 'json-crawl'
-import { ActionType } from '@netcracker/qubership-apihub-api-diff'
-import { ArrayContaining, ObjectContaining, RecursiveMatcher } from '../../.jest/jasmin'
+import { ActionType, Diff, DIFFS_AGGREGATED_META_KEY, DiffType } from '@netcracker/qubership-apihub-api-diff'
+import {
+  ArrayContaining,
+  AsymmetricMatcher,
+  ExpectedRecursive,
+  ObjectContaining,
+  RecursiveMatcher,
+} from '../../.jest/jasmin'
+import { extractSecuritySchemesNames } from '../../src/apitypes/rest/rest.utils'
+import { isObject } from '../../src/utils'
+import type { OpenAPIV3 } from 'openapi-types'
+import { deserializeDocument } from './utils'
+
+type SecuritySchemesObject = OpenAPIV3.ComponentsObject['securitySchemes']
 
 export type ApihubComparisonMatcher = ObjectContaining<VersionsComparison> & VersionsComparison
 export type ApihubOperationChangesMatcher = ObjectContaining<OperationChanges> & OperationChanges
 export type ApihubChangesSummaryMatcher = ObjectContaining<ChangeSummary> & ChangeSummary
 export type ApihubNotificationsMatcher = ObjectContaining<BuildResult> & BuildResult
-export type ApihubErrorNotificationMatcher = ObjectContaining<NotificationMessage> & NotificationMessage
+export type ApihubNotificationMatcher = ObjectContaining<NotificationMessage> & NotificationMessage
 export type ApihubChangeMessagesMatcher = ArrayContaining<ChangeMessage> & ChangeMessage[]
 export type ApihubExportDocumentsMatcher = ObjectContaining<BuildResult> & BuildResult
 export type ApihubExportDocumentMatcher = ObjectContaining<ZippableDocument> & ZippableDocument
+export type ApihubComparisonDocumentMatcher = ObjectContaining<ComparisonInternalDocument> & ComparisonInternalDocument
 
 export function apihubComparisonMatcher(
   expected: RecursiveMatcher<VersionsComparison>,
@@ -60,6 +74,16 @@ export function apihubOperationChangesMatcher(
       ]),
     }),
   ])
+}
+
+export function noChangesMatcher(
+  apiType: OperationsApiType = REST_API_TYPE,
+): ApihubChangesSummaryMatcher {
+  return operationTypeMatcher({
+    apiType: apiType,
+    changesSummary: EMPTY_CHANGE_SUMMARY,
+    numberOfImpactedOperations: EMPTY_CHANGE_SUMMARY,
+  })
 }
 
 export function changesSummaryMatcher(
@@ -92,14 +116,42 @@ export function operationTypeMatcher(
   expected: RecursiveMatcher<OperationType>,
 ): ApihubChangesSummaryMatcher {
   return expect.objectContaining({
+    comparisons: expect.arrayContaining([
+      expect.objectContaining({
+        operationTypes: expect.arrayContaining([
+          expect.objectContaining(expected),
+        ]),
+      }),
+    ]),
+  },
+  )
+}
+
+export function comparisonDocumentDiffMatcher(
+  expected: RecursiveMatcher<{ serializedComparisonDocument: AsymmetricMatcher<string> }>,
+): ApihubComparisonDocumentMatcher {
+  return expect.objectContaining({
       comparisons: expect.arrayContaining([
         expect.objectContaining({
-          operationTypes: expect.arrayContaining([
+          comparisonInternalDocuments: expect.arrayContaining([
             expect.objectContaining(expected),
           ]),
         }),
       ]),
     },
+  )
+}
+
+export function operationChangesMatcher(
+  expected: Array<ExpectedRecursive<OperationChanges>>,
+): ApihubOperationChangesMatcher {
+  return expect.objectContaining({
+    comparisons: expect.arrayContaining([
+      expect.objectContaining({
+        data: expect.toIncludeSameMembers(expected),
+      }),
+    ]),
+  },
   )
 }
 
@@ -143,26 +195,29 @@ export function notificationsMatcher(
   expected: Array<RecursiveMatcher<NotificationMessage>>,
 ): ApihubNotificationsMatcher {
   return expect.objectContaining({
-      notifications: expect.toIncludeSameMembers(expected),
-    },
+    notifications: expect.toIncludeSameMembers(expected),
+  },
   )
 }
 
-export function errorNotificationMatcher(
+export function notificationMatcher(
+  severity: MessageSeverity,
   message: string | RegExp,
-): ApihubErrorNotificationMatcher {
-  return expect.objectContaining({
+): ApihubNotificationMatcher {
+  const expected: Partial<NotificationMessage> = {
     message: expect.stringMatching(message),
-    severity: MESSAGE_SEVERITY.Error,
-  })
+    severity: severity,
+  }
+
+  return expect.objectContaining(expected)
 }
 
 export function exportDocumentsMatcher(
   expected: Array<RecursiveMatcher<ZippableDocument>>,
 ): ApihubExportDocumentsMatcher {
   return expect.objectContaining({
-      exportDocuments: expect.toIncludeSameMembers(expected),
-    },
+    exportDocuments: expect.toIncludeSameMembers(expected),
+  },
   )
 }
 
@@ -171,5 +226,68 @@ export function exportDocumentMatcher(
 ): ApihubExportDocumentMatcher {
   return expect.objectContaining({
     filename: filename,
+  })
+}
+
+/**
+ * Custom matcher to verify that security schemes in result match exactly the schemes used in security requirements
+ */
+export function securitySchemesFromRequirementsMatcher(
+  securityRequirements: OpenAPIV3.SecurityRequirementObject[],
+): AsymmetricMatcher<SecuritySchemesObject> {
+  const expectedSchemes = Array.from(extractSecuritySchemesNames(securityRequirements))
+
+  return {
+    asymmetricMatch: (actual: SecuritySchemesObject): boolean => {
+      if (!actual) {
+        return false
+      }
+
+      const actualSchemes = Object.keys(actual)
+
+      // Check that all expected schemes are present
+      const hasAllExpected = expectedSchemes.every(scheme => actualSchemes.includes(scheme))
+
+      // Check that no extra schemes are present
+      const hasOnlyExpected = actualSchemes.every(scheme => expectedSchemes.includes(scheme))
+
+      return hasAllExpected && hasOnlyExpected
+    },
+    jasmineToString: () => `securitySchemesFromRequirements(${JSON.stringify(expectedSchemes)})`,
+  }
+}
+
+export function serializedComparisonDocumentMatcher(
+  apiKinds: DiffType[],
+): AsymmetricMatcher<string> {
+  const extractAllDiffsFromDocument = (deserializedDoc: unknown): Diff[] => {
+    if (!isObject(deserializedDoc)) {
+      return []
+    }
+    const diffs: Diff[] = []
+    if (DIFFS_AGGREGATED_META_KEY in deserializedDoc) {
+      const aggregatedDiffs = (deserializedDoc as Record<symbol, unknown>)[DIFFS_AGGREGATED_META_KEY]
+      if (aggregatedDiffs instanceof Set) {
+        return Array.from(aggregatedDiffs)
+      }
+    }
+    return diffs
+  }
+
+  return comparisonDocumentDiffMatcher({
+    serializedComparisonDocument: {
+      asymmetricMatch: (actual: string): boolean => {
+        try {
+          const deserializedDoc = deserializeDocument(actual)
+          const diffs = extractAllDiffsFromDocument(deserializedDoc)
+
+          // TODO: It works, but it is too specialized (only works if there's exactly one diff). Would be better to do it by diffsMatcher
+          const diffTypes = new Set(diffs.map(diff => diff.type))
+          return apiKinds.every(apiKind => diffTypes.has(apiKind))
+        } catch (error) {
+          return false
+        }
+      },
+    },
   })
 }

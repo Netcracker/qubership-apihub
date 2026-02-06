@@ -18,7 +18,7 @@ import type { BuildConfigFile, BuilderContext, BuildFileResult } from '../types'
 import { buildDocument, buildErrorDocument } from './document'
 import { MESSAGE_SEVERITY } from '../consts'
 import { buildOperations } from './operations'
-import { slugify } from '../utils'
+import { SLUG_OPTIONS_DOCUMENT_ID, slugify } from '../utils'
 import { asyncDebugPerformance, DebugPerformanceContext } from '../utils/logs'
 
 export const createFileSlugs = (files: BuildConfigFile[], basePath: string): BuildConfigFile[] => {
@@ -33,7 +33,7 @@ export const createFileSlugs = (files: BuildConfigFile[], basePath: string): Bui
   for (const file of fs) {
     const filename = file.fileId.substring(basePath.length).trim()
     const name = filename.substring(filename.startsWith('.') ? 1 : 0).replace(/\.[^/.]+$/, '')
-    file.slug = slugify(name, slugs)
+    file.slug = slugify(name, SLUG_OPTIONS_DOCUMENT_ID, slugs)
     slugs.push(file.slug)
   }
 

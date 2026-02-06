@@ -17,18 +17,23 @@
 import { ApiAudienceTransition, RISKY_CHANGE_TYPE } from './../types/external/comparison'
 import {
   ANNOTATION_CHANGE_TYPE,
-  ApiKind,
   BREAKING_CHANGE_TYPE,
   ChangeSummary,
   DEPRECATED_CHANGE_TYPE,
   ImpactedOperationSummary,
   NON_BREAKING_CHANGE_TYPE,
-  ResolvedOperation,
   UNCLASSIFIED_CHANGE_TYPE,
 } from '../types'
-import { API_KIND } from '../consts'
 import { Diff, DiffType } from '@netcracker/qubership-apihub-api-diff'
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
+import { OperationPair } from '../components'
+import { isString } from './objects'
+import {
+  APIHUB_API_COMPATIBILITY_KIND_BWC,
+  APIHUB_API_COMPATIBILITY_KIND_EXPERIMENTAL,
+  APIHUB_API_COMPATIBILITY_KIND_NO_BWC,
+  ApihubApiCompatibilityKind,
+} from '../consts'
 
 export type ObjPath = (string | number)[]
 
@@ -42,6 +47,10 @@ export const removeFirstSlash = (input: string): string => {
   return input.startsWith('/') ? input.substring(1) : input
 }
 
+export function trimSlashes(input: string): string {
+  return input.replace(/^\/+|\/+$/g, '')
+}
+
 export type NormalizedPath = string
 
 export const normalizePath = (path: string): NormalizedPath => {
@@ -53,7 +62,7 @@ export function hidePathParamNames(path: string): string {
 }
 
 const PATH_PARAMETER_REGEXP = /\{.*?\}/g
-export const PATH_PARAM_UNIFIED_PLACEHOLDER = '*'
+const PATH_PARAM_UNIFIED_PLACEHOLDER = '*'
 
 export const filesDiff = (files1: { fileId: string }[], files2: { fileId: string }[]): { fileId: string }[] => {
   return files1.filter((f1) => !files2.find((f2) => f1.fileId === f2.fileId))
@@ -169,18 +178,21 @@ export const getValueByOpenAPIPath = (obj: any, path: string): any => {
   return value
 }
 
-export const rawToApiKind = (apiKindLike: string): ApiKind => {
-  const candidate = apiKindLike.toLowerCase() as ApiKind
-  return [API_KIND.BWC, API_KIND.NO_BWC, API_KIND.EXPERIMENTAL].includes(candidate) ? candidate : API_KIND.BWC
+export const rawToApiKind = <T extends ApihubApiCompatibilityKind | undefined>(apiKindLike: unknown, defaultApiKind: T): ApihubApiCompatibilityKind | T => {
+  if (!isString(apiKindLike)) {
+    return defaultApiKind
+  }
+  const candidate = apiKindLike.toLowerCase() as ApihubApiCompatibilityKind
+  return [APIHUB_API_COMPATIBILITY_KIND_BWC, APIHUB_API_COMPATIBILITY_KIND_NO_BWC, APIHUB_API_COMPATIBILITY_KIND_EXPERIMENTAL].includes(candidate) ? candidate : defaultApiKind
 }
 
 export const calculateApiAudienceTransitions = (
-  currentOperation: ResolvedOperation | undefined,
-  previousOperation: ResolvedOperation | undefined,
+  operationPair: OperationPair,
   apiAudienceTransitions: ApiAudienceTransition[],
 ): void => {
-  const currentAudience = currentOperation?.apiAudience
-  const previousAudience = previousOperation?.apiAudience
+  const { previous, current } = operationPair
+  const previousAudience = previous?.apiAudience
+  const currentAudience = current?.apiAudience
   if (!currentAudience || !previousAudience) {
     return
   }

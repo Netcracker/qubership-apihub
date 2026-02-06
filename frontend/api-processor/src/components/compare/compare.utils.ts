@@ -16,35 +16,36 @@
 
 import {
   ApiBuilder,
+  ApiDocument,
   ChangeSummary,
-  CompareContext,
+  CompareOperationsPairContext,
+  ComparisonDocument,
+  ComparisonInternalDocument,
   DIFF_TYPES,
   ImpactedOperationSummary,
   NormalizedOperationId,
+  OperationChanges,
   OperationChangesMetadata,
   OperationId,
   OperationsApiType,
   OperationTypes,
   ResolvedOperation,
-  ResolvedVersionOperationsHashMap,
+  ResolvedVersionDocument,
   VersionCache,
 } from '../../types'
-import { BUILD_TYPE, EMPTY_CHANGE_SUMMARY, MESSAGE_SEVERITY } from '../../consts'
+import { EMPTY_CHANGE_SUMMARY } from '../../consts'
 import {
-  convertToSlug,
-  IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER,
-  NormalizedPath,
+  calculateChangeSummary,
+  calculateImpactedSummary,
+  difference,
+  intersection,
+  removeFirstSlash,
+  serializeDocument,
+  SLUG_OPTIONS_OPERATION_ID,
   slugify,
   takeIfDefined,
 } from '../../utils'
-import { REST_API_TYPE } from '../../apitypes'
-import { OpenAPIV3 } from 'openapi-types'
-
-export const totalChanges = (changeSummary?: ChangeSummary): number => {
-  return changeSummary
-    ? Object.values(changeSummary).reduce((acc, current) => acc + current, 0)
-    : 0
-}
+import { Diff } from '@netcracker/qubership-apihub-api-diff'
 
 export function calculateTotalChangeSummary(
   summaries: ChangeSummary[],
@@ -68,7 +69,7 @@ export function calculateTotalImpactedSummary(
   }, { ...EMPTY_CHANGE_SUMMARY })
 }
 
-export function getOperationTags(operation: ResolvedOperation): string[] {
+export function getOperationTags(operation?: ResolvedOperation): string[] {
   return operation?.tags || operation?.metadata?.tags || []
 }
 
@@ -93,53 +94,66 @@ export function getOperationTypesFromTwoVersions(
   return [prevVersion?.operationTypes || [], currVersion?.operationTypes || []]
 }
 
-type OperationIdWithoutGroupPrefix = string
-export type OperationIdentityMap = Record<OperationIdWithoutGroupPrefix, OperationId>
+export function dedupeTuples<T extends [object | undefined, object | undefined]>(
+  tuples: T[],
+): T[] {
+  const UNDEF: object = {}
+  const root = new WeakMap<object, WeakSet<object>>()
+  const result: T[] = []
 
-export function getOperationsHashMapByApiType(
-  apiBuilder: ApiBuilder,
-  operations: ResolvedOperation[],
-  ctx: CompareContext,
-  areOperationsFromCurrentVersion: boolean = false,
-): [ResolvedVersionOperationsHashMap, OperationIdentityMap] {
-  const { buildType, currentGroup, previousGroup } = ctx.config
-  const resolvedHashMap: ResolvedVersionOperationsHashMap = {}
-  const normalizedToOriginalOperationIdMap: Record<NormalizedOperationId | OperationId, OperationId> = {}
+  for (const [a, b] of tuples) {
+    const keyA = (a ?? UNDEF)
+    const keyB = (b ?? UNDEF)
 
-  for (const operation of operations) {
-    const { operationId, dataHash } = operation
-    const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(operation) ?? operationId
-    resolvedHashMap[normalizedOperationId] = dataHash
-    normalizedToOriginalOperationIdMap[normalizedOperationId] = operationId
-  }
+    let inner = root.get(keyA)
+    if (!inner) {
+      inner = new WeakSet()
+      root.set(keyA, inner)
+    }
 
-  if (buildType !== BUILD_TYPE.PREFIX_GROUPS_CHANGELOG) {
-    return [resolvedHashMap, normalizedToOriginalOperationIdMap]
-  }
-
-  if (!currentGroup || !previousGroup) {
-    ctx.notifications.push({
-      severity: MESSAGE_SEVERITY.Warning,
-      message: `Build type is prefix group changelog, but one of the groups is not provided: currentGroup=${currentGroup}, previousGroup=${previousGroup}`,
-    })
-    return [resolvedHashMap, normalizedToOriginalOperationIdMap]
-  }
-
-  const changedIdToOriginal: OperationIdentityMap = {}
-
-  for (const [operationId, dataHash] of Object.entries(resolvedHashMap)) {
-    Reflect.deleteProperty(resolvedHashMap, operationId)
-
-    const groupSlug = convertToSlug(areOperationsFromCurrentVersion ? currentGroup : previousGroup)
-
-    if (operationId.startsWith(groupSlug)) {
-      const changedOperationId = operationId.substring(groupSlug.length)
-      resolvedHashMap[changedOperationId] = dataHash
-      changedIdToOriginal[changedOperationId] = normalizedToOriginalOperationIdMap[operationId]
+    if (!inner.has(keyB)) {
+      inner.add(keyB)
+      result.push([a, b] as T)
     }
   }
 
-  return [resolvedHashMap, changedIdToOriginal]
+  return result
+}
+
+export function removeRedundantPartialPairs<T extends [object | undefined, object | undefined]>(
+  tuples: T[],
+): T[] {
+  const completeAtPosition = [new Set<object>(), new Set<object>()] as const
+
+  // First pass: identify all values that appear in complete pairs by position
+  for (const [a, b] of tuples) {
+    if (a !== undefined && b !== undefined) {
+      completeAtPosition[0].add(a)
+      completeAtPosition[1].add(b)
+    }
+  }
+
+  // Second pass: filter out partial pairs that are consumed by a complete pair
+  return tuples.filter(([a, b]) => {
+    const isPartial = a === undefined || b === undefined
+    if (!isPartial) return true // Keep all complete pairs
+
+    // For partial pairs, only keep if there's no corresponding complete pair
+    // with the defined value at corresponding position
+    return a === undefined
+      ? !completeAtPosition[1].has(b!)
+      : !completeAtPosition[0].has(a)
+  })
+}
+
+export function normalizeOperationIds(operations: ResolvedOperation[], apiBuilder: ApiBuilder, groupSlug: string): [(NormalizedOperationId | OperationId)[], Record<NormalizedOperationId | OperationId, ResolvedOperation>] {
+  const normalizedOperationIdToOperation: Record<NormalizedOperationId | OperationId, ResolvedOperation> = {}
+  operations.forEach(operation => {
+    const normalizedOperationId = apiBuilder.createNormalizedOperationId?.(operation) ?? operation.operationId
+    // '-' is a slugified slash in the middle of a normalizedOperationId that should also be removed for a proper matching during comparison
+    normalizedOperationIdToOperation[removeGroupPrefixFromOperationId(normalizedOperationId, groupSlug)] = operation
+  })
+  return [Object.keys(normalizedOperationIdToOperation), normalizedOperationIdToOperation]
 }
 
 export function getOperationMetadata(operation: ResolvedOperation): OperationChangesMetadata {
@@ -160,4 +174,161 @@ export function takeSubstringIf(condition: boolean, value: string, startIndex: n
   }
 
   return value.substring(startIndex)
+}
+
+export type OperationPair = {
+  previous?: ResolvedOperation
+  current?: ResolvedOperation
+}
+
+export type OperationsMap = Record<NormalizedOperationId, OperationPair>
+
+export const createPairOperationsMap = (
+  previousGroupSlug: string,
+  currentGroupSlug: string,
+  previousOperations: ResolvedOperation[],
+  currentOperations: ResolvedOperation[],
+  apiBuilder: ApiBuilder,
+): OperationsMap => {
+  const [prevNormalizedOperationIds, prevNormalizedIdToOperation] = normalizeOperationIds(previousOperations, apiBuilder, previousGroupSlug)
+  const [currNormalizedOperationIds, currNormalizedIdToOperation] = normalizeOperationIds(currentOperations, apiBuilder, currentGroupSlug)
+
+  const added: NormalizedOperationId[] = difference(currNormalizedOperationIds, prevNormalizedOperationIds)
+  const removed: NormalizedOperationId[] = difference(prevNormalizedOperationIds, currNormalizedOperationIds)
+  const potentiallyChanged: NormalizedOperationId[] = intersection(prevNormalizedOperationIds, currNormalizedOperationIds)
+
+  const operationsMap: OperationsMap = {}
+  added.forEach(id => operationsMap[id] = { current: currNormalizedIdToOperation[id] })
+  removed.forEach(id => operationsMap[id] = { previous: prevNormalizedIdToOperation[id] })
+  potentiallyChanged.forEach(id => operationsMap[id] = {
+    previous: prevNormalizedIdToOperation[id],
+    current: currNormalizedIdToOperation[id],
+  })
+
+  return operationsMap
+}
+
+export const calculatePairedDocs = async (
+  operationPairs: OperationPair[],
+  ctx: CompareOperationsPairContext,
+): Promise<[ResolvedVersionDocument | undefined, ResolvedVersionDocument | undefined][]> => {
+
+  const {
+    apiType,
+    versionDocumentsResolver,
+    previousVersion,
+    currentVersion,
+    previousPackageId,
+    currentPackageId,
+  } = ctx
+
+  const { documents: prevDocuments } = previousVersion && await versionDocumentsResolver(previousVersion, previousPackageId, apiType) || { documents: [] }
+  const { documents: currDocuments } = currentVersion && await versionDocumentsResolver(currentVersion, currentPackageId, apiType) || { documents: [] }
+
+  const pairedDocs: [ResolvedVersionDocument | undefined, ResolvedVersionDocument | undefined][] = []
+  for (const { previous, current } of operationPairs) {
+    const prevDoc = previous && prevDocuments.find(document => document.slug === previous.documentId)
+    const currDoc = current && currDocuments.find(document => document.slug === current.documentId)
+    pairedDocs.push([prevDoc, currDoc])
+  }
+  return removeRedundantPartialPairs(dedupeTuples(pairedDocs))
+}
+
+export const comparePairedDocs = async (
+  operationsMap: OperationsMap,
+  pairedDocs: [ResolvedVersionDocument | undefined, ResolvedVersionDocument | undefined][],
+  apiBuilder: ApiBuilder,
+  ctx: CompareOperationsPairContext,
+): Promise<[OperationChanges[], Set<Diff>[], string[], ComparisonDocument[]]> => {
+  const operationChanges: OperationChanges[] = []
+  const uniqueDiffsForDocPairs: Set<Diff>[] = []
+  const comparisonDocuments: ComparisonDocument[] = []
+  const tags = new Set<string>()
+
+  for (const [prevDoc, currDoc] of pairedDocs) {
+    const {
+      operationChanges: docsPairOperationChanges,
+      tags: docsPairTags,
+      comparisonDocument: docsPairComparisonDocument,
+    } = await apiBuilder.compareDocuments!(operationsMap, prevDoc, currDoc, ctx)
+
+    // We can remove duplicates for diffs coming from the same apiDiff call using simple identity
+    uniqueDiffsForDocPairs.push(new Set(docsPairOperationChanges.flatMap(({ diffs }) => diffs ?? [])))
+
+    operationChanges.push(...docsPairOperationChanges)
+    docsPairTags.forEach(tag => tags.add(tag))
+    docsPairComparisonDocument && comparisonDocuments.push(docsPairComparisonDocument)
+  }
+
+  return [operationChanges, uniqueDiffsForDocPairs, Array.from(tags).sort(), comparisonDocuments]
+}
+
+export function createOperationChange(
+  apiType: OperationsApiType,
+  operationDiffs: Diff[],
+  comparisonInternalDocumentId: string,
+  previous?: ResolvedOperation,
+  current?: ResolvedOperation,
+  currentGroup?: string,
+  previousGroup?: string,
+): OperationChanges {
+  const changeSummary = calculateChangeSummary(operationDiffs)
+  const impactedSummary = calculateImpactedSummary([changeSummary])
+
+  const currentOperationFields = current && {
+    operationId: current.operationId,
+    apiKind: current.apiKind,
+    metadata: getOperationMetadata(current),
+  }
+
+  const previousOperationFields = previous && {
+    previousOperationId: previous.operationId,
+    previousApiKind: previous.apiKind,
+    previousMetadata: getOperationMetadata(previous),
+  }
+  return {
+    apiType,
+    diffs: operationDiffs,
+    changeSummary: changeSummary,
+    impactedSummary: impactedSummary,
+    comparisonInternalDocumentId,
+    ...currentOperationFields,
+    ...previousOperationFields,
+  }
+}
+
+export function createComparisonDocument(comparisonDocumentId: string, apiDocument: ApiDocument): ComparisonDocument {
+  return {
+    comparisonDocumentId,
+    serializedComparisonDocument: serializeDocument(apiDocument),
+  }
+}
+
+type FileParam = string | undefined
+type FileParams = FileParam[] | null
+
+export const createComparisonFileId = (prev: FileParams | null, curr: FileParams): string => {
+  return [...prev || [], ...curr || []].filter(Boolean).join('_').replace(/\//g, '_')
+}
+
+export const createComparisonInternalDocumentId = (
+  previousVersion: string,
+  previousPackageId: string,
+  prevSlug: string | undefined,
+  currentVersion: string,
+  currentPackageId: string,
+  currSlug: string | undefined,
+): string => {
+  return createComparisonFileId([prevSlug, previousVersion, previousPackageId || currentPackageId], [currSlug, currentVersion, currentPackageId])
+}
+
+export const removeGroupPrefixFromOperationId = (operationId: string, groupPrefix: string): string => {
+  return takeSubstringIf(!!groupPrefix, operationId, slugify(removeFirstSlash(groupPrefix), SLUG_OPTIONS_OPERATION_ID).length)
+}
+
+export const createComparisonInternalDocuments = (comparisonDocuments: ComparisonDocument[], comparisonFileId: string): ComparisonInternalDocument[] => {
+  return comparisonDocuments.map(doc => ({
+    ...doc,
+    comparisonFileId,
+  }))
 }

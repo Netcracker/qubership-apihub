@@ -20,5 +20,12 @@ export * from './builder-strategy'
 export * from './components'
 export * from './consts'
 export * from './types'
-export { calculateChangeId, calculateDiffId, calculateImpactedSummary, convertToSlug, removeComponents } from './utils'
+export {
+  calculateChangeId,
+  calculateDiffId,
+  calculateImpactedSummary,
+  calculateNormalizedRestOperationId,
+  cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument,
+  removeComponents,
+} from './utils'
 export { convertDtoFieldOperationTypes, replacePropertyInChangesSummary } from './utils/transformToDto'

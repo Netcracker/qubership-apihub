@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import { DocumentBuilder, DocumentDumper } from '../../types'
+import { DocumentBuilder, DocumentDumper, VersionDocument } from '../../types'
 import { TEXT_DOCUMENT_TYPE } from './text.consts'
+import { createVersionInternalDocument } from '../../utils'
 
-export const buildTextDocument: DocumentBuilder<string> = async (parsedFile, file) => {
+export const buildTextDocument: DocumentBuilder<string> = async (parsedFile, file): Promise<VersionDocument<string>> => {
   const { fileId, slug = '', publish = true, ...metadata } = file
   return {
     fileId,
@@ -33,6 +34,7 @@ export const buildTextDocument: DocumentBuilder<string> = async (parsedFile, fil
     operationIds: [],
     metadata,
     source: parsedFile.source,
+    versionInternalDocument: createVersionInternalDocument(slug),
   }
 }
 

@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import { KeyOfConstType, OperationId, OperationsApiType, PackageId, VersionId } from './types'
+import { OperationId, OperationsApiType, PackageId, VersionId } from './types'
 import { DeprecateItem } from './deprecated'
-import { API_KIND } from '../../consts'
 import { ApiAudience } from '../package'
-
-export type ApiKind = KeyOfConstType<typeof API_KIND>
+import { ApihubApiCompatibilityKind } from '../../consts'
 
 export type VersionOperationsResolver = (
   apiType: OperationsApiType,
@@ -36,10 +34,10 @@ export interface ResolvedOperations {
 
 export interface ResolvedOperation<M = any> {
   operationId: OperationId
+  documentId: string
   title: string
-  dataHash: string
   apiType: OperationsApiType
-  apiKind: ApiKind
+  apiKind: ApihubApiCompatibilityKind
   deprecated: boolean
   metadata: M // TODO: align with contract
   data?: unknown

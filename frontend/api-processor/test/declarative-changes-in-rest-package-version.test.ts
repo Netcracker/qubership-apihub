@@ -15,7 +15,7 @@
  */
 
 import { buildChangelogPackage, changesSummaryMatcher, numberOfImpactedOperationsMatcher } from './helpers'
-import { BREAKING_CHANGE_TYPE, NON_BREAKING_CHANGE_TYPE, RISKY_CHANGE_TYPE, SEMI_BREAKING_CHANGE_TYPE } from '../src'
+import { BREAKING_CHANGE_TYPE, NON_BREAKING_CHANGE_TYPE, RISKY_CHANGE_TYPE } from '../src'
 
 describe('Number of declarative changes in rest package version test', () => {
   test('Two operations use one schema in response', async () => {
@@ -62,5 +62,31 @@ describe('Number of declarative changes in rest package version test', () => {
       [BREAKING_CHANGE_TYPE]: 1,
       [RISKY_CHANGE_TYPE]: 1,
     }))
+  })
+
+  test('Uses synthetic document when there is no existing appropriate document pair', async () => {
+    const result = await buildChangelogPackage(
+      'declarative-changes-in-rest-package-version/whole-documents-added-removed',
+      [{ fileId: 'before/spec1.yaml' }],
+      [{ fileId: 'after/spec2.yaml' }],
+    )
+    expect(result).toEqual(changesSummaryMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+    }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({
+      [BREAKING_CHANGE_TYPE]: 1,
+      [NON_BREAKING_CHANGE_TYPE]: 1,
+    }))
+  })
+
+  test('Changes are not duplicated when deleted operation could be mapped to several documents', async () => {
+    const result = await buildChangelogPackage(
+      'declarative-changes-in-rest-package-version/deleted-operation-mapped-to-several-documents',
+      [{ fileId: 'before/spec1.yaml' }],
+      [{ fileId: 'after/spec2.yaml' }, { fileId: 'after/spec3.yaml' }],
+    )
+    expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
   })
 })

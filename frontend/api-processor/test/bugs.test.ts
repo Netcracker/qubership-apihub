@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-import { API_AUDIENCE_INTERNAL, API_KIND } from '../src'
+import { API_AUDIENCE_INTERNAL, APIHUB_API_COMPATIBILITY_KIND_BWC, APIHUB_API_COMPATIBILITY_KIND_NO_BWC } from '../src'
 import { Editor, LocalRegistry } from './helpers'
+
+import { describe, expect, test } from '@jest/globals'
+import { calculateRestOperationTitle } from '../src/utils'
 
 const bugsPackage = LocalRegistry.openPackage('bugs')
 const swaggerPackage = LocalRegistry.openPackage('basic_swagger')
@@ -60,7 +63,7 @@ describe('Operation Bugs', () => {
       ],
     })
 
-    expect([...result.operations.values()].every(operation => operation.apiKind === API_KIND.NO_BWC)).toBeTruthy()
+    expect([...result.operations.values()].every(operation => operation.apiKind === APIHUB_API_COMPATIBILITY_KIND_NO_BWC)).toBeTruthy()
   })
 
   test('duplicated operations in document and component should publish only document operations', async () => {
@@ -72,7 +75,7 @@ describe('Operation Bugs', () => {
       ],
     })
 
-    const operationV1 = result.operations.get('v1-pet-findbystatus-get')
+    const operationV1 = result.operations.get('v1-pet-findByStatus-get')
     expect(operationV1?.title).toMatch(/(\s*)TEST(\s*)/g)
   })
 
@@ -93,14 +96,14 @@ describe('Operation Bugs', () => {
       files: [{
         fileId: 'petstore(publish_1).yaml',
         publish: true,
-      },
-      ],
+      }],
     })
 
     const result = await editor.run({
       packageId: 'config_bug',
       version: '3.0',
       previousVersion: '1.0',
+      refs: [],
       files: [{
         fileId: 'petstore(publish_2).yaml',
         publish: true,
@@ -120,8 +123,7 @@ describe('Operation Bugs', () => {
       files: [{
         fileId: 'search-scope-v1.yaml',
         publish: true,
-      },
-      ],
+      }],
     })
 
     const result = await editor.run({
@@ -328,7 +330,7 @@ describe('Operation Bugs', () => {
       ],
     })
 
-    expect(editor.builder.operationList.every(operation => operation.apiKind === API_KIND.BWC)).toBeTruthy()
+    expect(editor.builder.operationList.every(operation => operation.apiKind === APIHUB_API_COMPATIBILITY_KIND_BWC)).toBeTruthy()
   })
 
   test('apiKind of operations should be no-BWC (defined in info)', async () => {
@@ -340,7 +342,7 @@ describe('Operation Bugs', () => {
       ],
     })
 
-    expect(editor.builder.operationList.every(operation => operation.apiKind === API_KIND.NO_BWC)).toBeTruthy()
+    expect(editor.builder.operationList.every(operation => operation.apiKind === APIHUB_API_COMPATIBILITY_KIND_NO_BWC)).toBeTruthy()
   })
 
   test('should correctly calculate operationId for servers with incorrect URL', async () => {
@@ -366,4 +368,26 @@ describe('Operation Bugs', () => {
     expect(data).toHaveProperty(['paths', '/test', 'post', 'responses', '200', 'content', 'application/json', 'schema', 'properties', 'testConnectionDate', 'example'], '2022-03-10T16:15:50Z')
   })
 
+  test('should format rest operationId title without extra characters', async () => {
+    type TestCase = [string, string, string, string]
+
+    const testData: TestCase[] = [
+      ['', 'get', '/path1', 'Path1 Get'],
+      ['', 'get', '/items/{itemId}', 'Items ItemId Get'],
+      ['api/v1', 'get', '/path1', 'Api V1 Path1 Get'],
+      ['api/v1', 'get', '/items/{itemId}', 'Api V1 Items ItemId Get'],
+      ['api/v1/rest', 'get', '/items/{itemId}', 'Api V1 Rest Items ItemId Get'],
+    ]
+    testData.forEach(([basePath, key, path, expectedTitle]) =>{
+      const title = calculateRestOperationTitle(basePath, key, path)
+      expect(title).toEqual(expectedTitle)
+    })
+
+    const editor = await Editor.openProject('bugs', bugsPackage)
+    const result = await editor.run({
+      files: [{ fileId: 'title-rest-operation-id-format.yaml', publish: true }],
+    })
+    const restOperationTitle = result.operations.get('api-v1-items-_item_-get')?.title
+    expect(restOperationTitle).toEqual('Api V1 Items Item Get')
+  })
 })

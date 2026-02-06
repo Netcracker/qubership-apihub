@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import createSlug, { CharMap } from 'slug'
 import {
   _ParsedFileResolver,
+  ApiDocument,
   ApiOperation,
   BuilderContext,
   BuildResult,
@@ -28,12 +28,18 @@ import {
   ResolvedGroupDocument,
   VALIDATION_RULES_SEVERITY_LEVEL_ERROR,
   VersionDocument,
+  VersionInternalDocument,
 } from '../types'
 import { bundle, Resolver } from 'api-ref-bundler'
-import { FILE_FORMAT_HTML, FILE_FORMAT_JSON, FILE_FORMAT_YAML, MESSAGE_SEVERITY } from '../consts'
+import {
+  FILE_FORMAT_HTML,
+  FILE_FORMAT_JSON,
+  FILE_FORMAT_YAML,
+  MESSAGE_SEVERITY,
+  SERIALIZE_SYMBOL_STRING_MAPPING,
+} from '../consts'
 import { isNotEmpty } from './arrays'
-import { PATH_PARAM_UNIFIED_PLACEHOLDER } from './builder'
-import { RefErrorType, RefErrorTypes } from '@netcracker/qubership-apihub-api-unifier'
+import { RefErrorType, RefErrorTypes, serialize } from '@netcracker/qubership-apihub-api-unifier'
 
 export const EXPORT_FORMAT_TO_FILE_FORMAT = new Map<ExportFormat, typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON>([
   [FILE_FORMAT_YAML, FILE_FORMAT_YAML],
@@ -55,6 +61,7 @@ export function toVersionDocument(document: ResolvedGroupDocument, fileFormat: F
     dependencies: [],
     description: '',
     metadata: {},
+    versionInternalDocument: createVersionInternalDocument(document.slug),
   }
 }
 
@@ -70,21 +77,26 @@ export function toPackageDocument(document: VersionDocument): PackageDocument {
     operationIds: document.operationIds,
     metadata: document.metadata,
     version: document.version,
+    apiKind: document.apiKind,
   }
 }
 
 export function setDocument(buildResult: BuildResult, document: VersionDocument, operations: ApiOperation[] = []): void {
   buildResult.documents.set(document.fileId, document)
   for (const operation of operations) {
+    const existingOperation = buildResult.operations.get(operation.operationId)
+    if (existingOperation) {
+      buildResult.notifications.push({
+        severity: MESSAGE_SEVERITY.Error,
+        message: `Duplicated operationId '${operation.operationId}' found in different documents: ` +
+          `'${existingOperation.documentId}' and '${operation.documentId}'`,
+        operationId: operation.operationId,
+        fileId: operation.documentId,
+      })
+    }
     buildResult.operations.set(operation.operationId, operation)
   }
 }
-
-createSlug.extend({ '/': '-' })
-createSlug.extend({ '_': '_' })
-createSlug.extend({ '.': '-' })
-createSlug.extend({ '(': '-' })
-createSlug.extend({ ')': '-' })
 
 export const findSharedPath = (fileIds: string[]): string => {
   if (!fileIds.length) { return '' }
@@ -95,20 +107,6 @@ export const findSharedPath = (fileIds: string[]): string => {
   let i = 0
   while (i < first.length - 1 && first[i] === last[i]) { i++ }
   return first.slice(0, i).join('/') + (i ? '/' : '')
-}
-
-export const IGNORE_PATH_PARAM_UNIFIED_PLACEHOLDER: CharMap = { [PATH_PARAM_UNIFIED_PLACEHOLDER]: PATH_PARAM_UNIFIED_PLACEHOLDER }
-
-export const slugify = (text: string, slugs: string[] = [], charMapEntry?: CharMap): string => {
-  if (!text) {
-    return ''
-  }
-
-  const slug = createSlug(text, { charmap: { ...createSlug.charmap, ...charMapEntry } })
-  let suffix: string = ''
-  // add suffix if not unique
-  while (slugs.includes(slug + suffix)) { suffix = String(+suffix + 1) }
-  return slug + suffix
 }
 
 export const getFileExtension = (fileId: string): string => {
@@ -129,11 +127,11 @@ export interface BundlingError {
 export const createBundlingErrorHandler = (ctx: BuilderContext, fileId: FileId) => (errors: BundlingError[]): void => {
   // Only throw if severity is ERROR and there's at least one critical error
   if (ctx.config.validationRulesSeverity?.brokenRefs === VALIDATION_RULES_SEVERITY_LEVEL_ERROR) {
-    const criticalError = errors.find(error => 
-      error.errorType === RefErrorTypes.REF_NOT_FOUND || 
+    const criticalError = errors.find(error =>
+      error.errorType === RefErrorTypes.REF_NOT_FOUND ||
       error.errorType === RefErrorTypes.REF_NOT_VALID_FORMAT,
     )
-    
+
     if (criticalError) {
       throw new Error(criticalError.message)
     }
@@ -200,4 +198,14 @@ export function capitalize(string: string): string {
   }
 
   return string.charAt(0).toUpperCase() + string.slice(1)
+}
+
+export function serializeDocument(normalizedDocument: ApiDocument): string {
+  return serialize(normalizedDocument, SERIALIZE_SYMBOL_STRING_MAPPING)
+}
+
+export const createVersionInternalDocument = (internalDocumentId: string): VersionInternalDocument =>  {
+  return {
+    versionDocumentId: internalDocumentId,
+  }
 }
