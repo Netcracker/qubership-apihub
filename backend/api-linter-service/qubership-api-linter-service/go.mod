@@ -53,6 +53,8 @@ require (
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/googleapis/gnostic v0.4.1 // indirect
 	github.com/gophercloud/gophercloud v0.13.0 // indirect
+	github.com/gosimple/slug v1.15.0 // indirect
+	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
 	github.com/hashicorp/go-discover v0.0.0-20200812215701-c4b85f6ed31f // indirect
@@ -109,6 +111,7 @@ require (
 	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.19.2 // indirect
 	k8s.io/apimachinery v0.19.2 // indirect
 	k8s.io/client-go v0.19.2 // indirect

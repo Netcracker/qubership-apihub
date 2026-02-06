@@ -170,6 +170,7 @@ func main() {
 	rulesetController := controller.NewRulesetController(rulesetService, authorizationService)
 	cleanupController := controller.NewCleanupController(cleanupService, authorizationService, systemInfoService)
 	healthController := controller.NewHealthController(readyChan)
+	logsController := controller.NewLogsController()
 
 	// Validate version
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/validation", security.Secure(validationController.ValidateVersion)).Methods(http.MethodPost)
@@ -186,6 +187,9 @@ func main() {
 	r.HandleFunc("/api/v1/rulesets/{ruleset_id}/data", security.NoSecure(rulesetController.GetRulesetData)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/rulesets/{ruleset_id}/activation", security.Secure(rulesetController.GetRulesetActivationHistory)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/rulesets/{ruleset_id}", security.Secure(rulesetController.DeleteRuleset)).Methods(http.MethodDelete)
+
+	r.HandleFunc("/api/v1/debug/logs/setLevel", security.Secure(logsController.SetLogLevel)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/debug/logs/checkLevel", security.Secure(logsController.CheckLogLevel)).Methods(http.MethodGet)
 
 	// Test data cleanup
 	r.HandleFunc("/api/internal/clear/{testId}", security.Secure(cleanupController.ClearTestData)).Methods(http.MethodDelete)
