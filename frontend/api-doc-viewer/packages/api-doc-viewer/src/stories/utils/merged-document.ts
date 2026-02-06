@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { apiDiff, COMPARE_MODE_OPERATION, CompareResult, DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
-import { NormalizeOptions, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier'
+import { apiDiff, COMPARE_MODE_OPERATION, CompareResult, DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff';
+import { NormalizeOptions, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier';
 
 const SYNTHETIC_TITLE_FLAG = Symbol('synthetic-title');
 const NORMALIZE_OPTIONS: NormalizeOptions = {

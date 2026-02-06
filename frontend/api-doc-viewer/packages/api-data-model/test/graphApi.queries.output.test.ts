@@ -213,7 +213,7 @@ describe('graphapi tree. queries output', () => {
       }
     `
     const graphApi = buildGraphApi(graphql)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 4)
     const root = tree.root
 
     expect(root).not.toBeNull()
@@ -246,7 +246,7 @@ describe('graphapi tree. queries output', () => {
       }
     `
     const graphApi = buildGraphApi(graphql)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 3)
     const queryOutput = tree.root!
       .children().find(child => child.kind === 'query')
       ?.children().find(child => child.kind === 'output')
@@ -255,7 +255,7 @@ describe('graphapi tree. queries output', () => {
     expect(outputItems?.value()).toMatchObject({ type: 'string' })
   })
 
-  it('no args, array of scalars in output', () => {
+  it('no args, array of enums in output', () => {
     const graphql = `
       type Query {
         fruit: [Fruit!]!
@@ -268,7 +268,7 @@ describe('graphapi tree. queries output', () => {
       }
     `
     const graphApi = buildGraphApi(graphql)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const queryOutput = tree.root!
       .children().find(child => child.kind === 'query')
       ?.children().find(child => child.kind === 'output')
@@ -292,7 +292,7 @@ describe('graphapi tree. queries output', () => {
       }
     `
     const graphApi = buildGraphApi(graphql)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 3)
     const root = tree.root
 
     expect(root).not.toBeNull()
@@ -326,7 +326,7 @@ describe('graphapi tree. queries output', () => {
       }
     `
     const graphApi = buildGraphApi(graphql)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const root = tree.root
 
     expect(root).not.toBeNull()
@@ -371,7 +371,7 @@ describe('graphapi tree. queries output', () => {
       }
     `
     const graphApi = buildGraphApi(graphql)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const root = tree.root
 
     expect(root).not.toBeNull()
@@ -427,7 +427,7 @@ describe('graphapi tree. queries output', () => {
       }
     `
     const graphApi = buildGraphApi(graphql)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const root = tree.root
 
     expect(root).not.toBeNull()
@@ -485,7 +485,7 @@ describe('graphapi tree. queries output', () => {
       }
     `
     const graphApi = buildGraphApi(graphql)
-    const tree = createGraphApiTreeForTests(graphApi)
+    const tree = createGraphApiTreeForTests(graphApi, 5)
     const root = tree.root
 
     expect(root).not.toBeNull()

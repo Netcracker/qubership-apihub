@@ -16,8 +16,8 @@
 
 import type { Meta, StoryObj } from '@storybook/react';
 import { GraphQLOperationViewer } from '../components/GraphQLOperationViewer/GraphQLOperationViewer';
-import { graphapi } from './utils/helpers';
 import { prepareGraphApiSchema } from './preprocess';
+import { graphapi } from './utils/helpers';
 
 // It's necessary because storybook doesn't render nested stories without this empty story
 // eslint-disable-next-line storybook/story-exports
@@ -25,7 +25,11 @@ const meta = {
   title: 'Graph Api Viewer',
   component: GraphQLOperationViewer,
   parameters: {},
-  argTypes: {},
+  argTypes: {
+    source: {
+      control: 'object'
+    }
+  },
   args: {
     source: {}
   }
@@ -59,8 +63,8 @@ export const Union: Story = {
 }
 
 export const SelfCycled: Story = {
-  args: {
-    source: prepareGraphApiSchema({
+  render: (args) => {
+    const processedSource = prepareGraphApiSchema({
       source: graphapi`
         type Query {
           test: CycledEntity
@@ -71,6 +75,73 @@ export const SelfCycled: Story = {
         }
       `,
       circular: true
-    }),
-  }
+    });
+    return <GraphQLOperationViewer {...args} source={processedSource} />;
+  },
+  args: {}
+}
+
+export const SelfCycledInput: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiSchema({
+      source: graphapi`
+        type Query {
+          test: CycledEntity
+        }
+        input CycledEntity {
+          value: String
+          child: CycledEntity
+        }
+      `,
+      circular: true
+    });
+    return <GraphQLOperationViewer {...args} source={processedSource} />;
+  },
+  args: {}
+}
+
+export const TwoBranchesSelfCycled: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiSchema({
+      source: graphapi`
+        type Query {
+          test: Response
+        }
+        type Response {
+          cycled: CycledEntity
+          anotherCycled: CycledEntity
+        }
+        type CycledEntity {
+          value: String
+          child: CycledEntity
+        }
+      `,
+      circular: true
+    });
+    return <GraphQLOperationViewer {...args} source={processedSource} />;
+  },
+  args: {}
+}
+
+export const TwoBranchesSelfCycledInput: Story = {
+  render: (args) => {
+    const processedSource = prepareGraphApiSchema({
+      source: graphapi`
+        type Query {
+          test: Response
+        }
+        type Response {
+          cycled: CycledEntity
+          anotherCycled: CycledEntity
+        }
+        input CycledEntity {
+          value: String
+          child: CycledEntity
+        }
+      `,
+      circular: true
+    });
+    return <GraphQLOperationViewer {...args} source={processedSource} />;
+  },
+  args: {}
 }

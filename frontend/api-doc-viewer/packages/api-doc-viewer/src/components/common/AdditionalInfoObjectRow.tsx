@@ -375,7 +375,6 @@ function getRowChanges($changes: Partial<DiffRecord> | undefined, $keys: string[
       ...diffFragment,
       path: [],
       afterValue: null,
-      afterNormalizedValue: null,
       scope: '',
     } as DiffAdd
   }
@@ -385,7 +384,6 @@ function getRowChanges($changes: Partial<DiffRecord> | undefined, $keys: string[
       ...diffFragment,
       path: [],
       beforeValue: null,
-      beforeNormalizedValue: null,
       scope: '',
     } as DiffRemove
   }
@@ -394,9 +392,7 @@ function getRowChanges($changes: Partial<DiffRecord> | undefined, $keys: string[
     ...diffFragment,
     path: [],
     beforeValue: null,
-    beforeNormalizedValue: null,
     afterValue: null,
-    afterNormalizedValue: null,
     scope: '',
   } as DiffReplace
 }

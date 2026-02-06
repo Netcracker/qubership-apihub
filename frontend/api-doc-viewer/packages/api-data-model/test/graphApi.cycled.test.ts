@@ -1,11 +1,4 @@
-import { IModelTreeNode } from '../src/abstract/model/types'
 import { createGraphApiTreeForTests, graphapi } from './helpers/graphql'
-
-function findNodeChild(node: IModelTreeNode<any, any, any>): IModelTreeNode<any, any, any> {
-  return node
-    .children().find(child => child.kind === 'output')!
-    .children().find(({ key, kind }) => kind === 'method' && key === 'child')!
-}
 
 describe('cycled entities', () => {
   const jestConsole = console
@@ -26,18 +19,33 @@ describe('cycled entities', () => {
         child: CycledEntity
       }
     `
-    const tree = createGraphApiTreeForTests(source)
+    const tree = createGraphApiTreeForTests(source, 6)
 
-    const query = tree.root!.children().find(child => child.kind === 'query')!
+    const queryOutput = tree.root!
+      .children()
+      .find(child => child.kind === 'query')!
+      .children()
+      .find(child => child.kind === 'output')! // CycledEntity (1)
 
-    const childFirst = findNodeChild(query)
-    const childSecond = findNodeChild(childFirst)
-    const childThird = findNodeChild(childSecond)
+    expect(queryOutput.value()).toHaveProperty('title', 'CycledEntity')
+    expect(queryOutput.isCycle).toBe(false)
 
-    expect(childFirst!.isCycle).toBe(false)
-    expect(childSecond!.isCycle).toBe(true)
-    expect(childThird).toBe(childSecond)
+    const methodChildOutput = queryOutput
+      .children()
+      .find(child => child.key === 'child' && child.kind === 'method')!
+      .children()
+      .find(child => child.kind === 'output')! // CycledEntity (2)
 
-    expect(tree).toBeTruthy()
+    expect(methodChildOutput.value()).toHaveProperty('title', 'CycledEntity')
+    expect(methodChildOutput.isCycle).toBe(true)
+
+    const nextMethodChildOutput = methodChildOutput
+      .children()
+      .find(child => child.key === 'child' && child.kind === 'method')!
+      .children()
+      .find(child => child.kind === 'output')! // CycledEntity (3)
+
+    expect(nextMethodChildOutput.value()).toHaveProperty('title', 'CycledEntity')
+    expect(nextMethodChildOutput.isCycle).toBe(true)
   })
 })

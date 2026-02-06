@@ -1,8 +1,17 @@
 name: Run screenshot tests
 
 on:
-  push
+  push:
+  workflow_dispatch:
+    inputs:
+      update_screenshots:
+        description: "Regenerate screenshots"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   call-screenshot-tests-workflow:
     uses: netcracker/qubership-apihub-ci/.github/workflows/screenshot-tests.yaml@main
+    with:
+      update_screenshots: ${{ inputs.update_screenshots || false }}

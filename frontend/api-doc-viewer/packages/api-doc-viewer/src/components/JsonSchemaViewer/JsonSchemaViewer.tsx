@@ -61,7 +61,8 @@ const JsonSchemaViewerInner: FC<JsonSchemaViewerProps> = (props) => {
     [schema]
   )
   const state = useMemo(
-    () => new JsonSchemaState<JsonSchemaTreeNode>(tree, expandedDepth),
+    // FIXME 07.10.25 // Get rid of "any"
+    () => new JsonSchemaState<JsonSchemaTreeNode>(tree as any, expandedDepth),
     [expandedDepth, tree]
   )
 
@@ -75,8 +76,7 @@ const JsonSchemaViewerInner: FC<JsonSchemaViewerProps> = (props) => {
   if (isPropNodeState(root)) {
     content = (
       <JsonPropNodeViewer
-        // FIXME 11.06.24
-        // @ts-expect-error // Bad types
+        // @ts-expect-error // TODO 14.10.25 // Fix this later
         state={root}
         overriddenKind={overriddenKind}
       />
@@ -86,8 +86,7 @@ const JsonSchemaViewerInner: FC<JsonSchemaViewerProps> = (props) => {
   if (isCombinerNodeState(root)) {
     content = (
       <JsonCombinerNodeViewer
-        // FIXME 12.08.24
-        // @ts-expect-error // Bad types
+        // @ts-expect-error // TODO 14.10.25 // Fix this later
         state={root}
         onGlobalSelectNestedNode={() => null}
       />

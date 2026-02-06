@@ -1,5 +1,5 @@
 import { annotation, deprecated, DiffAction, nonBreaking, unclassified } from "@netcracker/qubership-apihub-api-diff"
-import { createGraphApiDiffTreeForTests, graphapi, metaKey } from "./helpers/graphql"
+import { createGraphApiDiffTreeForTests, diffMetaKeys, graphapi } from "./helpers/graphql"
 
 describe('directive changes', () => {
   it('enum value, added deprecation', () => {
@@ -19,7 +19,7 @@ describe('directive changes', () => {
         deprecatedValue @deprecated
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -29,8 +29,8 @@ describe('directive changes', () => {
       ['values', 'deprecatedValue', 'deprecationReason'],
       'No longer supported'
     )
-    expect(output.meta.$metaChanges).toHaveProperty(
-      ['typeDef', 'values', 'deprecatedValue', 'deprecationReason'],
+    expect(output.value()?.$changes).toHaveProperty(
+      ['values', 'deprecatedValue', 'deprecationReason'],
       expect.objectContaining({
         type: deprecated,
         action: DiffAction.add,
@@ -56,7 +56,7 @@ describe('directive changes', () => {
         deprecatedValue
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -66,8 +66,8 @@ describe('directive changes', () => {
       ['values', 'deprecatedValue', 'deprecationReason'],
       'No longer supported'
     )
-    expect(output.meta.$metaChanges).toHaveProperty(
-      ['typeDef', 'values', 'deprecatedValue', 'deprecationReason'],
+    expect(output.value()?.$changes).toHaveProperty(
+      ['values', 'deprecatedValue', 'deprecationReason'],
       expect.objectContaining({
         type: deprecated,
         action: DiffAction.remove,
@@ -93,7 +93,7 @@ describe('directive changes', () => {
         deprecatedValue @deprecated(reason: "After")
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -103,8 +103,8 @@ describe('directive changes', () => {
       ['values', 'deprecatedValue', 'deprecationReason'],
       'After'
     )
-    expect(output.meta.$metaChanges).toHaveProperty(
-      ['typeDef', 'values', 'deprecatedValue', 'deprecationReason'],
+    expect(output.value()?.$changes).toHaveProperty(
+      ['values', 'deprecatedValue', 'deprecationReason'],
       expect.objectContaining({
         type: annotation,
         action: DiffAction.replace,
@@ -125,7 +125,7 @@ describe('directive changes', () => {
         test: String @deprecated
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
 
     const query = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -151,7 +151,7 @@ describe('directive changes', () => {
         test: String 
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
 
     const query = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -177,7 +177,7 @@ describe('directive changes', () => {
         test: String @deprecated(reason: "Will be deleted")
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
 
     const query = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -209,7 +209,7 @@ describe('directive changes', () => {
         test: String @deprecated
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -245,7 +245,7 @@ describe('directive changes', () => {
         test: String 
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -281,7 +281,7 @@ describe('directive changes', () => {
         test: String @deprecated(reason: "Will be deleted")
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -313,7 +313,7 @@ describe('directive changes', () => {
       }
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
     const query = tree.root!.children().find(child => child.kind === 'query')
 
     expect(query?.meta.directives).toHaveProperty('foo', {
@@ -350,7 +350,7 @@ describe('directive changes', () => {
       }
     `
 
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
     const query = tree.root!.children().find(child => child.kind === 'query')
 
     expect(query?.meta.directives).toHaveProperty('foo', {
@@ -387,7 +387,7 @@ describe('directive changes', () => {
         test: String @foo
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -424,7 +424,7 @@ describe('directive changes', () => {
         test: String @foo
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -461,7 +461,7 @@ describe('directive changes', () => {
         test: String @foo
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -502,7 +502,7 @@ describe('directive changes', () => {
         test: String @foo
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -540,7 +540,7 @@ describe('directive changes', () => {
         test: String @foo
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys)
 
     const output = tree.root!
       .children().find(child => child.kind === 'query')!
@@ -578,11 +578,11 @@ describe('directive changes', () => {
         test: String @foo
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 5)
 
-    const output = tree.root!
+    const query = tree.root!
       .children().find(child => child.kind === 'query')!
-    const usedDirectives = output!
+    const usedDirectives = query!
       .children().find(child => child.kind === 'usedDirectives')
     const directiveUsage = usedDirectives!.children()[0]
 
@@ -616,11 +616,11 @@ describe('directive changes', () => {
         test: String @foo
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 5)
 
-    const output = tree.root!
+    const query = tree.root!
       .children().find(child => child.kind === 'query')!
-    const usedDirectives = output!
+    const usedDirectives = query!
       .children().find(child => child.kind === 'usedDirectives')
     const directiveUsage = usedDirectives!.children()[0]
 
@@ -642,286 +642,6 @@ describe('directive changes', () => {
     })
   })
 
-  it('custom directive definition, added location', () => {
-    const before = graphapi`
-      directive @foo on FIELD_DEFINITION
-    `
-    const after = graphapi`
-      directive @foo on FIELD_DEFINITION | ENUM_VALUE
-    `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
-
-    const directive = tree.root!
-      .children().find(child => child.kind === 'directive')
-
-    expect(directive).toBeTruthy()
-    expect(directive!.value()).toHaveProperty('title', 'foo')
-    expect(directive!.meta).toHaveProperty('locations', ['FIELD_DEFINITION', 'ENUM_VALUE'])
-    expect(directive!.meta.$metaChanges).toMatchObject({
-      locations: {
-        1: expect.objectContaining({
-          type: nonBreaking,
-          action: DiffAction.add,
-        })
-      }
-    })
-  })
-
-  it('custom directive definition, removed location', () => {
-    const before = graphapi`
-      directive @foo on FIELD_DEFINITION | ENUM_VALUE
-    `
-    const after = graphapi`
-      directive @foo on FIELD_DEFINITION
-    `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
-
-    const directive = tree.root!
-      .children().find(child => child.kind === 'directive')
-
-    expect(directive).toBeTruthy()
-    expect(directive!.value()).toHaveProperty('title', 'foo')
-    expect(directive!.meta).toHaveProperty('locations', ['FIELD_DEFINITION', 'ENUM_VALUE'])
-    expect(directive!.meta.$metaChanges).toMatchObject({
-      locations: {
-        1: expect.objectContaining({
-          type: nonBreaking,
-          action: DiffAction.remove,
-        })
-      }
-    })
-  })
-
-  it('custom directive definition, added description', () => {
-    const before = graphapi`
-      directive @foo on FIELD_DEFINITION
-    `
-    const after = graphapi`
-      "Description"
-      directive @foo on FIELD_DEFINITION
-    `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
-
-    const directive = tree.root!
-      .children().find(child => child.kind === 'directive')
-
-    expect(directive).toBeTruthy()
-    expect(directive!.value()).toHaveProperty('title', 'foo')
-    expect(directive!.value()).toHaveProperty('description', 'Description')
-    expect(directive!.value()?.$changes).toMatchObject({
-      description: expect.objectContaining({
-        type: annotation,
-        action: DiffAction.add
-      })
-    })
-    expect(directive!.meta).toHaveProperty('locations', ['FIELD_DEFINITION'])
-  })
-
-  it('custom directive definition, removed description', () => {
-    const before = graphapi`
-      "Description"
-      directive @foo on FIELD_DEFINITION
-    `
-    const after = graphapi`
-      directive @foo on FIELD_DEFINITION
-    `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
-
-    const directive = tree.root!
-      .children().find(child => child.kind === 'directive')
-
-    expect(directive).toBeTruthy()
-    expect(directive!.value()).toHaveProperty('title', 'foo')
-    expect(directive!.value()).toHaveProperty('description', 'Description')
-    expect(directive!.value()?.$changes).toMatchObject({
-      description: expect.objectContaining({
-        type: annotation,
-        action: DiffAction.remove
-      })
-    })
-    expect(directive!.meta).toHaveProperty('locations', ['FIELD_DEFINITION'])
-  })
-
-  it('custom directive definition, replaced description', () => {
-    const before = graphapi`
-      "Description"
-      directive @foo on FIELD_DEFINITION
-    `
-    const after = graphapi`
-      "CHANGED Description"
-      directive @foo on FIELD_DEFINITION
-    `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
-
-    const directive = tree.root!
-      .children().find(child => child.kind === 'directive')
-
-    expect(directive).toBeTruthy()
-    expect(directive!.value()).toHaveProperty('title', 'foo')
-    expect(directive!.value()).toHaveProperty('description', 'CHANGED Description')
-    expect(directive!.value()?.$changes).toMatchObject({
-      description: expect.objectContaining({
-        type: annotation,
-        action: DiffAction.replace,
-        beforeValue: 'Description',
-        afterValue: 'CHANGED Description',
-      })
-    })
-    expect(directive!.meta).toHaveProperty('locations', ['FIELD_DEFINITION'])
-  })
-
-  it('custom directive definition, added arg', () => {
-    const before = graphapi`
-      directive @foo on FIELD_DEFINITION
-    `
-    const after = graphapi`
-      directive @foo(val: String) on FIELD_DEFINITION
-    `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
-
-    const directive = tree.root!
-      .children().find(child => child.kind === 'directive')
-
-    expect(directive).toBeTruthy()
-    expect(directive!.value()).toHaveProperty('title', 'foo')
-    expect(directive!.meta).toHaveProperty('locations', ['FIELD_DEFINITION'])
-
-    const arg = directive!
-      .children().find(child => child.kind === 'args')!
-      .children().find(child => child.kind === 'arg')
-
-    expect(arg).toBeTruthy()
-    expect(arg!.value()).toHaveProperty('type', 'string')
-    expect(arg!.meta.$nodeChange).toMatchObject({
-      type: nonBreaking,
-      action: DiffAction.add,
-    })
-  })
-
-  it('custom directive definition, removed arg', () => {
-    const before = graphapi`
-      directive @foo(val: String) on FIELD_DEFINITION
-    `
-    const after = graphapi`
-      directive @foo on FIELD_DEFINITION
-    `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
-
-    const directive = tree.root!
-      .children().find(child => child.kind === 'directive')
-
-    expect(directive).toBeTruthy()
-    expect(directive!.value()).toHaveProperty('title', 'foo')
-    expect(directive!.meta).toHaveProperty('locations', ['FIELD_DEFINITION'])
-
-    const arg = directive!
-      .children().find(child => child.kind === 'args')!
-      .children().find(child => child.kind === 'arg')
-
-    expect(arg).toBeTruthy()
-    expect(arg!.value()).toHaveProperty('type', 'string')
-    expect(arg!.meta.$nodeChange).toMatchObject({
-      type: nonBreaking,
-      action: DiffAction.remove,
-    })
-  })
-
-  it('custom directive definition, marked as repeatable', () => {
-    const before = graphapi`
-      directive @foo on FIELD_DEFINITION
-    `
-    const after = graphapi`
-      directive @foo repeatable on FIELD_DEFINITION
-    `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
-
-    const directive = tree.root!
-      .children().find(child => child.kind === 'directive')
-
-    expect(directive).toBeTruthy()
-    expect(directive!.value()).toHaveProperty('title', 'foo')
-    expect(directive!.meta).toHaveProperty('repeatable', true)
-    expect(directive!.meta).toHaveProperty('locations', ['FIELD_DEFINITION'])
-    expect(directive!.meta.$metaChanges).toMatchObject({
-      repeatable: {
-        type: unclassified,
-        action: DiffAction.replace,
-        beforeValue: false,
-        afterValue: true,
-      }
-    })
-  })
-
-  it('custom directive definition, marked as NOT repeatable', () => {
-    const before = graphapi`
-      directive @foo repeatable on FIELD_DEFINITION
-    `
-    const after = graphapi`
-      directive @foo on FIELD_DEFINITION
-    `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
-
-    const directive = tree.root!
-      .children().find(child => child.kind === 'directive')
-
-    expect(directive).toBeTruthy()
-    expect(directive!.value()).toHaveProperty('title', 'foo')
-    expect(directive!.meta).toHaveProperty('repeatable', false)
-    expect(directive!.meta).toHaveProperty('locations', ['FIELD_DEFINITION'])
-    expect(directive!.meta.$metaChanges).toMatchObject({
-      repeatable: {
-        type: unclassified,
-        action: DiffAction.replace,
-        beforeValue: true,
-        afterValue: false,
-      }
-    })
-  })
-
-  it('added custom directive definition', () => {
-    const before = graphapi`
-      directive @foo on FIELD_DEFINITION
-    `
-    const after = graphapi`
-      directive @foo on FIELD_DEFINITION
-      directive @bar on FIELD_DEFINITION
-    `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
-
-    const directive = tree.root!
-      .children().find(child => child.kind === 'directive' && child.key === 'bar')
-
-    expect(directive).toBeTruthy()
-    expect(directive!.value()).toHaveProperty('title', 'bar')
-    expect(directive!.meta).toHaveProperty('locations', ['FIELD_DEFINITION'])
-    expect(directive!.meta.$nodeChange).toMatchObject({
-      type: nonBreaking,
-      action: DiffAction.add,
-    })
-  })
-
-  it('removed custom directive definition', () => {
-    const before = graphapi`
-      directive @foo on FIELD_DEFINITION
-      directive @bar on FIELD_DEFINITION
-    `
-    const after = graphapi`
-      directive @foo on FIELD_DEFINITION
-    `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
-
-    const directive = tree.root!
-      .children().find(child => child.kind === 'directive' && child.key === 'bar')
-
-    expect(directive).toBeTruthy()
-    expect(directive!.value()).toHaveProperty('title', 'bar')
-    expect(directive!.meta).toHaveProperty('locations', ['FIELD_DEFINITION'])
-    expect(directive!.meta.$nodeChange).toMatchObject({
-      type: nonBreaking,
-      action: DiffAction.remove,
-    })
-  })
-
   it('custom directive usage, changed argument', () => {
     const before = graphapi`
       directive @foo(val: String) on FIELD_DEFINITION
@@ -935,7 +655,7 @@ describe('directive changes', () => {
         test: String @foo(val: "changed value")
       }
     `
-    const tree = createGraphApiDiffTreeForTests(before, after, metaKey)
+    const tree = createGraphApiDiffTreeForTests(before, after, diffMetaKeys, 5)
 
     const arg = tree.root!
       .children().find(child => child.kind === 'query')!

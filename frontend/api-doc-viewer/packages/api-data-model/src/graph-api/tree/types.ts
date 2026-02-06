@@ -100,7 +100,12 @@ export type GraphApiNodeKind = GraphSchemaNodeKind | keyof typeof graphApiNodeKi
 export type GraphApiCrawlState = {
   parent: GraphApiTreeNode | null
   container?: GraphApiTreeComplexNode
-  alreadyConvertedMappingStack: Map<unknown, GraphApiTreeNode | GraphApiTreeComplexNode>
+  alreadyConvertedMappingStack: Map<unknown, GraphApiTreeNode | GraphApiTreeComplexNode | null>,
+  /* Feature "Lazy Tree Building" */
+  nodeIdPrefix: string
+  treeLevel: number, // current tree level
+  maxTreeLevel: number, // this level will have no children/nested nodes until they're lazy-built
+  /* --- */
 }
 
 export type GraphApiCrawlRule = SchemaCrawlRule<GraphApiNodeKind, GraphApiCrawlState>

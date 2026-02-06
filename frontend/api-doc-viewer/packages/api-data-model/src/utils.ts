@@ -192,7 +192,6 @@ export function inverDiffAction(diff?: Diff): Diff | undefined {
       // inverted part
       action: DiffAction.remove,
       beforeValue: diff.afterValue,
-      beforeNormalizedValue: diff.afterNormalizedValue,
       beforeDeclarationPaths: diff.afterDeclarationPaths,
     }
     return newDiff
@@ -205,7 +204,6 @@ export function inverDiffAction(diff?: Diff): Diff | undefined {
       // inverted part
       action: DiffAction.add,
       afterValue: diff.beforeValue,
-      afterNormalizedValue: diff.beforeNormalizedValue,
       afterDeclarationPaths: diff.beforeDeclarationPaths,
     }
     return newDiff
@@ -266,4 +264,10 @@ export function wasGraphApiEnumDefinition(
     return false
   }
   return isObject(diffForType.beforeValue) && diffForType.beforeValue.kind === 'enum'
+}
+
+type TObject = Record<PropertyKey, unknown>
+
+export function extendToObject(value: unknown): TObject | undefined {
+  return isObject(value) ? value : undefined
 }

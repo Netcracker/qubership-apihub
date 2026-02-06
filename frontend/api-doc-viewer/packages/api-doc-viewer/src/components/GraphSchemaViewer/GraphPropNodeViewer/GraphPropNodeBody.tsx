@@ -22,9 +22,9 @@ import {
   graphSchemaNodeKind,
   isObject
 } from '@netcracker/qubership-apihub-api-data-model'
+import { GraphSchemaStatePropNode, isExpandableTreeNode } from '@netcracker/qubership-apihub-api-state-model'
 import type { FC } from 'react'
 import { useEffect, useState } from 'react'
-import { GraphSchemaStatePropNode, isExpandableTreeNode } from '@netcracker/qubership-apihub-api-state-model'
 import { buildNodeTitleData, buildNodeTypeData } from '../../../builders/nodes'
 import { useLayoutMode } from '../../../contexts/LayoutModeContext'
 import { useLevelContext } from '../../../contexts/LevelContext'
@@ -46,11 +46,7 @@ import {
 } from '../../../utils/nodes'
 import { Annotations } from '../../common/annotations/Annotations'
 import { isPropNodeState } from '../../GraphQLOperationViewer/types/nodes.guards'
-import {
-  isDirectiveNode,
-  isOperationNode,
-  isPropertyNode
-} from '../../GraphQLOperationViewer/utils/nodes'
+import { isOperationNode, isPropertyNode } from '../../GraphQLOperationViewer/utils/nodes'
 import { HeaderRow, NULLABILITY_POSITION_NODE, NULLABILITY_POSITION_TYPE } from '../internal/layout/HeaderRow/HeaderRow'
 import { Validations } from '../internal/validations/Validations'
 
@@ -111,7 +107,6 @@ export const GraphPropNodeBody: FC<GraphPropNodeBodyProps> = (props) => {
   const isOperation = isOperationNode(node)
   const isProperty = isPropertyNode(node)
   const isOutput = isOutputNode(node)
-  const isDirectiveDefinition = isDirectiveNode(node)
   const isDirectiveUsage = isDirectiveUsageNode(node)
   const isArgument = isArgumentNode(node)
   const hasArgs = node.nested.length === 0 && node.children().some(isArgumentsNode)
@@ -147,7 +142,7 @@ export const GraphPropNodeBody: FC<GraphPropNodeBodyProps> = (props) => {
               NULLABILITY_POSITION_NODE
           }
           // other
-          isDirective={isDirectiveDefinition || isDirectiveUsage}
+          isDirective={isDirectiveUsage}
           isArgument={isArgument}
           usedDirectives={usedDirectives}
           directiveLocations={directiveLocations}
