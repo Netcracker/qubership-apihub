@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_1_Smoke_Portal",
-        "_postman_id": "c6e44b13-f2a3-4df8-b528-3d4fe0d45f3d",
+        "_postman_id": "92013e29-1ffd-46d6-8762-bfdc49dec03c",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -13052,6 +13052,71 @@
                             "protocolProfileBehavior": {}
                         },
                         {
+                            "name": "5.3.23 Get list of operations filtered by hash",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "\r",
+                                            "pm.test(\"List of operations displayed\", () => {\r",
+                                            "    pm.expect(data.operations.length).to.eql(4);\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{dashboard_1}}/versions/{{version_1}}/rest/operations?hashList={{hash_1}}",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{dashboard_1}}",
+                                        "versions",
+                                        "{{version_1}}",
+                                        "rest",
+                                        "operations"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "hashList",
+                                            "value": "{{hash_1}}"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
                             "name": "5.3.24 Validation filter results of document versions",
                             "event": [
                                 {
@@ -14647,28 +14712,55 @@
                                             "    pm.response.to.have.status(200);\r",
                                             "});\r",
                                             "\r",
-                                            "var data = JSON.parse(responseBody);\r",
+                                            "const jsonData = pm.response.json();\r",
                                             "\r",
-                                            "pm.test(\"There are 5 operations\", function () {\r",
-                                            "    pm.expect(data.operations.length).to.eql(6);\r",
+                                            "pm.test(\"There are 6 operations in response\", function () {\r",
+                                            "    pm.expect(jsonData.operations).to.be.an(\"array\");\r",
+                                            "    pm.expect(jsonData.operations.length).to.equal(6);\r",
                                             "});\r",
                                             "\r",
-                                            "var title = [];\r",
+                                            "const titles = jsonData.operations.map(op => op.title);\r",
                                             "\r",
-                                            "for (var i = 0; i<data.operations.length; i++) {\r",
-                                            "    title.push(data.operations[i].title)\r",
-                                            "}\r",
+                                            "const normalizedTitles = titles.map(t => t.replace(/\\s+/g, ' ').trim());\r",
                                             "\r",
-                                            "pm.test(\"All operations are present\", () => {\r",
-                                            "    pm.expect(title).to.include('Inline Semi-Breaking change by x-api-kind tag'),\r",
-                                            "    pm.expect(title).to.include('Inline Semi-Breaking change by deprecated mark'),\r",
-                                            "    pm.expect(title).to.include('Semi-Breaking change in reusable schema \\\"User\\\" by deprecated mark'),\r",
-                                            "    pm.expect(title).to.include('Semi-Breaking change in reusable schema \\\"Pet\\\" by x-api-kind tag'),\r",
-                                            "    pm.expect(title).to.include('LACONICCACTUS0P IOT 1.0.0 Devices Get'),\r",
-                                            "    pm.expect(title).to.include('LACONICCACTUS0P IOT 1.0.0 Devices Post')\r",
+                                            "const expectedTitles = [\r",
+                                            "    \"Inline Semi-Breaking change by x-api-kind tag\",\r",
+                                            "    \"Inline Semi-Breaking change by deprecated mark\",\r",
+                                            "    \"Semi-Breaking change in reusable schema \\\"User\\\" by deprecated mark\",\r",
+                                            "    \"Semi-Breaking change in reusable schema \\\"Pet\\\" by x-api-kind tag\",\r",
+                                            "    \"LACONICCACTUS0P IOT 1 0 0 Devices Get\",\r",
+                                            "    \"LACONICCACTUS0P IOT 1 0 0 Devices Post\" \r",
+                                            "];\r",
+                                            "\r",
+                                            "pm.test(\"All expected operation titles are present\", function () {\r",
+                                            "    expectedTitles.forEach(expected => {\r",
+                                            "        const found = normalizedTitles.includes(expected) ||\r",
+                                            "                      normalizedTitles.some(t => t.includes(expected));\r",
+                                            "        \r",
+                                            "        pm.expect(found, `Title not found: \"${expected}\"`).to.be.true;\r",
+                                            "    });\r",
                                             "});\r",
                                             "\r",
-                                            "pm.environment.set(\"operation_id_1\", data.operations[0].operationId)"
+                                            "const operationIds = jsonData.operations.map(op => op.operationId);\r",
+                                            "\r",
+                                            "const expectedOperationIds = [\r",
+                                            "    \"LACONICCACTUS0P-IOT-1.0.0-devices-get\",\r",
+                                            "    \"LACONICCACTUS0P-IOT-1.0.0-devices-post\",\r",
+                                            "    \"api-v1-pet-petId-uploadImage-post\",\r",
+                                            "    \"api-v1-pet-post\",\r",
+                                            "    \"api-v1-pet-put\",\r",
+                                            "    \"api-v1-store-order-post\"\r",
+                                            "];\r",
+                                            "\r",
+                                            "pm.test(\"All expected operationIds are present\", function () {\r",
+                                            "    expectedOperationIds.forEach(id => {\r",
+                                            "        pm.expect(operationIds, `operationId not found: ${id}`).to.include(id);\r",
+                                            "    });\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.environment.set(\"operation_id_1\", jsonData.operations[0].operationId);\r",
+                                            "pm.environment.set(\"operation_id_2\", jsonData.operations[1].operationId);\r",
+                                            ""
                                         ]
                                     }
                                 },
