@@ -8,7 +8,7 @@ export const randomString = (length: number, range?: string): string => {
   return result
 }
 
-// Надо переименовать в ordinalPostfix
+// Need to rename to ordinalPostfix
 export const nthPostfix = (nth: number): string => {
   if ((nth % 100) >= 11 && (nth % 100) <= 13) return 'th'
   switch (nth % 10) {
