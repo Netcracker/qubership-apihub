@@ -100,7 +100,7 @@ Execute `generate_env_and_up_compose.sh` - it will initialize all require ENV VA
 
 http://host.docker.internal:8081/ - Qubserhip-APIHUB UI URL
 
-You will be able to login under user/user credential (set in ./keycloack/realm.json)
+You will be able to login under user/user credential (set in ./keycloak/realm.json)
 
 ## Startup with locally built images
 
