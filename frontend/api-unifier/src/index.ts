@@ -1,4 +1,5 @@
 export * from './normalize'
+export * from './merge-traits'
 export * from './cycle-jso'
 export * from './types'
 export * from './utils'

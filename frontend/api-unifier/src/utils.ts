@@ -20,7 +20,7 @@ import {
   RichReference,
 } from './types'
 import { JSON_SCHEMA_PROPERTY_REF } from './rules/jsonschema.const'
-import { resolveOrigins, setOriginsForArray } from './origins'
+import { copyOrigins, copyProperty, resolveOrigins, setOriginsForArray } from './origins'
 import { JSON_SCHEMA, load } from 'js-yaml'
 import {
   JSON_SCHEMA_SPEC_TYPES,
@@ -405,8 +405,96 @@ export const removeDuplicatesWithMergeOrigins = <T>(array: T[], originFlag: symb
   return uniqueItems
 }
 
-export function loadYaml(file: string){
-  return load(file, {schema:JSON_SCHEMA})
+/**
+ * Copy symbol properties from source to target
+ * Symbol properties are not copied by standard object spread or Object.assign
+ * This helper ensures symbol properties like referenceNameProperty, inlineRefsFlag, syntheticTitleFlag, etc.
+ * are preserved during merge operations
+ *
+ * @param source - The source object to copy symbols from
+ * @param target - The target object to copy symbols to
+ * @param skipSymbols - Set of symbols to skip (e.g., originsFlag which is managed separately)
+ */
+export function copySymbolProperties(source: Jso, target: Jso, skipSymbols: Set<symbol>): void {
+  if (!isObject(source) || !isObject(target)) {
+    return
+  }
+
+  const symbolKeys = Object.getOwnPropertySymbols(source)
+  for (const sym of symbolKeys) {
+    if (!skipSymbols.has(sym)) {
+      (target as Record<PropertyKey, unknown>)[sym] = (source as Record<PropertyKey, unknown>)[sym]
+    }
+  }
+}
+
+/**
+ * Implements AsyncAPI JSON Merge Patch
+ * Logic is aligned with @asyncapi/parser as much as possible
+ * Additional logic for handling origins is added
+* @param patch - The patch value to merge from
+* @param target - The target value to merge into
+* @param propertyKey - The property key to merge
+* @param originsFlag - The origins flag to use
+* @param skipSymbols - Set of symbols to skip when copying symbol properties
+* @param visited - Set of visited objects to avoid cyclic references
+* @param rootLevel - Whether the merge is at the root level
+ * @returns The merged result
+ */
+export function mergePatchWithOrigins(
+  patch: Jso,
+  target: Jso,
+  propertyKey: PropertyKey,
+  originsFlag: symbol | undefined,
+  skipSymbols: Set<symbol> = new Set(),
+  visited: Set<Jso> = new Set(),
+  rootLevel: boolean = true
+) {
+  // If the propertyKey value is null in patch, delete property from target
+  const patchValue = getJsoProperty(patch, propertyKey)
+  // for some reason @asyncapi/parser does not delete the property from target if it is at the root level
+  // see https://github.com/asyncapi/spec/issues/1178
+  if (patchValue === null && !rootLevel) {
+    delete (target as Record<PropertyKey, unknown>)[propertyKey]  //TODO: think about origins for this case
+    return
+  }
+
+  // If the patch property is not an object, it replaces the target property
+  // note that this is also true for arrays, see in https://github.com/asyncapi/spec/issues/505
+  if (!isObject(patchValue) || isArray(patchValue)) {
+    copyProperty(patch, target, propertyKey, originsFlag)
+    return
+  }
+
+  // Patch property is object
+
+  if (visited.has(patchValue)) {
+    // cyclic reference found, set the patch value to keep reference identity
+    setJsoProperty(target, propertyKey, patchValue)
+    copyOrigins(patch, target, propertyKey, propertyKey, originsFlag)
+    return
+  }
+
+  const targetValue = getJsoProperty(target, propertyKey)
+  const blank = {}
+  const result = !isObject(targetValue)
+    ? blank // Non objects are being replaced.
+    : Object.assign(blank, targetValue) // Make sure we never modify the target.
+
+  // Symbols are just copied, without applying merge patch logic
+  copySymbolProperties(patchValue as Jso, result, skipSymbols)
+
+  visited.add(patchValue)
+  Object.keys(patchValue as Jso).forEach(key => {
+    mergePatchWithOrigins(patchValue as Jso, result, key, originsFlag, skipSymbols, visited, false)
+  })
+
+  setJsoProperty(target, propertyKey, result)
+  copyOrigins(patch, target, propertyKey, propertyKey, originsFlag)
+}
+
+export function loadYaml(file: string) {
+  return load(file, { schema: JSON_SCHEMA })
 }
 
 export function determineSpecTypeFamily(specType: SpecType): SpecTypeFamily {

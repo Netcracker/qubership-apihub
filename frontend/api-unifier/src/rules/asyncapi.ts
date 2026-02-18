@@ -263,6 +263,7 @@ const messageRules: NormalizationRules = {
   '/traits': {
     '/*': messageTraitRules,
     validate: checkType(TYPE_ARRAY),
+    mergeTraits: true,
   },
   unify: [
     valueDefaults(ASYNCAPI_MESSAGE_DEFAULTS),
@@ -400,6 +401,7 @@ const operationRules: NormalizationRules = {
   '/traits': {
     '/*': operationTraitRules,
     validate: checkType(TYPE_ARRAY),
+    mergeTraits: true,
   },
   '/messages': {
     '/*': messageRules, //TODO: think how to enforce [Reference Object] here as per specification

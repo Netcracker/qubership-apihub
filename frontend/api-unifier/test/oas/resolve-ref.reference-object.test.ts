@@ -9,7 +9,7 @@ import {
 import 'jest-extended'
 import { defineOriginsAndResolveRef } from '../../src/define-origins-and-resolve-ref'
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
-import { TEST_INLINE_REFS_FLAG, TEST_ORIGINS_FLAG, TEST_REFERENCE_NAME_PROPERTY, TEST_SYNTHETIC_TITLE_FLAG } from '../helpers'
+import { getValueByPath, setValueAtPath, TEST_INLINE_REFS_FLAG, TEST_ORIGINS_FLAG, TEST_REFERENCE_NAME_PROPERTY, TEST_SYNTHETIC_TITLE_FLAG } from '../helpers'
 import defineResponseViaReferenceObjectChain
   from '../resources/reference-object/define-response-via-reference-object-chain.json'
 import secondLevelObjectSameWhenOverridingDescriptionForResponse
@@ -378,25 +378,6 @@ describe('OAS Reference Object', () => {
     pathItemObjectTestData,
     exampleObjectTestData,
   ]
-
-  function setValueAtPath(obj: any, path: JsonPath, value: any): void {
-    if (path.length === 0) { return }
-
-    let current = obj
-    for (let i = 0; i < path.length - 1; i++) {
-      const key = path[i]
-      const nextKey = path[i + 1]
-      if (!(key in current)) {
-        current[key] = typeof nextKey === 'number' ? [] : {}
-      }
-      current = current[key]
-    }
-    if (value !== undefined) {
-      current[path[path.length - 1]] = value
-    }
-  }
-
-  const getValueByPath = (value: any, path: JsonPath) => path.reduce((data, key) => data?.[key], value)
 
   const createRef = (path: JsonPath) => `#/${path.join('/')}`
 
