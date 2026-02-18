@@ -2,6 +2,7 @@ import { CrawlRules, JsonPath, SyncCloneHook } from '@netcracker/qubership-apihu
 import { EvaluationCacheService, PropertySpreadWithCacheService } from './cache'
 import { HasSelfMetaResolver } from './utils'
 import { ReferenceHandlerArgsWithResolver, ReferenceHandlerResponse } from './references/ref-resolver'
+import { SpecType } from './spec-type'
 
 export type RawJsonSchema = Record<PropertyKey, unknown> | boolean
 export type JsonSchema = Record<PropertyKey, unknown>
@@ -55,6 +56,7 @@ export interface UnifyOptions {
 
 export interface DeUnifyOptions extends UnifyOptions {
   skip?: PropertySkipFunction,                     // predicate to skip rollback unification
+  forceRulesForSpecVersion?: SpecType,             // force deunify rules (spec family only: OpenAPI 3.0/3.1, JsonSchemaSpecVersion); cannot override AsyncAPI / GraphAPI
 }
 
 interface HasInternalIgnoreSymbols {

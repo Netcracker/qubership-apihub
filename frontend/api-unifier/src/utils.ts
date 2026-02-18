@@ -1,11 +1,19 @@
-import { isArray, isObject, JSON_ROOT_KEY, SyncCloneHook, SyncCrawlHook, type JsonPath } from '@netcracker/qubership-apihub-json-crawl'
+import {
+  isArray,
+  isObject,
+  JSON_ROOT_KEY,
+  type JsonPath,
+  SyncCloneHook,
+  SyncCrawlHook,
+} from '@netcracker/qubership-apihub-json-crawl'
 
 import {
   ChainItem,
   DEFAULT_TYPE_FLAG_PURE,
   DEFAULT_TYPE_FLAG_SYNTHETIC,
   DefaultMetaRecord,
-  Jso, OriginLeafs,
+  Jso,
+  OriginLeafs,
   PureRefNode,
   type RawJsonSchema,
   RefNode,
@@ -13,7 +21,18 @@ import {
 } from './types'
 import { JSON_SCHEMA_PROPERTY_REF } from './rules/jsonschema.const'
 import { resolveOrigins, setOriginsForArray } from './origins'
-import { load, JSON_SCHEMA } from 'js-yaml'
+import { JSON_SCHEMA, load } from 'js-yaml'
+import {
+  JSON_SCHEMA_SPEC_TYPES,
+  OPEN_API_SPEC_TYPES,
+  SPEC_TYPE_ASYNCAPI_3,
+  SPEC_TYPE_ASYNCAPI_TYPE_FAMILY,
+  SPEC_TYPE_GRAPH_API_TYPE_FAMILY,
+  SPEC_TYPE_JSON_SCHEMA_TYPE_FAMILY,
+  SPEC_TYPE_OPEN_API_TYPE_FAMILY,
+  SpecType,
+  SpecTypeFamily,
+} from './spec-type'
 
 export class MapArray<K, V> extends Map<K, Array<V>> {
   public add(key: K, value: V): this {
@@ -388,4 +407,17 @@ export const removeDuplicatesWithMergeOrigins = <T>(array: T[], originFlag: symb
 
 export function loadYaml(file: string){
   return load(file, {schema:JSON_SCHEMA})
+}
+
+export function determineSpecTypeFamily(specType: SpecType): SpecTypeFamily {
+  if (OPEN_API_SPEC_TYPES.has(specType)) {
+    return SPEC_TYPE_OPEN_API_TYPE_FAMILY
+  }
+  if (JSON_SCHEMA_SPEC_TYPES.has(specType)) {
+    return SPEC_TYPE_JSON_SCHEMA_TYPE_FAMILY
+  }
+  if (specType === SPEC_TYPE_ASYNCAPI_3) {
+    return SPEC_TYPE_ASYNCAPI_TYPE_FAMILY
+  }
+  return SPEC_TYPE_GRAPH_API_TYPE_FAMILY
 }
