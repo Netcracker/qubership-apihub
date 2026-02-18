@@ -1,0 +1,9 @@
+description: to an equivalent
+anyOf:
+  - type: string
+  - type: number
+  - type: integer
+  - type: boolean
+  - type: array
+    items: {}
+  - type: object

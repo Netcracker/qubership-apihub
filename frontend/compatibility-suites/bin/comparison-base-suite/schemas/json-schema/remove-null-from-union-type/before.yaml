@@ -1,0 +1,1 @@
+type: [string, integer, "null"] # Union of three types

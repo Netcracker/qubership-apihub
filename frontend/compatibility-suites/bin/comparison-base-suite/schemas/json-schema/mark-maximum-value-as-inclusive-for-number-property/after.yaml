@@ -1,0 +1,8 @@
+properties:
+  option1:
+    type: number
+    maximum: 99
+  option2:
+    type: number
+    maximum: 99
+    exclusiveMaximum: false

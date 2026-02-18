@@ -1,0 +1,6 @@
+properties:
+  option1:
+    type: string
+    readOnly: false
+  option2:
+    type: string

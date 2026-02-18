@@ -1,0 +1,1 @@
+type: [string, integer, "null"] # After - Union type with string, integer, and boolean

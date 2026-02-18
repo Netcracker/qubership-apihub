@@ -1,0 +1,6 @@
+properties:
+  option1:
+    type: array
+  option2:
+    type: array
+    uniqueItems: false
