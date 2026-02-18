@@ -1,8 +1,10 @@
+import type { TestSpecType } from '@netcracker/qubership-apihub-compatibility-suites'
 import type { Diff } from '../../src'
 
 declare global {
   namespace jest {
-    interface OpenApiVersionPairCaseContext {
+    interface SpecVersionPairCaseContext {
+      suiteType: TestSpecType
       suiteId: string
       testId: string
       beforeVersion: string
@@ -13,18 +15,20 @@ declare global {
 
     interface It {
       /**
-       * Jest-runner friendly wrapper: first arg is the test name (used for `-t`), so it can match
-       * the real generated per-pair tests (`${testId} (${pairTag})`).
+       * Jest-runner friendly wrapper that iterates over specification version pairs.
+       *
+       * For each pair, calls `getCompatibilitySuite(...)` with `specificationVersionPair` and runs `fn`.
        *
        * Usage:
-       * - `test.caseForOpenApiVersionPairs('<testId>', '<suiteId>', fn)`
-       * - `test.only.caseForOpenApiVersionPairs(...)`
-       * - `test.skip.caseForOpenApiVersionPairs(...)`
+       * - `test.caseForSpecVersionPairs(suiteType, '<testId>', '<suiteId>', fn)`
+       * - `test.only.caseForSpecVersionPairs(...)`
+       * - `test.skip.caseForSpecVersionPairs(...)`
        */
-      caseForOpenApiVersionPairs(
+      caseForSpecVersionPairs(
+        suiteType: TestSpecType,
         testId: string,
         suiteId: string,
-        fn: (ctx: OpenApiVersionPairCaseContext) => Promise<void> | void,
+        fn: (ctx: SpecVersionPairCaseContext) => Promise<void> | void,
       ): void
     }
   }
