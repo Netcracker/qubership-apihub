@@ -150,9 +150,9 @@ const createMergeTraitsHook = (options: InternalMergeTraitsOptions): MergeTraits
     // Step 3: Delete ONLY properties that exist in traits from the original object
     // Properties not in any trait stay intact on the base object
     const targetValue = { ...value }
-    for (const k of traitProperties) {
-      if (k in targetValue) {
-        delete targetValue[k]
+    for (const key of traitProperties) {
+      if (key in targetValue) {
+        delete targetValue[key]
       }
     }
 

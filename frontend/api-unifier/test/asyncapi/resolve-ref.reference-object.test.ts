@@ -1,5 +1,6 @@
 import { normalize } from '../../src/normalize'
 import { TEST_REFERENCE_NAME_PROPERTY } from '../helpers'
+import { parseAsyncApiAndAssertValid } from '../helpers/asyncapi'
 
 const NORMALIZATION_OPTIONS = {
   referenceNameProperty: TEST_REFERENCE_NAME_PROPERTY,
@@ -7,7 +8,7 @@ const NORMALIZATION_OPTIONS = {
 
 describe('AsyncAPI Reference Object Resolver', () => {
   describe('Reference Name Property', () => {
-    it('should capture reference name for simple channel reference', () => {
+    it('should capture reference name for simple channel reference', async () => {
       const source = {
         asyncapi: '3.0.0',
         info: {
@@ -34,12 +35,14 @@ describe('AsyncAPI Reference Object Resolver', () => {
         },
       }
 
+      await parseAsyncApiAndAssertValid(source)
+
       const result = normalize(source, NORMALIZATION_OPTIONS) as any
 
       expect(result.operations.testOperation.channel[TEST_REFERENCE_NAME_PROPERTY]).toBe('UserChannel')
     })
 
-    it('should capture last reference name in a reference chain', () => {
+    it('should capture last reference name in a reference chain', async () => {
       const source = {
         asyncapi: '3.0.0',
         info: {
@@ -69,6 +72,8 @@ describe('AsyncAPI Reference Object Resolver', () => {
         },
       }
 
+      await parseAsyncApiAndAssertValid(source)
+
       const result = normalize(source, NORMALIZATION_OPTIONS) as any
 
       // All references should have the last reference name from the chain
@@ -79,7 +84,7 @@ describe('AsyncAPI Reference Object Resolver', () => {
       expect(result.channels.IntermediateChannel).toBe(result.channels.FinalChannel)
     })
 
-    it('should capture reference name for multiple references to same target', () => {
+    it('should capture reference name for multiple references to same target', async () => {
       const source = {
         asyncapi: '3.0.0',
         info: {
@@ -110,6 +115,8 @@ describe('AsyncAPI Reference Object Resolver', () => {
         },
       }
 
+      await parseAsyncApiAndAssertValid(source)
+
       const result = normalize(source, NORMALIZATION_OPTIONS) as any
 
       // All references should have the same reference name
@@ -120,7 +127,7 @@ describe('AsyncAPI Reference Object Resolver', () => {
       expect(result.operations.receiveOperation.channel).toBe(result.channels.SharedChannel)
     })
 
-    it('should not add reference name property when option is not provided', () => {
+    it('should not add reference name property when option is not provided', async () => {
       const source = {
         asyncapi: '3.0.0',
         info: {
@@ -147,6 +154,8 @@ describe('AsyncAPI Reference Object Resolver', () => {
         },
       }
 
+      await parseAsyncApiAndAssertValid(source)
+
       const result = normalize(source) as any
 
       // Should not have reference name property
@@ -154,7 +163,7 @@ describe('AsyncAPI Reference Object Resolver', () => {
       expect(result.channels.UserChannel[TEST_REFERENCE_NAME_PROPERTY]).toBeUndefined()
     })
 
-    it('should capture reference name for message references', () => {
+    it('should capture reference name for message references', async () => {
       const source = {
         asyncapi: '3.0.0',
         info: {
@@ -185,6 +194,8 @@ describe('AsyncAPI Reference Object Resolver', () => {
         },
       }
 
+      await parseAsyncApiAndAssertValid(source)
+
       const result = normalize(source, NORMALIZATION_OPTIONS) as any
 
       // Check that reference name is captured for message
@@ -193,7 +204,7 @@ describe('AsyncAPI Reference Object Resolver', () => {
       expect(result.channels.userChannel.messages.userCreatedMsg).toBe(result.components.messages.UserCreatedMessage)
     })
 
-    it('should capture reference name for server references', () => {
+    it('should capture reference name for server references', async () => {
       const source = {
         asyncapi: '3.0.0',
         info: {
@@ -216,6 +227,8 @@ describe('AsyncAPI Reference Object Resolver', () => {
         },
       }
 
+      await parseAsyncApiAndAssertValid(source)
+
       const result = normalize(source, NORMALIZATION_OPTIONS) as any
 
       // Check that reference name is captured for server
@@ -224,7 +237,7 @@ describe('AsyncAPI Reference Object Resolver', () => {
       expect(result.channels.userChannel.servers[0]).toBe(result.servers.ProductionServer)
     })
 
-    it('should capture reference name for operation trait references', () => {
+    it('should capture reference name for operation trait references', async () => {
       const source = {
         asyncapi: '3.0.0',
         info: {
@@ -252,6 +265,8 @@ describe('AsyncAPI Reference Object Resolver', () => {
           },
         },
       }
+
+      await parseAsyncApiAndAssertValid(source)
 
       const result = normalize(source, NORMALIZATION_OPTIONS) as any
 

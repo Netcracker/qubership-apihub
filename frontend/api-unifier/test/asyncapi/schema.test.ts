@@ -1,4 +1,5 @@
 import { normalize } from '../../src/normalize'
+import { parseAsyncApiAndAssertValid } from '../helpers/asyncapi'
 
 describe('Schema and Multi Format Schema rules', () => {
 
@@ -49,7 +50,7 @@ describe('Schema and Multi Format Schema rules', () => {
   }
 
   describe('AsyncAPI Schema rules', () => {
-    it('validates discriminator as string, externalDocs as object, and deprecated as boolean', () => {
+    it('validates discriminator as string, externalDocs as object, and deprecated as boolean', async () => {
       const source = createAsyncAPIWithSchema({
         type: 'object',
         discriminator: 'entityType', // AsyncAPI: must be string
@@ -63,6 +64,8 @@ describe('Schema and Multi Format Schema rules', () => {
           name: { type: 'string' },
         },
       })
+
+      await parseAsyncApiAndAssertValid(source)
 
       const result = normalize(source, NORMALIZATION_OPTIONS)
 
@@ -85,7 +88,7 @@ describe('Schema and Multi Format Schema rules', () => {
       expect(schema.deprecated).toBe(true)
     })
 
-    it('applies default value for deprecated and externalDocs', () => {
+    it('applies default value for deprecated and externalDocs', async () => {
       const source = createAsyncAPIWithSchema({
         type: 'object',
         properties: {
@@ -94,6 +97,8 @@ describe('Schema and Multi Format Schema rules', () => {
         },
         // Note: deprecated is not specified
       })
+
+      await parseAsyncApiAndAssertValid(source)
 
       const result = normalize(source, NORMALIZATION_OPTIONS)
 
@@ -111,7 +116,7 @@ describe('Schema and Multi Format Schema rules', () => {
       expect(schema).not.toHaveProperty('discriminator')
     })
 
-    it('applies default value for schemaFormat in Multi Format Schema', () => {
+    it('applies default value for schemaFormat in Multi Format Schema', async () => {
       const source = createAsyncAPIWithSchema({
         type: 'object',
         properties: {
@@ -119,6 +124,8 @@ describe('Schema and Multi Format Schema rules', () => {
         },
         // Note: schemaFormat is not specified (Multi Format Schema without schemaFormat)
       }, '') // Empty string creates Multi Format Schema without schemaFormat property
+
+      await parseAsyncApiAndAssertValid(source)
 
       const result = normalize(source, NORMALIZATION_OPTIONS)
 
@@ -182,7 +189,7 @@ describe('Schema and Multi Format Schema rules', () => {
     }
 
     describe('Default AsyncAPI Schema rules', () => {
-      it('uses AsyncAPI schema rules by default', () => {
+      it('uses AsyncAPI schema rules by default', async () => {
         const source = createAsyncAPIWithSchema({
           type: 'object',
           discriminator: 'petType', // AsyncAPI style: string
@@ -191,6 +198,8 @@ describe('Schema and Multi Format Schema rules', () => {
             name: { type: 'string' },
           },
         })
+
+        await parseAsyncApiAndAssertValid(source)
 
         const result = normalize(source, NORMALIZATION_OPTIONS)
 
@@ -209,7 +218,7 @@ describe('Schema and Multi Format Schema rules', () => {
           'application/vnd.aai.asyncapi+yaml;version=3.0.0',
         ]
 
-        formats.forEach((format) => {
+        formats.forEach(async (format) => {
           const source = createAsyncAPIWithSchema({
             type: 'object',
             discriminator: 'petType', // AsyncAPI style: string
@@ -217,6 +226,8 @@ describe('Schema and Multi Format Schema rules', () => {
               petType: { type: 'string' },
             },
           }, format)
+
+          await parseAsyncApiAndAssertValid(source)
 
           const result = normalize(source, NORMALIZATION_OPTIONS)
 
@@ -233,7 +244,7 @@ describe('Schema and Multi Format Schema rules', () => {
           'application/vnd.oai.openapi+yaml;version=3.0.0',
         ]
 
-        formats.forEach((format) => {
+        formats.forEach(async (format) => {
           const source = createAsyncAPIWithSchema({
             type: 'object',
             discriminator: {
@@ -244,6 +255,8 @@ describe('Schema and Multi Format Schema rules', () => {
             },
           }, format)
 
+          // await parseAsyncApiAndAssertValid(source) // parser does not support OpenAPI format variations?
+
           const result = normalize(source, NORMALIZATION_OPTIONS)
 
           checkDiscriminatorBehavior(result, 'openapi', 'petType')
@@ -252,13 +265,13 @@ describe('Schema and Multi Format Schema rules', () => {
 
 
 
-      it('uses JSON Schema rules with alternative JSON Schema format variations', () => {
+      it('uses JSON Schema rules with alternative JSON Schema format variations', async () => {
         const formats = [
           'application/schema+json;version=draft-07',
           'application/schema+yaml;version=draft-07',
         ]
 
-        formats.forEach((format) => {
+        formats.forEach(async (format) => {
           const source = createAsyncAPIWithSchema({
             type: 'object',
             properties: {
@@ -267,13 +280,15 @@ describe('Schema and Multi Format Schema rules', () => {
             },
           }, format)
 
+          await parseAsyncApiAndAssertValid(source)
+
           const result = normalize(source, NORMALIZATION_OPTIONS)
 
           checkDiscriminatorBehavior(result, 'jsonschema')
         })
       })
 
-      it('defaults schemaFormat to AsyncAPI when not specified in Multi Format Schema', () => {
+      it('defaults schemaFormat to AsyncAPI when not specified in Multi Format Schema', async () => {
         const source = createAsyncAPIWithSchema({
           type: 'object',
           discriminator: 'petType', // AsyncAPI style: string
@@ -282,18 +297,20 @@ describe('Schema and Multi Format Schema rules', () => {
           },
         }, '')
 
+        await parseAsyncApiAndAssertValid(source)
+
         const result = normalize(source, NORMALIZATION_OPTIONS)
 
         checkDiscriminatorBehavior(result, 'asyncapi', 'petType')
       })
 
-      it('handles schemaFormat with different casing', () => {
+      it('handles schemaFormat with different casing', async () => {
         const formats = [
           'APPLICATION/VND.AAI.ASYNCAPI+JSON;VERSION=3.0.0',
           'Application/Vnd.Aai.AsyncAPI+Json;Version=3.0.0',
         ]
 
-        formats.forEach((format) => {
+        formats.forEach(async (format) => {
           const source = createAsyncAPIWithSchema({
             type: 'object',
             discriminator: 'petType', // AsyncAPI style: string
@@ -301,6 +318,8 @@ describe('Schema and Multi Format Schema rules', () => {
               petType: { type: 'string' },
             },
           }, format)
+
+          // await parseAsyncApiAndAssertValid(source) // parser does not support format variations?
 
           const result = normalize(source, NORMALIZATION_OPTIONS)
 

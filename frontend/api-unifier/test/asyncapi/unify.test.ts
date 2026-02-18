@@ -3,6 +3,7 @@ import { convertOriginToHumanReadable } from '../../src/origins'
 import { NormalizeOptions } from '../../src/types'
 import { unify, deUnify } from '../../src/unify'
 import { commonOriginsCheck, TEST_DEFAULTS_FLAG, TEST_ORIGINS_FLAG, TEST_ORIGINS_FOR_DEFAULTS } from '../helpers'
+import { parseAsyncApiAndAssertValid } from '../helpers/asyncapi'
 
 describe('AsyncAPI unify', () => {
 
@@ -15,10 +16,14 @@ describe('AsyncAPI unify', () => {
 
   describe('defaults', () => {
     describe('Root object', () => {
-      it('sets default empty objects for root properties', () => {
-        const result = unify({
+      it('sets default empty objects for root properties', async () => {
+        const source = {
           asyncapi: '3.0.0',
-        }, { unify: true })
+        }
+
+        // await parseAsyncApiAndAssertValid(source) // intentionally not valid source
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['info'])
         expect(result).toHaveProperty(['servers'], {})
@@ -29,14 +34,18 @@ describe('AsyncAPI unify', () => {
     })
 
     describe('Info object', () => {
-      it('sets default empty objects and arrays for info properties', () => {
-        const result = unify({
+      it('sets default empty objects and arrays for info properties', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
             version: '1.0.0',
-          },
-        }, { unify: true })
+          }
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['info', 'contact'], {})
         expect(result).toHaveProperty(['info', 'license'], {})
@@ -46,8 +55,8 @@ describe('AsyncAPI unify', () => {
     })
 
     describe('Tag object', () => {
-      it('sets default empty object for tag externalDocs', () => {
-        const result = unify({
+      it('sets default empty object for tag externalDocs', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -57,20 +66,27 @@ describe('AsyncAPI unify', () => {
                 name: 'user',
               },
             ],
-          },
-        }, { unify: true })
+          }
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['info', 'tags', 0, 'externalDocs'], {})
       })
     })
 
     describe('Operation object', () => {
-      it('sets default empty arrays and objects for operation properties', () => {
-        const result = unify({
+      it('sets default empty arrays and objects for operation properties', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
             version: '1.0.0',
+          },
+          channels: {
+            testChannel: {}
           },
           operations: {
             testOperation: {
@@ -78,7 +94,11 @@ describe('AsyncAPI unify', () => {
               channel: { $ref: '#/channels/testChannel' },
             },
           },
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['operations', 'testOperation', 'security'], [])
         expect(result).toHaveProperty(['operations', 'testOperation', 'tags'], [])
@@ -91,8 +111,8 @@ describe('AsyncAPI unify', () => {
     })
 
     describe('Operation Trait object', () => {
-      it('sets default empty arrays and objects for operation trait properties', () => {
-        const result = unify({
+      it('sets default empty arrays and objects for operation trait properties', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -104,8 +124,12 @@ describe('AsyncAPI unify', () => {
                 description: 'Common operation trait',
               },
             },
-          },
-        }, { unify: true })
+          }
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['components', 'operationTraits', 'commonTrait', 'security'], [])
         expect(result).toHaveProperty(['components', 'operationTraits', 'commonTrait', 'tags'], [])
@@ -116,12 +140,16 @@ describe('AsyncAPI unify', () => {
     })
 
     describe('Operation Reply object', () => {
-      it('sets default empty array for operation reply messages', () => {
-        const result = unify({
+      it('sets default empty array for operation reply messages', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
             version: '1.0.0',
+          },
+          channels: {
+            testChannel: {},
+            replyChannel: {},
           },
           operations: {
             sendOperation: {
@@ -132,15 +160,19 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['operations', 'sendOperation', 'reply', 'messages'], [])
       })
     })
 
     describe('Server object', () => {
-      it('sets default empty objects and arrays for server properties', () => {
-        const result = unify({
+      it('sets default empty objects and arrays for server properties', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -152,7 +184,11 @@ describe('AsyncAPI unify', () => {
               protocol: 'mqtt',
             },
           },
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['servers', 'production', 'variables'], {})
         expect(result).toHaveProperty(['servers', 'production', 'security'], [])
@@ -163,8 +199,8 @@ describe('AsyncAPI unify', () => {
     })
 
     describe('Server Variable object', () => {
-      it('sets default empty arrays for server variable properties', () => {
-        const result = unify({
+      it('sets default empty arrays for server variable properties', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -181,14 +217,18 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['servers', 'production', 'variables', 'env', 'enum'], [])
         expect(result).toHaveProperty(['servers', 'production', 'variables', 'env', 'examples'], [])
       })
 
-      it('removes duplicate values from server variable enum', () => {
-        const result = unify({
+      it('removes duplicate values from server variable enum', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -206,13 +246,17 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        // await parseAsyncApiAndAssertValid(source) // intentionally not valid source
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['servers', 'production', 'variables', 'env', 'enum'], ['dev', 'staging', 'prod'])
       })
 
-      it('removes duplicates from component server variable enum', () => {
-        const result = unify({
+      it('removes duplicates from component server variable enum', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -227,13 +271,17 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        // await parseAsyncApiAndAssertValid(source) // intentionally not valid source
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['components', 'serverVariables', 'env', 'enum'], ['dev', 'staging', 'prod'])
       })
 
-      it('preserves enum order when removing duplicates', () => {
-        const result = unify({
+      it('preserves enum order when removing duplicates', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -251,13 +299,17 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        // await parseAsyncApiAndAssertValid(source) // intentionally not valid source
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['servers', 'production', 'variables', 'env', 'enum'], ['prod', 'staging', 'dev'])
       })
 
-      it('handles server variable enum with no duplicates', () => {
-        const result = unify({
+      it('handles server variable enum with no duplicates', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -275,12 +327,16 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['servers', 'production', 'variables', 'env', 'enum'], ['dev', 'staging', 'prod'])
       })
 
-      it('merges origins when removing duplicates from server variable enum ', () => {
+      it('merges origins when removing duplicates from server variable enum ', async () => {
         const source = {
           asyncapi: '3.0.0',
           info: {
@@ -300,7 +356,10 @@ describe('AsyncAPI unify', () => {
             },
           },
         }
-        const result = normalize(source, NORMALIZATION_OPTIONS) as any
+
+        // await parseAsyncApiAndAssertValid(source) // intentionally not valid source
+
+        const result = normalize(source, NORMALIZATION_OPTIONS)
 
         commonOriginsCheck(result, { source })
         const resultWithHmr = convertOriginToHumanReadable(result, TEST_ORIGINS_FLAG)
@@ -313,8 +372,8 @@ describe('AsyncAPI unify', () => {
     })
 
     describe('Channel object', () => {
-      it('sets default empty collections for channel properties', () => {
-        const result = unify({
+      it('sets default empty collections for channel properties', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -325,7 +384,11 @@ describe('AsyncAPI unify', () => {
               address: '/test',
             },
           },
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['channels', 'testChannel', 'messages'], {})
         expect(result).toHaveProperty(['channels', 'testChannel', 'servers'], [])
@@ -337,8 +400,8 @@ describe('AsyncAPI unify', () => {
     })
 
     describe('Message object', () => {
-      it('sets default empty arrays and objects for message properties', () => {
-        const result = unify({
+      it('sets default empty arrays and objects for message properties', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -355,7 +418,11 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['channels', 'userSignup', 'messages', 'userSignedUp', 'tags'], [])
         expect(result).toHaveProperty(['channels', 'userSignup', 'messages', 'userSignedUp', 'externalDocs'], {})
@@ -366,7 +433,7 @@ describe('AsyncAPI unify', () => {
 
       // just basic test here to check that rule is specified for the message object,
       // defaultContentType logic is tested extensively in Message Trait Object tests
-      it('defaults contentType to root defaultContentType', () => {
+      it('defaults contentType to root defaultContentType', async () => {
         const source = {
           asyncapi: '3.0.0',
           defaultContentType: 'application/json',
@@ -386,6 +453,9 @@ describe('AsyncAPI unify', () => {
             },
           },
         }
+
+        await parseAsyncApiAndAssertValid(source)
+
         const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(
@@ -396,8 +466,8 @@ describe('AsyncAPI unify', () => {
     })
 
     describe('Message Trait object', () => {
-      it('sets default empty arrays and objects for message trait properties', () => {
-        const result = unify({
+      it('sets default empty arrays and objects for message trait properties', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -410,7 +480,11 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['components', 'messageTraits', 'commonTrait', 'tags'], [])
         expect(result).toHaveProperty(['components', 'messageTraits', 'commonTrait', 'externalDocs'], {})
@@ -418,7 +492,7 @@ describe('AsyncAPI unify', () => {
         expect(result).toHaveProperty(['components', 'messageTraits', 'commonTrait', 'examples'], [])
       })
 
-      it('defaults contentType to root defaultContentType', () => {
+      it('defaults contentType to root defaultContentType', async () => {
         const source = {
           asyncapi: '3.0.0',
           defaultContentType: 'application/json',
@@ -434,6 +508,9 @@ describe('AsyncAPI unify', () => {
             },
           },
         }
+
+        await parseAsyncApiAndAssertValid(source)
+
         const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(
@@ -442,7 +519,7 @@ describe('AsyncAPI unify', () => {
         )
       })
 
-      it('preserves explicit contentType over root defaultContentType', () => {
+      it('preserves explicit contentType over root defaultContentType', async () => {
         const source = {
           asyncapi: '3.0.0',
           defaultContentType: 'application/json',
@@ -458,6 +535,9 @@ describe('AsyncAPI unify', () => {
             },
           },
         }
+
+        await parseAsyncApiAndAssertValid(source)
+
         const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(
@@ -466,7 +546,7 @@ describe('AsyncAPI unify', () => {
         )
       })
 
-      it('does not set contentType when root has no defaultContentType', () => {
+      it('does not set contentType when root has no defaultContentType', async () => {
         const source = {
           asyncapi: '3.0.0',
           info: {
@@ -481,6 +561,9 @@ describe('AsyncAPI unify', () => {
             },
           },
         }
+
+        await parseAsyncApiAndAssertValid(source)
+
         const result = unify(source, { unify: true })
 
         // Should not have contentType property
@@ -489,7 +572,7 @@ describe('AsyncAPI unify', () => {
         )
       })
 
-      it('sets correct origin for synthetic contentType', () => {
+      it('sets correct origin for synthetic contentType', async () => {
         const source = {
           asyncapi: '3.0.0',
           defaultContentType: 'application/json',
@@ -505,6 +588,9 @@ describe('AsyncAPI unify', () => {
             },
           },
         }
+
+        await parseAsyncApiAndAssertValid(source)
+
         const result = normalize(source, NORMALIZATION_OPTIONS)
 
         commonOriginsCheck(result, { source })
@@ -514,7 +600,7 @@ describe('AsyncAPI unify', () => {
     })
 
     describe('Message Trait object - reversibility', () => {
-      it('removes synthetic contentType during deUnify', () => {
+      it('removes synthetic contentType during deUnify', async () => {
         const source = {
           asyncapi: '3.0.0',
           defaultContentType: 'application/json',
@@ -532,6 +618,8 @@ describe('AsyncAPI unify', () => {
           },
         }
 
+        await parseAsyncApiAndAssertValid(source)
+
         const unified = unify(source, { unify: true })
         const result = deUnify(unified, { unify: true })
 
@@ -539,7 +627,7 @@ describe('AsyncAPI unify', () => {
         expect(result).not.toHaveProperty(['components', 'messageTraits', 'commonTrait', 'contentType'])
       })
 
-      it('preserves pure contentType during deUnify', () => {
+      it('preserves pure contentType during deUnify', async () => {
         const source = {
           asyncapi: '3.0.0',
           defaultContentType: 'application/json',
@@ -557,13 +645,15 @@ describe('AsyncAPI unify', () => {
           },
         }
 
+        await parseAsyncApiAndAssertValid(source)
+
         const unified = unify(source, NORMALIZATION_OPTIONS)
         const result = deUnify(unified, NORMALIZATION_OPTIONS)
 
         // Pure contentType should be preserved
         expect(result).toHaveProperty(['components', 'messageTraits', 'commonTrait', 'contentType'], 'application/json')
       })
-      it('removes defaults and origins metadata after de-normalization', () => {
+      it('removes defaults and origins metadata after de-normalization', async () => {
         const source = {
           asyncapi: '3.0.0',
           defaultContentType: 'application/json',
@@ -580,6 +670,8 @@ describe('AsyncAPI unify', () => {
             },
           },
         }
+
+        await parseAsyncApiAndAssertValid(source)
 
         const normalized = normalize(source, NORMALIZATION_OPTIONS)
 
@@ -607,8 +699,8 @@ describe('AsyncAPI unify', () => {
     })
 
     describe('Message Example object', () => {
-      it('sets default empty object for message example headers', () => {
-        const result = unify({
+      it('sets default empty object for message example headers', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -633,15 +725,19 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['channels', 'userSignup', 'messages', 'userSignedUp', 'examples', 0, 'headers'], {})
       })
     })
 
     describe('Parameter object', () => {
-      it('sets default empty arrays for parameter properties', () => {
-        const result = unify({
+      it('sets default empty arrays for parameter properties', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -656,14 +752,18 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['channels', 'userChannel', 'parameters', 'userId', 'enum'], [])
         expect(result).toHaveProperty(['channels', 'userChannel', 'parameters', 'userId', 'examples'], [])
       })
 
-      it('removes duplicate values from parameter enum', () => {
-        const result = unify({
+      it('removes duplicate values from parameter enum', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -679,13 +779,17 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['channels', 'userChannel', 'parameters', 'userId', 'enum'], ['user1', 'user2', 'user3'])
       })
 
-      it('removes duplicates from component parameter enum', () => {
-        const result = unify({
+      it('removes duplicates from component parameter enum', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -699,13 +803,17 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['components', 'parameters', 'userId', 'enum'], ['admin', 'user', 'guest'])
       })
 
-      it('preserves enum order when removing duplicates from parameter', () => {
-        const result = unify({
+      it('preserves enum order when removing duplicates from parameter', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -721,13 +829,17 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['channels', 'userChannel', 'parameters', 'status', 'enum'], ['active', 'inactive', 'pending'])
       })
 
-      it('handles parameter enum with no duplicates', () => {
-        const result = unify({
+      it('handles parameter enum with no duplicates', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -743,12 +855,16 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['channels', 'userChannel', 'parameters', 'type', 'enum'], ['type1', 'type2', 'type3'])
       })
 
-      it('merges origins when removing duplicates from parameter enum', () => {
+      it('merges origins when removing duplicates from parameter enum', async () => {
         const source = {
           asyncapi: '3.0.0',
           info: {
@@ -766,7 +882,10 @@ describe('AsyncAPI unify', () => {
             },
           },
         }
-        const result = normalize(source, NORMALIZATION_OPTIONS) as any
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = normalize(source, NORMALIZATION_OPTIONS)
 
         commonOriginsCheck(result, { source })
         const resultWithHmr = convertOriginToHumanReadable(result, TEST_ORIGINS_FLAG)
@@ -779,8 +898,8 @@ describe('AsyncAPI unify', () => {
     })
 
     describe('Security Scheme object', () => {
-      it('sets default empty arrays and objects for security scheme properties', () => {
-        const result = unify({
+      it('sets default empty arrays and objects for security scheme properties', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -794,7 +913,11 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        // await parseAsyncApiAndAssertValid(source) // intentionally not valid source
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['components', 'securitySchemes', 'oauth', 'flows'], {})
         expect(result).toHaveProperty(['components', 'securitySchemes', 'oauth', 'scopes'], [])
@@ -802,15 +925,19 @@ describe('AsyncAPI unify', () => {
     })
 
     describe('Components object', () => {
-      it('sets default empty objects for all components properties', () => {
-        const result = unify({
+      it('sets default empty objects for all components properties', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
             version: '1.0.0',
           },
           components: {},
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         expect(result).toHaveProperty(['components', 'schemas'], {})
         expect(result).toHaveProperty(['components', 'servers'], {})
@@ -835,10 +962,14 @@ describe('AsyncAPI unify', () => {
     })
 
     describe('Integration tests', () => {
-      it('applies all defaults to a minimal AsyncAPI document', () => {
-        const result: unknown = unify({
+      it('applies all defaults to a minimal AsyncAPI document', async () => {
+        const source = {
           asyncapi: '3.0.0',
-        }, { unify: true })
+        }
+
+        // await parseAsyncApiAndAssertValid(source) // intentionally not valid source
+
+        const result = unify(source, { unify: true })
 
         // Root defaults
         expect(result).toHaveProperty(['info'])
@@ -857,8 +988,8 @@ describe('AsyncAPI unify', () => {
         expect(components).toHaveProperty('securitySchemes', {})
       })
 
-      it('applies nested defaults correctly', () => {
-        const result = unify({
+      it('applies nested defaults correctly', async () => {
+        const source = {
           asyncapi: '3.0.0',
           info: {
             title: 'Test API',
@@ -892,6 +1023,7 @@ describe('AsyncAPI unify', () => {
                 },
               },
             },
+            replyChannel: {}
           },
           operations: {
             sendUser: {
@@ -902,7 +1034,11 @@ describe('AsyncAPI unify', () => {
               },
             },
           },
-        }, { unify: true })
+        }
+
+        await parseAsyncApiAndAssertValid(source)
+
+        const result = unify(source, { unify: true })
 
         // Server defaults
         expect(result).toHaveProperty(['servers', 'dev', 'security'], [])
