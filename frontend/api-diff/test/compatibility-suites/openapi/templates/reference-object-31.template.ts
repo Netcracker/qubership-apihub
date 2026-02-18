@@ -1,4 +1,5 @@
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
+import { TEST_SPEC_TYPE_OPEN_API } from '@netcracker/qubership-apihub-compatibility-suites'
 import { diffsMatcher, expectOpenApiVersionChange } from '../../../helper/matchers'
 import { annotation, DiffAction } from '../../../../src'
 
@@ -16,7 +17,7 @@ export function runRefObjectSummaryTests(suiteId: string, refPath: JsonPath, com
 }
 
 export function runReferenceObjectTests(suiteId: string, refPath: JsonPath, componentPath: JsonPath, overridenField: OverridenFields): void {
-  test.caseForOpenApiVersionPairs(`add-overriden-${overridenField}`, suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
+  test.caseForSpecVersionPairs(TEST_SPEC_TYPE_OPEN_API, `add-overriden-${overridenField}`, suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
     expect(diffs).toEqual(diffsMatcher([
       expectOpenApiVersionChange(beforeVersion, afterVersion),
       expect.objectContaining({
@@ -28,7 +29,7 @@ export function runReferenceObjectTests(suiteId: string, refPath: JsonPath, comp
     ]))
   })
 
-  test.caseForOpenApiVersionPairs(`remove-overriden-${overridenField}`, suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
+  test.caseForSpecVersionPairs(TEST_SPEC_TYPE_OPEN_API, `remove-overriden-${overridenField}`, suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
     expect(diffs).toEqual(diffsMatcher([
       expectOpenApiVersionChange(beforeVersion, afterVersion),
       expect.objectContaining({
@@ -40,7 +41,7 @@ export function runReferenceObjectTests(suiteId: string, refPath: JsonPath, comp
     ]))
   })
 
-  test.caseForOpenApiVersionPairs(`change-overriden-${overridenField}`, suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
+  test.caseForSpecVersionPairs(TEST_SPEC_TYPE_OPEN_API, `change-overriden-${overridenField}`, suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
     expect(diffs).toEqual(diffsMatcher([
       expectOpenApiVersionChange(beforeVersion, afterVersion),
       expect.objectContaining({
@@ -52,7 +53,7 @@ export function runReferenceObjectTests(suiteId: string, refPath: JsonPath, comp
     ]))
   })
 
-  test.caseForOpenApiVersionPairs(`change-referenced-${overridenField}-when-overridden-exists`, suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
+  test.caseForSpecVersionPairs(TEST_SPEC_TYPE_OPEN_API, `change-referenced-${overridenField}-when-overridden-exists`, suiteId, async ({ beforeVersion, afterVersion, diffs }) => {
     expect(diffs).toEqual(diffsMatcher([
       expectOpenApiVersionChange(beforeVersion, afterVersion),
     ]))

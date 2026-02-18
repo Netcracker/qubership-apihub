@@ -54,6 +54,9 @@ import shouldReportSingleDiffWhenRequiredPropertyIsChangedForTheCombinerAfter fr
 import duplicateParametersBefore from './helper/resources/duplicate-parameters/before.json'
 import duplicateParametersAfter from './helper/resources/duplicate-parameters/after.json'
 
+import unexpectedFieldsBefore from './helper/resources/unexpected-fields-in-the-same-documents-30-and-31/before.json'
+import unexpectedFieldsAfter from './helper/resources/unexpected-fields-in-the-same-documents-30-and-31/after.json'
+
 import { diffsMatcher, expectOpenApiVersionChange } from './helper/matchers'
 import { TEST_DIFF_FLAG, TEST_ORIGINS_FLAG } from './helper'
 import { JSON_SCHEMA_NODE_SYNTHETIC_TYPE_NOTHING } from '@netcracker/qubership-apihub-api-unifier'
@@ -343,5 +346,11 @@ describe('Real Data', () => {
     expect(diffs).toEqual(diffsMatcher([
       expectOpenApiVersionChange(),
     ]))
+  })
+
+  it('should not contain unexpected fields when comparing identical documents from different versions with allOf', () => {
+    const { merged } = apiDiff(unexpectedFieldsBefore, unexpectedFieldsAfter, OPTIONS)
+
+    expect(merged).not.toHaveProperty(['paths', '/path1', 'put', 'responses', '200', 'content', 'application/json', 'schema', 'additionalProperties'])
   })
 })

@@ -1,3 +1,4 @@
+import { TEST_SPEC_TYPE_OPEN_API } from '@netcracker/qubership-apihub-compatibility-suites'
 import { compareFiles, TEST_DEFAULTS_DECLARATION_PATHS } from '../utils'
 import { diffsMatcher, expectOpenApiVersionChange } from '../../helper/matchers'
 import { annotation, breaking, deprecated, DiffAction, nonBreaking } from '../../../src'
@@ -775,7 +776,7 @@ const PATH_ITEM_PATH = [
 ]
 
 describe('Openapi3.1 PathItems', () => {
-  test.caseForOpenApiVersionPairs('add-method-in-path-item', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
+  test.caseForSpecVersionPairs(TEST_SPEC_TYPE_OPEN_API, 'add-method-in-path-item', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
     expect(diffs).toEqual(diffsMatcher([
       expectOpenApiVersionChange(beforeVersion, afterVersion),
       expect.objectContaining({
@@ -786,19 +787,19 @@ describe('Openapi3.1 PathItems', () => {
     ]))
   })
 
-  test.caseForOpenApiVersionPairs('remove-unused-method-in-path-item', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
+  test.caseForSpecVersionPairs(TEST_SPEC_TYPE_OPEN_API, 'remove-unused-method-in-path-item', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
     expect(diffs).toEqual(diffsMatcher([
       expectOpenApiVersionChange(beforeVersion, afterVersion),
     ]))
   })
 
-  test.caseForOpenApiVersionPairs('add-unused-method-in-path-item', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
+  test.caseForSpecVersionPairs(TEST_SPEC_TYPE_OPEN_API, 'add-unused-method-in-path-item', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
     expect(diffs).toEqual(diffsMatcher([
       expectOpenApiVersionChange(beforeVersion, afterVersion),
     ]))
   })
 
-  test.caseForOpenApiVersionPairs('remove-method-in-path-item', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
+  test.caseForSpecVersionPairs(TEST_SPEC_TYPE_OPEN_API, 'remove-method-in-path-item', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
     expect(diffs).toEqual(diffsMatcher([
       expectOpenApiVersionChange(beforeVersion, afterVersion),
       expect.objectContaining({
@@ -809,13 +810,13 @@ describe('Openapi3.1 PathItems', () => {
     ]))
   })
 
-  test.caseForOpenApiVersionPairs('replace-inline-path-item-to-ref', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
+  test.caseForSpecVersionPairs(TEST_SPEC_TYPE_OPEN_API, 'replace-inline-path-item-to-ref', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
     expect(diffs).toEqual(diffsMatcher([
       expectOpenApiVersionChange(beforeVersion, afterVersion),
     ]))
   })
 
-  test.caseForOpenApiVersionPairs('replace-ref-path-item-to-inline', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
+  test.caseForSpecVersionPairs(TEST_SPEC_TYPE_OPEN_API, 'replace-ref-path-item-to-inline', SUITE_ID, async ({ beforeVersion, afterVersion, diffs }) => {
     expect(diffs).toEqual(diffsMatcher([
       expectOpenApiVersionChange(beforeVersion, afterVersion),
     ]))

@@ -1,3 +1,3 @@
-import { initCaseForOpenApiVersionPairs } from '../compatibility-suites/utils'
+import { initCaseForSpecVersionPairs } from '../compatibility-suites/utils'
 
-initCaseForOpenApiVersionPairs()
+initCaseForSpecVersionPairs()
