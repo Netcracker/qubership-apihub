@@ -272,6 +272,11 @@ const messageRules: NormalizationRules = {
   ],
 }
 
+const rootMessageRules: NormalizationRules = {
+  ...messageRules,
+  captureFirstReferenceKey: true,
+}
+
 const parameterRules: NormalizationRules = {
   '/enum': {
     '/*': { validate: checkType(TYPE_STRING) },
@@ -332,6 +337,11 @@ const channelRules: NormalizationRules = {
     valueDefaults(ASYNCAPI_CHANNEL_DEFAULTS),
     valueReplaces(ASYNCAPI_CHANNEL_REPLACES),
   ],
+}
+
+const rootChannelRules: NormalizationRules = {
+  ...channelRules,
+  captureFirstReferenceKey: true,
 }
 
 const operationReplyAddressRules: NormalizationRules = {
@@ -413,6 +423,14 @@ const operationRules: NormalizationRules = {
   ],
 }
 
+const rootOperationRules: NormalizationRules = {
+  ...operationRules,
+  '/channel': rootChannelRules,
+  '/messages': {
+    '/*': rootMessageRules,
+    validate: checkType(TYPE_ARRAY),
+  },
+}
 
 const componentsRules: NormalizationRules = {
   '/schemas': {
@@ -547,7 +565,7 @@ export const asyncApiRules = (): NormalizationRules => ({
     validate: checkType(TYPE_OBJECT),
   },
   '/operations': {
-    '/*': operationRules,
+    '/*': rootOperationRules,
     validate: checkType(TYPE_OBJECT),
   },
   '/components': componentsRules,

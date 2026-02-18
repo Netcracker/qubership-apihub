@@ -8,7 +8,7 @@ import {
   SyncCloneHook,
   syncCrawl,
 } from '@netcracker/qubership-apihub-json-crawl'
-import { isRefNode, parsePointer, parseRef, pathItemToFullPath, resolveValueByPath } from './utils'
+import { isRefNode, parsePointer, parseRef, pathItemToFullPath, resolveValueByPath, setJsoProperty } from './utils'
 import {
   ChainItem,
   DEFAULT_OPTION_RESOLVE_REF,
@@ -73,7 +73,8 @@ export const defineOriginsAndResolveRef = (value: unknown, options?: ResolveOpti
       ...(options?.inlineRefsFlag ? [options.inlineRefsFlag] : []),
       ...(options?.syntheticTitleFlag ? [options.syntheticTitleFlag] : []),
       ...(options?.syntheticAllOfFlag ? [options.syntheticAllOfFlag] : []),
-      ...(options?.referenceNameProperty ? [options.referenceNameProperty] : []),
+      ...(options?.firstReferenceKeyProperty ? [options.firstReferenceKeyProperty] : []),
+      ...(options?.lastReferenceKeyProperty ? [options.lastReferenceKeyProperty] : []),
       ...(options?.ignoreSymbols ? options.ignoreSymbols : []),
     ]),
   } satisfies InternalResolveOptions
@@ -260,9 +261,13 @@ const createDefineOriginsAndResolveRefHook: (rootJso: unknown, options: Internal
           }
 
           const processReferenceWithChildren = (resolvedRefWithSibling: ResolvedRefWithSiblings) => {
-            const { refValue, origin, childrenOrigins } = resolvedRefWithSibling as ResolvedRefWithChildrenOrigins
+            const { refValue, origin, childrenOrigins, firstReferenceKey, lastReferenceKey } = resolvedRefWithSibling as ResolvedRefWithChildrenOrigins
+            const captureFirstReferenceKey = options.firstReferenceKeyProperty && rules?.captureFirstReferenceKey && firstReferenceKey !== undefined
+            const refValueToUse = captureFirstReferenceKey && options.firstReferenceKeyProperty && isObject(refValue)
+              ? copyTargetIfFirstKeyDiffers(refValue as Record<PropertyKey, unknown>, options.firstReferenceKeyProperty, firstReferenceKey)
+              : refValue
             return {
-              value: refValue,
+              value: refValueToUse,
               state: {
                 ...state,
                 originParent: origin,
@@ -278,6 +283,8 @@ const createDefineOriginsAndResolveRefHook: (rootJso: unknown, options: Internal
               exitHook: () => {
                 const node = state.node[safeKey]
                 options.inlineRefsFlag && isObject(node) && addRefInlineHistory(node, options.inlineRefsFlag, reference)
+                options.firstReferenceKeyProperty && isObject(node) && firstReferenceKey !== undefined && setJsoProperty(node, options.firstReferenceKeyProperty, firstReferenceKey)
+                options.lastReferenceKeyProperty && isObject(node) && setJsoProperty(node, options.lastReferenceKeyProperty, lastReferenceKey)
                 if (options.originsFlag && isObject(node) && origin) {
                   state.originCollector[safeKey] = [originForObj]
                   const lazyOrigins = state.lazySourceOriginCollector.get(refValue) ?? {} //need proof for this rows
@@ -303,7 +310,12 @@ const createDefineOriginsAndResolveRefHook: (rootJso: unknown, options: Internal
           } else {
             cyclingGuard.add(reference.normalized)
           }
+          const previousFirstReferenceKeyForCapture = state.firstReferenceKeyForCapture
           try {
+            if (rules?.captureFirstReferenceKey && options.firstReferenceKeyProperty) {
+              state.firstReferenceKeyForCapture = state.firstReferenceKeyForCapture ?? reference.jsonPath.at(-1)?.toString()
+            }
+            const firstReferenceKeyForResolve = (rules?.captureFirstReferenceKey && options.firstReferenceKeyProperty) ? state.firstReferenceKeyForCapture : undefined
             const updateLazyParentChainItem: (item: ChainItem, parentValue: unknown | undefined, propertyKey: PropertyKey) => void = (item, parentValue, propertyKey) =>
               state.lazySourceOriginCollector.set(parentValue, {
                 ...(state.lazySourceOriginCollector.get(parentValue) ?? {}),
@@ -320,7 +332,8 @@ const createDefineOriginsAndResolveRefHook: (rootJso: unknown, options: Internal
                 ? (value, parentChain, parentValue, propertyKey) =>
                   getOrSimpleCreateOrigin(value, parentChain, propertyKey, state.originCache/*, item => updateLazyParentChainItem(item, parentValue, propertyKey) proof by test*/)
                 : undefined,
-              options.referenceNameProperty,
+              firstReferenceKeyForResolve,
+              options.lastReferenceKeyProperty,
             )
             if (refInResultedJso?.refValue !== undefined && refInResultedJso?.refValue !== null) {
               const resolvedRefWithRules = referenceHandler({
@@ -359,7 +372,8 @@ const createDefineOriginsAndResolveRefHook: (rootJso: unknown, options: Internal
                     },
                     state.originCache)
                 : undefined,
-              options.referenceNameProperty,
+              firstReferenceKeyForResolve,
+              options.lastReferenceKeyProperty,
             )
             if (refInSourceJso?.refValue !== undefined && refInSourceJso?.refValue !== null) {
               const resolvedRefWithRules = referenceHandler({
@@ -382,6 +396,7 @@ const createDefineOriginsAndResolveRefHook: (rootJso: unknown, options: Internal
             return { done: true }
           } finally {
             cyclingGuard.delete(reference.normalized)
+            state.firstReferenceKeyForCapture = previousFirstReferenceKeyForCapture
           }
         }
         return referenceHandler({ path, ref: $ref, safeKey, options, state, value, resolveDefaultReference })
@@ -429,6 +444,30 @@ const addRefInlineHistory: (jso: Record<PropertyKey, unknown>, inlineRefsFlag: s
   if (!history.includes(normalized)) { history.push(normalized) }
 }
 
+/**
+ * Returns an object that has the given first reference key set. If the target already has a different
+ * first key, returns a shallow copy (with symbol properties preserved) and sets the first key on the copy;
+ * otherwise sets the first key on the target and returns it.
+ */
+function copyTargetIfFirstKeyDiffers(
+  target: Record<PropertyKey, unknown>,
+  firstReferenceKeyProperty: symbol,
+  firstReferenceKey: string,
+): Record<PropertyKey, unknown> {
+  const existingFirstReferenceKey = target[firstReferenceKeyProperty]
+  if (existingFirstReferenceKey === firstReferenceKey) {
+    return target
+  }
+  if (existingFirstReferenceKey === undefined) {
+    target[firstReferenceKeyProperty] = firstReferenceKey
+    return target
+  }
+  // Target already has a different first key: create a shallow copy and set this first key on the copy.
+  const copy = { ...target }
+  copy[firstReferenceKeyProperty] = firstReferenceKey
+  return copy
+}
+
 const resolveRefNode = (
   reference: RichReference,
   source: unknown,
@@ -437,7 +476,8 @@ const resolveRefNode = (
   state: CloneState<DefineOriginsAndResolveRefState>,
   rules: CrawlRules<NormalizationRule> | undefined,
   originResolver?: (value: unknown, parentChain: ChainItem | undefined, parentValue: unknown | undefined, propertyKey: PropertyKey) => ChainItem,
-  referenceNameProperty?: symbol,
+  firstReferenceKey?: string,
+  lastReferenceKeyProperty?: symbol,
 ): ResolvedRef | undefined => {
   if (!isObject(source)) {
     return undefined
@@ -450,7 +490,7 @@ const resolveRefNode = (
   let pathChain: ChainItem | undefined = undefined
   const path = parsePointer(reference.pointer)
   // Initialize with the name from the initial reference
-  let lastReferenceName: string | undefined = reference.jsonPath.length > 0
+  let lastReferenceKey: string | undefined = reference.jsonPath.length > 0
     ? reference.jsonPath.at(-1)?.toString()
     : undefined
   let isRefValue: boolean
@@ -465,7 +505,7 @@ const resolveRefNode = (
       if (typeof refString === 'string') {
         const parsedRef = parseRef(refString)
         if (parsedRef.jsonPath.length > 0) {
-          lastReferenceName = parsedRef.jsonPath.at(-1)?.toString()
+          lastReferenceKey = parsedRef.jsonPath.at(-1)?.toString()
         }
       }
       value = syncClone<DefineOriginsAndResolveRefState, NormalizationRule>(value, [cycleJsoHook, resolveRefHook, cycleJsoHook], {
@@ -477,10 +517,6 @@ const resolveRefNode = (
       })
       if (isRefNode(value)) { //it possible only for broken refs
         return undefined
-      }
-      // If the resolved object has a reference name property set by nested resolution, use it
-      if (referenceNameProperty && isObject(value) && referenceNameProperty in value) {
-        lastReferenceName = value[referenceNameProperty]
       }
       pathChain = originResolver?.(value, pathChain, parentValue, key)
       continue
@@ -506,10 +542,15 @@ const resolveRefNode = (
     }
     pathChain = originResolver?.(value, pathChain, parentValue, key)
   }
+  // If we reached an already-resolved value (e.g. from a prior path), use its last reference key
+  if (lastReferenceKeyProperty && isObject(value) && lastReferenceKeyProperty in value) {
+    lastReferenceKey = value[lastReferenceKeyProperty] as string
+  }
   return {
     refValue: value,
     origin: pathChain,
-    lastReferenceName,
+    lastReferenceKey,
+    firstReferenceKey,
   }
 }
 
@@ -552,5 +593,6 @@ function cleanupRootOrigin(origins: ChainItem[]): void {
 export interface ResolvedRef {
   refValue: unknown
   origin: ChainItem | undefined
-  lastReferenceName?: string
+  firstReferenceKey?: string
+  lastReferenceKey?: string
 }

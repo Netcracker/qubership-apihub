@@ -62,7 +62,8 @@ export const mergeTraits = (value: unknown, options?: MergeTraitsOptions & Resol
       ...(options?.inlineRefsFlag ? [options.inlineRefsFlag] : []),
       ...(options?.syntheticTitleFlag ? [options.syntheticTitleFlag] : []),
       ...(options?.syntheticAllOfFlag ? [options.syntheticAllOfFlag] : []),
-      ...(options?.referenceNameProperty ? [options.referenceNameProperty] : []),
+      ...(options?.firstReferenceKeyProperty ? [options.firstReferenceKeyProperty] : []),
+      ...(options?.lastReferenceKeyProperty ? [options.lastReferenceKeyProperty] : []),
       ...(options?.ignoreSymbols ? options.ignoreSymbols : []),
     ]),
   }

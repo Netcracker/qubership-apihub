@@ -408,7 +408,7 @@ export const removeDuplicatesWithMergeOrigins = <T>(array: T[], originFlag: symb
 /**
  * Copy symbol properties from source to target
  * Symbol properties are not copied by standard object spread or Object.assign
- * This helper ensures symbol properties like referenceNameProperty, inlineRefsFlag, syntheticTitleFlag, etc.
+ * This helper ensures symbol properties like lastReferenceKeyProperty, inlineRefsFlag, syntheticTitleFlag, etc.
  * are preserved during merge operations
  *
  * @param source - The source object to copy symbols from

@@ -523,7 +523,7 @@ export const jsonSchemaRules: (
   referenceHandler: referenceResolverRuleFunction(version),
   merge: resolvers.jsonSchemaMergeResolver,
   canLiftCombiners: true,
-  resolvedReferenceNamePropertyKey: JSON_SCHEMA_PROPERTY_TITLE,
+  resolvedLastReferenceKeyPropertyKey: JSON_SCHEMA_PROPERTY_TITLE,
   unify: [
     extractEmptyJsonSchema,
     jsonSchemaTypeInfer,

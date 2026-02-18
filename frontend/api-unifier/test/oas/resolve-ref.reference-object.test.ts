@@ -9,7 +9,7 @@ import {
 import 'jest-extended'
 import { defineOriginsAndResolveRef } from '../../src/define-origins-and-resolve-ref'
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
-import { getValueByPath, setValueAtPath, TEST_INLINE_REFS_FLAG, TEST_ORIGINS_FLAG, TEST_REFERENCE_NAME_PROPERTY, TEST_SYNTHETIC_TITLE_FLAG } from '../helpers'
+import { getValueByPath, setValueAtPath, TEST_INLINE_REFS_FLAG, TEST_ORIGINS_FLAG, TEST_LAST_REFERENCE_KEY_PROPERTY, TEST_SYNTHETIC_TITLE_FLAG } from '../helpers'
 import defineResponseViaReferenceObjectChain
   from '../resources/reference-object/define-response-via-reference-object-chain.json'
 import secondLevelObjectSameWhenOverridingDescriptionForResponse
@@ -633,9 +633,9 @@ describe('OAS Reference Object', () => {
         },
       }
 
-      const result = defineOriginsAndResolveRef(source, { referenceNameProperty: TEST_REFERENCE_NAME_PROPERTY }) as any
+      const result = defineOriginsAndResolveRef(source, { lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY }) as any
       expect(result.paths['/test'].get.responses['200']).toBe(result.components.responses.SuccessResponse)
-      expect(result.paths['/test'].get.responses['200'][TEST_REFERENCE_NAME_PROPERTY]).toBe('SuccessResponse')
+      expect(result.paths['/test'].get.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('SuccessResponse')
     })
 
     it('should capture reference name when various normalize options are used', () => {
@@ -663,7 +663,7 @@ describe('OAS Reference Object', () => {
 
       const result = normalize(source,
         {
-          referenceNameProperty: TEST_REFERENCE_NAME_PROPERTY,
+          lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY,
           mergeAllOf: true,
           syntheticTitleFlag: TEST_SYNTHETIC_TITLE_FLAG,
           inlineRefsFlag: TEST_INLINE_REFS_FLAG,
@@ -673,7 +673,7 @@ describe('OAS Reference Object', () => {
         }
       ) as any
       expect(result.paths['/test'].get.responses['200']).toBe(result.components.responses.SuccessResponse)
-      expect(result.paths['/test'].get.responses['200'][TEST_REFERENCE_NAME_PROPERTY]).toBe('SuccessResponse')
+      expect(result.paths['/test'].get.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('SuccessResponse')
     })
 
     it('should capture last reference name in a reference chain', () => {
@@ -705,13 +705,13 @@ describe('OAS Reference Object', () => {
         },
       }
 
-      const result = defineOriginsAndResolveRef(source, { referenceNameProperty: TEST_REFERENCE_NAME_PROPERTY }) as any
+      const result = defineOriginsAndResolveRef(source, { lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY }) as any
       // All should point to the same object
       expect(result.paths['/test'].get.responses['200']).toBe(result.components.responses.SuccessResponse3)
       expect(result.components.responses.SuccessResponse).toBe(result.components.responses.SuccessResponse3)
       expect(result.components.responses.SuccessResponse2).toBe(result.components.responses.SuccessResponse3)
       // Should have the last reference name in the chain
-      expect(result.paths['/test'].get.responses['200'][TEST_REFERENCE_NAME_PROPERTY]).toBe('SuccessResponse3')
+      expect(result.paths['/test'].get.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('SuccessResponse3')
     })
 
     it('should capture reference name for multiple references to same target', () => {
@@ -746,13 +746,13 @@ describe('OAS Reference Object', () => {
         },
       }
 
-      const result = defineOriginsAndResolveRef(source, { referenceNameProperty: TEST_REFERENCE_NAME_PROPERTY }) as any
+      const result = defineOriginsAndResolveRef(source, { lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY }) as any
       // Both should point to the same object
       expect(result.paths['/endpoint1'].get.responses['200']).toBe(result.paths['/endpoint2'].get.responses['200'])
       expect(result.paths['/endpoint1'].get.responses['200']).toBe(result.components.responses.SharedResponse)
       // Both should have the same reference name
-      expect(result.paths['/endpoint1'].get.responses['200'][TEST_REFERENCE_NAME_PROPERTY]).toBe('SharedResponse')
-      expect(result.paths['/endpoint2'].get.responses['200'][TEST_REFERENCE_NAME_PROPERTY]).toBe('SharedResponse')
+      expect(result.paths['/endpoint1'].get.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('SharedResponse')
+      expect(result.paths['/endpoint2'].get.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('SharedResponse')
     })
 
     it('should not add reference name property when option is not provided', () => {
@@ -780,7 +780,7 @@ describe('OAS Reference Object', () => {
 
       const result = defineOriginsAndResolveRef(source) as any
       expect(result.paths['/test'].get.responses['200']).toBe(result.components.responses.SuccessResponse)
-      expect(result.paths['/test'].get.responses['200'][TEST_REFERENCE_NAME_PROPERTY]).toBeUndefined()
+      expect(result.paths['/test'].get.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBeUndefined()
     })
 
     it('should work with reference object override fields', () => {
@@ -793,6 +793,13 @@ describe('OAS Reference Object', () => {
                 '200': {
                   $ref: '#/components/responses/SuccessResponse',
                   description: 'Custom description override',
+                },
+              },
+            },
+            post: {
+              responses: {
+                '200': {
+                  $ref: '#/components/responses/SuccessResponse',
                 },
               },
             },
@@ -812,12 +819,12 @@ describe('OAS Reference Object', () => {
         },
       }
 
-      const result = normalize(source, { referenceNameProperty: TEST_REFERENCE_NAME_PROPERTY }) as any
+      const result = normalize(source, { lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY }) as any
       // With override fields, it creates a shallow copy, so they won't be the same reference
       expect(result.paths['/test'].get.responses['200']).not.toBe(result.components.responses.SuccessResponse)
       // But both should have the reference name property
-      expect(result.paths['/test'].get.responses['200'][TEST_REFERENCE_NAME_PROPERTY]).toBe('SuccessResponse')
-      expect(result.components.responses.SuccessResponse[TEST_REFERENCE_NAME_PROPERTY]).toBe('SuccessResponse')
+      expect(result.paths['/test'].get.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('SuccessResponse')
+      expect(result.paths['/test'].post.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('SuccessResponse')
       // Override field should be present
       expect(result.paths['/test'].get.responses['200'].description).toBe('Custom description override')
       // Content should be shared from the base
@@ -848,13 +855,13 @@ describe('OAS Reference Object', () => {
       }
 
       const result = defineOriginsAndResolveRef(source, {
-        referenceNameProperty: TEST_REFERENCE_NAME_PROPERTY,
+        lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY,
       }) as any
 
       // The broken reference should remain as a $ref
       expect(result.components.responses.SuccessResponse.$ref).toBe('#/components/responses/NonExistent')
       // Should not have reference name property on broken ref
-      expect(result.components.responses.SuccessResponse[TEST_REFERENCE_NAME_PROPERTY]).toBeUndefined()
+      expect(result.components.responses.SuccessResponse[TEST_LAST_REFERENCE_KEY_PROPERTY]).toBeUndefined()
     })
   })
 })

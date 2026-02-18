@@ -1,6 +1,6 @@
 
 import { normalize, convertOriginToHumanReadable } from '../../src'
-import { checkOriginsAreTheSame, commonOriginsCheck, setValueAtPath, TEST_ORIGINS_FLAG, TEST_INLINE_REFS_FLAG, TEST_REFERENCE_NAME_PROPERTY, TEST_SYNTHETIC_TITLE_FLAG } from '../helpers'
+import { checkOriginsAreTheSame, commonOriginsCheck, setValueAtPath, TEST_ORIGINS_FLAG, TEST_INLINE_REFS_FLAG, TEST_LAST_REFERENCE_KEY_PROPERTY, TEST_SYNTHETIC_TITLE_FLAG } from '../helpers'
 import { parseAsyncApiAndAssertValid } from '../helpers/asyncapi'
 import type { Input } from '@asyncapi/parser/esm/types'
 import 'jest-extended'
@@ -1160,7 +1160,7 @@ describe('AsyncAPI: merge traits', () => {
   })
 
   describe('symbol properties handling', () => {
-    it('should preserve referenceNameProperty on operation when merging traits from component refs', async () => {
+    it('should preserve lastReferenceKeyProperty on operation when merging traits from component refs', async () => {
       const spec = {
         asyncapi: '3.0.0',
         info: {
@@ -1201,23 +1201,23 @@ describe('AsyncAPI: merge traits', () => {
       await parseAsyncApiAndAssertValid(spec)
 
       const result: any = normalize(spec, {
-        referenceNameProperty: TEST_REFERENCE_NAME_PROPERTY,
+        lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY,
       })
 
-      // Operation should have referenceNameProperty preserved after trait merge
-      expect(result.operations.testOp[TEST_REFERENCE_NAME_PROPERTY]).toBe('TestOperation')
+      // Operation should have lastReferenceKeyProperty preserved after trait merge
+      expect(result.operations.testOp[TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('TestOperation')
 
-      // Trait in the traits array should have referenceNameProperty preserved
+      // Trait in the traits array should have lastReferenceKeyProperty preserved
       expect(result.operations.testOp.traits).toBeArray()
       expect(result.operations.testOp.traits).toHaveLength(1)
-      expect(result.operations.testOp.traits[0][TEST_REFERENCE_NAME_PROPERTY]).toBe('CommonTrait')
+      expect(result.operations.testOp.traits[0][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('CommonTrait')
 
       // Properties from trait should be merged to operation
       expect(result.operations.testOp.description).toBe('common trait description')
       expect(result.operations.testOp.summary).toBe('common trait summary')
     })
 
-    it('should preserve referenceNameProperty on operation with multiple trait refs', async () => {
+    it('should preserve lastReferenceKeyProperty on operation with multiple trait refs', async () => {
       const spec = {
         asyncapi: '3.0.0',
         info: {
@@ -1258,13 +1258,13 @@ describe('AsyncAPI: merge traits', () => {
       await parseAsyncApiAndAssertValid(spec)
 
       const result: any = normalize(spec, {
-        referenceNameProperty: TEST_REFERENCE_NAME_PROPERTY,
+        lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY,
       })
 
-      // Both traits should preserve their referenceNameProperty
+      // Both traits should preserve their lastReferenceKeyProperty
       expect(result.operations.testOp.traits).toHaveLength(2)
-      expect(result.operations.testOp.traits[0][TEST_REFERENCE_NAME_PROPERTY]).toBe('Trait1')
-      expect(result.operations.testOp.traits[1][TEST_REFERENCE_NAME_PROPERTY]).toBe('Trait2')
+      expect(result.operations.testOp.traits[0][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('Trait1')
+      expect(result.operations.testOp.traits[1][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('Trait2')
 
       // Properties should be merged
       expect(result.operations.testOp.description).toBe('trait1 description')
@@ -1323,7 +1323,7 @@ describe('AsyncAPI: merge traits', () => {
       expect(result.operations.testOp.traits[0][TEST_INLINE_REFS_FLAG]).toContain('#/components/operationTraits/CommonTrait')
     })
 
-    it('should preserve both referenceNameProperty and inlineRefsFlag on operation', async () => {
+    it('should preserve both lastReferenceKeyProperty and inlineRefsFlag on operation', async () => {
       const spec = {
         asyncapi: '3.0.0',
         info: {
@@ -1363,22 +1363,22 @@ describe('AsyncAPI: merge traits', () => {
       await parseAsyncApiAndAssertValid(spec)
 
       const result: any = normalize(spec, {
-        referenceNameProperty: TEST_REFERENCE_NAME_PROPERTY,
+        lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY,
         inlineRefsFlag: TEST_INLINE_REFS_FLAG,
       })
 
       // Both symbol properties should be preserved on operation
-      expect(result.operations.testOp[TEST_REFERENCE_NAME_PROPERTY]).toBe('TestOperation')
+      expect(result.operations.testOp[TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('TestOperation')
       expect(result.operations.testOp[TEST_INLINE_REFS_FLAG]).toBeArray()
       expect(result.operations.testOp[TEST_INLINE_REFS_FLAG]).toContain('#/components/operations/TestOperation')
 
       // Both symbol properties should be preserved on trait
-      expect(result.operations.testOp.traits[0][TEST_REFERENCE_NAME_PROPERTY]).toBe('CommonTrait')
+      expect(result.operations.testOp.traits[0][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('CommonTrait')
       expect(result.operations.testOp.traits[0][TEST_INLINE_REFS_FLAG]).toBeArray()
       expect(result.operations.testOp.traits[0][TEST_INLINE_REFS_FLAG]).toContain('#/components/operationTraits/CommonTrait')
     })
 
-    it('should preserve referenceNameProperty on message when merging traits from component refs', async () => {
+    it('should preserve lastReferenceKeyProperty on message when merging traits from component refs', async () => {
       const spec = {
         asyncapi: '3.0.0',
         info: {
@@ -1416,16 +1416,16 @@ describe('AsyncAPI: merge traits', () => {
       await parseAsyncApiAndAssertValid(spec)
 
       const result: any = normalize(spec, {
-        referenceNameProperty: TEST_REFERENCE_NAME_PROPERTY,
+        lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY,
       })
 
-      // Message should have referenceNameProperty preserved after trait merge
-      expect(result.channels.channel1.messages.msg1[TEST_REFERENCE_NAME_PROPERTY]).toBe('TestMessage')
+      // Message should have lastReferenceKeyProperty preserved after trait merge
+      expect(result.channels.channel1.messages.msg1[TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('TestMessage')
 
-      // Trait should have referenceNameProperty preserved
+      // Trait should have lastReferenceKeyProperty preserved
       expect(result.channels.channel1.messages.msg1.traits).toBeArray()
       expect(result.channels.channel1.messages.msg1.traits).toHaveLength(1)
-      expect(result.channels.channel1.messages.msg1.traits[0][TEST_REFERENCE_NAME_PROPERTY]).toBe('CommonTrait')
+      expect(result.channels.channel1.messages.msg1.traits[0][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('CommonTrait')
 
       // Properties from trait should be merged to message
       expect(result.channels.channel1.messages.msg1.contentType).toBe('application/json')
@@ -1467,16 +1467,16 @@ describe('AsyncAPI: merge traits', () => {
       await parseAsyncApiAndAssertValid(spec)
 
       const result: any = normalize(spec, {
-        referenceNameProperty: TEST_REFERENCE_NAME_PROPERTY,
+        lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY,
         inlineRefsFlag: TEST_INLINE_REFS_FLAG,
       })
 
       // Operation should have symbol properties preserved even with inline traits
-      expect(result.operations.testOp[TEST_REFERENCE_NAME_PROPERTY]).toBe('TestOperation')
+      expect(result.operations.testOp[TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('TestOperation')
       expect(result.operations.testOp[TEST_INLINE_REFS_FLAG]).toBeArray()
 
-      // Inline trait should not have referenceNameProperty (it's not from a ref)
-      expect(result.operations.testOp.traits[0][TEST_REFERENCE_NAME_PROPERTY]).toBeUndefined()
+      // Inline trait should not have lastReferenceKeyProperty (it's not from a ref)
+      expect(result.operations.testOp.traits[0][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBeUndefined()
 
       // Properties should be merged
       expect(result.operations.testOp.description).toBe('inline trait description')
@@ -1524,14 +1524,14 @@ describe('AsyncAPI: merge traits', () => {
       await parseAsyncApiAndAssertValid(spec)
 
       const result: any = normalize(spec, {
-        referenceNameProperty: TEST_REFERENCE_NAME_PROPERTY,
+        lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY,
       })
 
-      // Operation should preserve referenceNameProperty
-      expect(result.operations.testOp[TEST_REFERENCE_NAME_PROPERTY]).toBe('TestOperation')
+      // Operation should preserve lastReferenceKeyProperty
+      expect(result.operations.testOp[TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('TestOperation')
 
-      // Trait should preserve referenceNameProperty
-      expect(result.operations.testOp.traits[0][TEST_REFERENCE_NAME_PROPERTY]).toBe('CommonTrait')
+      // Trait should preserve lastReferenceKeyProperty
+      expect(result.operations.testOp.traits[0][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('CommonTrait')
 
       // Root description should win over trait description
       expect(result.operations.testOp.description).toBe('root description')
