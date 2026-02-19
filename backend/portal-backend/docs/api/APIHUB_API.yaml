@@ -3280,6 +3280,8 @@ paths:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/apiAudience"
+        - $ref: "#/components/parameters/asyncapiChannel"
+        - $ref: "#/components/parameters/asyncapiProtocol"
         - $ref: "#/components/parameters/severity"
         - name: previousVersion
           in: query
@@ -3363,7 +3365,9 @@ paths:
             default: false
         - name: textFilter
           in: query
-          description: Filter by operation's title/path/method.
+          description: |
+            Filter by operation's title/path/method.
+            For AsyncAPI: searches by message title, channel address, or operation action (OR logic).
           schema:
             type: string
         - $ref: "#/components/parameters/limit"
@@ -3409,11 +3413,8 @@ paths:
                               currentOperation:
                                 $ref: "#/components/schemas/GqlOperationInfoFromDifferentVersions"
                           - title: AsyncAPIOperation
+                            description: AsyncAPI 3.0 operation change entry. Type-specific fields (action, channel, protocol) are inside previousOperation/currentOperation.
                             type: object
-                            required:
-                              - action
-                              - channel
-                              - protocol
                             properties:
                               previousOperation:
                                 $ref: "#/components/schemas/AsyncAPIOperationInfoFromDifferentVersions"
@@ -3498,6 +3499,8 @@ paths:
       - $ref: "#/components/parameters/version"
       - $ref: "#/components/parameters/apiType"
       - $ref: "#/components/parameters/apiAudience"
+      - $ref: "#/components/parameters/asyncapiChannel"
+      - $ref: "#/components/parameters/asyncapiProtocol"
       - $ref: "#/components/parameters/severity"
       - name: previousVersion
         in: query
@@ -3565,7 +3568,9 @@ paths:
           default: false
       - name: textFilter
         in: query
-        description: Filter by operation's title/path/method.
+        description: |
+          Filter by operation's title/path/method.
+          For AsyncAPI: searches by message title, channel address, or operation action (OR logic).
         schema:
           type: string
     get:
@@ -5638,6 +5643,8 @@ paths:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
         - $ref: "#/components/parameters/apiAudience"
+        - $ref: "#/components/parameters/asyncapiChannel"
+        - $ref: "#/components/parameters/asyncapiProtocol"
         - name: skipRefs
           in: query
           description: |
@@ -5647,7 +5654,9 @@ paths:
             default: false
         - name: textFilter
           in: query
-          description: "Filter by title/path/method. Custom tag format in search is  key: value. Search works as a complete match"
+          description: |
+            Filter by title/path/method. Custom tag format in search is key: value. Search works as a complete match.
+            For AsyncAPI: searches by message title, channel address, or operation action (OR logic).
           schema:
             type: string
         - name: documentSlug
@@ -5972,6 +5981,8 @@ paths:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/apiAudience"
+        - $ref: "#/components/parameters/asyncapiChannel"
+        - $ref: "#/components/parameters/asyncapiProtocol"
         - name: includeDeprecatedItems
           in: query
           description: Include deprecated items inside operation.
@@ -6002,7 +6013,9 @@ paths:
             type: string
         - name: textFilter
           in: query
-          description: Filter operation by operation title/path/method.
+          description: |
+            Filter operation by operation title/path/method.
+            For AsyncAPI: searches by message title, channel address, or operation action (OR logic).
           schema:
             type: string
         - name: apiKind
@@ -6109,6 +6122,8 @@ paths:
                                 Additional information about deprecated operation:
                                 * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated operation.
                                 * for GraphQL API it is value of 'reason' argument of @deprecated directive, which is defined for deprecated operation.
+                                * for AsyncAPI 3.0: "[Deprecated] message {name}" when message has x-deprecated: true (name = message.title or messageId),
+                                  or "[Deprecated] channel {name}" when channel has x-deprecated: true (name = channel.title or channelId).
                               type: string
                             deprecatedItems:
                               allOf:
@@ -6322,9 +6337,13 @@ paths:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
         - $ref: "#/components/parameters/apiAudience"
+        - $ref: "#/components/parameters/asyncapiChannel"
+        - $ref: "#/components/parameters/asyncapiProtocol"
         - name: textFilter
           in: query
-          description: Filter by title/path/method.
+          description: |
+            Filter by title/path/method.
+            For AsyncAPI: searches by message title, channel address, or operation action (OR logic).
           schema:
             type: string
         - name: tag
@@ -6452,9 +6471,13 @@ paths:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
         - $ref: "#/components/parameters/apiAudience"
+        - $ref: "#/components/parameters/asyncapiChannel"
+        - $ref: "#/components/parameters/asyncapiProtocol"
         - name: textFilter
           in: query
-          description: Filter by title/path/method.
+          description: |
+            Filter by title/path/method.
+            For AsyncAPI: searches by message title, channel address, or operation action (OR logic).
           schema:
             type: string
         - name: tag
@@ -7019,9 +7042,13 @@ paths:
           - $ref: "#/components/parameters/version"
           - $ref: "#/components/parameters/groupName"
           - $ref: "#/components/parameters/apiAudience"
+          - $ref: "#/components/parameters/asyncapiChannel"
+          - $ref: "#/components/parameters/asyncapiProtocol"
           - name: textFilter
             in: query
-            description: Filter by title/path/method.
+            description: |
+              Filter by title/path/method.
+              For AsyncAPI: searches by message title, channel address, or operation action (OR logic).
             schema:
               type: string
           - name: documentSlug
@@ -9360,6 +9387,26 @@ components:
           - graphql
           - protobuf
           - asyncapi
+    asyncapiChannel:
+      name: asyncapiChannel
+      in: query
+      description: |
+        Filter operations by AsyncAPI channel identifier (comma-separated).
+        Applicable only when apiType = asyncapi; ignored for other API types.
+      schema:
+        type: string
+        example: "userSignup,orderCreated"
+    asyncapiProtocol:
+      name: asyncapiProtocol
+      in: query
+      description: |
+        Filter operations by communication protocol.
+        Applicable only when apiType = asyncapi; ignored for other API types.
+        The value is the protocol string from the channel's server (e.g. kafka, amqp).
+        Use "Unknown" for operations where the protocol could not be resolved.
+      schema:
+        type: string
+        example: "kafka"
     groupName:
       name: groupName
       in: path
@@ -9499,6 +9546,8 @@ components:
               Additional information about single deprecated item:
               * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated item.
               * for GraphQL API it is value of 'reason' argument of @deprecated directive.
+              * for AsyncAPI 3.0: "[Deprecated] message {name}" (name = message.title or messageId),
+                or "[Deprecated] channel {name}" (name = channel.title or channelId).
             type: string
           tolerantHash:
             description: Tolerant hash for Schema object or Parameter object that has been deprecated. It is needed to identify that the same schema/parameter was deprecated in previous version.
@@ -10477,6 +10526,7 @@ components:
         - graphapi
         - introspection
         - protobuf-3
+        - asyncapi-3-0
         - unknown
     DocumentFormat:
       title: format
@@ -10504,7 +10554,10 @@ components:
         - versionInternalDocumentId
       properties:
         operationId:
-          description: Operation unique identifier (slug). Not the same as operationId tag from the OpenAPI file.
+          description: |
+            Operation unique identifier (slug). Not the same as operationId tag from the OpenAPI file.
+            For AsyncAPI 3.0: operationId = normalized_operation_id + "-" + normalized_message_id,
+            where operation_id is the key in the root operations map and message_id is the key in the channel's messages map.
           type: string
           example: get-quoteManagement-v5-quote
         documentId:
@@ -10513,7 +10566,9 @@ components:
           pattern: "^[a-z0-9-]"
           example: "qitmf-v5-11-json"
         title:
-          description: Operation summary/title.
+          description: |
+            Operation summary/title.
+            For AsyncAPI 3.0: message.title. If the message has no title, the messageId (key in the channel's messages map) is used.
           type: string
         apiType:
           #  description: Type of the API.
@@ -10529,7 +10584,10 @@ components:
           description: External operation metadata.
           type: object
         deprecated:
-          description: Operation deprecate flag.
+          description: |
+            Operation deprecate flag.
+            For AsyncAPI 3.0: derived from x-deprecated extension on Message Object (message-deprecated)
+            or Channel Object (channel-deprecated). Native deprecated: true/false exists only for Schema Object in AsyncAPI 3.0.
           type: boolean
           default: false
         apiAudience:
@@ -10538,6 +10596,8 @@ components:
             * internal - APIs are available for integration within product application.
             * external - APIs exposed outside the boundary of product application: solution delivery integrations, 3rd party integrations, customer integrations.
             * unknown - If any value other than internal or external is used, the API is considered as unknown.
+            For AsyncAPI 3.0: derived from x-api-audience extension. Channel-level is the default;
+            operation-level overrides when present. If neither defines the extension, the audience is external.
           type: string
           enum:
             - internal
@@ -10549,6 +10609,8 @@ components:
             * bwc - API with backward compatibility support (a.k.a. public).
             * no-bwc - API without backward compatibility support (a.k.a. internal).
             * experimental - APIs for feature testing. Usage is not recommended.
+            For AsyncAPI 3.0: derived from x-api-kind extension. Channel-level is the default;
+            operation-level overrides when present. If neither defines the extension, API Kind is bwc.
           type: string
           enum:
             - bwc
@@ -10842,7 +10904,9 @@ components:
           description: Custom tags.
           type: object
     AsyncAPIOperationMeta:
-      description: Specific parameters for AsyncAPI operation.
+      description: |
+        Specific parameters for AsyncAPI 3.0 operation.
+        An APIHUB Operation for AsyncAPI is the triple (channel, operation, message).
       title: AsyncAPIOperationMeta
       required:
         - action
@@ -10851,22 +10915,28 @@ components:
       type: object
       properties:
         action:
-          description: AsyncAPI operation action (e.g., send, receive).
+          description: "AsyncAPI operation action: send or receive."
           type: string
+          enum:
+            - send
+            - receive
         channel:
-          description: AsyncAPI channel name.
+          description: |
+            AsyncAPI channel identifier.
+            Uses channel.title if available; otherwise uses channelId (key in the document's root channels map).
           type: string
-          example: "user/signedup"
+          example: "User Signup Channel"
         protocol:
-          description: Communication protocol used (e.g., kafka, mqtt, amqp).
+          description: |
+            Communication protocol derived from the channel's first server.
+            Expected values: kafka, amqp. Any other protocol value from the spec is displayed as-is.
+            If the channel has no server references or the protocol cannot be resolved, the value is "Unknown".
           type: string
-        tags:
-          description: Operation tags.
-          type: array
-          items:
-            type: string
+          example: "kafka"
         title:
-          description: Operation summary/title.
+          description: |
+            APIHUB Operation title derived from message.title.
+            If the message has no title, the messageId (key in the channel's messages map) is used.
           type: string
         customTags:
           description: Custom tags.
@@ -10970,7 +11040,7 @@ components:
               type: string
               example: getPaymentMethodSpecificationCore
     AsyncAPIOperationInfoFromDifferentVersions:
-      description: Operation info from previous/current version.
+      description: AsyncAPI 3.0 operation info from previous/current version.
       allOf:
         - $ref: "#/components/schemas/OperationInfoFromDifferentVersionsV2"
         - type: object
@@ -10980,20 +11050,24 @@ components:
             - protocol
           properties:
             action:
-              description: AsyncAPI operation action.
+              description: "AsyncAPI operation action: send or receive."
               type: string
+              enum:
+                - send
+                - receive
             channel:
-              description: AsyncAPI channel name.
+              description: |
+                AsyncAPI channel identifier.
+                Uses channel.title if available; otherwise uses channelId (key in the document's root channels map).
               type: string
-              example: "user/signedup"
+              example: "User Signup Channel"
             protocol:
-              description: Communication protocol used.
+              description: |
+                Communication protocol derived from the channel's first server.
+                Expected values: kafka, amqp. Any other protocol value from the spec is displayed as-is.
+                If the channel has no server references or the protocol cannot be resolved, the value is "Unknown".
               type: string
-            tags:
-              description: Operation tags.
-              type: array
-              items:
-                type: string
+              example: "kafka"
     SingleOperationChange:
       allOf:
         - type: object

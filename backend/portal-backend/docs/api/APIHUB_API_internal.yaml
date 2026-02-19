@@ -959,6 +959,8 @@ components:
               Additional information about single deprecated item:
               * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated item.
               * for GraphQL API it is value of 'reason' argument of @deprecated directive.
+              * for AsyncAPI 3.0: "[Deprecated] message {name}" (name = message.title or messageId),
+                or "[Deprecated] channel {name}" (name = channel.title or channelId).
             type: string
           tolerantHash:
             description: Tolerant hash for Schema object or Parameter object that has been deprecated. It is needed to identify that the same schema/parameter was deprecated in previous version.
@@ -973,6 +975,7 @@ components:
         - rest
         - graphql
         - protobuf
+        - asyncapi
     PackageStatus:
       description: Published package version content
       type: object
@@ -1052,6 +1055,7 @@ components:
         - graphapi
         - introspection
         - protobuf-3
+        - asyncapi-3-0
         - unknown
     DocumentFormat:
       title: format
@@ -1219,6 +1223,44 @@ components:
           description: Operation title (same as method name but with adding spaces between capital letters)
           type: string
           example: List Action Log Items
+    AsyncAPIOperationMeta:
+      description: |
+        Specific parameters for AsyncAPI 3.0 operation.
+        An APIHUB Operation for AsyncAPI is the triple (channel, operation, message).
+      title: AsyncAPIOperationMeta
+      required:
+        - action
+        - channel
+        - protocol
+      type: object
+      properties:
+        action:
+          description: "AsyncAPI operation action: send or receive."
+          type: string
+          enum:
+            - send
+            - receive
+        channel:
+          description: |
+            AsyncAPI channel identifier.
+            Uses channel.title if available; otherwise uses channelId (key in the document's root channels map).
+          type: string
+          example: "User Signup Channel"
+        protocol:
+          description: |
+            Communication protocol derived from the channel's first server.
+            Expected values: kafka, amqp. Any other protocol value from the spec is displayed as-is.
+            If the channel has no server references or the protocol cannot be resolved, the value is "Unknown".
+          type: string
+          example: "kafka"
+        title:
+          description: |
+            APIHUB Operation title derived from message.title.
+            If the message has no title, the messageId (key in the channel's messages map) is used.
+          type: string
+        customTags:
+          description: Custom tags.
+          type: object
     BuildResult:
       description: |
         Result of build operation in ZIP archive.
@@ -1498,6 +1540,8 @@ components:
                               Additional information about deprecated operation:
                               * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated operation.
                               * for GraphQL API it is value of 'reason' argument of @deprecated directive, which is defined for deprecated operation.
+                              * for AsyncAPI 3.0: "[Deprecated] message {name}" when message has x-deprecated: true (name = message.title or messageId),
+                                or "[Deprecated] channel {name}" when channel has x-deprecated: true (name = channel.title or channelId).
                             type: string
                           deprecatedInPreviousVersions:
                             description: List of previous release versions where operation was also deprecated
@@ -1513,6 +1557,7 @@ components:
                               - $ref: "#/components/schemas/RestOperationMeta"
                               - $ref: "#/components/schemas/GraphQLOperationMeta"
                               - $ref: "#/components/schemas/ProtobufOperationMeta"
+                              - $ref: "#/components/schemas/AsyncAPIOperationMeta"
                           searchScopes:
                             description: Scopes for search indexes.
                             type: object
