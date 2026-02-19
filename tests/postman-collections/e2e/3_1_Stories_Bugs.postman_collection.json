@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "3_1_Stories_Bugs",
-        "_postman_id": "63d2e843-fe8d-4a1b-94dc-c992e9c05723",
+        "_postman_id": "6debdc01-0560-49fb-aefa-b22f486bf04e",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -5809,20 +5809,20 @@
                                     }
                                 ],
                                 "body": {
-									"mode": "formdata",
-									"formdata": [
-										{
-											"key": "groupName",
-											"value": "test_1",
-											"type": "text"
-										},
-										{
-											"key": "description",
-											"value": "Test group",
-											"type": "text"
-										}
-									]
-								}
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "groupName",
+                                            "type": "default",
+                                            "value": "test_1"
+                                        },
+                                        {
+                                            "key": "description",
+                                            "type": "default",
+                                            "value": "Test group"
+                                        }
+                                    ]
+                                }
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
@@ -7931,6 +7931,11 @@
                                     {
                                         "key": "Authorization",
                                         "value": "Bearer {{token}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "X-Personal-Access-Token",
+                                        "value": "54141abdce1cc9b66740ed5572ecea7d957fe69e1bdeeadbd8c8dd05b888cd27",
                                         "type": "default"
                                     }
                                 ]
@@ -12854,20 +12859,20 @@
                                     }
                                 ],
                                 "body": {
-									"mode": "formdata",
-									"formdata": [
-										{
-											"key": "groupName",
-											"value": "test_group_1",
-											"type": "text"
-										},
-										{
-											"key": "operations",
-											"value": "[{\"operationId\":\"{{operation_id_1}}\"}]",
-											"type": "text"
-										}
-									]
-								}
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "groupName",
+                                            "type": "default",
+                                            "value": "test_group_1"
+                                        },
+                                        {
+                                            "key": "operations",
+                                            "type": "default",
+                                            "value": "[{\"operationId\":\"{{operation_id_1}}\"}]"
+                                        }
+                                    ]
+                                }
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
@@ -16745,7 +16750,6 @@
                                     {
                                         "key": "Content-Type",
                                         "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
-                                        "description": "",
                                         "type": "default"
                                     },
                                     {
@@ -17185,7 +17189,6 @@
                                     {
                                         "key": "Content-Transfer-Encoding",
                                         "value": "base64",
-                                        "description": "",
                                         "type": "default"
                                     }
                                 ],
@@ -18229,6 +18232,2463 @@
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
+                        }
+                    ]
+                },
+                {
+                    "name": "8.30 APIHUB-12694 [BE]  ApiKind operations",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "item": [
+                        {
+                            "name": "CreateGroup",
+                            "event": [
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "item": [
+                                {
+                                    "name": "Delete static_test_2 data from DB",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test(\"Status code is 204\", function () {\r",
+                                                    "    pm.response.to.have.status(204);\r",
+                                                    "});\r",
+                                                    ""
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/internal/clear/API-KIND-TEST-11",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "internal",
+                                                "clear",
+                                                "API-KIND-TEST-11"
+                                            ]
+                                        },
+                                        "method": "DELETE",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Create static test group",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 201', function () {",
+                                                    "    pm.response.to.have.status(201);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('static_root_group', data.packageId);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\"id\": \"API-KIND-TEST-11\",\"Alias\": \"API-KIND-TEST-11\",\"name\": \"Test Workspace\",\"parentId\": null,\"kind\": \"workspace\",\"description\": \"Workspace for schema comparison tests\"}",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                }
+                            ]
+                        },
+                        {
+                            "name": "TC1-Override in info",
+                            "item": [
+                                {
+                                    "name": "Create Package for parameters-schemas",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 201', function () {",
+                                                    "    pm.response.to.have.status(201);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('package_parameters', data.packageId);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\"id\": \"API-KIND-TEST-11.TC1\",\"Alias\": \"TC1\",\"name\": \"TC1-Override in info\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for add-overriden-description\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Publish parameters-schemas/add-overriden-description/before.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 202', function () {",
+                                                    "    pm.response.to.have.status(202);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('parameters_before_publish_id', data.publishId);",
+                                                    "setTimeout(() => {}, 5000);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Transfer-Encoding",
+                                                "value": "base64",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"API-KIND-TEST-11.TC1\",\r\n    \"version\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"TC1_before.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"TC1_before.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIABGAU1wAAAAAAAAAAAAAAAAPACAAVEMxX2JlZm9yZS55YW1sdXgLAAEEAAAAAAQAAAAAVVQNAAeCF5dpgxeXaYHMlmlVj7EOwjAMRPdI+QdvnSgpbNkQE2KAX4ha01qiSeokSP170gJq8HR657POzqM1njQca1UrKcg+nJYCIFJ8oobT/QJnExCaBb6QAzmroflsS+FNHMIa2KeQ3VUC9Bi/CsAbNiPGzVxmBzZDDdRtDIDy6SkhzyVknBIxdhoiJyyd0A44Gl2iXHz2y10bsUf+WYzBOxuwrFAdlKr+wh2GlsnH9cXbVYo3UEsHCGwcpbOmAAAAHgEAAFBLAQIUAxQACAAIABGAU1xsHKWzpgAAAB4BAAAPABgAAAAAAAAAAAC2gQAAAABUQzFfYmVmb3JlLnlhbWx1eAsAAQQAAAAABAAAAABVVAUAAYIXl2lQSwUGAAAAAAEAAQBVAAAAAwEAAAAA\r\n----------------------------127308995100818139707097--",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "text"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Check Publish Status for parameters-schemas/add-overriden-description/before.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                                    "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                                    "var respBody = pm.response.json();",
+                                                    "if (respBody.status !== 'complete' && retry < 15) {",
+                                                    "    retry++;",
+                                                    "    delay = 5000 + delay;",
+                                                    "    pm.test('Status is OK, response is JSON', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.response.to.be.ok;",
+                                                    "    });",
+                                                    "    setTimeout(function () {}, delay);",
+                                                    "    postman.setNextRequest(request.name);",
+                                                    "    pm.environment.set('com_retry_counter', retry);",
+                                                    "    pm.environment.set('com_retry_delay', delay);",
+                                                    "} else {",
+                                                    "    pm.environment.set('com_retry_counter', null);",
+                                                    "    pm.environment.set('com_retry_delay', null);",
+                                                    "    pm.test('Status code is 200 and publication completed', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.expect(respBody.status).to.eql('complete');",
+                                                    "    });",
+                                                    "}"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish/{{parameters_before_publish_id}}/status",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish",
+                                                "{{parameters_before_publish_id}}",
+                                                "status"
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Publish parameters-schemas/add-overriden-description/after.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 202', function () {",
+                                                    "    pm.response.to.have.status(202);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('parameters_after_publish_id', data.publishId);",
+                                                    "setTimeout(() => {}, 5000);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Transfer-Encoding",
+                                                "value": "base64",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0000.2\",\r\n    \"previousVersion\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"TC1_after.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"TC1_after.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIABeAU1wAAAAAAAAAAAAAAAAOACAAVEMxX2FmdGVyLnlhbWx1eAsAAQQAAAAABAAAAABVVA0AB48Xl2mQF5dpjMyWaVWQwU7DMAyG75HyDr/EYadu3bjlNtA0TZMA8QahNa3F5mROOtjbkxXEik/WZ/vTn4RI4iM73M/reW0Ny3tw1gCZ84Ec1i87PPpEWF7hmTRxEIfVzzbwVZXr6oOldZBQvX02AO4QyqZyS+hJyRpros99GsWLIRXL2AId5d8OiF79kfJteK0KUqADtzcGcIlwGkgvU6h0GlipBMk60HSSmp6O3k1ReeAlFm/KytKNmR9eN+v97mmLpvfS/QmUUgySaJpqtqrr2T9fS6lRjnn8nee9Nd9QSwcIiSiiN9MAAABZAQAAUEsBAhQDFAAIAAgAF4BTXIkoojfTAAAAWQEAAA4AGAAAAAAAAAAAALaBAAAAAFRDMV9hZnRlci55YW1sdXgLAAEEAAAAAAQAAAAAVVQFAAGPF5dpUEsFBgAAAAABAAEAVAAAAC8BAAAAAA==\r\n----------------------------127308995100818139707097--",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "text"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Check Publish Status for parameters-schemas/add-overriden-description/after.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                                    "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                                    "var respBody = pm.response.json();",
+                                                    "if (respBody.status !== 'complete' && retry < 15) {",
+                                                    "    retry++;",
+                                                    "    delay = 5000 + delay;",
+                                                    "    pm.test('Status is OK, response is JSON', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.response.to.be.ok;",
+                                                    "    });",
+                                                    "    setTimeout(function () {}, delay);",
+                                                    "    postman.setNextRequest(request.name);",
+                                                    "    pm.environment.set('com_retry_counter', retry);",
+                                                    "    pm.environment.set('com_retry_delay', delay);",
+                                                    "} else {",
+                                                    "    pm.environment.set('com_retry_counter', null);",
+                                                    "    pm.environment.set('com_retry_delay', null);",
+                                                    "    pm.test('Status code is 200 and publication completed', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.expect(respBody.status).to.eql('complete');",
+                                                    "    });",
+                                                    "}"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish/{{parameters_after_publish_id}}/status",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish",
+                                                "{{parameters_after_publish_id}}",
+                                                "status"
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Validate parameters-schemas change (annotation) Copy",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test(\"TC1 → status 200\", () => pm.response.to.have.status(200));",
+                                                    "",
+                                                    "pm.test(\"TC1 → response structure is correct\", () => {",
+                                                    "    let json = pm.response.json();",
+                                                    "    pm.expect(json).to.have.all.keys(\"previousVersion\", \"previousVersionPackageId\", \"operations\", \"packages\");",
+                                                    "    pm.expect(json.operations).to.be.an(\"array\").that.is.not.empty;",
+                                                    "});",
+                                                    "",
+                                                    "pm.test(\"TC1 → apiKind changed from bwc to no-bwc\", () => {",
+                                                    "    let op = pm.response.json().operations[0];",
+                                                    "    pm.expect(op.previousOperation.apiKind).to.equal(\"bwc\");",
+                                                    "    pm.expect(op.currentOperation.apiKind).to.equal(\"no-bwc\");",
+                                                    "});",
+                                                    "",
+                                                    "pm.test(\"TC1 → only semi-breaking = 1\", () => {",
+                                                    "    let summary = pm.response.json().operations[0].changeSummary;",
+                                                    "    pm.expect(summary.breaking).to.equal(0);",
+                                                    "    pm.expect(summary[\"semi-breaking\"]).to.equal(1);",
+                                                    "    pm.expect(summary.deprecated).to.equal(0);",
+                                                    "    pm.expect(summary[\"non-breaking\"]).to.equal(0);",
+                                                    "    pm.expect(summary.annotation).to.equal(0);",
+                                                    "    pm.expect(summary.unclassified).to.equal(0);",
+                                                    "});"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_parameters}}/versions/0000.2/rest/changes?refPackageId={{package_parameters}}&previousVersion=0000.1&previousVersionPackageId={{package_parameters}}&apiAudience=all&apiType=rest&page=0&limit=100",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v4",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "versions",
+                                                "0000.2",
+                                                "rest",
+                                                "changes"
+                                            ],
+                                            "query": [
+                                                {
+                                                    "key": "refPackageId",
+                                                    "value": "{{package_parameters}}"
+                                                },
+                                                {
+                                                    "key": "previousVersion",
+                                                    "value": "0000.1"
+                                                },
+                                                {
+                                                    "key": "previousVersionPackageId",
+                                                    "value": "{{package_parameters}}"
+                                                },
+                                                {
+                                                    "key": "apiAudience",
+                                                    "value": "all"
+                                                },
+                                                {
+                                                    "key": "apiType",
+                                                    "value": "rest"
+                                                },
+                                                {
+                                                    "key": "page",
+                                                    "value": "0"
+                                                },
+                                                {
+                                                    "key": "limit",
+                                                    "value": "100"
+                                                }
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                }
+                            ]
+                        },
+                        {
+                            "name": "TC2_Override Label",
+                            "item": [
+                                {
+                                    "name": "Create Package for parameters-schemas",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 201', function () {",
+                                                    "    pm.response.to.have.status(201);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('package_parameters', data.packageId);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\"id\": \"API-KIND-TEST-11.TC2\",\"Alias\": \"TC2\",\"name\": \"TC2_Override Label\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for add-overriden-description\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Publish parameters-schemas/add-overriden-description/before.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 202', function () {",
+                                                    "    pm.response.to.have.status(202);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('parameters_before_publish_id', data.publishId);",
+                                                    "setTimeout(() => {}, 5000);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Transfer-Encoding",
+                                                "value": "base64",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"API-KIND-TEST-11.TC2\",\r\n    \"version\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"TC2_before.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"TC2_before.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIACCAU1wAAAAAAAAAAAAAAAAPACAAVEMyX2JlZm9yZS55YW1sdXgLAAEEAAAAAAQAAAAAVVQNAAedF5dpnheXabMFl2lVj7EOwjAMRPdI+QdvnSihbNkQE2KAX4ha01qiSeokSP170gJq8HR657POzqM1njQca1UrKcg+nJYCIFJ8oobT/QJnExCaBb6QAzmr4fDZlsKbOIQ1sE8hu6sE6DF+FYA3bEaMm7nMDmyGGqjbGADl01NCnkvIOCVi7DRETlg6oR1wNLpEufjsl7s2Yo/8sxiDdzZgWaFqlKr+wh2GlsnH9cXbVYo3UEsHCCnpfMKmAAAAHgEAAFBLAQIUAxQACAAIACCAU1wp6XzCpgAAAB4BAAAPABgAAAAAAAAAAAC2gQAAAABUQzJfYmVmb3JlLnlhbWx1eAsAAQQAAAAABAAAAABVVAUAAZ0Xl2lQSwUGAAAAAAEAAQBVAAAAAwEAAAAA\r\n----------------------------127308995100818139707097--",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "text"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Check Publish Status for parameters-schemas/add-overriden-description/before.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                                    "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                                    "var respBody = pm.response.json();",
+                                                    "if (respBody.status !== 'complete' && retry < 15) {",
+                                                    "    retry++;",
+                                                    "    delay = 5000 + delay;",
+                                                    "    pm.test('Status is OK, response is JSON', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.response.to.be.ok;",
+                                                    "    });",
+                                                    "    setTimeout(function () {}, delay);",
+                                                    "    postman.setNextRequest(request.name);",
+                                                    "    pm.environment.set('com_retry_counter', retry);",
+                                                    "    pm.environment.set('com_retry_delay', delay);",
+                                                    "} else {",
+                                                    "    pm.environment.set('com_retry_counter', null);",
+                                                    "    pm.environment.set('com_retry_delay', null);",
+                                                    "    pm.test('Status code is 200 and publication completed', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.expect(respBody.status).to.eql('complete');",
+                                                    "    });",
+                                                    "}"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish/{{parameters_before_publish_id}}/status",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish",
+                                                "{{parameters_before_publish_id}}",
+                                                "status"
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Publish parameters-schemas/add-overriden-description/after.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 202', function () {",
+                                                    "    pm.response.to.have.status(202);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('parameters_after_publish_id', data.publishId);",
+                                                    "setTimeout(() => {}, 5000);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Transfer-Encoding",
+                                                "value": "base64",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0000.2\",\r\n    \"previousVersion\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"TC2_after.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ],\r\n    \"metadata\":{\r\n        \"versionLabels\":[\r\n            \"apihub/x-api-kind: no-bwc\"\r\n            ]\r\n        }\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"TC2_after.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIACOAU1wAAAAAAAAAAAAAAAAOACAAVEMyX2FmdGVyLnlhbWx1eAsAAQQAAAAABAAAAABVVA0AB6MXl2mkF5dpwQWXaVWPwQrCQAxE74X+w4AHT2qpt72piJSCin+wtLEN6HZNtoJ/71pFa07Jm2SYdJ6c9WywnGfzLE3YnTuTJkDgcCGD1bHAxiohf8E7iXLnDPL3dpp4G1odDha9RnVogYbCpwO8FXul8BNfNYOL0IDrHwM4Wt96kscYCt16FqoNgvQ0VrRq6WrNGMXgDx99NQi7Jo4TrE/bVVnsd6ha65qvgZD6zimNU03zLJv++dWklbAPw9eHMk2eUEsHCNxtJyW2AAAAMQEAAFBLAQIUAxQACAAIACOAU1zcbScltgAAADEBAAAOABgAAAAAAAAAAAC2gQAAAABUQzJfYWZ0ZXIueWFtbHV4CwABBAAAAAAEAAAAAFVUBQABoxeXaVBLBQYAAAAAAQABAFQAAAASAQAAAAA=\r\n----------------------------127308995100818139707097--",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "text"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Check Publish Status for parameters-schemas/add-overriden-description/after.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                                    "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                                    "var respBody = pm.response.json();",
+                                                    "if (respBody.status !== 'complete' && retry < 15) {",
+                                                    "    retry++;",
+                                                    "    delay = 5000 + delay;",
+                                                    "    pm.test('Status is OK, response is JSON', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.response.to.be.ok;",
+                                                    "    });",
+                                                    "    setTimeout(function () {}, delay);",
+                                                    "    postman.setNextRequest(request.name);",
+                                                    "    pm.environment.set('com_retry_counter', retry);",
+                                                    "    pm.environment.set('com_retry_delay', delay);",
+                                                    "} else {",
+                                                    "    pm.environment.set('com_retry_counter', null);",
+                                                    "    pm.environment.set('com_retry_delay', null);",
+                                                    "    pm.test('Status code is 200 and publication completed', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.expect(respBody.status).to.eql('complete');",
+                                                    "    });",
+                                                    "}"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish/{{parameters_after_publish_id}}/status",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish",
+                                                "{{parameters_after_publish_id}}",
+                                                "status"
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Validate parameters-schemas change (annotation) Copy",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test(\"TC2 → status 200\", () => pm.response.to.have.status(200));",
+                                                    "",
+                                                    "pm.test(\"TC2 → at least one operation exists\", () => {",
+                                                    "    let json = pm.response.json();",
+                                                    "    pm.expect(json.operations).to.be.an(\"array\").with.lengthOf.at.least(1);",
+                                                    "});",
+                                                    "",
+                                                    "pm.test(\"TC2 → apiKind changed: bwc → no-bwc\", () => {",
+                                                    "    let op = pm.response.json().operations[0];",
+                                                    "    pm.expect(op.previousOperation.apiKind).to.equal(\"bwc\");",
+                                                    "    pm.expect(op.currentOperation.apiKind).to.equal(\"no-bwc\");",
+                                                    "});",
+                                                    "",
+                                                    "pm.test(\"TC2 → changeSummary: only semi-breaking\", () => {",
+                                                    "    let s = pm.response.json().operations[0].changeSummary;",
+                                                    "    pm.expect(s.breaking, \"there should be no breaking changes\").to.equal(0);",
+                                                    "    pm.expect(s[\"semi-breaking\"]).to.equal(1);",
+                                                    "    pm.expect(s.deprecated + s[\"non-breaking\"] + s.annotation + s.unclassified).to.equal(0);",
+                                                    "});"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_parameters}}/versions/0000.2/rest/changes?refPackageId={{package_parameters}}&previousVersion=0000.1&previousVersionPackageId={{package_parameters}}&apiAudience=all&apiType=rest&page=0&limit=100",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v4",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "versions",
+                                                "0000.2",
+                                                "rest",
+                                                "changes"
+                                            ],
+                                            "query": [
+                                                {
+                                                    "key": "refPackageId",
+                                                    "value": "{{package_parameters}}"
+                                                },
+                                                {
+                                                    "key": "previousVersion",
+                                                    "value": "0000.1"
+                                                },
+                                                {
+                                                    "key": "previousVersionPackageId",
+                                                    "value": "{{package_parameters}}"
+                                                },
+                                                {
+                                                    "key": "apiAudience",
+                                                    "value": "all"
+                                                },
+                                                {
+                                                    "key": "apiType",
+                                                    "value": "rest"
+                                                },
+                                                {
+                                                    "key": "page",
+                                                    "value": "0"
+                                                },
+                                                {
+                                                    "key": "limit",
+                                                    "value": "100"
+                                                }
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                }
+                            ]
+                        },
+                        {
+                            "name": "TC3_Breaking for BWC",
+                            "item": [
+                                {
+                                    "name": "Create Package for parameters-schemas",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 201', function () {",
+                                                    "    pm.response.to.have.status(201);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('package_parameters', data.packageId);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\"id\": \"API-KIND-TEST-11.TC3\",\"Alias\": \"TC3\",\"name\": \"TC3_Breaking for BWC\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for add-overriden-description\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Publish parameters-schemas/add-overriden-description/before.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 202', function () {",
+                                                    "    pm.response.to.have.status(202);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('parameters_before_publish_id', data.publishId);",
+                                                    "setTimeout(() => {}, 5000);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Transfer-Encoding",
+                                                "value": "base64",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"API-KIND-TEST-11.TC3\",\r\n    \"version\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"TC3_before.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"TC3_before.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIALJ7U1wAAAAAAAAAAAAAAAAPACAAVEMzX2JlZm9yZS55YW1sdXgLAAEEAAAAAAQAAAAAVVQNAAdAEJdpQRCXac0Fl2lNjbEKwkAQRPuD+4fp0sXTdNuJhYiF/sKhqx6Yu+V2DeTvJYmK3ZuZB1OEc5RE6NrQBu9SvhXyDrBkTybsonKH7fkwdQNXTSUT1ovsnUR76OyvhG0h4M72IUBffR/rSNizYXK+Q2WVkpX1pwLNJoTmLwNX1ktNYvPt6ejdG1BLBwgEVmGgfQAAALEAAABQSwECFAMUAAgACACye1NcBFZhoH0AAACxAAAADwAYAAAAAAAAAAAAtoEAAAAAVEMzX2JlZm9yZS55YW1sdXgLAAEEAAAAAAQAAAAAVVQFAAFAEJdpUEsFBgAAAAABAAEAVQAAANoAAAAAAA==\r\n----------------------------127308995100818139707097--",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "text"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Check Publish Status for parameters-schemas/add-overriden-description/before.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                                    "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                                    "var respBody = pm.response.json();",
+                                                    "if (respBody.status !== 'complete' && retry < 15) {",
+                                                    "    retry++;",
+                                                    "    delay = 5000 + delay;",
+                                                    "    pm.test('Status is OK, response is JSON', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.response.to.be.ok;",
+                                                    "    });",
+                                                    "    setTimeout(function () {}, delay);",
+                                                    "    postman.setNextRequest(request.name);",
+                                                    "    pm.environment.set('com_retry_counter', retry);",
+                                                    "    pm.environment.set('com_retry_delay', delay);",
+                                                    "} else {",
+                                                    "    pm.environment.set('com_retry_counter', null);",
+                                                    "    pm.environment.set('com_retry_delay', null);",
+                                                    "    pm.test('Status code is 200 and publication completed', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.expect(respBody.status).to.eql('complete');",
+                                                    "    });",
+                                                    "}"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish/{{parameters_before_publish_id}}/status",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish",
+                                                "{{parameters_before_publish_id}}",
+                                                "status"
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Publish parameters-schemas/add-overriden-description/after.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 202', function () {",
+                                                    "    pm.response.to.have.status(202);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('parameters_after_publish_id', data.publishId);",
+                                                    "setTimeout(() => {}, 5000);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Transfer-Encoding",
+                                                "value": "base64",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0000.2\",\r\n    \"previousVersion\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"TC3_after.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"TC3_after.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIAI58U1wAAAAAAAAAAAAAAAAOACAAVEMzX2FmdGVyLnlhbWx1eAsAAQQAAAAABAAAAABVVA0AB90Rl2ndEZdp1wWXaTXKSwoCMRCE4X0gd6gTxBlm1ztxIe68QhalBpykSbeCiHeX+Nj9VH1NWbMWwZKmNMVQ6qlJDIAXv1Kwy8YF2+NhbHd2K60K5jQPHINmv9jHb5T+LeBM/xVgt3XN/SHY0zHM/+g0bdVogucrhjdQSwcIBnc3KG0AAACJAAAAUEsBAhQDFAAIAAgAjnxTXAZ3NyhtAAAAiQAAAA4AGAAAAAAAAAAAALaBAAAAAFRDM19hZnRlci55YW1sdXgLAAEEAAAAAAQAAAAAVVQFAAHdEZdpUEsFBgAAAAABAAEAVAAAAMkAAAAAAA==\r\n----------------------------127308995100818139707097--",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "text"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Check Publish Status for parameters-schemas/add-overriden-description/after.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                                    "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                                    "var respBody = pm.response.json();",
+                                                    "if (respBody.status !== 'complete' && retry < 15) {",
+                                                    "    retry++;",
+                                                    "    delay = 5000 + delay;",
+                                                    "    pm.test('Status is OK, response is JSON', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.response.to.be.ok;",
+                                                    "    });",
+                                                    "    setTimeout(function () {}, delay);",
+                                                    "    postman.setNextRequest(request.name);",
+                                                    "    pm.environment.set('com_retry_counter', retry);",
+                                                    "    pm.environment.set('com_retry_delay', delay);",
+                                                    "} else {",
+                                                    "    pm.environment.set('com_retry_counter', null);",
+                                                    "    pm.environment.set('com_retry_delay', null);",
+                                                    "    pm.test('Status code is 200 and publication completed', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.expect(respBody.status).to.eql('complete');",
+                                                    "    });",
+                                                    "}"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish/{{parameters_after_publish_id}}/status",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish",
+                                                "{{parameters_after_publish_id}}",
+                                                "status"
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Validate parameters-schemas change (annotation) Copy",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test(\"TC3 → status 200\", () => pm.response.to.have.status(200));",
+                                                    "",
+                                                    "pm.test(\"TC3 → apiKind remained bwc\", () => {",
+                                                    "    let op = pm.response.json().operations[0];",
+                                                    "    pm.expect(op.previousOperation.apiKind).to.equal(\"bwc\");",
+                                                    "    pm.expect(op.currentOperation.apiKind).to.equal(\"bwc\");",
+                                                    "});",
+                                                    "",
+                                                    "pm.test(\"TC3 → breaking change = 1\", () => {",
+                                                    "    let s = pm.response.json().operations[0].changeSummary;",
+                                                    "    pm.expect(s.breaking).to.equal(1);",
+                                                    "    pm.expect(s[\"semi-breaking\"]).to.equal(0);",
+                                                    "    pm.expect(s.deprecated + s[\"non-breaking\"] + s.annotation + s.unclassified).to.equal(0);",
+                                                    "});"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_parameters}}/versions/0000.2/rest/changes?refPackageId={{package_parameters}}&previousVersion=0000.1&previousVersionPackageId={{package_parameters}}&apiAudience=all&apiType=rest&page=0&limit=100",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v4",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "versions",
+                                                "0000.2",
+                                                "rest",
+                                                "changes"
+                                            ],
+                                            "query": [
+                                                {
+                                                    "key": "refPackageId",
+                                                    "value": "{{package_parameters}}"
+                                                },
+                                                {
+                                                    "key": "previousVersion",
+                                                    "value": "0000.1"
+                                                },
+                                                {
+                                                    "key": "previousVersionPackageId",
+                                                    "value": "{{package_parameters}}"
+                                                },
+                                                {
+                                                    "key": "apiAudience",
+                                                    "value": "all"
+                                                },
+                                                {
+                                                    "key": "apiType",
+                                                    "value": "rest"
+                                                },
+                                                {
+                                                    "key": "page",
+                                                    "value": "0"
+                                                },
+                                                {
+                                                    "key": "limit",
+                                                    "value": "100"
+                                                }
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                }
+                            ]
+                        },
+                        {
+                            "name": "TC4_Risky no-bws",
+                            "item": [
+                                {
+                                    "name": "Create Package for parameters-schemas",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 201', function () {",
+                                                    "    pm.response.to.have.status(201);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('package_parameters', data.packageId);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\"id\": \"API-KIND-TEST-11.TC4\",\"Alias\": \"TC4\",\"name\": \"TC4_Risky no-bws\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for add-overriden-description\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Publish parameters-schemas/add-overriden-description/before.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 202', function () {",
+                                                    "    pm.response.to.have.status(202);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('parameters_before_publish_id', data.publishId);",
+                                                    "setTimeout(() => {}, 5000);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Transfer-Encoding",
+                                                "value": "base64",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"API-KIND-TEST-11.TC4\",\r\n    \"version\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"TC4_before.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"TC4_before.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIACV9U1wAAAAAAAAAAAAAAAAPACAAVEM0X2JlZm9yZS55YW1sdXgLAAEEAAAAAAQAAAAAVVQNAAf3Epdp+BKXaeUFl2lNjjsOwjAQRHtLvsN0qRLMp3KHKBCigCuYZAELYlve5Xd7SEIQ3ezM087ERMElbzGvTGW08uEYrVaAeLmSxcoxLbDcbzrvTpl9DBbTAdYqOTlzz08SyaCAE8lXAXxrW5dfFmsSdMwYPMtPb3nxobEIsTw86jHJxCkGJv49AYqZMcXfDTTEdfZJ+kG7rVZvUEsHCL5T7beOAAAAywAAAFBLAQIUAxQACAAIACV9U1y+U+23jgAAAMsAAAAPABgAAAAAAAAAAAC2gQAAAABUQzRfYmVmb3JlLnlhbWx1eAsAAQQAAAAABAAAAABVVAUAAfcSl2lQSwUGAAAAAAEAAQBVAAAA6wAAAAAA\r\n----------------------------127308995100818139707097--",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "text"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Check Publish Status for parameters-schemas/add-overriden-description/before.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                                    "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                                    "var respBody = pm.response.json();",
+                                                    "if (respBody.status !== 'complete' && retry < 15) {",
+                                                    "    retry++;",
+                                                    "    delay = 5000 + delay;",
+                                                    "    pm.test('Status is OK, response is JSON', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.response.to.be.ok;",
+                                                    "    });",
+                                                    "    setTimeout(function () {}, delay);",
+                                                    "    postman.setNextRequest(request.name);",
+                                                    "    pm.environment.set('com_retry_counter', retry);",
+                                                    "    pm.environment.set('com_retry_delay', delay);",
+                                                    "} else {",
+                                                    "    pm.environment.set('com_retry_counter', null);",
+                                                    "    pm.environment.set('com_retry_delay', null);",
+                                                    "    pm.test('Status code is 200 and publication completed', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.expect(respBody.status).to.eql('complete');",
+                                                    "    });",
+                                                    "}"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish/{{parameters_before_publish_id}}/status",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish",
+                                                "{{parameters_before_publish_id}}",
+                                                "status"
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Publish parameters-schemas/add-overriden-description/after.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 202', function () {",
+                                                    "    pm.response.to.have.status(202);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('parameters_after_publish_id', data.publishId);",
+                                                    "setTimeout(() => {}, 5000);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Transfer-Encoding",
+                                                "value": "base64",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0000.2\",\r\n    \"previousVersion\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"TC4_after.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"TC4_after.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIACp9U1wAAAAAAAAAAAAAAAAOACAAVEM0X2FmdGVyLnlhbWx1eAsAAQQAAAAABAAAAABVVA0ABwATl2kBE5dp8QWXaTWNSwoCMRAF94Hc4V0gcQZd9U5ciDuvELXVoJOEdPtDvLtGnV3xquDlwimUSJj6znfWxLTPZA2gUc9MWAThGebrVduuXCXmROh932JrStCjfPtJYf0RcGD9EyCXYQj1QViyojWjuLvPrzvFtCOk7Da37WgqS8lJWAjPlzVvUEsHCCeKivN9AAAAowAAAFBLAQIUAxQACAAIACp9U1wniorzfQAAAKMAAAAOABgAAAAAAAAAAAC2gQAAAABUQzRfYWZ0ZXIueWFtbHV4CwABBAAAAAAEAAAAAFVUBQABABOXaVBLBQYAAAAAAQABAFQAAADZAAAAAAA=\r\n----------------------------127308995100818139707097--",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "text"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Check Publish Status for parameters-schemas/add-overriden-description/after.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                                    "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                                    "var respBody = pm.response.json();",
+                                                    "if (respBody.status !== 'complete' && retry < 15) {",
+                                                    "    retry++;",
+                                                    "    delay = 5000 + delay;",
+                                                    "    pm.test('Status is OK, response is JSON', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.response.to.be.ok;",
+                                                    "    });",
+                                                    "    setTimeout(function () {}, delay);",
+                                                    "    postman.setNextRequest(request.name);",
+                                                    "    pm.environment.set('com_retry_counter', retry);",
+                                                    "    pm.environment.set('com_retry_delay', delay);",
+                                                    "} else {",
+                                                    "    pm.environment.set('com_retry_counter', null);",
+                                                    "    pm.environment.set('com_retry_delay', null);",
+                                                    "    pm.test('Status code is 200 and publication completed', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.expect(respBody.status).to.eql('complete');",
+                                                    "    });",
+                                                    "}"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish/{{parameters_after_publish_id}}/status",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish",
+                                                "{{parameters_after_publish_id}}",
+                                                "status"
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Validate parameters-schemas change (annotation) Copy",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test(\"TC4 → status 200\", () => pm.response.to.have.status(200));",
+                                                    "",
+                                                    "pm.test(\"TC4 → apiKind is no-bwc in both versions\", () => {",
+                                                    "    let op = pm.response.json().operations[0];",
+                                                    "    pm.expect(op.previousOperation.apiKind).to.equal(\"no-bwc\");",
+                                                    "    pm.expect(op.currentOperation.apiKind).to.equal(\"no-bwc\");",
+                                                    "});",
+                                                    "",
+                                                    "pm.test(\"TC4 → semi-breaking = 1, no breaking changes\", () => {",
+                                                    "    let s = pm.response.json().operations[0].changeSummary;",
+                                                    "    pm.expect(s.breaking).to.equal(0);",
+                                                    "    pm.expect(s[\"semi-breaking\"]).to.equal(1);",
+                                                    "    pm.expect(s.deprecated + s[\"non-breaking\"] + s.annotation + s.unclassified).to.equal(0);",
+                                                    "});"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_parameters}}/versions/0000.2/rest/changes?refPackageId={{package_parameters}}&previousVersion=0000.1&previousVersionPackageId={{package_parameters}}&apiAudience=all&apiType=rest&page=0&limit=100",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v4",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "versions",
+                                                "0000.2",
+                                                "rest",
+                                                "changes"
+                                            ],
+                                            "query": [
+                                                {
+                                                    "key": "refPackageId",
+                                                    "value": "{{package_parameters}}"
+                                                },
+                                                {
+                                                    "key": "previousVersion",
+                                                    "value": "0000.1"
+                                                },
+                                                {
+                                                    "key": "previousVersionPackageId",
+                                                    "value": "{{package_parameters}}"
+                                                },
+                                                {
+                                                    "key": "apiAudience",
+                                                    "value": "all"
+                                                },
+                                                {
+                                                    "key": "apiType",
+                                                    "value": "rest"
+                                                },
+                                                {
+                                                    "key": "page",
+                                                    "value": "0"
+                                                },
+                                                {
+                                                    "key": "limit",
+                                                    "value": "100"
+                                                }
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                }
+                            ]
+                        },
+                        {
+                            "name": "TC5_Risky for 2x operations",
+                            "item": [
+                                {
+                                    "name": "Create Package for parameters-schemas",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 201', function () {",
+                                                    "    pm.response.to.have.status(201);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('package_parameters', data.packageId);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\"id\": \"API-KIND-TEST-11.TC5\",\"Alias\": \"TC5\",\"name\": \"TC5_Risky for 2x operations\",\"parentId\": \"{{static_root_group}}\",\"kind\": \"package\",\"description\": \"Package for add-overriden-description\",\"serviceName\": \"\",\"imageUrl\": \"\",\"restGroupingPrefix\": \"/api/{group}/\"}",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Publish parameters-schemas/add-overriden-description/before.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 202', function () {",
+                                                    "    pm.response.to.have.status(202);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('parameters_before_publish_id', data.publishId);",
+                                                    "setTimeout(() => {}, 5000);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Transfer-Encoding",
+                                                "value": "base64",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"API-KIND-TEST-11.TC5\",\r\n    \"version\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"TC5_before.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"TC5_before.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIAD1+U1wAAAAAAAAAAAAAAAAPACAAVEM1X2JlZm9yZS55YW1sdXgLAAEEAAAAAAQAAAAAVVQNAAcGFZdpBxWXaQEGl2nVj71Ow0AQhHtLfofpUjk4RDTXoRQRShFe4WIvyYrcD7cbEr89ZxuDkRA93Wpmdme/EMnbyAbrZb2sy4L9SzBlASjrmQw2VugBj89PvfZOSTh4g9UYLoto9SRD/i6SjhNwJP2cALk4Z1NnsCVFn5mMW5V7q1f2rYEP1eHaTE60yTrSXPZ1BajAufjtQqn7FgGfkwZndqxzWZoTOWvmUkbqYs6yVzpSmqxEEoMXmnct7ut68WO5JWkSRx3o97seffg0yC+km0RWqYf9H6yrP1hHlrYsPgBQSwcI2L5xBdUAAAApAgAAUEsBAhQDFAAIAAgAPX5TXNi+cQXVAAAAKQIAAA8AGAAAAAAAAAAAALaBAAAAAFRDNV9iZWZvcmUueWFtbHV4CwABBAAAAAAEAAAAAFVUBQABBhWXaVBLBQYAAAAAAQABAFUAAAAyAQAAAAA=\r\n----------------------------127308995100818139707097--",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "text"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Check Publish Status for parameters-schemas/add-overriden-description/before.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                                    "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                                    "var respBody = pm.response.json();",
+                                                    "if (respBody.status !== 'complete' && retry < 15) {",
+                                                    "    retry++;",
+                                                    "    delay = 5000 + delay;",
+                                                    "    pm.test('Status is OK, response is JSON', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.response.to.be.ok;",
+                                                    "    });",
+                                                    "    setTimeout(function () {}, delay);",
+                                                    "    postman.setNextRequest(request.name);",
+                                                    "    pm.environment.set('com_retry_counter', retry);",
+                                                    "    pm.environment.set('com_retry_delay', delay);",
+                                                    "} else {",
+                                                    "    pm.environment.set('com_retry_counter', null);",
+                                                    "    pm.environment.set('com_retry_delay', null);",
+                                                    "    pm.test('Status code is 200 and publication completed', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.expect(respBody.status).to.eql('complete');",
+                                                    "    });",
+                                                    "}"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish/{{parameters_before_publish_id}}/status",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish",
+                                                "{{parameters_before_publish_id}}",
+                                                "status"
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Publish parameters-schemas/add-overriden-description/after.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test('Status code is 202', function () {",
+                                                    "    pm.response.to.have.status(202);",
+                                                    "});",
+                                                    "var data = JSON.parse(responseBody);",
+                                                    "pm.environment.set('parameters_after_publish_id', data.publishId);",
+                                                    "setTimeout(() => {}, 5000);"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish"
+                                            ]
+                                        },
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                                "type": "default"
+                                            },
+                                            {
+                                                "key": "Content-Transfer-Encoding",
+                                                "value": "base64",
+                                                "type": "default"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"version\": \"0000.2\",\r\n    \"previousVersion\": \"0000.1\",\r\n    \"status\": \"release\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"TC5_after.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"TC5_after.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQACAAIAER+U1wAAAAAAAAAAAAAAAAOACAAVEM1X2FmdGVyLnlhbWx1eAsAAQQAAAAABAAAAABVVA0ABxAVl2kQFZdpEQaXadWPvU7EQAyE+0h5h+muSkhANNuhK06IAl5hScydxe0Pax+Qt2c3RyBIiJ7Omhl7/IVI3kY2uGq7tqsr9k/B1BWgrEcy2Fqha9w83BbtlZJw8AZ925dwXUWrB5nzF5H0PAF70s8JkJNzNk0GO1KUzGK8N7m3eWY/GvjQPL4NixNtso40l31dARpwLn45UZq+RcDnpMGRHetaluFAzpq1lJGmmLOiif1+cRJJDF5oXbW57LrNj92RZEgcdYa/vyvk86NBfgHdJrJKhfVfoPZ/oJ5Rxrr6AFBLBwjQ9qJa1QAAACcCAABQSwECFAMUAAgACABEflNc0PaiWtUAAAAnAgAADgAYAAAAAAAAAAAAtoEAAAAAVEM1X2FmdGVyLnlhbWx1eAsAAQQAAAAABAAAAABVVAUAARAVl2lQSwUGAAAAAAEAAQBUAAAAMQEAAAAA\r\n----------------------------127308995100818139707097--",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "text"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Check Publish Status for parameters-schemas/add-overriden-description/after.yaml",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "var retry = parseInt(pm.environment.get('com_retry_counter') || 0);",
+                                                    "var delay = parseInt(pm.environment.get('com_retry_delay') || 0);",
+                                                    "var respBody = pm.response.json();",
+                                                    "if (respBody.status !== 'complete' && retry < 15) {",
+                                                    "    retry++;",
+                                                    "    delay = 5000 + delay;",
+                                                    "    pm.test('Status is OK, response is JSON', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.response.to.be.ok;",
+                                                    "    });",
+                                                    "    setTimeout(function () {}, delay);",
+                                                    "    postman.setNextRequest(request.name);",
+                                                    "    pm.environment.set('com_retry_counter', retry);",
+                                                    "    pm.environment.set('com_retry_delay', delay);",
+                                                    "} else {",
+                                                    "    pm.environment.set('com_retry_counter', null);",
+                                                    "    pm.environment.set('com_retry_delay', null);",
+                                                    "    pm.test('Status code is 200 and publication completed', function () {",
+                                                    "        pm.response.to.have.status(200);",
+                                                    "        pm.expect(respBody.status).to.eql('complete');",
+                                                    "    });",
+                                                    "}"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_parameters}}/publish/{{parameters_after_publish_id}}/status",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v2",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "publish",
+                                                "{{parameters_after_publish_id}}",
+                                                "status"
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                },
+                                {
+                                    "name": "Validate parameters-schemas change (annotation) Copy",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test(\"TC5 → status 200\", () => pm.response.to.have.status(200));",
+                                                    "",
+                                                    "pm.test(\"TC5 → exactly 2 operations in the array\", () => {",
+                                                    "    let ops = pm.response.json().operations;",
+                                                    "    pm.expect(ops).to.be.an(\"array\").with.lengthOf(2);",
+                                                    "});",
+                                                    "",
+                                                    "pm.test(\"TC5 → both operations have apiKind = no-bwc\", () => {",
+                                                    "    let ops = pm.response.json().operations;",
+                                                    "    ops.forEach((op, i) => {",
+                                                    "        pm.expect(op.previousOperation.apiKind, `operation ${i+1}`).to.equal(\"no-bwc\");",
+                                                    "        pm.expect(op.currentOperation.apiKind,    `operation ${i+1}`).to.equal(\"no-bwc\");",
+                                                    "    });",
+                                                    "});",
+                                                    "",
+                                                    "pm.test(\"TC5 → both operations have semi-breaking = 1\", () => {",
+                                                    "    let ops = pm.response.json().operations;",
+                                                    "    ops.forEach((op, i) => {",
+                                                    "        let s = op.changeSummary;",
+                                                    "        pm.expect(s.breaking,        `operation ${i+1} - breaking`).to.equal(0);",
+                                                    "        pm.expect(s[\"semi-breaking\"], `operation ${i+1} - semi-breaking`).to.equal(1);",
+                                                    "    });",
+                                                    "});"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/v4/packages/{{package_parameters}}/versions/0000.2/rest/changes?refPackageId={{package_parameters}}&previousVersion=0000.1&previousVersionPackageId={{package_parameters}}&apiAudience=all&apiType=rest&page=0&limit=100",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "v4",
+                                                "packages",
+                                                "{{package_parameters}}",
+                                                "versions",
+                                                "0000.2",
+                                                "rest",
+                                                "changes"
+                                            ],
+                                            "query": [
+                                                {
+                                                    "key": "refPackageId",
+                                                    "value": "{{package_parameters}}"
+                                                },
+                                                {
+                                                    "key": "previousVersion",
+                                                    "value": "0000.1"
+                                                },
+                                                {
+                                                    "key": "previousVersionPackageId",
+                                                    "value": "{{package_parameters}}"
+                                                },
+                                                {
+                                                    "key": "apiAudience",
+                                                    "value": "all"
+                                                },
+                                                {
+                                                    "key": "apiType",
+                                                    "value": "rest"
+                                                },
+                                                {
+                                                    "key": "page",
+                                                    "value": "0"
+                                                },
+                                                {
+                                                    "key": "limit",
+                                                    "value": "100"
+                                                }
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Cleanup",
+                            "item": [
+                                {
+                                    "name": "Delete static_test_2 data from DB",
+                                    "event": [
+                                        {
+                                            "listen": "test",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    "pm.test(\"Status code is 204\", function () {\r",
+                                                    "    pm.response.to.have.status(204);\r",
+                                                    "});\r",
+                                                    ""
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "listen": "prerequest",
+                                            "script": {
+                                                "type": "text/javascript",
+                                                "exec": [
+                                                    ""
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "request": {
+                                        "url": {
+                                            "raw": "{{SERVER_HOST}}/api/internal/clear/API-KIND-TEST-11",
+                                            "host": [
+                                                "{{SERVER_HOST}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "internal",
+                                                "clear",
+                                                "API-KIND-TEST-11"
+                                            ]
+                                        },
+                                        "method": "DELETE",
+                                        "header": [
+                                            {
+                                                "key": "api-key",
+                                                "value": "{{at-api-key}}",
+                                                "type": "default"
+                                            }
+                                        ]
+                                    },
+                                    "response": [],
+                                    "protocolProfileBehavior": {}
+                                }
+                            ]
                         }
                     ]
                 }
