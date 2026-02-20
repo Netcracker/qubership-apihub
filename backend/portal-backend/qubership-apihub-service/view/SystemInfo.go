@@ -5,11 +5,12 @@ import (
 )
 
 type SystemInfo struct {
-	BackendVersion      string   `json:"backendVersion"`
-	ProductionMode      bool     `json:"productionMode"`
-	Notification        string   `json:"notification,omitempty"`
-	ExternalLinks       []string `json:"externalLinks"`
-	MigrationInProgress bool     `json:"migrationInProgress"`
+	BackendVersion      string         `json:"backendVersion"`
+	ProductionMode      bool           `json:"productionMode"`
+	Notification        string         `json:"notification,omitempty"`
+	ExternalLinks       []string       `json:"externalLinks"`
+	MigrationInProgress bool           `json:"migrationInProgress"`
+	FeatureFlags        map[string]any `json:"featureFlags"`
 }
 
 type SystemConfigurationInfo_deprecated struct {

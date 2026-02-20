@@ -189,10 +189,11 @@ func (a *BuildResultToEntitiesReader) ReadTransformedDocumentsToEntity() (*entit
 	}, nil
 }
 
-func (a *BuildResultToEntitiesReader) ReadOperationsToEntities() ([]*entity.OperationEntity, []*entity.OperationDataEntity, map[string]entity.OperationInfo, error) {
+func (a *BuildResultToEntitiesReader) ReadOperationsToEntities() ([]*entity.OperationEntity, []*entity.OperationDataEntity, []*entity.OperationSearchTextEntity, map[string]entity.OperationInfo, error) {
 	operationsFromZipReadStart := time.Now()
 	operationEntities := make([]*entity.OperationEntity, 0)
 	operationDataEntities := make([]*entity.OperationDataEntity, 0)
+	operationSearchTexts := make([]*entity.OperationSearchTextEntity, 0)
 	operationsInfo := make(map[string]entity.OperationInfo)
 	operationsExternalMetadataMap := a.calculateOperationsExternalMetadataMap()
 	for _, operation := range a.PackageOperations.Operations {
@@ -204,7 +205,7 @@ func (a *BuildResultToEntitiesReader) ReadOperationsToEntities() ([]*entity.Oper
 			var err error
 			fileData, err = ReadZipFile(fileHeader)
 			if err != nil {
-				return nil, nil, nil, &exception.CustomError{
+				return nil, nil, nil, nil, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.InvalidPackageArchivedFile,
 					Message: exception.InvalidPackageArchivedFileMsg,
@@ -254,7 +255,7 @@ func (a *BuildResultToEntitiesReader) ReadOperationsToEntities() ([]*entity.Oper
 		var err error
 		customTags, err = operationMetadata.GetMapStringToInterface("customTags")
 		if err != nil {
-			return nil, nil, nil, &exception.CustomError{
+			return nil, nil, nil, nil, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidPackagedFile,
 				Message: exception.InvalidPackagedFileMsg,
@@ -299,10 +300,63 @@ func (a *BuildResultToEntitiesReader) ReadOperationsToEntities() ([]*entity.Oper
 		})
 
 		if dataHash != nil {
+			searchScope := map[string]interface{}{}
+			if allVal, ok := operation.SearchScopes[view.ScopeAll]; ok {
+				searchScope[view.ScopeAll] = allVal
+			}
 			operationDataEntities = append(operationDataEntities, &entity.OperationDataEntity{
 				DataHash:    *dataHash,
 				Data:        fileData,
-				SearchScope: operation.SearchScopes,
+				SearchScope: searchScope,
+			})
+		}
+
+		var searchTextData []byte
+		var searchTextHash string
+		if operation.Search == nil || operation.Search.UseOperationDataAsSearchText {
+			if dataHash != nil {
+				searchTextData = fileData
+				searchTextHash = *dataHash
+			}
+		} else {
+			searchTextFilePath := operation.Search.SearchTextFilePath
+			if searchTextFilePath == "" {
+				return nil, nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackagedFile,
+					Message: exception.InvalidPackagedFileMsg,
+					Params: map[string]interface{}{"file": "operations.json",
+						"error": fmt.Sprintf("operation %s has search.useOperationDataAsSearchText=false but searchTextFilePath is empty", operation.OperationId)},
+				}
+			}
+			searchTextFileHeader, found := a.UncategorizedFileHeaders[searchTextFilePath]
+			if !found {
+				return nil, nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackageArchivedFile,
+					Message: exception.InvalidPackageArchivedFileMsg,
+					Params: map[string]interface{}{"file": searchTextFilePath,
+						"error": fmt.Sprintf("search text file not found for operation %s", operation.OperationId)},
+				}
+			}
+			searchTextData, err = ReadZipFile(searchTextFileHeader)
+			if err != nil {
+				return nil, nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackageArchivedFile,
+					Message: exception.InvalidPackageArchivedFileMsg,
+					Params:  map[string]interface{}{"file": searchTextFilePath, "error": err.Error()},
+				}
+			}
+			searchTextHash = utils.GetEncodedXXHash128(searchTextData)
+		}
+
+		if len(searchTextData) > 0 {
+			operationSearchTexts = append(operationSearchTexts, &entity.OperationSearchTextEntity{
+				OperationId:    operation.OperationId,
+				ApiType:        operation.ApiType,
+				SearchTextData: searchTextData,
+				SearchTextHash: searchTextHash,
 			})
 		}
 
@@ -312,7 +366,7 @@ func (a *BuildResultToEntitiesReader) ReadOperationsToEntities() ([]*entity.Oper
 		}
 	}
 	log.Debugf("Zip operations reading time: %vms", time.Since(operationsFromZipReadStart).Milliseconds())
-	return operationEntities, operationDataEntities, operationsInfo, nil
+	return operationEntities, operationDataEntities, operationSearchTexts, operationsInfo, nil
 }
 
 func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(publishingOperationsInfo map[string]entity.OperationInfo, operationRepository repository.OperationRepository) ([]*entity.VersionComparisonEntity, []*entity.OperationComparisonEntity, []string, map[string]view.ComparisonKey, error) {

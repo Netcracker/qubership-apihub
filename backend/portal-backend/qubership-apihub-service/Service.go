@@ -336,7 +336,8 @@ func main() {
 	r.HandleFunc("/api/v1/debug/logs/checkLevel", security.Secure(logsController.CheckLogLevel)).Methods(http.MethodGet)
 
 	//Search
-	r.HandleFunc("/api/v3/search/{searchLevel}", security.Secure(searchController.Search)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v3/search/{searchLevel}", security.Secure(searchController.Search_deprecated)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v4/search/{searchLevel}", security.Secure(searchController.Search)).Methods(http.MethodPost)
 
 	r.HandleFunc("/api/v2/builders/{builderId}/tasks", security.Secure(publishV2Controller.GetFreeBuild)).Methods(http.MethodPost)
 

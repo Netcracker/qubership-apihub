@@ -21,6 +21,7 @@ type Config struct {
 	Cleanup              CleanupConfig
 	Extensions           []view.Extension
 	Ai                   AIConfig
+	FeatureFlags         map[string]any
 }
 
 type DatabaseConfig struct {

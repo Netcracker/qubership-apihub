@@ -8,20 +8,6 @@ const SearchLevelDocuments = "documents"
 
 const ScopeAll = "all"
 
-const RestScopeRequest = "request"
-const RestScopeResponse = "response"
-const RestScopeAnnotation = "annotation"
-const RestScopeExamples = "examples"
-const RestScopeProperties = "properties"
-
-func ValidRestOperationScope(scope string) bool {
-	switch scope {
-	case ScopeAll, RestScopeRequest, RestScopeResponse, RestScopeAnnotation, RestScopeExamples, RestScopeProperties:
-		return true
-	}
-	return false
-}
-
 type PublicationDateInterval struct {
 	// TODO: probably user's timezone is required to handle dates properly
 	StartDate time.Time `json:"startDate"`
@@ -30,13 +16,11 @@ type PublicationDateInterval struct {
 
 type OperationSearchParams struct {
 	ApiType        string   `json:"apiType"`
-	Scopes         []string `json:"scope"`
-	DetailedScopes []string `json:"detailedScope"`
 	Methods        []string `json:"methods"`
 	OperationTypes []string `json:"operationTypes"`
 }
 
-type SearchQueryReq struct {
+type SearchQueryReq_deprecated struct {
 	SearchString            string                  `json:"searchString" validate:"required"`
 	PackageIds              []string                `json:"packageIds"`
 	Versions                []string                `json:"versions"`
@@ -45,6 +29,33 @@ type SearchQueryReq struct {
 	OperationSearchParams   *OperationSearchParams  `json:"operationParams"`
 	Limit                   int                     `json:"-"`
 	Page                    int                     `json:"-"`
+}
+
+type SearchQueryReq struct {
+	SearchString            string                  `json:"searchString" validate:"required"`
+	ApiType                 string                  `json:"apiType" validate:"required"`
+	Workspace               string                  `json:"workspace" validate:"required"`
+	Status                  string                  `json:"status" validate:"required"`
+	PackageIds              []string                `json:"packageIds"`
+	Versions                []string                `json:"versions"`
+	PublicationDateInterval PublicationDateInterval `json:"creationDateInterval"`
+	Limit                   int                     `json:"-"`
+	Page                    int                     `json:"-"`
+}
+
+func (r SearchQueryReq) ToDeprecated() SearchQueryReq_deprecated {
+	req := SearchQueryReq_deprecated{
+		SearchString:            r.SearchString,
+		PackageIds:              r.PackageIds,
+		Versions:                r.Versions,
+		PublicationDateInterval: r.PublicationDateInterval,
+		Limit:                   r.Limit,
+		Page:                    r.Page,
+	}
+	if r.Status != "" {
+		req.Statuses = []string{r.Status}
+	}
+	return req
 }
 
 type SearchResult struct {
@@ -62,7 +73,7 @@ type OperationSearchWeightsDebug struct {
 	OperationOpenCount       float64 `json:"operationOpenCount"`
 }
 
-type CommonOperationSearchResult struct {
+type CommonOperationSearchResult_deprecated struct {
 	PackageId      string   `json:"packageId"`
 	PackageName    string   `json:"name"`
 	ParentPackages []string `json:"parentPackages"`
@@ -74,9 +85,28 @@ type CommonOperationSearchResult struct {
 	Debug OperationSearchWeightsDebug `json:"debug,omitempty"`
 }
 
+type CommonOperationSearchResult struct {
+	PackageId      string   `json:"packageId"`
+	PackageName    string   `json:"name"`
+	ParentPackages []string `json:"parentPackages"`
+	VersionStatus  string   `json:"status"`
+	Version        string   `json:"version"`
+	Title          string   `json:"title"`
+}
+
+type RestOperationSearchResult_deprecated struct {
+	RestOperationView
+	CommonOperationSearchResult_deprecated
+}
+
 type RestOperationSearchResult struct {
 	RestOperationView
 	CommonOperationSearchResult
+}
+
+type GraphQLOperationSearchResult_deprecated struct {
+	GraphQLOperationView
+	CommonOperationSearchResult_deprecated
 }
 
 type GraphQLOperationSearchResult struct {

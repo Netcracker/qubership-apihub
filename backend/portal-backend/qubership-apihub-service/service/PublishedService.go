@@ -457,7 +457,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 		return err
 	}
 
-	operationEntities, operationDataEntities, operationsInfo, err := buildArcEntitiesReader.ReadOperationsToEntities()
+	operationEntities, operationDataEntities, operationSearchTexts, operationsInfo, err := buildArcEntitiesReader.ReadOperationsToEntities()
 	if err != nil {
 		return err
 	}
@@ -628,6 +628,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 		versionInternalDocDataEntities,
 		comparisonInternalDocEntities,
 		comparisonInternalDocDataEntities,
+		operationSearchTexts,
 	)
 	utils.PerfLog(time.Since(start).Milliseconds(), 15000, "publishPackage: CreateVersionWithData")
 	if err != nil {

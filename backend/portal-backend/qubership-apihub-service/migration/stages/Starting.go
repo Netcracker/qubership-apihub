@@ -45,5 +45,14 @@ on migration."version_comparison_%s"(package_id,version,revision,previous_packag
 	if err != nil {
 		return err
 	}
+	_, err = d.cp.GetConnection().ExecContext(d.migrationCtx,
+		fmt.Sprintf(`create table migration."fts_operation_search_text_tmp_%s" (
+			package_id varchar, version varchar, revision integer,
+			operation_id varchar, api_type varchar, status varchar,
+			search_text_hash varchar, search_text_data bytea,
+			PRIMARY KEY (package_id, version, revision, operation_id));`, d.ent.Id))
+	if err != nil {
+		return err
+	}
 	return nil
 }

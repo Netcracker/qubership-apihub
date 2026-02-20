@@ -22,18 +22,7 @@ type OperationSearchWeight struct {
 	OpenCountWeight float64 `pg:"open_count_weight, type:real, use_zero"`
 }
 
-type OperationSearchScopeFilter struct {
-	FilterAll bool `pg:"filter_all, type:boolean, use_zero"`
-
-	FilterRequest    bool `pg:"filter_request, type:boolean, use_zero"`
-	FilterResponse   bool `pg:"filter_response, type:boolean, use_zero"`
-	FilterAnnotation bool `pg:"filter_annotation, type:boolean, use_zero"`
-	FilterExamples   bool `pg:"filter_examples, type:boolean, use_zero"`
-	FilterProperties bool `pg:"filter_properties, type:boolean, use_zero"`
-}
-
 type OperationSearchQuery struct {
-	OperationSearchScopeFilter
 	OperationSearchWeight
 	VersionStatusSearchWeight
 	SearchString      string    `pg:"search_filter, type:varchar, use_zero"`       //for postgres ts indexes
@@ -54,7 +43,7 @@ type OperationSearchQuery struct {
 	GraphqlApiType string `pg:"graphql_api_type, type:varchar, use_zero"`
 }
 
-type OperationSearchResult struct {
+type OperationSearchResult_deprecated struct {
 	tableName struct{} `pg:",discard_unknown_columns"`
 
 	OperationEntity
@@ -72,7 +61,16 @@ type OperationSearchResult struct {
 	AllTsRank          float64 `pg:"all_ts.rank, type:real"`
 }
 
-func MakeOperationSearchQueryEntity(searchQuery *view.SearchQueryReq) (*OperationSearchQuery, error) {
+type OperationSearchResult struct {
+	tableName struct{} `pg:",discard_unknown_columns"`
+
+	OperationEntity
+	PackageName   string   `pg:"name, type:varchar"`
+	VersionStatus string   `pg:"status, type:varchar"`
+	ParentNames   []string `pg:"parent_names, type:varchar[]"`
+}
+
+func MakeOperationSearchQueryEntity(searchQuery *view.SearchQueryReq_deprecated) (*OperationSearchQuery, error) {
 
 	//todo probably need to replace more symbols
 	ftsSearchString := searchQuery.SearchString
@@ -131,8 +129,20 @@ func MakeOperationSearchQueryEntity(searchQuery *view.SearchQueryReq) (*Operatio
 	return searchQueryEntity, nil
 }
 
-func MakeOperationSearchResultView(ent OperationSearchResult) interface{} {
-	operationSearchResult := view.CommonOperationSearchResult{
+type GlobalOperationSearchQuery struct {
+	OriginalTextInput string    `pg:"original_text_input, type:varchar, use_zero"`
+	ApiType           string    `pg:"api_type, type:varchar, use_zero"`
+	Packages          []string  `pg:"packages, type:varchar[], use_zero"`
+	Versions          []string  `pg:"versions, type:varchar[], use_zero"`
+	Status            string    `pg:"status, type:varchar, use_zero"`
+	StartDate         time.Time `pg:"start_date, type:timestamp without time zone, use_zero"`
+	EndDate           time.Time `pg:"end_date, type:timestamp without time zone, use_zero"`
+	Limit             int       `pg:"limit, type:integer, use_zero"`
+	Offset            int       `pg:"offset, type:integer, use_zero"`
+}
+
+func MakeOperationSearchResultView(ent OperationSearchResult_deprecated) interface{} {
+	operationSearchResult := view.CommonOperationSearchResult_deprecated{
 		PackageId:      ent.PackageId,
 		PackageName:    ent.PackageName,
 		ParentPackages: ent.ParentNames,
@@ -149,6 +159,31 @@ func MakeOperationSearchResultView(ent OperationSearchResult) interface{} {
 			OperationOpenCountWeight: ent.OpenCountWeight,
 			OperationOpenCount:       ent.OperationOpenCount,
 		},
+	}
+
+	switch ent.Type {
+	case string(view.RestApiType):
+		return view.RestOperationSearchResult_deprecated{
+			CommonOperationSearchResult_deprecated: operationSearchResult,
+			RestOperationView:                      MakeRestOperationView(&ent.OperationEntity),
+		}
+	case string(view.GraphqlApiType):
+		return view.GraphQLOperationSearchResult_deprecated{
+			CommonOperationSearchResult_deprecated: operationSearchResult,
+			GraphQLOperationView:                   MakeGraphQLOperationView(&ent.OperationEntity),
+		}
+	}
+	return operationSearchResult
+}
+
+func MakeGlobalOperationSearchResultView(ent OperationSearchResult) interface{} {
+	operationSearchResult := view.CommonOperationSearchResult{
+		PackageId:      ent.PackageId,
+		PackageName:    ent.PackageName,
+		ParentPackages: ent.ParentNames,
+		VersionStatus:  ent.VersionStatus,
+		Version:        view.MakeVersionRefKey(ent.Version, ent.Revision),
+		Title:          ent.Title,
 	}
 
 	switch ent.Type {
@@ -218,7 +253,7 @@ type PackageSearchResult struct {
 	VersionOpenCount     float64 `pg:"version_open_count, type:real"`
 }
 
-func MakePackageSearchQueryEntity(searchQuery *view.SearchQueryReq) (*PackageSearchQuery, error) {
+func MakePackageSearchQueryEntity(searchQuery *view.SearchQueryReq_deprecated) (*PackageSearchQuery, error) {
 	searchQueryEntity := &PackageSearchQuery{
 		TextFilter: searchQuery.SearchString,
 		Packages:   searchQuery.PackageIds,
@@ -321,7 +356,7 @@ type DocumentSearchResult struct {
 	DocumentOpenCount float64 `pg:"document_open_count, type:real"`
 }
 
-func MakeDocumentSearchQueryEntity(searchQuery *view.SearchQueryReq, unknownTypes []string) (*DocumentSearchQuery, error) {
+func MakeDocumentSearchQueryEntity(searchQuery *view.SearchQueryReq_deprecated, unknownTypes []string) (*DocumentSearchQuery, error) {
 	searchQueryEntity := &DocumentSearchQuery{
 		TextFilter:   searchQuery.SearchString,
 		Packages:     searchQuery.PackageIds,

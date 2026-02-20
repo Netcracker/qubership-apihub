@@ -64,6 +64,10 @@ func (d OpsMigration) StageCleanupAfter() error {
 	if err != nil {
 		log.Errorf("ops migration %s: failed to cleanup migration tables: %v", d.ent.Id, err.Error())
 	}
+	_, err = d.cp.GetConnection().Exec(fmt.Sprintf(`drop table migration."fts_operation_search_text_tmp_%s";`, d.ent.Id))
+	if err != nil {
+		log.Errorf("ops migration %s: failed to cleanup migration tables: %v", d.ent.Id, err.Error())
+	}
 	return nil
 }
 

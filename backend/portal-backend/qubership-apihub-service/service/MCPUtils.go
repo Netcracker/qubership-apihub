@@ -62,8 +62,8 @@ func convertPackagesToMCP(packages *view.Packages) *view.PackagesMCP {
 	return &view.PackagesMCP{Packages: converted}
 }
 
-// transformOperations transforms view.RestOperationSearchResult to TransformedOperation
-func transformOperations(items []view.RestOperationSearchResult) []view.TransformedOperation {
+// transformOperations transforms view.RestOperationSearchResult_deprecated to TransformedOperation
+func transformOperations(items []view.RestOperationSearchResult_deprecated) []view.TransformedOperation {
 	transformed := make([]view.TransformedOperation, len(items))
 
 	for i, item := range items {

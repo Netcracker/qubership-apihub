@@ -42,8 +42,8 @@ type VersionService interface {
 	GetDefaultVersion(packageId string) (string, error)
 	GetVersionDetails(packageId string, versionName string) (*view.VersionDetails, error)
 	GetVersionReferencesV3(packageId string, versionName string) (*view.VersionReferencesV3, error)
-	SearchForPackages(searchReq view.SearchQueryReq) (*view.SearchResult, error)
-	SearchForDocuments(searchReq view.SearchQueryReq) (*view.SearchResult, error)
+	SearchForPackages(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error)
+	SearchForDocuments(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error)
 	GetVersionStatus(packageId string, version string) (string, error)
 	GetLatestRevision(packageId string, versionName string) (int, error)
 	GetVersionChanges(packageId, version, apiType string, severities []string, changelogCalculationParams view.VersionChangesReq) (*view.VersionChangesView, error)
@@ -1100,7 +1100,7 @@ func ReleaseVersionMatchesPattern(versionName string, pattern string) error {
 	return nil
 }
 
-func (v versionServiceImpl) SearchForPackages(searchReq view.SearchQueryReq) (*view.SearchResult, error) {
+func (v versionServiceImpl) SearchForPackages(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error) {
 	searchQuery, err := entity.MakePackageSearchQueryEntity(&searchReq)
 	if err != nil {
 		return nil, &exception.CustomError{
@@ -1141,7 +1141,7 @@ func (v versionServiceImpl) SearchForPackages(searchReq view.SearchQueryReq) (*v
 	return &view.SearchResult{Packages: &packages}, nil
 }
 
-func (v versionServiceImpl) SearchForDocuments(searchReq view.SearchQueryReq) (*view.SearchResult, error) {
+func (v versionServiceImpl) SearchForDocuments(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error) {
 	unknownTypes := make(map[string]bool, 0)
 	unknownTypes[string(view.Unknown)] = true
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
@@ -19,8 +20,9 @@ type OperationService interface {
 	GetOperationsTags(searchReq view.OperationBasicSearchReq, skipRefs bool) (*view.OperationTags, error)
 	GetOperationChanges(packageId string, version string, operationId string, previousPackageId string, previousVersion string, severities []string) (*view.OperationChangesView, error)
 	GetVersionChanges(packageId string, version string, apiType string, searchReq view.VersionChangesReq) (*view.VersionChangesView, error)
-	SearchForOperations(searchReq view.SearchQueryReq) (*view.SearchResult, error)
-	LiteSearchForOperations(searchReq view.SearchQueryReq) (*view.SearchResult, error)
+	SearchForOperations(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error)
+	LiteSearchForOperations(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error)
+	GlobalSearchForOperations(searchReq view.SearchQueryReq) (*view.SearchResult, error)
 	GetDeprecatedOperations(packageId string, version string, searchReq view.DeprecatedOperationListReq) (*view.Operations, error)
 	GetOperationDeprecatedItems(searchReq view.OperationBasicSearchReq) (*view.DeprecatedItems, error)
 	GetDeprecatedOperationsSummary(packageId string, version string) (*view.DeprecatedOperationsSummary, error)
@@ -558,7 +560,7 @@ func (o operationServiceImpl) GetVersionChanges(packageId string, version string
 	return changelog, nil
 }
 
-func (o operationServiceImpl) SearchForOperations(searchReq view.SearchQueryReq) (*view.SearchResult, error) {
+func (o operationServiceImpl) SearchForOperations(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error) {
 	searchQuery, err := entity.MakeOperationSearchQueryEntity(&searchReq)
 	if err != nil {
 		return nil, &exception.CustomError{
@@ -587,7 +589,7 @@ func (o operationServiceImpl) SearchForOperations(searchReq view.SearchQueryReq)
 		VersionArchivedStatusWeight: 0.1,
 	}
 
-	var operationEntities []entity.OperationSearchResult
+	var operationEntities []entity.OperationSearchResult_deprecated
 
 	if strings.HasPrefix(searchQuery.OriginalTextInput, "_") {
 		searchQuery.TextFilter = strings.TrimPrefix(searchQuery.TextFilter, "_")
@@ -617,7 +619,7 @@ func (o operationServiceImpl) SearchForOperations(searchReq view.SearchQueryReq)
 	return &view.SearchResult{Operations: &operations}, nil
 }
 
-func (o operationServiceImpl) LiteSearchForOperations(searchReq view.SearchQueryReq) (*view.SearchResult, error) {
+func (o operationServiceImpl) LiteSearchForOperations(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error) {
 	searchQuery, err := entity.MakeOperationSearchQueryEntity(&searchReq)
 	if err != nil {
 		return nil, &exception.CustomError{
@@ -644,9 +646,47 @@ func (o operationServiceImpl) LiteSearchForOperations(searchReq view.SearchQuery
 	return &view.SearchResult{Operations: &operations}, nil
 }
 
+func (o operationServiceImpl) GlobalSearchForOperations(searchReq view.SearchQueryReq) (*view.SearchResult, error) {
+	versions := searchReq.Versions
+	if versions == nil {
+		versions = make([]string, 0)
+	}
+
+	startDate := searchReq.PublicationDateInterval.StartDate
+	endDate := searchReq.PublicationDateInterval.EndDate
+	if startDate.IsZero() {
+		startDate = time.Unix(0, 0) // January 1, 1970
+	}
+	if endDate.IsZero() {
+		endDate = time.Unix(2556057600, 0) // December 31, 2050
+	}
+
+	searchQuery := &entity.GlobalOperationSearchQuery{
+		OriginalTextInput: searchReq.SearchString,
+		ApiType:           searchReq.ApiType,
+		Packages:          searchReq.PackageIds,
+		Versions:          versions,
+		Status:            searchReq.Status,
+		StartDate:         startDate,
+		EndDate:           endDate,
+		Limit:             searchReq.Limit,
+		Offset:            searchReq.Limit * searchReq.Page,
+	}
+
+	operationEntities, err := o.operationRepository.GlobalSearchForOperations(searchQuery)
+	if err != nil {
+		return nil, err
+	}
+	operations := make([]interface{}, 0)
+	for _, ent := range operationEntities {
+		operations = append(operations, entity.MakeGlobalOperationSearchResultView(ent))
+	}
+
+	return &view.SearchResult{Operations: &operations}, nil
+}
+
 func setOperationSearchParams(operationParams *view.OperationSearchParams, searchQuery *entity.OperationSearchQuery) error {
 	if operationParams == nil {
-		searchQuery.FilterAll = true
 		return nil
 	}
 	switch operationParams.ApiType {
@@ -667,55 +707,6 @@ func setOperationSearchParams(operationParams *view.OperationSearchParams, searc
 func setRestOperationSearchParams(restOperationParams *view.OperationSearchParams, searchQuery *entity.OperationSearchQuery) error {
 	searchQuery.ApiType = restOperationParams.ApiType
 	searchQuery.Methods = append(searchQuery.Methods, restOperationParams.Methods...)
-	if len(restOperationParams.Scopes)+len(restOperationParams.DetailedScopes) == 0 {
-		searchQuery.FilterAll = true
-	} else {
-		for _, s := range restOperationParams.Scopes {
-			switch s {
-			case view.RestScopeRequest:
-				searchQuery.FilterRequest = true
-			case view.RestScopeResponse:
-				searchQuery.FilterResponse = true
-			default:
-				return &exception.CustomError{
-					Status:  http.StatusBadRequest,
-					Code:    exception.InvalidSearchParameters,
-					Message: exception.InvalidSearchParametersMsg,
-					Params:  map[string]interface{}{"error": fmt.Sprintf("scope %v is invalid for %v apiType", s, restOperationParams.ApiType)},
-				}
-			}
-		}
-		if searchQuery.FilterRequest && searchQuery.FilterResponse {
-			searchQuery.FilterRequest = false
-			searchQuery.FilterResponse = false
-		}
-		for _, s := range restOperationParams.DetailedScopes {
-			switch s {
-			case view.RestScopeAnnotation:
-				searchQuery.FilterAnnotation = true
-			case view.RestScopeExamples:
-				searchQuery.FilterExamples = true
-			case view.RestScopeProperties:
-				searchQuery.FilterProperties = true
-			default:
-				return &exception.CustomError{
-					Status:  http.StatusBadRequest,
-					Code:    exception.InvalidSearchParameters,
-					Message: exception.InvalidSearchParametersMsg,
-					Params:  map[string]interface{}{"error": fmt.Sprintf("detailed scope %v is invalid", s)},
-				}
-			}
-		}
-		if searchQuery.FilterAnnotation && searchQuery.FilterExamples && searchQuery.FilterProperties {
-			searchQuery.FilterAnnotation = false
-			searchQuery.FilterExamples = false
-			searchQuery.FilterProperties = false
-		}
-		if !searchQuery.FilterRequest && !searchQuery.FilterResponse &&
-			!searchQuery.FilterAnnotation && !searchQuery.FilterExamples && !searchQuery.FilterProperties {
-			searchQuery.FilterAll = true
-		}
-	}
 	return nil
 }
 
@@ -732,7 +723,6 @@ func setGraphqlOperationSearchParams(graphqlOperationParams *view.OperationSearc
 		}
 	}
 	searchQuery.OperationTypes = append(searchQuery.OperationTypes, graphqlOperationParams.OperationTypes...)
-	searchQuery.FilterAll = true
 	return nil
 }
 

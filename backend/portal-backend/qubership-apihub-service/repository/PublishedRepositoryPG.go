@@ -155,7 +155,7 @@ func (p publishedRepositoryImpl) PatchVersion(packageId string, versionName stri
 				return fmt.Errorf("failed to delete fts_latest_release_operation_data: %w", err)
 			}
 		}
-		if statusChanged && ent.Status == string(view.Release) {
+		if statusChanged && ent.Status == string(view.Release) && !getPackage.ExcludeFromSearch {
 			calculateLiteSearchOperationsQuery := `
 								insert into fts_latest_release_operation_data
 								select o.package_id, o.version, o.revision, o.operation_id, o.type, to_tsvector(convert_from(od.data,'UTF-8'))  data_vector from
@@ -166,6 +166,15 @@ func (p publishedRepositoryImpl) PatchVersion(packageId string, versionName stri
 				ent.PackageId, ent.Version, ent.Revision)
 			if err != nil {
 				return fmt.Errorf("failed to insert fts_latest_release_operation_data: %w", err)
+			}
+		}
+
+		if statusChanged {
+			updateFtsSearchTextStatusQuery := `UPDATE fts_operation_search_text SET status = ? WHERE package_id = ? AND version = ? AND revision = ?`
+			_, err = tx.Exec(updateFtsSearchTextStatusQuery,
+				ent.Status, ent.PackageId, ent.Version, ent.Revision)
+			if err != nil {
+				return fmt.Errorf("failed to update fts_operation_search_text status: %w", err)
 			}
 		}
 
@@ -1159,7 +1168,8 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 	operationComparisons []*entity.OperationComparisonEntity, builderNotifications []*entity.BuilderNotificationsEntity,
 	versionComparisons []*entity.VersionComparisonEntity, serviceName string, pkg *entity.PackageEntity, versionComparisonsFromCache []string,
 	versionInternalDocEntities []*entity.VersionInternalDocumentEntity, versionInternalDocDataEntities []*entity.VersionInternalDocumentDataEntity,
-	comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity) error {
+	comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity,
+	operationSearchTexts []*entity.OperationSearchTextEntity) error {
 	if len(content) == 0 && len(refs) == 0 {
 		return nil
 	}
@@ -1369,28 +1379,6 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 				}
 			} else {
 				start = time.Now()
-				calculateRestTextSearchDataQuery := `
-				insert into ts_rest_operation_data
-					select data_hash,
-					to_tsvector(jsonb_extract_path_text(search_scope, ?)) scope_request,
-					to_tsvector(jsonb_extract_path_text(search_scope, ?)) scope_response,
-					to_tsvector(jsonb_extract_path_text(search_scope, ?)) scope_annotation,
-					to_tsvector(jsonb_extract_path_text(search_scope, ?)) scope_properties,
-					to_tsvector(jsonb_extract_path_text(search_scope, ?)) scope_examples
-					from operation_data
-					where data_hash in (select distinct data_hash from operation where package_id = ? and version = ? and revision = ? and type = ?)
-				on conflict (data_hash) do update
-				set scope_request = EXCLUDED.scope_request,
-				scope_response = EXCLUDED.scope_response,
-				scope_annotation = EXCLUDED.scope_annotation,
-				scope_properties = EXCLUDED.scope_properties,
-				scope_examples = EXCLUDED.scope_examples;`
-				_, err = tx.Exec(calculateRestTextSearchDataQuery,
-					view.RestScopeRequest, view.RestScopeResponse, view.RestScopeAnnotation, view.RestScopeProperties, view.RestScopeExamples,
-					version.PackageId, version.Version, version.Revision, view.RestApiType)
-				if err != nil {
-					return fmt.Errorf("failed to insert ts_rest_operation_data: %w", err)
-				}
 				calculateAllTextSearchDataQuery := `
 				insert into ts_operation_data
 					select data_hash,
@@ -1422,7 +1410,7 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 			}
 		}
 
-		if version.Status == string(view.Release) && !packageInfo.MigrationBuild {
+		if version.Status == string(view.Release) && !packageInfo.MigrationBuild && !pkg.ExcludeFromSearch {
 			start = time.Now()
 			if version.Revision > 1 {
 				cleanOldLiteSearchOperationsQuery := `delete from fts_latest_release_operation_data where package_id = ? and version = ? and revision = ?`
@@ -1445,6 +1433,70 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 				return fmt.Errorf("failed to insert fts_latest_release_operation_data: %w", err)
 			}
 			utils.PerfLog(time.Since(start).Milliseconds(), 1000, "CreateVersionWithData: fts_latest_release_operation_data insert")
+		}
+
+		if len(operationSearchTexts) > 0 && !pkg.ExcludeFromSearch {
+			if !packageInfo.MigrationBuild {
+				start = time.Now()
+				if version.Revision > 1 {
+					cleanOldFtsSearchTextQuery := `delete from fts_operation_search_text where package_id = ? and version = ? and revision = ?`
+					_, err = tx.Exec(cleanOldFtsSearchTextQuery,
+						version.PackageId, version.Version, version.Revision-1)
+					if err != nil {
+						return fmt.Errorf("failed to cleanup old revision fts_operation_search_text: %w", err)
+					}
+				}
+
+				for _, st := range operationSearchTexts {
+					insertFtsSearchTextQuery := `
+						INSERT INTO fts_operation_search_text (package_id, version, revision, operation_id, api_type, status, search_text_hash, data_vector)
+						VALUES (?, ?, ?, ?, ?, ?, ?, to_tsvector(convert_from(?, 'UTF-8')))
+						ON CONFLICT (package_id, version, revision, operation_id) DO UPDATE
+							SET search_text_hash = EXCLUDED.search_text_hash,
+								data_vector = EXCLUDED.data_vector`
+					_, err = tx.Exec(insertFtsSearchTextQuery,
+						version.PackageId, version.Version, version.Revision, st.OperationId,
+						st.ApiType, version.Status, st.SearchTextHash, st.SearchTextData)
+					if err != nil {
+						return fmt.Errorf("failed to insert fts_operation_search_text for operation %s: %w", st.OperationId, err)
+					}
+				}
+				utils.PerfLog(time.Since(start).Milliseconds(), 1000, "CreateVersionWithData: fts_operation_search_text insert")
+			} else if packageInfo.MigrationBuild {
+				// Store search texts in tmp table for selective recalculation at end of migration.
+				// Only populate for the latest revision of the version — older revisions are skipped.
+				var maxRevision int
+				_, err = tx.Query(pg.Scan(&maxRevision),
+					`SELECT COALESCE(MAX(revision), 0) FROM published_version WHERE package_id = ? AND version = ? AND deleted_at IS NULL`,
+					version.PackageId, version.Version)
+				if err != nil {
+					return fmt.Errorf("failed to get max revision for fts_operation_search_text: %w", err)
+				}
+				if version.Revision == maxRevision {
+					for _, st := range operationSearchTexts {
+						insertTmpQuery := fmt.Sprintf(`
+							INSERT INTO migration."fts_operation_search_text_tmp_%s"
+								(package_id, version, revision, operation_id, api_type, status, search_text_hash, search_text_data)
+							SELECT ?, ?, ?, ?, ?, ?, ?, ?
+							WHERE NOT EXISTS (
+								SELECT 1 FROM fts_operation_search_text
+								WHERE package_id = ? AND version = ? AND revision = ? AND operation_id = ?
+									AND search_text_hash = ?
+							)
+							ON CONFLICT (package_id, version, revision, operation_id) DO UPDATE
+								SET search_text_hash = EXCLUDED.search_text_hash,
+									search_text_data = EXCLUDED.search_text_data`, packageInfo.MigrationId)
+						_, err = tx.Exec(insertTmpQuery,
+							version.PackageId, version.Version, version.Revision, st.OperationId,
+							st.ApiType, version.Status, st.SearchTextHash, st.SearchTextData,
+							version.PackageId, version.Version, version.Revision, st.OperationId,
+							st.SearchTextHash)
+						if err != nil {
+							return fmt.Errorf("failed to insert into migration.fts_operation_search_text_tmp: %w", err)
+						}
+					}
+				}
+			}
 		}
 
 		if len(versionComparisons) != 0 {
@@ -2486,11 +2538,11 @@ func (p publishedRepositoryImpl) GetParentsForPackage(id string, includeDeleted 
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) UpdatePackage(ent *entity.PackageEntity) (*entity.PackageEntity, error) {
+func (p publishedRepositoryImpl) UpdatePackage(ent *entity.PackageEntity, excludeFromSearchChanged bool) (*entity.PackageEntity, error) {
 	ctx := context.Background()
 
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
-		_, err := p.updatePackage(tx, ent)
+		_, err := p.updatePackage(tx, ent, excludeFromSearchChanged)
 		if err != nil {
 			return err
 		}
@@ -2502,7 +2554,7 @@ func (p publishedRepositoryImpl) UpdatePackage(ent *entity.PackageEntity) (*enti
 	return ent, nil
 }
 
-func (p publishedRepositoryImpl) updatePackage(tx *pg.Tx, ent *entity.PackageEntity) (*entity.PackageEntity, error) {
+func (p publishedRepositoryImpl) updatePackage(tx *pg.Tx, ent *entity.PackageEntity, excludeFromSearchChanged bool) (*entity.PackageEntity, error) {
 	_, err := tx.Model(ent).Where("id = ?", ent.Id).Update()
 	if err != nil {
 		return nil, err
@@ -2521,7 +2573,51 @@ func (p publishedRepositoryImpl) updatePackage(tx *pg.Tx, ent *entity.PackageEnt
 	if err != nil {
 		return nil, err
 	}
+	if excludeFromSearchChanged {
+		err = p.updateFtsIndexForExcludeFromSearchChange(tx, ent.Id, ent.ExcludeFromSearch)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return ent, nil
+}
+
+func (p publishedRepositoryImpl) updateFtsIndexForExcludeFromSearchChange(tx *pg.Tx, packageId string, excludeFromSearch bool) error {
+	if excludeFromSearch {
+		_, err := tx.Exec(`DELETE FROM fts_latest_release_operation_data WHERE package_id = ? OR package_id LIKE ? || '.%'`,
+			packageId, packageId)
+		if err != nil {
+			return fmt.Errorf("failed to delete fts_latest_release_operation_data on exclude_from_search change: %w", err)
+		}
+		_, err = tx.Exec(`DELETE FROM fts_operation_search_text WHERE package_id = ? OR package_id LIKE ? || '.%'`,
+			packageId, packageId)
+		if err != nil {
+			return fmt.Errorf("failed to delete fts_operation_search_text on exclude_from_search change: %w", err)
+		}
+	} else {
+		// fts_operation_search_text is intentionally not repopulated — it will be recalculated during the next migration.
+		repopulateLiteSearchQuery := `
+			WITH maxrev AS (
+				SELECT pv.package_id, pv.version, MAX(pv.revision) AS revision
+				FROM published_version pv
+				WHERE (pv.package_id = ? OR pv.package_id LIKE ? || '.%')
+				  AND pv.status = 'release'
+				  AND pv.deleted_at IS NULL
+				GROUP BY pv.package_id, pv.version
+			)
+			INSERT INTO fts_latest_release_operation_data (package_id, version, revision, operation_id, api_type, data_vector)
+			SELECT o.package_id, o.version, o.revision, o.operation_id, o.type,
+				   to_tsvector(convert_from(od.data, 'UTF-8'))
+			FROM operation o
+			INNER JOIN operation_data od ON o.data_hash = od.data_hash
+			INNER JOIN maxrev mr ON o.package_id = mr.package_id AND o.version = mr.version AND o.revision = mr.revision
+			ON CONFLICT (package_id, version, revision, operation_id) DO UPDATE SET data_vector = EXCLUDED.data_vector`
+		_, err := tx.Exec(repopulateLiteSearchQuery, packageId, packageId)
+		if err != nil {
+			return fmt.Errorf("failed to repopulate fts_latest_release_operation_data on exclude_from_search change: %w", err)
+		}
+	}
+	return nil
 }
 
 func (p publishedRepositoryImpl) deletePackage(tx *pg.Tx, packageId string, userId string) (int, error) {
@@ -2548,7 +2644,7 @@ func (p publishedRepositoryImpl) deletePackage(tx *pg.Tx, packageId string, user
 	ent.DeletedBy = userId
 	ent.ServiceName = ""
 
-	_, err = p.updatePackage(tx, ent)
+	_, err = p.updatePackage(tx, ent, false)
 	if err != nil {
 		return 0, err
 	}
@@ -2634,7 +2730,7 @@ func (p publishedRepositoryImpl) deleteGroup(tx *pg.Tx, packageId string, userId
 	ent.DeletedBy = userId
 	ent.ServiceName = ""
 
-	_, err = p.updatePackage(tx, ent)
+	_, err = p.updatePackage(tx, ent, false)
 	if err != nil {
 		return 0, err
 	}
@@ -3857,6 +3953,20 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackagesBeforeDate(ctx context
 			return fmt.Errorf("failed to delete related package transitions: %w", err)
 		}
 
+		logger.Trace(ctx, "Deleting FTS operation search text for packages")
+		deleteFtsSearchTextQuery := `DELETE FROM fts_operation_search_text WHERE package_id IN (?)`
+		_, err = tx.ExecContext(ctx, deleteFtsSearchTextQuery, pg.In(packageIds))
+		if err != nil {
+			return fmt.Errorf("failed to delete fts_operation_search_text: %w", err)
+		}
+
+		logger.Trace(ctx, "Deleting FTS latest release operation data for packages")
+		deleteFtsLiteSearchQuery := `DELETE FROM fts_latest_release_operation_data WHERE package_id IN (?)`
+		_, err = tx.ExecContext(ctx, deleteFtsLiteSearchQuery, pg.In(packageIds))
+		if err != nil {
+			return fmt.Errorf("failed to delete fts_latest_release_operation_data: %w", err)
+		}
+
 		logger.Tracef(ctx, "Deleting packages: %v", packageIds)
 		deletePackagesQuery := `
 			DELETE FROM package_group
@@ -3924,6 +4034,18 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackageRevisionsBeforeDate(ctx
 		err = p.countRelatedDataForPackageRevisionsTx(ctx, tx, valuesClause, args, deletedItemsStats)
 		if err != nil {
 			return fmt.Errorf("failed to count related data: %w", err)
+		}
+
+		deleteFtsSearchTextQuery := `DELETE FROM fts_operation_search_text WHERE (package_id, version, revision) IN (` + valuesClause + `)`
+		_, err = tx.ExecContext(ctx, deleteFtsSearchTextQuery, args...)
+		if err != nil {
+			return fmt.Errorf("failed to delete fts_operation_search_text: %w", err)
+		}
+
+		deleteFtsLiteSearchQuery := `DELETE FROM fts_latest_release_operation_data WHERE (package_id, version, revision) IN (` + valuesClause + `)`
+		_, err = tx.ExecContext(ctx, deleteFtsLiteSearchQuery, args...)
+		if err != nil {
+			return fmt.Errorf("failed to delete fts_latest_release_operation_data: %w", err)
 		}
 
 		logger.Tracef(ctx, "Deleting package revisions: %v", revisionKeys)
@@ -4137,6 +4259,18 @@ func (p publishedRepositoryImpl) countRelatedDataForPackagesTx(ctx context.Conte
 		return err
 	}
 
+	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.FtsOperationSearchText),
+		`SELECT COUNT(*) FROM fts_operation_search_text WHERE package_id IN (?)`, pg.In(packageIds))
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.FtsLatestReleaseOperationData),
+		`SELECT COUNT(*) FROM fts_latest_release_operation_data WHERE package_id IN (?)`, pg.In(packageIds))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -4208,6 +4342,18 @@ func (p publishedRepositoryImpl) countRelatedDataForPackageRevisionsTx(ctx conte
 
 	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.VersionInternalDocument),
 		`SELECT COUNT(*) FROM version_internal_document WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.FtsOperationSearchText),
+		`SELECT COUNT(*) FROM fts_operation_search_text WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.FtsLatestReleaseOperationData),
+		`SELECT COUNT(*) FROM fts_latest_release_operation_data WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
 	if err != nil {
 		return err
 	}

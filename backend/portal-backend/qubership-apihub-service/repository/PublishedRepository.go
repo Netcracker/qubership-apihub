@@ -33,7 +33,8 @@ type PublishedRepository interface {
 		operationComparisons []*entity.OperationComparisonEntity, builderNotifications []*entity.BuilderNotificationsEntity,
 		versionComparisonEntities []*entity.VersionComparisonEntity, serviceName string, pkg *entity.PackageEntity, versionComparisonsFromCache []string,
 		versionInternalDocEntities []*entity.VersionInternalDocumentEntity, versionInternalDocDataEntities []*entity.VersionInternalDocumentDataEntity,
-		comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity) error
+		comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity,
+		operationSearchTexts []*entity.OperationSearchTextEntity) error
 	GetContentData(packageId string, checksum string) (*entity.PublishedContentDataEntity, error)
 
 	GetVersionRefsV3(packageId string, version string, revision int) ([]entity.PublishedReferenceEntity, error)
@@ -54,7 +55,7 @@ type PublishedRepository interface {
 	GetPackageIncludingDeleted(id string) (*entity.PackageEntity, error)
 	GetAllChildPackageIdsIncludingParent(parentId string) ([]string, error)
 	GetParentsForPackage(id string, includeDeleted bool) ([]entity.PackageEntity, error)
-	UpdatePackage(ent *entity.PackageEntity) (*entity.PackageEntity, error)
+	UpdatePackage(ent *entity.PackageEntity, excludeFromSearchChanged bool) (*entity.PackageEntity, error)
 	DeletePackage(id string, userId string) (int, error)
 	DeleteSoftDeletedPackagesBeforeDate(ctx context.Context, runId string, beforeDate time.Time, batchSize int) (int, error)
 	GetFilteredPackagesWithOffset(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error)

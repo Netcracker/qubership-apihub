@@ -234,6 +234,14 @@ func copyVersions(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	}
 	objAffected += res.RowsAffected()
 
+	copyFtsSearchText := "insert into fts_operation_search_text (package_id, version, revision, operation_id, api_type, status, search_text_hash, data_vector) " +
+		"(select ?, version, revision, operation_id, api_type, status, search_text_hash, data_vector from fts_operation_search_text orig where orig.package_id = ?) on conflict do nothing"
+	res, err = tx.Exec(copyFtsSearchText, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy fts_operation_search_text from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
 	copyPVOC := "insert into published_version_open_count (package_id, version, open_count) " +
 		"(select ?, version, open_count from " +
 		"published_version_open_count orig where orig.package_id = ?) on conflict do nothing"
@@ -462,6 +470,12 @@ func deleteVersionsData(tx *pg.Tx, fromPkg string) error {
 	_, err = tx.Exec(query, fromPkg)
 	if err != nil {
 		return fmt.Errorf("failed to delete orig(%s) from operation: %w", fromPkg, err)
+	}
+
+	query = "delete from fts_operation_search_text where package_id = ?"
+	_, err = tx.Exec(query, fromPkg)
+	if err != nil {
+		return fmt.Errorf("failed to delete orig(%s) from fts_operation_search_text: %w", fromPkg, err)
 	}
 
 	query = "delete from operation_comparison where package_id = ?"

@@ -21,9 +21,10 @@ type OperationRepository interface {
 	GetOperationChanges(comparisonId string, operationId string, severities []string) (*entity.OperationComparisonEntity, error)
 	GetOperationChangesSummary(comparisonId string, operationId string, refPackageId string) (*entity.OperationComparisonSummaryEntity, error)
 	GetChangelog(searchQuery entity.ChangelogSearchQueryEntity) ([]entity.OperationComparisonChangelogEntity, error)
-	SearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult, error)
-	FullTextSearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult, error)
-	LiteSearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult, error)
+	SearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult_deprecated, error)
+	FullTextSearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult_deprecated, error)
+	LiteSearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult_deprecated, error)
+	GlobalSearchForOperations(searchQuery *entity.GlobalOperationSearchQuery) ([]entity.OperationSearchResult, error)
 	GetOperationsTypeCount(packageId string, version string, revision int, showOnlyDeleted bool) ([]entity.OperationsTypeCountEntity, error)
 	GetOperationsTypes(packageId string, version string, revision int) ([]entity.OperationsTypeEntity, error)
 	GetOperationsInfo(packageId string, version string, revision int) (entity.OperationsInfoEntity, error)
@@ -653,13 +654,13 @@ func (o operationRepositoryImpl) GetChangelog(searchQuery entity.ChangelogSearch
 	return result, nil
 }
 
-func (o operationRepositoryImpl) SearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult, error) {
+func (o operationRepositoryImpl) SearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult_deprecated, error) {
 	_, err := o.cp.GetConnection().Exec("select to_tsquery(?)", searchQuery.SearchString)
 	if err != nil {
 		return nil, fmt.Errorf("invalid search string: %v", err.Error())
 	}
 	searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
-	var result []entity.OperationSearchResult
+	var result []entity.OperationSearchResult_deprecated
 	operationsSearchQuery := `
 	with	maxrev as
 			(
@@ -737,58 +738,11 @@ func (o operationRepositoryImpl) SearchForOperations(searchQuery *entity.Operati
 							with filtered as (select data_hash from operations)
 							select
 							ts.data_hash,
-				case when scope_rank = 0 then detailed_scope_rank
-					when detailed_scope_rank = 0 then scope_rank
-					else scope_rank * detailed_scope_rank end rank
-							from
-							ts_rest_operation_data ts,
-							filtered f,
-							to_tsquery(?search_filter) search_query,
-							--using coalesce to skip ts_rank evaluation for scopes that are not requested
-							coalesce(case when ?filter_response then null else 0 end, ts_rank(scope_response, search_query)) resp_rank,
-							coalesce(case when ?filter_request then null else 0 end, ts_rank(scope_request, search_query)) req_rank,
-							coalesce(case when ?filter_examples then null else 0 end, ts_rank(scope_examples, search_query)) example_rank,
-							coalesce(case when ?filter_annotation then null else 0 end, ts_rank(scope_annotation, search_query)) annotation_rank,
-							coalesce(case when ?filter_properties then null else 0 end, ts_rank(scope_properties, search_query)) properties_rank,
-							coalesce(resp_rank + req_rank) scope_rank,
-							coalesce(example_rank + annotation_rank + properties_rank) detailed_scope_rank
-							where ts.data_hash = f.data_hash
-							and
-							(
-								(
-								(?filter_request = false and ?filter_response = false) or
-								(?filter_request and search_query @@ scope_request) or
-								(?filter_response and search_query @@ scope_response)
-								)
-								and
-								(
-								(?filter_annotation = false and ?filter_examples = false and ?filter_properties = false) or
-								(?filter_annotation and search_query @@ scope_annotation) or
-								(?filter_examples and search_query @@ scope_examples) or
-								(?filter_properties and search_query @@ scope_properties)
-								)
-							)
-					) ts
-					group by ts.data_hash
-					order by max(rank) desc
-					limit ?limit
-					offset ?offset
-			) rest_ts
-				on rest_ts.data_hash = o.data_hash
-				and o.type = ?rest_api_type
-				and ?filter_all = false
-			left join (
-					select ts.data_hash, max(rank) as rank from (
-							with filtered as (select data_hash from operations)
-							select
-							ts.data_hash,
-							scope_rank rank
+							ts_rank(scope_all, search_query) rank
 							from
 							ts_operation_data ts,
 							filtered f,
-							to_tsquery(?search_filter) search_query,
-							--using coalesce to skip ts_rank evaluation for scopes that are not requested
-							coalesce(case when ?filter_all then null else 0 end, ts_rank(scope_all, search_query)) scope_rank
+							to_tsquery(?search_filter) search_query
 							where ts.data_hash = f.data_hash
 							and search_query @@ scope_all
 					) ts
@@ -798,13 +752,12 @@ func (o operationRepositoryImpl) SearchForOperations(searchQuery *entity.Operati
 					offset ?offset
 			) all_ts
 				on all_ts.data_hash = o.data_hash
-				and ?filter_all = true
 			left join operation_open_count oc
 				on oc.package_id = o.package_id
 				and oc.version = o.version
 				and oc.operation_id = o.operation_id,
 			coalesce(?title_weight * (o.title ilike ?text_filter)::int, 0) title_tf,
-			coalesce(?scope_weight * (coalesce(rest_ts.rank, 0) + coalesce(all_ts.rank, 0)), 0) scope_tf,
+			coalesce(?scope_weight * coalesce(all_ts.rank, 0), 0) scope_tf,
 			coalesce(title_tf + scope_tf, 0) init_rank,
 			coalesce(
 				?version_status_release_weight * (o.version_status = ?version_status_release)::int +
@@ -826,7 +779,7 @@ func (o operationRepositoryImpl) SearchForOperations(searchQuery *entity.Operati
 	return result, nil
 }
 
-func (o operationRepositoryImpl) FullTextSearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult, error) {
+func (o operationRepositoryImpl) FullTextSearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult_deprecated, error) {
 
 	searchQuery.TextFilter = strings.TrimPrefix(searchQuery.TextFilter, "_")
 	searchQuery.OriginalTextInput = strings.TrimPrefix(searchQuery.OriginalTextInput, "_")
@@ -836,7 +789,7 @@ func (o operationRepositoryImpl) FullTextSearchForOperations(searchQuery *entity
 		return nil, fmt.Errorf("invalid search string: %v", err.Error())
 	}
 	searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
-	var result []entity.OperationSearchResult
+	var result []entity.OperationSearchResult_deprecated
 
 	operationsSearchQuery := `
 			with
@@ -952,7 +905,7 @@ func (o operationRepositoryImpl) FullTextSearchForOperations(searchQuery *entity
 
 }
 
-func (o operationRepositoryImpl) LiteSearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult, error) {
+func (o operationRepositoryImpl) LiteSearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult_deprecated, error) {
 
 	searchQuery.TextFilter = strings.TrimPrefix(searchQuery.TextFilter, "_")
 	searchQuery.OriginalTextInput = strings.TrimPrefix(searchQuery.OriginalTextInput, "_")
@@ -962,7 +915,7 @@ func (o operationRepositoryImpl) LiteSearchForOperations(searchQuery *entity.Ope
 		return nil, fmt.Errorf("invalid search string: %v", err.Error())
 	}
 	searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
-	var result []entity.OperationSearchResult
+	var result []entity.OperationSearchResult_deprecated
 
 	operationsSearchQuery := `
 select
@@ -1605,6 +1558,82 @@ func (o operationRepositoryImpl) GetOperationsByModelHash(packageId string, vers
 		}
 		return nil, err
 	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GlobalSearchForOperations(searchQuery *entity.GlobalOperationSearchQuery) ([]entity.OperationSearchResult, error) {
+	_, err := o.cp.GetConnection().Exec("select websearch_to_tsquery(?)", searchQuery.OriginalTextInput)
+	if err != nil {
+		return nil, fmt.Errorf("invalid search string: %v", err.Error())
+	}
+	var result []entity.OperationSearchResult
+
+	operationsSearchQuery := `
+select
+    o.package_id,
+    pg.name,
+    o.version,
+    o.revision,
+    pv.status,
+    o.operation_id,
+    o.title,
+    o.data_hash,
+    o.deprecated,
+    o.kind,
+    o.type,
+    o.metadata,
+    parent_package_names(o.package_id) parent_names
+from operation o
+         inner join (
+    SELECT DISTINCT ON (rank, package_id, operation_id)
+        ts_rank(data_vector, search_query) as rank,
+        ts.package_id   as package_id,
+        ts.operation_id as operation_id,
+        ts.version      as version,
+        ts.revision     as revision
+
+    FROM fts_operation_search_text ts,
+         websearch_to_tsquery(?original_text_input) search_query
+    WHERE ts.status = ?status
+        and ts.api_type = ?api_type
+        and (?versions = '{}' or version like ANY(
+						select id from unnest(?versions::text[]) id))
+        and (package_id like ANY(
+						select id from unnest(?packages::text[]) id
+						union
+						select id||'.%' from unnest(?packages::text[]) id))
+        and search_query @@ data_vector
+    ORDER BY ts_rank(data_vector, search_query) DESC,
+             package_id,
+             operation_id desc,
+             version DESC,
+             revision DESC
+    LIMIT ?limit OFFSET ?offset
+) all_ts
+                   on all_ts.package_id = o.package_id and
+                      all_ts.version = o.version and
+                      all_ts.revision = o.revision and
+		all_ts.operation_id = o.operation_id
+
+inner join published_version pv on o.package_id=pv.package_id and o.version=pv.version and o.revision=pv.revision
+inner join package_group pg on o.package_id=pg.id
+
+where all_ts.rank > 0
+and pv.deleted_at is null
+and pv.published_at >= ?start_date
+and pv.published_at <= ?end_date
+order by all_ts.rank desc, o.operation_id
+limit ?limit;
+`
+
+	_, err = o.cp.GetConnection().Model(searchQuery).Query(&result, operationsSearchQuery)
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
 	return result, nil
 }
 

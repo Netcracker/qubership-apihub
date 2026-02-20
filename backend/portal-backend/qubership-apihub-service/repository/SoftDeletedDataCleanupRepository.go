@@ -370,6 +370,28 @@ func (d softDeletedDataCleanupRepositoryImpl) VacuumAffectedTables(ctx context.C
 				logger.Trace(ctx, "Successfully vacuumed 'version_internal_document' table")
 			}
 		}
+		if deletedItems.FtsOperationSearchText > 0 {
+			logger.Debugf(ctx, "Vacuuming 'fts_operation_search_text' table for %d deleted records", deletedItems.FtsOperationSearchText)
+			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL fts_operation_search_text")
+			if err != nil {
+				errorMsg := fmt.Sprintf("Failed to vacuum 'fts_operation_search_text' table: %v", err)
+				logger.Warn(ctx, errorMsg)
+				vacuumErrors = append(vacuumErrors, errorMsg)
+			} else {
+				logger.Trace(ctx, "Successfully vacuumed 'fts_operation_search_text' table")
+			}
+		}
+		if deletedItems.FtsLatestReleaseOperationData > 0 {
+			logger.Debugf(ctx, "Vacuuming 'fts_latest_release_operation_data' table for %d deleted records", deletedItems.FtsLatestReleaseOperationData)
+			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL fts_latest_release_operation_data")
+			if err != nil {
+				errorMsg := fmt.Sprintf("Failed to vacuum 'fts_latest_release_operation_data' table: %v", err)
+				logger.Warn(ctx, errorMsg)
+				vacuumErrors = append(vacuumErrors, errorMsg)
+			} else {
+				logger.Trace(ctx, "Successfully vacuumed 'fts_latest_release_operation_data' table")
+			}
+		}
 	} else {
 		logger.Info(ctx, "No deleted items found - skipping vacuum operations")
 	}
