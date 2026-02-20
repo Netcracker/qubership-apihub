@@ -5,3 +5,4 @@ docker-compose/with-keycloak/jwt_private_key
 docker-compose/with-gitlab/gitlab/**
 helm-templates/qubership-apihub/jwt_private_key
 helm-templates/qubership-apihub/local-secrets.yaml
+.idea
