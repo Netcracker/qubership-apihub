@@ -1,6 +1,7 @@
 import { Diff } from '../../src'
 import 'jest-extended'
 import {
+  TEST_SPEC_TYPE_ASYNC_API,
   TEST_SPEC_TYPE_OPEN_API,
   TestSpecType,
 } from '@netcracker/qubership-apihub-compatibility-suites'
@@ -84,6 +85,9 @@ export const expectSpecVersionChange = (
   switch (suiteType) {
     case TEST_SPEC_TYPE_OPEN_API:
       rootKey = 'openapi'
+      break
+    case TEST_SPEC_TYPE_ASYNC_API:
+      rootKey = 'asyncapi'
       break
     default:
       // GraphQL and unknown types have no root version key to match
