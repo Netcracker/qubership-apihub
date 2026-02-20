@@ -10,12 +10,13 @@ import {
   buildCaseKey,
   CASE_KEY_SEPARATOR,
   isKnownSuiteType,
+  TEST_SPEC_TYPE_ASYNC_API,
   TEST_SPEC_TYPE_GRAPH_QL,
   TEST_SPEC_TYPE_OPEN_API,
   type TestSpecType,
 } from './suite-types'
 
-export { TEST_SPEC_TYPE_GRAPH_QL, TEST_SPEC_TYPE_OPEN_API }
+export { TEST_SPEC_TYPE_ASYNC_API, TEST_SPEC_TYPE_GRAPH_QL, TEST_SPEC_TYPE_OPEN_API }
 export type { TestSpecType }
 
 export type SpecificationVersion = string
@@ -23,6 +24,7 @@ export type SpecificationVersionPair = [SpecificationVersion, SpecificationVersi
 
 // Non-OpenAPI suites currently do not participate in any version matrix.
 // Keep stable stubs per spec type (future-proofing).
+const DEFAULT_ASYNC_API_VERSION_PAIR: SpecificationVersionPair = ['3.0.0', '3.0.0']
 const DEFAULT_GRAPH_QL_VERSION_PAIR: SpecificationVersionPair = ['unversioned', 'unversioned']
 
 type VersionPairPolicy = {
@@ -79,6 +81,9 @@ const VERSION_PAIR_POLICY_BY_SUITE_TYPE: Record<TestSpecType, VersionPairPolicy>
   },
   [TEST_SPEC_TYPE_GRAPH_QL]: {
     defaultPair: DEFAULT_GRAPH_QL_VERSION_PAIR,
+  },
+  [TEST_SPEC_TYPE_ASYNC_API]: {
+    defaultPair: DEFAULT_ASYNC_API_VERSION_PAIR,
   },
 }
 
@@ -139,7 +144,7 @@ export const getCompatibilitySuiteSpecificationVersionPairs = (
  *
  * - If specificationVersionPair is not provided: returns stored samples as-is.
  * - If specificationVersionPair is provided:
- *   - suite types without a version-pair patch strategy (GraphQL): returns raw samples as-is.
+ *   - suite types without a version-pair patch strategy (AsyncAPI, GraphQL): returns raw samples as-is.
  *   - case without metadata.yaml: returns stored samples as-is (canonical; no patching).
  *   - case with metadata.yaml: patches samples according to the provided pair and returns patched strings.
  */
@@ -171,7 +176,7 @@ export const getCompatibilitySuite = (
     )
   }
 
-  // Suite types without a patch strategy (GraphQL) return raw samples as-is.
+  // Suite types without a patch strategy (AsyncAPI, GraphQL) return raw samples as-is.
   if (!versionPairPolicy.patchSamples) {
     return suiteSamples
   }

@@ -4,7 +4,7 @@
 
 It is a collection of most important cases of changes in API for the purposes of changes classification.
 
-Contains cases for OpenAPI and GraphQL.
+Contains cases for OpenAPI, GraphQL and AsyncAPI.
 
 ## Structure
 

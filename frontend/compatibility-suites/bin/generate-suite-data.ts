@@ -10,6 +10,7 @@ import {
   buildCaseKey,
   buildTemplateKey,
   isKnownSuiteType,
+  TEST_SPEC_TYPE_ASYNC_API,
   TEST_SPEC_TYPE_GRAPH_QL,
   TEST_SPEC_TYPE_OPEN_API,
   type TestSpecType,
@@ -36,6 +37,7 @@ const SCHEMA_TEMPLATE_FILE_NAME = 'template.yaml.tpl'
 const SPEC_SAMPLE_FILE_EXT_BY_SUITE_TYPE: Record<TestSpecType, string> = {
   [TEST_SPEC_TYPE_OPEN_API]: DEFAULT_SPEC_SAMPLE_FILE_EXT,
   [TEST_SPEC_TYPE_GRAPH_QL]: GRAPHQL_SAMPLE_FILE_EXT,
+  [TEST_SPEC_TYPE_ASYNC_API]: DEFAULT_SPEC_SAMPLE_FILE_EXT,
 }
 const getSampleFileExt = (suiteType: TestSpecType): string => SPEC_SAMPLE_FILE_EXT_BY_SUITE_TYPE[suiteType]
 
