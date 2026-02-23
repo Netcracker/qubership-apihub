@@ -14,7 +14,6 @@ import type { AsyncApi3SchemaRulesOptions } from './asyncapi3.types'
 import { CompareRules } from '../types'
 import {
   normalize,
-  OriginsMetaRecord,
   SPEC_TYPE_JSON_SCHEMA_07,
 } from '@netcracker/qubership-apihub-api-unifier'
 import { asyncApiSpecificationExtensionRulesFunction } from './asyncapi3.compare.rules'
