@@ -957,14 +957,14 @@ func (o operationRepositoryImpl) LiteSearchForOperations(searchQuery *entity.Ope
 	searchQuery.TextFilter = strings.TrimPrefix(searchQuery.TextFilter, "_")
 	searchQuery.OriginalTextInput = strings.TrimPrefix(searchQuery.OriginalTextInput, "_")
 
-	_, err := o.cp.GetConnection().Exec("select plainto_tsquery(?)", searchQuery.OriginalTextInput)
+	_, err := o.cp.GetConnection().Exec("select websearch_to_tsquery(?)", searchQuery.OriginalTextInput)
 	if err != nil {
 		return nil, fmt.Errorf("invalid search string: %v", err.Error())
 	}
 	searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
 	var result []entity.OperationSearchResult
 
-	andSearchQuery := `
+	operationsSearchQuery := `
 select
     o.package_id,
     pg.name,
@@ -989,7 +989,7 @@ from operation o
         ts.revision     as revision
 
     FROM fts_latest_release_operation_data ts,
-         plainto_tsquery(?original_text_input) search_query
+         websearch_to_tsquery(?original_text_input) search_query
     WHERE (?versions = '{}' or version like ANY(
 						select id from unnest(?versions::text[]) id)) and
         				(?packages = '{}' or package_id like ANY(
@@ -1018,71 +1018,7 @@ order by all_ts.rank desc, o.operation_id
 limit ?limit;
 `
 
-	_, err = o.cp.GetConnection().Model(searchQuery).Query(&result, andSearchQuery)
-	if err != nil {
-		if err != pg.ErrNoRows {
-			return nil, err
-		}
-	}
-	if len(result) > 0 {
-		return result, nil
-	}
-
-	orSearchQuery := `
-select
-    o.package_id,
-    pg.name,
-    o.version,
-    o.revision,
-    pv.status,
-    o.operation_id,
-    o.title,
-    o.data_hash,
-    o.deprecated,
-    o.kind,
-    o.type,
-    o.metadata,
-    parent_package_names(o.package_id) parent_names
-from operation o
-         inner join (
-    SELECT DISTINCT ON (rank, package_id, operation_id)
-        ts_rank(data_vector, or_query) as rank,
-        ts.package_id   as package_id,
-        ts.operation_id as operation_id,
-        ts.version      as version,
-        ts.revision     as revision
-
-    FROM fts_latest_release_operation_data ts,
-         replace(plainto_tsquery(?original_text_input)::text, ' & ', ' | ')::tsquery or_query
-    WHERE (?versions = '{}' or version like ANY(
-						select id from unnest(?versions::text[]) id)) and
-        				(?packages = '{}' or package_id like ANY(
-						select id from unnest(?packages::text[]) id
-						union
-						select id||'.%' from unnest(?packages::text[]) id)) and
-        				(?api_type = '' or ts.api_type = ?api_type) and or_query @@ data_vector
-    ORDER BY ts_rank(data_vector, or_query) DESC,
-             package_id,
-             operation_id desc,
-             version DESC,
-             revision DESC
-    LIMIT ?limit OFFSET ?offset
-) all_ts
-                   on all_ts.package_id = o.package_id and
-                      all_ts.version = o.version and
-                      all_ts.revision = o.revision and
-		all_ts.operation_id = o.operation_id
-
-inner join published_version pv on o.package_id=pv.package_id and o.version=pv.version and o.revision=pv.revision
-inner join package_group pg on o.package_id=pg.id
-
-where all_ts.rank > 0
-and pv.deleted_at is null
-order by all_ts.rank desc, o.operation_id
-limit ?limit;
-`
-
-	_, err = o.cp.GetConnection().Model(searchQuery).Query(&result, orSearchQuery)
+	_, err = o.cp.GetConnection().Model(searchQuery).Query(&result, operationsSearchQuery)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
