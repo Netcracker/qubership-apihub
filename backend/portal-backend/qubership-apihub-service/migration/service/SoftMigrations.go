@@ -1,17 +1,21 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/go-pg/pg/v10"
 	log "github.com/sirupsen/logrus"
 )
 
 const typeAndTitleMigrationVersion = 22
+const transitionRefsMigrationVersion = 29
 
 // SoftMigrateDb The function implements migrations that can't be made via SQL query.
 // Executes only required migrations based on current vs new versions.
@@ -25,6 +29,18 @@ func (d dbMigrationServiceImpl) SoftMigrateDb(currentVersion int, newVersion int
 				log.Errorf("Failed to fix release_versions_published metric: %v", err)
 			} else {
 				log.Infof("Successfully fixed release_versions_published metric")
+			}
+		})
+	}
+
+	if (currentVersion < transitionRefsMigrationVersion && transitionRefsMigrationVersion <= newVersion) ||
+		(migrationRequired && transitionRefsMigrationVersion == currentVersion && transitionRefsMigrationVersion == newVersion) {
+		utils.SafeAsync(func() {
+			err := d.fixRefsInConfigsAfterTransition()
+			if err != nil {
+				log.Errorf("Failed to fix transition refs in configs: %v", err)
+			} else {
+				log.Infof("Successfully fixed transition refs in configs")
 			}
 		})
 	}
@@ -241,4 +257,157 @@ func (d dbMigrationServiceImpl) fixReleaseVersionsPublishedMetricFromPatches() e
 
 	log.Infof("ReleaseVersionsDeleted metric creation completed. Processed: %d", deletedProcessed)
 	return nil
+}
+
+func (d dbMigrationServiceImpl) fixRefsInConfigsAfterTransition() error {
+	log.Infof("Starting transition refs fix in published_sources configs...")
+	ctx := context.Background()
+
+	transitionMap, oldIdBytes, err := d.loadStaleTransitions(ctx)
+	if err != nil {
+		return err
+	}
+	if len(transitionMap) == 0 {
+		log.Infof("No stale transitions found, nothing to fix")
+		return nil
+	}
+	log.Infof("Found %d stale transitions (old package no longer exists)", len(transitionMap))
+
+	totalUpdated, err := d.updateStaleRefsInPublishedSources(ctx, transitionMap, oldIdBytes)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Transition refs fix completed. Updated: %d", totalUpdated)
+	return nil
+}
+
+func (d dbMigrationServiceImpl) loadStaleTransitions(ctx context.Context) (map[string]string, [][]byte, error) {
+	type transition struct {
+		OldPackageId string `pg:"old_package_id"`
+		NewPackageId string `pg:"new_package_id"`
+	}
+	var rows []transition
+	_, err := d.cp.GetConnection().QueryContext(ctx, &rows,
+		`SELECT pt.old_package_id, pt.new_package_id
+		 FROM package_transition pt
+		 LEFT JOIN package_group pg ON pt.old_package_id = pg.id
+		 WHERE pg.id IS NULL`)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to query stale transitions: %w", err)
+	}
+
+	transitionMap := make(map[string]string, len(rows))
+	oldIdBytes := make([][]byte, len(rows))
+	for i, r := range rows {
+		transitionMap[r.OldPackageId] = r.NewPackageId
+		oldIdBytes[i] = []byte(r.OldPackageId)
+	}
+	return transitionMap, oldIdBytes, nil
+}
+
+type publishedSourceRow struct {
+	PackageId string `pg:"package_id"`
+	Version   string `pg:"version"`
+	Revision  int    `pg:"revision"`
+	Config    []byte `pg:"config"`
+}
+
+func (d dbMigrationServiceImpl) updateStaleRefsInPublishedSources(ctx context.Context, transitionMap map[string]string, oldIdBytes [][]byte) (int, error) {
+	const batchSize = 500
+	totalUpdated := 0
+
+	for offset := 0; ; offset += batchSize {
+		var sources []publishedSourceRow
+		_, err := d.cp.GetConnection().QueryContext(ctx, &sources,
+			`SELECT package_id, version, revision, config
+			 FROM published_sources
+			 WHERE config IS NOT NULL
+			 ORDER BY package_id, version, revision
+			 LIMIT ? OFFSET ?`, batchSize, offset)
+		if err != nil {
+			return totalUpdated, fmt.Errorf("failed to fetch published_sources batch: %w", err)
+		}
+		if len(sources) == 0 {
+			break
+		}
+
+		updated, err := d.fixRefsInBatch(ctx, sources, transitionMap, oldIdBytes)
+		if err != nil {
+			return totalUpdated, err
+		}
+		totalUpdated += updated
+
+		log.Infof("Sources update progress: updated %d", totalUpdated)
+
+		if len(sources) < batchSize {
+			break
+		}
+	}
+
+	return totalUpdated, nil
+}
+
+func (d dbMigrationServiceImpl) fixRefsInBatch(ctx context.Context, sources []publishedSourceRow, transitionMap map[string]string, oldIdBytes [][]byte) (int, error) {
+	updated := 0
+	err := d.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		for _, src := range sources {
+			if !bytesContainsAny(src.Config, oldIdBytes) {
+				continue
+			}
+
+			var config view.BuildConfig
+			if err := json.Unmarshal(src.Config, &config); err != nil {
+				log.Warnf("Failed to unmarshal config for %s/%s@%d, skipping: %v",
+					src.PackageId, src.Version, src.Revision, err)
+				continue
+			}
+
+			if !replaceStaleRefs(&config, transitionMap) {
+				continue
+			}
+
+			updatedConfig, err := json.Marshal(config)
+			if err != nil {
+				return fmt.Errorf("failed to marshal config for %s/%s@%d: %w",
+					src.PackageId, src.Version, src.Revision, err)
+			}
+
+			_, err = tx.Exec(
+				`UPDATE published_sources SET config = ?
+				 WHERE package_id = ? AND version = ? AND revision = ?`,
+				updatedConfig, src.PackageId, src.Version, src.Revision)
+			if err != nil {
+				return fmt.Errorf("failed to update config for %s/%s@%d: %w",
+					src.PackageId, src.Version, src.Revision, err)
+			}
+			updated++
+		}
+		return nil
+	})
+	return updated, err
+}
+
+func replaceStaleRefs(config *view.BuildConfig, transitionMap map[string]string) bool {
+	changed := false
+	for i := range config.Refs {
+		if newId, ok := transitionMap[config.Refs[i].RefId]; ok {
+			config.Refs[i].RefId = newId
+			changed = true
+		}
+		if newId, ok := transitionMap[config.Refs[i].ParentRefId]; ok {
+			config.Refs[i].ParentRefId = newId
+			changed = true
+		}
+	}
+	return changed
+}
+
+func bytesContainsAny(data []byte, patterns [][]byte) bool {
+	for _, p := range patterns {
+		if bytes.Contains(data, p) {
+			return true
+		}
+	}
+	return false
 }

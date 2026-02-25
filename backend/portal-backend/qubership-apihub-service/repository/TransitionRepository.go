@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -189,6 +190,14 @@ func copyVersions(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	}
 	objAffected += res.RowsAffected()
 
+	copyVID := "insert into version_internal_document (package_id, version, revision, document_id, filename, hash) " +
+		"(select ?, version, revision, document_id, filename, hash from version_internal_document orig where orig.package_id = ?) on conflict do nothing"
+	res, err = tx.Exec(copyVID, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy version_internal_document from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
 	copyRefsMain := "insert into published_version_reference (package_id, version, revision, reference_id, reference_version, reference_revision, parent_reference_id, parent_reference_version, parent_reference_revision, excluded) " +
 		"(select ?, version, revision, reference_id, reference_version, reference_revision, parent_reference_id, parent_reference_version, parent_reference_revision, excluded from published_version_reference orig where orig.package_id = ?)  on conflict do nothing"
 	res, err = tx.Exec(copyRefsMain, toPkg, fromPkg)
@@ -205,22 +214,17 @@ func copyVersions(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	}
 	objAffected += res.RowsAffected()
 
-	updPSD := "update published_sources set config=convert_to((convert_from(config,'UTF8')::jsonb||'{\"packageId\": \"" + toPkg + "\"}')::varchar, 'UTF8')::bytea where package_id='" + toPkg + "'" // toPkg twice here since the record is already inserted for new package id
-	res, err = tx.Exec(updPSD)
+	configAffected, err := updatePublishedSourcesConfig(tx, fromPkg, toPkg)
 	if err != nil {
-		return 0, fmt.Errorf("failed to update published sources packageId for %s: %w", toPkg, err)
+		return 0, err
 	}
-	objAffected += res.RowsAffected()
+	objAffected += configAffected
 
-	updPSD2 := "update published_sources set config=convert_to((convert_from(config,'UTF8')::jsonb||'{\"previousVersionPackageId\": \"" + toPkg + "\"}')::varchar, 'UTF8')::bytea where (convert_from(config,'UTF8')::jsonb)->>'previousVersionPackageId'='" + fromPkg + "'"
-	res, err = tx.Exec(updPSD2)
-	if err != nil {
-		return 0, fmt.Errorf("failed to update published sources previousVersionPackageId for %s: %w", toPkg, err)
-	}
-	objAffected += res.RowsAffected()
-
-	copyOps := "insert into operation (package_id, version, revision, operation_id, data_hash, deprecated, kind, title, metadata, type, deprecated_info, deprecated_items, previous_release_versions) " +
-		"(select ?, version, revision, operation_id, data_hash, deprecated, kind, title, metadata, type, deprecated_info, deprecated_items, previous_release_versions from operation orig where orig.package_id = ?)  on conflict do nothing"
+	copyOps := "insert into operation (package_id, version, revision, operation_id, data_hash, deprecated, kind, title, metadata, type, " +
+		"deprecated_info, deprecated_items, previous_release_versions, models, custom_tags, api_audience, document_id, version_internal_document_id) " +
+		"(select ?, version, revision, operation_id, data_hash, deprecated, kind, title, metadata, type, " +
+		"deprecated_info, deprecated_items, previous_release_versions, models, custom_tags, api_audience, document_id, version_internal_document_id " +
+		"from operation orig where orig.package_id = ?) on conflict do nothing"
 	res, err = tx.Exec(copyOps, toPkg, fromPkg)
 	if err != nil {
 		return 0, fmt.Errorf("failed to copy operations from %s to %s: %w", fromPkg, toPkg, err)
@@ -231,6 +235,14 @@ func copyVersions(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	res, err = tx.Exec(copyOpsGroups, toPkg, fromPkg)
 	if err != nil {
 		return 0, fmt.Errorf("failed to copy operation groups from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
+	copyFTS := "insert into fts_latest_release_operation_data (package_id, version, revision, operation_id, api_type, data_vector) " +
+		"(select ?, version, revision, operation_id, api_type, data_vector from fts_latest_release_operation_data orig where orig.package_id = ?) on conflict do nothing"
+	res, err = tx.Exec(copyFTS, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy fts_latest_release_operation_data from %s to %s: %w", fromPkg, toPkg, err)
 	}
 	objAffected += res.RowsAffected()
 
@@ -315,7 +327,13 @@ func moveNonVersionsData(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 		return 0, fmt.Errorf("MoveAllData: failed to update ref package_id in published_version_reference from %s to %s: %w", fromPkg, toPkg, err)
 	}
 	objAffected += res.RowsAffected()
-	// TODO: what about parent reference id?
+
+	updateParentRefs := "update published_version_reference set parent_reference_id = ? where parent_reference_id = ?;"
+	res, err = tx.Exec(updateParentRefs, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("MoveAllData: failed to update parent_reference_id in published_version_reference from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
 
 	updateVersComp := "update version_comparison set package_id  = ? where package_id = ?;"
 	res, err = tx.Exec(updateVersComp, toPkg, fromPkg)
@@ -395,6 +413,20 @@ func moveNonVersionsData(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	}
 	objAffected += res.RowsAffected()
 
+	updateTCD := "update transformed_content_data set package_id = ? where package_id = ?;"
+	res, err = tx.Exec(updateTCD, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("MoveAllData: failed to update package_id in transformed_content_data from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
+	updatePEC := "update package_export_config set package_id = ? where package_id = ?;"
+	res, err = tx.Exec(updatePEC, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("MoveAllData: failed to update package_id in package_export_config from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
 	updatePkgSvc := "update package_service set package_id = ? where package_id=?;"
 	res, err = tx.Exec(updatePkgSvc, toPkg, fromPkg)
 	if err != nil {
@@ -422,8 +454,14 @@ func moveNonVersionsData(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 
 // deleteVersionsData delete data related to all versions/revisions
 func deleteVersionsData(tx *pg.Tx, fromPkg string) error {
-	query := "delete from published_version where package_id = ?"
+	query := "delete from version_internal_document where package_id = ?"
 	_, err := tx.Exec(query, fromPkg)
+	if err != nil {
+		return fmt.Errorf("failed to delete orig(%s) from version_internal_document: %w", fromPkg, err)
+	}
+
+	query = "delete from published_version where package_id = ?"
+	_, err = tx.Exec(query, fromPkg)
 	if err != nil {
 		return fmt.Errorf("failed to delete orig(%s) from published_version: %w", fromPkg, err)
 	}
@@ -492,6 +530,12 @@ func deleteVersionsData(tx *pg.Tx, fromPkg string) error {
 	_, err = tx.Exec(query, fromPkg)
 	if err != nil {
 		return fmt.Errorf("failed to delete orig(%s) from published_document_open_count: %w", fromPkg, err)
+	}
+
+	query = "delete from fts_latest_release_operation_data where package_id = ?"
+	_, err = tx.Exec(query, fromPkg)
+	if err != nil {
+		return fmt.Errorf("failed to delete orig(%s) from fts_latest_release_operation_data: %w", fromPkg, err)
 	}
 
 	return nil
@@ -659,4 +703,74 @@ func (t transitionRepositoryImpl) ListPackageTransitions() ([]entity.PackageTran
 	var result []entity.PackageTransitionEntity
 	err := t.cp.GetConnection().Model(&result).Select()
 	return result, err
+}
+
+func updatePublishedSourcesConfig(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
+	objAffected := 0
+
+	type publishedSourceRow struct {
+		PackageId string `pg:"package_id"`
+		Version   string `pg:"version"`
+		Revision  int    `pg:"revision"`
+		Config    []byte `pg:"config"`
+	}
+
+	var sources []publishedSourceRow
+	query := "select package_id, version, revision, config from published_sources where config is not null and (package_id = ? or convert_from(config, 'UTF8') like ?)"
+	_, err := tx.Query(&sources, query, toPkg, "%"+fromPkg+"%")
+	if err != nil {
+		return 0, fmt.Errorf("failed to query published_sources for config update from %s to %s: %w", fromPkg, toPkg, err)
+	}
+
+	for _, src := range sources {
+		var config view.BuildConfig
+		if err := json.Unmarshal(src.Config, &config); err != nil {
+			log.Warnf("failed to unmarshal published_sources config for %s/%s@%d, skipping config update: %v",
+				src.PackageId, src.Version, src.Revision, err)
+			continue
+		}
+		changed := false
+
+		// Update packageId for rows belonging to the new package
+		if src.PackageId == toPkg && config.PackageId != toPkg {
+			config.PackageId = toPkg
+			changed = true
+		}
+
+		// Update previousVersionPackageId references
+		if config.PreviousVersionPackageId == fromPkg {
+			config.PreviousVersionPackageId = toPkg
+			changed = true
+		}
+
+		// Update refs
+		for i := range config.Refs {
+			if config.Refs[i].RefId == fromPkg {
+				config.Refs[i].RefId = toPkg
+				changed = true
+			}
+			if config.Refs[i].ParentRefId == fromPkg {
+				config.Refs[i].ParentRefId = toPkg
+				changed = true
+			}
+		}
+
+		if !changed {
+			continue
+		}
+		updatedConfig, err := json.Marshal(config)
+		if err != nil {
+			return 0, fmt.Errorf("failed to marshal updated config for %s/%s@%d: %w",
+				src.PackageId, src.Version, src.Revision, err)
+		}
+		_, err = tx.Exec("update published_sources set config = ? where package_id = ? and version = ? and revision = ?",
+			updatedConfig, src.PackageId, src.Version, src.Revision)
+		if err != nil {
+			return 0, fmt.Errorf("failed to update published_sources config for %s/%s@%d: %w",
+				src.PackageId, src.Version, src.Revision, err)
+		}
+		objAffected++
+	}
+
+	return objAffected, nil
 }
