@@ -114,6 +114,11 @@ type GraphQLOperationSearchResult struct {
 	CommonOperationSearchResult
 }
 
+type AsyncAPIOperationSearchResult struct {
+	AsyncAPIOperationView
+	CommonOperationSearchResult
+}
+
 type PackageSearchWeightsDebug struct {
 	PackageIdTf            float64 `json:"packageIdTf"`
 	PackageNameTf          float64 `json:"packageNameTf"`
