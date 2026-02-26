@@ -8850,6 +8850,8 @@ paths:
             - documents
             - packages
     post:
+      deprecated: true
+      x-deprecation-reason: POST /api/v4/search/{searchLevel} shall be used instead.
       x-nc-api-audience: noBWC
       tags:
         - Search
@@ -8989,6 +8991,139 @@ paths:
                               - query
                               - mutation
                               - subscription
+            examples: {}
+        required: true
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                description: Results of the global search list
+                type: object
+                properties:
+                  operations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SearchResultOperation"
+                  documents:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SearchResultDocument"
+                  packages:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SearchResultPackage"
+              examples: {}
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v4/search/{searchLevel}":
+    parameters:
+      - name: searchLevel
+        in: path
+        required: true
+        description: |
+          Level of object for search.
+        schema:
+          type: string
+          enum:
+            - operations
+            - documents
+            - packages
+    post:
+      x-nc-api-audience: noBWC
+      tags:
+        - Search
+      summary: "Global search v4"
+      description: Global search by text or custom parameters
+      operationId: postSearchV4
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      requestBody:
+        description: Filters for search
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - searchString
+                - apiType
+                - workspace
+                - status
+              title: searchCommonParamsV4
+              description: Common parameters for Global search v4
+              properties:
+                searchString:
+                  description: Search text
+                  type: string
+                  example: "Billing account"
+                apiType:
+                  description: Type of the API to search for.
+                  type: string
+                  enum:
+                    - rest
+                    - graphql
+                    - asyncapi
+                workspace:
+                  description: Top-level workspace ID (no dots).
+                  type: string
+                  example: "QS"
+                status:
+                  description: Package version status.
+                  $ref: "#/components/schemas/VersionStatusEnum"
+                packageIds:
+                  description: |
+                    List of Package Id(s). Must belong to the specified workspace.
+                  type: array
+                  items:
+                    type: string
+                  example: ["QS.CloudQSS.CPQ.Q-TMF", "QS.CloudQSS.CPQ.CORE"]
+                versions:
+                  description: Package version names.
+                  type: array
+                  items:
+                    type: string
+                  example: ["2022.2", "2022.3"]
+                creationDateInterval:
+                  description: |
+                    Search interval for the package version publication date.
+                    Both dates are included.
+                  type: object
+                  properties:
+                    startDate:
+                      description: Start date of the search.
+                      type: string
+                      format: date
+                      default: "1970-01-01"
+                    endDate:
+                      description: End date of the search.
+                      type: string
+                      format: date
+                      default: "2050-12-31"
             examples: {}
         required: true
       responses:
@@ -9455,6 +9590,15 @@ components:
           description: Identifies if migration is currently in progress.
           type: boolean
           default: false
+        featureFlags:
+          description: Feature flags for the system
+          type: object
+          properties:
+            useLegacySearch:
+              description: When true, signals to use v3 legacy global search instead of v4 global search.
+              type: boolean
+              default: false
+          additionalProperties: true
     ApiKey:
       title: ApiKey
       type: object
@@ -11482,6 +11626,8 @@ components:
         externalLinks:
           - User guide|https://www.example.com/guide
           - Support team|https://www.example.com/support]
+        featureFlags:
+          useLegacySearch: false
     Package:
       description: Example of the package params
       value:
