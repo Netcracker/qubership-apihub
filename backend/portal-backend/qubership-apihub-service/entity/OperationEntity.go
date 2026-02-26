@@ -87,6 +87,13 @@ type OperationSearchTextEntity struct {
 	SearchTextHash string
 }
 
+type FtsOperationSearchTextEntity struct {
+	tableName struct{} `pg:"fts_operation_search_text"`
+
+	OperationId    string `pg:"operation_id, type:varchar"`
+	SearchTextHash string `pg:"search_text_hash, type:varchar"`
+}
+
 type OperationComparisonEntity struct {
 	tableName struct{} `pg:"operation_comparison"`
 

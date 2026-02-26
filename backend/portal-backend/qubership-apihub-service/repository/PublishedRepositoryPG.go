@@ -472,7 +472,8 @@ func (p publishedRepositoryImpl) GetServiceOwner(workspaceId string, serviceName
 
 func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo view.PackageInfoFile, publishId string, version *entity.PublishedVersionEntity, content []*entity.PublishedContentEntity, contentData []*entity.PublishedContentDataEntity,
 	refs []*entity.PublishedReferenceEntity, src *entity.PublishedSrcEntity, operations []*entity.OperationEntity, operationData []*entity.OperationDataEntity, versionComparisons []*entity.VersionComparisonEntity, operationComparisons []*entity.OperationComparisonEntity, versionComparisonsFromCache []string,
-	versionInternalDocs []*entity.VersionInternalDocumentEntity, versionInternalDocData []*entity.VersionInternalDocumentDataEntity, comparisonInternalDocs []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocData []*entity.ComparisonInternalDocumentDataEntity) error {
+	versionInternalDocs []*entity.VersionInternalDocumentEntity, versionInternalDocData []*entity.VersionInternalDocumentDataEntity, comparisonInternalDocs []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocData []*entity.ComparisonInternalDocumentDataEntity,
+	operationSearchTexts []*entity.OperationSearchTextEntity) error {
 	migrationRun := new(mEntity.MigrationRunEntity)
 
 	err := tx.Model(migrationRun).Where("id = ?", packageInfo.MigrationId).First()
@@ -818,6 +819,47 @@ func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo 
 		for tableName, tableChanges := range comparisonInternalDocsChanges {
 			changes[tableName] = tableChanges
 		}
+	}
+
+	currentTable = "fts_operation_search_text"
+	oldSearchTexts := make([]entity.FtsOperationSearchTextEntity, 0)
+	err = tx.Model(&oldSearchTexts).
+		Where("package_id = ?", version.PackageId).
+		Where("version = ?", version.Version).
+		Where("revision = ?", version.Revision).
+		Select()
+	if err != nil {
+		return err
+	}
+	searchTextChanges := make(map[string]interface{}, 0)
+	matchedSearchTexts := make(map[string]struct{}, 0)
+	for _, s := range oldSearchTexts {
+		found := false
+		for _, t := range operationSearchTexts {
+			if s.OperationId == t.OperationId {
+				found = true
+				matchedSearchTexts[s.OperationId] = struct{}{}
+				oldSt := entity.OperationSearchTextEntity{SearchTextHash: s.SearchTextHash}
+				if stChanges := oldSt.GetChanges(entity.OperationSearchTextEntity{SearchTextHash: t.SearchTextHash}); len(stChanges) > 0 {
+					searchTextChanges[s.OperationId] = stChanges
+					changesOverview.setTableChanges(currentTable, stChanges)
+					continue
+				}
+			}
+		}
+		if !found {
+			searchTextChanges[s.OperationId] = "search text not found in build archive"
+			changesOverview.setNotFoundEntry(currentTable)
+		}
+	}
+	for _, t := range operationSearchTexts {
+		if _, matched := matchedSearchTexts[t.OperationId]; !matched {
+			searchTextChanges[t.OperationId] = "unexpected search text (not found in database)"
+			changesOverview.setUnexpectedEntry(currentTable)
+		}
+	}
+	if len(searchTextChanges) > 0 {
+		changes[currentTable] = searchTextChanges
 	}
 
 	if len(changes) > 0 {
@@ -1204,7 +1246,7 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 
 		if packageInfo.MigrationBuild {
 			start = time.Now()
-			err := p.validateMigrationResult(tx, packageInfo, buildId, version, content, data, refs, src, operations, operationsData, versionComparisons, operationComparisons, versionComparisonsFromCache, versionInternalDocEntities, versionInternalDocDataEntities, comparisonInternalDocEntities, comparisonInternalDocDataEntities)
+			err := p.validateMigrationResult(tx, packageInfo, buildId, version, content, data, refs, src, operations, operationsData, versionComparisons, operationComparisons, versionComparisonsFromCache, versionInternalDocEntities, versionInternalDocDataEntities, comparisonInternalDocEntities, comparisonInternalDocDataEntities, operationSearchTexts)
 			if err != nil {
 				return fmt.Errorf("migration result validation failed: %v", err.Error())
 			}
