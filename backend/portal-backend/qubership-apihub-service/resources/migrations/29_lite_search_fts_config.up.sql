@@ -19,7 +19,7 @@ versions AS (
       AND status = 'release'
 ),
 operations_data AS (
-    SELECT o.package_id, o.version, o.revision, o.operation_id, o.type, od.data
+    SELECT o.package_id, o.version, o.revision, o.operation_id, o.type, od.data, o.title
     FROM operation_data od
         INNER JOIN operation o ON od.data_hash = o.data_hash
         INNER JOIN versions v
@@ -34,7 +34,6 @@ SELECT
     operations_data.revision,
     operations_data.operation_id,
     operations_data.type,
-    to_tsvector(convert_from(operations_data.data, 'UTF-8'))
-    || to_tsvector(regexp_replace(convert_from(operations_data.data, 'UTF-8'), '[-/_.]', ' ', 'g'))
+    to_tsvector(convert_from(operations_data.data, 'UTF-8') || ' ' || coalesce(operations_data.title, ''))
     AS data_vector
 FROM operations_data;

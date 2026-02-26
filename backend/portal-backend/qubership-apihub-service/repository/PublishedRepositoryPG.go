@@ -159,8 +159,7 @@ func (p publishedRepositoryImpl) PatchVersion(packageId string, versionName stri
 			calculateLiteSearchOperationsQuery := `
 								insert into fts_latest_release_operation_data
 								select o.package_id, o.version, o.revision, o.operation_id, o.type,
-									to_tsvector(convert_from(od.data,'UTF-8'))
-									|| to_tsvector(regexp_replace(convert_from(od.data,'UTF-8'), '[-/_.]', ' ', 'g'))
+									to_tsvector(convert_from(od.data,'UTF-8') || ' ' || coalesce(o.title,''))
 									data_vector
 								from operation o inner join operation_data od on o.data_hash=od.data_hash
 									where package_id = ? and version = ? and revision = ?
@@ -1439,8 +1438,7 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 			calculateLiteSearchOperationsQuery := `
 						insert into fts_latest_release_operation_data
 						select o.package_id, o.version, o.revision, o.operation_id, o.type,
-							to_tsvector(convert_from(od.data,'UTF-8'))
-							|| to_tsvector(regexp_replace(convert_from(od.data,'UTF-8'), '[-/_.]', ' ', 'g'))
+							to_tsvector(convert_from(od.data,'UTF-8') || ' ' || coalesce(o.title,''))
 							data_vector
 						from operation o inner join operation_data od on o.data_hash=od.data_hash
 							where package_id = ? and version = ? and revision = ?
