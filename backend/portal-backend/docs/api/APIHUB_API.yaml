@@ -9598,7 +9598,6 @@ components:
               description: When true, signals to use v3 legacy global search instead of v4 global search.
               type: boolean
               default: false
-          additionalProperties: true
     ApiKey:
       title: ApiKey
       type: object

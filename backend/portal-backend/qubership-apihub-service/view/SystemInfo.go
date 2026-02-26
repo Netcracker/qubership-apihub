@@ -10,7 +10,11 @@ type SystemInfo struct {
 	Notification        string         `json:"notification,omitempty"`
 	ExternalLinks       []string       `json:"externalLinks"`
 	MigrationInProgress bool           `json:"migrationInProgress"`
-	FeatureFlags        map[string]any `json:"featureFlags"`
+	FeatureFlags        FeatureFlags `json:"featureFlags"`
+}
+
+type FeatureFlags struct {
+	UseLegacySearch bool `json:"useLegacySearch"`
 }
 
 type SystemConfigurationInfo_deprecated struct {
