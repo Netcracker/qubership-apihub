@@ -1,17 +1,3 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package repository
 
 import (
@@ -172,8 +158,10 @@ func (p publishedRepositoryImpl) PatchVersion(packageId string, versionName stri
 		if statusChanged && ent.Status == string(view.Release) {
 			calculateLiteSearchOperationsQuery := `
 								insert into fts_latest_release_operation_data
-								select o.package_id, o.version, o.revision, o.operation_id, o.type, to_tsvector(convert_from(od.data,'UTF-8'))  data_vector from
-								operation o inner join operation_data od on o.data_hash=od.data_hash
+								select o.package_id, o.version, o.revision, o.operation_id, o.type,
+									to_tsvector(convert_from(od.data,'UTF-8') || ' ' || coalesce(o.title,''))
+									data_vector
+								from operation o inner join operation_data od on o.data_hash=od.data_hash
 									where package_id = ? and version = ? and revision = ?
 								on conflict (package_id, version, revision, operation_id) do update set data_vector = EXCLUDED.data_vector;`
 			_, err = tx.Exec(calculateLiteSearchOperationsQuery,
@@ -1449,8 +1437,10 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 
 			calculateLiteSearchOperationsQuery := `
 						insert into fts_latest_release_operation_data
-						select o.package_id, o.version, o.revision, o.operation_id, o.type, to_tsvector(convert_from(od.data,'UTF-8'))  data_vector from
-						operation o inner join operation_data od on o.data_hash=od.data_hash
+						select o.package_id, o.version, o.revision, o.operation_id, o.type,
+							to_tsvector(convert_from(od.data,'UTF-8') || ' ' || coalesce(o.title,''))
+							data_vector
+						from operation o inner join operation_data od on o.data_hash=od.data_hash
 							where package_id = ? and version = ? and revision = ?
 						on conflict (package_id, version, revision, operation_id) do update set data_vector = EXCLUDED.data_vector;`
 			_, err = tx.Exec(calculateLiteSearchOperationsQuery,
