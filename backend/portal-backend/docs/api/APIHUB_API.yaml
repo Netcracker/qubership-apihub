@@ -3367,7 +3367,7 @@ paths:
           in: query
           description: |
             Filter by operation's title/path/method.
-            For AsyncAPI: searches by message title, channel address, or operation action (OR logic).
+            For AsyncAPI: searches by message title(or messageId), channel title(or channelId) or operation action.
           schema:
             type: string
         - $ref: "#/components/parameters/limit"
@@ -3570,7 +3570,7 @@ paths:
         in: query
         description: |
           Filter by operation's title/path/method.
-          For AsyncAPI: searches by message title, channel address, or operation action (OR logic).
+          For AsyncAPI: searches by message title(or messageId), channel title(or channelId) or operation action.
         schema:
           type: string
     get:
@@ -5656,7 +5656,7 @@ paths:
           in: query
           description: |
             Filter by title/path/method. Custom tag format in search is key: value. Search works as a complete match.
-            For AsyncAPI: searches by message title, channel address, or operation action (OR logic).
+            For AsyncAPI: searches by message title(or messageId), channel title(or channelId) or operation action.
           schema:
             type: string
         - name: documentSlug
@@ -6015,7 +6015,7 @@ paths:
           in: query
           description: |
             Filter operation by operation title/path/method.
-            For AsyncAPI: searches by message title, channel address, or operation action (OR logic).
+            For AsyncAPI: searches by message title(or messageId), channel title(or channelId) or operation action.
           schema:
             type: string
         - name: apiKind
@@ -6343,7 +6343,7 @@ paths:
           in: query
           description: |
             Filter by title/path/method.
-            For AsyncAPI: searches by message title, channel address, or operation action (OR logic).
+            For AsyncAPI: searches by message title(or messageId), channel title(or channelId) or operation action.
           schema:
             type: string
         - name: tag
@@ -6477,7 +6477,7 @@ paths:
           in: query
           description: |
             Filter by title/path/method.
-            For AsyncAPI: searches by message title, channel address, or operation action (OR logic).
+            For AsyncAPI: searches by message title(or messageId), channel title(or channelId) or operation action.
           schema:
             type: string
         - name: tag
@@ -7048,7 +7048,7 @@ paths:
             in: query
             description: |
               Filter by title/path/method.
-              For AsyncAPI: searches by message title, channel address, or operation action (OR logic).
+              For AsyncAPI: searches by message title(or messageId), channel title(or channelId) or operation action.
             schema:
               type: string
           - name: documentSlug
