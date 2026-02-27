@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS fts_operation_search_text
     operation_id     varchar NOT NULL,
     status           varchar NOT NULL,
     api_type         varchar NOT NULL,
-    search_text_hash varchar,
+    search_data_hash varchar,
     data_vector      tsvector,
     CONSTRAINT pk_fts_operation_search_text PRIMARY KEY (package_id, version, revision, operation_id)
 );
@@ -33,7 +33,7 @@ with maxrev as
                                   and pv.revision = maxrev.revision
           where pv.deleted_at is null),
      operations as
-         (select o.package_id, o.version, o.revision, o.operation_id, o.type, o.data_hash, v.status
+         (select o.package_id, o.version, o.revision, o.operation_id, o.type, o.data_hash, o.title, v.status
           from operation o
                    inner join versions v
                               on v.package_id = o.package_id
@@ -42,12 +42,12 @@ with maxrev as
           where o.type in ('rest', 'asyncapi')
             and o.data_hash is not null),
      operations_data as
-         (select ops.package_id, ops.version, ops.revision, ops.operation_id, ops.type, ops.status, ops.data_hash, od.data
+         (select ops.package_id, ops.version, ops.revision, ops.operation_id, ops.type, ops.status, ops.data_hash, ops.title, od.data
           from operations ops
                    inner join operation_data od
                               on od.data_hash = ops.data_hash)
 insert
-into fts_operation_search_text (package_id, version, revision, operation_id, status, api_type, search_text_hash, data_vector)
+into fts_operation_search_text (package_id, version, revision, operation_id, status, api_type, search_data_hash, data_vector)
 select operations_data.package_id,
        operations_data.version,
        operations_data.revision,
@@ -55,7 +55,7 @@ select operations_data.package_id,
        operations_data.status,
        operations_data.type,
        operations_data.data_hash,
-       to_tsvector(convert_from(operations_data.data, 'UTF-8')) data_vector
+       to_tsvector(convert_from(operations_data.data, 'UTF-8') || ' ' || coalesce(operations_data.title, '')) data_vector
 from operations_data;
 
 -- Clean stale fts_latest_release_operation_data rows for packages excluded from search.

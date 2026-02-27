@@ -324,10 +324,10 @@ func (s OperationDataEntity) GetChanges(t OperationDataEntity) map[string]interf
 
 func (s OperationSearchTextEntity) GetChanges(t OperationSearchTextEntity) map[string]interface{} {
 	changes := make(map[string]interface{}, 0)
-	if s.SearchTextHash != t.SearchTextHash {
-		changes["SearchTextHash"] = map[string]interface{}{
-			"old": s.SearchTextHash,
-			"new": t.SearchTextHash,
+	if s.SearchDataHash != t.SearchDataHash {
+		changes["SearchDataHash"] = map[string]interface{}{
+			"old": s.SearchDataHash,
+			"new": t.SearchDataHash,
 		}
 	}
 	return changes

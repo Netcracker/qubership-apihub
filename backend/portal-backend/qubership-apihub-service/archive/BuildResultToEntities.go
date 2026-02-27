@@ -312,11 +312,9 @@ func (a *BuildResultToEntitiesReader) ReadOperationsToEntities() ([]*entity.Oper
 		}
 
 		var searchTextData []byte
-		var searchTextHash string
 		if operation.Search == nil || operation.Search.UseOperationDataAsSearchText {
 			if dataHash != nil {
 				searchTextData = fileData
-				searchTextHash = *dataHash
 			}
 		} else {
 			searchTextFilePath := operation.Search.SearchTextFilePath
@@ -348,15 +346,16 @@ func (a *BuildResultToEntitiesReader) ReadOperationsToEntities() ([]*entity.Oper
 					Params:  map[string]interface{}{"file": searchTextFilePath, "error": err.Error()},
 				}
 			}
-			searchTextHash = utils.GetEncodedXXHash128(searchTextData)
 		}
 
 		if len(searchTextData) > 0 {
+			searchDataHash := utils.GetEncodedXXHash128(append(searchTextData, []byte(operation.Title)...))
 			operationSearchTexts = append(operationSearchTexts, &entity.OperationSearchTextEntity{
 				OperationId:    operation.OperationId,
 				ApiType:        operation.ApiType,
+				Title:          operation.Title,
 				SearchTextData: searchTextData,
-				SearchTextHash: searchTextHash,
+				SearchDataHash: searchDataHash,
 			})
 		}
 

@@ -841,8 +841,8 @@ func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo 
 			if s.OperationId == t.OperationId {
 				found = true
 				matchedSearchTexts[s.OperationId] = struct{}{}
-				oldSt := entity.OperationSearchTextEntity{SearchTextHash: s.SearchTextHash}
-				if stChanges := oldSt.GetChanges(entity.OperationSearchTextEntity{SearchTextHash: t.SearchTextHash}); len(stChanges) > 0 {
+				oldSt := entity.OperationSearchTextEntity{SearchDataHash: s.SearchDataHash}
+				if stChanges := oldSt.GetChanges(entity.OperationSearchTextEntity{SearchDataHash: t.SearchDataHash}); len(stChanges) > 0 {
 					searchTextChanges[s.OperationId] = stChanges
 					changesOverview.setTableChanges(currentTable, stChanges)
 					continue
@@ -1495,14 +1495,14 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 
 				for _, st := range operationSearchTexts {
 					insertFtsSearchTextQuery := `
-						INSERT INTO fts_operation_search_text (package_id, version, revision, operation_id, api_type, status, search_text_hash, data_vector)
-						VALUES (?, ?, ?, ?, ?, ?, ?, to_tsvector(convert_from(?, 'UTF-8')))
+						INSERT INTO fts_operation_search_text (package_id, version, revision, operation_id, api_type, status, search_data_hash, data_vector)
+						VALUES (?, ?, ?, ?, ?, ?, ?, to_tsvector(convert_from(?, 'UTF-8') || ' ' || coalesce(?, '')))
 						ON CONFLICT (package_id, version, revision, operation_id) DO UPDATE
-							SET search_text_hash = EXCLUDED.search_text_hash,
+							SET search_data_hash = EXCLUDED.search_data_hash,
 								data_vector = EXCLUDED.data_vector`
 					_, err = tx.Exec(insertFtsSearchTextQuery,
 						version.PackageId, version.Version, version.Revision, st.OperationId,
-						st.ApiType, version.Status, st.SearchTextHash, st.SearchTextData)
+						st.ApiType, version.Status, st.SearchDataHash, st.SearchTextData, st.Title)
 					if err != nil {
 						return fmt.Errorf("failed to insert fts_operation_search_text for operation %s: %w", st.OperationId, err)
 					}
@@ -1522,21 +1522,22 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 					for _, st := range operationSearchTexts {
 						insertTmpQuery := fmt.Sprintf(`
 							INSERT INTO migration."fts_operation_search_text_tmp_%s"
-								(package_id, version, revision, operation_id, api_type, status, search_text_hash, search_text_data)
-							SELECT ?, ?, ?, ?, ?, ?, ?, ?
+								(package_id, version, revision, operation_id, api_type, status, search_data_hash, search_text_data, title)
+							SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
 							WHERE NOT EXISTS (
 								SELECT 1 FROM fts_operation_search_text
 								WHERE package_id = ? AND version = ? AND revision = ? AND operation_id = ?
-									AND search_text_hash = ?
+									AND search_data_hash = ?
 							)
 							ON CONFLICT (package_id, version, revision, operation_id) DO UPDATE
-								SET search_text_hash = EXCLUDED.search_text_hash,
-									search_text_data = EXCLUDED.search_text_data`, packageInfo.MigrationId)
+								SET search_data_hash = EXCLUDED.search_data_hash,
+									search_text_data = EXCLUDED.search_text_data,
+									title = EXCLUDED.title`, packageInfo.MigrationId)
 						_, err = tx.Exec(insertTmpQuery,
 							version.PackageId, version.Version, version.Revision, st.OperationId,
-							st.ApiType, version.Status, st.SearchTextHash, st.SearchTextData,
+							st.ApiType, version.Status, st.SearchDataHash, st.SearchTextData, st.Title,
 							version.PackageId, version.Version, version.Revision, st.OperationId,
-							st.SearchTextHash)
+							st.SearchDataHash)
 						if err != nil {
 							return fmt.Errorf("failed to insert into migration.fts_operation_search_text_tmp: %w", err)
 						}

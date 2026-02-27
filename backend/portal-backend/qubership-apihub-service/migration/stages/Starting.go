@@ -49,7 +49,7 @@ on migration."version_comparison_%s"(package_id,version,revision,previous_packag
 		fmt.Sprintf(`create table migration."fts_operation_search_text_tmp_%s" (
 			package_id varchar, version varchar, revision integer,
 			operation_id varchar, api_type varchar, status varchar,
-			search_text_hash varchar, search_text_data bytea,
+			search_data_hash varchar, search_text_data bytea, title varchar,
 			PRIMARY KEY (package_id, version, revision, operation_id));`, d.ent.Id))
 	if err != nil {
 		return err

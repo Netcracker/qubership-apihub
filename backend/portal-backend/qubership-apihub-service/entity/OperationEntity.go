@@ -83,15 +83,16 @@ type OperationDataEntity struct {
 type OperationSearchTextEntity struct {
 	OperationId    string
 	ApiType        string
+	Title          string
 	SearchTextData []byte
-	SearchTextHash string
+	SearchDataHash string
 }
 
 type FtsOperationSearchTextEntity struct {
 	tableName struct{} `pg:"fts_operation_search_text"`
 
 	OperationId    string `pg:"operation_id, type:varchar"`
-	SearchTextHash string `pg:"search_text_hash, type:varchar"`
+	SearchDataHash string `pg:"search_data_hash, type:varchar"`
 }
 
 type OperationComparisonEntity struct {

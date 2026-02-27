@@ -234,8 +234,8 @@ func copyVersions(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	}
 	objAffected += res.RowsAffected()
 
-	copyFtsSearchText := "insert into fts_operation_search_text (package_id, version, revision, operation_id, api_type, status, search_text_hash, data_vector) " +
-		"(select ?, version, revision, operation_id, api_type, status, search_text_hash, data_vector from fts_operation_search_text orig where orig.package_id = ?) on conflict do nothing"
+	copyFtsSearchText := "insert into fts_operation_search_text (package_id, version, revision, operation_id, api_type, status, search_data_hash, data_vector) " +
+		"(select ?, version, revision, operation_id, api_type, status, search_data_hash, data_vector from fts_operation_search_text orig where orig.package_id = ?) on conflict do nothing"
 	res, err = tx.Exec(copyFtsSearchText, toPkg, fromPkg)
 	if err != nil {
 		return 0, fmt.Errorf("failed to copy fts_operation_search_text from %s to %s: %w", fromPkg, toPkg, err)

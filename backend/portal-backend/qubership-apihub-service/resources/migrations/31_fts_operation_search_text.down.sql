@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS fts_operation_search_text;
+    DROP TABLE IF EXISTS fts_operation_search_text;
 
 CREATE TABLE IF NOT EXISTS public.ts_rest_operation_data (
     data_hash character varying NOT NULL,

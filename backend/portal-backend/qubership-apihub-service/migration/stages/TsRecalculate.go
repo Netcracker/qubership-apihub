@@ -69,7 +69,7 @@ func (d OpsMigration) StageTSRecalculate() error {
 	)
 	INSERT INTO fts_latest_release_operation_data (package_id, version, revision, operation_id, api_type, data_vector)
 	SELECT o.package_id, o.version, o.revision, o.operation_id, o.type,
-		to_tsvector(convert_from(od.data, 'UTF-8'))
+		to_tsvector(convert_from(od.data, 'UTF-8') || ' ' || coalesce(o.title, ''))
 	FROM operation o
 	INNER JOIN operation_data od ON o.data_hash = od.data_hash
 	INNER JOIN latest_rev lr ON o.package_id = lr.package_id AND o.version = lr.version AND o.revision = lr.revision
@@ -82,13 +82,13 @@ func (d OpsMigration) StageTSRecalculate() error {
 
 	log.Info("Calculating fts_operation_search_text")
 	recalculateFtsOperationSearchTextQuery := fmt.Sprintf(`
-	INSERT INTO fts_operation_search_text (package_id, version, revision, operation_id, api_type, status, search_text_hash, data_vector)
+	INSERT INTO fts_operation_search_text (package_id, version, revision, operation_id, api_type, status, search_data_hash, data_vector)
 		SELECT tmp.package_id, tmp.version, tmp.revision, tmp.operation_id,
-			tmp.api_type, tmp.status, tmp.search_text_hash,
-			to_tsvector(convert_from(tmp.search_text_data, 'UTF-8'))
+			tmp.api_type, tmp.status, tmp.search_data_hash,
+			to_tsvector(convert_from(tmp.search_text_data, 'UTF-8') || ' ' || coalesce(tmp.title, ''))
 		FROM migration."fts_operation_search_text_tmp_%s" tmp
 	ON CONFLICT (package_id, version, revision, operation_id) DO UPDATE
-		SET search_text_hash = EXCLUDED.search_text_hash,
+		SET search_data_hash = EXCLUDED.search_data_hash,
 			data_vector = EXCLUDED.data_vector`, d.ent.Id)
 	_, err = d.cp.GetConnection().ExecContext(d.migrationCtx, recalculateFtsOperationSearchTextQuery)
 	if err != nil {
