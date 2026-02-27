@@ -234,19 +234,44 @@ func (o operationGroupControllerImpl) GetGroupedOperations(w http.ResponseWriter
 		}
 	}
 
+	asyncapiChannel, err := url.QueryUnescape(r.URL.Query().Get("asyncapiChannel"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiChannel"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	asyncapiProtocol, err := url.QueryUnescape(r.URL.Query().Get("asyncapiProtocol"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiProtocol"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
 	groupedOperationListReq := view.OperationListReq{
-		Deprecated:   deprecated,
-		Kind:         kind,
-		EmptyTag:     emptyTag,
-		Tag:          tag,
-		Limit:        limit,
-		Page:         page,
-		TextFilter:   textFilter,
-		ApiType:      apiType,
-		DocumentSlug: documentSlug,
-		RefPackageId: refPackageId,
-		OnlyAddable:  onlyAddable,
-		ApiAudience:  apiAudience,
+		Deprecated:       deprecated,
+		Kind:             kind,
+		EmptyTag:         emptyTag,
+		Tag:              tag,
+		Limit:            limit,
+		Page:             page,
+		TextFilter:       textFilter,
+		ApiType:          apiType,
+		DocumentSlug:     documentSlug,
+		RefPackageId:     refPackageId,
+		OnlyAddable:      onlyAddable,
+		ApiAudience:      apiAudience,
+		AsyncapiChannel:  asyncapiChannel,
+		AsyncapiProtocol: asyncapiProtocol,
 	}
 
 	groupedOperations, err := o.operationGroupService.GetGroupedOperations(packageId, versionName, apiType, groupName, groupedOperationListReq)

@@ -44,6 +44,8 @@ func (e excelServiceImpl) ExportApiChanges(packageId, version, apiType string, s
 		Group:                    req.Group,
 		EmptyGroup:               req.EmptyGroup,
 		ApiAudience:              req.ApiAudience,
+		AsyncapiChannel:          req.AsyncapiChannel,
+		AsyncapiProtocol:         req.AsyncapiProtocol,
 	}
 	changelog, err := e.versionService.GetVersionChanges(packageId, version, apiType, severities, versionChangesSearchReq)
 	if err != nil {
@@ -78,15 +80,17 @@ type OperationsReport struct {
 
 func (e excelServiceImpl) ExportOperations(packageId, version, apiType string, req view.ExportOperationRequestView) (*excelize.File, string, error) {
 	restOperationListReq := view.OperationListReq{
-		Kind:         req.Kind,
-		EmptyTag:     req.EmptyTag,
-		Tag:          req.Tag,
-		TextFilter:   req.TextFilter,
-		ApiType:      apiType,
-		RefPackageId: req.RefPackageId,
-		Group:        req.Group,
-		EmptyGroup:   req.EmptyGroup,
-		ApiAudience:  req.ApiAudience,
+		Kind:             req.Kind,
+		EmptyTag:         req.EmptyTag,
+		Tag:              req.Tag,
+		TextFilter:       req.TextFilter,
+		ApiType:          apiType,
+		RefPackageId:     req.RefPackageId,
+		Group:            req.Group,
+		EmptyGroup:       req.EmptyGroup,
+		ApiAudience:      req.ApiAudience,
+		AsyncapiChannel:  req.AsyncapiChannel,
+		AsyncapiProtocol: req.AsyncapiProtocol,
 	}
 	operations, err := e.operationService.GetOperations(packageId, version, false, restOperationListReq)
 	if err != nil {
@@ -131,6 +135,8 @@ func (e excelServiceImpl) ExportDeprecatedOperations(packageId, version, apiType
 		EmptyGroup:             req.EmptyGroup,
 		Group:                  req.Group,
 		ApiAudience:            req.ApiAudience,
+		AsyncapiChannel:        req.AsyncapiChannel,
+		AsyncapiProtocol:       req.AsyncapiProtocol,
 	}
 	deprecatedOperations, err := e.operationService.GetDeprecatedOperations(packageId, version, deprecatedOperationListReq)
 	if err != nil {

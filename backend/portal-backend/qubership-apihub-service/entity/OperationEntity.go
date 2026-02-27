@@ -172,23 +172,25 @@ type OperationComparisonChangelogEntity struct {
 }
 
 type ChangelogSearchQueryEntity struct {
-	ComparisonId   string   `pg:"comparison_id, type:varchar, use_zero"`
-	ApiType        string   `pg:"type, type:varchar, use_zero"`
-	TextFilter     string   `pg:"text_filter, type:varchar, use_zero"`
-	ApiKind        string   `pg:"api_kind, type:varchar, use_zero"`
-	ApiAudience    string   `pg:"api_audience, type:varchar, use_zero"`
-	DocumentSlug   string   `pg:"document_slug, type:varchar, use_zero"`
-	Tags           []string `pg:"tags, type:varchar[], use_zero"`
-	EmptyTag       bool     `pg:"empty_tag, type:boolean, use_zero"`
-	RefPackageId   string   `pg:"ref_package_id, type:varchar, use_zero"`
-	Limit          int      `pg:"limit, type:integer, use_zero"`
-	Offset         int      `pg:"offset, type:integer, use_zero"`
-	EmptyGroup     bool     `pg:"-"`
-	Group          string   `pg:"-"`
-	GroupPackageId string   `pg:"-"`
-	GroupVersion   string   `pg:"-"`
-	GroupRevision  int      `pg:"-"`
-	Severities     []string `pg:"-"`
+	ComparisonId     string   `pg:"comparison_id, type:varchar, use_zero"`
+	ApiType          string   `pg:"type, type:varchar, use_zero"`
+	TextFilter       string   `pg:"text_filter, type:varchar, use_zero"`
+	ApiKind          string   `pg:"api_kind, type:varchar, use_zero"`
+	ApiAudience      string   `pg:"api_audience, type:varchar, use_zero"`
+	DocumentSlug     string   `pg:"document_slug, type:varchar, use_zero"`
+	Tags             []string `pg:"tags, type:varchar[], use_zero"`
+	EmptyTag         bool     `pg:"empty_tag, type:boolean, use_zero"`
+	RefPackageId     string   `pg:"ref_package_id, type:varchar, use_zero"`
+	Limit            int      `pg:"limit, type:integer, use_zero"`
+	Offset           int      `pg:"offset, type:integer, use_zero"`
+	EmptyGroup       bool     `pg:"-"`
+	Group            string   `pg:"-"`
+	GroupPackageId   string   `pg:"-"`
+	GroupVersion     string   `pg:"-"`
+	GroupRevision    int      `pg:"-"`
+	Severities       []string `pg:"-"`
+	AsyncapiChannel  string   `pg:"-"`
+	AsyncapiProtocol string   `pg:"-"`
 }
 
 type OperationTagsSearchQueryEntity struct {

@@ -584,6 +584,29 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 		}
 	}
 
+	asyncapiChannel, err := url.QueryUnescape(r.URL.Query().Get("asyncapiChannel"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiChannel"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	asyncapiProtocol, err := url.QueryUnescape(r.URL.Query().Get("asyncapiProtocol"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiProtocol"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
 	e.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.ExportsCalled, packageId)
 
 	exportApiChangesRequestView := view.ExportApiChangesRequestView{
@@ -597,6 +620,8 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 		Group:                    group,
 		EmptyGroup:               emptyGroup,
 		ApiAudience:              apiAudience,
+		AsyncapiChannel:          asyncapiChannel,
+		AsyncapiProtocol:         asyncapiProtocol,
 	}
 	apiChangesReport, versionName, err := e.excelService.ExportApiChanges(packageId, version, apiType, severities, exportApiChangesRequestView)
 	if err != nil {
@@ -764,17 +789,42 @@ func (e exportControllerImpl) GenerateOperationsExcelReport(w http.ResponseWrite
 		return
 	}
 
+	asyncapiChannel, err := url.QueryUnescape(r.URL.Query().Get("asyncapiChannel"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiChannel"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	asyncapiProtocol, err := url.QueryUnescape(r.URL.Query().Get("asyncapiProtocol"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiProtocol"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
 	e.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.ExportsCalled, packageId)
 
 	exportOperationsRequestView := view.ExportOperationRequestView{
-		Tag:          tag,
-		TextFilter:   textFilter,
-		EmptyTag:     emptyTag,
-		Kind:         kind,
-		RefPackageId: refPackageId,
-		EmptyGroup:   emptyGroup,
-		Group:        group,
-		ApiAudience:  apiAudience,
+		Tag:              tag,
+		TextFilter:       textFilter,
+		EmptyTag:         emptyTag,
+		Kind:             kind,
+		RefPackageId:     refPackageId,
+		EmptyGroup:       emptyGroup,
+		Group:            group,
+		ApiAudience:      apiAudience,
+		AsyncapiProtocol: asyncapiProtocol,
+		AsyncapiChannel:  asyncapiChannel,
 	}
 	operationsReport, versionName, err := e.excelService.ExportOperations(packageId, version, apiType, exportOperationsRequestView)
 	if err != nil {
@@ -933,17 +983,42 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 		return
 	}
 
+	asyncapiChannel, err := url.QueryUnescape(r.URL.Query().Get("asyncapiChannel"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiChannel"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	asyncapiProtocol, err := url.QueryUnescape(r.URL.Query().Get("asyncapiProtocol"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiProtocol"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
 	e.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.ExportsCalled, packageId)
 
 	exportOperationsRequestView := view.ExportOperationRequestView{
-		Tags:         tags,
-		TextFilter:   textFilter,
-		Kind:         kind,
-		RefPackageId: refPackageId,
-		EmptyTag:     emptyTag,
-		EmptyGroup:   emptyGroup,
-		Group:        group,
-		ApiAudience:  apiAudience,
+		Tags:             tags,
+		TextFilter:       textFilter,
+		Kind:             kind,
+		RefPackageId:     refPackageId,
+		EmptyTag:         emptyTag,
+		EmptyGroup:       emptyGroup,
+		Group:            group,
+		ApiAudience:      apiAudience,
+		AsyncapiChannel:  asyncapiChannel,
+		AsyncapiProtocol: asyncapiProtocol,
 	}
 	deprecatedOperationsReport, versionName, err := e.excelService.ExportDeprecatedOperations(packageId, version, apiType, exportOperationsRequestView)
 	if err != nil {
