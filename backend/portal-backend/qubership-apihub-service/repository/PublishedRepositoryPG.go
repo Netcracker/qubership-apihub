@@ -158,8 +158,10 @@ func (p publishedRepositoryImpl) PatchVersion(packageId string, versionName stri
 		if statusChanged && ent.Status == string(view.Release) && !getPackage.ExcludeFromSearch {
 			calculateLiteSearchOperationsQuery := `
 								insert into fts_latest_release_operation_data
-								select o.package_id, o.version, o.revision, o.operation_id, o.type, to_tsvector(convert_from(od.data,'UTF-8'))  data_vector from
-								operation o inner join operation_data od on o.data_hash=od.data_hash
+								select o.package_id, o.version, o.revision, o.operation_id, o.type,
+									to_tsvector(convert_from(od.data,'UTF-8') || ' ' || coalesce(o.title,''))
+									data_vector
+								from operation o inner join operation_data od on o.data_hash=od.data_hash
 									where package_id = ? and version = ? and revision = ?
 								on conflict (package_id, version, revision, operation_id) do update set data_vector = EXCLUDED.data_vector;`
 			_, err = tx.Exec(calculateLiteSearchOperationsQuery,
@@ -1465,8 +1467,10 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 
 			calculateLiteSearchOperationsQuery := `
 						insert into fts_latest_release_operation_data
-						select o.package_id, o.version, o.revision, o.operation_id, o.type, to_tsvector(convert_from(od.data,'UTF-8'))  data_vector from
-						operation o inner join operation_data od on o.data_hash=od.data_hash
+						select o.package_id, o.version, o.revision, o.operation_id, o.type,
+							to_tsvector(convert_from(od.data,'UTF-8') || ' ' || coalesce(o.title,''))
+							data_vector
+						from operation o inner join operation_data od on o.data_hash=od.data_hash
 							where package_id = ? and version = ? and revision = ?
 						on conflict (package_id, version, revision, operation_id) do update set data_vector = EXCLUDED.data_vector;`
 			_, err = tx.Exec(calculateLiteSearchOperationsQuery,
