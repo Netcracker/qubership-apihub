@@ -6,11 +6,6 @@ export type AsyncApi3RulesOptions = {
   mode: CompareMode
 }
 
-export type AsyncApi3SchemaRulesOptions = {
-  version: typeof SPEC_TYPE_ASYNCAPI_3
-  // true = send scope (like request), false = receive scope (like response)
-  send?: boolean
-}
 
 export type AsyncApiCompareOptions = StrictCompareOptions & Omit<AsyncApi3RulesOptions, 'version'>
 

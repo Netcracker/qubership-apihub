@@ -15,17 +15,16 @@ import {
   START_NEW_COMPARE_SCOPE_RULE,
 } from '../types'
 import { AsyncApi3RulesOptions } from './asyncapi3.types'
-import { asyncApiSchemaRules } from './asyncapi3.schema'
+import { schemaOrMultiFormatSchemaRules } from './asyncapi3.schema'
 import { asyncApiSpecificationExtensionRulesFunction } from './asyncapi3.compare.rules'
 import {
   COMPARE_SCOPE_COMPONENTS,
   COMPARE_SCOPE_RECEIVE,
   COMPARE_SCOPE_SEND,
-  ASYNCAPI_ACTION_SEND,
 } from './asyncapi3.const'
-import { SPEC_TYPE_ASYNCAPI_3 } from '@netcracker/qubership-apihub-api-unifier'
 import { externalDocumentationRules } from './asyncapi3.rules.common'
 import { bindingsRules } from './asyncapi3.bindings'
+import { ASYNCAPI_ACTION_SEND } from '@netcracker/qubership-apihub-api-unifier'
 
 /**
  * Keep consisten ordering for the rules
@@ -35,9 +34,6 @@ import { bindingsRules } from './asyncapi3.bindings'
  */
 
 export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => {
-  const sendSchemaRules = asyncApiSchemaRules({ version: SPEC_TYPE_ASYNCAPI_3, send: true })
-  const receiveSchemaRules = asyncApiSchemaRules({ version: SPEC_TYPE_ASYNCAPI_3, send: false })
-
   const tagRules: CompareRules = {
     $: allAnnotation,
     '/name': { $: allAnnotation },
@@ -156,13 +152,9 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
     '/*': messageExampleRules,
   }
 
-  // Message rules factory based on send/receive context
-  const messageRules = (isSend: boolean): CompareRules => ({
+  const messageRules: CompareRules = {
     $: allBreaking,
-    '/headers': () => ({
-      ...(isSend ? sendSchemaRules : receiveSchemaRules),
-      $: allBreaking,
-    }),
+    '/headers': (ctx) => ({ ...schemaOrMultiFormatSchemaRules(ctx), $: allBreaking }),
     '/correlationId': correlationIdRules,
     '/contentType': { $: addNonBreaking },
     '/name': { $: allNonBreaking },
@@ -173,10 +165,7 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
     '/externalDocs': externalDocumentationRules,
     '/bindings': bindingsRules,
     '/examples': messageExamplesRules,
-    '/payload': () => ({
-      ...(isSend ? sendSchemaRules : receiveSchemaRules),
-      $: allBreaking,
-    }),
+    '/payload': (ctx) => ({ ...schemaOrMultiFormatSchemaRules(ctx), $: allBreaking }),
     '/traits': {
       $: allUnclassified,
       '/*': {
@@ -186,7 +175,7 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
       },
     },
     ...asyncApiSpecificationExtensionRulesFunction(allUnclassified),
-  })
+  }
 
   //TODO: validate classification
   const parameterRules: CompareRules = {
@@ -211,7 +200,7 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
     '/address': { $: allUnclassified },
     '/messages': {
       $: addNonBreaking,
-      '/*': messageRules(true), // Default to send scope for channel-level messages
+      '/*': messageRules,
     },
     '/title': { $: allAnnotation },
     '/summary': { $: allAnnotation },
@@ -237,17 +226,17 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
     ...asyncApiSpecificationExtensionRulesFunction(),
   }
 
-  const operationReplyRules: CompareRules = {
+  const operationReplyRules = (isSendAction: boolean): CompareRules => ({
     $: allUnclassified,
-    [START_NEW_COMPARE_SCOPE_RULE]: COMPARE_SCOPE_SEND, //TODO: invert operation scope
+    [START_NEW_COMPARE_SCOPE_RULE]: isSendAction ? COMPARE_SCOPE_RECEIVE : COMPARE_SCOPE_SEND,
     '/address': operationReplyAddressRules,
-    '/channel': { $: allUnclassified },
+    '/channel': channelRules,
     '/messages': {
       $: allUnclassified,
-      '/*': messageRules(true), //TODO: fix scope
+      '/*': messageRules,
     },
     ...asyncApiSpecificationExtensionRulesFunction(),
-  }
+  })
 
   const operationTraitsRules: CompareRules = {
     $: allUnclassified,
@@ -276,13 +265,13 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
     '/tags': tagsRules,
     '/externalDocs': externalDocumentationRules,
     '/bindings': bindingsRules,
-    '/reply': operationReplyRules, // Reply always uses send scope
+    '/reply': operationReplyRules(isSendAction),
     '/action': { $: allBreaking },
-    '/channel': { $: allBreaking },
+    '/channel': channelRules,
     '/traits': operationTraitsRules,
     '/messages': {
       $: allUnclassified,
-      '/*': messageRules(isSendAction),
+      '/*': messageRules,
     },
     ...asyncApiSpecificationExtensionRulesFunction(),
   })
@@ -304,10 +293,7 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
     [START_NEW_COMPARE_SCOPE_RULE]: COMPARE_SCOPE_COMPONENTS,
     '/schemas': {
       $: [nonBreaking, breaking, breaking],
-      '/*': () => ({
-        $: allUnclassified, // For component schemas, use unclassified as default
-        ...sendSchemaRules,
-      }),
+      '/*': (ctx) => ({ $: allUnclassified, ...schemaOrMultiFormatSchemaRules(ctx) }),
     },
     '/servers': {
       $: [nonBreaking, breaking, breaking],
@@ -327,7 +313,7 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
     },
     '/messages': {
       $: [nonBreaking, breaking, breaking],
-      '/*': messageRules(true), // Component messages default to send scope
+      '/*': messageRules,
     },
     '/securitySchemes': {
       $: [breaking, nonBreaking, breaking],
@@ -347,7 +333,7 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
     },
     '/replies': {
       $: [nonBreaking, breaking, breaking],
-      '/*': operationReplyRules,
+      '/*': operationReplyRules(true),
     },
     '/replyAddresses': {
       $: [nonBreaking, breaking, breaking],
