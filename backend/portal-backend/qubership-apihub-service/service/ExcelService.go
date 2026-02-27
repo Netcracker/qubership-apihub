@@ -179,7 +179,7 @@ func buildDeprecatedOperationsWorkbook(deprecatedOperations *view.Operations, pa
 	report := DeprecatedOperationsReport{
 		workbook:           deprecatedOperationsReport,
 		startColumn:        "A",
-		endColumn:          "L",
+		endColumn:          "M",
 		columnDefaultWidth: 35,
 	}
 
@@ -190,6 +190,7 @@ func buildDeprecatedOperationsWorkbook(deprecatedOperations *view.Operations, pa
 	restOperations := make(map[string][]view.DeprecatedRestOperationView)
 	graphQLOperations := make(map[string][]view.DeprecateGraphQLOperationView)
 	protobufOperations := make(map[string][]view.DeprecateProtobufOperationView)
+	asyncapiOperations := make(map[string][]view.DeprecatedAsyncAPIOperationView)
 
 	for _, operation := range deprecatedOperations.Operations {
 		if restOperation, ok := operation.(view.DeprecatedRestOperationView); ok {
@@ -201,6 +202,9 @@ func buildDeprecatedOperationsWorkbook(deprecatedOperations *view.Operations, pa
 		}
 		if protobufOperation, ok := operation.(view.DeprecateProtobufOperationView); ok {
 			protobufOperations[protobufOperation.PackageRef] = append(protobufOperations[protobufOperation.PackageRef], protobufOperation)
+		}
+		if asyncapiOperation, ok := operation.(view.DeprecatedAsyncAPIOperationView); ok {
+			asyncapiOperations[asyncapiOperation.PackageRef] = append(asyncapiOperations[asyncapiOperation.PackageRef], asyncapiOperation)
 		}
 	}
 	var cellsValues map[string]interface{}
@@ -361,6 +365,60 @@ func buildDeprecatedOperationsWorkbook(deprecatedOperations *view.Operations, pa
 			}
 		}
 	}
+
+	rowIndex = 2
+	asyncapiSheetCreated := false
+	for packageRef, operationsView := range asyncapiOperations {
+		versionName := deprecatedOperations.Packages[packageRef].RefPackageVersion
+		if !deprecatedOperations.Packages[packageRef].NotLatestRevision {
+			versionName, err = getVersionNameFromVersionWithRevision(deprecatedOperations.Packages[packageRef].RefPackageVersion)
+			if err != nil {
+				return nil, err
+			}
+		}
+		for _, operationView := range operationsView {
+			if !asyncapiSheetCreated {
+				err := report.createAsyncAPISheet()
+				if err != nil {
+					return nil, err
+				}
+				asyncapiSheetCreated = true
+			}
+			for _, deprecatedItem := range operationView.DeprecatedItems {
+				cellsValues = make(map[string]interface{})
+				cellsValues[fmt.Sprintf("A%d", rowIndex)] = deprecatedOperations.Packages[packageRef].RefPackageId
+				cellsValues[fmt.Sprintf("B%d", rowIndex)] = deprecatedOperations.Packages[packageRef].RefPackageName
+				cellsValues[fmt.Sprintf("C%d", rowIndex)] = deprecatedOperations.Packages[packageRef].ServiceName
+				cellsValues[fmt.Sprintf("D%d", rowIndex)] = versionName
+				cellsValues[fmt.Sprintf("E%d", rowIndex)] = operationView.Title
+				cellsValues[fmt.Sprintf("F%d", rowIndex)] = operationView.Action
+				cellsValues[fmt.Sprintf("G%d", rowIndex)] = operationView.Channel
+				cellsValues[fmt.Sprintf("H%d", rowIndex)] = operationView.Protocol
+				cellsValues[fmt.Sprintf("I%d", rowIndex)] = strings.Join(operationView.Tags, ",")
+				cellsValues[fmt.Sprintf("J%d", rowIndex)] = strings.ToUpper(operationView.ApiKind)
+				if len(deprecatedItem.PreviousReleaseVersions) > 0 {
+					cellsValues[fmt.Sprintf("K%d", rowIndex)] = deprecatedItem.PreviousReleaseVersions[0]
+				}
+				cellsValues[fmt.Sprintf("L%d", rowIndex)] = deprecatedItem.Description
+				if deprecatedItem.DeprecatedInfo != "" {
+					cellsValues[fmt.Sprintf("M%d", rowIndex)] = deprecatedItem.DeprecatedInfo
+				}
+				err := setCellsValues(report.workbook, view.AsyncAPISheetName, cellsValues)
+				if err != nil {
+					return nil, err
+				}
+				if rowIndex%2 == 0 {
+					err = report.workbook.SetCellStyle(view.AsyncAPISheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("M%d", rowIndex), evenCellStyle)
+				} else {
+					err = report.workbook.SetCellStyle(view.AsyncAPISheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("M%d", rowIndex), oddCellStyle)
+				}
+				if err != nil {
+					return nil, err
+				}
+				rowIndex += 1
+			}
+		}
+	}
 	err = report.setupSettings()
 	if err != nil {
 		return nil, err
@@ -383,7 +441,7 @@ func buildOperationsWorkbook(operations *view.Operations, packageName, versionNa
 	report := OperationsReport{
 		workbook:           apiChangesReport,
 		startColumn:        "A",
-		endColumn:          "J",
+		endColumn:          "K",
 		columnDefaultWidth: 35,
 	}
 
@@ -395,6 +453,7 @@ func buildOperationsWorkbook(operations *view.Operations, packageName, versionNa
 	restOperations := make(map[string][]view.RestOperationView)
 	graphQLOperations := make(map[string][]view.GraphQLOperationView)
 	protobufOperations := make(map[string][]view.ProtobufOperationView)
+	asyncapiOperations := make(map[string][]view.AsyncAPIOperationView)
 
 	for _, operation := range operations.Operations {
 		if restOperation, ok := operation.(view.RestOperationView); ok {
@@ -406,6 +465,9 @@ func buildOperationsWorkbook(operations *view.Operations, packageName, versionNa
 		}
 		if protobufOperation, ok := operation.(view.ProtobufOperationView); ok {
 			protobufOperations[protobufOperation.PackageRef] = append(protobufOperations[protobufOperation.PackageRef], protobufOperation)
+		}
+		if asyncapiOperation, ok := operation.(view.AsyncAPIOperationView); ok {
+			asyncapiOperations[asyncapiOperation.PackageRef] = append(asyncapiOperations[asyncapiOperation.PackageRef], asyncapiOperation)
 		}
 	}
 	var cellsValues map[string]interface{}
@@ -541,6 +603,52 @@ func buildOperationsWorkbook(operations *view.Operations, packageName, versionNa
 			rowIndex += 1
 		}
 	}
+
+	rowIndex = 2
+	asyncapiSheetCreated := false
+	for packageRef, operationsView := range asyncapiOperations {
+		versionName := operations.Packages[packageRef].RefPackageVersion
+		if !operations.Packages[packageRef].NotLatestRevision {
+			versionName, err = getVersionNameFromVersionWithRevision(operations.Packages[packageRef].RefPackageVersion)
+			if err != nil {
+				return nil, err
+			}
+		}
+		for _, operationView := range operationsView {
+			if !asyncapiSheetCreated {
+				err := report.createAsyncAPISheet()
+				if err != nil {
+					return nil, err
+				}
+				asyncapiSheetCreated = true
+			}
+			cellsValues = make(map[string]interface{})
+			cellsValues[fmt.Sprintf("A%d", rowIndex)] = operations.Packages[packageRef].RefPackageId
+			cellsValues[fmt.Sprintf("B%d", rowIndex)] = operations.Packages[packageRef].RefPackageName
+			cellsValues[fmt.Sprintf("C%d", rowIndex)] = operations.Packages[packageRef].ServiceName
+			cellsValues[fmt.Sprintf("D%d", rowIndex)] = versionName
+			cellsValues[fmt.Sprintf("E%d", rowIndex)] = operationView.Title
+			cellsValues[fmt.Sprintf("F%d", rowIndex)] = operationView.Action
+			cellsValues[fmt.Sprintf("G%d", rowIndex)] = operationView.Channel
+			cellsValues[fmt.Sprintf("H%d", rowIndex)] = operationView.Protocol
+			cellsValues[fmt.Sprintf("I%d", rowIndex)] = strings.Join(operationView.Tags, " ")
+			cellsValues[fmt.Sprintf("J%d", rowIndex)] = strings.ToUpper(operationView.ApiKind)
+			cellsValues[fmt.Sprintf("K%d", rowIndex)] = strings.ToLower(strconv.FormatBool(operationView.Deprecated))
+			err := setCellsValues(report.workbook, view.AsyncAPISheetName, cellsValues)
+			if err != nil {
+				return nil, err
+			}
+			if rowIndex%2 == 0 {
+				err = report.workbook.SetCellStyle(view.AsyncAPISheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("K%d", rowIndex), evenCellStyle)
+			} else {
+				err = report.workbook.SetCellStyle(view.AsyncAPISheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("K%d", rowIndex), oddCellStyle)
+			}
+			if err != nil {
+				return nil, err
+			}
+			rowIndex += 1
+		}
+	}
 	err = report.setupSettings()
 	if err != nil {
 		return nil, err
@@ -571,7 +679,7 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 	report := ApiChangesReport{
 		workbook:           apiChangesReport,
 		startColumn:        "A",
-		endColumn:          "M",
+		endColumn:          "N",
 		columnDefaultWidth: 35,
 	}
 
@@ -592,6 +700,7 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 	restApiMap := make(map[string][]view.RestOperationComparisonChangesView)
 	graphQLApiMap := make(map[string][]view.GraphQLOperationComparisonChangesView)
 	protobufApiMap := make(map[string][]view.ProtobufOperationComparisonChangesView)
+	asyncapiApiMap := make(map[string][]view.AsyncAPIOperationComparisonChangesView)
 	err = report.setupSettings()
 	if err != nil {
 		return nil, err
@@ -620,11 +729,19 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 			}
 			protobufApiMap[protobufOperation.PackageRef] = append(protobufApiMap[protobufOperation.PackageRef], protobufOperation)
 		}
+		if asyncapiOperation, ok := operation.(view.AsyncAPIOperationComparisonChangesView); ok {
+			if asyncapiOperation.PackageRef == "" {
+				asyncapiApiMap[asyncapiOperation.PreviousVersionPackageRef] = append(asyncapiApiMap[asyncapiOperation.PreviousVersionPackageRef], asyncapiOperation)
+				continue
+			}
+			asyncapiApiMap[asyncapiOperation.PackageRef] = append(asyncapiApiMap[asyncapiOperation.PackageRef], asyncapiOperation)
+		}
 	}
 
 	restApiAllChangesSummaryMap := make(map[string]view.ChangeSummary)
 	graphQLApiAllChangesSummaryMap := make(map[string]view.ChangeSummary)
 	protobufApiAllChangesSummaryMap := make(map[string]view.ChangeSummary)
+	asyncapiApiAllChangesSummaryMap := make(map[string]view.ChangeSummary)
 
 	for key, value := range restApiMap {
 		summary := restApiAllChangesSummaryMap[key]
@@ -698,6 +815,30 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 			}
 		}
 		protobufApiAllChangesSummaryMap[key] = summary
+	}
+	for key, value := range asyncapiApiMap {
+		summary := asyncapiApiAllChangesSummaryMap[key]
+		for _, changelogView := range value {
+			if changelogView.ChangeSummary.Deprecated > 0 {
+				summary.Deprecated += 1
+			}
+			if changelogView.ChangeSummary.NonBreaking > 0 {
+				summary.NonBreaking += 1
+			}
+			if changelogView.ChangeSummary.Breaking > 0 {
+				summary.Breaking += 1
+			}
+			if changelogView.ChangeSummary.SemiBreaking > 0 {
+				summary.SemiBreaking += 1
+			}
+			if changelogView.ChangeSummary.Annotation > 0 {
+				summary.Annotation += 1
+			}
+			if changelogView.ChangeSummary.Unclassified > 0 {
+				summary.Unclassified += 1
+			}
+		}
+		asyncapiApiAllChangesSummaryMap[key] = summary
 	}
 
 	cellsValues = make(map[string]interface{})
@@ -831,6 +972,45 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 		cellsValues[fmt.Sprintf("%s5", colName)] = versionName
 		cellsValues[fmt.Sprintf("%s6", colName)] = previousVersionName
 		cellsValues[fmt.Sprintf("%s7", colName)] = "protobuf"
+		cellsValues[fmt.Sprintf("%s8", colName)] = value.Breaking
+		cellsValues[fmt.Sprintf("%s9", colName)] = value.SemiBreaking
+		cellsValues[fmt.Sprintf("%s10", colName)] = value.NonBreaking
+		cellsValues[fmt.Sprintf("%s11", colName)] = value.Deprecated
+		cellsValues[fmt.Sprintf("%s12", colName)] = value.Annotation
+		cellsValues[fmt.Sprintf("%s13", colName)] = value.Unclassified
+		err := setCellsValues(report.workbook, view.SummarySheetName, cellsValues)
+		if err != nil {
+			return nil, err
+		}
+		err = report.workbook.SetCellStyle(view.SummarySheetName, fmt.Sprintf("%s1", colName), fmt.Sprintf("%s13", colName), summaryCellStyle)
+		if err != nil {
+			return nil, err
+		}
+	}
+	for key, value := range asyncapiApiAllChangesSummaryMap {
+		versionName := versionChanges.Packages[key].RefPackageVersion
+		if !versionChanges.Packages[key].NotLatestRevision {
+			versionName, err = getVersionNameFromVersionWithRevision(versionChanges.Packages[key].RefPackageVersion)
+			if err != nil {
+				return nil, err
+			}
+		}
+		previousVersionName := versionChanges.Packages[asyncapiApiMap[key][0].PreviousVersionPackageRef].RefPackageVersion
+		if !versionChanges.Packages[asyncapiApiMap[key][0].PreviousVersionPackageRef].NotLatestRevision {
+			previousVersionName, err = getVersionNameFromVersionWithRevision(versionChanges.Packages[asyncapiApiMap[key][0].PreviousVersionPackageRef].RefPackageVersion)
+			if err != nil {
+				return nil, err
+			}
+		}
+		colName, _ := excelize.ColumnNumberToName(colNum)
+		colNum++
+		cellsValues = make(map[string]interface{})
+		cellsValues[fmt.Sprintf("%s2", colName)] = versionChanges.Packages[key].RefPackageId
+		cellsValues[fmt.Sprintf("%s3", colName)] = versionChanges.Packages[key].RefPackageName
+		cellsValues[fmt.Sprintf("%s4", colName)] = versionChanges.Packages[key].ServiceName
+		cellsValues[fmt.Sprintf("%s5", colName)] = versionName
+		cellsValues[fmt.Sprintf("%s6", colName)] = previousVersionName
+		cellsValues[fmt.Sprintf("%s7", colName)] = "asyncapi"
 		cellsValues[fmt.Sprintf("%s8", colName)] = value.Breaking
 		cellsValues[fmt.Sprintf("%s9", colName)] = value.SemiBreaking
 		cellsValues[fmt.Sprintf("%s10", colName)] = value.NonBreaking
@@ -1020,6 +1200,65 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 			}
 		}
 	}
+
+	rowIndex = 2
+	asyncapiSheetCreated := false
+	for key, changelogAsyncAPIOperationView := range asyncapiApiMap {
+		versionName := versionChanges.Packages[key].RefPackageVersion
+		if !versionChanges.Packages[key].NotLatestRevision {
+			versionName, err = getVersionNameFromVersionWithRevision(versionChanges.Packages[key].RefPackageVersion)
+			if err != nil {
+				return nil, err
+			}
+		}
+		for _, changelogView := range changelogAsyncAPIOperationView {
+			previousVersionName := versionChanges.Packages[changelogView.PreviousVersionPackageRef].RefPackageVersion
+			if !versionChanges.Packages[changelogView.PreviousVersionPackageRef].NotLatestRevision {
+				previousVersionName, err = getVersionNameFromVersionWithRevision(versionChanges.Packages[changelogView.PreviousVersionPackageRef].RefPackageVersion)
+				if err != nil {
+					return nil, err
+				}
+			}
+			for _, change := range changelogView.Changes {
+				commonOperationChange := view.GetSingleOperationChangeCommon(change)
+				if !asyncapiSheetCreated {
+					err := report.createAsyncAPISheet()
+					if err != nil {
+						return nil, err
+					}
+					asyncapiSheetCreated = true
+				}
+				cellsValues = make(map[string]interface{})
+				cellsValues[fmt.Sprintf("A%d", rowIndex)] = versionChanges.Packages[key].RefPackageId
+				cellsValues[fmt.Sprintf("B%d", rowIndex)] = versionChanges.Packages[key].RefPackageName
+				cellsValues[fmt.Sprintf("C%d", rowIndex)] = versionChanges.Packages[key].ServiceName
+				cellsValues[fmt.Sprintf("D%d", rowIndex)] = versionName
+				cellsValues[fmt.Sprintf("E%d", rowIndex)] = previousVersionName
+				cellsValues[fmt.Sprintf("F%d", rowIndex)] = changelogView.Title
+				cellsValues[fmt.Sprintf("G%d", rowIndex)] = changelogView.AsyncAPIOperationMetadata.Action
+				cellsValues[fmt.Sprintf("H%d", rowIndex)] = changelogView.Channel
+				cellsValues[fmt.Sprintf("I%d", rowIndex)] = changelogView.Protocol
+				cellsValues[fmt.Sprintf("J%d", rowIndex)] = changelogView.OperationComparisonChangesView.Action
+				cellsValues[fmt.Sprintf("K%d", rowIndex)] = commonOperationChange.Description
+				cellsValues[fmt.Sprintf("L%d", rowIndex)] = mapSeverity(commonOperationChange.Severity)
+				cellsValues[fmt.Sprintf("M%d", rowIndex)] = versionChanges.Packages[key].Kind
+				cellsValues[fmt.Sprintf("N%d", rowIndex)] = changelogView.ApiKind
+				err := setCellsValues(report.workbook, view.AsyncAPISheetName, cellsValues)
+				if err != nil {
+					return nil, err
+				}
+				if rowIndex%2 == 0 {
+					err = report.workbook.SetCellStyle(view.AsyncAPISheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("N%d", rowIndex), evenCellStyle)
+				} else {
+					err = report.workbook.SetCellStyle(view.AsyncAPISheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("N%d", rowIndex), oddCellStyle)
+				}
+				if err != nil {
+					return nil, err
+				}
+				rowIndex += 1
+			}
+		}
+	}
 	return report.workbook, nil
 }
 
@@ -1147,6 +1386,47 @@ func (a *ApiChangesReport) createProtobufSheet() error {
 		return err
 	}
 	err = a.workbook.AutoFilter(view.ProtobufSheetName, fmt.Sprintf("%s:%s", fmt.Sprintf("A%d", headerRowIndex), fmt.Sprintf("M%d", headerRowIndex)), []excelize.AutoFilterOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *ApiChangesReport) createAsyncAPISheet() error {
+	headerRowIndex := 1
+	headerStyle := getHeaderStyle(a.workbook)
+	_, err := a.workbook.NewSheet(view.AsyncAPISheetName)
+	if err != nil {
+		return err
+	}
+	err = a.workbook.SetColWidth(view.AsyncAPISheetName, a.startColumn, a.endColumn, a.columnDefaultWidth)
+	if err != nil {
+		return err
+	}
+	cellsValues := make(map[string]interface{})
+	cellsValues[fmt.Sprintf("A%d", headerRowIndex)] = view.PackageIDColumnName
+	cellsValues[fmt.Sprintf("B%d", headerRowIndex)] = view.PackageNameColumnName
+	cellsValues[fmt.Sprintf("C%d", headerRowIndex)] = view.ServiceNameColumnName
+	cellsValues[fmt.Sprintf("D%d", headerRowIndex)] = view.VersionColumnName
+	cellsValues[fmt.Sprintf("E%d", headerRowIndex)] = view.PreviousVersionColumnName
+	cellsValues[fmt.Sprintf("F%d", headerRowIndex)] = view.OperationTitleColumnName
+	cellsValues[fmt.Sprintf("G%d", headerRowIndex)] = view.AsyncAPIActionColumnName
+	cellsValues[fmt.Sprintf("H%d", headerRowIndex)] = view.OperationChannelColumnName
+	cellsValues[fmt.Sprintf("I%d", headerRowIndex)] = view.OperationProtocolColumnName
+	cellsValues[fmt.Sprintf("J%d", headerRowIndex)] = view.OperationActionColumnName
+	cellsValues[fmt.Sprintf("K%d", headerRowIndex)] = view.ChangeDescriptionColumnName
+	cellsValues[fmt.Sprintf("L%d", headerRowIndex)] = view.ChangeSeverityColumnName
+	cellsValues[fmt.Sprintf("M%d", headerRowIndex)] = view.KindColumnName
+	cellsValues[fmt.Sprintf("N%d", headerRowIndex)] = view.APIKindColumnName
+	err = setCellsValues(a.workbook, view.AsyncAPISheetName, cellsValues)
+	if err != nil {
+		return err
+	}
+	err = a.workbook.SetCellStyle(view.AsyncAPISheetName, fmt.Sprintf("A%d", headerRowIndex), fmt.Sprintf("N%d", headerRowIndex), headerStyle)
+	if err != nil {
+		return err
+	}
+	err = a.workbook.AutoFilter(view.AsyncAPISheetName, fmt.Sprintf("%s:%s", fmt.Sprintf("A%d", headerRowIndex), fmt.Sprintf("N%d", headerRowIndex)), []excelize.AutoFilterOptions{})
 	if err != nil {
 		return err
 	}
@@ -1492,6 +1772,45 @@ func (o *OperationsReport) createProtobufSheet() error {
 	return nil
 }
 
+func (o *OperationsReport) createAsyncAPISheet() error {
+	var err error
+	headerRowIndex := 1
+	o.firstSheetIndex, err = o.workbook.NewSheet(view.AsyncAPISheetName)
+	if err != nil {
+		return err
+	}
+	err = o.workbook.SetColWidth(view.AsyncAPISheetName, o.startColumn, o.endColumn, o.columnDefaultWidth)
+	if err != nil {
+		return err
+	}
+	headerStyle := getHeaderStyle(o.workbook)
+	cellsValues := make(map[string]interface{})
+	cellsValues[fmt.Sprintf("A%d", headerRowIndex)] = view.PackageIDColumnName
+	cellsValues[fmt.Sprintf("B%d", headerRowIndex)] = view.PackageNameColumnName
+	cellsValues[fmt.Sprintf("C%d", headerRowIndex)] = view.ServiceNameColumnName
+	cellsValues[fmt.Sprintf("D%d", headerRowIndex)] = view.VersionColumnName
+	cellsValues[fmt.Sprintf("E%d", headerRowIndex)] = view.OperationTitleColumnName
+	cellsValues[fmt.Sprintf("F%d", headerRowIndex)] = view.AsyncAPIActionColumnName
+	cellsValues[fmt.Sprintf("G%d", headerRowIndex)] = view.OperationChannelColumnName
+	cellsValues[fmt.Sprintf("H%d", headerRowIndex)] = view.OperationProtocolColumnName
+	cellsValues[fmt.Sprintf("I%d", headerRowIndex)] = view.TagColumnName
+	cellsValues[fmt.Sprintf("J%d", headerRowIndex)] = view.KindColumnName
+	cellsValues[fmt.Sprintf("K%d", headerRowIndex)] = view.DeprecatedColumnName
+	err = setCellsValues(o.workbook, view.AsyncAPISheetName, cellsValues)
+	if err != nil {
+		return err
+	}
+	err = o.workbook.SetCellStyle(view.AsyncAPISheetName, fmt.Sprintf("A%d", headerRowIndex), fmt.Sprintf("K%d", headerRowIndex), headerStyle)
+	if err != nil {
+		return err
+	}
+	err = o.workbook.AutoFilter(view.AsyncAPISheetName, fmt.Sprintf("%s:%s", fmt.Sprintf("A%d", headerRowIndex), fmt.Sprintf("K%d", headerRowIndex)), []excelize.AutoFilterOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (o *DeprecatedOperationsReport) createRestSheet() error {
 	var err error
 	headerRowIndex := 1
@@ -1605,6 +1924,47 @@ func (o *DeprecatedOperationsReport) createProtobufSheet() error {
 		return err
 	}
 	err = o.workbook.AutoFilter(view.ProtobufSheetName, fmt.Sprintf("%s:%s", fmt.Sprintf("A%d", headerRowIndex), fmt.Sprintf("K%d", headerRowIndex)), []excelize.AutoFilterOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o *DeprecatedOperationsReport) createAsyncAPISheet() error {
+	var err error
+	headerRowIndex := 1
+	headerStyle := getHeaderStyle(o.workbook)
+	o.firstSheetIndex, err = o.workbook.NewSheet(view.AsyncAPISheetName)
+	if err != nil {
+		return err
+	}
+	err = o.workbook.SetColWidth(view.AsyncAPISheetName, o.startColumn, o.endColumn, o.columnDefaultWidth)
+	if err != nil {
+		return err
+	}
+	cellsValues := make(map[string]interface{})
+	cellsValues[fmt.Sprintf("A%d", headerRowIndex)] = view.PackageIDColumnName
+	cellsValues[fmt.Sprintf("B%d", headerRowIndex)] = view.PackageNameColumnName
+	cellsValues[fmt.Sprintf("C%d", headerRowIndex)] = view.ServiceNameColumnName
+	cellsValues[fmt.Sprintf("D%d", headerRowIndex)] = view.VersionColumnName
+	cellsValues[fmt.Sprintf("E%d", headerRowIndex)] = view.OperationTitleColumnName
+	cellsValues[fmt.Sprintf("F%d", headerRowIndex)] = view.AsyncAPIActionColumnName
+	cellsValues[fmt.Sprintf("G%d", headerRowIndex)] = view.OperationChannelColumnName
+	cellsValues[fmt.Sprintf("H%d", headerRowIndex)] = view.OperationProtocolColumnName
+	cellsValues[fmt.Sprintf("I%d", headerRowIndex)] = view.TagColumnName
+	cellsValues[fmt.Sprintf("J%d", headerRowIndex)] = view.KindColumnName
+	cellsValues[fmt.Sprintf("K%d", headerRowIndex)] = view.DeprecatedSinceColumnName
+	cellsValues[fmt.Sprintf("L%d", headerRowIndex)] = view.DeprecatedDescriptionColumnName
+	cellsValues[fmt.Sprintf("M%d", headerRowIndex)] = view.AdditionalInformationColumnName
+	err = setCellsValues(o.workbook, view.AsyncAPISheetName, cellsValues)
+	if err != nil {
+		return err
+	}
+	err = o.workbook.SetCellStyle(view.AsyncAPISheetName, fmt.Sprintf("A%d", headerRowIndex), fmt.Sprintf("M%d", headerRowIndex), headerStyle)
+	if err != nil {
+		return err
+	}
+	err = o.workbook.AutoFilter(view.AsyncAPISheetName, fmt.Sprintf("%s:%s", fmt.Sprintf("A%d", headerRowIndex), fmt.Sprintf("M%d", headerRowIndex)), []excelize.AutoFilterOptions{})
 	if err != nil {
 		return err
 	}
