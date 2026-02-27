@@ -22,30 +22,14 @@ import {
   specificationExtensionsRules,
 } from './asyncapi.jsonschema.common'
 import { openApiJsonSchemaRules } from './openapi.jsonschema'
-import { ASYNCAPI_PROPERTY_EXTERNAL_DOCS, ASYNCAPI_PROPERTY_SCHEMA_FORMAT } from './asyncapi.const'
+import {
+  ASYNCAPI_PROPERTY_EXTERNAL_DOCS,
+  ASYNCAPI_PROPERTY_SCHEMA_FORMAT, ASYNCAPI_SCHEMA_FORMAT_DEFAULT,
+  ASYNCAPI_SCHEMA_FORMATS_ASCYNAPI_30,
+  ASYNCAPI_SCHEMA_FORMATS_JSON,
+  ASYNCAPI_SCHEMA_FORMATS_OPENAPI_30,
+} from './asyncapi.const'
 import { EMPTY_MARKER, ReplaceMapping, TO_EMPTY_OBJECT_MAPPING, valueReplaces } from '../unifies/replaces'
-
-// Schema format constants
-const ASYNCAPI_SCHEMA_FORMAT_DEFAULT = 'application/vnd.aai.asyncapi+json;version=3.0.0'
-
-// Supported schema formats (normalized to lowercase for comparison)
-// Include all variations: with/without +json suffix
-const ASYNCAPI_30_SCHEMA_FORMATS = [
-  'application/vnd.aai.asyncapi;version=3.0.0',
-  ASYNCAPI_SCHEMA_FORMAT_DEFAULT,
-  'application/vnd.aai.asyncapi+yaml;version=3.0.0',
-]
-
-const JSON_SCHEMA_FORMATS = [
-  'application/schema+json;version=draft-07',
-  'application/schema+yaml;version=draft-07',
-]
-
-const OPENAPI_30_SCHEMA_FORMATS = [
-  'application/vnd.oai.openapi;version=3.0.0',
-  'application/vnd.oai.openapi+json;version=3.0.0',
-  'application/vnd.oai.openapi+yaml;version=3.0.0',
-]
 
 // Default value mapping for Multi Format Schema
 const MULTI_FORMAT_SCHEMA_DEFAULTS: DefaultValueMapping = {
@@ -129,13 +113,13 @@ function normalizeSchemaFormat(format: string): string {
 function getSchemaRulesByFormat(schemaFormat: string): () => NormalizationRules {
   const normalizedSchemaFormat = normalizeSchemaFormat(schemaFormat)
 
-  if (ASYNCAPI_30_SCHEMA_FORMATS.includes(normalizedSchemaFormat)) {
+  if (ASYNCAPI_SCHEMA_FORMATS_ASCYNAPI_30.includes(normalizedSchemaFormat)) {
     return () => asyncApiSchemaRules
   }
-  if (JSON_SCHEMA_FORMATS.includes(normalizedSchemaFormat)) {
+  if (ASYNCAPI_SCHEMA_FORMATS_JSON.includes(normalizedSchemaFormat)) {
     return () => jsonSchemaRules(SPEC_TYPE_JSON_SCHEMA_07)
   }
-  if (OPENAPI_30_SCHEMA_FORMATS.includes(normalizedSchemaFormat)) {
+  if (ASYNCAPI_SCHEMA_FORMATS_OPENAPI_30.includes(normalizedSchemaFormat)) {
     return () => openApiJsonSchemaRules(SPEC_TYPE_OPEN_API_30)
   }
   return () => ({

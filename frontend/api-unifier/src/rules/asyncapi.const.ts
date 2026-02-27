@@ -125,3 +125,25 @@ export const ASYNCAPI_PROPERTY_EXAMPLE = 'example'
 export const ASYNCAPI_PROPERTY_EXAMPLES = 'examples'
 export const ASYNCAPI_PROPERTY_ENUM = 'enum'
 export const ASYNCAPI_PROPERTY_DEFAULT = 'default'
+
+// Schema format constants
+export const ASYNCAPI_SCHEMA_FORMAT_DEFAULT = 'application/vnd.aai.asyncapi+json;version=3.0.0'
+
+// Supported schema formats (normalized to lowercase for comparison)
+// Include all variations: with/without +json suffix
+export const ASYNCAPI_SCHEMA_FORMATS_ASCYNAPI_30 = [
+  'application/vnd.aai.asyncapi;version=3.0.0',
+  ASYNCAPI_SCHEMA_FORMAT_DEFAULT,
+  'application/vnd.aai.asyncapi+yaml;version=3.0.0',
+]
+
+export const ASYNCAPI_SCHEMA_FORMATS_JSON = [
+  'application/schema+json;version=draft-07',
+  'application/schema+yaml;version=draft-07',
+]
+
+export const ASYNCAPI_SCHEMA_FORMATS_OPENAPI_30 = [
+  'application/vnd.oai.openapi;version=3.0.0',
+  'application/vnd.oai.openapi+json;version=3.0.0',
+  'application/vnd.oai.openapi+yaml;version=3.0.0',
+]
