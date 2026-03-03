@@ -1,0 +1,41 @@
+openapi: 3.1.0
+info:
+  title: nullable schema property
+  version: 1.0.0
+paths:
+  /products/{id}:
+    get:
+      description: Operation is used to get
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Product"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+components:
+  schemas:
+    Product:
+      description: product description from components
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        price:
+          anyOf:
+            - type: string
+              description:
+                Optional. If defined, system try to cast specified primitive data
+              enum:
+                - NUMBER
+                - STRING
+                - BOOLEAN
+            - type: "null"
+
