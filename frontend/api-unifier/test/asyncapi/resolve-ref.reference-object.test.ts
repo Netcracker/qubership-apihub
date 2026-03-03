@@ -1,5 +1,5 @@
 import { normalize } from '../../src/normalize'
-import { TEST_FIRST_REFERENCE_KEY_PROPERTY, TEST_LAST_REFERENCE_KEY_PROPERTY } from '../helpers'
+import { TEST_FIRST_REFERENCE_KEY_PROPERTY, TEST_LAST_REFERENCE_KEY_PROPERTY, TEST_SYNTHETIC_TITLE_FLAG } from '../helpers'
 import { parseAsyncApiAndAssertValid } from '../helpers/asyncapi'
 
 const NORMALIZATION_OPTIONS_FIRST_REFERENCE_KEY = {
@@ -642,6 +642,11 @@ describe('AsyncAPI Reference Object Resolver', () => {
   })
 
   describe('Broken Reference Handling', () => {
+    const NORMALIZATION_OPTIONS_BROKEN_REFERENCE = {
+      firstReferenceKeyProperty: TEST_FIRST_REFERENCE_KEY_PROPERTY,
+      validate: true,
+    }
+
     it('should keep unresolved server reference on channel when target server does not exist', () => {
       const source = {
         asyncapi: '3.0.0',
@@ -678,7 +683,7 @@ describe('AsyncAPI Reference Object Resolver', () => {
         // No components.servers defined on purpose to keep the reference broken
       }
 
-      const result = normalize(source, NORMALIZATION_OPTIONS_LAST_REFERENCE_KEY) as any
+      const result = normalize(source, NORMALIZATION_OPTIONS_BROKEN_REFERENCE) as any
 
       // Channel reference from operation should still resolve correctly
       expect(result.operations['send-operation'].channel).toBe(result.channels.ChannelID)
@@ -724,7 +729,7 @@ describe('AsyncAPI Reference Object Resolver', () => {
         // No components.parameters defined on purpose to keep the reference broken
       }
 
-      const result = normalize(source, NORMALIZATION_OPTIONS_LAST_REFERENCE_KEY) as any
+      const result = normalize(source, NORMALIZATION_OPTIONS_BROKEN_REFERENCE) as any
 
       // Channel reference from operation should still resolve correctly
       expect(result.operations['send-operation'].channel).toBe(result.channels.ChannelID)

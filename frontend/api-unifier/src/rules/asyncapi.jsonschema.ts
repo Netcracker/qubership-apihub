@@ -18,6 +18,7 @@ import { jsonSchemaRules } from './jsonschema'
 import { JSON_SCHEMA_PROPERTY_DEPRECATED } from './jsonschema.const'
 import { jsonSchemaReferenceResolver, referenceObjectResolver } from '../references/ref-resolver'
 import {
+  referenceObjectRules,
   externalDocumentationRules,
   specificationExtensionsRules,
 } from './asyncapi.jsonschema.common'
@@ -139,8 +140,8 @@ function multiFormatSchemaRules(schemaFormat: string): NormalizationRules {
       validate: checkType(TYPE_STRING),
     },
     '/schema': getSchemaRulesByFormat(schemaFormat),
+    ...referenceObjectRules,
     ...specificationExtensionsRules,
-    referenceHandler: referenceObjectResolver(),
     validate: checkType(TYPE_OBJECT),
     unify: valueDefaults(MULTI_FORMAT_SCHEMA_DEFAULTS),
   }

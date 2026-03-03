@@ -21,6 +21,7 @@ import {
 } from './asyncapi.const'
 import { schemaOrMultiFormatSchemaRules } from './asyncapi.jsonschema'
 import {
+  referenceObjectRules,
   externalDocumentationRules,
   specificationExtensionsRules,
 } from './asyncapi.jsonschema.common'
@@ -64,8 +65,8 @@ const tagRules: NormalizationRules = {
   '/name': { validate: checkType(TYPE_STRING) },
   '/description': { validate: checkType(TYPE_STRING) },
   '/externalDocs': externalDocumentationRules,
+  ...referenceObjectRules,
   ...specificationExtensionsRules,
-  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_TAG_DEFAULTS),
@@ -127,8 +128,8 @@ const securitySchemeRules: NormalizationRules = {
     '/*': { validate: checkType(TYPE_STRING) },
     validate: checkType(TYPE_ARRAY),
   },
+  ...referenceObjectRules,
   ...specificationExtensionsRules,
-  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_SECURITY_SCHEME_DEFAULTS),
@@ -148,8 +149,8 @@ const serverVariableRules: NormalizationRules = {
     '/*': { validate: checkType(TYPE_STRING) },
     validate: checkType(TYPE_ARRAY),
   },
+  ...referenceObjectRules,
   ...specificationExtensionsRules,
-  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_SERVER_VARIABLE_DEFAULTS),
@@ -158,10 +159,10 @@ const serverVariableRules: NormalizationRules = {
 }
 
 const serverBindingsRules: NormalizationRules = {
+  ...referenceObjectRules,
   ...specificationExtensionsRules,
   '/*': { validate: checkType(...TYPE_JSON_ANY) },
   '/**': { validate: checkType(...TYPE_JSON_ANY) },
-  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
 }
 
@@ -184,7 +185,8 @@ const serverRules: NormalizationRules = {
   '/tags': tagsRules,
   '/externalDocs': externalDocumentationRules,
   '/bindings': serverBindingsRules,
-  referenceHandler: referenceObjectResolver(),
+  ...referenceObjectRules,
+  ...specificationExtensionsRules,
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_SERVER_DEFAULTS),
@@ -195,16 +197,16 @@ const serverRules: NormalizationRules = {
 const correlationIdRules: NormalizationRules = {
   '/description': { validate: checkType(TYPE_STRING) },
   '/location': { validate: checkType(TYPE_STRING) },
+  ...referenceObjectRules,
   ...specificationExtensionsRules,
-  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
 }
 
 const messageBindingsRules: NormalizationRules = {
+  ...referenceObjectRules,
   ...specificationExtensionsRules,
   '/*': { validate: checkType(...TYPE_JSON_ANY) },
   '/**': { validate: checkType(...TYPE_JSON_ANY) },
-  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
 }
 
@@ -247,8 +249,8 @@ const messageTraitRules: NormalizationRules = {
     deprecationResolver: (ctx) => ASYNCAPI_DEPRECATION_RESOLVER(ctx),
     descriptionCalculator: ctx => `[Deprecated] message ${ctx.source.name || ctx.source.title || ''}`,
   },
+  ...referenceObjectRules,
   ...specificationExtensionsRules,
-  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_MESSAGE_TRAIT_DEFAULTS),
@@ -290,8 +292,8 @@ const parameterRules: NormalizationRules = {
     validate: checkType(TYPE_ARRAY),
   },
   '/location': { validate: checkType(TYPE_STRING) },
+  ...referenceObjectRules,
   ...specificationExtensionsRules,
-  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_PARAMETER_DEFAULTS),
@@ -300,10 +302,10 @@ const parameterRules: NormalizationRules = {
 }
 
 const channelBindingsRules: NormalizationRules = {
+  ...referenceObjectRules,
   ...specificationExtensionsRules,
   '/*': { validate: checkType(...TYPE_JSON_ANY) },
   '/**': { validate: checkType(...TYPE_JSON_ANY) },
-  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
 }
 
@@ -330,8 +332,8 @@ const channelRules: NormalizationRules = {
   '/tags': tagsRules,
   '/externalDocs': externalDocumentationRules,
   '/bindings': channelBindingsRules,
+  ...referenceObjectRules,
   ...specificationExtensionsRules,
-  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_CHANNEL_DEFAULTS),
@@ -347,8 +349,8 @@ const rootChannelRules: NormalizationRules = {
 const operationReplyAddressRules: NormalizationRules = {
   '/description': { validate: checkType(TYPE_STRING) },
   '/location': { validate: checkType(TYPE_STRING) },
+  ...referenceObjectRules,
   ...specificationExtensionsRules,
-  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
 }
 
@@ -359,8 +361,8 @@ const operationReplyRules: NormalizationRules = {
     '/*': messageRules, //TODO: think how to enforce [Reference Object] here as per specification
     validate: checkType(TYPE_ARRAY),
   },
+  ...referenceObjectRules,
   ...specificationExtensionsRules,
-  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_OPERATION_REPLY_DEFAULTS),
@@ -369,10 +371,10 @@ const operationReplyRules: NormalizationRules = {
 }
 
 const operationBindingsRules: NormalizationRules = {
+  ...referenceObjectRules,
   ...specificationExtensionsRules,
   '/*': { validate: checkType(...TYPE_JSON_ANY) },
   '/**': { validate: checkType(...TYPE_JSON_ANY) },
-  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
 }
 
@@ -392,8 +394,8 @@ const operationTraitRules: NormalizationRules = {
     deprecationResolver: (ctx) => ASYNCAPI_DEPRECATION_RESOLVER(ctx),
     descriptionCalculator: ctx => `[Deprecated] operation ${ctx.key.toString()}`,
   },
+  ...referenceObjectRules,
   ...specificationExtensionsRules,
-  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   unify: [
     valueDefaults(ASYNCAPI_OPERATION_TRAIT_DEFAULTS),

@@ -9,6 +9,14 @@ import {
 } from '../validate/checker'
 import { referenceObjectResolver } from '../references/ref-resolver'
 
+
+export const referenceObjectRules: NormalizationRules = {
+  // $ref rule is to keep broken refs during validation phase
+  // Valid refs will all be resolved before validation phase
+  '/$ref': { validate: checkType(TYPE_STRING) },
+  referenceHandler: referenceObjectResolver(),
+}
+
 // Specification Extension Prefix Rules (x-* properties)
 // Shared across AsyncAPI and can be reused by other specifications
 const _specificationExtensionPrefixRules: CrawlPrefixRules<NormalizationRules> = {
@@ -38,8 +46,8 @@ export const specificationExtensionsRules: NormalizationRules = {
 export const externalDocumentationRules: NormalizationRules = {
   '/description': { validate: checkType(TYPE_STRING) },
   '/url': { validate: checkType(TYPE_STRING) },
+  ...referenceObjectRules,
   ...specificationExtensionsRules,
-  referenceHandler: referenceObjectResolver(),
   validate: checkType(TYPE_OBJECT),
   merge: resolvers.last,  // used only for JSON schema
 }
