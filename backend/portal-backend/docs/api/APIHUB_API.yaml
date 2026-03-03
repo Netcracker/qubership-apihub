@@ -244,7 +244,7 @@ paths:
       description: |
         Start export of package version, one document or operations group. Use ```GET /api/v1/export/publish/{publishId}/status``` to get status of export and exported file itself.\
         Export of document is currently available for documents with type openapi-3-1, openapi-3-0, or openapi-2-0 and is intended to retrieve content with some transformations. For other document types, use GET /api/v2/packages/{packageId}/versions/{version}/files/{slug} to obtain the original document content.\
-        Export of operations group is currently available for groups with apiType = REST.
+        Export of operations group is currently available for groups with apiType = REST or GraphQL.
       operationId: postExport
       requestBody:
         description: |
@@ -253,6 +253,7 @@ paths:
             - **version** - export of all documents from the version.
             - **OpnAPI document** - export of one specific document with type openapi-3-1, openapi-3-0, or openapi-2-0.
             - **REST operations group** - export of operations group. Only operations group with apiType = REST can be exported.
+            - **GraphQL operations group** - export of operations group. Only operations group with apiType = GraphQL can be exported.
         content:
           application/json:
             schema:
@@ -260,6 +261,7 @@ paths:
                 - $ref: "#/components/schemas/ExportVersion"
                 - $ref: "#/components/schemas/ExportRestDocument"
                 - $ref: "#/components/schemas/ExportRestOperationsGroup"
+                - $ref: "#/components/schemas/ExportGraphqlOperationsGroup"
               discriminator:
                 propertyName: exportedEntity
       responses:
@@ -8011,6 +8013,7 @@ paths:
           type: string
           enum:
             - rest
+            - graphql
       - name: groupName
         in: path
         required: true
@@ -8126,6 +8129,7 @@ paths:
           type: string
           enum:
             - rest
+            - graphql
       - name: groupName
         in: path
         required: true
@@ -9657,6 +9661,34 @@ components:
             exported specification or not.
           type: boolean
           default: false
+    ExportGraphqlOperationsGroup:
+      type: object
+      title: Export GraphQL operations group
+      description: |
+        Export settings for exporting the operations group. The option is applicable only for groups with apiType = GraphQL.
+        The export result is a ZIP file containing GraphQL schema files for all operations from the group.
+      required:
+        - exportedEntity
+        - packageId
+        - version
+        - groupName
+      properties:
+        exportedEntity:
+          description: The entity to be exported.
+          type: string
+          enum:
+            - graphqlOperationsGroup
+        packageId:
+          description: Package unique string identifier (full alias).
+          type: string
+          example: WS.GRP.PCKG
+        version:
+          description: Package version.
+          type: string
+          example: "2024.2"
+        groupName:
+          description: Name of the operations group to export. Group must have apiType = GraphQL
+          type: string
     PackageCreate:
       description: Parameters for the package creation
       required:

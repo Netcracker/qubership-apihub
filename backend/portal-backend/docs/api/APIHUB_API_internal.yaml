@@ -308,7 +308,8 @@ paths:
             - exportVersion - process of exporting all documents from the package version.
             - exportRestDocument - process of exporting one OpenAPI document form the version.
             - exportRestOperationsGroup - process of exporting one operations group with apiType = rest.
-          There are no any config files in buid result archive for exportVersion/exportRestDocument/exportRestOperationsGroup build types, i.e. only the resulting build files will be in the archive.
+            - exportGraphqlOperationsGroup - process of exporting one operations group with apiType = graphql.
+          There are no any config files in buid result archive for exportVersion/exportRestDocument/exportRestOperationsGroup/exportGraphqlOperationsGroup build types, i.e. only the resulting build files will be in the archive.
         content:
           multipart/form-data:
             schema:
@@ -475,6 +476,7 @@ paths:
                       - $ref: "#/components/schemas/ExportVersionBuildConfig"
                       - $ref: "#/components/schemas/ExportRestDocumentBuildConfig"
                       - $ref: "#/components/schemas/ExportRestOperationsGroupBuildConfig"
+                      - $ref: "#/components/schemas/ExportGraphqlOperationsGroupBuildConfig"
                     discriminator:
                       propertyName: buildType
         "204":
@@ -1232,7 +1234,8 @@ components:
           - exportVersion - process of exporting all documents from the package version.
           - exportRestDocument - process of exporting one OpenAPI document form the version.
           - exportRestOperationsGroup - process of exporting one operations group with apiType = rest.
-        There are no any config files in buid result archive for exportVersion/exportRestDocument/exportRestOperationsGroup build types, i.e. only the resulting build files will be in the archive.
+          - exportGraphqlOperationsGroup - process of exporting one operations group with apiType = graphql.
+        There are no any config files in buid result archive for exportVersion/exportRestDocument/exportRestOperationsGroup/exportGraphqlOperationsGroup build types, i.e. only the resulting build files will be in the archive.
       title: Build result
       oneOf:
         - title: Build result for build
@@ -2189,6 +2192,54 @@ components:
           example:
             - x-internal-info
             - x-design-details
+    ExportGraphqlOperationsGroupBuildConfig:
+      description: Build config for export of GraphQL operations group.
+      type: object
+      required:
+        - buildType
+        - packageId
+        - version
+        - groupName
+        - apiType
+        - operationsSpecTransformation
+        - format
+      properties:
+        buildType:
+          description: Type of the build process.
+          type: string
+          enum:
+            - exportGraphqlOperationsGroup
+        packageId:
+          description: Package unique identifier (full alias).
+          type: string
+          example: NC.CBSS.CPQ.TMF
+        version:
+          description: |
+            Package version.\
+            The mask <version>@<revision> will be used for return in a
+            specific revision.
+          type: string
+          example: 2022.3@3
+        groupName:
+          description: Name of the group
+          type: string
+          example: v1
+        apiType:
+          description: Type of the API.
+          type: string
+          enum:
+            - graphql
+        operationsSpecTransformation:
+          description: >
+            Type of specification transformation. For GraphQL operations group export, only reducedSourceSpecifications is used.
+          type: string
+          enum:
+            - reducedSourceSpecifications
+        format:
+          description: Format of the exported file.
+          type: string
+          enum:
+            - graphql
     InternalDocumentMetadata:
       type: object
       required:

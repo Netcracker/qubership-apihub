@@ -1407,21 +1407,16 @@ func (o operationRepositoryImpl) CalculateOperationGroups(packageId string, vers
 	operationGroupsQuery := `
 	select distinct coalesce(group_name, '') as group_name from (
 		select
-		case
-			when type = 'rest'
-				then case when ? = '' then null else substring(metadata ->> 'path', ?) end
-			when type = 'graphql'
-				then case when ? = '' then null else substring(metadata ->> 'method', ?) end
-		end group_name
+		case when ? = '' then null else substring(metadata ->> 'path', ?) end group_name
 		from operation
 		where package_id = ?
 		and version = ?
 		and revision = ?
+		and type = 'rest'
 	) groups
 	`
 	_, err := o.cp.GetConnection().Query(&groups,
 		operationGroupsQuery,
-		groupingPrefix, groupingPrefix,
 		groupingPrefix, groupingPrefix,
 		packageId,
 		version,

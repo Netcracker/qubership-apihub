@@ -638,7 +638,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 
 	start = time.Now()
 	//todo move this recalculation inside publish method to run in the same transaction (after publish method redesign)
-	err = p.publishedRepo.RecalculateOperationGroups(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, view.MakePackageGroupingPrefixRegex(existingPackage.RestGroupingPrefix), "", versionEnt.CreatedBy)
+	err = p.publishedRepo.RecalculateOperationGroups(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, view.MakePackageGroupingPrefixRegex(existingPackage.RestGroupingPrefix), versionEnt.CreatedBy)
 	if err != nil {
 		log.Errorf("failed to calculate operations groups for version: %+v: %v", versionEnt, err.Error())
 	}

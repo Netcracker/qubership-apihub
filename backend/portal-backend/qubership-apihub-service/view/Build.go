@@ -85,6 +85,7 @@ const MergedSpecificationType_deprecated BuildType = "mergedSpecification"
 const ExportVersion BuildType = "exportVersion"
 const ExportRestDocument BuildType = "exportRestDocument"
 const ExportRestOperationsGroup BuildType = "exportRestOperationsGroup"
+const ExportGraphqlOperationsGroup BuildType = "exportGraphqlOperationsGroup"
 
 // TODO: add new export type here
 

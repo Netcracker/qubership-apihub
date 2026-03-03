@@ -628,6 +628,8 @@ components:
               $ref: "#/components/schemas/BuildsCount"
             exportRestOperationsGroup:
               $ref: "#/components/schemas/BuildsCount"
+            exportGraphqlOperationsGroup:
+              $ref: "#/components/schemas/BuildsCount"
             exportVersion:
               $ref: "#/components/schemas/BuildsCount"
             mergedSpecification:
