@@ -48,6 +48,8 @@ type PublishedService interface {
 	GetVersionInternalDocumentData(hash string) ([]byte, string, error)
 	GetComparisonInternalDocuments(packageId string, version string, previousPackageId string, previousVersion string, refPackageId string) ([]view.InternalDocument, error)
 	GetComparisonInternalDocumentData(hash string) ([]byte, string, error)
+	// CheckPreviousVersionDependencyCycle(packageID string, version string, previousVersionPackageID string, previousVersion string) (bool, error)
+	CheckPreviousVersionDependencyCycle(packageID string, version string, previousVersionPackageID string, prevVersion string, revision int) (bool, error)
 }
 
 func NewPublishedService(versionRepo repository.PublishedRepository,
@@ -1060,4 +1062,89 @@ func (p publishedServiceImpl) GetComparisonInternalDocumentData(hash string) ([]
 	}
 
 	return docData.Data, docData.Filename, nil
+}
+
+// func (p publishedServiceImpl) CheckPreviousVersionDependencyCycle(packageID string, version string, previousVersionPackageID string, previousVersion string) (bool, error) {
+// 	log.Info("Running previous version dependency validation")
+// 	log.Info("NewPackageID", packageID)
+// 	log.Info("NewVersion", version)
+// 	log.Info("NewPreviousVersion", previousVersion)
+// 	log.Info("NewPreviousVersionPackageID", previousVersionPackageID)
+// 	if previousVersionPackageID == "" {
+// 		previousVersionPackageID = packageID
+// 	}
+// 	hasDependencyCycle, err := p.publishedRepo.HasDependencyCycle(packageID, version, previousVersionPackageID, previousVersion)
+// 	if err != nil {
+// 		return false, err
+// 	}
+// 	return hasDependencyCycle, nil
+// }
+
+func (p publishedServiceImpl) CheckPreviousVersionDependencyCycle(packageID string, version string, previousVersionPackageID string, prevVersion string, revision int) (bool, error) {
+	versionNodes, err := p.publishedRepo.GetAllVersionRevisionsByPackageID(packageID)
+	if err != nil {
+		return false, err
+	}
+
+	type versionNodeKey struct {
+		version  string
+		revision int
+	}
+
+	versionNodeMap := make(map[versionNodeKey]string, len(versionNodes))
+	for _, n := range versionNodes {
+		if n.PreviousVersion != "" {
+			versionNodeMap[versionNodeKey{n.Version, n.Revision}] = n.PreviousVersion
+		}
+	}
+
+	revisionsByVersion := make(map[string][]int, len(versionNodes))
+	for _, n := range versionNodes {
+		revisionsByVersion[n.Version] = append(revisionsByVersion[n.Version], n.Revision)
+	}
+
+	// Simulate the new revision to be added
+	versionNodeMap[versionNodeKey{version, revision}] = prevVersion
+	revisionsByVersion[version] = append(revisionsByVersion[version], revision)
+
+	visited := make(map[versionNodeKey]bool)
+
+	type stackItem struct {
+		version  string
+		revision int
+	}
+
+	stack := make([]stackItem, 0, len(revisionsByVersion[version]))
+	// DFS from all revisions of the version being published
+	for _, rev := range revisionsByVersion[version] {
+		stack = append(stack, stackItem{version, rev})
+	}
+
+	// perform DFS
+	for len(stack) > 0 {
+		current := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		key := versionNodeKey{current.version, current.revision}
+
+		if visited[key] {
+			return true, nil
+		}
+		visited[key] = true
+
+		prevVer, exists := versionNodeMap[key]
+		if !exists {
+			continue
+		}
+
+		// push all revisions of previous version to the stack
+		for _, prevRev := range revisionsByVersion[prevVer] {
+			nextKey := versionNodeKey{prevVer, prevRev}
+			if !visited[nextKey] {
+				stack = append(stack, stackItem{prevVer, prevRev})
+			}
+		}
+	}
+
+	return false, nil
 }

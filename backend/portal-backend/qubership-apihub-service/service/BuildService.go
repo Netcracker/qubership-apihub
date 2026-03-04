@@ -159,6 +159,21 @@ func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config vi
 				Params:  map[string]interface{}{"version": config.PreviousVersion, "packageId": previousVersionPackageId},
 			}
 		}
+
+		dependencyCycleExists, err := b.publishService.CheckPreviousVersionDependencyCycle(config.PackageId, config.Version, config.PreviousVersionPackageId, config.PreviousVersion, config.ComparisonRevision)
+		if err != nil {
+			return nil, err
+		}
+
+		if dependencyCycleExists {
+			log.Info("Previous version dependency found") // to be removed
+			return nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidPreviousVersion,
+				Message: exception.InvalidPreviousVersionMsg,
+				Params:  map[string]interface{}{"version": config.PreviousVersion, "packageId": config.PackageId},
+			}
+		}
 	}
 
 	if len(src) > 0 {

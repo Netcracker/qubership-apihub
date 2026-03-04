@@ -4329,3 +4329,79 @@ func (p publishedRepositoryImpl) comparisonInternalDocumentDataExists(tx *pg.Tx,
 	}
 	return true, nil
 }
+
+func (p publishedRepositoryImpl) HasDependencyCycle(packageID string, version string, prevPackageID string, prevVersion string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	log.Info("running has dependency cycle query in DB") // to be removed
+
+	query := `
+        WITH RECURSIVE version_chain AS (
+            SELECT
+                pv.package_id,
+                pv.version,
+                pv.previous_version,
+                pv.previous_version_package_id
+            FROM published_version pv
+            WHERE pv.package_id = ?
+              AND pv.version    = ?
+              AND pv.deleted_at IS NULL
+
+            UNION ALL
+
+            SELECT
+                pv.package_id,
+                pv.version,
+                pv.previous_version,
+                pv.previous_version_package_id
+            FROM published_version pv
+            INNER JOIN version_chain vc
+                ON  pv.version    = vc.previous_version
+                AND pv.package_id = COALESCE(vc.previous_version_package_id, vc.package_id)
+            WHERE pv.deleted_at IS NULL
+        )
+        SELECT 1
+        FROM version_chain
+        WHERE version    = ?
+          AND package_id = ?
+        LIMIT 1
+    `
+
+	var exists int
+	res, err := p.cp.GetConnection().QueryContext(ctx, pg.Scan(&exists), query,
+		prevPackageID, prevVersion,
+		version, packageID,
+	)
+	if err != nil {
+		log.Info("finished running has dependency cycle query in DB, err", err)
+		return false, fmt.Errorf("cycle check query failed: %w", err)
+	}
+
+	log.Info("finished running has dependency cycle query in DB no error found, rows returned", res.RowsReturned())
+	return res.RowsReturned() > 0, nil
+}
+
+func (p publishedRepositoryImpl) GetAllVersionRevisionsByPackageID(packageID string) ([]entity.PublishedVersionEntity, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+        SELECT
+            version,
+            revision,
+            previous_version
+        FROM published_version
+        WHERE package_id = ?
+          AND deleted_at IS NULL
+        ORDER BY version, revision ASC
+    `
+
+	var publishedVersions []entity.PublishedVersionEntity
+	_, err := p.cp.GetConnection().QueryContext(ctx, &publishedVersions, query, packageID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch version revisions by packageID: %v", err)
+	}
+
+	return publishedVersions, nil
+}
