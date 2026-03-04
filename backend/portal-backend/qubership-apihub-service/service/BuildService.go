@@ -166,7 +166,6 @@ func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config vi
 		}
 
 		if dependencyCycleExists {
-			log.Info("Previous version dependency found") // to be removed
 			return nil, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidPreviousVersion,

@@ -48,7 +48,6 @@ type PublishedService interface {
 	GetVersionInternalDocumentData(hash string) ([]byte, string, error)
 	GetComparisonInternalDocuments(packageId string, version string, previousPackageId string, previousVersion string, refPackageId string) ([]view.InternalDocument, error)
 	GetComparisonInternalDocumentData(hash string) ([]byte, string, error)
-	// CheckPreviousVersionDependencyCycle(packageID string, version string, previousVersionPackageID string, previousVersion string) (bool, error)
 	CheckPreviousVersionDependencyCycle(packageID string, version string, previousVersionPackageID string, prevVersion string, revision int) (bool, error)
 }
 
@@ -1063,22 +1062,6 @@ func (p publishedServiceImpl) GetComparisonInternalDocumentData(hash string) ([]
 
 	return docData.Data, docData.Filename, nil
 }
-
-// func (p publishedServiceImpl) CheckPreviousVersionDependencyCycle(packageID string, version string, previousVersionPackageID string, previousVersion string) (bool, error) {
-// 	log.Info("Running previous version dependency validation")
-// 	log.Info("NewPackageID", packageID)
-// 	log.Info("NewVersion", version)
-// 	log.Info("NewPreviousVersion", previousVersion)
-// 	log.Info("NewPreviousVersionPackageID", previousVersionPackageID)
-// 	if previousVersionPackageID == "" {
-// 		previousVersionPackageID = packageID
-// 	}
-// 	hasDependencyCycle, err := p.publishedRepo.HasDependencyCycle(packageID, version, previousVersionPackageID, previousVersion)
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	return hasDependencyCycle, nil
-// }
 
 func (p publishedServiceImpl) CheckPreviousVersionDependencyCycle(packageID string, version string, previousVersionPackageID string, prevVersion string, revision int) (bool, error) {
 	versionNodes, err := p.publishedRepo.GetAllVersionRevisionsByPackageID(packageID)
