@@ -25118,13 +25118,13 @@
                                             "});",
                                             "",
                                             "",
-                                            "pm.test(\"Only non-breaking = 1\", () => {",
+                                            "pm.test(\"Only annotation = 1\", () => {",
                                             "    let summary = pm.response.json().operations[0].changeSummary;",
                                             "    pm.expect(summary.breaking).to.equal(0);",
                                             "    pm.expect(summary[\"semi-breaking\"]).to.equal(0);",
                                             "    pm.expect(summary.deprecated).to.equal(0);",
                                             "    pm.expect(summary[\"non-breaking\"]).to.equal(0);",
-                                            "    pm.expect(summary.annotation).to.equal(0);",
+                                            "    pm.expect(summary.annotation).to.equal(1);",
                                             "    pm.expect(summary.unclassified).to.equal(0);",
                                             "});"
                                         ]
