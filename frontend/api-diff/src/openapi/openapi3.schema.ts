@@ -22,6 +22,8 @@ import {
   cleanOrigins,
   JSON_SCHEMA_NODE_TYPE_NULL,
   JSON_SCHEMA_PROPERTY_ANY_OF,
+  JSON_SCHEMA_PROPERTY_DESCRIPTION,
+  JSON_SCHEMA_PROPERTY_ENUM,
   JSON_SCHEMA_PROPERTY_NULLABLE,
   JSON_SCHEMA_PROPERTY_ONE_OF,
   JSON_SCHEMA_PROPERTY_TITLE,
@@ -130,6 +132,26 @@ const buildNullTypeWithOrigins = (
     const titleOrigins = inputOrigins && inputOrigins[JSON_SCHEMA_PROPERTY_TITLE]
     if (titleOrigins) {
       nullTypeOrigins[JSON_SCHEMA_PROPERTY_TITLE] = titleOrigins
+    }
+  }
+
+  const description = valueWithoutNullable[JSON_SCHEMA_PROPERTY_DESCRIPTION]
+  if (description) {
+    nullTypeObject[JSON_SCHEMA_PROPERTY_DESCRIPTION] = description
+
+    const descriptionOrigins = inputOrigins && inputOrigins[JSON_SCHEMA_PROPERTY_DESCRIPTION]
+    if (descriptionOrigins) {
+      nullTypeOrigins[JSON_SCHEMA_PROPERTY_DESCRIPTION] = descriptionOrigins
+    }
+  }
+
+  const enumValue = valueWithoutNullable[JSON_SCHEMA_PROPERTY_ENUM]
+  if (enumValue !== undefined) {
+    nullTypeObject[JSON_SCHEMA_PROPERTY_ENUM] = enumValue
+
+    const enumOrigins = inputOrigins && inputOrigins[JSON_SCHEMA_PROPERTY_ENUM]
+    if (enumOrigins) {
+      nullTypeOrigins[JSON_SCHEMA_PROPERTY_ENUM] = enumOrigins
     }
   }
 

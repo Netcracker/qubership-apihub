@@ -12,7 +12,7 @@ paths:
             schema:
               $ref: "#/components/schemas/Product"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -30,10 +30,10 @@ components:
           type: string
         price:
           type: string
-          description:
-            Optional. If defined, system try to cast specified primitive data
+          description: Optional. If defined, system try to cast specified primitive data
           nullable: true
           enum:
             - NUMBER
             - STRING
             - BOOLEAN
+            - NULL

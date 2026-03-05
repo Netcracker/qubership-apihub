@@ -122,9 +122,9 @@ describe('OpenAPI 3.0 to 3.1 Comparison Tests', () => {
       ]))
     })
 
-    test('nullable enum is equivalent to anyOf with null type', () => {
-      const before = loadYamlSample('openapi-3_0-to-3_1/nullable-enum-is-equivalent-to-anyOf-with-null-type/before.yaml')
-      const after = loadYamlSample('openapi-3_0-to-3_1/nullable-enum-is-equivalent-to-anyOf-with-null-type/after.yaml')
+    test('nullable enum is equivalent to union with null type', () => {
+      const before = loadYamlSample('openapi-3_0-to-3_1/nullable-enum-is-equivalent-to-union-with-enum-with-null/before.yaml')
+      const after = loadYamlSample('openapi-3_0-to-3_1/nullable-enum-is-equivalent-to-union-with-enum-with-null/after.yaml')
 
       const { diffs } = apiDiff(
         before,
