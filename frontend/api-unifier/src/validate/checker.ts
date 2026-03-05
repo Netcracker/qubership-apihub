@@ -1,6 +1,7 @@
 import { ValidateFunction } from '../types'
 
-const TYPE_UNDEFINED = 'undefined' /*null here*/
+const TYPE_UNDEFINED = 'undefined'
+const TYPE_NULL = 'null'
 export const TYPE_OBJECT = 'object'
 export const TYPE_ARRAY = 'array'
 export const TYPE_BOOLEAN = 'boolean'
@@ -11,6 +12,7 @@ export const TYPE_SYMBOL = 'symbol'
 export const TYPE_FUNCTION = 'function'
 type ValueType =
   typeof TYPE_UNDEFINED
+  | typeof TYPE_NULL
   | typeof TYPE_OBJECT
   | typeof TYPE_ARRAY
   | typeof TYPE_BOOLEAN
@@ -25,7 +27,7 @@ export function checkType(...expectedTypes: ValueType[]): ValidateFunction {
     let actualType: ValueType = typeof value
     if (actualType === 'object') {
       if (value === null) {
-        actualType = TYPE_UNDEFINED
+        actualType = TYPE_NULL
       }
       if (Array.isArray(value)) {
         actualType = TYPE_ARRAY
@@ -45,7 +47,7 @@ export function checkContains(...allowedValues: (string | number)[]): ValidateFu
   return f
 }
 
-export const TYPE_JSON_ANY: ValueType[] = [TYPE_OBJECT, TYPE_ARRAY, TYPE_BOOLEAN, TYPE_NUMBER, TYPE_STRING]
+export const TYPE_JSON_ANY: ValueType[] = [TYPE_OBJECT, TYPE_ARRAY, TYPE_BOOLEAN, TYPE_NUMBER, TYPE_STRING, TYPE_NULL]
 
 export function checkNotEmptyType(): ValidateFunction {
   const f: ValidateFunction = (value) => {
