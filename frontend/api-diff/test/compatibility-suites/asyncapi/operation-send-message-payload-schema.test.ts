@@ -12,6 +12,6 @@ const MESSAGE_PAYLOAD_PATH = [
   'payload',
 ]
 
-describe.skip('AsyncAPI Operation Send Message Payload', () => {
+describe('AsyncAPI Operation Send Message Payload', () => {
   runGeneralSchemaTests(TEST_SPEC_TYPE_ASYNC_API, SUITE_ID, MESSAGE_PAYLOAD_PATH, DATA_FLOW_DIRECTION_SEND)
 })
