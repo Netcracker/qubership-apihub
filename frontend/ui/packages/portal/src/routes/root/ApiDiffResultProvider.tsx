@@ -51,16 +51,31 @@ export function useSetIsApiDiffResultLoading(): Dispatch<SetStateAction<boolean>
   return useContext(SetIsApiDiffResultLoadingContext)
 }
 
+const HasComparisonInternalDocumentContext = createContext<boolean>(true)
+const SetHasComparisonInternalDocumentContext = createContext<Dispatch<SetStateAction<boolean>>>()
+
+export function useHasComparisonInternalDocument(): boolean {
+  return useContext(HasComparisonInternalDocumentContext)
+}
+
+export function useSetHasComparisonInternalDocument(): Dispatch<SetStateAction<boolean>> {
+  return useContext(SetHasComparisonInternalDocumentContext)
+}
+
 export const ApiDiffResultProvider: FC<PropsWithChildren> = ({ children }) => {
   const [apiDiffResult, setApiDiffResult] = useState<ApiDiffResult>()
   const [isApiDiffResultLoading, setIsApiDiffResultLoading] = useState<boolean>(false)
-
+  const [hasComparisonInternalDocument, setHasComparisonInternalDocument] = useState<boolean>(true)
   return (
     <ApiDiffResultContext.Provider value={apiDiffResult}>
       <SetApiDiffResultContext.Provider value={setApiDiffResult}>
         <IsApiDiffResultLoadingContext.Provider value={isApiDiffResultLoading}>
           <SetIsApiDiffResultLoadingContext.Provider value={setIsApiDiffResultLoading}>
-            {children}
+            <HasComparisonInternalDocumentContext.Provider value={hasComparisonInternalDocument}>
+              <SetHasComparisonInternalDocumentContext.Provider value={setHasComparisonInternalDocument}>
+                {children}
+              </SetHasComparisonInternalDocumentContext.Provider>
+            </HasComparisonInternalDocumentContext.Provider>
           </SetIsApiDiffResultLoadingContext.Provider>
         </IsApiDiffResultLoadingContext.Provider>
       </SetApiDiffResultContext.Provider>

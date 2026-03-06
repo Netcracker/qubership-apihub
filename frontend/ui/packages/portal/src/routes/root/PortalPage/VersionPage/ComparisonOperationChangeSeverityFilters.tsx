@@ -18,6 +18,7 @@ import { useComparedOperations } from '@apihub/api-hooks/InternalDocuments/useCo
 import {
   useIsApiDiffResultLoading,
   useSetApiDiffResult,
+  useSetHasComparisonInternalDocument,
   useSetIsApiDiffResultLoading,
 } from '@apihub/routes/root/ApiDiffResultProvider'
 import type { Diff } from '@netcracker/qubership-apihub-api-diff'
@@ -52,11 +53,16 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
   const setApiDiffResultContext = useSetApiDiffResult()
   const isApiDiffResultLoading = useIsApiDiffResultLoading()
   const setIsApiDiffResultLoadingContext = useSetIsApiDiffResultLoading()
+  const setHasComparisonInternalDocumentContext = useSetHasComparisonInternalDocument()
 
   const [apiDiffExecuting, setApiDiffExecuting] = useState(false)
   const [changes, setChanges] = useState<ChangesSummary | undefined>(undefined)
 
-  const { data: comparisonInternalDocument, isLoading: apiDiffLoading } = useComparedOperations({
+  const {
+    data: comparisonInternalDocument,
+    isLoading: apiDiffLoading,
+    hasInternalDocument: hasComparisonInternalDocument,
+  } = useComparedOperations({
     previousOperation: originOperation,
     currentOperation: changedOperation,
     versionChanges: internalDocumentOptions?.versionChanges,
@@ -100,15 +106,30 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
     setIsApiDiffResultLoadingContext(internalDocumentOptions ? apiDiffLoading : apiDiffExecuting)
   }, [apiDiffLoading, apiDiffExecuting, setIsApiDiffResultLoadingContext, internalDocumentOptions])
 
-  useEffect(() => {
-    if (isOperationsLoading || apiDiffLoading || apiDiffExecuting) {
-      return
-    }
-    setApiDiffResultContext(apiDiffResult)
-    if (!comparisonAlreadyDone) {
-      setChanges(apiDiffResult?.diffs.reduce(changesSummaryReducer, { ...DEFAULT_CHANGE_SEVERITY_MAP }))
-    }
-  }, [apiDiffLoading, apiDiffResult, apiDiffExecuting, isOperationsLoading, setApiDiffResultContext, setChanges, internalDocumentOptions, comparisonAlreadyDone])
+  useEffect(
+    () => {
+      if (isOperationsLoading || apiDiffLoading || apiDiffExecuting) {
+        return
+      }
+      setApiDiffResultContext(apiDiffResult)
+      setHasComparisonInternalDocumentContext(hasComparisonInternalDocument)
+      if (!comparisonAlreadyDone) {
+        setChanges(apiDiffResult?.diffs.reduce(changesSummaryReducer, { ...DEFAULT_CHANGE_SEVERITY_MAP }))
+      }
+    },
+    [
+      apiDiffLoading,
+      apiDiffResult,
+      apiDiffExecuting,
+      isOperationsLoading,
+      setApiDiffResultContext,
+      setChanges,
+      internalDocumentOptions,
+      comparisonAlreadyDone,
+      setHasComparisonInternalDocumentContext,
+      hasComparisonInternalDocument,
+    ],
+  )
 
   //todo return after resolve
   /*const [filters, setFilters] = useSeverityFiltersSearchParam()

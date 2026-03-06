@@ -15,6 +15,7 @@
  */
 
 // eslint-disable-next-line filenames/no-index
+export * from './constants'
 export {
   CONTENT_PLACEHOLDER_AREA,
   DATA_PLACEHOLDER_VARIANT,

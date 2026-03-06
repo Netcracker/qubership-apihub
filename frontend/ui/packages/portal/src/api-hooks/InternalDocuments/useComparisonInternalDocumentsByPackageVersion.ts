@@ -2,7 +2,7 @@ import type { PackageKey, VersionKey } from '@netcracker/qubership-apihub-ui-sha
 import { API_V1, requestJson } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { useQuery } from '@tanstack/react-query'
 import { generatePath, useParams } from 'react-router-dom'
-import type { InternalDocuments, QueryResult } from './useInternalDocumentsByPackageVersion'
+import type { InternalDocuments, QueryResult } from './shared-types'
 import { useVersionSearchParam } from '@apihub/routes/root/useVersionSearchParam'
 import {
   usePackageSearchParam,
@@ -45,7 +45,6 @@ export function useComparisonInternalDocumentsByPackageVersion(
   const currentPackageKey = encodeURIComponent(currentPackageId ?? '')
   const currentPackageVersion = encodeURIComponent(currentVersionId ?? '')
   const enabled = !!currentPackageKey && !!currentPackageVersion && !!previousPackageId
-
 
   const { data, isFetching, error } = useQuery<InternalDocuments, Error, InternalDocuments>({
     queryKey: [QUERY_KEY, currentPackageKey, currentPackageVersion, previousPackageId, previousVersionId],
