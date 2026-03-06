@@ -1698,7 +1698,7 @@ test.describe('12.1.2.0 Manual grouping: Viewing (Packages)', () => {
       })
     })
 
-  test('[P-MGOP-2.2.2-N] Exporting a GraphQL group (Negative).',
+  test('[P-MGOP-2.2.2] Exporting a GraphQL group.',
     {
       tag: '@smoke',
       annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10191` },
@@ -1714,8 +1714,10 @@ test.describe('12.1.2.0 Manual grouping: Viewing (Packages)', () => {
       await portalPage.gotoVersion(testVersion, VERSION_OVERVIEW_TAB_GROUPS)
 
       await groupsTab.getGroupRow(groupName).hover()
+      await expect(groupsTab.getGroupRow(groupName).exportBtn).toBeEnabled()
 
-      await expect(groupsTab.getGroupRow(groupName).exportBtn).toBeDisabled()
+      const file = await groupsTab.performExport(groupsTab.getGroupRow(groupName).exportBtn.click())
+      await expectFile(file).toHaveName(`${testPackage.packageId}_${testVersion.version}_${groupName}.graphql`)
     })
 
   test('[P-MGOP-2.2.3] Exporting the combined specification and its subsequent publication.',
@@ -1854,7 +1856,7 @@ test.describe('12.2.2.0 Manual grouping: Viewing (Dashboards)', () => {
       })
     })
 
-  test('[P-MGO-2.2.2-N] Exporting a GraphQL group (Negative).',
+  test('[P-MGO-2.2.2] Exporting a GraphQL group.',
     {
       tag: '@smoke',
       annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-10184` },
@@ -1871,7 +1873,9 @@ test.describe('12.2.2.0 Manual grouping: Viewing (Dashboards)', () => {
 
       await groupsTab.getGroupRow(groupName).hover()
 
-      await expect(groupsTab.getGroupRow(groupName).exportBtn).toBeDisabled()
+      await expect(groupsTab.getGroupRow(groupName).exportBtn).toBeEnabled()
+      const file = await groupsTab.performExport(groupsTab.getGroupRow(groupName).exportBtn.click())
+      await expectFile(file).toHaveName(`${testDashboard.packageId}_${testVersion.version}_${groupName}.graphql`)
     })
 })
 
