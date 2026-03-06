@@ -46,6 +46,8 @@ import { usePackages } from '@apihub/routes/root/usePackages'
 import { usePackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
 import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
 import { usePackageVersionConfig } from '@apihub/routes/root/PortalPage/usePackageVersionConfig'
+import { REST_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 export const PublishDashboardVersionFromCSVDialog: FC = memo(() => {
   return (
@@ -99,6 +101,7 @@ const PublishDashboardVersionFromCSVPopup: FC<PopupProps> = memo<PopupProps>(({ 
       status: DRAFT_VERSION_STATUS,
       labels: [],
       previousVersion: NO_PREVIOUS_RELEASE_VERSION_OPTION,
+      apiType: REST_API_TYPE,
     }
   }, [currentWorkspace, versionId])
   const { handleSubmit, control, setValue, formState, reset } = useForm<VersionFormData>({ defaultValues })
@@ -132,6 +135,7 @@ const PublishDashboardVersionFromCSVPopup: FC<PopupProps> = memo<PopupProps>(({ 
     previousVersion,
     workspace,
     file,
+    apiType,
   }: PublishInfo): Promise<void> => {
     setTargetVersion(version)
 
@@ -144,6 +148,7 @@ const PublishDashboardVersionFromCSVPopup: FC<PopupProps> = memo<PopupProps>(({ 
         version: version,
         status: status,
         previousVersion: replaceEmptyPreviousVersion(previousVersion),
+        apiType: apiType ?? REST_API_TYPE,
       },
     })
   }, [packageObj, publish])
@@ -188,4 +193,5 @@ type PublishInfo = Readonly<{
   file?: File
   previousVersion: Key
   workspace?: Package | null
+  apiType?: ApiType | undefined
 }>
