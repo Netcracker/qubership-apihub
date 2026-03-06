@@ -151,7 +151,7 @@ test.describe('03.3.3 Access Control. Owner role. (Group)', () => {
         await generalTab.deletePackageDialog.deleteBtn.click()
 
         await expect(generalTab.deletePackageDialog.deleteBtn).toBeHidden()
-        await expect(portalPage.toolbar.title).toHaveText('Favorite')
+        await expect(portalPage.toolbar.title).toHaveText('Workspaces')
 
         await portalPage.gotoGroup(crudGroup)
 
