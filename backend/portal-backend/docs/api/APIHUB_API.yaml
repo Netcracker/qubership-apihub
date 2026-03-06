@@ -10912,6 +10912,8 @@ components:
         - action
         - channel
         - protocol
+        - asyncOperationId
+        - messageId
       type: object
       properties:
         action:
@@ -10933,11 +10935,18 @@ components:
             If the channel has no server references or the protocol cannot be resolved, the value is "Unknown".
           type: string
           example: "kafka"
-        title:
+        asyncOperationId:
           description: |
-            APIHUB Operation title derived from message.title.
-            If the message has no title, the messageId (key in the channel's messages map) is used.
+            AsyncAPI operationId as defined in the AsyncAPI specification.
+            The key in the root operations map that identifies the operation.
           type: string
+          example: "onUserSignUp"
+        messageId:
+          description: |
+            AsyncAPI messageId as defined in the AsyncAPI specification.
+            The key in the channel's messages map that identifies the message.
+          type: string
+          example: "userSignedUp"
         customTags:
           description: Custom tags.
           type: object
@@ -11048,6 +11057,8 @@ components:
             - action
             - channel
             - protocol
+            - asyncOperationId
+            - messageId
           properties:
             action:
               description: "AsyncAPI operation action: send or receive."
@@ -11068,6 +11079,18 @@ components:
                 If the channel has no server references or the protocol cannot be resolved, the value is "Unknown".
               type: string
               example: "kafka"
+            asyncOperationId:
+              description: |
+                AsyncAPI operationId as defined in the AsyncAPI specification.
+                The key in the root operations map that identifies the operation.
+              type: string
+              example: "onUserSignUp"
+            messageId:
+              description: |
+                AsyncAPI messageId as defined in the AsyncAPI specification.
+                The key in the channel's messages map that identifies the message.
+              type: string
+              example: "userSignedUp"
     SingleOperationChange:
       allOf:
         - type: object
