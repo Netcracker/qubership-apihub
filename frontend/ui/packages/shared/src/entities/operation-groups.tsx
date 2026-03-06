@@ -39,7 +39,7 @@ export type OperationGroup = Readonly<{
   isPrefixGroup: boolean
   exportTemplateFileName?: string
   operationsCount: number
-  apiType?: ApiType
+  apiType: ApiType
   template?: File
 }>
 

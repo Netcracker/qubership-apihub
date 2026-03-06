@@ -4,8 +4,8 @@ import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/componen
 import type { FC } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { useExportConfig } from '../../../routes/root/PortalPage/useExportConfig'
-import type { IRequestDataExport } from '../api/useExport'
-import { useExport, useRemoveExport } from '../api/useExport'
+import type { IRequestDataExport} from '../api/useExport'
+import { useExport, useRemoveExportResult } from '../api/useExport'
 import { useExportStatus } from '../api/useExportStatus'
 import { ExportSettingsForm } from './ExportSettingsForm'
 
@@ -25,7 +25,7 @@ export const ExportSettingsPopup: FC<PopupProps> = ({ open, setOpen, detail }) =
   // Initialize state used for request data export
   const [requestDataExport, setRequestDataExport] = useState<IRequestDataExport | undefined>(undefined)
   const [exportTask, isStartingExport, exportStartingError] = useExport(requestDataExport)
-  const removeExport = useRemoveExport(requestDataExport?.exportedEntity, requestDataExport?.packageId, requestDataExport?.version)
+  const removeExportResult = useRemoveExportResult(requestDataExport?.exportedEntity, requestDataExport?.packageId, requestDataExport?.version)
 
   const [exporting, setExporting] = useState(false)
   const [needToGetExportStatus, setNeedToGetExportStatus] = useState(false)
@@ -47,11 +47,11 @@ export const ExportSettingsPopup: FC<PopupProps> = ({ open, setOpen, detail }) =
   }, [exportStartingError, showErrorNotification])
 
   const completeExport = useCallback(() => {
-    removeExport()
+    removeExportResult()
     setExporting(false)
     setOpen(false)
     setNeedToGetExportStatus(false)
-  }, [removeExport, setOpen])
+  }, [removeExportResult, setOpen])
 
   useExportStatus(exportTask?.exportId, needToGetExportStatus, completeExport, completeExport)
 

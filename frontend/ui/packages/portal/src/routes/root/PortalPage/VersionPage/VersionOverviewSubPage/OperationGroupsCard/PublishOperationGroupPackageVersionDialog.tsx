@@ -45,7 +45,6 @@ import { getSplittedVersionKey, getVersionLabelsMap } from '@netcracker/qubershi
 import { usePublishOperationGroupPackageVersion } from '../../../usePublishOperationGroupPackageVersion'
 import { useOperationGroupPublicationStatuses } from '../../../usePublicationStatus'
 import { useFullMainVersion } from '../../../FullMainVersionProvider'
-import { REST_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
 import { usePackageVersionConfig } from '@apihub/routes/root/PortalPage/usePackageVersionConfig'
 
 export const PublishOperationGroupPackageVersionDialog: FC = memo(() => {
@@ -102,7 +101,7 @@ const PublishOperationGroupPackageVersionPopup: FC<PopupProps> = memo<PopupProps
     isLoading: isPublishStarting,
     isSuccess: isPublishStartedSuccessfully,
   } = usePublishOperationGroupPackageVersion()
-  const [isPublishing, isPublished] = useOperationGroupPublicationStatuses(targetPackage?.key ?? '', targetVersion, group.groupName, publishId ?? '')
+  const [isPublishing, isPublished] = useOperationGroupPublicationStatuses(targetPackage?.key ?? '', targetVersion, group.groupName, publishId ?? '', group.apiType!)
 
   const versionLabelsMap = useMemo(() => getVersionLabelsMap(filteredVersions), [filteredVersions])
   const versionOptions = useMemo(() => getVersionOptions(versionLabelsMap, targetVersion), [targetVersion, versionLabelsMap])
@@ -154,7 +153,7 @@ const PublishOperationGroupPackageVersionPopup: FC<PopupProps> = memo<PopupProps
       packageKey: currentPackage?.key ?? '',
       versionKey: currentVersionId!,
       groupName: group.groupName,
-      apiType: REST_API_TYPE,
+      apiType: group.apiType,
       value: {
         targetPackageKey: data.package!.key,
         targetVersionKey: data.version,
