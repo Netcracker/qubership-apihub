@@ -1,0 +1,10 @@
+{
+  "apiType": "graphql",
+  "version": "v1",
+  "files": [
+    {
+      "fileId": "queries-only.gql",
+      "publish": true
+    }
+  ]
+}

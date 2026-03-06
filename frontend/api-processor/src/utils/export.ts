@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { _TemplateResolver, ExportDocument } from '../types'
+import { _TemplateResolver, ExportDocument, FileFormat } from '../types'
 import { getDocumentTitle } from './document'
+import YAML from 'js-yaml'
+import { FILE_FORMAT_GRAPHQL, FILE_FORMAT_JSON, FILE_FORMAT_YAML } from '../consts'
 
 export async function createCommonStaticExportDocuments(packageName: string, version: string, templateResolver: _TemplateResolver): Promise<ExportDocument[]> {
   return [
@@ -92,4 +94,25 @@ export async function generateIndexHtmlPage(packageName: string, version: string
 
 export function createSingleFileExportName(packageId: string, version: string, documentTitle: string, format: string): string {
   return `${packageId}_${version}_${documentTitle}.${format}`
+}
+
+type TextBlobConstructorParameters = [[string], BlobPropertyBag]
+
+export const dump = (
+  value: unknown,
+  format: FileFormat,
+): TextBlobConstructorParameters => {
+  switch (format) {
+    case FILE_FORMAT_YAML:
+      return [[YAML.dump(value)], { type: 'application/yaml' }]
+
+    case FILE_FORMAT_JSON:
+      return [[JSON.stringify(value, undefined, 2)], { type: 'application/json' }]
+
+    case FILE_FORMAT_GRAPHQL:
+      return [[value as string], { type: 'application/graphql' }]
+
+    default:
+      throw new Error(`Unsupported format: ${format}`)
+  }
 }

@@ -24,6 +24,7 @@ import {
   FILE_KIND,
   FileFormat,
   FileId,
+  OperationsApiType,
   PackageDocument,
   ResolvedGroupDocument,
   VALIDATION_RULES_SEVERITY_LEVEL_ERROR,
@@ -32,19 +33,37 @@ import {
 } from '../types'
 import { bundle, Resolver } from 'api-ref-bundler'
 import {
+  FILE_FORMAT_GRAPHQL,
   FILE_FORMAT_HTML,
   FILE_FORMAT_JSON,
   FILE_FORMAT_YAML,
+  GRAPHQL_API_TYPE,
   MESSAGE_SEVERITY,
+  REST_API_TYPE,
   SERIALIZE_SYMBOL_STRING_MAPPING,
 } from '../consts'
 import { isNotEmpty } from './arrays'
 import { RefErrorType, RefErrorTypes, serialize } from '@netcracker/qubership-apihub-api-unifier'
 
-export const EXPORT_FORMAT_TO_FILE_FORMAT = new Map<ExportFormat, typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON>([
+const REST_FILE_FORMATS = [FILE_FORMAT_YAML, FILE_FORMAT_JSON] as const
+type RestFileFormat = typeof REST_FILE_FORMATS[number]
+
+const GRAPHQL_FILE_FORMATS = [FILE_FORMAT_GRAPHQL] as const
+type GraphQlFileFormat = typeof GRAPHQL_FILE_FORMATS[number]
+
+export const EXPORT_FORMAT_TO_FILE_FORMAT = new Map<ExportFormat, RestFileFormat>([
   [FILE_FORMAT_YAML, FILE_FORMAT_YAML],
   [FILE_FORMAT_JSON, FILE_FORMAT_JSON],
   [FILE_FORMAT_HTML, FILE_FORMAT_JSON],
+])
+
+export const EXPORT_GRAPHQL_FORMAT_TO_FILE_FORMAT = new Map<ExportFormat, GraphQlFileFormat>([
+  [FILE_FORMAT_GRAPHQL, FILE_FORMAT_GRAPHQL],
+])
+
+export const EXPORT_API_TYPE_FORMATS = new Map<OperationsApiType, Map<ExportFormat, RestFileFormat | GraphQlFileFormat>>([
+  [REST_API_TYPE, EXPORT_FORMAT_TO_FILE_FORMAT],
+  [GRAPHQL_API_TYPE, EXPORT_GRAPHQL_FORMAT_TO_FILE_FORMAT],
 ])
 
 export function toVersionDocument(document: ResolvedGroupDocument, fileFormat: FileFormat): VersionDocument {
@@ -204,7 +223,7 @@ export function serializeDocument(normalizedDocument: ApiDocument): string {
   return serialize(normalizedDocument, SERIALIZE_SYMBOL_STRING_MAPPING)
 }
 
-export const createVersionInternalDocument = (internalDocumentId: string): VersionInternalDocument =>  {
+export const createVersionInternalDocument = (internalDocumentId: string): VersionInternalDocument => {
   return {
     versionDocumentId: internalDocumentId,
   }

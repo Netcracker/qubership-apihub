@@ -1,0 +1,43 @@
+directive @deprecated(reason: String = "No longer supported") on FIELD_DEFINITION | ARGUMENT_DEFINITION | ENUM_VALUE
+
+type Query {
+  """Get list of Pets"""
+  listPets(listId: String): [Pet!]
+
+  """Get Pet by ID"""
+  getPet(id: String!): Pet
+}
+
+type Mutation {
+  """Create a new Pet"""
+  createPet(input: CreatePetInput!): Pet
+}
+
+input CreatePetInput {
+  name: String!
+  category: String
+}
+
+"""The entity represents a Pet"""
+type Pet {
+  """Unique identifier"""
+  id: String
+
+  """Name"""
+  name: String
+
+  """Category"""
+  category: Category
+
+  """Status"""
+  status: String
+}
+
+"""The entity represents a Category"""
+type Category {
+  """Unique identifier"""
+  id: String
+
+  """Name"""
+  name: String
+}

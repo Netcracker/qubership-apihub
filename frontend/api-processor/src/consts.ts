@@ -91,12 +91,14 @@ export const BUILD_TYPE = {
   EXPORT_VERSION: 'exportVersion',
   EXPORT_REST_DOCUMENT: 'exportRestDocument',
   EXPORT_REST_OPERATIONS_GROUP: 'exportRestOperationsGroup',
+  EXPORT_GRAPHQL_OPERATIONS_GROUP: 'exportGraphqlOperationsGroup',
 } as const
 
 export const EXPORT_BUILD_TYPES = [
   BUILD_TYPE.EXPORT_VERSION,
   BUILD_TYPE.EXPORT_REST_DOCUMENT,
   BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP,
+  BUILD_TYPE.EXPORT_GRAPHQL_OPERATIONS_GROUP,
 ]
 
 export type ExportBuildType = typeof EXPORT_BUILD_TYPES[number]
@@ -191,3 +193,6 @@ export const EMPTY_CHANGE_SUMMARY_DTO = {
 
 export const CUSTOM_PARAMETER_API_AUDIENCE = 'x-api-audience'
 export const HTTP_METHODS_SET = new Set(Object.values(OpenAPIV3.HttpMethods) as string[])
+
+export const REST_API_TYPE = 'rest' as const
+export const GRAPHQL_API_TYPE = 'graphql' as const

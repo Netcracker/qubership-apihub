@@ -22,9 +22,10 @@ import {
 } from '@netcracker/qubership-apihub-graphapi'
 import type { GraphQLSchema, IntrospectionQuery } from 'graphql'
 
-import { BuildConfigFile, DocumentDumper, TextFile, VersionDocument } from '../../types'
+import { BuildConfigFile, DocumentDumper, ExportDocument, ExportFormat, TextFile, VersionDocument } from '../../types'
 import { GRAPHQL_DOCUMENT_TYPE } from './graphql.consts'
-import { createVersionInternalDocument } from '../../utils'
+import { createVersionInternalDocument, getDocumentTitle } from '../../utils'
+import { GRAPHQL_API_TYPE } from '../../consts'
 
 export const buildGraphQLDocument = async (parsedFile: TextFile, file: BuildConfigFile): Promise<VersionDocument<GraphApiSchema>> => {
   let graphapi: GraphApiSchema
@@ -60,4 +61,20 @@ export const buildGraphQLDocument = async (parsedFile: TextFile, file: BuildConf
 
 export const dumpGraphQLDocument: DocumentDumper<GraphApiSchema> = (document) => {
   return new Blob([printGraphApi(document.data)], { type: 'text/plain' })
+}
+
+export async function createGraphQLExportDocument(
+  filename: string,
+  data: string,
+  format: ExportFormat,
+): Promise<ExportDocument> {
+  if (format !== GRAPHQL_API_TYPE) {
+    throw new Error('Unsupported format type')
+  }
+  const exportFilename = `${getDocumentTitle(filename)}.${GRAPHQL_API_TYPE}`
+
+  return {
+    data: new Blob([data], { type: 'application/graphql' }),
+    filename: exportFilename,
+  }
 }

@@ -1,0 +1,20 @@
+{
+  "packageId": "graphql-export",
+  "packageName": "graphql-export pkg",
+  "apiType": "graphql",
+  "version": "v1@1",
+  "files": [
+    {
+      "fileId": "schema1.graphql",
+      "publish": true,
+      "labels": [],
+      "commitId": "abc123"
+    },
+    {
+      "fileId": "schema2.graphql",
+      "publish": true,
+      "labels": [],
+      "commitId": "abc124"
+    }
+  ]
+}
