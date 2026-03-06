@@ -17,8 +17,6 @@ type LintedDocument struct {
 	LintDetails       string                    `pg:"lint_details,type:varchar"`
 }
 
-// TODO: choose linted vs validated term!
-
 func MakeValidatedDocumentView(ent LintedDocument) view.ValidatedDocument {
 	return view.ValidatedDocument{
 		Slug:    ent.Slug,

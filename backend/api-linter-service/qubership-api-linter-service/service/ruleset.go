@@ -3,6 +3,10 @@ package service
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"sort"
+	"time"
+
 	"github.com/Netcracker/qubership-api-linter-service/entity"
 	"github.com/Netcracker/qubership-api-linter-service/exception"
 	"github.com/Netcracker/qubership-api-linter-service/repository"
@@ -10,9 +14,6 @@ import (
 	"github.com/Netcracker/qubership-api-linter-service/view"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"sort"
-	"time"
 )
 
 type RulesetService interface {

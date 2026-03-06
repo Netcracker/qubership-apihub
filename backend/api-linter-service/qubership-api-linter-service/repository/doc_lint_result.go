@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+
 	"github.com/Netcracker/qubership-api-linter-service/db"
 	"github.com/Netcracker/qubership-api-linter-service/entity"
 	"github.com/Netcracker/qubership-api-linter-service/view"
@@ -41,7 +42,7 @@ func (d docResultRepositoryImpl) SaveLintResult(ctx context.Context, docLintTask
 			Where("executor_id = ?", executorId).
 			Update()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to update DocumentLintTask: %w", err)
 		}
 		if res.RowsAffected() == 0 {
 			var docEnt entity.DocumentLintTask
@@ -59,9 +60,9 @@ func (d docResultRepositoryImpl) SaveLintResult(ctx context.Context, docLintTask
 			Set("linted_at = EXCLUDED.linted_at").
 			Insert()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to insert LintedVersion: %w", err)
 		}
-		_, err = tx.Model(&document).OnConflict("(package_id, version, revision, file_id) do update").
+		_, err = tx.Model(&document).OnConflict("(package_id, version, revision, file_id, ruleset_id) do update").
 			Set("slug = EXCLUDED.slug").
 			Set("specification_type = EXCLUDED.specification_type").
 			Set("ruleset_id = EXCLUDED.ruleset_id").
@@ -70,7 +71,7 @@ func (d docResultRepositoryImpl) SaveLintResult(ctx context.Context, docLintTask
 			Set("lint_details = EXCLUDED.lint_details").
 			Insert()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to insert LintedDocument: %w", err)
 		}
 		if result != nil {
 			_, err = tx.Model(result).OnConflict("(data_hash, ruleset_id) do update").
@@ -79,7 +80,7 @@ func (d docResultRepositoryImpl) SaveLintResult(ctx context.Context, docLintTask
 				Set("summary = EXCLUDED.summary").
 				Insert()
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to insert LintFileResult: %w", err)
 			}
 		}
 		return nil

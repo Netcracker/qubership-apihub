@@ -21,6 +21,7 @@ type VersionLintTask struct {
 	LastActive   time.Time       `pg:"last_active,type:timestamp without time zone,notnull"`
 	RestartCount int             `pg:"restart_count,type:integer,notnull,use_zero"`
 	Priority     int             `pg:"priority, type:integer, use_zero"`
+	Recalculate  bool            `pg:"recalculate,type:boolean,notnull,use_zero"`
 }
 
 type DocumentLintTask struct {
@@ -44,4 +45,5 @@ type DocumentLintTask struct {
 	RestartCount      int             `pg:"restart_count,type:integer,notnull,use_zero"`
 	Priority          int             `pg:"priority, type:integer use_zero"`
 	LintTimeMs        int64           `pg:"lint_time_ms,type:integer,notnull,use_zero"`
+	Recalculate       bool            `pg:"recalculate,type:boolean,notnull,use_zero"`
 }

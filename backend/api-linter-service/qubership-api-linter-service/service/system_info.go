@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Netcracker/qubership-api-linter-service/client"
@@ -39,6 +40,18 @@ const (
 	NAMESPACE            = "NAMESPACE"
 
 	PRODUCTION_MODE = "PRODUCTION_MODE"
+
+	OPENAI_API_KEY          = "OPENAI_API_KEY"
+	OPENAI_API_PROXY        = "OPENAI_API_PROXY"
+	OPENAI_MODEL            = "OPENAI_MODEL"
+	OPENAI_RATE_LIMIT_RPS   = "OPENAI_RATE_LIMIT_RPS"
+	OPENAI_RATE_LIMIT_BURST = "OPENAI_RATE_LIMIT_BURST"
+	ENABLE_AI_OAS_LINTER    = "ENABLE_AI_OAS_LINTER"
+	AI_LINTER_WORKERS       = "AI_LINTER_WORKERS"
+	SPECTRAL_LINTER_WORKERS = "SPECTRAL_LINTER_WORKERS"
+
+	AI_LINTER_EXCLUDED_PACKAGES = "AI_LINTER_EXCLUDED_PACKAGES"
+	AI_LINTER_INCLUDED_PACKAGES = "AI_LINTER_INCLUDED_PACKAGES"
 )
 
 type SystemInfoService interface {
@@ -66,6 +79,17 @@ type SystemInfoService interface {
 	GetOlricDiscoveryMode() string
 	GetReplicaCount() int
 	GetNamespace() string
+
+	GetOpenAIAPIKey() string
+	GetOpenAIAPIProxy() string
+	GetOpenAIModel() string
+	GetOpenAIRateLimitRPS() float64
+	GetOpenAIRateLimitBurst() int
+	IsAiOasLinterEnabled() bool
+	GetAiLinterWorkers() int
+	GetAiLinterExcludedPackages() []string
+	GetAiLinterIncludedPackages() []string
+	GetSpectralLinterWorkers() int
 
 	SetProductionMode(apihubClient client.ApihubClient)
 	IsProductionMode() bool
@@ -110,6 +134,17 @@ func (s systemInfoServiceImpl) Init() error {
 	s.setOlricDiscoveryMode()
 	s.setReplicaCount()
 	s.setNamespace()
+
+	s.setOpenAIAPIKey()
+	s.setOpenAIAPIProxy()
+	s.setOpenAIModel()
+	s.setOpenAIRateLimitRPS()
+	s.setOpenAIRateLimitBurst()
+	s.setEnableAIOasLinter()
+	s.setAiLinterWorkers()
+	s.setAiLinterExcludedPackages()
+	s.setAiLinterIncludedPackages()
+	s.setSpectralLinterWorkers()
 
 	return nil
 }
@@ -313,6 +348,149 @@ func (s systemInfoServiceImpl) setNamespace() {
 
 func (s systemInfoServiceImpl) GetNamespace() string {
 	return s.systemInfoMap[NAMESPACE].(string)
+}
+
+func (s systemInfoServiceImpl) setOpenAIAPIKey() {
+	s.systemInfoMap[OPENAI_API_KEY] = os.Getenv(OPENAI_API_KEY)
+}
+
+func (s systemInfoServiceImpl) GetOpenAIAPIKey() string {
+	return s.systemInfoMap[OPENAI_API_KEY].(string)
+}
+
+func (s systemInfoServiceImpl) setOpenAIAPIProxy() {
+	s.systemInfoMap[OPENAI_API_PROXY] = os.Getenv(OPENAI_API_PROXY)
+}
+
+func (s systemInfoServiceImpl) GetOpenAIAPIProxy() string {
+	return s.systemInfoMap[OPENAI_API_PROXY].(string)
+}
+
+func (s systemInfoServiceImpl) setOpenAIModel() {
+	s.systemInfoMap[OPENAI_MODEL] = os.Getenv(OPENAI_MODEL)
+}
+
+func (s systemInfoServiceImpl) GetOpenAIModel() string {
+	return s.systemInfoMap[OPENAI_MODEL].(string)
+}
+
+func (s systemInfoServiceImpl) setOpenAIRateLimitRPS() {
+	rpsStr := os.Getenv(OPENAI_RATE_LIMIT_RPS)
+	var rps float64
+	if rpsStr != "" {
+		if parsed, err := strconv.ParseFloat(rpsStr, 64); err == nil && parsed > 0 {
+			rps = parsed
+		}
+	}
+	if rps <= 0 {
+		rps = 10.0 // default: 10 requests per second
+	}
+	s.systemInfoMap[OPENAI_RATE_LIMIT_RPS] = rps
+}
+
+func (s systemInfoServiceImpl) GetOpenAIRateLimitRPS() float64 {
+	return s.systemInfoMap[OPENAI_RATE_LIMIT_RPS].(float64)
+}
+
+func (s systemInfoServiceImpl) setOpenAIRateLimitBurst() {
+	burstStr := os.Getenv(OPENAI_RATE_LIMIT_BURST)
+	var burst int
+	if burstStr != "" {
+		if parsed, err := strconv.Atoi(burstStr); err == nil && parsed > 0 {
+			burst = parsed
+		}
+	}
+	if burst <= 0 {
+		burst = 30 // default: allow burst of 30 requests
+	}
+	s.systemInfoMap[OPENAI_RATE_LIMIT_BURST] = burst
+}
+
+func (s systemInfoServiceImpl) GetOpenAIRateLimitBurst() int {
+	return s.systemInfoMap[OPENAI_RATE_LIMIT_BURST].(int)
+}
+
+func (s systemInfoServiceImpl) setEnableAIOasLinter() {
+	val := os.Getenv(ENABLE_AI_OAS_LINTER)
+	enabled, err := strconv.ParseBool(val)
+	if err != nil {
+		enabled = false
+	}
+	s.systemInfoMap[ENABLE_AI_OAS_LINTER] = enabled
+}
+
+func (s systemInfoServiceImpl) IsAiOasLinterEnabled() bool {
+	return s.systemInfoMap[ENABLE_AI_OAS_LINTER].(bool)
+}
+
+func (s systemInfoServiceImpl) setAiLinterWorkers() {
+	workersStr := os.Getenv(AI_LINTER_WORKERS)
+	var workers int
+	if workersStr != "" {
+		if parsed, err := strconv.Atoi(workersStr); err == nil && parsed > 0 {
+			workers = parsed
+		}
+	}
+	if workers <= 0 {
+		workers = 1
+	}
+	s.systemInfoMap[AI_LINTER_WORKERS] = workers
+}
+
+func (s systemInfoServiceImpl) GetAiLinterWorkers() int {
+	return s.systemInfoMap[AI_LINTER_WORKERS].(int)
+}
+
+func parseCommaSeparatedList(val string) []string {
+	if val == "" {
+		return nil
+	}
+	parts := strings.Split(val, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		trimmed := strings.TrimSpace(p)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	if len(result) == 0 {
+		return nil
+	}
+	return result
+}
+
+func (s systemInfoServiceImpl) setAiLinterExcludedPackages() {
+	s.systemInfoMap[AI_LINTER_EXCLUDED_PACKAGES] = parseCommaSeparatedList(os.Getenv(AI_LINTER_EXCLUDED_PACKAGES))
+}
+
+func (s systemInfoServiceImpl) GetAiLinterExcludedPackages() []string {
+	return s.systemInfoMap[AI_LINTER_EXCLUDED_PACKAGES].([]string)
+}
+
+func (s systemInfoServiceImpl) setAiLinterIncludedPackages() {
+	s.systemInfoMap[AI_LINTER_INCLUDED_PACKAGES] = parseCommaSeparatedList(os.Getenv(AI_LINTER_INCLUDED_PACKAGES))
+}
+
+func (s systemInfoServiceImpl) GetAiLinterIncludedPackages() []string {
+	return s.systemInfoMap[AI_LINTER_INCLUDED_PACKAGES].([]string)
+}
+
+func (s systemInfoServiceImpl) setSpectralLinterWorkers() {
+	workersStr := os.Getenv(SPECTRAL_LINTER_WORKERS)
+	var workers int
+	if workersStr != "" {
+		if parsed, err := strconv.Atoi(workersStr); err == nil && parsed > 0 {
+			workers = parsed
+		}
+	}
+	if workers <= 0 {
+		workers = 1
+	}
+	s.systemInfoMap[SPECTRAL_LINTER_WORKERS] = workers
+}
+
+func (s systemInfoServiceImpl) GetSpectralLinterWorkers() int {
+	return s.systemInfoMap[SPECTRAL_LINTER_WORKERS].(int)
 }
 
 func (s systemInfoServiceImpl) SetProductionMode(apihubClient client.ApihubClient) {

@@ -64,7 +64,7 @@ func (p *publishEventListenerImpl) listen(message olric.DTopicMessage) {
 
 	version := fmt.Sprintf("%s@%d", notification.Version, notification.Revision)
 
-	taskId, err := p.validationService.ValidateVersion(ctx, notification.PackageId, version, notification.EventId)
+	taskId, err := p.validationService.ValidateVersion(ctx, notification.PackageId, version, notification.EventId, false)
 	if err != nil {
 		processed := false
 		var customError *exception.CustomError

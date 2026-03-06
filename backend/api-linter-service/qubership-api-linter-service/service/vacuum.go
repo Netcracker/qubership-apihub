@@ -15,7 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (v validationServiceImpl) runDocumentsVacuum(documents []string) (*[]view.DocumentValidationEntity, error) {
+func (v *validationServiceImpl) runDocumentsVacuum(documents []string) (*[]view.DocumentValidationEntity, error) {
 	err := os.MkdirAll(tempFolder, 0777)
 	if err != nil {
 		log.Errorf("failed to create temp folder: %v", err.Error())
@@ -32,7 +32,7 @@ func (v validationServiceImpl) runDocumentsVacuum(documents []string) (*[]view.D
 			CalculationTime: calculationTime,
 		}
 		if errStr != "" {
-			log.Errorf(errStr)
+			log.Error(errStr)
 			documentValidation.Details = errStr
 		} else {
 			documentValidation.Summary = vacuumReport.Statistics

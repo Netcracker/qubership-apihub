@@ -5,14 +5,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Netcracker/qubership-api-linter-service/utils"
-	"github.com/Netcracker/qubership-api-linter-service/view"
-	log "github.com/sirupsen/logrus"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Netcracker/qubership-api-linter-service/utils"
+	"github.com/Netcracker/qubership-api-linter-service/view"
+	log "github.com/sirupsen/logrus"
 )
 
 type SpectralExecutor interface {

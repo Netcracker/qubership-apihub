@@ -8,6 +8,48 @@
 	},
 	"item": [
 		{
+			"name": "Linters",
+			"item": [
+				{
+					"name": "GET List Linters",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/linters",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"linters"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Ruleset Management",
 			"item": [
 				{
@@ -341,7 +383,7 @@
 			"name": "Validation Result",
 			"item": [
 				{
-					"name": "GET Validation Summary",
+					"name": "GET Validation Summary (v1 - deprecated)",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -371,6 +413,48 @@
 							"path": [
 								"api",
 								"v1",
+								"packages",
+								"{{packageId}}",
+								"versions",
+								"{{version}}",
+								"validation",
+								"summary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Validation Summary (v2)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/packages/{{packageId}}/versions/{{version}}/validation/summary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
 								"packages",
 								"{{packageId}}",
 								"versions",
@@ -423,7 +507,7 @@
 					"response": []
 				},
 				{
-					"name": "GET Document Validation Details",
+					"name": "GET Document Validation Details (v1 - deprecated)",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -453,6 +537,50 @@
 							"path": [
 								"api",
 								"v1",
+								"packages",
+								"{{packageId}}",
+								"versions",
+								"{{version}}",
+								"validation",
+								"documents",
+								"{{slug}}",
+								"details"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Document Validation Details (v2)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/packages/{{packageId}}/versions/{{version}}/validation/documents/{{slug}}/details",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
 								"packages",
 								"{{packageId}}",
 								"versions",
@@ -513,6 +641,114 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Bulk Validation",
+			"item": [
+				{
+					"name": "POST Start Bulk Validation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 202\", function () {",
+									"    pm.response.to.have.status(202);",
+									"});",
+									"",
+									"var data = JSON.parse(responseBody);",
+									"if (data.jobId) {",
+									"    pm.environment.set(\"jobId\", data.jobId);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"packageId\": \"{{packageId}}\",\n  \"version\": \"{{version}}\",\n  \"excludePackages\": []\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bulkValidation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bulkValidation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Bulk Validation Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bulkValidation/{{jobId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bulkValidation",
+								"{{jobId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"variable": [
@@ -553,6 +789,11 @@
 		},
 		{
 			"key": "slug",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "jobId",
 			"value": "",
 			"type": "string"
 		}

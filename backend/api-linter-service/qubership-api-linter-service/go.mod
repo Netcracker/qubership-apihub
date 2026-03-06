@@ -1,8 +1,9 @@
 module github.com/Netcracker/qubership-api-linter-service
 
-go 1.23.0
+go 1.24
 
 require (
+	github.com/AsaiYusuke/jsonpath/v2 v2.2.0
 	github.com/Netcracker/qubership-apihub-commons-go v0.0.1
 	github.com/buraksezer/olric v0.4.7
 	github.com/buraksezer/olric-cloud-plugin v0.3.0-beta.4
@@ -10,11 +11,16 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
+	github.com/invopop/jsonschema v0.13.0
+	github.com/openai/openai-go/v3 v3.24.0
 	github.com/shaj13/go-guardian/v2 v2.11.6
 	github.com/shaj13/libcache v1.0.0
 	github.com/sirupsen/logrus v1.9.3
+	golang.org/x/sync v0.10.0
+	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/square/go-jose.v2 v2.6.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -32,6 +38,8 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/aws/aws-sdk-go v1.35.1 // indirect
+	github.com/bahlo/generic-list-go v0.2.0 // indirect
+	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/buraksezer/connpool v0.6.0 // indirect
 	github.com/buraksezer/consistent v0.0.0-20191006190839-693edf70fd72 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
@@ -74,6 +82,7 @@ require (
 	github.com/joyent/triton-go v1.8.5 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/linode/linodego v0.21.1 // indirect
+	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/miekg/dns v1.1.31 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.2.2 // indirect
@@ -87,6 +96,10 @@ require (
 	github.com/softlayer/xmlrpc v0.0.0-20200409220501-5f089df7cb7e // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go v3.0.233+incompatible // indirect
+	github.com/tidwall/gjson v1.18.0 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.1 // indirect
+	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/vmihailenco/bufpool v0.1.11 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
@@ -94,15 +107,14 @@ require (
 	github.com/vmihailenco/tagparser v0.1.2 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/vmware/govmomi v0.23.1 // indirect
+	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	go.opencensus.io v0.22.4 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/net v0.23.0 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
+	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/term v0.27.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	google.golang.org/api v0.32.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20201001141541-efaab9d3c4f7 // indirect
@@ -111,7 +123,6 @@ require (
 	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.19.2 // indirect
 	k8s.io/apimachinery v0.19.2 // indirect
 	k8s.io/client-go v0.19.2 // indirect
