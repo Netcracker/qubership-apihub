@@ -7,10 +7,6 @@ export function useAddMarkers(
   markers: Editor.IMarkerData[] = [],
 ): void {
   useEffect(() => {
-    if (markers.length === 0) {
-      return
-    }
-
     const currentEditor = editor.current
     if (!currentEditor) {
       return

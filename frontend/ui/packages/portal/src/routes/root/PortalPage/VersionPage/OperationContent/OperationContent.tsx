@@ -32,8 +32,8 @@ import {
   CONTENT_PLACEHOLDER_AREA,
   Placeholder,
   PLACEHOLDER_MESSAGE_NO_INTERNAL_DOCUMENT,
-  SEARCH_PLACEHOLDER_VARIANT,
 } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+import { SEARCH_RAINY_DAY_PLACEHOLDER_VARIANT } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder/Placeholder'
 import { RawSpecDiffView } from '@netcracker/qubership-apihub-ui-shared/components/RawSpecDiffView'
 import { RawSpecView } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/RawSpecView'
 import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
@@ -290,7 +290,7 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
       return (
         <Placeholder
           invisible={false}
-          variant={SEARCH_PLACEHOLDER_VARIANT}
+          variant={SEARCH_RAINY_DAY_PLACEHOLDER_VARIANT}
           area={CONTENT_PLACEHOLDER_AREA}
           message="No operations"
         />

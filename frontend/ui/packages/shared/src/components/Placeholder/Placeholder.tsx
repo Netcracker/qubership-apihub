@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-import type { FC, PropsWithChildren, ReactNode } from 'react'
-import { memo } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import type { SxProps } from '@mui/system/styleFunctionSx'
+import type { FC, PropsWithChildren, ReactNode } from 'react'
+import { memo, useMemo } from 'react'
+import type { TestableProps } from '../Testable'
+import everythingOkSvg from './everything-ok.svg'
 import noDataSvg from './no-data.svg'
 import nothingFoundSvg from './nothing-found.svg'
-import type { SxProps } from '@mui/system/styleFunctionSx'
-import type { TestableProps } from '../Testable'
 
 export type PlaceholderProps = PropsWithChildren<{
   invisible: boolean
@@ -33,13 +34,32 @@ export type PlaceholderProps = PropsWithChildren<{
 
 export const Placeholder: FC<PlaceholderProps> = memo<PlaceholderProps>(({
   invisible,
-  variant = DATA_PLACEHOLDER_VARIANT,
+  variant = DATA_RAINY_DAY_PLACEHOLDER_VARIANT,
   area,
   message,
   children,
   sx,
   testId,
 }) => {
+  const backgroundImage = useMemo(() => {
+    if (invisible) {
+      return undefined
+    }
+    let url = ''
+    switch (variant) {
+      case DATA_SUNNY_DAY_PLACEHOLDER_VARIANT:
+        url = everythingOkSvg
+        break
+      case DATA_RAINY_DAY_PLACEHOLDER_VARIANT:
+        url = noDataSvg
+        break
+      case SEARCH_RAINY_DAY_PLACEHOLDER_VARIANT:
+        url = nothingFoundSvg
+        break
+    }
+    return `url('${url}')`
+  }, [invisible, variant])
+
   if (invisible) {
     return (
       <>{children}</>
@@ -51,7 +71,7 @@ export const Placeholder: FC<PlaceholderProps> = memo<PlaceholderProps>(({
       {area === CONTENT_PLACEHOLDER_AREA && (
         <Box
           sx={{
-            backgroundImage: `url('${variant === DATA_PLACEHOLDER_VARIANT ? noDataSvg : nothingFoundSvg}')`,
+            backgroundImage: backgroundImage,
             backgroundSize: 'cover',
             backgroundRepeat: 'round',
             height: 'inherit',
@@ -77,12 +97,14 @@ export const Placeholder: FC<PlaceholderProps> = memo<PlaceholderProps>(({
 export const NO_SEARCH_RESULTS = 'No search results'
 export const NO_PERMISSION = 'You do not have permission to see this page'
 
-export const SEARCH_PLACEHOLDER_VARIANT = 'search'
-export const DATA_PLACEHOLDER_VARIANT = 'data'
+export const SEARCH_RAINY_DAY_PLACEHOLDER_VARIANT = 'search'
+export const DATA_SUNNY_DAY_PLACEHOLDER_VARIANT = 'data-sunny-day'
+export const DATA_RAINY_DAY_PLACEHOLDER_VARIANT = 'data-rainy-day'
 
 type PlaceholderVariant =
-  | typeof SEARCH_PLACEHOLDER_VARIANT
-  | typeof DATA_PLACEHOLDER_VARIANT
+  | typeof SEARCH_RAINY_DAY_PLACEHOLDER_VARIANT
+  | typeof DATA_SUNNY_DAY_PLACEHOLDER_VARIANT
+  | typeof DATA_RAINY_DAY_PLACEHOLDER_VARIANT
 
 export const NAVIGATION_PLACEHOLDER_AREA = 'navigation'
 export const CONTENT_PLACEHOLDER_AREA = 'content'
