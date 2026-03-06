@@ -280,7 +280,7 @@ func main() {
 	tokenRevocationService := service.NewTokenRevocationService(olricProvider, systemInfoService.GetRefreshTokenDurationSec())
 	systemStatsService := service.NewSystemStatsService(systemStatsRepository)
 
-	mcpService := service.NewMCPService(systemInfoService, operationService, packageService)
+	mcpService := service.NewMCPService(systemInfoService, operationService, packageService, versionService)
 	chatService := service.NewChatService(systemInfoService, mcpService)
 
 	idpManager, err := providers.NewIDPManager(systemInfoService.GetAuthConfig(), systemInfoService.GetAllowedHosts(), systemInfoService.IsProductionMode(), userService)

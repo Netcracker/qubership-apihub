@@ -21,20 +21,26 @@ type MCPService interface {
 	GetPackagesList(ctx context.Context, workspaceId string) ([]mcp.ResourceContents, error)
 }
 
-func NewMCPService(systemInfoService SystemInfoService, operationService OperationService, packageService PackageService) MCPService {
-	return &mcpService{systemInfoService: systemInfoService, operationService: operationService, packageService: packageService}
+func NewMCPService(systemInfoService SystemInfoService, operationService OperationService, packageService PackageService, versionService VersionService) MCPService {
+	return &mcpService{
+		systemInfoService: systemInfoService,
+		operationService:  operationService,
+		packageService:    packageService,
+		versionService:    versionService,
+	}
 }
 
 type mcpService struct {
 	systemInfoService SystemInfoService
 	operationService  OperationService
 	packageService    PackageService
+	versionService    VersionService
 }
 
 func (m mcpService) MakeMCPServer() *mcpserver.MCPServer {
 	s := mcpserver.NewMCPServer(
 		"apihub-mcp",
-		"0.0.1",
+		"0.0.2",
 		mcpserver.WithToolCapabilities(false),
 		mcpserver.WithInstructions(mcpInstructions),
 	)
@@ -61,13 +67,23 @@ func (m mcpService) MakeMCPServer() *mcpserver.MCPServer {
 		return m.ExecuteGetSpecTool(ctx, req)
 	})
 
+	// Add get_rest_api_operation_diff tool
+	diffMeta := toolsMetadata[2]
+	s.AddTool(mcp.Tool{
+		Name:           diffMeta.Name,
+		Description:    diffMeta.DescriptionMCP,
+		RawInputSchema: diffMeta.Schema,
+	}, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return m.ExecuteGetOperationDiffTool(ctx, req)
+	})
+
 	mcpWorkspace := m.systemInfoService.GetAiMCPConfig().Workspace
 	if mcpWorkspace != "" {
 		// Register API packages resource
 		s.AddResource(mcp.Resource{
 			URI:         "api-packages-list",
 			Name:        "API Packages List",
-			Description: "List of all API packages in the system. The resource returns a JSON array with elements containing: name (package/group name), id (package ID for use in tool calls), type (type: 'package' or 'group'). Package ID can serve as a hint to which domain the API belongs. Use this resource to: get a list of all available packages, find package ID by package name. Package IDs from this resource should be used in the 'group' parameter of the search_rest_api_operations tool.",
+			Description: "List of all API packages in the system. The resource returns a JSON object with a 'packages' array. Each item includes package metadata (name, packageId, kind, parents, etc.) and a 'versions' list containing up to 100 release versions sorted by version desc (status=release, sortBy=version, sortOrder=desc). Package ID can serve as a hint to which domain the API belongs. Use this resource to: get a list of all available packages, find package ID by package name, and review available release versions. Package IDs from this resource should be used in the 'group' parameter of the search_rest_api_operations tool.",
 			MIMEType:    "application/json",
 		}, func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 			return m.GetPackagesList(ctx, mcpWorkspace)
@@ -121,6 +137,25 @@ func (m mcpService) GetPackagesList(ctx context.Context, workspaceId string) ([]
 
 	// Post-processing: filter and convert packages
 	packagesMCP := convertPackagesToMCP(packages)
+	for i := range packagesMCP.Packages {
+		packageInfo := &packagesMCP.Packages[i]
+		versionsReq := view.VersionListReq{
+			PackageId: packageInfo.Id,
+			Status:    "release",
+			Limit:     100,
+			Page:      0,
+			SortBy:    view.VersionSortByVersion,
+			SortOrder: view.VersionSortOrderDesc,
+		}
+		versionsView, err := m.versionService.GetPackageVersionsView(versionsReq, false)
+		if err != nil {
+			log.Errorf("Failed to get versions list for package %s: %v", packageInfo.Id, err)
+			return nil, fmt.Errorf("failed to get versions list for package %s: %w", packageInfo.Id, err)
+		}
+		if versionsView != nil {
+			packageInfo.Versions = versionsView.Versions
+		}
+	}
 
 	jsonData, err := json.Marshal(packagesMCP)
 	if err != nil {
@@ -146,6 +181,7 @@ DATA STRUCTURE:
 - Package ID can serve as a hint to which domain the API belongs
 - Each package contains API operations
 - Each package can have multiple versions in YYYY.Q format (e.g., 2024.3, 2024.4)
+- api-packages-list resource includes release versions per package (up to 100, sorted by version desc)
 
 WHEN TO USE THIS SERVER:
 Use apihub-mcp when the user asks about:
@@ -157,12 +193,13 @@ Use apihub-mcp when the user asks about:
 AVAILABLE TOOLS:
 1. search_rest_api_operations - search for API operations (see tool description for details)
 2. get_rest_api_operations_specification - get OpenAPI specification for a specific operation (use only when user explicitly requests details)
+3. get_rest_api_operation_diff - get list of changes of the specific operation from OpenAPI specification from the specific package and version to the previous version (use then user asks for changes of the specific operation)
 
 AVAILABLE RESOURCES:
 - api-packages-list - list of all packages in the system. Use this resource when:
   * User asks "what packages are available", "show all APIs", "list packages"
   * You need to find package ID by package name for use in tool calls
-  * The resource returns a JSON array with fields: name, id, type (package/group)
+  * The resource returns a JSON object with 'packages' array. Each package contains metadata and 'versions' list (release versions sorted by version desc)
   * Use package ID from this resource in the 'group' parameter of search_rest_api_operations tool
 
 RESPONSES:
@@ -175,17 +212,21 @@ RESPONSES:
 const (
 	ToolNameSearchOperations = "search_rest_api_operations"
 	ToolNameGetOperationSpec = "get_rest_api_operations_specification"
+	ToolNameGetOperationDiff = "get_rest_api_operation_diff"
 )
 
 // Tool descriptions for MCP server
 const (
-	ToolDescriptionSearchOperationsMCP = `Search for REST API operations by text query.
+ToolDescriptionSearchOperationsMCP = `Search for REST API operations by text query.
 
 IMPORTANT: The search is not full-text. For example, a query "create customer" may not find an operation "create new customer". Therefore, it is important to try different search query variations.
+IMPORTANT: The search works well for exact API path lookups and method+path lookups. You can pass "/api/v1/customers" or "GET /api/v1/customers" as the query.
 
 LLM INSTRUCTIONS:
 - For the first call, use a large limit (100) to find as many options as possible. Paging starts from 0
 - Consider simplifying the query to a single keyword (e.g., if query is "create customer", also try "customer")
+- If the user provides HTTP method and path, use "METHOD /path" as query (e.g., "POST /api/v2/address")
+- If only path is provided, use "/path" as query
 - Query string has special features: -word to force exclude a word from the search - it can help if search results are flooded with irrelevant results; "something certain"  - double quotes to strict search of a phrase/word
 - Group results by packageId when displaying
 - Return all metadata that MCP returns (operationId, packageId, packageName, version, path, method, title, apiKind, apiType, apiAudience)
@@ -198,7 +239,7 @@ LLM INSTRUCTIONS:
 - If user asks for more results - increment page, simplify query, or search in other packages/versions
 - DO NOT use get_rest_api_operations_specification in advance - first show a list of operations to choose from, even if only one is found
 - Use get_rest_api_operations_specification only when user explicitly requests details about a specific operation
-- If user explicitly requests a specific version - use 'release' parameter in YYYY.Q format
+- If user explicitly requests a specific version - use 'release' parameter in YYYY.Q format (prefer versions from api-packages-list resource)
 - If user requests results from a specific package - use 'group' parameter with packageId (not packageName)`
 
 	ToolDescriptionGetOperationSpecMCP = `Get OpenAPI specification for a specific REST API operation.
@@ -215,17 +256,28 @@ LLM INSTRUCTIONS:
 - Generate RequestBody and ResponseBody examples based on the specification
 - Provide the user with complete information about the operation
 - Include the full OpenAPI specification json in the response`
+
+	ToolDescriptionGetOperationDiffMCP = `Get list of changes of the specific operation from OpenAPI specification from the specific package and version to the previous version.
+
+Use this tool ONLY when the user explicitly requests changes of the specific operation.
+
+LLM INSTRUCTIONS:
+- The response contains JSON with list of changes of the specific operation from OpenAPI specification from the specific package and version to the previous version.
+- If uesrs asks for changes for many operation - call this tool for each operation`
 )
 
 // Tool descriptions for OpenAI
 const (
-	ToolDescriptionSearchOperationsOpenAI = `Search for REST API operations by text query.
+ToolDescriptionSearchOperationsOpenAI = `Search for REST API operations by text query.
 
 IMPORTANT: The search is not full-text. For example, a query "create customer" may not find an operation "create new customer". Therefore, it is important to try different search query variations.
+IMPORTANT: The search works well for exact API path lookups and method+path lookups. You can pass "/api/v1/customers" or "GET /api/v1/customers" as the query.
 
 LLM INSTRUCTIONS:
 - For the first call, use a large limit (100) to find as many options as possible. Paging starts from 0
 - Consider simplifying the query to a single keyword (e.g., if query is "create customer", also try "customer")
+- If the user provides HTTP method and path, use "METHOD /path" as query (e.g., "POST /api/v2/address")
+- If only path is provided, use "/path" as query
 - Query string has special features: -word to force exclude a word from the search - it can help if search results are flooded with irrelevant results; "something certain"  - double quotes to strict search of a phrase/word
 - Group results by packageId when displaying in markdown format
 - Return all metadata that MCP returns (operationId, packageId, packageName, version, path, method, title, apiKind, apiType, apiAudience)
@@ -238,7 +290,7 @@ LLM INSTRUCTIONS:
 - If user asks for more results - increment page, simplify query, or search in other packages/versions
 - DO NOT use get_rest_api_operations_specification in advance - first show a list of operations to choose from in markdown format, even if only one is found
 - Use get_rest_api_operations_specification only when user explicitly requests details about a specific operation
-- If user explicitly requests a specific version - use 'release' parameter in YYYY.Q format
+- If user explicitly requests a specific version - use 'release' parameter in YYYY.Q format (prefer versions from api-packages-list resource)
 - If user requests results from a specific package - use 'group' parameter with packageId (not packageName)
 - REQUIRED: Convert metadata to markdown links (relative, without baseUrl):
   * packageId -> [packageId](/portal/packages/<packageId>)
@@ -261,6 +313,15 @@ LLM INSTRUCTIONS:
 - Use markdown links for packageId and operationId:
   * packageId -> [packageId](/portal/packages/<packageId>)
   * operationId -> [operationId](/portal/packages/<packageId>/<version>/operations/rest/<operationId>)`
+
+	ToolDescriptionGetOperationDiffOpenAI = `Get list of changes of the specific operation from OpenAPI specification from the specific package and version to the previous version in markdown format.
+
+Use this tool ONLY when the user explicitly requests changes of the specific operation.
+
+LLM INSTRUCTIONS:
+- The response contains JSON with list of changes of the specific operation from OpenAPI specification from the specific package and version to the previous version.
+- If uesrs asks for changes for many operation - call this tool for each operation
+- Format responses in markdown with well-readable markup (headings, lists, tables)`
 )
 
 // Tool input schemas (shared between MCP and OpenAI)
@@ -305,6 +366,25 @@ var (
 		},
 		"required": ["operationId","packageId","version"]
 	}`)
+
+	getOperationDiffSchema = json.RawMessage(`{
+		"type": "object",
+		"properties": {
+			"operationId": {
+				"type": "string"
+			},
+			"packageId": {
+				"type": "string"
+			},
+			"version": {
+				"type": "string"
+			},
+			"previousVersion": {
+				"type": "string"
+			}
+		},
+		"required": ["operationId","packageId","version","previousVersion"]
+	}`)
 )
 
 // getToolMetadata returns metadata for all tools
@@ -321,6 +401,12 @@ func getToolMetadata() []view.ToolMetadata {
 			Schema:            getOperationSpecSchema,
 			DescriptionMCP:    ToolDescriptionGetOperationSpecMCP,
 			DescriptionOpenAI: ToolDescriptionGetOperationSpecOpenAI,
+		},
+		{
+			Name:              ToolNameGetOperationDiff,
+			Schema:            getOperationDiffSchema,
+			DescriptionMCP:    ToolDescriptionGetOperationDiffMCP,
+			DescriptionOpenAI: ToolDescriptionGetOperationDiffOpenAI,
 		},
 	}
 }
@@ -369,6 +455,12 @@ func getParameterDescription(toolName, paramName string) string {
 			"operationId": "Unique operation identifier (operationId) from search results",
 			"packageId":   "Package ID (packageId) where the operation is located. Use packageId from search results or api-packages-list resource",
 			"version":     "Package version in YYYY.Q format (e.g., 2024.3) where the operation is located",
+		},
+		ToolNameGetOperationDiff: {
+			"operationId":     "Unique operation identifier (operationId) from search results",
+			"packageId":       "Package ID (packageId) where the operation is located. Use packageId from search results or api-packages-list resource",
+			"version":         "Package version in YYYY.Q format (e.g., 2024.3) where the operation is located",
+			"previousVersion": "Package version in YYYY.Q format (e.g., 2024.2) where the operation was located",
 		},
 	}
 
