@@ -19,10 +19,26 @@ type AiOasExecutor interface {
 	GetLinterVersion() string
 }
 
-func NewAiOasExecutor(lLMClient client.LLMClient) AiOasExecutor {
-	return &aiOasExecutor{
-		llmClient: lLMClient,
+func NewAiOasExecutor(systemInfoService SystemInfoService) (AiOasExecutor, error) {
+	var llmCl client.LLMClient
+	var err error
+	if systemInfoService.IsAiOasLinterEnabled() {
+		llmCl, err = client.NewOpenaiClient(
+			systemInfoService.GetOpenAIAPIKey(),
+			systemInfoService.GetOpenAIModel(),
+			systemInfoService.GetOpenAIAPIProxy(),
+			systemInfoService.GetOpenAIRateLimitRPS(),
+			systemInfoService.GetOpenAIRateLimitBurst())
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		llmCl = client.NewStubLlmClient()
 	}
+
+	return &aiOasExecutor{
+		llmClient: llmCl,
+	}, nil
 }
 
 type aiOasExecutor struct {

@@ -94,13 +94,16 @@ func (d docTaskProcessorImpl) runWorkerLoop(workerExecutorId string, linters ...
 		select {
 		case <-ticker.C:
 			// periodic poll
-		case <-d.docTaskNotify:
+		case _, ok := <-d.docTaskNotify:
+			if !ok {
+				log.Errorf("docTaskProcessorImpl id=%s: notification channel is closed, worker stopped", workerExecutorId)
+				return
+			}
 			// interrupt sleep and start processing immediately when doc lint task is created
 			log.Tracef("docTaskProcessorImpl id=%s: woken by doc task notify", workerExecutorId)
 		}
-
+		running.Store(true)
 		utils.SafeAsync(func() {
-			running.Store(true)
 			for {
 				moreWork := d.processTask(workerExecutorId, linters...)
 				if !moreWork {

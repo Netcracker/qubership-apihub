@@ -113,16 +113,6 @@ func main() {
 
 	apihubClient := client.NewApihubClient(systemInfoService.GetAPIHubUrl(), systemInfoService.GetApihubAccessToken())
 
-	oaiCl, err := client.NewOpenaiClient(
-		systemInfoService.GetOpenAIAPIKey(),
-		systemInfoService.GetOpenAIModel(),
-		systemInfoService.GetOpenAIAPIProxy(),
-		systemInfoService.GetOpenAIRateLimitRPS(),
-		systemInfoService.GetOpenAIRateLimitBurst())
-	if err != nil {
-		log.Panicf("Failed create openaiClient: %s", err.Error())
-	}
-
 	utils.SafeAsync(func() {
 		systemInfoService.SetProductionMode(apihubClient)
 	})
@@ -154,7 +144,10 @@ func main() {
 		log.Fatalf("Failed to create Spectral executor: %s", err.Error())
 	}
 
-	aiOasExecutor := service.NewAiOasExecutor(oaiCl)
+	aiOasExecutor, err := service.NewAiOasExecutor(systemInfoService)
+	if err != nil {
+		log.Fatalf("Failed to create AiOas executor: %s", err.Error())
+	}
 
 	docTaskProcessor := service.NewDocTaskProcessor(docLintTaskRepository, ruleSetRepository, docResultRepository, lintResultRepository, apihubClient, spectralExecutor, aiOasExecutor, executorId, systemInfoService.GetSpectralLinterWorkers(), systemInfoService.GetAiLinterWorkers(), docTaskNotify)
 

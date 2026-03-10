@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -229,4 +230,18 @@ var validChatModels = map[openai.ChatModel]struct{}{
 	openai.ChatModelGPT3_5Turbo: {}, openai.ChatModelGPT3_5Turbo16k: {}, openai.ChatModelGPT3_5Turbo0301: {},
 	openai.ChatModelGPT3_5Turbo0613: {}, openai.ChatModelGPT3_5Turbo1106: {}, openai.ChatModelGPT3_5Turbo0125: {},
 	openai.ChatModelGPT3_5Turbo16k0613: {},
+}
+
+func NewStubLlmClient() LLMClient {
+	return &stubLlmClient{}
+}
+
+type stubLlmClient struct{}
+
+func (s stubLlmClient) LintOasDocument(ctx context.Context, docStr string, prompt string) ([]view.AiValidationIssue, error) {
+	return nil, fmt.Errorf("LLM client is not configured, using stub instead of implementation")
+}
+
+func (s stubLlmClient) DeduplicateIssues(ctx context.Context, issues []view.ValidationIssue) ([]view.AiValidationIssue, error) {
+	return nil, fmt.Errorf("LLM client is not configured, using stub instead of implementation")
 }
