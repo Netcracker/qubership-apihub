@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+/* eslint-disable react-refresh/only-export-components */
+import { DiffMetaKeys } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff, DIFF_META_KEY, DiffReplace, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier'
 import { getCompatibilitySuite, TestSpecType } from '@netcracker/qubership-apihub-compatibility-suites'
@@ -25,11 +27,21 @@ import { buildGraphApiSchema } from '../../mocks/utils/graph-api-transformers'
 import { SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '../../types/LayoutMode'
 import { ArrayUtils } from '../../utils/common/arrays'
 import { getCompareResult } from './merged-document'
-import { DiffMetaKeys } from '@netcracker/qubership-apihub-api-data-model'
-
-export type GraphQLCompatibilitySuiteStoryArgs = { before: string, after: string }
 
 const FONT_FAMILIES: string[] = ['Inter']
+
+function useFontLoaded(): boolean {
+  const [fontLoaded, setFontLoaded] = useState(false)
+  const promises = FONT_FAMILIES.map(fontFamily => new FontFaceObserver(fontFamily).load(null, 10_000))
+  Promise.all(promises).then(() => {
+    setFontLoaded(true)
+  })
+  return fontLoaded
+}
+
+// GraphQL
+
+export type GraphQLCompatibilitySuiteStoryArgs = { before: string; after: string }
 
 const DIFF_META_KEYS: DiffMetaKeys = {
   diffsMetaKey: DIFF_META_KEY,
@@ -42,20 +54,11 @@ export function GraphQLStoryComponent({ before, after }: GraphQLCompatibilitySui
     buildGraphApiSchema(after),
   )
 
-  const [fontLoaded, setFontLoaded] = useState(false)
-
-  const promises = FONT_FAMILIES.map(fontFamily => new FontFaceObserver(fontFamily).load(null, 10_000))
-  Promise.all(promises).then(() => {
-    setFontLoaded(true)
-  })
+  const fontLoaded = useFontLoaded()
 
   if (!fontLoaded) {
     return <></>
   }
-
-  // printDiffs(diffs)
-
-  // printGraphQLChanges(before, after)
 
   return (
     <GraphQLOperationDiffViewer
@@ -66,27 +69,41 @@ export function GraphQLStoryComponent({ before, after }: GraphQLCompatibilitySui
   )
 }
 
+export function getGraphQLStoryArgs(
+  suiteType: TestSpecType,
+  suiteId: string,
+  testId: string,
+): GraphQLCompatibilitySuiteStoryArgs {
+  const [before, after] = getCompatibilitySuite(suiteType, suiteId, testId)
+  return { before, after }
+}
+
+// Debug helpers
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function printDiffs(diffs: Diff[]) {
-  console.log('apihub-diff:', stringifyCyclicJso(
-    diffs.map(diff => {
-      const {
-        beforeDeclarationPaths = [],
-        afterDeclarationPaths = [],
-        ...rest
-      } = { ...diff } as DiffReplace // TODO 14.10.25 // Get rid of this because casting isn't a good solution
+  console.log(
+    'apihub-diff:',
+    stringifyCyclicJso(
+      diffs.map(diff => {
+        const {
+          beforeDeclarationPaths = [],
+          afterDeclarationPaths = [],
+          ...rest
+        } = { ...diff } as DiffReplace // TODO 14.10.25 // Get rid of this because casting isn't a good solution
 
-      return {
-        ...rest,
-        ...(ArrayUtils.isNotEmpty(beforeDeclarationPaths)
-          ? { beforeDeclarationPaths: `[${beforeDeclarationPaths.map(path => `[${path.join()}]`).join()}]` }
-          : {}),
-        ...(ArrayUtils.isNotEmpty(afterDeclarationPaths)
-          ? { afterDeclarationPaths: `[${afterDeclarationPaths.map(path => `[${path.join()}]`).join()}]` }
-          : {}),
-      }
-    }),
-  ))
+        return {
+          ...rest,
+          ...(ArrayUtils.isNotEmpty(beforeDeclarationPaths)
+            ? { beforeDeclarationPaths: `[${beforeDeclarationPaths.map(path => `[${path.join()}]`).join()}]` }
+            : {}),
+          ...(ArrayUtils.isNotEmpty(afterDeclarationPaths)
+            ? { afterDeclarationPaths: `[${afterDeclarationPaths.map(path => `[${path.join()}]`).join()}]` }
+            : {}),
+        }
+      }),
+    ),
+  )
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -108,9 +125,4 @@ function printGraphQLChanges(before: string, after: string) {
   } else {
     console.log('No Dangerous Changes')
   }
-}
-
-export function getStoryArgs(suiteType: TestSpecType, suitId: string, testId: string): GraphQLCompatibilitySuiteStoryArgs {
-  const [before, after] = getCompatibilitySuite(suiteType, suitId, testId)
-  return { before, after }
 }
