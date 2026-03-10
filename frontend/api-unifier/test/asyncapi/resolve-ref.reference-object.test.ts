@@ -364,6 +364,46 @@ describe('AsyncAPI Reference Object Resolver', () => {
       }
     }
 
+    function createSpecTwoServersSameFinalServer() {
+      return {
+        asyncapi: '3.0.0',
+        info: {
+          title: 'Test API',
+          version: '1.0.0',
+        },
+        servers: {
+          DirectServer: {
+            $ref: '#/servers/FinalServer',
+          },
+          AliasServer: {
+            $ref: '#/servers/DirectServer',
+          },
+          FinalServer: {
+            host: 'final.example.com',
+            protocol: 'amqp',
+          },
+        },
+        channels: {
+          userChannel: {
+            address: 'user/events',
+            servers: [
+              {
+                $ref: '#/servers/DirectServer',
+              },
+            ],
+          },
+          providerChannel: {
+            address: 'provider/events',
+            servers: [
+              {
+                $ref: '#/servers/AliasServer',
+              },
+            ],
+          },
+        },
+      }
+    }
+
     function createSpecTwoMessagesSameFinalMessage() {
       return {
         asyncapi: '3.0.0',
@@ -487,6 +527,58 @@ describe('AsyncAPI Reference Object Resolver', () => {
       // Without firstReferenceKeyProperty there is no need to copy; same final target => same instance
       expect(directMessage).toBe(aliasMessage)
       expect(directMessage[TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('FinalMessage')
+    })
+
+    it('should capture different first reference keys for servers in channel servers array', async () => {
+      const source = createSpecTwoServersSameFinalServer()
+      await parseAsyncApiAndAssertValid(source)
+
+      const result = normalize(source, NORMALIZATION_OPTIONS_BOTH_REFERENCE_KEYS) as any
+
+      const [fromDirectServer] = result.channels.userChannel.servers
+      const [fromAliasServer] = result.channels.providerChannel.servers
+
+      // First reference key should correspond to the first key in the ref-chain from the channel
+      expect(fromDirectServer[TEST_FIRST_REFERENCE_KEY_PROPERTY]).toBe('DirectServer')
+      expect(fromAliasServer[TEST_FIRST_REFERENCE_KEY_PROPERTY]).toBe('AliasServer')
+
+      // Last reference key should be the same for both, since both resolve to FinalServer
+      expect(fromDirectServer[TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('FinalServer')
+      expect(fromAliasServer[TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('FinalServer')
+
+      // Different first keys for the same final target should produce different instances
+      expect(fromDirectServer).not.toBe(fromAliasServer)
+    })
+
+    it('should capture different first reference keys for servers in channel servers array when only first reference key is captured', async () => {
+      const source = createSpecTwoServersSameFinalServer()
+      await parseAsyncApiAndAssertValid(source)
+
+      const result = normalize(source, NORMALIZATION_OPTIONS_FIRST_REFERENCE_KEY) as any
+
+      const [fromDirectServer] = result.channels.userChannel.servers
+      const [fromAliasServer] = result.channels.providerChannel.servers
+
+      // First reference key should correspond to the first key in the ref-chain from the channel
+      expect(fromDirectServer[TEST_FIRST_REFERENCE_KEY_PROPERTY]).toBe('DirectServer')
+      expect(fromAliasServer[TEST_FIRST_REFERENCE_KEY_PROPERTY]).toBe('AliasServer')
+
+      // Different first keys for the same final target should produce different instances
+      expect(fromDirectServer).not.toBe(fromAliasServer)
+    })
+
+    it('should resolve to same server instance when firstReferenceKeyProperty is not provided', async () => {
+      const source = createSpecTwoServersSameFinalServer()
+      await parseAsyncApiAndAssertValid(source)
+
+      const result = normalize(source, NORMALIZATION_OPTIONS_LAST_REFERENCE_KEY) as any
+
+      const [fromDirectServer] = result.channels.userChannel.servers
+      const [fromAliasServer] = result.channels.providerChannel.servers
+
+      // Without firstReferenceKeyProperty there is no need to copy; same final target => same instance
+      expect(fromDirectServer).toBe(fromAliasServer)
+      expect(fromDirectServer[TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('FinalServer')
     })
 
     it('should reuse the same object when same first key is used in different operations', async () => {
