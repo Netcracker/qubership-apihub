@@ -27,8 +27,6 @@ import { TEXT_DOCUMENT_TYPE, TextDocumentType } from '../text'
 import { API_KIND_KEY, DEPRECATED_META_KEY } from '../../utils/apihubSpecificationExtensions'
 import { NormalizeOptions } from '@netcracker/qubership-apihub-api-unifier'
 
-export const REST_API_TYPE = 'rest' as const
-
 export const REST_SCOPES = {
   all: 'all',
   annotation: 'annotation',

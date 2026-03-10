@@ -19,7 +19,8 @@ import {
   ApiDocument,
   ChangeSummary,
   CompareOperationsPairContext,
-  ComparisonDocument, ComparisonInternalDocument,
+  ComparisonDocument,
+  ComparisonInternalDocument,
   DIFF_TYPES,
   ImpactedOperationSummary,
   NormalizedOperationId,
@@ -39,9 +40,9 @@ import {
   difference,
   intersection,
   removeFirstSlash,
+  serializeDocument,
   SLUG_OPTIONS_OPERATION_ID,
   slugify,
-  serializeDocument,
   takeIfDefined,
 } from '../../utils'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
@@ -296,7 +297,6 @@ export function createOperationChange(
   }
 }
 
-
 export function createComparisonDocument(comparisonDocumentId: string, apiDocument: ApiDocument): ComparisonDocument {
   return {
     comparisonDocumentId,
@@ -305,19 +305,21 @@ export function createComparisonDocument(comparisonDocumentId: string, apiDocume
 }
 
 type FileParam = string | undefined
-type FileParams = [FileParam, FileParam] | null
+type FileParams = FileParam[] | null
 
 export const createComparisonFileId = (prev: FileParams | null, curr: FileParams): string => {
-  return [...prev || [], ...curr || []].filter(Boolean).join('_')
+  return [...prev || [], ...curr || []].filter(Boolean).join('_').replace(/\//g, '_')
 }
 
 export const createComparisonInternalDocumentId = (
-  prevDoc: ResolvedVersionDocument | undefined,
-  currDoc: ResolvedVersionDocument | undefined,
-  previousVersion: FileParam,
-  currentVersion: FileParam,
+  previousVersion: string,
+  previousPackageId: string,
+  prevSlug: string | undefined,
+  currentVersion: string,
+  currentPackageId: string,
+  currSlug: string | undefined,
 ): string => {
-  return createComparisonFileId([prevDoc?.slug, previousVersion], [currDoc?.slug, currentVersion])
+  return createComparisonFileId([prevSlug, previousVersion, previousPackageId || currentPackageId], [currSlug, currentVersion, currentPackageId])
 }
 
 export const removeGroupPrefixFromOperationId = (operationId: string, groupPrefix: string): string => {

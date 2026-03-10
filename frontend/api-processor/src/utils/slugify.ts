@@ -13,6 +13,24 @@ export const SLUG_OPTIONS_DOCUMENT_ID: Options = {
     },
 }
 
+// Intended for human-readable titles (keeps original casing, uses spaces as separators)
+export const SLUG_OPTIONS_TITLE: Options = {
+    replacement: ' ',
+    lower: false,
+    trim: true,
+    charmap: {
+        ...createSlug.charmap,
+        ...{
+            '/': ' ',
+            '_': ' ',
+            '.': ' ',
+            '(': ' ',
+            ')': ' ',
+            '-': ' ',
+        },
+    },
+}
+
 // additional characters are added for more selectivity
 export const SLUG_OPTIONS_OPERATION_ID: Options = {
     charmap: {

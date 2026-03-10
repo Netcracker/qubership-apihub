@@ -18,6 +18,7 @@ import { API_AUDIENCE_INTERNAL, APIHUB_API_COMPATIBILITY_KIND_BWC, APIHUB_API_CO
 import { Editor, LocalRegistry } from './helpers'
 
 import { describe, expect, test } from '@jest/globals'
+import { calculateRestOperationTitle } from '../src/utils'
 
 const bugsPackage = LocalRegistry.openPackage('bugs')
 const swaggerPackage = LocalRegistry.openPackage('basic_swagger')
@@ -367,4 +368,26 @@ describe('Operation Bugs', () => {
     expect(data).toHaveProperty(['paths', '/test', 'post', 'responses', '200', 'content', 'application/json', 'schema', 'properties', 'testConnectionDate', 'example'], '2022-03-10T16:15:50Z')
   })
 
+  test('should format rest operationId title without extra characters', async () => {
+    type TestCase = [string, string, string, string]
+
+    const testData: TestCase[] = [
+      ['', 'get', '/path1', 'Path1 Get'],
+      ['', 'get', '/items/{itemId}', 'Items ItemId Get'],
+      ['api/v1', 'get', '/path1', 'Api V1 Path1 Get'],
+      ['api/v1', 'get', '/items/{itemId}', 'Api V1 Items ItemId Get'],
+      ['api/v1/rest', 'get', '/items/{itemId}', 'Api V1 Rest Items ItemId Get'],
+    ]
+    testData.forEach(([basePath, key, path, expectedTitle]) =>{
+      const title = calculateRestOperationTitle(basePath, key, path)
+      expect(title).toEqual(expectedTitle)
+    })
+
+    const editor = await Editor.openProject('bugs', bugsPackage)
+    const result = await editor.run({
+      files: [{ fileId: 'title-rest-operation-id-format.yaml', publish: true }],
+    })
+    const restOperationTitle = result.operations.get('api-v1-items-_item_-get')?.title
+    expect(restOperationTitle).toEqual('Api V1 Items Item Get')
+  })
 })

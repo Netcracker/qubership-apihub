@@ -19,8 +19,8 @@ import { compareVersions } from '../components/compare'
 import { getOperationsList, setDocument } from '../utils'
 import { buildFiles } from '../components/files'
 import { calculateHistoryForDeprecatedItems } from '../components/deprecated'
-import { REST_API_TYPE } from '../apitypes'
 import { asyncDebugPerformance, DebugPerformanceContext } from '../utils/logs'
+import { REST_API_TYPE } from '../consts'
 
 export class BuildStrategy implements BuilderStrategy {
   async execute(config: BuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts, debugContext: DebugPerformanceContext): Promise<BuildResult> {

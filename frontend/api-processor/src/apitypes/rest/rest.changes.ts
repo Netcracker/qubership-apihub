@@ -40,7 +40,7 @@ import {
   BEFORE_VALUE_NORMALIZED_PROPERTY,
   MESSAGE_SEVERITY,
   NORMALIZE_OPTIONS,
-  ORIGINS_SYMBOL,
+  ORIGINS_SYMBOL, REST_API_TYPE,
 } from '../../consts'
 import {
   BREAKING_CHANGE_TYPE,
@@ -63,7 +63,6 @@ import {
 } from '@netcracker/qubership-apihub-api-unifier'
 import { findRequiredRemovedProperties } from './rest.required'
 import { calculateHash } from '../../utils/hashes'
-import { REST_API_TYPE } from './rest.consts'
 import { OpenAPIV3 } from 'openapi-types'
 import {
   extractOpenapiVersionDiff,
@@ -103,7 +102,7 @@ export const compareDocuments: DocumentsCompare = async (
     previousVersionLabels,
     currentVersionLabels,
   } = ctx
-  const comparisonInternalDocumentId = createComparisonInternalDocumentId(prevDoc, currDoc, previousVersion, currentVersion)
+  const comparisonInternalDocumentId = createComparisonInternalDocumentId(previousVersion, previousPackageId, prevDoc?.slug, currentVersion, currentPackageId, currDoc?.slug)
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
   const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
   let prevDocData = prevFile && JSON.parse(await prevFile.text())

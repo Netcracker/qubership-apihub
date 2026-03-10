@@ -18,8 +18,14 @@ import { ApiDocument, ApiOperation, BuildResult, OperationIdNormalizer, VersionD
 import { GraphApiComponents, GraphApiDirectiveDefinition } from '@netcracker/qubership-apihub-graphapi'
 import { OpenAPIV3 } from 'openapi-types'
 import { isObject } from './objects'
-import { serializeDocument } from './document'
-import { SLUG_OPTIONS_DOCUMENT_ID, SLUG_OPTIONS_NORMALIZED_OPERATION_ID, SLUG_OPTIONS_OPERATION_ID, slugify } from './slugify'
+import { capitalize, serializeDocument } from './document'
+import {
+  SLUG_OPTIONS_DOCUMENT_ID,
+  SLUG_OPTIONS_NORMALIZED_OPERATION_ID,
+  SLUG_OPTIONS_OPERATION_ID,
+  SLUG_OPTIONS_TITLE,
+  slugify,
+} from './slugify'
 import { normalizePath, removeFirstSlash } from './builder'
 import { Diff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import {
@@ -144,6 +150,27 @@ export const calculateRestOperationId = (
   method: string,
 ): string => {
   return _calculateRestOperationIdV2(basePath, path, method)
+}
+
+/**
+ * Calculates a human-readable REST operation title.
+ *
+ * @param basePath - The base path from servers configuration
+ * @param key - Operation key (usually HTTP method)
+ * @param path - The operation path
+ * @returns The formatted operation title (space-separated, title-cased)
+ */
+export const calculateRestOperationTitle = (
+  basePath: string,
+  key: string,
+  path: string,
+): string => {
+  const operationPath = `${basePath}${path}`
+  return slugify(`${removeFirstSlash(operationPath)}-${key}`, SLUG_OPTIONS_TITLE)
+    .split(' ')
+    .filter(Boolean)
+    .map(capitalize)
+    .join(' ')
 }
 
 export const calculateGraphqlOperationId = (

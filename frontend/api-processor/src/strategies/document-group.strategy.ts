@@ -19,61 +19,97 @@ import {
   BuildResult,
   BuildTypeContexts,
   FileFormat,
+  OperationsApiType,
   ReducedSourceSpecificationsBuildConfig,
   ResolvedGroupDocument,
   ResolvedReferenceMap,
   VersionDocument,
 } from '../types'
-import { REST_API_TYPE } from '../apitypes'
 import {
   calculateRestOperationId,
-  EXPORT_FORMAT_TO_FILE_FORMAT,
+  EXPORT_API_TYPE_FORMATS,
   fromBase64,
   isValidHttpMethod,
+  normalizeGraphQL,
   takeIfDefined,
   toVersionDocument,
 } from '../utils'
 import { OpenAPIV3 } from 'openapi-types'
 import { VersionRestDocument } from '../apitypes/rest/rest.types'
-import { FILE_FORMAT_JSON, INLINE_REFS_FLAG, NORMALIZE_OPTIONS } from '../consts'
+import { ASYNCAPI_API_TYPE, FILE_FORMAT_JSON, GRAPHQL_API_TYPE, INLINE_REFS_FLAG, NORMALIZE_OPTIONS, REST_API_TYPE } from '../consts'
 import { normalize } from '@netcracker/qubership-apihub-api-unifier'
 import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
 import { calculateSpecRefs, extractCommonPathItemProperties } from '../apitypes/rest/rest.operation'
+import { GraphApiSchema, printGraphApi } from '@netcracker/qubership-apihub-graphapi'
+import { createOperationSpec } from '../apitypes/graphql/graphql.operation'
+import { parseGraphQLSource } from '../utils/graphql-transformer'
 
-function getTransformedDocument(document: ResolvedGroupDocument, format: FileFormat, packages: ResolvedReferenceMap): VersionRestDocument {
-  const versionDocument = toVersionDocument(document, format)
+type ApiTypeDocumentTransformer = (document: ResolvedGroupDocument, format: FileFormat, packages: ResolvedReferenceMap) => VersionDocument
 
-  const sourceDocument = extractDocumentData(versionDocument)
-  versionDocument.data = transformDocumentData(versionDocument)
-  const normalizedDocument = normalizeOpenApi(versionDocument.data, sourceDocument)
+const documentTransformers: Record<OperationsApiType, ApiTypeDocumentTransformer | null> = {
+  [REST_API_TYPE]: getRestTransformedDocument,
+  [GRAPHQL_API_TYPE]: getGraphQLTransformedDocument,
+  [ASYNCAPI_API_TYPE]: null,
+}
+
+function getTransformedDocument(apiType: OperationsApiType, document: ResolvedGroupDocument, format: FileFormat, packages: ResolvedReferenceMap): VersionDocument {
+  const transformer = documentTransformers[apiType]
+  if (!transformer) {
+    throw new Error(`Document transformation is not supported for API type: ${apiType}`)
+  }
+  return transformer(document, format, packages)
+}
+
+function buildTransformedDocument<T extends VersionDocument>(
+  document: ResolvedGroupDocument,
+  format: FileFormat,
+  packages: ResolvedReferenceMap,
+  populateData: (versionDocument: T) => void,
+): T {
+  const versionDocument = toVersionDocument(document, format) as T
+  populateData(versionDocument)
   versionDocument.publish = true
-
-  calculateSpecRefs(sourceDocument, normalizedDocument, versionDocument.data, versionDocument.operationIds)
-
-  // dashboard case
   if (document.packageRef) {
     const { refId } = packages[document.packageRef]
     versionDocument.fileId = `${refId}_${versionDocument.fileId}`
     versionDocument.filename = `${refId}_${versionDocument.filename}`
   }
-
   return versionDocument
+}
+
+function getRestTransformedDocument(document: ResolvedGroupDocument, format: FileFormat, packages: ResolvedReferenceMap): VersionRestDocument {
+  return buildTransformedDocument<VersionRestDocument>(document, format, packages, (versionDocument) => {
+    const sourceDocument = extractDocumentData(versionDocument)
+    versionDocument.data = transformDocumentData(versionDocument)
+    const normalizedDocument = normalizeOpenApi(versionDocument.data, sourceDocument)
+    calculateSpecRefs(sourceDocument, normalizedDocument, versionDocument.data, versionDocument.operationIds)
+  })
+}
+
+function getGraphQLTransformedDocument(document: ResolvedGroupDocument, format: FileFormat, packages: ResolvedReferenceMap): VersionDocument<string> {
+  return buildTransformedDocument<VersionDocument<string>>(document, format, packages, (versionDocument) => {
+    const sourceDocument = extractGraphQLDocumentData(versionDocument)
+    const refsOnlyDocument = normalizeGraphQL(sourceDocument)
+    const operationsSpec = createOperationSpec(sourceDocument, refsOnlyDocument, versionDocument.operationIds)
+    versionDocument.data = printGraphApi(operationsSpec)
+  })
 }
 
 export class DocumentGroupStrategy implements BuilderStrategy {
   async execute(config: ReducedSourceSpecificationsBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
     const { builderContext } = contexts
-    const { packageId, version, groupName, apiType, format = FILE_FORMAT_JSON } = config
+    const { packageId, version, groupName, apiType = REST_API_TYPE, format = FILE_FORMAT_JSON } = config
 
     if (!groupName) {
       throw new Error('No group to transform documents for provided')
     }
 
-    if (apiType !== REST_API_TYPE) {
-      throw new Error(`API type is not supported: ${apiType}`)
+    if (![REST_API_TYPE, GRAPHQL_API_TYPE].some(type => type === apiType)) {
+      throw new Error(`reducedSourceSpecifications transformation is not supported for API type: ${apiType}`)
     }
 
-    const documentFormat = EXPORT_FORMAT_TO_FILE_FORMAT.get(format)
+    const availableFormatsForApiType = EXPORT_API_TYPE_FORMATS.get(apiType)
+    const documentFormat = availableFormatsForApiType?.get(format)
     if (!documentFormat) {
       throw new Error(`Export format is not supported: ${format}`)
     }
@@ -81,14 +117,14 @@ export class DocumentGroupStrategy implements BuilderStrategy {
     const builderContextObject = builderContext(config)
 
     const { documents, packages } = await builderContextObject.groupDocumentsResolver(
-      REST_API_TYPE,
+      apiType,
       version,
       packageId,
       groupName,
     ) ?? { documents: [], packages: {} }
 
     for (const document of documents) {
-      const transformedDocument = getTransformedDocument(document, documentFormat, packages)
+      const transformedDocument = getTransformedDocument(apiType, document, documentFormat, packages)
       buildResult.documents.set(transformedDocument.fileId, transformedDocument)
     }
 
@@ -105,6 +141,14 @@ function extractDocumentData(versionDocument: VersionDocument): OpenAPIV3.Docume
     return parseBase64String(versionDocument.data) as OpenAPIV3.Document
   } catch (e) {
     throw new Error(`Cannot parse data of ${versionDocument.slug} from base64-encoded string`)
+  }
+}
+
+function extractGraphQLDocumentData(versionDocument: VersionDocument): GraphApiSchema {
+  try {
+    return parseGraphQLSource(fromBase64(versionDocument.data) as string)
+  } catch (e) {
+    throw new Error(`Cannot parse GraphQL data of ${versionDocument.slug}: ${e instanceof Error ? e.message : e}`)
   }
 }
 

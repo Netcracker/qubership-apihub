@@ -1,4 +1,6 @@
 {
+  "apiType": "graphql",
+  "version": "v1",
   "files": [
     {
       "fileId": "spec.gql",

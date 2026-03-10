@@ -17,12 +17,13 @@
 import { OpenAPIV3 } from 'openapi-types'
 
 import { buildRestDocument, createRestExportDocument, dumpRestDocument } from './rest.document'
-import { REST_API_TYPE, REST_DOCUMENT_TYPE } from './rest.consts'
+import { REST_DOCUMENT_TYPE } from './rest.consts'
 import { compareDocuments } from './rest.changes'
 import { buildRestOperations } from './rest.operations'
 import { parseRestFile } from './rest.parser'
 import { ApiBuilder } from '../../types'
 import { restOperationIdNormalizer } from '../../utils'
+import { REST_API_TYPE } from '../../consts'
 
 export * from './rest.consts'
 export type { RestOperationData } from './rest.types'

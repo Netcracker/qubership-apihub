@@ -19,8 +19,6 @@ import { NormalizeOptions } from '@netcracker/qubership-apihub-api-unifier'
 import { ResolvedVersionDocument, ZippableDocument } from '../../types'
 import { API_KIND_KEY, DEPRECATED_META_KEY } from '../../utils/apihubSpecificationExtensions'
 
-export const ASYNCAPI_API_TYPE = 'asyncapi' as const
-
 export const ASYNC_SCOPES = {
   all: 'all',
   annotation: 'annotation',

@@ -22,14 +22,16 @@ import {
   BuilderContext,
   BuilderResolvers,
   BuildResult,
-  ChangeSummary, ComparisonInternalDocument,
+  ChangeSummary,
+  ComparisonInternalDocument,
   EMPTY_CHANGE_SUMMARY,
   FILE_FORMAT,
   graphqlApiBuilder,
   isAsyncApiDocument,
   isGraphqlDocument,
   isRestDocument,
-  KIND_PACKAGE, Labels,
+  KIND_PACKAGE,
+  Labels,
   MESSAGE_SEVERITY,
   NotificationMessage,
   OperationId,
@@ -60,11 +62,14 @@ import {
   VersionDocument,
   VersionDocuments,
   VersionId,
-  VersionsComparison, VersionsComparisonDto,
+  VersionsComparison,
+  VersionsComparisonDto,
   ZippableDocument,
 } from '../../../src'
 import {
-  getOperationsFileContent, saveComparisonInternalDocuments, saveComparisonInternalDocumentsArray,
+  getOperationsFileContent,
+  saveComparisonInternalDocuments,
+  saveComparisonInternalDocumentsArray,
   saveComparisonsArray,
   saveDocumentsArray,
   saveEachComparison,
@@ -72,13 +77,16 @@ import {
   saveEachOperation,
   saveInfo,
   saveNotifications,
-  saveOperationsArray, saveVersionInternalDocuments, saveVersionInternalDocumentsArray,
+  saveOperationsArray,
+  saveVersionInternalDocuments,
+  saveVersionInternalDocumentsArray,
 } from './utils'
 import {
   getCompositeKey,
   getDocumentTitle,
   getSplittedVersionKey,
   isNotEmpty,
+  isString,
   takeIfDefined,
   toBase64,
 } from '../../../src/utils'
@@ -323,9 +331,22 @@ export class LocalRegistry implements IRegistry {
         apiKind: document.apiKind,
         includedOperationIds: filterOperationIdsByGroup ? document.operationIds.filter(filterOperationIdsByGroup!) : document.operationIds,
         description: document.description,
-        data: toBase64(JSON.stringify(document.data)),
+        data: this.resolveDocumentData(document),
         ...takeIfDefined({ packageRef: refId }),
       }))
+  }
+
+  private resolveDocumentData(document: VersionDocument): string | undefined {
+    if (document.data) {
+      return toBase64(JSON.stringify(document.data))
+    }
+
+    const { source } = document
+    if (source && isString(source)) {
+      return toBase64(source)
+    }
+
+    return undefined
   }
 
   private getDocApiTypeGuard(apiType: OperationsApiType): (document: ZippableDocument | ResolvedVersionDocument) => void {
