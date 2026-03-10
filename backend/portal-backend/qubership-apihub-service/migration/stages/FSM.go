@@ -44,6 +44,7 @@ type OpsMigration struct {
 	keepaliveStopChan chan struct{}
 	migrationCtx      context.Context
 	migrationCancel   context.CancelFunc
+	restartStage      mView.OpsMigrationStage
 }
 
 func NewOpsMigration(cp db.ConnectionProvider,
@@ -51,7 +52,7 @@ func NewOpsMigration(cp db.ConnectionProvider,
 	minioStorageService service.MinioStorageService,
 	repo mRepository.MigrationRunRepository,
 	buildCleanupRepository repository.BuildCleanupRepository,
-	ent mEntity.MigrationRunEntity) *OpsMigration {
+	ent mEntity.MigrationRunEntity, restartStage mView.OpsMigrationStage) *OpsMigration {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &OpsMigration{
 		cp:                     cp,
@@ -63,6 +64,7 @@ func NewOpsMigration(cp db.ConnectionProvider,
 		keepaliveStopChan:      make(chan struct{}, 1),
 		migrationCtx:           ctx,
 		migrationCancel:        cancel,
+		restartStage:           restartStage,
 	}
 }
 
@@ -287,20 +289,24 @@ func (d OpsMigration) handleComplete() error {
 }
 
 func (d OpsMigration) handleStageStart(stage mView.OpsMigrationStage) error {
-	log.Infof("Ops migration %s: processing stage %s", d.ent.Id, stage)
-
-	d.ent.StagesExecution = append(d.ent.StagesExecution, mEntity.StageExecution{
-		Stage:       stage,
-		Start:       time.Now(),
-		End:         time.Time{},
-		BuildsCount: 0,
-	})
-	_, err := d.cp.GetConnection().Model(&mEntity.MigrationRunEntity{}).
-		Set("updated_at=now()").
-		Set("stage=?", stage).
-		Set("stages_execution = ?", d.ent.StagesExecution).
-		Where("id = ?", d.ent.Id).Update()
-	return err
+	if d.restartStage == stage {
+		log.Infof("Ops migration %s: restarting stage %s", d.ent.Id, stage)
+		return nil
+	} else {
+		log.Infof("Ops migration %s: processing stage %s", d.ent.Id, stage)
+		d.ent.StagesExecution = append(d.ent.StagesExecution, mEntity.StageExecution{
+			Stage:       stage,
+			Start:       time.Now(),
+			End:         time.Time{},
+			BuildsCount: 0,
+		})
+		_, err := d.cp.GetConnection().Model(&mEntity.MigrationRunEntity{}).
+			Set("updated_at=now()").
+			Set("stage=?", stage).
+			Set("stages_execution = ?", d.ent.StagesExecution).
+			Where("id = ?", d.ent.Id).Update()
+		return err
+	}
 }
 
 func (d OpsMigration) handleStageFinish() error {

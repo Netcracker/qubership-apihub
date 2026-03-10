@@ -75,7 +75,7 @@ func (d *dbMigrationServiceImpl) restartMigrations() error {
 
 		mrEnt.InstanceId = d.instanceId
 		mrEnt.RetryCount = mrEnt.RetryCount + 1
-		om = stages.NewOpsMigration(d.cp, d.systemInfoService, d.minioStorageService, d.repo, d.buildCleanupRepository, mrEnt)
+		om = stages.NewOpsMigration(d.cp, d.systemInfoService, d.minioStorageService, d.repo, d.buildCleanupRepository, mrEnt, mrEnt.Stage)
 
 		return nil
 	})
