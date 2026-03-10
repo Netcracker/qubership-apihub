@@ -208,3 +208,5 @@ export const getRulesetApiTypeLabel = (apiType: LintRulesetApiType): string => {
  */
 export const OAS_30_LABEL = getRulesetApiTypeLabel(LintRulesetApiTypes.OAS_3_0)
 export const OAS_31_LABEL = getRulesetApiTypeLabel(LintRulesetApiTypes.OAS_3_1)
+
+export const LINTER_NAME_SPECTRAL = 'Spectral'
