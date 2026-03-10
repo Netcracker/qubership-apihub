@@ -1,6 +1,6 @@
 module github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service
 
-go 1.24.7
+go 1.25.7
 
 require (
 	github.com/Netcracker/qubership-apihub-commons-go v0.0.1
