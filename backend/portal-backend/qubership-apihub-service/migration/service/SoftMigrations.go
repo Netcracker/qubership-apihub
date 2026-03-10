@@ -15,7 +15,7 @@ import (
 )
 
 const typeAndTitleMigrationVersion = 22
-const transitionRefsMigrationVersion = 30
+const transitionFixMigrationVersion = 30
 
 // SoftMigrateDb The function implements migrations that can't be made via SQL query.
 // Executes only required migrations based on current vs new versions.
@@ -33,14 +33,14 @@ func (d dbMigrationServiceImpl) SoftMigrateDb(currentVersion int, newVersion int
 		})
 	}
 
-	if (currentVersion < transitionRefsMigrationVersion && transitionRefsMigrationVersion <= newVersion) ||
-		(migrationRequired && transitionRefsMigrationVersion == currentVersion && transitionRefsMigrationVersion == newVersion) {
+	if (currentVersion < transitionFixMigrationVersion && transitionFixMigrationVersion <= newVersion) ||
+		(migrationRequired && transitionFixMigrationVersion == currentVersion && transitionFixMigrationVersion == newVersion) {
 		utils.SafeAsync(func() {
-			err := d.fixDataAfterTransition()
+			err := d.fixDataAfterTransitions()
 			if err != nil {
-				log.Errorf("Failed to fix data after transition: %v", err)
+				log.Errorf("Failed to fix data after transitions: %v", err)
 			} else {
-				log.Infof("Successfully fixed data after transition")
+				log.Infof("Successfully fixed data after transitions")
 			}
 		})
 	}
@@ -259,11 +259,11 @@ func (d dbMigrationServiceImpl) fixReleaseVersionsPublishedMetricFromPatches() e
 	return nil
 }
 
-// fixDataAfterTransition fixes data in tables that were not properly updated during package transitions.
+// fixDataAfterTransitions fixes data in tables that were not properly updated during package transitions.
 //
 // Assumption: no new package was created under an old package ID (from_id) after a transition.
-func (d dbMigrationServiceImpl) fixDataAfterTransition() error {
-	log.Infof("Starting data fix after package transitions...")
+func (d dbMigrationServiceImpl) fixDataAfterTransitions() error {
+	log.Infof("Starting data fix after package transitions")
 	ctx := context.Background()
 
 	transitions, err := d.loadCompletedTransitions(ctx)
@@ -276,23 +276,22 @@ func (d dbMigrationServiceImpl) fixDataAfterTransition() error {
 	}
 	log.Infof("Found %d completed transitions to process", len(transitions))
 
-	resolvedMap := resolveTransitionChains(transitions)
-	log.Debugf("Resolved %d transition chains", len(resolvedMap))
+	d.logWarningsForExistingFromIds(ctx, transitions)
 
-	d.logWarningsForExistingFromIds(ctx, resolvedMap)
-
-	for fromId, toId := range resolvedMap {
-		log.Infof("Applying data fixes for transition: %s -> %s", fromId, toId)
-		if err := d.fixFtsPackageId(ctx, fromId, toId); err != nil {
-			return fmt.Errorf("failed to fix fts for %s -> %s: %w", fromId, toId, err)
+	for _, transition := range transitions {
+		log.Infof("Applying data fixes for transition: %s -> %s", transition.FromId, transition.ToId)
+		if err := d.fixLiteSearchPackageId(ctx, transition.FromId, transition.ToId); err != nil {
+			return fmt.Errorf("failed to fix fts_latest_release_operation_data for %s -> %s: %w", transition.FromId, transition.ToId, err)
 		}
-		if err := d.fixPvrParentReferenceId(ctx, fromId, toId); err != nil {
-			return fmt.Errorf("failed to fix pvr for %s -> %s: %w", fromId, toId, err)
+		if err := d.fixDashboardParentReferenceId(ctx, transition.FromId, transition.ToId); err != nil {
+			return fmt.Errorf("failed to fix published_version_reference for %s -> %s: %w", transition.FromId, transition.ToId, err)
 		}
-		if err := d.fixTcdPackageId(ctx, fromId, toId); err != nil {
-			return fmt.Errorf("failed to fix tcd for %s -> %s: %w", fromId, toId, err)
+		if err := d.fixTransformedDataPackageId(ctx, transition.FromId, transition.ToId); err != nil {
+			return fmt.Errorf("failed to fix transformed_content_data for %s -> %s: %w", transition.FromId, transition.ToId, err)
 		}
 	}
+
+	resolvedMap := resolveTransitionChains(transitions) // this is required to iterate over published source only once
 
 	updated, err := d.fixPublishedSourcesConfigRefs(ctx, resolvedMap)
 	if err != nil {
@@ -302,7 +301,6 @@ func (d dbMigrationServiceImpl) fixDataAfterTransition() error {
 		log.Infof("Updated %d published_sources configs total", updated)
 	}
 
-	log.Infof("Data fix after package transitions completed successfully")
 	return nil
 }
 
@@ -353,10 +351,10 @@ func (d dbMigrationServiceImpl) loadCompletedTransitions(ctx context.Context) ([
 	return rows, nil
 }
 
-func (d dbMigrationServiceImpl) logWarningsForExistingFromIds(ctx context.Context, resolvedMap map[string]string) {
-	fromIds := make([]string, 0, len(resolvedMap))
-	for fromId := range resolvedMap {
-		fromIds = append(fromIds, fromId)
+func (d dbMigrationServiceImpl) logWarningsForExistingFromIds(ctx context.Context, transitions []completedTransition) {
+	fromIds := make([]string, 0, len(transitions))
+	for _, transition := range transitions {
+		fromIds = append(fromIds, transition.FromId)
 	}
 
 	type existingPkg struct {
@@ -378,7 +376,7 @@ func (d dbMigrationServiceImpl) logWarningsForExistingFromIds(ctx context.Contex
 	}
 }
 
-func (d dbMigrationServiceImpl) fixFtsPackageId(ctx context.Context, fromId, toId string) error {
+func (d dbMigrationServiceImpl) fixLiteSearchPackageId(ctx context.Context, fromId, toId string) error {
 	_, err := d.cp.GetConnection().ExecContext(ctx,
 		`UPDATE fts_latest_release_operation_data SET package_id = ? WHERE package_id = ?`,
 		toId, fromId)
@@ -388,7 +386,7 @@ func (d dbMigrationServiceImpl) fixFtsPackageId(ctx context.Context, fromId, toI
 	return nil
 }
 
-func (d dbMigrationServiceImpl) fixPvrParentReferenceId(ctx context.Context, fromId, toId string) error {
+func (d dbMigrationServiceImpl) fixDashboardParentReferenceId(ctx context.Context, fromId, toId string) error {
 	_, err := d.cp.GetConnection().ExecContext(ctx,
 		`UPDATE published_version_reference SET parent_reference_id = ? WHERE parent_reference_id = ?`,
 		toId, fromId)
@@ -398,7 +396,7 @@ func (d dbMigrationServiceImpl) fixPvrParentReferenceId(ctx context.Context, fro
 	return nil
 }
 
-func (d dbMigrationServiceImpl) fixTcdPackageId(ctx context.Context, fromId, toId string) error {
+func (d dbMigrationServiceImpl) fixTransformedDataPackageId(ctx context.Context, fromId, toId string) error {
 	// Delete old rows where new_id rows already exist (can be created for new package id  by ops group publish)
 	_, err := d.cp.GetConnection().ExecContext(ctx,
 		`DELETE FROM transformed_content_data old
@@ -458,10 +456,14 @@ func (d dbMigrationServiceImpl) fixPublishedSourcesConfigRefs(ctx context.Contex
 		if len(sources) == 0 {
 			break
 		}
+		log.Infof("Processing published_sources config refs: rows %d-%d", offset, offset+len(sources))
 
 		updated, err := d.fixConfigRefsInBatch(ctx, sources, resolvedMap, fromIdBytes)
 		if err != nil {
 			return totalUpdated, err
+		}
+		if updated > 0 {
+			log.Infof("Updated %d published_sources configs in current batch", updated)
 		}
 		totalUpdated += updated
 
