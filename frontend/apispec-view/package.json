@@ -29,6 +29,7 @@
     "@netcracker/qubership-apihub-api-doc-viewer": "feature-asyncapi-basic-e2e",
     "@netcracker/qubership-apihub-http-spec": "5.5.9",
     "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "2.0.0",
+    "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
     "@schemastore/package": "0.0.4",
     "@stoplight/eslint-config": "2.1.0",
     "@stoplight/json": "^3.18.1",
@@ -44,7 +45,6 @@
     "@stoplight/scripts": "^9.2.0",
     "@stoplight/types": "^13.0.0",
     "@stoplight/yaml": "^4.2.3",
-    "@storybook/addons": "^7.6.20",
     "@storybook/addon-controls": "^8.2.1",
     "@storybook/addon-docs": "^8.2.1",
     "@storybook/addon-interactions": "^8.2.1",
@@ -52,6 +52,7 @@
     "@storybook/addon-toolbars": "^8.2.1",
     "@storybook/addon-viewport": "^8.2.1",
     "@storybook/addon-webpack5-compiler-babel": "3.0.3",
+    "@storybook/addons": "^7.6.20",
     "@storybook/react": "^8.1.11",
     "@storybook/react-webpack5": "8.1.11",
     "@storybook/test": "^8.2.1",
@@ -124,6 +125,7 @@
     "process": "0.11.10",
     "prop-types": "^15.7.2",
     "puppeteer": "21.11.0",
+    "raw-loader": "^4.0.2",
     "react": "^17.0.0",
     "react-dom": "^17.0.0",
     "react-mark.js": "^9.0.7",
@@ -148,8 +150,6 @@
     "webpack-cli": "4.7.2",
     "webpack-dev-server": "3.11.2",
     "xml-formatter": "^2.4.0",
-    "raw-loader": "^4.0.2",
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
     "yaml-loader": "^0.8.1"
   }
 }
