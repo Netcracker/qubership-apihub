@@ -1,6 +1,6 @@
 module github.com/Netcracker/qubership-api-linter-service
 
-go 1.24
+go 1.25.0
 
 require (
 	github.com/AsaiYusuke/jsonpath/v2 v2.2.0
@@ -16,7 +16,7 @@ require (
 	github.com/shaj13/go-guardian/v2 v2.11.6
 	github.com/shaj13/libcache v1.0.0
 	github.com/sirupsen/logrus v1.9.3
-	golang.org/x/sync v0.10.0
+	golang.org/x/sync v0.20.0
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/square/go-jose.v2 v2.6.0
