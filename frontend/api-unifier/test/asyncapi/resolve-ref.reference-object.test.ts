@@ -581,6 +581,61 @@ describe('AsyncAPI Reference Object Resolver', () => {
       expect(fromDirectServer[TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('FinalServer')
     })
 
+    it('should capture first reference key for channel, message and server in a single operation', async () => {
+      const source = {
+        asyncapi: '3.0.0',
+        info: {
+          title: 'Test API',
+          version: '1.0.0',
+        },
+        servers: {
+          'ServerID': {
+            host: 'localhost',
+            protocol: 'http',
+          },
+        },
+        operations: {
+          'send-operation': {
+            action: 'send',
+            channel: {
+              $ref: '#/channels/ChannelID',
+            },
+            messages: [
+              { $ref: '#/channels/ChannelID/messages/MessageID' },
+            ],
+          },
+        },
+        channels: {
+          ChannelID: {
+            servers: [
+              { $ref: '#/servers/ServerID' },
+            ],
+            messages: {
+              MessageID: {
+                name: 'Message Name',
+              },
+            },
+          },
+        },
+      }
+
+      await parseAsyncApiAndAssertValid(source)
+
+      const result = normalize(source, NORMALIZATION_OPTIONS_FIRST_REFERENCE_KEY) as any
+
+      // Channel reference from operation captures first reference key
+      expect(result.operations['send-operation'].channel[TEST_FIRST_REFERENCE_KEY_PROPERTY]).toBe('ChannelID')
+      // Message reference from operation messages array captures first reference key
+      expect(result.operations['send-operation'].messages[0][TEST_FIRST_REFERENCE_KEY_PROPERTY]).toBe('MessageID')
+      // Server reference from channel servers array captures first reference key
+      expect(result.channels.ChannelID.servers[0][TEST_FIRST_REFERENCE_KEY_PROPERTY]).toBe('ServerID')
+
+      // All resolved objects should point to the same instances as their definition sites
+      expect(result.operations['send-operation'].channel).toBe(result.channels.ChannelID)
+      expect(result.operations['send-operation'].messages[0]).toBe(result.channels.ChannelID.messages.MessageID)
+      expect(result.channels.ChannelID.servers[0]).toBe(result.servers.ServerID)
+    })
+
     it('should reuse the same object when same first key is used in different operations', async () => {
       const source = {
         asyncapi: '3.0.0',

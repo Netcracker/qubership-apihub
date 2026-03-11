@@ -272,6 +272,7 @@ const createDefineOriginsAndResolveRefHook: (rootJso: unknown, options: Internal
                 ...state,
                 originParent: origin,
                 originCollector: childrenOrigins,
+                firstReferenceKeyForCapture: undefined,
               },
               afterHooksHook: () => {
                 const node = state.node[safeKey]
