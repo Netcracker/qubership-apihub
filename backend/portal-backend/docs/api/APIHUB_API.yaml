@@ -2379,6 +2379,8 @@ paths:
       tags:
         - Publish
       summary: Start dashboard version publication from CSV file
+      deprecated: true
+      x-deprecation-reason: Use /api/v2/packages/{packageId}/publish/withOperationsGroup/{apiType} instead
       description: |
         Start dashboard version publication from CSV file (value of 'packageId'
         path parameter must be an Id of dashboard).\
@@ -2602,6 +2604,142 @@ paths:
                 type: string
                 format: binary
                 description: CSV file which contains initial (input) content and supplemented with information about status and details info if any problems occured (package version was not found, operation was not found, insufficient information provided).
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Unauthorized:
+                  $ref: "#/components/examples/Unauthorized"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                PackageNotFound:
+                  $ref: '#/components/examples/PackageNotFound'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                InternalServerError:
+                  $ref: '#/components/examples/InternalServerError'
+  "/api/v2/packages/{packageId}/publish/withOperationsGroup/{apiType}":
+    parameters:
+      - $ref: '#/components/parameters/packageId'
+      - name: apiType
+        description: Type of the API. Only REST and GraphQL are supported for CSV publish.
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+            - rest
+            - graphql
+    post:
+      tags:
+        - Publish
+      summary: Start dashboard version publication from CSV file
+      description: |
+        Start dashboard version publication from CSV file (value of 'packageId'
+        path parameter must be an Id of dashboard).
+
+        In this process the system reads information from the input CSV file
+        which contains list of services and their versions. Based on this info,
+        the system searches for package release versions (in the specified workspace) and publishes
+        a dashboard version with references to the found package versions.
+
+        Additionally, if the input CSV file contains info about operations
+        of listed services, the system searches for operations
+        from the included package versions and automatically creates an operations
+        group (manual group with the specified api type) in the published dashboard version
+        with all found operations.
+
+        CSV file columns depend on the API type:
+        * **REST**: service, version, method, path
+        * **GraphQL**: service, version, type, method
+      operationId: DashboardPublishWithOperationsGroupV2
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - csvFile
+                - version
+                - status
+                - servicesWorkspaceId
+              properties:
+                csvFile:
+                  description: |
+                    CSV file with information about services and their operations.
+                    Columns depend on the API type:
+                    * **REST**: service, version, method, path
+                    * **GraphQL**: service, version, type, method
+                  type: string
+                  format: binary
+                servicesWorkspaceId:
+                  type: string
+                  description: Id of the workspace in which the system will search for packages for the services specified in the CSV file.
+                version:
+                  description: Version name for publication in the dashboard.
+                  type: string
+                  example: '2022.3'
+                previousVersion:
+                  description: Name of the previous published version in the dashboard.
+                  type: string
+                  example: '2022.2'
+                previousVersionPackageId:
+                  description: >-
+                    packageId of the previous version. The parameter may be
+                    empty if the value is equal to the packageId.
+                  type: string
+                  example: NC.CloudBSS.CPQ.Q-TMF
+                status:
+                  $ref: '#/components/schemas/VersionStatusEnum'
+                versionLabels:
+                  description: List of version labels in dashboard version.
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - part-of:CloudBSS-CPQBE
+      responses:
+        '202':
+          description: Publish process started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  publishId:
+                    type: string
+                    description: Publish process Id
+                    format: uuid
+                    example: 9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                IncorrectInputParams:
+                  $ref: '#/components/examples/IncorrectInputParameters'
         '401':
           description: Unauthorized
           content:
@@ -4814,7 +4952,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "404":
           description: Not found
           content:
@@ -7883,7 +8021,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "404":
           description: Not found
           content:
