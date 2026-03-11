@@ -17,6 +17,7 @@
 import type { OpenApiData } from '@apihub/entities/operation-structure'
 import {
   useApiDiffResult,
+  useHasComparisonInternalDocument,
   useIsApiDiffResultLoading,
   useSetApiDiffResult,
 } from '@apihub/routes/root/ApiDiffResultProvider'
@@ -31,8 +32,9 @@ import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/compone
 import {
   CONTENT_PLACEHOLDER_AREA,
   Placeholder,
-  SEARCH_PLACEHOLDER_VARIANT,
+  PLACEHOLDER_MESSAGE_NO_INTERNAL_DOCUMENT,
 } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+import { SEARCH_RAINY_DAY_PLACEHOLDER_VARIANT } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder/Placeholder'
 import { RawSpecDiffView } from '@netcracker/qubership-apihub-ui-shared/components/RawSpecDiffView'
 import { RawSpecView } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/RawSpecView'
 import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
@@ -88,6 +90,7 @@ export type OperationContentProps = {
   // Feature "Internal documents"
   normalizedChangedOperation?: unknown
   normalizedOriginOperation?: unknown
+  hasVersionInternalDocument?: boolean
   // ---
   isOperationExist?: boolean
   displayMode?: OperationDisplayMode
@@ -104,6 +107,7 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
       // Feature "Internal documents"
       normalizedChangedOperation,
       normalizedOriginOperation,
+      hasVersionInternalDocument,
       // ---
       isOperationExist = true,
       displayMode = DEFAULT_DISPLAY_MODE,
@@ -238,6 +242,7 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
     const apiDiffResult = useApiDiffResult()
     const isApiDiffResultLoading = useIsApiDiffResultLoading()
     const setApiDiffResult = useSetApiDiffResult()
+    const hasComparisonInternalDocument = useHasComparisonInternalDocument()
 
     const mergedDocument = useMemo(
       () => {
@@ -257,22 +262,32 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
       }
     }, [setApiDiffResult])
 
+    const noDataForDocView = useMemo(
+      () => isDocViewMode && !comparisonMode && !normalizedChangedOperation && !normalizedOriginOperation,
+      [isDocViewMode, comparisonMode, normalizedChangedOperation, normalizedOriginOperation],
+    )
+    const noDataForDiffView = useMemo(
+      () => isDocViewMode && comparisonMode && !apiDiffResult?.merged,
+      [isDocViewMode, comparisonMode, apiDiffResult?.merged],
+    )
+    const noDataForRawView = useMemo(
+      () => isRawViewMode && !originValueForRawSpecView && !changedValueForRawSpecView,
+      [isRawViewMode, originValueForRawSpecView, changedValueForRawSpecView],
+    )
+
     if (isLoading || isApiDiffResultLoading) {
       return <LoadingIndicator />
     }
 
-    if (
-      !normalizedChangedOperation &&
-      !normalizedOriginOperation &&
-      !apiDiffResult?.merged &&
-      !originValueForRawSpecView &&
-      !changedValueForRawSpecView
-    ) {
+    if (noDataForDocView || noDataForDiffView || noDataForRawView) {
+      const message = !hasVersionInternalDocument || !hasComparisonInternalDocument
+        ? PLACEHOLDER_MESSAGE_NO_INTERNAL_DOCUMENT
+        : 'Please select an operation'
       return (
         <Placeholder
           invisible={false}
           area={CONTENT_PLACEHOLDER_AREA}
-          message="Please select an operation"
+          message={message}
         />
       )
     }
@@ -281,7 +296,7 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
       return (
         <Placeholder
           invisible={false}
-          variant={SEARCH_PLACEHOLDER_VARIANT}
+          variant={SEARCH_RAINY_DAY_PLACEHOLDER_VARIANT}
           area={CONTENT_PLACEHOLDER_AREA}
           message="No operations"
         />

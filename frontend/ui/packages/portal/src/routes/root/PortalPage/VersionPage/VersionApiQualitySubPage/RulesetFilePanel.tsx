@@ -14,10 +14,10 @@ export const RulesetFilePanel: FC<RulesetFilePanelProps> = (props) => {
   return (
     <Box display='flex' flexDirection='column'>
       <Typography fontSize={13} color='black' fontWeight='bold'>
-        Spectral Ruleset
+        Ruleset File
       </Typography>
       <Box display='flex' justifyContent='space-between'>
-        <Box display='flex' alignItems='center' gap={1}>
+        <Box display='flex' alignItems='center' gap={1} data-testid="RulesetFileNameContainer">
           <FileIcon color='black' />
           <Typography variant='body2'>
             {ruleset.fileName}

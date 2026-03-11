@@ -68,6 +68,9 @@ import { CSV_FILE_EXTENSION } from '../utils/files'
 import { FileUploadField } from './FileUploadField'
 import type { AutocompleteInputChangeReason } from '@mui/base/AutocompleteUnstyled/useAutocomplete'
 import { WARNING_API_PROCESSOR_TEXT, WarningApiProcessorVersion } from './WarningApiProcessorVersion'
+import type { ApiType } from '../entities/api-types'
+import { API_TYPE_REST, API_TYPE_TITLE_MAP, API_TYPES } from '../entities/api-types'
+import { REST_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
 
 export type VersionFormData = {
   message?: string
@@ -79,6 +82,7 @@ export type VersionFormData = {
   status: VersionStatus
   labels: string[]
   previousVersion: Key
+  apiType?: ApiType
   file?: File
 }
 
@@ -180,6 +184,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
   const workspace = useWatch({ control: control, name: 'workspace' })
   const targetPackage = useWatch({ control: control, name: 'package' })
   const status = useWatch({ control: control, name: 'status' })
+  const apiType = useWatch({ control: control, name: 'apiType' })
   const previousVersion = useWatch({ control: control, name: 'previousVersion' })
   const descriptorFile = useWatch({ control: control, name: 'descriptorFile' })
   const isReleaseStatus = status === RELEASE_VERSION_STATUS
@@ -351,6 +356,40 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
 
         {!hideCSVRelatedFields && (
           <>
+            <Box gap={0.5} alignItems="center" pb={1}>
+              <Controller
+                name="apiType"
+                control={control}
+                rules={{ required: true }}
+                render={({ field: { value, onChange } }) => (
+                  <Autocomplete
+                    value={value ?? API_TYPE_REST}
+                    options={API_TYPES}
+                    isOptionEqualToValue={(option, value) => option === value}
+                    renderOption={(props, option) => <ListItem
+                      {...props}
+                      key={option}
+                      data-testid={`Option-${option}`}
+                    >
+                      {API_TYPE_TITLE_MAP[option]}
+                    </ListItem>}
+                    getOptionLabel={(option) => API_TYPE_TITLE_MAP[option]!}
+                    onChange={(_, type) => {
+                      onChange(type)
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        required
+                        {...params}
+                        label="API type"
+                      />
+                    )}
+                    data-testid="ApiTypeAutocomplete"
+                  />
+                )}
+              />
+            </Box>
+
             <Box display="flex" gap={0.5} alignItems="center" pb={1}>
               <Box sx={{ lineHeight: 1 }}>
                 <Typography variant="button" component="span">Dashboard Version Config</Typography>
@@ -359,7 +398,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
               <Tooltip
                 disableHoverListener={false}
                 placement="right"
-                title={DASHBOARD_VERSION_CONFIG_TITLE}
+                title={apiType === REST_API_TYPE ? DASHBOARD_VERSION_CONFIG_DEFAULT_TITLE : DASHBOARD_VERSION_CONFIG_GRAPH_QL_TITLE}
                 PopperProps={{
                   sx: { '.MuiTooltip-tooltip': { maxWidth: '600px' } },
                 }}
@@ -738,7 +777,8 @@ function checkFileUpload(descriptorContent: string | null): boolean {
   return !!descriptorContent
 }
 
-const DASHBOARD_VERSION_CONFIG_TITLE = 'CSV file must have the following information: "serviceName" and "serviceVersion". Published dashboard version will include package release versions (from selected workspace) for specified services. Additionally, "method" and "path" of REST API operations for services can be defined in the file. In this case, the system will create operations group with the operations for specified method and path.'
+const DASHBOARD_VERSION_CONFIG_DEFAULT_TITLE = 'CSV file must have the following information: "serviceName" and "serviceVersion". Published dashboard version will include package release versions (from selected workspace) for specified services. Additionally, "method" and "path" of REST API operations for services can be defined in the file. In this case, the system will create operations group with the operations for specified method and path.'
+const DASHBOARD_VERSION_CONFIG_GRAPH_QL_TITLE = 'CSV file must have the following information: "serviceName" and "serviceVersion". Published dashboard version will include package release versions (from selected workspace) for specified services. Additionally, "type" and "method" of GraphQL operations for services can be defined in the file. In this case, the system will create operations group with the operations for specified type and method.'
 const PACKAGE_SEARCH_SCOPE_TITLE = 'The workspace in which package versions for services from the CSV configuration will be searched. The package versions found in this workspace will be included into the dashboard version.'
 
 function createOnInputChange(onChange: (_: SyntheticEvent, value: string) => void) {

@@ -94,7 +94,7 @@ function toIntrospection(value: string): GraphqlIntrospection | null {
         data: introspectionFromSchema(buildSchema(value)),
         dataPresent: true,
         errors: [],
-        extensions: null,
+        extensions: {},
       }
   } catch (e) {
     return null

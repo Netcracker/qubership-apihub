@@ -139,7 +139,11 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
   )
   const changedGraphQlOperationContent = useRawGraphQlCroppedToSingleOperationRawGraphQl(changedOperationContent, graphQlOperationType, graphQlOperationName)
 
-  const { data: normalizedChangedOperation, isLoading: isNormalizedChangedOperationLoading } = useNormalizedOperation({
+  const {
+    data: normalizedChangedOperation,
+    isLoading: isNormalizedChangedOperationLoading,
+    hasInternalDocument: hasVersionInternalDocument,
+  } = useNormalizedOperation({
     operation: changedOperation,
     packageId: operationsPackageKey,
     versionId: operationsVersionsKey,
@@ -190,6 +194,7 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
           changedOperationContent={changedGraphQlOperationContent || changedOperationContent}
           // Feature "Internal documents"
           normalizedChangedOperation={normalizedChangedOperation}
+          hasVersionInternalDocument={hasVersionInternalDocument}
           // ---
           isLoading={isInitialLoading || isNormalizedChangedOperationLoading}
           mode={mode}

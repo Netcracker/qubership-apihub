@@ -86,7 +86,7 @@ export const RichFiltersLayout: FC<VersionOperationsLayoutProps> = memo<VersionO
         secondIcon={secondView.icon}
         secondValue={secondView.value}
         secondTooltip={secondView.tooltip}
-        onChange={(_, value) => setSelectedViewMode(value)}
+        onChange={(_, value) => value && setSelectedViewMode(value)}
       />
     )
   }, [selectedViewMode, setSelectedViewMode, viewOptions])

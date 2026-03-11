@@ -1,4 +1,6 @@
 import type { Key } from '../keys'
+import type { LinterApiType } from './linter-api-types'
+import type { Linter } from './linters'
 
 export const RulesetStatuses = {
   INACTIVE: 'inactive',
@@ -16,23 +18,6 @@ export type RulesetActivationHistory = {
   activationHistory: RulesetActivation[]
 }
 
-export const RulesetApiTypes = {
-  OAS_2_0: 'openapi-2-0',
-  OAS_3_0: 'openapi-3-0',
-  OAS_3_1: 'openapi-3-1',
-} as const
-export type RulesetApiType = (typeof RulesetApiTypes)[keyof typeof RulesetApiTypes]
-export const RULESET_API_TYPE_TITLE_MAP = {
-  [RulesetApiTypes.OAS_2_0]: 'OAS 2.0',
-  [RulesetApiTypes.OAS_3_0]: 'OAS 3.0',
-  [RulesetApiTypes.OAS_3_1]: 'OAS 3.1',
-}
-
-export const RulesetLinters = {
-  SPECTRAL: 'spectral',
-} as const
-export type RulesetLinter = (typeof RulesetLinters)[keyof typeof RulesetLinters]
-
 // Full ruleset
 
 export type RulesetDto = Readonly<{
@@ -40,8 +25,8 @@ export type RulesetDto = Readonly<{
   name: string
   fileName: string
   status: RulesetStatus
-  apiType: RulesetApiType
-  linter: RulesetLinter
+  apiType: LinterApiType
+  linter: Linter['linter']
   createdAt: string // Format: date-time
   canBeDeleted: boolean
 }>
@@ -50,5 +35,5 @@ export type Ruleset = RulesetDto
 
 // The only main data of ruleset
 
-export type RulesetMetadataDto = Pick<RulesetDto, 'id' | 'name' | 'fileName' | 'status' | 'apiType'>
+export type RulesetMetadataDto = Pick<RulesetDto, 'id' | 'name' | 'fileName' | 'status' | 'apiType' | 'linter'>
 export type RulesetMetadata = RulesetMetadataDto

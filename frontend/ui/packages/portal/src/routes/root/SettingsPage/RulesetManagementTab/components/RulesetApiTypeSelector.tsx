@@ -1,17 +1,13 @@
-import { MenuItem, Select, type SelectChangeEvent } from '@mui/material'
+import { FormControl, InputLabel, MenuItem, Select, type SelectChangeEvent } from '@mui/material'
 import {
-  RULESET_API_TYPE_TITLE_MAP,
-  type RulesetApiType,
-  RulesetApiTypes,
-} from '@netcracker/qubership-apihub-ui-portal/src/entities/api-quality/rulesets'
+  LINTER_API_TYPE_TITLE_MAP,
+  type LinterApiType,
+  LinterApiTypes
+} from '@apihub/entities/api-quality/linter-api-types'
 import { type FC, memo } from 'react'
 
 const STYLE = {
-  '& .MuiSelect-select': {
-    pt: 0.75,
-    pb: 0.75,
-  },
-  minWidth: '110px',
+  minWidth: 170,
 }
 
 const MENU_PROPS = {
@@ -25,34 +21,37 @@ const MENU_PROPS = {
 const INPUT_PROPS = { 'aria-label': 'API Type' }
 
 type RulesetApiTypeSelectorProps = {
-  apiType: RulesetApiType
+  apiType: LinterApiType
   onChange?: (event: SelectChangeEvent) => void
 }
 
-export const RulesetApiTypeSelector: FC<RulesetApiTypeSelectorProps> = memo<RulesetApiTypeSelectorProps>(({
-  apiType,
-  onChange,
-}) => {
+export const RulesetApiTypeSelector: FC<RulesetApiTypeSelectorProps> = memo<RulesetApiTypeSelectorProps>((props) => {
+  const { apiType, onChange } = props
   return (
-    <Select
-      variant="filled"
-      value={apiType}
-      onChange={onChange}
-      sx={STYLE}
-      inputProps={INPUT_PROPS}
-      MenuProps={MENU_PROPS}
-      data-testid="RulesetTypeSelect"
-    >
-      {Object.values(RulesetApiTypes).map(apiType => (
-        <MenuItem
-          key={apiType}
-          value={apiType}
-          data-testid={`MenuItem-${apiType}`}
-        >
-          {RULESET_API_TYPE_TITLE_MAP[apiType]}
-        </MenuItem>
-      ))}
-    </Select>
+    <FormControl sx={STYLE} variant="filled">
+      <InputLabel id="demo-select-small-label">API Type</InputLabel>
+      <Select
+        labelId='demo-select-small-label'
+        variant="filled"
+        value={apiType}
+        onChange={onChange}
+        sx={STYLE}
+        inputProps={INPUT_PROPS}
+        MenuProps={MENU_PROPS}
+        data-testid="RulesetTypeSelect"
+        label='API Type'
+      >
+        {Object.values(LinterApiTypes).map(apiType => (
+          <MenuItem
+            key={apiType}
+            value={apiType}
+            data-testid={`MenuItem-${apiType}`}
+          >
+            {LINTER_API_TYPE_TITLE_MAP[apiType]}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
   )
 })
 

@@ -10,45 +10,52 @@ import {
 import type { SpecItemPath } from './specifications'
 import { decodeKey } from './specifications'
 
-export function findLocationByPath(
+const Formats = {
+  json: 'json',
+  yaml: 'yaml',
+} as const
+type Format = typeof Formats[keyof typeof Formats]
+
+type ParsedContent<F extends Format> =
+  F extends typeof Formats.json ? ReturnType<typeof jsonParseWithPointers> :
+  F extends typeof Formats.yaml ? ReturnType<typeof yamlParseWithPointers> :
+  never
+
+export function parseWithPointers(
   content: string,
-  path: SpecItemPath,
-  format: 'json' | 'yaml',
-): ILocation | undefined {
+  format: Format,
+): ParsedContent<typeof format> {
   switch (format) {
-    case 'json':
-      return jsonFindLocationByPath(content, path)
-    case 'yaml':
-      return yamlFindLocationByPath(content, path)
+    case Formats.json:
+      return jsonParseWithPointers(content)
+    case Formats.yaml:
+      return yamlParseWithPointers(content)
   }
+}
+
+function isParsedJsonContent(format: Format, content: ParsedContent<Format>): content is ReturnType<typeof jsonParseWithPointers> {
+  return format === Formats.json
+}
+
+function isParsedYamlContent(format: Format, content: ParsedContent<Format>): content is ReturnType<typeof yamlParseWithPointers> {
+  return format === Formats.yaml
+}
+
+export function findLocationByPath(
+  content: ParsedContent<typeof format>,
+  path: SpecItemPath,
+  format: Format,
+): ILocation | undefined {
+  if (!path.length) {
+    return undefined
+  }
+
+  if (isParsedJsonContent(format, content)) {
+    return jsonGetLocationForJsonPath(content, path.map(decodeKey))
+  }
+  if (isParsedYamlContent(format, content)) {
+    return yamlGetLocationForJsonPath(content, path.map(decodeKey))
+  }
+
   return undefined
-}
-
-function jsonFindLocationByPath(
-  content: string,
-  path: SpecItemPath,
-): ILocation | undefined {
-  if (!path.length) {
-    return undefined
-  }
-
-  return jsonGetLocationForJsonPath(
-    jsonParseWithPointers(content),
-    path.map(decodeKey),
-  )
-}
-
-
-function yamlFindLocationByPath(
-  content: string,
-  path: SpecItemPath,
-): ILocation | undefined {
-  if (!path.length) {
-    return undefined
-  }
-
-  return yamlGetLocationForJsonPath(
-    yamlParseWithPointers(content),
-    path.map(decodeKey),
-  )
 }

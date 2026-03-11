@@ -53,7 +53,7 @@ export function Toggler<T extends string>(props: TogglerProps<T>): ReactElement 
               sx={{ textTransform: 'capitalize' }}
               key={mode}
               value={mode}
-              data-testid={`ModeButton-${mode}`}
+              data-testid={`ModeButton-${mode.toLowerCase()}`}
             >
               {modeToText?.[mode] ?? mode}
             </ToggleButton>

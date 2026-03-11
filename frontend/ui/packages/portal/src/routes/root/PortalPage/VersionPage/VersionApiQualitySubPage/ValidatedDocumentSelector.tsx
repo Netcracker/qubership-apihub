@@ -6,7 +6,7 @@ import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/Sea
 import { SpecLogo } from '@netcracker/qubership-apihub-ui-shared/components/SpecLogo'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { memo, useEffect, useMemo, useState, type FC } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState, type FC } from 'react'
 
 type ValidatedDocumentSelectorProps = {
   value: DocumentValidationSummary | undefined
@@ -15,10 +15,17 @@ type ValidatedDocumentSelectorProps = {
   loading: IsLoading
 }
 
+function onClickMenuButtonItems(event: React.MouseEvent<HTMLElement>): void {
+  event.stopPropagation()
+}
+
 export const ValidatedDocumentSelector: FC<ValidatedDocumentSelectorProps> = memo<ValidatedDocumentSelectorProps>((props) => {
   const { value, onSelect, options, loading } = props
 
   const [anchor, setAnchor] = useState<HTMLElement>()
+  const onCloseMenuButtonItems = useCallback(() => {
+    setAnchor(undefined)
+  }, [])
 
   const [searchValue, setSearchValue] = useState('')
 
@@ -59,6 +66,7 @@ export const ValidatedDocumentSelector: FC<ValidatedDocumentSelectorProps> = mem
       }}
       variant="text"
       onClick={({ currentTarget }) => setAnchor(currentTarget)}
+      data-testid="ValidatedDocumentSelectorButton"
     >
       <Box display='flex' alignItems='center' gap={1} width='100%'>
         <SpecLogo value={selectedDocument.apiType} />
@@ -74,8 +82,8 @@ export const ValidatedDocumentSelector: FC<ValidatedDocumentSelectorProps> = mem
       <MenuButtonItems
         anchorEl={anchor}
         open={!!anchor}
-        onClick={event => event.stopPropagation()}
-        onClose={() => setAnchor(undefined)}
+        onClick={onClickMenuButtonItems}
+        onClose={onCloseMenuButtonItems}
       >
         <Box
           sx={{ p: 1, width: 300, height: 216, pb: '36px', overflow: 'hidden' }}

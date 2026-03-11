@@ -1,28 +1,37 @@
-import { RULESET_API_TYPE_TITLE_MAP, RulesetStatuses, type RulesetMetadata } from '@apihub/entities/api-quality/rulesets'
+import { RulesetStatuses, type RulesetMetadata } from '@apihub/entities/api-quality/rulesets'
+import { LINTER_API_TYPE_TITLE_MAP } from '@apihub/entities/api-quality/linter-api-types'
 import { useEventBus } from '@apihub/routes/EventBusProvider'
-import { Box, Link, Skeleton, Typography } from '@mui/material'
+import { Box, Link, Skeleton } from '@mui/material'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import capitalize from 'lodash-es/capitalize'
-import type { FC, ReactElement } from 'react'
+import type { FC } from 'react'
 import { memo, useCallback } from 'react'
+import { useLinters } from '@apihub/api-hooks/ApiQuality/useLinters'
+import { getLinterName } from '@apihub/utils/api-quality/linters'
 
 type ValidationRulesetLinkProps = {
   data: RulesetMetadata | undefined
   loading: IsLoading
-  showLabel?: boolean
 }
 
 // First Order Component
-export const ValidationRulesettLink: FC<ValidationRulesetLinkProps> = memo<ValidationRulesetLinkProps>(props => {
-  const { data, loading, showLabel = true } = props
+export const ValidationRulesetLink: FC<ValidationRulesetLinkProps> = memo<ValidationRulesetLinkProps>(props => {
+  const { data, loading } = props
 
   const { showRulesetInfoDialog } = useEventBus()
 
   const onClickRulesetName = useCallback(
-    () => data && showRulesetInfoDialog(data),
+    (event: React.MouseEvent<HTMLAnchorElement>) => {
+      event.stopPropagation()
+      event.preventDefault()
+      data && showRulesetInfoDialog(data)
+    },
     [data, showRulesetInfoDialog],
   )
+
+  const { data: lintersList = [] } = useLinters()
 
   if (loading) {
     return <Skeleton variant="rectangular" width={100} height={20} />
@@ -32,57 +41,51 @@ export const ValidationRulesettLink: FC<ValidationRulesetLinkProps> = memo<Valid
     return null
   }
 
-  const elements: ReactElement[] = []
-
-  elements.push(
-    <Typography
-      key='validation-ruleset-link-name'
-      variant='body2'
-      onClick={onClickRulesetName}
-    >
-      <Link>
-        {data.name}
-      </Link>
-    </Typography>,
-  )
-
-  elements.push(
-    <CustomChip
-      key={`validation-ruleset-link-api-type-${data.apiType}`}
-      value='rulesetSpecType'
-      sx={{ m: 0 }}
-      label={RULESET_API_TYPE_TITLE_MAP[data.apiType]}
-    />,
-  )
-
-  elements.push(
-    <CustomChip
-      key='validation-ruleset-link-status'
-      value={data.status === RulesetStatuses.ACTIVE ? 'rulesetActive' : 'rulesetInactive'}
-      sx={{ m: 0 }}
-      label={capitalize(data.status)}
-    />,
-  )
-
-  if (showLabel) {
-    elements.splice(0, 0, (
-      <Typography
-        key='validation-ruleset-link-label'
-        variant='body2'
-        component='span'
-      >
-        Ruleset
-      </Typography>
-    ))
-  }
-
-  if (elements.length === 0) {
-    return elements[0]
-  }
+  const linterId = data.linter
+  const linterTitle = getLinterName(linterId, lintersList)
+  const fullRulesetTitle = `${linterTitle} ${data.name}`
 
   return (
-    <Box display='flex' alignItems='center' gap={1}>
-      {elements}
+    <Box display='flex' justifyContent='space-between' alignItems='center' gap={1} width='100%' minWidth={0}>
+      <Box display='flex' gap={1} minWidth={0} flexGrow={1}>
+        <TextWithOverflowTooltip
+          data-id='overflowtext'
+          tooltipText={fullRulesetTitle}
+          sx={{
+            display: 'block',
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            flexGrow: 1,
+          }}
+        >
+          {`${linterTitle} `}
+          <Link
+            data-testid="ValidationRulesetLinkName"
+            onClick={onClickRulesetName}
+            sx={{ display: 'inline' }}
+          >
+            {data.name}
+          </Link>
+        </TextWithOverflowTooltip>
+      </Box>
+      <Box display='flex' gap={1} flexShrink={0}>
+        <CustomChip
+          key={`validation-ruleset-link-api-type-${data.apiType}`}
+          value='rulesetSpecType'
+          sx={{ m: 0 }}
+          label={LINTER_API_TYPE_TITLE_MAP[data.apiType]}
+          data-testid="ValidationRulesetApiTypeChip"
+        />
+        <CustomChip
+          key='validation-ruleset-link-status'
+          value={data.status === RulesetStatuses.ACTIVE ? 'rulesetActive' : 'rulesetInactive'}
+          sx={{ m: 0 }}
+          label={capitalize(data.status)}
+          data-testid="ValidationRulesetStatusChip"
+        />
+      </Box>
     </Box>
   )
 })

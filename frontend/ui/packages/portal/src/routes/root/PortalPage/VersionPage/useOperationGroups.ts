@@ -23,6 +23,7 @@ import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/ali
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import type { OperationGroup } from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'
 import { API_V3 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import { API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 const OPERATIONS_GROUP_QUERY_KEY = 'operations-group-query-key'
 
@@ -84,5 +85,6 @@ export const EMPTY_OPERATION_GROUPS = [
     description: '',
     isPrefixGroup: false,
     operationsCount: 0,
+    apiType: API_TYPE_REST,
   },
 ]

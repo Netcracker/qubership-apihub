@@ -16,7 +16,7 @@
 
 import type { FC } from 'react'
 import * as React from 'react'
-import { memo, useCallback, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { OperationGroupTable } from './OperationGroupTable'
 import { usePackageVersionContent } from '../../../../usePackageVersionContent'
@@ -41,14 +41,48 @@ import {
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { PublishOperationGroupPackageVersionDialog } from './PublishOperationGroupPackageVersionDialog'
-import { ExportedEntityKind } from '@apihub/components/ExportSettingsDialog/api/useExport'
+import type {
+  IRequestDataExportWithoutFormat} from '@apihub/components/ExportSettingsDialog/api/useExport'
+import {
+  ExportedEntityKind,
+  ExportedEntityKindWithoutForm,
+  RequestDataExportGraphQlOperationsGroup,
+  useExport,
+  useRemoveExportResult,
+} from '@apihub/components/ExportSettingsDialog/api/useExport'
+import { REST_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
+import { useExportStatus } from '@apihub/components/ExportSettingsDialog/api/useExportStatus'
+import { useShowInfoNotification } from '@apihub/routes/root/BasePage/Notification'
 
 export const OperationGroupsCard: FC = memo(() => {
   const { packageId: packageKey } = useParams()
   const currentPackage = useCurrentPackage()
-
+  const showNotification = useShowInfoNotification()
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false)
   const [groupToDelete, setGroupToDelete] = useState<OperationGroup>()
+
+  const [requestDataExport, setRequestDataExport] = useState<IRequestDataExportWithoutFormat | undefined>(undefined)
+  const [exportTask] = useExport(requestDataExport)
+  const [, setExporting] = useState(false)
+  const [needToGetExportStatus, setNeedToGetExportStatus] = useState(false)
+
+  const removeExportResult = useRemoveExportResult(requestDataExport?.exportedEntity, requestDataExport?.packageId, requestDataExport?.version)
+
+  useEffect(() => {
+    if (exportTask) {
+      setExporting(true)
+      setNeedToGetExportStatus(true)
+    }
+  }, [exportTask])
+
+  const completeExport = useCallback(() => {
+    removeExportResult()
+    setExporting(false)
+    setNeedToGetExportStatus(false)
+    setRequestDataExport(undefined)
+  }, [removeExportResult, setExporting, setNeedToGetExportStatus])
+
+  useExportStatus(exportTask?.exportId, needToGetExportStatus, completeExport, completeExport)
 
   const fullVersion = useFullMainVersion()
   const {
@@ -74,7 +108,7 @@ export const OperationGroupsCard: FC = memo(() => {
   const groupNamesByApiTypes = useGroupingNamesByApiType(apiTypes, versionContent?.operationGroups)
 
   const hasCreatePermissions = useMemo(() =>
-    !!currentPackage?.permissions?.includes(VERSION_STATUS_MANAGE_PERMISSIONS[versionContent?.status ?? DRAFT_VERSION_STATUS]),
+      !!currentPackage?.permissions?.includes(VERSION_STATUS_MANAGE_PERMISSIONS[versionContent?.status ?? DRAFT_VERSION_STATUS]),
     [currentPackage?.permissions, versionContent?.status])
 
   const onCreateButton = useCallback(() => {
@@ -113,13 +147,24 @@ export const OperationGroupsCard: FC = memo(() => {
   }, [showPublishGroupPackageVersionDialog])
 
   const onExportButton = useCallback((group: OperationGroup) => {
-    showExportSettingsDialog({
-      exportedEntity: ExportedEntityKind.REST_OPERATIONS_GROUP,
-      packageId: packageKey!,
-      version: fullVersion!,
-      groupName: group.groupName,
-    })
-  }, [showExportSettingsDialog, packageKey, fullVersion])
+    if (group.apiType === REST_API_TYPE) {
+      showExportSettingsDialog({
+        exportedEntity: ExportedEntityKind.REST_OPERATIONS_GROUP,
+        packageId: packageKey!,
+        version: fullVersion!,
+        groupName: group.groupName,
+      })
+    } else {
+      setRequestDataExport(new RequestDataExportGraphQlOperationsGroup(
+        group.groupName!,
+        ExportedEntityKindWithoutForm.GRAPHQL_OPERATIONS_GROUP,
+        packageKey!,
+        fullVersion!,
+      ))
+      showNotification({message: 'Export initiated. Your download will begin shortly.' })
+    }
+
+  }, [showExportSettingsDialog, packageKey, fullVersion, showNotification])
 
   const isPackage = useMemo(() => currentPackage?.kind === PACKAGE_KIND, [currentPackage?.kind])
   const operationGroups = useMemo(() => (
@@ -152,10 +197,10 @@ export const OperationGroupsCard: FC = memo(() => {
             onPublish={onPublishButton}
             onExport={onExportButton}
           />
-          <CreateOperationGroupDialog />
-          <EditOperationGroupDialog />
-          <EditOperationGroupContentDialog />
-          <PublishOperationGroupPackageVersionDialog />
+          <CreateOperationGroupDialog/>
+          <EditOperationGroupDialog/>
+          <EditOperationGroupContentDialog/>
+          <PublishOperationGroupPackageVersionDialog/>
           <ConfirmationDialog
             open={deleteConfirmationOpen}
             title="Delete Group"

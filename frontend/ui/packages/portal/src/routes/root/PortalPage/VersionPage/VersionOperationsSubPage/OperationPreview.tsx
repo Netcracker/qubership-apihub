@@ -20,7 +20,7 @@ import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/compone
 import {
   OperationTitleWithMeta,
 } from '@netcracker/qubership-apihub-ui-shared/components/Operations/OperationTitleWithMeta'
-import { NAVIGATION_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+import { CONTENT_PLACEHOLDER_AREA, NAVIGATION_PLACEHOLDER_AREA, Placeholder, PLACEHOLDER_MESSAGE_NO_INTERNAL_DOCUMENT } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
 import { RawSpecView } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/RawSpecView'
 import { SMALL_TOOLBAR_SIZE, Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
@@ -52,6 +52,7 @@ export type OperationPreviewProps = {
   changedOperationContent: string
   // Feature "Internal documents"
   normalizedChangedOperation?: unknown
+  hasVersionInternalDocument: boolean
   // ---
   isLoading: boolean
   mode: OperationViewMode
@@ -68,6 +69,7 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
     changedOperationContent,
     // Feature "Internal documents"
     normalizedChangedOperation,
+    hasVersionInternalDocument,
     // ---
     isLoading, mode, schemaViewMode,
     productionMode, maxWidthHeaderToolbar,
@@ -93,7 +95,9 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
     return (
       <LoadingIndicator />
     )
-  } else if (!changedOperation?.operationKey) {
+  }
+
+  if (!changedOperation?.operationKey) {
     return (
       <Placeholder
         invisible={!!changedOperationContent}
@@ -133,19 +137,26 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
 
       <Box>
         {isDocViewMode && (
-          <OperationView
-            apiType={apiType}
-            schemaViewMode={schemaViewMode}
-            hideTryIt
-            hideExamples
-            noHeading
-            productionMode={productionMode}
-            comparisonMode={false}
-            mergedDocument={normalizedChangedOperation}
-            // GraphQL specific
-            operationType={operationType}
-            operationName={operationName}
-          />
+          <Placeholder
+            invisible={hasVersionInternalDocument}
+            area={CONTENT_PLACEHOLDER_AREA}
+            message={PLACEHOLDER_MESSAGE_NO_INTERNAL_DOCUMENT}
+            testId="NoVersionInternalDocumentPlaceholder"
+          >
+            <OperationView
+              apiType={apiType}
+              schemaViewMode={schemaViewMode}
+              hideTryIt
+              hideExamples
+              noHeading
+              productionMode={productionMode}
+              comparisonMode={false}
+              mergedDocument={normalizedChangedOperation}
+              // GraphQL specific
+              operationType={operationType}
+              operationName={operationName}
+            />
+          </Placeholder>
         )}
         {isRawViewMode && (
           <RawSpecView
