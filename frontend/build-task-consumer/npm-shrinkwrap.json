@@ -1980,9 +1980,9 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-processor": {
-      "version": "5.0.1-feature-asyncapi-basic-e2e.20260310110051",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.0.1-feature-asyncapi-basic-e2e.20260310110051/cbf8a5a0c56491f4ff4aae663db20b1657c0d6a7",
-      "integrity": "sha512-hTbif1fXf8aBkCI3BLFTC6zNcFCi4DwxhzGfCNFnV79OzoQvoIFIMWUnuKkSTtL5/6hjeS2XCEErAIN/oW9wiw==",
+      "version": "5.0.1-feature-asyncapi-basic-e2e.20260311103503",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.0.1-feature-asyncapi-basic-e2e.20260311103503/505150f23321de94982afe0de8cc6bc79fd8903f",
+      "integrity": "sha512-yLLWMUdDaTRMEB86yJYnbpT6q0JARoJMbzvifuAOVccFyYFvaqu0seyUMn0l8K5Up31/hhxP23nM7J7Bz9cXcw==",
       "license": "Apache-2.0",
       "dependencies": {
         "@asyncapi/parser": "^3.0.0",
@@ -2020,9 +2020,9 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-unifier": {
-      "version": "2.5.1-feature-asyncapi-basic-e2e.20260310121858",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-unifier/2.5.1-feature-asyncapi-basic-e2e.20260310121858/d917ad5671c4edc4bdf04063c125bea0c188eb75",
-      "integrity": "sha512-fjIp4oxZfy3Flq7cPdTmgnzGFEwEwdu2yhUMY2ujsBVsxOZ8K/TSNw8hl2WUzmNOF++WZuX4/iXTk+DcS9GO5w==",
+      "version": "2.5.1-feature-asyncapi-basic-e2e.20260311091111",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-unifier/2.5.1-feature-asyncapi-basic-e2e.20260311091111/079447370a9909a14d94c52c7eadf646ffedd4dd",
+      "integrity": "sha512-e9QCgG7PVZClobPFNzDUshdVkWju8aCMHUA5PNQDbWn2ErgCnM4C5oNANDoHqISX3+aUZA5VH+brug/SknhJYQ==",
       "dependencies": {
         "@netcracker/qubership-apihub-json-crawl": "1.2.0",
         "fast-equals": "4.0.3",
