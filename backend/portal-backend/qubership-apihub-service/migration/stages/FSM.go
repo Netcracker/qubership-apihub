@@ -217,7 +217,7 @@ func (d OpsMigration) handleCancel() error {
 		BuildsCount: 0,
 	})
 
-	_, updErr := d.cp.GetConnection().Model(&d.ent).
+	_, updErr := d.cp.GetConnection().Model(&mEntity.MigrationRunEntity{}).
 		Set("status=?", mView.MigrationStatusCancelled).
 		Set("stage=?", mView.MigrationStageCancelled).
 		Set("finished_at=now()").
