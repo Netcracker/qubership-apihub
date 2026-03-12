@@ -7878,6 +7878,59 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+  "/api/v2/packages/{packageId}/versions/{version}/documents/{slug}/shareability":
+    parameters:
+      - $ref: "#/components/parameters/packageId"
+      - $ref: "#/components/parameters/version"
+      - $ref: "#/components/parameters/slug"
+    patch:
+      tags:
+        - Documents
+      summary: Update document shareability
+      description: Update the shareability property of a published document. Only available to package owners and admins.
+      operationId: updateDocumentShareability
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - shareability
+              properties:
+                shareability:
+                  description: The shareability status to set
+                  type: string
+                  enum:
+                    - sharable
+                    - non-sharable
+      responses:
+        "204":
+          description: Shareability updated successfully
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   "/api/v1/packages/{packageId}/versions/{version}/version-internal-documents":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -9697,6 +9750,16 @@ components:
             - yaml
             - json
             - html
+        includeDocuments:
+          description: |
+            Filter which documents to include in export.
+            "all" - include all documents.
+            "sharableOnly" - include only documents with shareability = "sharable".
+          type: string
+          enum:
+            - all
+            - sharableOnly
+          default: all
     ExportRestDocument:
       type: object
       title: Export one OpenAPI document
@@ -10350,6 +10413,15 @@ components:
           items:
             type: string
           example: ["TMF"]
+        shareability:
+          description: Document shareability status
+          type: string
+          enum:
+            - sharable
+            - non-sharable
+            - unknown
+          default: unknown
+          example: "unknown"
     PackageTransformationFile:
       description: Parameters of published file in package version
       type: object
@@ -10405,6 +10477,15 @@ components:
         data:
           description: Content of the operation as a JSON object
           type: object
+        shareability:
+          description: Document shareability status
+          type: string
+          enum:
+            - sharable
+            - non-sharable
+            - unknown
+          default: unknown
+          example: "unknown"
     PackageVersionRef:
       description: Package version reference
       type: object

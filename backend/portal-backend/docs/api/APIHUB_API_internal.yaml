@@ -2059,6 +2059,16 @@ components:
           example:
             - x-internal-info
             - x-design-details
+        includeDocuments:
+          description: |
+            Filter which documents to include in export.
+            "all" - include all documents.
+            "sharableOnly" - include only documents with shareability = "sharable".
+          type: string
+          enum:
+            - all
+            - sharableOnly
+          default: all
     ExportRestDocumentBuildConfig:
       description: Build config for export of one OpenAPI document.
       type: object
