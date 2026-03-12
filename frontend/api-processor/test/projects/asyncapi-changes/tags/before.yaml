@@ -1,0 +1,98 @@
+asyncapi: 3.0.0
+info:
+  title: Test AsyncAPI
+  version: 1.0.0
+channels:
+  userSignup:
+    address: user/signup
+    messages:
+      userSignedUp:
+        $ref: '#/components/messages/UserSignedUp'
+  userUpdate:
+    address: user/update
+    messages:
+      userUpdated:
+        $ref: '#/components/messages/UserUpdated'
+  orderCreate:
+    address: order/create
+    messages:
+      orderCreated:
+        $ref: '#/components/messages/OrderCreated'
+  orderUpdate:
+    address: order/update
+    messages:
+      orderUpdated:
+        $ref: '#/components/messages/OrderUpdated'
+  orderDelete:
+    address: order/delete
+    messages:
+      orderDeleted:
+        $ref: '#/components/messages/OrderDeleted'
+operations:
+  removed1:
+    action: receive
+    channel:
+      $ref: '#/channels/userSignup'
+    tags:
+      - name: sameTagInDifferentChannels1
+      - name: sameTagInDifferentChannels2
+  removed2:
+    action: send
+    channel:
+      $ref: '#/channels/userUpdate'
+    tags:
+      - name: sameTagInDifferentChannels1
+      - name: sameTagInDifferentChannels2
+      - name: sameTagInDifferentSiblings1
+  removed3:
+    action: receive
+    channel:
+      $ref: '#/channels/orderCreate'
+    tags:
+      - name: sameTagInDifferentSiblings1
+  changed1:
+    action: send
+    channel:
+      $ref: '#/channels/orderUpdate'
+    tags:
+      - name: sameTagInOperationSiblings1
+      - name: tag
+      - name: missingByDesign
+  changed2:
+    action: receive
+    channel:
+      $ref: '#/channels/orderDelete'
+    tags:
+      - name: missingByDesign
+components:
+  messages:
+    UserSignedUp:
+      payload:
+        type: object
+        properties:
+          userId:
+            type: string
+    UserUpdated:
+      payload:
+        type: object
+        properties:
+          userId:
+            type: string
+    OrderCreated:
+      payload:
+        type: object
+        properties:
+          orderId:
+            type: string
+    OrderUpdated:
+      payload:
+        type: object
+        properties:
+          orderId:
+            type: string
+    OrderDeleted:
+      payload:
+        type: object
+        properties:
+          orderId:
+            type: string

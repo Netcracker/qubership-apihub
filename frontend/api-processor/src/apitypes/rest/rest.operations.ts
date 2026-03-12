@@ -22,6 +22,8 @@ import {
   calculateRestOperationId,
   createBundlingErrorHandler,
   createSerializedInternalDocument,
+  DuplicateEntry,
+  findDuplicates,
   isNotEmpty,
   removeComponents,
 } from '../../utils'
@@ -34,7 +36,6 @@ import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
 import { REST_EFFECTIVE_NORMALIZE_OPTIONS } from './rest.consts'
 
 type OperationInfo = { path: string; method: string }
-type DuplicateEntry = { operationId: string; operations: OperationInfo[] }
 
 export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async (document, ctx, debugCtx) => {
   const documentWithoutComponents = removeComponents(document.data)
@@ -151,13 +152,7 @@ function validatePath(path: string, fileId: string): NotificationMessage[] {
   return notifications
 }
 
-function findDuplicates(operationIdMap: Map<string, OperationInfo[]>): DuplicateEntry[] {
-  return Array.from(operationIdMap.entries())
-    .filter(([, operations]) => operations.length > 1)
-    .map(([operationId, operations]) => ({ operationId, operations }))
-}
-
-function createDuplicatesError(duplicates: DuplicateEntry[]): Error {
+function createDuplicatesError(duplicates: DuplicateEntry<OperationInfo>[]): Error {
   const duplicatesList = duplicates
     .map(({ operationId, operations }) => {
       const operationsList = operations

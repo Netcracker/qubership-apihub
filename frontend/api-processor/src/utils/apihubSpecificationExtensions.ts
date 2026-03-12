@@ -80,8 +80,3 @@ export const dump = (value: unknown, format: typeof FILE_FORMAT_YAML | typeof FI
   }
   throw new Error(`Unsupported format: ${format}`)
 }
-
-// Extension constant keys (generic for all API types)
-export const API_KIND_KEY = 'x-api-kind'
-export const DEPRECATED_META_KEY = 'x-deprecated-meta'
-

@@ -63,8 +63,8 @@ describe('Comparison Internal Documents tests', () => {
 
   describe('OAS tests', () => {
     runCommonPreProcessedChangelogDocumentsTests(
-      'comparison-internal-documents/case2',
-      'before_v1_comparison-internal-documents_case2_after_v2_comparison-internal-documents_case2',
+      'comparison-internal-documents/openapi',
+      'before_v1_comparison-internal-documents_openapi_after_v2_comparison-internal-documents_openapi',
     )
 
     it('should have comparison internal document data for add operation', async () => {
@@ -98,8 +98,8 @@ describe('Comparison Internal Documents tests', () => {
 
   describe('Graphql tests', () => {
     runCommonPreProcessedChangelogDocumentsTests(
-      'comparison-internal-documents/case1',
-      'before_v1_comparison-internal-documents_case1_after_v2_comparison-internal-documents_case1',
+      'comparison-internal-documents/graphql',
+      'before_v1_comparison-internal-documents_graphql_after_v2_comparison-internal-documents_graphql',
       true,
     )
 

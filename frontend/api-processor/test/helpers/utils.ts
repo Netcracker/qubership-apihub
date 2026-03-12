@@ -25,15 +25,16 @@ import {
   BuildConfigFile,
   BuildResult,
   ChangeSummary,
-  EMPTY_CHANGE_SUMMARY,
+  EMPTY_CHANGE_SUMMARY, Labels,
   SERIALIZE_SYMBOL_STRING_MAPPING,
   VERSION_STATUS,
 } from '../../src'
 import { buildSchema, introspectionFromSchema } from 'graphql/utilities'
 import { LocalRegistry } from './registry'
 import { Editor } from './editor'
-import { getFileExtension } from '../../src/utils'
+import { getFileExtension, takeIfDefined } from '../../src/utils'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
+import YAML from 'js-yaml'
 
 export const loadFileAsString = async (filePath: string, folder: string, fileName: string): Promise<string | null> => {
   return (await loadFile(filePath, folder, fileName))?.text() ?? null
@@ -270,6 +271,61 @@ export async function prepareChangelogDashboard(
   })
 }
 
+export async function buildPackageWithDefaultConfig(
+  packageId: string,
+  fileLabels?: Labels,
+  versionLabels?: Labels,
+): Promise<BuildResult> {
+  const portal = new LocalRegistry(packageId)
+
+  await portal.publish(packageId, {
+    packageId: packageId,
+    version: 'v1',
+    metadata: { ...takeIfDefined({ versionLabels: versionLabels }) },
+    files: [{ fileId: 'spec.yaml', ...takeIfDefined({ labels: fileLabels }), publish: true }],
+  })
+
+  const editor = new Editor(packageId, {
+    packageId: packageId,
+    version: 'v1',
+    status: VERSION_STATUS.RELEASE,
+    buildType: BUILD_TYPE.BUILD,
+    files: [{ fileId: 'spec.yaml'}],
+  }, {}, portal)
+
+  return editor.run()
+}
+
+export async function buildChangelogPackageDefaultConfig(
+  packageId: string,
+  filesBefore: BuildConfigFile[] = [{ fileId: 'before.yaml', publish: true }],
+  filesAfter: BuildConfigFile[] = [{ fileId: 'after.yaml' }],
+): Promise<BuildResult> {
+  const portal = new LocalRegistry(packageId)
+
+  await portal.publish(packageId, {
+    packageId: packageId,
+    version: BEFORE_VERSION_ID,
+    files: filesBefore,
+  })
+  await portal.publish(packageId, {
+    packageId: packageId,
+    version: AFTER_VERSION_ID,
+    files: filesAfter,
+  })
+
+  const editor = new Editor(packageId, {
+    version: AFTER_VERSION_ID,
+    packageId: packageId,
+    previousVersionPackageId: packageId,
+    previousVersion: BEFORE_VERSION_ID,
+    buildType: BUILD_TYPE.CHANGELOG,
+    status: VERSION_STATUS.RELEASE,
+  })
+  return await editor.run()
+}
+
+
 const invertMap = <K, V>(map: Map<K, V>): Map<V, K> => {
   return new Map(
     [...map].map(([key, value]: [K, V]) => [value, key]),
@@ -280,4 +336,13 @@ const DESERIALIZE_SYMBOL_STRING_MAPPING = invertMap(SERIALIZE_SYMBOL_STRING_MAPP
 
 export function deserializeDocument(serializedDocument: string): ApiDocument {
   return deserialize(serializedDocument, DESERIALIZE_SYMBOL_STRING_MAPPING) as ApiDocument
+}
+
+export const cloneDocument = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
+
+// Helper function to load YAML test files
+export const loadYamlFile = async <T>(relativePath: string): Promise<T> => {
+  const filePath = path.join(process.cwd(), 'test/projects', relativePath)
+  const content = await fs.readFile(filePath, 'utf8')
+  return YAML.load(content) as T
 }

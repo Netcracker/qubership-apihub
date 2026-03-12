@@ -52,10 +52,19 @@ describe('AsyncAPI Validation', () => {
     })
 
     test('error should include file context', async () => {
+      await runTest('invalid-critical-async.yaml')
+    })
+
+    test('should operation message belong to the specified channel', async () => {
+      const errorMessage = await runTest('operation-message-not-belong-to-specified-channel.yaml')
+      expect(errorMessage).toContain('Operation message does not belong to the specified channel')
+    })
+
+    async function runTest(fileId: string): Promise<string> {
       const editor = await Editor.openProject('asyncapi-validation', asyncValidationPackage)
 
       try {
-        await editor.run({ files: [{ fileId: 'invalid-critical-async.yaml', publish: true, labels: [] }] })
+        await editor.run({ files: [{ fileId, publish: true, labels: [] }] })
         fail('Expected error to be thrown')
       } catch (error) {
         expect(error).toBeInstanceOf(Error)
@@ -65,9 +74,10 @@ describe('AsyncAPI Validation', () => {
         expect(errorMessage).toContain('AsyncAPI validation')
 
         // Should contain file name from parseFile error wrapping
-        expect(errorMessage).toContain('invalid-critical-async.yaml')
+        expect(errorMessage).toContain(fileId)
+        return errorMessage
       }
-    })
+    }
   })
 
   //TODO: add tests for AsyncAPI document with non-critical errors/warnings

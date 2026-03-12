@@ -16,53 +16,78 @@
 
 import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
 import type * as TYPE from './async.types'
+import { AsyncOperationActionType, VersionAsyncOperation } from './async.types'
 import { BuildConfig, DeprecateItem, NotificationMessage, SearchScopes } from '../../types'
 import {
-  capitalize,
+  calculateAsyncOperationId,
   getSplittedVersionKey,
   isDeprecatedOperationItem,
+  isObject,
   isOperationDeprecated,
+  normalizeOperationIds,
   takeIf,
-  takeIfDefined,
 } from '../../utils'
-import { APIHUB_API_COMPATIBILITY_KIND_BWC, ORIGINS_SYMBOL, VERSION_STATUS } from '../../consts'
+import {
+  ASYNCAPI_API_TYPE,
+  DEPRECATED_MESSAGE_PREFIX,
+  DEPRECATED_SPECIFICATION_EXTENSION,
+  ORIGINS_SYMBOL,
+  VERSION_STATUS,
+} from '../../consts'
 import { getCustomTags, resolveApiAudience } from '../../utils/apihubSpecificationExtensions'
 import { DebugPerformanceContext, syncDebugPerformance } from '../../utils/logs'
 import {
   calculateDeprecatedItems,
+  Jso,
   JSON_SCHEMA_PROPERTY_DEPRECATED,
-  matchPaths,
-  OPEN_API_PROPERTY_PATHS,
   pathItemToFullPath,
-  PREDICATE_ANY_VALUE,
   resolveOrigins,
 } from '@netcracker/qubership-apihub-api-unifier'
 import { calculateHash, ObjectHashCache } from '../../utils/hashes'
-import { extractProtocol } from './async.utils'
+import {
+  buildAsyncApiSpecFromDocument,
+  calculateAsyncApiKind,
+  checkHasAsyncApiOperations,
+  createBaseAsyncApiSpec,
+  enrichAsyncApiWithInlineRefs,
+  extractProtocol,
+  getAsyncMessageId,
+  isMessageObject,
+  resolveAsyncApiOperationIdsFromRefs,
+} from './async.utils'
+import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 import { getApiKindProperty } from '../../components/document'
+import { calculateTolerantHash } from '../../components/deprecated'
 
 export const buildAsyncApiOperation = (
   operationId: string,
-  operationKey: string,
-  action: 'send' | 'receive',
-  channel: string,
+  messageId: string,
+  channelId: string,
+  asyncOperationId: string,
+  action: AsyncOperationActionType,
+  channel: AsyncAPIV3.ChannelObject,
+  message: AsyncAPIV3.MessageObject,
   document: TYPE.VersionAsyncDocument,
-  effectiveDocument: TYPE.AsyncApiDocument,
-  refsOnlyDocument: TYPE.AsyncApiDocument,
+  effectiveDocument: AsyncAPIV3.AsyncAPIObject,
+  refsOnlyDocument: AsyncAPIV3.AsyncAPIObject,
   notifications: NotificationMessage[],
   config: BuildConfig,
   normalizedSpecFragmentsHashCache: ObjectHashCache,
   debugCtx?: DebugPerformanceContext,
-): TYPE.VersionAsyncOperation => {
+): VersionAsyncOperation => {
+  const {
+    data: documentData,
+    slug: documentSlug,
+    versionInternalDocument,
+    metadata: documentMetadata,
+  } = document
+  const effectiveOperationObject: AsyncAPIV3.OperationObject = effectiveDocument.operations?.[asyncOperationId] as AsyncAPIV3.OperationObject || {}
+  const effectiveSingleOperationSpec = createOperationSpec(effectiveDocument, operationId)
 
-  const { apiKind: documentApiKind, servers, components } = document.data
-  const { versionInternalDocument } = document
-  const effectiveOperationObject = effectiveDocument.operations?.[operationKey] || {}
-  const effectiveSingleOperationSpec = createSingleOperationSpec(effectiveDocument, operationKey)
+  // TODO Out of scope
+  const tags: string[] = effectiveOperationObject?.tags?.map(tag => (tag as AsyncAPIV3.TagObject)?.name) || []
 
-  const tags = effectiveOperationObject.tags || []
-
-  // Extract search scopes (similar to REST)
+  // TODO Extract search scopes (similar to REST)
   const scopes: SearchScopes = {}
   syncDebugPerformance('[SearchScopes]', () => {
     const handledObject = new Set<unknown>()
@@ -82,47 +107,23 @@ export const buildAsyncApiOperation = (
     )
   }, debugCtx)
 
-  // Calculate deprecated items
-  const deprecatedItems: DeprecateItem[] = []
-  syncDebugPerformance('[DeprecatedItems]', () => {
-    const foundedDeprecatedItems = calculateDeprecatedItems(effectiveSingleOperationSpec, ORIGINS_SYMBOL)
+  const deprecatedItems = collectDeprecatedItems(
+    config, message, messageId, channel, channelId,
+    effectiveSingleOperationSpec, normalizedSpecFragmentsHashCache,
+    notifications, debugCtx,
+  )
 
-    for (const item of foundedDeprecatedItems) {
-      const { description, deprecatedReason, value } = item
+  const operationApiKind = getApiKindProperty(effectiveOperationObject)
+  const channelApiKind = getApiKindProperty(channel)
 
-      const declarationJsonPaths = resolveOrigins(value, JSON_SCHEMA_PROPERTY_DEPRECATED, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? []
-      const isOperation = isOperationPaths(declarationJsonPaths)
-      const [version] = getSplittedVersionKey(config.version)
-
-      const tolerantHash = undefined // Skip tolerant hash for now
-      const hash = isOperation ? undefined : calculateHash(value, normalizedSpecFragmentsHashCache)
-
-      deprecatedItems.push({
-        declarationJsonPaths,
-        description,
-        ...takeIfDefined({ deprecatedInfo: deprecatedReason }),
-        ...takeIf({ [isOperationDeprecated]: true }, isOperation),
-        deprecatedInPreviousVersions: config.status === VERSION_STATUS.RELEASE ? [version] : [],
-        ...takeIfDefined({ hash: hash }),
-        ...takeIfDefined({ tolerantHash: tolerantHash }),
-      })
-    }
-  }, debugCtx)
-
-  // Extract API kind
-  const operationApiKind = getApiKindProperty(effectiveOperationObject) || documentApiKind || APIHUB_API_COMPATIBILITY_KIND_BWC
-
-  // Build operation data with models
+  // TODO: Populate models when AsyncAPI model extraction is implemented
   const models: Record<string, string> = {}
-  const [specWithSingleOperation] = syncDebugPerformance('[ModelsAndOperationHashing]', () => {
-    const specWithSingleOperation = createSingleOperationSpec(
-      document.data,
-      operationKey,
-      servers,
-      components,
+  const specWithSingleOperation = syncDebugPerformance('[ModelsAndOperationHashing]', () => {
+    return createOperationSpecWithInlineRefs(
+      documentData,
+      operationId,
+      refsOnlyDocument,
     )
-    // For AsyncAPI, we could calculate spec refs similar to REST, but keeping it simple for now
-    return [specWithSingleOperation]
   }, debugCtx)
 
   const deprecatedOperationItem = deprecatedItems.find(isDeprecatedOperationItem)
@@ -131,25 +132,26 @@ export const buildAsyncApiOperation = (
   const customTags = getCustomTags(effectiveOperationObject)
 
   // Resolve API audience
-  const apiAudience = resolveApiAudience(document.metadata?.info)
+  const apiAudience = resolveApiAudience(documentMetadata?.info)
 
-  // Extract protocol from servers or channel bindings
-  const protocol = extractProtocol(effectiveDocument, channel)
+  const protocol = extractProtocol(channel)
 
   return {
     operationId,
-    documentId: document.slug,
-    apiType: 'asyncapi',
-    apiKind: operationApiKind,
-    deprecated: !!effectiveOperationObject.deprecated,
-    title: effectiveOperationObject.title || effectiveOperationObject.summary || operationKey.split('-').map(str => capitalize(str)).join(' '),
+    documentId: documentSlug,
+    apiType: ASYNCAPI_API_TYPE,
+    apiKind: calculateAsyncApiKind(operationApiKind, channelApiKind),
+    deprecated: !!message[DEPRECATED_SPECIFICATION_EXTENSION],
+    title: message.title || messageId,
     metadata: {
       action,
-      channel,
+      channel: channel.title || channelId,
       protocol,
       customTags,
+      messageId,
+      asyncOperationId,
     },
-    tags: Array.isArray(tags) ? tags : tags ? [tags] : [],
+    tags,
     data: specWithSingleOperation,
     searchScopes: scopes,
     deprecatedItems,
@@ -163,38 +165,195 @@ export const buildAsyncApiOperation = (
   }
 }
 
-const isOperationPaths = (paths: JsonPath[]): boolean => {
-  return !!matchPaths(
-    paths,
-    [[OPEN_API_PROPERTY_PATHS, PREDICATE_ANY_VALUE, PREDICATE_ANY_VALUE, PREDICATE_ANY_VALUE]],
-  )
+/**
+ * Collects deprecation data for an AsyncAPI 3.0 operation.
+ *
+ * In AsyncAPI 3.0, native `deprecated: true` exists only on Schema Object (JSON Schema).
+ * For Message and Channel objects, deprecation is expressed via the custom `x-deprecated` extension.
+ *
+ * **Message deprecation** (`x-deprecated` on Message Object):
+ * If the resolved message has `x-deprecated: true`, the APIHUB operation is treated as
+ * deprecated.
+ *
+ * **Channel deprecation** (`x-deprecated` on Channel Object):
+ * If the channel has `x-deprecated: true`, the channel are treated as channel-deprecated.
+ */
+const collectDeprecatedItems = (
+  config: BuildConfig,
+  message: AsyncAPIV3.MessageObject,
+  messageId: string,
+  channel: AsyncAPIV3.ChannelObject,
+  channelId: string,
+  effectiveSingleOperationSpec: TYPE.AsyncOperationData,
+  normalizedSpecFragmentsHashCache: ObjectHashCache,
+  notifications: NotificationMessage[],
+  debugCtx?: DebugPerformanceContext,
+): DeprecateItem[] => {
+
+  const deprecatedItems: DeprecateItem[] = []
+  syncDebugPerformance('[DeprecatedItems]', () => {
+    const [version] = getSplittedVersionKey(config.version)
+    const deprecatedInPreviousVersions = config.status === VERSION_STATUS.RELEASE ? [version] : []
+
+    const resolveDeclarationJsonPaths = (value: Jso): JsonPath[] => (
+      resolveOrigins(value, DEPRECATED_SPECIFICATION_EXTENSION, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? []
+    )
+
+    // Handled Custom extensions (x-deprecated) on Message
+    if (message[DEPRECATED_SPECIFICATION_EXTENSION]) {
+      const declarationJsonPaths = resolveDeclarationJsonPaths(message as Jso)
+      const messageTitle = message.title || messageId
+
+      deprecatedItems.push({
+        declarationJsonPaths,
+        description: `${DEPRECATED_MESSAGE_PREFIX} message '${messageTitle}'`,
+        ...{ [isOperationDeprecated]: true },
+        deprecatedInPreviousVersions,
+      })
+    }
+    // Handled Custom extensions (x-deprecated) on Channel
+    if (channel[DEPRECATED_SPECIFICATION_EXTENSION]) {
+      const declarationJsonPaths = resolveDeclarationJsonPaths(channel as Jso)
+      const channelTitle = channel.title || channelId
+
+      deprecatedItems.push({
+        declarationJsonPaths,
+        description: `${DEPRECATED_MESSAGE_PREFIX} channel '${channelTitle}'`,
+        deprecatedInPreviousVersions,
+        hash: calculateHash(channel, normalizedSpecFragmentsHashCache),
+        tolerantHash: calculateTolerantHash(channel as Jso, notifications),
+      })
+    }
+
+    // Native `deprecated: true` on Schema Objects in payload/headers — calculated by api-unifier
+    const foundDeprecatedItems = calculateDeprecatedItems(effectiveSingleOperationSpec, ORIGINS_SYMBOL)
+    for (const item of foundDeprecatedItems) {
+      const { description, value } = item
+      const declarationJsonPaths = resolveOrigins(value, JSON_SCHEMA_PROPERTY_DEPRECATED, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? []
+
+      deprecatedItems.push({
+        declarationJsonPaths,
+        description,
+        deprecatedInPreviousVersions,
+        hash: calculateHash(value, normalizedSpecFragmentsHashCache),
+        tolerantHash: calculateTolerantHash(value as Jso, notifications),
+      })
+    }
+  }, debugCtx)
+
+  return deprecatedItems
 }
 
 /**
- * Creates a single operation spec from AsyncAPI document
- * Crops the document to contain only the specific operation
+ * Creates an operation spec (a cropped normalized AsyncAPI document)
+ * that contains only the requested operation(s).
+ *
+ * The returned document includes only:
+ * - `asyncapi`
+ * - `info`
+ * - `operations`
+ *
+ * @param normalizedDocument Normalized AsyncAPI document to crop.
+ * @param operationId Operation id or array of operation ids to include.
+ *
+ * @throws Error when:
+ * - document has no `operations`
+ * - no operation ids are provided
  */
-const createSingleOperationSpec = (
-  document: TYPE.AsyncApiDocument,
-  operationKey: string,
-  servers?: Record<string, any>,
-  components?: Record<string, any>,
+export const createOperationSpec = (
+  normalizedDocument: AsyncAPIV3.AsyncAPIObject,
+  operationId: string | string[],
 ): TYPE.AsyncOperationData => {
-  const operation = document.operations?.[operationKey]
+  const operations = checkHasAsyncApiOperations(normalizedDocument)
+  const operationIds = normalizeOperationIds(operationId)
+  const requestedIdsSet = new Set(operationIds)
 
-  if (!operation) {
-    throw new Error(`Operation ${operationKey} not found in document`)
+  const selectedOperations: Record<string, AsyncAPIV3.OperationObject> = {}
+  for (const [asyncOperationId, operationData] of Object.entries(operations)) {
+    if (!isObject(operationData)) {
+      continue
+    }
+
+    const operationObject = operationData as AsyncAPIV3.OperationObject
+    const { messages, action, channel } = operationObject
+
+    if (!Array.isArray(messages) || !messages.length) {
+      continue
+    }
+    if (!action || !channel) {
+      continue
+    }
+
+    for (const message of messages) {
+      if (!isMessageObject(message)) {
+        continue
+      }
+      const messageId = getAsyncMessageId(message)
+      if (!messageId) {
+        throw new Error(
+          `Unable to calculate operation ID for async operation "${asyncOperationId}"`,
+        )
+      }
+
+      const calculatedId = calculateAsyncOperationId(
+        asyncOperationId,
+        messageId,
+      )
+
+      if (requestedIdsSet.has(calculatedId)) {
+        selectedOperations[asyncOperationId] = operationObject
+        break
+      }
+    }
   }
 
-  return {
-    asyncapi: document.asyncapi || '3.0.0',
-    info: document.info,
-    ...takeIfDefined({ servers }),
-    operations: {
-      [operationKey]: operation,
-    },
-    channels: document.channels,
-    ...takeIfDefined({ components }),
-  }
+  return createBaseAsyncApiSpec(normalizedDocument, selectedOperations)
 }
 
+/**
+ * Creates an operation spec (a cropped AsyncAPI document)
+ * that contains only the requested operation(s) and additionally
+ * resolves inline references from the provided refsDocument.
+ *
+ * If refsDocument contains inline refs for the requested operations,
+ * the function will inline referenced:
+ * - `channels`
+ * - `servers`
+ * - `components`
+ *
+ * @param document Original AsyncAPI 3.0 document.
+ * @param operationId Operation id or array of operation ids to include.
+ * @param refsDocument Normalized AsyncAPI document containing inline refs metadata.
+ *
+ * @throws Error when:
+ * - no operation ids are provided
+ * - operations are missing in document
+ * - requested operations are not found
+ */
+export const createOperationSpecWithInlineRefs = (
+  document: AsyncAPIV3.AsyncAPIObject,
+  operationId: string | string[],
+  refsDocument: AsyncAPIV3.AsyncAPIObject,
+): TYPE.AsyncOperationData => {
+  const operations = checkHasAsyncApiOperations(refsDocument)
+  const operationIds = normalizeOperationIds(operationId)
+
+  const resolvedOperationKeys = resolveAsyncApiOperationIdsFromRefs(
+    operations,
+    operationIds,
+  )
+
+  if (resolvedOperationKeys.size === 0) {
+    throw new Error(
+      `Operations not found in document.operations: ${
+        Array.isArray(operationId) ? operationId.join(', ') : operationId
+      }`,
+    )
+  }
+
+  const resultSpec = buildAsyncApiSpecFromDocument(document, resolvedOperationKeys)
+
+  enrichAsyncApiWithInlineRefs(resultSpec, document, refsDocument)
+
+  return resultSpec
+}

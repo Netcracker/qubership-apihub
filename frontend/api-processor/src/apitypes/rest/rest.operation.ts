@@ -34,6 +34,7 @@ import {
   calculateRestOperationId,
   calculateRestOperationTitle,
   extractSymbolProperty,
+  getInlineRefsFomDocument,
   getKeyValue,
   getSplittedVersionKey,
   getSymbolValueIfDefined,
@@ -209,27 +210,7 @@ export const calculateSpecRefs = (
   models?: Record<string, string>,
   originalSpecComponentsHashCache?: Map<string, string>,
 ): void => {
-  const handledObjects = new Set<unknown>()
-  const inlineRefs = new Set<string>()
-  syncCrawl(
-    normalizedSpec,
-    ({ key, value }) => {
-      if (typeof key === 'symbol' && key !== INLINE_REFS_FLAG) {
-        return { done: true }
-      }
-      if (handledObjects.has(value)) {
-        return { done: true }
-      }
-      handledObjects.add(value)
-      if (key !== INLINE_REFS_FLAG) {
-        return { value }
-      }
-      if (!Array.isArray(value)) {
-        return { done: true }
-      }
-      value.forEach(ref => inlineRefs.add(ref))
-    },
-  )
+  const inlineRefs = getInlineRefsFomDocument(normalizedSpec)
   inlineRefs.forEach(ref => {
     const path = parseRef(ref).jsonPath
     const grepKey = 'componentName'

@@ -17,19 +17,10 @@
 import { OpenAPIV3 } from 'openapi-types'
 import { createSingleOperationSpec } from '../src/apitypes/rest/rest.operation'
 
-import { describe, test, expect } from '@jest/globals'
-import * as fs from 'fs/promises'
-import * as path from 'path'
-import YAML from 'js-yaml'
+import { describe, expect, test } from '@jest/globals'
 import { securitySchemesFromRequirementsMatcher } from './helpers/matchers'
 import { RestOperationData } from '../src/apitypes/rest/rest.types'
-
-// Helper function to load YAML test files
-const loadYamlFile = async (relativePath: string): Promise<OpenAPIV3.Document> => {
-  const filePath = path.join(process.cwd(), 'test/projects', relativePath)
-  const content = await fs.readFile(filePath, 'utf8')
-  return YAML.load(content) as OpenAPIV3.Document
-}
+import { loadYamlFile } from './helpers'
 
 describe('REST Operation Unit Tests', () => {
   describe('createSingleOperationSpec', () => {
@@ -57,7 +48,7 @@ describe('REST Operation Unit Tests', () => {
 
     describe('Security Scheme Filtering', () => {
       test('should include only used security schemes when operation security is defined', async () => {
-        const document = await loadYamlFile('rest.operation/security-schemes-filtering-operation/base.yaml')
+        const document: OpenAPIV3.Document = await loadYamlFile('rest.operation/security-schemes-filtering-operation/base.yaml')
 
         const operationSecurity = getOperationSecurity(document, TEST_DATA_PATH, TEST_DATA_METHOD)
 
@@ -70,7 +61,7 @@ describe('REST Operation Unit Tests', () => {
       })
 
       test('should include only used security schemes when root security is defined but no operation security', async () => {
-        const document = await loadYamlFile('rest.operation/security-schemes-filtering-root/base.yaml')
+        const document: OpenAPIV3.Document = await loadYamlFile('rest.operation/security-schemes-filtering-root/base.yaml')
 
         const result = createTestSingleOperationSpec(document)
 
@@ -81,7 +72,7 @@ describe('REST Operation Unit Tests', () => {
       })
 
       test('should not include security schemes when none are used', async () => {
-        const document = await loadYamlFile('rest.operation/security-schemes-filtering-none-used/base.yaml')
+        const document: OpenAPIV3.Document = await loadYamlFile('rest.operation/security-schemes-filtering-none-used/base.yaml')
 
         const result = createTestSingleOperationSpec(document)
 
@@ -89,7 +80,7 @@ describe('REST Operation Unit Tests', () => {
       })
 
       test('should handle empty root security requirements', async () => {
-        const document = await loadYamlFile('rest.operation/security-schemes-filtering-empty-root/base.yaml')
+        const document: OpenAPIV3.Document = await loadYamlFile('rest.operation/security-schemes-filtering-empty-root/base.yaml')
 
         const result = createTestSingleOperationSpec(document)
 
@@ -97,7 +88,7 @@ describe('REST Operation Unit Tests', () => {
       })
 
       test('should handle empty operation security requirements', async () => {
-        const document = await loadYamlFile('rest.operation/security-schemes-filtering-empty-operation/base.yaml')
+        const document: OpenAPIV3.Document = await loadYamlFile('rest.operation/security-schemes-filtering-empty-operation/base.yaml')
 
         const result = createTestSingleOperationSpec(document)
 
@@ -107,7 +98,7 @@ describe('REST Operation Unit Tests', () => {
 
     describe('Conditional Security Handling', () => {
       test('should not include root security when operation security is explicitly defined', async () => {
-        const document = await loadYamlFile('rest.operation/conditional-security-explicit/base.yaml')
+        const document: OpenAPIV3.Document = await loadYamlFile('rest.operation/conditional-security-explicit/base.yaml')
 
         const result = createTestSingleOperationSpec(document)
 
@@ -115,7 +106,7 @@ describe('REST Operation Unit Tests', () => {
       })
 
       test('should include root security when no operation security is defined', async () => {
-        const document = await loadYamlFile('rest.operation/security-schemes-filtering-root/base.yaml')
+        const document: OpenAPIV3.Document = await loadYamlFile('rest.operation/security-schemes-filtering-root/base.yaml')
 
         const result = createTestSingleOperationSpec(document)
 
@@ -125,7 +116,7 @@ describe('REST Operation Unit Tests', () => {
 
     describe('Info, ExternalDocs, and Tags Handling', () => {
       test('should include info object from source document', async () => {
-        const document = await loadYamlFile('rest.operation/info-externaldocs-tags-filtering/base.yaml')
+        const document: OpenAPIV3.Document = await loadYamlFile('rest.operation/info-externaldocs-tags-filtering/base.yaml')
 
         const result = createTestSingleOperationSpec(document)
 
@@ -134,7 +125,7 @@ describe('REST Operation Unit Tests', () => {
       })
 
       test('should include externalDocs object from source document', async () => {
-        const document = await loadYamlFile('rest.operation/info-externaldocs-tags-filtering/base.yaml')
+        const document: OpenAPIV3.Document = await loadYamlFile('rest.operation/info-externaldocs-tags-filtering/base.yaml')
 
         const result = createTestSingleOperationSpec(document)
 
@@ -143,7 +134,7 @@ describe('REST Operation Unit Tests', () => {
       })
 
       test('should filter tags to only include those used by the operation', async () => {
-        const document = await loadYamlFile('rest.operation/info-externaldocs-tags-filtering/base.yaml')
+        const document: OpenAPIV3.Document = await loadYamlFile('rest.operation/info-externaldocs-tags-filtering/base.yaml')
 
         const result = createTestSingleOperationSpec(document)
 
@@ -156,7 +147,7 @@ describe('REST Operation Unit Tests', () => {
       })
 
       test('should handle document with no tags', async () => {
-        const document = await loadYamlFile('rest.operation/info-externaldocs-no-tags/base.yaml')
+        const document: OpenAPIV3.Document = await loadYamlFile('rest.operation/info-externaldocs-no-tags/base.yaml')
 
         const result = createTestSingleOperationSpec(document)
 

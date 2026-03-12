@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { isString } from './objects'
 
 // https://stackoverflow.com/questions/196972/convert-string-to-title-case-with-javascript
 export function toTitleCase(str: string): string {
@@ -58,3 +59,5 @@ export function toTitleCase(str: string): string {
 export function toLowerCase(value: unknown): string {
   return `${value}`.toLowerCase()
 }
+
+export const getStringValue = (value: unknown): string => (isString(value) ? value : '')

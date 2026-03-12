@@ -1,0 +1,30 @@
+asyncapi: 3.0.0
+info:
+  title: Sample AsyncAPI
+  version: 1.0.0
+channels:
+  package:
+    address: package
+    messages:
+      packageUpdated:
+        $ref: '#/components/messages/PackageUpdated'
+operations:
+  onReceive:
+    action: receive
+    channel:
+      $ref: '#/channels/package'
+components:
+  messages:
+    PackageUpdated:
+      payload:
+        $ref: '#/components/schemas/Package'
+  schemas:
+    Package:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: number #!
+        parentPackage:
+          $ref: '#/components/schemas/Package'

@@ -15,16 +15,18 @@
  */
 
 import {
-  APIHUB_API_COMPATIBILITY_KIND_BWC, APIHUB_API_COMPATIBILITY_KIND_NO_BWC, ApihubApiCompatibilityKind,
+  APIHUB_API_COMPATIBILITY_KIND_BWC,
+  APIHUB_API_COMPATIBILITY_KIND_NO_BWC,
+  ApihubApiCompatibilityKind,
   SPECIFICATION_EXTENSION_PREFIX,
 } from '../../consts'
 import { isObject, isValidHttpMethod } from '../../utils'
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 import {
-  ApiCompatibilityKind,
-  ApiCompatibilityScopeFunction,
   API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE,
   API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE,
+  ApiCompatibilityKind,
+  ApiCompatibilityScopeFunction,
 } from '@netcracker/qubership-apihub-api-diff'
 import { getApiKindProperty } from '../document'
 import { OpenAPIV3 } from 'openapi-types'
@@ -85,7 +87,7 @@ const checkAllMethodsHaveSameApiKind = (obj: OpenAPIV3.PathItemObject, apiKind: 
 
   return entries.length > 0 &&
     entries.filter(([key, value]) => isValidHttpMethod(key) && isObject(value))
-      .every(([key, value]) => hasApiKind(value as OpenAPIV3.OperationObject, apiKind))
+      .every(([_, value]) => hasApiKind(value as OpenAPIV3.OperationObject, apiKind))
 }
 
 const ROOT_PATH_LENGTH = 0

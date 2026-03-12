@@ -20,99 +20,125 @@ import type { Parser, ParseOutput, Diagnostic } from '@asyncapi/parser'
 import { ASYNC_DOCUMENT_TYPE, ASYNC_FILE_FORMAT } from './async.consts'
 import { FILE_KIND, TextFile } from '../../types'
 import { getFileExtension } from '../../utils'
-import { AsyncApiDocument } from './async.types'
+import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 
 interface ValidationError {
   message: string
   path?: string
 }
 
-export const parseAsyncApiFile = async (fileId: string, source: Blob): Promise<TextFile<AsyncApiDocument, ValidationError> | undefined> => {
-  const sourceString = await source.text()
-  const extension = getFileExtension(fileId)
+class AsyncApiValidationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AsyncApiValidationError'
+  }
+}
 
-  // Detect AsyncAPI 3.0 documents
-  const isAsyncApi3Json = /\s*?"asyncapi"\s*?:\s*?"3\..+?"/g.test(sourceString)
-  const isAsyncApi3Yaml = /\s*?'?"?asyncapi'?"?\s*?:\s*?\|?\s*'?"?3\..+?'?"?/g.test(sourceString)
+const ASYNCAPI_3_JSON_PATTERN = /\s*?"asyncapi"\s*?:\s*?"3\..+?"/
+const ASYNCAPI_3_YAML_PATTERN = /\s*?'?"?asyncapi'?"?\s*?:\s*?\|?\s*'?"?3\..+?'?"?/
 
+type FormatInfo = {
+  format: typeof ASYNC_FILE_FORMAT[keyof typeof ASYNC_FILE_FORMAT]
+  parse: (source: string) => AsyncAPIV3.AsyncAPIObject
+}
+
+function detectFormat(extension: string, sourceString: string): FormatInfo | undefined {
   if (extension === ASYNC_FILE_FORMAT.JSON || sourceString.trimStart().startsWith('{')) {
-    if (isAsyncApi3Json) {
-      const data = JSON.parse(sourceString) as AsyncApiDocument
-      const errors = await validateAsyncApiDocument(sourceString)
-
+    if (ASYNCAPI_3_JSON_PATTERN.test(sourceString)) {
       return {
-        fileId,
-        type: ASYNC_DOCUMENT_TYPE.AAS3,
         format: ASYNC_FILE_FORMAT.JSON,
-        data,
-        source,
-        errors,
-        kind: FILE_KIND.TEXT,
+        parse: (s) => JSON.parse(s) as AsyncAPIV3.AsyncAPIObject,
       }
     }
-  } else if (([ASYNC_FILE_FORMAT.YAML, 'yml'] as string[]).includes(extension) || !extension) {
-    if (isAsyncApi3Yaml) {
-      const data = YAML.load(sourceString) as AsyncApiDocument
-      const errors = await validateAsyncApiDocument(sourceString)
-
+  } else if (extension === ASYNC_FILE_FORMAT.YAML || extension === 'yml' || !extension) {
+    if (ASYNCAPI_3_YAML_PATTERN.test(sourceString)) {
       return {
-        fileId,
-        type: ASYNC_DOCUMENT_TYPE.AAS3,
         format: ASYNC_FILE_FORMAT.YAML,
-        data,
-        source,
-        errors,
-        kind: FILE_KIND.TEXT,
+        parse: (s) => YAML.load(s) as AsyncAPIV3.AsyncAPIObject,
       }
     }
   }
-
   return undefined
 }
 
+export const parseAsyncApiFile = async (fileId: string, source: Blob): Promise<TextFile<AsyncAPIV3.AsyncAPIObject, ValidationError> | undefined> => {
+  const sourceString = await source.text()
+  const extension = getFileExtension(fileId)
+
+  const formatInfo = detectFormat(extension, sourceString)
+  if (!formatInfo) {
+    return undefined
+  }
+
+  let data: AsyncAPIV3.AsyncAPIObject
+  try {
+    data = formatInfo.parse(sourceString)
+  } catch (error) {
+    throw new Error(`Failed to parse AsyncAPI file '${fileId}': ${error instanceof Error ? error.message : 'Unknown parse error'}`)
+  }
+
+  const errors = await validateAsyncApiDocument(sourceString)
+
+  return {
+    fileId,
+    type: ASYNC_DOCUMENT_TYPE.AAS3,
+    format: formatInfo.format,
+    data,
+    source,
+    errors,
+    kind: FILE_KIND.TEXT,
+  }
+}
+
+let cachedParserClass: typeof Parser | undefined
+
+async function getParserClass(): Promise<typeof Parser> {
+  if (cachedParserClass) {
+    return cachedParserClass
+  }
+
+  // Dynamic import — bundler will use appropriate version based on environment.
+  // Browser builds will use @asyncapi/parser/browser automatically via vite alias.
+  const parserModule = await import('@asyncapi/parser')
+
+  // Handle different export formats (ESM named export vs default export)
+  const ParserClass = (parserModule as { Parser?: typeof Parser; default?: typeof Parser }).Parser ||
+    parserModule.default as typeof Parser
+
+  if (!ParserClass) {
+    throw new Error('AsyncAPI Parser class not found in module exports')
+  }
+
+  cachedParserClass = ParserClass
+  return ParserClass
+}
+
 /**
- * Validates AsyncAPI document using official parser
+ * Validates AsyncAPI document using official parser.
  * This provides spec validation while avoiding circular reference issues
- * by using the parser only for validation, not for the actual parsing
+ * by using the parser only for validation, not for the actual parsing.
  *
- * @throws Error when critical validation errors (severity 0) are found
+ * @throws AsyncApiValidationError when critical validation errors (severity 0) are found
  * @returns Non-critical diagnostics (warnings, info) to be collected as notifications
  */
 async function validateAsyncApiDocument(sourceString: string): Promise<ValidationError[] | undefined> {
   try {
-    // Dynamic import - bundler will use appropriate version based on environment
-    // Browser builds will use @asyncapi/parser/browser automatically via vite alias
-    const parserModule = await import('@asyncapi/parser')
-
-    // Handle different export formats (ESM named export vs default export)
-    // ESM: export { Parser } and export default Parser
-    // Browser (UMD converted by Vite): exposes both named and default
-    const ParserClass = (parserModule as { Parser?: typeof Parser; default?: typeof Parser }).Parser ||
-      parserModule.default as typeof Parser
-
-    if (!ParserClass) {
-      throw new Error('AsyncAPI Parser class not found in module exports')
-    }
-
+    const ParserClass = await getParserClass()
     const parser: Parser = new ParserClass()
     const { diagnostics }: ParseOutput = await parser.parse(sourceString)
 
-    // Separate critical errors from non-critical diagnostics
-    // DiagnosticSeverity.Error = 0
     const criticalErrors: Diagnostic[] = diagnostics.filter(diagnostic => diagnostic.severity === 0)
     const nonCriticalDiagnostics: Diagnostic[] = diagnostics.filter(diagnostic => diagnostic.severity > 0)
 
-    // Throw error if critical validation errors are found - this will fail the build
     if (criticalErrors.length > 0) {
       const errorMessages = criticalErrors.map(err => {
         const location = err.range ? ` at line ${err.range.start.line}` : ''
         return `${err.message}${location}`
       }).join('; ')
 
-      throw new Error(`AsyncAPI validation failed: ${errorMessages}`)
+      throw new AsyncApiValidationError(`AsyncAPI validation failed: ${errorMessages}`)
     }
 
-    // Return non-critical diagnostics to be added to notifications
     if (nonCriticalDiagnostics.length > 0) {
       return nonCriticalDiagnostics.map(diagnostic => ({
         message: diagnostic.message,
@@ -122,12 +148,10 @@ async function validateAsyncApiDocument(sourceString: string): Promise<Validatio
 
     return undefined
   } catch (error) {
-    // Re-throw validation errors to fail the build
-    if (error instanceof Error && error.message.startsWith('AsyncAPI validation failed')) {
+    if (error instanceof AsyncApiValidationError) {
       throw error
     }
 
-    // For other errors (e.g., parser crashes), also fail the build
     throw new Error(`AsyncAPI validation error: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }

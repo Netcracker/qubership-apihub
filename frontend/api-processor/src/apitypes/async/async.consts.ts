@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-import { FILE_FORMAT_JSON, FILE_FORMAT_YAML, HASH_FLAG, NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
+import {
+  FILE_FORMAT_JSON, FILE_FORMAT_YAML, HASH_FLAG, NORMALIZE_OPTIONS, ORIGINS_SYMBOL, DEPRECATED_META_KEY,
+  FIRST_REFERENCE_KEY_PROPERTY,
+} from '../../consts'
 import { NormalizeOptions } from '@netcracker/qubership-apihub-api-unifier'
 import { ResolvedVersionDocument, ZippableDocument } from '../../types'
-import { API_KIND_KEY, DEPRECATED_META_KEY } from '../../utils/apihubSpecificationExtensions'
 
 export const ASYNC_SCOPES = {
   all: 'all',
@@ -39,7 +41,6 @@ export const ASYNC_FILE_FORMAT = {
 } as const
 
 // Re-export shared constants for AsyncAPI
-export const ASYNC_KIND_KEY = API_KIND_KEY
 export { DEPRECATED_META_KEY }
 
 export function isAsyncApiDocument(document: ZippableDocument | ResolvedVersionDocument): boolean {
@@ -50,4 +51,5 @@ export const ASYNC_EFFECTIVE_NORMALIZE_OPTIONS: NormalizeOptions = {
   ...NORMALIZE_OPTIONS,
   originsFlag: ORIGINS_SYMBOL,
   hashFlag: HASH_FLAG,
+  firstReferenceKeyProperty: FIRST_REFERENCE_KEY_PROPERTY,
 }

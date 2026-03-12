@@ -14,132 +14,143 @@
  * limitations under the License.
  */
 
-import { buildAsyncApiOperation } from './async.operation'
 import { OperationsBuilder } from '../../types'
-import { createBundlingErrorHandler, createSerializedInternalDocument, isNotEmpty, removeComponents, SLUG_OPTIONS_OPERATION_ID, slugify } from '../../utils'
+import {
+  calculateAsyncOperationId,
+  createBundlingErrorHandler,
+  createSerializedInternalDocument,
+  DuplicateEntry,
+  findDuplicates,
+  isNotEmpty,
+  isObject,
+  removeComponents,
+} from '../../utils'
 import type * as TYPE from './async.types'
-import { INLINE_REFS_FLAG } from '../../consts'
+import { AsyncOperationActionType } from './async.types'
+import { FIRST_REFERENCE_KEY_PROPERTY, INLINE_REFS_FLAG } from '../../consts'
 import { asyncFunction } from '../../utils/async'
 import { logLongBuild, syncDebugPerformance } from '../../utils/logs'
 import { normalize, RefErrorType } from '@netcracker/qubership-apihub-api-unifier'
 import { ASYNC_EFFECTIVE_NORMALIZE_OPTIONS } from './async.consts'
+import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
+import { buildAsyncApiOperation } from './async.operation'
+import { getAsyncChannelId, getAsyncMessageId } from './async.utils'
 
-type OperationInfo = { channel: string; action: string }
-type DuplicateEntry = { operationId: string; operations: OperationInfo[] }
+type OperationInfo = { messageId: string; channelId: string; asyncOperationId: string }
 
-export const buildAsyncApiOperations: OperationsBuilder<TYPE.AsyncApiDocument> = async (document, ctx, debugCtx) => {
-  const documentWithoutComponents = removeComponents(document.data)
-  const bundlingErrorHandler = createBundlingErrorHandler(ctx, document.fileId)
+export const buildAsyncApiOperations: OperationsBuilder<AsyncAPIV3.AsyncAPIObject> = async (document, ctx, debugCtx) => {
+  const { data: documentData, fileId: documentFileId } = document
+  const documentWithoutComponents = removeComponents(documentData)
+  const bundlingErrorHandler = createBundlingErrorHandler(ctx, documentFileId)
 
   const { notifications, normalizedSpecFragmentsHashCache, config } = ctx
   const { effectiveDocument, refsOnlyDocument } = syncDebugPerformance('[NormalizeDocument]', () => {
-    const effectiveDocument = normalize(
-      documentWithoutComponents,
-      {
-        ...ASYNC_EFFECTIVE_NORMALIZE_OPTIONS,
-        source: document.data,
-        onRefResolveError: (message: string, _path: PropertyKey[], _ref: string, errorType: RefErrorType) =>
-          bundlingErrorHandler([{ message, errorType }]),
-      },
-    ) as TYPE.AsyncApiDocument
-    const refsOnlyDocument = normalize(
-      documentWithoutComponents,
-      {
-        mergeAllOf: false,
-        inlineRefsFlag: INLINE_REFS_FLAG,
-        source: document.data,
-      },
-    ) as TYPE.AsyncApiDocument
-    return { effectiveDocument, refsOnlyDocument }
-  },
+      const effectiveDocument = normalize(
+        documentWithoutComponents,
+        {
+          ...ASYNC_EFFECTIVE_NORMALIZE_OPTIONS,
+          source: documentData,
+          onRefResolveError: (message: string, _path: PropertyKey[], _ref: string, errorType: RefErrorType) =>
+            bundlingErrorHandler([{ message, errorType }]),
+        },
+      ) as AsyncAPIV3.AsyncAPIObject
+      const refsOnlyDocument = normalize(
+        documentWithoutComponents,
+        {
+          mergeAllOf: false,
+          firstReferenceKeyProperty: FIRST_REFERENCE_KEY_PROPERTY,
+          inlineRefsFlag: INLINE_REFS_FLAG,
+          source: documentData,
+        },
+      ) as AsyncAPIV3.AsyncAPIObject
+      return { effectiveDocument, refsOnlyDocument }
+    },
     debugCtx,
   )
 
-  const { operations: operationsObj } = effectiveDocument
+  const { operations } = effectiveDocument
 
-  const operations: TYPE.VersionAsyncOperation[] = []
-  if (!operationsObj || typeof operationsObj !== 'object') {
+  const apihubOperations: TYPE.VersionAsyncOperation[] = []
+  if (!isObject(operations)) {
     return []
   }
 
   const operationIdMap = new Map<string, OperationInfo[]>()
 
   // Iterate through all operations in AsyncAPI 3.0 document
-  for (const [operationKey, operationData] of Object.entries(operationsObj)) {
-    if (!operationData || typeof operationData !== 'object') {
+  for (const [asyncOperationId, operationData] of Object.entries(operations)) {
+    if (!isObject(operationData)) {
+      continue
+    }
+    const operationObject = operationData as AsyncAPIV3.OperationObject
+    const messages = operationData.messages as AsyncAPIV3.MessageObject[]
+
+    if (!Array.isArray(messages) || messages.length === 0) {
       continue
     }
 
-    await asyncFunction(async () => {
-      // Extract action and channel from operation
-      const action = (operationData as any).action as 'send' | 'receive'  //TODO: fix type
-      const channelRef = (operationData as any).channel
+    const action = operationObject.action as AsyncOperationActionType
+    const channel = operationObject.channel as AsyncAPIV3.ChannelObject
+    if (!action || !channel) {
+      continue
+    }
+    const channelId = getAsyncChannelId(channel)
+    for (const message of messages) {
+      const messageId = getAsyncMessageId(message)
+      const operationId = calculateAsyncOperationId(asyncOperationId, messageId)
 
-      if (!action || !channelRef) {
-        return
+      if (!operationIdMap.has(operationId)) {
+        operationIdMap.set(operationId, [])
       }
+      operationIdMap.get(operationId)!.push({ asyncOperationId, channelId, messageId})
 
-      // Extract channel name from reference (e.g., "#/channels/userSignup" -> "userSignup")
-      const channel = typeof channelRef === 'string' && channelRef.startsWith('#/channels/')
-        ? channelRef.split('/').pop() || operationKey
-        : operationKey
-
-      // TODO: Consider using operationId from spec if present (operationData.operationId)
-      const operationId = slugify(`${action}-${channel}`, SLUG_OPTIONS_OPERATION_ID)
-
-      const trackedOperations = operationIdMap.get(operationId) ?? []
-      trackedOperations.push({ channel, action })
-      operationIdMap.set(operationId, trackedOperations)
-
-      syncDebugPerformance('[Operation]', (innerDebugCtx) =>
-        logLongBuild(() => {
-          const operation = buildAsyncApiOperation(
-            operationId,
-            operationKey,
-            action,
-            channel,
-            document,
-            effectiveDocument,
-            refsOnlyDocument,
-            notifications,
-            config,
-            normalizedSpecFragmentsHashCache,
-            innerDebugCtx,
-          )
-          operations.push(operation)
-        },
-          `${config.packageId}/${config.version} ${operationId}`,
-        ), debugCtx, [operationId])
-    })
+      await asyncFunction(() => {
+        syncDebugPerformance('[Operation]', (innerDebugCtx) =>
+          logLongBuild(() => {
+              const builtOperation = buildAsyncApiOperation(
+                operationId,
+                messageId,
+                channelId,
+                asyncOperationId,
+                action,
+                channel,
+                message,
+                document,
+                effectiveDocument,
+                refsOnlyDocument,
+                notifications,
+                config,
+                normalizedSpecFragmentsHashCache,
+                innerDebugCtx,
+              )
+              apihubOperations.push(builtOperation)
+            },
+            `${config.packageId}/${config.version} ${operationId}`,
+          ), debugCtx, [operationId])
+      })
+    }
   }
 
   const duplicates = findDuplicates(operationIdMap)
   if (isNotEmpty(duplicates)) {
-    throw createDuplicatesError(document.fileId, duplicates)
+    throw createDuplicatesError(documentFileId, duplicates)
   }
 
-  if (operations.length) {
+  if (apihubOperations.length) {
     createSerializedInternalDocument(document, effectiveDocument, ASYNC_EFFECTIVE_NORMALIZE_OPTIONS)
   }
 
-  return operations
+  return apihubOperations
 }
 
-function findDuplicates(operationIdMap: Map<string, OperationInfo[]>): DuplicateEntry[] {
-  return Array.from(operationIdMap.entries())
-    .filter(([, operations]) => operations.length > 1)
-    .map(([operationId, operations]) => ({ operationId, operations }))
-}
-
-function createDuplicatesError(fileId: string, duplicates: DuplicateEntry[]): Error {
+function createDuplicatesError(fileId: string, duplicates: DuplicateEntry<OperationInfo>[]): Error {
   const duplicatesList = duplicates
     .map(({ operationId, operations }) => {
       const operationsList = operations
-        .map((operation: OperationInfo) => `${operation.action.toUpperCase()} ${operation.channel}`)
+        .map((operation: OperationInfo) => `${operation.channelId} ${operation.asyncOperationId} ${operation.messageId}`)
         .join(', ')
       return `- operationId '${operationId}': Found ${operations.length} operations: ${operationsList}`
     })
     .join('\n')
   return new Error(`Duplicated operationIds found within document '${fileId}':\n${duplicatesList}`)
 }
-
