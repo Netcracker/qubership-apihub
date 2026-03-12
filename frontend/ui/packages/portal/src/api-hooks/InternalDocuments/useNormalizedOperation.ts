@@ -1,6 +1,6 @@
 import type { VersionKey } from '@apihub/entities/keys'
 import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@apihub/utils/internal-documents/constants'
-import { isGraphApiSpecification, isOpenApiSpecification } from '@apihub/utils/internal-documents/type-guards'
+import { isAsyncApiSpecification, isGraphApiSpecification, isOpenApiSpecification } from '@apihub/utils/internal-documents/type-guards'
 import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
 import { calculateNormalizedRestOperationId, removeComponents } from '@netcracker/qubership-apihub-api-processor'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
@@ -85,6 +85,9 @@ export function useNormalizedOperation(options: Options): QueryResultWithNoInter
       }
       // GraphQL operations should be returned as is, because truncating is on ADV layer
       if (isGraphApiSpecification(deserializedInternalDocument)) {
+        return deserializedInternalDocument
+      }
+      if (isAsyncApiSpecification(deserializedInternalDocument)) {
         return deserializedInternalDocument
       }
       // Handle unrecognized operations

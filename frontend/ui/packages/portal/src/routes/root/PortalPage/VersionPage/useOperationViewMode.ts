@@ -45,7 +45,7 @@ export function useOperationViewMode(defaultValue: OperationViewMode = DOC_OPERA
   const navigate = useNavigate()
 
   const setModeValue = useCallback((value: Key) => {
-    const isDefaultValue = value === DOC_OPERATION_VIEW_MODE
+    const isDefaultValue = value === defaultValue
     const mode = isDefaultValue ? '' : (value ?? '')
     if (isDefaultValue) {
       searchParams.delete(MODE_SEARCH_PARAM)
@@ -56,7 +56,7 @@ export function useOperationViewMode(defaultValue: OperationViewMode = DOC_OPERA
       search: `${searchParams}`,
       hash: hashParam,
     }, { replace: true })
-  }, [hashParam, navigate, searchParams])
+  }, [defaultValue, hashParam, navigate, searchParams])
 
   useEffect(() => {
     if (!modeValueFromUrl) {

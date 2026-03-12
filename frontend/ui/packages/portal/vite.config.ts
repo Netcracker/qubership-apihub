@@ -12,7 +12,8 @@ import inject from '@rollup/plugin-inject'
 import monacoWorkerHashPlugin from '../../vite-monaco-worker-hash'
 import createVersionJsonFilePlugin from '../../vite-create-version-json'
 
-const proxyServer = 'https://qubership-apihub-2.localtest.me/'
+// const proxyServer = 'https://qubership-apihub-2.localtest.me/'
+const proxyServer = 'http://host.docker.internal:8081'
 const apiLinterProxyServer = 'http://host.docker.internal:8091'
 const devServer = 'http://localhost:3003'
 

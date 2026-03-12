@@ -22,16 +22,15 @@ import {
 } from '@netcracker/qubership-apihub-api-processor'
 import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstack/react-query'
 import type { IsLoading } from '../utils/aliases'
-import { isObject } from '../utils/objects'
 import type { ApiType } from './api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from './api-types'
+import { API_TYPE_REST } from './api-types'
+import type { AsyncApiOperationType } from './asyncapi-operation-types'
 import type { GraphQlOperationType } from './graphql-operation-types'
 import type { Key, VersionKey } from './keys'
 import type { MethodType } from './method-types'
 import type { PackageKind } from './packages'
 import type { OperationChangeBase } from './version-changelog'
 import type { VersionStatus } from './version-status'
-import type { AsyncApiOperationType } from './asyncapi-operation-types'
 
 export const DEFAULT_API_TYPE: ApiType = API_TYPE_REST
 
@@ -70,6 +69,8 @@ export type AsyncApiOperationDto = OperationMetadataDto & Readonly<{
   action: AsyncApiOperationType
   channel: string
   protocol: string
+  asyncOperationId: Key
+  messageId: Key
 }>
 
 export type DeprecatedItem = DeprecateItem
@@ -148,6 +149,8 @@ export interface AsyncApiOperation extends Operation {
   readonly action: AsyncApiOperationType
   readonly channel: string
   readonly protocol: string
+  readonly asyncOperationId: Key
+  readonly messageId: Key
 }
 
 export interface OperationData extends Operation {
@@ -291,28 +294,36 @@ export function isRestOperationDto(operation: OperationDto): operation is RestOp
   return asRestOperation.path !== undefined
 }
 
-export function isGraphQlOperation(operation: Operation): operation is GraphQlOperation {
+export function isGraphQlOperation(operation: Operation | undefined): operation is GraphQlOperation {
+  if (!operation) {
+    return false
+  }
   const asGraphQlOperation = (operation as GraphQlOperation)
   return asGraphQlOperation.type !== undefined
 }
 
-export function isGraphQlOperationDto(operation: OperationDto): operation is GraphQlOperationDto {
+export function isGraphQlOperationDto(operation: OperationDto | undefined): operation is GraphQlOperationDto {
+  if (!operation) {
+    return false
+  }
   const asGraphQlOperation = (operation as GraphQlOperationDto)
   return asGraphQlOperation.type !== undefined
 }
 
-export function isAsyncApiOperation(operation: Operation): operation is AsyncApiOperation {
+export function isAsyncApiOperation(operation: Operation | undefined): operation is AsyncApiOperation {
+  if (!operation) {
+    return false
+  }
   const asAsyncApiOperation = (operation as AsyncApiOperation)
   return asAsyncApiOperation.action !== undefined && asAsyncApiOperation.channel !== undefined
 }
 
-export function isAsyncApiOperationDto(operation: OperationDto): operation is AsyncApiOperationDto {
+export function isAsyncApiOperationDto(operation: OperationDto | undefined): operation is AsyncApiOperationDto {
+  if (!operation) {
+    return false
+  }
   const asAsyncApiOperation = (operation as AsyncApiOperationDto)
   return asAsyncApiOperation.action !== undefined && asAsyncApiOperation.channel !== undefined
-}
-
-export function checkIfGraphQLOperation(maybeOperation: unknown): maybeOperation is GraphQlOperation {
-  return !!maybeOperation && isObject(maybeOperation) && 'apiType' in maybeOperation && maybeOperation.apiType === API_TYPE_GRAPHQL
 }
 
 export function isOperation(value: unknown): value is Operation {

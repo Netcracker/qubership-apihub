@@ -32,8 +32,9 @@ import {
   OPERATION_PREVIEW_VIEW_MODES_BY_API_TYPE,
 } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import {
-  checkIfGraphQLOperation,
   DEFAULT_API_TYPE,
+  isAsyncApiOperation,
+  isGraphQlOperation,
   type OperationData,
 } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { SchemaViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
@@ -76,10 +77,19 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
   } = props
 
   const [operationType, operationName] = useMemo(() => {
-    if (!checkIfGraphQLOperation(changedOperation)) {
-      return [undefined, undefined]
+    if (isGraphQlOperation(changedOperation)) {
+      return [changedOperation.type, changedOperation.method]
     }
-    return [changedOperation.type, changedOperation.method]
+    if (isAsyncApiOperation(changedOperation)) {
+      return [changedOperation.action, changedOperation.asyncOperationId]
+    }
+    return [undefined, undefined]
+  }, [changedOperation])
+  const [messageId] = useMemo(() => {
+    if (isAsyncApiOperation(changedOperation)) {
+      return [changedOperation.messageId]
+    }
+    return [undefined]
   }, [changedOperation])
 
   const isDocViewMode = useIsDocOperationViewMode(mode)
@@ -154,7 +164,10 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
               mergedDocument={normalizedChangedOperation}
               // GraphQL specific
               operationType={operationType}
+              // GraphQL, AsyncAPI specific
               operationName={operationName}
+              // AsyncAPI specific
+              messageId={messageId}
             />
           </Placeholder>
         )}

@@ -37,7 +37,7 @@ import { API_TYPE_TITLE_MAP, API_TYPES } from '@netcracker/qubership-apihub-ui-s
 import { CHANGE_SEVERITIES } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import {
-  DEFAULT_OPERATION_PREVIEW_VIEW_MODE_BY_API_TYPE,
+  DEFAULT_VIEW_MODE_MAP_BY_API_TYPE,
   OPERATION_COMPARE_VIEW_MODES,
   RAW_OPERATION_VIEW_MODE,
 } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
@@ -121,7 +121,8 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
   const isOperationsComparison = [COMPARE_SAME_OPERATIONS_MODE, COMPARE_DIFFERENT_OPERATIONS_MODE].includes(compareToolbarMode)
   const isPackagesComparison = compareToolbarMode === COMPARE_PACKAGES_MODE
 
-  const { mode } = useOperationViewMode()
+  const defaultViewMode = DEFAULT_VIEW_MODE_MAP_BY_API_TYPE[apiType as ApiType](isOperationsComparison)
+  const { mode } = useOperationViewMode(defaultViewMode)
 
   const isDashboardsComparison = compareToolbarMode === COMPARE_DASHBOARDS_MODE
   const changesSummary = useChangesSummaryFromContext()
@@ -189,7 +190,7 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
                 />
               )}
               <OperationViewModeSelector
-                defaultValue={DEFAULT_OPERATION_PREVIEW_VIEW_MODE_BY_API_TYPE.get(apiType)!}
+                defaultValue={defaultViewMode}
                 modes={OPERATION_COMPARE_VIEW_MODES.get(apiType)!}
               />
             </>
