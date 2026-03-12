@@ -3,28 +3,29 @@ import { CrawlRules } from '@netcracker/qubership-apihub-json-crawl'
 import type { JsonSchemaCrawlRule, JsonSchemaNodeKind } from './tree/types'
 import { isNumber } from '../utils'
 import { jsonSchemaTransformers } from './transformers'
+import { jsonSchemaNodeKind } from './constants'
 
-export const jsonSchemaCrawlRules = (kind: JsonSchemaNodeKind = 'root'): CrawlRules<JsonSchemaCrawlRule> => ({
+export const jsonSchemaCrawlRules = (kind: JsonSchemaNodeKind = jsonSchemaNodeKind.root): CrawlRules<JsonSchemaCrawlRule> => ({
   '/allOf': {
-    '/*': () => jsonSchemaCrawlRules('allOf'),
+    '/*': () => jsonSchemaCrawlRules(jsonSchemaNodeKind.allOf),
   },
   '/oneOf': {
-    '/*': () => jsonSchemaCrawlRules('oneOf'),
+    '/*': () => jsonSchemaCrawlRules(jsonSchemaNodeKind.oneOf),
   },
   '/anyOf': {
-    '/*': () => jsonSchemaCrawlRules('anyOf'),
+    '/*': () => jsonSchemaCrawlRules(jsonSchemaNodeKind.anyOf),
   },
   '/properties': {
-    '/*': () => jsonSchemaCrawlRules('property'),
+    '/*': () => jsonSchemaCrawlRules(jsonSchemaNodeKind.property),
   },
   '/items': () => ({
-    ...jsonSchemaCrawlRules('items'),
-    '/*': ({ key }) => isNumber(key) ? jsonSchemaCrawlRules('item') : {},
+    ...jsonSchemaCrawlRules(jsonSchemaNodeKind.items),
+    '/*': ({ key }) => isNumber(key) ? jsonSchemaCrawlRules(jsonSchemaNodeKind.item) : {},
   }),
-  '/additionalProperties': () => jsonSchemaCrawlRules('additionalProperties'),
-  '/additionalItems': () => jsonSchemaCrawlRules('additionalItems'),
+  '/additionalProperties': () => jsonSchemaCrawlRules(jsonSchemaNodeKind.additionalProperties),
+  '/additionalItems': () => jsonSchemaCrawlRules(jsonSchemaNodeKind.additionalItems),
   '/patternProperties': {
-    '/*': () => jsonSchemaCrawlRules('patternProperty'),
+    '/*': () => jsonSchemaCrawlRules(jsonSchemaNodeKind.patternProperty),
   },
   kind,
   transformers: jsonSchemaTransformers,

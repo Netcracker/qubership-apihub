@@ -39,8 +39,10 @@ import {
 
 // TODO 01.12.23 // Is there the same function in "allof-merge" lib?
 
-export function buildNodeTitleData(options: JsonNodeTitleDataOptions | GraphNodeTitleDataOptions): NodeTitleData {
-  const { node, nodeValue, nodeMeta, titleMappings } = options
+export function buildNodeTitleData(
+  options: JsonNodeTitleDataOptions | GraphNodeTitleDataOptions
+): NodeTitleData {
+  const { node, nodeValue, nodeMeta, titleMappings, customizationOptions = {} } = options
 
   if (!node) {
     return {}
@@ -75,7 +77,7 @@ export function buildNodeTitleData(options: JsonNodeTitleDataOptions | GraphNode
   }
 
   if (root) {
-    data.title = 'Type: '
+    data.title = customizationOptions.headerRowTitle || 'Type: '
   } else if (additionalProperty) {
     if (typeof nodeValue === 'boolean') {
       data.title = 'no additional properties'

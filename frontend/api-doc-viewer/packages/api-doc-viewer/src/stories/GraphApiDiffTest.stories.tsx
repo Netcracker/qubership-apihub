@@ -24,7 +24,7 @@ import { buildGraphApi, graphapi } from './utils/helpers'
 // It's necessary because storybook doesn't render nested stories without this empty story
 // eslint-disable-next-line storybook/story-exports
 const meta = {
-  title: 'Graph Api Diff Viewer',
+  title: 'GraphQL Operation Diff Viewer/Test Stories',
   component: GraphQLOperationDiffViewer,
   parameters: {},
   argTypes: {},

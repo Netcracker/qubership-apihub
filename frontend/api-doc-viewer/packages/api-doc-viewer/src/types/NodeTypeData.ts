@@ -23,6 +23,7 @@ import {
   JsonSchemaDiffTreeNode,
 } from '@netcracker/qubership-apihub-api-data-model'
 import { GraphPropNodePropsWithState, JsonPropNodePropsWithState } from './internal/PropsWithState'
+import { CustomizationOptions } from '@apihub/contexts/CustomizationOptionsContext'
 
 export type NodeTypeData = Partial<{
   brokenRef: string
@@ -35,6 +36,7 @@ export type NodeTypeData = Partial<{
 export type NodeTypeDataOptions<S, N, V> = Partial<S> & {
   node: N | null
   nodeValue?: V | null
+  customizationOptions?: CustomizationOptions
 }
 
 export type JsonNodeTypeDataOptions = NodeTypeDataOptions<

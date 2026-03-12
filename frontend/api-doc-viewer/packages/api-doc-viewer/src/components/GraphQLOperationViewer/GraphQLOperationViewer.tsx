@@ -147,7 +147,7 @@ const GraphQLOperationViewerInner: FC<GraphQLOperationViewerProps> = (props) => 
     displayMode = DETAILED_DISPLAY_MODE,
   } = props
 
-  console.debug('GraphAPI Schema:', source)
+  // console.debug('GraphAPI Schema:', source)
 
   const tree: ModelTree<GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta> = useMemo(
     () => createGraphApiTree(
@@ -159,7 +159,7 @@ const GraphQLOperationViewerInner: FC<GraphQLOperationViewerProps> = (props) => 
     [operationType, operationName, source]
   )
 
-  console.debug('Tree Model:', tree)
+  // console.debug('Tree Model:', tree)
 
   // TODO 27.12.23 // Diff State!
   const state = useMemo(
@@ -167,7 +167,7 @@ const GraphQLOperationViewerInner: FC<GraphQLOperationViewerProps> = (props) => 
     [expandedDepth, tree]
   )
 
-  console.debug('State Model:', state)
+  // console.debug('State Model:', state)
   // console.debug('GraphAPI Schema (string):', customStringifyCyclicJso(source))
   // console.debug('Tree model (string):', customStringifyCyclicJso(tree))
   // console.debug('State model (string):', customStringifyCyclicJso(state))

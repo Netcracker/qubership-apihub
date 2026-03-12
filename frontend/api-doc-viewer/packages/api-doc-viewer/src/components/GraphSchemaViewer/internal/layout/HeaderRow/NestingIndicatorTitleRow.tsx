@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { LevelIndicator } from '@apihub/components/AsyncApiOperationViewer/LevelIndicator'
 import { DiffNodeMeta, DiffNodeValue, isDiff } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import type { FC, PropsWithChildren } from 'react'
@@ -36,7 +37,6 @@ import {
 import { isDefined } from '../../../../../utils/common/checkers'
 import { EmptyContent } from '../../../../common/diffs/EmptyContent'
 import { UnsupportedContent } from '../../../../common/diffs/UnsupportedContent'
-import { NestingIndicator } from '../../../../common/NestingIndicator'
 import { NodeTypeProps } from '../../../../common/NodeType'
 import { UxDiffFloatingBadge } from '../../../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 
@@ -248,7 +248,7 @@ const Content: FC<NestingIndicatorTitleRowContentProps> = (props) => {
 
   return (
     <div className={`flex flex-row ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
-      <NestingIndicator level={level} lastInvisible={true}/>
+      <LevelIndicator level={level} lastInvisible={true}/>
       <div className="text-xs text-slate-400 border-b border-slate-400 w-max pt-1"
            style={{ marginLeft: '-1px' }}
       >

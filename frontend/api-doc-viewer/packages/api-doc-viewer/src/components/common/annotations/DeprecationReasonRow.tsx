@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+import { LevelIndicator } from "@apihub/components/AsyncApiOperationViewer/LevelIndicator"
 import { isDiff, isObject } from "@netcracker/qubership-apihub-api-data-model"
 import { Diff, DiffAction, DiffMetaRecord } from "@netcracker/qubership-apihub-api-diff"
+import { GRAPH_API_DIRECTIVE_DEPRECATED_DEFAULT_REASON } from "@netcracker/qubership-apihub-graphapi"
 import type { FC } from 'react'
 import { DEFAULT_STRIKETHROUGH_VALUE_CLASS, NODE_DIFF_COLOR_MAP } from '../../../consts/changes'
 import {
@@ -43,8 +45,6 @@ import {
 import { UxDiffFloatingBadge } from '../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 import { EmptyContent } from '../diffs/EmptyContent'
 import { UnsupportedContent } from '../diffs/UnsupportedContent'
-import { NestingIndicator } from '../NestingIndicator'
-import { GRAPH_API_DIRECTIVE_DEPRECATED_DEFAULT_REASON } from "@netcracker/qubership-apihub-graphapi"
 
 export type DeprecationReasonRowProps = PropsWithoutChangesSummary<
   PropsWithShift &
@@ -95,8 +95,8 @@ export const DeprecationReasonRow: FC<DeprecationReasonRowProps> = (props) => {
     // FIXME 28.11.23 // Fix this component when it's clear how $changes for deprecation reason are provided not in enum
 
     return (
-      <div className={`flex flex-row gap-5 ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
-        <NestingIndicator level={level} />
+      <div className={`flex flex-row gap-6 ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
+        <LevelIndicator level={level} />
         <div className="inline-block py-1">
           <Value
             value={value}

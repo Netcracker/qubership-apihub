@@ -64,13 +64,13 @@ import {
 } from '../../utils/common/changes'
 import { isDefined } from '../../utils/common/checkers'
 import { handleSeriesItem, isSeriesItemEmpty, stringifyItem } from '../../utils/common/rows'
+import { LevelIndicator } from '../AsyncApiOperationViewer/LevelIndicator'
 import { COLOR_SCHEMAS } from '../kit/ux/consts'
 import { BADGE_KIND_DEFAULT } from '../kit/ux/types'
 import { UxBadge } from '../kit/ux/UxBadge'
 import { UxDiffFloatingBadge } from '../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 import { EmptyContent } from './diffs/EmptyContent'
 import { UnsupportedContent } from './diffs/UnsupportedContent'
-import { NestingIndicator } from './NestingIndicator'
 
 export type AdditionalInfoObjectRowProps = PropsWithoutChangesSummary<
   PropsWithShift &
@@ -134,8 +134,8 @@ export const AdditionalInfoObjectRow: FC<AdditionalInfoObjectRowProps> = (props)
     const { originSide, changedSide } = getLayoutSideFlags(layoutSide)
 
     return (
-      <div className={`flex flex-row gap-5 ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
-        <NestingIndicator level={level}/>
+      <div className={`flex flex-row gap-6 ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
+        <LevelIndicator level={level} />
         <div className="flex flex-row flex-wrap items-start gap-2 py-1">
           <div className="inline text-xs font-normal text-slate-500">
             {title}:
@@ -243,7 +243,7 @@ export const AdditionalInfoObjectRow: FC<AdditionalInfoObjectRowProps> = (props)
   if (isDocumentLayoutMode) {
     return (
       <div className="flex flex-row">
-        <Content layoutSide={CHANGED_LAYOUT_SIDE}/>
+        <Content layoutSide={CHANGED_LAYOUT_SIDE} />
       </div>
     )
   }
@@ -252,15 +252,15 @@ export const AdditionalInfoObjectRow: FC<AdditionalInfoObjectRowProps> = (props)
     if (!isNodeChanged && !isRowChanged) {
       return (
         <div className="flex flex-row">
-          <Content layoutSide={ORIGIN_LAYOUT_SIDE}/>
+          <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
         </div>
       )
     }
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause}/>}
-        <Content layoutSide={ORIGIN_LAYOUT_SIDE}/>
+        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
+        <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
     )
   }
@@ -269,26 +269,26 @@ export const AdditionalInfoObjectRow: FC<AdditionalInfoObjectRowProps> = (props)
     if (!isNodeChanged && !isRowChanged) {
       return (
         <div className="flex flex-row">
-          <Content layoutSide={ORIGIN_LAYOUT_SIDE}/>
-          <Content layoutSide={CHANGED_LAYOUT_SIDE}/>
+          <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
+          <Content layoutSide={CHANGED_LAYOUT_SIDE} />
         </div>
       )
     }
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause}/>}
+        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         {(isNodeChanged || isRowChanged) && (nodeRemoved || nodeReplaced)
-          ? <Content layoutSide={ORIGIN_LAYOUT_SIDE}/>
-          : <EmptyContent level={$nodeChange?.depth ?? level}/>}
+          ? <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
+          : <EmptyContent level={$nodeChange?.depth ?? level} />}
         {(isNodeChanged || isRowChanged) && (nodeAdded || nodeReplaced)
-          ? <Content layoutSide={CHANGED_LAYOUT_SIDE}/>
-          : <EmptyContent level={$nodeChange?.depth ?? level}/>}
+          ? <Content layoutSide={CHANGED_LAYOUT_SIDE} />
+          : <EmptyContent level={$nodeChange?.depth ?? level} />}
       </div>
     )
   }
 
-  return <UnsupportedContent layoutMode={layoutMode}/>
+  return <UnsupportedContent layoutMode={layoutMode} />
 }
 
 function checkRowChanged($changes: DiffRecord | undefined, $keys: string[]): boolean {

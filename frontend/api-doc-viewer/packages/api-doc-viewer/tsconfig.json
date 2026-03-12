@@ -28,6 +28,18 @@
       ],
       "@netcracker/qubership-apihub-api-data-model": [
         "./../api-data-model/src"
+      ],
+      "@netcracker/qubership-apihub-next-data-model": [
+        "./../next-data-model/src"
+      ],
+      "@netcracker/qubership-apihub-next-data-model/*": [
+        "./../next-data-model/src/*"
+      ],
+      "@apihub/next-data-model": [
+        "./../next-data-model/src"
+      ],
+      "@apihub/next-data-model/*": [
+        "./../next-data-model/src/*"
       ]
     }
   },

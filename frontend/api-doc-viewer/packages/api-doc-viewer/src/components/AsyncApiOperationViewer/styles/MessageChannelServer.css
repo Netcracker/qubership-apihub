@@ -1,0 +1,23 @@
+.message-channel-server-node {
+  width: 600px;
+  min-width: 600px;
+  max-width: 600px;
+}
+
+.message-channel-server-node .server-element {
+  font-family: 'Inter Variable';
+  font-size: 13px;
+  color: black;
+  text-wrap: wrap;
+  word-break: break-all;
+  word-wrap: break-word;
+}
+
+.message-channel-server-node .server-element.server-subheader {
+  background-color: rgb(243, 243, 245);
+  padding: 4px 8px;
+  border-radius: 4px;
+  width: max-content;
+  min-width: 10px;
+  max-width: 600px;
+}

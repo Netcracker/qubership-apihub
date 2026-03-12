@@ -17,9 +17,9 @@
 import { isDiff, isObject } from '@netcracker/qubership-apihub-api-data-model'
 import { DiffAction, DiffType } from '@netcracker/qubership-apihub-api-diff'
 import type { FC } from 'react'
-import { useCallback/*, useState */ } from 'react'
+import { useCallback /*, useState */ } from 'react'
 import { NODE_DIFF_COLOR_MAP } from '../../../../consts/changes'
-import { DEFAULT_LAYOUT_MODE, DEFAULT_ROW_PADDING_LEFT } from '../../../../consts/configuration'
+import { DEFAULT_LAYOUT_MODE, DEFAULT_ROW_PADDING_LEFT, SHIFTED_ROW_PADDING_LEFT } from '../../../../consts/configuration'
 // import {
 //   COLLAPSE_ALL_MENU_ITEM,
 //   EXPAND_ALL_MENU_ITEM,
@@ -47,7 +47,6 @@ import {
   toChangesList
 } from '../../../../utils/common/changes'
 // import { defaultOnContextMenu } from '../../../../utils/common/event-handlers'
-import { NestingIndicator } from '../../../common/NestingIndicator'
 import { NodeTitle } from '../../../common/NodeTitle'
 import { NodeType } from '../../../common/NodeType'
 import { DiffBadge } from '../../../common/diffs/DiffBadge'
@@ -58,6 +57,7 @@ import { Expander } from '../../../common/layout/Expander/Expander'
 import { CircularRefIcon } from '../../../kit/icons/CircularRefIcon'
 // import { UxContextMenu } from '../../../kit/ux/UxContextMenu/UxContextMenu'
 // import { ToggleContextMenuHandlerOptions } from '../../../kit/ux/UxContextMenu/types/ToggleContextMenuHandler'
+import { LevelIndicator } from '@apihub/components/AsyncApiOperationViewer/LevelIndicator'
 import { UxDiffFloatingBadge } from '../../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 import { UxMarkerPanel } from '../../../kit/ux/UxMarkerPanel/UxMarkerPanel'
 import { UxTooltip } from '../../../kit/ux/UxTooltip/UxTooltip'
@@ -175,7 +175,7 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
 
     const SubHeader: FC = () => <>
       {nodeTypeData && (
-        <div className="text-xs font-normal text-slate-500">
+        <div className='text-xs font-normal text-slate-500'>
           <NodeType
             {...nodeTypeData}
             showNullable={true}
@@ -226,39 +226,41 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
     </>
 
     return (
-      <div className={`flex flex-col ${DEFAULT_ROW_PADDING_LEFT} ${width}`}>
-        <div className="flex flex-row relative">
-          <NestingIndicator level={level} />
-          <Expander
-            isRoot={isRoot}
-            isExpandable={isExpandable}
-            expanded={expanded}
-            onToggleExpander={onToggleExpander}
-            // onToggleContextMenu={onToggleContextMenu}
-          />
-          <div className="flex flex-row items-center gap-2 pt-2 pb-1">
-            <div
-              className={`text-xs text-black font-Inter-Medium ${isExpandable ? 'hover:cursor-pointer' : ''}`}
-              onClick={isExpandable ? onToggleExpander : undefined}
-              // onContextMenu={defaultOnContextMenu(isExpandable, onToggleContextMenu)}
-            >
-              <NodeTitle
-                {...nodeTitleData}
-                showRequired={true} // to BWC with GraphQL
-                // diffs
-                layoutMode={layoutMode}
-                layoutSide={layoutSide}
-                requiredChange={$metaChanges?.required}
-                titleChange={$nodeChange}
-              />
-            </div>
-            {!noSubHeader && <SubHeader />}
-            {/* <UxContextMenu
+      <div className={`flex flex-row gap-2 ${isRoot && !isExpandable ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
+        {(!isRoot || isExpandable) && (
+          <div className="flex flex-row relative">
+            <LevelIndicator level={level} />
+            <Expander
+              isRoot={isRoot}
+              isExpandable={isExpandable}
+              expanded={expanded}
+              onToggleExpander={onToggleExpander}
+              // onToggleContextMenu={onToggleContextMenu}
+            />
+          </div>
+        )}
+        <div className="flex flex-row items-center gap-2 pt-2 pb-1">
+          <div
+            className={`text-xs text-black font-Inter-Medium ${isExpandable ? 'hover:cursor-pointer' : ''}`}
+            onClick={isExpandable ? onToggleExpander : undefined}
+          // onContextMenu={defaultOnContextMenu(isExpandable, onToggleContextMenu)}
+          >
+            <NodeTitle
+              {...nodeTitleData}
+              showRequired={true} // to BWC with GraphQL
+              // diffs
+              layoutMode={layoutMode}
+              layoutSide={layoutSide}
+              requiredChange={$metaChanges?.required}
+              titleChange={$nodeChange}
+            />
+          </div>
+          {!noSubHeader && <SubHeader />}
+          {/* <UxContextMenu
               visible={contextMenuOpen}
               onClickAway={() => onToggleContextMenu({ open: false })}
               menuItems={contextMenuItems}
             /> */}
-          </div>
         </div>
       </div>
     )

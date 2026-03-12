@@ -61,8 +61,8 @@ export type IJsonSchemaBaseType = {
   readonly enum?: any[]
   // const: value => enum: [value]
   readonly default?: any
-  // x-extensionName, used for OpenAPI mostly
-  readonly [extensionKey: OpenApiExtensionKey]: unknown
+  // list of extensions, used for OpenAPI mostly, like: [{ 'x-example': 'example' }, { 'x-description': 'description' }]
+  readonly extensions?: Array<{ [K in OpenApiExtensionKey]: unknown }>
 }
 
 export interface IJsonSchemaAnyType extends IJsonSchemaBaseType {

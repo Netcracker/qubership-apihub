@@ -22,6 +22,7 @@ import {
 } from '@netcracker/qubership-apihub-api-diff'
 import { denormalize, normalize, NormalizeOptions, RefErrorType, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier'
 import { ObjectUtils } from '../utils/common/objects'
+import { TEST_REFERENCE_NAME_PROPERTY } from './async-api-suite/shared-test-data'
 
 const syntheticTitleFlag = Symbol('syntheticTitle')
 
@@ -411,4 +412,38 @@ export function generateSyntheticObjectPropsFromArray(...arr: Record<PropertyKey
     object[`prop${i}`] = arr[i]
   }
   return object
+}
+
+// Async API 3.0
+
+type AsyncApiDocumentOptions = {
+  source: unknown
+  circular?: boolean
+  referenceNamePropertyKey?: symbol
+  storyName?: string
+}
+
+export function prepareAsyncApiDocument(options: AsyncApiDocumentOptions): unknown {
+  const { source, circular = false, referenceNamePropertyKey = TEST_REFERENCE_NAME_PROPERTY, storyName } = options
+  storyName && console.debug(`[AsyncAPI] STORY: ${storyName}`)
+  storyName && console.debug('[AsyncAPI] Raw source:', source)
+  const normalizedSchema = normalize(source, {
+    syntheticTitleFlag: syntheticTitleFlag,
+    firstReferenceKeyProperty: referenceNamePropertyKey,
+    unify: true,
+    validate: true,
+    liftCombiners: true,
+  })
+  storyName && console.debug('[AsyncAPI] Normalized schema:', normalizedSchema)
+  const mergedSchema = denormalize(normalizedSchema, {
+    syntheticTitleFlag: syntheticTitleFlag,
+    unify: true,
+    validate: true,
+    liftCombiners: true,
+  })
+  storyName && console.debug('[AsyncAPI] Merged schema:', mergedSchema)
+  if (circular && isObject(mergedSchema)) {
+    mergedSchema.toJSON = () => stringifyCyclicJso(mergedSchema)
+  }
+  return mergedSchema
 }

@@ -24,7 +24,7 @@ import {
   JsonSchemaDiffNodeValue,
 } from '@netcracker/qubership-apihub-api-data-model'
 import type { FC } from 'react'
-import { DEFAULT_VALUE_LABEL, EXAMPLES_LABEL, PROVIDED_VALUE_LABEL } from '../../../consts/validations'
+import { DEFAULT_VALUE_LABEL, EXAMPLES_LABEL, LOCATION_LABEL, PROVIDED_VALUE_LABEL } from '../../../consts/validations'
 import { useLayoutMode } from '../../../contexts/LayoutModeContext'
 import { useLevelContext } from '../../../contexts/LevelContext'
 import { PropsWithChanges } from '../../../types/internal/PropsWithChanges'
@@ -32,12 +32,12 @@ import { PropsWithShift } from '../../../types/internal/PropsWithShift'
 import { AnyNodePropsWithState } from '../../../types/internal/PropsWithState'
 import { PropsWithoutChangesSummary } from "../../../types/PropsWithoutChangesSummary"
 import { ArrayUtils } from '../../../utils/common/arrays'
+import { takeNodeChangeIfWholeNodeChanged } from '../../../utils/common/changes'
 import { isDefined } from '../../../utils/common/checkers'
 import { AdditionalInfoArrayRow } from '../AdditionalInfoArrayRow'
 import { AdditionalInfoObjectRow } from '../AdditionalInfoObjectRow'
 import { DeprecationReasonRow } from './DeprecationReasonRow'
 import { DescriptionRow } from './Description/DescriptionRow'
-import { takeNodeChangeIfWholeNodeChanged } from '../../../utils/common/changes'
 
 export type AnnotationsProps = PropsWithoutChangesSummary<
   PropsWithShift &
@@ -49,6 +49,7 @@ const ChangesKeys = {
   default: ['default'],
   value: ['value'],
   examples: ['examples'],
+  location: ['location'], // AsyncAPI Channel Parameters only
 }
 
 export const Annotations: FC<AnnotationsProps> = (props) => {
@@ -76,6 +77,10 @@ export const Annotations: FC<AnnotationsProps> = (props) => {
   const providedValue = (nodeValue as IGraphSchemaBaseType<GraphSchemaNodeType>)?.value
   // Examples
   const examples = (nodeValue as IJsonSchemaBaseType)?.examples as unknown[]
+
+  // Location (AsyncAPI Channel Parameters only)
+  const locationCandidate = (nodeValue as Record<string, unknown> | undefined)?.location
+  const location = typeof locationCandidate === 'string' ? locationCandidate : undefined
 
   const $appliedNodeChange = takeNodeChangeIfWholeNodeChanged($nodeChange ?? $nodeMeta?.$nodeChange)
 
@@ -135,6 +140,20 @@ export const Annotations: FC<AnnotationsProps> = (props) => {
           $changesKey={ChangesKeys.examples[0]}
           title={EXAMPLES_LABEL}
           items={examples}
+          layoutMode={layoutMode}
+          level={level}
+          $nodeChange={$appliedNodeChange}
+          $changes={$nodeValue?.$changes}
+        />
+      )}
+      {location && (
+        <AdditionalInfoObjectRow
+          shift={shift}
+          $changesKeys={ChangesKeys.location}
+          title={LOCATION_LABEL}
+          items={{
+            location: `${location}`
+          }}
           layoutMode={layoutMode}
           level={level}
           $nodeChange={$appliedNodeChange}
