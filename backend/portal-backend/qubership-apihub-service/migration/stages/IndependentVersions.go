@@ -98,9 +98,9 @@ func makeIndependentVersionsQuery(packageIds []string, versionsIn []string, isLa
 		getLatestIndependentVersionsQuery += whereVersionIn
 	}
 
-	notExistsFilter := ""
+	alreadyCreatedBuildsFilter := ""
 	if isRestart {
-		notExistsFilter = fmt.Sprintf(`
+		alreadyCreatedBuildsFilter = fmt.Sprintf(`
 		and not exists(
 			select 1 from build b
 			where (string_to_array(b.version, '@'))[1] = pv.version
@@ -127,6 +127,6 @@ func makeIndependentVersionsQuery(packageIds []string, versionsIn []string, isLa
 		pv.previous_version is null and pkg.deleted_at is null and pkg.kind = '%s'
 		%s
     order by pv.published_at asc, pv.package_id asc, pv.version asc, pv.revision asc
-	`, maxrevQueryOperator, entity.KIND_PACKAGE, notExistsFilter) // published_at is a first order to avoid paging breakage by new entries
+	`, maxrevQueryOperator, entity.KIND_PACKAGE, alreadyCreatedBuildsFilter) // published_at is a first order to avoid paging breakage by new entries
 	return getLatestIndependentVersionsQuery, params
 }
