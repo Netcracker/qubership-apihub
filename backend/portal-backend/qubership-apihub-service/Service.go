@@ -1,17 +1,3 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package main
 
 import (
@@ -294,7 +280,7 @@ func main() {
 	tokenRevocationService := service.NewTokenRevocationService(olricProvider, systemInfoService.GetRefreshTokenDurationSec())
 	systemStatsService := service.NewSystemStatsService(systemStatsRepository)
 
-	mcpService := service.NewMCPService(systemInfoService, operationService, packageService)
+	mcpService := service.NewMCPService(systemInfoService, operationService, packageService, versionService)
 	chatService := service.NewChatService(systemInfoService, mcpService)
 
 	idpManager, err := providers.NewIDPManager(systemInfoService.GetAuthConfig(), systemInfoService.GetAllowedHosts(), systemInfoService.IsProductionMode(), userService)
@@ -383,7 +369,8 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}/publish/statuses", security.Secure(publishV2Controller.GetPublishStatuses)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/packages/{packageId}/publish", security.Secure(publishV2Controller.Publish)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v3/packages/{packageId}/publish/{publishId}/status", security.Secure(publishV2Controller.SetPublishStatus)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/packages/{packageId}/publish/withOperationsGroup", security.Secure(versionController.PublishFromCSV)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/packages/{packageId}/publish/withOperationsGroup", security.Secure(versionController.PublishFromCSV_deprecated)).Methods(http.MethodPost) //deprecated
+	r.HandleFunc("/api/v2/packages/{packageId}/publish/withOperationsGroup/{apiType}", security.Secure(versionController.PublishFromCSV)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/packages/{packageId}/publish/{publishId}/withOperationsGroup/status", security.Secure(versionController.GetCSVDashboardPublishStatus)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/publish/{publishId}/withOperationsGroup/report", security.Secure(versionController.GetCSVDashboardPublishReport)).Methods(http.MethodGet)
 

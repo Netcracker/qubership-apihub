@@ -1,17 +1,3 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package controller
 
 import (
@@ -380,6 +366,16 @@ func (o operationGroupControllerImpl) CreateOperationGroup(w http.ResponseWriter
 		return
 	}
 
+	if apiType != string(view.RestApiType) && createOperationGroupReq.TemplateFilename != "" {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.OperationGroupTemplateNotSupported,
+			Message: exception.OperationGroupTemplateNotSupportedMsg,
+			Params:  map[string]interface{}{"apiType": apiType},
+		})
+		return
+	}
+
 	validationErr := utils.ValidateObject(createOperationGroupReq)
 	if validationErr != nil {
 		if customError, ok := validationErr.(*exception.CustomError); ok {
@@ -604,6 +600,17 @@ func (o operationGroupControllerImpl) UpdateOperationGroup(w http.ResponseWriter
 			TemplateFilename: "",
 		}
 	}
+
+	if apiType != string(view.RestApiType) && updateOperationGroupReq.Template != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.OperationGroupTemplateNotSupported,
+			Message: exception.OperationGroupTemplateNotSupportedMsg,
+			Params:  map[string]interface{}{"apiType": apiType},
+		})
+		return
+	}
+
 	operationsArrStr := r.FormValue("operations")
 	if operationsArrStr != "" {
 		var operations []view.GroupOperations
@@ -671,6 +678,15 @@ func (o operationGroupControllerImpl) GetGroupExportTemplate(w http.ResponseWrit
 		})
 		return
 	}
+	if apiType != string(view.RestApiType) {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.OperationGroupTemplateNotSupported,
+			Message: exception.OperationGroupTemplateNotSupportedMsg,
+			Params:  map[string]interface{}{"apiType": apiType},
+		})
+		return
+	}
 	groupName, err := getUnescapedStringParam(r, "groupName")
 	if err != nil {
 		utils.RespondWithCustomError(w, &exception.CustomError{
@@ -732,8 +748,7 @@ func (o operationGroupControllerImpl) StartOperationGroupPublish(w http.Response
 		})
 		return
 	}
-	//todo add support for different apiTypes when reducedSourceSpecifications is supported for them
-	if apiType != string(view.RestApiType) {
+	if apiType != string(view.RestApiType) && apiType != string(view.GraphqlApiType) {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.UnsupportedApiType,

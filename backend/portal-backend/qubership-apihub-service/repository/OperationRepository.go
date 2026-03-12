@@ -1,17 +1,3 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package repository
 
 import (
@@ -56,7 +42,8 @@ type OperationRepository interface {
 	GetVersionOperationGroups(packageId string, version string, revision int) ([]entity.OperationGroupCountEntity, error)
 	GetGroupedOperations(packageId string, version string, revision int, operationType string, groupName string, searchReq view.OperationListReq) ([]entity.OperationRichEntity, error)
 	GetOperationsByModelHash(packageId string, version string, revision int, apiType string, modelHash string) ([]entity.OperationModelsEntity, error)
-	GetOperationsByPathAndMethod(packageId string, version string, revision int, apiType string, path string, method string) ([]string, error)
+	GetRESTOperationsByPathAndMethod(packageId string, version string, revision int, path string, method string) ([]string, error)
+	GetGQLOperationsByTypeAndMethod(packageId string, version string, revision int, operationType string, method string) ([]string, error)
 }
 
 func NewOperationRepository(cp db.ConnectionProvider) OperationRepository {
@@ -980,19 +967,19 @@ func (o operationRepositoryImpl) LiteSearchForOperations(searchQuery *entity.Ope
 
 	operationsSearchQuery := `
 select
-    o.package_id,
-    pg.name,
-    o.version,
-    o.revision,
-    pv.status,
-    o.operation_id,
-    o.title,
-    o.data_hash,
-    o.deprecated,
-    o.kind,
-    o.type,
-    o.metadata,
-    parent_package_names(o.package_id) parent_names
+	o.package_id,
+	pg.name,
+	o.version,
+	o.revision,
+	pv.status,
+	o.operation_id,
+	o.title,
+	o.data_hash,
+	o.deprecated,
+	o.kind,
+	o.type,
+	o.metadata,
+	parent_package_names(o.package_id) parent_names
 from operation o
          inner join (
     SELECT DISTINCT ON (rank, package_id, operation_id)
@@ -1421,21 +1408,16 @@ func (o operationRepositoryImpl) CalculateOperationGroups(packageId string, vers
 	operationGroupsQuery := `
 	select distinct coalesce(group_name, '') as group_name from (
 		select
-		case
-			when type = 'rest'
-				then case when ? = '' then null else substring(metadata ->> 'path', ?) end
-			when type = 'graphql'
-				then case when ? = '' then null else substring(metadata ->> 'method', ?) end
-		end group_name
+		case when ? = '' then null else substring(metadata ->> 'path', ?) end group_name
 		from operation
 		where package_id = ?
 		and version = ?
 		and revision = ?
+		and type = 'rest'
 	) groups
 	`
 	_, err := o.cp.GetConnection().Query(&groups,
 		operationGroupsQuery,
-		groupingPrefix, groupingPrefix,
 		groupingPrefix, groupingPrefix,
 		packageId,
 		version,
@@ -1622,7 +1604,7 @@ func (o operationRepositoryImpl) GetOperationsByModelHash(packageId string, vers
 	return result, nil
 }
 
-func (o operationRepositoryImpl) GetOperationsByPathAndMethod(packageId string, version string, revision int, apiType string, path string, method string) ([]string, error) {
+func (o operationRepositoryImpl) GetRESTOperationsByPathAndMethod(packageId string, version string, revision int, path string, method string) ([]string, error) {
 	type OperationId struct {
 		OperationId string `pg:"operation_id"`
 	}
@@ -1638,7 +1620,39 @@ func (o operationRepositoryImpl) GetOperationsByPathAndMethod(packageId string, 
 		and metadata ->> 'path' ilike ?
 		and metadata ->> 'method' ilike ?
 	`
-	_, err := o.cp.GetConnection().Query(&operationIds, operationsByPathAndMethod, packageId, version, revision, apiType, path, method)
+	_, err := o.cp.GetConnection().Query(&operationIds, operationsByPathAndMethod, packageId, version, revision, string(view.RestApiType), path, method)
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	result := make([]string, 0)
+
+	for _, t := range operationIds {
+		result = append(result, t.OperationId)
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetGQLOperationsByTypeAndMethod(packageId string, version string, revision int, operationType string, method string) ([]string, error) {
+	type OperationId struct {
+		OperationId string `pg:"operation_id"`
+	}
+	var operationIds []OperationId
+
+	operationsByTypeAndMethod := `
+		select operation_id
+		from operation
+		where package_id = ?
+		and version = ?
+		and revision = ?
+		and type = ?
+		and metadata ->> 'type' = ?
+		and metadata ->> 'method' = ?
+	`
+	_, err := o.cp.GetConnection().Query(&operationIds, operationsByTypeAndMethod, packageId, version, revision, string(view.GraphqlApiType), operationType, method)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil

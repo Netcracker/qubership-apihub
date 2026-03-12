@@ -34,6 +34,7 @@ func (m mcpService) ExecuteGetSpecTool(ctx context.Context, req mcp.CallToolRequ
 		Version:     version,
 		OperationId: operationId,
 		ApiType:     string(view.RestApiType),
+		IncludeData: true,
 	}
 
 	operationViewInterface, err := m.operationService.GetOperation(searchReq)
@@ -104,6 +105,42 @@ func (m mcpService) ExecuteSearchTool(ctx context.Context, req mcp.CallToolReque
 	// Log MCP tool response at debug level
 	payloadJSON, _ := json.Marshal(payload)
 	log.Debugf("MCP tool search_rest_api_operations response: %s", string(payloadJSON))
+
+	return mcp.NewToolResultStructuredOnly(payload), nil
+}
+
+// ExecuteSearchTool executes the get_rest_api_operation_diff tool
+func (m mcpService) ExecuteGetOperationDiffTool(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	operationId, err := req.RequireString("operationId")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+	packageId, err := req.RequireString("packageId")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+	previousVersion, err := req.RequireString("previousVersion")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+
+	version, err := req.RequireString("version")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+
+	log.Infof("get_rest_api_operation_diff: operationId=%s, packageId=%s, version=%s, previousVersion=%s", operationId, packageId, version, previousVersion)
+
+	operationChangesView, err := m.operationService.GetOperationChanges(packageId, version, operationId, packageId, previousVersion, []string{})
+	if err != nil {
+		return nil, err
+	}
+
+	payload := map[string]any{"operationChangesList": operationChangesView.Changes}
+
+	// Log MCP tool response at debug level
+	payloadJSON, _ := json.Marshal(payload)
+	log.Debugf("MCP tool get_rest_api_operation_diff response: %s", string(payloadJSON))
 
 	return mcp.NewToolResultStructuredOnly(payload), nil
 }

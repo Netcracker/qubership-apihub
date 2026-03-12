@@ -1,17 +1,3 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package stages
 
 import (
@@ -28,6 +14,13 @@ func (d OpsMigration) StageCleanupBefore() error {
 		// this action will generate a lot of data and may cause DB disk overflow
 		// Try to avoid too much space usage by cleaning up all old migration build data
 		log.Infof("ops migration %s: Starting cleanup before full migration", d.ent.Id)
+
+		deleted, err := d.cleanupTransformedContentData()
+		if err != nil {
+			return err
+		}
+		log.Infof("ops migration %s: cleaned %d rows from transformed_content_data", d.ent.Id, deleted)
+
 		if d.systemInfoService.IsMinioStorageActive() {
 			ids, err := d.buildCleanupRepository.GetRemoveMigrationBuildIds(d.migrationCtx)
 			if err != nil {
@@ -54,7 +47,7 @@ func (d OpsMigration) StageCleanupBefore() error {
 			log.Infof("ops migration %s: Cleanup before full migration cleaned up %d entries", d.ent.Id, deleted)
 		}
 
-		err := d.runVacuumForAllTables()
+		err = d.runVacuumForAllTables()
 		if err != nil {
 			return err
 		}
@@ -117,4 +110,12 @@ func (d OpsMigration) resetStatStatements() {
 	if err != nil {
 		log.Warnf("failed to reset stat statements: %v", err.Error())
 	}
+}
+
+func (d OpsMigration) cleanupTransformedContentData() (int, error) {
+	result, err := d.cp.GetConnection().Exec(`DELETE FROM transformed_content_data`)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

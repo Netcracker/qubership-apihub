@@ -7,9 +7,9 @@ info:
     name: Netcracker Opensource Group
     email: opensourcegroup@netcracker.com
   license:
-    name: qubership
-    url: https://github.com/Netcracker/qubership-apihub
-  version: "2025.4"
+    name: Apache 2.0
+    url: https://github.com/Netcracker/qubership-apihub-backend/raw/refs/heads/main/LICENSE
+  version: "2026.1"
   x-nc-api-audience: BWC
 externalDocs:
   description: Find out more about package
@@ -627,6 +627,8 @@ components:
             exportRestDocument:
               $ref: "#/components/schemas/BuildsCount"
             exportRestOperationsGroup:
+              $ref: "#/components/schemas/BuildsCount"
+            exportGraphqlOperationsGroup:
               $ref: "#/components/schemas/BuildsCount"
             exportVersion:
               $ref: "#/components/schemas/BuildsCount"

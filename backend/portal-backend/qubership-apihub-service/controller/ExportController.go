@@ -1,17 +1,3 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package controller
 
 import (
@@ -1015,6 +1001,8 @@ func (e exportControllerImpl) StartAsyncExport(w http.ResponseWriter, r *http.Re
 		exportRequest = &view.ExportOASDocumentReq{}
 	case view.ExportEntityRestOperationsGroup:
 		exportRequest = &view.ExportRestOperationsGroupReq{}
+	case view.ExportEntityGraphqlOperationsGroup:
+		exportRequest = &view.ExportGraphqlOperationsGroupReq{}
 	default:
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
@@ -1074,6 +1062,8 @@ func (e exportControllerImpl) StartAsyncExport(w http.ResponseWriter, r *http.Re
 		exportID, err = e.exportService.StartOASDocExport(ctx, *exportRequest.(*view.ExportOASDocumentReq))
 	case view.ExportEntityRestOperationsGroup:
 		exportID, err = e.exportService.StartRESTOpGroupExport(ctx, *exportRequest.(*view.ExportRestOperationsGroupReq))
+	case view.ExportEntityGraphqlOperationsGroup:
+		exportID, err = e.exportService.StartGraphQLOpGroupExport(ctx, *exportRequest.(*view.ExportGraphqlOperationsGroupReq))
 	}
 	if err != nil {
 		utils.RespondWithError(w, "Failed to start export process", err)
