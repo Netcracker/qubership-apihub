@@ -59,16 +59,17 @@ type PackagesMCP struct {
 }
 
 type PackagesInfoMCP struct {
-	Id                        string              `json:"packageId"`
-	Alias                     string              `json:"alias"`
-	ParentId                  string              `json:"parentId"`
-	Kind                      string              `json:"kind"`
-	Name                      string              `json:"name"`
-	Description               string              `json:"description"`
-	ServiceName               string              `json:"serviceName,omitempty"`
-	Parents                   []ParentPackageInfo `json:"parents"`
-	LastReleaseVersionDetails *VersionDetails     `json:"lastReleaseVersionDetails,omitempty"`
-	RestGroupingPrefix        string              `json:"restGroupingPrefix,omitempty"`
+	Id                        string                     `json:"packageId"`
+	Alias                     string                     `json:"alias"`
+	ParentId                  string                     `json:"parentId"`
+	Kind                      string                     `json:"kind"`
+	Name                      string                     `json:"name"`
+	Description               string                     `json:"description"`
+	ServiceName               string                     `json:"serviceName,omitempty"`
+	Parents                   []ParentPackageInfo        `json:"parents"`
+	LastReleaseVersionDetails *VersionDetails            `json:"lastReleaseVersionDetails,omitempty"`
+	RestGroupingPrefix        string                     `json:"restGroupingPrefix,omitempty"`
+	Versions                  []PublishedVersionListView `json:"versions,omitempty"`
 }
 
 type ParentPackageInfo struct {

@@ -2,6 +2,9 @@ package service
 
 import (
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/archive"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
@@ -10,14 +13,13 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service/validation"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"time"
 )
 
 type ExportService interface {
 	StartVersionExport(ctx context.SecurityContext, req view.ExportVersionReq) (string, error)
 	StartOASDocExport(ctx context.SecurityContext, req view.ExportOASDocumentReq) (string, error)
 	StartRESTOpGroupExport(ctx context.SecurityContext, req view.ExportRestOperationsGroupReq) (string, error)
+	StartGraphQLOpGroupExport(ctx context.SecurityContext, req view.ExportGraphqlOperationsGroupReq) (string, error)
 
 	GetAsyncExportStatus(exportId string) (*view.ExportStatus, *view.ExportResult, string, error)
 
@@ -150,7 +152,29 @@ func (e exportServiceImpl) StartRESTOpGroupExport(ctx context.SecurityContext, r
 		OperationsSpecTransformation: req.OperationsSpecTransformation,
 		Format:                       req.Format,
 	}
-	
+
+	exportId, _, err := e.buildService.CreateBuildWithoutDependencies(buildConfig, false, "")
+	if err != nil {
+		return "", err
+	}
+
+	return exportId, nil
+}
+
+func (e exportServiceImpl) StartGraphQLOpGroupExport(ctx context.SecurityContext, req view.ExportGraphqlOperationsGroupReq) (string, error) {
+	// TODO: validate groupName?
+
+	buildConfig := view.BuildConfig{
+		PackageId:                    req.PackageId,
+		Version:                      req.Version,
+		BuildType:                    view.ExportGraphqlOperationsGroup,
+		CreatedBy:                    ctx.GetUserId(),
+		ApiType:                      string(view.GraphqlApiType),
+		GroupName:                    req.GroupName,
+		OperationsSpecTransformation: view.TransformationReducedSource,
+		Format:                       view.GraphQLFormat,
+	}
+
 	exportId, _, err := e.buildService.CreateBuildWithoutDependencies(buildConfig, false, "")
 	if err != nil {
 		return "", err

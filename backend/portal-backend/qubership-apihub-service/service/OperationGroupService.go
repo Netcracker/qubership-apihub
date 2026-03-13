@@ -1,10 +1,14 @@
 package service
 
 import (
+	"archive/zip"
+	"bytes"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/archive"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
@@ -589,36 +593,88 @@ func (o operationGroupServiceImpl) StartOperationGroupPublish(ctx context.Securi
 }
 
 func (o operationGroupServiceImpl) publishOperationGroup(ctx context.SecurityContext, version *entity.PublishedVersionEntity, apiType string, groupName string, req view.OperationGroupPublishReq, publishEnt *entity.OperationGroupPublishEntity) {
-	groupId := view.MakeOperationGroupId(version.PackageId, version.Version, version.Revision, apiType, groupName)
-	transformedDocuments, err := o.exportRepository.GetTransformedDocuments(version.PackageId, view.MakeVersionRefKey(version.Version, version.Revision), apiType, groupId, view.ReducedSourceSpecificationsType_deprecated, string(view.JsonDocumentFormat))
-	if err != nil {
-		o.updatePublishProcess(publishEnt, string(view.StatusError), fmt.Sprintf("faield to get existing transformed documents: %v", err.Error()))
+	var buildConfig view.BuildConfig
+	if apiType == string(view.RestApiType) {
+		buildConfig = view.BuildConfig{
+			PackageId:                    version.PackageId,
+			Version:                      view.MakeVersionRefKey(version.Version, version.Revision),
+			BuildType:                    view.ExportRestOperationsGroup,
+			CreatedBy:                    ctx.GetUserId(),
+			ApiType:                      string(view.RestApiType),
+			GroupName:                    groupName,
+			OperationsSpecTransformation: view.TransformationReducedSource,
+			Format:                       view.FormatJSON,
+		}
+	} else if apiType == string(view.GraphqlApiType) {
+		buildConfig = view.BuildConfig{
+			PackageId:                    version.PackageId,
+			Version:                      view.MakeVersionRefKey(version.Version, version.Revision),
+			BuildType:                    view.ExportGraphqlOperationsGroup,
+			CreatedBy:                    ctx.GetUserId(),
+			ApiType:                      string(view.GraphqlApiType),
+			GroupName:                    groupName,
+			OperationsSpecTransformation: view.TransformationReducedSource,
+			Format:                       "graphql",
+		}
+	} else {
+		o.updatePublishProcess(publishEnt, string(view.StatusError), fmt.Sprintf("unsupported API type: %s", apiType))
 		return
 	}
-	if transformedDocuments == nil {
-		err = o.transformDocuments(ctx, version, apiType, groupName)
-		if err != nil {
-			o.updatePublishProcess(publishEnt, string(view.StatusError), fmt.Sprintf("faield to tranform group operations into documents: %v", err.Error()))
-			return
-		}
-		transformedDocuments, err = o.exportRepository.GetTransformedDocuments(version.PackageId, view.MakeVersionRefKey(version.Version, version.Revision), apiType, groupId, view.ReducedSourceSpecificationsType_deprecated, string(view.JsonDocumentFormat))
-		if err != nil {
-			o.updatePublishProcess(publishEnt, string(view.StatusError), fmt.Sprintf("faield to get transformed documents: %v", err.Error()))
-			return
-		}
-		if transformedDocuments == nil {
-			o.updatePublishProcess(publishEnt, string(view.StatusError), "faield to get transformed documents: transformed documents not found")
-			return
-		}
+	exportBuildId, _, err := o.buildService.CreateBuildWithoutDependencies(buildConfig, false, "")
+	if err != nil {
+		o.updatePublishProcess(publishEnt, string(view.StatusError), fmt.Sprintf("failed to create export build: %v", err.Error()))
+		return
 	}
+
+	err = o.buildService.AwaitBuildCompletion(exportBuildId)
+	if err != nil {
+		o.updatePublishProcess(publishEnt, string(view.StatusError), fmt.Sprintf("export build failed: %v", err.Error()))
+		return
+	}
+	exportResult, err := o.exportRepository.GetExportResult(exportBuildId)
+	if err != nil {
+		o.updatePublishProcess(publishEnt, string(view.StatusError), fmt.Sprintf("failed to get export result: %v", err.Error()))
+		return
+	}
+	if exportResult == nil {
+		o.updatePublishProcess(publishEnt, string(view.StatusError), "export result not found")
+		return
+	}
+
 	files := make([]view.BCFile, 0)
 	publishFile := true
-	for _, document := range transformedDocuments.DocumentsInfo {
+	var data []byte
+	if strings.HasSuffix(exportResult.Filename, ".zip") {
+		r, err := zip.NewReader(bytes.NewReader(exportResult.Data), int64(len(exportResult.Data)))
+		if err != nil {
+			o.updatePublishProcess(publishEnt, string(view.StatusError), "failed to read export result")
+			return
+		}
+		for _, f := range r.File {
+			files = append(files, view.BCFile{
+				FileId:  f.Name,
+				Publish: &publishFile,
+			})
+		}
+		data = exportResult.Data
+	} else {
+		var buf bytes.Buffer
+		zw := zip.NewWriter(&buf)
+		if err := archive.AddFileToZip(zw, exportResult.Filename, exportResult.Data); err != nil {
+			o.updatePublishProcess(publishEnt, string(view.StatusError), "failed to create source archive")
+			return
+		}
+		if err := zw.Close(); err != nil {
+			o.updatePublishProcess(publishEnt, string(view.StatusError), "failed to create source archive")
+			return
+		}
 		files = append(files, view.BCFile{
-			FileId:  document.Filename,
+			FileId:  exportResult.Filename,
 			Publish: &publishFile,
 		})
+		data = buf.Bytes()
 	}
+
 	groupPublishBuildConfig := view.BuildConfig{
 		PackageId:                req.PackageId,
 		Version:                  req.Version,
@@ -632,7 +688,7 @@ func (o operationGroupServiceImpl) publishOperationGroup(ctx context.SecurityCon
 			VersionLabels: req.VersionLabels,
 		},
 	}
-	build, err := o.buildService.PublishVersion(ctx, groupPublishBuildConfig, transformedDocuments.Data, false, "", nil, false, false)
+	build, err := o.buildService.PublishVersion(ctx, groupPublishBuildConfig, data, false, "", nil, false, false)
 	if err != nil {
 		o.updatePublishProcess(publishEnt, string(view.StatusError), fmt.Sprintf("faield to start operation group publish: %v", err.Error()))
 		return
@@ -643,26 +699,6 @@ func (o operationGroupServiceImpl) publishOperationGroup(ctx context.SecurityCon
 		return
 	}
 	o.updatePublishProcess(publishEnt, string(view.StatusComplete), "")
-}
-
-func (o operationGroupServiceImpl) transformDocuments(ctx context.SecurityContext, version *entity.PublishedVersionEntity, apiType string, groupName string) error {
-	buildId, _, err := o.buildService.CreateBuildWithoutDependencies(view.BuildConfig{
-		PackageId: version.PackageId,
-		Version:   view.MakeVersionRefKey(version.Version, version.Revision),
-		BuildType: view.ReducedSourceSpecificationsType_deprecated,
-		Format:    string(view.JsonDocumentFormat),
-		CreatedBy: ctx.GetUserId(),
-		ApiType:   apiType,
-		GroupName: groupName,
-	}, false, "")
-	if err != nil {
-		return fmt.Errorf("failed to create documents transformation build: %v", err.Error())
-	}
-	err = o.buildService.AwaitBuildCompletion(buildId)
-	if err != nil {
-		return fmt.Errorf("documents transformation build failed: %v", err.Error())
-	}
-	return nil
 }
 
 func (o operationGroupServiceImpl) updatePublishProcess(publishEnt *entity.OperationGroupPublishEntity, status string, details string) {

@@ -121,7 +121,7 @@ func (p buildResultServiceImpl) SaveBuildResult(packageId string, data []byte, f
 	utils.PerfLog(time.Since(start).Milliseconds(), 200, "SaveBuildResult: get build src")
 
 	switch buildConfig.BuildType {
-	case view.ExportVersion, view.ExportRestDocument, view.ExportRestOperationsGroup:
+	case view.ExportVersion, view.ExportRestDocument, view.ExportRestOperationsGroup, view.ExportGraphqlOperationsGroup:
 		return p.exportService.StoreExportResult(buildConfig.CreatedBy, publishId, data, fileName, *buildConfig)
 	}
 

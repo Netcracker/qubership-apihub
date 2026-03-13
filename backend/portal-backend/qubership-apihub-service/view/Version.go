@@ -167,6 +167,7 @@ type PublishFromCSVReq struct {
 	VersionLabels            []string `json:"versionLabels"`
 	CSVData                  []byte   `json:"csvData"`
 	ServicesWorkspaceId      string   `json:"servicesWorkspaceId" validate:"required"` //workspace for matching packages by serviceNames
+	ApiType                  string   `json:"apiType" validate:"required"`
 }
 
 type PublishFromCSVResp struct {

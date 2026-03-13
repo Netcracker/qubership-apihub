@@ -280,7 +280,7 @@ func main() {
 	tokenRevocationService := service.NewTokenRevocationService(olricProvider, systemInfoService.GetRefreshTokenDurationSec())
 	systemStatsService := service.NewSystemStatsService(systemStatsRepository)
 
-	mcpService := service.NewMCPService(systemInfoService, operationService, packageService)
+	mcpService := service.NewMCPService(systemInfoService, operationService, packageService, versionService)
 	chatService := service.NewChatService(systemInfoService, mcpService)
 
 	idpManager, err := providers.NewIDPManager(systemInfoService.GetAuthConfig(), systemInfoService.GetAllowedHosts(), systemInfoService.IsProductionMode(), userService)
@@ -370,7 +370,8 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}/publish/statuses", security.Secure(publishV2Controller.GetPublishStatuses)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/packages/{packageId}/publish", security.Secure(publishV2Controller.Publish)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v3/packages/{packageId}/publish/{publishId}/status", security.Secure(publishV2Controller.SetPublishStatus)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/packages/{packageId}/publish/withOperationsGroup", security.Secure(versionController.PublishFromCSV)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/packages/{packageId}/publish/withOperationsGroup", security.Secure(versionController.PublishFromCSV_deprecated)).Methods(http.MethodPost) //deprecated
+	r.HandleFunc("/api/v2/packages/{packageId}/publish/withOperationsGroup/{apiType}", security.Secure(versionController.PublishFromCSV)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/packages/{packageId}/publish/{publishId}/withOperationsGroup/status", security.Secure(versionController.GetCSVDashboardPublishStatus)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/publish/{publishId}/withOperationsGroup/report", security.Secure(versionController.GetCSVDashboardPublishReport)).Methods(http.MethodGet)
 
