@@ -152,6 +152,7 @@ type PublishedContentEntity struct {
 	ReferenceId  string   `pg:"-"`
 	OperationIds []string `pg:"operation_ids, type:varchar[], array"`
 	Filename     string   `pg:"filename, type:varchar"`
+	Shareability string   `pg:"shareability, type:varchar"`
 }
 
 type PublishedContentWithDataEntity struct {
@@ -300,17 +301,18 @@ func MakePublishedVersionHistoryView(ent PackageVersionHistoryEntity) view.Publi
 
 func MakePublishedContentView(ent *PublishedContentEntity) *view.PublishedContent {
 	return &view.PublishedContent{
-		ContentId:   ent.FileId,
-		Type:        view.ParseTypeFromString(ent.DataType),
-		Format:      ent.Format,
-		Path:        ent.Path,
-		Name:        ent.Name,
-		Index:       ent.Index,
-		Slug:        ent.Slug,
-		Labels:      ent.Metadata.GetLabels(),
-		Title:       ent.Title,
-		Version:     ent.Version,
-		ReferenceId: ent.ReferenceId,
+		ContentId:    ent.FileId,
+		Type:         view.ParseTypeFromString(ent.DataType),
+		Format:       ent.Format,
+		Path:         ent.Path,
+		Name:         ent.Name,
+		Index:        ent.Index,
+		Slug:         ent.Slug,
+		Labels:       ent.Metadata.GetLabels(),
+		Title:        ent.Title,
+		Version:      ent.Version,
+		Shareability: ent.Shareability,
+		ReferenceId:  ent.ReferenceId,
 	}
 }
 
@@ -323,6 +325,7 @@ func MakePublishedDocumentView(ent *PublishedContentEntity) *view.PublishedDocum
 		Labels:       ent.Metadata.GetLabels(),
 		Description:  ent.Metadata.GetDescription(),
 		Version:      ent.Metadata.GetVersion(),
+		Shareability: ent.Shareability,
 		Info:         ent.Metadata.GetInfo(),
 		ExternalDocs: ent.Metadata.GetExternalDocs(),
 		Title:        ent.Title,
@@ -340,6 +343,7 @@ func MakeDocumentForTransformationView(ent *PublishedContentWithDataEntity) *vie
 		Labels:               ent.Metadata.GetLabels(),
 		Description:          ent.Metadata.GetDescription(),
 		Version:              ent.Metadata.GetVersion(),
+		Shareability:         ent.Shareability,
 		Title:                ent.Title,
 		Filename:             ent.Filename,
 		IncludedOperationIds: ent.OperationIds,
@@ -350,16 +354,17 @@ func MakeDocumentForTransformationView(ent *PublishedContentWithDataEntity) *vie
 
 func MakePublishedDocumentRefView2(ent *PublishedContentEntity) *view.PublishedDocumentRefView {
 	return &view.PublishedDocumentRefView{
-		FieldId:     ent.FileId,
-		Type:        ent.DataType,
-		Format:      ent.Format,
-		Slug:        ent.Slug,
-		Labels:      ent.Metadata.GetLabels(),
-		Description: ent.Metadata.GetDescription(),
-		Version:     ent.Metadata.GetVersion(),
-		Title:       ent.Title,
-		Filename:    ent.Filename,
-		PackageRef:  view.MakePackageRefKey(ent.PackageId, ent.Version, ent.Revision),
+		FieldId:      ent.FileId,
+		Type:         ent.DataType,
+		Format:       ent.Format,
+		Slug:         ent.Slug,
+		Labels:       ent.Metadata.GetLabels(),
+		Description:  ent.Metadata.GetDescription(),
+		Version:      ent.Metadata.GetVersion(),
+		Shareability: ent.Shareability,
+		Title:        ent.Title,
+		Filename:     ent.Filename,
+		PackageRef:   view.MakePackageRefKey(ent.PackageId, ent.Version, ent.Revision),
 	}
 }
 

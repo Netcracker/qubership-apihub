@@ -55,6 +55,7 @@ type VersionService interface {
 	StartPublishFromCSV(ctx context.SecurityContext, req view.PublishFromCSVReq) (string, error)
 	GetCSVDashboardPublishStatus(publishId string) (*view.CSVDashboardPublishStatusResponse, error)
 	GetCSVDashboardPublishReport(publishId string) ([]byte, error)
+	UpdateDocumentShareability(packageId string, versionName string, slug string, shareability string) error
 }
 
 func NewVersionService(favoritesRepo repository.FavoritesRepository,
@@ -2148,4 +2149,34 @@ func getCSVSeparator(record string) *rune {
 		}
 	}
 	return nil
+}
+
+func (v versionServiceImpl) UpdateDocumentShareability(packageId string, versionName string, slug string, shareability string) error {
+	versionEnt, err := v.publishedRepo.GetVersion(packageId, versionName)
+	if err != nil {
+		return err
+	}
+	if versionEnt == nil {
+		return &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.PublishedVersionNotFound,
+			Message: exception.PublishedVersionNotFoundMsg,
+			Params:  map[string]interface{}{"version": versionName},
+		}
+	}
+
+	document, err := v.publishedRepo.GetLatestContentBySlug(packageId, versionName, slug)
+	if err != nil {
+		return err
+	}
+	if document == nil {
+		return &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.ContentSlugNotFound,
+			Message: exception.ContentSlugNotFoundMsg,
+			Params:  map[string]interface{}{"contentSlug": slug},
+		}
+	}
+
+	return v.publishedRepo.UpdateDocumentShareabilityBySlug(packageId, versionEnt.Version, versionEnt.Revision, slug, shareability)
 }

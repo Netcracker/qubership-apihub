@@ -39,6 +39,7 @@ type BuildConfig struct {
 	AllowedOasExtensions         *[]string               `json:"allowedOasExtensions,omitempty"`         // for export
 	DocumentId                   string                  `json:"documentId,omitempty"`                   // for export
 	OperationsSpecTransformation string                  `json:"operationsSpecTransformation,omitempty"` // for export
+	IncludeDocuments             string                  `json:"includeDocuments,omitempty"`             // for export
 }
 
 type BuildConfigMetadata struct {

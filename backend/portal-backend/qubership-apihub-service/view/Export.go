@@ -58,7 +58,13 @@ type ExportVersionReq struct {
 	Version             string         `json:"version" validate:"required"`
 	Format              string         `json:"format" validate:"required"`
 	RemoveOasExtensions bool           `json:"removeOasExtensions"`
+	IncludeDocuments    string         `json:"includeDocuments,omitempty"`
 }
+
+const (
+	IncludeDocumentsAll      = "all"
+	IncludeDocumentsSharable = "sharableOnly"
+)
 
 type ExportOASDocumentReq struct {
 	ExportedEntity      ExportedEntity `json:"exportedEntity" validate:"required"`

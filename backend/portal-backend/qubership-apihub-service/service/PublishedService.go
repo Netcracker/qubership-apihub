@@ -457,6 +457,46 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 		return err
 	}
 
+	if buildArc.PackageInfo.MigrationBuild {
+		// take shareability from the existing revision as baseline
+		existingContent, existingErr := p.publishedRepo.GetRevisionContent(
+			buildArc.PackageInfo.PackageId, buildArc.PackageInfo.Version, buildArc.PackageInfo.Revision)
+		if existingErr != nil {
+			return existingErr
+		}
+		if len(existingContent) > 0 {
+			existingShareabilityMap := make(map[string]string, len(existingContent))
+			for _, ec := range existingContent {
+				existingShareabilityMap[ec.Slug] = ec.Shareability
+			}
+			for _, fe := range fileEntities {
+				if existingShareability, exists := existingShareabilityMap[fe.Slug]; exists {
+					fe.Shareability = existingShareability
+				}
+			}
+		}
+	}
+	if buildArc.PackageInfo.PreviousVersion != "" && previousVersionRevision > 0 {
+		// inherit shareability from previous version
+		prevPkgId := buildArc.PackageInfo.PackageId
+		if buildArc.PackageInfo.PreviousVersionPackageId != "" {
+			prevPkgId = buildArc.PackageInfo.PreviousVersionPackageId
+		}
+		prevContent, prevErr := p.publishedRepo.GetRevisionContent(prevPkgId, buildArc.PackageInfo.PreviousVersion, previousVersionRevision)
+		if prevErr != nil {
+			return prevErr
+		}
+		prevShareabilityMap := make(map[string]string, len(prevContent))
+		for _, pc := range prevContent {
+			prevShareabilityMap[pc.Slug] = pc.Shareability
+		}
+		for _, fe := range fileEntities {
+			if prevShareability, exists := prevShareabilityMap[fe.Slug]; exists {
+				fe.Shareability = prevShareability
+			}
+		}
+	}
+
 	operationEntities, operationDataEntities, operationsInfo, err := buildArcEntitiesReader.ReadOperationsToEntities()
 	if err != nil {
 		return err

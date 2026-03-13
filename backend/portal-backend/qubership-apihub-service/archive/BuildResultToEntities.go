@@ -106,6 +106,7 @@ func (a *BuildResultToEntitiesReader) ReadDocumentsToEntities() ([]*entity.Publi
 				Metadata:     fileEntMetadata,
 				OperationIds: document.OperationIds,
 				Filename:     document.Filename,
+				Shareability: view.ShareabilityUnknown,
 			})
 			fileDataEntities = append(fileDataEntities, &entity.PublishedContentDataEntity{
 				PackageId: a.PackageInfo.PackageId,

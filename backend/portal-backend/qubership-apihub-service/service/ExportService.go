@@ -73,6 +73,15 @@ func (e exportServiceImpl) StartVersionExport(ctx context.SecurityContext, req v
 		user = ctx.GetApiKeyId()
 	}
 
+	includeDocuments := req.IncludeDocuments
+	if includeDocuments == "" {
+		includeDocuments = view.IncludeDocumentsAll
+	}
+	err = validateDocumentFilter(includeDocuments)
+	if err != nil {
+		return "", err
+	}
+
 	config := view.BuildConfig{
 		PackageId:            req.PackageId,
 		Version:              req.Version,
@@ -80,6 +89,7 @@ func (e exportServiceImpl) StartVersionExport(ctx context.SecurityContext, req v
 		Format:               req.Format,
 		CreatedBy:            user,
 		AllowedOasExtensions: allowedOasExtensions,
+		IncludeDocuments:     includeDocuments,
 	}
 
 	buildId, config, err := e.buildService.CreateBuildWithoutDependencies(config, false, "")
@@ -307,6 +317,21 @@ func validateTransformation(transformation string) error {
 			Code:    exception.InvalidDocumentTransformation,
 			Message: exception.InvalidDocumentTransformationMsg,
 			Params:  map[string]interface{}{"value": transformation},
+		}
+	}
+	return nil
+}
+
+func validateDocumentFilter(filter string) error {
+	switch filter {
+	case view.IncludeDocumentsAll, view.IncludeDocumentsSharable:
+		break
+	default:
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidIncludeDocuments,
+			Message: exception.InvalidIncludeDocumentsMsg,
+			Params:  map[string]interface{}{"value": filter},
 		}
 	}
 	return nil

@@ -95,4 +95,6 @@ type PublishedRepository interface {
 	GetVersionInternalDocumentData(hash string) (*entity.EnrichedVersionInternalDocumentDataEntity, error)
 	GetComparisonInternalDocumentsByComparisons(comparisons []entity.VersionComparisonEntity) ([]entity.ComparisonInternalDocumentEntity, error)
 	GetComparisonInternalDocumentData(hash string) (*entity.EnrichedComparisonInternalDocumentDataEntity, error)
+
+	UpdateDocumentShareabilityBySlug(packageId string, version string, revision int, slug string, shareability string) error
 }

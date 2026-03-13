@@ -789,3 +789,6 @@ const BuildResultNotFoundMsg = "Build result for '$buildId' build not found"
 
 const OperationGroupTemplateNotSupported = "7900"
 const OperationGroupTemplateNotSupportedMsg = "Export template is not supported for '$apiType' API type"
+
+const InvalidIncludeDocuments = "8000"
+const InvalidIncludeDocumentsMsg = "includeDocuments value $value is unknown"

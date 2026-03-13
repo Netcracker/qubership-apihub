@@ -1,19 +1,20 @@
 package view
 
 type PublishedContent struct {
-	ContentId   string       `json:"fileId"`
-	Type        ShortcutType `json:"type"`
-	Format      string       `json:"format"`
-	Path        string       `json:"-"`
-	Name        string       `json:"-"`
-	Index       int          `json:"-"`
-	Slug        string       `json:"slug"`
-	Labels      []string     `json:"labels,omitempty"`
-	Title       string       `json:"title,omitempty"`
-	Version     string       `json:"version,omitempty"`
-	ReferenceId string       `json:"refId,omitempty"`
-	Openapi     *Openapi     `json:"openapi,omitempty"`
-	Asyncapi    *Asyncapi    `json:"asyncapi,omitempty"`
+	ContentId    string       `json:"fileId"`
+	Type         ShortcutType `json:"type"`
+	Format       string       `json:"format"`
+	Path         string       `json:"-"`
+	Name         string       `json:"-"`
+	Index        int          `json:"-"`
+	Slug         string       `json:"slug"`
+	Labels       []string     `json:"labels,omitempty"`
+	Title        string       `json:"title,omitempty"`
+	Version      string       `json:"version,omitempty"`
+	Shareability string       `json:"shareability"`
+	ReferenceId  string       `json:"refId,omitempty"`
+	Openapi      *Openapi     `json:"openapi,omitempty"`
+	Asyncapi     *Asyncapi    `json:"asyncapi,omitempty"`
 }
 
 type SharedUrlResult_deprecated struct {
@@ -29,6 +30,7 @@ type PublishedDocument struct {
 	Labels       []string      `json:"labels,omitempty"`
 	Description  string        `json:"description,omitempty"`
 	Version      string        `json:"version,omitempty"`
+	Shareability string        `json:"shareability"`
 	Info         interface{}   `json:"info,omitempty"`
 	ExternalDocs interface{}   `json:"externalDocs,omitempty"`
 	Operations   []interface{} `json:"operations,omitempty"`
@@ -45,6 +47,7 @@ type PublishedDocumentRefView struct {
 	Labels               []string `json:"labels,omitempty"`
 	Description          string   `json:"description,omitempty"`
 	Version              string   `json:"version,omitempty"`
+	Shareability         string   `json:"shareability"`
 	Filename             string   `json:"filename"`
 	PackageRef           string   `json:"packageRef"`
 	IncludedOperationIds []string `json:"includedOperationIds"`
@@ -64,6 +67,7 @@ type DocumentForTransformationView struct {
 	Labels               []string `json:"labels,omitempty"`
 	Description          string   `json:"description,omitempty"`
 	Version              string   `json:"version,omitempty"`
+	Shareability         string   `json:"shareability"`
 	Filename             string   `json:"filename"`
 	IncludedOperationIds []string `json:"includedOperationIds,omitempty"`
 	Data                 []byte   `json:"data"`
@@ -96,4 +100,23 @@ type AsyncapiOperation struct {
 	Action   string   `json:"action"`
 	Protocol string   `json:"protocol"`
 	Tags     []string `json:"tags"`
+}
+
+const (
+	ShareabilitySharable    = "sharable"
+	ShareabilityNonSharable = "non-sharable"
+	ShareabilityUnknown     = "unknown"
+)
+
+func ValidateShareability(value string) bool {
+	switch value {
+	case ShareabilitySharable, ShareabilityNonSharable:
+		return true
+	default:
+		return false
+	}
+}
+
+type UpdateDocumentShareabilityReq struct {
+	Shareability string `json:"shareability" validate:"required"`
 }

@@ -42,6 +42,7 @@ type VersionController interface {
 	PublishFromCSV(w http.ResponseWriter, r *http.Request)
 	GetCSVDashboardPublishStatus(w http.ResponseWriter, r *http.Request)
 	GetCSVDashboardPublishReport(w http.ResponseWriter, r *http.Request)
+	UpdateDocumentShareability(w http.ResponseWriter, r *http.Request)
 }
 
 func NewVersionController(versionService service.VersionService, roleService service.RoleService, monitoringService service.MonitoringService,
@@ -1345,4 +1346,78 @@ func (v versionControllerImpl) GetCSVDashboardPublishReport(w http.ResponseWrite
 	w.Header().Set("Expires", "0")
 	w.WriteHeader(http.StatusOK)
 	w.Write(publishReport)
+}
+
+func (v versionControllerImpl) UpdateDocumentShareability(w http.ResponseWriter, r *http.Request) {
+	packageId := getStringParam(r, "packageId")
+	ctx := context.Create(r)
+
+	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.DocumentShareabilityManagementPermission)
+	if err != nil {
+		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+
+	versionName, err := getUnescapedStringParam(r, "version")
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "version"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	slug := getStringParam(r, "slug")
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	var req view.UpdateDocumentShareabilityReq
+	err = json.Unmarshal(body, &req)
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	if !view.ValidateShareability(req.Shareability) {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"param": "shareability", "value": req.Shareability},
+		})
+		return
+	}
+
+	err = v.versionService.UpdateDocumentShareability(packageId, versionName, slug, req.Shareability)
+	if err != nil {
+		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to update document shareability", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
