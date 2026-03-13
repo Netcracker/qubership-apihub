@@ -162,19 +162,23 @@ export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(pr
 
   useSetupOperationView(resolvedOperationViewElement, props)
 
+  const apiTypeViewerElement = useMemo(() => (
+    API_TYPE_VIEWER_MAP[apiType](
+      operationViewContainerRef,
+      comparisonMode,
+      mergedDocument,
+      schemaViewMode,
+      filters,
+      operationType,
+      operationName,
+      messageId,
+    )
+  ), [apiType, comparisonMode, filters, mergedDocument, messageId, operationName, operationType, schemaViewMode])
+
   return (
     <Suspense fallback={<LoadingIndicator />}>
       <Box lineHeight={1.5} height="100%" pt={1} sx={{ position: 'relative', overflowY: 'auto' }} data-testid="DocView">
-        {API_TYPE_VIEWER_MAP[apiType](
-          operationViewContainerRef,
-          comparisonMode,
-          mergedDocument,
-          schemaViewMode,
-          filters,
-          operationType,
-          operationName,
-          messageId,
-        )}
+        {apiTypeViewerElement}
       </Box>
       {contextPanelOpen && (
         <Box position="absolute" style={{ backgroundColor: 'white' }} top="0" right="0" left="0" bottom="0">
@@ -228,7 +232,12 @@ const API_TYPE_VIEWER_MAP: Record<ApiType, ApiTypeViewerCallback> = {
       />
   ),
   [API_TYPE_ASYNCAPI]: (_, comparisonMode, mergedDocument, schemaViewMode, filters, operationType, operationName, messageId) => (
-    <Box lineHeight={1.5} height='100%' px={4}>
+    <Box
+      key={`${operationName}-${messageId}`}
+      lineHeight={1.5}
+      height='100%'
+      px={4}
+    >
       <AsyncApiOperationViewer
         source={mergedDocument}
         displayMode={schemaViewMode as SchemaViewMode}
