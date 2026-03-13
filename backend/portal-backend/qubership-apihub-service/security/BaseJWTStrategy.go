@@ -32,8 +32,9 @@ func (b baseJWTStrategyImpl) Authenticate(ctx goctx.Context, r *http.Request) (a
 		return nil, err
 	}
 
+	var info auth.Info
 	if v, ok := b.cache.Load(token); ok {
-		info, ok := v.(auth.Info)
+		info, ok = v.(auth.Info)
 		if !ok {
 			return nil, auth.NewTypeError("authentication failed:", (*auth.Info)(nil), v)
 		}
@@ -41,15 +42,20 @@ func (b baseJWTStrategyImpl) Authenticate(ctx goctx.Context, r *http.Request) (a
 		if b.jwtValidator.IsTokenRevoked(info.GetID(), tokenCreationTimestamp) {
 			return nil, fmt.Errorf("authentication failed: access token is revoked")
 		}
-		return info, nil
+		if info.GetExtensions().Get(TokenTypeExt) != AccessTokenType {
+			return nil, fmt.Errorf("authentication failed: token is not an access token")
+		}
+	} else {
+		var expirationTime time.Time
+		info, expirationTime, err = b.jwtValidator.ValidateToken(token)
+		if err != nil {
+			return nil, fmt.Errorf("authentication failed: %w", err)
+		}
+		if info.GetExtensions().Get(TokenTypeExt) != AccessTokenType {
+			return nil, fmt.Errorf("authentication failed: token is not an access token")
+		}
+		b.cache.StoreWithTTL(token, info, time.Until(expirationTime))
 	}
-
-	info, expirationTime, err := b.jwtValidator.ValidateToken(token)
-	if err != nil {
-		return nil, fmt.Errorf("authentication failed: %w", err)
-	}
-
-	b.cache.StoreWithTTL(token, info, time.Until(expirationTime))
 
 	return info, nil
 }

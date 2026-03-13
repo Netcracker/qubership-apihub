@@ -46,6 +46,9 @@ func (r refreshTokenStrategyImpl) Authenticate(ctx goctx.Context, req *http.Requ
 		if r.jwtValidator.IsTokenRevoked(info.GetID(), tokenCreationTimestamp) {
 			return nil, fmt.Errorf("authentication failed for %s: refresh token is revoked", info.GetID())
 		}
+		if info.GetExtensions().Get(TokenTypeExt) != RefreshTokenType {
+			return nil, fmt.Errorf("authentication failed for %s: token is not a refresh token", info.GetID())
+		}
 	}
 	if info == nil {
 		var t time.Time
@@ -53,6 +56,9 @@ func (r refreshTokenStrategyImpl) Authenticate(ctx goctx.Context, req *http.Requ
 		info, t, err = r.jwtValidator.ValidateToken(refreshToken)
 		if err != nil {
 			return nil, fmt.Errorf("authentication failed: %w", err)
+		}
+		if info.GetExtensions().Get(TokenTypeExt) != RefreshTokenType {
+			return nil, fmt.Errorf("authentication failed for %s: token is not a refresh token", info.GetID())
 		}
 		r.cache.StoreWithTTL(refreshToken, info, time.Until(t))
 	}
@@ -69,6 +75,7 @@ func (r refreshTokenStrategyImpl) refreshAccessToken(userInfo auth.Info) (auth.I
 	user := auth.NewUserInfo(userInfo.GetUserName(), userInfo.GetID(), []string{}, auth.Extensions{})
 	extensions := user.GetExtensions()
 	extensions.Set(context.SystemRoleExt, userInfo.GetExtensions().Get(context.SystemRoleExt))
+	extensions.Set(TokenTypeExt, AccessTokenType)
 	accessDuration := jwt.SetExpDuration(accessTokenDuration)
 
 	accessToken, err := jwt.IssueAccessToken(user, keeper, accessDuration)

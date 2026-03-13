@@ -16,6 +16,9 @@ import (
 )
 
 const TokenIssuedAtExt = "issuedAt"
+const TokenTypeExt = "tokenType"
+const AccessTokenType = "access"
+const RefreshTokenType = "refresh"
 
 type JWTValidator interface {
 	ValidateToken(token string) (auth.Info, time.Time, error)
