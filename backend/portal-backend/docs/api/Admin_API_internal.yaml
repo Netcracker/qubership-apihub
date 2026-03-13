@@ -707,6 +707,7 @@ components:
         - rest
         - graphql
         - protobuf
+        - asyncapi
   examples:
     IncorrectInputParameters:
       description: Incorrect input parameters
