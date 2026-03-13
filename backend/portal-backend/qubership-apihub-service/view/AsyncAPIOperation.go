@@ -14,10 +14,12 @@ func ValidAsyncAPIAction(actionValue string) bool {
 }
 
 type AsyncAPIOperationMetadata struct {
-	Action   string   `json:"action"`
-	Channel  string   `json:"channel"`
-	Protocol string   `json:"protocol"`
-	Tags     []string `json:"tags,omitempty"`
+	Action           string   `json:"action"`
+	Channel          string   `json:"channel"`
+	Protocol         string   `json:"protocol"`
+	AsyncOperationId string   `json:"asyncOperationId"`
+	MessageId        string   `json:"messageId"`
+	Tags             []string `json:"tags,omitempty"`
 }
 
 type AsyncAPIOperationSingleView struct {

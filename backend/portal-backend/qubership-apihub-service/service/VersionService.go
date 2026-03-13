@@ -1327,20 +1327,22 @@ func (v versionServiceImpl) GetVersionChanges(packageId, version, apiType string
 		}
 	}
 	searchQuery := entity.ChangelogSearchQueryEntity{
-		ComparisonId:   comparisonId,
-		ApiType:        apiType,
-		ApiKind:        versionChangesReq.ApiKind,
-		ApiAudience:    versionChangesReq.ApiAudience,
-		TextFilter:     versionChangesReq.TextFilter,
-		Tags:           versionChangesReq.Tags,
-		EmptyTag:       versionChangesReq.EmptyTag,
-		RefPackageId:   versionChangesReq.RefPackageId,
-		EmptyGroup:     versionChangesReq.EmptyGroup,
-		Group:          versionChangesReq.Group,
-		GroupPackageId: versionEnt.PackageId,
-		GroupVersion:   versionEnt.Version,
-		GroupRevision:  versionEnt.Revision,
-		Severities:     severities,
+		ComparisonId:     comparisonId,
+		ApiType:          apiType,
+		ApiKind:          versionChangesReq.ApiKind,
+		ApiAudience:      versionChangesReq.ApiAudience,
+		TextFilter:       versionChangesReq.TextFilter,
+		Tags:             versionChangesReq.Tags,
+		EmptyTag:         versionChangesReq.EmptyTag,
+		RefPackageId:     versionChangesReq.RefPackageId,
+		EmptyGroup:       versionChangesReq.EmptyGroup,
+		Group:            versionChangesReq.Group,
+		GroupPackageId:   versionEnt.PackageId,
+		GroupVersion:     versionEnt.Version,
+		GroupRevision:    versionEnt.Revision,
+		Severities:       severities,
+		AsyncapiChannel:  versionChangesReq.AsyncapiChannel,
+		AsyncapiProtocol: versionChangesReq.AsyncapiProtocol,
 	}
 	operationComparisons := make([]interface{}, 0)
 	changelogOperationEnts, err := v.operationRepo.GetChangelog(searchQuery)

@@ -271,22 +271,47 @@ func (o operationControllerImpl) GetOperationList(w http.ResponseWriter, r *http
 		return
 	}
 
+	asyncapiChannel, err := url.QueryUnescape(r.URL.Query().Get("asyncapiChannel"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiChannel"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	asyncapiProtocol, err := url.QueryUnescape(r.URL.Query().Get("asyncapiProtocol"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiProtocol"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
 	restOperationListReq := view.OperationListReq{
-		Deprecated:   deprecated,
-		Ids:          ids,
-		IncludeData:  includeData,
-		Kind:         kind,
-		EmptyTag:     emptyTag,
-		Tag:          tag,
-		Limit:        limit,
-		Page:         page,
-		TextFilter:   textFilter,
-		ApiType:      apiType,
-		DocumentSlug: documentSlug,
-		EmptyGroup:   emptyGroup,
-		Group:        group,
-		RefPackageId: refPackageId,
-		ApiAudience:  apiAudience,
+		Deprecated:       deprecated,
+		Ids:              ids,
+		IncludeData:      includeData,
+		Kind:             kind,
+		EmptyTag:         emptyTag,
+		Tag:              tag,
+		Limit:            limit,
+		Page:             page,
+		TextFilter:       textFilter,
+		ApiType:          apiType,
+		DocumentSlug:     documentSlug,
+		EmptyGroup:       emptyGroup,
+		Group:            group,
+		RefPackageId:     refPackageId,
+		ApiAudience:      apiAudience,
+		AsyncapiChannel:  asyncapiChannel,
+		AsyncapiProtocol: asyncapiProtocol,
 	}
 
 	operations, err := o.operationService.GetOperations(packageId, versionName, skipRefs, restOperationListReq)
@@ -369,7 +394,7 @@ func (o operationControllerImpl) GetOperation(w http.ResponseWriter, r *http.Req
 		Version:     versionName,
 		ApiType:     apiType,
 		OperationId: operationId,
-		IncludeData:  includeData,
+		IncludeData: includeData,
 	}
 
 	operation, err := o.operationService.GetOperation(basicSearchFilter)
@@ -727,6 +752,29 @@ func (o operationControllerImpl) GetOperationsChanges(w http.ResponseWriter, r *
 		}
 	}
 
+	asyncapiChannel, err := url.QueryUnescape(r.URL.Query().Get("asyncapiChannel"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiChannel"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	asyncapiProtocol, err := url.QueryUnescape(r.URL.Query().Get("asyncapiProtocol"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiProtocol"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
 	versionChangesSearchReq := view.VersionChangesReq{
 		PreviousVersion:          previousVersion,
 		PreviousVersionPackageId: previousVersionPackageId,
@@ -742,6 +790,8 @@ func (o operationControllerImpl) GetOperationsChanges(w http.ResponseWriter, r *
 		Group:                    group,
 		Severities:               severities,
 		ApiAudience:              apiAudience,
+		AsyncapiChannel:          asyncapiChannel,
+		AsyncapiProtocol:         asyncapiProtocol,
 	}
 
 	changelog, err := o.operationService.GetVersionChanges(packageId, versionName, apiType, versionChangesSearchReq)
@@ -941,6 +991,29 @@ func (o operationControllerImpl) GetDeprecatedOperationsList(w http.ResponseWrit
 		return
 	}
 
+	asyncapiChannel, err := url.QueryUnescape(r.URL.Query().Get("asyncapiChannel"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiChannel"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	asyncapiProtocol, err := url.QueryUnescape(r.URL.Query().Get("asyncapiProtocol"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiProtocol"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
 	o.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.DeprecatedOperationsCalled, packageId)
 
 	deprecatedOperationListReq := view.DeprecatedOperationListReq{
@@ -958,6 +1031,8 @@ func (o operationControllerImpl) GetDeprecatedOperationsList(w http.ResponseWrit
 		EmptyGroup:             emptyGroup,
 		Group:                  group,
 		ApiAudience:            apiAudience,
+		AsyncapiChannel:        asyncapiChannel,
+		AsyncapiProtocol:       asyncapiProtocol,
 	}
 
 	operations, err := o.operationService.GetDeprecatedOperations(packageId, versionName, deprecatedOperationListReq)
