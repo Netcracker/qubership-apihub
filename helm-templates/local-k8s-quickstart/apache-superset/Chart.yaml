@@ -1,0 +1,10 @@
+apiVersion: v2
+name: apache-superset
+description: Apache Superset for local Kind cluster, pre-configured with APIHUB PG datasources
+type: application
+version: 0.1.0
+appVersion: "5.0.0"
+dependencies:
+  - name: superset
+    version: "0.15.2"
+    repository: https://apache.github.io/superset

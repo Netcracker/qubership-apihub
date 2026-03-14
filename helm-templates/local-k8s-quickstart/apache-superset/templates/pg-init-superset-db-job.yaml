@@ -1,0 +1,61 @@
+# Pre-install hook: creates superset database and user in pg-common before Superset starts
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-pg-init-superset-db
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+    app.kubernetes.io/name: apache-superset
+    app.kubernetes.io/component: pg-init
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app: pg-init-superset-db
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: init-superset-db
+          image: postgres:16-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "Waiting for PostgreSQL at $PG_HOST:$PG_PORT..."
+              until PGPASSWORD=$PG_ADMIN_PASSWORD psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_ADMIN_USER" -d postgres -c '\q' 2>/dev/null; do
+                echo "PostgreSQL is unavailable - sleeping"
+                sleep 2
+              done
+              echo "PostgreSQL is up - creating superset user and database"
+              PGPASSWORD=$PG_ADMIN_PASSWORD psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_ADMIN_USER" -d postgres -v ON_ERROR_STOP=1 <<'EOSQL'
+              DO $body$
+              BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'superset') THEN
+                  CREATE ROLE superset WITH LOGIN PASSWORD 'superset' CREATEDB;
+                END IF;
+              END $body$;
+              EOSQL
+              PGPASSWORD=$PG_ADMIN_PASSWORD psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_ADMIN_USER" -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE superset OWNER superset" || true
+              PGPASSWORD=$PG_ADMIN_PASSWORD psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_ADMIN_USER" -d postgres -v ON_ERROR_STOP=1 -c "GRANT ALL PRIVILEGES ON DATABASE superset TO superset"
+              echo "Superset database initialized successfully"
+          env:
+            - name: PG_HOST
+              value: {{ .Values.pgInit.host | default "pg-common.postgres-db.svc.cluster.local" | quote }}
+            - name: PG_PORT
+              value: {{ .Values.pgInit.port | default "5432" | quote }}
+            - name: PG_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: apache-superset-pg-admin
+                  key: username
+            - name: PG_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: apache-superset-pg-admin
+                  key: password

@@ -19,6 +19,7 @@ It is not a production ready deployment schema.
   * [Deployment](#deployment)
   * [Verify Installation](#verify-installation)
   * [Uninstallation](#uninstallation)
+  * [Apache Superset (optional)](#apache-superset-optional)
   * [Deploy several APIHUBs simultaneously](#deploy-several-apihubs-simultaneously)
   
 # Quickstart
@@ -170,7 +171,25 @@ Credentials for login can be found in `./qubership-apihub/local-secrets.yaml` fi
 ```
     helm uninstall apihub -n qubership-apihub
     helm uninstall postgres-db -n postgres-db
+    helm uninstall superset -n superset  # if Superset was deployed
 ```
+
+## Apache Superset (optional)
+
+[Apache Superset](https://superset.apache.org/) can be deployed alongside APIHUB to build reports and dashboards over your PostgreSQL data. The `apache-superset` chart is pre-configured with connections to the APIHUB backend databases (`apihub_backend`, `api_linter`, `agents_backend`).
+
+**Prerequisites:** Postgres-db and APIHUB must be deployed first.
+
+**Deploy manually:**
+```bash
+helm repo add superset https://apache.github.io/superset
+cd apache-superset && helm dependency update
+helm install superset . -n superset --create-namespace -f values.yaml
+```
+
+**Access:** http://superset.localtest.me (login: admin/admin)
+
+For detailed usage, customization, and troubleshooting, see [apache-superset/README.md](apache-superset/README.md).
 
 ## Deploy several APIHUBs simultaneously
 
