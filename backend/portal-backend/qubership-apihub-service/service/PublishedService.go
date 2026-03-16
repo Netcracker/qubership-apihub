@@ -48,6 +48,8 @@ type PublishedService interface {
 	GetVersionInternalDocumentData(hash string) ([]byte, string, error)
 	GetComparisonInternalDocuments(packageId string, version string, previousPackageId string, previousVersion string, refPackageId string) ([]view.InternalDocument, error)
 	GetComparisonInternalDocumentData(hash string) ([]byte, string, error)
+
+	ReplaceVersionSources(secCtx context.SecurityContext, packageId string, versionName string, zipData []byte) error
 }
 
 func NewPublishedService(versionRepo repository.PublishedRepository,
@@ -1060,4 +1062,96 @@ func (p publishedServiceImpl) GetComparisonInternalDocumentData(hash string) ([]
 	}
 
 	return docData.Data, docData.Filename, nil
+}
+
+func (p publishedServiceImpl) ReplaceVersionSources(secCtx context.SecurityContext, packageId string, versionName string, zipData []byte) error {
+	versionEnt, err := p.publishedRepo.GetVersion(packageId, versionName)
+	if err != nil {
+		return err
+	}
+	if versionEnt == nil {
+		return &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.PublishedVersionNotFound,
+			Message: exception.PublishedVersionNotFoundMsg,
+			Params:  map[string]interface{}{"version": versionName},
+		}
+	}
+	version := versionEnt.Version
+	revision := versionEnt.Revision
+
+	existingSrc, err := p.publishedRepo.GetPublishedSources(packageId, version, revision)
+	if err != nil {
+		return err
+	}
+	if existingSrc == nil {
+		return &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.PublishedSourcesDataNotFound,
+			Message: exception.PublishedSourcesDataNotFoundMsg,
+			Params:  map[string]interface{}{"packageId": packageId, "versionName": version},
+		}
+	}
+
+	var buildConfig view.BuildConfig
+	err = json.Unmarshal(existingSrc.Config, &buildConfig)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal build config from published sources: %v", err.Error())
+	}
+
+	zipReader, err := zip.NewReader(bytes.NewReader(zipData), int64(len(zipData)))
+	if err != nil {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameter,
+			Message: exception.InvalidParameterMsg,
+			Params:  map[string]interface{}{"param": "request body (ZIP archive)"},
+			Debug:   err.Error(),
+		}
+	}
+
+	srcArc := archive.NewSourcesArchive(zipReader, &buildConfig)
+	err = validation.ValidatePublishSources(srcArc)
+	if err != nil {
+		return err
+	}
+
+	archiveCS := sha512.Sum512(zipData)
+	newChecksum := hex.EncodeToString(archiveCS[:])
+	oldChecksum := existingSrc.ArchiveChecksum
+
+	trackingEntity := &entity.SourcesUpdateTrackingEntity{
+		Id:          uuid.New().String(),
+		PackageId:   packageId,
+		Version:     version,
+		Revision:    revision,
+		OldChecksum: oldChecksum,
+		NewChecksum: newChecksum,
+		PerformedBy: secCtx.GetUserId(),
+		PerformedAt: time.Now(),
+	}
+
+	if p.systemInfoService.IsMinioStorageActive() && !p.systemInfoService.IsMinioStoreOnlyBuildResult() {
+		err = p.minioStorageService.UploadFile(ctx.Background(), view.PUBLISHED_SOURCES_ARCHIVES_TABLE, newChecksum, zipData)
+		if err != nil {
+			return err
+		}
+		err = p.publishedRepo.UpdatePublishedSourcesChecksum(packageId, version, revision, newChecksum, trackingEntity)
+		if err != nil {
+			return err
+		}
+	} else {
+		srcArchiveEntity := &entity.PublishedSrcArchiveEntity{
+			Checksum: newChecksum,
+			Data:     zipData,
+		}
+		err = p.publishedRepo.UpdatePublishedSourcesArchive(packageId, version, revision, newChecksum, srcArchiveEntity, trackingEntity)
+		if err != nil {
+			return err
+		}
+	}
+
+	log.Infof("Replaced published sources for packageId=%s version=%s revision=%d oldChecksum=%s newChecksum=%s",
+		packageId, version, revision, oldChecksum, newChecksum)
+	return nil
 }
