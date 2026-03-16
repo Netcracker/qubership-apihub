@@ -11,7 +11,7 @@ type PublishedContent struct {
 	Labels       []string     `json:"labels,omitempty"`
 	Title        string       `json:"title,omitempty"`
 	Version      string       `json:"version,omitempty"`
-	Shareability string       `json:"shareability"`
+	Shareability string       `json:"shareabilityStatus"`
 	ReferenceId  string       `json:"refId,omitempty"`
 	Openapi      *Openapi     `json:"openapi,omitempty"`
 	Asyncapi     *Asyncapi    `json:"asyncapi,omitempty"`
@@ -30,7 +30,7 @@ type PublishedDocument struct {
 	Labels       []string      `json:"labels,omitempty"`
 	Description  string        `json:"description,omitempty"`
 	Version      string        `json:"version,omitempty"`
-	Shareability string        `json:"shareability"`
+	Shareability string        `json:"shareabilityStatus"`
 	Info         interface{}   `json:"info,omitempty"`
 	ExternalDocs interface{}   `json:"externalDocs,omitempty"`
 	Operations   []interface{} `json:"operations,omitempty"`
@@ -47,7 +47,7 @@ type PublishedDocumentRefView struct {
 	Labels               []string `json:"labels,omitempty"`
 	Description          string   `json:"description,omitempty"`
 	Version              string   `json:"version,omitempty"`
-	Shareability         string   `json:"shareability"`
+	Shareability         string   `json:"shareabilityStatus"`
 	Filename             string   `json:"filename"`
 	PackageRef           string   `json:"packageRef"`
 	IncludedOperationIds []string `json:"includedOperationIds"`
@@ -67,7 +67,7 @@ type DocumentForTransformationView struct {
 	Labels               []string `json:"labels,omitempty"`
 	Description          string   `json:"description,omitempty"`
 	Version              string   `json:"version,omitempty"`
-	Shareability         string   `json:"shareability"`
+	Shareability         string   `json:"shareabilityStatus"`
 	Filename             string   `json:"filename"`
 	IncludedOperationIds []string `json:"includedOperationIds,omitempty"`
 	Data                 []byte   `json:"data"`
@@ -103,14 +103,14 @@ type AsyncapiOperation struct {
 }
 
 const (
-	ShareabilitySharable    = "sharable"
-	ShareabilityNonSharable = "non-sharable"
-	ShareabilityUnknown     = "unknown"
+	ShareabilityShareable    = "shareable"
+	ShareabilityNonShareable = "non-shareable"
+	ShareabilityUnknown      = "unknown"
 )
 
 func ValidateShareability(value string) bool {
 	switch value {
-	case ShareabilitySharable, ShareabilityNonSharable:
+	case ShareabilityShareable, ShareabilityNonShareable:
 		return true
 	default:
 		return false
@@ -118,5 +118,5 @@ func ValidateShareability(value string) bool {
 }
 
 type UpdateDocumentShareabilityReq struct {
-	Shareability string `json:"shareability" validate:"required"`
+	Shareability string `json:"shareabilityStatus" validate:"required"`
 }

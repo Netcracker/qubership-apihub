@@ -58,12 +58,12 @@ type ExportVersionReq struct {
 	Version             string         `json:"version" validate:"required"`
 	Format              string         `json:"format" validate:"required"`
 	RemoveOasExtensions bool           `json:"removeOasExtensions"`
-	IncludeDocuments    string         `json:"includeDocuments,omitempty"`
+	ShareabilityFilter  string         `json:"shareabilityFilter,omitempty"`
 }
 
 const (
-	IncludeDocumentsAll      = "all"
-	IncludeDocumentsSharable = "sharableOnly"
+	ShareabilityFilterAll           = "all"
+	ShareabilityFilterShareableOnly = "shareable_only"
 )
 
 type ExportOASDocumentReq struct {

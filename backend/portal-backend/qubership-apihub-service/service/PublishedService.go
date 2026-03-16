@@ -457,26 +457,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 		return err
 	}
 
-	if buildArc.PackageInfo.MigrationBuild {
-		// take shareability from the existing revision as baseline
-		existingContent, existingErr := p.publishedRepo.GetRevisionContent(
-			buildArc.PackageInfo.PackageId, buildArc.PackageInfo.Version, buildArc.PackageInfo.Revision)
-		if existingErr != nil {
-			return existingErr
-		}
-		if len(existingContent) > 0 {
-			existingShareabilityMap := make(map[string]string, len(existingContent))
-			for _, ec := range existingContent {
-				existingShareabilityMap[ec.Slug] = ec.Shareability
-			}
-			for _, fe := range fileEntities {
-				if existingShareability, exists := existingShareabilityMap[fe.Slug]; exists {
-					fe.Shareability = existingShareability
-				}
-			}
-		}
-	}
-	if buildArc.PackageInfo.PreviousVersion != "" && previousVersionRevision > 0 {
+	if !buildArc.PackageInfo.MigrationBuild && buildArc.PackageInfo.PreviousVersion != "" {
 		// inherit shareability from previous version
 		prevPkgId := buildArc.PackageInfo.PackageId
 		if buildArc.PackageInfo.PreviousVersionPackageId != "" {

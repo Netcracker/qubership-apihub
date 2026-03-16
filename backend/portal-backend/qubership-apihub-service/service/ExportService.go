@@ -73,11 +73,11 @@ func (e exportServiceImpl) StartVersionExport(ctx context.SecurityContext, req v
 		user = ctx.GetApiKeyId()
 	}
 
-	includeDocuments := req.IncludeDocuments
-	if includeDocuments == "" {
-		includeDocuments = view.IncludeDocumentsAll
+	shareabilityFilter := req.ShareabilityFilter
+	if shareabilityFilter == "" {
+		shareabilityFilter = view.ShareabilityFilterAll
 	}
-	err = validateDocumentFilter(includeDocuments)
+	err = validateShareabilityFilter(shareabilityFilter)
 	if err != nil {
 		return "", err
 	}
@@ -89,7 +89,7 @@ func (e exportServiceImpl) StartVersionExport(ctx context.SecurityContext, req v
 		Format:               req.Format,
 		CreatedBy:            user,
 		AllowedOasExtensions: allowedOasExtensions,
-		IncludeDocuments:     includeDocuments,
+		ShareabilityFilter:   shareabilityFilter,
 	}
 
 	buildId, config, err := e.buildService.CreateBuildWithoutDependencies(config, false, "")
@@ -322,15 +322,15 @@ func validateTransformation(transformation string) error {
 	return nil
 }
 
-func validateDocumentFilter(filter string) error {
+func validateShareabilityFilter(filter string) error {
 	switch filter {
-	case view.IncludeDocumentsAll, view.IncludeDocumentsSharable:
+	case view.ShareabilityFilterAll, view.ShareabilityFilterShareableOnly:
 		break
 	default:
 		return &exception.CustomError{
 			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidIncludeDocuments,
-			Message: exception.InvalidIncludeDocumentsMsg,
+			Code:    exception.InvalidShareabilityFilter,
+			Message: exception.InvalidShareabilityFilterMsg,
 			Params:  map[string]interface{}{"value": filter},
 		}
 	}

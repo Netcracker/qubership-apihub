@@ -1408,7 +1408,7 @@ func (v versionControllerImpl) UpdateDocumentShareability(w http.ResponseWriter,
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,
-			Params:  map[string]interface{}{"param": "shareability", "value": req.Shareability},
+			Params:  map[string]interface{}{"param": "shareabilityStatus", "value": req.Shareability},
 		})
 		return
 	}

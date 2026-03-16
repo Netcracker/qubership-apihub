@@ -183,12 +183,6 @@ func (s PublishedContentEntity) GetChanges(t PublishedContentEntity) map[string]
 			"new": t.Filename,
 		}
 	}
-	if s.Shareability != t.Shareability {
-		changes["Shareability"] = map[string]interface{}{
-			"old": s.Shareability,
-			"new": t.Shareability,
-		}
-	}
 	return changes
 }
 

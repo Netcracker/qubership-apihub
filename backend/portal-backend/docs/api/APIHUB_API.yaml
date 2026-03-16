@@ -7896,14 +7896,14 @@ paths:
             schema:
               type: object
               required:
-                - shareability
+                - shareabilityStatus
               properties:
-                shareability:
+                shareabilityStatus:
                   description: The shareability status to set
                   type: string
                   enum:
-                    - sharable
-                    - non-sharable
+                    - shareable
+                    - non-shareable
       responses:
         "204":
           description: Shareability updated successfully
@@ -9750,15 +9750,15 @@ components:
             - yaml
             - json
             - html
-        includeDocuments:
+        shareabilityFilter:
           description: |
             Filter which documents to include in export.
             "all" - include all documents.
-            "sharableOnly" - include only documents with shareability = "sharable".
+            "shareable_only" - include only documents with shareabilityStatus = "shareable".
           type: string
           enum:
             - all
-            - sharableOnly
+            - shareable_only
           default: all
     ExportRestDocument:
       type: object
@@ -10413,12 +10413,12 @@ components:
           items:
             type: string
           example: ["TMF"]
-        shareability:
+        shareabilityStatus:
           description: Document shareability status
           type: string
           enum:
-            - sharable
-            - non-sharable
+            - shareable
+            - non-shareable
             - unknown
           default: unknown
           example: "unknown"
@@ -10477,12 +10477,12 @@ components:
         data:
           description: Content of the operation as a JSON object
           type: object
-        shareability:
+        shareabilityStatus:
           description: Document shareability status
           type: string
           enum:
-            - sharable
-            - non-sharable
+            - shareable
+            - non-shareable
             - unknown
           default: unknown
           example: "unknown"

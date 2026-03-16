@@ -1220,7 +1220,25 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 		utils.PerfLog(time.Since(start).Milliseconds(), 200, "CreateVersionWithData: content data insert")
 		start = time.Now()
 		for _, c := range content {
-			_, err := tx.Model(c).OnConflict("(package_id, version, revision, file_id) DO UPDATE").Insert()
+			var err error
+			if packageInfo.MigrationBuild {
+				// exclude "shareability" from the ON CONFLICT update so the database preserves the user-set
+				// shareability value instead of overwriting it with the default "unknown"
+				_, err = tx.Model(c).OnConflict(`(package_id, version, revision, file_id) DO UPDATE SET
+					"checksum" = EXCLUDED."checksum",
+					"index" = EXCLUDED."index",
+					"slug" = EXCLUDED."slug",
+					"name" = EXCLUDED."name",
+					"path" = EXCLUDED."path",
+					"data_type" = EXCLUDED."data_type",
+					"format" = EXCLUDED."format",
+					"title" = EXCLUDED."title",
+					"metadata" = EXCLUDED."metadata",
+					"operation_ids" = EXCLUDED."operation_ids",
+					"filename" = EXCLUDED."filename"`).Insert()
+			} else {
+				_, err = tx.Model(c).OnConflict("(package_id, version, revision, file_id) DO UPDATE").Insert()
+			}
 			if err != nil {
 				return fmt.Errorf("failed to insert published_version_revision_content %+v: %w", c, err)
 			}
