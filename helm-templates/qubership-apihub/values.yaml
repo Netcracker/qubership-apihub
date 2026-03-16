@@ -232,6 +232,11 @@ qubershipApihubBackend:
         baseUrl: http://qubership-apihub-agents-backend:8080
         pathPrefix: agents-backend
 
+    # Section with feature flags for controlling feature availability
+    featureFlags:
+      # Optional; When true, signals to use v3 legacy global search instead of v4 global search
+      useLegacySearch: false
+
 # Section with APIHUB Build Task Consumer configuration
 qubershipApihubBuildTaskConsumer:
   image:
