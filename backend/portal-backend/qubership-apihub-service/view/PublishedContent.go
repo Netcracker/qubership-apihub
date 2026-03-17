@@ -110,7 +110,7 @@ const (
 
 func ValidateShareability(value string) bool {
 	switch value {
-	case ShareabilityShareable, ShareabilityNonShareable:
+	case ShareabilityShareable, ShareabilityNonShareable, ShareabilityUnknown:
 		return true
 	default:
 		return false

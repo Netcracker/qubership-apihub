@@ -7904,6 +7904,7 @@ paths:
                   enum:
                     - shareable
                     - non-shareable
+                    - unknown
       responses:
         "204":
           description: Shareability updated successfully
