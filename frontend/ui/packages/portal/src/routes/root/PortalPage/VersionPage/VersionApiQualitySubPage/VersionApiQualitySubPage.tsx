@@ -18,7 +18,10 @@ export const VersionApiQualitySubPage: FC = memo(() => {
   const validationSummary = useApiQualityValidationSummary()
   const validationSummaryAvailable = validationSummary?.status === ClientValidationStatuses.SUCCESS
 
-  const validatedDocuments = useMemo(() => validationSummary?.documents ?? [], [validationSummary])
+  const validatedDocuments = useMemo(() => {
+    const documents = validationSummary?.documents ?? []
+    return [...new Map(documents.map(doc => [doc.slug, doc])).values()]
+  }, [validationSummary])
   const loadingValidatedDocuments = useMemo(() => validationSummary === undefined, [validationSummary])
 
   const [selectedDocument, setSelectedDocument] = useState<DocumentValidationSummary | undefined>()

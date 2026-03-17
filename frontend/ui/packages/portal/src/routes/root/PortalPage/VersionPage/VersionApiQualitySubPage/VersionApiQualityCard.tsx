@@ -3,7 +3,6 @@ import { IssueSeverityFilters } from '@apihub/components/ApiQuality/IssueSeverit
 import { ValidationRulesetsDropdown } from '@apihub/components/ApiQuality/ValidationRulesetsDropdown'
 import type { IssueSeverity } from '@apihub/entities/api-quality/issue-severities'
 import type { Issue } from '@apihub/entities/api-quality/issues'
-import type { Linter } from '@apihub/entities/api-quality/linters'
 import type { DocumentValidationSummary } from '@apihub/entities/api-quality/package-version-validation-summary'
 import type { RulesetMetadata } from '@apihub/entities/api-quality/rulesets'
 import { transformIssuesToMarkers } from '@apihub/utils/api-quality/issues'
@@ -257,9 +256,8 @@ export const VersionApiQualityCard: FC<VersionApiQualityCardProps> = memo((props
 })
 
 function filterBySelectedRulesets(source: Issue[], selectedRulesets: Set<RulesetMetadata>): Issue[] {
-  const selectedRulesetsList = Array.from(selectedRulesets)
-  const selectedLinters = new Set<Linter['linter']>(selectedRulesetsList.map(ruleset => ruleset.linter))
-  return source.filter(issue => selectedLinters.has(issue.linter))
+  const selectedRulesetIds = new Set<string>(Array.from(selectedRulesets).map(ruleset => ruleset.id))
+  return source.filter(issue => selectedRulesetIds.has(issue.rulesetId))
 }
 
 function filterByIssueSeverityFilters(source: Issue[], issueSeverityFilters: IssueSeverity[]): Issue[] {
