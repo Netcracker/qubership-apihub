@@ -29,6 +29,8 @@ const MIGRATION_ID_KEY = "migration_id"
 const ACTION_KEY = "action"
 const CHANNEL_KEY = "channel"
 const PROTOCOL_KEY = "protocol"
+const ASYNC_OPERATION_ID_KEY = "asyncOperationId"
+const MESSAGE_ID_KEY = "messageId"
 const OPERATION_ID_V1 = "operationIdV1"
 
 type Metadata map[string]interface{}
@@ -357,6 +359,28 @@ func (m Metadata) SetProtocol(protocol string) {
 func (m Metadata) GetProtocol() string {
 	if protocol, ok := m[PROTOCOL_KEY].(string); ok {
 		return protocol
+	}
+	return ""
+}
+
+func (m Metadata) SetAsyncOperationId(asyncOperationId string) {
+	m[ASYNC_OPERATION_ID_KEY] = asyncOperationId
+}
+
+func (m Metadata) GetAsyncOperationId() string {
+	if asyncOperationId, ok := m[ASYNC_OPERATION_ID_KEY].(string); ok {
+		return asyncOperationId
+	}
+	return ""
+}
+
+func (m Metadata) SetMessageId(messageId string) {
+	m[MESSAGE_ID_KEY] = messageId
+}
+
+func (m Metadata) GetMessageId() string {
+	if messageId, ok := m[MESSAGE_ID_KEY].(string); ok {
+		return messageId
 	}
 	return ""
 }

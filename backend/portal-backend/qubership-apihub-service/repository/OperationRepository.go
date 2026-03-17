@@ -42,7 +42,8 @@ type OperationRepository interface {
 	GetVersionOperationGroups(packageId string, version string, revision int) ([]entity.OperationGroupCountEntity, error)
 	GetGroupedOperations(packageId string, version string, revision int, operationType string, groupName string, searchReq view.OperationListReq) ([]entity.OperationRichEntity, error)
 	GetOperationsByModelHash(packageId string, version string, revision int, apiType string, modelHash string) ([]entity.OperationModelsEntity, error)
-	GetOperationsByPathAndMethod(packageId string, version string, revision int, apiType string, path string, method string) ([]string, error)
+	GetRESTOperationsByPathAndMethod(packageId string, version string, revision int, path string, method string) ([]string, error)
+	GetGQLOperationsByTypeAndMethod(packageId string, version string, revision int, operationType string, method string) ([]string, error)
 }
 
 func NewOperationRepository(cp db.ConnectionProvider) OperationRepository {
@@ -205,12 +206,21 @@ func (o operationRepositoryImpl) GetOperations(packageId string, version string,
 		query.Where("exists(select 1 from jsonb_each_text(operation.custom_tags) where key = ?)", searchReq.CustomTagKey)
 	} else if searchReq.TextFilter != "" {
 		searchReq.TextFilter = "%" + utils.LikeEscaped(searchReq.TextFilter) + "%"
-		query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
-				WhereOr("operation.metadata->>? ilike ?", "path", searchReq.TextFilter).
-				WhereOr("operation.metadata->>? ilike ?", "method", searchReq.TextFilter)
-			return q, nil
-		})
+		if operationType == string(view.AsyncapiApiType) {
+			query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+				q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "channel", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "action", searchReq.TextFilter)
+				return q, nil
+			})
+		} else {
+			query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+				q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "path", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "method", searchReq.TextFilter)
+				return q, nil
+			})
+		}
 	}
 
 	if searchReq.Kind != "" {
@@ -218,6 +228,15 @@ func (o operationRepositoryImpl) GetOperations(packageId string, version string,
 	}
 	if searchReq.ApiAudience != "" {
 		query.Where("api_audience = ?", searchReq.ApiAudience)
+	}
+
+	if operationType == string(view.AsyncapiApiType) {
+		if searchReq.AsyncapiChannel != "" {
+			query.Where("operation.metadata->>? = ?", "channel", searchReq.AsyncapiChannel)
+		}
+		if searchReq.AsyncapiProtocol != "" {
+			query.Where("operation.metadata->>? = ?", "protocol", searchReq.AsyncapiProtocol)
+		}
 	}
 
 	if searchReq.Tag != "" {
@@ -301,18 +320,36 @@ func (o operationRepositoryImpl) GetDeprecatedOperations(packageId string, versi
 
 	if searchReq.TextFilter != "" {
 		searchReq.TextFilter = "%" + utils.LikeEscaped(searchReq.TextFilter) + "%"
-		query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
-				WhereOr("operation.metadata->>? ilike ?", "path", searchReq.TextFilter).
-				WhereOr("operation.metadata->>? ilike ?", "method", searchReq.TextFilter)
-			return q, nil
-		})
+		if operationType == string(view.AsyncapiApiType) {
+			query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+				q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "channel", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "action", searchReq.TextFilter)
+				return q, nil
+			})
+		} else {
+			query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+				q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "path", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "method", searchReq.TextFilter)
+				return q, nil
+			})
+		}
 	}
 	if searchReq.Kind != "" {
 		query.Where("kind = ?", searchReq.Kind)
 	}
 	if searchReq.ApiAudience != "" {
 		query.Where("api_audience = ?", searchReq.ApiAudience)
+	}
+
+	if operationType == string(view.AsyncapiApiType) {
+		if searchReq.AsyncapiChannel != "" {
+			query.Where("operation.metadata->>? = ?", "channel", searchReq.AsyncapiChannel)
+		}
+		if searchReq.AsyncapiProtocol != "" {
+			query.Where("operation.metadata->>? = ?", "protocol", searchReq.AsyncapiProtocol)
+		}
 	}
 
 	if len(searchReq.Tags) != 0 {
@@ -560,7 +597,11 @@ func (o operationRepositoryImpl) GetChangelog(searchQuery entity.ChangelogSearch
 		JoinOn("o.operation_id = operation_comparison.selected_operation_id")
 	if searchQuery.TextFilter != "" {
 		searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
-		query.JoinOn("o.title ilike ? or o.metadata->>? ilike ? or o.metadata->>? ilike ?", searchQuery.TextFilter, "path", searchQuery.TextFilter, "method", searchQuery.TextFilter)
+		if searchQuery.ApiType == string(view.AsyncapiApiType) {
+			query.JoinOn("o.title ilike ? or o.metadata->>? ilike ? or o.metadata->>? ilike ?", searchQuery.TextFilter, "channel", searchQuery.TextFilter, "action", searchQuery.TextFilter)
+		} else {
+			query.JoinOn("o.title ilike ? or o.metadata->>? ilike ? or o.metadata->>? ilike ?", searchQuery.TextFilter, "path", searchQuery.TextFilter, "method", searchQuery.TextFilter)
+		}
 	}
 	if searchQuery.ApiType != "" {
 		query.JoinOn("o.type = ?", searchQuery.ApiType)
@@ -570,6 +611,14 @@ func (o operationRepositoryImpl) GetChangelog(searchQuery entity.ChangelogSearch
 	}
 	if searchQuery.ApiAudience != "" {
 		query.JoinOn("o.api_audience = ?", searchQuery.ApiAudience)
+	}
+	if searchQuery.ApiType == string(view.AsyncapiApiType) {
+		if searchQuery.AsyncapiChannel != "" {
+			query.Where("o.metadata->>? = ?", "channel", searchQuery.AsyncapiChannel)
+		}
+		if searchQuery.AsyncapiProtocol != "" {
+			query.Where("o.metadata->>? = ?", "protocol", searchQuery.AsyncapiProtocol)
+		}
 	}
 	if len(searchQuery.Tags) != 0 {
 		query.JoinOn(`exists(
@@ -966,19 +1015,19 @@ func (o operationRepositoryImpl) LiteSearchForOperations(searchQuery *entity.Ope
 
 	operationsSearchQuery := `
 select
-    o.package_id,
-    pg.name,
-    o.version,
-    o.revision,
-    pv.status,
-    o.operation_id,
-    o.title,
-    o.data_hash,
-    o.deprecated,
-    o.kind,
-    o.type,
-    o.metadata,
-    parent_package_names(o.package_id) parent_names
+	o.package_id,
+	pg.name,
+	o.version,
+	o.revision,
+	pv.status,
+	o.operation_id,
+	o.title,
+	o.data_hash,
+	o.deprecated,
+	o.kind,
+	o.type,
+	o.metadata,
+	parent_package_names(o.package_id) parent_names
 from operation o
          inner join (
     SELECT DISTINCT ON (rank, package_id, operation_id)
@@ -1527,12 +1576,21 @@ func (o operationRepositoryImpl) GetGroupedOperations(packageId string, version 
 		query.Where("exists(select 1 from jsonb_each_text(operation.custom_tags) where key = ?)", searchReq.CustomTagKey)
 	} else if searchReq.TextFilter != "" {
 		searchReq.TextFilter = "%" + utils.LikeEscaped(searchReq.TextFilter) + "%"
-		query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
-				WhereOr("operation.metadata->>? ilike ?", "path", searchReq.TextFilter).
-				WhereOr("operation.metadata->>? ilike ?", "method", searchReq.TextFilter)
-			return q, nil
-		})
+		if operationType == string(view.AsyncapiApiType) {
+			query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+				q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "channel", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "action", searchReq.TextFilter)
+				return q, nil
+			})
+		} else {
+			query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+				q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "path", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "method", searchReq.TextFilter)
+				return q, nil
+			})
+		}
 	}
 
 	if searchReq.Kind != "" {
@@ -1540,6 +1598,15 @@ func (o operationRepositoryImpl) GetGroupedOperations(packageId string, version 
 	}
 	if searchReq.ApiAudience != "" {
 		query.Where("api_audience = ?", searchReq.ApiAudience)
+	}
+
+	if operationType == string(view.AsyncapiApiType) {
+		if searchReq.AsyncapiChannel != "" {
+			query.Where("operation.metadata->>? = ?", "channel", searchReq.AsyncapiChannel)
+		}
+		if searchReq.AsyncapiProtocol != "" {
+			query.Where("operation.metadata->>? = ?", "protocol", searchReq.AsyncapiProtocol)
+		}
 	}
 
 	if searchReq.Tag != "" {
@@ -1603,7 +1670,7 @@ func (o operationRepositoryImpl) GetOperationsByModelHash(packageId string, vers
 	return result, nil
 }
 
-func (o operationRepositoryImpl) GetOperationsByPathAndMethod(packageId string, version string, revision int, apiType string, path string, method string) ([]string, error) {
+func (o operationRepositoryImpl) GetRESTOperationsByPathAndMethod(packageId string, version string, revision int, path string, method string) ([]string, error) {
 	type OperationId struct {
 		OperationId string `pg:"operation_id"`
 	}
@@ -1619,7 +1686,39 @@ func (o operationRepositoryImpl) GetOperationsByPathAndMethod(packageId string, 
 		and metadata ->> 'path' ilike ?
 		and metadata ->> 'method' ilike ?
 	`
-	_, err := o.cp.GetConnection().Query(&operationIds, operationsByPathAndMethod, packageId, version, revision, apiType, path, method)
+	_, err := o.cp.GetConnection().Query(&operationIds, operationsByPathAndMethod, packageId, version, revision, string(view.RestApiType), path, method)
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	result := make([]string, 0)
+
+	for _, t := range operationIds {
+		result = append(result, t.OperationId)
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetGQLOperationsByTypeAndMethod(packageId string, version string, revision int, operationType string, method string) ([]string, error) {
+	type OperationId struct {
+		OperationId string `pg:"operation_id"`
+	}
+	var operationIds []OperationId
+
+	operationsByTypeAndMethod := `
+		select operation_id
+		from operation
+		where package_id = ?
+		and version = ?
+		and revision = ?
+		and type = ?
+		and metadata ->> 'type' = ?
+		and metadata ->> 'method' = ?
+	`
+	_, err := o.cp.GetConnection().Query(&operationIds, operationsByTypeAndMethod, packageId, version, revision, string(view.GraphqlApiType), operationType, method)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil

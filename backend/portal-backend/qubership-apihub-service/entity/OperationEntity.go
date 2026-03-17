@@ -172,23 +172,25 @@ type OperationComparisonChangelogEntity struct {
 }
 
 type ChangelogSearchQueryEntity struct {
-	ComparisonId   string   `pg:"comparison_id, type:varchar, use_zero"`
-	ApiType        string   `pg:"type, type:varchar, use_zero"`
-	TextFilter     string   `pg:"text_filter, type:varchar, use_zero"`
-	ApiKind        string   `pg:"api_kind, type:varchar, use_zero"`
-	ApiAudience    string   `pg:"api_audience, type:varchar, use_zero"`
-	DocumentSlug   string   `pg:"document_slug, type:varchar, use_zero"`
-	Tags           []string `pg:"tags, type:varchar[], use_zero"`
-	EmptyTag       bool     `pg:"empty_tag, type:boolean, use_zero"`
-	RefPackageId   string   `pg:"ref_package_id, type:varchar, use_zero"`
-	Limit          int      `pg:"limit, type:integer, use_zero"`
-	Offset         int      `pg:"offset, type:integer, use_zero"`
-	EmptyGroup     bool     `pg:"-"`
-	Group          string   `pg:"-"`
-	GroupPackageId string   `pg:"-"`
-	GroupVersion   string   `pg:"-"`
-	GroupRevision  int      `pg:"-"`
-	Severities     []string `pg:"-"`
+	ComparisonId     string   `pg:"comparison_id, type:varchar, use_zero"`
+	ApiType          string   `pg:"type, type:varchar, use_zero"`
+	TextFilter       string   `pg:"text_filter, type:varchar, use_zero"`
+	ApiKind          string   `pg:"api_kind, type:varchar, use_zero"`
+	ApiAudience      string   `pg:"api_audience, type:varchar, use_zero"`
+	DocumentSlug     string   `pg:"document_slug, type:varchar, use_zero"`
+	Tags             []string `pg:"tags, type:varchar[], use_zero"`
+	EmptyTag         bool     `pg:"empty_tag, type:boolean, use_zero"`
+	RefPackageId     string   `pg:"ref_package_id, type:varchar, use_zero"`
+	Limit            int      `pg:"limit, type:integer, use_zero"`
+	Offset           int      `pg:"offset, type:integer, use_zero"`
+	EmptyGroup       bool     `pg:"-"`
+	Group            string   `pg:"-"`
+	GroupPackageId   string   `pg:"-"`
+	GroupVersion     string   `pg:"-"`
+	GroupRevision    int      `pg:"-"`
+	Severities       []string `pg:"-"`
+	AsyncapiChannel  string   `pg:"-"`
+	AsyncapiProtocol string   `pg:"-"`
 }
 
 type OperationTagsSearchQueryEntity struct {
@@ -320,10 +322,12 @@ func MakeAsyncAPIOperationView(operationEnt *OperationEntity) view.AsyncAPIOpera
 	return view.AsyncAPIOperationView{
 		OperationListView: MakeCommonOperationView(operationEnt),
 		AsyncAPIOperationMetadata: view.AsyncAPIOperationMetadata{
-			Action:   operationEnt.Metadata.GetAction(),
-			Channel:  operationEnt.Metadata.GetChannel(),
-			Protocol: operationEnt.Metadata.GetProtocol(),
-			Tags:     operationEnt.Metadata.GetTags(),
+			Action:           operationEnt.Metadata.GetAction(),
+			Channel:          operationEnt.Metadata.GetChannel(),
+			Protocol:         operationEnt.Metadata.GetProtocol(),
+			AsyncOperationId: operationEnt.Metadata.GetAsyncOperationId(),
+			MessageId:        operationEnt.Metadata.GetMessageId(),
+			Tags:             operationEnt.Metadata.GetTags(),
 		},
 	}
 }
@@ -378,10 +382,12 @@ func MakeDeprecatedOperationView(operationEnt OperationRichEntity, includeDeprec
 		return view.DeprecatedAsyncAPIOperationView{
 			DeprecatedOperationView: operationView,
 			AsyncAPIOperationMetadata: view.AsyncAPIOperationMetadata{
-				Action:   operationEnt.Metadata.GetAction(),
-				Channel:  operationEnt.Metadata.GetChannel(),
-				Protocol: operationEnt.Metadata.GetProtocol(),
-				Tags:     operationEnt.Metadata.GetTags(),
+				Action:           operationEnt.Metadata.GetAction(),
+				Channel:          operationEnt.Metadata.GetChannel(),
+				Protocol:         operationEnt.Metadata.GetProtocol(),
+				AsyncOperationId: operationEnt.Metadata.GetAsyncOperationId(),
+				MessageId:        operationEnt.Metadata.GetMessageId(),
+				Tags:             operationEnt.Metadata.GetTags(),
 			},
 		}
 	}
@@ -441,10 +447,12 @@ func MakeSingleOperationView(operationEnt OperationRichEntity) interface{} {
 		return view.AsyncAPIOperationSingleView{
 			SingleOperationView: operationView,
 			AsyncAPIOperationMetadata: view.AsyncAPIOperationMetadata{
-				Action:   operationEnt.Metadata.GetAction(),
-				Channel:  operationEnt.Metadata.GetChannel(),
-				Protocol: operationEnt.Metadata.GetProtocol(),
-				Tags:     operationEnt.Metadata.GetTags(),
+				Action:           operationEnt.Metadata.GetAction(),
+				Channel:          operationEnt.Metadata.GetChannel(),
+				Protocol:         operationEnt.Metadata.GetProtocol(),
+				AsyncOperationId: operationEnt.Metadata.GetAsyncOperationId(),
+				MessageId:        operationEnt.Metadata.GetMessageId(),
+				Tags:             operationEnt.Metadata.GetTags(),
 			},
 		}
 	}
@@ -587,10 +595,12 @@ func MakeOperationComparisonChangelogView(entity OperationComparisonChangelogEnt
 			current = &view.AsyncAPIOperationComparisonChangelogView{
 				GenericComparisonOperationView: currentGenericView,
 				AsyncAPIOperationMetadata: view.AsyncAPIOperationMetadata{
-					Action:   entity.Metadata.GetAction(),
-					Channel:  entity.Metadata.GetChannel(),
-					Protocol: entity.Metadata.GetProtocol(),
-					Tags:     entity.Metadata.GetTags(),
+					Action:           entity.Metadata.GetAction(),
+					Channel:          entity.Metadata.GetChannel(),
+					Protocol:         entity.Metadata.GetProtocol(),
+					AsyncOperationId: entity.Metadata.GetAsyncOperationId(),
+					MessageId:        entity.Metadata.GetMessageId(),
+					Tags:             entity.Metadata.GetTags(),
 				},
 			}
 		}
@@ -598,10 +608,12 @@ func MakeOperationComparisonChangelogView(entity OperationComparisonChangelogEnt
 			previous = &view.AsyncAPIOperationComparisonChangelogView{
 				GenericComparisonOperationView: previousGenericView,
 				AsyncAPIOperationMetadata: view.AsyncAPIOperationMetadata{
-					Action:   entity.PreviousMetadata.GetAction(),
-					Channel:  entity.PreviousMetadata.GetChannel(),
-					Protocol: entity.PreviousMetadata.GetProtocol(),
-					Tags:     entity.PreviousMetadata.GetTags(),
+					Action:           entity.PreviousMetadata.GetAction(),
+					Channel:          entity.PreviousMetadata.GetChannel(),
+					Protocol:         entity.PreviousMetadata.GetProtocol(),
+					AsyncOperationId: entity.PreviousMetadata.GetAsyncOperationId(),
+					MessageId:        entity.PreviousMetadata.GetMessageId(),
+					Tags:             entity.PreviousMetadata.GetTags(),
 				},
 			}
 		}
@@ -711,20 +723,24 @@ func MakeOperationComparisonChangesView(entity OperationComparisonChangelogEntit
 			return view.AsyncAPIOperationComparisonChangesView{
 				OperationComparisonChangesView: operationComparisonChangelogView,
 				AsyncAPIOperationMetadata: view.AsyncAPIOperationMetadata{
-					Action:   entity.PreviousMetadata.GetAction(),
-					Channel:  entity.PreviousMetadata.GetChannel(),
-					Protocol: entity.PreviousMetadata.GetProtocol(),
-					Tags:     entity.PreviousMetadata.GetTags(),
+					Action:           entity.PreviousMetadata.GetAction(),
+					Channel:          entity.PreviousMetadata.GetChannel(),
+					Protocol:         entity.PreviousMetadata.GetProtocol(),
+					AsyncOperationId: entity.PreviousMetadata.GetAsyncOperationId(),
+					MessageId:        entity.PreviousMetadata.GetMessageId(),
+					Tags:             entity.PreviousMetadata.GetTags(),
 				},
 			}
 		} else {
 			return view.AsyncAPIOperationComparisonChangesView{
 				OperationComparisonChangesView: operationComparisonChangelogView,
 				AsyncAPIOperationMetadata: view.AsyncAPIOperationMetadata{
-					Action:   entity.Metadata.GetAction(),
-					Channel:  entity.Metadata.GetChannel(),
-					Protocol: entity.Metadata.GetProtocol(),
-					Tags:     entity.Metadata.GetTags(),
+					Action:           entity.Metadata.GetAction(),
+					Channel:          entity.Metadata.GetChannel(),
+					Protocol:         entity.Metadata.GetProtocol(),
+					AsyncOperationId: entity.Metadata.GetAsyncOperationId(),
+					MessageId:        entity.Metadata.GetMessageId(),
+					Tags:             entity.Metadata.GetTags(),
 				},
 			}
 		}
