@@ -15,7 +15,7 @@ import (
 )
 
 const typeAndTitleMigrationVersion = 22
-const transitionFixMigrationVersion = 30
+const transitionFixMigrationVersion = 31
 
 // SoftMigrateDb The function implements migrations that can't be made via SQL query.
 // Executes only required migrations based on current vs new versions.
