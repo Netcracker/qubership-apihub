@@ -4331,8 +4331,6 @@ func (p publishedRepositoryImpl) comparisonInternalDocumentDataExists(tx *pg.Tx,
 }
 
 func (p publishedRepositoryImpl) GetAllVersionRevisionsByPackageID(packageID string) ([]entity.PublishedVersionEntity, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
 
 	query := `
         SELECT
@@ -4346,7 +4344,7 @@ func (p publishedRepositoryImpl) GetAllVersionRevisionsByPackageID(packageID str
     `
 
 	var publishedVersions []entity.PublishedVersionEntity
-	_, err := p.cp.GetConnection().QueryContext(ctx, &publishedVersions, query, packageID)
+	_, err := p.cp.GetConnection().QueryContext(context.Background(), &publishedVersions, query, packageID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch version revisions by packageID: %v", err)
 	}
