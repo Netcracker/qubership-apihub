@@ -617,6 +617,6 @@ func (g *systemInfoServiceImpl) GetAiMCPConfig() config.MCPConfig {
 
 func (g *systemInfoServiceImpl) GetFeatureFlags() view.FeatureFlags {
 	return view.FeatureFlags{
-		UseLegacySearch: g.config.FeatureFlags.UseLegacySearch,
+		UseV3Search: g.config.FeatureFlags.UseV3Search,
 	}
 }

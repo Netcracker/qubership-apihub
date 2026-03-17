@@ -14,7 +14,7 @@ type SystemInfo struct {
 }
 
 type FeatureFlags struct {
-	UseLegacySearch bool `json:"useLegacySearch"`
+	UseV3Search bool `json:"useV3Search"`
 }
 
 type SystemConfigurationInfo_deprecated struct {

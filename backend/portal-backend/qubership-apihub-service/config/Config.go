@@ -183,7 +183,7 @@ type BuildsCleanupConfig struct {
 }
 
 type FeatureFlagsConfig struct {
-	UseLegacySearch bool
+	UseV3Search bool
 }
 
 type Base64DecodedString []byte

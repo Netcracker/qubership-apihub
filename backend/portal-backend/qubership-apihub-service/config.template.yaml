@@ -211,8 +211,8 @@ ai:
 
 # Section with feature flags for controlling feature availability
 featureFlags:
-  # Optional; When true, signals to use v3 legacy global search instead of v4 global search; Default: false; Example: true
-  useLegacySearch: false
+  # Optional; When true, signals to use v3 search API instead of v4 search API; Default: false; Example: true
+  useV3Search: false
 
 # List of enabled extension services
 #extensions:

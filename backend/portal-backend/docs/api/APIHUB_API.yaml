@@ -9783,10 +9783,11 @@ components:
           description: Feature flags for the system
           type: object
           properties:
-            useLegacySearch:
-              description: When true, signals to use v3 legacy global search instead of v4 global search.
+            useV3Search:
+              description: When true, signals to use v3 search API instead of v4 search API.
               type: boolean
               default: false
+              deprecated: true
     ApiKey:
       title: ApiKey
       type: object
@@ -11893,7 +11894,7 @@ components:
           - User guide|https://www.example.com/guide
           - Support team|https://www.example.com/support]
         featureFlags:
-          useLegacySearch: false
+          useV3Search: false
     Package:
       description: Example of the package params
       value:
