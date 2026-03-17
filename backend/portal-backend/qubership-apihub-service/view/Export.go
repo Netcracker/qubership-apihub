@@ -11,18 +11,22 @@ type ExportApiChangesRequestView struct {
 	Group                    string
 	EmptyGroup               bool
 	ApiAudience              string
+	AsyncapiChannel          string
+	AsyncapiProtocol         string
 }
 
 type ExportOperationRequestView struct {
-	EmptyTag     bool
-	Kind         string
-	Tag          string
-	TextFilter   string
-	Tags         []string
-	RefPackageId string
-	Group        string
-	EmptyGroup   bool
-	ApiAudience  string
+	EmptyTag         bool
+	Kind             string
+	Tag              string
+	TextFilter       string
+	Tags             []string
+	RefPackageId     string
+	Group            string
+	EmptyGroup       bool
+	ApiAudience      string
+	AsyncapiChannel  string
+	AsyncapiProtocol string
 }
 
 const ExportFormatXlsx = "xlsx"

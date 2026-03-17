@@ -246,6 +246,8 @@ func (a *BuildResultToEntitiesReader) ReadOperationsToEntities() ([]*entity.Oper
 			metadata.SetAction(operationMetadata.GetStringValue("action"))
 			metadata.SetChannel(operationMetadata.GetStringValue("channel"))
 			metadata.SetProtocol(operationMetadata.GetStringValue("protocol"))
+			metadata.SetAsyncOperationId(operationMetadata.GetStringValue("asyncOperationId"))
+			metadata.SetMessageId(operationMetadata.GetStringValue("messageId"))
 		}
 
 		if operationMetadata.GetOperationIdV1() != "" {

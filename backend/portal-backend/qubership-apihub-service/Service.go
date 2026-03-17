@@ -326,6 +326,7 @@ func main() {
 	mcpController := controller.NewMCPController(mcpService)
 	chatController := controller.NewChatController(chatService)
 	buildController := controller.NewBuildController(buildResultService, buildService, roleService.IsSysadm)
+	adminPublishedController := controller.NewAdminPublishedController(publishedService, roleService.IsSysadm, systemInfoService.GetPublishArchiveSizeLimitMB())
 
 	r.HandleFunc("/api/v1/system/info", security.Secure(systemInfoController.GetSystemInfo)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/system/configuration", samlAuthController.GetSystemSSOInfo_deprecated).Methods(http.MethodGet) //deprecated
@@ -477,6 +478,8 @@ func main() {
 
 	r.HandleFunc("/api/v2/admin/builds/{buildId}/result", security.Secure(buildController.GetBuildResult)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/admin/builds/{buildId}/sources", security.Secure(buildController.GetBuildSources)).Methods(http.MethodGet)
+
+	r.HandleFunc("/api/v2/admin/packages/{packageId}/versions/{version}/sources", security.Secure(adminPublishedController.ReplaceVersionSources)).Methods(http.MethodPut)
 
 	r.HandleFunc("/api/v2/admin/system/stats", security.Secure(systemStatsController.GetSystemStats)).Methods(http.MethodGet)
 
