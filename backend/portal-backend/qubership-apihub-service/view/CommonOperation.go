@@ -373,24 +373,26 @@ func GetDocumentTypesForApiType(apiType string) []string {
 }
 
 type OperationListReq struct {
-	Deprecated     *bool
-	Ids            []string
-	IncludeData    bool
-	Kind           string
-	EmptyTag       bool
-	Tag            string
-	Limit          int
-	Page           int
-	TextFilter     string
-	ApiType        string
-	DocumentSlug   string
-	EmptyGroup     bool
-	Group          string
-	OnlyAddable    bool
-	RefPackageId   string
-	CustomTagKey   string
-	CustomTagValue string
-	ApiAudience    string
+	Deprecated       *bool
+	Ids              []string
+	IncludeData      bool
+	Kind             string
+	EmptyTag         bool
+	Tag              string
+	Limit            int
+	Page             int
+	TextFilter       string
+	ApiType          string
+	DocumentSlug     string
+	EmptyGroup       bool
+	Group            string
+	OnlyAddable      bool
+	RefPackageId     string
+	CustomTagKey     string
+	CustomTagValue   string
+	ApiAudience      string
+	AsyncapiChannel  string
+	AsyncapiProtocol string
 }
 
 type DeprecatedOperationListReq struct {
@@ -408,6 +410,8 @@ type DeprecatedOperationListReq struct {
 	EmptyGroup             bool
 	Group                  string
 	ApiAudience            string
+	AsyncapiChannel        string
+	AsyncapiProtocol       string
 }
 
 type OperationBasicSearchReq struct {
@@ -439,6 +443,8 @@ type VersionChangesReq struct {
 	Group                    string
 	Severities               []string
 	ApiAudience              string
+	AsyncapiChannel          string
+	AsyncapiProtocol         string
 }
 
 type PagingFilterReq struct {

@@ -14,6 +14,7 @@
 
 ## Admin guides
 ### [Operations migration analysis](ops_migration_analysis_guide.md)
+### [Modifying published version sources](modify_published_sources_guide.md)
 
 ## API documentation
 ### API specifications
