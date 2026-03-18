@@ -2387,12 +2387,12 @@ paths:
 
         In this process the system reads information from the input CSV file
         which contains list of services and their versions. Based on this info,
-        the system searches for package release versions (in Netcracker workspace) and publish dashboard
+        the system searches for package release versions and publish dashboard
         version with references to the found package versions.\
 
-        Additionlly, if input CSV file contains info about REST API operations
+        Also, CSV file contains info about REST API operations
         (method, path) of listed services, the system searches for operations
-        from the included pacakge versions and automatically creates operations
+        from the included package versions and automatically creates operations
         group (manual group with rest api type) in published dashboard version
         with all found operations.
       operationId: DashboardPublishWithOperationsGroup
@@ -2663,13 +2663,13 @@ paths:
         the system searches for package release versions (in the specified workspace) and publishes
         a dashboard version with references to the found package versions.
 
-        Additionally, if the input CSV file contains info about operations
+        Also, the CSV file contains info about operations
         of listed services, the system searches for operations
         from the included package versions and automatically creates an operations
         group (manual group with the specified api type) in the published dashboard version
         with all found operations.
 
-        CSV file columns depend on the API type:
+        CSV file columns depend on the API type, all columns are mandatory:
         * **REST**: service, version, method, path
         * **GraphQL**: service, version, type, method
       operationId: DashboardPublishWithOperationsGroupV2
