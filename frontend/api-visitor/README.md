@@ -35,15 +35,15 @@ const invertOptions: DenormalizeOptions = {
   /* Add additional options if necessary */
 }
 
-/* 
+/*
 * Normalized OpenAPI document - a Dereferenced and Bundled version of OpenAPI spec, where all $ref references are resolved.
-* 
-* 'normalize' - process resolves refs, merges allOf-s, sets default values according to specification, 
-* unwrap system "anyOf" (type "any") and so on. Some of the stages are revertable, some not. 
-* As a result we get completely "normalized" OpenAPI specification 
-* which has transparent structure and can be easily matched with another normalized OpenAPI specification. 
-* 
-* 'denormalize - revertable things will be reverted (e.g. defaults, unified system anyOf-s), but resolved refs and merge allOf-s will be saved. 
+*
+* 'normalize' - process resolves refs, merges allOf-s, sets default values according to specification,
+* unwrap system "anyOf" (type "any") and so on. Some of the stages are revertable, some not.
+* As a result we get completely "normalized" OpenAPI specification
+* which has transparent structure and can be easily matched with another normalized OpenAPI specification.
+*
+* 'denormalize - revertable things will be reverted (e.g. defaults, unified system anyOf-s), but resolved refs and merge allOf-s will be saved.
 * So it results to original specification with resolved refs and merged allOf-s.'
 */
 const normalizedOpenApiDocument = denormalize(normalize(operationData, options), invertOptions)
@@ -67,6 +67,7 @@ walker.walkPathsOnNormalizedSource(normalizedOpenApiDocument, {
   // Add other handlers as needed
 
 }, { /* Options */ })
+
 ```
 
 
