@@ -176,7 +176,6 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
     ...asyncApiSpecificationExtensionRulesFunction(allUnclassified),
   }
 
-  //TODO: validate classification
   const parameterRules: CompareRules = {
     $: allUnclassified,
     '/enum': {
@@ -250,7 +249,7 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
   const operationRules = (isSendAction: boolean): CompareRules => ({
     // For send operations: add=non-breaking (can send new types), remove=breaking
     // For receive operations: add=breaking (must handle new types), remove=non-breaking
-    $: isSendAction //TODO: fix scopes
+    $: isSendAction
       ? [nonBreaking, breaking, unclassified]
       : [breaking, nonBreaking, unclassified],
     [START_NEW_COMPARE_SCOPE_RULE]: isSendAction ? COMPARE_SCOPE_SEND : COMPARE_SCOPE_RECEIVE,
@@ -275,7 +274,6 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
     ...asyncApiSpecificationExtensionRulesFunction(),
   })
 
-  //TODO: review
   const operationsRules: CompareRules = {
     $: addNonBreaking,
     '/*': ({ value }) => {
