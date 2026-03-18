@@ -789,3 +789,12 @@ const BuildResultNotFoundMsg = "Build result for '$buildId' build not found"
 
 const OperationGroupTemplateNotSupported = "7900"
 const OperationGroupTemplateNotSupportedMsg = "Export template is not supported for '$apiType' API type"
+
+const TemplateSizeExceeded = "8000"
+const TemplateSizeExceededMsg = "Template file size exceeded. Template size limit - $size"
+
+const InvalidTemplateFileExtension = "8001"
+const InvalidTemplateFileExtensionMsg = "Template file extension '$extension' is not allowed. Allowed extensions: $allowedExtensions"
+
+const InvalidTemplateContent = "8002"
+const InvalidTemplateContentMsg = "Template file content is not valid $format"
