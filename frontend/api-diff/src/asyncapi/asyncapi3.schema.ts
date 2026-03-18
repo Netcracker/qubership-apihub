@@ -106,7 +106,9 @@ const jsonDraft7SchemaRules: CompareRules = withDynamicScopeReclassification(
 
 const unknownFormatSchemaRules: CompareRules = { '/**': { $: allUnclassified } }
 
-function normalizeSchemaFormat(format: string): string {
+type NormalizedSchemaFormat = string
+
+function normalizeSchemaFormat(format: string): NormalizedSchemaFormat {
   return format.trim().toLowerCase()
 }
 
@@ -156,7 +158,7 @@ const asyncApiSchemaRulesWithAdapter: CompareRules = {
 }
 
 // Cache one instance per supported format string to avoid re-computation
-const multiFormatSchemaRulesCache = new Map<string, CompareRules>()
+const multiFormatSchemaRulesCache = new Map<NormalizedSchemaFormat, CompareRules>()
 
 function multiFormatSchemaRulesFactory(schemaFormat: string): CompareRules {
   const normalized = normalizeSchemaFormat(schemaFormat)
