@@ -662,7 +662,7 @@ func (o operationGroupControllerImpl) UpdateOperationGroup(w http.ResponseWriter
 		}
 		updateOperationGroupReq.Template = &view.OperationGroupTemplate{
 			TemplateData:     templateData,
-			TemplateFilename: utils.SanitizeFilename(templateFileHeader.Filename, "fallback"),
+			TemplateFilename: utils.SanitizeFilename(templateFileHeader.Filename, "template"),
 		}
 	} else if r.Form.Has("template") {
 		if r.FormValue("template") != "" {
