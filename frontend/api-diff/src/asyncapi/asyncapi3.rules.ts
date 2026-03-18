@@ -135,7 +135,6 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
     $: allAnnotation,
     '/headers': {
       $: allAnnotation,
-      '/*': { $: allAnnotation },
       '/**': { $: allAnnotation },
     },
     '/payload': {

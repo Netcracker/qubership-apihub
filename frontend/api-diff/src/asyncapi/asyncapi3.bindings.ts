@@ -7,9 +7,5 @@ import type { CompareRules } from '../types'
  */
 export const bindingsRules: CompareRules = {
   $: allUnclassified,
-  '/*': {
-    $: allUnclassified,
-    '/*': { $: allUnclassified },
-    '/**': { $: allUnclassified },
-  },
+  '/**': { $: allUnclassified },
 }
