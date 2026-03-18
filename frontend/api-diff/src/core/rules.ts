@@ -96,29 +96,29 @@ export const transformClassifyRule = ([add, remove, replace, reverseAdd, reverse
  * used directly instead of computing the reverse.
  */
 const dynamicReverseSlot = (
-  normal: RuleDiffType,
-  explicitReversed: RuleDiffType | undefined,
+  originalDiffType: RuleDiffType,
+  explicitReversedDiffType: RuleDiffType | undefined,
   shouldReverse: ReversePredicate,
 ): RuleDiffType => {
-  if (explicitReversed !== undefined) {
+  if (explicitReversedDiffType !== undefined) {
     return (ctx: CompareContext): DiffType => {
-      const chosen = shouldReverse(ctx) ? explicitReversed : normal
-      return isFunc(chosen) ? chosen(ctx) : chosen
+      const chosenDiffType = shouldReverse(ctx) ? explicitReversedDiffType : originalDiffType
+      return isFunc(chosenDiffType) ? chosenDiffType(ctx) : chosenDiffType
     }
   }
-  if (isFunc(normal)) {
+  if (isFunc(originalDiffType)) {
     return (ctx: CompareContext): DiffType => {
       if (shouldReverse(ctx)) {
-        return reverseDiffType(normal(ctx)) as DiffType
+        return reverseDiffType(originalDiffType(ctx)) as DiffType
       }
-      return normal(ctx)
+      return originalDiffType(ctx)
     }
   }
-  if (normal === breaking || normal === nonBreaking) {
-    const reversed = reverseDiffType(normal) as DiffType
-    return (ctx: CompareContext): DiffType => (shouldReverse(ctx) ? reversed : normal)
+  if (originalDiffType === breaking || originalDiffType === nonBreaking) {
+    const reversedDiffType = reverseDiffType(originalDiffType) as DiffType
+    return (ctx: CompareContext): DiffType => (shouldReverse(ctx) ? reversedDiffType : originalDiffType)
   }
-  return normal
+  return originalDiffType
 }
 
 const dynamicReverseClassifyRule = (rule: ClassifyRule, shouldReverse: ReversePredicate): ClassifyRule => {
