@@ -11,4 +11,5 @@ export type IssueDto = {
 
 export type Issue = IssueDto & {
   linter: Linter['linter']
+  rulesetId: string
 }

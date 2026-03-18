@@ -3,12 +3,10 @@ import { IssueSeverityFilters } from '@apihub/components/ApiQuality/IssueSeverit
 import { ValidationRulesetsDropdown } from '@apihub/components/ApiQuality/ValidationRulesetsDropdown'
 import type { IssueSeverity } from '@apihub/entities/api-quality/issue-severities'
 import type { Issue } from '@apihub/entities/api-quality/issues'
-import type { Linter } from '@apihub/entities/api-quality/linters'
 import type { DocumentValidationSummary } from '@apihub/entities/api-quality/package-version-validation-summary'
 import type { RulesetMetadata } from '@apihub/entities/api-quality/rulesets'
 import { transformIssuesToMarkers } from '@apihub/utils/api-quality/issues'
 import { Box, Typography } from '@mui/material'
-import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { ModuleFetchingErrorBoundary } from '@netcracker/qubership-apihub-ui-shared/components/ModuleFetchingErrorBoundary/ModuleFetchingErrorBoundary'
 import { MonacoEditor } from '@netcracker/qubership-apihub-ui-shared/components/MonacoEditor'
@@ -87,11 +85,10 @@ type VersionApiQualityCardProps = {
   selectedDocument: DocumentValidationSummary
   selectedIssuePath: SpecItemUri | undefined
   setSelectedIssuePath: (value: SpecItemUri | undefined) => void
-  validationSummaryAvailable: boolean
 }
 
 export const VersionApiQualityCard: FC<VersionApiQualityCardProps> = memo((props) => {
-  const { selectedDocument, selectedIssuePath, setSelectedIssuePath, validationSummaryAvailable } = props
+  const { selectedDocument, selectedIssuePath, setSelectedIssuePath } = props
 
   const { packageId, versionId } = useParams()
 
@@ -190,95 +187,77 @@ export const VersionApiQualityCard: FC<VersionApiQualityCardProps> = memo((props
   )
 
   return (
-    <BodyCard
-      body={
-        <Placeholder
-          invisible={validationSummaryAvailable}
-          area={CONTENT_PLACEHOLDER_AREA}
-          testId="ApiQualityNoResultsPlaceholder"
-          message={
-            <Typography component="div" variant="h6" color="#8F9EB4">
-              API Quality results are not available
-              <br />
-              Please check the Summary tab for validation status
-            </Typography>
-          }
+    <TwoSidedCard
+      leftHeader={
+        <Box
+          display='flex'
+          justifyContent='space-between'
+          alignItems='center'
+          gap={1}
+          width="100%"
         >
-          <TwoSidedCard
-            leftHeader={
-              <Box
-                display='flex'
-                justifyContent='space-between'
-                alignItems='center'
-                gap={1}
-                width="100%"
-              >
-                <ValidationRulesetsDropdown
-                  options={validationRulesets}
-                  onChange={setSelectedRulesets}
-                  loading={loadingValidationDetails}
-                />
-                <Box display='flex' alignItems='center' gap={1}>
-                  <IssueSeverityFilters
-                    data={validationIssuesFilteredByRulesets}
-                    filters={issueSeverityFilters}
-                    handleFilters={setIssueSeverityFilters}
-                  />
-                  <ValidationResultsExportToolbar
-                    disabled={isExportToolbarDisabled}
-                    data={validationIssuesFilteredByRulesetsAndSeverities}
-                  />
-                </Box>
-              </Box>
-            }
-            rightHeader={
-              <Toggler<OriginalDocumentFileFormat>
-                mode={format}
-                modes={MONACO_EDITOR_FORMATS}
-                modeToText={MONACO_EDITOR_PRETTY_FORMATS}
-                onChange={onFormatChange}
-              />
-            }
-            leftBody={
-              <Placeholder
-                invisible={!placeholderMessage}
-                area={CONTENT_PLACEHOLDER_AREA}
-                variant={isSunnyDayPlaceholder ? DATA_SUNNY_DAY_PLACEHOLDER_VARIANT : DATA_RAINY_DAY_PLACEHOLDER_VARIANT}
-                message={placeholderMessage}
-              >
-                <ValidationResultsTable
-                  data={validationIssuesFilteredByRulesetsAndSeverities}
-                  loading={loadingValidationDetails}
-                  onSelectIssue={setSelectedIssuePath}
-                />
-              </Placeholder>
-            }
-            rightBody={
-              loadingSelectedDocumentContent ? <LoadingIndicator /> : (
-                <ModuleFetchingErrorBoundary>
-                  <Box height="100%">
-                    <MonacoEditor
-                      value={transformedSelectedDocumentContent}
-                      type={selectedDocument!.apiType}
-                      language={format}
-                      selectedUri={selectedIssuePath}
-                      markers={selectedDocumentMarkers}
-                    />
-                  </Box>
-                </ModuleFetchingErrorBoundary>
-              )
-            }
+          <ValidationRulesetsDropdown
+            options={validationRulesets}
+            onChange={setSelectedRulesets}
+            loading={loadingValidationDetails}
+          />
+          <Box display='flex' alignItems='center' gap={1}>
+            <IssueSeverityFilters
+              data={validationIssuesFilteredByRulesets}
+              filters={issueSeverityFilters}
+              handleFilters={setIssueSeverityFilters}
+            />
+            <ValidationResultsExportToolbar
+              disabled={isExportToolbarDisabled}
+              data={validationIssuesFilteredByRulesetsAndSeverities}
+            />
+          </Box>
+        </Box>
+      }
+      rightHeader={
+        <Toggler<OriginalDocumentFileFormat>
+          mode={format}
+          modes={MONACO_EDITOR_FORMATS}
+          modeToText={MONACO_EDITOR_PRETTY_FORMATS}
+          onChange={onFormatChange}
+        />
+      }
+      leftBody={
+        <Placeholder
+          invisible={!placeholderMessage}
+          area={CONTENT_PLACEHOLDER_AREA}
+          variant={isSunnyDayPlaceholder ? DATA_SUNNY_DAY_PLACEHOLDER_VARIANT : DATA_RAINY_DAY_PLACEHOLDER_VARIANT}
+          message={placeholderMessage}
+        >
+          <ValidationResultsTable
+            data={validationIssuesFilteredByRulesetsAndSeverities}
+            loading={loadingValidationDetails}
+            onSelectIssue={setSelectedIssuePath}
           />
         </Placeholder>
+      }
+      rightBody={
+        loadingSelectedDocumentContent ? <LoadingIndicator /> : (
+          <ModuleFetchingErrorBoundary>
+            <Box height="100%">
+              <MonacoEditor
+                value={transformedSelectedDocumentContent}
+                type={selectedDocument.apiType}
+                language={format}
+                selectedUri={selectedIssuePath}
+                markers={selectedDocumentMarkers}
+              />
+            </Box>
+          </ModuleFetchingErrorBoundary>
+        )
       }
     />
   )
 })
 
 function filterBySelectedRulesets(source: Issue[], selectedRulesets: Set<RulesetMetadata>): Issue[] {
-  const selectedRulesetsList = Array.from(selectedRulesets)
-  const selectedLinters = new Set<Linter['linter']>(selectedRulesetsList.map(ruleset => ruleset.linter))
-  return source.filter(issue => selectedLinters.has(issue.linter))
+  const selectedRulesetIds = new Set<string>(Array.from(selectedRulesets).map(ruleset => ruleset.id))
+  return source.filter(issue => selectedRulesetIds.has(issue.rulesetId))
 }
 
 function filterByIssueSeverityFilters(source: Issue[], issueSeverityFilters: IssueSeverity[]): Issue[] {

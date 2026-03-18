@@ -55,6 +55,7 @@ function toValidationDetails(dto: ValidationDetailsDto): ValidationDetails {
       issues: result.issues.map(issue => ({
         ...issue,
         linter: result.linter,
+        rulesetId: result.ruleset.id,
       })),
     })),
     document: dto.document,
