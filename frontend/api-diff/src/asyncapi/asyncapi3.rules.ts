@@ -152,11 +152,11 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
   }
 
   const messageRules: CompareRules = {
-    $: allBreaking,
+    $: allUnclassified,
     '/headers': (ctx) => ({ ...schemaOrMultiFormatSchemaRules(ctx), $: allBreaking }),
     '/correlationId': correlationIdRules,
     '/contentType': { $: addNonBreaking },
-    '/name': { $: allNonBreaking },
+    '/name': { $: allAnnotation },
     '/title': { $: allAnnotation },
     '/summary': { $: allAnnotation },
     '/description': { $: allAnnotation },
@@ -309,7 +309,7 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
       },
     },
     '/messages': {
-      $: [nonBreaking, breaking, breaking],
+      $: allUnclassified,
       '/*': messageRules,
     },
     '/securitySchemes': {
