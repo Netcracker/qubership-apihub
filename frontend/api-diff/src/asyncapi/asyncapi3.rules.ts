@@ -15,6 +15,7 @@ import {
   START_NEW_COMPARE_SCOPE_RULE,
 } from '../types'
 import { AsyncApi3RulesOptions } from './asyncapi3.types'
+import { createPropertyMappingResolver } from './asyncapi3.mapping'
 import { schemaOrMultiFormatSchemaRules } from './asyncapi3.schema'
 import { asyncApiSpecificationExtensionRulesFunction } from './asyncapi3.compare.rules'
 import {
@@ -34,6 +35,10 @@ import { ASYNCAPI_ACTION_SEND } from '@netcracker/qubership-apihub-api-unifier'
  */
 
 export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => {
+  const firstReferenceKeyMapping = options.firstReferenceKeyProperty
+    ? createPropertyMappingResolver(options.firstReferenceKeyProperty)
+    : undefined
+
   const tagRules: CompareRules = {
     $: allAnnotation,
     '/name': { $: allAnnotation },
@@ -205,7 +210,8 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
     '/description': { $: allAnnotation },
     '/servers': {
       $: allUnclassified,
-      '/*': { $: allUnclassified },
+      mapping: firstReferenceKeyMapping,
+      '/*': { $: allUnclassified, ignoreKeyDifference: true },
     },
     '/parameters': {
       $: allUnclassified,
@@ -269,7 +275,8 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
     '/traits': operationTraitsRules,
     '/messages': {
       $: allUnclassified,
-      '/*': messageRules,
+      mapping: firstReferenceKeyMapping,
+      '/*': { ...messageRules, ignoreKeyDifference: true },
     },
     ...asyncApiSpecificationExtensionRulesFunction(),
   })

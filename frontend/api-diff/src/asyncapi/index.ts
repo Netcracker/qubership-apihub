@@ -1,6 +1,7 @@
 export * from './asyncapi3.compare'
 export * from './asyncapi3.compare.rules'
 export * from './asyncapi3.const'
+export * from './asyncapi3.mapping'
 export * from './asyncapi3.rules'
 export * from './asyncapi3.schema'
 export * from './asyncapi3.types'

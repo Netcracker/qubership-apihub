@@ -276,6 +276,10 @@ const useMergeFactory = (onDiff: DiffCallback, options: InternalCompareOptions):
     if (!(beforeKey in keyMap)) {
       //actually we don't make deep copy here and create "way to modify" original source
       mergedJso[beforeKey] = value
+      // remove case- cleanup firstReferenceKeyProperty if required
+      if (!options.retainFirstReferenceKeyProperty && options.firstReferenceKeyProperty && isObject(value)) {
+        delete (value as Record<PropertyKey, unknown>)[options.firstReferenceKeyProperty]
+      }
       return { done: true }
     }
 
@@ -376,10 +380,27 @@ const useMergeFactory = (onDiff: DiffCallback, options: InternalCompareOptions):
             const childCtx = createChildContext(ctx, keyInMerge, undefined, keyInAfter, additionBwc)
             jsoDiffEntries.push(getOrCreateChildDiffAdd(diffUniquenessCache, childCtx))
             mergedJsoValue[keyInMerge] = afterValue[keyInAfter]
+            // add case- cleanup firstReferenceKeyProperty if required
+            if (!options.retainFirstReferenceKeyProperty && options.firstReferenceKeyProperty && isObject(afterValue[keyInAfter])) {
+              delete (afterValue[keyInAfter] as Record<PropertyKey, unknown>)[options.firstReferenceKeyProperty]
+            }
           })
 
           jsoDiffEntries.forEach(e => addDiff(e.diff))
           addDiffObjectToContainer(mergedJsoValue, metaKey, jsoDiffEntries)
+
+          // merge case- keep firstReferenceKeyProperty if required
+          if (
+            options.retainFirstReferenceKeyProperty &&
+            options.firstReferenceKeyProperty &&
+            !isArray(mergedJsoValue) &&
+            isObject(afterValue)
+          ) {
+            const firstRefKey = (afterValue as Record<PropertyKey, unknown>)[options.firstReferenceKeyProperty]
+            if (firstRefKey !== undefined) {
+              mergedJsoValue[options.firstReferenceKeyProperty] = firstRefKey
+            }
+          }
         }
 
         return {
