@@ -1,4 +1,5 @@
 import { Diff } from '../../src'
+import { CompareScope } from '../../src/types'
 import 'jest-extended'
 import {
   TEST_SPEC_TYPE_ASYNC_API,
@@ -41,8 +42,8 @@ export interface ObjectContaining<T> extends AsymmetricMatcher<any> {
 
 export type RecursiveMatcher<T> = {
   [P in keyof T]?: T[P] extends (infer U)[] ? ArrayContaining<ExpectedRecursive<U>> :
-    T[P] extends object[] ? ExpectedRecursive<T[P]> :
-      T[P];
+  T[P] extends object[] ? ExpectedRecursive<T[P]> :
+  T[P];
 }
 
 export type DiffMatcher = ArrayContaining<Diff> & Diff[]
@@ -61,11 +62,35 @@ export function diffDescriptionMatcher(
 
 export function diffsMatcher(
   expected: Array<RecursiveMatcher<Diff> | typeof DIFF_MATCHER_SKIP>,
+  skipScopes: Set<CompareScope> = new Set(),
 ): DiffMatcher {
   const compactExpected = expected.filter(
     (value): value is RecursiveMatcher<Diff> => value !== DIFF_MATCHER_SKIP,
   )
-  return expect.toIncludeSameMembers(compactExpected)
+  const inner = expect.toIncludeSameMembers(compactExpected)
+  return {
+    $$typeof: Symbol.for('jest.asymmetricMatcher'),
+    asymmetricMatch(actual: Diff[]) {
+      const filteredActual = actual.filter(diff => !skipScopes.has(diff.scope))
+      return inner.asymmetricMatch(filteredActual)
+    },
+    toString() {
+      return 'DiffsMatcher'
+    },
+    toAsymmetricMatcher() {
+      const itemStrings = compactExpected.map(item => {
+        if (item !== null && typeof item === 'object' && 'toAsymmetricMatcher' in item && typeof (item as any).toAsymmetricMatcher === 'function') {
+          return (item as any).toAsymmetricMatcher()
+        }
+        try {
+          return JSON.stringify(item, null, 2)
+        } catch {
+          return String(item)
+        }
+      })
+      return `DiffsMatcher (skipScopes: [${[...skipScopes].join(', ')}]) [\n  ${itemStrings.join(',\n  ')}\n]`
+    },
+  } as unknown as DiffMatcher
 }
 
 /**

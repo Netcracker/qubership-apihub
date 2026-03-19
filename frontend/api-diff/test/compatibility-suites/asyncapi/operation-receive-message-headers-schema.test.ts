@@ -14,6 +14,6 @@ const MESSAGE_HEADERS_PATH = [
   'header1',
 ]
 
-describe.skip('AsyncAPI Operation Receive Message Headers', () => {
+describe('AsyncAPI Operation Receive Message Headers', () => {
   runGeneralSchemaTests(TEST_SPEC_TYPE_ASYNC_API, SUITE_ID, MESSAGE_HEADERS_PATH, DATA_FLOW_DIRECTION_RECEIVE)
 })

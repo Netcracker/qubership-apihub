@@ -6,10 +6,3 @@ import type { CompareScope } from '../types'
 export const COMPARE_SCOPE_SEND: CompareScope = 'send'
 export const COMPARE_SCOPE_RECEIVE: CompareScope = 'receive'
 export const COMPARE_SCOPE_COMPONENTS: CompareScope = 'components'
-
-// Re-export action constants from api-unifier (do not duplicate)
-export {
-  ASYNCAPI_ACTION_SEND,
-  ASYNCAPI_ACTION_RECEIVE,
-} from '@netcracker/qubership-apihub-api-unifier'
-

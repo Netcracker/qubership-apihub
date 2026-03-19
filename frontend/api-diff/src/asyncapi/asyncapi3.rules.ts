@@ -15,62 +15,81 @@ import {
   START_NEW_COMPARE_SCOPE_RULE,
 } from '../types'
 import { AsyncApi3RulesOptions } from './asyncapi3.types'
-import { asyncApiSchemaRules } from './asyncapi3.schema'
+import { createPropertyMappingResolver } from './asyncapi3.mapping'
+import { schemaOrMultiFormatSchemaRules } from './asyncapi3.schema'
 import { asyncApiSpecificationExtensionRulesFunction } from './asyncapi3.compare.rules'
 import {
   COMPARE_SCOPE_COMPONENTS,
   COMPARE_SCOPE_RECEIVE,
   COMPARE_SCOPE_SEND,
-  ASYNCAPI_ACTION_SEND,
 } from './asyncapi3.const'
-import { SPEC_TYPE_ASYNCAPI_3 } from '@netcracker/qubership-apihub-api-unifier'
+import { externalDocumentationRules } from './asyncapi3.rules.common'
+import { bindingsRules } from './asyncapi3.bindings'
+import { ASYNCAPI_ACTION_SEND } from '@netcracker/qubership-apihub-api-unifier'
 
-/***
- * Keep consistent ordering for the rules:
- * - classify rule ($) for the node itself first
- * - other rules for the node itself in rule-key alphabetical order
- * - rules for children
- *   - for specific child keys (in alphabetical order)
- *   - prefix rules
- *   - local rules ('/*')
- *   - global rules ('/**')
- * The only exception is top-level structure of AsyncAPI Object where specific keys are in the natural order from the specification.
-***/
+/**
+ * Keep consisten ordering for the rules
+ * - Classify rule ($) for the node itself first
+ * - Other rules for the node itself in the order they listed in specification
+ * - Children: specific keys, then prefix rules, then '/*', then '/**' *
+ */
 
 export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => {
-  const sendSchemaRules = asyncApiSchemaRules({ version: SPEC_TYPE_ASYNCAPI_3, send: true })
-  const receiveSchemaRules = asyncApiSchemaRules({ version: SPEC_TYPE_ASYNCAPI_3, send: false })
+  const firstReferenceKeyMapping = options.firstReferenceKeyProperty
+    ? createPropertyMappingResolver(options.firstReferenceKeyProperty)
+    : undefined
 
-  // Common rules for tags (used in multiple places)
-  const tagsRules: CompareRules = {
+  const tagRules: CompareRules = {
     $: allAnnotation,
-    mapping: deepEqualsUniqueItemsArrayMappingResolver,
-    '/*': {
-      $: allAnnotation,
-      '/description': { $: allAnnotation },
-      '/name': { $: allAnnotation },
-      ...asyncApiSpecificationExtensionRulesFunction(allAnnotation),
-    },
-  }
-
-  // External documentation rules
-  const externalDocsRules: CompareRules = {
-    $: allAnnotation,
+    '/name': { $: allAnnotation },
     '/description': { $: allAnnotation },
-    '/url': { $: allAnnotation },
+    '/externalDocs': externalDocumentationRules,
     ...asyncApiSpecificationExtensionRulesFunction(allAnnotation),
   }
 
-  // Server variable rules
+  const tagsRules: CompareRules = {
+    $: allAnnotation,
+    mapping: deepEqualsUniqueItemsArrayMappingResolver,
+    '/*': tagRules,
+  }
+
+  const oAuthFlowRules: CompareRules = {
+    $: [breaking, nonBreaking, breaking],
+    ...asyncApiSpecificationExtensionRulesFunction(),
+  }
+
+  const oAuthFlowsRules: CompareRules = {
+    $: [breaking, nonBreaking, breaking],
+    ...asyncApiSpecificationExtensionRulesFunction(),
+    '/*': oAuthFlowRules,
+  }
+
+  const securitySchemeRules: CompareRules = {
+    $: [breaking, nonBreaking, breaking],
+    '/type': { $: [breaking, nonBreaking, breaking] },
+    '/description': { $: allAnnotation },
+    '/name': { $: [breaking, nonBreaking, breaking] },
+    '/in': { $: [breaking, nonBreaking, breaking] },
+    '/scheme': { $: [breaking, nonBreaking, breaking] },
+    '/bearerFormat': { $: allAnnotation },
+    '/flows': oAuthFlowsRules,
+    '/openIdConnectUrl': { $: allAnnotation },
+    '/scopes': {
+      $: [nonBreaking, breaking, breaking],
+      '/*': { $: [nonBreaking, breaking, breaking] },
+    },
+    ...asyncApiSpecificationExtensionRulesFunction(),
+  }
+
   const serverVariableRules: CompareRules = {
     $: allAnnotation,
-    '/default': { $: allAnnotation },
-    '/description': { $: allAnnotation },
     '/enum': {
       $: allAnnotation,
       mapping: deepEqualsUniqueItemsArrayMappingResolver,
       '/*': { $: allAnnotation, ignoreKeyDifference: true },
     },
+    '/default': { $: allAnnotation },
+    '/description': { $: allAnnotation },
     '/examples': {
       $: allAnnotation,
       '/*': { $: allAnnotation },
@@ -81,16 +100,17 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
   // Server rules
   const serverRules: CompareRules = {
     $: allAnnotation,
-    '/bindings': {
-      $: allUnclassified,
-      '/*': { $: allUnclassified },
-      '/**': { $: allUnclassified },
-    },
-    '/description': { $: allAnnotation },
     '/host': { $: allAnnotation },
-    '/pathname': { $: allAnnotation },
     '/protocol': { $: allAnnotation },
     '/protocolVersion': { $: allAnnotation },
+    '/pathname': { $: allAnnotation },
+    '/description': { $: allAnnotation },
+    '/title': { $: allAnnotation },
+    '/summary': { $: allAnnotation },
+    '/variables': {
+      $: allAnnotation,
+      '/*': serverVariableRules,
+    },
     '/security': {
       $: allAnnotation,
       '/*': {
@@ -99,158 +119,133 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
       },
     },
     '/tags': tagsRules,
-    '/title': { $: allAnnotation },
-    '/variables': {
-      $: allAnnotation,
-      '/*': serverVariableRules,
-    },
+    '/externalDocs': externalDocumentationRules,
+    '/bindings': bindingsRules,
     ...asyncApiSpecificationExtensionRulesFunction(allAnnotation),
   }
 
-  // Servers map rules
   const serversRules: CompareRules = {
     $: allAnnotation,
     '/*': serverRules,
   }
 
-  // Bindings rules (protocol-specific, unclassified)
-  const bindingsRules: CompareRules = {
-    $: allUnclassified,
-    '/*': {
-      $: allUnclassified,
-      '/*': { $: allUnclassified },
-      '/**': { $: allUnclassified },
-    },
-  }
-
-  // Correlation ID rules
   const correlationIdRules: CompareRules = {
-    $: addNonBreaking,
-    '/description': { $: allAnnotation },
-    '/location': { $: addNonBreaking },
-    ...asyncApiSpecificationExtensionRulesFunction(),
+    $: allUnclassified,
+    '/description': { $: allUnclassified },
+    '/location': { $: allUnclassified },
+    ...asyncApiSpecificationExtensionRulesFunction(allUnclassified),
   }
 
-  // Message examples rules
+  const messageExampleRules: CompareRules = {
+    $: allAnnotation,
+    '/headers': {
+      $: allAnnotation,
+      '/**': { $: allAnnotation },
+    },
+    '/payload': {
+      $: allAnnotation,
+      '/**': { $: allAnnotation },
+    },
+    '/name': { $: allAnnotation },
+    '/summary': { $: allAnnotation },
+    ...asyncApiSpecificationExtensionRulesFunction(allAnnotation),
+  }
+
   const messageExamplesRules: CompareRules = {
     $: allAnnotation,
-    '/*': {
-      $: allAnnotation,
-      '/headers': {
-        $: allAnnotation,
-        '/*': { $: allAnnotation },
-        '/**': { $: allAnnotation },
-      },
-      '/name': { $: allAnnotation },
-      '/payload': {
-        $: allAnnotation,
-        '/**': { $: allAnnotation },
-      },
-      '/summary': { $: allAnnotation },
-      ...asyncApiSpecificationExtensionRulesFunction(allAnnotation),
-    },
+    '/*': messageExampleRules,
   }
 
-  // Message rules factory based on send/receive context
-  const messageRules = (isSend: boolean): CompareRules => ({
-    $: allBreaking,
-    '/bindings': bindingsRules,
-    '/contentType': { $: addNonBreaking },
+  const messageRules: CompareRules = {
+    $: allUnclassified,
+    '/headers': (ctx) => ({ ...schemaOrMultiFormatSchemaRules(ctx), $: allBreaking }),
     '/correlationId': correlationIdRules,
-    '/description': { $: allAnnotation },
-    '/examples': messageExamplesRules,
-    '/headers': () => ({
-      ...(isSend ? sendSchemaRules : receiveSchemaRules),
-      $: allBreaking,
-    }),
-    '/name': { $: allNonBreaking },
-    '/payload': () => ({
-      ...(isSend ? sendSchemaRules : receiveSchemaRules),
-      $: allBreaking,
-    }),
-    '/schemaFormat': { $: allBreaking },
-    '/summary': { $: allAnnotation },
-    '/tags': tagsRules,
+    '/contentType': { $: addNonBreaking },
+    '/name': { $: allAnnotation },
     '/title': { $: allAnnotation },
+    '/summary': { $: allAnnotation },
+    '/description': { $: allAnnotation },
+    '/tags': tagsRules,
+    '/externalDocs': externalDocumentationRules,
+    '/bindings': bindingsRules,
+    '/examples': messageExamplesRules,
+    '/payload': (ctx) => ({ ...schemaOrMultiFormatSchemaRules(ctx), $: allBreaking }),
     '/traits': {
-      $: addNonBreaking,
+      $: allUnclassified,
       '/*': {
-        $: addNonBreaking,
+        $: allUnclassified,
         '/*': { $: allUnclassified },
         '/**': { $: allUnclassified },
       },
     },
-    ...asyncApiSpecificationExtensionRulesFunction(),
-  })
+    ...asyncApiSpecificationExtensionRulesFunction(allUnclassified),
+  }
 
-  // Channel parameter rules
-  const channelParameterRules: CompareRules = {
-    $: addNonBreaking,
-    '/default': { $: allAnnotation },
-    '/description': { $: allAnnotation },
+  const parameterRules: CompareRules = {
+    $: allUnclassified,
     '/enum': {
-      $: allBreaking,
+      $: allUnclassified,
       mapping: deepEqualsUniqueItemsArrayMappingResolver,
-      '/*': { $: allBreaking, ignoreKeyDifference: true },
+      '/*': { $: allUnclassified, ignoreKeyDifference: true },
     },
+    '/default': { $: allUnclassified },
+    '/description': { $: allAnnotation },
     '/examples': {
       $: allAnnotation,
       '/*': { $: allAnnotation },
     },
-    '/location': { $: allBreaking },
+    '/location': { $: allUnclassified },
     ...asyncApiSpecificationExtensionRulesFunction(),
   }
 
-  // Channel rules
   const channelRules: CompareRules = {
     $: addNonBreaking,
-    '/address': { $: allAnnotation },
-    '/bindings': bindingsRules,
-    '/description': { $: allAnnotation },
+    '/address': { $: allUnclassified },
     '/messages': {
       $: addNonBreaking,
-      '/*': messageRules(true), // Default to send scope for channel-level messages
+      '/*': messageRules,
+    },
+    '/title': { $: allAnnotation },
+    '/summary': { $: allAnnotation },
+    '/description': { $: allAnnotation },
+    '/servers': {
+      $: allUnclassified,
+      mapping: firstReferenceKeyMapping,
+      '/*': { $: allUnclassified, ignoreKeyDifference: true },
     },
     '/parameters': {
-      $: allBreaking,
-      '/*': channelParameterRules,
+      $: allUnclassified,
+      '/*': parameterRules,
     },
-    '/servers': {
-      $: allAnnotation,
-      '/*': { $: allAnnotation },
-    },
-    '/summary': { $: allAnnotation },
     '/tags': tagsRules,
-    '/title': { $: allAnnotation },
+    '/externalDocs': externalDocumentationRules,
+    '/bindings': bindingsRules,
     ...asyncApiSpecificationExtensionRulesFunction(),
   }
 
-  // Reply address rules
-  const replyAddressRules: CompareRules = {
-    $: addNonBreaking,
+  const operationReplyAddressRules: CompareRules = {
+    $: allUnclassified,
     '/description': { $: allAnnotation },
-    '/location': { $: addNonBreaking },
+    '/location': { $: allUnclassified },
     ...asyncApiSpecificationExtensionRulesFunction(),
   }
 
-  // Reply rules - uses SEND scope since it's about sending messages back
-  const replyRules: CompareRules = {
-    $: addNonBreaking,
-    [START_NEW_COMPARE_SCOPE_RULE]: COMPARE_SCOPE_SEND,
-    '/address': replyAddressRules,
-    '/channel': { $: allBreaking },
+  const operationReplyRules = (isSendAction: boolean): CompareRules => ({
+    $: allUnclassified,
+    [START_NEW_COMPARE_SCOPE_RULE]: isSendAction ? COMPARE_SCOPE_RECEIVE : COMPARE_SCOPE_SEND,
+    '/address': operationReplyAddressRules,
+    '/channel': channelRules,
     '/messages': {
-      $: addNonBreaking,
-      '/*': messageRules(true), // Reply messages use send scope
+      $: allUnclassified,
+      '/*': messageRules,
     },
     ...asyncApiSpecificationExtensionRulesFunction(),
-  }
+  })
 
-  // Operation traits rules
   const operationTraitsRules: CompareRules = {
-    $: addNonBreaking,
+    $: allUnclassified,
     '/*': {
-      $: addNonBreaking,
+      $: allUnclassified,
       '/*': { $: allUnclassified },
       '/**': { $: allUnclassified },
     },
@@ -264,41 +259,28 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
       ? [nonBreaking, breaking, unclassified]
       : [breaking, nonBreaking, unclassified],
     [START_NEW_COMPARE_SCOPE_RULE]: isSendAction ? COMPARE_SCOPE_SEND : COMPARE_SCOPE_RECEIVE,
-    '/action': { $: allBreaking },
-    '/bindings': bindingsRules,
-    '/channel': { $: allBreaking },
-    '/deprecated': { $: allDeprecated },
-    '/description': { $: allAnnotation },
-    '/externalDocs': externalDocsRules,
-    '/messages': {
-      // For send: add message = non-breaking, remove = breaking
-      // For receive: add message = breaking, remove = non-breaking
-      $: isSendAction
-        ? [nonBreaking, breaking, breaking]
-        : [breaking, nonBreaking, breaking],
-      '/*': messageRules(isSendAction),
-    },
-    '/reply': replyRules, // Reply always uses send scope
-    '/security': {
-      // Security changes follow the same pattern as messages
-      $: isSendAction
-        ? [nonBreaking, breaking, breaking]
-        : [breaking, nonBreaking, breaking],
-      '/*': {
-        $: isSendAction
-          ? [nonBreaking, breaking, breaking]
-          : [breaking, nonBreaking, breaking],
-        '/*': { $: allBreaking },
-      },
-    },
-    '/summary': { $: allAnnotation },
-    '/tags': tagsRules,
     '/title': { $: allAnnotation },
+    '/summary': { $: allAnnotation },
+    '/description': { $: allAnnotation },
+    '/security': {
+      $: allUnclassified,
+      '/*': securitySchemeRules,
+    },
+    '/tags': tagsRules,
+    '/externalDocs': externalDocumentationRules,
+    '/bindings': bindingsRules,
+    '/reply': operationReplyRules(isSendAction),
+    '/action': { $: allBreaking },
+    '/channel': channelRules,
     '/traits': operationTraitsRules,
+    '/messages': {
+      $: allUnclassified,
+      mapping: firstReferenceKeyMapping,
+      '/*': { ...messageRules, ignoreKeyDifference: true },
+    },
     ...asyncApiSpecificationExtensionRulesFunction(),
   })
 
-  // Operations map rules with dynamic operation type detection
   const operationsRules: CompareRules = {
     $: addNonBreaking,
     '/*': ({ value }) => {
@@ -309,53 +291,21 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
     },
   }
 
-  // Security scheme rules
-  const securitySchemeRules: CompareRules = {
-    $: [breaking, nonBreaking, breaking],
-    '/bearerFormat': { $: allAnnotation },
-    '/description': { $: allAnnotation },
-    '/flows': {
-      $: [breaking, nonBreaking, breaking],
-      '/*': {
-        $: [breaking, nonBreaking, breaking],
-        ...asyncApiSpecificationExtensionRulesFunction(),
-      },
-    },
-    '/in': { $: [breaking, nonBreaking, breaking] },
-    '/name': { $: [breaking, nonBreaking, breaking] },
-    '/openIdConnectUrl': { $: allAnnotation },
-    '/scheme': { $: [breaking, nonBreaking, breaking] },
-    '/scopes': {
-      $: [nonBreaking, breaking, breaking],
-      '/*': { $: [nonBreaking, breaking, breaking] },
-    },
-    '/type': { $: [breaking, nonBreaking, breaking] },
-    ...asyncApiSpecificationExtensionRulesFunction(),
-  }
-
   // Components rules
   const componentsRules: CompareRules = {
     $: allNonBreaking,
     [START_NEW_COMPARE_SCOPE_RULE]: COMPARE_SCOPE_COMPONENTS,
+    '/schemas': {
+      $: [nonBreaking, breaking, breaking],
+      '/*': (ctx) => ({ $: allUnclassified, ...schemaOrMultiFormatSchemaRules(ctx) }),
+    },
+    '/servers': {
+      $: [nonBreaking, breaking, breaking],
+      '/*': serverRules,
+    },
     '/channels': {
       $: [nonBreaking, breaking, breaking],
       '/*': channelRules,
-    },
-    '/correlationIds': {
-      $: [nonBreaking, breaking, breaking],
-      '/*': correlationIdRules,
-    },
-    '/messages': {
-      $: [nonBreaking, breaking, breaking],
-      '/*': messageRules(true), // Component messages default to send scope
-    },
-    '/messageTraits': {
-      $: [nonBreaking, breaking, breaking],
-      '/*': {
-        $: addNonBreaking,
-        '/*': { $: allUnclassified },
-        '/**': { $: allUnclassified },
-      },
     },
     '/operations': {
       $: [nonBreaking, breaking, breaking],
@@ -365,6 +315,42 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
         return operationRules(isSendAction)
       },
     },
+    '/messages': {
+      $: allUnclassified,
+      '/*': messageRules,
+    },
+    '/securitySchemes': {
+      $: [breaking, nonBreaking, breaking],
+      '/*': securitySchemeRules,
+    },
+    '/serverVariables': {
+      $: [nonBreaking, breaking, breaking],
+      '/*': serverVariableRules,
+    },
+    '/parameters': {
+      $: [nonBreaking, breaking, breaking],
+      '/*': parameterRules,
+    },
+    '/correlationIds': {
+      $: [nonBreaking, breaking, breaking],
+      '/*': correlationIdRules,
+    },
+    '/replies': {
+      $: [nonBreaking, breaking, breaking],
+      '/*': operationReplyRules(true),
+    },
+    '/replyAddresses': {
+      $: [nonBreaking, breaking, breaking],
+      '/*': operationReplyAddressRules,
+    },
+    '/externalDocs': {
+      $: [nonBreaking, breaking, breaking],
+      '/*': externalDocumentationRules,
+    },
+    '/tags': {
+      $: [nonBreaking, breaking, breaking],
+      '/*': tagRules,
+    },
     '/operationTraits': {
       $: [nonBreaking, breaking, breaking],
       '/*': {
@@ -373,77 +359,77 @@ export const asyncApi3Rules = (options: AsyncApi3RulesOptions): CompareRules => 
         '/**': { $: allUnclassified },
       },
     },
-    '/parameters': {
+    '/messageTraits': {
       $: [nonBreaking, breaking, breaking],
-      '/*': channelParameterRules,
+      '/*': {
+        $: addNonBreaking,
+        '/*': { $: allUnclassified },
+        '/**': { $: allUnclassified },
+      },
     },
-    '/replies': {
+    '/serverBindings': {
       $: [nonBreaking, breaking, breaking],
-      '/*': replyRules,
+      '/*': bindingsRules,
     },
-    '/replyAddresses': {
+    '/channelBindings': {
       $: [nonBreaking, breaking, breaking],
-      '/*': replyAddressRules,
+      '/*': bindingsRules,
     },
-    '/schemas': {
+    '/operationBindings': {
       $: [nonBreaking, breaking, breaking],
-      '/*': () => ({
-        $: allUnclassified, // For component schemas, use unclassified as default
-        ...sendSchemaRules,
-      }),
+      '/*': bindingsRules,
     },
-    '/securitySchemes': {
-      $: [breaking, nonBreaking, breaking],
-      '/*': securitySchemeRules,
-    },
-    '/servers': {
+    '/messageBindings': {
       $: [nonBreaking, breaking, breaking],
-      '/*': serverRules,
+      '/*': bindingsRules,
     },
     ...asyncApiSpecificationExtensionRulesFunction(),
+  }
+
+  // Contact rules (info.contact)
+  const contactRules: CompareRules = {
+    $: allAnnotation,
+    '/name': { $: allAnnotation },
+    '/url': { $: allAnnotation },
+    '/email': { $: allAnnotation },
+    ...asyncApiSpecificationExtensionRulesFunction(allAnnotation),
+  }
+
+  // License rules (info.license)
+  const licenseRules: CompareRules = {
+    $: allAnnotation,
+    '/name': { $: allAnnotation },
+    '/url': { $: allAnnotation },
+    ...asyncApiSpecificationExtensionRulesFunction(allAnnotation),
   }
 
   // Info rules
   const infoRules: CompareRules = {
     $: allAnnotation,
-    '/contact': {
-      $: allAnnotation,
-      '/email': { $: allAnnotation },
-      '/name': { $: allAnnotation },
-      '/url': { $: allAnnotation },
-      ...asyncApiSpecificationExtensionRulesFunction(allAnnotation),
-    },
-    '/description': { $: allAnnotation },
-    '/externalDocs': externalDocsRules,
-    '/license': {
-      $: allAnnotation,
-      '/name': { $: allAnnotation },
-      '/url': { $: allAnnotation },
-      ...asyncApiSpecificationExtensionRulesFunction(allAnnotation),
-    },
-    '/tags': tagsRules,
-    '/termsOfService': { $: allAnnotation },
     '/title': { $: allAnnotation },
     '/version': { $: allAnnotation },
+    '/description': { $: allAnnotation },
+    '/termsOfService': { $: allAnnotation },
+    '/contact': contactRules,
+    '/license': licenseRules,
+    '/tags': tagsRules,
+    '/externalDocs': externalDocumentationRules,
     ...asyncApiSpecificationExtensionRulesFunction(allAnnotation),
   }
 
-  // Root AsyncAPI document rules
   return {
-    ...asyncApiSpecificationExtensionRulesFunction(),
     '/asyncapi': { $: allAnnotation },
     '/id': { $: allAnnotation },
-    '/defaultContentType': { $: allBreaking },
     '/info': infoRules,
     '/servers': serversRules,
+    '/defaultContentType': { $: allUnclassified },
     '/channels': {
-      $: addNonBreaking,
+      $: allUnclassified,
       '/*': channelRules,
     },
     '/operations': operationsRules,
     '/components': componentsRules,
-    '/tags': tagsRules,
-    '/externalDocs': externalDocsRules,
+    ...asyncApiSpecificationExtensionRulesFunction(),
   }
 }
 

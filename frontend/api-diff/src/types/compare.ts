@@ -114,10 +114,15 @@ export interface CompareOptions extends Omit<NormalizeOptions, 'source'> {
    * For OpenAPI specs:
    * If a whole PathItem is removed, generate separate diffs for each HTTP operation (get/post/...)
    * instead of a single diff for the whole PathItem.
-   * 
+   *
    * Default: `false`
    */
   openApiPathItemPerOperationDiffs?: boolean
+  /**
+   * When true, the symbol value stored under `firstReferenceKeyProperty` will be preserved in the merged result.
+   * Set automatically by the AsyncAPI engine when `firstReferenceKeyProperty` is user-provided.
+   */
+  retainFirstReferenceKeyProperty?: boolean
 }
 
 export type DiffCallback = (diff: Diff/*, ctx: CompareContext*/) => void

@@ -14,6 +14,6 @@ const REPLY_MESSAGE_HEADERS_PATH = [
   'header1',
 ]
 
-describe.skip('AsyncAPI Operation Reply Send Message Headers', () => {
+describe('AsyncAPI Operation Reply Send Message Headers', () => {
   runGeneralSchemaTests(TEST_SPEC_TYPE_ASYNC_API, SUITE_ID, REPLY_MESSAGE_HEADERS_PATH, DATA_FLOW_DIRECTION_RECEIVE)
 })
