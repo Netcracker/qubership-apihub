@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -396,6 +397,19 @@ func (o operationGroupControllerImpl) CreateOperationGroup(w http.ResponseWriter
 				Debug:   err.Error()})
 			return
 		}
+		encoding := r.Header.Get("Content-Transfer-Encoding")
+		if strings.EqualFold(encoding, "base64") {
+			n, decodeErr := base64.StdEncoding.Decode(templateData, templateData)
+			if decodeErr != nil {
+				utils.RespondWithCustomError(w, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.IncorrectMultipartFile,
+					Message: exception.IncorrectMultipartFileMsg,
+					Debug:   decodeErr.Error()})
+				return
+			}
+			templateData = templateData[:n]
+		}
 		if int64(len(templateData)) > o.templateSizeLimit {
 			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusRequestEntityTooLarge,
@@ -646,6 +660,19 @@ func (o operationGroupControllerImpl) UpdateOperationGroup(w http.ResponseWriter
 				Message: exception.IncorrectMultipartFileMsg,
 				Debug:   err.Error()})
 			return
+		}
+		encoding := r.Header.Get("Content-Transfer-Encoding")
+		if strings.EqualFold(encoding, "base64") {
+			n, decodeErr := base64.StdEncoding.Decode(templateData, templateData)
+			if decodeErr != nil {
+				utils.RespondWithCustomError(w, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.IncorrectMultipartFile,
+					Message: exception.IncorrectMultipartFileMsg,
+					Debug:   decodeErr.Error()})
+				return
+			}
+			templateData = templateData[:n]
 		}
 		if int64(len(templateData)) > o.templateSizeLimit {
 			utils.RespondWithCustomError(w, &exception.CustomError{
