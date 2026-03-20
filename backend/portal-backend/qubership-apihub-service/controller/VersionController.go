@@ -1403,17 +1403,17 @@ func (v versionControllerImpl) UpdateDocumentShareability(w http.ResponseWriter,
 		return
 	}
 
-	if !view.ValidateShareability(req.Shareability) {
+	if !view.ValidateShareability(req.ShareabilityStatus) {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,
-			Params:  map[string]interface{}{"param": "shareabilityStatus", "value": req.Shareability},
+			Params:  map[string]interface{}{"param": "shareabilityStatus", "value": req.ShareabilityStatus},
 		})
 		return
 	}
 
-	err = v.versionService.UpdateDocumentShareability(packageId, versionName, slug, req.Shareability)
+	err = v.versionService.UpdateDocumentShareability(packageId, versionName, slug, req.ShareabilityStatus)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to update document shareability", err)
 		return

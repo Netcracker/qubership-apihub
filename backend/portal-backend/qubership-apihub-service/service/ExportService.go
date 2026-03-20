@@ -73,23 +73,22 @@ func (e exportServiceImpl) StartVersionExport(ctx context.SecurityContext, req v
 		user = ctx.GetApiKeyId()
 	}
 
-	shareabilityFilter := req.ShareabilityFilter
-	if shareabilityFilter == "" {
-		shareabilityFilter = view.ShareabilityFilterAll
+	if len(req.AllowedShareabilityStatuses) == 0 {
+		req.AllowedShareabilityStatuses = append(req.AllowedShareabilityStatuses, view.ShareabilityShareable, view.ShareabilityNonShareable, view.ShareabilityUnknown)
 	}
-	err = validateShareabilityFilter(shareabilityFilter)
+	err = validateAllowedShareabilityStatuses(req.AllowedShareabilityStatuses)
 	if err != nil {
 		return "", err
 	}
 
 	config := view.BuildConfig{
-		PackageId:            req.PackageId,
-		Version:              req.Version,
-		BuildType:            view.ExportVersion,
-		Format:               req.Format,
-		CreatedBy:            user,
-		AllowedOasExtensions: allowedOasExtensions,
-		ShareabilityFilter:   shareabilityFilter,
+		PackageId:                   req.PackageId,
+		Version:                     req.Version,
+		BuildType:                   view.ExportVersion,
+		Format:                      req.Format,
+		CreatedBy:                   user,
+		AllowedOasExtensions:        allowedOasExtensions,
+		AllowedShareabilityStatuses: req.AllowedShareabilityStatuses,
 	}
 
 	buildId, config, err := e.buildService.CreateBuildWithoutDependencies(config, false, "")
@@ -322,16 +321,15 @@ func validateTransformation(transformation string) error {
 	return nil
 }
 
-func validateShareabilityFilter(filter string) error {
-	switch filter {
-	case view.ShareabilityFilterAll, view.ShareabilityFilterShareableOnly:
-		break
-	default:
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidShareabilityFilter,
-			Message: exception.InvalidShareabilityFilterMsg,
-			Params:  map[string]interface{}{"value": filter},
+func validateAllowedShareabilityStatuses(allowedShareabilityStatuses []string) error {
+	for _, allowedShareabilityStatus := range allowedShareabilityStatuses {
+		if !view.ValidateShareability(allowedShareabilityStatus) {
+			return &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidShareabilityStatus,
+				Message: exception.InvalidShareabilityStatusMsg,
+				Params:  map[string]interface{}{"value": allowedShareabilityStatus},
+			}
 		}
 	}
 	return nil

@@ -7923,9 +7923,9 @@ paths:
             schema:
               type: object
               required:
-                - shareabilityStatus
+                - status
               properties:
-                shareabilityStatus:
+                status:
                   description: The shareability status to set
                   type: string
                   enum:
@@ -9800,16 +9800,18 @@ components:
             - yaml
             - json
             - html
-        shareabilityFilter:
+        allowedShareabilityStatuses:
           description: |
-            Filter which documents to include in export.
-            "all" - include all documents.
-            "shareable_only" - include only documents with shareabilityStatus = "shareable".
-          type: string
-          enum:
-            - all
-            - shareable_only
-          default: all
+            Array of shareability statuses to filter documents during the export.
+          type: array
+          items:
+            type: string
+            enum:
+              - shareable
+              - non-shareable
+              - unknown
+          default: ["shareable", "non-shareable", "unknown"]
+          example: ["shareable"]
     ExportRestDocument:
       type: object
       title: Export one OpenAPI document

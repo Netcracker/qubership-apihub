@@ -4433,7 +4433,7 @@ func (p publishedRepositoryImpl) comparisonInternalDocumentDataExists(tx *pg.Tx,
 
 func (p publishedRepositoryImpl) UpdateDocumentShareabilityBySlug(packageId string, version string, revision int, slug string, shareability string) error {
 	_, err := p.cp.GetConnection().Model((*entity.PublishedContentEntity)(nil)).
-		Set("shareability = ?", shareability).
+		Set("shareability_status = ?", shareability).
 		Where("package_id = ?", packageId).
 		Where("version = ?", version).
 		Where("revision = ?", revision).

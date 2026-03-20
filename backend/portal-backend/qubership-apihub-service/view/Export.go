@@ -57,18 +57,13 @@ type ExportRequestDiscriminator struct {
 }
 
 type ExportVersionReq struct {
-	ExportedEntity      ExportedEntity `json:"exportedEntity" validate:"required"`
-	PackageId           string         `json:"packageId" validate:"required"`
-	Version             string         `json:"version" validate:"required"`
-	Format              string         `json:"format" validate:"required"`
-	RemoveOasExtensions bool           `json:"removeOasExtensions"`
-	ShareabilityFilter  string         `json:"shareabilityFilter,omitempty"`
+	ExportedEntity              ExportedEntity `json:"exportedEntity" validate:"required"`
+	PackageId                   string         `json:"packageId" validate:"required"`
+	Version                     string         `json:"version" validate:"required"`
+	Format                      string         `json:"format" validate:"required"`
+	RemoveOasExtensions         bool           `json:"removeOasExtensions"`
+	AllowedShareabilityStatuses []string       `json:"allowedShareabilityStatuses,omitempty"`
 }
-
-const (
-	ShareabilityFilterAll           = "all"
-	ShareabilityFilterShareableOnly = "shareable_only"
-)
 
 type ExportOASDocumentReq struct {
 	ExportedEntity      ExportedEntity `json:"exportedEntity" validate:"required"`

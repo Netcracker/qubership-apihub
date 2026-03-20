@@ -182,8 +182,8 @@ func copyVersions(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	}
 	objAffected += res.RowsAffected()
 
-	copyVerDocs := "insert into published_version_revision_content (package_id, version, revision, checksum, index, file_id, path, slug, data_type, name, metadata, title, format, operation_ids, filename, shareability) " +
-		"(select ?, version, revision, checksum, index, file_id, path, slug, data_type, name, metadata, title, format, operation_ids, filename, shareability from published_version_revision_content orig where orig.package_id = ?) on conflict do nothing"
+	copyVerDocs := "insert into published_version_revision_content (package_id, version, revision, checksum, index, file_id, path, slug, data_type, name, metadata, title, format, operation_ids, filename, shareability_status) " +
+		"(select ?, version, revision, checksum, index, file_id, path, slug, data_type, name, metadata, title, format, operation_ids, filename, shareability_status from published_version_revision_content orig where orig.package_id = ?) on conflict do nothing"
 	res, err = tx.Exec(copyVerDocs, toPkg, fromPkg)
 	if err != nil {
 		return 0, fmt.Errorf("failed to copy versions docs from %s to %s: %w", fromPkg, toPkg, err)

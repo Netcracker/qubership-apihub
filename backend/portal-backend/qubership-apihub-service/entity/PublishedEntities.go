@@ -152,7 +152,7 @@ type PublishedContentEntity struct {
 	ReferenceId  string   `pg:"-"`
 	OperationIds []string `pg:"operation_ids, type:varchar[], array"`
 	Filename     string   `pg:"filename, type:varchar"`
-	Shareability string   `pg:"shareability, type:varchar"`
+	Shareability string   `pg:"shareability_status, type:varchar"`
 }
 
 type PublishedContentWithDataEntity struct {

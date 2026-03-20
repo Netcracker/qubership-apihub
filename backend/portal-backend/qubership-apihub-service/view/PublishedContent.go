@@ -118,5 +118,5 @@ func ValidateShareability(value string) bool {
 }
 
 type UpdateDocumentShareabilityReq struct {
-	Shareability string `json:"shareabilityStatus" validate:"required"`
+	ShareabilityStatus string `json:"status" validate:"required"`
 }
