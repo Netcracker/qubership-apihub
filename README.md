@@ -61,6 +61,8 @@ See [qubership-apihub-agents-backend](https://github.com/Netcracker/qubership-ap
 
 ## Documentation
 
+### [Internal Wiki](https://github.com/Netcracker/qubership-apihub/wiki)
+
 ### Installation Guide
 
 [Installation Guide](./docs/installation-guide.md)
