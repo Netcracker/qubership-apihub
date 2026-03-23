@@ -1,5 +1,5 @@
 # General description
-To add an ability to discover files different from supported specification format Apihub support special type of config.  
+To add an ability to discover files different from supported specification format Apihub support special type of config.
 It's called `Apihub config`, the format was inspired by swagger config and it's almost equals.
 The only change is `type` field added.
 
@@ -7,7 +7,7 @@ The only change is `type` field added.
 Default Apihub config discovery path is `/v3/api-docs/apihub-swagger-config`
 
 # Schema
-Base keys are 
+Base keys are
 * "configUrl" - URL of the config itself
 * "urls" - array of "url" objects.
 
@@ -17,10 +17,15 @@ Base keys are
 * "type" - one of the supported types.
 
 Supported types:
-* "rest" - openapi 2.0 or 3.* specification
-* "graphql" - graphql specification
-* "markdown" - markdown file
-* "unknown" - any binary file
+* `openapi-3-1` — OpenAPI 3.1 specification
+* `openapi-3-0` — OpenAPI 3.0 specification
+* `openapi-2-0` — OpenAPI 2.0 (Swagger) specification
+* `asyncapi-3-0` — AsyncAPI 3.0 specification
+* `graphql` — GraphQL
+* `introspection` — GraphQL introspection result
+* `json-schema` — JSON Schema
+* `markdown` — Markdown document
+* `unknown` — any other file
 
 # How to enable
 steps:
@@ -35,7 +40,7 @@ steps:
     "urls": [
         {
             "url":"/v3/api-docs",
-            "name":"Openapi specification"
+            "name":"Openapi specification",
             "type":"openapi-3-0"
         },
         {
@@ -43,6 +48,11 @@ steps:
             "name":"Openapi specification for admin operations",
             "x-api-kind":"no-BWC",
             "type":"openapi-3-0"
+        },
+        {
+            "url":"/v3/api-docs/asyncapi",
+            "name":"AsyncAPI specification",
+            "type":"asyncapi-3-0"
         },
         {
             "url":"/v3/api-docs/doc1md",

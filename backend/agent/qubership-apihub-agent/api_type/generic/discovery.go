@@ -87,7 +87,7 @@ func GetAnyDocsByRefs(baseUrl string, refs []view.DocumentRef, configPath string
 	}
 
 	result := make([]view.Document, len(refs))
-	callResults := make([]view.EndpointCallInfo, len(refs))
+	failedCalls := make([]view.EndpointCallInfo, len(refs))
 	errors := make([]string, len(refs))
 
 	wg := sync.WaitGroup{}
@@ -118,7 +118,7 @@ func GetAnyDocsByRefs(baseUrl string, refs []view.DocumentRef, configPath string
 				if customError, ok := err.(*exception.CustomError); ok {
 					statusCode, _ = strconv.Atoi(customError.Params["code"].(string))
 				}
-				callResults[i] = view.EndpointCallInfo{
+				failedCalls[i] = view.EndpointCallInfo{
 					Path:         url,
 					StatusCode:   statusCode,
 					ErrorSummary: fmt.Sprintf("Failed to get document: %s", err.Error()),
@@ -140,7 +140,7 @@ func GetAnyDocsByRefs(baseUrl string, refs []view.DocumentRef, configPath string
 					ConfigPath: configPath,
 				}
 			} else {
-				callResults[i] = view.EndpointCallInfo{
+				failedCalls[i] = view.EndpointCallInfo{
 					Path:         url,
 					ErrorSummary: "Document contains no data",
 				}
@@ -148,7 +148,7 @@ func GetAnyDocsByRefs(baseUrl string, refs []view.DocumentRef, configPath string
 		})
 	}
 	wg.Wait()
-	return utils.FilterResultDocuments(result), utils.FilterEndpointCallResults(callResults), utils.FilterResultErrors(errors)
+	return utils.FilterResultDocuments(result), utils.FilterFailedEndpointCalls(failedCalls), utils.FilterResultErrors(errors)
 }
 
 func GetGenericObjectFromUrl(url string, timeout time.Duration) (view.JsonMap, string, error) {

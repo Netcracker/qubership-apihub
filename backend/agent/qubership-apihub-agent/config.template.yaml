@@ -1,0 +1,69 @@
+# Section with technical parameters
+technicalParameters:
+  # Optional; Base path for binary and static files, default value: .; Example: /tmp
+  basePath: '.'
+  # Optional; Listen address for APIHUB agent, can be used to avoid port conflicts in case of run on bare metall; If not set, default value: :8080; Example: :8080
+  listenAddress: ':8080'
+  # Optional; APIHUB Agent release version to be shown in UI; If not set, default value: unknown; Example: 1.0.0
+  version: ''
+  apihub:
+    # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: http://localhost:8090; Example: https://apihub.example.com
+    url: ''
+    # Mandatory; Provide admin access token for your Qubership APIHUB; If not set, default value: ""; Example: access-token-12345
+    accessToken: ''
+  # Mandatory; Factual Qubership APIHUB Agent Ingress URL in your environment.; If not set, default value: ""; Example: https://apihub-agent.k8s.example.com
+  agentUrl: ''
+  # Mandatory; Display name of Qubership APIHUB Agent's k8s cluster; If not set, default value: unknown; Example: myStagingK8sCluster
+  cloudName: ''
+  # Mandatory; Name of k8s namespace where Qubership APIHUB Agent is deployed; If not set, default value: unknown; Example: myStagingK8sCluster
+  namespace: ''
+  # Optional; Display name of Qubership APIHUB Agent's instance; If not set, default value: ""; Example: apihub-agent-1
+  agentName: ''
+  # Mandatory; Platform type for paas-mediation client initialization. Determines which Kubernetes API client to use; If not set, default value: KUBERNETES; Example: OPENSHIFT
+  paasPlatform: 'KUBERNETES'
+  # Optional; TTL value for namespaces cache; If not set, default value: 1440; Example: 600
+  namespacesCacheTTLMin: 1440
+  # Optional; TTL value for services cache; If not set, default value: 480; Example: 600
+  servicesCacheTTLMin: 480
+
+# Section with all security parameters
+security:
+  # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
+  allowedOrigins:
+    - https://localhost:5137
+  # Deprecated; Set to true to enable apihub playground work without authtorization. Dangerous. Not recommended; If not set, default value: false; Example: false
+  insecureProxy: false
+
+discovery:
+  # Optional; List of k8s labels keys which will be a mark to skip this service during discovery; If not set, default value: []; Example: [gateway,cronJob]
+  excludeLabels:
+    - gateway
+    - cronJob
+  # Optional; List of k8s labels keys by which services will be grouped during discovery; If not set, default value: ''; Example: 'app_name,application'
+  groupingLabels:
+    - app_name
+    - application
+  # Optional; Timeout for getting API spec files from service in k8s cluster; If not set, default value: 15; Example: 30
+  timeoutSec: 15
+  # Optional; URLs for API specification discovery.
+  urls:
+    # OpenAPI discovery configuration. Supports both config-urls (for retrieving configuration with multiple API doc endpoints) and doc-urls (for direct API specification endpoints). If not set, default config-urls: [/v3/api-docs/swagger-config, /swagger-resources]; default doc-urls: [/q/openapi?format=json, /v3/api-docs?format=json, /v2/api-docs, /swagger-ui/swagger.json]
+    openapi:
+      config-urls:
+        - /v3/api-docs/swagger-config
+      doc-urls:
+        - /v3/api-docs
+    # GraphQL discovery configuration. Supports both config-urls (for retrieving configuration with multiple schema endpoints) and doc-urls (for direct GraphQL schema endpoints). If not set, default value: []
+    graphql:
+      config-urls:
+        - /api/graphql-server/schema/domains
+      doc-urls:
+        - /api/graphql-server/schema
+    # APIHUB configuration discovery. Supports only config-urls (for retrieving APIHUB-specific configuration endpoints). If not set, default value: [/v3/api-docs/apihub-swagger-config]
+    apihub-config:
+      config-urls:
+        - /v3/api-docs/apihub-swagger-config
+    # AsyncAPI discovery configuration. Supports only doc-urls (for direct AsyncAPI specification endpoints). If not set, default value: []
+    asyncapi:
+      doc-urls:
+        - /v3/api-docs/asyncapi

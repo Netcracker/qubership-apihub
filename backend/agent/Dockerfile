@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Note: this uses host platform for the build, and we ask go build to target the needed platform, so we do not spend time on qemu emulation when running "go build"
-FROM --platform=$BUILDPLATFORM docker.io/golang:1.25.1-alpine3.22 as builder
+FROM --platform=$BUILDPLATFORM docker.io/golang:1.25.5-alpine3.22 as builder
 ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
@@ -44,7 +44,6 @@ RUN apk --no-cache add curl
 WORKDIR /app/qubership-apihub-agent
 
 COPY --from=builder /workspace/qubership-apihub-agent/qubership-apihub-agent ./qubership-apihub-agent
-COPY qubership-apihub-agent/config.yaml ./
 
 RUN chmod -R a+rwx /app
 

@@ -28,19 +28,19 @@ const DefaultGraphqlSpecName = "Graphql specification"
 const DefaultGraphqlIntSpecName = "Graphql introspection"
 
 func (r graphqlDiscoveryRunner) DiscoverDocuments(baseUrl string, urls view.DocumentDiscoveryUrls, timeout time.Duration) ([]view.Document, []view.EndpointCallInfo, error) {
-	var allCallResults []view.EndpointCallInfo
+	var allFailedCalls []view.EndpointCallInfo
 
 	// Check for GraphQL config first
 	for _, url := range urls.GraphqlConfig {
-		configRefs, callResult := getRefsFromGraphqlConfig(baseUrl, url, timeout)
-		if callResult != nil {
-			allCallResults = append(allCallResults, *callResult)
+		configRefs, failedCall := getRefsFromGraphqlConfig(baseUrl, url, timeout)
+		if failedCall != nil {
+			allFailedCalls = append(allFailedCalls, *failedCall)
 		}
 		if len(configRefs) > 0 {
 			// Graphql config found
-			docs, callResults, err := r.GetDocumentsByRefs(baseUrl, configRefs, url)
-			allCallResults = append(allCallResults, callResults...)
-			return docs, allCallResults, err
+			docs, failedCalls, err := r.GetDocumentsByRefs(baseUrl, configRefs, url)
+			allFailedCalls = append(allFailedCalls, failedCalls...)
+			return docs, allFailedCalls, err
 		}
 	}
 
@@ -52,9 +52,9 @@ func (r graphqlDiscoveryRunner) DiscoverDocuments(baseUrl string, urls view.Docu
 	for _, url := range urls.GraphqlIntrospection {
 		refs = append(refs, view.DocumentRef{Url: url, ApiType: view.ATGraphql, Required: false, Timeout: timeout}) //TODO: Metadata: map[string]interface{}{"isIntrospection": true} ???
 	}
-	docs, callResults, err := r.GetDocumentsByRefs(baseUrl, refs, "")
-	allCallResults = append(allCallResults, callResults...)
-	return docs, allCallResults, err
+	docs, failedCalls, err := r.GetDocumentsByRefs(baseUrl, refs, "")
+	allFailedCalls = append(allFailedCalls, failedCalls...)
+	return docs, allFailedCalls, err
 }
 
 func (r graphqlDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.DocumentRef, configPath string) ([]view.Document, []view.EndpointCallInfo, error) {
@@ -64,7 +64,7 @@ func (r graphqlDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.D
 	}
 
 	result := make([]view.Document, len(filteredRefs))
-	callResults := make([]view.EndpointCallInfo, len(filteredRefs))
+	failedCalls := make([]view.EndpointCallInfo, len(filteredRefs))
 	errs := make([]string, len(filteredRefs))
 
 	wg := sync.WaitGroup{}
@@ -96,7 +96,7 @@ func (r graphqlDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.D
 					if errors.As(err, &customErr) {
 						statusCode, _ = strconv.Atoi(customErr.Params["code"].(string))
 					}
-					callResults[i] = view.EndpointCallInfo{
+					failedCalls[i] = view.EndpointCallInfo{
 						Path:         currentSpecUrl,
 						StatusCode:   statusCode,
 						ErrorSummary: err.Error(),
@@ -138,7 +138,7 @@ func (r graphqlDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.D
 
 	wg.Wait()
 
-	return utils.FilterResultDocuments(result), utils.FilterEndpointCallResults(callResults), utils.FilterResultErrors(errs)
+	return utils.FilterResultDocuments(result), utils.FilterFailedEndpointCalls(failedCalls), utils.FilterResultErrors(errs)
 }
 
 func (r graphqlDiscoveryRunner) FilterRefsForApiType(refs []view.DocumentRef) []view.DocumentRef {

@@ -1,7 +1,5 @@
 # Section with Qubership APIHUB Agent deployment configuration
 qubershipApihubAgent:
-  # Optional; APIHUB Agent release version to be shown in UI; If not set, default value: unknown; Example: 1.0.0
-  version: ''
 
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-agent'
@@ -23,35 +21,43 @@ qubershipApihubAgent:
 
   # Section with business and technical parameters for Qubership APIHUB Agent.
   env:
-    # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
-    apihubUrl: ''
+    # Section with technical parameters
+    technicalParameters:
+      # Optional; APIHUB Agent release version to be shown in UI; If not set, default value: unknown; Example: 1.0.0
+      version: 'unknown'
+      apihub:
+        # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: http://localhost:8090; Example: https://apihub.example.com
+        url: ''
+        # Mandatory; Provide admin access token for your Qubership APIHUB; If not set, default value: ""; Example: access-token-12345
+        accessToken: ''
+      # Mandatory; Hostname for Qubership APIHUB Agent (used in Ingress and to construct agentUrl); If not set, default value: ""; Example: apihub-agent.k8s.example.com
+      agentHost: ''
+      # Optional; Protocol for agentUrl construction; If not set, default value: http; Example: https
+      agentProtocol: 'http'
+      # Optional; Port for agentUrl construction; If not set, default value: ""; Example: 8080
+      agentPort: ''
+      # Mandatory; Display name of Qubership APIHUB Agent's k8s cluster; If not set, default value: unknown; Example: myStagingK8sCluster
+      cloudName: ''
+      # Optional; Display name of Qubership APIHUB Agent's instance; If not set, default value: ""; Example: apihub-agent-1
+      agentName: ''
+      # Mandatory; Platform type for paas-mediation client initialization. Determines which Kubernetes API client to use; If not set, default value: KUBERNETES; Example: OPENSHIFT
+      paasPlatform: 'KUBERNETES'
+      # Optional; TTL value for namespaces cache; If not set, default value: 1440; Example: 600
+      namespacesCacheTTLMin: 1440
+      # Optional; TTL value for services cache; If not set, default value: 480; Example: 600
+      servicesCacheTTLMin: 480
 
-    # Mandatory; Provide admin access token for your Qubership APIHUB; If not set, default value: ""; Example: access-token-12345
-    accessToken: ''
+    # Section with all security parameters
+    security:
+      # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
+      allowedOrigins: []
+      # Deprecated; Set to true to enable apihub playground work without authtorization. Dangerous. Not recommended; If not set, default value: false; Example: false
+      insecureProxy: false
 
-    # Mandatory; Display name of Qubership APIHUB Agent's k8s cluster; If not set, default value: ""; Example: myStagingK8sCluster
-    cloudName: ''
-
-    # Mandatory; Factual Qubership APIHUB Agent Ingress URL in your environment.; If not set, default value: ""; Example: https://apihub-agent.k8s.example.com
-    agentUrl: ''
-
-    # Mandatory; Display name of Qubership APIHUB Agent's instance; If not set, default value: ""; Example: apihub-agent-1
-    agentName: ''
-
-    # Optional; Set to true to enable apihub playground work without authtorization. Dangerous. Not recommended; If not set, default value: false; Example: false
-    insecureProxy: false
-
-    # Optional; Timeout for getting API spec files from service in k8s cluster; If not set, default value: 15; Example: 30
-    discoveryTimeoutSec: 15
-
-    # Optional; Comma-separated list of k8s labels keys which will be a mark to skip this service during discovery; If not set, default value: ''; Example: 'gateway,cronJob'
-    discoveryExcludeLabels: ''
-
-    # Optional; Comma-separated list of k8s labels keys by which services will be grouped during discovery; If not set, default value: ''; Example: 'app_name,application'
-    discoveryGroupingLabels: ''
-
-    # Optional; TTL value for namespaces cache; If not set, default value: 1440; Example: 600
-    namespacesCacheTTLMin: 1440
-
-    # Optional; TTL value for services cache; If not set, default value: 480; Example: 600
-    servicesCacheTTLMin: 480
+    discovery:
+      # Optional; List of k8s labels keys which will be a mark to skip this service during discovery; If not set, default value: []; Example: [gateway,cronJob]
+      excludeLabels: []
+      # Optional; List of k8s labels keys by which services will be grouped during discovery; If not set, default value: ''; Example: 'app_name,application'
+      groupingLabels: []
+      # Optional; Timeout for getting API spec files from service in k8s cluster; If not set, default value: 15; Example: 30
+      timeoutSec: 15

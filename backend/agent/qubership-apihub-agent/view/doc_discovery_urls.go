@@ -1,15 +1,10 @@
 package view
 
-import "time"
+import (
+	"time"
 
-var defaultApihubConfigUrls = []string{"/v3/api-docs/apihub-swagger-config"}
-var defaultSwaggerConfigUrls = []string{"/v3/api-docs/swagger-config", "/swagger-resources"}
-var defaultOpenapiUrls = []string{"/q/openapi?format=json", "/v3/api-docs?format=json", "/v2/api-docs",
-	"/swagger-ui/swagger.json", "/swagger-ui/doc.json", "/api-docs", "/v1/api-docs"}
-var defaultGraphqlUrls = []string{"/api/graphql-server/schema", "/graphql"}
-var defaultGraphqlIntUrls = []string{"/graphql/introspection"}
-var defaultGraphqlConfigUrls = []string{"/api/graphql-server/schema/domains"}
-var defaultSmartlplugConfigUrls = []string{"/smartplug/v1/api/config"}
+	"github.com/Netcracker/qubership-apihub-agent/config"
+)
 
 const CustomK8sApihubConfigUrl = "apihub-config-url"
 const CustomK8sSwaggerConfigUrl = "apihub-swagger-config-url"
@@ -28,47 +23,44 @@ type DocumentDiscoveryUrls struct {
 	GraphqlSchema        []string
 	GraphqlIntrospection []string
 
-	SmartplugConfig []string
+	AsyncAPI []string
 }
 
-func MakeDocDiscoveryUrls(annotations map[string]string) DocumentDiscoveryUrls {
-	result := DocumentDiscoveryUrls{}
-	//TODO: may be some custom annotation for smartplug url?
-	for key, value := range annotations {
-		switch key {
-		case CustomK8sApihubConfigUrl:
-			result.ApihubConfig = append(result.ApihubConfig, value)
-		case CustomK8sSwaggerConfigUrl:
-			result.SwaggerConfig = append(result.SwaggerConfig, value)
-		case CustomK8sOpenapiUrl:
-			result.Openapi = append(result.Openapi, value)
-		case CustomK8sGraphqlUrl:
-			result.GraphqlSchema = append(result.GraphqlSchema, value)
-		case CustomK8sGraphqlIntUrl:
-			result.GraphqlIntrospection = append(result.GraphqlIntrospection, value)
-		case CustomK8sGraphqlConfigUrl:
-			result.GraphqlConfig = append(result.GraphqlConfig, value)
+func MakeDocDiscoveryUrls(baseUrls config.ApiTypeUrlsConfig, annotations map[string]string) DocumentDiscoveryUrls {
+	return DocumentDiscoveryUrls{
+		ApihubConfig:         copyWithPrepend(baseUrls.ApihubConfig.ConfigUrls, annotations[CustomK8sApihubConfigUrl]),
+		SwaggerConfig:        copyWithPrepend(baseUrls.OpenAPI.ConfigUrls, annotations[CustomK8sSwaggerConfigUrl]),
+		Openapi:              copyWithPrepend(baseUrls.OpenAPI.DocUrls, annotations[CustomK8sOpenapiUrl]),
+		GraphqlConfig:        copyWithPrepend(baseUrls.GraphQL.ConfigUrls, annotations[CustomK8sGraphqlConfigUrl]),
+		GraphqlSchema:        copyWithPrepend(baseUrls.GraphQL.DocUrls, annotations[CustomK8sGraphqlUrl]),
+		GraphqlIntrospection: copyWithPrepend(nil, annotations[CustomK8sGraphqlIntUrl]),
+		AsyncAPI:             copyWithPrepend(baseUrls.AsyncAPI.DocUrls, ""),
+	}
+}
+
+// copyWithPrepend creates a copy of base slice with an optional value prepended.
+func copyWithPrepend(base []string, prepend string) []string {
+	if prepend == "" {
+		if base == nil {
+			return nil
+		}
+		result := make([]string, len(base))
+		copy(result, base)
+		return result
+	}
+
+	//check for duplicate
+	for _, v := range base {
+		if v == prepend {
+			result := make([]string, len(base))
+			copy(result, base)
+			return result
 		}
 	}
-	if len(result.ApihubConfig) == 0 {
-		result.ApihubConfig = append(result.ApihubConfig, defaultApihubConfigUrls...)
-	}
-	if len(result.SwaggerConfig) == 0 {
-		result.SwaggerConfig = append(result.SwaggerConfig, defaultSwaggerConfigUrls...)
-	}
-	if len(result.Openapi) == 0 {
-		result.Openapi = append(result.Openapi, defaultOpenapiUrls...)
-	}
-	if len(result.GraphqlSchema) == 0 {
-		result.GraphqlSchema = append(result.GraphqlSchema, defaultGraphqlUrls...)
-	}
-	if len(result.GraphqlIntrospection) == 0 {
-		result.GraphqlIntrospection = append(result.GraphqlIntrospection, defaultGraphqlIntUrls...)
-	}
-	if len(result.GraphqlConfig) == 0 {
-		result.GraphqlConfig = append(result.GraphqlConfig, defaultGraphqlConfigUrls...)
-	}
-	result.SmartplugConfig = append(result.SmartplugConfig, defaultSmartlplugConfigUrls...)
+
+	result := make([]string, len(base)+1)
+	result[0] = prepend
+	copy(result[1:], base)
 	return result
 }
 
