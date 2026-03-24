@@ -33,31 +33,31 @@ const JSON_SCHEMA_FULLY_CYCLED: Record<PropertyKey, unknown> = {
   $ref: 'str',
   contentMediaType: 'str',
   const: 42,
-  get items() {return JSON_SCHEMA_FULLY_CYCLED},
-  get additionalItems() {return JSON_SCHEMA_FULLY_CYCLED},
+  get items() { return JSON_SCHEMA_FULLY_CYCLED },
+  get additionalItems() { return JSON_SCHEMA_FULLY_CYCLED },
   properties: {
-    get something() {return JSON_SCHEMA_FULLY_CYCLED},
+    get something() { return JSON_SCHEMA_FULLY_CYCLED },
   },
   additionalProperties: {
-    get something() {return JSON_SCHEMA_FULLY_CYCLED},
+    get something() { return JSON_SCHEMA_FULLY_CYCLED },
   },
   patternProperties: {
-    get something() {return JSON_SCHEMA_FULLY_CYCLED},
+    get something() { return JSON_SCHEMA_FULLY_CYCLED },
   },
-  get allOf() {return [JSON_SCHEMA_FULLY_CYCLED]},
-  get oneOf() {return [JSON_SCHEMA_FULLY_CYCLED]},
-  get anyOf() {return [JSON_SCHEMA_FULLY_CYCLED]},
-  get not() {return JSON_SCHEMA_FULLY_CYCLED},
+  get allOf() { return [JSON_SCHEMA_FULLY_CYCLED] },
+  get oneOf() { return [JSON_SCHEMA_FULLY_CYCLED] },
+  get anyOf() { return [JSON_SCHEMA_FULLY_CYCLED] },
+  get not() { return JSON_SCHEMA_FULLY_CYCLED },
   definitions: {
-    get something() {return JSON_SCHEMA_FULLY_CYCLED},
+    get something() { return JSON_SCHEMA_FULLY_CYCLED },
   },
-  get propertyNames() {return JSON_SCHEMA_FULLY_CYCLED},
-  get contain() {return JSON_SCHEMA_FULLY_CYCLED},
+  get propertyNames() { return JSON_SCHEMA_FULLY_CYCLED },
+  get contain() { return JSON_SCHEMA_FULLY_CYCLED },
   dependencies: {
-    get something() {return JSON_SCHEMA_FULLY_CYCLED},
+    get something() { return JSON_SCHEMA_FULLY_CYCLED },
   },
   defs: {
-    get something() {return JSON_SCHEMA_FULLY_CYCLED},
+    get something() { return JSON_SCHEMA_FULLY_CYCLED },
   },
 }
 
@@ -89,20 +89,20 @@ const OPEN_API_JSON_SCHEMA_FULLY_CYCLED: Record<PropertyKey, unknown> = {
   nullable: true,
   exclusiveMaximum: true,
   exclusiveMinimum: true,
-  get items() {return OPEN_API_JSON_SCHEMA_FULLY_CYCLED},
-  get additionalItems() {return OPEN_API_JSON_SCHEMA_FULLY_CYCLED},
+  get items() { return OPEN_API_JSON_SCHEMA_FULLY_CYCLED },
+  get additionalItems() { return OPEN_API_JSON_SCHEMA_FULLY_CYCLED },
   properties: {
-    get something() {return OPEN_API_JSON_SCHEMA_FULLY_CYCLED},
+    get something() { return OPEN_API_JSON_SCHEMA_FULLY_CYCLED },
   },
   additionalProperties: {
-    get something() {return OPEN_API_JSON_SCHEMA_FULLY_CYCLED},
+    get something() { return OPEN_API_JSON_SCHEMA_FULLY_CYCLED },
   },
-  get allOf() {return [OPEN_API_JSON_SCHEMA_FULLY_CYCLED]},
-  get oneOf() {return [OPEN_API_JSON_SCHEMA_FULLY_CYCLED]},
-  get anyOf() {return [OPEN_API_JSON_SCHEMA_FULLY_CYCLED]},
-  get not() {return OPEN_API_JSON_SCHEMA_FULLY_CYCLED},
+  get allOf() { return [OPEN_API_JSON_SCHEMA_FULLY_CYCLED] },
+  get oneOf() { return [OPEN_API_JSON_SCHEMA_FULLY_CYCLED] },
+  get anyOf() { return [OPEN_API_JSON_SCHEMA_FULLY_CYCLED] },
+  get not() { return OPEN_API_JSON_SCHEMA_FULLY_CYCLED },
   definitions: {
-    get something() {return OPEN_API_JSON_SCHEMA_FULLY_CYCLED},
+    get something() { return OPEN_API_JSON_SCHEMA_FULLY_CYCLED },
   },
 }
 
@@ -126,7 +126,7 @@ const OPEN_API_CONTENT = {
     encoding: {
       something: {
         contentType: 'str',
-        get headers() {return OPEN_API_HEADERS},
+        get headers() { return OPEN_API_HEADERS },
         style: 'str',
         explode: true,
         allowReserved: true,
@@ -336,10 +336,10 @@ function changeDeepValueTypes(data: unknown): Record<PropertyKey, unknown> {
       case 'string':
       case 'number':
       case 'boolean':
-        return { value: () => {} }
+        return { value: () => { } }
       case 'object': {
         if (key !== undefined && (value === JSON_SCHEMA_FULLY_CYCLED || Object.keys(value).length === 0)) {
-          return { value: () => {} }
+          return { value: () => { } }
         }
       }
     }
@@ -355,10 +355,10 @@ function changeRootValueTypes(data: unknown): Record<PropertyKey, unknown> {
       case 'string':
       case 'number':
       case 'boolean':
-        return { value: () => {} }
+        return { value: () => { } }
       case 'object': {
         if (key !== undefined) {
-          return { value: () => {} }
+          return { value: () => { } }
         }
       }
     }
@@ -547,6 +547,14 @@ describe('validate', () => {
       },
     })
   })
+
+  it('null is a valid value in enum', () => {
+    const source = {
+      enum: [null, 'string'],
+    }
+    const result = validate(source, { validate: true })
+    expect(result).toEqual(source)
+  })
 })
 
 const schemaPath = ['paths', '/example', 'post', 'responses', '200', 'content', 'application/json', 'schema']
@@ -655,7 +663,7 @@ describe('OAS 3.1 Type validations: array of types', () => {
     const spec = {
       openapi: "3.0.4",
       info: {
-        title: "Test API", 
+        title: "Test API",
         version: "1.0.0"
       },
       paths: {
