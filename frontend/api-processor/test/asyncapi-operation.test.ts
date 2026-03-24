@@ -41,6 +41,21 @@ describe('AsyncAPI 3.0 Operation Tests', () => {
       const result = await buildPackageWithDefaultConfig('asyncapi/operations/multiple-operations')
       expect(Array.from(result.operations.values())).toHaveLength(3)
     })
+
+    test('should set search config with useOperationDataAsSearchText=true on all operations', async () => {
+      const result = await buildPackageWithDefaultConfig('asyncapi/operations/multiple-operations')
+      for (const operation of Array.from(result.operations.values())) {
+        expect(operation.search).toEqual({ useOperationDataAsSearchText: true })
+      }
+    })
+
+    // TODO: remove after new search is adopted irrevocably
+    test('should set empty searchScopes (legacy) on all operations', async () => {
+      const result = await buildPackageWithDefaultConfig('asyncapi/operations/multiple-operations')
+      for (const operation of Array.from(result.operations.values())) {
+        expect(operation.searchScopes).toEqual({})
+      }
+    })
   })
 
   describe('OperationId Tests', () => {

@@ -51,7 +51,7 @@ import {
   saveEachOperation,
   saveInfo,
   saveNotifications,
-  saveOperationsArray, saveVersionInternalDocuments, saveVersionInternalDocumentsArray,
+  saveOperationsArray, saveSearchTextFiles, saveVersionInternalDocuments, saveVersionInternalDocumentsArray,
 } from './utils'
 import { toVersionsComparisonDto } from '../../../src/utils/transformToDto'
 
@@ -128,6 +128,7 @@ export class ApihubRegistry implements IRegistry {
 
     await saveOperationsArray(operations, basePath)
     await saveEachOperation(operations, basePath)
+    await saveSearchTextFiles(operations, basePath)
     const comparisonsDto = comparisons.map(comparison => toVersionsComparisonDto(comparison, builderContext.normalizedSpecFragmentsHashCache, logError))
     const comparisonInternalDocuments: ComparisonInternalDocument[] = comparisons.map(comparison => comparison.comparisonInternalDocuments).flat()
 

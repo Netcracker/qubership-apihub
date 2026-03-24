@@ -98,6 +98,7 @@ export const buildRestOperation = (
   const refsOnlySingleOperationSpec = createSingleOperationSpec(refsOnlyDocument, path, method, openapi)
   const { tags = [] } = effectiveOperationObject
 
+  // TODO: remove after new search is adopted irrevocably
   const scopes: SearchScopes = {}
   syncDebugPerformance('[SearchScopes]', () => {
     const handledObject = new Set<unknown>()
@@ -190,7 +191,8 @@ export const buildRestOperation = (
     },
     tags: Array.isArray(tags) ? tags : [tags],
     data: specWithSingleOperation,
-    searchScopes: scopes,
+    searchScopes: scopes, // TODO: remove after new search is adopted irrevocably
+    search: { useOperationDataAsSearchText: true },
     deprecatedItems,
     models,
     ...takeIf({

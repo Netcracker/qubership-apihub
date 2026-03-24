@@ -125,6 +125,19 @@ export async function saveEachOperation(
   }
 }
 
+export async function saveSearchTextFiles(
+  operations: Map<string, ApiOperation>,
+  basePath: string,
+): Promise<void> {
+  for (const operation of Array.from(operations.values())) {
+    if (!operation.searchText || !operation.search.searchTextFilePath) { continue }
+    const filePath = `${basePath}/${operation.search.searchTextFilePath}`
+    const dir = filePath.substring(0, filePath.lastIndexOf('/'))
+    await fs.mkdir(dir, { recursive: true })
+    await fs.writeFile(filePath, operation.searchText)
+  }
+}
+
 export async function saveInfo(
   config: BuildConfig,
   basePath: string,
@@ -236,6 +249,7 @@ export function getOperationsFileContent(
       apiType: operation.apiType,
       metadata: operation.metadata,
       searchScopes: searchScopes,
+      search: operation.search,
       deprecatedItems: operation.deprecatedItems,
       deprecatedInfo: operation.deprecatedInfo,
       deprecatedInPreviousVersions: operation.deprecatedInPreviousVersions,

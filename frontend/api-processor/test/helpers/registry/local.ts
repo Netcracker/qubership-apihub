@@ -78,6 +78,7 @@ import {
   saveInfo,
   saveNotifications,
   saveOperationsArray,
+  saveSearchTextFiles,
   saveVersionInternalDocuments,
   saveVersionInternalDocumentsArray,
 } from './utils'
@@ -496,6 +497,7 @@ export class LocalRegistry implements IRegistry {
 
     await saveOperationsArray(operations, basePath)
     await saveEachOperation(operations, basePath)
+    await saveSearchTextFiles(operations, basePath)
 
     const logError = (message: string): void => {
       notifications.push({

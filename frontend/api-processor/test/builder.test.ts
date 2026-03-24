@@ -49,6 +49,7 @@ describe('Editor scenarios', () => {
       expect(operations.some(({ operationId }) => operationId.endsWith('-parameters'))).toEqual(false)
       expect(operations.every(({ title }) => title)).toEqual(true)
       expect(operations.every(({ searchScopes }) => searchScopes && Object.keys(searchScopes).length > 0)).toEqual(true)
+      expect(operations.every(({ search }) => search && search.useOperationDataAsSearchText !== undefined)).toEqual(true)
     })
 
     test('document has info and externalDocs', async () => {
@@ -103,6 +104,7 @@ describe('Editor scenarios', () => {
       expect(documents.every(({ slug }) => slug)).toEqual(true)
       expect(operations.every(({ title }) => title)).toEqual(true)
       expect(operations.every(({ searchScopes }) => searchScopes && Object.keys(searchScopes).length > 0)).toEqual(true)
+      expect(operations.every(({ search }) => search && search.useOperationDataAsSearchText !== undefined)).toEqual(true)
     })
   })
 

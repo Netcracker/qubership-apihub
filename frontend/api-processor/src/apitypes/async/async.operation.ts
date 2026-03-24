@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
+import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 import type * as TYPE from './async.types'
 import { AsyncOperationActionType, VersionAsyncOperation } from './async.types'
-import { BuildConfig, DeprecateItem, NotificationMessage, SearchScopes } from '../../types'
+import { BuildConfig, DeprecateItem, NotificationMessage } from '../../types'
 import {
   calculateAsyncOperationId,
   getSplittedVersionKey,
@@ -87,26 +87,6 @@ export const buildAsyncApiOperation = (
   // TODO Out of scope
   const tags: string[] = effectiveOperationObject?.tags?.map(tag => (tag as AsyncAPIV3.TagObject)?.name) || []
 
-  // TODO Extract search scopes (similar to REST)
-  const scopes: SearchScopes = {}
-  syncDebugPerformance('[SearchScopes]', () => {
-    const handledObject = new Set<unknown>()
-    syncCrawl(
-      effectiveOperationObject,
-      ({ key, value }) => {
-        if (typeof key === 'symbol') {
-          return { done: true }
-        }
-        if (handledObject.has(value)) {
-          return { done: true }
-        }
-        handledObject.add(value)
-        // For AsyncAPI, we could build search scopes for messages, but for now keep it simple
-        return { value }
-      },
-    )
-  }, debugCtx)
-
   const deprecatedItems = collectDeprecatedItems(
     config, message, messageId, channel, channelId,
     effectiveSingleOperationSpec, normalizedSpecFragmentsHashCache,
@@ -153,7 +133,8 @@ export const buildAsyncApiOperation = (
     },
     tags,
     data: specWithSingleOperation,
-    searchScopes: scopes,
+    searchScopes: {}, // TODO: remove after new search is adopted irrevocably
+    search: { useOperationDataAsSearchText: true },
     deprecatedItems,
     models,
     ...takeIf({

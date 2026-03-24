@@ -32,9 +32,10 @@ import {
 import { buildSchema, introspectionFromSchema } from 'graphql/utilities'
 import { LocalRegistry } from './registry'
 import { Editor } from './editor'
-import { getFileExtension, takeIfDefined } from '../../src/utils'
+import { getFileExtension, normalizeGraphQL, parseGraphQLSource, takeIfDefined } from '../../src/utils'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
 import YAML from 'js-yaml'
+import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 
 export const loadFileAsString = async (filePath: string, folder: string, fileName: string): Promise<string | null> => {
   return (await loadFile(filePath, folder, fileName))?.text() ?? null
@@ -345,4 +346,10 @@ export const loadYamlFile = async <T>(relativePath: string): Promise<T> => {
   const filePath = path.join(process.cwd(), 'test/projects', relativePath)
   const content = await fs.readFile(filePath, 'utf8')
   return YAML.load(content) as T
+}
+
+export function parseAndNormalizeGraphQLSchema(sdl: string): { source: GraphApiSchema; normalized: GraphApiSchema } {
+  const source = parseGraphQLSource(sdl)
+  const normalized = normalizeGraphQL(source)
+  return { source, normalized }
 }
