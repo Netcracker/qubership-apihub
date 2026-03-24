@@ -3,11 +3,12 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"math"
 	"net/http"
 	"sort"
 	"time"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/stages"
@@ -81,7 +82,7 @@ func (d *dbMigrationServiceImpl) StartMigrateOperations(req mView.MigrationReque
 			}
 		}
 
-		om = stages.NewOpsMigration(d.cp, d.systemInfoService, d.minioStorageService, d.repo, d.buildCleanupRepository, mrEnt)
+		om = stages.NewOpsMigration(d.cp, d.systemInfoService, d.minioStorageService, d.repo, d.buildCleanupRepository, mrEnt, "")
 
 		return nil
 	})
