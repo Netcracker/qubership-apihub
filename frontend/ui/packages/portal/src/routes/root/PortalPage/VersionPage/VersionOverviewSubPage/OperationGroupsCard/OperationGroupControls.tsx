@@ -52,14 +52,11 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
   const { isPrefixGroup, apiType, operationsCount } = operationGroup
 
   const isGraphQlGroup = apiType && API_TYPE_DISABLE_ACTION_MAP[apiType]
-  const isDownloadButtonDisabled = /* isExporting || */ isGraphQlGroup || !operationsCount
-  const isPublishButtonDisabled = isGraphQlGroup || !operationsCount
+  const isDownloadButtonDisabled = !operationsCount
+  const isPublishButtonDisabled = !operationsCount
 
   const downloadButtonTitle = useMemo(
     () => {
-      if (isGraphQlGroup) {
-        return 'Export is not available for groups with GraphQL operations'
-      }
       if (!operationsCount) {
         return 'Export is not available because there are no operations in the group'
       }
@@ -69,9 +66,6 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
   )
 
   const publishButtonTitle = useMemo(() => {
-    if (isGraphQlGroup) {
-      return 'Publish is not available for groups with GraphQL operations'
-    }
     if (!operationsCount) {
       return 'Publish is not available because there are no operations in the group'
     }

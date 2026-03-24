@@ -8,7 +8,7 @@ import { useEffect } from 'react'
 import { generatePath } from 'react-router'
 import type { SetClientValidationStatus } from '../../routes/root/PortalPage/VersionPage/ApiQualityValidationSummaryProvider'
 import { ClientValidationStatuses } from '../../routes/root/PortalPage/VersionPage/ApiQualityValidationSummaryProvider'
-import { API_LINTER_API_V1 } from './constants'
+import { API_LINTER_API_V2 } from './constants'
 
 const QUERY_KEY_VALIDATION_SUMMARY_FOR_PACKAGE_VERSION = 'validation-summary-for-package-version'
 
@@ -64,7 +64,7 @@ function getValidationSummaryByPackageVersion(
     endpoint,
     { method: 'GET' },
     {
-      basePath: API_LINTER_API_V1,
+      basePath: API_LINTER_API_V2,
       customErrorHandler: (response) => {
         throw new Error(`Request failed with status ${response.status}`)
       },

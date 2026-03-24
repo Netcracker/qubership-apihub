@@ -15,7 +15,7 @@
  */
 
 import { buildOperationPairKey, useHandledOperationPairsContext } from '@apihub/components/HandledOperationPairsProvider'
-import { useSetIsApiDiffResultLoading } from '@apihub/routes/root/ApiDiffResultProvider'
+import { useHasComparisonInternalDocument, useSetIsApiDiffResultLoading } from '@apihub/routes/root/ApiDiffResultProvider'
 import { CustomListItemButton } from '@netcracker/qubership-apihub-ui-shared/components/CustomListItemButton'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
@@ -72,6 +72,7 @@ export const OperationsListOnComparison: FC<OperationsListOnComparisonProps> = m
   const shouldAutoExpand = useShouldAutoExpandTagsContext()
   const setShouldAutoExpand = useSetShouldAutoExpandTagsContext()
   const setIsApiDiffResultLoading = useSetIsApiDiffResultLoading()
+  const hasComparisonInternalDocument = useHasComparisonInternalDocument()
   const selectedElementRef = useRefWithAutoScroll(shouldAutoExpand, selectedElement)
 
   const searchParams: OperationsComparisonSearchParams | GroupsOperationsComparisonSearchParams = useMemo(
@@ -100,13 +101,16 @@ export const OperationsListOnComparison: FC<OperationsListOnComparisonProps> = m
   const alreadyHandledOperationPairs = useHandledOperationPairsContext()
   const resetIsApiDiffResultLoadingIfNeeded = useCallback(
     (operationPair: OperationPair) => {
+      if (!hasComparisonInternalDocument) {
+        return
+      }
       const operationPairKey = buildOperationPairKey(operationPair)
       if (!alreadyHandledOperationPairs?.has(operationPairKey)) {
         // We need to reset status to default value. For more details, look at the comment next to IsApiDiffResultLoadingContext.
         setIsApiDiffResultLoading(true)
       }
     },
-    [alreadyHandledOperationPairs, setIsApiDiffResultLoading],
+    [alreadyHandledOperationPairs, setIsApiDiffResultLoading, hasComparisonInternalDocument],
   )
 
   const handleListItemClick = useCallback(

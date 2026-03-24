@@ -1,6 +1,7 @@
-import type { ValidationDetails } from '@apihub/entities/api-quality/document-validation-details'
+import { useLinters } from '@apihub/api-hooks/ApiQuality/useLinters'
 import type { IssueSeverity } from '@apihub/entities/api-quality/issue-severities'
 import type { Issue } from '@apihub/entities/api-quality/issues'
+import type { Linter } from '@apihub/entities/api-quality/linters'
 import { Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
 import { CustomTableHeadCell } from '@netcracker/qubership-apihub-ui-shared/components/CustomTableHeadCell'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
@@ -10,24 +11,29 @@ import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-tabl
 import type { FC } from 'react'
 import { memo, useMemo, useRef } from 'react'
 import { IssueSeverityMarker } from './IssueSeverityMarker'
-import { issuePathToSpecItemUri } from './utilities/transformers'
+import { issuePathToSpecItemUri, sortIssuesBySeveralFields } from './utilities/transformers'
+import { getLinterName } from '@apihub/utils/api-quality/linters'
 
 const TABLE_COLUMN_ID_TYPE = 'type'
+const TABLE_COLUMN_ID_LINTER = 'linter'
 const TABLE_COLUMN_ID_MESSAGE = 'message'
 
 const TABLE_COLUMN_ID_LABELS = {
   [TABLE_COLUMN_ID_TYPE]: 'Type',
+  [TABLE_COLUMN_ID_LINTER]: 'Linter',
   [TABLE_COLUMN_ID_MESSAGE]: 'Message',
 }
 
 type TableData = {
   type: IssueSeverity
+  linterId: Linter['linter']
+  linterName: Linter['displayName']
   message: string
   path: SpecItemUri // Example: /foo/bar/baz/qux/1
 }
 
 type ValidationResultsTableProps = {
-  data: ValidationDetails | undefined
+  data: Issue[]
   loading: IsLoading
   onSelectIssue: (pathToIssue: SpecItemUri) => void
 }
@@ -67,6 +73,11 @@ const TABLE_COLUMNS_LAYOUT_CONFIG: Record<string, TableColumnLayoutConfig> = {
     whiteSpace: 'nowrap',
     textAlign: 'center',
   },
+  [TABLE_COLUMN_ID_LINTER]: {
+    width: '100px',
+    whiteSpace: 'normal',
+    textAlign: 'left',
+  },
   [TABLE_COLUMN_ID_MESSAGE]: {
     width: 'auto',
     whiteSpace: 'normal',
@@ -87,6 +98,17 @@ const COLUMNS: ColumnDef<TableData>[] = [
     },
   },
   {
+    id: TABLE_COLUMN_ID_LINTER,
+    header: () => <CustomTableHeadCell title={TABLE_COLUMN_ID_LABELS[TABLE_COLUMN_ID_LINTER]} />,
+    cell: ({ row: { original: { linterName } } }) => {
+      return (
+        <Typography variant="body2">
+          {linterName}
+        </Typography>
+      )
+    },
+  },
+  {
     id: TABLE_COLUMN_ID_MESSAGE,
     header: () => <CustomTableHeadCell title={TABLE_COLUMN_ID_LABELS[TABLE_COLUMN_ID_MESSAGE]} />,
     cell: ({ row: { original: { message } } }) => (
@@ -102,12 +124,18 @@ export const ValidationResultsTable: FC<ValidationResultsTableProps> = memo<Vali
 
   const tableContainerRef = useRef<HTMLDivElement>(null)
 
-  const transformedData: TableData[] = useMemo(() => (data?.issues ?? []).map((issue: Issue) => ({
+  const sortedIssuesList = useMemo(() => sortIssuesBySeveralFields(data), [data])
+
+  const { data: lintersList = [] } = useLinters()
+
+  const transformedData: TableData[] = useMemo(() => sortedIssuesList.map((issue: Issue) => ({
     type: issue.severity,
+    linterId: issue.linter,
+    linterName: getLinterName(issue.linter, lintersList),
     message: issue.message,
     // TODO 19.09.25 // Remove default because real response doesn't match API
     path: issuePathToSpecItemUri(issue.path ?? []),
-  })), [data?.issues])
+  })), [sortedIssuesList, lintersList])
 
   const { getHeaderGroups, getRowModel } = useReactTable({
     data: transformedData,

@@ -19,6 +19,7 @@ export const OPENAPI_3_0_SPEC_TYPE = 'openapi-3-0'
 export const OPENAPI_2_0_SPEC_TYPE = 'openapi-2-0'
 export const OPENAPI_SPEC_TYPE = 'openapi'
 export const ASYNCAPI_2_SPEC_TYPE = 'asyncapi-2'
+export const ASYNCAPI_3_0_SPEC_TYPE = 'asyncapi-3-0'
 export const JSON_SCHEMA_SPEC_TYPE = 'json-schema'
 export const MARKDOWN_SPEC_TYPE = 'markdown'
 export const UNKNOWN_SPEC_TYPE = 'unknown'
@@ -34,6 +35,7 @@ export type SpecType =
   | typeof OPENAPI_2_0_SPEC_TYPE
   | typeof OPENAPI_SPEC_TYPE
   | typeof ASYNCAPI_2_SPEC_TYPE
+  | typeof ASYNCAPI_3_0_SPEC_TYPE
   | typeof JSON_SCHEMA_SPEC_TYPE
   | typeof MARKDOWN_SPEC_TYPE
   | typeof UNKNOWN_SPEC_TYPE

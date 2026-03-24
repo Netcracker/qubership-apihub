@@ -1,22 +1,8 @@
-import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { API_V1, requestJson } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import type { PackageKey, VersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/types'
 import { useQuery } from '@tanstack/react-query'
 import { generatePath } from 'react-router'
-
-export type InternalDocumentMetaData = {
-  id: Key
-  fileName: string
-  hash: string
-}
-
-export type InternalDocuments = ReadonlyArray<InternalDocumentMetaData>
-
-export type QueryResult<T, E = Error> = {
-  data: T | undefined
-  isLoading: boolean
-  error: E | null
-}
+import type { InternalDocuments, QueryResult } from './shared-types'
 
 const QUERY_KEY = 'query-key-internal-documents-by-package-version'
 

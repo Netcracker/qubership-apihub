@@ -1,9 +1,7 @@
+import type { LinterApiType } from '@apihub/entities/api-quality/linter-api-types'
+import type { Linter } from '@apihub/entities/api-quality/linters'
 import { API_LINTER_API_V1 } from '@netcracker/qubership-apihub-ui-portal/src/api-hooks/ApiQuality/constants'
-import type {
-  RulesetApiType,
-  RulesetDto,
-  RulesetLinter,
-} from '@netcracker/qubership-apihub-ui-portal/src/entities/api-quality/rulesets'
+import type { RulesetDto } from '@netcracker/qubership-apihub-ui-portal/src/entities/api-quality/rulesets'
 import { useShowSuccessNotification } from '@netcracker/qubership-apihub-ui-portal/src/routes/root/BasePage/Notification'
 import { portalRequestJson } from '@netcracker/qubership-apihub-ui-portal/src/utils/requests'
 import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
@@ -12,8 +10,8 @@ import { useInvalidateRulesets } from './useRulesets'
 
 type CreateRulesetRequest = {
   rulesetName: string
-  apiType: RulesetApiType
-  linter: RulesetLinter
+  apiType: LinterApiType
+  linter: Linter['linter']
   rulesetFile: File
 }
 

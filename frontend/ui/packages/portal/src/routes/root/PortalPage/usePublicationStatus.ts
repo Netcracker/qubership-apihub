@@ -33,13 +33,13 @@ import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/ut
 import { getVersionPath, useNavigation } from '@apihub/routes/NavigationProvider'
 import type { IsError, IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { useMemo } from 'react'
-import { REST_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
 import { useDownloadPublicationReport } from './useDownloadPublicationReport'
 import { useAsyncInvalidateVersionContent } from '../usePackageVersionContent'
 import {
   useAsyncInvalidatePackageVersions,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
 import { useAsyncInvalidatePackage } from '../usePackage'
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 const PUBLISH_STATUS_QUERY_KEY = 'publish-status-query-key'
 const OPERATION_GROUP_PUBLISH_STATUS_QUERY_KEY = 'operation-group-publish-status-query-key'
@@ -110,13 +110,14 @@ export function useOperationGroupPublicationStatuses(
   versionId: Key,
   groupName: string,
   publishId: Key,
+  apiType: ApiType,
 ): [IsLoading, IsSuccess] {
   const showNotification = useShowInfoNotification()
   const showErrorNotification = useShowErrorNotification()
 
   const { data } = useQuery<PublishStatusDto, Error, PublishStatusDto>({
     queryKey: [OPERATION_GROUP_PUBLISH_STATUS_QUERY_KEY, packageId, versionId, groupName, publishId],
-    queryFn: () => getOperationGroupPublishStatus(packageId, versionId, groupName, publishId),
+    queryFn: () => getOperationGroupPublishStatus(packageId, versionId, groupName, publishId, apiType),
     refetchInterval: data => (data?.status === RUNNING_PUBLISH_STATUS || data?.status === NONE_PUBLISH_STATUS ? STATUS_REFETCH_INTERVAL : false),
     onSuccess: (data) => {
       if (data.status === COMPLETE_PUBLISH_STATUS) {
@@ -157,12 +158,12 @@ export async function getOperationGroupPublishStatus(
   versionKey: Key,
   groupName: string,
   publishKey: Key,
+  apiType: ApiType,
 ): Promise<PublishStatusDto> {
   const packageId = encodeURIComponent(packageKey)
   const versionId = encodeURIComponent(versionKey)
   const publishId = encodeURIComponent(publishKey)
   const encodedGroupName = encodeURIComponent(groupName)
-  const apiType = REST_API_TYPE
 
   const pathPattern = '/packages/:packageId/versions/:versionId/:apiType/groups/:encodedGroupName/publish/:publishId/status'
   return await requestJson<PublishStatusDto>(

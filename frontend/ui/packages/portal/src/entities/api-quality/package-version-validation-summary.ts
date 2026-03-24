@@ -1,5 +1,6 @@
 import type { IssueSeverity } from './issue-severities'
-import type { RulesetApiType, RulesetMetadataDto } from './rulesets'
+import type { RulesetMetadataDto } from './rulesets'
+import type { LinterApiType } from './linter-api-types'
 import type { ValidationStatus } from './validation-statuses'
 
 export type IssuesSummary = Record<IssueSeverity, number>
@@ -9,7 +10,7 @@ export type IssuesSummary = Record<IssueSeverity, number>
 export type DocumentValidationSummaryDto = {
   slug: string
   documentName: string
-  apiType: RulesetApiType
+  apiType: LinterApiType
   rulesetId?: RulesetMetadataDto['id']
   issuesSummary?: IssuesSummary
   status: ValidationStatus

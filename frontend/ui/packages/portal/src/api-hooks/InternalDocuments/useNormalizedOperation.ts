@@ -1,15 +1,15 @@
 import type { VersionKey } from '@apihub/entities/keys'
 import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@apihub/utils/internal-documents/constants'
 import { isGraphApiSpecification, isOpenApiSpecification } from '@apihub/utils/internal-documents/type-guards'
+import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
 import { calculateNormalizedRestOperationId, removeComponents } from '@netcracker/qubership-apihub-api-processor'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
 import { isRestOperation, type OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { PackageKey } from '@netcracker/qubership-apihub-ui-shared/utils/types'
 import { useMemo } from 'react'
+import type { QueryResultWithNoInternalDocument } from './shared-types'
 import { useInternalDocumentContent } from './useInternalDocumentContent'
-import type { QueryResult } from './useInternalDocumentsByPackageVersion'
 import { useInternalDocumentsByPackageVersion } from './useInternalDocumentsByPackageVersion'
-import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
 
 type Options = {
   operation: OperationData | undefined
@@ -17,8 +17,10 @@ type Options = {
   versionId: VersionKey | undefined
 }
 
-export function useNormalizedOperation(options: Options): QueryResult<unknown, Error> {
+export function useNormalizedOperation(options: Options): QueryResultWithNoInternalDocument<unknown, Error> {
   const { operation, packageId, versionId } = options
+
+  const hasVersionInternalDocument = !!operation?.versionInternalDocumentId
 
   const operationPackageKey = encodeURIComponent(packageId ?? '')
   const operationPackageVersion = encodeURIComponent(versionId ?? '')
@@ -96,6 +98,7 @@ export function useNormalizedOperation(options: Options): QueryResult<unknown, E
       data: filteredInternalDocumentForOperation,
       isLoading: isInternalDocumentsLoading || isInternalDocumentContentLoading,
       error: internalDocumentsError || internalDocumentContentError,
+      hasInternalDocument: hasVersionInternalDocument,
     }),
     [
       filteredInternalDocumentForOperation,
@@ -103,6 +106,7 @@ export function useNormalizedOperation(options: Options): QueryResult<unknown, E
       internalDocumentsError,
       isInternalDocumentContentLoading,
       isInternalDocumentsLoading,
+      hasVersionInternalDocument,
     ],
   )
 }

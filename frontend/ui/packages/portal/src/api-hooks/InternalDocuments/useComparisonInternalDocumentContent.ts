@@ -2,7 +2,7 @@ import { requestText } from '@netcracker/qubership-apihub-ui-shared/utils/reques
 import { API_V1 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { useQuery } from '@tanstack/react-query'
 import { generatePath } from 'react-router-dom'
-import type { InternalDocumentMetaData, QueryResult } from './useInternalDocumentsByPackageVersion'
+import type { InternalDocumentMetaData, QueryResult } from './shared-types'
 
 const QUERY_KEY = 'query-key-comparison-internal-document-content'
 

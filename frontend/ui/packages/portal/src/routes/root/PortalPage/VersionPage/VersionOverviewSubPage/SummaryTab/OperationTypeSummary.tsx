@@ -348,7 +348,7 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
                   >
                     {validationRulesets.map(ruleset => (
                       <Box key={ruleset.id} display='flex' alignItems='center' data-testid="ValidationRulesetContainer">
-                        <ValidationRulesetLink data={ruleset} loading={false} showLabel={false} />
+                        <ValidationRulesetLink data={ruleset} loading={false} />
                       </Box>
                     ))}
                     {hasInactiveRulesets && (

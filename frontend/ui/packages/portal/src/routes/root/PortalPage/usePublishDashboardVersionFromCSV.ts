@@ -18,11 +18,12 @@ import { useMutation } from '@tanstack/react-query'
 import { generatePath } from 'react-router-dom'
 import { useShowErrorNotification } from '../BasePage/Notification'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { API_V1, requestJson } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import { API_V2, requestJson } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import type { PackageId, VersionStatus } from '@netcracker/qubership-apihub-api-processor'
 import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 type PublishDashboardVersionFromCSVData = {
   packageKey: Key
@@ -34,6 +35,7 @@ type PublishDashboardVersionFromCSVData = {
     previousVersion?: Key
     previousVersionPackageId?: Key
     versionLabels?: string[]
+    apiType: ApiType
   }
 }
 
@@ -79,14 +81,15 @@ async function publishOperationGroupPackageVersion({
 }: PublishDashboardVersionFromCSVData): Promise<PublishResponse> {
   const packageId = encodeURIComponent(packageKey)
   const formData = makeFormData(value)
+  const { apiType } = value
 
-  const pathPattern = '/packages/:packageId/publish/withOperationsGroup'
-  return await requestJson<PublishResponse>(generatePath(pathPattern, { packageId }), {
+  const pathPattern = '/packages/:packageId/publish/withOperationsGroup/:apiType'
+  return await requestJson<PublishResponse>(generatePath(pathPattern, { packageId, apiType }), {
     method: 'POST',
     body: formData,
   }, {
     customRedirectHandler: (response) => getPackageRedirectDetails(response, pathPattern),
-    basePath: API_V1,
+    basePath: API_V2,
   })
 }
 
@@ -98,12 +101,14 @@ function makeFormData({
   previousVersion,
   previousVersionPackageId,
   versionLabels,
+  apiType,
 }: PublishDashboardVersionFromCSVData['value']): FormData {
   const formData = new FormData()
   formData.append('csvFile', csvFile)
   formData.append('servicesWorkspaceId', servicesWorkspaceId)
   formData.append('version', version)
   formData.append('status', status)
+  formData.append('apiType', apiType)
   previousVersion && formData.append('previousVersion', previousVersion)
   previousVersionPackageId && formData.append('previousVersionPackageId', previousVersionPackageId)
   isNotEmpty(versionLabels) && formData.append('versionLabels', JSON.stringify(versionLabels))
