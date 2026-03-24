@@ -15,7 +15,7 @@ import (
 type DocLintTaskRepository interface {
 	SetDocTaskStatus(ctx context.Context, docTaskId string, status view.TaskStatus, details string, executorId string) error
 	SaveDocTasksAndUpdVer(ctx context.Context, ents []entity.DocumentLintTask, versionTaskId string) error
-	FindFreeDocTask(ctx context.Context, executorId string) (*entity.DocumentLintTask, error)
+	FindFreeDocTask(ctx context.Context, executorId string, linters ...view.Linter) (*entity.DocumentLintTask, error)
 	GetDocTasksForVersionTasks(ctx context.Context, verTaskIds []string) ([]entity.DocumentLintTask, error)
 }
 
@@ -94,25 +94,38 @@ func (d docLintTaskRepositoryImpl) SaveDocTasksAndUpdVer(ctx context.Context, en
 
 const buildKeepaliveTimeoutSec = 30
 
-var queryItemToBuild = fmt.Sprintf("select * from document_lint_task b where "+
-	"(b.status='%s' or (b.status='%s' and b.last_active < (now() - interval '%d seconds'))) "+
-	"order by b.created_at ASC limit 1 for no key update skip locked", view.TaskStatusNotStarted, view.TaskStatusProcessing, buildKeepaliveTimeoutSec)
+var queryBase = fmt.Sprintf("select * from document_lint_task b where "+
+	"(b.status='%s' or (b.status='%s' and b.last_active < (now() - interval '%d seconds')))",
+	view.TaskStatusNotStarted, view.TaskStatusProcessing, buildKeepaliveTimeoutSec)
 
-func (d docLintTaskRepositoryImpl) FindFreeDocTask(ctx context.Context, executorId string) (*entity.DocumentLintTask, error) {
+func (d docLintTaskRepositoryImpl) FindFreeDocTask(ctx context.Context, executorId string, linters ...view.Linter) (*entity.DocumentLintTask, error) {
 	var result *entity.DocumentLintTask
 	var err error
 
+	query := queryBase
+	var queryArgs []interface{}
+	if len(linters) > 0 {
+		query += " and b.linter in (?)"
+		queryArgs = append(queryArgs, pg.In(linters))
+	}
+	query += " order by b.created_at ASC limit 1 for no key update skip locked"
+
 	for {
 		taskFailed := false
-		err = d.cp.GetConnection().RunInTransaction(context.Background(), func(tx *pg.Tx) error {
+		err = d.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 			var ents []entity.DocumentLintTask
 
-			_, err := tx.Query(&ents, queryItemToBuild)
-			if err != nil {
-				if err == pg.ErrNoRows {
+			var queryErr error
+			if len(queryArgs) > 0 {
+				_, queryErr = tx.Query(&ents, query, queryArgs...)
+			} else {
+				_, queryErr = tx.Query(&ents, query)
+			}
+			if queryErr != nil {
+				if queryErr == pg.ErrNoRows {
 					return nil
 				}
-				return fmt.Errorf("failed to find free build: %w", err)
+				return fmt.Errorf("failed to find free build: %w", queryErr)
 			}
 			if len(ents) > 0 {
 				result = &ents[0]

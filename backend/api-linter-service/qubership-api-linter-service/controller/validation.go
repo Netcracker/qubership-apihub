@@ -1,29 +1,21 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package controller
 
 import (
+	"encoding/json"
+	"io"
+	"net/http"
+
 	"github.com/Netcracker/qubership-api-linter-service/exception"
 	"github.com/Netcracker/qubership-api-linter-service/secctx"
 	"github.com/Netcracker/qubership-api-linter-service/service"
+	"github.com/Netcracker/qubership-api-linter-service/view"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 type ValidationController interface {
 	ValidateVersion(w http.ResponseWriter, r *http.Request)
+	StartBulkValidation(w http.ResponseWriter, r *http.Request)
+	GetBulkValidationStatus(w http.ResponseWriter, r *http.Request)
 }
 
 func NewValidationController(validationService service.ValidationService, authorizationService service.AuthorizationService) ValidationController {
@@ -65,7 +57,8 @@ func (v *validationControllerImpl) ValidateVersion(w http.ResponseWriter, r *htt
 		return
 	}
 
-	taskId, err := v.validationService.ValidateVersion(ctx, packageId, version, "")
+	recalculate := r.URL.Query().Get("recalculate") == "true"
+	taskId, err := v.validationService.ValidateVersion(ctx, packageId, version, "", recalculate)
 	if err != nil {
 		respondWithError(w, "Failed to start version validation", err)
 		return
@@ -74,4 +67,80 @@ func (v *validationControllerImpl) ValidateVersion(w http.ResponseWriter, r *htt
 	log.Debugf("Validation task started for packageId %s version %s, taskId is: %s", packageId, version, taskId)
 
 	w.WriteHeader(http.StatusAccepted)
+}
+
+func (v *validationControllerImpl) StartBulkValidation(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	var req view.BulkValidationRequest
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	if len(body) > 0 {
+		if err := json.Unmarshal(body, &req); err != nil {
+			RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.BadRequestBody,
+				Message: exception.BadRequestBodyMsg,
+				Debug:   err.Error(),
+			})
+			return
+		}
+	}
+
+	if req.PackageId == "" {
+		RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.RequiredParamsMissing,
+			Message: exception.RequiredParamsMissingMsg,
+			Params:  map[string]interface{}{"params": "packageId"},
+		})
+		return
+	}
+
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges, err := v.authorizationService.HasPublishPackagePermission(ctx, req.PackageId)
+	if err != nil {
+		respondWithError(w, "Failed to check permissions", err)
+		return
+	}
+	if !sufficientPrivileges {
+		RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+
+	jobId, err := v.validationService.StartBulkValidation(ctx, req)
+	if err != nil {
+		respondWithError(w, "Failed to start bulk validation", err)
+		return
+	}
+
+	respondWithJson(w, http.StatusAccepted, view.BulkValidationStartResponse{JobId: jobId})
+}
+
+func (v *validationControllerImpl) GetBulkValidationStatus(w http.ResponseWriter, r *http.Request) {
+	jobId := getStringParam(r, "jobId")
+
+	ctx := secctx.MakeUserContext(r)
+
+	result, err := v.validationService.GetBulkValidationStatus(ctx, jobId)
+	if err != nil {
+		respondWithError(w, "Failed to get bulk validation status", err)
+		return
+	}
+
+	respondWithJson(w, http.StatusOK, result)
 }

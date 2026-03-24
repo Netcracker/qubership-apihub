@@ -1,17 +1,3 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package main
 
 import (
@@ -147,37 +133,50 @@ func main() {
 	versionResultRepository := repository.NewVersionResultRepository(cp)
 	lintResultRepository := repository.NewLintResultRepository(cp)
 
-	linterSelectorService := service.NewLinterSelectorService(ruleSetRepository)
+	linterConfigService := service.NewLinterConfigService(systemInfoService)
+	linterSelectorService := service.NewLinterSelectorService(ruleSetRepository, linterConfigService)
 
-	versionTaskProcessor := service.NewVersionTaskProcessor(versionLintTaskRepository, docLintTaskRepository, versionResultRepository, apihubClient, linterSelectorService, executorId)
-	spectralExecutor, err := service.NewSpectralExecutor(systemInfoService.GetSpectralBinPath())
+	docTaskNotify := make(chan struct{}, 1)
+	versionTaskNotify := make(chan struct{}, 1)
+	versionTaskProcessor := service.NewVersionTaskProcessor(versionLintTaskRepository, docLintTaskRepository, versionResultRepository, apihubClient, linterSelectorService, executorId, docTaskNotify, versionTaskNotify)
+	spectralExecutor, err := service.NewSpectralExecutor(systemInfoService.GetSpectralBinPath()) // TODO: use linters config
 	if err != nil {
 		log.Fatalf("Failed to create Spectral executor: %s", err.Error())
 	}
 
-	docTaskProcessor := service.NewDocTaskProcessor(docLintTaskRepository, ruleSetRepository, docResultRepository, apihubClient, spectralExecutor, executorId)
+	aiOasExecutor, err := service.NewAiOasExecutor(systemInfoService)
+	if err != nil {
+		log.Fatalf("Failed to create AiOas executor: %s", err.Error())
+	}
 
-	validationService := service.NewValidationService(versionLintTaskRepository, versionResultRepository, lintResultRepository, ruleSetRepository, docLintTaskRepository, versionTaskProcessor, apihubClient, executorId)
+	docTaskProcessor := service.NewDocTaskProcessor(docLintTaskRepository, ruleSetRepository, docResultRepository, lintResultRepository, apihubClient, spectralExecutor, aiOasExecutor, executorId, systemInfoService.GetSpectralLinterWorkers(), systemInfoService.GetAiLinterWorkers(), docTaskNotify)
+
+	validationService := service.NewValidationService(versionLintTaskRepository, versionResultRepository, lintResultRepository, ruleSetRepository, docLintTaskRepository, versionTaskProcessor, apihubClient, executorId, versionTaskNotify)
 	publishEventListener := service.NewPublishEventListener(olricProvider, validationService)
 	rulesetService := service.NewRulesetService(ruleSetRepository)
 	cleanupService := service.NewCleanupService(cp)
 	authorizationService := service.NewAuthorizationService(apihubClient)
 
 	validationController := controller.NewValidationController(validationService, authorizationService)
-
 	validationResultController := controller.NewValidationResultController(validationService, authorizationService)
-
 	rulesetController := controller.NewRulesetController(rulesetService, authorizationService)
 	cleanupController := controller.NewCleanupController(cleanupService, authorizationService, systemInfoService)
 	healthController := controller.NewHealthController(readyChan)
 	logsController := controller.NewLogsController()
+	linterController := controller.NewLinterController(linterConfigService)
 
-	// Validate version
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/validation", security.Secure(validationController.ValidateVersion)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/bulkValidation", security.Secure(validationController.StartBulkValidation)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/bulkValidation/{jobId}", security.Secure(validationController.GetBulkValidationStatus)).Methods(http.MethodGet)
 
 	// Validation result
-	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/validation/summary", security.Secure(validationResultController.GetValidationSummaryForVersion)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/validation/documents/{slug}/details", security.Secure(validationResultController.GetValidationResultForDocument)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/validation/summary", security.Secure(validationResultController.GetValidationSummaryForVersion_deprecated)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/validation/summary", security.Secure(validationResultController.GetValidationSummaryForVersion)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/validation/documents/{slug}/details", security.Secure(validationResultController.GetValidationResultForDocument_deprecated)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/validation/documents/{slug}/details", security.Secure(validationResultController.GetValidationResultForDocument)).Methods(http.MethodGet)
+
+	// Linters
+	r.HandleFunc("/api/v1/linters", security.Secure(linterController.ListLinters)).Methods(http.MethodGet)
 
 	// Ruleset management
 	r.HandleFunc("/api/v1/rulesets", security.Secure(rulesetController.CreateRuleset)).Methods(http.MethodPost)

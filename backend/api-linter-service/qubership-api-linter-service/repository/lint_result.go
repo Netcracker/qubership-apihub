@@ -2,10 +2,11 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"errors"
+
 	"github.com/Netcracker/qubership-api-linter-service/db"
 	"github.com/Netcracker/qubership-api-linter-service/entity"
+	"github.com/go-pg/pg/v10"
 )
 
 type LintResultRepository interface {
@@ -28,7 +29,7 @@ func (l lintResultRepositoryImpl) GetLintResultSummary(ctx context.Context, data
 		Where("ruleset_id = ?", rulesetId).
 		Select()
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pg.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
@@ -43,7 +44,7 @@ func (l lintResultRepositoryImpl) GetLintResult(ctx context.Context, dataHash st
 		Where("ruleset_id = ?", rulesetId).
 		Select()
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pg.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err

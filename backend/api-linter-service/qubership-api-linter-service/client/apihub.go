@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/Netcracker/qubership-api-linter-service/exception"
 	"github.com/Netcracker/qubership-api-linter-service/secctx"
@@ -23,11 +24,16 @@ type ApihubClient interface {
 	GetRsaPublicKey(ctx context.Context) (*view.PublicKey, error)
 	GetApiKeyByKey(apiKey string) (*view.ApihubApiKeyView, error)
 
+	GetPackagesList(ctx context.Context, packageListReq view.PackageListReq) (*view.Packages, error)
 	GetPackageById(ctx context.Context, id string) (*view.SimplePackage, error)
 	GetVersion(ctx context.Context, id, version string) (*view.VersionContent, error)
+	ListPackageVersions(ctx context.Context, packageId string) ([]view.PackageVersion, error)
 
 	GetVersionDocuments(ctx context.Context, packageId, version string) (*view.VersionDocuments, error)
 	GetDocumentRawData(ctx context.Context, packageId, version string, fileId string) ([]byte, error)
+	GetDocumentDetails(ctx context.Context, packageId, version string, slug string) (*view.PublishedDocument, error)
+
+	GetOperationWithData(ctx context.Context, packageId, version string, apiType view.OpApiType, operationId string) (*view.Operation, error)
 
 	CheckAuthToken(ctx context.Context, token string) (bool, error)
 	GetUserByPAT(ctx context.Context, token string) (*view.User, error)
@@ -134,6 +140,66 @@ func (a apihubClientImpl) GetRsaPublicKey(ctx context.Context) (*view.PublicKey,
 	return &publicKey, nil
 }
 
+func (a apihubClientImpl) GetPackagesList(ctx context.Context, packageListReq view.PackageListReq) (*view.Packages, error) {
+	req := a.makeRequest(ctx)
+
+	if packageListReq.TextFilter != "" {
+		req.SetQueryParam("textFilter", packageListReq.TextFilter)
+	}
+	if packageListReq.ParentID != "" {
+		req.SetQueryParam("parentId", packageListReq.ParentID)
+	}
+	if len(packageListReq.Kind) > 0 {
+		req.SetQueryParam("kind", strings.Join(packageListReq.Kind, ","))
+	}
+	if packageListReq.ServiceName != "" {
+		req.SetQueryParam("serviceName", packageListReq.ServiceName)
+	}
+
+	if packageListReq.ShowParents != nil {
+		req.SetQueryParam("showParents", strconv.FormatBool(*packageListReq.ShowParents))
+	}
+	if packageListReq.LastReleaseVersionDetails != nil {
+		req.SetQueryParam("lastReleaseVersionDetails", strconv.FormatBool(*packageListReq.LastReleaseVersionDetails))
+	}
+	if packageListReq.ShowAllDescendants != nil {
+		req.SetQueryParam("showAllDescendants", strconv.FormatBool(*packageListReq.ShowAllDescendants))
+	}
+
+	// Set integer parameters
+	if packageListReq.Limit != nil {
+		req.SetQueryParam("limit", strconv.Itoa(*packageListReq.Limit))
+	}
+	if packageListReq.Page != nil {
+		req.SetQueryParam("page", strconv.Itoa(*packageListReq.Page))
+	}
+
+	resp, err := req.Get(fmt.Sprintf("%s/api/v2/packages", a.apihubUrl))
+	if err != nil {
+		return nil, err
+	}
+
+	// Check for error status codes
+	if resp.StatusCode() != http.StatusOK {
+		if resp.StatusCode() == http.StatusNotFound {
+			return nil, nil
+		}
+		if authErr := checkUnauthorized(resp); authErr != nil {
+			return nil, authErr
+		}
+		return nil, fmt.Errorf("failed to list packages: status code %d %v", resp.StatusCode(), resp.Body())
+	}
+
+	// Parse successful response
+	var packageResponse view.Packages
+	err = json.Unmarshal(resp.Body(), &packageResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &packageResponse, nil
+}
+
 func (a apihubClientImpl) GetPackageById(ctx context.Context, id string) (*view.SimplePackage, error) {
 	req := a.makeRequest(ctx)
 
@@ -185,6 +251,49 @@ func (a apihubClientImpl) GetVersion(ctx context.Context, id, version string) (*
 	return &pVersion, nil
 }
 
+func (a apihubClientImpl) ListPackageVersions(ctx context.Context, packageId string) ([]view.PackageVersion, error) {
+	var allVersions []view.PackageVersion
+	limit := 100
+	page := 0
+
+	for {
+		req := a.makeRequest(ctx)
+		req.SetQueryParam("limit", strconv.Itoa(limit))
+		req.SetQueryParam("page", strconv.Itoa(page))
+
+		resp, err := req.Get(fmt.Sprintf("%s/api/v3/packages/%s/versions", a.apihubUrl, url.PathEscape(packageId)))
+		if err != nil {
+			return nil, fmt.Errorf("failed to list versions for package %s: %w", packageId, err)
+		}
+
+		if resp.StatusCode() != http.StatusOK {
+			if resp.StatusCode() == http.StatusNotFound {
+				return nil, nil
+			}
+			if authErr := checkUnauthorized(resp); authErr != nil {
+				return nil, authErr
+			}
+			if customErr := checkCustomError(resp); customErr != nil {
+				return nil, customErr
+			}
+			return nil, fmt.Errorf("failed to list versions for package %s: status code %d %s", packageId, resp.StatusCode(), string(resp.Body()))
+		}
+
+		var versionsResp view.PackageVersionsResponse
+		if err := json.Unmarshal(resp.Body(), &versionsResp); err != nil {
+			return nil, err
+		}
+
+		allVersions = append(allVersions, versionsResp.Versions...)
+		if len(versionsResp.Versions) < limit {
+			break
+		}
+		page++
+	}
+
+	return allVersions, nil
+}
+
 func (a apihubClientImpl) GetVersionDocuments(ctx context.Context, packageId, version string) (*view.VersionDocuments, error) {
 	req := a.makeRequest(ctx)
 	resp, err := req.Get(fmt.Sprintf("%s/api/v2/packages/%s/versions/%s/documents", a.apihubUrl, url.PathEscape(packageId), url.PathEscape(version)))
@@ -226,6 +335,46 @@ func (a apihubClientImpl) GetDocumentRawData(ctx context.Context, packageId, ver
 	}
 
 	return resp.Body(), nil
+}
+
+func (a apihubClientImpl) GetDocumentDetails(ctx context.Context, packageId, version string, slug string) (*view.PublishedDocument, error) {
+	req := a.makeRequest(ctx)
+	resp, err := req.Get(fmt.Sprintf("%s/api/v3/packages/%s/versions/%s/documents/%s", a.apihubUrl, url.PathEscape(packageId), url.PathEscape(version), url.PathEscape(slug)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get document details for package %s, version %s, slug %s: %s", packageId, version, slug, err.Error())
+	}
+	if resp.StatusCode() != http.StatusOK {
+		if resp.StatusCode() == http.StatusNotFound {
+			return nil, nil
+		}
+		if authErr := checkUnauthorized(resp); authErr != nil {
+			return nil, authErr
+		}
+		return nil, fmt.Errorf("failed to get version documents. version - %s for id %s: status code %d %v", version, packageId, resp.StatusCode(), resp.Body())
+	}
+	var publishedDocument view.PublishedDocument
+	err = json.Unmarshal(resp.Body(), &publishedDocument)
+	if err != nil {
+		return nil, err
+	}
+	return &publishedDocument, nil
+}
+
+func (a apihubClientImpl) GetOperationWithData(ctx context.Context, packageId, version string, apiType view.OpApiType, operationId string) (*view.Operation, error) {
+	req := a.makeRequest(ctx)
+	resp, err := req.Get(fmt.Sprintf("%s/api/v2/packages/%s/versions/%s/%s/operations/%s", a.apihubUrl, url.PathEscape(packageId), url.PathEscape(version), apiType, url.PathEscape(operationId)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get operation with data for package %s, version %s, operation id %s: %s", packageId, version, operationId, err.Error())
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("failed to get operation with data for package %s, version %s, operation id %s: status code %d %v", packageId, version, operationId, resp.StatusCode(), resp.Body())
+	}
+	var operation view.Operation
+	err = json.Unmarshal(resp.Body(), &operation)
+	if err != nil {
+		return nil, err
+	}
+	return &operation, nil
 }
 
 func (a apihubClientImpl) CheckAuthToken(ctx context.Context, token string) (bool, error) {

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Note: this uses host platform for the build, and we ask go build to target the needed platform, so we do not spend time on qemu emulation when running "go build"
-FROM --platform=$BUILDPLATFORM docker.io/golang:1.23.4-alpine3.21 as builder
+FROM --platform=$BUILDPLATFORM docker.io/golang:1.25.7-alpine3.23 as builder
 ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
@@ -26,7 +26,7 @@ WORKDIR /workspace/qubership-api-linter-service
 
 RUN GOSUMDB=off CGO_ENABLED=0 go mod tidy && go mod download && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build .
 
-FROM docker.io/alpine:3.22.1
+FROM docker.io/alpine:3.23
 
 ARG GIT_BRANCH=unknown
 ARG GIT_HASH=unknown

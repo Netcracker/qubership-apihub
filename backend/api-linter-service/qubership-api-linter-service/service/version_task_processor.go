@@ -3,6 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
+	"time"
+
 	"github.com/Netcracker/qubership-api-linter-service/client"
 	"github.com/Netcracker/qubership-api-linter-service/entity"
 	"github.com/Netcracker/qubership-api-linter-service/repository"
@@ -11,16 +14,13 @@ import (
 	"github.com/Netcracker/qubership-api-linter-service/view"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
-	"os"
-	"sync/atomic"
-	"time"
 )
 
 type VersionTaskProcessor interface {
 	StartVersionLintTask(taskId string) error
 }
 
-func NewVersionTaskProcessor(verRepo repository.VersionLintTaskRepository, docRepo repository.DocLintTaskRepository, verResRepo repository.VersionResultRepository, cl client.ApihubClient, linterSelectorService LinterSelectorService, executorId string) VersionTaskProcessor {
+func NewVersionTaskProcessor(verRepo repository.VersionLintTaskRepository, docRepo repository.DocLintTaskRepository, verResRepo repository.VersionResultRepository, cl client.ApihubClient, linterSelectorService LinterSelectorService, executorId string, docTaskNotify chan<- struct{}, versionTaskNotify <-chan struct{}) VersionTaskProcessor {
 	svc := &versionTaskProcessorImpl{
 		verRepo:               verRepo,
 		docRepo:               docRepo,
@@ -28,6 +28,8 @@ func NewVersionTaskProcessor(verRepo repository.VersionLintTaskRepository, docRe
 		cl:                    cl,
 		linterSelectorService: linterSelectorService,
 		executorId:            executorId,
+		docTaskNotify:         docTaskNotify,
+		versionTaskNotify:     versionTaskNotify,
 	}
 
 	utils.SafeAsync(func() {
@@ -48,6 +50,8 @@ type versionTaskProcessorImpl struct {
 	cl                    client.ApihubClient
 	linterSelectorService LinterSelectorService
 	executorId            string
+	docTaskNotify         chan<- struct{}
+	versionTaskNotify     <-chan struct{}
 }
 
 func (v versionTaskProcessorImpl) StartVersionLintTask(taskId string) error {
@@ -87,22 +91,16 @@ func (v versionTaskProcessorImpl) processVersionLintTask(taskId string) {
 		return
 	}
 
-	type linterAndRuleset struct {
-		linter    view.Linter
-		rulesetId string
-		err       error
-	}
-
-	typeToLinter := make(map[view.ApiType]linterAndRuleset)
+	typeToLinters := make(map[view.ApiType][]view.LinterAndRuleset)
 	for _, doc := range docs.Documents {
-		_, exists := typeToLinter[doc.Type]
+		_, exists := typeToLinters[doc.Type]
 		if !exists {
-			linter, rulesetId, err := v.linterSelectorService.SelectLinterAndRuleset(ctx, doc.Type)
-
-			typeToLinter[doc.Type] = linterAndRuleset{
-				linter:    linter,
-				rulesetId: rulesetId,
-				err:       err,
+			lr := v.linterSelectorService.SelectLintersAndRuleset(ctx, doc.Type, task.PackageId)
+			if linters, ok := typeToLinters[doc.Type]; ok {
+				linters = append(linters, lr...)
+				typeToLinters[doc.Type] = linters
+			} else {
+				typeToLinters[doc.Type] = lr
 			}
 		}
 	}
@@ -110,51 +108,58 @@ func (v versionTaskProcessorImpl) processVersionLintTask(taskId string) {
 	var docTasks []entity.DocumentLintTask
 
 	for _, doc := range docs.Documents {
-		if !supportedApiType(doc.Type) {
-			log.Infof("Skipping document %s for [ %s | %s ] with unsupported api type: %s", doc.Slug, task.PackageId, task.Version, doc.Type)
-			continue
+		linters := typeToLinters[doc.Type]
+
+		for _, lr := range linters {
+			status := view.TaskStatusNotStarted
+			details := ""
+			executorId := ""
+
+			if lr.Err != nil {
+				status = view.TaskStatusError
+				details = lr.Err.Error()
+				executorId = v.executorId
+			}
+
+			if lr.Linter == view.UnknownLinter {
+				if lr.Err != nil {
+					v.handleProcessingFailed(ctx, *task, fmt.Errorf("failed to select linter: %w", lr.Err))
+					return
+				}
+				log.Infof("Skipping document %s for [ %s | %s ] with unsupported api type: %s", doc.Slug, task.PackageId, task.Version, doc.Type)
+				continue
+			}
+
+			if lr.RulesetId == "" {
+				status = view.TaskStatusError
+				details = fmt.Sprintf("No suitable ruleset was found. Linter=%s", lr.Linter)
+				executorId = v.executorId
+			}
+
+			docTaskEnt := entity.DocumentLintTask{
+				Id:                uuid.NewString(),
+				VersionLintTaskId: taskId,
+				PackageId:         task.PackageId,
+				Version:           task.Version,
+				Revision:          task.Revision,
+				FileId:            doc.FileId,
+				FileSlug:          doc.Slug,
+				APIType:           doc.Type,
+				Linter:            lr.Linter,
+				RulesetId:         lr.RulesetId,
+				Status:            status,
+				Details:           details,
+				CreatedAt:         time.Now(),
+				ExecutorId:        executorId,
+				LastActive:        nil,
+				RestartCount:      0,
+				Priority:          0,
+				LintTimeMs:        0,
+				Recalculate:       task.Recalculate,
+			}
+
+			docTasks = append(docTasks, docTaskEnt)
 		}
-
-		lr := typeToLinter[doc.Type]
-
-		status := view.TaskStatusNotStarted
-		details := ""
-		executorId := ""
-
-		if lr.err != nil {
-			status = view.TaskStatusError
-			details = lr.err.Error()
-			executorId = v.executorId
-		}
-
-		if lr.rulesetId == "" {
-			status = view.TaskStatusError
-			details = fmt.Sprintf("No suitable ruleset was found. Linter=%s", lr.linter)
-			executorId = v.executorId
-		}
-
-		docTaskEnt := entity.DocumentLintTask{
-			Id:                uuid.NewString(),
-			VersionLintTaskId: taskId,
-			PackageId:         task.PackageId,
-			Version:           task.Version,
-			Revision:          task.Revision,
-			FileId:            doc.FieldId,
-			FileSlug:          doc.Slug,
-			APIType:           doc.Type,
-			Linter:            lr.linter,
-			RulesetId:         lr.rulesetId,
-			Status:            status,
-			Details:           details,
-			CreatedAt:         time.Now(),
-			ExecutorId:        executorId,
-			LastActive:        nil,
-			RestartCount:      0,
-			Priority:          0,
-			LintTimeMs:        0,
-		}
-
-		docTasks = append(docTasks, docTaskEnt)
 	}
 
 	if len(docTasks) == 0 {
@@ -173,26 +178,34 @@ func (v versionTaskProcessorImpl) processVersionLintTask(taskId string) {
 		return
 	}
 
-	log.Infof("Version lint task for [ %s | %s ] (id = %s) is processed, %d doc lint task(s) created. Processing time = %dms", task.PackageId, task.Version, taskId, len(docTasks), time.Since(start).Milliseconds())
-}
-
-func supportedApiType(at view.ApiType) bool {
-	switch at {
-	case view.OpenAPI20Type, view.OpenAPI30Type, view.OpenAPI31Type:
-		return true
+	// Signal doc task processor to wake up and start processing immediately
+	select {
+	case v.docTaskNotify <- struct{}{}:
 	default:
-		return false
+		// channel full or no receiver - worker will pick up on next tick
 	}
+
+	log.Infof("Version lint task for [ %s | %s ] (id = %s) is processed, %d doc lint task(s) created. Processing time = %dms", task.PackageId, task.Version, taskId, len(docTasks), time.Since(start).Milliseconds())
 }
 
 func (v versionTaskProcessorImpl) acquireFreeTasks() {
 	t := time.NewTicker(time.Second * 5)
+	defer t.Stop()
 
 	running := atomic.Bool{}
-	for range t.C {
+	for {
 		if running.Load() {
 			log.Tracef("versionTaskProcessorImpl: ticker skipped, running")
+			<-t.C
 			continue
+		}
+
+		select {
+		case <-t.C:
+			// periodic poll
+		case <-v.versionTaskNotify:
+			// interrupt sleep and start processing immediately when version lint task is created
+			log.Tracef("versionTaskProcessorImpl: woken by version task notify")
 		}
 
 		utils.SafeAsync(func() {
@@ -218,7 +231,6 @@ func (v versionTaskProcessorImpl) processTask() bool {
 	}
 	if task != nil {
 		v.processVersionLintTask(task.Id)
-		v.writeAsyncTestLog(task.Id)
 		return true
 	}
 	return false
@@ -307,12 +319,11 @@ func (v versionTaskProcessorImpl) checkDocReady() {
 		}
 
 	}
-
 }
 
 func (v versionTaskProcessorImpl) handleProcessingFailed(ctx context.Context, verLintTask entity.VersionLintTask, taskErr error) {
 	if verLintTask.RestartCount >= 2 {
-		log.Error("Failed to process version task %s with status = %s: %s. No more retries.", verLintTask.Id, verLintTask.Status, taskErr)
+		log.Errorf("Failed to process version task %s with status = %s: %s. No more retries.", verLintTask.Id, verLintTask.Status, taskErr)
 		updErr := v.verRepo.VersionLintFailed(ctx, verLintTask.Id, fmt.Sprintf("failed to save version lint finished status: %s", taskErr))
 		if updErr != nil {
 			log.Errorf("Failed to update version lint task %s status to %s: %v", verLintTask.Id, view.TaskStatusError, updErr)
@@ -324,28 +335,6 @@ func (v versionTaskProcessorImpl) handleProcessingFailed(ctx context.Context, ve
 		if updErr != nil {
 			log.Errorf("Failed to increment version lint task %s restart count : %v", verLintTask.Id, updErr)
 		}
-		return
-	}
-}
-
-// TODO: temp! just for testing!
-func (v versionTaskProcessorImpl) writeAsyncTestLog(taskId string) {
-	enabled := os.Getenv("TASK_LOG")
-	if enabled == "" {
-		return
-	}
-	fileName := "ver_task_log_" + v.executorId + ".txt"
-
-	// Open the file in append mode, create it if it doesn't exist, with write-only permissions
-	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Errorf("failed to open test log entry file %s", fileName)
-		return
-	}
-	defer file.Close()
-
-	if _, err := file.WriteString(taskId + "\n"); err != nil {
-		log.Errorf("failed to write test log entry to file %s", fileName)
 		return
 	}
 }
