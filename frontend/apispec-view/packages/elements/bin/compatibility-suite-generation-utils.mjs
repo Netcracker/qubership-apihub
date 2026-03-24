@@ -50,9 +50,6 @@ export const storyMetaId = (group, suiteId) => `openapi-compatibility-suite-${pa
 /**
  * Builds grouped OpenAPI cases for generation.
  *
- * Note: `openApiVersionPair` is set to `null` for single-pair cases to avoid passing redundant args.
- * For multi-pair cases it's the concrete pair `[beforeVersion, afterVersion]`.
- *
  * @param {string[]} excludedSuiteIds - Suite ids to skip
  * @returns {OpenApiCasesByPairGroup}
  */
@@ -68,12 +65,11 @@ const getOpenApiCasesByPairGroup = (excludedSuiteIds = DEFAULT_EXCLUDED_SUITE_ID
 
       for (const openApiVersionPair of pairs) {
         const group = toPairGroup(openApiVersionPair)
-        const passPair = pairs.length > 1 ? openApiVersionPair : null
 
         if (!groupMap.has(group)) groupMap.set(group, new Map())
         const suiteMap = groupMap.get(group)
         if (!suiteMap.has(suiteId)) suiteMap.set(suiteId, [])
-        suiteMap.get(suiteId).push({ testId, openApiVersionPair: passPair })
+        suiteMap.get(suiteId).push({ testId, openApiVersionPair })
       }
     }
   }
