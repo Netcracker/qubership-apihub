@@ -48,7 +48,15 @@ spec:
                 protocol: TCP
               env:
               - name: LOG_LEVEL
-                value: '{{ .Values.qubershipApiLinterService.logLevel }}'
+                value: '{{ .Values.qubershipApiLinterService.env.logLevel }}'
+              - name: BASE_PATH
+                value: '{{ .Values.qubershipApiLinterService.env.basePath }}'
+              - name: API_SPEC_DIR
+                value: '{{ .Values.qubershipApiLinterService.env.apiSpecDir }}'
+              - name: LISTEN_ADDRESS
+                value: '{{ .Values.qubershipApiLinterService.env.listenAddress }}'
+              - name: ORIGIN_ALLOWED
+                value: '{{ .Values.qubershipApiLinterService.env.originAllowed }}'
               - name: APIHUB_URL
                 value: '{{ .Values.qubershipApiLinterService.env.apihub.url }}'
               - name: APIHUB_ACCESS_TOKEN
@@ -72,16 +80,41 @@ spec:
                     secretKeyRef:
                         name: 'qubership-api-linter-service-db-secret'
                         key: linter_postgresql_password
+              - name: LINTER_PG_SSL_MODE
+                value: '{{ .Values.qubershipApiLinterService.env.database.sslMode }}'
               - name: OLRIC_DISCOVERY_MODE
-                value: 'lan'
+                value: '{{ .Values.qubershipApiLinterService.env.olric.discoveryMode }}'
               - name: OLRIC_REPLICA_COUNT
-                value: '{{ .Values.qubershipApiLinterService.replicas }}'
+                value: '{{ .Values.qubershipApiLinterService.replicas | toString }}'
               - name: SPECTRAL_BIN_PATH
                 value: '{{ .Values.qubershipApiLinterService.env.linters.spectral.bin_path }}'
+              - name: SPECTRAL_LINTER_WORKERS
+                value: '{{ .Values.qubershipApiLinterService.env.linters.spectral.workers | toString }}'
               - name: NAMESPACE
                 valueFrom:
                     fieldRef:
                         fieldPath: metadata.namespace
+              - name: OPENAI_API_KEY
+                valueFrom:
+                    secretKeyRef:
+                        name: 'qubership-api-linter-service-api-key-secret'
+                        key: openai_api_key
+              - name: OPENAI_API_PROXY
+                value: '{{ .Values.qubershipApiLinterService.env.ai.openai.apiProxy }}'
+              - name: OPENAI_MODEL
+                value: '{{ .Values.qubershipApiLinterService.env.ai.openai.model }}'
+              - name: OPENAI_RATE_LIMIT_RPS
+                value: '{{ .Values.qubershipApiLinterService.env.ai.openai.rateLimitRps | toString }}'
+              - name: OPENAI_RATE_LIMIT_BURST
+                value: '{{ .Values.qubershipApiLinterService.env.ai.openai.rateLimitBurst | toString }}'
+              - name: ENABLE_AI_OAS_LINTER
+                value: '{{ .Values.qubershipApiLinterService.env.ai.enable | toString }}'
+              - name: AI_LINTER_WORKERS
+                value: '{{ .Values.qubershipApiLinterService.env.ai.workers | toString }}'
+              - name: AI_LINTER_EXCLUDED_PACKAGES
+                value: '{{ .Values.qubershipApiLinterService.env.ai.excludedPackages }}'
+              - name: AI_LINTER_INCLUDED_PACKAGES
+                value: '{{ .Values.qubershipApiLinterService.env.ai.includedPackages }}'
               resources:
                 requests:
                     cpu: {{ .Values.qubershipApiLinterService.resource.cpu.request }}

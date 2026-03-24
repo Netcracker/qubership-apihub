@@ -326,22 +326,48 @@ qubershipApiLinterService:
       host: ''
       # Mandatory; PostgreSQL database port; If not set, default value: 5432; Example: 5432
       port:
-      # Mandatory; Logical database in PostgreSQL cluster for APIHUB. Manual pre-creation required; If not set, default value: apihub; Example: apihub_backend_prod_db
+      # Mandatory; Logical database in PostgreSQL cluster for APIHUB. Manual pre-creation required; If not set, default value: apihub_linter; Example: apihub_backend_prod_db
       name: ''
-      # Mandatory; User for database.name database; If not set, default value: apihub; Example: apihub_api_linter_service_prod_admin
+      # Mandatory; User for database.name database; If not set, default value: apihub_linter; Example: apihub_api_linter_service_prod_admin
       username: ''
       # Mandatory; Password for database.user.; If not set, default value: apihub; Example: apihub_api_linter_service_prod_password
       password: ''
-    # Confguration for linters
+
+    # Configuration for linters
     linters:
       spectral:
         # Path to Spectral binary inside docker container
         bin_path: 'resources/spectral/linux/spectral'
+        # Optional; Number of Spectral linter workers; If not set, default value: 1; Example: 4
+        workers: 1
+
     apihub:
       # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
       url: 'http://qubership-apihub-ui:8080'
       # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
       accessToken: ''
+
+    # Section with AI OAS linter configuration
+    ai:
+      # Optional; Enable AI-powered OAS linter; If not set, default value: false; Example: true
+      enable: false
+      # Optional; Number of AI linter workers; If not set, default value: 1; Example: 4
+      workers: 1
+      # Optional; Comma-separated list of package IDs to exclude from AI linting; If not set, default value: ""; Example: pkg1,pkg2
+      excludedPackages: ''
+      # Optional; Comma-separated list of package IDs to include for AI linting (empty = all); If not set, default value: ""; Example: pkg1,pkg2
+      includedPackages: ''
+      openai:
+        # Mandatory when AI linter enabled; OpenAI API key; If not set, default value: ""; Example: sk-...
+        apiKey: ''
+        # Optional; Proxy URL for OpenAI API requests; If not set, default value: ""; Example: http://proxy.example.com:8080
+        apiProxy: ''
+        # Optional; OpenAI model to use; If not set, default value: ""; Example: gpt-4o
+        model: ''
+        # Optional; OpenAI API rate limit (requests per second); If not set, default value: 10; Example: 10
+        rateLimitRps: 10
+        # Optional; OpenAI API rate limit burst; If not set, default value: 30; Example: 30
+        rateLimitBurst: 30
 
 # Section with Qubership APIHUB Agents Backend deployment configuration
 qubershipApihubAgentsBackend:
