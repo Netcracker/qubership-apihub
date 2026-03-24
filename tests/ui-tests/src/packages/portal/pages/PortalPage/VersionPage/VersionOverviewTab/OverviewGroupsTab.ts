@@ -1,10 +1,12 @@
-import type { Locator } from '@playwright/test'
+import { Locator, test as report } from '@playwright/test'
 import { Button, Tab } from '@shared/components/base'
 import { BaseDeleteDialog } from '@shared/components/custom'
 import { OverviewGroupRow } from './OverviewGroupsTab/OverviewGroupRow'
 import { CreateUpdateOperationGroupDialog } from './OverviewGroupsTab/CreateUpdateOperationGroupDialog'
 import { EditOperationGroupDialog } from './OverviewGroupsTab/EditOperationGroupDialog'
-import { nthPostfix } from '@services/utils'
+import { getDownloadedFile, nthPostfix } from '@services/utils'
+import type { DownloadedTestFile } from '@shared/entities'
+import { PUBLISH_TIMEOUT } from '@test-setup'
 
 export class OverviewGroupsTab extends Tab {
 
@@ -36,5 +38,16 @@ export class OverviewGroupsTab extends Tab {
         `${nth}${nthPostfix(nth)} group row`)
     }
     throw new Error('Check arguments')
+  }
+
+  async performExport(action: Promise<void>): Promise<DownloadedTestFile> {
+    let file!: DownloadedTestFile
+    await report.step('Export', async () => {
+      const downloadPromise = this.page.waitForEvent('download', { timeout: PUBLISH_TIMEOUT })
+      await action
+      const download = await downloadPromise
+      file = await getDownloadedFile(download)
+    })
+    return file
   }
 }

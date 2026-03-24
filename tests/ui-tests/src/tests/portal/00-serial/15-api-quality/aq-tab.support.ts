@@ -29,7 +29,13 @@ import type { Version } from '@test-data/props'
 import { Package } from '@test-data/props'
 import { HOOK_PUBLISH_TIMEOUT } from '@test-setup'
 import path from 'node:path'
-import { FILE_GRAPHQL, G_AQ, PATH_API_QUALITY_RULESETS, PATH_API_QUALITY_SPECS } from './aq-shared.support'
+import {
+  FILE_GRAPHQL,
+  G_AQ,
+  LINTER_NAME_SPECTRAL,
+  PATH_API_QUALITY_RULESETS,
+  PATH_API_QUALITY_SPECS,
+} from './aq-shared.support'
 
 /**
  * Ruleset file used to generate deterministic linter issues for API Quality tab tests.
@@ -375,7 +381,7 @@ export const verifyProblemPopupContent = async (portalPage: PortalPage, testCase
   await test.step('Verify Problem Popup appears with correct content', async () => {
     await expect(problemPopUp).toBeVisible()
     await expect(problemPopUp.message).toContainText(testCase.linterMessage)
-    await expect(problemPopUp.message).toContainText(LintRulesetLinters.SPECTRAL)
+    await expect(problemPopUp.message).toContainText(LINTER_NAME_SPECTRAL)
     await expect(problemPopUp.message).toContainText(testCase.ruleName)
   })
 
@@ -478,7 +484,7 @@ export const verifyTooltipOnHover = async (portalPage: PortalPage): Promise<void
       await test.step('Verify Problem Tooltip appears with expected content', async () => {
         await expect(problemTooltip).toBeVisible()
         await expect(problemTooltip).toContainText(testCase.linterMessage)
-        await expect(problemTooltip).toContainText(LintRulesetLinters.SPECTRAL)
+        await expect(problemTooltip).toContainText(LINTER_NAME_SPECTRAL)
         await expect(problemTooltip).toContainText(testCase.ruleName)
 
         if (testCase.linterMessage !== MSG_HINT_1 && testCase.linterMessage !== MSG_HINT_2) {

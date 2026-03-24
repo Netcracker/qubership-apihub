@@ -217,7 +217,7 @@ test.describe('API Quality Validation', () => {
         await rulesetManagementTab.openCreateRulesetDialog()
 
         await test.step('Verify dialog title matches expected format', async () => {
-          await expect(createRulesetDialog.title).toHaveText(`Create Ruleset for ${DEFAULT_API_TYPE_LABEL}`)
+          await expect(createRulesetDialog.title).toHaveText(`Create ${aqShared.LINTER_NAME_SPECTRAL} Ruleset for ${DEFAULT_API_TYPE_LABEL}`)
         })
 
         await test.step('Close dialog without creating ruleset', async () => {
