@@ -808,7 +808,7 @@ func (p packageServiceImpl) RecalculateOperationGroups(ctx context.SecurityConte
 			Params:  map[string]interface{}{"packageId": packageId},
 		}
 	}
-	err = p.publishedRepo.RecalculatePackageOperationGroups(packageEnt.Id, view.MakePackageGroupingPrefixRegex(packageEnt.RestGroupingPrefix), "", ctx.GetUserId())
+	err = p.publishedRepo.RecalculatePackageOperationGroups(packageEnt.Id, view.MakePackageGroupingPrefixRegex(packageEnt.RestGroupingPrefix), ctx.GetUserId())
 	if err != nil {
 		return err
 	}

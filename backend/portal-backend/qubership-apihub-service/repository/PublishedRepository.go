@@ -64,8 +64,8 @@ type PublishedRepository interface {
 	SearchForVersions(searchQuery *entity.PackageSearchQuery) ([]entity.PackageSearchResult, error)
 	SearchForDocuments(searchQuery *entity.DocumentSearchQuery) ([]entity.DocumentSearchResult, error)
 
-	RecalculatePackageOperationGroups(packageId string, restGroupingPrefixRegex string, graphqlGroupingPrefixRegex string, userId string) error
-	RecalculateOperationGroups(packageId string, version string, revision int, restGroupingPrefixRegex string, graphqlGroupingPrefixRegex string, userId string) error
+	RecalculatePackageOperationGroups(packageId string, restGroupingPrefixRegex string, userId string) error
+	RecalculateOperationGroups(packageId string, version string, revision int, restGroupingPrefixRegex string, userId string) error
 
 	GetVersionComparison(comparisonId string) (*entity.VersionComparisonEntity, error)
 	GetVersionRefsComparisons(comparisonId string) ([]entity.VersionComparisonEntity, error)
@@ -95,4 +95,7 @@ type PublishedRepository interface {
 	GetVersionInternalDocumentData(hash string) (*entity.EnrichedVersionInternalDocumentDataEntity, error)
 	GetComparisonInternalDocumentsByComparisons(comparisons []entity.VersionComparisonEntity) ([]entity.ComparisonInternalDocumentEntity, error)
 	GetComparisonInternalDocumentData(hash string) (*entity.EnrichedComparisonInternalDocumentDataEntity, error)
+
+	UpdatePublishedSourcesArchive(packageId string, version string, revision int, newChecksum string, srcArchive *entity.PublishedSrcArchiveEntity, trackingEntity *entity.SourcesUpdateTrackingEntity) error
+	UpdatePublishedSourcesChecksum(packageId string, version string, revision int, newChecksum string, trackingEntity *entity.SourcesUpdateTrackingEntity) error
 }

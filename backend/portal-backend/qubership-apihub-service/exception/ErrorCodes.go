@@ -786,3 +786,6 @@ const InvalidAsyncAPIOperationActionMsg = "Unexpected async API operation action
 
 const BuildResultNotFound = "7800"
 const BuildResultNotFoundMsg = "Build result for '$buildId' build not found"
+
+const OperationGroupTemplateNotSupported = "7900"
+const OperationGroupTemplateNotSupportedMsg = "Export template is not supported for '$apiType' API type"

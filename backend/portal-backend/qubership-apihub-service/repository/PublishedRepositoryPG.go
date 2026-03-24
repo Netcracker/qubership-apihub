@@ -1481,6 +1481,18 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 				}
 			}
 		}
+		if packageInfo.MigrationBuild {
+			// In case of migration, list of version internal documents may change
+			// so need to cleanup existing list before insert
+			_, err := tx.Model(&entity.VersionInternalDocumentEntity{}).
+				Where("package_id = ?", version.PackageId).
+				Where("version = ?", version.Version).
+				Where("revision = ?", version.Revision).
+				Delete()
+			if err != nil {
+				return fmt.Errorf("failed to cleanup version internal documents for migration: %w", err)
+			}
+		}
 		for _, c := range versionInternalDocEntities {
 			_, err := tx.Model(c).OnConflict("(package_id, version, revision, document_id) DO UPDATE").Insert()
 			if err != nil {
@@ -1489,7 +1501,7 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 		}
 		utils.PerfLog(time.Since(start).Milliseconds(), 200, "CreateVersionWithData: version internal documents insert")
 		start = time.Now()
-		err = p.saveComparisonInternalDocumentsTx(tx, comparisonInternalDocEntities, comparisonInternalDocDataEntities)
+		err = p.saveComparisonInternalDocumentsTx(tx, comparisonInternalDocEntities, comparisonInternalDocDataEntities, packageInfo.MigrationBuild, versionComparisons)
 		if err != nil {
 			return err
 		}
@@ -1795,7 +1807,7 @@ func (p publishedRepositoryImpl) SaveVersionChanges(packageInfo view.PackageInfo
 			return err
 		}
 
-		err = p.saveComparisonInternalDocumentsTx(tx, comparisonInternalDocEntities, comparisonInternalDocDataEntities)
+		err = p.saveComparisonInternalDocumentsTx(tx, comparisonInternalDocEntities, comparisonInternalDocDataEntities, packageInfo.MigrationBuild, versionComparisons)
 		if err != nil {
 			return err
 		}
@@ -1846,7 +1858,7 @@ func (p publishedRepositoryImpl) saveVersionChangesTx(tx *pg.Tx, operationCompar
 	return nil
 }
 
-func (p publishedRepositoryImpl) saveComparisonInternalDocumentsTx(tx *pg.Tx, comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity) error {
+func (p publishedRepositoryImpl) saveComparisonInternalDocumentsTx(tx *pg.Tx, comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity, migrationBuild bool, versionComparisons []*entity.VersionComparisonEntity) error {
 	for _, d := range comparisonInternalDocDataEntities {
 		exists, err := p.comparisonInternalDocumentDataExists(tx, d.Hash) // TODO: could be bulk select
 		if err != nil {
@@ -1856,6 +1868,33 @@ func (p publishedRepositoryImpl) saveComparisonInternalDocumentsTx(tx *pg.Tx, co
 			_, err := tx.Model(d).OnConflict("(hash) DO UPDATE").Insert()
 			if err != nil {
 				return fmt.Errorf("failed to insert comparison_internal_document_data %+v: %w", d, err)
+			}
+		}
+	}
+	if migrationBuild {
+		// In case of migration, list of comparison internal documents may change
+		// so need to cleanup existing list before insert per comparison.
+		// Iterate over versionComparisons (not comparisonInternalDocEntities) to ensure
+		// that comparisons producing zero internal documents also get their stale rows deleted.
+		deletedComparisons := make(map[string]struct{})
+		for _, vc := range versionComparisons {
+			// Multiple internal documents may share the same comparison key, so dedup
+			// to avoid redundant DELETE queries for the same comparison.
+			key := fmt.Sprintf("%s|%s|%d|%s|%s|%d", vc.PackageId, vc.Version, vc.Revision, vc.PreviousPackageId, vc.PreviousVersion, vc.PreviousRevision)
+			if _, already := deletedComparisons[key]; already {
+				continue
+			}
+			deletedComparisons[key] = struct{}{}
+			_, err := tx.Model(&entity.ComparisonInternalDocumentEntity{}).
+				Where("package_id = ?", vc.PackageId).
+				Where("version = ?", vc.Version).
+				Where("revision = ?", vc.Revision).
+				Where("previous_package_id = ?", vc.PreviousPackageId).
+				Where("previous_version = ?", vc.PreviousVersion).
+				Where("previous_revision = ?", vc.PreviousRevision).
+				Delete()
+			if err != nil {
+				return fmt.Errorf("failed to cleanup comparison internal documents for migration: %w", err)
 			}
 		}
 	}
@@ -3007,7 +3046,7 @@ func (p publishedRepositoryImpl) SearchForDocuments(searchQuery *entity.Document
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) RecalculatePackageOperationGroups(packageId string, restGroupingPrefixRegex string, graphqlGroupingPrefixRegex string, userId string) error {
+func (p publishedRepositoryImpl) RecalculatePackageOperationGroups(packageId string, restGroupingPrefixRegex string, userId string) error {
 	ctx := context.Background()
 
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
@@ -3015,7 +3054,7 @@ func (p publishedRepositoryImpl) RecalculatePackageOperationGroups(packageId str
 		if err != nil {
 			return fmt.Errorf("failed to delete autogenerated groups for package %v from operation_group: %w", packageId, err)
 		}
-		err = p.recalculateOperationsGroupsTx(tx, packageId, "", 0, restGroupingPrefixRegex, graphqlGroupingPrefixRegex, userId)
+		err = p.recalculateOperationsGroupsTx(tx, packageId, "", 0, restGroupingPrefixRegex, userId)
 		if err != nil {
 			return fmt.Errorf("failed to insert groups for package %v: %w", packageId, err)
 		}
@@ -3027,16 +3066,16 @@ func (p publishedRepositoryImpl) RecalculatePackageOperationGroups(packageId str
 	return nil
 }
 
-func (p publishedRepositoryImpl) RecalculateOperationGroups(packageId string, version string, revision int, restGroupingPrefixRegex string, graphqlGroupingPrefixRegex string, userId string) error {
+func (p publishedRepositoryImpl) RecalculateOperationGroups(packageId string, version string, revision int, restGroupingPrefixRegex string, userId string) error {
 	ctx := context.Background()
 
 	return p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
-		return p.recalculateOperationsGroupsTx(tx, packageId, version, revision, restGroupingPrefixRegex, graphqlGroupingPrefixRegex, userId)
+		return p.recalculateOperationsGroupsTx(tx, packageId, version, revision, restGroupingPrefixRegex, userId)
 	})
 }
 
-func (p publishedRepositoryImpl) recalculateOperationsGroupsTx(tx *pg.Tx, packageId string, version string, revision int, restGroupingPrefixRegex string, graphqlGroupingPrefixRegex string, userId string) error {
-	if restGroupingPrefixRegex == "" && graphqlGroupingPrefixRegex == "" {
+func (p publishedRepositoryImpl) recalculateOperationsGroupsTx(tx *pg.Tx, packageId string, version string, revision int, restGroupingPrefixRegex string, userId string) error {
+	if restGroupingPrefixRegex == "" {
 		return nil
 	}
 	if version != "" && revision != 0 {
@@ -3052,17 +3091,13 @@ func (p publishedRepositoryImpl) recalculateOperationsGroupsTx(tx *pg.Tx, packag
 		package_id,
 		version,
 		revision,
-		case
-			when type = 'rest'
-				then case when ? = '' then null else substring(metadata ->> 'path', ?) end
-			when type = 'graphql'
-				then case when ? = '' then null else substring(metadata ->> 'method', ?) end
-		end group_name,
+		case when ? = '' then null else substring(metadata ->> 'path', ?) end group_name,
 		type api_type,
 		true autogenerated
 		from operation
 		where
 		package_id = ?
+		and type = 'rest'
 		and (? = '' or version = ?)
 		and (? = 0 or revision = ?)
 	) groups
@@ -3076,7 +3111,6 @@ func (p publishedRepositoryImpl) recalculateOperationsGroupsTx(tx *pg.Tx, packag
 	where groups.group_name is not null and groups.group_name != '';`
 	_, err := tx.Query(&operationGroups, operationGroupsQuery,
 		restGroupingPrefixRegex, restGroupingPrefixRegex,
-		graphqlGroupingPrefixRegex, graphqlGroupingPrefixRegex,
 		packageId,
 		version, version,
 		revision, revision)
@@ -3135,19 +3169,14 @@ func (p publishedRepositoryImpl) recalculateOperationsGroupsTx(tx *pg.Tx, packag
 			package_id,
 			version,
 			revision,
-			case
-				when type = 'rest'
-					then case when ? = '' then null else substring(metadata ->> 'path', ?) end
-				when type = 'graphql'
-					then case when ? = '' then null else substring(metadata ->> 'method', ?) end
-			end group_name,
+			case when ? = '' then null else substring(metadata ->> 'path', ?) end group_name,
 			operation_id
 			from operation
 			where
 			package_id = ?
 			and version = ?
 			and revision = ?
-			and type = ?
+			and type = 'rest'
 		) groups
 		where group_name = ?
 	) filtered_groups;`
@@ -3156,11 +3185,9 @@ func (p publishedRepositoryImpl) recalculateOperationsGroupsTx(tx *pg.Tx, packag
 		_, err = tx.Exec(insertGroupedOperationsQuery,
 			group.GroupId,
 			restGroupingPrefixRegex, restGroupingPrefixRegex,
-			graphqlGroupingPrefixRegex, graphqlGroupingPrefixRegex,
 			group.PackageId,
 			group.Version,
 			group.Revision,
-			group.ApiType,
 			group.GroupName)
 		if err != nil {
 			return fmt.Errorf("failed to insert autogenerated grouped operations for group %+v: %w", group, err)
@@ -3304,6 +3331,50 @@ func (p publishedRepositoryImpl) SavePublishedSourcesArchive(ent *entity.Publish
 		return nil
 	})
 	return err
+}
+
+func (p publishedRepositoryImpl) UpdatePublishedSourcesArchive(packageId string, version string, revision int, newChecksum string, srcArchive *entity.PublishedSrcArchiveEntity, trackingEntity *entity.SourcesUpdateTrackingEntity) error {
+	ctx := context.Background()
+	return p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		_, err := tx.Model(srcArchive).OnConflict("(checksum) DO NOTHING").Insert()
+		if err != nil {
+			return fmt.Errorf("failed to insert published_sources_archive: %w", err)
+		}
+		_, err = tx.Model((*entity.PublishedSrcEntity)(nil)).
+			Set("archive_checksum = ?", newChecksum).
+			Where("package_id = ?", packageId).
+			Where("version = ?", version).
+			Where("revision = ?", revision).
+			Update()
+		if err != nil {
+			return fmt.Errorf("failed to update published_sources checksum: %w", err)
+		}
+		_, err = tx.Model(trackingEntity).Insert()
+		if err != nil {
+			return fmt.Errorf("failed to insert sources_update_tracking: %w", err)
+		}
+		return nil
+	})
+}
+
+func (p publishedRepositoryImpl) UpdatePublishedSourcesChecksum(packageId string, version string, revision int, newChecksum string, trackingEntity *entity.SourcesUpdateTrackingEntity) error {
+	ctx := context.Background()
+	return p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		_, err := tx.Model((*entity.PublishedSrcEntity)(nil)).
+			Set("archive_checksum = ?", newChecksum).
+			Where("package_id = ?", packageId).
+			Where("version = ?", version).
+			Where("revision = ?", revision).
+			Update()
+		if err != nil {
+			return fmt.Errorf("failed to update published_sources checksum: %w", err)
+		}
+		_, err = tx.Model(trackingEntity).Insert()
+		if err != nil {
+			return fmt.Errorf("failed to insert sources_update_tracking: %w", err)
+		}
+		return nil
+	})
 }
 
 type PublishedBuildChangesOverview map[string]int

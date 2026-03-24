@@ -69,6 +69,14 @@ type PublishedVersionListView struct {
 	NotLatestRevision        bool                   `json:"notLatestRevision,omitempty"`
 	ApiProcessorVersion      string                 `json:"apiProcessorVersion"`
 }
+
+// PublishedVersionListMCPView is a compact view used in MCP resources.
+// It intentionally omits fields that are not needed by MCP clients.
+type PublishedVersionListMCPView struct {
+	Version         string `json:"version"`
+	Status          string `json:"status"`
+	PreviousVersion string `json:"previousVersion"`
+}
 type PublishedVersionsView struct {
 	Versions []PublishedVersionListView `json:"versions"`
 }
@@ -167,6 +175,7 @@ type PublishFromCSVReq struct {
 	VersionLabels            []string `json:"versionLabels"`
 	CSVData                  []byte   `json:"csvData"`
 	ServicesWorkspaceId      string   `json:"servicesWorkspaceId" validate:"required"` //workspace for matching packages by serviceNames
+	ApiType                  string   `json:"apiType" validate:"required"`
 }
 
 type PublishFromCSVResp struct {

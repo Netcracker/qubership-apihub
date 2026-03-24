@@ -7,9 +7,9 @@ info:
     name: Netcracker Opensource Group
     email: opensourcegroup@netcracker.com
   license:
-    name: qubership
-    url: https://github.com/Netcracker/qubership-apihub
-  version: "2025.4"
+    name: Apache 2.0
+    url: https://github.com/Netcracker/qubership-apihub-backend/raw/refs/heads/main/LICENSE
+  version: "2026.1"
   x-nc-api-audience: BWC
 externalDocs:
   description: Find out more about package
@@ -242,9 +242,9 @@ paths:
         - Export
       summary: Async export of version, document or operations group
       description: |
-        Start export of package version, one document or operations group. Use ```GET /api/v1/export/publish/{publishId}/status``` to get status of export and exported file itself.\
+        Start export of package version, one document or operations group. Use ```GET /api/v1/export/{exportId}/status``` to get status of export and exported file itself.\
         Export of document is currently available for documents with type openapi-3-1, openapi-3-0, or openapi-2-0 and is intended to retrieve content with some transformations. For other document types, use GET /api/v2/packages/{packageId}/versions/{version}/files/{slug} to obtain the original document content.\
-        Export of operations group is currently available for groups with apiType = REST.
+        Export of operations group is currently available for groups with apiType = REST or GraphQL.
       operationId: postExport
       requestBody:
         description: |
@@ -253,6 +253,7 @@ paths:
             - **version** - export of all documents from the version.
             - **OpnAPI document** - export of one specific document with type openapi-3-1, openapi-3-0, or openapi-2-0.
             - **REST operations group** - export of operations group. Only operations group with apiType = REST can be exported.
+            - **GraphQL operations group** - export of operations group. Only operations group with apiType = GraphQL can be exported.
         content:
           application/json:
             schema:
@@ -260,6 +261,7 @@ paths:
                 - $ref: "#/components/schemas/ExportVersion"
                 - $ref: "#/components/schemas/ExportRestDocument"
                 - $ref: "#/components/schemas/ExportRestOperationsGroup"
+                - $ref: "#/components/schemas/ExportGraphqlOperationsGroup"
               discriminator:
                 propertyName: exportedEntity
       responses:
@@ -2377,18 +2379,20 @@ paths:
       tags:
         - Publish
       summary: Start dashboard version publication from CSV file
+      deprecated: true
+      x-deprecation-reason: Use /api/v2/packages/{packageId}/publish/withOperationsGroup/{apiType} instead
       description: |
         Start dashboard version publication from CSV file (value of 'packageId'
         path parameter must be an Id of dashboard).\
 
         In this process the system reads information from the input CSV file
         which contains list of services and their versions. Based on this info,
-        the system searches for package release versions (in Netcracker workspace) and publish dashboard
+        the system searches for package release versions and publish dashboard
         version with references to the found package versions.\
 
-        Additionlly, if input CSV file contains info about REST API operations
+        Also, CSV file contains info about REST API operations
         (method, path) of listed services, the system searches for operations
-        from the included pacakge versions and automatically creates operations
+        from the included package versions and automatically creates operations
         group (manual group with rest api type) in published dashboard version
         with all found operations.
       operationId: DashboardPublishWithOperationsGroup
@@ -2600,6 +2604,142 @@ paths:
                 type: string
                 format: binary
                 description: CSV file which contains initial (input) content and supplemented with information about status and details info if any problems occured (package version was not found, operation was not found, insufficient information provided).
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Unauthorized:
+                  $ref: "#/components/examples/Unauthorized"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples: {}
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                PackageNotFound:
+                  $ref: '#/components/examples/PackageNotFound'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                InternalServerError:
+                  $ref: '#/components/examples/InternalServerError'
+  "/api/v2/packages/{packageId}/publish/withOperationsGroup/{apiType}":
+    parameters:
+      - $ref: '#/components/parameters/packageId'
+      - name: apiType
+        description: Type of the API. Only REST and GraphQL are supported for CSV publish.
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+            - rest
+            - graphql
+    post:
+      tags:
+        - Publish
+      summary: Start dashboard version publication from CSV file
+      description: |
+        Start dashboard version publication from CSV file (value of 'packageId'
+        path parameter must be an Id of dashboard).
+
+        In this process the system reads information from the input CSV file
+        which contains list of services and their versions. Based on this info,
+        the system searches for package release versions (in the specified workspace) and publishes
+        a dashboard version with references to the found package versions.
+
+        Also, the CSV file contains info about operations
+        of listed services, the system searches for operations
+        from the included package versions and automatically creates an operations
+        group (manual group with the specified api type) in the published dashboard version
+        with all found operations.
+
+        CSV file columns depend on the API type, all columns are mandatory:
+        * **REST**: service, version, method, path
+        * **GraphQL**: service, version, type, method
+      operationId: DashboardPublishWithOperationsGroupV2
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - csvFile
+                - version
+                - status
+                - servicesWorkspaceId
+              properties:
+                csvFile:
+                  description: |
+                    CSV file with information about services and their operations.
+                    Columns depend on the API type:
+                    * **REST**: service, version, method, path
+                    * **GraphQL**: service, version, type, method
+                  type: string
+                  format: binary
+                servicesWorkspaceId:
+                  type: string
+                  description: Id of the workspace in which the system will search for packages for the services specified in the CSV file.
+                version:
+                  description: Version name for publication in the dashboard.
+                  type: string
+                  example: '2022.3'
+                previousVersion:
+                  description: Name of the previous published version in the dashboard.
+                  type: string
+                  example: '2022.2'
+                previousVersionPackageId:
+                  description: >-
+                    packageId of the previous version. The parameter may be
+                    empty if the value is equal to the packageId.
+                  type: string
+                  example: NC.CloudBSS.CPQ.Q-TMF
+                status:
+                  $ref: '#/components/schemas/VersionStatusEnum'
+                versionLabels:
+                  description: List of version labels in dashboard version.
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - part-of:CloudBSS-CPQBE
+      responses:
+        '202':
+          description: Publish process started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  publishId:
+                    type: string
+                    description: Publish process Id
+                    format: uuid
+                    example: 9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                IncorrectInputParams:
+                  $ref: '#/components/examples/IncorrectInputParameters'
         '401':
           description: Unauthorized
           content:
@@ -3280,6 +3420,8 @@ paths:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/apiAudience"
+        - $ref: "#/components/parameters/asyncapiChannel"
+        - $ref: "#/components/parameters/asyncapiProtocol"
         - $ref: "#/components/parameters/severity"
         - name: previousVersion
           in: query
@@ -3363,7 +3505,9 @@ paths:
             default: false
         - name: textFilter
           in: query
-          description: Filter by operation's title/path/method.
+          description: |
+            Filter by operation's title/path/method.
+            For AsyncAPI: searches by message title(or messageId), channel title(or channelId) or operation action.
           schema:
             type: string
         - $ref: "#/components/parameters/limit"
@@ -3409,11 +3553,8 @@ paths:
                               currentOperation:
                                 $ref: "#/components/schemas/GqlOperationInfoFromDifferentVersions"
                           - title: AsyncAPIOperation
+                            description: AsyncAPI 3.0 operation change entry. Type-specific fields (action, channel, protocol) are inside previousOperation/currentOperation.
                             type: object
-                            required:
-                              - action
-                              - channel
-                              - protocol
                             properties:
                               previousOperation:
                                 $ref: "#/components/schemas/AsyncAPIOperationInfoFromDifferentVersions"
@@ -3498,6 +3639,8 @@ paths:
       - $ref: "#/components/parameters/version"
       - $ref: "#/components/parameters/apiType"
       - $ref: "#/components/parameters/apiAudience"
+      - $ref: "#/components/parameters/asyncapiChannel"
+      - $ref: "#/components/parameters/asyncapiProtocol"
       - $ref: "#/components/parameters/severity"
       - name: previousVersion
         in: query
@@ -3565,7 +3708,9 @@ paths:
           default: false
       - name: textFilter
         in: query
-        description: Filter by operation's title/path/method.
+        description: |
+          Filter by operation's title/path/method.
+          For AsyncAPI: searches by message title(or messageId), channel title(or channelId) or operation action.
         schema:
           type: string
     get:
@@ -4812,7 +4957,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "404":
           description: Not found
           content:
@@ -5638,6 +5783,8 @@ paths:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
         - $ref: "#/components/parameters/apiAudience"
+        - $ref: "#/components/parameters/asyncapiChannel"
+        - $ref: "#/components/parameters/asyncapiProtocol"
         - name: skipRefs
           in: query
           description: |
@@ -5647,7 +5794,9 @@ paths:
             default: false
         - name: textFilter
           in: query
-          description: "Filter by title/path/method. Custom tag format in search is  key: value. Search works as a complete match"
+          description: |
+            Filter by title/path/method. Custom tag format in search is key: value. Search works as a complete match.
+            For AsyncAPI: searches by message title(or messageId), channel title(or channelId) or operation action.
           schema:
             type: string
         - name: documentSlug
@@ -5972,6 +6121,8 @@ paths:
         - $ref: "#/components/parameters/apiType"
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/apiAudience"
+        - $ref: "#/components/parameters/asyncapiChannel"
+        - $ref: "#/components/parameters/asyncapiProtocol"
         - name: includeDeprecatedItems
           in: query
           description: Include deprecated items inside operation.
@@ -6002,7 +6153,9 @@ paths:
             type: string
         - name: textFilter
           in: query
-          description: Filter operation by operation title/path/method.
+          description: |
+            Filter operation by operation title/path/method.
+            For AsyncAPI: searches by message title(or messageId), channel title(or channelId) or operation action.
           schema:
             type: string
         - name: apiKind
@@ -6109,6 +6262,8 @@ paths:
                                 Additional information about deprecated operation:
                                 * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated operation.
                                 * for GraphQL API it is value of 'reason' argument of @deprecated directive, which is defined for deprecated operation.
+                                * for AsyncAPI 3.0: "[Deprecated] message {name}" when message has x-deprecated: true (name = message.title or messageId),
+                                  or "[Deprecated] channel {name}" when channel has x-deprecated: true (name = channel.title or channelId).
                               type: string
                             deprecatedItems:
                               allOf:
@@ -6322,9 +6477,13 @@ paths:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
         - $ref: "#/components/parameters/apiAudience"
+        - $ref: "#/components/parameters/asyncapiChannel"
+        - $ref: "#/components/parameters/asyncapiProtocol"
         - name: textFilter
           in: query
-          description: Filter by title/path/method.
+          description: |
+            Filter by title/path/method.
+            For AsyncAPI: searches by message title(or messageId), channel title(or channelId) or operation action.
           schema:
             type: string
         - name: tag
@@ -6452,9 +6611,13 @@ paths:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
         - $ref: "#/components/parameters/apiAudience"
+        - $ref: "#/components/parameters/asyncapiChannel"
+        - $ref: "#/components/parameters/asyncapiProtocol"
         - name: textFilter
           in: query
-          description: Filter by title/path/method.
+          description: |
+            Filter by title/path/method.
+            For AsyncAPI: searches by message title(or messageId), channel title(or channelId) or operation action.
           schema:
             type: string
         - name: tag
@@ -7019,9 +7182,13 @@ paths:
           - $ref: "#/components/parameters/version"
           - $ref: "#/components/parameters/groupName"
           - $ref: "#/components/parameters/apiAudience"
+          - $ref: "#/components/parameters/asyncapiChannel"
+          - $ref: "#/components/parameters/asyncapiProtocol"
           - name: textFilter
             in: query
-            description: Filter by title/path/method.
+            description: |
+              Filter by title/path/method.
+              For AsyncAPI: searches by message title(or messageId), channel title(or channelId) or operation action.
             schema:
               type: string
           - name: documentSlug
@@ -7881,7 +8048,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              examples: { }
+              examples: {}
         "404":
           description: Not found
           content:
@@ -8011,6 +8178,7 @@ paths:
           type: string
           enum:
             - rest
+            - graphql
       - name: groupName
         in: path
         required: true
@@ -8126,6 +8294,7 @@ paths:
           type: string
           enum:
             - rest
+            - graphql
       - name: groupName
         in: path
         required: true
@@ -9360,6 +9529,26 @@ components:
           - graphql
           - protobuf
           - asyncapi
+    asyncapiChannel:
+      name: asyncapiChannel
+      in: query
+      description: |
+        Filter operations by AsyncAPI channel identifier (comma-separated).
+        Applicable only when apiType = asyncapi; ignored for other API types.
+      schema:
+        type: string
+        example: "userSignup,orderCreated"
+    asyncapiProtocol:
+      name: asyncapiProtocol
+      in: query
+      description: |
+        Filter operations by communication protocol.
+        Applicable only when apiType = asyncapi; ignored for other API types.
+        The value is the protocol string from the channel's server (e.g. kafka, amqp).
+        Use "Unknown" for operations where the protocol could not be resolved.
+      schema:
+        type: string
+        example: "kafka"
     groupName:
       name: groupName
       in: path
@@ -9499,6 +9688,8 @@ components:
               Additional information about single deprecated item:
               * for REST API it is value of 'x-deprecated-meta' extension (value of extension must be string), which is defined for deprecated item.
               * for GraphQL API it is value of 'reason' argument of @deprecated directive.
+              * for AsyncAPI 3.0: "[Deprecated] message {name}" (name = message.title or messageId),
+                or "[Deprecated] channel {name}" (name = channel.title or channelId).
             type: string
           tolerantHash:
             description: Tolerant hash for Schema object or Parameter object that has been deprecated. It is needed to identify that the same schema/parameter was deprecated in previous version.
@@ -9657,6 +9848,34 @@ components:
             exported specification or not.
           type: boolean
           default: false
+    ExportGraphqlOperationsGroup:
+      type: object
+      title: Export GraphQL operations group
+      description: |
+        Export settings for exporting the operations group. The option is applicable only for groups with apiType = GraphQL.
+        The export result is a ZIP file containing GraphQL schema files for all operations from the group.
+      required:
+        - exportedEntity
+        - packageId
+        - version
+        - groupName
+      properties:
+        exportedEntity:
+          description: The entity to be exported.
+          type: string
+          enum:
+            - graphqlOperationsGroup
+        packageId:
+          description: Package unique string identifier (full alias).
+          type: string
+          example: WS.GRP.PCKG
+        version:
+          description: Package version.
+          type: string
+          example: "2024.2"
+        groupName:
+          description: Name of the operations group to export. Group must have apiType = GraphQL
+          type: string
     PackageCreate:
       description: Parameters for the package creation
       required:
@@ -10477,6 +10696,7 @@ components:
         - graphapi
         - introspection
         - protobuf-3
+        - asyncapi-3-0
         - unknown
     DocumentFormat:
       title: format
@@ -10504,7 +10724,10 @@ components:
         - versionInternalDocumentId
       properties:
         operationId:
-          description: Operation unique identifier (slug). Not the same as operationId tag from the OpenAPI file.
+          description: |
+            Operation unique identifier (slug). Not the same as operationId tag from the OpenAPI file.
+            For AsyncAPI 3.0: operationId = normalized_operation_id + "-" + normalized_message_id,
+            where operation_id is the key in the root operations map and message_id is the key in the channel's messages map.
           type: string
           example: get-quoteManagement-v5-quote
         documentId:
@@ -10513,7 +10736,9 @@ components:
           pattern: "^[a-z0-9-]"
           example: "qitmf-v5-11-json"
         title:
-          description: Operation summary/title.
+          description: |
+            Operation summary/title.
+            For AsyncAPI 3.0: message.title. If the message has no title, the messageId (key in the channel's messages map) is used.
           type: string
         apiType:
           #  description: Type of the API.
@@ -10529,7 +10754,10 @@ components:
           description: External operation metadata.
           type: object
         deprecated:
-          description: Operation deprecate flag.
+          description: |
+            Operation deprecate flag.
+            For AsyncAPI 3.0: derived from x-deprecated extension on Message Object (message-deprecated)
+            or Channel Object (channel-deprecated). Native deprecated: true/false exists only for Schema Object in AsyncAPI 3.0.
           type: boolean
           default: false
         apiAudience:
@@ -10538,6 +10766,8 @@ components:
             * internal - APIs are available for integration within product application.
             * external - APIs exposed outside the boundary of product application: solution delivery integrations, 3rd party integrations, customer integrations.
             * unknown - If any value other than internal or external is used, the API is considered as unknown.
+            For AsyncAPI 3.0: derived from x-api-audience extension. Channel-level is the default;
+            operation-level overrides when present. If neither defines the extension, the audience is external.
           type: string
           enum:
             - internal
@@ -10549,6 +10779,8 @@ components:
             * bwc - API with backward compatibility support (a.k.a. public).
             * no-bwc - API without backward compatibility support (a.k.a. internal).
             * experimental - APIs for feature testing. Usage is not recommended.
+            For AsyncAPI 3.0: derived from x-api-kind extension. Channel-level is the default;
+            operation-level overrides when present. If neither defines the extension, API Kind is bwc.
           type: string
           enum:
             - bwc
@@ -10842,32 +11074,49 @@ components:
           description: Custom tags.
           type: object
     AsyncAPIOperationMeta:
-      description: Specific parameters for AsyncAPI operation.
+      description: |
+        Specific parameters for AsyncAPI 3.0 operation.
+        An APIHUB Operation for AsyncAPI is the triple (channel, operation, message).
       title: AsyncAPIOperationMeta
       required:
         - action
         - channel
         - protocol
+        - asyncOperationId
+        - messageId
       type: object
       properties:
         action:
-          description: AsyncAPI operation action (e.g., send, receive).
+          description: "AsyncAPI operation action: send or receive."
           type: string
+          enum:
+            - send
+            - receive
         channel:
-          description: AsyncAPI channel name.
+          description: |
+            AsyncAPI channel identifier.
+            Uses channel.title if available; otherwise uses channelId (key in the document's root channels map).
           type: string
-          example: "user/signedup"
+          example: "User Signup Channel"
         protocol:
-          description: Communication protocol used (e.g., kafka, mqtt, amqp).
+          description: |
+            Communication protocol derived from the channel's first server.
+            Expected values: kafka, amqp. Any other protocol value from the spec is displayed as-is.
+            If the channel has no server references or the protocol cannot be resolved, the value is "Unknown".
           type: string
-        tags:
-          description: Operation tags.
-          type: array
-          items:
-            type: string
-        title:
-          description: Operation summary/title.
+          example: "kafka"
+        asyncOperationId:
+          description: |
+            AsyncAPI operationId as defined in the AsyncAPI specification.
+            The key in the root operations map that identifies the operation.
           type: string
+          example: "onUserSignUp"
+        messageId:
+          description: |
+            AsyncAPI messageId as defined in the AsyncAPI specification.
+            The key in the channel's messages map that identifies the message.
+          type: string
+          example: "userSignedUp"
         customTags:
           description: Custom tags.
           type: object
@@ -10970,7 +11219,7 @@ components:
               type: string
               example: getPaymentMethodSpecificationCore
     AsyncAPIOperationInfoFromDifferentVersions:
-      description: Operation info from previous/current version.
+      description: AsyncAPI 3.0 operation info from previous/current version.
       allOf:
         - $ref: "#/components/schemas/OperationInfoFromDifferentVersionsV2"
         - type: object
@@ -10978,22 +11227,40 @@ components:
             - action
             - channel
             - protocol
+            - asyncOperationId
+            - messageId
           properties:
             action:
-              description: AsyncAPI operation action.
+              description: "AsyncAPI operation action: send or receive."
               type: string
+              enum:
+                - send
+                - receive
             channel:
-              description: AsyncAPI channel name.
+              description: |
+                AsyncAPI channel identifier.
+                Uses channel.title if available; otherwise uses channelId (key in the document's root channels map).
               type: string
-              example: "user/signedup"
+              example: "User Signup Channel"
             protocol:
-              description: Communication protocol used.
+              description: |
+                Communication protocol derived from the channel's first server.
+                Expected values: kafka, amqp. Any other protocol value from the spec is displayed as-is.
+                If the channel has no server references or the protocol cannot be resolved, the value is "Unknown".
               type: string
-            tags:
-              description: Operation tags.
-              type: array
-              items:
-                type: string
+              example: "kafka"
+            asyncOperationId:
+              description: |
+                AsyncAPI operationId as defined in the AsyncAPI specification.
+                The key in the root operations map that identifies the operation.
+              type: string
+              example: "onUserSignUp"
+            messageId:
+              description: |
+                AsyncAPI messageId as defined in the AsyncAPI specification.
+                The key in the channel's messages map that identifies the message.
+              type: string
+              example: "userSignedUp"
     SingleOperationChange:
       allOf:
         - type: object

@@ -7,9 +7,9 @@ info:
     name: Netcracker Opensource Group
     email: opensourcegroup@netcracker.com
   license:
-    name: qubership
-    url: https://github.com/Netcracker/qubership-apihub
-  version: "2025.4"
+    name: Apache 2.0
+    url: https://github.com/Netcracker/qubership-apihub-backend/raw/refs/heads/main/LICENSE
+  version: "2026.1"
   x-nc-api-audience: BWC
 externalDocs:
   description: Find out more about package
@@ -518,6 +518,76 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+  "/api/v2/admin/packages/{packageId}/versions/{version}/sources":
+    put:
+      tags:
+        - Admin
+      summary: Replace published version sources
+      description: |
+        Replaces the source archive of a specific published version revision.
+        The new archive is validated against the existing build config to ensure file consistency.
+        Only sources are replaced; derived data (operations, documents, comparisons) will be
+        recalculated during the next ops migration run.
+        Only for system administrators.
+      operationId: replaceVersionSources
+      x-api-kind: no-BWC
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          description: Package identifier
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          description: "Version identifier. Supports version@revision format (e.g., 1.0.0@2). If revision is omitted, the latest revision is targeted."
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/zip:
+            schema:
+              type: string
+              format: binary
+              description: ZIP archive containing the replacement source files
+      responses:
+        "204":
+          description: Sources replaced successfully
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Version/revision or published sources not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
 
 components:
   schemas:
@@ -628,6 +698,8 @@ components:
               $ref: "#/components/schemas/BuildsCount"
             exportRestOperationsGroup:
               $ref: "#/components/schemas/BuildsCount"
+            exportGraphqlOperationsGroup:
+              $ref: "#/components/schemas/BuildsCount"
             exportVersion:
               $ref: "#/components/schemas/BuildsCount"
             mergedSpecification:
@@ -705,6 +777,7 @@ components:
         - rest
         - graphql
         - protobuf
+        - asyncapi
   examples:
     IncorrectInputParameters:
       description: Incorrect input parameters

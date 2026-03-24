@@ -234,19 +234,44 @@ func (o operationGroupControllerImpl) GetGroupedOperations(w http.ResponseWriter
 		}
 	}
 
+	asyncapiChannel, err := url.QueryUnescape(r.URL.Query().Get("asyncapiChannel"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiChannel"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	asyncapiProtocol, err := url.QueryUnescape(r.URL.Query().Get("asyncapiProtocol"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "asyncapiProtocol"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
 	groupedOperationListReq := view.OperationListReq{
-		Deprecated:   deprecated,
-		Kind:         kind,
-		EmptyTag:     emptyTag,
-		Tag:          tag,
-		Limit:        limit,
-		Page:         page,
-		TextFilter:   textFilter,
-		ApiType:      apiType,
-		DocumentSlug: documentSlug,
-		RefPackageId: refPackageId,
-		OnlyAddable:  onlyAddable,
-		ApiAudience:  apiAudience,
+		Deprecated:       deprecated,
+		Kind:             kind,
+		EmptyTag:         emptyTag,
+		Tag:              tag,
+		Limit:            limit,
+		Page:             page,
+		TextFilter:       textFilter,
+		ApiType:          apiType,
+		DocumentSlug:     documentSlug,
+		RefPackageId:     refPackageId,
+		OnlyAddable:      onlyAddable,
+		ApiAudience:      apiAudience,
+		AsyncapiChannel:  asyncapiChannel,
+		AsyncapiProtocol: asyncapiProtocol,
 	}
 
 	groupedOperations, err := o.operationGroupService.GetGroupedOperations(packageId, versionName, apiType, groupName, groupedOperationListReq)
@@ -362,6 +387,16 @@ func (o operationGroupControllerImpl) CreateOperationGroup(w http.ResponseWriter
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidGroupExportTemplateType,
 			Message: exception.InvalidGroupExportTemplateTypeMsg,
+		})
+		return
+	}
+
+	if apiType != string(view.RestApiType) && createOperationGroupReq.TemplateFilename != "" {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.OperationGroupTemplateNotSupported,
+			Message: exception.OperationGroupTemplateNotSupportedMsg,
+			Params:  map[string]interface{}{"apiType": apiType},
 		})
 		return
 	}
@@ -590,6 +625,17 @@ func (o operationGroupControllerImpl) UpdateOperationGroup(w http.ResponseWriter
 			TemplateFilename: "",
 		}
 	}
+
+	if apiType != string(view.RestApiType) && updateOperationGroupReq.Template != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.OperationGroupTemplateNotSupported,
+			Message: exception.OperationGroupTemplateNotSupportedMsg,
+			Params:  map[string]interface{}{"apiType": apiType},
+		})
+		return
+	}
+
 	operationsArrStr := r.FormValue("operations")
 	if operationsArrStr != "" {
 		var operations []view.GroupOperations
@@ -657,6 +703,15 @@ func (o operationGroupControllerImpl) GetGroupExportTemplate(w http.ResponseWrit
 		})
 		return
 	}
+	if apiType != string(view.RestApiType) {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.OperationGroupTemplateNotSupported,
+			Message: exception.OperationGroupTemplateNotSupportedMsg,
+			Params:  map[string]interface{}{"apiType": apiType},
+		})
+		return
+	}
 	groupName, err := getUnescapedStringParam(r, "groupName")
 	if err != nil {
 		utils.RespondWithCustomError(w, &exception.CustomError{
@@ -718,8 +773,7 @@ func (o operationGroupControllerImpl) StartOperationGroupPublish(w http.Response
 		})
 		return
 	}
-	//todo add support for different apiTypes when reducedSourceSpecifications is supported for them
-	if apiType != string(view.RestApiType) {
+	if apiType != string(view.RestApiType) && apiType != string(view.GraphqlApiType) {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.UnsupportedApiType,

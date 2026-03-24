@@ -38,6 +38,7 @@ type VersionController interface {
 	DeleteVersionsRecursively(w http.ResponseWriter, r *http.Request)
 	CopyVersion(w http.ResponseWriter, r *http.Request)
 	GetPublishedVersionsHistory(w http.ResponseWriter, r *http.Request)
+	PublishFromCSV_deprecated(w http.ResponseWriter, r *http.Request)
 	PublishFromCSV(w http.ResponseWriter, r *http.Request)
 	GetCSVDashboardPublishStatus(w http.ResponseWriter, r *http.Request)
 	GetCSVDashboardPublishReport(w http.ResponseWriter, r *http.Request)
@@ -1122,13 +1123,27 @@ func (v versionControllerImpl) GetPublishedVersionsHistory(w http.ResponseWriter
 	utils.RespondWithJson(w, http.StatusOK, history)
 }
 
-func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Request) {
+func (v versionControllerImpl) PublishFromCSV_deprecated(w http.ResponseWriter, r *http.Request) {
+	csvPublishReq, ok := v.parseCSVPublishRequest(w, r, string(view.RestApiType))
+	if !ok {
+		return
+	}
+
+	publishId, err := v.versionService.StartPublishFromCSV(context.Create(r), *csvPublishReq)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to start dashboard publish from csv", err)
+		return
+	}
+	utils.RespondWithJson(w, http.StatusAccepted, view.PublishFromCSVResp{PublishId: publishId})
+}
+
+func (v versionControllerImpl) parseCSVPublishRequest(w http.ResponseWriter, r *http.Request, apiType string) (*view.PublishFromCSVReq, bool) {
 	packageId := getStringParam(r, "packageId")
 	ctx := context.Create(r)
 	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to check user privileges", err)
-		return
+		return nil, false
 	}
 	if !sufficientPrivileges {
 		utils.RespondWithCustomError(w, &exception.CustomError{
@@ -1136,7 +1151,7 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
 		})
-		return
+		return nil, false
 	}
 
 	err = r.ParseMultipartForm(0)
@@ -1147,7 +1162,7 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 			Message: exception.BadRequestBodyMsg,
 			Debug:   err.Error(),
 		})
-		return
+		return nil, false
 	}
 	defer func() {
 		err := r.MultipartForm.RemoveAll()
@@ -1157,6 +1172,7 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 	}()
 	csvPublishReq := view.PublishFromCSVReq{}
 	csvPublishReq.PackageId = packageId
+	csvPublishReq.ApiType = apiType
 	csvPublishReq.Version = r.FormValue("version")
 	csvPublishReq.ServicesWorkspaceId = r.FormValue("servicesWorkspaceId")
 	csvPublishReq.PreviousVersion = r.FormValue("previousVersion")
@@ -1172,7 +1188,7 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 				Message: exception.BadRequestBodyMsg,
 				Debug:   fmt.Sprintf("failed to unmarshal versionLabels field: %v", err.Error()),
 			})
-			return
+			return nil, false
 		}
 	}
 	csvFile, _, err := r.FormFile("csvFile")
@@ -1183,7 +1199,7 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 				Code:    exception.IncorrectMultipartFile,
 				Message: exception.IncorrectMultipartFileMsg,
 				Debug:   err.Error()})
-			return
+			return nil, false
 		}
 		csvData, err := io.ReadAll(csvFile)
 		closeErr := csvFile.Close()
@@ -1196,7 +1212,7 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 				Code:    exception.IncorrectMultipartFile,
 				Message: exception.IncorrectMultipartFileMsg,
 				Debug:   err.Error()})
-			return
+			return nil, false
 		}
 		csvPublishReq.CSVData = csvData
 	} else if r.FormValue("csvFile") != "" {
@@ -1206,13 +1222,13 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 			Message: exception.InvalidMultipartFileTypeMsg,
 			Params:  map[string]interface{}{"field": "csvFile"},
 		})
-		return
+		return nil, false
 	}
 	validationErr := utils.ValidateObject(csvPublishReq)
 	if validationErr != nil {
 		if customError, ok := validationErr.(*exception.CustomError); ok {
 			utils.RespondWithCustomError(w, customError)
-			return
+			return nil, false
 		}
 	}
 
@@ -1223,12 +1239,12 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 			Code:    exception.InvalidParameter,
 			Message: err.Error(),
 		})
-		return
+		return nil, false
 	}
 	sufficientPrivileges, err = v.roleService.HasManageVersionPermission(ctx, csvPublishReq.PackageId, csvPublishReq.Status)
 	if err != nil {
 		utils.RespondWithError(w, "Failed to check user privileges", err)
-		return
+		return nil, false
 	}
 	if !sufficientPrivileges {
 		utils.RespondWithCustomError(w, &exception.CustomError{
@@ -1236,10 +1252,38 @@ func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Req
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
 		})
+		return nil, false
+	}
+
+	return &csvPublishReq, true
+}
+
+func (v versionControllerImpl) PublishFromCSV(w http.ResponseWriter, r *http.Request) {
+	apiType := getStringParam(r, "apiType")
+	parsedApiType, err := view.ParseApiType(apiType)
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameter,
+			Message: fmt.Sprintf("invalid apiType: %s, expected 'rest' or 'graphql'", apiType),
+		})
+		return
+	}
+	if parsedApiType != view.RestApiType && parsedApiType != view.GraphqlApiType {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameter,
+			Message: fmt.Sprintf("unsupported apiType for CSV publish: %s, expected 'rest' or 'graphql'", apiType),
+		})
 		return
 	}
 
-	publishId, err := v.versionService.StartPublishFromCSV(ctx, csvPublishReq)
+	csvPublishReq, ok := v.parseCSVPublishRequest(w, r, string(parsedApiType))
+	if !ok {
+		return
+	}
+
+	publishId, err := v.versionService.StartPublishFromCSV(context.Create(r), *csvPublishReq)
 	if err != nil {
 		utils.RespondWithError(w, "Failed to start dashboard publish from csv", err)
 		return

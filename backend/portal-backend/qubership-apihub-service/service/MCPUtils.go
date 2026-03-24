@@ -62,6 +62,22 @@ func convertPackagesToMCP(packages *view.Packages) *view.PackagesMCP {
 	return &view.PackagesMCP{Packages: converted}
 }
 
+func projectPublishedVersionsForMCP(versions []view.PublishedVersionListView) []view.PublishedVersionListMCPView {
+	if len(versions) == 0 {
+		return nil
+	}
+
+	projected := make([]view.PublishedVersionListMCPView, len(versions))
+	for i, v := range versions {
+		projected[i] = view.PublishedVersionListMCPView{
+			Version:         v.Version,
+			Status:          v.Status,
+			PreviousVersion: v.PreviousVersion,
+		}
+	}
+	return projected
+}
+
 // transformOperations transforms view.RestOperationSearchResult to TransformedOperation
 func transformOperations(items []view.RestOperationSearchResult) []view.TransformedOperation {
 	transformed := make([]view.TransformedOperation, len(items))
