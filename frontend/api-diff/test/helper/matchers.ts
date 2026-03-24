@@ -1,8 +1,11 @@
 import { Diff } from '../../src'
 import 'jest-extended'
+import {
+  TEST_SPEC_TYPE_OPEN_API,
+  TestSpecType,
+} from '@netcracker/qubership-apihub-compatibility-suites'
 
 import CustomEqualityTester = jasmine.CustomEqualityTester
-import 'jest-extended'
 
 type ExpectedRecursive<T> = T | ObjectContaining<T> | AsymmetricMatcher<any> | {
   [K in keyof T]: ExpectedRecursive<T[K]> | Any;
@@ -41,7 +44,6 @@ export type RecursiveMatcher<T> = {
       T[P];
 }
 
-
 export type DiffMatcher = ArrayContaining<Diff> & Diff[]
 
 const DIFF_MATCHER_SKIP = Symbol('DIFF_MATCHER_SKIP')
@@ -65,18 +67,43 @@ export function diffsMatcher(
   return expect.toIncludeSameMembers(compactExpected)
 }
 
-export const expectOpenApiVersionChange = (fromVersion: string = '3.0.4', toVersion: string = '3.1.0') => {
-  if (fromVersion === toVersion)
-    {
+/**
+ * Generic spec-version-change matcher. Returns a diff matcher for the root version key change,
+ * or DIFF_MATCHER_SKIP when versions are equal (no version change diff expected).
+ */
+export const expectSpecVersionChange = (
+  suiteType: TestSpecType,
+  fromVersion: string,
+  toVersion: string,
+) => {
+  if (fromVersion === toVersion) {
+    return DIFF_MATCHER_SKIP
+  }
+
+  let rootKey: string
+  switch (suiteType) {
+    case TEST_SPEC_TYPE_OPEN_API:
+      rootKey = 'openapi'
+      break
+    default:
+      // GraphQL and unknown types have no root version key to match
       return DIFF_MATCHER_SKIP
-    }
+  }
 
   return expect.objectContaining({
     action: 'replace',
-    afterDeclarationPaths: [['openapi']],
+    afterDeclarationPaths: [[rootKey]],
     afterValue: toVersion,
-    beforeDeclarationPaths: [['openapi']],
+    beforeDeclarationPaths: [[rootKey]],
     beforeValue: fromVersion,
     type: 'annotation',
   })
+}
+
+/**
+ * Backward-compatible thin wrapper for OpenAPI version change matching.
+ * Non-schema tests can continue using this without changes.
+ */
+export const expectOpenApiVersionChange = (fromVersion: string = '3.0.4', toVersion: string = '3.1.0') => {
+  return expectSpecVersionChange(TEST_SPEC_TYPE_OPEN_API, fromVersion, toVersion)
 }

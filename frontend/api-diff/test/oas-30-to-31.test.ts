@@ -1,5 +1,5 @@
 import { apiDiff, CompareOptions } from '../src'
-import { TEST_DIFF_FLAG, TEST_ORIGINS_FLAG, TEST_SYNTHETIC_TITLE_FLAG } from './helper'
+import { loadYamlSample, TEST_DIFF_FLAG, TEST_ORIGINS_FLAG, TEST_SYNTHETIC_TITLE_FLAG } from './helper'
 import { diffsMatcher, expectOpenApiVersionChange } from './helper/matchers'
 
 import couldCompareOverriddenDescriptionViaReferenceObjectBefore from './helper/resources/openapi-3_0-to-3_1/could-compare-overridden-description-via-reference-object/before.json'
@@ -113,6 +113,22 @@ describe('OpenAPI 3.0 to 3.1 Comparison Tests', () => {
       const { diffs } = apiDiff(
         nullableIsEquivalentToUnionWithNullTypeForSchemaViaRefBefore,
         nullableIsEquivalentToUnionWithNullTypeForSchemaViaRefAfter,
+        TEST_NORMALIZE_OPTIONS
+      )
+
+      expect(diffs.length).toBe(1)
+      expect(diffs).toEqual(diffsMatcher([
+        expectOpenApiVersionChange(),
+      ]))
+    })
+
+    test('nullable enum is equivalent to union with null type', () => {
+      const before = loadYamlSample('openapi-3_0-to-3_1/nullable-enum-is-equivalent-to-union-with-enum-with-null/before.yaml')
+      const after = loadYamlSample('openapi-3_0-to-3_1/nullable-enum-is-equivalent-to-union-with-enum-with-null/after.yaml')
+
+      const { diffs } = apiDiff(
+        before,
+        after,
         TEST_NORMALIZE_OPTIONS
       )
 
