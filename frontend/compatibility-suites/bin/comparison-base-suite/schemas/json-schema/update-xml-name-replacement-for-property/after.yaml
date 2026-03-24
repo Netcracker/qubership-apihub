@@ -1,0 +1,6 @@
+type: object
+properties:
+  id:
+    type: integer
+    xml:
+      name: "xml-id-2"

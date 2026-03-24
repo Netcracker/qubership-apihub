@@ -4,12 +4,12 @@
 
 It is a collection of most important cases of changes in API for the purposes of changes classification.
 
-Contains cases for OpenAPI and GraphQL
+Contains cases for OpenAPI, GraphQL and AsyncAPI.
 
 ## Structure
 
-The cases path structure is `bin/comparison-base-suite/<apitype>/<case-suite>/<specific-case>`
-Each case contains two specifications - `before` and `after`.
+The cases path structure is `bin/comparison-base-suite/<suiteType>/<suiteId>/<testId>`
+Each case contains two specifications - `before` and `after` (or is rendered from a template, see below).
 
 Reflects one specific change (or may contain multiple variations of representing the same change).
 
@@ -19,6 +19,20 @@ OpenAPI cases may additionally contain `metadata.yaml` with a version matrix:
 
 - `version_combinations`: a non-empty array of `[beforeVersion, afterVersion]` pairs.
 - Only OAS `3.0.x` and `3.1.x` are supported (other versions are rejected by the generator).
+
+### Schema base store (JSON Schema fragments)
+
+Schema suites reuse schema deltas from a base store:
+
+- `bin/comparison-base-suite/schemas/json-schema/<testId>/{before.yaml,after.yaml}`
+
+### Schema suites (template-rendered suites)
+
+Schema suites use templates rendered at runtime:
+
+- `bin/comparison-base-suite/<apitype>/<suiteId>/template.yaml.tpl`
+- The template must include a **single** line-only `__SCHEMA__` placeholder.
+- If a full sample exists (`before/after`), it takes precedence over rendering (used for exceptions like `$ref` with `components:`).
 
 ## Usages
 
@@ -48,6 +62,7 @@ export function getCompatibilitySuiteSpecificationVersionPairs(
 It returns a pair of strings: `[before, after]`.
 
 `getCompatibilitySuites` enumerates suite cases and returns a map: `suiteId -> testIds[]` (optionally filtered by `specType`).
+When `specType` is omitted, `suiteId` must be unique across suite types or later entries overwrite earlier ones.
 
 `getCompatibilitySuiteSpecificationVersionPairs` returns supported specification version pairs for a given case:
 

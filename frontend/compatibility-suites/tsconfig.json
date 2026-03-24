@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "esnext",
+    "target": "es2022",
     "module": "ESNext",
     "allowJs": false,
     "outDir": "dist",

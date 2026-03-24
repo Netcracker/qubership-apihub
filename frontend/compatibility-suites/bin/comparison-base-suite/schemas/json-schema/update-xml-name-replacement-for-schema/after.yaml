@@ -1,0 +1,10 @@
+type: object
+properties:
+  id:
+    type: integer
+  title:
+    type: string
+  author:
+    type: string
+xml:
+  name: "xml-book-1"
