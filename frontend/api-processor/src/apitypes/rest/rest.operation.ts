@@ -16,7 +16,6 @@
 
 import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
 import { OpenAPIV3 } from 'openapi-types'
-import { REST_API_TYPE } from './rest.consts'
 import { operationRules } from './rest.rules'
 import type * as TYPE from './rest.types'
 import { RestOperationData } from './rest.types'
@@ -32,7 +31,8 @@ import {
 import {
   _calculateRestOperationIdV1,
   buildSearchScope,
-  calculateRestOperationId, calculateRestOperationTitle,
+  calculateRestOperationId,
+  calculateRestOperationTitle,
   extractSymbolProperty,
   getKeyValue,
   getSplittedVersionKey,
@@ -46,7 +46,13 @@ import {
   takeIfDefined,
 } from '../../utils'
 import { getUsedTags } from '../../utils/mergeOpenapiDocuments'
-import { APIHUB_API_COMPATIBILITY_KIND_BWC, INLINE_REFS_FLAG, ORIGINS_SYMBOL, VERSION_STATUS } from '../../consts'
+import {
+  APIHUB_API_COMPATIBILITY_KIND_BWC,
+  INLINE_REFS_FLAG,
+  ORIGINS_SYMBOL,
+  REST_API_TYPE,
+  VERSION_STATUS,
+} from '../../consts'
 import { extractSecuritySchemesNames, getCustomTags, resolveApiAudience } from './rest.utils'
 import { DebugPerformanceContext, syncDebugPerformance } from '../../utils/logs'
 import {

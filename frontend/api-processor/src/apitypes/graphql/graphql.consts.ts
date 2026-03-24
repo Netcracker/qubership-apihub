@@ -15,8 +15,7 @@
  */
 import { ResolvedVersionDocument, ZippableDocument } from '../../types'
 import { NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
-
-export const GRAPHQL_API_TYPE = 'graphql' as const
+import { DirectiveLocation } from 'graphql/language'
 
 export const GRAPHQL_DOCUMENT_TYPE = {
   SCHEMA: 'graphql-schema',
@@ -54,3 +53,14 @@ export const GRAPHQL_EFFECTIVE_NORMALIZE_OPTIONS = {
   ...NORMALIZE_OPTIONS,
   originsFlag: ORIGINS_SYMBOL,
 }
+
+export const RUNTIME_DIRECTIVE_LOCATIONS = new Set([
+  DirectiveLocation.QUERY,
+  DirectiveLocation.MUTATION,
+  DirectiveLocation.SUBSCRIPTION,
+  DirectiveLocation.FIELD,
+  DirectiveLocation.FRAGMENT_DEFINITION,
+  DirectiveLocation.FRAGMENT_SPREAD,
+  DirectiveLocation.INLINE_FRAGMENT,
+  DirectiveLocation.VARIABLE_DEFINITION,
+])

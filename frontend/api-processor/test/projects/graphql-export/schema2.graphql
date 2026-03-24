@@ -1,0 +1,27 @@
+type Query {
+  """Get list of Users"""
+  listUsers(listId: String): [User!]
+
+  """Get User by ID"""
+  getUser(id: String!): User
+}
+
+type Subscription {
+  """Notifies when a new user is created"""
+  onUserCreated: User
+}
+
+"""The entity represents a User"""
+type User {
+  """Unique identifier"""
+  id: String
+
+  """Username"""
+  username: String
+
+  """First name"""
+  firstName: String
+
+  """Last name"""
+  lastName: String
+}

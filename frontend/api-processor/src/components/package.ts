@@ -72,6 +72,7 @@ export const createVersionPackage = async (
   switch (buildResult.config.buildType) {
     case BUILD_TYPE.EXPORT_VERSION:
     case BUILD_TYPE.EXPORT_REST_DOCUMENT:
+    case BUILD_TYPE.EXPORT_GRAPHQL_OPERATIONS_GROUP:
     case BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP:
       if (buildResult.exportDocuments.length === 1) {
         return Buffer.from(await buildResultDto.exportDocuments[0].data.arrayBuffer())

@@ -14,9 +14,21 @@
  * limitations under the License.
  */
 
-import { Editor, loadFileAsString, LocalRegistry, VERSIONS_PATH } from './helpers'
-import { BUILD_TYPE, BuildConfigAggregator, BuildResult, PACKAGE, PackageNotifications, REST_API_TYPE } from '../src'
 import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
+import {
+  BUILD_TYPE,
+  BuildConfigAggregator,
+  BuildResult,
+  FILE_FORMAT_GRAPHQL,
+  GRAPHQL_API_TYPE,
+  PACKAGE,
+  PackageNotifications,
+  REST_API_TYPE,
+  TRANSFORMATION_KIND_MERGED,
+  TRANSFORMATION_KIND_REDUCED,
+} from '../src'
+import { parseGraphQLSource } from '../src/utils/graphql-transformer'
+import { Editor, loadFileAsString, LocalRegistry, VERSIONS_PATH } from './helpers'
 
 const GROUP_NAME = 'manualGroup'
 const groupToOperationIdsMap = {
@@ -37,6 +49,19 @@ const groupToOnePathOperationIdsMap = {
   [GROUP_NAME]: [
     'path1-get',
     'path1-post',
+  ],
+}
+
+const operationIdsForGroupWithSingleOperation = {
+  [GROUP_NAME]: [
+    'query-listPets',
+  ],
+}
+
+const operationIdsForGroupWithMultipleOperations = {
+  [GROUP_NAME]: [
+    'query-listPets',
+    'query-listUsers',
   ],
 }
 
@@ -130,168 +155,241 @@ describe('Document Group test', () => {
         expect(Object.keys(document.data.paths).length).toEqual(document.operationIds.length)
       }
     })
-  })
 
-  describe('PathItems operations', () => {
-    runCommonTests(PATH_ITEMS_OPERATION_PATH)
+    describe('PathItems operations', () => {
+      runCommonTests(PATH_ITEMS_OPERATION_PATH)
 
-    test('should have properly merged documents', async () => {
-      await runMergeOperationsCase('basic-documents-pathitems-for-merge')
-    })
+      test('should have properly merged documents', async () => {
+        await runMergeOperationsCase('basic-documents-pathitems-for-merge')
+      })
 
-    test('should have properly merged documents mixed formats (operation + pathItems operation)', async () => {
-      await runMergeOperationsCase('documents-pathitems-with-mixed-formats')
-    })
+      test('should have properly merged documents mixed formats (operation + pathItems operation)', async () => {
+        await runMergeOperationsCase('documents-pathitems-with-mixed-formats')
+      })
 
-    test('should have save pathItems in components', async () => {
-      const { result } = await runPublishPackage(
-        `document-group/${PATH_ITEMS_OPERATION_PATH}/multiple-pathitems-operations`,
-        groupToOperationIdsMap,
-      )
-
-      for (const document of Array.from(result.documents.values())) {
-        expect(Object.keys(document.data.components.pathItems).length).toEqual(document.operationIds.length)
-      }
-    })
-
-    test('second level object are the same when overriding for pathitems response', async () => {
-      const { pkg, result } = await runPublishPackage(
-        `document-group/${PATH_ITEMS_OPERATION_PATH}/second-level-object-are-the-same-when-overriding-for-response`, groupToOnePathOperationIdsMap,
-      )
-
-      const expectedResult = loadYaml(
-        (await loadFileAsString(pkg.projectsDir, pkg.packageId, EXPECTED_RESULT_FILE))!,
-      )
-      for (const document of Array.from(result.documents.values())) {
-        expect(document.data).toEqual(expectedResult)
-      }
-    })
-
-    describe('Chain pathItems Refs', () => {
-      const COMPONENTS_ITEM_1_PATH = ['components', 'pathItems', 'componentsPathItem1']
-
-      test('should have documents with keep pathItems in components', async () => {
+      test('should have save pathItems in components', async () => {
         const { result } = await runPublishPackage(
-          `document-group/${PATH_ITEMS_OPERATION_PATH}/define-pathitems-via-reference-object-chain`,
+          `document-group/${PATH_ITEMS_OPERATION_PATH}/multiple-pathitems-operations`,
+          groupToOperationIdsMap,
+        )
+
+        for (const document of Array.from(result.documents.values())) {
+          expect(Object.keys(document.data.components.pathItems).length).toEqual(document.operationIds.length)
+        }
+      })
+
+      test('second level object are the same when overriding for pathitems response', async () => {
+        const { pkg, result } = await runPublishPackage(
+          `document-group/${PATH_ITEMS_OPERATION_PATH}/second-level-object-are-the-same-when-overriding-for-response`, groupToOnePathOperationIdsMap,
+        )
+
+        const expectedResult = loadYaml(
+          (await loadFileAsString(pkg.projectsDir, pkg.packageId, EXPECTED_RESULT_FILE))!,
+        )
+        for (const document of Array.from(result.documents.values())) {
+          expect(document.data).toEqual(expectedResult)
+        }
+      })
+
+      describe('Chain pathItems Refs', () => {
+        const COMPONENTS_ITEM_1_PATH = ['components', 'pathItems', 'componentsPathItem1']
+
+        test('should have documents with keep pathItems in components', async () => {
+          const { result } = await runPublishPackage(
+            `document-group/${PATH_ITEMS_OPERATION_PATH}/define-pathitems-via-reference-object-chain`,
+            groupToOnePathOperationIdsMap,
+          )
+
+          for (const document of Array.from(result.documents.values())) {
+            expect(document.data).toHaveProperty([...COMPONENTS_ITEM_1_PATH, 'post'])
+            expect(document.data).toHaveProperty([...COMPONENTS_ITEM_1_PATH, 'get'])
+          }
+        })
+
+        test('should have documents stripped of operations other than from provided group', async () => {
+          const { result } = await runPublishPackage(
+            `document-group/${PATH_ITEMS_OPERATION_PATH}/define-pathitems-via-reference-object-chain`,
+            groupWithOneOperationIdsMap,
+          )
+
+          for (const document of Array.from(result.documents.values())) {
+            expect(document.data).toHaveProperty([...COMPONENTS_ITEM_1_PATH, 'post'])
+            expect(document.data).not.toHaveProperty([...COMPONENTS_ITEM_1_PATH, 'get'])
+          }
+        })
+      })
+    })
+
+    function runCommonTests(folder: DOCUMENT_GROUP_PATHS): void {
+      test('should have keep a multiple operations in one path', async () => {
+        const { result } = await runPublishPackage(
+          `document-group/${folder}/multiple-operations-in-one-path`,
           groupToOnePathOperationIdsMap,
         )
 
         for (const document of Array.from(result.documents.values())) {
-          expect(document.data).toHaveProperty([...COMPONENTS_ITEM_1_PATH, 'post'])
-          expect(document.data).toHaveProperty([...COMPONENTS_ITEM_1_PATH, 'get'])
+          const expectedResult =
+            folder === PATH_ITEMS_OPERATION_PATH
+              ? Object.keys(document.data.components.pathItems['pathItem1']).length
+              : Object.keys(document.data.paths['/path1']).length
+
+          expect(expectedResult).toEqual(document.operationIds.length)
+        }
+      })
+
+      test('should define operations with servers prefix', async () => {
+        const { result } = await runPublishPackage(
+          `document-group/${folder}/define-operations-with-servers-prefix`,
+          groupToOneServerPrefixPathOperationIdsMap,
+        )
+
+        for (const document of Array.from(result.documents.values())) {
+          expect(Object.keys(document.data.paths).length).toEqual(document.operationIds.length)
+        }
+      })
+
+      test('should delete pathItems object which is not referenced', async () => {
+        const { result } = await runPublishPackage(
+          `document-group/${folder}/not-referenced-object`,
+          groupToOperationIdsMap,
+        )
+
+        for (const document of Array.from(result.documents.values())) {
+          const expectedResult =
+            folder === PATH_ITEMS_OPERATION_PATH
+              ? Object.keys(document.data.components.pathItems).length
+              : Object.keys(document.data.paths).length
+
+          expect(expectedResult).toEqual(document.operationIds.length)
         }
       })
 
       test('should have documents stripped of operations other than from provided group', async () => {
         const { result } = await runPublishPackage(
-          `document-group/${PATH_ITEMS_OPERATION_PATH}/define-pathitems-via-reference-object-chain`,
-          groupWithOneOperationIdsMap,
+          `document-group/${folder}/stripped-of-operations`,
+          groupToOperationIdsMap,
         )
 
         for (const document of Array.from(result.documents.values())) {
-          expect(document.data).toHaveProperty([...COMPONENTS_ITEM_1_PATH, 'post'])
-          expect(document.data).not.toHaveProperty([...COMPONENTS_ITEM_1_PATH, 'get'])
+          expect(Object.keys(document.data.paths).length).toEqual(document.operationIds.length)
         }
       })
-    })
+
+      test('should not hang up when processing for response which points to itself', async () => {
+        const { result } = await runPublishPackage(
+          `document-group/${folder}/not-hang-up-when-processing-for-response-which-points-to-itself`,
+          groupToOnePathOperationIdsMap,
+        )
+
+        expect(result.documents.size).toEqual(0)
+      })
+
+      test('should not hang up when processing cycled chain for response', async () => {
+        const pkg = LocalRegistry.openPackage(`document-group/${folder}/not-hang-up-when-processing-cycled-chain-for-response`, groupToOnePathOperationIdsMap)
+        await pkg.publish(pkg.packageId, { packageId: pkg.packageId })
+
+        const notificationFile = await loadFileAsString(
+          VERSIONS_PATH,
+          `${pkg.packageId}/v1`,
+          `${PACKAGE.NOTIFICATIONS_FILE_NAME}`,
+        )
+        expect(notificationFile).not.toBeNull()
+
+        const { notifications } = JSON.parse(notificationFile!) as PackageNotifications
+
+        const brokenRefMessages = [
+          '$ref can\'t be resolved: #/components/responses/SuccessResponse2',
+          '$ref can\'t be resolved: #/components/responses/SuccessResponse',
+        ]
+
+        brokenRefMessages.forEach((message) => {
+          const found = notifications.some(notification => notification.message === message)
+          expect(found).toBe(true)
+        })
+      })
+    }
+
+    async function runMergeOperationsCase(caseName: string): Promise<void> {
+      const { pkg, result } = await runPublishPackage(
+        `merge-operations/${caseName}`,
+        groupToOperationIdsMap,
+        { buildType: BUILD_TYPE.MERGED_SPECIFICATION, apiType: REST_API_TYPE },
+      )
+
+      const expectedResult = loadYaml(
+        (await loadFileAsString(pkg.projectsDir, pkg.packageId, EXPECTED_RESULT_FILE))!,
+      )
+
+      expect(result.merged?.data).toEqual(expectedResult)
+    }
   })
 
-  function runCommonTests(folder: DOCUMENT_GROUP_PATHS): void {
-    test('should have keep a multiple operations in one path', async () => {
+  describe('GraphQL document group', () => {
+    const graphqlOptions: Partial<BuildConfigAggregator> = {
+      buildType: TRANSFORMATION_KIND_REDUCED,
+      apiType: GRAPHQL_API_TYPE,
+      format: FILE_FORMAT_GRAPHQL,
+    }
+
+    test('operation group export should produce a valid GraphQL document', async () => {
       const { result } = await runPublishPackage(
-        `document-group/${folder}/multiple-operations-in-one-path`,
-        groupToOnePathOperationIdsMap,
+        'graphql/document-group',
+        operationIdsForGroupWithSingleOperation,
+        graphqlOptions,
       )
 
-      for (const document of Array.from(result.documents.values())) {
-        folder === PATH_ITEMS_OPERATION_PATH
-          ? expect(Object.keys(document.data.components.pathItems['pathItem1']).length).toEqual(document.operationIds.length)
-          : expect(Object.keys(document.data.paths['/path1']).length).toEqual(document.operationIds.length)
-      }
+      expect(result.documents.size).toBeGreaterThan(0)
+
+      const [document] = Array.from(result.documents.values())
+      expect(typeof document.data).toBe('string')
+
+      const schema = parseGraphQLSource(document.data as string)
+      expect(schema.graphapi).toBeDefined()
     })
 
-    test('should define operations with servers prefix', async () => {
+    test('should export only one operation from group', async () => {
       const { result } = await runPublishPackage(
-        `document-group/${folder}/define-operations-with-servers-prefix`,
-        groupToOneServerPrefixPathOperationIdsMap,
+        'graphql/document-group',
+        operationIdsForGroupWithSingleOperation,
+        graphqlOptions,
       )
 
-      for (const document of Array.from(result.documents.values())) {
-        expect(Object.keys(document.data.paths).length).toEqual(document.operationIds.length)
-      }
+      const [document] = Array.from(result.documents.values())
+      const schema = parseGraphQLSource(document.data as string)
+
+      const queries = schema.queries ?? {}
+      expect(Object.keys(queries)).toEqual(['listPets'])
+
+      expect(schema.mutations).toBeUndefined()
+      expect(schema.subscriptions).toBeUndefined()
     })
 
-    test('should delete pathItems object which is not referenced', async () => {
+    test('should export include only requested operation from group', async () => {
       const { result } = await runPublishPackage(
-        `document-group/${folder}/not-referenced-object`,
-        groupToOperationIdsMap,
+        'graphql/document-group',
+        operationIdsForGroupWithMultipleOperations,
+        graphqlOptions,
       )
 
-      for (const document of Array.from(result.documents.values())) {
-        folder === PATH_ITEMS_OPERATION_PATH
-          ? expect(Object.keys(document.data.components.pathItems).length).toEqual(document.operationIds.length)
-          : expect(Object.keys(document.data.paths).length).toEqual(document.operationIds.length)
-      }
+      expect(result.documents.size).toBeGreaterThan(0)
+
+      const [document] = Array.from(result.documents.values())
+      const schema = parseGraphQLSource(document.data as string)
+      const queries = schema.queries ?? {}
+      expect(Object.keys(queries)).toEqual(['listPets', 'listUsers'])
     })
 
-    test('should have documents stripped of operations other than from provided group', async () => {
-      const { result } = await runPublishPackage(
-        `document-group/${folder}/stripped-of-operations`,
-        groupToOperationIdsMap,
-      )
-
-      for (const document of Array.from(result.documents.values())) {
-        expect(Object.keys(document.data.paths).length).toEqual(document.operationIds.length)
-      }
+    test('should not support merged specification', async () => {
+      await expect(runPublishPackage(
+        'graphql/document-group',
+        operationIdsForGroupWithMultipleOperations,
+        {
+          buildType: TRANSFORMATION_KIND_MERGED,
+          apiType: GRAPHQL_API_TYPE,
+        },
+      )).rejects.toThrow('mergedSourceSpecifications transformation is not supported for API type: graphql')
     })
-
-    test('should not hang up when processing for response which points to itself', async () => {
-      const { result } = await runPublishPackage(
-        `document-group/${folder}/not-hang-up-when-processing-for-response-which-points-to-itself`,
-        groupToOnePathOperationIdsMap,
-      )
-
-      expect(result.documents.size).toEqual(0)
-    })
-
-    test('should not hang up when processing cycled chain for response', async () => {
-      const pkg = LocalRegistry.openPackage(`document-group/${folder}/not-hang-up-when-processing-cycled-chain-for-response`, groupToOnePathOperationIdsMap)
-      await pkg.publish(pkg.packageId, { packageId: pkg.packageId })
-
-      const notificationFile = await loadFileAsString(
-        VERSIONS_PATH,
-        `${pkg.packageId}/v1`,
-        `${PACKAGE.NOTIFICATIONS_FILE_NAME}`,
-      )
-      expect(notificationFile).not.toBeNull()
-
-      const { notifications } = JSON.parse(notificationFile!) as PackageNotifications
-
-      const brokenRefMessages = [
-        '$ref can\'t be resolved: #/components/responses/SuccessResponse2',
-        '$ref can\'t be resolved: #/components/responses/SuccessResponse',
-      ]
-
-      brokenRefMessages.forEach((message) => {
-        const found = notifications.some(notification => notification.message === message)
-        expect(found).toBe(true)
-      })
-    })
-  }
-
-  async function runMergeOperationsCase(caseName: string): Promise<void> {
-    const { pkg, result } = await runPublishPackage(
-      `merge-operations/${caseName}`,
-      groupToOperationIdsMap,
-      { buildType: BUILD_TYPE.MERGED_SPECIFICATION, apiType: REST_API_TYPE },
-    )
-
-    const expectedResult = loadYaml(
-      (await loadFileAsString(pkg.projectsDir, pkg.packageId, EXPECTED_RESULT_FILE))!,
-    )
-
-    expect(result.merged?.data).toEqual(expectedResult)
-  }
+  })
 
   async function runPublishPackage(
     packageId: string,

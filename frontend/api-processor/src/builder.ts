@@ -53,7 +53,7 @@ import {
   VersionDocument,
 } from './types/internal'
 import type { NotificationMessage, PackageConfig } from './types/package'
-import { graphqlApiBuilder, REST_API_TYPE, restApiBuilder, textApiBuilder, unknownApiBuilder } from './apitypes'
+import { graphqlApiBuilder, restApiBuilder, textApiBuilder, unknownApiBuilder } from './apitypes'
 import { filesDiff, findSharedPath, getCompositeKey, getFileExtension, getOperationsList } from './utils'
 import {
   BUILD_TYPE,
@@ -61,6 +61,7 @@ import {
   DEFAULT_VALIDATION_RULES_SEVERITY_CONFIG,
   EXPORT_BUILD_TYPES,
   MESSAGE_SEVERITY,
+  REST_API_TYPE,
   SUPPORTED_FILE_FORMATS,
   VERSION_STATUS,
 } from './consts'
@@ -81,6 +82,7 @@ import { ExportVersionStrategy } from './strategies/export-version.strategy'
 import { ExportRestDocumentStrategy } from './strategies/export-rest-document.strategy'
 import { ExportRestOperationsGroupStrategy } from './strategies/export-rest-operations-group.strategy'
 import { ResolvedPackage } from './types/external/package'
+import { ExportGraphQlOperationsGroupStrategy } from './strategies/export-graphql-operations-group.strategy'
 
 export const DEFAULT_RUN_OPTIONS: BuilderRunOptions = {
   cleanCache: false,
@@ -279,6 +281,10 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
 
     if (buildType === BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP) {
       builderStrategyContext.setStrategy(new ExportRestOperationsGroupStrategy())
+    }
+
+    if (buildType === BUILD_TYPE.EXPORT_GRAPHQL_OPERATIONS_GROUP) {
+      builderStrategyContext.setStrategy(new ExportGraphQlOperationsGroupStrategy())
     }
 
     await asyncDebugPerformance('[Builder]', async (debugCtx) => {

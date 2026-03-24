@@ -40,7 +40,7 @@ import {
   BEFORE_VALUE_NORMALIZED_PROPERTY,
   MESSAGE_SEVERITY,
   NORMALIZE_OPTIONS,
-  ORIGINS_SYMBOL,
+  ORIGINS_SYMBOL, REST_API_TYPE,
 } from '../../consts'
 import {
   BREAKING_CHANGE_TYPE,
@@ -63,7 +63,6 @@ import {
 } from '@netcracker/qubership-apihub-api-unifier'
 import { findRequiredRemovedProperties } from './rest.required'
 import { calculateHash } from '../../utils/hashes'
-import { REST_API_TYPE } from './rest.consts'
 import { OpenAPIV3 } from 'openapi-types'
 import {
   extractOpenapiVersionDiff,

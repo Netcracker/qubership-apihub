@@ -25,8 +25,6 @@ import {
 import { KeyOfConstType, ResolvedVersionDocument, ZippableDocument } from '../../types'
 import { TEXT_DOCUMENT_TYPE, TextDocumentType } from '../text'
 
-export const REST_API_TYPE = 'rest' as const
-
 export const REST_SCOPES = {
   all: 'all',
   annotation: 'annotation',

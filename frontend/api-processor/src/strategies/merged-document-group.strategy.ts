@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
+import { OpenAPIV3 } from 'openapi-types'
+import { BUILD_TYPE, FILE_FORMAT_JSON, REST_API_TYPE } from '../consts'
 import { BuilderStrategy, BuildResult, BuildTypeContexts, MergedSpecificationBuildConfig } from '../types'
 import {
   createVersionInternalDocument,
@@ -24,10 +27,6 @@ import {
   mergeOpenapiDocuments,
 } from '../utils'
 import { DocumentGroupStrategy } from './document-group.strategy'
-import { OpenAPIV3 } from 'openapi-types'
-import { REST_API_TYPE } from '../apitypes'
-import { BUILD_TYPE, FILE_FORMAT_JSON } from '../consts'
-import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 
 export class MergedDocumentGroupStrategy implements BuilderStrategy {
   async execute(config: MergedSpecificationBuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
@@ -38,7 +37,7 @@ export class MergedDocumentGroupStrategy implements BuilderStrategy {
     }
 
     if (apiType !== REST_API_TYPE) {
-      throw new Error(`API type is not supported: ${apiType}`)
+      throw new Error(`mergedSourceSpecifications transformation is not supported for API type: ${apiType}`)
     }
 
     const { documents: documentsMap } = await new DocumentGroupStrategy().execute(
