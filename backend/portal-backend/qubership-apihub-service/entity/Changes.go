@@ -322,6 +322,17 @@ func (s OperationDataEntity) GetChanges(t OperationDataEntity) map[string]interf
 	return changes
 }
 
+func (s OperationSearchTextEntity) GetChanges(t OperationSearchTextEntity) map[string]interface{} {
+	changes := make(map[string]interface{}, 0)
+	if s.SearchDataHash != t.SearchDataHash {
+		changes["SearchDataHash"] = map[string]interface{}{
+			"old": s.SearchDataHash,
+			"new": t.SearchDataHash,
+		}
+	}
+	return changes
+}
+
 func (s VersionComparisonEntity) GetChanges(t VersionComparisonEntity) map[string]interface{} {
 	changes := make(map[string]interface{}, 0)
 	if (len(s.Refs) != 0 || len(t.Refs) != 0) &&

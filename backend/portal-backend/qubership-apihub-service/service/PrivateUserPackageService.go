@@ -95,7 +95,7 @@ func (p privateUserPackageServiceImpl) CreatePrivateUserPackage(ctx context.Secu
 			// restore workspace package
 			packageEnt.DeletedAt = nil
 			packageEnt.DeletedBy = ""
-			resEnt, err := p.publishedRepo.UpdatePackage(packageEnt)
+			resEnt, err := p.publishedRepo.UpdatePackage(packageEnt, false)
 			if err != nil {
 				return nil, err
 			}

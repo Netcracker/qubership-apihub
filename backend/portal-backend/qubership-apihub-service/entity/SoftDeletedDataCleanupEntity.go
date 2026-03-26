@@ -46,6 +46,8 @@ type DeletedItemsStats struct {
 	SharedUrlInfo                   int                         `json:"sharedUrlInfo"`
 	TransformedContentData          int                         `json:"transformedContentData"`
 	VersionInternalDocument         int                         `json:"versionInternalDocument"`
+	FtsOperationSearchText          int                         `json:"ftsOperationSearchText"`
+	FtsLatestReleaseOperationData   int                         `json:"ftsLatestReleaseOperationData"`
 	TotalRecords                    int                         `json:"totalRecords"`
 }
 
@@ -94,7 +96,9 @@ func (d *DeletedItemsStats) CalculateTotal() {
 		d.SharedUrlInfo +
 		d.TransformedContentData +
 		d.PackageTransitions +
-		d.VersionInternalDocument
+		d.VersionInternalDocument +
+		d.FtsOperationSearchText +
+		d.FtsLatestReleaseOperationData
 }
 
 func (d *DeletedItemsStats) Add(other *DeletedItemsStats) {
@@ -126,5 +130,7 @@ func (d *DeletedItemsStats) Add(other *DeletedItemsStats) {
 	d.TransformedContentData += other.TransformedContentData
 	d.PackageTransitions += other.PackageTransitions
 	d.VersionInternalDocument += other.VersionInternalDocument
+	d.FtsOperationSearchText += other.FtsOperationSearchText
+	d.FtsLatestReleaseOperationData += other.FtsLatestReleaseOperationData
 	d.CalculateTotal()
 }
