@@ -57,6 +57,10 @@ const ATETPatchVersionMeta ATEventType = "patch_version_meta"
 const ATETDeleteVersion ATEventType = "delete_version"
 const ATETDeleteRevision ATEventType = "delete_revision"
 
+// document actions
+
+const ATETUpdateDocumentShareability ATEventType = "update_document_shareability"
+
 // manual groups
 
 const ATETCreateManualGroup ATEventType = "create_manual_group"
@@ -74,7 +78,7 @@ func ConvertEventTypes(input []string) []string {
 		case "new_version":
 			output = append(output, string(ATETPublishNewVersion))
 		case "package_version":
-			output = append(output, string(ATETPublishNewRevision), string(ATETPatchVersionMeta), string(ATETDeleteVersion), string(ATETDeleteRevision))
+			output = append(output, string(ATETPublishNewRevision), string(ATETPatchVersionMeta), string(ATETDeleteVersion), string(ATETDeleteRevision), string(ATETUpdateDocumentShareability))
 		case "package_management":
 			output = append(output, string(ATETPatchPackageMeta), string(ATETCreatePackage), string(ATETDeletePackage))
 		case "operations_group":

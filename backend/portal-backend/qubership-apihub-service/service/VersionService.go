@@ -55,7 +55,7 @@ type VersionService interface {
 	StartPublishFromCSV(ctx context.SecurityContext, req view.PublishFromCSVReq) (string, error)
 	GetCSVDashboardPublishStatus(publishId string) (*view.CSVDashboardPublishStatusResponse, error)
 	GetCSVDashboardPublishReport(publishId string) ([]byte, error)
-	UpdateDocumentShareability(packageId string, versionName string, slug string, shareability string) error
+	UpdateDocumentShareability(ctx context.SecurityContext, packageId string, versionName string, slug string, shareability string) error
 }
 
 func NewVersionService(favoritesRepo repository.FavoritesRepository,
@@ -2153,7 +2153,7 @@ func getCSVSeparator(record string) *rune {
 	return nil
 }
 
-func (v versionServiceImpl) UpdateDocumentShareability(packageId string, versionName string, slug string, shareability string) error {
+func (v versionServiceImpl) UpdateDocumentShareability(ctx context.SecurityContext, packageId string, versionName string, slug string, shareability string) error {
 	versionEnt, err := v.publishedRepo.GetVersion(packageId, versionName)
 	if err != nil {
 		return err
@@ -2180,5 +2180,27 @@ func (v versionServiceImpl) UpdateDocumentShareability(packageId string, version
 		}
 	}
 
-	return v.publishedRepo.UpdateDocumentShareabilityBySlug(packageId, versionEnt.Version, versionEnt.Revision, slug, shareability)
+	err = v.publishedRepo.UpdateDocumentShareabilityBySlug(packageId, versionEnt.Version, versionEnt.Revision, slug, shareability)
+	if err != nil {
+		return err
+	}
+
+	dataMap := map[string]interface{}{}
+	dataMap["version"] = versionEnt.Version
+	dataMap["revision"] = versionEnt.Revision
+	documentDisplayName := document.Title
+	if document.Metadata.GetVersion() != "" {
+		documentDisplayName += " " + document.Metadata.GetVersion()
+	}
+	dataMap["documentDisplayName"] = documentDisplayName
+	dataMap["shareabilityStatus"] = shareability
+
+	v.atService.TrackEvent(view.ActivityTrackingEvent{
+		Type:      view.ATETUpdateDocumentShareability,
+		Data:      dataMap,
+		PackageId: packageId,
+		Date:      time.Now(),
+		UserId:    ctx.GetUserId(),
+	})
+	return nil
 }

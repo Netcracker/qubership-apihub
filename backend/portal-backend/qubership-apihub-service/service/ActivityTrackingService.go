@@ -121,7 +121,8 @@ func (a activityTrackingServiceImpl) makePkgActivityResponse(ents []entity.Enric
 			ent.Type == string(view.ATETDeleteRevision) ||
 			ent.Type == string(view.ATETCreateManualGroup) ||
 			ent.Type == string(view.ATETDeleteManualGroup) ||
-			ent.Type == string(view.ATETOperationsGroupParameters) {
+			ent.Type == string(view.ATETOperationsGroupParameters) ||
+			ent.Type == string(view.ATETUpdateDocumentShareability) {
 			if ent.Data != nil && getVersion(ent.Data) != "" {
 				if ent.NotLatestRevision {
 					ent.Data["notLatestRevision"] = true

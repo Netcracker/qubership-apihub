@@ -1413,7 +1413,7 @@ func (v versionControllerImpl) UpdateDocumentShareability(w http.ResponseWriter,
 		return
 	}
 
-	err = v.versionService.UpdateDocumentShareability(packageId, versionName, slug, req.ShareabilityStatus)
+	err = v.versionService.UpdateDocumentShareability(ctx, packageId, versionName, slug, req.ShareabilityStatus)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to update document shareability", err)
 		return

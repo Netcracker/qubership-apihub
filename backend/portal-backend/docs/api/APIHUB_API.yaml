@@ -539,6 +539,7 @@ paths:
                             - create_manual_group
                             - delete_manual_group
                             - update_operations_group_parameters
+                            - update_document_shareability
                         params:
                           type: object
                           description: Events specific params
@@ -728,6 +729,33 @@ paths:
                                   example: "4@2"
                                 status:
                                   $ref: "#/components/schemas/VersionStatusEnum"
+                            - type: object
+                              title: ParamsForUpdateDocumentShareability
+                              description: params for update_document_shareability event
+                              required:
+                                - version
+                                - documentDisplayName
+                                - shareabilityStatus
+                              properties:
+                                version:
+                                  description: Package version name. The <version>@<revision> mask is used to return the revision number.
+                                  type: string
+                                  example: "22.3@2"
+                                notLatestRevision:
+                                  type: boolean
+                                  default: false
+                                  description: If parameter is not returned, then it is latest revision.
+                                documentDisplayName:
+                                  description: Title + version of the document whose shareability was updated
+                                  type: string
+                                  example: "API Specification 1.0.0"
+                                shareabilityStatus:
+                                  description: New shareability status
+                                  type: string
+                                  enum:
+                                    - shareable
+                                    - non-shareable
+                                    - unknown
         "401":
           description: Unauthorized
           content:
@@ -1447,6 +1475,7 @@ paths:
                             - create_manual_group
                             - delete_manual_group
                             - update_operations_group_parameters
+                            - update_document_shareability
                         params:
                           type: object
                           description: Events specific params
@@ -1641,6 +1670,33 @@ paths:
                                   example: "4@2"
                                 status:
                                   $ref: "#/components/schemas/VersionStatusEnum"
+                            - type: object
+                              title: ParamsForUpdateDocumentShareability
+                              description: params for update_document_shareability event
+                              required:
+                                - version
+                                - documentDisplayName
+                                - shareabilityStatus
+                              properties:
+                                version:
+                                  description: Package version name. The <version>@<revision> mask is used to return the revision number.
+                                  type: string
+                                  example: "22.3@2"
+                                notLatestRevision:
+                                  type: boolean
+                                  default: false
+                                  description: If parameter is not returned, then it is latest revision.
+                                documentDisplayName:
+                                  description: Title + version of the document whose shareability was updated
+                                  type: string
+                                  example: "API Specification 1.0.0"
+                                shareabilityStatus:
+                                  description: New shareability status
+                                  type: string
+                                  enum:
+                                    - shareable
+                                    - non-shareable
+                                    - unknown
         "301":
           description: Moved Permanently
           headers:
