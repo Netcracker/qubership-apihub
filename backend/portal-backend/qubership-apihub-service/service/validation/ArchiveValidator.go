@@ -51,11 +51,16 @@ func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
 	for _, configFile := range buildArc.PackageDocuments.Documents {
 		documentsFileIds = append(documentsFileIds, configFile.Filename)
 	}
+	searchTextFilePaths := map[string]struct{}{}
 	for _, configFile := range buildArc.PackageOperations.Operations {
 		if configFile.ApiType != string(view.GraphqlApiType) {
 			operationsFileIds = append(operationsFileIds, configFile.OperationId)
 		}
+		if configFile.Search != nil && !configFile.Search.UseOperationDataAsSearchText && configFile.Search.SearchTextFilePath != "" {
+			searchTextFilePaths[configFile.Search.SearchTextFilePath] = struct{}{}
+		}
 	}
+
 	for _, configFile := range buildArc.PackageComparisons.Comparisons {
 		if configFile.ComparisonFileId != "" {
 			comparisonsFileIds = append(comparisonsFileIds, configFile.ComparisonFileId)
@@ -68,9 +73,22 @@ func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
 		comparisonInternalDocumentsFileIds = append(comparisonInternalDocumentsFileIds, configFile.Filename)
 	}
 
+	for path := range searchTextFilePaths {
+		if _, ok := buildArc.UncategorizedFileHeaders[path]; !ok {
+			return &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.FileMissing,
+				Message: exception.FileMissingMsg,
+				Params:  map[string]interface{}{"fileIds": []string{path}, "location": "build result archive (search text files)"},
+			}
+		}
+	}
+
 	var fullUnknownList []string
 	for f := range buildArc.UncategorizedFileHeaders {
-		fullUnknownList = append(fullUnknownList, f)
+		if _, isSearchText := searchTextFilePaths[f]; !isSearchText {
+			fullUnknownList = append(fullUnknownList, f)
+		}
 	}
 
 	duplicates, missing, unknown := validateFiles(buildArc.DocumentsHeaders, documentsFileIds)

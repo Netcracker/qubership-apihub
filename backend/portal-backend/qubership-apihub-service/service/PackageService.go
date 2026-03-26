@@ -513,8 +513,10 @@ func (p packageServiceImpl) UpdatePackage(ctx context.SecurityContext, packg *vi
 			}
 		}
 	}
+	excludeFromSearchChanged := false
 	if packg.ExcludeFromSearch != nil {
 		if *packg.ExcludeFromSearch != existingEnt.ExcludeFromSearch {
+			excludeFromSearchChanged = true
 			if existingEnt.ParentId != "" {
 				parentEnt, err := p.publishedRepo.GetPackage(existingEnt.ParentId)
 				if err != nil {
@@ -547,7 +549,7 @@ func (p packageServiceImpl) UpdatePackage(ctx context.SecurityContext, packg *vi
 
 	ent := entity.MakeSimplePackageUpdateEntity(existingEnt, packg)
 
-	res, err := p.publishedRepo.UpdatePackage(ent)
+	res, err := p.publishedRepo.UpdatePackage(ent, excludeFromSearchChanged)
 	if err != nil {
 		return nil, err
 	}

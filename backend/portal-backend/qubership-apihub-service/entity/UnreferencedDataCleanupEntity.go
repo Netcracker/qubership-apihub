@@ -16,7 +16,6 @@ type UnreferencedDataCleanupEntity struct {
 
 type DeletedItemsCounts struct {
 	OperationData                  int `json:"operationData"`
-	TSRestOperationData            int `json:"tsRestOperationData"`
 	TSOperationData                int `json:"tsOperationData"`
 	FTSOperationData               int `json:"ftsOperationData"`
 	OperationGroupTemplate         int `json:"operationGroupTemplate"`
