@@ -1067,9 +1067,30 @@ func (p publishedServiceImpl) GetComparisonInternalDocumentData(hash string) ([]
 }
 
 func (p publishedServiceImpl) CheckPreviousVersionDependencyCycle(packageID string, version string, previousVersionPackageID string, prevVersion string, revision int) (bool, error) {
-	versionNodes, err := p.publishedRepo.GetAllVersionRevisionsByPackageID(packageID)
-	if err != nil {
-		return false, err
+	versionSearchQuery := entity.PublishedVersionSearchQueryEntity{
+		PackageId: packageID,
+		Limit:     100,
+		Offset:    0,
+	}
+	var packageVersions []entity.PackageVersionRevisionEntity
+	for {
+		versionEnts, err := p.publishedRepo.GetReadonlyPackageVersionsWithLimit(versionSearchQuery, false, false)
+		if err != nil {
+			return false, err
+		}
+		packageVersions = append(packageVersions, versionEnts...)
+		if len(versionEnts) < 100 {
+			break
+		}
+		versionSearchQuery.Offset += 100
+	}
+
+	return detectPreviousVersionDependencyCycleWithCurrVersion(packageVersions, version, prevVersion, revision), nil
+}
+
+func detectPreviousVersionDependencyCycleWithCurrVersion(versionNodes []entity.PackageVersionRevisionEntity, version, prevVersion string, revision int) bool {
+	if prevVersion == "" {
+		return false
 	}
 
 	type versionNodeKey struct {
@@ -1084,55 +1105,42 @@ func (p publishedServiceImpl) CheckPreviousVersionDependencyCycle(packageID stri
 		}
 	}
 
-	revisionsByVersion := make(map[string][]int, len(versionNodes))
+	latestRevision := make(map[string]int)
 	for _, n := range versionNodes {
-		revisionsByVersion[n.Version] = append(revisionsByVersion[n.Version], n.Revision)
+		latestRevision[n.Version] = n.Revision
 	}
 
-	// Simulate the new revision to be added
-	versionNodeMap[versionNodeKey{version, revision}] = prevVersion
-	revisionsByVersion[version] = append(revisionsByVersion[version], revision)
+	latestRevision[version] = revision
+	visited := make(map[string]bool)
+	stack := []string{prevVersion}
 
-	visited := make(map[versionNodeKey]bool)
-
-	type stackItem struct {
-		version  string
-		revision int
-	}
-
-	stack := make([]stackItem, 0, len(revisionsByVersion[version]))
-	// DFS from all revisions of the version being published
-	for _, rev := range revisionsByVersion[version] {
-		stack = append(stack, stackItem{version, rev})
-	}
-
-	// perform DFS
 	for len(stack) > 0 {
 		current := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
 
-		key := versionNodeKey{current.version, current.revision}
-
-		if visited[key] {
-			return true, nil
+		if current == version {
+			return true
 		}
-		visited[key] = true
 
-		prevVer, exists := versionNodeMap[key]
+		if visited[current] {
+			continue
+		}
+		visited[current] = true
+
+		latestRev, exists := latestRevision[current]
 		if !exists {
 			continue
 		}
 
-		// push all revisions of previous version to the stack
-		for _, prevRev := range revisionsByVersion[prevVer] {
-			nextKey := versionNodeKey{prevVer, prevRev}
-			if !visited[nextKey] {
-				stack = append(stack, stackItem{prevVer, prevRev})
-			}
+		prev, exists := versionNodeMap[versionNodeKey{current, latestRev}]
+		if !exists {
+			continue
 		}
+
+		stack = append(stack, prev)
 	}
 
-	return false, nil
+	return false
 }
 
 func (p publishedServiceImpl) ReplaceVersionSources(secCtx context.SecurityContext, packageId string, versionName string, zipData []byte) error {

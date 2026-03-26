@@ -98,6 +98,4 @@ type PublishedRepository interface {
 
 	UpdatePublishedSourcesArchive(packageId string, version string, revision int, newChecksum string, srcArchive *entity.PublishedSrcArchiveEntity, trackingEntity *entity.SourcesUpdateTrackingEntity) error
 	UpdatePublishedSourcesChecksum(packageId string, version string, revision int, newChecksum string, trackingEntity *entity.SourcesUpdateTrackingEntity) error
-
-	GetAllVersionRevisionsByPackageID(packageID string) ([]entity.PublishedVersionEntity, error)
 }
