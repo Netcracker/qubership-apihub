@@ -9,10 +9,18 @@ http {
     include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
 
-    # Global headers for all responses
-    add_header X-Content-Type-Options "nosniff"          always;
-    add_header X-XSS-Protection       "0"                always;
+    # Global headers for all responses.
+    #
+    # IMPORTANT: nginx `add_header` inheritance is not intuitive:
+    # if any `add_header` is defined in a `location`, headers from upper levels
+    # (http/server) are NOT inherited. Because we use location-level Cache-Control,
+    # we must repeat required security headers in those locations explicitly.
+    add_header X-Content-Type-Options "nosniff"                         always;
+    add_header X-XSS-Protection       "0"                               always;
     add_header Referrer-Policy        "strict-origin-when-cross-origin" always;
+    add_header X-Frame-Options        "DENY"                            always;
+    # Minimal-impact CSP that only forbids framing (use stronger CSP for HTML below)
+    add_header Content-Security-Policy "frame-ancestors 'none'"         always;
 
     sendfile              on;
     keepalive_timeout     1200;
@@ -72,6 +80,11 @@ http {
         location ~ ^/api/v1/(?<doc_kind>(comparison|version)-internal-documents)/(?<doc_hash>[^/]+)$ {
             add_header Cache-Control "private, max-age=31536000, immutable" always;
             add_header ETag "W/\"$doc_hash\"" always;
+            add_header X-Content-Type-Options  "nosniff"                         always;
+            add_header X-XSS-Protection        "0"                               always;
+            add_header Referrer-Policy         "strict-origin-when-cross-origin" always;
+            add_header X-Frame-Options         "DENY"                            always;
+            add_header Content-Security-Policy "frame-ancestors 'none'"          always;
 
             proxy_pass http://${APIHUB_BACKEND_ADDRESS};
         }
@@ -79,6 +92,11 @@ http {
         # API endpoints proxifying to backend. Static upstream resolution
         location ~ ^/(?:api|ws|saml|login/gitlab|login/sso|debug|playground)(?:/.*)?$ {
             add_header Cache-Control "no-store" always;
+            add_header X-Content-Type-Options  "nosniff"                         always;
+            add_header X-XSS-Protection        "0"                               always;
+            add_header Referrer-Policy         "strict-origin-when-cross-origin" always;
+            add_header X-Frame-Options         "DENY"                            always;
+            add_header Content-Security-Policy "frame-ancestors 'none'"          always;
             proxy_pass http://${APIHUB_BACKEND_ADDRESS};
         }
 
@@ -87,6 +105,11 @@ http {
             set $apihub_nc_upstream http://${APIHUB_NC_SERVICE_ADDRESS};
 
             add_header Cache-Control "no-store" always;
+            add_header X-Content-Type-Options  "nosniff"                         always;
+            add_header X-XSS-Protection        "0"                               always;
+            add_header Referrer-Policy         "strict-origin-when-cross-origin" always;
+            add_header X-Frame-Options         "DENY"                            always;
+            add_header Content-Security-Policy "frame-ancestors 'none'"          always;
             rewrite ^/apihub-nc/(.*)$ /$1 break;
 
             proxy_pass $apihub_nc_upstream;
@@ -101,6 +124,11 @@ http {
             set $api_linter_upstream http://${API_LINTER_SERVICE_ADDRESS};
 
             add_header Cache-Control "no-store" always;
+            add_header X-Content-Type-Options  "nosniff"                         always;
+            add_header X-XSS-Protection        "0"                               always;
+            add_header Referrer-Policy         "strict-origin-when-cross-origin" always;
+            add_header X-Frame-Options         "DENY"                            always;
+            add_header Content-Security-Policy "frame-ancestors 'none'"          always;
             rewrite ^/api-linter/(.*)$ /$1 break;
 
             proxy_pass $api_linter_upstream;
@@ -115,6 +143,11 @@ http {
             set $agents_backend_upstream http://${APIHUB_AGENTS_BACKEND_ADDRESS};
 
             add_header Cache-Control "no-store" always;
+            add_header X-Content-Type-Options  "nosniff"                         always;
+            add_header X-XSS-Protection        "0"                               always;
+            add_header Referrer-Policy         "strict-origin-when-cross-origin" always;
+            add_header X-Frame-Options         "DENY"                            always;
+            add_header Content-Security-Policy "frame-ancestors 'none'"          always;
             rewrite ^/agents-backend/(.*)$ /$1 break;
 
             proxy_pass $agents_backend_upstream;
@@ -127,6 +160,11 @@ http {
         location ~ ^/(portal|agents)/version\.json$ {
             root /usr/share/nginx/html;
             add_header Cache-Control "no-store" always;
+            add_header X-Content-Type-Options  "nosniff"                         always;
+            add_header X-XSS-Protection        "0"                               always;
+            add_header Referrer-Policy         "strict-origin-when-cross-origin" always;
+            add_header X-Frame-Options         "DENY"                            always;
+            add_header Content-Security-Policy "frame-ancestors 'none'"          always;
             try_files $uri =404;
         }
 
@@ -136,10 +174,18 @@ http {
             add_header Strict-Transport-Security "max-age=15768000; includeSubdomains; preload;" always;
             add_header X-Frame-Options           "DENY" always;
             add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'" always;
+            add_header X-Content-Type-Options    "nosniff"                         always;
+            add_header X-XSS-Protection          "0"                               always;
+            add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
         }
 
         location ~* ^/agents/.*\.(?:js|css|woff2?|ttf|svg|png)$ {
             add_header Cache-Control "public, max-age=604800, immutable";
+            add_header X-Content-Type-Options  "nosniff"                         always;
+            add_header X-XSS-Protection        "0"                               always;
+            add_header Referrer-Policy         "strict-origin-when-cross-origin" always;
+            add_header X-Frame-Options         "DENY"                            always;
+            add_header Content-Security-Policy "frame-ancestors 'none'"          always;
             root /usr/share/nginx/html;
         }
 
@@ -153,10 +199,18 @@ http {
             add_header Strict-Transport-Security "max-age=15768000; includeSubdomains; preload;" always;
             add_header X-Frame-Options           "DENY"                                          always;
             add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'" always;
+            add_header X-Content-Type-Options    "nosniff"                         always;
+            add_header X-XSS-Protection          "0"                               always;
+            add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
         }
 
         location ~* ^/portal/.*\.(?:js|css|woff2?|ttf|svg|png)$ {
             add_header Cache-Control "public, max-age=604800, immutable";
+            add_header X-Content-Type-Options  "nosniff"                         always;
+            add_header X-XSS-Protection        "0"                               always;
+            add_header Referrer-Policy         "strict-origin-when-cross-origin" always;
+            add_header X-Frame-Options         "DENY"                            always;
+            add_header Content-Security-Policy "frame-ancestors 'none'"          always;
             root /usr/share/nginx/html/portal;
         }
 
@@ -170,10 +224,18 @@ http {
             add_header Strict-Transport-Security "max-age=15768000; includeSubdomains; preload;" always;
             add_header X-Frame-Options           "DENY"                                          always;
             add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'" always;
+            add_header X-Content-Type-Options    "nosniff"                         always;
+            add_header X-XSS-Protection          "0"                               always;
+            add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
         }
 
         location ~* \.(?:js|css|woff2?|ttf|svg|png)$ {
             add_header Cache-Control "public, max-age=604800, immutable";
+            add_header X-Content-Type-Options  "nosniff"                         always;
+            add_header X-XSS-Protection        "0"                               always;
+            add_header Referrer-Policy         "strict-origin-when-cross-origin" always;
+            add_header X-Frame-Options         "DENY"                            always;
+            add_header Content-Security-Policy "frame-ancestors 'none'"          always;
             root /usr/share/nginx/html/portal;
         }
 
@@ -187,6 +249,9 @@ http {
             add_header Strict-Transport-Security "max-age=15768000; includeSubdomains; preload;" always;
             add_header X-Frame-Options           "DENY"                                          always;
             add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'" always;
+            add_header X-Content-Type-Options    "nosniff"                         always;
+            add_header X-XSS-Protection          "0"                               always;
+            add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
         }
 
         # Health-checks
