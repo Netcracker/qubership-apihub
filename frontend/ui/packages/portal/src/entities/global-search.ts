@@ -20,7 +20,11 @@ import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entit
 import type { MethodType } from '@netcracker/qubership-apihub-ui-shared/entities/method-types'
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  API_TYPE_ASYNCAPI,
+  API_TYPE_GRAPHQL,
+  API_TYPE_REST,
+} from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 export type SearchResults = Readonly<{
   packages: PackageSearchResult[]
@@ -180,11 +184,13 @@ export type SearchCriteria = {
   packageIds?: Key[]
   versions?: Key[]
   statuses?: VersionStatus[]
+  status?: VersionStatus
   creationDateInterval?: {
     startDate: string
     endDate: string
   }
   operationParams?: SearchRestParams | SearchGQLParams
+  apiType?: ApiType
 }
 
 export type SearchRestParams = Partial<{

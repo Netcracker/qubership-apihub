@@ -16,7 +16,7 @@
 
 import type { FC } from 'react'
 import { memo, useState } from 'react'
-import { Box, Drawer } from '@mui/material'
+import { Box, Divider, Drawer, Typography } from '@mui/material'
 import { useEvent } from 'react-use'
 import { SearchFilters } from './SearchFilters'
 import { SearchResults } from './SearchResults'
@@ -48,10 +48,12 @@ export const GlobalSearchPanel: FC = memo(() => {
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'row', overflow: 'hidden', height: '100%' }}
            data-testid="GlobalSearchPanel">
         <GlobalSearchTextProvider>
-          <Box sx={{ p: 2, width: '330px' }}>
+          <Box sx={{ width: '330px' }}>
             <SearchFilters enabledFilters={open}/>
           </Box>
-          <Box sx={{ pl: 1, width: '500px' }}>
+          <Divider sx={{ mt: -2, mb: -2 }} orientation="vertical"/>
+          <Box sx={{ pl: 3, width: '500px' }}>
+            <Typography sx={{ mb: 2, mt: 1 }} variant="h3">Global Search</Typography>
             <SearchResults/>
           </Box>
         </GlobalSearchTextProvider>
