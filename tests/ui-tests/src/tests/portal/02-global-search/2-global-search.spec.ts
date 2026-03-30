@@ -1,6 +1,15 @@
 import { test } from '@fixtures'
 import { expect } from '@services/expect-decorator'
-import { ARCHIVED_VERSION_STATUS, DRAFT_VERSION_STATUS, GRAPHQL_API_TYPE_TITLE, GRAPHQL_ICON, OPENAPI_ICON, RELEASE_VERSION_STATUS, REST_API_TYPE_TITLE, RESTAPI_ICON } from '@shared/entities'
+import {
+  ARCHIVED_VERSION_STATUS,
+  DRAFT_VERSION_STATUS,
+  GRAPHQL_API_TYPE_TITLE,
+  GRAPHQL_ICON,
+  OPENAPI_ICON,
+  RELEASE_VERSION_STATUS,
+  REST_API_TYPE_TITLE,
+  RESTAPI_ICON,
+} from '@shared/entities'
 import { PortalPage } from '@portal/pages/PortalPage'
 import { SEARCH_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
 import {
@@ -8,7 +17,6 @@ import {
   GS_LABEL,
   GS_OPERATION_GRAPHQL,
   GS_OPERATION_REST,
-  GS_OPERATION_REST_REQUEST,
   P_WS_DSH_COMPARISON1_R,
   P_WS_MAIN_R,
   PK11,
@@ -29,6 +37,7 @@ test.describe('02 Global Search', () => {
   const filtersConfig: FiltersConfig = {
     workspace: `${testWorkspace.name} ${testWorkspace.packageId}`,
     group: `${testGroup.name} ${testGroup.packageId}`,
+    status: 'draft',
   }
   const filtersConfigRest: FiltersConfig = {
     ...filtersConfig,
@@ -157,6 +166,8 @@ test.describe('02 Global Search', () => {
 
         await globalSearchPanel.filters.acVersionStatus.hover()
         await globalSearchPanel.filters.acVersionStatus.clearBtn.click()
+        await globalSearchPanel.filters.acVersionStatus.click()
+        await globalSearchPanel.filters.acVersionStatus.getListItem(filtersConfig.status).click()
 
         await globalSearchPanel.searchbar.fill(GS_OPERATION_REST.title)
 
@@ -277,54 +288,26 @@ test.describe('02 Global Search', () => {
         await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
       })
 
-      await test.step(`Add "${RELEASE_VERSION_STATUS}" status`, async () => {
+      await test.step(`Set "${RELEASE_VERSION_STATUS}" status`, async () => {
         await globalSearchPanel.filters.acVersionStatus.click()
         await globalSearchPanel.filters.acVersionStatus.releaseItm.click()
         await portalPage.waitForTimeout(SEARCH_TIMEOUT.short)
 
-        await expect(globalSearchPanel.filters.acVersionStatus.chipDraft).toBeVisible()
-        await expect(globalSearchPanel.filters.acVersionStatus.chipRelease).toBeVisible()
-        await expect(globalSearchPanel.filters.acVersionStatus.chipArchived).not.toBeVisible()
-        await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
-      })
-
-      await test.step(`Add "${ARCHIVED_VERSION_STATUS}" status`, async () => {
-        await globalSearchPanel.filters.acVersionStatus.click()
-        await globalSearchPanel.filters.acVersionStatus.archivedItm.click()
-        await portalPage.waitForTimeout(SEARCH_TIMEOUT.short)
-
-        await expect(globalSearchPanel.filters.acVersionStatus.chipDraft).toBeVisible()
-        await expect(globalSearchPanel.filters.acVersionStatus.chipRelease).toBeVisible()
-        await expect(globalSearchPanel.filters.acVersionStatus.chipArchived).toBeVisible()
-        await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
-      })
-
-      await test.step(`Remove "${DRAFT_VERSION_STATUS}" status`, async () => {
-        await globalSearchPanel.filters.acVersionStatus.chipDraft.remove()
-        await portalPage.waitForTimeout(SEARCH_TIMEOUT.short)
-
         await expect(globalSearchPanel.filters.acVersionStatus.chipDraft).not.toBeVisible()
         await expect(globalSearchPanel.filters.acVersionStatus.chipRelease).toBeVisible()
-        await expect(globalSearchPanel.filters.acVersionStatus.chipArchived).toBeVisible()
-        await expect(globalSearchPanel.searchResults.phNoOperations).toBeVisible()
+        await expect(globalSearchPanel.filters.acVersionStatus.chipArchived).not.toBeVisible()
+        await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).not.toBeVisible()
       })
 
-      await test.step(`Remove "${RELEASE_VERSION_STATUS}" status`, async () => {
-        await globalSearchPanel.filters.acVersionStatus.chipRelease.remove()
+      await test.step(`Set "${ARCHIVED_VERSION_STATUS}" status`, async () => {
+        await globalSearchPanel.filters.acVersionStatus.click()
+        await globalSearchPanel.filters.acVersionStatus.archivedItm.click()
         await portalPage.waitForTimeout(SEARCH_TIMEOUT.short)
 
         await expect(globalSearchPanel.filters.acVersionStatus.chipDraft).not.toBeVisible()
         await expect(globalSearchPanel.filters.acVersionStatus.chipRelease).not.toBeVisible()
         await expect(globalSearchPanel.filters.acVersionStatus.chipArchived).toBeVisible()
-        await expect(globalSearchPanel.searchResults.phNoOperations).toBeVisible()
-      })
-
-      await test.step(`Remove "${ARCHIVED_VERSION_STATUS}" status`, async () => {
-        await globalSearchPanel.filters.acVersionStatus.chipArchived.remove()
-        await portalPage.waitForTimeout(SEARCH_TIMEOUT.short)
-
-        await expect(globalSearchPanel.filters.acVersionStatus).toBeEmpty()
-        await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
+        await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).not.toBeVisible()
       })
     })
 
@@ -386,19 +369,6 @@ test.describe('02 Global Search', () => {
 
         await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
         //! await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_GRAPHQL)).toBeVisible() //Issue GraphQL checks temporarily disabled
-        await expect.soft(globalSearchPanel.filters.chxSearchOnly).toBeEnabled()
-        await expect.soft(globalSearchPanel.filters.acApiType).toBeDisabled()
-      })
-
-      await test.step('Check "Search only" checkbox', async () => {
-        await globalSearchPanel.filters.chxSearchOnly.click()
-
-        await expect.soft(globalSearchPanel.filters.acApiType).toHaveValue(globalSearchPanel.filters.acApiType.restApiItm.componentName!)
-        await expect.soft(globalSearchPanel.filters.acScope).toBeEnabled()
-        await expect.soft(globalSearchPanel.filters.acDetailedScope).toBeEnabled()
-        await expect.soft(globalSearchPanel.filters.acMethods).toBeEnabled()
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_GRAPHQL)).not.toBeVisible()
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
       })
 
       await test.step('Select "GraphQL" API type', async () => {
@@ -410,17 +380,9 @@ test.describe('02 Global Search', () => {
         await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).not.toBeVisible()
       })
 
-      await test.step('Uncheck "Search only" checkbox', async () => {
-        await globalSearchPanel.filters.chxSearchOnly.click()
-
-        await expect.soft(globalSearchPanel.filters.chxSearchOnly).toBeEnabled()
-        await expect.soft(globalSearchPanel.filters.acApiType).toBeDisabled()
-        //! await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_GRAPHQL)).toBeVisible() //Issue GraphQL checks temporarily disabled
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
-      })
-
       await test.step('Switch tabs', async () => {
-        await globalSearchPanel.filters.chxSearchOnly.click()
+        await globalSearchPanel.filters.acApiType.click()
+        await globalSearchPanel.filters.acApiType.getListItem(REST_API_TYPE_TITLE).click()
 
         await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_GRAPHQL)).not.toBeVisible()
         await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
@@ -428,171 +390,10 @@ test.describe('02 Global Search', () => {
         await globalSearchPanel.tabBtnDocuments.click()
 
         await expect.soft(globalSearchPanel.searchResults.phNoDocuments).toBeVisible()
-        await expect.soft(globalSearchPanel.filters.chxSearchOnly).toBeDisabled()
-        await expect.soft(globalSearchPanel.filters.acApiType).toBeDisabled()
 
         await globalSearchPanel.tabBtnPackages.click()
 
         await expect.soft(globalSearchPanel.searchResults.phNoPackages).toBeVisible()
-        await expect.soft(globalSearchPanel.filters.chxSearchOnly).toBeDisabled()
-        await expect.soft(globalSearchPanel.filters.acApiType).toBeDisabled()
-      })
-    })
-
-  test('[P-GSOFIR-1] Checking "Search scope" filter for REST',
-    {
-      tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-6226` },
-    },
-    async ({ sysadminPage: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { globalSearchPanel } = portalPage
-
-      await test.step('Setup', async () => {
-        await portalPage.goto()
-        await portalPage.header.globalSearchBtn.click()
-        await globalSearchPanel.setFilters(filtersConfigRest)
-      })
-
-      await test.step('Set "response" scope', async () => {
-        await globalSearchPanel.filters.acScope.click()
-        await globalSearchPanel.filters.acScope.responseItm.click()
-        await globalSearchPanel.searchbar.fill(GS_OPERATION_REST.responseDescriptionKey)
-
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
-
-        await globalSearchPanel.searchbar.fill(GS_OPERATION_REST_REQUEST.requestDescriptionKey)
-
-        await expect.soft(globalSearchPanel.searchResults.phNoOperations).toBeVisible()
-      })
-
-      await test.step('Add "request" scope', async () => {
-        await globalSearchPanel.filters.acScope.click()
-        await globalSearchPanel.filters.acScope.requestItm.click()
-
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST_REQUEST)).toBeVisible()
-      })
-
-      await test.step('Remove scopes', async () => {
-        await globalSearchPanel.filters.acScope.chipRequest.remove()
-
-        await expect.soft(globalSearchPanel.searchResults.phNoOperations).toBeVisible()
-
-        await globalSearchPanel.filters.acScope.chipResponse.remove()
-
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST_REQUEST)).toBeVisible()
-      })
-    })
-
-  test('[P-GSOFIR-2] Checking "Detailed search scope" filter for REST',
-    {
-      tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-6227` },
-    },
-    async ({ sysadminPage: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { globalSearchPanel } = portalPage
-
-      await test.step('Setup', async () => {
-        await portalPage.goto()
-        await portalPage.header.globalSearchBtn.click()
-        await globalSearchPanel.setFilters(filtersConfigRest)
-      })
-
-      await test.step('Set "properties" scope', async () => {
-        await globalSearchPanel.filters.acDetailedScope.click()
-        await globalSearchPanel.filters.acDetailedScope.propertiesItm.click()
-        await globalSearchPanel.searchbar.fill(GS_OPERATION_REST.property)
-
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
-
-        await globalSearchPanel.searchbar.fill(GS_OPERATION_REST.descriptionKey)
-
-        await expect.soft(globalSearchPanel.searchResults.phNoOperations).toBeVisible()
-      })
-
-      await test.step('Add "annotation" scope', async () => {
-        await globalSearchPanel.filters.acDetailedScope.click()
-        await globalSearchPanel.filters.acDetailedScope.annotationItm.click()
-
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
-
-        await globalSearchPanel.searchbar.fill(GS_OPERATION_REST.exampleProperty)
-
-        await expect.soft(globalSearchPanel.searchResults.phNoOperations).toBeVisible()
-      })
-
-      await test.step('Add "examples" scope', async () => {
-        await globalSearchPanel.filters.acDetailedScope.click()
-        await globalSearchPanel.filters.acDetailedScope.examplesItm.click()
-
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
-      })
-
-      await test.step('Remove scopes', async () => {
-        await globalSearchPanel.filters.acDetailedScope.examplesChip.remove()
-        await globalSearchPanel.filters.acDetailedScope.annotationChip.remove()
-
-        await expect.soft(globalSearchPanel.searchResults.phNoOperations).toBeVisible()
-
-        await globalSearchPanel.filters.acDetailedScope.propertiesChip.remove()
-
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
-      })
-    })
-
-  test('[P-GSOFIR-3] Checking "Methods" filter for REST',
-    {
-      tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-6228` },
-    },
-    async ({ sysadminPage: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { globalSearchPanel } = portalPage
-
-      await test.step('Setup', async () => {
-        await portalPage.goto()
-        await portalPage.header.globalSearchBtn.click()
-        await globalSearchPanel.setFilters(filtersConfigRest)
-      })
-
-      await test.step('Set "get" method', async () => {
-        await globalSearchPanel.filters.acMethods.click()
-        await globalSearchPanel.filters.acMethods.getItm.click()
-        await globalSearchPanel.searchbar.fill(GS_OPERATION_REST.title)
-
-        await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
-      })
-
-      await test.step('Add other methods', async () => {
-        await globalSearchPanel.filters.acMethods.click()
-        await globalSearchPanel.filters.acMethods.postItm.click()
-        await globalSearchPanel.filters.acMethods.click()
-        await globalSearchPanel.filters.acMethods.putItm.click()
-        await globalSearchPanel.filters.acMethods.click()
-        await globalSearchPanel.filters.acMethods.patchItm.click()
-        await globalSearchPanel.filters.acMethods.click()
-        await globalSearchPanel.filters.acMethods.deleteItm.click()
-
-        await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
-      })
-
-      await test.step('Remove "get" method', async () => {
-        await globalSearchPanel.filters.acMethods.chipGet.remove()
-
-        await expect(globalSearchPanel.searchResults.phNoOperations).toBeVisible()
-      })
-
-      await test.step('Remove other methods', async () => {
-        await globalSearchPanel.filters.acMethods.chipPost.remove()
-        await globalSearchPanel.filters.acMethods.chipPut.remove()
-        await globalSearchPanel.filters.acMethods.chipPatch.remove()
-        await globalSearchPanel.filters.acMethods.chipDelete.remove()
-
-        await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
       })
     })
 
@@ -625,12 +426,6 @@ test.describe('02 Global Search', () => {
         // await globalSearchPanel.filters.datePicker.dateCell(today).click()
         // await globalSearchPanel.filters.datePicker.dateCell(today).click()
         // await globalSearchPanel.tabBtnOperations.click() // for closing date picker
-        await globalSearchPanel.filters.acScope.click()
-        await globalSearchPanel.filters.acScope.responseItm.click()
-        await globalSearchPanel.filters.acDetailedScope.click()
-        await globalSearchPanel.filters.acDetailedScope.propertiesItm.click()
-        await globalSearchPanel.filters.acMethods.click()
-        await globalSearchPanel.filters.acMethods.getItm.click()
         await globalSearchPanel.searchbar.fill(GS_OPERATION_REST.property)
 
         await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
@@ -641,9 +436,6 @@ test.describe('02 Global Search', () => {
         await expect.soft(globalSearchPanel.filters.acVersionStatus.chipDraft).toBeVisible()
         await expect.soft(globalSearchPanel.filters.datePicker).not.toBeEmpty()
         await expect.soft(globalSearchPanel.filters.acApiType).not.toBeEmpty()
-        await expect.soft(globalSearchPanel.filters.acScope.chipResponse).toBeVisible()
-        await expect.soft(globalSearchPanel.filters.acDetailedScope.propertiesChip).toBeVisible()
-        await expect.soft(globalSearchPanel.filters.acMethods.chipGet).toBeVisible()
       })
 
       await test.step('Reset filters', async () => {
@@ -654,121 +446,9 @@ test.describe('02 Global Search', () => {
         await expect.soft(globalSearchPanel.filters.acGroup).toBeEmpty()
         await expect.soft(globalSearchPanel.filters.acPackage).toBeEmpty()
         await expect.soft(globalSearchPanel.filters.acVersion).toBeEmpty()
-        await expect.soft(globalSearchPanel.filters.acVersionStatus.chipDraft).not.toBeVisible()
+        await expect.soft(globalSearchPanel.filters.acVersionStatus.chipRelease).toBeVisible()
         // await expect.soft(globalSearchPanel.filters.datePicker).toBeEmpty()
-        await expect.soft(globalSearchPanel.filters.acApiType).toBeEmpty()
-        await expect.soft(globalSearchPanel.filters.acScope.chipResponse).not.toBeVisible()
-        await expect.soft(globalSearchPanel.filters.acDetailedScope.propertiesChip).not.toBeVisible()
-        await expect.soft(globalSearchPanel.filters.acMethods.chipGet).not.toBeVisible()
-      })
-    })
-
-  test.skip('[P-GSOFIG-1] Checking "Search scope" filter for GraphQL',
-    {
-      tag: '@smoke',
-      annotation: [
-        { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-6229` },
-        { type: 'Issue', description: `${TICKET_BASE_URL}TestCase-B-826` },
-        { type: 'Issue', description: 'GraphQL checks temporarily disabled' },
-      ],
-    },
-    async ({ sysadminPage: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { globalSearchPanel } = portalPage
-
-      await test.step('Setup', async () => {
-        await portalPage.goto()
-        await portalPage.header.globalSearchBtn.click()
-        await globalSearchPanel.setFilters(filtersConfigGraphql)
-      })
-
-      await test.step('Set "argument" scope', async () => {
-        await globalSearchPanel.filters.acScope.click()
-        await globalSearchPanel.filters.acScope.argumentItm.click()
-        await globalSearchPanel.searchbar.fill(GS_OPERATION_GRAPHQL.argument)
-
-        // await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_GRAPHQL)).toBeVisible() //TODO TestCase-B-826
-
-        await globalSearchPanel.searchbar.fill(GS_OPERATION_GRAPHQL.property)
-
-        await expect.soft(globalSearchPanel.searchResults.phNoOperations).toBeVisible()
-      })
-
-      await test.step('Add "property" scope', async () => {
-        await globalSearchPanel.filters.acScope.click()
-        await globalSearchPanel.filters.acScope.propertyItm.click()
-
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_GRAPHQL)).toBeVisible()
-
-        await globalSearchPanel.searchbar.fill(GS_OPERATION_GRAPHQL.descriptionKey)
-
-        await expect.soft(globalSearchPanel.searchResults.phNoOperations).toBeVisible()
-      })
-
-      await test.step('Add "annotation" scope', async () => {
-        await globalSearchPanel.filters.acScope.click()
-        await globalSearchPanel.filters.acScope.annotationItm.click()
-
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_GRAPHQL)).toBeVisible()
-      })
-
-      await test.step('Remove scopes', async () => {
-        await globalSearchPanel.filters.acScope.chipProperty.remove()
-        await globalSearchPanel.filters.acScope.chipAnnotation.remove()
-
-        await expect.soft(globalSearchPanel.searchResults.phNoOperations).toBeVisible()
-
-        await globalSearchPanel.filters.acScope.chipArgument.remove()
-
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_GRAPHQL)).toBeVisible()
-      })
-    })
-
-  test('[P-GSOFIG-2] Checking "Operation type" filter for GraphQL',
-    {
-      tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-6230` },
-    },
-    async ({ sysadminPage: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { globalSearchPanel } = portalPage
-
-      await test.step('Setup', async () => {
-        await portalPage.goto()
-        await portalPage.header.globalSearchBtn.click()
-        await globalSearchPanel.setFilters(filtersConfigGraphql)
-      })
-
-      await test.step('Set "query" type', async () => {
-        await globalSearchPanel.filters.acOperationTypes.click()
-        await globalSearchPanel.filters.acOperationTypes.queryItm.click()
-        await globalSearchPanel.searchbar.fill(GS_OPERATION_GRAPHQL.title)
-
-        await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_GRAPHQL)).toBeVisible()
-      })
-
-      await test.step('Add other types', async () => {
-        await globalSearchPanel.filters.acOperationTypes.click()
-        await globalSearchPanel.filters.acOperationTypes.mutationItm.click()
-        await globalSearchPanel.filters.acOperationTypes.click()
-        await globalSearchPanel.filters.acOperationTypes.subscriptionItm.click()
-
-        await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_GRAPHQL)).toBeVisible()
-      })
-
-      await test.step('Remove "query" type', async () => {
-        await globalSearchPanel.filters.acOperationTypes.chipQuery.remove()
-
-        await expect(globalSearchPanel.searchResults.phNoOperations).toBeVisible()
-      })
-
-      await test.step('Remove other types', async () => {
-        await globalSearchPanel.filters.acOperationTypes.chipMutation.remove()
-        await globalSearchPanel.filters.acOperationTypes.chipSubscription.remove()
-
-        await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_GRAPHQL)).toBeVisible()
+        await expect.soft(globalSearchPanel.filters.acApiType).not.toBeEmpty()
       })
     })
 

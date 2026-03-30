@@ -21,12 +21,15 @@ export class GlobalSearchPanel extends BaseComponent {
     const filters = new GsFilters(this.mainLocator)
     await filters.acVersionStatus.hover()
     await filters.acVersionStatus.clearBtn.click()
+    if (config.status) {
+      await filters.acVersionStatus.click()
+      await filters.acVersionStatus.getListItem(config.status).click()
+    }
     await filters.acWorkspace.click()
     await filters.acWorkspace.getListItem(config.workspace).click()
     await filters.acGroup.click()
     await filters.acGroup.getListItem(config.group).click()
     if (config.apiType) {
-      await filters.chxSearchOnly.click()
       await filters.acApiType.click()
       await filters.acApiType.getListItem(config.apiType).click()
     }
@@ -37,4 +40,5 @@ export type FiltersConfig = {
   workspace: string
   group: string
   apiType?: ApiTypeTitles
+  status?: string
 }
