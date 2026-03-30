@@ -476,14 +476,6 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
               data-testid={`${PUBLISH_STATUSES.get(option)}Chip`}
             />
           </ListItem>}
-          renderTags={(value, getTagProps) => (
-            value.map((option, index) => <CustomChip
-              {...getTagProps({ index })}
-              key={index}
-              value={option}
-              data-testid={`${PUBLISH_STATUSES.get(option)}Chip`}
-            />)
-          )}
           onChange={(_, status) => setValue('status', status as VersionStatus)}
           renderInput={(params) =>
             <TextField
@@ -507,7 +499,12 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
                     WebkitTextFillColor: 'transparent',
                   },
                 },
-                startAdornment: status ? <CustomChip sx={{ height: 16, mb: 1 }} value={status}/> : null,
+                startAdornment: status
+                  ? <CustomChip
+                    sx={{ height: 16, mb: 1 }}
+                    value={status}
+                    data-testid={`${PUBLISH_STATUSES.get(status)}Chip`}/>
+                  : null,
               }}
             />
           }
