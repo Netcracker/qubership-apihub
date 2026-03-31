@@ -105,6 +105,9 @@ const PublishedPackageVersionNotFoundMsg = "Published version $version not found
 const PublishedVersionNotFound = "50"
 const PublishedVersionNotFoundMsg = "Published version $version not found"
 
+const InvalidPreviousVersion = "51"
+const InvalidPreviousVersionMsg = "Previous version $version cannot be assigned as it creates a dependency cycle with current version for package $packageId"
+
 const SharedIdIsIncorrect = "56"
 const SharedIdIsIncorrectMsg = "Shared ID is incorrect: $sharedId"
 

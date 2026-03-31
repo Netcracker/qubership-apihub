@@ -36,7 +36,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 
-	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer"
+	exposer "github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
