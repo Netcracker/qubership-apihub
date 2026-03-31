@@ -122,7 +122,6 @@ paths:
         - BearerAuth: []
         - CookieAuth: []
         - ApiKeyAuth: []
-        - PersonalAccessToken: []
       parameters:
         - $ref: '#/components/parameters/AgentId'
       responses:
@@ -160,7 +159,6 @@ paths:
         - BearerAuth: []
         - CookieAuth: []
         - ApiKeyAuth: []
-        - PersonalAccessToken: []
       parameters:
         - $ref: '#/components/parameters/AgentId'
       responses:
@@ -198,7 +196,6 @@ paths:
         - BearerAuth: []
         - CookieAuth: []
         - ApiKeyAuth: []
-        - PersonalAccessToken: []
       parameters:
         - $ref: '#/components/parameters/AgentId'
         - $ref: '#/components/parameters/Namespace'
@@ -243,7 +240,6 @@ paths:
         - BearerAuth: []
         - CookieAuth: []
         - ApiKeyAuth: []
-        - PersonalAccessToken: []
       parameters:
         - $ref: '#/components/parameters/AgentId'
         - $ref: '#/components/parameters/Namespace'
@@ -268,7 +264,6 @@ paths:
         - BearerAuth: []
         - CookieAuth: []
         - ApiKeyAuth: []
-        - PersonalAccessToken: []
       parameters:
         - $ref: '#/components/parameters/AgentId'
         - $ref: '#/components/parameters/Namespace'
@@ -372,7 +367,6 @@ paths:
         - BearerAuth: []
         - CookieAuth: []
         - ApiKeyAuth: []
-        - PersonalAccessToken: []
       parameters:
         - $ref: '#/components/parameters/AgentId'
         - $ref: '#/components/parameters/Namespace'
@@ -504,7 +498,6 @@ paths:
         - BearerAuth: []
         - CookieAuth: []
         - ApiKeyAuth: []
-        - PersonalAccessToken: []
       parameters:
         - $ref: '#/components/parameters/AgentId'
         - $ref: '#/components/parameters/Namespace'
@@ -542,7 +535,6 @@ paths:
         - BearerAuth: []
         - CookieAuth: []
         - ApiKeyAuth: []
-        - PersonalAccessToken: []
       parameters:
         - $ref: '#/components/parameters/AgentId'
         - $ref: '#/components/parameters/Namespace'
@@ -710,7 +702,6 @@ paths:
         - BearerAuth: []
         - CookieAuth: []
         - ApiKeyAuth: []
-        - PersonalAccessToken: []
       parameters:
         - $ref: '#/components/parameters/AgentId'
         - $ref: '#/components/parameters/Namespace'
@@ -762,7 +753,6 @@ paths:
         - BearerAuth: []
         - CookieAuth: []
         - ApiKeyAuth: []
-        - PersonalAccessToken: []
       parameters:
         - $ref: '#/components/parameters/AgentId'
         - $ref: '#/components/parameters/Namespace'
