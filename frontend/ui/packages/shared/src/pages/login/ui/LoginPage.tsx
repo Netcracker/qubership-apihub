@@ -23,6 +23,7 @@ import { useUser } from '../../../hooks/authorization'
 import { useSystemConfiguration } from '../../../hooks/authorization/useSystemConfiguration'
 import { isExternalIdentityProvider, isInternalIdentityProvider } from '../../../types/system-configuration'
 import { SEARCH_PARAM_NO_AUTO_LOGIN, SEARCH_PARAM_REDIRECT_URI } from '../../../utils/constants'
+import { isSameOriginUrl } from '../../../utils/redirects'
 import { ExternalAuthControls } from './ExternalAuthControls'
 import { InternalAuthForm } from './InternalAuthForm'
 
@@ -55,7 +56,8 @@ export const LoginPage: FC<LoginPageComponentProps> = memo(({ applicationName })
 
   useEffect(() => {
     if (user) {
-      location.replace(redirectUri ?? location.origin)
+      const safeRedirectUri = redirectUri && isSameOriginUrl(redirectUri) ? redirectUri : location.origin
+      location.replace(safeRedirectUri)
     }
   }, [user, redirectUri])
 
