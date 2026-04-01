@@ -195,6 +195,7 @@ func (a *BuildResultToEntitiesReader) ReadOperationsToEntities() ([]*entity.Oper
 	operationDataEntities := make([]*entity.OperationDataEntity, 0)
 	operationSearchTexts := make([]*entity.OperationSearchTextEntity, 0)
 	operationsInfo := make(map[string]entity.OperationInfo)
+	dataHashToOperationId := make(map[string]string)
 	operationsExternalMetadataMap := a.calculateOperationsExternalMetadataMap()
 	for _, operation := range a.PackageOperations.Operations {
 		var fileData []byte
@@ -213,6 +214,17 @@ func (a *BuildResultToEntitiesReader) ReadOperationsToEntities() ([]*entity.Oper
 				}
 			}
 			hash := utils.GetEncodedXXHash128(fileData)
+			if existingOpId, exists := dataHashToOperationId[hash]; exists {
+				return nil, nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.DuplicateOperationData,
+					Message: exception.DuplicateOperationDataMsg,
+					Params: map[string]interface{}{
+						"operationIds": []string{existingOpId, operation.OperationId},
+					},
+				}
+			}
+			dataHashToOperationId[hash] = operation.OperationId
 			dataHash = &hash
 		} else if operation.ApiType == string(view.GraphqlApiType) {
 			dataHash = nil
