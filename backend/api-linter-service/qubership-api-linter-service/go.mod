@@ -1,6 +1,6 @@
 module github.com/Netcracker/qubership-api-linter-service
 
-go 1.25.0
+go 1.26.1
 
 require (
 	github.com/AsaiYusuke/jsonpath/v2 v2.2.0
