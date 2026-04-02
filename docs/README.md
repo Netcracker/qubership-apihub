@@ -17,7 +17,7 @@
 # Development docs
 
 ## [Ticketing process guide](https://github.com/Netcracker/qubership-apihub/wiki/Development-Management-Guide)
-## [Local k8s with APIHUB](/helm-templates/local-k8s-quickstart)
+## [Local k8s with APIHUB](../helm-templates/local-k8s-quickstart/README.md)
 
 Each sub-component repository also has its dev level documentation:
 

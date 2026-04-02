@@ -119,7 +119,7 @@ If ports are busy:
 
 # APIHUB installation via Helm
 
-Quickstart procedure uses official Qubership APIHUB [Helm Chart](../qubership-apihub/). Please also refer to official [Installation Notes](/docs/installation-guide.md).
+Quickstart procedure uses official Qubership APIHUB [Helm Chart](../qubership-apihub/). Please also refer to official [Installation Notes](../../docs/installation-guide.md).
 
 This folder contains `postgresql` and `keycloak` Helm charts for Qubserhip APIHUB dependecies deployment.
 

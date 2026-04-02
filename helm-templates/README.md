@@ -2,7 +2,7 @@
 
 This folder contains `qubership-apihub` Helm chart for Qubership APIHUB deployment to k8s cluster.
 
-It is ready for usage Helm chart. Please refer to [Qubership APIHUB Installation Notes](/docs/installation-guide.md) for guide how to use it.
+It is ready for usage Helm chart. Please refer to [Qubership APIHUB Installation Notes](../docs/installation-guide.md) for guide how to use it.
 
 ## Dev cases
 

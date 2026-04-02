@@ -30,7 +30,7 @@ This guide describes Qubership APIHUB installation process
 
 # docker-compose
 
-Please refer to [`docker-compose/apihub-generic/README.md`](/docker-compose/apihub-generic/README.md)
+Please refer to [`docker-compose/apihub-generic/README.md`](../docker-compose/apihub-generic/README.md)
 
 ## Minimal parameters set
 
@@ -86,7 +86,7 @@ qubership-apihub-backend configuration is implemented via a configuration file(c
 
 # Helm
 
-Qubership APIHUB Helm Chart located here: [`helm-templates/qubership-apihub`](/helm-templates/qubership-apihub)
+Qubership APIHUB Helm Chart located here: [`helm-templates/qubership-apihub`](../helm-templates/qubership-apihub/Chart.yaml)
 
 ## Prerequisites
 
