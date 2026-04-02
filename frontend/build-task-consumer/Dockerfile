@@ -1,4 +1,4 @@
-FROM docker.io/node:20
+FROM docker.io/node:25.9-alpine
 
 ARG TAG=dev
 ARG GIT_BRANCH=unknown
