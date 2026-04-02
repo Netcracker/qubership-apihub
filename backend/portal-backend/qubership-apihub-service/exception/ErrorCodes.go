@@ -792,3 +792,6 @@ const BuildResultNotFoundMsg = "Build result for '$buildId' build not found"
 
 const OperationGroupTemplateNotSupported = "7900"
 const OperationGroupTemplateNotSupportedMsg = "Export template is not supported for '$apiType' API type"
+
+const DuplicateOperationData = "8000"
+const DuplicateOperationDataMsg = "Invalid build result. Operations have identical data: operationIds='$operationIds'"
