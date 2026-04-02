@@ -804,3 +804,6 @@ const InvalidTemplateFileExtensionMsg = "Template file extension '$extension' is
 
 const InvalidTemplateContent = "8102"
 const InvalidTemplateContentMsg = "Template file content is not valid $format"
+
+const InvalidShareabilityStatus = "8200"
+const InvalidShareabilityStatusMsg = "Allowed shareability statuses list contains unsupported value '$value'"

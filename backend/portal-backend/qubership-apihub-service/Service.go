@@ -436,6 +436,7 @@ func main() {
 
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/documents/{slug}", security.Secure(versionController.GetVersionedDocument)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/documents", security.Secure(versionController.GetVersionDocuments)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/documents/{slug}/shareability", security.Secure(versionController.UpdateDocumentShareability)).Methods(http.MethodPatch)
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/references", security.Secure(versionController.GetVersionReferencesV3)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/sources", security.Secure(publishedController.GetVersionSources)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/revisions", security.Secure(versionController.GetVersionRevisionsList)).Methods(http.MethodGet)

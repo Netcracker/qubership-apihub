@@ -2129,6 +2129,18 @@ components:
           example:
             - x-internal-info
             - x-design-details
+        allowedShareabilityStatuses:
+          description: |
+            Array of shareability statuses to filter documents during the export.
+          type: array
+          items:
+            type: string
+            enum:
+              - shareable
+              - non-shareable
+              - unknown
+          default: ["shareable", "non-shareable", "unknown"]
+          example: ["shareable"]
     ExportRestDocumentBuildConfig:
       description: Build config for export of one OpenAPI document.
       type: object

@@ -1272,7 +1272,25 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 		utils.PerfLog(time.Since(start).Milliseconds(), 200, "CreateVersionWithData: content data insert")
 		start = time.Now()
 		for _, c := range content {
-			_, err := tx.Model(c).OnConflict("(package_id, version, revision, file_id) DO UPDATE").Insert()
+			var err error
+			if packageInfo.MigrationBuild {
+				// exclude "shareability" from the ON CONFLICT update so the database preserves the user-set
+				// shareability value instead of overwriting it with the default "unknown"
+				_, err = tx.Model(c).OnConflict(`(package_id, version, revision, file_id) DO UPDATE SET
+					"checksum" = EXCLUDED."checksum",
+					"index" = EXCLUDED."index",
+					"slug" = EXCLUDED."slug",
+					"name" = EXCLUDED."name",
+					"path" = EXCLUDED."path",
+					"data_type" = EXCLUDED."data_type",
+					"format" = EXCLUDED."format",
+					"title" = EXCLUDED."title",
+					"metadata" = EXCLUDED."metadata",
+					"operation_ids" = EXCLUDED."operation_ids",
+					"filename" = EXCLUDED."filename"`).Insert()
+			} else {
+				_, err = tx.Model(c).OnConflict("(package_id, version, revision, file_id) DO UPDATE").Insert()
+			}
 			if err != nil {
 				return fmt.Errorf("failed to insert published_version_revision_content %+v: %w", c, err)
 			}
@@ -4600,4 +4618,15 @@ func (p publishedRepositoryImpl) comparisonInternalDocumentDataExists(tx *pg.Tx,
 		return false, err
 	}
 	return true, nil
+}
+
+func (p publishedRepositoryImpl) UpdateDocumentShareabilityBySlug(packageId string, version string, revision int, slug string, shareability string) error {
+	_, err := p.cp.GetConnection().Model((*entity.PublishedContentEntity)(nil)).
+		Set("shareability_status = ?", shareability).
+		Where("package_id = ?", packageId).
+		Where("version = ?", version).
+		Where("revision = ?", revision).
+		Where("slug = ?", slug).
+		Update()
+	return err
 }
