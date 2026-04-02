@@ -42,3 +42,7 @@ export function toApiTypeMap<T extends {
     )) as Record<ApiType, T>
     : undefined
 }
+
+export function isApiType(apiType: string): apiType is ApiType {
+  return API_TYPES.some(type => type === apiType)
+}
