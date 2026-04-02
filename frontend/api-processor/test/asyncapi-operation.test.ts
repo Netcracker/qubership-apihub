@@ -18,11 +18,18 @@ import { beforeAll, describe, expect, it, test } from '@jest/globals'
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 import { createOperationSpec, createOperationSpecWithInlineRefs } from '../src/apitypes/async/async.operation'
 import { calculateAsyncOperationId } from '../src/utils'
-import { buildPackageWithDefaultConfig, cloneDocument, loadYamlFile } from './helpers'
+import { buildPackageWithDefaultConfig, cloneDocument, loadYamlFile, LocalRegistry } from './helpers'
 import { extractProtocol } from '../src/apitypes/async/async.utils'
 import { FIRST_REFERENCE_KEY_PROPERTY, INLINE_REFS_FLAG } from '../src/consts'
-import { ASYNC_EFFECTIVE_NORMALIZE_OPTIONS } from '../src'
+import { ASYNC_EFFECTIVE_NORMALIZE_OPTIONS, BUILD_TYPE, VERSION_STATUS } from '../src'
 import { normalize } from '@netcracker/qubership-apihub-api-unifier'
+
+const normalizeAsyncApiDocument = (doc: AsyncAPIV3.AsyncAPIObject): AsyncAPIV3.AsyncAPIObject =>
+  normalize(doc, {
+    ...ASYNC_EFFECTIVE_NORMALIZE_OPTIONS,
+    firstReferenceKeyProperty: FIRST_REFERENCE_KEY_PROPERTY,
+    inlineRefsFlag: INLINE_REFS_FLAG,
+  }) as AsyncAPIV3.AsyncAPIObject
 
 describe('AsyncAPI 3.0 Operation Tests', () => {
 
@@ -277,11 +284,7 @@ describe('AsyncAPI 3.0 Operation Tests', () => {
 
       baseDocument = await loadYamlFile('asyncapi/operations/base.yaml')
 
-      normalizedDocument = normalize(baseDocument, {
-        ...ASYNC_EFFECTIVE_NORMALIZE_OPTIONS,
-        firstReferenceKeyProperty: FIRST_REFERENCE_KEY_PROPERTY,
-        inlineRefsFlag: INLINE_REFS_FLAG,
-      }) as AsyncAPIV3.AsyncAPIObject
+      normalizedDocument = normalizeAsyncApiDocument(baseDocument)
     })
 
     test('should select a single operation by key', () => {
@@ -397,6 +400,82 @@ describe('AsyncAPI 3.0 Operation Tests', () => {
       const operationKeys = Object.keys(result.operations || {})
       expect(operationKeys).toEqual([OPERATION_KEY_1])
       expect(operationKeys).not.toContain(OPERATION_KEY_2)
+    })
+  })
+
+  // TODO: unskip after api-unifier propagates root servers to channels during normalization.
+  describe('Root servers propagation to channels without explicit servers', () => {
+    const ROOT_SERVERS_DOC_PATH = 'asyncapi/operations/root-servers-no-channel-servers.yaml'
+    const OP_KEY = 'operation1'
+    const MSG_ID = 'message1'
+    let rootServersDoc: AsyncAPIV3.AsyncAPIObject
+    let rootServersNormalizedDoc: AsyncAPIV3.AsyncAPIObject
+    let rootServersOpId: string
+
+    const createRefsMsg = (messageId: string, inlineRefs: string[]): Record<string | symbol, unknown> => {
+      const message: Record<string | symbol, unknown> = {}
+      message[FIRST_REFERENCE_KEY_PROPERTY] = messageId
+      message[INLINE_REFS_FLAG] = inlineRefs
+      return message
+    }
+
+    beforeAll(async () => {
+      rootServersOpId = calculateAsyncOperationId(OP_KEY, MSG_ID)
+      rootServersDoc = await loadYamlFile(ROOT_SERVERS_DOC_PATH)
+      rootServersNormalizedDoc = normalizeAsyncApiDocument(rootServersDoc)
+    })
+
+    test.skip('createOperationSpec should include root servers when channel has no explicit servers', () => {
+      // After api-unifier normalization, channel1.servers should contain all root servers.
+      // createOperationSpec works on the normalized document, so the operation spec
+      // should include the servers that were propagated to the channel.
+      const result = createOperationSpec(rootServersNormalizedDoc, rootServersOpId)
+
+      expect(result.servers).toBeDefined()
+      expect(Object.keys(result.servers!)).toEqual(expect.arrayContaining(['production', 'staging']))
+    })
+
+    test.skip('createOperationSpecWithInlineRefs should include root servers when channel has no explicit servers', () => {
+      // Same as above but via createOperationSpecWithInlineRefs path.
+      const refsOnlyDocument = {
+        operations: {
+          [OP_KEY]: {
+            messages: [
+              createRefsMsg(MSG_ID, ['#/channels/channel1/messages/message1']),
+            ],
+          },
+        },
+        [INLINE_REFS_FLAG]: [
+          '#/servers/production',
+          '#/servers/staging',
+          '#/channels/channel1',
+          '#/channels/channel1/messages/message1',
+          '#/components/messages/message1',
+        ],
+      } as unknown as AsyncAPIV3.AsyncAPIObject
+
+      const result = createOperationSpecWithInlineRefs(rootServersDoc, rootServersOpId, refsOnlyDocument)
+
+      expect(result.servers).toBeDefined()
+      expect(Object.keys(result.servers!)).toEqual(expect.arrayContaining(['production', 'staging']))
+    })
+  })
+
+  describe('Duplicate operationId validation', () => {
+    test('should throw error during build when same operationId appears in multiple documents', async () => {
+      const packageId = 'asyncapi-changes/operation/duplicate-cross-document'
+      const portal = new LocalRegistry(packageId)
+
+      await expect(portal.publish(packageId, {
+        packageId,
+        version: 'v1',
+        status: VERSION_STATUS.RELEASE,
+        buildType: BUILD_TYPE.BUILD,
+        files: [
+          { fileId: 'spec1.yaml', publish: true },
+          { fileId: 'spec2.yaml', publish: true },
+        ],
+      })).rejects.toThrow(/Duplicated operationId 'operation1-message1'/)
     })
   })
 })

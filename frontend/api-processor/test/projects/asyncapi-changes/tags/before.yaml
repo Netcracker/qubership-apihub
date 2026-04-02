@@ -36,6 +36,8 @@ operations:
     tags:
       - name: sameTagInDifferentChannels1
       - name: sameTagInDifferentChannels2
+    messages:
+      - $ref: '#/channels/userSignup/messages/userSignedUp'
   removed2:
     action: send
     channel:
@@ -44,12 +46,16 @@ operations:
       - name: sameTagInDifferentChannels1
       - name: sameTagInDifferentChannels2
       - name: sameTagInDifferentSiblings1
+    messages:
+      - $ref: '#/channels/userUpdate/messages/userUpdated'
   removed3:
     action: receive
     channel:
       $ref: '#/channels/orderCreate'
     tags:
       - name: sameTagInDifferentSiblings1
+    messages:
+      - $ref: '#/channels/orderCreate/messages/orderCreated'
   changed1:
     action: send
     channel:
@@ -58,12 +64,16 @@ operations:
       - name: sameTagInOperationSiblings1
       - name: tag
       - name: missingByDesign
+    messages:
+      - $ref: '#/channels/orderUpdate/messages/orderUpdated'
   changed2:
     action: receive
     channel:
       $ref: '#/channels/orderDelete'
     tags:
       - name: missingByDesign
+    messages:
+      - $ref: '#/channels/orderDelete/messages/orderDeleted'
 components:
   messages:
     UserSignedUp:

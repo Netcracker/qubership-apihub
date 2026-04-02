@@ -475,6 +475,30 @@ export class LocalRegistry implements IRegistry {
     return buildResult
   }
 
+  async publishFromContent(
+    fileContents: Record<string, string>,
+    publishParams: Partial<BuildConfig>,
+  ): Promise<BuildResult> {
+    const versionConfig = {
+      status: VERSION_STATUS.RELEASE,
+      ...publishParams,
+    } as BuildConfig
+    const builder = new PackageVersionBuilder(versionConfig, {
+      resolvers: {
+        fileResolver: (fileId) => {
+          const content = fileContents[fileId]
+          if (!content) { return Promise.resolve(null) }
+          return Promise.resolve(new File([content], fileId, { type: 'application/yaml' }))
+        },
+        ...this.versionResolvers,
+      },
+    })
+
+    const buildResult = await builder.run()
+    await this.publishPackage(buildResult, builder.builderContext(versionConfig), versionConfig)
+    return buildResult
+  }
+
   async publishPackage(
     buildResult: BuildResult,
     builderContext: BuilderContext,

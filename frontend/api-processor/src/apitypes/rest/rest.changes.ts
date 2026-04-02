@@ -81,7 +81,7 @@ import {
   getOperationTags,
   OperationsMap,
 } from '../../components'
-import { createApihubApiCompatibilityScopeFunction } from '../../components/compare/bwc.validation'
+import { createRestApiCompatibilityScopeFunction } from '../../components/compare/rest.bwc.validation'
 import { calculateApiKindFromLabels, getApiKindProperty } from '../../components/document'
 
 export const compareDocuments: DocumentsCompare = async (
@@ -140,7 +140,7 @@ export const compareDocuments: DocumentsCompare = async (
       normalizedResult: false,
       afterValueNormalizedProperty: AFTER_VALUE_NORMALIZED_PROPERTY,
       beforeValueNormalizedProperty: BEFORE_VALUE_NORMALIZED_PROPERTY,
-      apiCompatibilityScopeFunction: createApihubApiCompatibilityScopeFunction(prevDocumentApiKind, currDocumentApiKind),
+      apiCompatibilityScopeFunction: createRestApiCompatibilityScopeFunction(prevDocumentApiKind, currDocumentApiKind),
       openApiPathItemPerOperationDiffs: true,
     },
   ) as { merged: OpenAPIV3.Document; diffs: Diff[] }

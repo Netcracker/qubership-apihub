@@ -28,13 +28,13 @@ operations:
       $ref: '#/channels/channel'
     messages:
       - $ref: '#/channels/channel/messages/UserSignedUp'
-  operation-with-cannel-bwc:
+  operation-with-channel-bwc:
     action: send
     channel:
       $ref: '#/channels/channel-bwc'
     messages:
       - $ref: '#/channels/channel-bwc/messages/UserSignedUp'
-  operation-with-cannel-no-bwc:
+  operation-with-channel-no-bwc:
     action: send
     channel:
       $ref: '#/channels/channel-no-bwc'

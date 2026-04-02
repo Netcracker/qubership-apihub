@@ -22,7 +22,8 @@ import {
   getSymbolValueIfDefined,
   isObject,
   isReferenceObject,
-  setValueByPath, takeIfDefined,
+  setValueByPath,
+  takeIfDefined,
 } from '../../utils'
 import type * as TYPE from './async.types'
 import {
@@ -42,6 +43,8 @@ import {
   FIRST_REFERENCE_KEY_PROPERTY,
   INLINE_REFS_FLAG,
 } from '../../consts'
+import { WithAggregatedDiffs, WithDiffMetaRecord } from '../../types'
+import { Diff, DiffAction, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 
 // Re-export shared utilities
 export { dump, getCustomTags, resolveApiAudience } from '../../utils/apihubSpecificationExtensions'
@@ -146,8 +149,8 @@ export const createBaseAsyncApiSpec = (
 ): TYPE.AsyncOperationData => ({
   asyncapi: document.asyncapi || '3.0.0',
   info: document.info,
-  ...takeIfDefined({id: document.id}),
-  ...takeIfDefined({defaultContentType: document.defaultContentType}),
+  ...takeIfDefined({ id: document.id }),
+  ...takeIfDefined({ defaultContentType: document.defaultContentType }),
   operations,
 })
 
@@ -236,11 +239,11 @@ export const resolveAsyncApiOperationIdsFromRefs = (
     }
 
     for (const message of messages) {
-      if(!isMessageObject(message)){
+      if (!isMessageObject(message)) {
         continue
       }
       const inlineRefs = getSymbolValueIfDefined(message, INLINE_REFS_FLAG) as string[] | undefined
-      if (!inlineRefs || inlineRefs.length === 0){
+      if (!inlineRefs || inlineRefs.length === 0) {
         continue
       }
       const lastInlineRef = inlineRefs.at(-1)
@@ -266,4 +269,89 @@ export const resolveAsyncApiOperationIdsFromRefs = (
   }
 
   return resolved
+}
+
+/**
+ * Aggregated diffs on the operation level include diffs from ALL messages.
+ * Since each apihub operation maps to a specific operation + message pair,
+ * diffs from sibling messages must be excluded to prevent them from leaking
+ * into unrelated apihub operations.
+ *
+ * Collects two kinds of diffs that belong exclusively to other messages:
+ * 1. Aggregated content diffs from each sibling message object
+ * 2. Array-level diffs for adding/removing sibling messages from the messages list
+ *
+ * Diffs shared between the current message and sibling messages (e.g. from a shared
+ * component schema) are NOT included, so they won't be incorrectly filtered out.
+ */
+export function collectExclusiveOtherMessageDiffs(messages: AsyncAPIV3.MessageObject[], currentMessageIndex: number): Set<Diff> {
+  const currentMessageDiffsArr = (messages[currentMessageIndex] as WithAggregatedDiffs<AsyncAPIV3.MessageObject>)[DIFFS_AGGREGATED_META_KEY]
+  const currentMessageDiffs = new Set(currentMessageDiffsArr ?? [])
+
+  const otherDiffs = new Set<Diff>()
+  for (const [messageIndex, message] of messages.entries()) {
+    if (messageIndex === currentMessageIndex) continue
+    const messageDiffs = (message as WithAggregatedDiffs<AsyncAPIV3.MessageObject>)[DIFFS_AGGREGATED_META_KEY]
+    if (messageDiffs) {
+      for (const messageDiff of messageDiffs) {
+        if (!currentMessageDiffs.has(messageDiff)) {
+          otherDiffs.add(messageDiff)
+        }
+      }
+    }
+  }
+  const messagesArrayMeta = (messages as WithDiffMetaRecord<AsyncAPIV3.MessageObject[]>)[DIFF_META_KEY]
+  if (messagesArrayMeta) {
+    for (const key in messagesArrayMeta) {
+      if (Number(key) !== currentMessageIndex) {
+        otherDiffs.add(messagesArrayMeta[key])
+      }
+    }
+  }
+  return otherDiffs
+}
+
+/**
+ * Collects diffs for adding/removing message definitions in channel.messages.
+ * These are channel-level definition changes that should not propagate to operations,
+ * because what matters is whether the operation's own messages array references a message,
+ * not whether the channel defines it.
+ */
+export function collectChannelMessageDefinitionDiffs(operationChannel: AsyncAPIV3.ChannelObject): Set<Diff> {
+  const channelMessages = (operationChannel as Record<string, unknown>).messages
+  if (!isObject(channelMessages)) {
+    return new Set()
+  }
+  const diffs = new Set<Diff>()
+  const messagesMeta = (channelMessages as WithDiffMetaRecord<object>)[DIFF_META_KEY]
+  if (messagesMeta) {
+    for (const key in messagesMeta) {
+      diffs.add(messagesMeta[key])
+    }
+  }
+  return diffs
+}
+
+export function extractAsyncApiVersionDiff(doc: AsyncAPIV3.AsyncAPIObject): Diff[] {
+  const diff = (doc as WithDiffMetaRecord<AsyncAPIV3.AsyncAPIObject>)[DIFF_META_KEY]?.asyncapi
+  return diff ? [diff] : []
+}
+
+export function extractInfoDiffs(doc: AsyncAPIV3.AsyncAPIObject): Diff[] {
+  const addOrRemoveInfoDiff = (doc as WithDiffMetaRecord<AsyncAPIV3.AsyncAPIObject>)[DIFF_META_KEY]?.info
+  const infoInternalDiffs = (doc.info as WithAggregatedDiffs<AsyncAPIV3.InfoObject>)?.[DIFFS_AGGREGATED_META_KEY] ?? []
+  return [
+    ...(addOrRemoveInfoDiff ? [addOrRemoveInfoDiff] : []),
+    ...infoInternalDiffs,
+  ]
+}
+
+export function extractIdDiff(doc: AsyncAPIV3.AsyncAPIObject): Diff[] {
+  const diff = (doc as WithDiffMetaRecord<AsyncAPIV3.AsyncAPIObject>)[DIFF_META_KEY]?.id
+  return diff ? [diff] : []
+}
+
+export function extractDefaultContentTypeDiff(doc: AsyncAPIV3.AsyncAPIObject): Diff[] {
+  const diff = (doc as WithDiffMetaRecord<AsyncAPIV3.AsyncAPIObject>)[DIFF_META_KEY]?.defaultContentType
+  return diff ? [diff] : []
 }

@@ -50,7 +50,7 @@ describe('AsyncAPI 3.0 Deprecated tests', () => {
       deprecatedItems = Array.from(result.operations.values()).flatMap(operation => operation.deprecatedItems ?? [])
     })
 
-    test('should detect deprecated messages', async () => {
+    test('should report deprecated messages', async () => {
       const [deprecatedItem] = deprecatedItems
 
       expect(deprecatedItems.length).toBeGreaterThan(0)
@@ -79,7 +79,7 @@ describe('AsyncAPI 3.0 Deprecated tests', () => {
     expect(operation.deprecated).toBe(true)
   })
 
-  test('should detect deprecated schemas (flag "deprecated" in payload schema)', async () => {
+  test('should report deprecated schemas (flag "deprecated" in payload schema)', async () => {
     const result = await buildPackageWithDefaultConfig('asyncapi/deprecated/schemas')
     const deprecatedItems = Array.from(result.operations.values()).flatMap(operation => operation.deprecatedItems ?? [])
     expect(deprecatedItems.length).toBeGreaterThan(0)

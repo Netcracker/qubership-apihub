@@ -100,18 +100,22 @@ export function toPackageDocument(document: VersionDocument): PackageDocument {
   }
 }
 
-export function setDocument(buildResult: BuildResult, document: VersionDocument, operations: ApiOperation[] = []): void {
+export type DuplicateOperationHandler = (
+  existing: ApiOperation,
+  duplicate: ApiOperation,
+) => void
+
+export function setDocument(
+  buildResult: BuildResult,
+  document: VersionDocument,
+  operations: ApiOperation[] = [],
+  handleDuplicateOperation?: DuplicateOperationHandler,
+): void {
   buildResult.documents.set(document.fileId, document)
   for (const operation of operations) {
     const existingOperation = buildResult.operations.get(operation.operationId)
-    if (existingOperation) {
-      buildResult.notifications.push({
-        severity: MESSAGE_SEVERITY.Error,
-        message: `Duplicated operationId '${operation.operationId}' found in different documents: ` +
-          `'${existingOperation.documentId}' and '${operation.documentId}'`,
-        operationId: operation.operationId,
-        fileId: operation.documentId,
-      })
+    if (existingOperation && handleDuplicateOperation) {
+      handleDuplicateOperation(existingOperation, operation)
     }
     buildResult.operations.set(operation.operationId, operation)
   }

@@ -327,6 +327,41 @@ export async function buildChangelogPackageDefaultConfig(
 }
 
 
+export async function buildChangelogFromContent(
+  packageId: string,
+  beforeContent: string,
+  afterContent: string,
+): Promise<BuildResult> {
+  const portal = new LocalRegistry(packageId)
+
+  await portal.publishFromContent(
+    { 'before.yaml': beforeContent },
+    {
+      packageId: packageId,
+      version: BEFORE_VERSION_ID,
+      files: [{ fileId: 'before.yaml', publish: true }],
+    },
+  )
+  await portal.publishFromContent(
+    { 'after.yaml': afterContent },
+    {
+      packageId: packageId,
+      version: AFTER_VERSION_ID,
+      files: [{ fileId: 'after.yaml' }],
+    },
+  )
+
+  const editor = new Editor(packageId, {
+    version: AFTER_VERSION_ID,
+    packageId: packageId,
+    previousVersionPackageId: packageId,
+    previousVersion: BEFORE_VERSION_ID,
+    buildType: BUILD_TYPE.CHANGELOG,
+    status: VERSION_STATUS.RELEASE,
+  })
+  return await editor.run()
+}
+
 const invertMap = <K, V>(map: Map<K, V>): Map<V, K> => {
   return new Map(
     [...map].map(([key, value]: [K, V]) => [value, key]),

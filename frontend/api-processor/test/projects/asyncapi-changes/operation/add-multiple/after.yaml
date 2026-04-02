@@ -35,4 +35,3 @@ components:
         properties:
           userId:
             type: string
-

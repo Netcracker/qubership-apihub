@@ -16,11 +16,32 @@
 
 import { BuildConfig, BuilderStrategy, BuildResult, BuildTypeContexts, VersionCache } from '../types'
 import { compareVersions } from '../components/compare'
-import { getOperationsList, setDocument } from '../utils'
+import { DuplicateOperationHandler, getOperationsList, setDocument } from '../utils'
 import { buildFiles } from '../components/files'
 import { calculateHistoryForDeprecatedItems } from '../components/deprecated'
 import { asyncDebugPerformance, DebugPerformanceContext } from '../utils/logs'
-import { REST_API_TYPE } from '../consts'
+import { ASYNCAPI_API_TYPE, MESSAGE_SEVERITY, REST_API_TYPE } from '../consts'
+
+/**
+ * Handles duplicate operationIds found across different documents during build.
+ * - AsyncAPI: throws an error, since duplicate operationIds across documents are not allowed.
+ * - REST: adds an error notification (non-fatal), since existing published specs may already have duplicates.
+ */
+const createDuplicateOperationHandler = (buildResult: BuildResult): DuplicateOperationHandler => (existing, duplicate) => {
+  if (duplicate.apiType === ASYNCAPI_API_TYPE) {
+    throw new Error(
+      `Duplicated operationId '${duplicate.operationId}' found in different documents: ` +
+      `'${existing.documentId}' and '${duplicate.documentId}'`,
+    )
+  }
+  buildResult.notifications.push({
+    severity: MESSAGE_SEVERITY.Error,
+    message: `Duplicated operationId '${duplicate.operationId}' found in different documents: ` +
+      `'${existing.documentId}' and '${duplicate.documentId}'`,
+    operationId: duplicate.operationId,
+    fileId: duplicate.documentId,
+  })
+}
 
 export class BuildStrategy implements BuilderStrategy {
   async execute(config: BuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts, debugContext: DebugPerformanceContext): Promise<BuildResult> {
@@ -48,8 +69,9 @@ export class BuildStrategy implements BuilderStrategy {
 
     if (files?.length) {
       const buildFilesResult = await buildFiles(files, builderContextObject, debugContext)
+      const handleDuplicateOperation = createDuplicateOperationHandler(buildResult)
       for (const { document, operations = [] } of buildFilesResult) {
-        setDocument(buildResult, document, operations)
+        setDocument(buildResult, document, operations, handleDuplicateOperation)
       }
 
       if (!builderContextObject.builderRunOptions.withoutDeprecatedDepth && previousVersionCache) {

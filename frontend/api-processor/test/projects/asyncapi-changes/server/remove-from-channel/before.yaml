@@ -9,6 +9,8 @@ servers:
 channels:
   channel1:
     address: channel1
+    servers:
+      - $ref: '#/servers/production'
     messages:
       message1:
         $ref: '#/components/messages/message1'

@@ -1,0 +1,32 @@
+asyncapi: 3.0.0
+info:
+  title: Root Servers Test
+  version: 1.0.0
+servers:
+  production:
+    host: api.example.com
+    protocol: amqp
+  staging:
+    host: staging.example.com
+    protocol: amqp
+channels:
+  channel1:
+    address: channel1
+    messages:
+      message1:
+        $ref: '#/components/messages/message1'
+operations:
+  operation1:
+    action: receive
+    channel:
+      $ref: '#/channels/channel1'
+    messages:
+      - $ref: '#/channels/channel1/messages/message1'
+components:
+  messages:
+    message1:
+      payload:
+        type: object
+        properties:
+          userId:
+            type: string
