@@ -795,3 +795,12 @@ const OperationGroupTemplateNotSupportedMsg = "Export template is not supported 
 
 const DuplicateOperationData = "8000"
 const DuplicateOperationDataMsg = "Invalid build result. Operations have identical data: operationIds='$operationIds'"
+
+const TemplateSizeExceeded = "8100"
+const TemplateSizeExceededMsg = "Template file size exceeded. Template size limit - $size"
+
+const InvalidTemplateFileExtension = "8101"
+const InvalidTemplateFileExtensionMsg = "Template file extension '$extension' is not allowed. Allowed extensions: $allowedExtensions"
+
+const InvalidTemplateContent = "8102"
+const InvalidTemplateContentMsg = "Template file content is not valid $format"
