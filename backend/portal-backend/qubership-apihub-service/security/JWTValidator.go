@@ -15,10 +15,15 @@ import (
 	josejwt "gopkg.in/square/go-jose.v2/jwt"
 )
 
-const TokenIssuedAtExt = "issuedAt"
+const (
+	TokenIssuedAtExt = "issuedAt"
+	TokenTypeExt     = "tokenType"
+	AccessTokenType  = "access"
+	RefreshTokenType = "refresh"
+)
 
 type JWTValidator interface {
-	ValidateToken(token string) (auth.Info, time.Time, error)
+	ValidateToken(token string, expectedTokenType string) (auth.Info, time.Time, error)
 	IsTokenRevoked(userId string, tokenCreationTimestamp int64) bool
 }
 
@@ -38,10 +43,15 @@ func (j jwtValidatorImpl) IsTokenRevoked(userId string, tokenCreationTimestamp i
 	return j.tokenRevocationService.IsTokenRevoked(userId, tokenCreationTimestamp)
 }
 
-func (j jwtValidatorImpl) ValidateToken(token string) (auth.Info, time.Time, error) {
+func (j jwtValidatorImpl) ValidateToken(token string, expectedTokenType string) (auth.Info, time.Time, error) {
 	claims, info, err := j.parseAndValidate(token)
 	if err != nil {
 		return nil, time.Time{}, err
+	}
+
+	actualTokenType := info.GetExtensions().Get(TokenTypeExt)
+	if actualTokenType != expectedTokenType {
+		return nil, time.Time{}, fmt.Errorf("token type mismatch: expected %s, got %s", expectedTokenType, actualTokenType)
 	}
 
 	return info, time.Time(*claims.ExpiresAt), nil

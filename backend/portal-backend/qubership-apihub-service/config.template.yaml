@@ -211,6 +211,11 @@ ai:
       # Optional; Controls verbosity and detail level of the model's response. Values: "low" (concise), "medium" (balanced, default), "high" (detailed with examples); If not set, default value: "medium"; Example: "medium"
       verbosity: 'medium'
 
+# Section with feature flags for controlling feature availability
+featureFlags:
+  # Optional; When true, signals to use v3 search API instead of v4 search API; Default: false; Example: true
+  useV3Search: false
+
 # List of enabled extension services
 #extensions:
 #  - name: linter

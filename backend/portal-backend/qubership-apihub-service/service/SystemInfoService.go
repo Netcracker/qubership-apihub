@@ -92,6 +92,7 @@ type SystemInfoService interface {
 	GetAiChatConfig() config.ChatConfig
 	GetAiMCPConfig() config.MCPConfig
 	GetApiSpecDirectory() string
+	GetFeatureFlags() view.FeatureFlags
 }
 
 func (g *systemInfoServiceImpl) GetCredsFromEnv() *view.DbCredentials {
@@ -141,6 +142,7 @@ func (g *systemInfoServiceImpl) GetSystemInfo() *view.SystemInfo {
 		ProductionMode: g.IsProductionMode(),
 		Notification:   g.getSystemNotification(),
 		ExternalLinks:  g.GetExternalLinks(),
+		FeatureFlags:   g.GetFeatureFlags(),
 	}
 }
 
@@ -617,4 +619,10 @@ func (g *systemInfoServiceImpl) GetAiChatConfig() config.ChatConfig {
 
 func (g *systemInfoServiceImpl) GetAiMCPConfig() config.MCPConfig {
 	return g.config.Ai.MCP
+}
+
+func (g *systemInfoServiceImpl) GetFeatureFlags() view.FeatureFlags {
+	return view.FeatureFlags{
+		UseV3Search: g.config.FeatureFlags.UseV3Search,
+	}
 }

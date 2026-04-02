@@ -50,6 +50,8 @@ type PublishedService interface {
 	GetComparisonInternalDocumentData(hash string) ([]byte, string, error)
 
 	ReplaceVersionSources(secCtx context.SecurityContext, packageId string, versionName string, zipData []byte) error
+
+	CheckPreviousVersionDependencyCycle(packageID string, version string, previousVersionPackageID string, prevVersion string, revision int) (bool, error)
 }
 
 func NewPublishedService(versionRepo repository.PublishedRepository,
@@ -459,7 +461,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 		return err
 	}
 
-	operationEntities, operationDataEntities, operationsInfo, err := buildArcEntitiesReader.ReadOperationsToEntities()
+	operationEntities, operationDataEntities, operationSearchTexts, operationsInfo, err := buildArcEntitiesReader.ReadOperationsToEntities()
 	if err != nil {
 		return err
 	}
@@ -630,6 +632,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 		versionInternalDocDataEntities,
 		comparisonInternalDocEntities,
 		comparisonInternalDocDataEntities,
+		operationSearchTexts,
 	)
 	utils.PerfLog(time.Since(start).Milliseconds(), 15000, "publishPackage: CreateVersionWithData")
 	if err != nil {
@@ -1062,6 +1065,83 @@ func (p publishedServiceImpl) GetComparisonInternalDocumentData(hash string) ([]
 	}
 
 	return docData.Data, docData.Filename, nil
+}
+
+func (p publishedServiceImpl) CheckPreviousVersionDependencyCycle(packageID string, version string, previousVersionPackageID string, prevVersion string, revision int) (bool, error) {
+	versionSearchQuery := entity.PublishedVersionSearchQueryEntity{
+		PackageId: packageID,
+		Limit:     100,
+		Offset:    0,
+	}
+	var packageVersions []entity.PackageVersionRevisionEntity
+	for {
+		versionEnts, err := p.publishedRepo.GetReadonlyPackageVersionsWithLimit(versionSearchQuery, false, false)
+		if err != nil {
+			return false, err
+		}
+		packageVersions = append(packageVersions, versionEnts...)
+		if len(versionEnts) < 100 {
+			break
+		}
+		versionSearchQuery.Offset += 100
+	}
+
+	return detectPreviousVersionDependencyCycleWithCurrVersion(packageVersions, version, prevVersion, revision), nil
+}
+
+func detectPreviousVersionDependencyCycleWithCurrVersion(versionNodes []entity.PackageVersionRevisionEntity, version, prevVersion string, revision int) bool {
+	if prevVersion == "" {
+		return false
+	}
+
+	type versionNodeKey struct {
+		version  string
+		revision int
+	}
+
+	versionNodeMap := make(map[versionNodeKey]string, len(versionNodes))
+	for _, n := range versionNodes {
+		if n.PreviousVersion != "" {
+			versionNodeMap[versionNodeKey{n.Version, n.Revision}] = n.PreviousVersion
+		}
+	}
+
+	latestRevision := make(map[string]int)
+	for _, n := range versionNodes {
+		latestRevision[n.Version] = n.Revision
+	}
+
+	latestRevision[version] = revision
+	visited := make(map[string]bool)
+	stack := []string{prevVersion}
+
+	for len(stack) > 0 {
+		current := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		if current == version {
+			return true
+		}
+
+		if visited[current] {
+			continue
+		}
+		visited[current] = true
+
+		latestRev, exists := latestRevision[current]
+		if !exists {
+			continue
+		}
+
+		prev, exists := versionNodeMap[versionNodeKey{current, latestRev}]
+		if !exists {
+			continue
+		}
+
+		stack = append(stack, prev)
+	}
+
+	return false
 }
 
 func (p publishedServiceImpl) ReplaceVersionSources(secCtx context.SecurityContext, packageId string, versionName string, zipData []byte) error {

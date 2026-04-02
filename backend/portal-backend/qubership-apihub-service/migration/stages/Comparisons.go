@@ -16,7 +16,7 @@ func (d OpsMigration) StageComparisonsOther() error {
 		return err
 	}
 
-	query, params := makeComparisonsQuery(d.ent.PackageIds, d.ent.Versions, d.ent.Id, false)
+	query, params := makeComparisonsQuery(d.ent.PackageIds, d.ent.Versions, d.ent.Id, false, d.restartStage == mView.MigrationStageComparisonsOther)
 
 	count, err := d.createComparisonBuilds(query, params, d.ent.Id, mView.MigrationStageComparisonsOther)
 	if err != nil {
@@ -39,7 +39,7 @@ func (d OpsMigration) StageComparisonsOnly() error {
 		return err
 	}
 
-	query, params := makeComparisonsQuery(d.ent.PackageIds, d.ent.Versions, d.ent.Id, true)
+	query, params := makeComparisonsQuery(d.ent.PackageIds, d.ent.Versions, d.ent.Id, true, d.restartStage == mView.MigrationStageComparisonsOnly)
 
 	count, err := d.createComparisonBuilds(query, params, d.ent.Id, mView.MigrationStageComparisonsOnly)
 	if err != nil {
@@ -56,7 +56,7 @@ func (d OpsMigration) StageComparisonsOnly() error {
 	return nil
 }
 
-func makeComparisonsQuery(packageIds []string, versionsIn []string, migrationId string, isComparisonsOnly bool) (string, []interface{}) {
+func makeComparisonsQuery(packageIds []string, versionsIn []string, migrationId string, isComparisonsOnly bool, isRestart bool) (string, []interface{}) {
 	params := make([]interface{}, 0)
 	var wherePackageIn string
 	if len(packageIds) > 0 {
@@ -95,6 +95,20 @@ func makeComparisonsQuery(packageIds []string, versionsIn []string, migrationId 
 		and exists (select 1 from build b1 where b1.package_id = vc.package_id and b1.version = concat(vc.version,'@',vc.revision) and b1.metadata->>'migration_id' = '%s' and b1.metadata->>'build_type' = 'build' and  b1.status='%s')
 		and exists (select 1 from build b2 where b2.package_id = vc.previous_package_id and b2.version = concat(vc.previous_version,'@',previous_revision) and b2.metadata->>'migration_id' = '%s' and b2.metadata->>'build_type' = 'build' and b2.status='%s')`,
 			migrationId, view.StatusComplete, migrationId, view.StatusComplete)
+	}
+
+	if isRestart {
+		//Allows avoiding re-creation of failed changelog builds during recovery
+		query += fmt.Sprintf(`
+		and not exists(
+			select 1 from build b
+			where b.package_id = vc.package_id
+			  and b.version = concat(vc.version, '@', vc.revision)
+			  and b.metadata->>'build_type' = 'changelog'
+			  and b.metadata->>'migration_id' = '%s'
+			  and b.metadata->>'previous_version' = concat(vc.previous_version, '@', vc.previous_revision)
+			  and b.metadata->>'previous_version_package_id' = vc.previous_package_id
+		)`, migrationId)
 	}
 
 	return query, params

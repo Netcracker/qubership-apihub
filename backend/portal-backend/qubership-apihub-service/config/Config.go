@@ -21,6 +21,7 @@ type Config struct {
 	Cleanup              CleanupConfig
 	Extensions           []view.Extension
 	Ai                   AIConfig
+	FeatureFlags         FeatureFlagsConfig
 }
 
 type DatabaseConfig struct {
@@ -180,6 +181,10 @@ type UnreferencedDataCleanupConfig struct {
 
 type BuildsCleanupConfig struct {
 	Schedule string
+}
+
+type FeatureFlagsConfig struct {
+	UseV3Search bool
 }
 
 type Base64DecodedString []byte

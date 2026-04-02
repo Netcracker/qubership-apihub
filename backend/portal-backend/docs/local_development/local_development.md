@@ -33,7 +33,7 @@ Don't forget to check 'Show all databases' to see all DBs.
 docker-compose -f docs/local_development/docker-compose/DB/docker-compose.yml up
 ```
 
-If you have another docker image (usually another DB container from another project) which could intersect with this one then you need to change PostgreSQL port settings and image port mapping in  [`DB/docker-compose.yml`](/docs/local_development/docker-compose/DB/docker-compose.yml).
+If you have another docker image (usually another DB container from another project) which could intersect with this one then you need to change PostgreSQL port settings and image port mapping in  [`DB/docker-compose.yml`](docker-compose/DB/docker-compose.yml).
 Please add two arguments into **command** section ("\-p" and "\<new port number\>") and update port mapping in the **ports** section. Default port number for PostgreSQL is **5432**.
 
 * To run the image please issue a command below:
@@ -89,7 +89,7 @@ technicalParameters:
 
 #### Run API hub
 
-You can simply run Service.go from apihub-service project or you can try to use [`Dockerfile`](/Dockerfile) at your choice. If you will try to use Dockerfile you have to know about the proper image URL which you need to change in the file.
+You can simply run Service.go from apihub-service project or you can try to use [`Dockerfile`](../../Dockerfile) at your choice. If you will try to use Dockerfile you have to know about the proper image URL which you need to change in the file.
 
 ### Post-setup
 
@@ -140,7 +140,7 @@ To create a corresponding Docker image you need to issue a command:
 docker compose -f docs/local_development/docker-compose/UI/docker-compose.yml up
 ```
 
-If default port (8080) was already taken by another application or Docker image you have configure another one in the **ports** section an re-create image with the command above. See [`FE/docker-compose.yml`](/docs/local_development/docker-compose/FE/docker-compose.yml)
+If default port (8080) was already taken by another application or Docker image you have configure another one in the **ports** section an re-create image with the command above. See [`FE/docker-compose.yml`](docker-compose/UI/docker-compose.yml)
 
 To run the image please issue a command below:
 

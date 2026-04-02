@@ -153,7 +153,7 @@ func (m mcpService) GetPackagesList(ctx context.Context, workspaceId string) ([]
 			return nil, fmt.Errorf("failed to get versions list for package %s: %w", packageInfo.Id, err)
 		}
 		if versionsView != nil {
-			packageInfo.Versions = versionsView.Versions
+			packageInfo.Versions = projectPublishedVersionsForMCP(versionsView.Versions)
 		}
 	}
 
@@ -217,7 +217,7 @@ const (
 
 // Tool descriptions for MCP server
 const (
-ToolDescriptionSearchOperationsMCP = `Search for REST API operations by text query.
+	ToolDescriptionSearchOperationsMCP = `Search for REST API operations by text query.
 
 IMPORTANT: The search is not full-text. For example, a query "create customer" may not find an operation "create new customer". Therefore, it is important to try different search query variations.
 IMPORTANT: The search works well for exact API path lookups and method+path lookups. You can pass "/api/v1/customers" or "GET /api/v1/customers" as the query.
@@ -268,7 +268,7 @@ LLM INSTRUCTIONS:
 
 // Tool descriptions for OpenAI
 const (
-ToolDescriptionSearchOperationsOpenAI = `Search for REST API operations by text query.
+	ToolDescriptionSearchOperationsOpenAI = `Search for REST API operations by text query.
 
 IMPORTANT: The search is not full-text. For example, a query "create customer" may not find an operation "create new customer". Therefore, it is important to try different search query variations.
 IMPORTANT: The search works well for exact API path lookups and method+path lookups. You can pass "/api/v1/customers" or "GET /api/v1/customers" as the query.
