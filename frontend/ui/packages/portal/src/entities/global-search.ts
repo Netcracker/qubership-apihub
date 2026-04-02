@@ -25,6 +25,8 @@ import {
   API_TYPE_GRAPHQL,
   API_TYPE_REST,
 } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { ApiKind, Operation } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import type { ApiAudience } from '@netcracker/qubership-apihub-api-processor'
 
 export type SearchResults = Readonly<{
   packages: PackageSearchResult[]
@@ -44,7 +46,7 @@ export type PackageSearchResult = Readonly<{
   labels?: Labels
 }>
 
-export type OperationSearchResult = Readonly<{
+export interface OperationSearchResult extends Operation {
   packageKey: Key
   name: string
   description?: string
@@ -59,7 +61,7 @@ export type OperationSearchResult = Readonly<{
   path: string
   method?: MethodType
   type?: GraphQlOperationTypes
-}>
+}
 
 export type DocumentSearchResult = Readonly<{
   packageKey: Key
@@ -105,6 +107,9 @@ export type OperationSearchResultDto = Readonly<{
   apiType: ApiType
   path: string
   method: MethodType
+  apiAudience: ApiAudience
+  documentId: Key
+  apiKind: ApiKind
 }>
 
 export type DocumentSearchResultDto = Readonly<{
