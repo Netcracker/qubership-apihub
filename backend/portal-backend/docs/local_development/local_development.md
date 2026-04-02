@@ -140,7 +140,7 @@ To create a corresponding Docker image you need to issue a command:
 docker compose -f docs/local_development/docker-compose/UI/docker-compose.yml up
 ```
 
-If default port (8080) was already taken by another application or Docker image you have configure another one in the **ports** section an re-create image with the command above. See [`FE/docker-compose.yml`](docker-compose/FE/docker-compose.yml)
+If default port (8080) was already taken by another application or Docker image you have configure another one in the **ports** section an re-create image with the command above. See [`FE/docker-compose.yml`](docker-compose/UI/docker-compose.yml)
 
 To run the image please issue a command below:
 
