@@ -130,10 +130,15 @@ export class LocalRegistry implements IRegistry {
 
   groupToOperationIdsMap: Record<string, string[]> = {}
   projectsDir: string = DEFAULT_PROJECTS_PATH
+  shareabilityOverrides: Map<string, string> = new Map()
 
   constructor(public packageId: string, groupOperationIds: Record<string, string[]> = {}, projectsDir: string = DEFAULT_PROJECTS_PATH) {
     this.groupToOperationIdsMap = groupOperationIds
     this.projectsDir = projectsDir
+  }
+
+  setDocumentShareability(slug: string, status: string): void {
+    this.shareabilityOverrides.set(slug, status)
   }
 
   static openPackage(packageId: string, groupOperationIds: Record<string, string[]> = {}, projectsDir: string = DEFAULT_PROJECTS_PATH): LocalRegistry {
@@ -334,6 +339,7 @@ export class LocalRegistry implements IRegistry {
         description: document.description,
         data: this.resolveDocumentData(document),
         ...takeIfDefined({ packageRef: refId }),
+        ...takeIfDefined({ shareabilityStatus: this.shareabilityOverrides.get(document.slug) }),
       }))
   }
 

@@ -1,0 +1,20 @@
+{
+  "packageId": "asyncapi-export",
+  "packageName": "asyncapi-export pkg",
+  "apiType": "asyncapi",
+  "version": "single-async-yaml-version@1",
+  "files": [
+    {
+      "fileId": "valid-async-yaml.yaml",
+      "publish": true,
+      "labels": [],
+      "commitId": "asyncapi-export-1"
+    },
+    {
+      "fileId": "valid-async-json.json",
+      "publish": true,
+      "labels": [],
+      "commitId": "asyncapi-export-2"
+    }
+  ]
+}

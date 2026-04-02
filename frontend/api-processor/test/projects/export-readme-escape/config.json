@@ -1,0 +1,10 @@
+{
+  "packageId": "export-readme-escape",
+  "packageName": "export readme escape",
+  "apiType": "rest",
+  "version": "1",
+  "files": [
+    { "fileId": "1.yaml", "publish": true },
+    { "fileId": "README.md", "publish": true }
+  ]
+}
