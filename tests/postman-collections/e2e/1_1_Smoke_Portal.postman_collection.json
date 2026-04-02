@@ -16037,7 +16037,7 @@
                                     "\r",
                                     "pm.test(\"All default premissions exist\", function(){\r",
                                     "    for (var i = 0; i<data.permissions.length; i++) {\r",
-                                    "        pm.expect(data.permissions[i].permission).to.be.oneOf(['read','create_and_update_package','delete_package','manage_draft_version','manage_release_version','manage_archived_version','user_access_management','access_token_management'])\r",
+                                    "        pm.expect(data.permissions[i].permission).to.be.oneOf(['read','create_and_update_package','delete_package','manage_draft_version','manage_release_version','manage_archived_version','user_access_management','access_token_management','document_shareability_management'])\r",
                                     "    }\r",
                                     "});"
                                 ]
