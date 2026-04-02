@@ -235,7 +235,7 @@ qubershipApihubBackend:
     # Section with feature flags for controlling feature availability
     featureFlags:
       # Optional; When true, signals to use v3 legacy global search instead of v4 global search
-      useLegacySearch: false
+      useV3Search: false
 
 # Section with APIHUB Build Task Consumer configuration
 qubershipApihubBuildTaskConsumer:
