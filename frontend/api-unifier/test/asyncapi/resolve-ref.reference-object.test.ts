@@ -1,5 +1,5 @@
 import { normalize } from '../../src/normalize'
-import { TEST_FIRST_REFERENCE_KEY_PROPERTY, TEST_LAST_REFERENCE_KEY_PROPERTY, TEST_SYNTHETIC_TITLE_FLAG } from '../helpers'
+import { TEST_FIRST_REFERENCE_KEY_PROPERTY, TEST_INLINE_REFS_FLAG, TEST_LAST_REFERENCE_KEY_PROPERTY, TEST_SYNTHETIC_TITLE_FLAG } from '../helpers'
 import { parseAsyncApiAndAssertValid } from '../helpers/asyncapi'
 
 const NORMALIZATION_OPTIONS_FIRST_REFERENCE_KEY = {
@@ -884,6 +884,233 @@ describe('AsyncAPI Reference Object Resolver', () => {
       expect(result.operations['send-operation'].messages[0]).toBe(result.channels.ChannelID.messages.MessageID)
       // Broken parameter reference should remain unresolved (kept as $ref) in the final spec
       expect(result.channels.ChannelID.parameters.notExistingParameter.$ref).toBe('#/components/parameters/not-existing-parameter')
+    })
+  })
+
+  describe('Inline Refs Flag', () => {
+    it('should produce same message instance when both operations reference the same channel message via identical chains', async () => {
+      const source = {
+        asyncapi: '3.0.0',
+        info: {
+          title: 'Test API',
+          version: '1.0.0',
+        },
+        channels: {
+          channel1: {
+            messages: {
+              SharedMessage: {
+                payload: {
+                  type: 'object',
+                },
+              },
+            },
+          },
+        },
+        operations: {
+          operation1: {
+            action: 'send',
+            channel: { $ref: '#/channels/channel1' },
+            messages: [
+              { $ref: '#/channels/channel1/messages/SharedMessage' },
+            ],
+          },
+          operation2: {
+            action: 'receive',
+            channel: { $ref: '#/channels/channel1' },
+            messages: [
+              { $ref: '#/channels/channel1/messages/SharedMessage' },
+            ],
+          },
+        },
+      }
+
+      await parseAsyncApiAndAssertValid(source)
+
+      const result = normalize(source, {
+        inlineRefsFlag: TEST_INLINE_REFS_FLAG,
+      }) as any
+
+      // Both operations resolve through identical chains — expected inlineRefsFlag is the same,
+      // so no copy is needed and they share the same resolved instance.
+      expect(result.operations.operation1.messages[0]).toBe(result.operations.operation2.messages[0])
+      expect(result.operations.operation1.messages[0][TEST_INLINE_REFS_FLAG]).toEqual(['#/channels/channel1/messages/SharedMessage'])
+    })
+
+    it('should capture inline refs for channel messages without creating chain-specific copies', async () => {
+      const source = {
+        asyncapi: '3.0.0',
+        info: {
+          title: 'Test API',
+          version: '1.0.0',
+        },
+        channels: {
+          channel1: {
+            messages: {
+              SharedMessage: {
+                $ref: '#/components/messages/SharedMessage',
+              },
+            },
+          },
+        },
+        operations: {
+          operation: {
+            action: 'send',
+            channel: { $ref: '#/channels/channel1' },
+            messages: [
+              { $ref: '#/channels/channel1/messages/SharedMessage' },
+            ],
+          }
+        },
+        components: {
+          messages: {
+            SharedMessage: {
+              payload: {
+                type: 'object',
+              },
+            },
+          },
+        },
+      }
+
+      await parseAsyncApiAndAssertValid(source)
+
+      const result = normalize(source, {
+        inlineRefsFlag: TEST_INLINE_REFS_FLAG,
+      }) as any
+
+      // Channel message resolution uses normal (non-refChainStart) processing,
+      // so inlineRefsFlag is set via addRefInlineHistory directly.
+      expect(result.channels.channel1.messages.SharedMessage[TEST_INLINE_REFS_FLAG]).toEqual(['#/components/messages/SharedMessage'])
+      expect(result.operations.operation.messages[0][TEST_INLINE_REFS_FLAG]).toEqual(['#/components/messages/SharedMessage', '#/channels/channel1/messages/SharedMessage'])
+    })
+
+    it('should capture inline refs and first reference key together using a single copy per operation', async () => {
+      const source = {
+        asyncapi: '3.0.0',
+        info: {
+          title: 'Test API',
+          version: '1.0.0',
+        },
+        channels: {
+          channel1: {
+            messages: {
+              SharedMessage: {
+                $ref: '#/components/messages/SharedMessage',
+              },
+            },
+          },
+          channel2: {
+            messages: {
+              SharedMessage: {
+                $ref: '#/components/messages/SharedMessage',
+              },
+            },
+          },
+        },
+        operations: {
+          operation1: {
+            action: 'send',
+            channel: { $ref: '#/channels/channel1' },
+            messages: [
+              { $ref: '#/channels/channel1/messages/SharedMessage' },
+            ],
+          },
+          operation2: {
+            action: 'send',
+            channel: { $ref: '#/channels/channel2' },
+            messages: [
+              { $ref: '#/channels/channel2/messages/SharedMessage' },
+            ],
+          },
+        },
+        components: {
+          messages: {
+            SharedMessage: {
+              payload: {
+                type: 'object',
+              },
+            },
+          },
+        },
+      }
+
+      await parseAsyncApiAndAssertValid(source)
+
+      const result = normalize(source, {
+        inlineRefsFlag: TEST_INLINE_REFS_FLAG,
+        firstReferenceKeyProperty: TEST_FIRST_REFERENCE_KEY_PROPERTY,
+      }) as any
+
+      // Each operation resolves through a different channel path and gets its own copy
+      // with both flags set in a single copy (not two separate copies).
+      expect(result.operations.operation1.messages[0]).not.toBe(result.operations.operation2.messages[0])
+
+      expect(result.operations.operation1.messages[0][TEST_INLINE_REFS_FLAG]).toEqual(['#/components/messages/SharedMessage', '#/channels/channel1/messages/SharedMessage'])
+      expect(result.operations.operation2.messages[0][TEST_INLINE_REFS_FLAG]).toEqual(['#/components/messages/SharedMessage', '#/channels/channel2/messages/SharedMessage'])
+
+      expect(result.operations.operation1.messages[0][TEST_FIRST_REFERENCE_KEY_PROPERTY]).toBe('SharedMessage')
+      expect(result.operations.operation2.messages[0][TEST_FIRST_REFERENCE_KEY_PROPERTY]).toBe('SharedMessage')
+    })
+
+    it('should capture different inline refs flags for message references in different operations', async () => {
+      const source = {
+        asyncapi: '3.0.0',
+        info: {
+          title: 'Test API',
+          version: '1.0.0',
+        },
+        channels: {
+          channel1: {
+            messages: {
+              SharedMessage: {
+                $ref: '#/components/messages/SharedMessage',
+              },
+            },
+          },
+          channel2: {
+            messages: {
+              SharedMessage: {
+                $ref: '#/components/messages/SharedMessage',
+              },
+            },
+          },
+        },
+        operations: {
+          operation1: {
+            action: 'send',
+            channel: { $ref: '#/channels/channel1' },
+            messages: [
+              { $ref: '#/channels/channel1/messages/SharedMessage' },
+            ],
+          },
+          operation2: {
+            action: 'send',
+            channel: { $ref: '#/channels/channel2' },
+            messages: [
+              { $ref: '#/channels/channel2/messages/SharedMessage' },
+            ],
+          },
+        },
+        components: {
+          messages: {
+            SharedMessage: {
+              payload: {
+                type: 'object',
+              },
+            },
+          },
+        },
+      }
+
+      await parseAsyncApiAndAssertValid(source)
+
+      const result = normalize(source, {
+        inlineRefsFlag: TEST_INLINE_REFS_FLAG,
+      }) as any
+
+      expect(result.operations.operation1.messages[0][TEST_INLINE_REFS_FLAG]).not.toEqual(result.operations.operation2.messages[0][TEST_INLINE_REFS_FLAG])
+      expect(result.operations.operation1.messages[0][TEST_INLINE_REFS_FLAG]).toEqual(['#/components/messages/SharedMessage', '#/channels/channel1/messages/SharedMessage'])
+      expect(result.operations.operation2.messages[0][TEST_INLINE_REFS_FLAG]).toEqual(['#/components/messages/SharedMessage', '#/channels/channel2/messages/SharedMessage'])
     })
   })
 })

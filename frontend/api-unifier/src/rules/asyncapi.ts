@@ -277,6 +277,7 @@ const messageRules: NormalizationRules = {
 const rootMessageRules: NormalizationRules = {
   ...messageRules,
   captureFirstReferenceKey: true,
+  refChainStart: true,
 }
 
 const parameterRules: NormalizationRules = {

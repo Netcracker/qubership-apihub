@@ -226,6 +226,8 @@ export interface DefineOriginsAndResolveRefState extends HasIgnoreTreeUnderSymbo
   syntheticsJumps: Map<unknown, () => unknown>
   /** When set, nested ref resolution reuses this as first reference key (for captureFirstReferenceKey). */
   firstReferenceKeyForCapture?: string
+  /** Accumulates refs during a refChainStart chain; undefined outside such chains. */
+  inlineRefsChainCapture?: string[]
 }
 
 export interface ValidateState extends HasIgnoreTreeUnderSymbols {
@@ -257,6 +259,7 @@ export interface NormalizationRule {
   readonly isExtension?: boolean
   readonly referenceHandler?: ReferenceHandler
   readonly captureFirstReferenceKey?: boolean
+  readonly refChainStart?: boolean
 }
 
 export type MergeAndLiftCombinersSyncCloneHook = SyncCloneHook<MergeAndLiftCombinersState, NormalizationRule>
