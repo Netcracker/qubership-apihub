@@ -56,6 +56,18 @@ describe('AsyncAPI 3.0 Operation Tests', () => {
         expect(operation.searchScopes).toEqual({})
       }
     })
+
+    test('single-operation spec data should include relevant operation when multiple operations share the same message', async () => {
+      const result = await buildPackageWithDefaultConfig('asyncapi/operations/shared-message')
+      const operations = Array.from(result.operations.values())
+      expect(operations).toHaveLength(2)
+
+      for (const operation of operations) {
+        const asyncApiData = operation.data as AsyncAPIV3.AsyncAPIObject
+        const operationKeys = Object.keys(asyncApiData?.operations ?? {})
+        expect(operationKeys).toEqual([operation.metadata.asyncOperationId])
+      }
+    })
   })
 
   describe('OperationId Tests', () => {
