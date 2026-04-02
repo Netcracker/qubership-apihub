@@ -39,7 +39,7 @@ jobs:
     with:
       branch-name: ${{ github.head_ref }} # pass PR source branch
       repo-name: qubership-apihub-build-task-consumer
-  calculate-api-linter-tag:
+  calculate-api-linter-service-tag:
     if: github.event_name == 'pull_request'
     needs: build-docker-image
     uses: netcracker/qubership-apihub-ci/.github/workflows/calculate-effective-tag.yaml@main
@@ -55,15 +55,15 @@ jobs:
       repo-name: qubership-apihub-agents-backend
   run-e2e-tests:
     uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@main
-    needs: [build-docker-image, calculate-ui-tag, calculate-build-task-consumer-tag]
+    needs: [build-docker-image, calculate-ui-tag, calculate-build-task-consumer-tag, calculate-api-linter-service-tag, calculate-agents-backend-tag]
     if: github.event_name == 'pull_request'
     with:
       postman-collections-list: './e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/1_3_Linter_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json'
       apihub-backend-image-tag: ${{ needs.build-docker-image.outputs.image_tag }}
       apihub-ui-image-tag: ${{ needs.calculate-ui-tag.outputs.tag }}
       apihub-build-task-consumer-image-tag: ${{ needs.calculate-build-task-consumer-tag.outputs.tag }}
-      apihub-api-linter-tag: ${{ needs.calculate-api-linter-tag.outputs.tag }}
-      apihub-agents-backend-tag: ${{ needs.calculate-agents-backend-tag.outputs.tag }}
+      apihub-api-linter-service-image-tag: ${{ needs.calculate-api-linter-service-tag.outputs.tag }}
+      apihub-agents-backend-image-tag: ${{ needs.calculate-agents-backend-tag.outputs.tag }}
       # pass PR source branch, will default to develop if corresponding branch for Newman tests is not found
       postman-repository-branch: ${{ github.head_ref }}
       # pass PR source branch, will default to develop if corresponding branch for Playwright tests is not found
