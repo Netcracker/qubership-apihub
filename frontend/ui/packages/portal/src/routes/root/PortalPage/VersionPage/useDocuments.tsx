@@ -24,7 +24,7 @@ import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/ap
 import type { DocumentsDto } from '@netcracker/qubership-apihub-ui-shared/entities/documents'
 import { getDocuments } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 
-const DOCUMENTS_QUERY_KEY = 'documents-query-key'
+export const DOCUMENTS_QUERY_KEY = 'documents-query-key'
 
 export type DocumentsQueryState = {
   documents: Documents

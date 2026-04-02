@@ -25,7 +25,6 @@ import {
   Box,
   FormControlLabel,
   FormGroup,
-  Radio,
   RadioGroup,
   Switch,
   TextField,
@@ -44,6 +43,7 @@ import { EmailNotificationList } from './EmailNotificationList'
 import { useBaselineOptions } from '../useBaselineOptions'
 import { useVersionOptions } from './useVersionOptions'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
+import { RadioCustom } from '@netcracker/qubership-apihub-ui-shared/components/RadioCustom'
 import type {
   AutodiscoveryStatus} from '../../../../entities/statuses'
 import {
@@ -99,18 +99,18 @@ export const AutomationPage: FC = memo(() => {
                     disabled={isLoading}
                     value={NONE_AUTODISCOVERY_STATUS}
                     label="None"
-                    control={<Radio/>}
+                    control={<RadioCustom/>}
                   />
                   <FormControlLabel
                     disabled={isLoading}
                     value={SCHEDULE_AUTODISCOVERY_STATUS}
                     label="On schedule"
-                    control={<Radio/>}
+                    control={<RadioCustom/>}
                   />
                   <FormControlLabel
                     disabled
                     label="On any service update"
-                    control={<Radio/>}
+                    control={<RadioCustom/>}
                   />
                 </RadioGroup>
               )}

@@ -91,6 +91,7 @@ export const DocumentsCard: FC = memo(() => {
               searchValue={searchValue}
               setSearchValue={setSearchValue}
               isLoading={isLoading}
+              document={document}
             />
           )}
           subheader={isDashboard ? packageRef?.name : ''}

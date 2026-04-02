@@ -2,7 +2,7 @@ import { FormControl, InputLabel, MenuItem, Select, type SelectChangeEvent } fro
 import {
   LINTER_API_TYPE_TITLE_MAP,
   type LinterApiType,
-  LinterApiTypes
+  LinterApiTypes,
 } from '@apihub/entities/api-quality/linter-api-types'
 import { type FC, memo } from 'react'
 

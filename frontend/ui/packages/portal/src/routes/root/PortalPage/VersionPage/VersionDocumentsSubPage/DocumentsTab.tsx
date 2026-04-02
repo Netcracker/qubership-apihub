@@ -40,7 +40,7 @@ export const DocumentsTab: FC<DocumentsTabProps> = memo<DocumentsTabProps>((prop
       <Box sx={{ mt: 3 }}>
         {Array(5)
           .fill(0)
-          .map(() => <Skeleton sx={{ width: '70%' }}/>)}
+          .map((_, index) => <Skeleton key={index} sx={{ width: '70%' }}/>)}
       </Box>
     )
   }

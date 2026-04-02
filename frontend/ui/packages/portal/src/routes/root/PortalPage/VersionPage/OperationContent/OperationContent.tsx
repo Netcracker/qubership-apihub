@@ -19,11 +19,11 @@ import {
   useApiDiffResult,
   useHasComparisonInternalDocument,
   useIsApiDiffResultLoading,
-  useSetApiDiffResult
+  useSetApiDiffResult,
 } from '@apihub/routes/root/ApiDiffResultProvider'
 import { OperationView } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationView'
 import {
-  useCustomServersContext
+  useCustomServersContext,
 } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/CustomServersProvider'
 import { getFileDetails } from '@apihub/utils/file-details'
 import { isAsyncApiSpecification } from '@apihub/utils/internal-documents/type-guards'
@@ -39,13 +39,13 @@ import { RawSpecDiffView } from '@netcracker/qubership-apihub-ui-shared/componen
 import { RawSpecView } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/RawSpecView'
 import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
 import {
-  WarningApiProcessorVersion
+  WarningApiProcessorVersion,
 } from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import {
   API_TYPE_ASYNCAPI,
   API_TYPE_GRAPHQL,
-  API_TYPE_REST
+  API_TYPE_REST,
 } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { FileViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
 import { FILE_FORMAT_VIEW, YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
@@ -54,16 +54,16 @@ import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entit
 import { DEFAULT_API_TYPE, isAsyncApiOperation, isGraphQlOperation } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import {
-  useSeverityFiltersSearchParam
+  useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
 import { usePublishedDocumentRaw } from '@netcracker/qubership-apihub-ui-shared/hooks/documents/usePublishedDocumentRaw'
 import {
   useIsDocOperationViewMode,
   useIsGraphOperationViewMode,
-  useIsRawOperationViewMode
+  useIsRawOperationViewMode,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationMode'
 import {
-  useOperationsPairStringified
+  useOperationsPairStringified,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/operations/useOperationsPairAsStrings'
 import type { FC, ReactNode } from 'react'
 import { memo, useCallback, useEffect, useMemo } from 'react'

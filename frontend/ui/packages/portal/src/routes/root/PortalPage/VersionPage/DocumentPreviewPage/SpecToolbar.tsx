@@ -34,6 +34,7 @@ import {
 import { MD_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import {
   isAsyncApiSpecType,
+  isGraphQlSpecType,
   isOpenApiSpecType,
   UNKNOWN_SPEC_TYPE,
 } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
@@ -62,7 +63,7 @@ export const SpecToolbar: FC = memo(() => {
   const { packageId, versionId, documentId } = useParams()
   const [docPackageKey, docPackageVersionKey] = usePackageParamsWithRef()
   const [packageObject] = usePackage({ packageKey: packageId, showParents: true })
-  const [{ title, slug, type, format }] = useDocument(docPackageKey, docPackageVersionKey, documentId)
+  const [{ title, slug, type, format, shareabilityStatus }] = useDocument(docPackageKey, docPackageVersionKey, documentId)
   const [downloadPublishedDocument] = useDownloadPublishedDocument({
     slug: documentId!,
     packageKey: docPackageKey,
@@ -89,6 +90,7 @@ export const SpecToolbar: FC = memo(() => {
   const isSharingAvailable = type !== UNKNOWN_SPEC_TYPE || format === MD_FILE_FORMAT
   const isOpenApiSpecification = isOpenApiSpecType(type)
   const isAsyncApiSpecification = isAsyncApiSpecType(type)
+  const isGraphQlSpecification = isGraphQlSpecType(type)
 
   const { showExportSettingsDialog } = useEventBus()
 
@@ -111,10 +113,12 @@ export const SpecToolbar: FC = memo(() => {
     navigateToDocumentPreview: null, // We already on the preview page
     downloadPublishedDocument: downloadPublishedDocument,
     showExportSettingsDialog: showExportSettingsDialog,
+    shareabilityStatus: shareabilityStatus,
     getSharedKey: getSharedKey,
     copyToClipboard: copyToClipboard,
     showNotification: showNotification,
     createTemplate: createTemplate,
+    specType: type,
   }
 
   return (
@@ -161,7 +165,7 @@ export const SpecToolbar: FC = memo(() => {
             data-testid="ExportDocumentMenuButton"
           >
             {DOCUMENT_MENU_CONFIG_ON_PREVIEW_PAGE.map((menuItem) => (
-              menuItem.condition(isOpenApiSpecification, isSharingAvailable, isAsyncApiSpecification) &&
+              menuItem.condition(isOpenApiSpecification, isSharingAvailable, isAsyncApiSpecification, isGraphQlSpecification) &&
               <MenuItem
                 key={menuItem.id}
                 onClick={() => menuItem.action(actionParams)}

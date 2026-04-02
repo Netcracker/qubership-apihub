@@ -27,7 +27,7 @@ import { API_V3 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import { useMemo } from 'react'
 
-const DOCUMENT_QUERY_KEY = 'document-query-key'
+export const DOCUMENT_QUERY_KEY = 'document-query-key'
 
 export function useDocument(
   packageKey?: Key,

@@ -16,6 +16,7 @@ import { CheckboxCheckedIcon } from '../icons/CheckboxCheckedIcon'
 import { CheckboxDisabledCheckedIcon } from '../icons/CheckboxDisabledCheckedIcon'
 import { CheckboxDisabledIcon } from '../icons/CheckboxDisabledIcon'
 import { CheckboxIcon } from '../icons/CheckboxIcon'
+import { CheckCircleIcon } from '../icons/CheckCircleIcon'
 import { CheckIcon } from '../icons/CheckIcon'
 import { ClockBackwardIcon } from '../icons/ClockBackwardIcon'
 import { CloseIcon } from '../icons/CloseIcon'
@@ -44,6 +45,7 @@ import { GraphqlIcon } from '../icons/GraphqlIcon'
 import { GroupIcon } from '../icons/GroupIcon'
 import { HomeIcon } from '../icons/HomeIcon'
 import { InfoContextIcon } from '../icons/InfoContextIcon'
+import { InfoFilledIcon } from '../icons/InfoFilledIcon'
 import { JsonSchemaIcon } from '../icons/JsonSchemaIcon'
 import { KeyboardDoubleArrowLeftIcon } from '../icons/KeyboardDoubleArrowLeftIcon'
 import { KeyboardDoubleArrowRightIcon } from '../icons/KeyboardDoubleArrowRightIcon'
@@ -69,6 +71,11 @@ import { RobotIcon } from '../icons/RobotIcon'
 import { SegmentItemIcon } from '../icons/SegmentItemIcon'
 import { ServicesIcon } from '../icons/ServicesIcon'
 import { SettingIcon } from '../icons/SettingIcon'
+import {
+  ShareabilityNonShareableIcon,
+  ShareabilityShareableIcon,
+  ShareabilityUnknownIcon,
+} from '../icons/ShareabilityIcons'
 import { ShareIcon } from '../icons/ShareIcon'
 import { SliderIcon } from '../icons/SliderIcon'
 import { SnapshotsIcon } from '../icons/SnapshotsIcon'
@@ -81,6 +88,7 @@ import { UploadImageIcon } from '../icons/UploadImageIcon'
 import { VersionIcon } from '../icons/VersionIcon'
 import { RedWarningCircleIcon, YellowWarningCircleIcon } from '../icons/WarningCircleIcon'
 import { DefaultWarningIcon, RedWarningIcon, YellowWarningIcon } from '../icons/WarningIcon'
+import { WarningIconMui } from '../icons/WarningIconMui'
 
 type CustomIconComponent = React.FC<{ color?: string; size?: number }>
 type MuiIconComponent = React.FC<SvgIconProps>
@@ -170,6 +178,8 @@ const CUSTOM_ICONS_REGISTRY: readonly IconItem<CustomIconComponent>[] = [
 
 const MUI_ICONS_REGISTRY: readonly IconItem<MuiIconComponent>[] = [
   { name: 'InfoContextIcon', component: InfoContextIcon },
+  { name: 'InfoFilledIcon', component: InfoFilledIcon },
+  { name: 'CheckCircleIcon', component: CheckCircleIcon },
   { name: 'ClockBackwardIcon', component: ClockBackwardIcon },
   { name: 'CloseIcon', component: CloseIcon },
   { name: 'CloudUploadIcon', component: CloudUploadIcon },
@@ -180,6 +190,10 @@ const MUI_ICONS_REGISTRY: readonly IconItem<MuiIconComponent>[] = [
   { name: 'PlayIcon', component: PlayIcon },
   { name: 'PlusIcon', component: PlusIcon },
   { name: 'RobotIcon', component: RobotIcon },
+  { name: 'ShareableIcon', component: ShareabilityShareableIcon },
+  { name: 'NonShareableIcon', component: ShareabilityNonShareableIcon },
+  { name: 'UnknownShareabilityIcon', component: ShareabilityUnknownIcon },
+  { name: 'WarningIconMui', component: WarningIconMui },
 ] as const
 
 const BACKGROUND_COLORS: Record<BackgroundColor, string> = {

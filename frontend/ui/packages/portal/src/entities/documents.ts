@@ -32,6 +32,10 @@ import type { MethodType } from '@netcracker/qubership-apihub-ui-shared/entities
 import type { GraphQlOperationType } from '@netcracker/qubership-apihub-ui-shared/entities/graphql-operation-types'
 import { type DocumentsDto } from '@netcracker/qubership-apihub-ui-shared/entities/documents'
 import { UNKNOWN_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/entities/file-formats'
+import {
+  SHAREABILITY_STATUS_UNKNOWN,
+  type ShareabilityStatus,
+} from '@netcracker/qubership-apihub-api-processor'
 
 export type Documents = ReadonlyArray<Document>
 
@@ -49,6 +53,7 @@ export type Document = Readonly<{
   externalDocs?: Readonly<ExternalDocsLink>
   operations: OperationsData
   packageRef?: PackageRef
+  shareabilityStatus: ShareabilityStatus
 }>
 
 export type DocumentDto = Readonly<{
@@ -66,6 +71,7 @@ export type DocumentDto = Readonly<{
   operations?: ReadonlyArray<OperationDto>
   packages?: PackagesRefs // For operations
   packageRef?: string // For dashboards
+  shareabilityStatus?: ShareabilityStatus
 }>
 
 export function toDocument(value: DocumentDto, packagesRefs?: PackagesRefs): Document {
@@ -85,6 +91,7 @@ export function toDocument(value: DocumentDto, packagesRefs?: PackagesRefs): Doc
       operation => toOperation(operation, value.packages),
     ) ?? [],
     packageRef: toPackageRef(value.packageRef, packagesRefs),
+    shareabilityStatus: value.shareabilityStatus ?? SHAREABILITY_STATUS_UNKNOWN,
   }
 }
 
@@ -96,6 +103,7 @@ export const EMPTY_DOC: Document = {
   format: UNKNOWN_FILE_FORMAT,
   type: UNKNOWN_SPEC_TYPE,
   operations: [],
+  shareabilityStatus: SHAREABILITY_STATUS_UNKNOWN,
   key: '',
   title: '',
   slug: '',

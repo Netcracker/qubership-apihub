@@ -46,7 +46,6 @@ import { useSetFullMainVersion, useSetIsLatestRevision } from '../FullMainVersio
 import { VersionSelector } from '../VersionSelector'
 import { ComparisonSelectorButton } from './ComparisonSelectorButton'
 import { EditButton } from './EditButton'
-import { useDownloadVersionDocumentation } from './useDownloadVersionDocumentation'
 import { WarningApiProcessorVersion } from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
 
 export const VersionPageToolbar: FC = memo(() => {
@@ -59,8 +58,6 @@ export const VersionPageToolbar: FC = memo(() => {
   const { navigateToVersion } = useNavigation()
 
   const { showExportSettingsDialog } = useEventBus()
-
-  const [downloadVersionDocumentation] = useDownloadVersionDocumentation()
 
   const currentPackage = useCurrentPackage()
   const isDashboard: boolean = useMemo(() => currentPackage?.kind === DASHBOARD_KIND, [currentPackage?.kind])
@@ -114,6 +111,21 @@ export const VersionPageToolbar: FC = memo(() => {
     [permissions, status],
   )
 
+  const handleExportClick = useCallback(
+    () => {
+      if (!packageId || !fullVersion) {
+        return
+      }
+
+      showExportSettingsDialog({
+        exportedEntity: ExportedEntityKind.VERSION,
+        packageId: packageId,
+        version: fullVersion,
+      })
+    },
+    [fullVersion, packageId, showExportSettingsDialog],
+  )
+
   return (
     <>
       <Toolbar
@@ -151,18 +163,7 @@ export const VersionPageToolbar: FC = memo(() => {
             {!isDashboard && fullVersion && (
               <Button
                 variant="outlined"
-                onClick={() => {
-                  const hasRestApi = !!versionContent?.operationTypes?.[API_TYPE_REST]
-                  if (hasRestApi) {
-                    showExportSettingsDialog({
-                      exportedEntity: ExportedEntityKind.VERSION,
-                      packageId: packageId!,
-                      version: fullVersion,
-                    })
-                  } else {
-                    downloadVersionDocumentation({ packageKey: packageId!, version: fullVersion })
-                  }
-                }}
+                onClick={handleExportClick}
                 data-testid="ExportVersionButton"
               >
                 Export

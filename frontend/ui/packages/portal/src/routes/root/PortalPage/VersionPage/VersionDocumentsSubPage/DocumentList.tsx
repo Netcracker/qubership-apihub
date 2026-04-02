@@ -16,9 +16,8 @@
 
 import type {Document} from '@apihub/entities/documents'
 import type {FC} from 'react'
-import * as React from 'react'
 import {memo, useCallback, useMemo} from 'react'
-import {Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText, ListSubheader} from '@mui/material'
+import {Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText, ListSubheader, styled} from '@mui/material'
 import type {To} from 'react-router-dom'
 import {useNavigate, useParams} from 'react-router-dom'
 import {DocumentActionsButton} from './DocumentActionsButton'
@@ -28,10 +27,11 @@ import {isEmpty, isNotEmpty} from '@netcracker/qubership-apihub-ui-shared/utils/
 import {NAVIGATION_PLACEHOLDER_AREA, Placeholder} from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
 import {useSearchParam} from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import {optionalSearchParams, REF_SEARCH_PARAM} from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
+import {ShareabilityMarker} from './ShareabilityMarker'
 import {SpecLogo} from '@netcracker/qubership-apihub-ui-shared/components/SpecLogo'
-import type { SpecType} from '@netcracker/qubership-apihub-ui-shared/utils/specs'
-import {isAsyncApiSpecType} from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import {
+  type SpecType,
+  isAsyncApiSpecType,
   isGraphQlSpecType,
   isOpenApiSpecType,
   JSON_SCHEMA_SPEC_TYPE,
@@ -96,6 +96,22 @@ function getGroupNameBySpecType(type: SpecType): GroupName {
   return GROUP_NAME_OTHER
 }
 
+const ListItemShareabilityMarker = styled(ShareabilityMarker)({ marginLeft: 8 })
+
+const ListItemActionsButton = styled(DocumentActionsButton)({
+  visibility: 'visible',
+  backgroundColor: 'transparent',
+  '&:hover': {
+    backgroundColor: '#ECEDEF',
+  },
+  width: 24,
+  minWidth: 24,
+  height: 24,
+  paddingLeft: 10,
+  paddingRight: 10,
+  marginLeft: 0,
+})
+
 export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({documents, isLoading}) => {
   const {packageId: packageKey, versionId: versionKey, documentId} = useParams()
   const escapedVersionKey = encodeURIComponent(versionKey ?? '')
@@ -151,7 +167,7 @@ export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({doc
         >
           {groupName}
         </ListSubheader>
-        {documents.map(({key, type, title, slug, version, format}) => {
+        {documents.map(({ key, type, title, slug, version, format, shareabilityStatus }) => {
           const displayTitle = version ? `${title} ${version}` : title
           return (
             <ListItem
@@ -184,21 +200,12 @@ export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({doc
                   <SpecLogo value={type}/>
                 </ListItemIcon>
                 <ListItemText primary={displayTitle} primaryTypographyProps={{sx: {mt: 0.25}}}/>
-                <DocumentActionsButton
+                <ListItemShareabilityMarker value={shareabilityStatus} />
+                <ListItemActionsButton
                   slug={slug}
                   docType={type}
                   format={format}
-                  sx={{
-                    ml: 1,
-                    visibility: 'visible',
-                    backgroundColor: 'transparent',
-                    '&:hover': {
-                      backgroundColor: '#ECEDEF',
-                    },
-                    width: 24,
-                    minWidth: 24,
-                    height: 24,
-                  }}
+                  shareabilityStatus={shareabilityStatus}
                   icon={<MoreVertIcon sx={{color: '#626D82'}} fontSize="small"/>}
                 />
               </ListItemButton>
