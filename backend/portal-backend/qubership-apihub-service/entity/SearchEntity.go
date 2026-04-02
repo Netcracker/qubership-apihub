@@ -197,6 +197,11 @@ func MakeGlobalOperationSearchResultView(ent OperationSearchResult) interface{} 
 			CommonOperationSearchResult: operationSearchResult,
 			GraphQLOperationView:        MakeGraphQLOperationView(&ent.OperationEntity),
 		}
+	case string(view.AsyncapiApiType):
+		return view.AsyncAPIOperationSearchResult{
+			CommonOperationSearchResult: operationSearchResult,
+			AsyncAPIOperationView:       MakeAsyncAPIOperationView(&ent.OperationEntity),
+		}
 	}
 	return operationSearchResult
 }

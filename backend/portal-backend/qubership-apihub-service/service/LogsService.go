@@ -23,5 +23,5 @@ func (l logsServiceImpl) StoreLogs(obj map[string]interface{}) {
 	for key, value := range obj {
 		fields = append(fields, fmt.Sprintf("%v: %v", key, value))
 	}
-	log.Infof("logs received: " + strings.Join(fields, ", "))
+	log.Infof("logs received: %s", strings.Join(fields, ", "))
 }

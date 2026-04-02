@@ -194,11 +194,13 @@ func issueTokenPair(dbUser view.User, withGitIntegration bool) (accessToken stri
 	}
 	user.SetExtensions(extensions)
 
+	extensions.Set(TokenTypeExt, AccessTokenType)
 	accessToken, err = jwt.IssueAccessToken(user, keeper, accessDuration)
 	if err != nil {
 		return "", "", err
 	}
 
+	extensions.Set(TokenTypeExt, RefreshTokenType)
 	refreshDuration := jwt.SetExpDuration(refreshTokenDuration)
 	refreshToken, err = jwt.IssueAccessToken(user, keeper, refreshDuration)
 	if err != nil {

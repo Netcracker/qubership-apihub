@@ -1,6 +1,6 @@
 module github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service
 
-go 1.25.7
+go 1.26.1
 
 require (
 	github.com/Netcracker/qubership-apihub-commons-go v0.0.1
@@ -18,7 +18,7 @@ require (
 	github.com/iancoleman/orderedmap v0.3.0
 	github.com/mark3labs/mcp-go v0.45.0
 	github.com/minio/minio-go/v7 v7.0.99
-	github.com/openai/openai-go/v3 v3.29.0
+	github.com/openai/openai-go/v3 v3.30.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/robfig/cron/v3 v3.0.1
@@ -35,6 +35,7 @@ require (
 	golang.org/x/net v0.52.0
 	golang.org/x/sync v0.20.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -203,7 +204,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.32.3 // indirect
 	k8s.io/apimachinery v0.32.3 // indirect
 	k8s.io/client-go v0.32.3 // indirect

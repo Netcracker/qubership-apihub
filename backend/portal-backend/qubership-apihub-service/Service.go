@@ -36,7 +36,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 
-	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer"
+	exposer "github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -310,7 +310,7 @@ func main() {
 	jwtPubKeyController := controller.NewJwtPubKeyController()
 	logoutController := controller.NewLogoutController(tokenRevocationService, systemInfoService)
 	operationController := controller.NewOperationController(roleService, operationService, buildService, monitoringService, ptHandler)
-	operationGroupController := controller.NewOperationGroupController(roleService, operationGroupService, versionService)
+	operationGroupController := controller.NewOperationGroupController(roleService, operationGroupService, versionService, systemInfoService)
 	searchController := controller.NewSearchController(operationService, versionService, monitoringService)
 	dataMigrationController := mController.NewTempMigrationController(dbMigrationService, roleService.IsSysadm)
 	activityTrackingController := controller.NewActivityTrackingController(activityTrackingService, roleService, ptHandler)
