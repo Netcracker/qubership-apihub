@@ -8,7 +8,6 @@ import {
   OPENAPI_ICON,
   RELEASE_VERSION_STATUS,
   REST_API_TYPE_TITLE,
-  RESTAPI_ICON,
 } from '@shared/entities'
 import { PortalPage } from '@portal/pages/PortalPage'
 import { SEARCH_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
@@ -73,10 +72,8 @@ test.describe('02 Global Search', () => {
         await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
         await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST).pathToSearchResultItem)
           .toHaveText(`${testWorkspace.name} / ${testGroup.name} / ${testPackage.name} / ${testVersion.version}`)
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST).versionStatus).toHaveText(testVersion.status)
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toHaveIcon(RESTAPI_ICON)
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST).operationType).toHaveText(GS_OPERATION_REST.type)
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST).operationEndpoint).toHaveText(GS_OPERATION_REST.endpoint)
+        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST).operationPathChip).toHaveText(GS_OPERATION_REST.type)
+        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST).operationPathSubtitle).toHaveText(GS_OPERATION_REST.endpoint)
       })
 
       await test.step('Search by Description', async () => {
@@ -130,7 +127,7 @@ test.describe('02 Global Search', () => {
           .toHaveText(`${testWorkspace.name} / ${testGroup.name} / ${testPackage.name} / ${testVersion.version}`)
         await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_GRAPHQL).versionStatus).toHaveText(testVersion.status)
         await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_GRAPHQL)).toHaveIcon(GRAPHQL_ICON)
-        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_GRAPHQL).operationType).toHaveText(GS_OPERATION_GRAPHQL.type)
+        await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_GRAPHQL).operationPathChip).toHaveText(GS_OPERATION_GRAPHQL.type)
       })
 
       await test.step('Search by Description', async () => {
