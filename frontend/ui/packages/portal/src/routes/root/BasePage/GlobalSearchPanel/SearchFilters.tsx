@@ -16,7 +16,7 @@
 
 import type { ChangeEvent, FC, SyntheticEvent } from 'react'
 import * as React from 'react'
-import { memo, useCallback, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Autocomplete, Box, Button, debounce, ListItem, TextField, Tooltip, Typography } from '@mui/material'
 import { Controller, useForm } from 'react-hook-form'
 import { usePackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
@@ -73,6 +73,12 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { DEFAULT_DEBOUNCE } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
 import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
+import {
+  useSystemConfigurationContext,
+} from '@netcracker/qubership-apihub-ui-agents/src/routes/root/NamespacePage/SystemConfigurationProvider'
+import { usePackage } from '@apihub/routes/root/usePackage'
+
+const DEFAULT_WORKSPACE_ID = ''
 
 type FiltersData = Partial<{
   workspace: Package | null
@@ -97,6 +103,13 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
   const defaultPublicationDatePeriod = [oneYearAgo.toISOString(), new Date().toISOString()]
 
+  const systemConfiguration = useSystemConfigurationContext()
+  const defaultWorkspaceId = useMemo(() => {
+    return systemConfiguration?.defaultWorkspaceId ?? DEFAULT_WORKSPACE_ID
+  }, [systemConfiguration])
+
+  const [defaultWorkspace] = usePackage({ packageKey: defaultWorkspaceId, hideError: true })
+
   const {
     control,
     setValue,
@@ -114,6 +127,17 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
       publicationDatePeriod: defaultPublicationDatePeriod,
     },
   })
+
+  useEffect(() => {
+    reset({
+      workspace: defaultWorkspace,
+      group: null,
+      pkg: null,
+      status: RELEASE_VERSION_STATUS,
+      apiType: API_TYPE_REST,
+      publicationDatePeriod: defaultPublicationDatePeriod,
+    })
+  }, [defaultWorkspace])
 
   const {
     operationTypes,

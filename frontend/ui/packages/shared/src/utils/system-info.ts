@@ -35,6 +35,10 @@ export type SystemInfo = {
   useV3Search: boolean
 }
 
+type FeatureFlags = {
+  useV3Search: boolean
+}
+
 export type SystemInfoDto = {
   backendVersion: string
   frontendVersion: string
@@ -42,7 +46,7 @@ export type SystemInfoDto = {
   externalLinks: string[]
   notification?: string
   migrationInProgress: boolean
-  useV3Search: boolean
+  featureFlags: FeatureFlags
 }
 
 export const EMPTY_SYSTEM_INFO: SystemInfo = {
@@ -74,7 +78,7 @@ export function toSystemInfo(value: SystemInfoDto): SystemInfo {
     externalLinks: externalLinks,
     notification: value.notification,
     migrationInProgress: value.migrationInProgress,
-    useV3Search: value.useV3Search,
+    useV3Search: value.featureFlags.useV3Search,
   }
 }
 

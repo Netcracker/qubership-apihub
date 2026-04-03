@@ -49,9 +49,9 @@ export const ApiOperationsSearchList: FC<ApiOperationsSearchListProps> = memo<Ap
   return (
     <Box width={CONTENT_WIDTH} position="relative">
       {value.map((operation) => {
-        const { version, operationKey, packageKey, apiType, parentPackages } = operation
+        const { version, operationKey, packageKey, apiType, parentPackages, name } = operation
         const { versionKey } = getSplittedVersionKey(version)
-        const breadcrumbs = parentPackages.join(' / ')
+        const breadcrumbs = [...parentPackages, name, versionKey].join(' / ')
 
         return (
           <Box mb={2} key={`api-operations-search-list-box-${packageKey}-${operationKey}-${version}`} data-testid="SearchResultRow">
