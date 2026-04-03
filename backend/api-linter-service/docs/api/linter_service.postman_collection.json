@@ -597,6 +597,52 @@
 			]
 		},
 		{
+			"name": "Scoring",
+			"item": [
+				{
+					"name": "GET Scoring for Version",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/packages/{{packageId}}/versions/{{version}}/scoring",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"packages",
+								"{{packageId}}",
+								"versions",
+								"{{version}}",
+								"scoring"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Validation Operations",
 			"item": [
 				{

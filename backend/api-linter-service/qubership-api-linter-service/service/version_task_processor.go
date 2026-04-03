@@ -20,13 +20,14 @@ type VersionTaskProcessor interface {
 	StartVersionLintTask(taskId string) error
 }
 
-func NewVersionTaskProcessor(verRepo repository.VersionLintTaskRepository, docRepo repository.DocLintTaskRepository, verResRepo repository.VersionResultRepository, cl client.ApihubClient, linterSelectorService LinterSelectorService, executorId string, docTaskNotify chan<- struct{}, versionTaskNotify <-chan struct{}) VersionTaskProcessor {
+func NewVersionTaskProcessor(verRepo repository.VersionLintTaskRepository, docRepo repository.DocLintTaskRepository, verResRepo repository.VersionResultRepository, cl client.ApihubClient, linterSelectorService LinterSelectorService, scoringService ScoringService, executorId string, docTaskNotify chan<- struct{}, versionTaskNotify <-chan struct{}) VersionTaskProcessor {
 	svc := &versionTaskProcessorImpl{
 		verRepo:               verRepo,
 		docRepo:               docRepo,
 		verResRepo:            verResRepo,
 		cl:                    cl,
 		linterSelectorService: linterSelectorService,
+		scoringService:        scoringService,
 		executorId:            executorId,
 		docTaskNotify:         docTaskNotify,
 		versionTaskNotify:     versionTaskNotify,
@@ -49,6 +50,7 @@ type versionTaskProcessorImpl struct {
 	verResRepo            repository.VersionResultRepository
 	cl                    client.ApihubClient
 	linterSelectorService LinterSelectorService
+	scoringService        ScoringService
 	executorId            string
 	docTaskNotify         chan<- struct{}
 	versionTaskNotify     <-chan struct{}
@@ -238,7 +240,8 @@ func (v versionTaskProcessorImpl) processTask() bool {
 
 func (v versionTaskProcessorImpl) checkDocReady() {
 	t := time.NewTicker(time.Second * 5)
-	ctx := context.Background()
+	ctx := secctx.MakeSysadminContext(context.Background())
+
 	for range t.C {
 		verLintTasks, err := v.verRepo.GetWaitingForDocTasks(ctx, v.executorId) // FIXME: problem with dead executor here!!
 		if err != nil {
@@ -299,6 +302,7 @@ func (v versionTaskProcessorImpl) checkDocReady() {
 					continue
 				}
 
+				var score view.VersionScore
 				if numFailed > 0 {
 					log.Infof("Version lint (task = %s) is failed because of failed doc tasks", verLintTask.Id)
 					lintedVerEnt.LintStatus = view.VersionStatusError
@@ -308,16 +312,37 @@ func (v versionTaskProcessorImpl) checkDocReady() {
 					lintedVerEnt.LintStatus = view.VersionStatusSuccess
 					lintedVerEnt.LintDetails = ""
 				}
+
+				// calculate even for failed lint
+				score, err = v.scoringService.CalculateScore(ctx, verLintTask.PackageId, verLintTask.Version, verLintTask.Revision)
+				if err != nil {
+					log.Errorf("Version scoring failed: %s. (task = %s)", err, verLintTask.Id)
+					lintedVerEnt.LintStatus = view.VersionStatusError
+					lintedVerEnt.LintDetails = fmt.Sprintf("scoring failed: %s", err)
+				}
+				log.Infof("Version scoring status=%s. (task = %s)", score.Status, verLintTask.Id)
+
 				lintedVerEnt.LintedAt = time.Now()
 
-				err = v.verRepo.VersionLintCompleted(ctx, verLintTask.Id, lintedVerEnt)
+				scoreEnt := entity.VersionScore{
+					PackageId:                    lintedVerEnt.PackageId,
+					Version:                      lintedVerEnt.Version,
+					Revision:                     lintedVerEnt.Revision,
+					ScoredAt:                     time.Now(),
+					Status:                       score.Status,
+					Reasons:                      score.Reasons,
+					Debug:                        score.Debug,
+					BackwardCompatibilityDetails: score.BackwardCompatibilityDetails,
+					QualityCheckDetails:          score.QualityCheckDetails,
+				}
+
+				err = v.verRepo.VersionLintCompleted(ctx, verLintTask.Id, lintedVerEnt, &scoreEnt)
 				if err != nil {
 					v.handleProcessingFailed(ctx, verLintTask, err)
 					continue
 				}
 			}
 		}
-
 	}
 }
 
