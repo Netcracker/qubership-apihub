@@ -227,10 +227,8 @@ func makeServer(systemInfoService service.SystemInfoService, r *mux.Router) *htt
 	corsOptions = append(corsOptions, handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"}))
 
 	return &http.Server{
-		Handler:      handlers.CompressHandler(handlers.CORS(corsOptions...)(r)),
-		Addr:         listenAddr,
-		WriteTimeout: 600 * time.Second,
-		ReadTimeout:  60 * time.Second,
+		Handler: handlers.CompressHandler(handlers.CORS(corsOptions...)(r)),
+		Addr:    listenAddr,
 	}
 }
 
