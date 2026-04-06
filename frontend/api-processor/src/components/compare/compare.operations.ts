@@ -44,14 +44,12 @@ import {
   SLUG_OPTIONS_OPERATION_ID,
   slugify,
 } from '../../utils'
-import { asyncDebugPerformance, DebugPerformanceContext, syncDebugPerformance } from '../../utils/logs'
 import { validateApiProcessorVersion } from '../../validators'
 
 export async function compareVersionsOperations(
   prev: VersionParams,
   curr: VersionParams,
   ctx: CompareContext,
-  debugCtx?: DebugPerformanceContext,
 ): Promise<VersionsComparison> {
   const changes: OperationChanges[] = []
   const operationTypes: OperationType[] = []
@@ -69,11 +67,8 @@ export async function compareVersionsOperations(
 
   // compare operations of each type
   for (const apiType of getUniqueApiTypesFromVersions(prevVersionData, currVersionData)) {
-    const [operationType, operationsChanges = [], operationsComparisonDocuments = []] = await asyncDebugPerformance(
-      '[ApiType]',
-      (innerDebugCtx) => compareCurrentApiType(apiType, prevVersionData, currVersionData, ctx, innerDebugCtx) ?? [],
-      debugCtx,
-      [apiType],
+    const [operationType, operationsChanges = [], operationsComparisonDocuments = []] = await (
+      compareCurrentApiType(apiType, prevVersionData, currVersionData, ctx) ?? []
     ) ?? []
 
     if (!operationType) {
@@ -113,7 +108,6 @@ async function compareCurrentApiType(
   prev: VersionCache | null,
   curr: VersionCache | null,
   ctx: CompareContext,
-  debugCtx?: DebugPerformanceContext,
 ): Promise<[OperationType, OperationChanges[], ComparisonDocument[]] | null> {
   const {
     versionOperationsResolver,
@@ -186,10 +180,7 @@ async function compareCurrentApiType(
 
   const apiAudienceTransitions: ApiAudienceTransition[] = []
   // todo: convert from objects analysis to apihub-diff result analysis after the "info" section participates in the comparison of operations
-  syncDebugPerformance('[ApiAudience]',
-    () => operationPairs.forEach((pair) => calculateApiAudienceTransitions(pair, apiAudienceTransitions)),
-    debugCtx,
-  )
+  operationPairs.forEach((pair) => calculateApiAudienceTransitions(pair, apiAudienceTransitions))
 
   return [
     {

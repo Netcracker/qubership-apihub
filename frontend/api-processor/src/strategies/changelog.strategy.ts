@@ -17,10 +17,9 @@
 import { BuildConfig, BuilderStrategy, BuildResult, BuildTypeContexts, VersionCache } from '../types'
 import { compareVersions } from '../components/compare'
 import { MESSAGE_SEVERITY } from '../consts'
-import { DebugPerformanceContext } from '../utils/logs'
 
 export class ChangelogStrategy implements BuilderStrategy {
-  async execute(config: BuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts, debugContext?: DebugPerformanceContext): Promise<BuildResult> {
+  async execute(config: BuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
     const { previousVersionPackageId, packageId, version, previousVersion } = config
 
     const compareContextObject = contexts.compareContext(config)
@@ -42,7 +41,6 @@ export class ChangelogStrategy implements BuilderStrategy {
       comparisonPreviousVersion ? [comparisonPreviousVersion, previousVersionPackageId || packageId] : null,
       [version, packageId],
       compareContextObject,
-      debugContext,
     )
 
     return buildResult

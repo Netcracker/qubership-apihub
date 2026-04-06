@@ -30,40 +30,34 @@ import {
 import type * as TYPE from './rest.types'
 import { INLINE_REFS_FLAG, MESSAGE_SEVERITY } from '../../consts'
 import { asyncFunction } from '../../utils/async'
-import { logLongBuild, syncDebugPerformance } from '../../utils/logs'
 import { normalize, RefErrorType } from '@netcracker/qubership-apihub-api-unifier'
 import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
 import { REST_EFFECTIVE_NORMALIZE_OPTIONS } from './rest.consts'
 
 type OperationInfo = { path: string; method: string }
 
-export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async (document, ctx, debugCtx) => {
+export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async (document, ctx) => {
   const documentWithoutComponents = removeComponents(document.data)
   const bundlingErrorHandler = createBundlingErrorHandler(ctx, document.fileId)
 
   const { notifications, normalizedSpecFragmentsHashCache, config } = ctx
-  const { effectiveDocument, refsOnlyDocument } = syncDebugPerformance('[NormalizeDocument]', () => {
-      const effectiveDocument = normalize(
-        documentWithoutComponents,
-        {
-          ...REST_EFFECTIVE_NORMALIZE_OPTIONS,
-          source: document.data,
-          onRefResolveError: (message: string, _path: PropertyKey[], _ref: string, errorType: RefErrorType) =>
-            bundlingErrorHandler([{ message, errorType }]),
-        },
-      ) as OpenAPIV3.Document
-      const refsOnlyDocument = normalize(
-        documentWithoutComponents,
-        {
-          mergeAllOf: false,
-          inlineRefsFlag: INLINE_REFS_FLAG,
-          source: document.data,
-        },
-      ) as OpenAPIV3.Document
-      return { effectiveDocument, refsOnlyDocument }
+  const effectiveDocument = normalize(
+    documentWithoutComponents,
+    {
+      ...REST_EFFECTIVE_NORMALIZE_OPTIONS,
+      source: document.data,
+      onRefResolveError: (message: string, _path: PropertyKey[], _ref: string, errorType: RefErrorType) =>
+        bundlingErrorHandler([{ message, errorType }]),
     },
-    debugCtx,
-  )
+  ) as OpenAPIV3.Document
+  const refsOnlyDocument = normalize(
+    documentWithoutComponents,
+    {
+      mergeAllOf: false,
+      inlineRefsFlag: INLINE_REFS_FLAG,
+      source: document.data,
+    },
+  ) as OpenAPIV3.Document
 
   const { paths, servers } = effectiveDocument
 
@@ -94,26 +88,20 @@ export const buildRestOperations: OperationsBuilder<OpenAPIV3.Document> = async 
         trackedOperations.push({ path, method: key })
         operationIdMap.set(operationId, trackedOperations)
 
-        syncDebugPerformance('[Operation]', (innerDebugCtx) =>
-          logLongBuild(() => {
-            const operation = buildRestOperation(
-              operationId,
-              path,
-              <OpenAPIV3.HttpMethods>key,
-              document,
-              effectiveDocument,
-              refsOnlyDocument,
-              basePath,
-              notifications,
-              config,
-              normalizedSpecFragmentsHashCache,
-              originalSpecComponentsHashCache,
-              innerDebugCtx,
-            )
-            operations.push(operation)
-          },
-            `${config.packageId}/${config.version} ${operationId}`,
-          ), debugCtx, [operationId])
+        const operation = buildRestOperation(
+          operationId,
+          path,
+          <OpenAPIV3.HttpMethods>key,
+          document,
+          effectiveDocument,
+          refsOnlyDocument,
+          basePath,
+          notifications,
+          config,
+          normalizedSpecFragmentsHashCache,
+          originalSpecComponentsHashCache,
+        )
+        operations.push(operation)
       })
     }
   }

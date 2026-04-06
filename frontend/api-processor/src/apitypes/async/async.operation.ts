@@ -35,7 +35,6 @@ import {
   VERSION_STATUS,
 } from '../../consts'
 import { getCustomTags, resolveApiAudience } from '../../utils/apihubSpecificationExtensions'
-import { DebugPerformanceContext, syncDebugPerformance } from '../../utils/logs'
 import {
   calculateDeprecatedItems,
   Jso,
@@ -73,7 +72,6 @@ export const buildAsyncApiOperation = (
   notifications: NotificationMessage[],
   config: BuildConfig,
   normalizedSpecFragmentsHashCache: ObjectHashCache,
-  debugCtx?: DebugPerformanceContext,
 ): VersionAsyncOperation => {
   const {
     data: documentData,
@@ -90,7 +88,7 @@ export const buildAsyncApiOperation = (
   const deprecatedItems = collectDeprecatedItems(
     config, message, messageId, channel, channelId,
     effectiveSingleOperationSpec, normalizedSpecFragmentsHashCache,
-    notifications, debugCtx,
+    notifications,
   )
 
   const operationApiKind = getApiKindProperty(effectiveOperationObject)
@@ -98,13 +96,11 @@ export const buildAsyncApiOperation = (
 
   // TODO: Populate models when AsyncAPI model extraction is implemented
   const models: Record<string, string> = {}
-  const specWithSingleOperation = syncDebugPerformance('[ModelsAndOperationHashing]', () => {
-    return createOperationSpecWithInlineRefs(
-      documentData,
-      operationId,
-      refsOnlyDocument,
-    )
-  }, debugCtx)
+  const specWithSingleOperation = createOperationSpecWithInlineRefs(
+    documentData,
+    operationId,
+    refsOnlyDocument,
+  )
 
   const deprecatedOperationItem = deprecatedItems.find(isDeprecatedOperationItem)
 
@@ -168,59 +164,56 @@ const collectDeprecatedItems = (
   effectiveSingleOperationSpec: TYPE.AsyncOperationData,
   normalizedSpecFragmentsHashCache: ObjectHashCache,
   notifications: NotificationMessage[],
-  debugCtx?: DebugPerformanceContext,
 ): DeprecateItem[] => {
 
   const deprecatedItems: DeprecateItem[] = []
-  syncDebugPerformance('[DeprecatedItems]', () => {
-    const [version] = getSplittedVersionKey(config.version)
-    const deprecatedInPreviousVersions = config.status === VERSION_STATUS.RELEASE ? [version] : []
+  const [version] = getSplittedVersionKey(config.version)
+  const deprecatedInPreviousVersions = config.status === VERSION_STATUS.RELEASE ? [version] : []
 
-    const resolveDeclarationJsonPaths = (value: Jso): JsonPath[] => (
-      resolveOrigins(value, DEPRECATED_SPECIFICATION_EXTENSION, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? []
-    )
+  const resolveDeclarationJsonPaths = (value: Jso): JsonPath[] => (
+    resolveOrigins(value, DEPRECATED_SPECIFICATION_EXTENSION, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? []
+  )
 
-    // Handled Custom extensions (x-deprecated) on Message
-    if (message[DEPRECATED_SPECIFICATION_EXTENSION]) {
-      const declarationJsonPaths = resolveDeclarationJsonPaths(message as Jso)
-      const messageTitle = message.title || messageId
+  // Handled Custom extensions (x-deprecated) on Message
+  if (message[DEPRECATED_SPECIFICATION_EXTENSION]) {
+    const declarationJsonPaths = resolveDeclarationJsonPaths(message as Jso)
+    const messageTitle = message.title || messageId
 
-      deprecatedItems.push({
-        declarationJsonPaths,
-        description: `${DEPRECATED_MESSAGE_PREFIX} message '${messageTitle}'`,
-        ...{ [isOperationDeprecated]: true },
-        deprecatedInPreviousVersions,
-      })
-    }
-    // Handled Custom extensions (x-deprecated) on Channel
-    if (channel[DEPRECATED_SPECIFICATION_EXTENSION]) {
-      const declarationJsonPaths = resolveDeclarationJsonPaths(channel as Jso)
-      const channelTitle = channel.title || channelId
+    deprecatedItems.push({
+      declarationJsonPaths,
+      description: `${DEPRECATED_MESSAGE_PREFIX} message '${messageTitle}'`,
+      ...{ [isOperationDeprecated]: true },
+      deprecatedInPreviousVersions,
+    })
+  }
+  // Handled Custom extensions (x-deprecated) on Channel
+  if (channel[DEPRECATED_SPECIFICATION_EXTENSION]) {
+    const declarationJsonPaths = resolveDeclarationJsonPaths(channel as Jso)
+    const channelTitle = channel.title || channelId
 
-      deprecatedItems.push({
-        declarationJsonPaths,
-        description: `${DEPRECATED_MESSAGE_PREFIX} channel '${channelTitle}'`,
-        deprecatedInPreviousVersions,
-        hash: calculateHash(channel, normalizedSpecFragmentsHashCache),
-        tolerantHash: calculateTolerantHash(channel as Jso, notifications),
-      })
-    }
+    deprecatedItems.push({
+      declarationJsonPaths,
+      description: `${DEPRECATED_MESSAGE_PREFIX} channel '${channelTitle}'`,
+      deprecatedInPreviousVersions,
+      hash: calculateHash(channel, normalizedSpecFragmentsHashCache),
+      tolerantHash: calculateTolerantHash(channel as Jso, notifications),
+    })
+  }
 
-    // Native `deprecated: true` on Schema Objects in payload/headers — calculated by api-unifier
-    const foundDeprecatedItems = calculateDeprecatedItems(effectiveSingleOperationSpec, ORIGINS_SYMBOL)
-    for (const item of foundDeprecatedItems) {
-      const { description, value } = item
-      const declarationJsonPaths = resolveOrigins(value, JSON_SCHEMA_PROPERTY_DEPRECATED, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? []
+  // Native `deprecated: true` on Schema Objects in payload/headers — calculated by api-unifier
+  const foundDeprecatedItems = calculateDeprecatedItems(effectiveSingleOperationSpec, ORIGINS_SYMBOL)
+  for (const item of foundDeprecatedItems) {
+    const { description, value } = item
+    const declarationJsonPaths = resolveOrigins(value, JSON_SCHEMA_PROPERTY_DEPRECATED, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? []
 
-      deprecatedItems.push({
-        declarationJsonPaths,
-        description,
-        deprecatedInPreviousVersions,
-        hash: calculateHash(value, normalizedSpecFragmentsHashCache),
-        tolerantHash: calculateTolerantHash(value as Jso, notifications),
-      })
-    }
-  }, debugCtx)
+    deprecatedItems.push({
+      declarationJsonPaths,
+      description,
+      deprecatedInPreviousVersions,
+      hash: calculateHash(value, normalizedSpecFragmentsHashCache),
+      tolerantHash: calculateTolerantHash(value as Jso, notifications),
+    })
+  }
 
   return deprecatedItems
 }

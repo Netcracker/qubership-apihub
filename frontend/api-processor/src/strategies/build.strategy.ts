@@ -19,7 +19,6 @@ import { compareVersions } from '../components/compare'
 import { DuplicateOperationHandler, getOperationsList, setDocument } from '../utils'
 import { buildFiles } from '../components/files'
 import { calculateHistoryForDeprecatedItems } from '../components/deprecated'
-import { asyncDebugPerformance, DebugPerformanceContext } from '../utils/logs'
 import { ASYNCAPI_API_TYPE, MESSAGE_SEVERITY, REST_API_TYPE } from '../consts'
 
 /**
@@ -44,7 +43,7 @@ const createDuplicateOperationHandler = (buildResult: BuildResult): DuplicateOpe
 }
 
 export class BuildStrategy implements BuilderStrategy {
-  async execute(config: BuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts, debugContext: DebugPerformanceContext): Promise<BuildResult> {
+  async execute(config: BuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
     const {
       previousVersionPackageId,
       packageId,
@@ -68,7 +67,7 @@ export class BuildStrategy implements BuilderStrategy {
     }
 
     if (files?.length) {
-      const buildFilesResult = await buildFiles(files, builderContextObject, debugContext)
+      const buildFilesResult = await buildFiles(files, builderContextObject)
       const handleDuplicateOperation = createDuplicateOperationHandler(buildResult)
       for (const { document, operations = [] } of buildFilesResult) {
         setDocument(buildResult, document, operations, handleDuplicateOperation)
@@ -76,13 +75,13 @@ export class BuildStrategy implements BuilderStrategy {
 
       if (!builderContextObject.builderRunOptions.withoutDeprecatedDepth && previousVersionCache) {
         // add deprecated depth
-        await asyncDebugPerformance('[DeprecatedHistory]', () => calculateHistoryForDeprecatedItems(
+        await calculateHistoryForDeprecatedItems(
           REST_API_TYPE,
           getOperationsList(buildResult),
           previousVersionCache!.version,
           previousVersionPackageId || packageId,
           builderContextObject,
-        ), debugContext, [previousVersionPackageId ?? packageId, previousVersionCache!.version])
+        )
       }
     }
 
@@ -91,7 +90,6 @@ export class BuildStrategy implements BuilderStrategy {
         [previousVersionCache.version, previousVersionPackageId || packageId],
         [version, packageId],
         compareContextObject,
-        debugContext,
       )
     }
 

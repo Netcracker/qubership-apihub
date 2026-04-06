@@ -18,7 +18,6 @@ import { BuildResult } from './builder'
 import { BuildConfig, BuildConfigBase } from '../external'
 import { BuilderContext } from './apiBuilder'
 import { CompareContext } from './compare'
-import { DebugPerformanceContext } from '../../utils/logs'
 
 export type BuildTypeContexts = {
   builderContext: (config: BuildConfigBase) => BuilderContext
@@ -30,6 +29,5 @@ export interface BuilderStrategy {
     config: BuildConfigBase,
     buildResult: BuildResult,
     contexts: BuildTypeContexts,
-    debugContext?: DebugPerformanceContext,
   ): Promise<BuildResult>
 }

@@ -17,23 +17,14 @@
 import { BuildConfigRef, CompareContext, VersionParams, VersionsComparison } from '../../types'
 import { compareVersionsOperations } from './compare.operations'
 import { getSplittedVersionKey } from '../../utils'
-import { asyncDebugPerformance, DebugPerformanceContext } from '../../utils/logs'
 
 export async function compareVersions(
   prev: VersionParams,
   curr: VersionParams,
   ctx: CompareContext,
-  debugCtx?: DebugPerformanceContext,
 ): Promise<VersionsComparison[]> {
-  let comparisons: VersionsComparison[] = []
-  await asyncDebugPerformance('[CompareVersions]', async (versionsDebugContext) => {
-    comparisons = await compareVersionsReferences(prev, curr, ctx)
-    comparisons.push(await asyncDebugPerformance(
-      '[CompareOperations]',
-      (operationsDebugCtx) => compareVersionsOperations(prev, curr, ctx, operationsDebugCtx),
-      versionsDebugContext,
-    ))
-  }, debugCtx, prev ? [prev[1], prev[0]] : ['empty previous id', 'empty previous version'])
+  const comparisons: VersionsComparison[] = await compareVersionsReferences(prev, curr, ctx)
+  comparisons.push(await compareVersionsOperations(prev, curr, ctx))
 
   return comparisons
 }

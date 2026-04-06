@@ -55,7 +55,6 @@ import {
   VERSION_STATUS,
 } from '../../consts'
 import { extractSecuritySchemesNames, getCustomTags, resolveApiAudience } from './rest.utils'
-import { DebugPerformanceContext, syncDebugPerformance } from '../../utils/logs'
 import {
   calculateDeprecatedItems,
   grepValue,
@@ -89,7 +88,6 @@ export const buildRestOperation = (
   config: BuildConfig,
   normalizedSpecFragmentsHashCache: ObjectHashCache,
   originalSpecComponentsHashCache: Map<string, string>,
-  debugCtx?: DebugPerformanceContext,
 ): TYPE.VersionRestOperation => {
   const { apiKind: documentApiKind, data: documentData, slug: documentSlug, versionInternalDocument } = document
   const { servers, security, components, openapi } = documentData
@@ -100,72 +98,64 @@ export const buildRestOperation = (
 
   // TODO: remove after new search is adopted irrevocably
   const scopes: SearchScopes = {}
-  syncDebugPerformance('[SearchScopes]', () => {
-    const handledObject = new Set<unknown>()
-    syncCrawl<OperationCrawlState, CrawlRule>(
-      effectiveOperationObject,
-      ({ key, value, rules }) => {
-        if (typeof key === 'symbol') {
-          return { done: true }
-        }
-        if (handledObject.has(value)) {
-          return { done: true }
-        }
-        handledObject.add(value)
-        if (!rules) {
-          return { done: true }
-        }
+  const handledObject = new Set<unknown>()
+  syncCrawl<OperationCrawlState, CrawlRule>(
+    effectiveOperationObject,
+    ({ key, value, rules }) => {
+      if (typeof key === 'symbol') {
+        return { done: true }
+      }
+      if (handledObject.has(value)) {
+        return { done: true }
+      }
+      handledObject.add(value)
+      if (!rules) {
+        return { done: true }
+      }
 
-        buildSearchScope(key, value, rules, scopes)
-      },
-      { rules: operationRules },
-    )
-  }, debugCtx)
+      buildSearchScope(key, value, rules, scopes)
+    },
+    { rules: operationRules },
+  )
 
   const deprecatedItems: DeprecateItem[] = []
+  const foundedDeprecatedItems = calculateDeprecatedItems(effectiveSingleOperationSpec, ORIGINS_SYMBOL)
 
-  syncDebugPerformance('[DeprecatedItems]', () => {
-    const foundedDeprecatedItems = calculateDeprecatedItems(effectiveSingleOperationSpec, ORIGINS_SYMBOL)
+  for (const item of foundedDeprecatedItems) {
+    const { description, deprecatedReason, value } = item
 
-    for (const item of foundedDeprecatedItems) {
-      const { description, deprecatedReason, value } = item
+    const declarationJsonPaths = resolveOrigins(value, JSON_SCHEMA_PROPERTY_DEPRECATED, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? []
+    const isOperation = isOperationPaths(declarationJsonPaths)
+    const [version] = getSplittedVersionKey(config.version)
 
-      const declarationJsonPaths = resolveOrigins(value, JSON_SCHEMA_PROPERTY_DEPRECATED, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? []
-      const isOperation = isOperationPaths(declarationJsonPaths)
-      const [version] = getSplittedVersionKey(config.version)
+    const hash = isOperation ? undefined : calculateHash(value, normalizedSpecFragmentsHashCache)
+    const tolerantHash = isOperation ? undefined : calculateTolerantHash(value, notifications)
 
-      const hash = isOperation ? undefined : calculateHash(value, normalizedSpecFragmentsHashCache)
-      const tolerantHash = isOperation ? undefined : calculateTolerantHash(value, notifications)
-
-      deprecatedItems.push({
-        declarationJsonPaths,
-        description,
-        ...takeIfDefined({ deprecatedInfo: deprecatedReason }),
-        ...takeIf({ [isOperationDeprecated]: true }, isOperation),
-        deprecatedInPreviousVersions: config.status === VERSION_STATUS.RELEASE ? [version] : [],
-        ...takeIfDefined({ hash: hash }),
-        ...takeIfDefined({ tolerantHash: tolerantHash }),
-      })
-    }
-  }, debugCtx)
+    deprecatedItems.push({
+      declarationJsonPaths,
+      description,
+      ...takeIfDefined({ deprecatedInfo: deprecatedReason }),
+      ...takeIf({ [isOperationDeprecated]: true }, isOperation),
+      deprecatedInPreviousVersions: config.status === VERSION_STATUS.RELEASE ? [version] : [],
+      ...takeIfDefined({ hash: hash }),
+      ...takeIfDefined({ tolerantHash: tolerantHash }),
+    })
+  }
 
   const models: Record<string, string> = {}
   const operationApiKind = getApiKindProperty(effectiveOperationObject) || documentApiKind || APIHUB_API_COMPATIBILITY_KIND_BWC
-  const [specWithSingleOperation] = syncDebugPerformance('[ModelsAndOperationHashing]', () => {
-    const operationSecurity = effectiveOperationObject.security
-    const specWithSingleOperation = createSingleOperationSpec(
-      documentData,
-      path,
-      method,
-      openapi,
-      servers,
-      security,
-      operationSecurity,
-      components?.securitySchemes,
-    )
-    calculateSpecRefs(documentData, refsOnlySingleOperationSpec, specWithSingleOperation, [operationId], models, originalSpecComponentsHashCache)
-    return [specWithSingleOperation]
-  }, debugCtx)
+  const operationSecurity = effectiveOperationObject.security
+  const specWithSingleOperation = createSingleOperationSpec(
+    documentData,
+    path,
+    method,
+    openapi,
+    servers,
+    security,
+    operationSecurity,
+    components?.securitySchemes,
+  )
+  calculateSpecRefs(documentData, refsOnlySingleOperationSpec, specWithSingleOperation, [operationId], models, originalSpecComponentsHashCache)
 
   const deprecatedOperationItem = deprecatedItems.find(isDeprecatedOperationItem)
 
