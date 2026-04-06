@@ -7,7 +7,6 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"runtime/debug"
-	"time"
 
 	"github.com/Netcracker/qubership-apihub-agent/exception"
 	"github.com/netcracker/qubership-core-lib-go-paas-mediation-client/v8/types"
@@ -206,10 +205,8 @@ func main() {
 	corsOptions = append(corsOptions, handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"}))
 
 	srv := &http.Server{
-		Handler:      handlers.CompressHandler(handlers.CORS(corsOptions...)(r)),
-		Addr:         listenAddr,
-		WriteTimeout: 300 * time.Second,
-		ReadTimeout:  30 * time.Second,
+		Handler: handlers.CompressHandler(handlers.CORS(corsOptions...)(r)),
+		Addr:    listenAddr,
 	}
 
 	log.Fatalf("Http server returned error: %v", srv.ListenAndServe())
