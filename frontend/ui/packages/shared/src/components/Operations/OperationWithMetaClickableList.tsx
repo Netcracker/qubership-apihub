@@ -114,7 +114,7 @@ export const OperationWithMetaClickableList: FC<OperationWithMetaClickableListPr
           invisible={isNotEmpty(operations) || isLoading}
           area={NAVIGATION_PLACEHOLDER_AREA}
           message="No operations"
-          testId="NoOperationsPlaceholder"
+          data-testid="NoOperationsPlaceholder"
         >
           <Box overflow="auto" height="inherit">
             {operationsList}
@@ -193,7 +193,7 @@ const OperationItemButton: FC<OperationItemButtonProps> = memo<OperationItemButt
           onClick={onClick}
           size={LIST_ITEM_SIZE_BIG}
           isSelected={selected}
-          testId="Cell-endpoints"
+          data-testid="Cell-endpoints"
         />
         <Divider orientation="horizontal" variant="fullWidth"/>
 

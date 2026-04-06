@@ -47,7 +47,7 @@ export const ApiKindFilter: FC<ApiKindFilterProps> = memo<ApiKindFilterProps>((p
             key={apiKind}
             props={props}
             title={API_KINDS[apiKind as ApiKind]!}
-            testId={`Option-${apiKind}`}
+            data-testid={`Option-${apiKind}`}
           />
         )}
         isOptionEqualToValue={(option, value) => option === value}

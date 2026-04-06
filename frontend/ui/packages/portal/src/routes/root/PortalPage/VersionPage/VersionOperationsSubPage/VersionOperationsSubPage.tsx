@@ -146,7 +146,7 @@ export const VersionOperationsSubPage: FC = memo(() => {
           refPackageId={refKey}
           emptyTag={emptyTag}
         />}
-      testId="OperationsTab"
+      data-testid="OperationsTab"
     />
   )
 })

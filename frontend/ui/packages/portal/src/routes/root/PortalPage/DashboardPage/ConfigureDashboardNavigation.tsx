@@ -37,7 +37,7 @@ export const ConfigureDashboardNavigation: FC = memo(() => {
 
   return (
     <List>
-      {CONFIGURE_DASHBOARD_SIDEBAR.map(({ id, title, testId }) =>
+      {CONFIGURE_DASHBOARD_SIDEBAR.map(({ id, title, 'data-testid': dataTestId }) =>
         <ListItem
           key={`configure-dashboard-navigation-list-item-${id}-${title}`}
           sx={{ p: 0 }}
@@ -50,7 +50,7 @@ export const ConfigureDashboardNavigation: FC = memo(() => {
             }}
             selected={id === activeTab}
             onClick={() => setActiveTab(id)}
-            data-testid={testId}
+            data-testid={dataTestId}
           >
             <ListItemText primary={
               <Box display="flex">
@@ -82,6 +82,6 @@ const CONFIGURE_DASHBOARD_SIDEBAR: ConfigureDashboardNavItemProps[] = [
   {
     id: PACKAGES_CONFIGURE_DASHBOARD_TAB,
     title: 'Packages',
-    testId: 'PackagesButton',
+    'data-testid': 'PackagesButton',
   },
 ]

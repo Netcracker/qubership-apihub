@@ -171,7 +171,7 @@ export const SearchResults: FC = memo(() => {
                   invisible={isNotEmpty(operations)}
                   area={CONTENT_PLACEHOLDER_AREA}
                   message={searchText ? NO_SEARCH_RESULTS : 'No operations to display'}
-                  testId="NoOperationsPlaceholder"
+                  data-testid="NoOperationsPlaceholder"
                 />
           }
         </TabPanel>
@@ -193,7 +193,7 @@ export const SearchResults: FC = memo(() => {
                   invisible={isNotEmpty(documents)}
                   area={CONTENT_PLACEHOLDER_AREA}
                   message={searchText ? NO_SEARCH_RESULTS : 'No documents to display'}
-                  testId="NoDocumentsPlaceholder"
+                  data-testid="NoDocumentsPlaceholder"
                 />
           }
         </TabPanel>
@@ -215,7 +215,7 @@ export const SearchResults: FC = memo(() => {
                   invisible={isNotEmpty(packages)}
                   area={CONTENT_PLACEHOLDER_AREA}
                   message={searchText ? NO_SEARCH_RESULTS : 'No packages to display'}
-                  testId="NoPackagesPlaceholder"
+                  data-testid="NoPackagesPlaceholder"
                 />
           }
         </TabPanel>

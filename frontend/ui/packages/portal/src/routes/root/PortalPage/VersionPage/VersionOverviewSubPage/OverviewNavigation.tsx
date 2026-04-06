@@ -59,7 +59,7 @@ export const OverviewNavigation: FC = memo(() => {
 
   return (
     <List>
-      {OVERVIEW_SIDEBAR(packageKind).map(({ title, id, testId }) => {
+      {OVERVIEW_SIDEBAR(packageKind).map(({ title, id, 'data-testid': dataTestId }) => {
         const url = getOverviewPath({ packageKey: packageId!, versionKey: versionId!, tab: id })
         return (
           <OverviewNavigationItem
@@ -67,7 +67,7 @@ export const OverviewNavigation: FC = memo(() => {
             url={url}
             title={title}
             id={id}
-            testId={testId}
+            data-testid={dataTestId}
             sidebarItem={sidebarItem}
             deletedReferences={deletedReferences}
           />
@@ -90,28 +90,28 @@ const OVERVIEW_SIDEBAR = (
     {
       id: SUMMARY_PAGE,
       title: 'Summary',
-      testId: 'SummaryButton',
+      'data-testid': 'SummaryButton',
     },
     {
       id: ACTIVITY_HISTORY_PAGE,
       title: 'Activity History',
-      testId: 'ActivityHistoryButton',
+      'data-testid': 'ActivityHistoryButton',
     },
     {
       id: REVISION_HISTORY_PAGE,
       title: 'Revision History',
-      testId: 'RevisionsButton',
+      'data-testid': 'RevisionsButton',
     },
     {
       id: OPERATION_GROUPS_PAGE,
       title: 'Groups',
-      testId: 'OperationGroupsButton',
+      'data-testid': 'OperationGroupsButton',
     },
   ]
   const dashboardPackagesMenuItem: OverviewSidebarMenu = {
     id: PACKAGES_PAGE,
     title: 'Packages',
-    testId: 'PackagesButton',
+    'data-testid': 'PackagesButton',
   }
 
   if (isDashboard) {
@@ -120,4 +120,3 @@ const OVERVIEW_SIDEBAR = (
 
   return commonSidebarMenu
 }
-

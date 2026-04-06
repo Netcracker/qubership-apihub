@@ -34,8 +34,8 @@ export const Toolbar: FC<ToolbarProps> = memo<ToolbarProps>(({
   header,
   action,
   size = SMALL_TOOLBAR_SIZE,
-  testId,
   maxWidthHeaderToolbar,
+  'data-testid': dataTestId,
 }) => {
   return (
     <Card>
@@ -59,7 +59,7 @@ export const Toolbar: FC<ToolbarProps> = memo<ToolbarProps>(({
             {action}
           </Box>
         }
-        data-testid={testId}
+        data-testid={dataTestId}
       />
     </Card>
   )

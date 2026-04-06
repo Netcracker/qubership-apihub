@@ -64,7 +64,7 @@ export const OperationGroupFilter: FC<OperationGroupFilterProps> = (props) => {
             key={groupName}
             props={props}
             title={groupName}
-            testId={`FilterByGroup-Option-${slugify(groupName)}`}
+            data-testid={`FilterByGroup-Option-${slugify(groupName)}`}
           />
         )}
         isOptionEqualToValue={(option, value) => option === value}

@@ -30,7 +30,7 @@ export type NavigationItemProps = Readonly<{
 }> & TestableProps
 
 export const NavigationItem: FC<NavigationItemProps> = memo<NavigationItemProps>(props => {
-  const { to, icon, label, packageKey, testId, selected } = props
+  const { to, icon, label, packageKey, 'data-testid': dataTestId, selected } = props
 
   return (
     <Box sx={{
@@ -56,7 +56,7 @@ export const NavigationItem: FC<NavigationItemProps> = memo<NavigationItemProps>
           '&:hover': { color: '#0068FF', pl: '14px', borderLeft: '2px solid #0068FF' },
           '&:hover .MuiListItemIcon-root': { color: '#0068FF' },
         }}
-        data-testid={testId}
+        data-testid={dataTestId}
       >
         <ListItemIcon
           sx={{

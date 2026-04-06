@@ -28,7 +28,7 @@ export const VersionDocumentsSubPage: FC = memo(() => {
         navigation={<DocumentsSidebar/>}
         body={<DocumentsCard/>}
         nestedPage
-        testId="DocumentsTab"
+        data-testid="DocumentsTab"
       />
     </CurrentDocumentsListProvider>
   )

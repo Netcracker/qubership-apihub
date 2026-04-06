@@ -120,7 +120,7 @@ export const WorkspaceSelector: FC = memo(() => {
         onInput={setWorkspaceTextFilter!}
         onSelect={onSelectWorkspace!}
         loading={isSelectedWorkspaceLoading || isWorkspacesLoading}
-        testId="WorkspaceSelector"
+        data-testid="WorkspaceSelector"
       />
     </Box>
   )

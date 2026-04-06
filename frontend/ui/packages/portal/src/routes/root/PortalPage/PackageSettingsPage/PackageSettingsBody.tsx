@@ -79,14 +79,14 @@ export const PackageSettingsBody: FC<PackageSettingsTabProps> = memo<PackageSett
               invisible={hasTokenManagementPermission}
               area={CONTENT_PLACEHOLDER_AREA}
               message={NO_PERMISSION}
-              testId={'NoPermissionPlaceholder'}
+              data-testid={'NoPermissionPlaceholder'}
             > <AccessTokensPackageSettingsTab packageObject={packageObject}/>
             </Placeholder>,
           [USER_ACCESS_CONTROLS_PAGE]: <Placeholder
             invisible={hasUserAccessManagementPermission}
             area={CONTENT_PLACEHOLDER_AREA}
             message={NO_PERMISSION}
-            testId={'NoPermissionPlaceholder'}
+            data-testid={'NoPermissionPlaceholder'}
           ><UserPackageAccessControlSettingsTab packageObject={packageObject}/>
           </Placeholder>,
         }[activeTab]

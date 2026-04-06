@@ -92,7 +92,7 @@ export const ChangelogView: FC<ChangelogViewProps> = memo<ChangelogViewProps>(pr
       invisible={!changes || isNotEmpty(operationsChanges) || isLoading && hasChanges}
       area={CONTENT_PLACEHOLDER_AREA}
       message={searchValue ? NO_SEARCH_RESULTS : 'No changes'}
-      testId={searchValue ? 'NoSearchResultsPlaceholder' : 'NoChangesPlaceholder'}
+      data-testid={searchValue ? 'NoSearchResultsPlaceholder' : 'NoChangesPlaceholder'}
     >
       <ChangesViewTable
         value={operationsChanges}

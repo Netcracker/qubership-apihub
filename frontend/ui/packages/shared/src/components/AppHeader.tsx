@@ -52,7 +52,7 @@ export const AppHeader: FC<AppHeaderProps> = memo<AppHeaderProps>(({ logo, title
               {title}
             </Typography>
           )}
-          {links && links.map(({ name, pathname, active, testId }) => (
+          {links && links.map(({ name, pathname, active, 'data-testid': dataTestId }) => (
             <Box
               key={pathname}
               sx={active ? { ...APP_HEADER_LINK_STYLES, ...APP_HEADER_LINK_STYLES_SELECTED } : APP_HEADER_LINK_STYLES}
@@ -65,7 +65,7 @@ export const AppHeader: FC<AppHeaderProps> = memo<AppHeaderProps>(({ logo, title
                   return window.open(`${pathname}`, '_blank')
                 }
               }}
-              data-testid={testId}
+              data-testid={dataTestId}
             >
               <Typography variant="h2">
                 {name}

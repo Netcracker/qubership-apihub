@@ -44,7 +44,7 @@ export const ApiAudienceFilter: FC<ApiAudienceFilterProps> = memo<ApiAudienceFil
             key={apiAudience}
             props={props}
             title={API_AUDIENCES[apiAudience as ApiAudience]!}
-            testId={`Option-${apiAudience}`}
+            data-testid={`Option-${apiAudience}`}
           />
         )}
         isOptionEqualToValue={(option, value) => option === value}

@@ -154,7 +154,7 @@ export const VersionDeprecatedOperationsSubPage: FC = memo(() => {
         onlyDeprecated
       />
       }
-      testId="DeprecatedTab"
+      data-testid="DeprecatedTab"
     />
   )
 })

@@ -61,6 +61,7 @@ export const DropdownButton: FC<DropdownButtonProps> = memo<DropdownButtonProps>
     disableHint,
     hint,
     closeOnClick = true,
+    'data-testid': dataTestId,
   } = props
 
   const [open, setOpen] = useState(false)
@@ -95,7 +96,7 @@ export const DropdownButton: FC<DropdownButtonProps> = memo<DropdownButtonProps>
               endIcon={open ? <KeyboardArrowUpOutlinedIcon fontSize="small"/> : <KeyboardArrowDownOutlinedIcon
                 fontSize="small"/>}
               onClick={() => setOpen((prevOpen) => !prevOpen)}
-              data-testid={props.testId}
+              data-testid={dataTestId}
             >
               {label}
             </Button>
@@ -104,7 +105,7 @@ export const DropdownButton: FC<DropdownButtonProps> = memo<DropdownButtonProps>
               ref={anchorRef}
               disabled={disabled}
               onClick={() => setOpen((prevOpen) => !prevOpen)}
-              data-testid={props.testId}
+              data-testid={dataTestId}
             >
               {hasSelectedOptions ? (
                 <Badge variant="dot" color="primary">
@@ -147,7 +148,7 @@ export const DropdownButton: FC<DropdownButtonProps> = memo<DropdownButtonProps>
                       disabled={option?.disabled}
                       key={option?.key}
                       onClick={() => handleMenuItemClick(option)}
-                      data-testid={option.testId}
+                      data-testid={option['data-testid']}
                     >
                       {option?.selected ? <CheckIcon/> : null}
                       <span style={{

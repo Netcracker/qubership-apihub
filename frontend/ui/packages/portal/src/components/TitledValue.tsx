@@ -26,9 +26,9 @@ export type TitledValueProps = { sx?: SxProps<Theme> } & {
   value?: ReactNode
 } & TestableProps
 
-export const TitledValue: FC<TitledValueProps> = memo<TitledValueProps>(({ title, value, sx, testId }) => {
+export const TitledValue: FC<TitledValueProps> = memo<TitledValueProps>(({ title, value, sx, 'data-testid': dataTestId }) => {
   return <Box sx={sx}>
     <Typography noWrap variant="subtitle2">{title}</Typography>
-    <Typography noWrap variant="body2" data-testid={testId}>{value}</Typography>
+    <Typography noWrap variant="body2" data-testid={dataTestId}>{value}</Typography>
   </Box>
 })

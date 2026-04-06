@@ -113,7 +113,7 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
         invisible={!!changedOperationContent}
         area={NAVIGATION_PLACEHOLDER_AREA}
         message="No content"
-        testId="NoContentPlaceholder"
+        data-testid="NoContentPlaceholder"
       />
     )
   }
@@ -151,7 +151,7 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
             invisible={hasVersionInternalDocument}
             area={CONTENT_PLACEHOLDER_AREA}
             message={PLACEHOLDER_MESSAGE_NO_INTERNAL_DOCUMENT}
-            testId="NoVersionInternalDocumentPlaceholder"
+            data-testid="NoVersionInternalDocumentPlaceholder"
           >
             <OperationView
               apiType={apiType}

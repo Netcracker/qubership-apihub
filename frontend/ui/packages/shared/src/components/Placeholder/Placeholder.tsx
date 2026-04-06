@@ -39,7 +39,7 @@ export const Placeholder: FC<PlaceholderProps> = memo<PlaceholderProps>(({
   message,
   children,
   sx,
-  testId,
+  'data-testid': dataTestId,
 }) => {
   const backgroundImage = useMemo(() => {
     if (invisible) {
@@ -67,7 +67,7 @@ export const Placeholder: FC<PlaceholderProps> = memo<PlaceholderProps>(({
   }
 
   return (
-    <Box height="100%" display="flex" flexDirection="column" justifyContent="center" gap={1} data-testid={testId}>
+    <Box height="100%" display="flex" flexDirection="column" justifyContent="center" gap={1} data-testid={dataTestId}>
       {area === CONTENT_PLACEHOLDER_AREA && (
         <Box
           sx={{

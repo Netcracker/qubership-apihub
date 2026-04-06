@@ -46,8 +46,8 @@ function renderMultipleSelectorAutocomplete<Item extends object>(props: Multiple
     getOptionLabel,
     renderOption,
     renderTags,
-    testId,
     setInputSearch,
+    'data-testid': dataTestId,
   } = props
 
   return (
@@ -73,7 +73,7 @@ function renderMultipleSelectorAutocomplete<Item extends object>(props: Multiple
           onChange={(event) => setInputSearch?.(event?.target?.value ?? '')}
         />
       }
-      data-testid={testId}
+      data-testid={dataTestId}
     />
   )
 }

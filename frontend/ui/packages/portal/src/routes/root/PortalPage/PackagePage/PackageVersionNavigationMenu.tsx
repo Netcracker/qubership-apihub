@@ -73,6 +73,6 @@ const SIDEBAR_MENU_ITEMS = [
     title: 'Configuration',
     tooltip: 'Configuration',
     icon: <ConfigureIcon/>,
-    testId: 'ConfigurePackageButton',
+    'data-testid': 'ConfigurePackageButton',
   },
 ]

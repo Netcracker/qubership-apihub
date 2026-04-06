@@ -38,8 +38,8 @@ export const OptionItem: FC<OptionItemProps> = memo<OptionItemProps>(({
   disabled,
   subtitle,
   chipValue,
-  testId,
   tooltipProps: { title: tooltipTitle, ...rest } = {},
+  'data-testid': dataTestId,
 }) => {
   return (
     <Tooltip
@@ -50,7 +50,7 @@ export const OptionItem: FC<OptionItemProps> = memo<OptionItemProps>(({
       <Box>
         <ListItem
           {...props}
-          data-testid={testId}
+          data-testid={dataTestId}
           // todo 'disabled' prop is deprecated and does not work properly, transition to ListItemButton is required
           sx={{ pointerEvents: disabled ? 'none' : 'auto' }}
           disabled={disabled}

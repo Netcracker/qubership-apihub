@@ -95,7 +95,7 @@ export const CompareOperationPathsDialogForm: FC<CompareOperationPathsDialogForm
           options={originalOperationOptions}
           isLoading={isOriginalOperationsLoading}
           onInputChange={onOriginalInputChange}
-          testId="OriginalOperationAutocomplete"
+          data-testid="OriginalOperationAutocomplete"
         />
 
         <Box sx={{ gridArea: 'swapper', alignSelf: 'center' }}>
@@ -111,7 +111,7 @@ export const CompareOperationPathsDialogForm: FC<CompareOperationPathsDialogForm
           options={changedOperationOptions}
           isLoading={isChangedOperationsLoading}
           onInputChange={onChangedInputChange}
-          testId="ChangedOperationAutocomplete"
+          data-testid="ChangedOperationAutocomplete"
         />
       </DialogContent>
       <DialogActions>
@@ -139,8 +139,8 @@ const OperationController: FC<OperationControllerProps> = memo<OperationControll
   control,
   options,
   isLoading,
-  testId,
   onInputChange,
+  'data-testid': dataTestId,
 }) => {
   return (
     <Controller
@@ -164,7 +164,7 @@ const OperationController: FC<OperationControllerProps> = memo<OperationControll
           />}
           renderInput={(params) => <TextField {...params} required label="Operation"/>}
           onChange={(_, value) => onChange(value)}
-          data-testid={testId}
+          data-testid={dataTestId}
         />
       )}
     />

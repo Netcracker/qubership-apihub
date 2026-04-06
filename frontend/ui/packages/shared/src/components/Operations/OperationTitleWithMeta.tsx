@@ -109,7 +109,7 @@ export const OperationTitleWithMeta: FC<OperationTitleWithMetaProps> = memo<Oper
       {!onlyTitle && (
         <Box display="flex" alignItems="center" gap={1} data-testid="OperationPath">
           <CustomChip value={type} variant="outlined" data-testid="OperationPathChip"/>
-          <TextWithOverflowTooltip tooltipText={subtitle} variant="subtitle2" testId="OperationPathSubtitle">
+          <TextWithOverflowTooltip tooltipText={subtitle} variant="subtitle2" data-testid="OperationPathSubtitle">
             {subtitle}
           </TextWithOverflowTooltip>
         </Box>

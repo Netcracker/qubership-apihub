@@ -66,7 +66,7 @@ export const EmptyPackagePopup: FC<PopupProps> = memo<PopupProps>(({ open, setOp
           minWidth: 'unset',
         }}
       >
-        {emptyPackageData.map(({ label, navigate, description, ['data-testid']: testId }, index) => (
+        {emptyPackageData.map(({ label, navigate, description, 'data-testid': dataTestId }, index) => (
           <React.Fragment key={index}>
             <Box
               sx={{ cursor: 'pointer' }}
@@ -74,7 +74,7 @@ export const EmptyPackagePopup: FC<PopupProps> = memo<PopupProps>(({ open, setOp
                 onClose()
                 navigate()
               }}
-              data-testid={testId}
+              data-testid={dataTestId}
             >
               <Box display="flex" justifyContent="space-between">
                 <Typography variant="subtitle1" fontSize={13}>
