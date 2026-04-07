@@ -21,7 +21,7 @@ type VersionLintTaskRepository interface {
 	IncRestartCount(ctx context.Context, taskId string) error
 	FindFreeVersionTask(ctx context.Context, executorId string) (*entity.VersionLintTask, error)
 	GetWaitingForDocTasks(ctx context.Context, executorId string) ([]entity.VersionLintTask, error)
-	VersionLintCompleted(ctx context.Context, taskId string, ver *entity.LintedVersion) error
+	VersionLintCompleted(ctx context.Context, taskId string, ver *entity.LintedVersion, score *entity.VersionScore) error
 	VersionLintFailed(ctx context.Context, taskId string, details string) error
 	UpdateLastActive(ctx context.Context, taskId string, executorId string) error
 	EmptyVersionCompleted(ctx context.Context, task entity.VersionLintTask) error
@@ -104,7 +104,7 @@ func (r *versionLintTaskRepositoryImpl) SaveVersionTask(ctx context.Context, ent
 	return nil
 }
 
-func (r *versionLintTaskRepositoryImpl) VersionLintCompleted(ctx context.Context, taskId string, ver *entity.LintedVersion) error {
+func (r *versionLintTaskRepositoryImpl) VersionLintCompleted(ctx context.Context, taskId string, ver *entity.LintedVersion, score *entity.VersionScore) error {
 	return r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		var taskEnt entity.VersionLintTask
 		_, err := tx.Model(&taskEnt).
@@ -119,6 +119,11 @@ func (r *versionLintTaskRepositoryImpl) VersionLintCompleted(ctx context.Context
 		_, err = tx.Model(ver).WherePK().Update()
 		if err != nil {
 			return err
+		}
+
+		_, err = tx.Model(score).OnConflict("(package_id, version, revision) do update").Insert()
+		if err != nil {
+			return fmt.Errorf("failed to insert scoring data: %w", err)
 		}
 
 		return nil

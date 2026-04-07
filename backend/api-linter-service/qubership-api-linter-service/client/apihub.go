@@ -26,13 +26,15 @@ type ApihubClient interface {
 
 	GetPackagesList(ctx context.Context, packageListReq view.PackageListReq) (*view.Packages, error)
 	GetPackageById(ctx context.Context, id string) (*view.SimplePackage, error)
-	GetVersion(ctx context.Context, id, version string) (*view.VersionContent, error)
+	GetVersion(ctx context.Context, id, version string, includeSummary bool, includeOperations bool) (*view.VersionContent, error)
 	ListPackageVersions(ctx context.Context, packageId string) ([]view.PackageVersion, error)
 
 	GetVersionDocuments(ctx context.Context, packageId, version string) (*view.VersionDocuments, error)
 	GetDocumentRawData(ctx context.Context, packageId, version string, fileId string) ([]byte, error)
 	GetDocumentDetails(ctx context.Context, packageId, version string, slug string) (*view.PublishedDocument, error)
+	GetVersionChanges(ctx context.Context, packageId string, version string, prevVersionPackageId string, prevVersion string, apiType string, limit int, page int) (*view.VersionChangesView, error)
 
+	GetOperationsList(ctx context.Context, packageId string, version string, apiType view.OpApiType, operationListReq view.OperationListRequest) (*view.CommonOperations, error)
 	GetOperationWithData(ctx context.Context, packageId, version string, apiType view.OpApiType, operationId string) (*view.Operation, error)
 
 	CheckAuthToken(ctx context.Context, token string) (bool, error)
@@ -227,9 +229,16 @@ func (a apihubClientImpl) GetPackageById(ctx context.Context, id string) (*view.
 	return &pkg, nil
 }
 
-func (a apihubClientImpl) GetVersion(ctx context.Context, id, version string) (*view.VersionContent, error) {
-
+func (a apihubClientImpl) GetVersion(ctx context.Context, id, version string, includeSummary bool, includeOperations bool) (*view.VersionContent, error) {
 	req := a.makeRequest(ctx)
+
+	if includeSummary {
+		req.SetQueryParam("includeSummary", strconv.FormatBool(includeSummary))
+	}
+	if includeOperations {
+		req.SetQueryParam("includeOperations", strconv.FormatBool(includeOperations))
+	}
+
 	resp, err := req.Get(fmt.Sprintf("%s/api/v3/packages/%s/versions/%s", a.apihubUrl, url.PathEscape(id), url.PathEscape(version)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get version %s for id %s: %s", version, id, err.Error())
@@ -358,6 +367,115 @@ func (a apihubClientImpl) GetDocumentDetails(ctx context.Context, packageId, ver
 		return nil, err
 	}
 	return &publishedDocument, nil
+}
+
+func (a apihubClientImpl) GetVersionChanges(ctx context.Context, packageId string, version string, prevVersionPackageId string, prevVersion string, apiType string, limit int, page int) (*view.VersionChangesView, error) {
+	req := a.makeRequest(ctx)
+	if prevVersionPackageId == "" {
+		prevVersionPackageId = packageId
+	}
+	req.QueryParam.Add("limit", strconv.Itoa(limit))
+	req.QueryParam.Add("page", strconv.Itoa(page))
+	req.QueryParam.Add("previousVersionPackageId", prevVersionPackageId)
+	req.QueryParam.Add("previousVersion", prevVersion)
+	resp, err := req.Get(fmt.Sprintf("%s/api/v4/packages/%s/versions/%s/%s/changes", a.apihubUrl, url.PathEscape(packageId), url.PathEscape(version), apiType))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get version - %s for package id %s: %s", version, packageId, err.Error())
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		if authErr := checkUnauthorized(resp); authErr != nil {
+			return nil, authErr
+		}
+		if resp.StatusCode() == http.StatusNotFound {
+			log.Infof("Missing changes detected for packageId = %s, version = %s, prev version = %s. Trying to build it.", packageId, version, prevVersion)
+			timeout := time.Second * 120
+			for {
+				if timeout <= 0 {
+					log.Warnf("VersionChanges timed out for package %s version %s!", packageId, version)
+					return nil, fmt.Errorf("failed to get version changes due to timeout. version %s for package id %s", version, packageId)
+				}
+				compReqBody := view.CompareVersionsReq{
+					PackageId:                packageId,
+					Version:                  version,
+					PreviousVersion:          prevVersion,
+					PreviousVersionPackageId: prevVersionPackageId,
+				}
+
+				compReq := a.makeRequest(ctx)
+				compReq.SetBody(compReqBody)
+				compResp, err := compReq.Post(fmt.Sprintf("%s/api/v2/compare", a.apihubUrl))
+				if err != nil {
+					if authErr := checkUnauthorized(compResp); authErr != nil {
+						return nil, authErr
+					}
+					return nil, fmt.Errorf("failed to start %s version comparison for package id %s: %s", version, packageId, err.Error())
+				}
+				if compResp.StatusCode() == http.StatusCreated || compResp.StatusCode() == http.StatusAccepted {
+					timeout -= time.Second * 1
+					time.Sleep(time.Second * 1)
+					continue
+				}
+				if compResp.StatusCode() == http.StatusOK {
+					resp, err = req.Get(fmt.Sprintf("%s/api/v4/packages/%s/versions/%s/%s/changes", a.apihubUrl, url.PathEscape(packageId), url.PathEscape(version), apiType))
+					if err != nil {
+						return nil, fmt.Errorf("failed to get version %s changes after generate for package id %s: %s", version, packageId, err.Error())
+					}
+
+					if resp.StatusCode() == http.StatusOK {
+						break
+					} else {
+						if authErr := checkUnauthorized(resp); authErr != nil {
+							return nil, authErr
+						}
+						return nil, fmt.Errorf("failed to get version changes after generate. version - %s for package id %s: status code %d %v", version, packageId, resp.StatusCode(), err)
+					}
+				} else {
+					if authErr := checkUnauthorized(resp); authErr != nil {
+						return nil, authErr
+					}
+					return nil, fmt.Errorf("failed to start %s version comparison for package id %s: status code %d %v", version, packageId, resp.StatusCode(), err)
+				}
+			}
+		} else {
+			return nil, fmt.Errorf("failed to get version changes. version - %s for package id %s: status code %d %v", version, packageId, resp.StatusCode(), err)
+		}
+	}
+	var pVersion view.VersionChangesView
+	err = json.Unmarshal(resp.Body(), &pVersion)
+	if err != nil {
+		return nil, err
+	}
+	return &pVersion, nil
+}
+
+func (a apihubClientImpl) GetOperationsList(ctx context.Context, packageId string, version string, apiType view.OpApiType, operationListReq view.OperationListRequest) (*view.CommonOperations, error) {
+	req := a.makeRequest(ctx)
+	req.QueryParam.Add("page", strconv.Itoa(operationListReq.Page))
+	req.QueryParam.Add("limit", strconv.Itoa(operationListReq.Limit))
+	req.QueryParam.Add("deprecated", operationListReq.Deprecated)
+	req.QueryParam.Add("kind", operationListReq.Kind)
+	resp, err := req.Get(fmt.Sprintf("%s/api/v2/packages/%s/versions/%s/%s/operations", a.apihubUrl, url.PathEscape(packageId), url.PathEscape(version), apiType))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get version rest operations. Error - %s", err.Error())
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		if resp.StatusCode() == http.StatusNotFound {
+			return nil, nil
+		}
+		if authErr := checkUnauthorized(resp); authErr != nil {
+			return nil, authErr
+		}
+		return nil, fmt.Errorf("failed to get version rest operations: status code %d %v", resp.StatusCode(), err)
+	}
+
+	var operations view.CommonOperations
+	err = json.Unmarshal(resp.Body(), &operations)
+	if err != nil {
+		return nil, err
+	}
+	return &operations, nil
 }
 
 func (a apihubClientImpl) GetOperationWithData(ctx context.Context, packageId, version string, apiType view.OpApiType, operationId string) (*view.Operation, error) {

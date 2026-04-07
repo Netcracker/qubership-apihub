@@ -18,6 +18,8 @@ tags:
     description: API for retrieving Spectral validation results for package versions.
   - name: Validation Operations
     description: API operations for managing validation processes.
+  - name: Scoring
+    description: API for retrieving version scoring (quality and backwards compatibility).
 paths:
   /api/v1/linters:
     get:
@@ -287,6 +289,61 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/packages/{packageId}/versions/{version}/scoring:
+    get:
+      tags:
+        - Scoring
+      summary: Get scoring for a package version
+      description: >
+        Returns the scoring result for the specified package version: overall `status`, human-readable
+        `reason` and optional `debug` messages, `backwardsCompatibilityDetails` per API kind
+        (`rest`, `graphql`, `asyncapi`), and `qualityCheckDetails` with linter results per API kind.
+        The version parameter may include revision (e.g., `1.0.0@1`) or omit it to resolve the latest revision.
+      operationId: getScoringForVersion
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique package identifier
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Package version (optionally with revision, e.g. 1.0.0@1)
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionScore"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Scoring not found for the package version
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/v1/packages/{packageId}/versions/{version}/validation:
     post:
       tags:
@@ -322,14 +379,6 @@ paths:
       responses:
         "202":
           description: Validation started successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Validation started successfully"
         "401":
           description: Unauthorized
           content:
@@ -344,6 +393,92 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Package version not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/bulkValidation:
+    post:
+      tags:
+        - Validation Operations
+      summary: Start bulk validation for a package
+      description: >
+        Starts validation for all versions of a package (or a specific version).
+        Requires publication rights on the target package.
+      operationId: startBulkValidation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkValidationRequest"
+      responses:
+        "202":
+          description: Bulk validation job started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkValidationStartResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/bulkValidation/{jobId}:
+    get:
+      tags:
+        - Validation Operations
+      summary: Get bulk validation job status
+      description: >
+        Returns the current status and progress of a bulk validation job.
+      operationId: getBulkValidationStatus
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Bulk validation job ID returned by the start endpoint
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkValidationStatusResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Job not found
           content:
             application/json:
               schema:
@@ -642,7 +777,6 @@ components:
           enum:
             - success
             - inProgress
-            - notValidated
             - error
         documents:
           type: array
@@ -796,6 +930,213 @@ components:
         message:
           description: Description of the validation issue.
           type: string
+    VersionScore:
+      description: Scoring result for a package version.
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          description: Overall scoring status.
+          type: string
+          enum:
+            - passed
+            - passed_with_defects
+            - not_passed
+        reason:
+          description: Human-readable reasons for the overall status.
+          type: array
+          items:
+            type: string
+        debug:
+          description: Diagnostic messages for troubleshooting.
+          type: array
+          items:
+            type: string
+        backwardsCompatibilityDetails:
+          description: >
+            Backwards compatibility breakdown per API kind. A property is present only when that API type
+            exists for the version.
+          type: object
+          properties:
+            rest:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+            graphql:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+            protobuf:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+            asyncapi:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+        qualityCheckDetails:
+          description: Quality check results from each linter, grouped by API kind.
+          type: object
+          properties:
+            rest:
+              type: array
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
+            graphql:
+              type: array
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
+            protobuf:
+              type: array
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
+            asyncapi:
+              type: array
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
+    BackwardsCompatibilityDetails:
+      description: Backwards compatibility analysis for one API kind.
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - passed
+            - passed_with_defects
+            - not_passed
+        reason:
+          type: string
+          description: Summary reason for this section's status.
+        breaking:
+          type: integer
+          description: Total breaking changes count.
+        breakingInternal:
+          type: integer
+          description: Breaking changes for internal audience.
+        breakingExternal:
+          type: integer
+          description: Breaking changes for external audience.
+        breakingUnknown:
+          type: integer
+          description: Breaking changes for unknown audience.
+        internal2Unknown:
+          type: integer
+          description: Internal to unknown audience transitions.
+        external2Internal:
+          type: integer
+          description: External to internal audience transitions.
+        external2Unknown:
+          type: integer
+          description: External to unknown audience transitions.
+    QualityCheckDetails:
+      description: Quality check result from a single linter for one API kind.
+      type: object
+      required:
+        - linter
+        - status
+        - errorsCount
+        - warningsCount
+      properties:
+        linter:
+          type: string
+          enum:
+            - spectral
+            - ai_linter
+        status:
+          type: string
+          enum:
+            - passed
+            - passed_with_defects
+            - not_passed
+        reason:
+          type: string
+          description: Summary reason for this linter's result.
+        errorsCount:
+          type: integer
+        warningsCount:
+          type: integer
+        internalErrors:
+          type: string
+          description: Set when the linter failed internally (optional).
+    BulkValidationRequest:
+      description: Request body for starting a bulk validation job.
+      type: object
+      required:
+        - packageId
+      properties:
+        packageId:
+          type: string
+          description: ID of the package whose versions should be validated.
+        version:
+          type: string
+          description: Specific version to validate. If omitted, all versions are validated.
+        excludePackages:
+          type: array
+          description: Package IDs to exclude from bulk validation.
+          items:
+            type: string
+        recalculate:
+          type: boolean
+          description: When true, bypasses the lint cache and forces fresh validation.
+          default: false
+    BulkValidationStartResponse:
+      description: Response returned when a bulk validation job is successfully started.
+      type: object
+      required:
+        - jobId
+      properties:
+        jobId:
+          type: string
+          description: Unique identifier of the started bulk validation job.
+    BulkValidationStatusResponse:
+      description: Current status and progress of a bulk validation job.
+      type: object
+      required:
+        - jobId
+        - status
+        - processedVersions
+        - totalVersions
+      properties:
+        jobId:
+          type: string
+          description: Unique identifier of the bulk validation job.
+        status:
+          type: string
+          description: Current status of the job.
+          enum:
+            - not_started
+            - processing
+            - success
+            - error
+        processedVersions:
+          type: integer
+          description: Number of versions processed so far.
+        totalVersions:
+          type: integer
+          description: Total number of versions to process.
+        error:
+          type: string
+          description: Error message if the job failed.
+        packages:
+          type: array
+          description: Per-version validation entries.
+          items:
+            $ref: "#/components/schemas/BulkValidationEntry"
+    BulkValidationEntry:
+      description: Validation result entry for a single package version.
+      type: object
+      required:
+        - packageId
+        - version
+        - validationStarted
+      properties:
+        packageId:
+          type: string
+          description: Package ID.
+        version:
+          type: string
+          description: Package version.
+        validationTaskId:
+          type: string
+          description: ID of the validation task created for this version.
+        validationStarted:
+          type: boolean
+          description: Whether validation was successfully started for this version.
   securitySchemes:
     BearerAuth:
       type: http

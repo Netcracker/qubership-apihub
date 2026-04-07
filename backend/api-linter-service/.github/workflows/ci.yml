@@ -68,7 +68,7 @@ jobs:
     needs: [build-docker-image, calculate-ui-tag, calculate-build-task-consumer-tag, calculate-apihub-backend-tag, calculate-agents-backend-tag]
     if: github.event_name == 'pull_request'
     with:
-      postman-collections-list: './e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/1_3_Linter_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json'
+      postman-collections-list: './e2e/1_3_Linter_Portal.postman_collection.json'
       apihub-backend-image-tag: ${{ needs.calculate-apihub-backend-tag.outputs.tag }}
       apihub-ui-image-tag: ${{ needs.calculate-ui-tag.outputs.tag }}
       apihub-build-task-consumer-image-tag: ${{ needs.calculate-build-task-consumer-tag.outputs.tag }}

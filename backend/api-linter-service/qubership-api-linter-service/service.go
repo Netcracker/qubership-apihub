@@ -132,13 +132,15 @@ func main() {
 	docResultRepository := repository.NewDocResultRepository(cp)
 	versionResultRepository := repository.NewVersionResultRepository(cp)
 	lintResultRepository := repository.NewLintResultRepository(cp)
+	scoringRepository := repository.NewScoringRepository(cp)
 
 	linterConfigService := service.NewLinterConfigService(systemInfoService)
 	linterSelectorService := service.NewLinterSelectorService(ruleSetRepository, linterConfigService)
+	scoringService := service.NewScoringService(versionResultRepository, lintResultRepository, ruleSetRepository, scoringRepository, apihubClient)
 
 	docTaskNotify := make(chan struct{}, 1)
 	versionTaskNotify := make(chan struct{}, 1)
-	versionTaskProcessor := service.NewVersionTaskProcessor(versionLintTaskRepository, docLintTaskRepository, versionResultRepository, apihubClient, linterSelectorService, executorId, docTaskNotify, versionTaskNotify)
+	versionTaskProcessor := service.NewVersionTaskProcessor(versionLintTaskRepository, docLintTaskRepository, versionResultRepository, apihubClient, linterSelectorService, scoringService, executorId, docTaskNotify, versionTaskNotify)
 	spectralExecutor, err := service.NewSpectralExecutor(systemInfoService.GetSpectralBinPath()) // TODO: use linters config
 	if err != nil {
 		log.Fatalf("Failed to create Spectral executor: %s", err.Error())
@@ -164,6 +166,7 @@ func main() {
 	healthController := controller.NewHealthController(readyChan)
 	logsController := controller.NewLogsController()
 	linterController := controller.NewLinterController(linterConfigService)
+	scoringController := controller.NewScoringController(scoringService, authorizationService)
 
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/validation", security.Secure(validationController.ValidateVersion)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/bulkValidation", security.Secure(validationController.StartBulkValidation)).Methods(http.MethodPost)
@@ -174,6 +177,9 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/validation/summary", security.Secure(validationResultController.GetValidationSummaryForVersion)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/validation/documents/{slug}/details", security.Secure(validationResultController.GetValidationResultForDocument_deprecated)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/validation/documents/{slug}/details", security.Secure(validationResultController.GetValidationResultForDocument)).Methods(http.MethodGet)
+
+	// Scoring
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/scoring", security.Secure(scoringController.GetScoringForVersion)).Methods(http.MethodGet)
 
 	// Linters
 	r.HandleFunc("/api/v1/linters", security.Secure(linterController.ListLinters)).Methods(http.MethodGet)

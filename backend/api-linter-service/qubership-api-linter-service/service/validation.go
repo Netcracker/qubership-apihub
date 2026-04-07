@@ -497,7 +497,7 @@ func (v *validationServiceImpl) getVersionAndRevision(ctx context.Context, packa
 	}
 
 	if rev == 0 {
-		versionView, err := v.apihubClient.GetVersion(ctx, packageId, version)
+		versionView, err := v.apihubClient.GetVersion(ctx, packageId, version, false, false)
 		if err != nil {
 			return "", 0, err
 		}

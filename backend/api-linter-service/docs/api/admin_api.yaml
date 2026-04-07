@@ -269,14 +269,6 @@ paths:
       responses:
         "200":
           description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  level:
-                    type: string
-                    description: Current log level
         "400":
           description: Bad request
           content:
@@ -363,8 +355,7 @@ components:
           type: string
           enum:
             - spectral
-            - ai_oas
-            - spectral_asyncapi
+            - ai_linter
         createdAt:
           description: Date of ruleset creation.
           type: string
@@ -403,8 +394,7 @@ components:
           type: string
           enum:
             - spectral
-            - ai_oas
-            - spectral_asyncapi
+            - ai_linter
         rulesetFile:
           description: YAML file with Spectral rules.
           type: string
