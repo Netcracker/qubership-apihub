@@ -461,23 +461,43 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 		return err
 	}
 
-	if !buildArc.PackageInfo.MigrationBuild && buildArc.PackageInfo.PreviousVersion != "" {
-		// inherit shareability from previous version
-		prevPkgId := buildArc.PackageInfo.PackageId
-		if buildArc.PackageInfo.PreviousVersionPackageId != "" {
-			prevPkgId = buildArc.PackageInfo.PreviousVersionPackageId
-		}
-		prevContent, prevErr := p.publishedRepo.GetRevisionContent(prevPkgId, buildArc.PackageInfo.PreviousVersion, previousVersionRevision)
-		if prevErr != nil {
-			return prevErr
-		}
-		prevShareabilityMap := make(map[string]string, len(prevContent))
-		for _, pc := range prevContent {
-			prevShareabilityMap[pc.Slug] = pc.Shareability
-		}
-		for _, fe := range fileEntities {
-			if prevShareability, exists := prevShareabilityMap[fe.Slug]; exists {
-				fe.Shareability = prevShareability
+	if !buildArc.PackageInfo.MigrationBuild {
+		isFirstRevision := buildArc.PackageInfo.Revision == 1
+
+		if isFirstRevision {
+			if buildArc.PackageInfo.PreviousVersion != "" {
+				prevPkgId := buildArc.PackageInfo.PackageId
+				if buildArc.PackageInfo.PreviousVersionPackageId != "" {
+					prevPkgId = buildArc.PackageInfo.PreviousVersionPackageId
+				}
+				prevContent, prevErr := p.publishedRepo.GetRevisionContent(prevPkgId, buildArc.PackageInfo.PreviousVersion, previousVersionRevision)
+				if prevErr != nil {
+					return prevErr
+				}
+				propagateShareability(fileEntities, prevContent)
+			}
+		} else {
+			prevRevisionContent, prevRevErr := p.publishedRepo.GetRevisionContent(
+				buildArc.PackageInfo.PackageId,
+				buildArc.PackageInfo.Version,
+				buildArc.PackageInfo.Revision-1,
+			)
+			if prevRevErr != nil {
+				return prevRevErr
+			}
+
+			if hasNonUnknownShareability(prevRevisionContent) {
+				propagateShareability(fileEntities, prevRevisionContent)
+			} else if buildArc.PackageInfo.PreviousVersion != "" {
+				prevPkgId := buildArc.PackageInfo.PackageId
+				if buildArc.PackageInfo.PreviousVersionPackageId != "" {
+					prevPkgId = buildArc.PackageInfo.PreviousVersionPackageId
+				}
+				prevContent, prevErr := p.publishedRepo.GetRevisionContent(prevPkgId, buildArc.PackageInfo.PreviousVersion, previousVersionRevision)
+				if prevErr != nil {
+					return prevErr
+				}
+				propagateShareability(fileEntities, prevContent)
 			}
 		}
 	}
@@ -706,6 +726,27 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 
 	utils.PerfLog(time.Since(publishStart).Milliseconds(), 10000, "publishPackage: total package publishing")
 	return nil
+}
+
+func propagateShareability(targets []*entity.PublishedContentEntity, source []entity.PublishedContentEntity) {
+	sourceMap := make(map[string]string, len(source))
+	for _, s := range source {
+		sourceMap[s.Slug] = s.Shareability
+	}
+	for _, t := range targets {
+		if shareability, exists := sourceMap[t.Slug]; exists {
+			t.Shareability = shareability
+		}
+	}
+}
+
+func hasNonUnknownShareability(content []entity.PublishedContentEntity) bool {
+	for _, c := range content {
+		if c.Shareability != view.ShareabilityUnknown {
+			return true
+		}
+	}
+	return false
 }
 
 func (p publishedServiceImpl) makePublishedReferencesEntities(packageInfo view.PackageInfoFile, packageRefs []view.BCRef) ([]*entity.PublishedReferenceEntity, error) {
