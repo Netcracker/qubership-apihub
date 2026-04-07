@@ -1,295 +1,148 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package service
 
 import (
 	"fmt"
 	"os"
-	"regexp"
-	"strconv"
-	"strings"
 	"time"
 
-	"github.com/Netcracker/qubership-apihub-agent/view"
+	"github.com/Netcracker/qubership-apihub-agent/config"
+	"github.com/Netcracker/qubership-apihub-agent/utils"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
-var slugPattern = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
-
 type SystemInfoService interface {
-	GetSystemInfo() *view.SystemInfo
 	GetBackendVersion() string
 	GetApihubUrl() string
 	GetAgentUrl() string
 	GetAccessToken() string
-	GetDiscoveryConfig() string
 	GetCloudName() string
 	GetAgentNamespace() string
 	GetExcludeLabels() []string
 	GetGroupingLabels() []string
 	GetAgentName() string
 	GetDiscoveryTimeout() time.Duration
+	InsecureProxyEnabled() bool //TODO: remove this after deprecated proxy path is removed
+	GetBasePath() string
+	GetPaasPlatform() string
+	GetDiscoveryUrls() config.ApiTypeUrlsConfig
 	GetNamespacesCacheTTL() time.Duration
 	GetServicesCacheTTL() time.Duration
 }
 
 func NewSystemInfoService() (SystemInfoService, error) {
-	cloudName, err := getCloudName()
-	if err != nil {
-		return nil, fmt.Errorf("invalid CLOUD_NAME: %w", err)
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(getConfigFolder())
+	setDefaults()
+	if err := viper.ReadInConfig(); err != nil {
+		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
-
-	agentNamespace, err := getAgentNamespace()
-	if err != nil {
-		return nil, fmt.Errorf("invalid NAMESPACE: %w", err)
+	var cfg config.Config
+	if err := viper.Unmarshal(&cfg); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
-
-	agentName, err := getAgentName()
-	if err != nil {
-		return nil, fmt.Errorf("invalid AGENT_NAME: %w", err)
-	}
-
-	systemInfo := view.SystemInfo{
-		BackendVersion:   getBackendVersion(),
-		InsecureProxy:    getInsecureProxy(),
-		ApihubUrl:        getApihubUrl(),
-		AgentUrl:         getAgentUrl(),
-		AccessToken:      getAccessToken(),
-		DiscoveryConfig:  getDiscoveryConfig(),
-		CloudName:        cloudName,
-		AgentNamespace:   agentNamespace,
-		ExcludeLabels:    getExcludeLabels(),
-		GroupingLabels:   getGroupingLabels(),
-		AgentName:        agentName,
-		DiscoveryTimeout:   getDiscoveryTimeout(),
-		NamespacesCacheTTL: getNamespacesCacheTTL(),
-		ServicesCacheTTL:   getServicesCacheTTL(),
+	utils.PrintConfig(cfg)
+	if err := utils.ValidateConfig(cfg); err != nil {
+		return nil, err
 	}
 	return &systemInfoServiceImpl{
-		systemInfo: systemInfo}, nil
+		config: cfg}, nil
+}
+
+func setDefaults() {
+	viper.SetDefault("technicalParameters.basePath", ".")
+	viper.SetDefault("technicalParameters.listenAddress", ":8080")
+	viper.SetDefault("technicalParameters.version", "unknown")
+	viper.SetDefault("technicalParameters.apihub.url", "http://localhost:8090")
+	viper.SetDefault("technicalParameters.cloudName", "unknown")
+	viper.SetDefault("technicalParameters.namespace", "unknown")
+	viper.SetDefault("technicalParameters.paasPlatform", "KUBERNETES")
+	viper.SetDefault("technicalParameters.namespacesCacheTTLMin", 1440)
+	viper.SetDefault("technicalParameters.servicesCacheTTLMin", 480)
+	viper.SetDefault("security.allowedOrigins", []string{})
+	viper.SetDefault("security.insecureProxy", false)
+	viper.SetDefault("discovery.excludeLabels", []string{})
+	viper.SetDefault("discovery.groupingLabels", []string{})
+	viper.SetDefault("discovery.timeoutSec", 15)
+	viper.SetDefault("discovery.urls.openapi.config-urls", []string{"/v3/api-docs/swagger-config", "/swagger-resources"})
+	viper.SetDefault("discovery.urls.openapi.doc-urls", []string{"/q/openapi?format=json", "/v3/api-docs?format=json", "/v2/api-docs", "/swagger-ui/swagger.json"})
+	viper.SetDefault("discovery.urls.apihub-config.config-urls", []string{"/v3/api-docs/apihub-swagger-config"})
+}
+
+func getConfigFolder() string {
+	folder := os.Getenv("AGENT_CONFIG_FOLDER")
+	if folder == "" {
+		log.Warn("AGENT_CONFIG_FOLDER is not set, using default value: '.'")
+		folder = "."
+	}
+	return folder
 }
 
 type systemInfoServiceImpl struct {
-	systemInfo view.SystemInfo
-}
-
-func (g systemInfoServiceImpl) GetSystemInfo() *view.SystemInfo {
-	return &g.systemInfo
+	config config.Config
 }
 
 func (g systemInfoServiceImpl) GetBackendVersion() string {
-	return g.systemInfo.BackendVersion
+	return g.config.TechnicalParameters.Version
 }
 
 func (g systemInfoServiceImpl) GetApihubUrl() string {
-	return g.systemInfo.ApihubUrl
+	return g.config.TechnicalParameters.Apihub.URL
 }
 
 func (g systemInfoServiceImpl) GetAgentUrl() string {
-	return g.systemInfo.AgentUrl
+	return g.config.TechnicalParameters.AgentUrl
 }
 
 func (g systemInfoServiceImpl) GetAccessToken() string {
-	return g.systemInfo.AccessToken
-}
-
-func (g systemInfoServiceImpl) GetDiscoveryConfig() string {
-	return g.systemInfo.DiscoveryConfig
+	return g.config.TechnicalParameters.Apihub.AccessToken
 }
 
 func (g systemInfoServiceImpl) GetCloudName() string {
-	return g.systemInfo.CloudName
+	return g.config.TechnicalParameters.CloudName
 }
 
 func (g systemInfoServiceImpl) GetAgentNamespace() string {
-	return g.systemInfo.AgentNamespace
+	return g.config.TechnicalParameters.Namespace
 }
 
 func (g systemInfoServiceImpl) GetExcludeLabels() []string {
-	return g.systemInfo.ExcludeLabels
+	return g.config.Discovery.ExcludeLabels
 }
 
 func (g systemInfoServiceImpl) GetGroupingLabels() []string {
-	return g.systemInfo.GroupingLabels
+	return g.config.Discovery.GroupingLabels
 }
 
 func (g systemInfoServiceImpl) GetAgentName() string {
-	return g.systemInfo.AgentName
+	return g.config.TechnicalParameters.AgentName
 }
 
 func (g systemInfoServiceImpl) GetDiscoveryTimeout() time.Duration {
-	return g.systemInfo.DiscoveryTimeout
+	return time.Duration(g.config.Discovery.TimeoutSec) * time.Second
+}
+
+func (g systemInfoServiceImpl) InsecureProxyEnabled() bool {
+	return g.config.Security.InsecureProxy
 }
 
 func (g systemInfoServiceImpl) GetNamespacesCacheTTL() time.Duration {
-	return g.systemInfo.NamespacesCacheTTL
+	return time.Duration(g.config.TechnicalParameters.NamespacesCacheTTLMin) * time.Minute
 }
 
 func (g systemInfoServiceImpl) GetServicesCacheTTL() time.Duration {
-	return g.systemInfo.ServicesCacheTTL
+	return time.Duration(g.config.TechnicalParameters.ServicesCacheTTLMin) * time.Minute
 }
 
-func getInsecureProxy() bool {
-	envVal := os.Getenv("INSECURE_PROXY")
-	if envVal == "" {
-		return false
-	}
-	insecureProxy, err := strconv.ParseBool(envVal)
-	if err != nil {
-		return false
-	}
-	return insecureProxy
+func (g systemInfoServiceImpl) GetBasePath() string {
+	return g.config.TechnicalParameters.BasePath
 }
 
-func getBackendVersion() string {
-	version := os.Getenv("ARTIFACT_DESCRIPTOR_VERSION")
-	if version == "" {
-		version = "unknown"
-	}
-	return version
+func (g systemInfoServiceImpl) GetPaasPlatform() string {
+	return g.config.TechnicalParameters.PaasPlatform
 }
 
-func getApihubUrl() string {
-	apihubUrl := os.Getenv("APIHUB_URL")
-	if apihubUrl == "" {
-		apihubUrl = "https://qubership.localhost"
-	}
-	return apihubUrl
-}
-
-func getAgentUrl() string {
-	return os.Getenv("AGENT_URL")
-}
-
-func getAccessToken() string {
-	return os.Getenv("APIHUB_ACCESS_TOKEN")
-}
-
-func getDiscoveryConfig() string {
-	return os.Getenv("DISCOVERY_CONFIG")
-}
-
-func getCloudName() (string, error) {
-	cloudName := os.Getenv("CLOUD_NAME")
-	if cloudName == "" {
-		cloudName = "unknown"
-	}
-	if err := validateSlugOnlyCharacters(cloudName); err != nil {
-		return "", err
-	}
-	return cloudName, nil
-}
-
-func getAgentNamespace() (string, error) {
-	agentNamespace := os.Getenv("NAMESPACE")
-	if agentNamespace == "" {
-		agentNamespace = "unknown"
-	}
-	if err := validateSlugOnlyCharacters(agentNamespace); err != nil {
-		return "", err
-	}
-	return agentNamespace, nil
-}
-
-func getExcludeLabels() []string {
-	excludeLablesStr := os.Getenv("DISCOVERY_EXCLUDE_LABELS")
-	if excludeLablesStr == "" {
-		return []string{}
-	}
-	labels := strings.Split(excludeLablesStr, ",")
-	var cleanedExcludeLabels []string
-	for _, label := range labels {
-		cleanedLabel := strings.TrimSpace(label)
-		if cleanedLabel != "" {
-			cleanedExcludeLabels = append(cleanedExcludeLabels, cleanedLabel)
-		}
-	}
-	return cleanedExcludeLabels
-}
-
-func getGroupingLabels() []string {
-	groupingLablesStr := os.Getenv("DISCOVERY_GROUPING_LABELS")
-	if groupingLablesStr == "" {
-		return []string{}
-	}
-	labels := strings.Split(groupingLablesStr, ",")
-	var cleanedGroupingLabels []string
-	for _, label := range labels {
-		cleanedLabel := strings.TrimSpace(label)
-		if cleanedLabel != "" {
-			cleanedGroupingLabels = append(cleanedGroupingLabels, cleanedLabel)
-		}
-	}
-	return cleanedGroupingLabels
-}
-
-func getAgentName() (string, error) {
-	agentName := os.Getenv("AGENT_NAME")
-	if agentName != "" {
-		if err := validateSlugOnlyCharacters(agentName); err != nil {
-			return "", err
-		}
-	}
-	return agentName, nil
-}
-
-func getDiscoveryTimeout() time.Duration {
-	discoveryTimeoutSecStr := os.Getenv("DISCOVERY_TIMEOUT_SEC")
-	if discoveryTimeoutSecStr == "" {
-		return time.Second * 15
-	}
-	discoveryTimeoutSec, err := strconv.ParseInt(discoveryTimeoutSecStr, 10, 64)
-	if err != nil {
-		log.Errorf("Failed to parse DISCOVERY_TIMEOUT_SEC value = '%s' with err = '%s', using default = %ds", discoveryTimeoutSecStr, err, 15)
-		return time.Second * 15
-	}
-	return time.Second * time.Duration(discoveryTimeoutSec)
-}
-
-func getNamespacesCacheTTL() time.Duration {
-	ttlMinStr := os.Getenv("NAMESPACES_CACHE_TTL_MIN")
-	if ttlMinStr == "" {
-		return time.Minute * 1440
-	}
-	ttlMin, err := strconv.ParseInt(ttlMinStr, 10, 64)
-	if err != nil {
-		log.Errorf("Failed to parse NAMESPACES_CACHE_TTL_MIN value = '%s' with err = '%s', using default = %dm", ttlMinStr, err, 1440)
-		return time.Minute * 1440
-	}
-	return time.Minute * time.Duration(ttlMin)
-}
-
-func getServicesCacheTTL() time.Duration {
-	ttlMinStr := os.Getenv("SERVICES_CACHE_TTL_MIN")
-	if ttlMinStr == "" {
-		return time.Minute * 480
-	}
-	ttlMin, err := strconv.ParseInt(ttlMinStr, 10, 64)
-	if err != nil {
-		log.Errorf("Failed to parse SERVICES_CACHE_TTL_MIN value = '%s' with err = '%s', using default = %dm", ttlMinStr, err, 480)
-		return time.Minute * 480
-	}
-	return time.Minute * time.Duration(ttlMin)
-}
-
-func validateSlugOnlyCharacters(value string) error {
-	if value == "" {
-		return fmt.Errorf("value cannot be empty")
-	}
-	if !slugPattern.MatchString(value) {
-		return fmt.Errorf("value '%s' contains invalid characters. Can only contain letters, numbers, hyphens and underscores", value)
-	}
-	return nil
+func (g systemInfoServiceImpl) GetDiscoveryUrls() config.ApiTypeUrlsConfig {
+	return g.config.Discovery.Urls
 }

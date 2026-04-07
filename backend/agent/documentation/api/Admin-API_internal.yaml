@@ -234,12 +234,12 @@ components:
         - openapi-3-1
         - openapi-3-0
         - openapi-2-0
+        - asyncapi-3-0
         - json-schema
         - markdown
         - graphql-schema
         - graphapi
         - introspection
-        - protobuf-3
         - unknown
       example: openapi-3-0
     DocumentFormat:
@@ -360,6 +360,7 @@ components:
                   - openapi-2-0
                   - openapi-3-0
                   - openapi-3-1
+                  - asyncapi-3-0
                   - markdown
                   - graphql
                   - json-schema

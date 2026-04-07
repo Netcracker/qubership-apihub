@@ -1,17 +1,3 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package service
 
 import (
@@ -25,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-agent/client"
+	"github.com/Netcracker/qubership-apihub-agent/config"
 	"github.com/Netcracker/qubership-apihub-agent/secctx"
 	"github.com/netcracker/qubership-core-lib-go-paas-mediation-client/v8/entity"
 	"github.com/netcracker/qubership-core-lib-go-paas-mediation-client/v8/filter"
@@ -51,7 +38,8 @@ func NewDiscoveryService(
 	serviceListCache ServiceListCache,
 	paasClient service.PlatformService,
 	documentsDiscoveryService DocumentsDiscoveryService,
-	apihubClient client.ApihubClient) DiscoveryService {
+	apihubClient client.ApihubClient,
+	discoveryUrls config.ApiTypeUrlsConfig) DiscoveryService {
 	groupingLabelsMap := make(map[string]struct{}, len(groupingLabels))
 	for _, label := range groupingLabels {
 		groupingLabelsMap[label] = struct{}{}
@@ -67,7 +55,8 @@ func NewDiscoveryService(
 		serviceListCache:          serviceListCache,
 		paasClient:                paasClient,
 		documentsDiscoveryService: documentsDiscoveryService,
-		apihubClient:              apihubClient}
+		apihubClient:              apihubClient,
+		discoveryUrls:             discoveryUrls}
 }
 
 type discoveryServiceImpl struct {
@@ -76,6 +65,7 @@ type discoveryServiceImpl struct {
 	apihubUrl         string
 	excludeWithLabels []string
 	groupingLabels    map[string]struct{}
+	discoveryUrls     config.ApiTypeUrlsConfig
 
 	namespaceListCache NamespaceListCache
 	serviceListCache   ServiceListCache
@@ -209,7 +199,7 @@ func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namesp
 			}
 		}
 
-		discoveryUrls := view.MakeDocDiscoveryUrls(annotations)
+		discoveryUrls := view.MakeDocDiscoveryUrls(d.discoveryUrls, annotations)
 
 		srvTmp := srv
 		wg.Add(1)

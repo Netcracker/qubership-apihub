@@ -16,9 +16,18 @@ qubershipApihubAgent:
   logLevel: "INFO"
 
   env:
-    apihubUrl: 'http://qubership-apihub-ui.qubership-apihub.svc.cluster.local:8080'
-    accessToken: '' # set access token from qubership-apihub
-    cloudName: 'Kind'
-    agentUrl: 'qubership-apihub-agent.qubership-apihub-agent.svc.cluster.local'
-    agentName: 'qsAgent'
-    insecureProxy: false
+    technicalParameters:
+      apihub:
+        url: 'http://qubership-apihub-ui.qubership-apihub.svc.cluster.local:8080'
+        # Mandatory; Provide admin access token for your Qubership APIHUB; If not set, default value: ""; Example: access-token-12345
+        accessToken: '' # set access token from qubership-apihub
+      # Mandatory; Hostname for Qubership APIHUB Agent (used in Ingress and to construct agentUrl); If not set, default value: ""; Example: apihub-agent.k8s.example.com
+      agentHost: 'qubership-apihub-agent.qubership-apihub-agent.svc.cluster.local'
+      # Optional; Protocol for agentUrl construction; If not set, default value: http; Example: https
+      agentProtocol: 'http'
+      # Optional; Port for agentUrl construction. Leave empty for default ports (443 for https, 80 for http); If not set, default value: ""; Example: 8080
+      agentPort: '8080'
+      # Mandatory; Display name of Qubership APIHUB Agent's k8s cluster; If not set, default value: unknown; Example: myStagingK8sCluster
+      cloudName: 'Kind'
+      # Mandatory; Display name of Qubership APIHUB Agent's instance; If not set, default value: ""; Example: apihub-agent-1
+      agentName: 'qsAgent'

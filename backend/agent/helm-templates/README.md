@@ -2,9 +2,9 @@
 
 This folder contains `qubership-apihub-agent` Helm chart for Qubership APIHUB Agent deployment to k8s cluster.
 
-It is ready for usage Helm chart. 
+It is ready for usage Helm chart.
 
-## 3rd party dependencies
+## Third-party dependencies
 
 | Name | Version | Mandatory/Optional | Comment |
 | ---- | ------- |------------------- | ------- |
@@ -24,20 +24,23 @@ It is ready for usage Helm chart.
 
 ## Set up values.yml
 
-1. Download Qubership APIHUB Aget helm chart
-1. Fill `values.yaml` with corresponding deploy parameters. `values.yaml` is self-documented, so please refer to it
+1. Download Qubership APIHUB Agent helm chart
+2. Review [`config.template.yaml`](../qubership-apihub-agent/config.template.yaml) for the full list of configuration parameters and their descriptions
+3. Fill `values.yaml` with your deploy parameters:
+   - Helm-specific settings (image, resources) are at the top level under `qubershipApihubAgent`
+   - Application configuration is under `qubershipApihubAgent.env` and follows the same structure as `config.template.yaml`
 
 ## Execute helm install
 
 In order to deploy Qubership APIHUB Agent to your k8s cluster execute the following command:
 
-```
+```bash
 helm install qubership-apihub-agent -n qubership-apihub-agent --create-namespace -f ./qubership-apihub-agent/values.yaml ./qubership-apihub-agent
 ```
 
 In order to uninstall Qubership APIHUB from your k8s cluster execute the following command:
 
-```
+```bash
 helm uninstall qubership-apihub-agent -n qubership-apihub-agent
 ```
 
@@ -54,6 +57,6 @@ Prerequisites:
 
 Execute the following command to deploy Qubership APIHUB Agent:
 
-```
+```bash
 helm install qubership-apihub-agent -n qubership-apihub-agent --create-namespace -f ./qubership-apihub-agent/local-k8s-values.yaml ./qubership-apihub-agent
 ```

@@ -1,17 +1,3 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package rest
 
 import (
@@ -36,27 +22,27 @@ type restDiscoveryRunner struct {
 }
 
 func (r restDiscoveryRunner) DiscoverDocuments(baseUrl string, urls view.DocumentDiscoveryUrls, timeout time.Duration) ([]view.Document, []view.EndpointCallInfo, error) {
-	var allCallResults []view.EndpointCallInfo
+	var allFailedCalls []view.EndpointCallInfo
 
 	// find swagger-config, etc..
 	var refs []view.DocumentRef
 	for _, url := range urls.SwaggerConfig {
-		refs, callResult := getRefsFromSwaggerConfig(baseUrl, url, timeout)
-		if callResult != nil {
-			allCallResults = append(allCallResults, *callResult)
+		refs, failedCall := getRefsFromSwaggerConfig(baseUrl, url, timeout)
+		if failedCall != nil {
+			allFailedCalls = append(allFailedCalls, *failedCall)
 		}
 		if len(refs) > 0 {
 			// Swagger config found
-			docs, callResults, err := r.GetDocumentsByRefs(baseUrl, refs, url)
-			allCallResults = append(allCallResults, callResults...)
-			return docs, allCallResults, err
+			docs, failedCalls, err := r.GetDocumentsByRefs(baseUrl, refs, url)
+			allFailedCalls = append(allFailedCalls, failedCalls...)
+			return docs, allFailedCalls, err
 		}
 	}
 	// Swagger config not found, generate refs list from openapi urls
 	refs = utils.MakeDocumentRefsFromUrls(urls.Openapi, view.ATRest, false, timeout)
-	docs, callResults, err := r.GetDocumentsByRefs(baseUrl, refs, "")
-	allCallResults = append(allCallResults, callResults...)
-	return docs, allCallResults, err
+	docs, failedCalls, err := r.GetDocumentsByRefs(baseUrl, refs, "")
+	allFailedCalls = append(allFailedCalls, failedCalls...)
+	return docs, allFailedCalls, err
 }
 
 func (r restDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.DocumentRef, configPath string) ([]view.Document, []view.EndpointCallInfo, error) {
@@ -66,7 +52,7 @@ func (r restDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.Docu
 	}
 
 	result := make([]view.Document, len(filteredRefs))
-	callResults := make([]view.EndpointCallInfo, len(filteredRefs))
+	failedCalls := make([]view.EndpointCallInfo, len(filteredRefs))
 	errors := make([]string, len(filteredRefs))
 
 	wg := sync.WaitGroup{}
@@ -84,12 +70,12 @@ func (r restDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.Docu
 
 			url := baseUrl + currentSpecUrl
 
-			specVersion, specTitle, specFormat, callResult := getSpecVersionAndTitleFromDoc(url, currentSpecUrl, ref.Timeout)
-			if callResult != nil {
-				log.Debugf("Failed to read openapi spec from %s: %s", url, callResult.ErrorSummary)
-				callResults[i] = *callResult
+			specVersion, specTitle, specFormat, failedCall := getSpecVersionAndTitleFromDoc(url, currentSpecUrl, ref.Timeout)
+			if failedCall != nil {
+				log.Debugf("Failed to read openapi spec from %s: %s", url, failedCall.ErrorSummary)
+				failedCalls[i] = *failedCall
 				if ref.Required {
-					errors[i] = fmt.Sprintf("Failed to read required openapi spec from %s: %s", url, callResult.ErrorSummary)
+					errors[i] = fmt.Sprintf("Failed to read required openapi spec from %s: %s", url, failedCall.ErrorSummary)
 				}
 				return
 			}
@@ -118,7 +104,7 @@ func (r restDiscoveryRunner) GetDocumentsByRefs(baseUrl string, refs []view.Docu
 
 	wg.Wait()
 
-	return utils.FilterResultDocuments(result), utils.FilterEndpointCallResults(callResults), utils.FilterResultErrors(errors)
+	return utils.FilterResultDocuments(result), utils.FilterFailedEndpointCalls(failedCalls), utils.FilterResultErrors(errors)
 }
 
 // TODO: move to type detection
@@ -129,9 +115,9 @@ var openapi2Regexp = regexp.MustCompile(`2.*`)
 const DefaultOpenapiSpecName = "default"
 
 func getRefsFromSwaggerConfig(baseUrl string, swaggerConfigUrl string, timeout time.Duration) ([]view.DocumentRef, *view.EndpointCallInfo) {
-	swaggerSpecRefs, callResult := generic.GetRefsFromConfig(baseUrl, swaggerConfigUrl, timeout)
-	if callResult != nil {
-		return nil, callResult
+	swaggerSpecRefs, failedCall := generic.GetRefsFromConfig(baseUrl, swaggerConfigUrl, timeout)
+	if failedCall != nil {
+		return nil, failedCall
 	}
 	for i := range swaggerSpecRefs {
 		swaggerSpecRefs[i].ApiType = view.ATRest

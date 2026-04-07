@@ -1,24 +1,10 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package view
 
 const (
 	OpenAPI31Type     string = "openapi-3-1"
 	OpenAPI30Type     string = "openapi-3-0"
 	OpenAPI20Type     string = "openapi-2-0"
-	AsyncAPIType      string = "asyncapi-2"
+	AsyncAPI30Type    string = "asyncapi-3-0"
 	JsonSchemaType    string = "json-schema"
 	MDType            string = "markdown"
 	GraphQLSchemaType string = "graphql-schema"
@@ -30,7 +16,7 @@ const (
 
 func ValidDocumentType(documentType string) bool {
 	switch documentType {
-	case OpenAPI31Type, OpenAPI30Type, OpenAPI20Type, AsyncAPIType, JsonSchemaType, MDType, GraphQLSchemaType, GraphAPIType, IntrospectionType, GraphQLType, UnknownType:
+	case OpenAPI31Type, OpenAPI30Type, OpenAPI20Type, AsyncAPI30Type, JsonSchemaType, MDType, GraphQLSchemaType, GraphAPIType, IntrospectionType, GraphQLType, UnknownType:
 		return true
 	}
 	return false
@@ -46,6 +32,8 @@ func DocTypeToApiType(documentType string) ApiType {
 		return ATMarkdown
 	case JsonSchemaType:
 		return ATJsonSchema
+	case AsyncAPI30Type:
+		return ATAsyncAPI
 	default:
 		return ATUnknown
 	}

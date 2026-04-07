@@ -1,17 +1,3 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package main
 
 import (
@@ -24,13 +10,12 @@ import (
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-agent/exception"
-
-	"github.com/Netcracker/qubership-apihub-agent/utils"
-	"github.com/gorilla/handlers"
-	"github.com/netcracker/qubership-core-lib-go/v3/configloader"
+	"github.com/netcracker/qubership-core-lib-go-paas-mediation-client/v8/types"
 
 	"github.com/Netcracker/qubership-apihub-agent/client"
 	"github.com/Netcracker/qubership-apihub-agent/security"
+	"github.com/Netcracker/qubership-apihub-agent/utils"
+	"github.com/gorilla/handlers"
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/Netcracker/qubership-apihub-agent/controller"
@@ -42,10 +27,6 @@ import (
 )
 
 func init() {
-	basePath := os.Getenv("BASE_PATH")
-	if basePath == "" {
-		basePath = "."
-	}
 	logFilePath := os.Getenv("LOG_FILE_PATH") //Example: /logs/apihub-agent.log
 	var mw io.Writer
 	if logFilePath != "" {
@@ -73,33 +54,26 @@ func init() {
 	log.SetOutput(mw)
 }
 
-func init() {
-	sourceParams := configloader.YamlPropertySourceParams{ConfigFilePath: "config.yaml"}
-	configloader.Init(configloader.BasePropertySources(sourceParams)...)
-}
-
 func main() {
-	basePath := os.Getenv("BASE_PATH")
-	if basePath == "" {
-		basePath = "."
-	}
-
-	var paasCl paasService.PlatformService
-	var err error
-	stubPm := os.Getenv("STUB_PM")
-	if stubPm != "" {
-		paasCl = &paasService.MockPlatformService{}
-	} else {
-		paasCl, err = paasService.NewPlatformClientBuilder().Build() // TODO: not sure if should be sync
-		if err != nil {
-			panic(fmt.Sprintf("Can't create paas-mediation client: %s", err.Error()))
-		}
-	}
-
 	systemInfoService, err := service.NewSystemInfoService()
 	if err != nil {
 		log.Error("Failed to read system info: " + err.Error())
 		panic("Failed to read system info: " + err.Error())
+	}
+
+	var paasCl paasService.PlatformService
+	stubPm := os.Getenv("STUB_PM")
+	if stubPm != "" {
+		paasCl = &paasService.MockPlatformService{}
+	} else {
+		paasCl, err = paasService.NewPlatformClientBuilder().
+			WithNamespace(systemInfoService.GetAgentNamespace()).
+			WithPlatformType(types.PlatformType(systemInfoService.GetPaasPlatform())).
+			WithConsul(false, "").
+			Build() // TODO: not sure if should be sync
+		if err != nil {
+			panic(fmt.Sprintf("Can't create paas-mediation client: %s", err.Error()))
+		}
 	}
 
 	apihubClient := client.NewApihubClient(systemInfoService.GetApihubUrl(), systemInfoService.GetAccessToken(), systemInfoService.GetCloudName())
@@ -110,7 +84,7 @@ func main() {
 	serviceListCache := service.NewServiceListCache(systemInfoService.GetServicesCacheTTL())
 	documentsDiscoveryService := service.NewDocumentsDiscoveryService(systemInfoService.GetDiscoveryTimeout())
 	discoveryService := service.NewDiscoveryService(systemInfoService.GetCloudName(), systemInfoService.GetAgentNamespace(), systemInfoService.GetApihubUrl(), systemInfoService.GetExcludeLabels(), systemInfoService.GetGroupingLabels(), namespaceListCache, serviceListCache,
-		paasCl, documentsDiscoveryService, apihubClient)
+		paasCl, documentsDiscoveryService, apihubClient, systemInfoService.GetDiscoveryUrls())
 	documentService := service.NewDocumentService(serviceListCache, systemInfoService.GetDiscoveryTimeout())
 	regService := service.NewRegistrationService(systemInfoService.GetCloudName(), systemInfoService.GetAgentNamespace(), systemInfoService.GetAgentUrl(),
 		systemInfoService.GetBackendVersion(), systemInfoService.GetAgentName(), apihubClient, agentsBackendClient, disablingSerivce)
@@ -122,7 +96,7 @@ func main() {
 	serviceController := controller.NewServiceController(serviceListCache, discoveryService, listService)
 	documentController := controller.NewDocumentController(documentService)
 	serviceProxyController := controller.NewServiceProxyController(discoveryService)
-	apiDocsController := controller.NewApiDocsController(basePath)
+	apiDocsController := controller.NewApiDocsController(systemInfoService.GetBasePath())
 	cloudController := controller.NewCloudController(cloudService)
 	routesController := controller.NewRoutesController(routesService)
 	logsController := controller.NewLogsController()
@@ -177,7 +151,7 @@ func main() {
 	r.HandleFunc("/ready", healthController.HandleReadyRequest).Methods(http.MethodGet)
 	r.HandleFunc("/startup", healthController.HandleStartupRequest).Methods(http.MethodGet)
 
-	if systemInfoService.GetSystemInfo().InsecureProxy {
+	if systemInfoService.InsecureProxyEnabled() {
 		r.PathPrefix(utils.ProxyPathDeprecated).HandlerFunc(serviceProxyController.Proxy) //deprecated
 	} else {
 		r.PathPrefix(utils.ProxyPathDeprecated).HandlerFunc(security.SecureProxy(serviceProxyController.Proxy)) //deprecated
