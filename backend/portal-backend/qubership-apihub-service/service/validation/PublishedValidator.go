@@ -499,20 +499,7 @@ func (p publishedValidatorImpl) validatePackageOperations(buildArc *archive.Buil
 					},
 				}
 			}
-			for scope := range operation.SearchScopes {
-				if !view.ValidRestOperationScope(scope) {
-					return &exception.CustomError{
-						Status:  http.StatusBadRequest,
-						Code:    exception.InvalidPackagedFile,
-						Message: exception.InvalidPackagedFileMsg,
-						Params: map[string]interface{}{
-							"file":  "operations",
-							"error": fmt.Sprintf("object with operationId = %v is incorrect: search scope %v doesn't exist for %v api type", operation.OperationId, scope, apiType),
-						},
-					}
-				}
-			}
-		case view.GraphqlApiType:
+			case view.GraphqlApiType:
 			if operationMetadata.GetType() == "" {
 				return &exception.CustomError{
 					Status:  http.StatusBadRequest,

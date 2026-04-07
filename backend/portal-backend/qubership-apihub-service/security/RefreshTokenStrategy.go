@@ -3,18 +3,20 @@ package security
 import (
 	goctx "context"
 	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/shaj13/go-guardian/v2/auth"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/jwt"
 	"github.com/shaj13/libcache"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 const (
 	RefreshTokenCookieName  = "apihub-refresh-token"
 	SetAccessTokenCookieExt = "setAccessTokenCookie"
+	refreshTokenCachePrefix = "ref:"
 )
 
 func NewRefreshTokenStrategy(cache libcache.Cache, jwtValidator JWTValidator) auth.Strategy {
@@ -36,8 +38,9 @@ func (r refreshTokenStrategyImpl) Authenticate(ctx goctx.Context, req *http.Requ
 		return nil, nil
 	}
 	refreshToken := refreshTokenCookie.Value
+	cacheKey := refreshTokenCachePrefix + refreshToken
 	var info auth.Info
-	if v, ok := r.cache.Load(refreshToken); ok {
+	if v, ok := r.cache.Load(cacheKey); ok {
 		info, ok = v.(auth.Info)
 		if !ok {
 			return nil, auth.NewTypeError("authentication failed:", (*auth.Info)(nil), v)
@@ -50,11 +53,11 @@ func (r refreshTokenStrategyImpl) Authenticate(ctx goctx.Context, req *http.Requ
 	if info == nil {
 		var t time.Time
 		var err error
-		info, t, err = r.jwtValidator.ValidateToken(refreshToken)
+		info, t, err = r.jwtValidator.ValidateToken(refreshToken, RefreshTokenType)
 		if err != nil {
 			return nil, fmt.Errorf("authentication failed: %w", err)
 		}
-		r.cache.StoreWithTTL(refreshToken, info, time.Until(t))
+		r.cache.StoreWithTTL(cacheKey, info, time.Until(t))
 	}
 
 	userInfo, err := r.refreshAccessToken(info)
@@ -69,6 +72,7 @@ func (r refreshTokenStrategyImpl) refreshAccessToken(userInfo auth.Info) (auth.I
 	user := auth.NewUserInfo(userInfo.GetUserName(), userInfo.GetID(), []string{}, auth.Extensions{})
 	extensions := user.GetExtensions()
 	extensions.Set(context.SystemRoleExt, userInfo.GetExtensions().Get(context.SystemRoleExt))
+	extensions.Set(TokenTypeExt, AccessTokenType)
 	accessDuration := jwt.SetExpDuration(accessTokenDuration)
 
 	accessToken, err := jwt.IssueAccessToken(user, keeper, accessDuration)

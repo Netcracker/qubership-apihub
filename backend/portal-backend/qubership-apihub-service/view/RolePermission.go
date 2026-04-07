@@ -12,7 +12,8 @@ const (
 	ManageReleaseVersionPermission   RolePermission = "manage_release_version"
 	ManageArchivedVersionPermission  RolePermission = "manage_archived_version"
 	UserAccessManagementPermission   RolePermission = "user_access_management"
-	AccessTokenManagementPermission  RolePermission = "access_token_management"
+	AccessTokenManagementPermission             RolePermission = "access_token_management"
+	DocumentShareabilityManagementPermission    RolePermission = "document_shareability_management"
 )
 
 func GetAllRolePermissions() []RolePermission {
@@ -25,6 +26,7 @@ func GetAllRolePermissions() []RolePermission {
 		ManageArchivedVersionPermission,
 		UserAccessManagementPermission,
 		AccessTokenManagementPermission,
+		DocumentShareabilityManagementPermission,
 	}
 }
 
@@ -50,6 +52,8 @@ func (r RolePermission) Name() string {
 		return "user access management"
 	case AccessTokenManagementPermission:
 		return "access token management"
+	case DocumentShareabilityManagementPermission:
+		return "document shareability management"
 	default:
 		return ""
 	}
@@ -73,6 +77,8 @@ func ParseRolePermission(permissionId string) (RolePermission, error) {
 		return UserAccessManagementPermission, nil
 	case "access_token_management":
 		return AccessTokenManagementPermission, nil
+	case "document_shareability_management":
+		return DocumentShareabilityManagementPermission, nil
 	default:
 		return "", fmt.Errorf("permission '%v' doesn't exist", permissionId)
 	}

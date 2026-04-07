@@ -80,6 +80,21 @@ type OperationDataEntity struct {
 	SearchScope map[string]interface{} `pg:"search_scope, type:jsonb"`
 }
 
+type OperationSearchTextEntity struct {
+	OperationId    string
+	ApiType        string
+	Title          string
+	SearchTextData []byte
+	SearchDataHash string
+}
+
+type FtsOperationSearchTextEntity struct {
+	tableName struct{} `pg:"fts_operation_search_text"`
+
+	OperationId    string `pg:"operation_id, type:varchar"`
+	SearchDataHash string `pg:"search_data_hash, type:varchar"`
+}
+
 type OperationComparisonEntity struct {
 	tableName struct{} `pg:"operation_comparison"`
 

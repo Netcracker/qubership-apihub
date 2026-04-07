@@ -79,7 +79,7 @@ func (m mcpService) ExecuteSearchTool(ctx context.Context, req mcp.CallToolReque
 		packageIds = []string{group}
 	}
 
-	searchReq := view.SearchQueryReq{
+	searchReq := view.SearchQueryReq_deprecated{
 		SearchString: q,
 		PackageIds:   packageIds,
 		Versions:     []string{releaseVersion},
@@ -96,9 +96,9 @@ func (m mcpService) ExecuteSearchTool(ctx context.Context, req mcp.CallToolReque
 		return nil, err
 	}
 
-	operations := make([]view.RestOperationSearchResult, len(*searchResult.Operations))
+	operations := make([]view.RestOperationSearchResult_deprecated, len(*searchResult.Operations))
 	for i, op := range *searchResult.Operations {
-		operations[i] = op.(view.RestOperationSearchResult)
+		operations[i] = op.(view.RestOperationSearchResult_deprecated)
 	}
 	payload := map[string]any{"items": transformOperations(operations)}
 

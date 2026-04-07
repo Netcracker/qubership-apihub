@@ -78,8 +78,8 @@ func projectPublishedVersionsForMCP(versions []view.PublishedVersionListView) []
 	return projected
 }
 
-// transformOperations transforms view.RestOperationSearchResult to TransformedOperation
-func transformOperations(items []view.RestOperationSearchResult) []view.TransformedOperation {
+// transformOperations transforms view.RestOperationSearchResult_deprecated to TransformedOperation
+func transformOperations(items []view.RestOperationSearchResult_deprecated) []view.TransformedOperation {
 	transformed := make([]view.TransformedOperation, len(items))
 
 	for i, item := range items {

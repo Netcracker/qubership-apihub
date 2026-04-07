@@ -117,6 +117,8 @@ businessParameters:
   publishArchiveSizeLimitMb: 50
   # Optional; Limit for uploaded file (inside package) size in order to avoid OOM; If not set, default value: 15; Example: 20
   publishFileSizeLimitMb: 15
+  # Optional; Limit for uploaded operation group template file size in MB; If not set, default value: 1; Example: 2
+  templateSizeLimitMb: 1
   # Optional; If set - footer with this text is shown for all APIHUB users in APIHUB UI. Designed for maintenance windows notifications.; If not set, default value: ""; Example: Maintenance scheduled on 2023-10-15
   systemNotification: ''
   # Optional; Set to true to fail build on broken refs; If not set, default value: true; Example: true
@@ -208,6 +210,11 @@ ai:
       reasoningEffort: 'medium'
       # Optional; Controls verbosity and detail level of the model's response. Values: "low" (concise), "medium" (balanced, default), "high" (detailed with examples); If not set, default value: "medium"; Example: "medium"
       verbosity: 'medium'
+
+# Section with feature flags for controlling feature availability
+featureFlags:
+  # Optional; When true, signals to use v3 search API instead of v4 search API; Default: false; Example: true
+  useV3Search: false
 
 # List of enabled extension services
 #extensions:

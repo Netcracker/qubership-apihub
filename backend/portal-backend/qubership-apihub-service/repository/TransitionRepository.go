@@ -182,8 +182,8 @@ func copyVersions(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	}
 	objAffected += res.RowsAffected()
 
-	copyVerDocs := "insert into published_version_revision_content (package_id, version, revision, checksum, index, file_id, path, slug, data_type, name, metadata, title, format, operation_ids, filename) " +
-		"(select ?, version, revision, checksum, index, file_id, path, slug, data_type, name, metadata, title, format, operation_ids, filename from published_version_revision_content orig where orig.package_id = ?) on conflict do nothing"
+	copyVerDocs := "insert into published_version_revision_content (package_id, version, revision, checksum, index, file_id, path, slug, data_type, name, metadata, title, format, operation_ids, filename, shareability_status) " +
+		"(select ?, version, revision, checksum, index, file_id, path, slug, data_type, name, metadata, title, format, operation_ids, filename, shareability_status from published_version_revision_content orig where orig.package_id = ?) on conflict do nothing"
 	res, err = tx.Exec(copyVerDocs, toPkg, fromPkg)
 	if err != nil {
 		return 0, fmt.Errorf("failed to copy versions docs from %s to %s: %w", fromPkg, toPkg, err)
@@ -238,11 +238,19 @@ func copyVersions(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	}
 	objAffected += res.RowsAffected()
 
-	copyFTS := "insert into fts_latest_release_operation_data (package_id, version, revision, operation_id, api_type, data_vector) " +
+	copyFTSLiteSearch := "insert into fts_latest_release_operation_data (package_id, version, revision, operation_id, api_type, data_vector) " +
 		"(select ?, version, revision, operation_id, api_type, data_vector from fts_latest_release_operation_data orig where orig.package_id = ?) on conflict do nothing"
-	res, err = tx.Exec(copyFTS, toPkg, fromPkg)
+	res, err = tx.Exec(copyFTSLiteSearch, toPkg, fromPkg)
 	if err != nil {
 		return 0, fmt.Errorf("failed to copy fts_latest_release_operation_data from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
+	copyFTSSearchText := "insert into fts_operation_search_text (package_id, version, revision, operation_id, api_type, status, search_data_hash, data_vector) " +
+		"(select ?, version, revision, operation_id, api_type, status, search_data_hash, data_vector from fts_operation_search_text orig where orig.package_id = ?) on conflict do nothing"
+	res, err = tx.Exec(copyFTSSearchText, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy fts_operation_search_text from %s to %s: %w", fromPkg, toPkg, err)
 	}
 	objAffected += res.RowsAffected()
 
@@ -500,6 +508,12 @@ func deleteVersionsData(tx *pg.Tx, fromPkg string) error {
 	_, err = tx.Exec(query, fromPkg)
 	if err != nil {
 		return fmt.Errorf("failed to delete orig(%s) from operation: %w", fromPkg, err)
+	}
+
+	query = "delete from fts_operation_search_text where package_id = ?"
+	_, err = tx.Exec(query, fromPkg)
+	if err != nil {
+		return fmt.Errorf("failed to delete orig(%s) from fts_operation_search_text: %w", fromPkg, err)
 	}
 
 	query = "delete from operation_comparison where package_id = ?"

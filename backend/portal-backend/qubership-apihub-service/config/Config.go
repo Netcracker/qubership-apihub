@@ -21,6 +21,7 @@ type Config struct {
 	Cleanup              CleanupConfig
 	Extensions           []view.Extension
 	Ai                   AIConfig
+	FeatureFlags         FeatureFlagsConfig
 }
 
 type DatabaseConfig struct {
@@ -100,6 +101,7 @@ type BusinessParameters struct {
 	ReleaseVersionPattern     string
 	PublishArchiveSizeLimitMb int    `validate:"gt=0,lte=8796093022207"` //validation was added based on security scan results to avoid integer overflow, 8796093022207 * 1048576 is safely below MaxInt64
 	PublishFileSizeLimitMb    int    `validate:"gt=0,lte=8796093022207"` //validation was added based on security scan results to avoid integer overflow, 8796093022207 * 1048576 is safely below MaxInt64
+	TemplateSizeLimitMb       int    `validate:"gt=0,lte=8796093022207"` //validation was added based on security scan results to avoid integer overflow, 8796093022207 * 1048576 is safely below MaxInt64
 	SystemNotification        string //TODO: replace with db impl
 	FailBuildOnBrokenRefs     bool
 }
@@ -179,6 +181,10 @@ type UnreferencedDataCleanupConfig struct {
 
 type BuildsCleanupConfig struct {
 	Schedule string
+}
+
+type FeatureFlagsConfig struct {
+	UseV3Search bool
 }
 
 type Base64DecodedString []byte

@@ -42,8 +42,8 @@ type VersionService interface {
 	GetDefaultVersion(packageId string) (string, error)
 	GetVersionDetails(packageId string, versionName string) (*view.VersionDetails, error)
 	GetVersionReferencesV3(packageId string, versionName string) (*view.VersionReferencesV3, error)
-	SearchForPackages(searchReq view.SearchQueryReq) (*view.SearchResult, error)
-	SearchForDocuments(searchReq view.SearchQueryReq) (*view.SearchResult, error)
+	SearchForPackages(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error)
+	SearchForDocuments(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error)
 	GetVersionStatus(packageId string, version string) (string, error)
 	GetLatestRevision(packageId string, versionName string) (int, error)
 	GetVersionChanges(packageId, version, apiType string, severities []string, changelogCalculationParams view.VersionChangesReq) (*view.VersionChangesView, error)
@@ -55,6 +55,7 @@ type VersionService interface {
 	StartPublishFromCSV(ctx context.SecurityContext, req view.PublishFromCSVReq) (string, error)
 	GetCSVDashboardPublishStatus(publishId string) (*view.CSVDashboardPublishStatusResponse, error)
 	GetCSVDashboardPublishReport(publishId string) ([]byte, error)
+	UpdateDocumentShareability(ctx context.SecurityContext, packageId string, versionName string, slug string, shareability string) error
 }
 
 func NewVersionService(favoritesRepo repository.FavoritesRepository,
@@ -1100,7 +1101,7 @@ func ReleaseVersionMatchesPattern(versionName string, pattern string) error {
 	return nil
 }
 
-func (v versionServiceImpl) SearchForPackages(searchReq view.SearchQueryReq) (*view.SearchResult, error) {
+func (v versionServiceImpl) SearchForPackages(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error) {
 	searchQuery, err := entity.MakePackageSearchQueryEntity(&searchReq)
 	if err != nil {
 		return nil, &exception.CustomError{
@@ -1141,7 +1142,7 @@ func (v versionServiceImpl) SearchForPackages(searchReq view.SearchQueryReq) (*v
 	return &view.SearchResult{Packages: &packages}, nil
 }
 
-func (v versionServiceImpl) SearchForDocuments(searchReq view.SearchQueryReq) (*view.SearchResult, error) {
+func (v versionServiceImpl) SearchForDocuments(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error) {
 	unknownTypes := make(map[string]bool, 0)
 	unknownTypes[string(view.Unknown)] = true
 
@@ -2149,5 +2150,57 @@ func getCSVSeparator(record string) *rune {
 			return &sep[0]
 		}
 	}
+	return nil
+}
+
+func (v versionServiceImpl) UpdateDocumentShareability(ctx context.SecurityContext, packageId string, versionName string, slug string, shareability string) error {
+	versionEnt, err := v.publishedRepo.GetVersion(packageId, versionName)
+	if err != nil {
+		return err
+	}
+	if versionEnt == nil {
+		return &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.PublishedVersionNotFound,
+			Message: exception.PublishedVersionNotFoundMsg,
+			Params:  map[string]interface{}{"version": versionName},
+		}
+	}
+
+	document, err := v.publishedRepo.GetLatestContentBySlug(packageId, versionName, slug)
+	if err != nil {
+		return err
+	}
+	if document == nil {
+		return &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.ContentSlugNotFound,
+			Message: exception.ContentSlugNotFoundMsg,
+			Params:  map[string]interface{}{"contentSlug": slug},
+		}
+	}
+
+	err = v.publishedRepo.UpdateDocumentShareabilityBySlug(packageId, versionEnt.Version, versionEnt.Revision, slug, shareability)
+	if err != nil {
+		return err
+	}
+
+	dataMap := map[string]interface{}{}
+	dataMap["version"] = versionEnt.Version
+	dataMap["revision"] = versionEnt.Revision
+	documentDisplayName := document.Title
+	if document.Metadata.GetVersion() != "" {
+		documentDisplayName += " " + document.Metadata.GetVersion()
+	}
+	dataMap["documentDisplayName"] = documentDisplayName
+	dataMap["shareabilityStatus"] = shareability
+
+	v.atService.TrackEvent(view.ActivityTrackingEvent{
+		Type:      view.ATETUpdateDocumentShareability,
+		Data:      dataMap,
+		PackageId: packageId,
+		Date:      time.Now(),
+		UserId:    ctx.GetUserId(),
+	})
 	return nil
 }

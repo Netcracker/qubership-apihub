@@ -105,6 +105,9 @@ const PublishedPackageVersionNotFoundMsg = "Published version $version not found
 const PublishedVersionNotFound = "50"
 const PublishedVersionNotFoundMsg = "Published version $version not found"
 
+const InvalidPreviousVersion = "51"
+const InvalidPreviousVersionMsg = "Previous version $version cannot be assigned as it creates a dependency cycle with current version for package $packageId"
+
 const SharedIdIsIncorrect = "56"
 const SharedIdIsIncorrectMsg = "Shared ID is incorrect: $sharedId"
 
@@ -789,3 +792,18 @@ const BuildResultNotFoundMsg = "Build result for '$buildId' build not found"
 
 const OperationGroupTemplateNotSupported = "7900"
 const OperationGroupTemplateNotSupportedMsg = "Export template is not supported for '$apiType' API type"
+
+const DuplicateOperationData = "8000"
+const DuplicateOperationDataMsg = "Invalid build result. Operations have identical data: operationIds='$operationIds'"
+
+const TemplateSizeExceeded = "8100"
+const TemplateSizeExceededMsg = "Template file size exceeded. Template size limit - $size"
+
+const InvalidTemplateFileExtension = "8101"
+const InvalidTemplateFileExtensionMsg = "Template file extension '$extension' is not allowed. Allowed extensions: $allowedExtensions"
+
+const InvalidTemplateContent = "8102"
+const InvalidTemplateContentMsg = "Template file content is not valid $format"
+
+const InvalidShareabilityStatus = "8200"
+const InvalidShareabilityStatusMsg = "Allowed shareability statuses list contains unsupported value '$value'"

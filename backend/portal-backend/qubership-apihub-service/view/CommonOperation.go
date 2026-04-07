@@ -6,6 +6,11 @@ import (
 	"github.com/iancoleman/orderedmap"
 )
 
+type OperationSearch struct {
+	UseOperationDataAsSearchText bool   `json:"useOperationDataAsSearchText"`
+	SearchTextFilePath           string `json:"searchTextFilePath"`
+}
+
 type Operation struct {
 	OperationId               string                 `json:"operationId" validate:"required"`
 	Title                     string                 `json:"title" validate:"required"`
@@ -14,6 +19,7 @@ type Operation struct {
 	ApiKind                   string                 `json:"apiKind" validate:"required"`
 	Metadata                  map[string]interface{} `json:"metadata" validate:"required"`
 	SearchScopes              map[string]interface{} `json:"searchScopes" validate:"required"`
+	Search                    *OperationSearch       `json:"search,omitempty"`
 	PreviousReleaseVersions   []string               `json:"deprecatedInPreviousVersions"`
 	DeprecatedInfo            string                 `json:"deprecatedInfo"`
 	DeprecatedItems           []DeprecatedItem       `json:"deprecatedItems"`
