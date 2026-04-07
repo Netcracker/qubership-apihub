@@ -1,19 +1,19 @@
-# General description
+# APIHUB Config
 To add an ability to discover files different from supported specification format Apihub support special type of config.
 It's called `Apihub config`, the format was inspired by swagger config and it's almost equals.
 The only change is `type` field added.
 
-# Paths
+## Paths
 Default Apihub config discovery path is `/v3/api-docs/apihub-swagger-config`
 
-# Schema
+## Schema
 Base keys are
 * "configUrl" - URL of the config itself
 * "urls" - array of "url" objects.
 
 "url" object contains the following fields:
 * "url" - relative path to the file. Apihub agent will request the file by this path.
-* "name" - human readable file name (short summary).
+* "name" - human readable filename (short summary).
 * "type" - one of the supported types.
 
 Supported types:
@@ -27,14 +27,14 @@ Supported types:
 * `markdown` — Markdown document
 * `unknown` — any other file
 
-# How to enable
+## How to enable
 steps:
 1) add endpoint to the service with path `/v3/api-docs/apihub-swagger-config` or customized one
 2) the endpoint should return the json as specified above
 3) run discovery in Apihub agent and make sure that all required files are exposed
 
-# Response example
-```
+## Response example
+```json
 {
     "configUrl": "/v3/api-docs/apihub-swagger-config",
     "urls": [

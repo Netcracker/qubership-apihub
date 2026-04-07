@@ -14,7 +14,7 @@ The Agent retrieves a list of all services in the chosen namespace via the k8s A
 
 All discovery URLs are configurable via `config.yaml`. The values below are the built-in defaults.
 
-#### APIHUB Config
+### APIHUB Config
 
 Initially, Agent checks for the presence of APIHUB config. If it doesn't detect one, it runs discovery for each supported API type.
 
@@ -24,7 +24,7 @@ Default APIHUB config URL:
 
 See [apihub-config](./dev_docs/apihub-config.md) for details on the APIHUB config format.
 
-#### OpenAPI
+### OpenAPI
 
 First, the Agent looks for Swagger configuration files. This is typically the case when a service provides several OAS files.
 
@@ -40,7 +40,7 @@ If no config files are found, the Agent checks the default doc URLs for OAS file
 - `/v2/api-docs`
 - `/swagger-ui/swagger.json`
 
-#### GraphQL and AsyncAPI
+### GraphQL and AsyncAPI
 
 GraphQL and AsyncAPI have no built-in default URLs — they must be configured or these API types can be
 discovered via `apihub-config`.
@@ -52,8 +52,8 @@ discovered via `apihub-config`.
 **Notes:**
 - If both configuration files AND default URL contracts are present, only the contents of the configuration files will be discovered.
 - APIHUB requests configured paths during contract discovery. Therefore, there must be no prefix in the base path of the URLs above.
-    - Correct path: `https://<service name>.<namespace>:8080/v3/api-docs`
-    - Incorrect path: `https://<service name>.<namespace>:8080/<service prefix>/v3/api-docs`
+  - Correct path: `https://<service name>.<namespace>:8080/v3/api-docs`
+  - Incorrect path: `https://<service name>.<namespace>:8080/<service prefix>/v3/api-docs`
 - These endpoints must be available without any authentication.
 
 ## Configuring Discovery URLs
