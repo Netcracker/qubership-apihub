@@ -385,6 +385,7 @@ func (c rulesetControllerImpl) DeleteRuleset(w http.ResponseWriter, r *http.Requ
 		respondWithError(w, "Failed to delete ruleset", err)
 		return
 	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func validateApiType(at view.ApiType) error {
