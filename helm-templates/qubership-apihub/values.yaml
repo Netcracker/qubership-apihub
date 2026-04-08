@@ -354,6 +354,15 @@ qubershipApiLinterService:
       # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
       accessToken: ''
 
+    # Section with Olric configuration.
+    olric:
+      # Optional; Discovery mode for Olric. If not set, default value: local; Example: local
+      discoveryMode: 'lan'
+      # Optional; Replica count for Olric. If not set, default value: 1; Example: 1
+      replicaCount: 1
+      # Optional; Namespace for Olric discovery. If not set, default value: ""; Example: apihub
+      namespace: ''
+
     # Section with AI OAS linter configuration
     ai:
       # Optional; Enable AI-powered OAS linter; If not set, default value: false; Example: true
