@@ -31,6 +31,7 @@ export enum EventType {
   CREATE_MANUAL_GROUP_EVENT = 'create_manual_group',
   DELETE_MANUAL_GROUP_EVENT = 'delete_manual_group',
   UPDATE_OPERATIONS_GROUP_PARAMETERS_EVENT = 'update_operations_group_parameters',
+  UPDATE_DOCUMENT_SHAREABILITY_EVENT = 'update_document_shareability',
 }
 
 export const AVAILABLE_EVENT_TYPES = Object.values(EventType)
