@@ -1,9 +1,31 @@
+import type { CSSObject, Theme } from '@mui/material/styles'
 import type { Components } from '@mui/material/styles/components'
 
 import { COLOR_TEXT_DEFAULT, COLOR_TEXT_SECONDARY } from './colors'
 import { PAPER_SHADOW_DEFAULT } from './palette'
 
-export function createComponents(): Components {
+const getContainedDisabledStyles = (theme: Theme): Record<string, CSSObject> => {
+  const colorKeys = ['primary', 'secondary', 'success', 'error', 'warning', 'info'] as const
+  const styles: Record<string, CSSObject> = {}
+
+  colorKeys.forEach((color) => {
+    const paletteColor = theme.palette[color]
+    const colorClass = `${color[0].toUpperCase()}${color.slice(1)}`
+    const contrastText = paletteColor.contrastText ?? theme.palette.getContrastText(paletteColor.main)
+
+    styles[`&.MuiButton-contained${colorClass}.Mui-disabled`] = {
+      color: contrastText,
+      backgroundColor: paletteColor.main,
+    }
+    styles[`&.MuiButton-contained${colorClass}.Mui-disabled:hover`] = {
+      backgroundColor: paletteColor.main,
+    }
+  })
+
+  return styles
+}
+
+export function createComponents(): Components<Theme> {
   return {
     MuiButton: {
       defaultProps: {
@@ -21,6 +43,12 @@ export function createComponents(): Components {
             boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
           },
         },
+        contained: ({ theme }) => ({
+          '&.Mui-disabled': {
+            opacity: theme.palette.action.disabledOpacity ?? 0.5,
+          },
+          ...getContainedDisabledStyles(theme),
+        }),
         outlined: {
           color: COLOR_TEXT_DEFAULT,
           borderColor: '#D5DCE3',
@@ -116,8 +144,7 @@ export function createComponents(): Components {
       },
     },
     MuiList: {
-      defaultProps: {
-      },
+      defaultProps: {},
       styleOverrides: {
         root: {
           overflow: 'auto',
