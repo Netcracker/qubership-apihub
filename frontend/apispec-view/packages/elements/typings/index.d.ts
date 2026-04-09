@@ -1,4 +1,5 @@
 import { DiffType } from '@netcracker/qubership-apihub-api-diff';
+import { DiffMetaKeys } from '@netcracker/qubership-apihub-api-doc-viewer';
 
 declare global {
   interface HTMLElementTagNameMap {
