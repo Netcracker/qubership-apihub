@@ -90,6 +90,7 @@ export const createVersionPackage = async (
   await createInfoFile(zip, buildResultDto.config)
 
   createOperationsFile(zip, buildResultDto.operations)
+  createSearchTextFiles(zip, buildResultDto.operations)
   const operationsDir = zip.folder(PACKAGE.OPERATIONS_DIR_NAME)!
   for (const { data, operationId } of buildResultDto.operations.values()) {
     if (!data) { continue }
@@ -234,6 +235,7 @@ const createExportDocumentDataFiles = async (zip: ZipTool, documents: ExportDocu
 
 const createOperationsFile = (zip: ZipTool, operations: Map<string, ApiOperation>): void => {
   const data: PackageOperations = { operations: [] }
+  // TODO: remove searchScopes serialization after new search is adopted irrevocably
   const SEARCH_SCOPES_MAP: Record<string, string> = {}
 
   for (const operation of operations.values()) {
@@ -254,6 +256,7 @@ const createOperationsFile = (zip: ZipTool, operations: Map<string, ApiOperation
       apiType: operation.apiType,
       metadata: operation.metadata,
       searchScopes: searchScopes,
+      search: operation.search,
 
       ...(takeIf({ deprecatedItems: operation.deprecatedItems }, !!operation.deprecatedItems?.length)),
       deprecatedInfo: operation.deprecatedInfo,
@@ -267,6 +270,14 @@ const createOperationsFile = (zip: ZipTool, operations: Map<string, ApiOperation
   }
 
   zip.file(PACKAGE.OPERATIONS_FILE_NAME, data)
+}
+
+const createSearchTextFiles = (zip: ZipTool, operations: Map<string, ApiOperation>): void => {
+  for (const operation of operations.values()) {
+    if (operation.searchText && operation.search.searchTextFilePath) {
+      zip.file(operation.search.searchTextFilePath, operation.searchText)
+    }
+  }
 }
 
 const createOperationDataFile = (zipFolder: ZipTool, operationId: string, operation: PackageOperation): void => {

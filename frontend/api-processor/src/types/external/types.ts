@@ -23,7 +23,7 @@ import {
 
 export type KeyOfConstType<T> = T[keyof T]
 
-export type OperationsApiType = 'rest' | 'graphql'
+export type OperationsApiType = 'rest' | 'graphql' | 'asyncapi'
 export type PackageId = string
 export type FileId = string
 export type TemplatePath = string

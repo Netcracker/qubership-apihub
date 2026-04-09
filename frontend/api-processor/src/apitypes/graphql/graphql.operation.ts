@@ -35,6 +35,7 @@ import {
 import { GraphQLSchemaType, VersionGraphQLDocument, VersionGraphQLOperation } from './graphql.types'
 import { GRAPHQL_TYPE, GRAPHQL_TYPE_KEYS, RUNTIME_DIRECTIVE_LOCATIONS } from './graphql.consts'
 import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
+import { buildGraphQLSearchText } from './graphql.utils'
 import { toTitleCase } from '../../utils/strings'
 import {
   calculateDeprecatedItems,
@@ -91,12 +92,16 @@ export const buildGraphQLOperation = (
     return result
   }, debugCtx)
 
+  const searchTextFilePath = `search/${operationId}.txt`
+  const operation = effectiveDocument[type]?.[method]
+  const searchText = buildGraphQLSearchText(operation, method)
+
   return {
     operationId,
     documentId: documentSlug,
     apiType: GRAPHQL_API_TYPE,
     apiKind: documentApiKind || APIHUB_API_COMPATIBILITY_KIND_BWC,
-    deprecated: !!singleOperationEffectiveSpec[type]?.[method]?.directives?.deprecated,
+    deprecated: !!operation?.directives?.deprecated,
     title: toTitleCase(method),
     metadata: {
       type: GRAPHQL_TYPE[type],
@@ -104,7 +109,12 @@ export const buildGraphQLOperation = (
     },
     tags: [type],
     data: undefined,  // we do not want to save single-operation specs for GraphQL for performance reasons
-    searchScopes: {},
+    searchScopes: {}, // TODO: remove after new search is adopted irrevocably
+    search: {
+      useOperationDataAsSearchText: false,
+      searchTextFilePath,
+    },
+    searchText,
     deprecatedItems,
     models: {},
     apiAudience: API_AUDIENCE_EXTERNAL,

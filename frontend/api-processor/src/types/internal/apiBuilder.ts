@@ -43,7 +43,7 @@ import { ApiOperation } from './operation'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
 import { DebugPerformanceContext } from '../../utils/logs'
 import { ResolvedPackage } from '../external/package'
-import { FILE_FORMAT_JSON, FILE_FORMAT_YAML, GRAPHQL_API_TYPE, REST_API_TYPE } from '../../consts'
+import { FILE_FORMAT_JSON, FILE_FORMAT_YAML, GRAPHQL_API_TYPE, REST_API_TYPE, ASYNCAPI_API_TYPE } from '../../consts'
 import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
 import { OperationsMap } from '../../components'
 import { ObjectHashCache } from '../../utils/hashes'
@@ -51,6 +51,7 @@ import { ObjectHashCache } from '../../utils/hashes'
 export type BuilderType =
   | typeof REST_API_TYPE
   | typeof GRAPHQL_API_TYPE
+  | typeof ASYNCAPI_API_TYPE
   | typeof TEXT_API_TYPE
   | typeof UNKNOWN_API_TYPE
 

@@ -1,0 +1,36 @@
+asyncapi: 3.0.0
+info:
+  title: Shared Message Test
+  version: 1.0.0
+channels:
+  channel1:
+    address: events/channel1
+    messages:
+      UserSignedUp:
+        $ref: '#/components/messages/UserSignedUp'
+  channel2:
+    address: events/channel2
+    messages:
+      UserSignedUp:
+        $ref: '#/components/messages/UserSignedUp'
+operations:
+  sendChannel1:
+    action: send
+    channel:
+      $ref: '#/channels/channel1'
+    messages:
+      - $ref: '#/channels/channel1/messages/UserSignedUp'
+  sendChannel2:
+    action: send
+    channel:
+      $ref: '#/channels/channel2'
+    messages:
+      - $ref: '#/channels/channel2/messages/UserSignedUp'
+components:
+  messages:
+    UserSignedUp:
+      payload:
+        type: object
+        properties:
+          userId:
+            type: string

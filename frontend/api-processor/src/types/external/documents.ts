@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { FileId, OperationsApiType, PackageId, TemplatePath, VersionId } from './types'
-import { ResolvedReferenceMap } from './references'
-import { FileFormat } from '../internal'
 import { ApihubApiCompatibilityKind } from '../../consts'
+import { FileFormat } from '../internal'
+import { ResolvedReferenceMap } from './references'
+import { FileId, OperationsApiType, PackageId, TemplatePath, VersionId } from './types'
 
 export type ResolvedDocument = {
   fileId: string
@@ -44,6 +44,7 @@ export type ResolvedVersionDocuments = {
 export type ResolvedVersionDocument = ResolvedDocument & {
   packageRef?: string
   apiKind?: ApihubApiCompatibilityKind
+  shareabilityStatus?: ShareabilityStatus
 }
 
 export type Labels = string[]
@@ -76,3 +77,15 @@ export type RawDocumentResolver = (
 export type FileResolver = (fileId: FileId) => Promise<Blob | null>
 
 export type TemplateResolver = (templatePath: TemplatePath) => Promise<Blob | null>
+
+export const SHAREABILITY_STATUS_SHAREABLE = 'shareable' as const
+export const SHAREABILITY_STATUS_NON_SHAREABLE = 'non-shareable' as const
+export const SHAREABILITY_STATUS_UNKNOWN = 'unknown' as const
+
+export const SHAREABILITY_STATUSES = [
+  SHAREABILITY_STATUS_SHAREABLE,
+  SHAREABILITY_STATUS_NON_SHAREABLE,
+  SHAREABILITY_STATUS_UNKNOWN,
+] as const
+
+export type ShareabilityStatus = (typeof SHAREABILITY_STATUSES)[number]

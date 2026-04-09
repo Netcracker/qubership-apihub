@@ -27,6 +27,7 @@ import {
   EMPTY_CHANGE_SUMMARY,
   FILE_FORMAT,
   graphqlApiBuilder,
+  isAsyncApiDocument,
   isGraphqlDocument,
   isRestDocument,
   KIND_PACKAGE,
@@ -77,6 +78,7 @@ import {
   saveInfo,
   saveNotifications,
   saveOperationsArray,
+  saveSearchTextFiles,
   saveVersionInternalDocuments,
   saveVersionInternalDocumentsArray,
 } from './utils'
@@ -128,10 +130,15 @@ export class LocalRegistry implements IRegistry {
 
   groupToOperationIdsMap: Record<string, string[]> = {}
   projectsDir: string = DEFAULT_PROJECTS_PATH
+  shareabilityOverrides: Map<string, string> = new Map()
 
   constructor(public packageId: string, groupOperationIds: Record<string, string[]> = {}, projectsDir: string = DEFAULT_PROJECTS_PATH) {
     this.groupToOperationIdsMap = groupOperationIds
     this.projectsDir = projectsDir
+  }
+
+  setDocumentShareability(slug: string, status: string): void {
+    this.shareabilityOverrides.set(slug, status)
   }
 
   static openPackage(packageId: string, groupOperationIds: Record<string, string[]> = {}, projectsDir: string = DEFAULT_PROJECTS_PATH): LocalRegistry {
@@ -332,6 +339,7 @@ export class LocalRegistry implements IRegistry {
         description: document.description,
         data: this.resolveDocumentData(document),
         ...takeIfDefined({ packageRef: refId }),
+        ...takeIfDefined({ shareabilityStatus: this.shareabilityOverrides.get(document.slug) }),
       }))
   }
 
@@ -354,6 +362,8 @@ export class LocalRegistry implements IRegistry {
         return isRestDocument
       case 'graphql':
         return isGraphqlDocument
+      case 'asyncapi':
+        return isAsyncApiDocument
     }
   }
 
@@ -465,6 +475,30 @@ export class LocalRegistry implements IRegistry {
     return buildResult
   }
 
+  async publishFromContent(
+    fileContents: Record<string, string>,
+    publishParams: Partial<BuildConfig>,
+  ): Promise<BuildResult> {
+    const versionConfig = {
+      status: VERSION_STATUS.RELEASE,
+      ...publishParams,
+    } as BuildConfig
+    const builder = new PackageVersionBuilder(versionConfig, {
+      resolvers: {
+        fileResolver: (fileId) => {
+          const content = fileContents[fileId]
+          if (!content) { return Promise.resolve(null) }
+          return Promise.resolve(new File([content], fileId, { type: 'application/yaml' }))
+        },
+        ...this.versionResolvers,
+      },
+    })
+
+    const buildResult = await builder.run()
+    await this.publishPackage(buildResult, builder.builderContext(versionConfig), versionConfig)
+    return buildResult
+  }
+
   async publishPackage(
     buildResult: BuildResult,
     builderContext: BuilderContext,
@@ -493,6 +527,7 @@ export class LocalRegistry implements IRegistry {
 
     await saveOperationsArray(operations, basePath)
     await saveEachOperation(operations, basePath)
+    await saveSearchTextFiles(operations, basePath)
 
     const logError = (message: string): void => {
       notifications.push({

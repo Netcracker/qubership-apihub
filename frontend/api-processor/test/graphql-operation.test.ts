@@ -15,10 +15,9 @@
  */
 
 import { describe, expect, test } from '@jest/globals'
-import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 import { createOperationSpec } from '../src/apitypes/graphql/graphql.operation'
-import { calculateGraphqlOperationId, normalizeGraphQL, parseGraphQLSource } from '../src/utils'
-import { loadFileAsString } from './helpers'
+import { calculateGraphqlOperationId } from '../src/utils'
+import { loadFileAsString, parseAndNormalizeGraphQLSchema } from './helpers'
 
 const SCHEMA_SIMPLE = `
 type Query {
@@ -26,12 +25,6 @@ type Query {
   world: Int
 }
 `
-
-function parseAndNormalize(sdl: string): { source: GraphApiSchema; normalized: GraphApiSchema } {
-  const source = parseGraphQLSource(sdl)
-  const normalized = normalizeGraphQL(source)
-  return { source, normalized }
-}
 
 describe('GraphQL create operation spec', () => {
   let graphql: string
@@ -42,7 +35,7 @@ describe('GraphQL create operation spec', () => {
 
   describe('Error handling', () => {
     test('should throw when operationsId array is empty', () => {
-      const { source, normalized } = parseAndNormalize(SCHEMA_SIMPLE)
+      const { source, normalized } = parseAndNormalizeGraphQLSchema(SCHEMA_SIMPLE)
 
       expect(() =>
         createOperationSpec(source, normalized, []),
@@ -50,7 +43,7 @@ describe('GraphQL create operation spec', () => {
     })
 
     test('should throw when requested operation is not found', () => {
-      const { source, normalized } = parseAndNormalize(SCHEMA_SIMPLE)
+      const { source, normalized } = parseAndNormalizeGraphQLSchema(SCHEMA_SIMPLE)
 
       expect(() =>
         createOperationSpec(source, normalized, ['query-nonExistent']),
@@ -58,7 +51,7 @@ describe('GraphQL create operation spec', () => {
     })
 
     test('should throw listing all missing operations', () => {
-      const { source, normalized } = parseAndNormalize(SCHEMA_SIMPLE)
+      const { source, normalized } = parseAndNormalizeGraphQLSchema(SCHEMA_SIMPLE)
 
       expect(() =>
         createOperationSpec(source, normalized, [
@@ -73,7 +66,7 @@ describe('GraphQL create operation spec', () => {
 
   describe('Single query extraction', () => {
     test('should extract a single query operation', () => {
-      const { source, normalized } = parseAndNormalize(graphql)
+      const { source, normalized } = parseAndNormalizeGraphQLSchema(graphql)
       const opId = calculateGraphqlOperationId('query', 'listPets')
 
       const result = createOperationSpec(source, normalized, [opId])
@@ -86,7 +79,7 @@ describe('GraphQL create operation spec', () => {
     })
 
     test('should include referenced types (Pet, Category) for listPets', () => {
-      const { source, normalized } = parseAndNormalize(graphql)
+      const { source, normalized } = parseAndNormalizeGraphQLSchema(graphql)
       const opId = calculateGraphqlOperationId('query', 'listPets')
 
       const result = createOperationSpec(source, normalized, [opId])
@@ -104,7 +97,7 @@ describe('GraphQL create operation spec', () => {
 
   describe('Single mutation extraction', () => {
     test('should extract a single mutation operation', () => {
-      const { source, normalized } = parseAndNormalize(graphql)
+      const { source, normalized } = parseAndNormalizeGraphQLSchema(graphql)
       const opId = calculateGraphqlOperationId('mutation', 'petAvailabilityCheck')
 
       const result = createOperationSpec(source, normalized, [opId])
@@ -118,7 +111,7 @@ describe('GraphQL create operation spec', () => {
 
   describe('Single subscription extraction', () => {
     test('should extract a single subscription operation', () => {
-      const { source, normalized } = parseAndNormalize(graphql)
+      const { source, normalized } = parseAndNormalizeGraphQLSchema(graphql)
       const opId = calculateGraphqlOperationId('subscription', 'onPetAdded')
 
       const result = createOperationSpec(source, normalized, [opId])
@@ -132,7 +125,7 @@ describe('GraphQL create operation spec', () => {
 
   describe('Multiple operations extraction', () => {
     test('should extract multiple queries', () => {
-      const { source, normalized } = parseAndNormalize(graphql)
+      const { source, normalized } = parseAndNormalizeGraphQLSchema(graphql)
       const opIds = [
         calculateGraphqlOperationId('query', 'listPets'),
         calculateGraphqlOperationId('query', 'getPet'),
@@ -149,7 +142,7 @@ describe('GraphQL create operation spec', () => {
     })
 
     test('should extract operations across different types', () => {
-      const { source, normalized } = parseAndNormalize(graphql)
+      const { source, normalized } = parseAndNormalizeGraphQLSchema(graphql)
       const opIds = [
         calculateGraphqlOperationId('query', 'listPets'),
         calculateGraphqlOperationId('mutation', 'petAvailabilityCheck'),
@@ -169,7 +162,7 @@ describe('GraphQL create operation spec', () => {
 
   describe('Directive handling', () => {
     test('should always include runtime directives', () => {
-      const { source, normalized } = parseAndNormalize(graphql)
+      const { source, normalized } = parseAndNormalizeGraphQLSchema(graphql)
       const opId = calculateGraphqlOperationId('query', 'listPets')
 
       const result = createOperationSpec(source, normalized, [opId])
@@ -179,7 +172,7 @@ describe('GraphQL create operation spec', () => {
     })
 
     test('should include non-runtime directives only when referenced by operation', () => {
-      const { source, normalized } = parseAndNormalize(graphql)
+      const { source, normalized } = parseAndNormalizeGraphQLSchema(graphql)
       const opId = calculateGraphqlOperationId('query', 'listPets')
 
       const result = createOperationSpec(source, normalized, [opId])
@@ -190,7 +183,7 @@ describe('GraphQL create operation spec', () => {
     })
 
     test('should include non-runtime directives when used by operation', () => {
-      const { source, normalized } = parseAndNormalize(graphql)
+      const { source, normalized } = parseAndNormalizeGraphQLSchema(graphql)
       // getUser has @deprecated directive applied
       const opId = calculateGraphqlOperationId('query', 'getUser')
 
@@ -201,7 +194,7 @@ describe('GraphQL create operation spec', () => {
     })
 
     test('should include both runtime and non-runtime directives together', () => {
-      const { source, normalized } = parseAndNormalize(graphql)
+      const { source, normalized } = parseAndNormalizeGraphQLSchema(graphql)
       // getUser uses @deprecated (non-runtime), @cached is runtime
       const opId = calculateGraphqlOperationId('query', 'getUser')
 
@@ -215,7 +208,7 @@ describe('GraphQL create operation spec', () => {
 
   describe('Operation data isolation', () => {
     test('should not modify source document', () => {
-      const { source, normalized } = parseAndNormalize(graphql)
+      const { source, normalized } = parseAndNormalizeGraphQLSchema(graphql)
       const originalQueryKeys = Object.keys(source.queries || {})
       const opId = calculateGraphqlOperationId('query', 'listPets')
 
@@ -225,7 +218,7 @@ describe('GraphQL create operation spec', () => {
     })
 
     test('should create a shallow copy of operation data', () => {
-      const { source, normalized } = parseAndNormalize(graphql)
+      const { source, normalized } = parseAndNormalizeGraphQLSchema(graphql)
       const opId = calculateGraphqlOperationId('query', 'listPets')
 
       const result = createOperationSpec(source, normalized, [opId])

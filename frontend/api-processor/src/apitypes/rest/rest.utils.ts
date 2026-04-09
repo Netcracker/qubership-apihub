@@ -15,46 +15,17 @@
  */
 
 import { OpenAPIV3 } from 'openapi-types'
-import { CustomTags } from './rest.types'
 import {
-  API_AUDIENCE_EXTERNAL,
-  API_AUDIENCE_INTERNAL,
-  API_AUDIENCE_UNKNOWN,
-  ApiAudience,
   WithAggregatedDiffs,
   WithDiffMetaRecord,
 } from '../../types'
-import { isObject } from '@netcracker/qubership-apihub-json-crawl'
-import { CUSTOM_PARAMETER_API_AUDIENCE, SPECIFICATION_EXTENSION_PREFIX } from '../../consts'
 import { Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { isPathParamRenameDiff } from '../../utils'
 
-export function getCustomTags(data: object): CustomTags {
-  const initialValue: CustomTags = {}
-  if (!data || typeof data !== 'object') {
-    return initialValue
-  }
+import { dump, getCustomTags, resolveApiAudience } from '../../utils/apihubSpecificationExtensions'
 
-  return Object.entries(data)
-    .filter(([key]) => key.startsWith(SPECIFICATION_EXTENSION_PREFIX))
-    .reduce((acc, [key, value]) => {
-      acc[key] = value
-
-      return acc
-    }, { ...initialValue })
-}
-
-export const resolveApiAudience = (info: unknown): ApiAudience => {
-  if (!isObject(info)) {
-    return API_AUDIENCE_EXTERNAL
-  }
-  if (!(CUSTOM_PARAMETER_API_AUDIENCE in info)) {
-    return API_AUDIENCE_EXTERNAL
-  }
-  let apiAudience = Object.entries(info).find(([key, _]) => key === CUSTOM_PARAMETER_API_AUDIENCE)!.pop() as ApiAudience
-  apiAudience = [API_AUDIENCE_INTERNAL, API_AUDIENCE_EXTERNAL].includes(apiAudience) ? apiAudience : API_AUDIENCE_UNKNOWN
-  return apiAudience
-}
+// Re-export shared utilities for backward compatibility
+export { dump, getCustomTags, resolveApiAudience } //TODO: just use new utilities for REST
 
 export const extractOpenapiVersionDiff = (doc: OpenAPIV3.Document): Diff[] => {
   const diff = (doc as WithDiffMetaRecord<OpenAPIV3.Document>)[DIFF_META_KEY]?.openapi

@@ -24,6 +24,7 @@ import {
   VERSION_STATUS,
 } from '../../consts'
 import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
+import { ShareabilityStatus } from './documents'
 
 export type BuildType = KeyOfConstType<typeof BUILD_TYPE>
 export type VersionStatus = KeyOfConstType<typeof VERSION_STATUS>
@@ -104,6 +105,7 @@ export interface ExportVersionBuildConfig extends BuildConfigBase {
   version: VersionId
   format: ExportFormat
   allowedOasExtensions?: OpenApiExtensionKey[]
+  readonly allowedShareabilityStatuses?: readonly ShareabilityStatus[]
 }
 
 export interface ExportRestDocumentBuildConfig extends BuildConfigBase {

@@ -21,9 +21,7 @@ import {
   BREAKING_CHANGE_TYPE,
   BUILD_TYPE,
   BuildResult,
-  EMPTY_CHANGE_SUMMARY,
   Labels,
-  NON_BREAKING_CHANGE_TYPE,
   RISKY_CHANGE_TYPE,
   UNCLASSIFIED_CHANGE_TYPE,
   VERSION_STATUS,
@@ -31,8 +29,8 @@ import {
 import { jest } from '@jest/globals'
 import { changesSummaryMatcher, Editor, LocalRegistry, serializedComparisonDocumentMatcher } from './helpers'
 import { takeIfDefined } from '../src/utils'
-import * as bwcValidation from '../src/components/compare/bwc.validation'
-import { calculateOperationApiCompatibilityKind } from '../src/components/compare/bwc.validation'
+import * as bwcValidation from '../src/components/compare/rest.bwc.validation'
+import { calculateOperationApiCompatibilityKind } from '../src/components/compare/rest.bwc.validation'
 
 let afterPackage: LocalRegistry
 const AFTER_PACKAGE_ID = 'api-kinds'

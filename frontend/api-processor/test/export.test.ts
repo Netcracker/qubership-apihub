@@ -50,6 +50,7 @@ const REGULAR_VERSION = 'regular-version@123'
 const SINGLE_DOCUMENT_VERSION = 'single-document-version@24'
 const SINGLE_DOCUMENT_VERSION_WITH_README = 'single-document-version-with-readme@31'
 const NO_DOCUMENTS_VERSION = 'no-documents-version@51'
+const SPECIAL_README_VERSION = 'special-readme@71'
 
 const EXPECTED_RESULT_FILE = 'result.yaml'
 
@@ -273,6 +274,44 @@ describe('Export test', () => {
       exportDocumentMatcher('README.md'),
       exportDocumentMatcher('Test.png'),
     ]))
+  })
+
+  test('should export single document version with escaped markdown content to html', async () => {
+    const specialPkg = LocalRegistry.openPackage('export-readme-escape')
+    await specialPkg.publish(specialPkg.packageId, {
+      version: SPECIAL_README_VERSION,
+    })
+    const specialEditor = await Editor.openProject('export-readme-escape', specialPkg)
+    const result = await specialEditor.run({
+      version: SPECIAL_README_VERSION,
+      buildType: BUILD_TYPE.EXPORT_VERSION,
+      format: FILE_FORMAT_HTML,
+    })
+
+    const indexHtml = result.exportDocuments.find(({ filename }) => filename.toLowerCase() === 'index.html')
+    expect(indexHtml).toBeDefined()
+    const indexHtmlContent = indexHtml ? await indexHtml.data.text() : ''
+
+    // We use includes + boolean checks here instead of toContain/toMatch.
+    // This keeps assertion failures from dumping full huge HTML into terminal output when a test fails.
+    const hasRenderTemplateCall = indexHtmlContent.includes('let temp=md.render("')
+    const hasRenderLiteralCall = indexHtmlContent.includes('let temp=md.render(`')
+    const hasEscapedScriptTag = indexHtmlContent.includes('<\\/script')
+    const hasInlineCode = indexHtmlContent.includes('`inline code`')
+
+    expect(hasRenderTemplateCall).toBe(true)
+    expect(hasRenderLiteralCall).toBe(false)
+    expect(hasEscapedScriptTag).toBe(true)
+    expect(hasInlineCode).toBe(true)
+    expect(result).toEqual(exportDocumentsMatcher([
+      exportDocumentMatcher('1.html'),
+      exportDocumentMatcher('README.md'),
+      exportDocumentMatcher('index.html'),
+      exportDocumentMatcher('ls.html'),
+      exportDocumentMatcher('resources/corporatelogo.png'),
+      exportDocumentMatcher('resources/styles.css'),
+    ]))
+    expect(result.exportFileName).toEqual('export-readme-escape_special-readme.zip')
   })
 
   test('should export reduced rest operations group to html', async () => {

@@ -1,0 +1,16 @@
+asyncapi: 3.0.0
+info:
+  title: Invalid AsyncAPI with Critical Errors
+  version: 1.0.0
+channels:
+  userSignup:
+    address: user/signup
+    messages:
+      userSignedUp:
+        $ref: '#/components/messages/NonExistentMessage'
+operations:
+  onUserSignup:
+    action: invalid_action_type
+    channel:
+      $ref: '#/channels/userSignup'
+

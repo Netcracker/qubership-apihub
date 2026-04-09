@@ -14,48 +14,67 @@
  * limitations under the License.
  */
 
-import type { OpenAPIV3 } from 'openapi-types'
-
-import { ApiOperation, VersionDocument } from '../../types'
+import { ApiOperation, NotificationMessage, VersionDocument } from '../../types'
 import { ASYNC_DOCUMENT_TYPE, ASYNC_SCOPES } from './async.consts'
+import { CustomTags } from '../../utils/apihubSpecificationExtensions'
+import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 
 export type AsyncScopeType = keyof typeof ASYNC_SCOPES
 export type AsyncDocumentType = (typeof ASYNC_DOCUMENT_TYPE)[keyof typeof ASYNC_DOCUMENT_TYPE]
+export type AsyncOperationActionType = 'send' | 'receive'
 
+/**
+ * AsyncAPI 3.0 operation metadata
+ */
 export interface AsyncOperationMeta {
-  path: string // /packages/*/version/*
-  method: OpenAPIV3.HttpMethods // get | post
-  tags?: string[]
+  action: AsyncOperationActionType  // Operation action
+  channel: string                   // Channel name
+  protocol: string                  // Protocol (e.g., 'kafka', 'amqp', 'mqtt')
+  customTags: CustomTags            // Custom x-* extensions
+  messageId: string                 // Message key from the channel's messages map (e.g., 'UserSignedUp')
+  asyncOperationId: string          // Operation key from the AsyncAPI operations map (e.g., 'sendUserSignedup')
 }
 
+/**
+ * AsyncAPI document info
+ */
 export interface AsyncDocumentInfo {
   title: string
   description: string
   version: string
+  info?: Partial<AsyncAPIV3.InfoObject>
+  externalDocs?: Partial<AsyncAPIV3.ExternalDocumentationObject>
+  tags: AsyncAPIV3.TagObject[]
 }
 
-export type VersionAsyncDocument = VersionDocument<any>
+/**
+ * AsyncAPI operation data (single operation spec)
+ */
+export interface AsyncOperationData {
+  asyncapi: string
+  info: AsyncAPIV3.InfoObject
+  channels?: AsyncAPIV3.ChannelsObject
+  operations?: AsyncAPIV3.OperationsObject
+  components?: AsyncAPIV3.ComponentsObject
+  servers?: AsyncAPIV3.ServersObject
+}
+
+export type VersionAsyncDocument = VersionDocument<AsyncAPIV3.AsyncAPIObject>
 export type VersionAsyncOperation = ApiOperation<AsyncOperationData, AsyncOperationMeta>
 
-export type AsyncOperationData = any
-
+// TODO Delete AsyncRefCache if not used in future
 export interface AsyncRefCache {
   scopes: Record<AsyncScopeType, string>
   refs: string[]
   data: any
 }
 
+// TODO Delete AsyncOperationContext if not used in future
 export interface AsyncOperationContext {
   operationId: string
   scopes: Record<AsyncScopeType, string>
   operationData: AsyncOperationData
   document: VersionAsyncDocument
   refsCache: Record<string, AsyncRefCache>
-}
-
-export interface BuildAsyncOperationDataResult {
-  data: OpenAPIV3.OperationObject
-  scopes: Record<AsyncScopeType, string>
-  refs: Record<string, AsyncScopeType[]>
-  tags: string[]
+  notifications: NotificationMessage[]
 }

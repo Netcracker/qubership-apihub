@@ -16,7 +16,7 @@
 
 import { BuildConfigFile, BuilderContext, FILE_KIND, SourceFile, TextFile, VersionDocument } from '../types'
 import {
-  API_KIND_LABEL,
+  API_KIND_LABEL, API_KIND_SPECIFICATION_EXTENSION,
   APIHUB_API_COMPATIBILITY_KIND_BWC,
   ApihubApiCompatibilityKind,
   DOCUMENT_TYPE,
@@ -30,7 +30,7 @@ import {
   isString,
   rawToApiKind,
 } from '../utils'
-import { buildBinaryDocument, REST_KIND_KEY, unknownApiBuilder } from '../apitypes'
+import { buildBinaryDocument, unknownApiBuilder } from '../apitypes'
 
 export const buildErrorDocument = (file: BuildConfigFile, parsedFile?: TextFile): VersionDocument => {
   const { fileId, slug = '', publish = true, ...metadata } = file
@@ -92,9 +92,12 @@ export const calculateApiKindFromLabels = (fileLabels: unknown, versionLabels: u
   return APIHUB_API_COMPATIBILITY_KIND_BWC
 }
 
-export const getApiKindProperty = (obj: unknown, defaultApiKind?: ApihubApiCompatibilityKind): ApihubApiCompatibilityKind | undefined => {
+export const getApiKindProperty = (
+  obj: unknown,
+  defaultApiKind?: ApihubApiCompatibilityKind,
+): ApihubApiCompatibilityKind | undefined => {
   if (isObject(obj)) {
-    const apiKindLike = obj?.[REST_KIND_KEY]
+    const apiKindLike = obj?.[API_KIND_SPECIFICATION_EXTENSION]
     if (isString(apiKindLike)) {
       return rawToApiKind(apiKindLike, defaultApiKind)
     }

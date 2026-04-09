@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+export * from './apihubSpecificationExtensions'
 export * from './arrays'
 export * from './base64'
 export * from './builder'
@@ -24,8 +25,8 @@ export * from './graphql-transformer'
 export * from './keys'
 export * from './mergeOpenapiDocuments'
 export * from './objects'
-export * from './operations.utils'
 export * from './search'
+export * from './operations.utils'
 export * from './slugify'
 export * from './strings'
 export * from './validate'

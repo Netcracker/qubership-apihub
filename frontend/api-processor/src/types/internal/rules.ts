@@ -14,28 +14,17 @@
  * limitations under the License.
  */
 
-import { CrawlRules, JsonPath, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl'
+import { CrawlRules, JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 import { SearchScopes } from './operation'
 
 //todo: change path type after deprecated items for graphql will be done
 export type DeprecatedAnnotateFunc = (source: object, path: JsonPath) => string
 
+// TODO: remove after new search is adopted irrevocably
 export interface OperationCrawlState {
   scopes: SearchScopes    // search scopes
   parentRefs: string[]    // parent refs list
 }
-
-export interface SearchExampleCrawlState {
-  hasExample: boolean
-}
-
-export interface RefCache {
-  data: any
-  refPath: string[]
-  scopes: SearchScopes
-}
-
-export type OperationCrawlHook = SyncCrawlHook<OperationCrawlState, CrawlRule>
 
 export type CrawlRule = {
   '#'?: Array<string>           // list of search scopes for value

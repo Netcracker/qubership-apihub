@@ -15,6 +15,7 @@
  */
 import { ResolvedVersionDocument, ZippableDocument } from '../../types'
 import { NORMALIZE_OPTIONS, ORIGINS_SYMBOL } from '../../consts'
+import { NormalizeOptions } from '@netcracker/qubership-apihub-api-unifier'
 import { DirectiveLocation } from 'graphql/language'
 
 export const GRAPHQL_DOCUMENT_TYPE = {
@@ -49,7 +50,7 @@ export function isGraphqlDocument(document: ZippableDocument | ResolvedVersionDo
   return Object.values(GRAPHQL_DOCUMENT_TYPE).some(type => document.type === type)
 }
 
-export const GRAPHQL_EFFECTIVE_NORMALIZE_OPTIONS = {
+export const GRAPHQL_EFFECTIVE_NORMALIZE_OPTIONS: NormalizeOptions = {
   ...NORMALIZE_OPTIONS,
   originsFlag: ORIGINS_SYMBOL,
 }

@@ -36,7 +36,10 @@ import {
   PREDICATE_ANY_VALUE,
 } from '@netcracker/qubership-apihub-api-unifier'
 import { DirectiveLocation } from 'graphql/language'
-import { HTTP_METHODS_SET } from '../consts'
+import { HTTP_METHODS_SET, INLINE_REFS_FLAG } from '../consts'
+import { syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
+import { RestOperationData } from '../apitypes/rest/rest.types'
+import { AsyncOperationData } from '../apitypes'
 
 export function getOperationsList(buildResult: BuildResult): ApiOperation[] {
   return [...buildResult.operations.values()]
@@ -191,4 +194,60 @@ export const createSerializedInternalDocument = (document: VersionDocument, effe
     return
   }
   versionInternalDocument.serializedVersionDocument = serializeDocument(denormalize(effectiveDocument, options) as ApiDocument)
+}
+
+export const calculateAsyncOperationId = (
+  asyncOperationId: string,
+  messageId: string,
+): string => {
+  return `${slugify(asyncOperationId, SLUG_OPTIONS_OPERATION_ID)}-${slugify(messageId, SLUG_OPTIONS_OPERATION_ID)}`
+}
+
+export const getInlineRefsFomDocument = (document: RestOperationData | AsyncOperationData): Set<string> => {
+  const handledObjects = new Set<unknown>()
+  const inlineRefs = new Set<string>()
+  syncCrawl(
+    document,
+    ({ key, value }) => {
+      if (typeof key === 'symbol' && key !== INLINE_REFS_FLAG) {
+        return { done: true }
+      }
+      if (handledObjects.has(value)) {
+        return { done: true }
+      }
+      handledObjects.add(value)
+      if (key !== INLINE_REFS_FLAG) {
+        return { value }
+      }
+      if (!Array.isArray(value)) {
+        return { done: true }
+      }
+      value.forEach(ref => inlineRefs.add(ref))
+    },
+  )
+  return inlineRefs
+}
+
+export const isReferenceObject = <T extends object = { $ref: string }>(obj: unknown): obj is T & { $ref: string } => {
+  return isObject(obj) && '$ref' in obj
+}
+
+export type DuplicateEntry<T> = { operationId: string; operations: T[] }
+
+export function findDuplicates<T>(operationIdMap: Map<string, T[]>): DuplicateEntry<T>[] {
+  return Array.from(operationIdMap.entries())
+    .filter(([, operations]) => operations.length > 1)
+    .map(([operationId, operations]) => ({ operationId, operations }))
+}
+
+export const normalizeOperationIds = (operationId: string | string[]): string[] => {
+  const normalizedIds = Array.isArray(operationId) ? operationId : [operationId]
+
+  if (!normalizedIds.length) {
+    throw new Error(
+      'No operation ids provided.',
+    )
+  }
+
+  return normalizedIds
 }

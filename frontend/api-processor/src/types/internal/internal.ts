@@ -15,7 +15,6 @@
  */
 
 import { PackageId, VersionId } from '../external'
-import { ErrorObject } from 'ajv'
 
 import { FileFormat, VersionDocument } from './documents'
 
@@ -31,10 +30,12 @@ interface FileBase {
   source: Blob
 }
 
-export interface TextFile<T = any> extends FileBase {
+// TODO: review usages of errors from ajv and @asyncapi/parser
+// add corresponding tests for notifications
+export interface TextFile<T = any, E = any> extends FileBase {
   kind: typeof FILE_KIND.TEXT
   data: T
-  errors?: ErrorObject[]
+  errors?: E[]
 }
 
 export interface BinaryFile extends FileBase {

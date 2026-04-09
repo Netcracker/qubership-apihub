@@ -19,8 +19,15 @@ import { ApiAudience } from '../package'
 import { OpenAPIV3 } from 'openapi-types'
 import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 import { ApihubApiCompatibilityKind } from '../../consts'
+import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 
+// TODO: remove after new search is adopted irrevocably
 export type SearchScopes<T extends string = string> = Record<T, Set<string>>
+
+export interface OperationSearch {
+  useOperationDataAsSearchText: boolean
+  searchTextFilePath?: string
+}
 
 export interface ApiOperation<T = any, M = any> {
   operationId: string
@@ -42,7 +49,10 @@ export interface ApiOperation<T = any, M = any> {
   // [key: string]: unknown
 
   title: string
+  // TODO: remove after new search is adopted irrevocably
   searchScopes: SearchScopes
+  search: OperationSearch
+  searchText?: string
   // refPackage?: PackageRef
   // changes?: OperationChanges[]
   // changeSummary?: ChangeSummary
@@ -51,4 +61,4 @@ export interface ApiOperation<T = any, M = any> {
   versionInternalDocumentId: string
 }
 
-export type ApiDocument = OpenAPIV3.Document | GraphApiSchema
+export type ApiDocument = OpenAPIV3.Document | GraphApiSchema | AsyncAPIV3.AsyncAPIObject

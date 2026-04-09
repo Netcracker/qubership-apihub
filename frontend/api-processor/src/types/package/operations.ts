@@ -17,6 +17,7 @@
 import { OperationId, OperationsApiType } from '../external'
 import { PackageDeprecatedItem } from './deprecated'
 import { ApihubApiCompatibilityKind } from '../../consts'
+import { OperationSearch } from '../internal/operation'
 
 export type PackageOperations = {
   operations: PackageOperation[]
@@ -30,7 +31,9 @@ export interface PackageOperation {
   deprecated: boolean
   apiKind: ApihubApiCompatibilityKind
   metadata: RestMetadata | GraphQLMetaData
+  // TODO: remove after new search is adopted irrevocably
   searchScopes: Record<string, string>
+  search: OperationSearch
   tags: string[]
 
   // new properties

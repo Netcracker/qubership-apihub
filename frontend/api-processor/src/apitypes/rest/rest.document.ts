@@ -35,6 +35,7 @@ import {
   EXPORT_FORMAT_TO_FILE_FORMAT,
   getBundledFileDataWithDependencies,
   getDocumentTitle,
+  getStringValue,
 } from '../../utils'
 import { dump, generateHtmlPage } from '../../utils/export'
 import { removeOasExtensions } from '../../utils/removeOasExtensions'
@@ -47,8 +48,6 @@ const openApiDocumentMeta = (data: OpenAPIV3.Document): RestDocumentInfo => {
   }
 
   const { title = '', version = '', description = '' } = data?.info || {}
-
-  const getStringValue = (value: unknown): string => (typeof (<unknown>value) === 'string' ? <string>value : '')
 
   const info: Partial<OpenAPIV3.InfoObject> = { ...data?.info }
   delete info?.title

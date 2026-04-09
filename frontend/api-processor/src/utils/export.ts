@@ -70,7 +70,10 @@ async function generateReadmeParts(templateResolver: _TemplateResolver, readme?:
     return ['', '']
   }
   const markdownIt = await (await templateResolver('scripts/markdown-it.min.js')).text()
-  const readmeHtml = `    <div id="readmeMdDiv" class="card content">\n        <div class="card content"></div>\n    </div>\n    <br>\n    <script>\n        var md = window.markdownit();\n        let temp=md.render(\`${readme}\`);\n        const readmeMdDiv = document.getElementById('readmeMdDiv');\n        readmeMdDiv.innerHTML=temp;\n    </script>`
+  // Safe inline script value: JSON.stringify escapes string syntax, and `</script` is escaped
+  // to keep the browser from closing the script tag early.
+  const readmePayload = JSON.stringify(readme).replace(/<\/script/gi, '<\\/script')
+  const readmeHtml = `    <div id="readmeMdDiv" class="card content">\n        <div class="card content"></div>\n    </div>\n    <br>\n    <script>\n        var md = window.markdownit();\n        let temp=md.render(${readmePayload});\n        const readmeMdDiv = document.getElementById('readmeMdDiv');\n        readmeMdDiv.innerHTML=temp;\n    </script>`
   return [readmeHtml, `<script>${markdownIt}</script>`]
 }
 

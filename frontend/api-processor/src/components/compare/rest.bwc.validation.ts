@@ -15,19 +15,21 @@
  */
 
 import {
-  APIHUB_API_COMPATIBILITY_KIND_BWC, APIHUB_API_COMPATIBILITY_KIND_NO_BWC, ApihubApiCompatibilityKind,
+  APIHUB_API_COMPATIBILITY_KIND_BWC,
+  APIHUB_API_COMPATIBILITY_KIND_NO_BWC,
+  ApihubApiCompatibilityKind,
   SPECIFICATION_EXTENSION_PREFIX,
 } from '../../consts'
 import { isObject, isValidHttpMethod } from '../../utils'
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 import {
-  ApiCompatibilityKind,
-  ApiCompatibilityScopeFunction,
   API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE,
   API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE,
+  ApiCompatibilityKind,
 } from '@netcracker/qubership-apihub-api-diff'
 import { getApiKindProperty } from '../document'
 import { OpenAPIV3 } from 'openapi-types'
+import { ApiCompatibilityScopeFunctionFactory } from './bwc.validation.types'
 
 export const calculateOperationApiCompatibilityKind = (
   beforeOperationObject: OpenAPIV3.OperationObject | undefined,
@@ -85,17 +87,17 @@ const checkAllMethodsHaveSameApiKind = (obj: OpenAPIV3.PathItemObject, apiKind: 
 
   return entries.length > 0 &&
     entries.filter(([key, value]) => isValidHttpMethod(key) && isObject(value))
-      .every(([key, value]) => hasApiKind(value as OpenAPIV3.OperationObject, apiKind))
+      .every(([_, value]) => hasApiKind(value as OpenAPIV3.OperationObject, apiKind))
 }
 
 const ROOT_PATH_LENGTH = 0
 const PATH_ITEM_PATH_LENGTH = 2
 const OPERATION_OBJECT_PATH_LENGTH = 3
 
-export const createApihubApiCompatibilityScopeFunction = (
-  prevDocumentApiKind: ApihubApiCompatibilityKind = APIHUB_API_COMPATIBILITY_KIND_BWC,
-  currDocumentApiKind: ApihubApiCompatibilityKind = APIHUB_API_COMPATIBILITY_KIND_BWC,
-): ApiCompatibilityScopeFunction => {
+export const createRestApiCompatibilityScopeFunction: ApiCompatibilityScopeFunctionFactory = (
+  prevDocumentApiKind = APIHUB_API_COMPATIBILITY_KIND_BWC,
+  currDocumentApiKind = APIHUB_API_COMPATIBILITY_KIND_BWC,
+) => {
   const defaultApiCompatibilityKind = (prevDocumentApiKind === APIHUB_API_COMPATIBILITY_KIND_NO_BWC || currDocumentApiKind === APIHUB_API_COMPATIBILITY_KIND_NO_BWC)
     ? API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE
     : API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE

@@ -53,7 +53,7 @@ import {
   VersionDocument,
 } from './types/internal'
 import type { NotificationMessage, PackageConfig } from './types/package'
-import { graphqlApiBuilder, restApiBuilder, textApiBuilder, unknownApiBuilder } from './apitypes'
+import { asyncApiBuilder, graphqlApiBuilder, restApiBuilder, textApiBuilder, unknownApiBuilder } from './apitypes'
 import { filesDiff, findSharedPath, getCompositeKey, getFileExtension, getOperationsList } from './utils'
 import {
   BUILD_TYPE,
@@ -112,7 +112,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
   private basePath: string = ''
 
   constructor(config: BuildConfig, public params: BuilderParams, fileSources?: FileSourceMap) {
-    this.apiBuilders.push(restApiBuilder, graphqlApiBuilder, textApiBuilder, unknownApiBuilder)
+    this.apiBuilders.push(restApiBuilder, graphqlApiBuilder, asyncApiBuilder, textApiBuilder, unknownApiBuilder)
     this.config = {
       previousVersion: '',
       previousVersionPackageId: '',

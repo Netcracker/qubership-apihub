@@ -1,0 +1,35 @@
+asyncapi: 3.0.0
+
+info:
+  title: Tags
+  version: 1.0.0
+  description: AsyncAPI example with tags
+  tags:
+    - $ref: '#/components/tags/ref_tag1'
+    - name: simple_tag2
+      description: Description for simple_tag2
+
+servers:
+  production:
+    host: broker.mycompany.com
+    protocol: amqp
+
+channels:
+  channels1:
+    messages:
+      testMessage:
+        name: test
+        payload:
+          type: object
+
+operations:
+  operation1:
+    action: send
+    channel:
+      $ref: '#/channels/channels1'
+
+components:
+  tags:
+    ref_tag1:
+      name: ref_tag1
+      description: Description for ref_tag1

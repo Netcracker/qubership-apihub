@@ -35,5 +35,20 @@ export default defineConfig({
       formats: ['es', 'umd'],
       fileName: (format) => `apihub-builder.${format}.js`,
     },
+    rollupOptions: {
+      external: ['@asyncapi/parser'],
+      output: {
+        // Map @asyncapi/parser to browser version in UMD builds
+        paths: {
+          '@asyncapi/parser': '@asyncapi/parser',
+        },
+      },
+    },
+  },
+  resolve: {
+    alias: {
+      // Use browser-compatible version of AsyncAPI parser
+      '@asyncapi/parser': '@asyncapi/parser/browser',
+    },
   },
 })

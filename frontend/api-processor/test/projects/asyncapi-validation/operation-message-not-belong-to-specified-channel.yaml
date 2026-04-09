@@ -1,0 +1,33 @@
+asyncapi: 3.0.0
+
+info:
+  title: Broken example
+  version: 1.0.0
+
+channels:
+  user/events:
+    address: user.events
+    messages:
+      UserCreated:
+        payload:
+          type: object
+          properties:
+            id:
+              type: string
+
+operations:
+  publishUserDeleted:
+    action: send
+    channel:
+      $ref: '#/channels/user~1events'
+    messages:
+      - $ref: '#/components/messages/UserDeleted'
+
+components:
+  messages:
+    UserDeleted:
+      payload:
+        type: object
+        properties:
+          id:
+            type: string

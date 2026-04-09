@@ -36,7 +36,7 @@ import {
 } from '../utils'
 import { OpenAPIV3 } from 'openapi-types'
 import { VersionRestDocument } from '../apitypes/rest/rest.types'
-import { FILE_FORMAT_JSON, GRAPHQL_API_TYPE, INLINE_REFS_FLAG, NORMALIZE_OPTIONS, REST_API_TYPE } from '../consts'
+import { ASYNCAPI_API_TYPE, FILE_FORMAT_JSON, GRAPHQL_API_TYPE, INLINE_REFS_FLAG, NORMALIZE_OPTIONS, REST_API_TYPE } from '../consts'
 import { normalize } from '@netcracker/qubership-apihub-api-unifier'
 import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
 import { calculateSpecRefs, extractCommonPathItemProperties } from '../apitypes/rest/rest.operation'
@@ -44,9 +44,12 @@ import { GraphApiSchema, printGraphApi } from '@netcracker/qubership-apihub-grap
 import { createOperationSpec } from '../apitypes/graphql/graphql.operation'
 import { parseGraphQLSource } from '../utils/graphql-transformer'
 
-const documentTransformers: Record<OperationsApiType, (document: ResolvedGroupDocument, format: FileFormat, packages: ResolvedReferenceMap) => VersionDocument> = {
+type ApiTypeDocumentTransformer = (document: ResolvedGroupDocument, format: FileFormat, packages: ResolvedReferenceMap) => VersionDocument
+
+const documentTransformers: Record<OperationsApiType, ApiTypeDocumentTransformer | null> = {
   [REST_API_TYPE]: getRestTransformedDocument,
   [GRAPHQL_API_TYPE]: getGraphQLTransformedDocument,
+  [ASYNCAPI_API_TYPE]: null,
 }
 
 function getTransformedDocument(apiType: OperationsApiType, document: ResolvedGroupDocument, format: FileFormat, packages: ResolvedReferenceMap): VersionDocument {
@@ -101,7 +104,7 @@ export class DocumentGroupStrategy implements BuilderStrategy {
       throw new Error('No group to transform documents for provided')
     }
 
-    if (![REST_API_TYPE, GRAPHQL_API_TYPE].includes(apiType)) {
+    if (![REST_API_TYPE, GRAPHQL_API_TYPE].some(type => type === apiType)) {
       throw new Error(`reducedSourceSpecifications transformation is not supported for API type: ${apiType}`)
     }
 
