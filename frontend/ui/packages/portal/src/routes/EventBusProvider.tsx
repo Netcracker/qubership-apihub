@@ -54,6 +54,8 @@ import { createContext, memo, useContext, useState } from 'react'
 import { createEventBus, slot } from 'ts-event-bus'
 import { SHOW_RULESET_INFO_DIALOG } from './root/PortalPage/VersionPage/VersionApiQualitySubPage/components/RulesetInfoDialog/RulesetInfoDialog'
 import type { RulesetMetadata } from '@apihub/entities/api-quality/rulesets'
+import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import { type ShareabilityStatus } from '@netcracker/qubership-apihub-api-processor'
 
 // base
 export const SHOW_SUCCESS_NOTIFICATION = 'show-success-notification'
@@ -115,7 +117,7 @@ export type ButtonType = {
 
 export type GlobalSearchPanelDetails = {
   filters: Omit<SearchCriteria, 'searchString'>
-  apiSearchMode: boolean
+  apiSearchMode?: boolean
 }
 
 export type ShowCreatePackageDetail = {
@@ -186,6 +188,8 @@ export type ExportSettingsPopupDetail = {
   version: VersionKey
   documentId?: Key
   groupName?: string
+  specType?: SpecType
+  shareabilityStatus?: ShareabilityStatus
 }
 
 export type ShowDeleteCustomServerDetail = {

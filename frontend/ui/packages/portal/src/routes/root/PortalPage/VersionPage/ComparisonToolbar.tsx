@@ -33,21 +33,18 @@ import { Box, IconButton, Typography } from '@mui/material'
 import type { ChangesTooltipCategory } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import { CATEGORY_OPERATION, CATEGORY_PACKAGE } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_TITLE_MAP, API_TYPES } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPES, API_TYPE_TITLE_MAP, isApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { CHANGE_SEVERITIES } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import {
+  DEFAULT_VIEW_MODE_MAP_BY_API_TYPE,
   OPERATION_COMPARE_VIEW_MODES,
   RAW_OPERATION_VIEW_MODE,
 } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import type { VersionChanges } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
 import { isDashboardComparisonSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
-import {
-  useSeverityFiltersSearchParam,
-} from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
-import {
-  usePackageSearchParam,
-} from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
+import { useSeverityFiltersSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
+import { usePackageSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
 import type { FC } from 'react'
 import { memo, useCallback, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -92,7 +89,7 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
     group: Key
     apiType: ApiType
   }>()
-  const apiType = operationApiTypeInUrl ?? apiTypeSearchParam
+  const apiTypeFromUrl = operationApiTypeInUrl ?? apiTypeSearchParam
   const previousVersionPackageId = packageSearchParam ?? mainPackageId
 
   const { isPackageFromDashboard } = useIsPackageFromDashboard(true)
@@ -105,11 +102,11 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
     downloadChangesAsExcel({
       packageKey: mainPackageId!,
       version: mainVersionId!,
-      apiType: apiType!,
+      apiType: apiTypeFromUrl!,
       previousVersion: previousVersion!,
       previousVersionPackageId: previousVersionPackageId,
     })
-  }, [downloadChangesAsExcel, mainPackageId, mainVersionId, apiType, previousVersion, previousVersionPackageId])
+  }, [downloadChangesAsExcel, mainPackageId, mainVersionId, apiTypeFromUrl, previousVersion, previousVersionPackageId])
 
   const navigate = useNavigate()
   const backwardLocation = useBackwardLocationContext()
@@ -120,7 +117,10 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
   const isOperationsComparison = [COMPARE_SAME_OPERATIONS_MODE, COMPARE_DIFFERENT_OPERATIONS_MODE].includes(compareToolbarMode)
   const isPackagesComparison = compareToolbarMode === COMPARE_PACKAGES_MODE
 
-  const { mode } = useOperationViewMode()
+  const defaultViewMode = isApiType(apiTypeFromUrl)
+    ? DEFAULT_VIEW_MODE_MAP_BY_API_TYPE[apiTypeFromUrl](isOperationsComparison)
+    : RAW_OPERATION_VIEW_MODE
+  const { mode } = useOperationViewMode(defaultViewMode)
 
   const isDashboardsComparison = compareToolbarMode === COMPARE_DASHBOARDS_MODE
   const changesSummary = useChangesSummaryFromContext()
@@ -155,11 +155,11 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
 
   const title = useMemo(() => (
     isOperationsComparison
-      ? `${TITLE_BY_COMPARE_MODE[compareToolbarMode]} ${API_TYPE_TITLE_MAP[apiType]}`
+      ? `${TITLE_BY_COMPARE_MODE[compareToolbarMode]} ${API_TYPE_TITLE_MAP[apiTypeFromUrl]}`
       : group
         ? COMPARE_API_BY_GROUPS
         : TITLE_BY_COMPARE_MODE[compareToolbarMode]
-  ), [compareToolbarMode, group, isOperationsComparison, apiType])
+  ), [compareToolbarMode, group, isOperationsComparison, apiTypeFromUrl])
 
   return (
     <Box sx={COMPARISON_PAGE_TOOLBAR_STYLES} data-testid="ComparisonToolbar">
@@ -184,22 +184,25 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
               {mode !== RAW_OPERATION_VIEW_MODE && (
                 <ComparisonOperationChangeSeverityFilters
                   internalDocumentOptions={internalDocumentOptions}
-                  apiType={apiType}
+                  apiType={apiTypeFromUrl}
                 />
               )}
-              <OperationViewModeSelector modes={OPERATION_COMPARE_VIEW_MODES} />
+              <OperationViewModeSelector
+                defaultValue={defaultViewMode}
+                modes={OPERATION_COMPARE_VIEW_MODES.get(apiTypeFromUrl)!}
+              />
             </>
             : <>
               <ComparisonChangeSeverityFilters
                 category={getChangeSeverityCategory(isDashboardsComparison, isPackagesComparison)}
-                apiType={apiType ?? API_TYPES.find(type => type.toString() === apiTypeSearchParam)}
+                apiType={apiTypeFromUrl ?? API_TYPES.find(type => type.toString() === apiTypeSearchParam)}
               />
               {isDashboardsComparison && showApiTypeSelector && <ApiTypeSegmentedSelector />}
             </>
         )}
       </Box>
       <ExportChangesMenu
-        apiType={apiType}
+        apiType={apiTypeFromUrl}
         severityFilter={severityFilter}
         severityChanges={CHANGE_SEVERITIES}
         tag={selectedTag}

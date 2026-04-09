@@ -18,7 +18,7 @@ import type { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 import { printGraphApi as stringifyGraphQl } from '@netcracker/qubership-apihub-graphapi'
 import type { Key } from '../entities/keys'
 import type { OperationData } from '../entities/operations'
-import { isRestOperation } from '../entities/operations'
+import { isAsyncApiOperation, isRestOperation } from '../entities/operations'
 import type { ActionType} from '@netcracker/qubership-apihub-api-diff'
 import { DiffAction } from '@netcracker/qubership-apihub-api-diff'
 
@@ -27,9 +27,11 @@ export function stringifyOperation(operationData?: OperationData | null): string
     return ''
   }
 
-  return isRestOperation(operationData)
-    ? JSON.stringify(operationData.data)
-    : stringifyGraphQl((operationData.data ?? {}) as GraphApiSchema)
+  if (isRestOperation(operationData) || isAsyncApiOperation(operationData)) {
+    return JSON.stringify(operationData.data)
+  }
+
+  return stringifyGraphQl((operationData.data ?? {}) as GraphApiSchema)
 }
 
 export function joinedJsonPath(data: JsonPath): string {

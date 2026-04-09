@@ -15,12 +15,34 @@
  */
 
 import type { Components } from '@mui/material/styles/components'
-import React from 'react'
+import type { Theme } from '@mui/material/styles'
+import type { CSSObject } from '@mui/system'
 import { SECONDARY_TEXT_COLOR } from './colors'
 
 export const APP_HEADER_HEIGHT = '44px'
 
-export function createComponents(): Components {
+const getContainedDisabledStyles = (theme: Theme): Record<string, CSSObject> => {
+  const colorKeys = ['primary', 'secondary', 'success', 'error', 'warning', 'info'] as const
+  const styles: Record<string, CSSObject> = {}
+
+  colorKeys.forEach((color) => {
+    const paletteColor = theme.palette[color]
+    const colorClass = `${color[0].toUpperCase()}${color.slice(1)}`
+    const contrastText = paletteColor.contrastText ?? theme.palette.getContrastText(paletteColor.main)
+
+    styles[`&.MuiButton-contained${colorClass}.Mui-disabled`] = {
+      color: contrastText,
+      backgroundColor: paletteColor.main,
+    }
+    styles[`&.MuiButton-contained${colorClass}.Mui-disabled:hover`] = {
+      backgroundColor: paletteColor.main,
+    }
+  })
+
+  return styles
+}
+
+export function createComponents(): Components<Theme> {
   return {
     MuiAppBar: {
       styleOverrides: {
@@ -123,6 +145,12 @@ export function createComponents(): Components {
             boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
           },
         },
+        contained: ({ theme }) => ({
+          '&.Mui-disabled': {
+            opacity: theme.palette.action.disabledOpacity ?? 0.5,
+          },
+          ...getContainedDisabledStyles(theme),
+        }),
         outlined: {
           color: '#353C4E',
           borderColor: '#D5DCE3',

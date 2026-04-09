@@ -29,9 +29,13 @@ import type {
 } from '@tanstack/react-table'
 import { flexRender, getCoreRowModel, getExpandedRowModel, useReactTable } from '@tanstack/react-table'
 import { EndpointTableCell } from './EndpointTableCell'
-import { CUSTOM_METADATA_COLUMN_ID } from './openapi-table'
+import { CUSTOM_METADATA_COLUMN_ID } from './operation-table'
 import { CustomMetadataCell } from '@netcracker/qubership-apihub-ui-shared/components/CustomMetadataCell'
-import type { FetchNextOperationList, JSONValue, OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import type {
+  FetchNextOperationList,
+  JSONValue,
+  OperationData,
+} from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { DEFAULT_API_TYPE, DEFAULT_TAG } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { ColumnModel } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
 import {
@@ -50,15 +54,28 @@ import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/
 import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
 import { useResizeObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useResizeObserver'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_AUDIENCE_COLUMN_ID, API_KIND_COLUMN_ID, ENDPOINT_COLUMN_ID, PACKAGE_COLUMN_ID, TAGS_COLUMN_ID } from '@netcracker/qubership-apihub-ui-shared/entities/table-columns'
+import {
+  API_TYPE_ASYNCAPI,
+  API_TYPE_GRAPHQL,
+  API_TYPE_REST,
+} from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  API_AUDIENCE_COLUMN_ID,
+  API_KIND_COLUMN_ID,
+  ENDPOINT_COLUMN_ID,
+  PACKAGE_COLUMN_ID,
+  PROTOCOL_COLUMN_ID,
+  TAGS_COLUMN_ID,
+} from '@netcracker/qubership-apihub-ui-shared/entities/table-columns'
+import { isAsyncApiOperation } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { AsyncApiTableCell } from './AsyncApiTableCell'
 
-export type OpenApiTableData = {
+export type OperationTableData = {
   operation: OperationData
 }
 
 export type SubTableProps = {
-  value: Row<OpenApiTableData>
+  value: Row<OperationTableData>
 }
 
 const DASHBOARD_COLUMNS_MODELS: ColumnModel[] = [
@@ -86,13 +103,13 @@ const minPackageTableWidth = PACKAGE_COLUMNS_MODELS.reduce(
   (sum, { width, fixedWidth }) => sum + (width || fixedWidth || 0), 0,
 )
 
-export type OpenApiTableProps = {
+export type OperationTableProps = {
   value: ReadonlyArray<OperationData>
   fetchNextPage?: FetchNextOperationList
   isNextPageFetching?: boolean
   hasNextPage?: boolean
-  additionalColumns?: ColumnDef<OpenApiTableData>[]
-  isExpandableRow?: (row: Row<OpenApiTableData>) => boolean
+  additionalColumns?: ColumnDef<OperationTableData>[]
+  isExpandableRow?: (row: Row<OperationTableData>) => boolean
   SubTableComponent?: FC<SubTableProps>
   columnSizes?: ColumnModel[]
   tableMinWidth?: number
@@ -101,7 +118,7 @@ export type OpenApiTableProps = {
   apiType?: ApiType
 }
 
-export const OpenApiTable: FC<OpenApiTableProps> = memo<OpenApiTableProps>((
+export const OperationTable: FC<OperationTableProps> = memo<OperationTableProps>((
   {
     value,
     fetchNextPage,
@@ -122,8 +139,8 @@ export const OpenApiTable: FC<OpenApiTableProps> = memo<OpenApiTableProps>((
   const isDashboard = currentPackage?.kind === DASHBOARD_KIND
   const defaultMinWidth = isDashboard ? minDashboardTableWidth : minPackageTableWidth
 
-  const columns: ColumnDef<OpenApiTableData>[] = useMemo(() => {
-    const result: ColumnDef<OpenApiTableData>[] = [
+  const columns: ColumnDef<OperationTableData>[] = useMemo(() => {
+    const result: ColumnDef<OperationTableData>[] = [
       {
         id: ENDPOINT_COLUMN_ID,
         header: () => <CustomTableHeadCell title="Endpoints" />,
@@ -172,7 +189,7 @@ export const OpenApiTable: FC<OpenApiTableProps> = memo<OpenApiTableProps>((
       ...additionalColumns,
     ]
 
-    API_TYPE_COLUMNS_MAP[apiType ?? DEFAULT_API_TYPE]?.(result, textFilter)
+    API_TYPE_COLUMNS_CUSTOMIZERS_MAP[apiType ?? DEFAULT_API_TYPE]?.(result, textFilter)
 
     if (isDashboard) {
       insertIntoArrayByIndex(result, {
@@ -194,7 +211,7 @@ export const OpenApiTable: FC<OpenApiTableProps> = memo<OpenApiTableProps>((
     return result
   }, [additionalColumns, apiType, isDashboard, textFilter])
 
-  const data: OpenApiTableData[] = useMemo(() => value.map(operation => {
+  const data: OperationTableData[] = useMemo(() => value.map(operation => {
     return ({
       operation: operation,
     })
@@ -315,7 +332,7 @@ type TableSkeletonProps = {
 
 const TableSkeleton: FC<TableSkeletonProps> = memo<TableSkeletonProps>(({ isDashboard }) => {
   const columnModels = isDashboard ? DASHBOARD_COLUMNS_MODELS : PACKAGE_COLUMNS_MODELS
-  return createComponents(<RowSkeleton columnModels={columnModels} />, DEFAULT_NUMBER_SKELETON_ROWS)
+  return createComponents(<RowSkeleton columnModels={columnModels}/>, DEFAULT_NUMBER_SKELETON_ROWS)
 })
 
 type RowSkeletonProps = {
@@ -331,21 +348,67 @@ const RowSkeleton: FC<RowSkeletonProps> = memo<RowSkeletonProps>(({ refObject, c
         if (column.loadable) {
           return (
             <TableCell key={column.name} ref={refAttr}>
-              <Skeleton variant="rectangular" width="80%" />
+              <Skeleton variant="rectangular" width="80%"/>
             </TableCell>
           )
         }
-        return <TableCell key={column.name} ref={refAttr} />
+        return <TableCell key={column.name} ref={refAttr}/>
       })}
     </TableRow>
   )
 })
 
-type ColumnModelCallback = (tableColumns: ColumnDef<OpenApiTableData, unknown>[], textFilter: string | undefined) => void
-const API_TYPE_COLUMNS_MAP: Record<ApiType, ColumnModelCallback> = {
+type ColumnModelCallback = (tableColumns: ColumnDef<OperationTableData, unknown>[], textFilter: string | undefined) => void
+const createTableColumnsAsyncApi = (
+  tableColumns: ColumnDef<OperationTableData, unknown>[],
+  textFilter: string | undefined): void => {
+
+  // Replace endpoint column with AsyncAPI-specific cell
+  const endpointColumnIndex = tableColumns.findIndex(col => col.id === ENDPOINT_COLUMN_ID)
+  if (endpointColumnIndex !== -1) {
+    tableColumns[endpointColumnIndex] = {
+      id: ENDPOINT_COLUMN_ID,
+      header: () => <CustomTableHeadCell title="Operation"/>,
+      cell: ({ row }) => <AsyncApiTableCell value={row}/>,
+    }
+  }
+
+  // Add Protocol column after Endpoint
+  tableColumns.splice(1, 0, {
+    id: PROTOCOL_COLUMN_ID,
+    header: () => <CustomTableHeadCell title="Protocol"/>,
+    cell: ({ row: { original: { operation } } }) => {
+      if (isAsyncApiOperation(operation)) {
+        return (
+          <TextWithOverflowTooltip tooltipText={operation.protocol}>
+            {operation.protocol}
+          </TextWithOverflowTooltip>
+        )
+      }
+    },
+  })
+
+  // Add Custom Metadata column
+  tableColumns.push({
+    id: CUSTOM_METADATA_COLUMN_ID,
+    header: () => <CustomTableHeadCell title="Custom Metadata"/>,
+    cell: ({ row: { original: { operation } } }) => {
+      if (operation?.customTags) {
+        return (
+          <CustomMetadataCell
+            metaData={operation.customTags as { [key: string]: JSONValue }}
+            textFilter={textFilter}
+          />
+        )
+      }
+    },
+  })
+}
+
+const API_TYPE_COLUMNS_CUSTOMIZERS_MAP: Record<ApiType, ColumnModelCallback> = {
   [API_TYPE_REST]: (tableColumns, textFilter) => tableColumns.push({
     id: CUSTOM_METADATA_COLUMN_ID,
-    header: () => <CustomTableHeadCell title="Custom Metadata" />,
+    header: () => <CustomTableHeadCell title="Custom Metadata"/>,
     cell: ({ row: { original: { operation } } }) => {
       if (operation?.customTags) {
         return (
@@ -358,4 +421,5 @@ const API_TYPE_COLUMNS_MAP: Record<ApiType, ColumnModelCallback> = {
     },
   }),
   [API_TYPE_GRAPHQL]: () => null,
+  [API_TYPE_ASYNCAPI]: (tableColumns, textFilter) => createTableColumnsAsyncApi(tableColumns, textFilter),
 }

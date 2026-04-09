@@ -31,7 +31,7 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
 import {
   ChangesViewTable,
-  useFlatVersionChangelog
+  useFlatVersionChangelog,
 } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget'
 import {useCurrentPackage} from '@apihub/components/CurrentPackageProvider'
 import {

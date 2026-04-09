@@ -32,6 +32,11 @@ export type SystemInfo = {
   externalLinks: Link[]
   notification?: string
   migrationInProgress: boolean
+  useV3Search: boolean
+}
+
+type FeatureFlags = {
+  useV3Search: boolean
 }
 
 export type SystemInfoDto = {
@@ -41,6 +46,7 @@ export type SystemInfoDto = {
   externalLinks: string[]
   notification?: string
   migrationInProgress: boolean
+  featureFlags: FeatureFlags
 }
 
 export const EMPTY_SYSTEM_INFO: SystemInfo = {
@@ -49,6 +55,7 @@ export const EMPTY_SYSTEM_INFO: SystemInfo = {
   productionMode: false,
   externalLinks: [],
   migrationInProgress: false,
+  useV3Search: false,
 }
 
 export function toSystemInfo(value: SystemInfoDto): SystemInfo {
@@ -71,6 +78,7 @@ export function toSystemInfo(value: SystemInfoDto): SystemInfo {
     externalLinks: externalLinks,
     notification: value.notification,
     migrationInProgress: value.migrationInProgress,
+    useV3Search: value.featureFlags.useV3Search,
   }
 }
 

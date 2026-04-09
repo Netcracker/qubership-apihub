@@ -27,8 +27,16 @@ import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
 import type { OperationViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
-import { OPERATION_PREVIEW_VIEW_MODES } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
-import { checkIfGraphQLOperation, type OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import {
+  DEFAULT_OPERATION_PREVIEW_VIEW_MODE_BY_API_TYPE,
+  OPERATION_PREVIEW_VIEW_MODES_BY_API_TYPE,
+} from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
+import {
+  DEFAULT_API_TYPE,
+  isAsyncApiOperation,
+  isGraphQlOperation,
+  type OperationData,
+} from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { SchemaViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
 import {
   useIsDocOperationViewMode,
@@ -57,7 +65,7 @@ export type OperationPreviewProps = {
 // First Order Component //
 export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreviewProps>((props) => {
   const {
-    apiType,
+    apiType = DEFAULT_API_TYPE,
     changedOperation,
     changedOperationContent,
     // Feature "Internal documents"
@@ -69,10 +77,19 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
   } = props
 
   const [operationType, operationName] = useMemo(() => {
-    if (!checkIfGraphQLOperation(changedOperation)) {
-      return [undefined, undefined]
+    if (isGraphQlOperation(changedOperation)) {
+      return [changedOperation.type, changedOperation.method]
     }
-    return [changedOperation.type, changedOperation.method]
+    if (isAsyncApiOperation(changedOperation)) {
+      return [changedOperation.action, changedOperation.asyncOperationId]
+    }
+    return [undefined, undefined]
+  }, [changedOperation])
+  const [messageId] = useMemo(() => {
+    if (isAsyncApiOperation(changedOperation)) {
+      return [changedOperation.messageId]
+    }
+    return [undefined]
   }, [changedOperation])
 
   const isDocViewMode = useIsDocOperationViewMode(mode)
@@ -118,7 +135,12 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
               }
             />
           }
-          action={<OperationViewModeSelector modes={OPERATION_PREVIEW_VIEW_MODES} />}
+          action={
+            <OperationViewModeSelector
+              defaultValue={DEFAULT_OPERATION_PREVIEW_VIEW_MODE_BY_API_TYPE.get(apiType)!}
+              modes={OPERATION_PREVIEW_VIEW_MODES_BY_API_TYPE.get(apiType)!}
+            />
+          }
         />
         <Divider orientation="horizontal" variant="fullWidth" />
       </Box>
@@ -142,7 +164,10 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
               mergedDocument={normalizedChangedOperation}
               // GraphQL specific
               operationType={operationType}
+              // GraphQL, AsyncAPI specific
               operationName={operationName}
+              // AsyncAPI specific
+              messageId={messageId}
             />
           </Placeholder>
         )}

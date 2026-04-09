@@ -20,15 +20,13 @@ import type { DiffMetaKeys } from '@apihub/entities/diff-meta-keys'
 import type { OpenApiData } from '@apihub/entities/operation-structure'
 import { OPEN_API_SECTION_PARAMETERS, OPEN_API_SECTION_REQUESTS, OPEN_API_SECTION_RESPONSES } from '@apihub/entities/operation-structure'
 import { Box } from '@mui/material'
-import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
-import { GraphQLOperationDiffViewer, SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '@netcracker/qubership-apihub-api-doc-viewer'
-import { GRAPHQL_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
+import { DIFFS_AGGREGATED_META_KEY, DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import { AsyncApiOperationViewer, GraphQLOperationDiffViewer, SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '@netcracker/qubership-apihub-api-doc-viewer'
+import { FIRST_REFERENCE_KEY_PROPERTY, GRAPHQL_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
-import type {
-  VisitorNavigationDetails,
-} from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/oasToClassDiagramService'
+import type { VisitorNavigationDetails } from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/oasToClassDiagramService'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { SchemaViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
@@ -67,7 +65,10 @@ export type OperationViewProps = PropsWithChildren<{
   filters?: ChangeSeverity[]
   // GraphQL specific
   operationType?: string
+  // GraphQL, AsyncAPI specific
   operationName?: string
+  // AsyncAPI specific
+  messageId?: string
 }>
 
 export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(props => {
@@ -85,6 +86,8 @@ export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(pr
     // GraphQL specific
     operationType,
     operationName,
+    // AsyncAPI specific
+    messageId,
   } = props
 
   const filters = useMemo(() => props.filters ?? [], [props.filters])
@@ -159,18 +162,23 @@ export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(pr
 
   useSetupOperationView(resolvedOperationViewElement, props)
 
+  const apiTypeViewerElement = useMemo(() => (
+    API_TYPE_VIEWER_MAP[apiType](
+      operationViewContainerRef,
+      comparisonMode,
+      mergedDocument,
+      schemaViewMode,
+      filters,
+      operationType,
+      operationName,
+      messageId,
+    )
+  ), [apiType, comparisonMode, filters, mergedDocument, messageId, operationName, operationType, schemaViewMode])
+
   return (
     <Suspense fallback={<LoadingIndicator />}>
       <Box lineHeight={1.5} height="100%" pt={1} sx={{ position: 'relative', overflowY: 'auto' }} data-testid="DocView">
-        {API_TYPE_VIEWER_MAP[apiType](
-          operationViewContainerRef,
-          comparisonMode,
-          mergedDocument,
-          schemaViewMode,
-          filters,
-          operationType,
-          operationName,
-        )}
+        {apiTypeViewerElement}
       </Box>
       {contextPanelOpen && (
         <Box position="absolute" style={{ backgroundColor: 'white' }} top="0" right="0" left="0" bottom="0">
@@ -195,8 +203,9 @@ type ApiTypeViewerCallback = (
   mergedDocument?: unknown,
   schemaViewMode?: SchemaViewMode,
   filters?: ChangeSeverity[],
-  operationType?: string, // for GraphQL, variants: query, mutation, subscription
-  operationName?: string // for GraphQL, operation name
+  operationType?: string, // for GraphQL (query, mutation, subscription)/AsyncAPI (send, receive)
+  operationName?: string, // for GraphQL (operation name)/AsyncAPI (asyncOperationId)
+  messageId?: string // for AsyncAPI, message ID
 ) => ReactNode
 
 const API_TYPE_VIEWER_MAP: Record<ApiType, ApiTypeViewerCallback> = {
@@ -221,6 +230,25 @@ const API_TYPE_VIEWER_MAP: Record<ApiType, ApiTypeViewerCallback> = {
         operationType={operationType}
         operationName={operationName}
       />
+  ),
+  [API_TYPE_ASYNCAPI]: (_, comparisonMode, mergedDocument, schemaViewMode, filters, operationType, operationName, messageId) => (
+    <Box
+      key={`${operationName}-${messageId}`}
+      lineHeight={1.5}
+      height='100%'
+      px={4}
+    >
+      <AsyncApiOperationViewer
+        source={mergedDocument}
+        displayMode={schemaViewMode as SchemaViewMode}
+        operationKeys={
+          operationName && messageId
+            ? { operationKey: operationName, messageKey: messageId }
+            : undefined
+        }
+        referenceNamePropertyKey={FIRST_REFERENCE_KEY_PROPERTY}
+      />
+    </Box>
   ),
 }
 

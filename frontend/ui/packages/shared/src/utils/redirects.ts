@@ -66,10 +66,18 @@ export function getPackageRedirectDetails<P extends PackagePathPattern>(
     : null
 }
 
+export function isSameOriginUrl(uri: string): boolean {
+  try {
+    return new URL(uri, location.origin).origin === location.origin
+  } catch {
+    return false
+  }
+}
+
 export function getRedirectUri(): string {
   const url = new URL(location.href)
   const redirectUri = url.searchParams.get(SEARCH_PARAM_REDIRECT_URI)
-  if (redirectUri) {
+  if (redirectUri && isSameOriginUrl(redirectUri)) {
     return redirectUri
   }
   if (location.pathname === '/login') {

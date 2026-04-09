@@ -27,7 +27,7 @@ import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { FileFormat } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import { MD_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
-import { isOpenApiSpecType, UNKNOWN_SPEC_TYPE } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import { isGraphQlSpecType, isAsyncApiSpecType, isOpenApiSpecType, UNKNOWN_SPEC_TYPE } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import type { FC, MouseEvent, ReactNode } from 'react'
 import { memo, useCallback, useState } from 'react'
 import { useParams } from 'react-router-dom'
@@ -39,16 +39,19 @@ import type { DocumentActionParams } from '../document-actions'
 import { DOCUMENT_MENU_CONFIG, useCreateTemplate } from '../document-actions'
 import { useDownloadPublishedDocument } from '../useDownloadPublishedDocument'
 import { useGetSharedKey } from './useGetSharedKey'
+import type { ShareabilityStatus } from '@netcracker/qubership-apihub-api-processor'
 
 export type DocumentActionsButtonProps = {
   slug: Key
   docType: SpecType
   format: FileFormat
+  shareabilityStatus: ShareabilityStatus
   startIcon?: ReactNode
   icon?: ReactNode
   openedIcon?: ReactNode
   sx?: SxProps<Theme> | undefined
   customProps?: MenuButtonProps
+  className?: string
 }
 
 const DEFAULT_ACTION_BUTTON_STYLE = {
@@ -60,7 +63,7 @@ const DEFAULT_ACTION_BUTTON_STYLE = {
 
 // TODO 16.04.25 // Change props for icons. They are not clear to understand
 export const DocumentActionsButton: FC<DocumentActionsButtonProps> = memo<DocumentActionsButtonProps>((props) => {
-  const { slug, docType, format, sx, customProps, startIcon, openedIcon, icon } = props
+  const { slug, docType, format, shareabilityStatus, sx, customProps, startIcon, openedIcon, icon, className } = props
 
   const { packageId } = useParams()
   const fullVersion = useFullMainVersion()
@@ -87,6 +90,8 @@ export const DocumentActionsButton: FC<DocumentActionsButtonProps> = memo<Docume
 
   const isSharingAvailable = docType !== UNKNOWN_SPEC_TYPE || format === MD_FILE_FORMAT
   const isOpenApiSpecification = isOpenApiSpecType(docType)
+  const isAsyncApiSpecification = isAsyncApiSpecType(docType)
+  const isGraphQlSpecification = isGraphQlSpecType(docType)
 
   const actionParams: DocumentActionParams = {
     packageKey: packageId!,
@@ -103,6 +108,8 @@ export const DocumentActionsButton: FC<DocumentActionsButtonProps> = memo<Docume
     copyToClipboard: copyToClipboard,
     showNotification: showNotification,
     createTemplate: createTemplate,
+    specType: docType,
+    shareabilityStatus: shareabilityStatus,
   }
 
   const handleClick = useCallback((event: MouseEvent) => {
@@ -122,10 +129,11 @@ export const DocumentActionsButton: FC<DocumentActionsButtonProps> = memo<Docume
       onClick={handleClick}
       onItemClick={handleClick}
       {...customProps}
+      className={className}
       data-testid="DocumentActionsButton"
     >
       {DOCUMENT_MENU_CONFIG.map((menuItem) => (
-        menuItem.condition(isOpenApiSpecification, isSharingAvailable) &&
+        menuItem.condition(isOpenApiSpecification, isSharingAvailable, isAsyncApiSpecification, isGraphQlSpecification) &&
         <MenuItem
           key={menuItem.id}
           onClick={() => menuItem.action(actionParams)}

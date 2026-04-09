@@ -21,9 +21,14 @@ import { Box, Button } from '@mui/material'
 export type UnsupportedFilePlaceholderProps = {
   onDownload?: () => void
   message: string
+  buttonLabel?: string
 }
 
-export const UnsupportedFilePlaceholder: FC<UnsupportedFilePlaceholderProps> = memo<UnsupportedFilePlaceholderProps>(({onDownload, message}) => {
+export const UnsupportedFilePlaceholder: FC<UnsupportedFilePlaceholderProps> = memo<UnsupportedFilePlaceholderProps>(({
+  onDownload,
+  message,
+  buttonLabel = 'Download',
+}) => {
   return (
     <Box height="100%" display="flex" alignItems="center" data-testid="UnsupportedFilePlaceholder">
       <Box sx={{
@@ -41,7 +46,7 @@ export const UnsupportedFilePlaceholder: FC<UnsupportedFilePlaceholderProps> = m
         {
           onDownload &&
           <Button sx={{gridArea: 'button'}} onClick={onDownload} data-testid="DownloadButton">
-            Download
+            {buttonLabel}
           </Button>
         }
       </Box>

@@ -18,6 +18,7 @@ import type { FileKey, Key } from './keys'
 import type { OperationDto, PackagesRefs } from './operations'
 import type { SpecType } from '../utils/specs'
 import type { FileFormat } from './file-formats'
+import type { ShareabilityStatus } from '@netcracker/qubership-apihub-api-processor'
 
 export type DocumentsDto = Readonly<{
   documents: ReadonlyArray<DocumentDto>
@@ -39,6 +40,7 @@ export type DocumentDto = Readonly<{
   operations?: ReadonlyArray<OperationDto>
   packages?: PackagesRefs // For operations
   packageRef?: string // For dashboards
+  shareabilityStatus?: ShareabilityStatus
 }>
 
 export type DocumentInfo = {

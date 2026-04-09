@@ -19,6 +19,7 @@ import type { Key } from './types'
 import JSZip from 'jszip'
 import type { SpecType } from './specs'
 import {
+  ASYNCAPI_3_SPEC_TYPE,
   GRAPHAPI_SPEC_TYPE,
   GRAPHQL_INTROSPECTION_SPEC_TYPE,
   GRAPHQL_SCHEMA_SPEC_TYPE,
@@ -93,6 +94,14 @@ function findOpenapiType(content: string): SpecType | null {
   const schema = toJsonSchema(content)
   if (!schema || typeof schema !== 'object') {
     return null
+  }
+
+  // Check for AsyncAPI specifications
+  if ('asyncapi' in schema && schema['asyncapi'] && typeof schema['asyncapi'] === 'string') {
+    const asyncapi = schema['asyncapi'] as string
+    if (asyncapi.startsWith('3.0') || asyncapi.startsWith('3.')) {
+      return ASYNCAPI_3_SPEC_TYPE
+    }
   }
 
   if ('swagger' in schema) {

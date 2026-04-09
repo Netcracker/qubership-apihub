@@ -44,6 +44,8 @@ declare module '@mui/material/styles' {
     post: SimplePaletteColorOptions
     put: SimplePaletteColorOptions
     patch: SimplePaletteColorOptions
+    send: SimplePaletteColorOptions
+    receive: SimplePaletteColorOptions
     query: SimplePaletteColorOptions
     mutation: SimplePaletteColorOptions
     subscription: SimplePaletteColorOptions
@@ -63,6 +65,7 @@ declare module '@mui/material/styles' {
 
   interface TypographyVariantsOptions {
     subtitle3?: CSSProperties
+    subtitle4?: CSSProperties
   }
 }
 
@@ -83,6 +86,8 @@ declare module '@mui/material/Chip' {
     post: true
     patch: true
     delete: true
+    send: true
+    receive: true
     query: true
     mutation: true
     subscription: true
@@ -103,6 +108,7 @@ declare module '@mui/material/Chip' {
 declare module '@mui/material/Typography' {
   interface TypographyPropsVariantOverrides {
     subtitle3: true;
+    subtitle4: true;
   }
 }
 

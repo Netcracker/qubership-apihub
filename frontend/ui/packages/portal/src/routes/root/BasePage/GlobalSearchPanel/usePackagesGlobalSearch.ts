@@ -21,6 +21,7 @@ import { useMemo } from 'react'
 import type { SearchCriteria, SearchResults } from '@apihub/entities/global-search'
 import { PACKAGE_LEVEL } from '@apihub/entities/global-search'
 import type { HasNextPage, IsFetchingNextPage, IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 
 const GLOBAL_PACKAGES_SEARCH_RESULT_QUERY_KEY = 'global-packages-search-result-query-key'
 
@@ -31,6 +32,7 @@ export function usePackagesGlobalSearch(options: {
   page?: number
 }): [SearchResults, IsLoading, FetchNextSearchResultList, IsFetchingNextPage, HasNextPage] {
   const { criteria, enabled, page = 1, limit = 100 } = options
+  const { useV3Search } = useSystemInfo()
 
   const {
     data,
@@ -40,7 +42,7 @@ export function usePackagesGlobalSearch(options: {
     hasNextPage,
   } = useInfiniteQuery<SearchResults, Error, SearchResults>({
     queryKey: [GLOBAL_PACKAGES_SEARCH_RESULT_QUERY_KEY, criteria, PACKAGE_LEVEL],
-    queryFn: ({ pageParam = page }) => getSearchResult(criteria, PACKAGE_LEVEL, limit, pageParam - 1),
+    queryFn: ({ pageParam = page }) => getSearchResult(criteria, PACKAGE_LEVEL, limit, pageParam - 1, useV3Search),
     enabled: enabled && !!criteria.searchString,
     getNextPageParam: (lastPage, allPages) => {
       if (limit && enabled) {

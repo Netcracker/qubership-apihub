@@ -72,5 +72,10 @@ export function createTypography(): TypographyOptions {
       lineHeight: '20px',
       color: SECONDARY_TEXT_COLOR,
     },
+    subtitle4: {
+      fontSize: 13,
+      fontWeight: 500,
+      lineHeight: '20px',
+    },
   }
 }

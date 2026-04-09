@@ -8,7 +8,6 @@ import {
   FormControl,
   FormControlLabel,
   ListItem,
-  Radio,
   RadioGroup,
   TextField,
   Tooltip,
@@ -36,6 +35,7 @@ import { useShowSuccessNotification } from '@netcracker/qubership-apihub-ui-port
 import { ErrorTextField } from '@netcracker/qubership-apihub-ui-portal/src/components/ErrorTextField'
 import { InfoContextIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoContextIcon'
 import { ErrorIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ErrorIcon'
+import { RadioCustom } from '@netcracker/qubership-apihub-ui-shared/components/RadioCustom'
 import { useFirstSpecPath } from '../hooks/useFirstSpecPath'
 import { SpecPathWarningAlert } from './SpecPathWarningAlert'
 import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
@@ -480,8 +480,8 @@ const CreateCustomServerPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpe
               value={mode}
               onChange={(event) => setMode(event.target.value as ModeType)}
             >
-              <FormControlLabel value={MODE_MANUAL} control={<Radio size="small" />} label="Add Custom Server URL" />
-              <FormControlLabel value={MODE_AGENT} control={<Radio />} label="Use Agent Proxy" />
+              <FormControlLabel value={MODE_MANUAL} control={<RadioCustom size="small" />} label="Add Custom Server URL" />
+              <FormControlLabel value={MODE_AGENT} control={<RadioCustom />} label="Use Agent Proxy" />
             </RadioGroup>
           </FormControl>
         )}

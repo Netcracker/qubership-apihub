@@ -18,8 +18,8 @@ export const OPENAPI_3_1_SPEC_TYPE = 'openapi-3-1'
 export const OPENAPI_3_0_SPEC_TYPE = 'openapi-3-0'
 export const OPENAPI_2_0_SPEC_TYPE = 'openapi-2-0'
 export const OPENAPI_SPEC_TYPE = 'openapi'
-export const ASYNCAPI_2_SPEC_TYPE = 'asyncapi-2'
-export const ASYNCAPI_3_0_SPEC_TYPE = 'asyncapi-3-0'
+export const ASYNCAPI_3_SPEC_TYPE = 'asyncapi-3-0'
+export const ASYNCAPI_SPEC_TYPE = 'asyncapi'
 export const JSON_SCHEMA_SPEC_TYPE = 'json-schema'
 export const MARKDOWN_SPEC_TYPE = 'markdown'
 export const UNKNOWN_SPEC_TYPE = 'unknown'
@@ -34,8 +34,8 @@ export type SpecType =
   | typeof OPENAPI_3_0_SPEC_TYPE
   | typeof OPENAPI_2_0_SPEC_TYPE
   | typeof OPENAPI_SPEC_TYPE
-  | typeof ASYNCAPI_2_SPEC_TYPE
-  | typeof ASYNCAPI_3_0_SPEC_TYPE
+  | typeof ASYNCAPI_3_SPEC_TYPE
+  | typeof ASYNCAPI_SPEC_TYPE
   | typeof JSON_SCHEMA_SPEC_TYPE
   | typeof MARKDOWN_SPEC_TYPE
   | typeof UNKNOWN_SPEC_TYPE
@@ -59,10 +59,23 @@ export const GRAPHQL_SPEC_TYPES: ReadonlyArray<SpecType> = [
   GRAPHQL_SPEC_TYPE,
 ] as const
 
+export const ASYNCAPI_SPEC_TYPES: ReadonlyArray<SpecType> = [
+  ASYNCAPI_3_SPEC_TYPE,
+  ASYNCAPI_SPEC_TYPE,
+] as const
+
 export function isOpenApiSpecType(type?: SpecType): boolean {
   return !!type && OPENAPI_SPEC_TYPES.includes(type)
 }
 
 export function isGraphQlSpecType(type?: SpecType): boolean {
   return !!type && GRAPHQL_SPEC_TYPES.includes(type)
+}
+
+export function isAsyncApiSpecType(type?: SpecType): boolean {
+  return !!type && ASYNCAPI_SPEC_TYPES.includes(type)
+}
+
+export const isExportableSpecType = (type?: SpecType): boolean => {
+  return isOpenApiSpecType(type) || isAsyncApiSpecType(type)
 }

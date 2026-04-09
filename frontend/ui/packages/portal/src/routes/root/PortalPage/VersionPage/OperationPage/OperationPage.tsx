@@ -34,8 +34,8 @@ import {
   WarningApiProcessorVersion,
 } from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST, API_TYPE_TITLE_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { GRAPH_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
+import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST, API_TYPE_TITLE_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { DEFAULT_VIEW_MODE_MAP_BY_API_TYPE, GRAPH_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
@@ -75,7 +75,8 @@ export const OperationPage: FC = memo(() => {
   const [operationPackageKey, operationPackageVersion] = usePackageParamsWithRef()
   const [documentId] = useDocumentSearchParam()
   const [searchValue = ''] = useTextSearchParam()
-  const { mode: viewMode } = useOperationViewMode()
+  const defaultViewMode = DEFAULT_VIEW_MODE_MAP_BY_API_TYPE[apiType as ApiType](false)
+  const { mode: viewMode } = useOperationViewMode(defaultViewMode)
   const { showModelUsagesDialog } = useEventBus()
 
   const [operationsGroupedByTags, areOperationsLoading] = useOperationsGroupedByTags({
@@ -274,14 +275,17 @@ const API_TYPE_NAVIGATION_MAP: Record<ApiType, (
     />
   ),
   [API_TYPE_GRAPHQL]: () => null,
+  [API_TYPE_ASYNCAPI]: () => null,
 }
 
 const API_TYPE_SHOW_GROUPS_MAP: Record<ApiType, boolean> = {
   [API_TYPE_REST]: true,
   [API_TYPE_GRAPHQL]: false,
+  [API_TYPE_ASYNCAPI]: false,
 }
 
 const API_TYPE_MODELS_MAP: Record<ApiType, (operationData: object | undefined) => object | undefined> = {
   [API_TYPE_REST]: (operationData) => operationData,
   [API_TYPE_GRAPHQL]: () => undefined,
+  [API_TYPE_ASYNCAPI]: () => undefined,
 }

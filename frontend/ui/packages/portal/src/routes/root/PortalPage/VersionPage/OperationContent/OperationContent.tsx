@@ -26,6 +26,7 @@ import {
   useCustomServersContext,
 } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/CustomServersProvider'
 import { getFileDetails } from '@apihub/utils/file-details'
+import { isAsyncApiSpecification } from '@apihub/utils/internal-documents/type-guards'
 import { Box } from '@mui/material'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import {
@@ -41,11 +42,16 @@ import {
   WarningApiProcessorVersion,
 } from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  API_TYPE_ASYNCAPI,
+  API_TYPE_GRAPHQL,
+  API_TYPE_REST,
+} from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { FileViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
 import { FILE_FORMAT_VIEW, YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
+import { DEFAULT_VIEW_MODE_MAP_BY_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { checkIfGraphQLOperation, DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { DEFAULT_API_TYPE, isAsyncApiOperation, isGraphQlOperation } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import {
   useSeverityFiltersSearchParam,
@@ -110,6 +116,8 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
       operationModels,
     } = props
 
+    const comparisonMode = isComparisonMode(displayMode)
+
     const {
       packageId = '',
       apiType = DEFAULT_API_TYPE,
@@ -122,11 +130,13 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
     } = useVersionsComparisonGlobalParams()
 
     const isGraphQLOperation = useMemo(
-      () => checkIfGraphQLOperation(changedOperation) || checkIfGraphQLOperation(originOperation),
+      () => isGraphQlOperation(changedOperation) || isGraphQlOperation(originOperation),
       [changedOperation, originOperation],
     )
 
-    const { mode, schemaViewMode } = useOperationViewMode()
+    const defaultViewMode = DEFAULT_VIEW_MODE_MAP_BY_API_TYPE[apiType as ApiType](comparisonMode)
+    const { mode, schemaViewMode } = useOperationViewMode(defaultViewMode)
+
     const isDocViewMode = useIsDocOperationViewMode(mode)
     const isRawViewMode = useIsRawOperationViewMode(mode)
     const isGraphViewMode = useIsGraphOperationViewMode(mode)
@@ -136,26 +146,47 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
     const isPlaygroundSidebarOpen = useIsPlaygroundSidebarOpen()
 
     const operationType = useMemo(
-      () => (
-        checkIfGraphQLOperation(changedOperation)
-          ? changedOperation.type
-          : checkIfGraphQLOperation(originOperation)
-            ? originOperation.type
-            : undefined
-      ),
+      () => {
+        if (isGraphQlOperation(changedOperation)) {
+          return changedOperation.type
+        }
+        if (isGraphQlOperation(originOperation)) {
+          return originOperation.type
+        }
+        return undefined
+      },
       [changedOperation, originOperation],
     )
     const operationName = useMemo(
-      () => (
-        checkIfGraphQLOperation(changedOperation)
-          ? changedOperation.method
-          : checkIfGraphQLOperation(originOperation)
-            ? originOperation.method
-            : undefined
-      ),
+      () => {
+        if (isGraphQlOperation(changedOperation)) {
+          return changedOperation.method
+        }
+        if (isGraphQlOperation(originOperation)) {
+          return originOperation.method
+        }
+        if (isAsyncApiOperation(changedOperation)) {
+          return changedOperation.asyncOperationId
+        }
+        if (isAsyncApiOperation(originOperation)) {
+          return originOperation.asyncOperationId
+        }
+        return undefined
+      },
       [changedOperation, originOperation],
     )
-
+    const messageId = useMemo(
+      () => {
+        if (isAsyncApiOperation(changedOperation)) {
+          return changedOperation.messageId
+        }
+        if (isAsyncApiOperation(originOperation)) {
+          return originOperation.messageId
+        }
+        return undefined
+      },
+      [changedOperation],
+    )
     const [documentWithOriginOriginOperation] = usePublishedDocumentRaw({
       packageKey: originPackageKey,
       versionKey: originVersionKey,
@@ -180,7 +211,6 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
     useSelectOperationTags(originOperation, changedOperation)
 
     const [filters] = useSeverityFiltersSearchParam()
-    const comparisonMode = isComparisonMode(displayMode)
     const [fileViewMode = YAML_FILE_VIEW_MODE, setFileViewMode] = useFileViewMode()
 
     const {
@@ -195,6 +225,7 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
         changedOperation: changedOperation,
         enabled: (
           isRawViewMode || // TODO 03.12.2025 // Check how it was before refactoring
+          isAsyncApiSpecification(originOperation?.data) || isAsyncApiSpecification(changedOperation?.data) || // AsyncAPI
           isPlaygroundMode || isExamplesMode // OpenAPI
         ),
       },
@@ -269,7 +300,8 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
       [isRawViewMode, originValueForRawSpecView, changedValueForRawSpecView],
     )
 
-    if (isLoading || isApiDiffResultLoading) {
+    // TODO: Validate this condition after adding Doc View for AsyncAPI.
+    if (isLoading || (isApiDiffResultLoading && isDocViewMode && comparisonMode)) {
       return <LoadingIndicator />
     }
 
@@ -328,7 +360,10 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
               filters={filters}
               // GraphQL specific
               operationType={operationType}
+              // GraphQL, AsyncAPI specific
               operationName={operationName}
+              // AsyncAPI specific
+              messageId={messageId}
             />
           )}
           {isRawViewMode && (
@@ -366,7 +401,10 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
                 mergedDocument={mergedDocument}
                 // GraphQL specific
                 operationType={operationType}
+                // GraphQL, AsyncAPI specific
                 operationName={operationName}
+                // AsyncAPI specific
+                messageId={messageId}
               />
             )}
             {isRawViewMode && (
@@ -424,4 +462,5 @@ const API_TYPE_RAW_VIEW_ACTIONS_MAP: Record<ApiType, (fileViewMode: FileViewMode
     />
   ),
   [API_TYPE_GRAPHQL]: () => null,
+  [API_TYPE_ASYNCAPI]: () => null,
 }

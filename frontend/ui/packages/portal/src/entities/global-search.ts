@@ -20,7 +20,13 @@ import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entit
 import type { MethodType } from '@netcracker/qubership-apihub-ui-shared/entities/method-types'
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  API_TYPE_ASYNCAPI,
+  API_TYPE_GRAPHQL,
+  API_TYPE_REST,
+} from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { ApiKind, Operation } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import type { ApiAudience } from '@netcracker/qubership-apihub-api-processor'
 
 export type SearchResults = Readonly<{
   packages: PackageSearchResult[]
@@ -40,7 +46,7 @@ export type PackageSearchResult = Readonly<{
   labels?: Labels
 }>
 
-export type OperationSearchResult = Readonly<{
+export interface OperationSearchResult extends Operation {
   packageKey: Key
   name: string
   description?: string
@@ -55,7 +61,7 @@ export type OperationSearchResult = Readonly<{
   path: string
   method?: MethodType
   type?: GraphQlOperationTypes
-}>
+}
 
 export type DocumentSearchResult = Readonly<{
   packageKey: Key
@@ -101,6 +107,9 @@ export type OperationSearchResultDto = Readonly<{
   apiType: ApiType
   path: string
   method: MethodType
+  apiAudience: ApiAudience
+  documentId: Key
+  apiKind: ApiKind
 }>
 
 export type DocumentSearchResultDto = Readonly<{
@@ -142,6 +151,9 @@ export const QUERY_OPERATION_TYPES = 'query'
 export const MUTATION_OPERATION_TYPES = 'mutation'
 export const SUBSCRIPTION_OPERATION_TYPES = 'subscription'
 
+export const MESSAGE_SCOPE = 'message'
+export const CHANNEL_SCOPE = 'channel'
+
 export type RestScope =
   | typeof REQUEST_SCOPE
   | typeof RESPONSE_SCOPE
@@ -151,7 +163,11 @@ export type GraphqlScope =
   | typeof PROPERTY_SCOPE
   | typeof ANNOTATION_SCOPE
 
-export type Scopes = RestScope | GraphqlScope
+export type AsyncApiScope =
+  | typeof MESSAGE_SCOPE
+  | typeof CHANNEL_SCOPE
+
+export type Scopes = RestScope | GraphqlScope | AsyncApiScope
 
 export type RestDetailedScope =
   | typeof PROPERTIES_DETAILED_SCOPE
@@ -173,11 +189,13 @@ export type SearchCriteria = {
   packageIds?: Key[]
   versions?: Key[]
   statuses?: VersionStatus[]
+  status?: VersionStatus
   creationDateInterval?: {
     startDate: string
     endDate: string
   }
   operationParams?: SearchRestParams | SearchGQLParams
+  apiType?: ApiType
 }
 
 export type SearchRestParams = Partial<{
@@ -193,12 +211,19 @@ export type SearchGQLParams = Partial<{
   operationTypes: GraphQlOperationTypes[]
 }>
 
+export type SearchAsyncApiParams = Partial<{
+  apiType: ApiType
+  scope: Scopes[]
+}>
+
 export const REST_SCOPES: RestScope[] = [RESPONSE_SCOPE, REQUEST_SCOPE]
 export const GRAPHQL_SCOPES: GraphqlScope[] = [ARGUMENT_SCOPE, PROPERTY_SCOPE, ANNOTATION_SCOPE]
+export const ASYNCAPI_SCOPES: AsyncApiScope[] = [MESSAGE_SCOPE, CHANNEL_SCOPE]
 
-export const API_TYPE_SCOPES_MAP: Record<ApiType, RestScope[] | GraphqlScope[]> = {
+export const API_TYPE_SCOPES_MAP: Record<ApiType, RestScope[] | GraphqlScope[] | AsyncApiScope[]> = {
   [API_TYPE_REST]: REST_SCOPES,
   [API_TYPE_GRAPHQL]: GRAPHQL_SCOPES,
+  [API_TYPE_ASYNCAPI]: ASYNCAPI_SCOPES,
 }
 
 export const OPERATIONS_TYPES: GraphQlOperationTypes[] = [QUERY_OPERATION_TYPES, MUTATION_OPERATION_TYPES, SUBSCRIPTION_OPERATION_TYPES]

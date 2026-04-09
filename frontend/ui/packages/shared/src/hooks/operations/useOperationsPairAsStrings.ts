@@ -19,7 +19,8 @@ import type { OperationData } from '../../entities/operations'
 import { stringifyOperation } from '../../utils/operations'
 
 /**
- * Returns pair of operations as pair of strings
+ * Returns a pair of operations as a pair of strings
+ * @deprecated
  * @param originOperation - OperationData or already stringified document
  * @param changedOperation - OperationData or already stringified document
  * @returns transformed to string documents pair or just the same documents if they are already strings

@@ -31,6 +31,7 @@ export const SearchBar: FC<SearchBarProps> = memo<SearchBarProps>(({
   placeholder = 'Search',
   value = '',
   onValueChange,
+  inputProps,
   ...props
 }) => {
   const [searchValue, setSearchValue] = useState('')
@@ -54,6 +55,7 @@ export const SearchBar: FC<SearchBarProps> = memo<SearchBarProps>(({
         style: {
           padding: '4px 11px',
         },
+        ...inputProps,
       }}
       onKeyDown={event => event.stopPropagation()}
       InputProps={{

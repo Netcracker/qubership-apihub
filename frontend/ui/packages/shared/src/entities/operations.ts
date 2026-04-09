@@ -15,12 +15,16 @@
  */
 
 import type { DeprecateItem, ReferencedPackageKind } from '@netcracker/qubership-apihub-api-processor'
-import { API_AUDIENCE_EXTERNAL, API_AUDIENCE_INTERNAL, API_AUDIENCE_UNKNOWN } from '@netcracker/qubership-apihub-api-processor'
+import {
+  API_AUDIENCE_EXTERNAL,
+  API_AUDIENCE_INTERNAL,
+  API_AUDIENCE_UNKNOWN,
+} from '@netcracker/qubership-apihub-api-processor'
 import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstack/react-query'
 import type { IsLoading } from '../utils/aliases'
-import { isObject } from '../utils/objects'
 import type { ApiType } from './api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from './api-types'
+import { API_TYPE_REST } from './api-types'
+import type { AsyncApiOperationType } from './asyncapi-operation-types'
 import type { GraphQlOperationType } from './graphql-operation-types'
 import type { Key, VersionKey } from './keys'
 import type { MethodType } from './method-types'
@@ -34,7 +38,7 @@ export type OperationsDto = Readonly<{
   operations: ReadonlyArray<OperationDto>
   packages: PackagesRefs
 }>
-export type OperationDto = RestOperationDto | GraphQlOperationDto
+export type OperationDto = RestOperationDto | GraphQlOperationDto | AsyncApiOperationDto
 
 export type OperationMetadataDto = Readonly<{
   operationId: Key
@@ -59,6 +63,14 @@ export type RestOperationDto = OperationMetadataDto & Readonly<{
 export type GraphQlOperationDto = OperationMetadataDto & Readonly<{
   method: string
   type: GraphQlOperationType
+}>
+
+export type AsyncApiOperationDto = OperationMetadataDto & Readonly<{
+  action: AsyncApiOperationType
+  channel: string
+  protocol: string
+  asyncOperationId: Key
+  messageId: Key
 }>
 
 export type DeprecatedItem = DeprecateItem
@@ -122,6 +134,7 @@ export interface Operation {
   readonly customTags?: CustomTags
   readonly versionInternalDocumentId?: Key
 }
+
 export interface RestOperation extends Operation {
   readonly method: MethodType
   readonly path: string
@@ -130,6 +143,14 @@ export interface RestOperation extends Operation {
 export interface GraphQlOperation extends Operation {
   readonly method: string
   readonly type: GraphQlOperationType
+}
+
+export interface AsyncApiOperation extends Operation {
+  readonly action: AsyncApiOperationType
+  readonly channel: string
+  readonly protocol: string
+  readonly asyncOperationId: Key
+  readonly messageId: Key
 }
 
 export interface OperationData extends Operation {
@@ -273,13 +294,36 @@ export function isRestOperationDto(operation: OperationDto): operation is RestOp
   return asRestOperation.path !== undefined
 }
 
-export function isGraphQlOperation(operation: Operation): operation is GraphQlOperation {
+export function isGraphQlOperation(operation: Operation | undefined): operation is GraphQlOperation {
+  if (!operation) {
+    return false
+  }
   const asGraphQlOperation = (operation as GraphQlOperation)
   return asGraphQlOperation.type !== undefined
 }
 
-export function checkIfGraphQLOperation(maybeOperation: unknown): maybeOperation is GraphQlOperation {
-  return !!maybeOperation && isObject(maybeOperation) && 'apiType' in maybeOperation && maybeOperation.apiType === API_TYPE_GRAPHQL
+export function isGraphQlOperationDto(operation: OperationDto | undefined): operation is GraphQlOperationDto {
+  if (!operation) {
+    return false
+  }
+  const asGraphQlOperation = (operation as GraphQlOperationDto)
+  return asGraphQlOperation.type !== undefined
+}
+
+export function isAsyncApiOperation(operation: Operation | undefined): operation is AsyncApiOperation {
+  if (!operation) {
+    return false
+  }
+  const asAsyncApiOperation = (operation as AsyncApiOperation)
+  return asAsyncApiOperation.action !== undefined && asAsyncApiOperation.channel !== undefined
+}
+
+export function isAsyncApiOperationDto(operation: OperationDto | undefined): operation is AsyncApiOperationDto {
+  if (!operation) {
+    return false
+  }
+  const asAsyncApiOperation = (operation as AsyncApiOperationDto)
+  return asAsyncApiOperation.action !== undefined && asAsyncApiOperation.channel !== undefined
 }
 
 export function isOperation(value: unknown): value is Operation {

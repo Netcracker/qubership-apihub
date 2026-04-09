@@ -17,21 +17,19 @@
 import type { FC } from 'react'
 import { memo, useRef } from 'react'
 import { Box, Typography } from '@mui/material'
-import { ResultCommonHeader } from './ResultCommonHeader'
 import { CONTENT_WIDTH } from './GlobalSearchPanel'
 import { Marker } from 'react-mark.js'
 import type { FetchNextSearchResultList } from './global-search'
 import { getOperationsPath } from '../../../NavigationProvider'
-import type { GraphQlOperationTypes, OperationSearchResult } from '@apihub/entities/global-search'
+import type { OperationSearchResult } from '@apihub/entities/global-search'
 import { useIntersectionObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useIntersectionObserver'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
-import { RELEASE_VERSION_STATUS } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import type { MethodType } from '@netcracker/qubership-apihub-ui-shared/entities/method-types'
+import {
+  OperationTitleWithMeta as OperationTitle,
+} from '@netcracker/qubership-apihub-ui-shared/components/Operations/OperationTitleWithMeta'
+import { useEventBus } from '@apihub/routes/EventBusProvider'
 
 export type ApiOperationsSearchListProps = {
   value: OperationSearchResult[]
@@ -47,57 +45,38 @@ export const ApiOperationsSearchList: FC<ApiOperationsSearchListProps> = memo<Ap
   const ref = useRef<HTMLDivElement>(null)
   useIntersectionObserver(ref, isNextPageFetching, hasNextPage, fetchNextPage)
 
+  const { hideGlobalSearchPanel } = useEventBus()
   return (
     <Box width={CONTENT_WIDTH} position="relative">
-      {value.map(({
-          packageKey,
-          name,
-          parentPackages,
-          version,
-          title,
-          status,
-          operationKey,
-          path,
-          method,
-          apiType,
-          type,
-        }) => {
+      {value.map((operation) => {
+        const { version, operationKey, packageKey, apiType, parentPackages, name } = operation
         const { versionKey } = getSplittedVersionKey(version)
+        const breadcrumbs = [...parentPackages, name, versionKey].join(' / ')
+
         return (
           <Box mb={2} key={`api-operations-search-list-box-${packageKey}-${operationKey}-${version}`} data-testid="SearchResultRow">
-            <ResultCommonHeader
-              url={getOperationsPath({
-                packageKey: packageKey,
-                versionKey: versionKey,
-                operationKey: operationKey,
-                apiType: apiType,
-              })}
-              icon={apiType}
-              breadCrumbsStatus={status !== RELEASE_VERSION_STATUS ? status : undefined}
-              title={title}
-              parents={[...parentPackages, name, versionKey]}
-              searchText={searchText}
-            />
-
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <OverflowTooltip title={breadcrumbs}>
+                <Typography
+                  variant="subtitle2"
+                  noWrap
+                  data-testid="PathToSearchResultItem"
+                >
+                  {breadcrumbs}
+                </Typography>
+              </OverflowTooltip>
+            </Box>
             <Marker mark={searchText}>
-              <Box display="flex" gap={1} alignItems="center" maxWidth={CONTENT_WIDTH}>
-                <CustomChip
-                  sx={{ mr: 1 }}
-                  value={API_TYPE_CHIP_VALUE_MAP[apiType](method, type)}
-                  variant="outlined"
-                  data-testid="OperationTypeChip"
-                />
-                <OverflowTooltip title={path}>
-                  <Typography
-                    overflow="hidden"
-                    textOverflow="ellipsis"
-                    variant="subtitle2"
-                    data-testid="OperationEndpoint"
-                  >
-                    {path}
-                  </Typography>
-                </OverflowTooltip>
-              </Box>
+              <OperationTitle
+                operation={operation}
+                link={getOperationsPath({
+                  packageKey: packageKey,
+                  versionKey: versionKey,
+                  operationKey: operationKey,
+                  apiType: apiType,
+                })}
+                onLinkClick={hideGlobalSearchPanel}
+              />
             </Marker>
           </Box>
         )
@@ -114,9 +93,3 @@ export const ApiOperationsSearchList: FC<ApiOperationsSearchListProps> = memo<Ap
     </Box>
   )
 })
-
-type ChipValueCallback = (method: MethodType | undefined, type: GraphQlOperationTypes | undefined) => string
-const API_TYPE_CHIP_VALUE_MAP: Record<ApiType, ChipValueCallback> = {
-  [API_TYPE_REST]: (method) => method ?? '',
-  [API_TYPE_GRAPHQL]: (_, type) => type ?? '',
-}

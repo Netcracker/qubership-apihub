@@ -26,8 +26,14 @@ import type {
 } from '@netcracker/qubership-apihub-api-processor'
 import { generatePath } from 'react-router-dom'
 import type { ApiType } from '../entities/api-types'
-import type { OperationDto, OperationsDto } from '../entities/operations'
-import { isRestOperationDto } from '../entities/operations'
+import type {
+  AsyncApiOperationDto,
+  GraphQlOperationDto,
+  OperationDto,
+  OperationsDto,
+  RestOperationDto,
+} from '../entities/operations'
+import { isAsyncApiOperationDto, isGraphQlOperationDto, isRestOperationDto } from '../entities/operations'
 import type { ResolvedVersionDto } from '../types/packages'
 import { getPackageRedirectDetails } from './redirects'
 import { API_V1, API_V2, API_V3, requestBlob, requestJson, requestVoid } from './requests'
@@ -264,18 +270,33 @@ export type PublishDetailsDto = {
   message?: string
 }
 
-export function toVersionOperation(value: OperationDto): ResolvedOperation {
-  const metadata = isRestOperationDto(value)
-    ? {
+type OperationMetadata =
+  Pick<RestOperationDto, 'tags' | 'method' | 'path'> |
+  Pick<GraphQlOperationDto, 'tags' | 'method' | 'type'> |
+  Pick<AsyncApiOperationDto,'tags' | 'action' | 'protocol' | 'channel'>
+
+export function toVersionOperation(value: OperationDto): ResolvedOperation<OperationMetadata> {
+  let metadata!: OperationMetadata
+  if (isRestOperationDto(value)) {
+    metadata = {
       tags: value.tags,
       method: value.method,
       path: value.path,
     }
-    : {
+  } else if (isGraphQlOperationDto(value)) {
+    metadata = {
       tags: value.tags,
       method: value.method,
       type: value.type,
     }
+  } else if (isAsyncApiOperationDto(value)) {
+    metadata = {
+      tags: value.tags,
+      action: value.action,
+      channel: value.channel,
+      protocol: value.protocol,
+    }
+  }
   return {
     operationId: value.operationId,
     documentId: value.documentId,

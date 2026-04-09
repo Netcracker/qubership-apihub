@@ -289,7 +289,7 @@ function cherryPickOperation(options: CherryPickOperationOptions): OpenAPIV3.Doc
   if (!foundPath) {
     return undefined
   }
-  
+
   const foundPathObject = paths[foundPath] as Record<string, unknown> | undefined
   clonedOasComparisonInternalDocument.paths![foundPath] = {
     [comparedOperationMethod]: foundPathObject?.[comparedOperationMethod],

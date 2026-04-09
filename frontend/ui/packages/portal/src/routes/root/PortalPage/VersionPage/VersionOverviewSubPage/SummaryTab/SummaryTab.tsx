@@ -21,7 +21,7 @@ import { FormattedDate } from '@netcracker/qubership-apihub-ui-shared/components
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { PrincipalView } from '@netcracker/qubership-apihub-ui-shared/components/PrincipalView'
-import { API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { PackageKey, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import type { FC, ReactNode } from 'react'
@@ -33,7 +33,7 @@ import { OperationTypeSummary } from './OperationTypeSummary'
 
 const SUMMARY_BOX_MARGIN_TOP = 4
 
-const OPERATION_TYPES_ORDER = [API_TYPE_REST, API_TYPE_GRAPHQL]
+const OPERATION_TYPES_ORDER = [API_TYPE_REST, API_TYPE_GRAPHQL, API_TYPE_ASYNCAPI]
 
 const PreviousVersion: FC<Partial<{
   packageKey: PackageKey

@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo, useMemo } from 'react'
+import { Fragment, memo, useMemo, type FC } from 'react'
 import { Box, Link } from '@mui/material'
 import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
@@ -48,15 +47,17 @@ export const OpenApiOverview: FC<OpenApiOverviewProps> = memo<OpenApiOverviewPro
       links = [{ title: 'Email', url: contact.email, mail: true }]
     }
 
-    return <>
-      {links.map(({ title, url, mail }, index) =>
-        <>
-          {index !== 0 && <> | </>}
-          <span>{title}: </span>
-          <Link href={mail ? `mailto:${url}` : url}>{url}</Link>
-        </>,
-      )}
-    </>
+    return (
+      <>
+        {links.map(({ title, url, mail }, index) => (
+          <Fragment key={`${title}-${url}-${index}`}>
+            {index !== 0 && <> | </>}
+            <span>{title}: </span>
+            <Link href={mail ? `mailto:${url}` : url}>{url}</Link>
+          </Fragment>
+          ))}
+      </>
+    )
   }, [info])
 
   const license = useMemo(() => {

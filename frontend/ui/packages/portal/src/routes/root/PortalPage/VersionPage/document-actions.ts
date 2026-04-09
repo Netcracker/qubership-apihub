@@ -2,8 +2,10 @@ import { ExportedEntityKind } from '@apihub/components/ExportSettingsDialog/api/
 import type { ExportSettingsPopupDetail, NotificationDetail } from '@apihub/routes/EventBusProvider'
 import type { DocumentPreviewDetail } from '@apihub/routes/NavigationProvider'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import type { ShareabilityStatus } from '@netcracker/qubership-apihub-api-processor'
 import { REF_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useCallback } from 'react'
+import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 
 export type DocumentActionParams = {
   packageKey: Key
@@ -20,12 +22,19 @@ export type DocumentActionParams = {
   copyToClipboard: (text: string) => void
   showNotification: (detail: NotificationDetail) => void
   createTemplate: (key?: Key) => string
+  specType?: SpecType
+  shareabilityStatus: ShareabilityStatus
 }
 
 export type MenuItemConfig = {
   id: string
   label: string
-  condition: (isOpenApiSpec: boolean, isSharingAvailable: boolean) => boolean
+  condition: (
+    isOpenApiSpec: boolean,
+    isSharingAvailable: boolean,
+    isAsyncApiSpec: boolean,
+    isGraphQlSpec: boolean,
+  ) => boolean
   action: (params: DocumentActionParams) => void
   'data-testid'?: string
 }
@@ -50,13 +59,15 @@ export const DOCUMENT_MENU_CONFIG: MenuItemConfig[] = [
   {
     id: 'export',
     label: 'Export',
-    condition: (isOpenApiSpec) => isOpenApiSpec,
-    action: ({ showExportSettingsDialog, packageKey, fullVersion, refPackageKey, refFullVersion, slug }) => {
+    condition: () => true,
+    action: ({ showExportSettingsDialog, packageKey, fullVersion, refPackageKey, refFullVersion, slug, specType, shareabilityStatus }) => {
       showExportSettingsDialog({
-        exportedEntity: ExportedEntityKind.REST_DOCUMENT,
+        specType: specType,
+        exportedEntity: ExportedEntityKind.SINGLE_DOCUMENT,
         packageId: refPackageKey ?? packageKey!,
         version: refFullVersion ?? fullVersion!,
         documentId: slug,
+        shareabilityStatus: shareabilityStatus,
       })
     },
     'data-testid': 'ExportMenuItem',
@@ -64,7 +75,7 @@ export const DOCUMENT_MENU_CONFIG: MenuItemConfig[] = [
   {
     id: 'download',
     label: 'Download',
-    condition: (isOpenApiSpec) => !isOpenApiSpec,
+    condition: () => false,
     action: ({ downloadPublishedDocument }) => {
       downloadPublishedDocument()
     },

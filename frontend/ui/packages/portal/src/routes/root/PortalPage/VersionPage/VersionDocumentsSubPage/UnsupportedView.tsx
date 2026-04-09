@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo } from 'react'
+import { memo, useCallback, type FC } from 'react'
 import { usePackageParamsWithRef } from '../../usePackageParamsWithRef'
-import { useDownloadPublishedDocument } from '../useDownloadPublishedDocument'
 import { UnsupportedFilePlaceholder } from '@netcracker/qubership-apihub-ui-shared/components/UnsupportedFilePlaceholder'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import { ExportedEntityKind } from '@apihub/components/ExportSettingsDialog/api/useExport'
+import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { useDocument } from '../useDocument'
+import { useVersionWithRevision } from '../../../useVersionWithRevision'
 
 export type UnsupportedViewProps = {
   documentId: Key | undefined
@@ -27,16 +29,27 @@ export type UnsupportedViewProps = {
 
 export const UnsupportedView: FC<UnsupportedViewProps> = memo<UnsupportedViewProps>(({ documentId }) => {
   const [docPackageKey, docPackageVersionKey] = usePackageParamsWithRef()
-  const [downloadPublishedDocument] = useDownloadPublishedDocument({
-    packageKey: docPackageKey,
-    versionKey: docPackageVersionKey,
-    slug: documentId!,
-  })
+  const [document] = useDocument(docPackageKey, docPackageVersionKey, documentId)
+  const { fullVersion } = useVersionWithRevision(docPackageVersionKey, docPackageKey)
+  const { showExportSettingsDialog } = useEventBus()
+  const canExport = !!docPackageKey && !!docPackageVersionKey && !!documentId && !!fullVersion
+
+  const handleExport = useCallback(() => {
+    showExportSettingsDialog({
+      specType: document.type,
+      shareabilityStatus: document.shareabilityStatus,
+      exportedEntity: ExportedEntityKind.SINGLE_DOCUMENT,
+      packageId: docPackageKey!,
+      version: fullVersion,
+      documentId: documentId,
+    })
+  }, [document.type, document.shareabilityStatus, docPackageKey, fullVersion, documentId, showExportSettingsDialog])
 
   return (
     <UnsupportedFilePlaceholder
       message="Preview is not available"
-      onDownload={() => downloadPublishedDocument()}
+      onDownload={canExport ? handleExport : undefined}
+      buttonLabel="Export"
     />
   )
 })

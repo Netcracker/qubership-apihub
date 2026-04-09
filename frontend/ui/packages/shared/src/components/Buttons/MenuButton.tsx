@@ -31,11 +31,18 @@ export type MenuButtonProps = Partial<{
   isLoading?: boolean
 } & ButtonProps>
 
+const MENU_BUTTON_DEFAULT_ICON_STYLES = {
+  width: 32,
+  minWidth: 32,
+  p: 1.25,
+}
+
 export const MenuButton: FC<MenuButtonProps> = memo<MenuButtonProps>(({
   variant,
   color,
   title,
   icon,
+  className,
   children,
   alignItems,
   onClick,
@@ -58,6 +65,7 @@ export const MenuButton: FC<MenuButtonProps> = memo<MenuButtonProps>(({
           // @ts-ignore
           ? <Button
             {...props}
+            className={className}
             sx={sx}
             ref={buttonRef}
             color={color}
@@ -72,7 +80,8 @@ export const MenuButton: FC<MenuButtonProps> = memo<MenuButtonProps>(({
           </Button>
           : <Button
             {...props}
-            sx={{ width: 32, minWidth: 32, p: 1.25, ...sx }}
+            className={className}
+            sx={{ ...MENU_BUTTON_DEFAULT_ICON_STYLES, ...sx }}
             variant={variant}
             size="small"
             onClick={event => {

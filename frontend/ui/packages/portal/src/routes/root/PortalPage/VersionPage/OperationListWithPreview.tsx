@@ -16,6 +16,9 @@
 
 import { useNormalizedOperation } from '@apihub/api-hooks/InternalDocuments/useNormalizedOperation'
 import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import {
+  useRawGraphQlCroppedToSingleOperationRawGraphQl,
+} from '@apihub/routes/root/PortalPage/VersionPage/useRawGraphQlCroppedToSingleOperationRawGraphQl'
 import type {
   OperationListSubComponentProps,
 } from '@netcracker/qubership-apihub-ui-shared/components/Operations/OperationWithMetaClickableList'
@@ -25,13 +28,13 @@ import {
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { RAW_OPERATION_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
-import {
-  checkIfGraphQLOperation,
-  type FetchNextOperationList,
-  type OperationData,
-  type OperationsData,
-  type PackageRef,
+import type {
+  FetchNextOperationList,
+  OperationData,
+  OperationsData,
+  PackageRef,
 } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { isGraphQlOperation } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import { usePublishedDocumentRaw } from '@netcracker/qubership-apihub-ui-shared/hooks/documents/usePublishedDocumentRaw'
@@ -45,12 +48,11 @@ import { useBackwardLocation } from '../../useBackwardLocation'
 import { useSelectedPreviewOperation, useSetSelectedPreviewOperation } from '../SelectedPreviewOperationProvider'
 import { usePackageKind } from '../usePackageKind'
 import { usePackageParamsWithRef } from '../usePackageParamsWithRef'
-import { OperationPreview } from './VersionOperationsSubPage/OperationPreview'
 import { getOperationLink } from './useNavigateToOperation'
 import { useOperation } from './useOperation'
 import { useOperationSearchParams } from './useOperationSearchParams'
 import { useOperationViewMode } from './useOperationViewMode'
-import { useRawGraphQlCroppedToSingleOperationRawGraphQl } from './useRawGraphQlCroppedToSingleOperationRawGraphQl'
+import { OperationPreview } from './VersionOperationsSubPage/OperationPreview'
 
 export type OperationListWithPreviewProps = {
   operations: OperationsData
@@ -81,8 +83,9 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
 
   const operationSearchParams = useOperationSearchParams()
   const [kind] = usePackageKind()
-  const { mode, schemaViewMode } = useOperationViewMode()
   const { productionMode } = useSystemInfo()
+
+  const { mode, schemaViewMode } = useOperationViewMode()
 
   const selectedPreviewOperation = useSelectedPreviewOperation()
   const setSelectedPreviewOperation = useSetSelectedPreviewOperation()
@@ -96,7 +99,7 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
     apiType: apiType as ApiType,
   })
 
-  const isGraphQLOperation = checkIfGraphQLOperation(changedOperation)
+  const isGraphQLOperation = isGraphQlOperation(changedOperation)
   const isRawOperationViewMode = mode === RAW_OPERATION_VIEW_MODE
 
   const [documentWithChangedGraphQlOperation] = usePublishedDocumentRaw({
@@ -117,11 +120,11 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
   )
 
   const graphQlOperationType = useMemo(
-    () => (checkIfGraphQLOperation(changedOperation) ? changedOperation.type : undefined),
+    () => (isGraphQlOperation(changedOperation) ? changedOperation.type : undefined),
     [changedOperation],
   )
   const graphQlOperationName = useMemo(
-    () => (checkIfGraphQLOperation(changedOperation) ? changedOperation.method : undefined),
+    () => (isGraphQlOperation(changedOperation) ? changedOperation.method : undefined),
     [changedOperation],
   )
   const changedGraphQlOperationContent = useRawGraphQlCroppedToSingleOperationRawGraphQl(changedOperationContent, graphQlOperationType, graphQlOperationName)

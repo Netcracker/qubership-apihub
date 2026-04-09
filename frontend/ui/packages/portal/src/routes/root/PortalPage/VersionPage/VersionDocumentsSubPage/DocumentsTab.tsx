@@ -21,6 +21,7 @@ import { OpenApiViewer } from '../OpenApiViewer/OpenApiViewer'
 import { Box, Skeleton } from '@mui/material'
 import { useSelectedDocument } from './SelectedDocumentProvider'
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import { isAsyncApiSpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import { isGraphQlSpecType, isOpenApiSpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import type { FileFormat } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import { EMPTY_DOC } from '@apihub/entities/documents'
@@ -39,13 +40,13 @@ export const DocumentsTab: FC<DocumentsTabProps> = memo<DocumentsTabProps>((prop
       <Box sx={{ mt: 3 }}>
         {Array(5)
           .fill(0)
-          .map(() => <Skeleton sx={{ width: '70%' }}/>)}
+          .map((_, index) => <Skeleton key={index} sx={{ width: '70%' }}/>)}
       </Box>
     )
   }
 
   //todo fix component naming
-  if (isOpenApiSpecType(type) || isGraphQlSpecType(type)) {
+  if (isOpenApiSpecType(type) || isGraphQlSpecType(type) || isAsyncApiSpecType(type)) {
     return <OpenApiViewerWrapper/>
   }
 
