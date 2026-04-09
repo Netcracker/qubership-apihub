@@ -3,6 +3,7 @@ import {
   getCompatibilitySuite,
   getCompatibilitySuiteSpecificationVersionPairs,
   SpecificationVersionPair,
+  TEST_SPEC_TYPE_ASYNC_API,
   TEST_SPEC_TYPE_GRAPH_QL,
   TEST_SPEC_TYPE_OPEN_API,
   TestSpecType,
@@ -178,6 +179,11 @@ export async function compareFilesWithMerge(
 
   switch (type) {
     case TEST_SPEC_TYPE_OPEN_API: {
+      beforeObject = loadYaml(before) as object
+      afterObject = loadYaml(after) as object
+      break
+    }
+    case TEST_SPEC_TYPE_ASYNC_API: {
       beforeObject = loadYaml(before) as object
       afterObject = loadYaml(after) as object
       break

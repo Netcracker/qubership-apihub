@@ -13,6 +13,8 @@ import {
 import { isFunc, isObject, isString } from '../utils'
 import { breaking, DiffAction, nonBreaking, risky } from './constants'
 
+export type ReversePredicate = (ctx: CompareContext) => boolean
+
 export const transformCompareRules = (rules: CompareRules, transformer: CompareRulesTransformer): CompareRules => {
   return syncClone(rules, ({ value, key, state, path }) => {
     if (key && (!isString(key) || !key.startsWith('/'))) {
@@ -81,6 +83,63 @@ export const transformClassifyRule = ([add, remove, replace, reverseAdd, reverse
     transformedRule(replace, DiffAction.replace),
   ]
 }
+
+/**
+ * Wraps a single classify slot dynamically: when shouldReverse(ctx) is true the
+ * classification is reversed, otherwise the original value is used.
+ *
+ * Reversible statics (breaking/nonBreaking) and classifier functions are wrapped
+ * in a predicate check. Non-reversible statics (annotation, unclassified, deprecated,
+ * risky) are returned as-is.
+ *
+ * When an explicit reversed value is provided (from a 6-tuple ClassifyRule) it is
+ * used directly instead of computing the reverse.
+ */
+const dynamicReverseSlot = (
+  originalDiffType: RuleDiffType,
+  explicitReversedDiffType: RuleDiffType | undefined,
+  shouldReverse: ReversePredicate,
+): RuleDiffType => {
+  if (explicitReversedDiffType !== undefined) {
+    return (ctx: CompareContext): DiffType => {
+      const chosenDiffType = shouldReverse(ctx) ? explicitReversedDiffType : originalDiffType
+      return isFunc(chosenDiffType) ? chosenDiffType(ctx) : chosenDiffType
+    }
+  }
+  if (isFunc(originalDiffType)) {
+    return (ctx: CompareContext): DiffType => {
+      if (shouldReverse(ctx)) {
+        return reverseDiffType(originalDiffType(ctx)) as DiffType
+      }
+      return originalDiffType(ctx)
+    }
+  }
+  if (originalDiffType === breaking || originalDiffType === nonBreaking) {
+    const reversedDiffType = reverseDiffType(originalDiffType) as DiffType
+    return (ctx: CompareContext): DiffType => (shouldReverse(ctx) ? reversedDiffType : originalDiffType)
+  }
+  return originalDiffType
+}
+
+const dynamicReverseClassifyRule = (rule: ClassifyRule, shouldReverse: ReversePredicate): ClassifyRule => {
+  const [add, remove, replace, reversedAdd, reversedRemove, reversedReplace] = rule
+  return [
+    dynamicReverseSlot(add, reversedAdd, shouldReverse),
+    dynamicReverseSlot(remove, reversedRemove, shouldReverse),
+    dynamicReverseSlot(replace, reversedReplace, shouldReverse),
+  ]
+}
+
+/**
+ * Like reverseClassifyRuleTransformer but defers the reversal decision to
+ * diff-creation time via a predicate that receives CompareContext.
+ * This allows scope-aware reversal without pre-computing two rule sets.
+ */
+export const dynamicReclassifyTransformer = (shouldReverse: ReversePredicate): CompareRulesTransformer =>
+  (value) => {
+    if (!('$' in value) || !Array.isArray(value.$)) return value
+    return { ...value, $: dynamicReverseClassifyRule(value.$ as ClassifyRule, shouldReverse) }
+  }
 
 export const breakingIf = (v: boolean): DiffType => (v ? breaking : nonBreaking)
 export const riskyIf = (v: boolean): DiffType => (v ? risky : nonBreaking)
