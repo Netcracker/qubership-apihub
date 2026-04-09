@@ -8,6 +8,8 @@ import { RadioButton } from '@shared/components/base/buttons/RadioButton'
 
 export class ExportSettingsDialog extends BaseDialog {
 
+  readonly onlyShareableBtn = new RadioButton(this.rootLocator.locator('input[type="radio"][value="onlyShareable"]'), 'Only Shareable')
+  readonly allDocumentsBtn = new RadioButton(this.rootLocator.locator('input[type="radio"][value="allDocuments"]'), 'All Documents')
   readonly reducedBtn = new RadioButton(this.rootLocator.locator('input[type="radio"][value="reducedSourceSpecifications"]'), 'Reduced source specifications')
   readonly combinedBtn = new RadioButton(this.rootLocator.locator('input[type="radio"][value="mergedSpecification"]'), 'Combined specification')
   readonly yamlBtn = new RadioButton(this.rootLocator.locator('input[type="radio"][value="yaml"]'), 'YAML')

@@ -113,51 +113,75 @@ test.describe('7.1 Documents actions (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { documentsTab } = versionPage
+      const { documentsTab, exportSettingsDialog } = versionPage
 
       await portalPage.gotoVersion(testVersion, VERSION_DOCUMENTS_TAB)
 
       await test.step('Download JSON Schema (json)', async () => {
-        await documentsTab.sidebar.getFileButton(FILE_P_JSON_SCHEMA_JSON.slug).openActionMenu()
-        const file = await documentsTab.sidebar.getFileButton(FILE_P_JSON_SCHEMA_JSON.slug).actionMenu.performDownload()
+        const fileButton = documentsTab.sidebar.getFileButton(FILE_P_JSON_SCHEMA_JSON.slug)
+
+        await fileButton.openActionMenu()
+        await fileButton.actionMenu.exportItm.click()
+
+        const file = await exportSettingsDialog.performExport()
 
         await expectFile.soft(file).toHaveName(FILE_P_JSON_SCHEMA_JSON.name)
         await expectFile.soft(file).toContainText(FILE_P_JSON_SCHEMA_JSON.testMeta!.jsonString!)
       })
 
       await test.step('Download JSON Schema (yaml)', async () => {
-        await documentsTab.sidebar.getFileButton(FILE_P_JSON_SCHEMA_YAML.slug).openActionMenu()
-        const file = await documentsTab.sidebar.getFileButton(FILE_P_JSON_SCHEMA_YAML.slug).actionMenu.performDownload()
+        const fileButton = documentsTab.sidebar.getFileButton(FILE_P_JSON_SCHEMA_YAML.slug)
+
+        await fileButton.openActionMenu()
+        await fileButton.actionMenu.exportItm.click()
+
+        const file = await exportSettingsDialog.performExport()
 
         await expectFile.soft(file).toHaveName(FILE_P_JSON_SCHEMA_YAML.name)
         await expectFile.soft(file).toContainText(FILE_P_JSON_SCHEMA_YAML.testMeta!.yamlString!)
       })
 
       await test.step('Download MARKDOWN', async () => {
-        await documentsTab.sidebar.getFileButton(FILE_P_MARKDOWN.slug).openActionMenu()
-        const file = await documentsTab.sidebar.getFileButton(FILE_P_MARKDOWN.slug).actionMenu.performDownload()
+        const fileButton = documentsTab.sidebar.getFileButton(FILE_P_MARKDOWN.slug)
+
+        await fileButton.openActionMenu()
+        await fileButton.actionMenu.exportItm.click()
+
+        const file = await exportSettingsDialog.performExport()
 
         await expectFile.soft(file).toHaveName(FILE_P_MARKDOWN.name)
         await expectFile.soft(file).toContainText(FILE_P_MARKDOWN.testMeta!.mdString!)
       })
 
       await test.step('Download Picture file', async () => {
-        await documentsTab.sidebar.getFileButton(FILE_P_PICTURE.slug).openActionMenu()
-        const file = await documentsTab.sidebar.getFileButton(FILE_P_PICTURE.slug).actionMenu.performDownload()
+        const fileButton = documentsTab.sidebar.getFileButton(FILE_P_PICTURE.slug)
+
+        await fileButton.openActionMenu()
+        await fileButton.actionMenu.exportItm.click()
+
+        const file = await exportSettingsDialog.performExport()
 
         await expectFile.soft(file).toHaveName(FILE_P_PICTURE.name)
       })
 
       await test.step('Download Office file', async () => {
-        await documentsTab.sidebar.getFileButton(FILE_P_MSOFFICE.slug).openActionMenu()
-        const file = await documentsTab.sidebar.getFileButton(FILE_P_MSOFFICE.slug).actionMenu.performDownload()
+        const fileButton = documentsTab.sidebar.getFileButton(FILE_P_MSOFFICE.slug)
+
+        await fileButton.openActionMenu()
+        await fileButton.actionMenu.exportItm.click()
+
+        const file = await exportSettingsDialog.performExport()
 
         await expectFile.soft(file).toHaveName(FILE_P_MSOFFICE.name)
       })
 
       await test.step('Download Archive file', async () => {
-        await documentsTab.sidebar.getFileButton(FILE_P_ARCHIVE.slug).openActionMenu()
-        const file = await documentsTab.sidebar.getFileButton(FILE_P_ARCHIVE.slug).actionMenu.performDownload()
+        const fileButton = documentsTab.sidebar.getFileButton(FILE_P_ARCHIVE.slug)
+
+        await fileButton.openActionMenu()
+        await fileButton.actionMenu.exportItm.click()
+
+        const file = await exportSettingsDialog.performExport()
 
         await expectFile.soft(file).toHaveName(FILE_P_ARCHIVE.name)
       })
@@ -171,14 +195,16 @@ test.describe('7.1 Documents actions (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { documentsTab } = versionPage
+      const { documentsTab, exportSettingsDialog } = versionPage
 
       await portalPage.gotoVersion(testVersion, VERSION_DOCUMENTS_TAB)
 
       await test.step('Download JSON Schema (json)', async () => {
         await documentsTab.sidebar.getFileButton(FILE_P_JSON_SCHEMA_JSON.slug).click()
         await documentsTab.toolbar.moreMenu.click()
-        const file = await documentsTab.toolbar.moreMenu.performDownload()
+        await documentsTab.toolbar.moreMenu.exportItm.click()
+
+        const file = await exportSettingsDialog.performExport()
 
         await expectFile.soft(file).toHaveName(FILE_P_JSON_SCHEMA_JSON.name)
         await expectFile.soft(file).toContainText(FILE_P_JSON_SCHEMA_JSON.testMeta!.jsonString!)
@@ -187,7 +213,9 @@ test.describe('7.1 Documents actions (Package)', () => {
       await test.step('Download JSON Schema (yaml)', async () => {
         await documentsTab.sidebar.getFileButton(FILE_P_JSON_SCHEMA_YAML.slug).click()
         await documentsTab.toolbar.moreMenu.click()
-        const file = await documentsTab.toolbar.moreMenu.performDownload()
+        await documentsTab.toolbar.moreMenu.exportItm.click()
+
+        const file = await exportSettingsDialog.performExport()
 
         await expectFile.soft(file).toHaveName(FILE_P_JSON_SCHEMA_YAML.name)
         await expectFile.soft(file).toContainText(FILE_P_JSON_SCHEMA_YAML.testMeta!.yamlString!)
@@ -196,7 +224,9 @@ test.describe('7.1 Documents actions (Package)', () => {
       await test.step('Download MARKDOWN', async () => {
         await documentsTab.sidebar.getFileButton(FILE_P_MARKDOWN.slug).click()
         await documentsTab.toolbar.moreMenu.click()
-        const file = await documentsTab.toolbar.moreMenu.performDownload()
+        await documentsTab.toolbar.moreMenu.exportItm.click()
+
+        const file = await exportSettingsDialog.performExport()
 
         await expectFile.soft(file).toHaveName(FILE_P_MARKDOWN.name)
         await expectFile.soft(file).toContainText(FILE_P_MARKDOWN.testMeta!.mdString!)
@@ -205,7 +235,9 @@ test.describe('7.1 Documents actions (Package)', () => {
       await test.step('Download Picture file', async () => {
         await documentsTab.sidebar.getFileButton(FILE_P_PICTURE.slug).click()
         await documentsTab.toolbar.moreMenu.click()
-        const file = await documentsTab.toolbar.moreMenu.performDownload()
+        await documentsTab.toolbar.moreMenu.exportItm.click()
+
+        const file = await exportSettingsDialog.performExport()
 
         await expectFile.soft(file).toHaveName(FILE_P_PICTURE.name)
       })
@@ -213,7 +245,9 @@ test.describe('7.1 Documents actions (Package)', () => {
       await test.step('Download Office file', async () => {
         await documentsTab.sidebar.getFileButton(FILE_P_MSOFFICE.slug).click()
         await documentsTab.toolbar.moreMenu.click()
-        const file = await documentsTab.toolbar.moreMenu.performDownload()
+        await documentsTab.toolbar.moreMenu.exportItm.click()
+
+        const file = await exportSettingsDialog.performExport()
 
         await expectFile.soft(file).toHaveName(FILE_P_MSOFFICE.name)
       })
@@ -221,7 +255,9 @@ test.describe('7.1 Documents actions (Package)', () => {
       await test.step('Download Archive file', async () => {
         await documentsTab.sidebar.getFileButton(FILE_P_ARCHIVE.slug).click()
         await documentsTab.toolbar.moreMenu.click()
-        const file = await documentsTab.toolbar.moreMenu.performDownload()
+        await documentsTab.toolbar.moreMenu.exportItm.click()
+
+        const file = await exportSettingsDialog.performExport()
 
         await expectFile.soft(file).toHaveName(FILE_P_ARCHIVE.name)
       })
@@ -235,27 +271,33 @@ test.describe('7.1 Documents actions (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { documentsTab } = versionPage
+      const { documentsTab, exportSettingsDialog } = versionPage
 
       await portalPage.gotoVersion(testVersion, VERSION_DOCUMENTS_TAB)
 
       await test.step('Download Picture file', async () => {
         await documentsTab.sidebar.getFileButton(FILE_P_PICTURE.slug).click()
-        const file = await documentsTab.fileView.performDownload()
+        await documentsTab.fileView.downloadBtn.click()
+
+        const file = await exportSettingsDialog.performExport()
 
         await expectFile.soft(file).toHaveName(FILE_P_PICTURE.name)
       })
 
       await test.step('Download Office file', async () => {
         await documentsTab.sidebar.getFileButton(FILE_P_MSOFFICE.slug).click()
-        const file = await documentsTab.fileView.performDownload()
+        await documentsTab.fileView.downloadBtn.click()
+
+        const file = await exportSettingsDialog.performExport()
 
         await expectFile.soft(file).toHaveName(FILE_P_MSOFFICE.name)
       })
 
       await test.step('Download Archive file', async () => {
         await documentsTab.sidebar.getFileButton(FILE_P_ARCHIVE.slug).click()
-        const file = await documentsTab.fileView.performDownload()
+        await documentsTab.fileView.downloadBtn.click()
+
+        const file = await exportSettingsDialog.performExport()
 
         await expectFile.soft(file).toHaveName(FILE_P_ARCHIVE.name)
       })
@@ -269,12 +311,16 @@ test.describe('7.1 Documents actions (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { documentsTab } = versionPage
+      const { documentsTab, exportSettingsDialog } = versionPage
 
       await portalPage.gotoVersion(testVersion, VERSION_DOCUMENTS_TAB)
 
-      await documentsTab.sidebar.getFileButton(FILE_P_GQL_SMALL.slug).openActionMenu()
-      const file = await documentsTab.sidebar.getFileButton(FILE_P_GQL_SMALL.slug).actionMenu.performDownload()
+      const fileButton = documentsTab.sidebar.getFileButton(FILE_P_GQL_SMALL.slug)
+
+      await fileButton.openActionMenu()
+      await fileButton.actionMenu.exportItm.click()
+
+      const file = await exportSettingsDialog.performExport()
 
       await expectFile.soft(file).toHaveName(FILE_P_GQL_SMALL.name)
       await expectFile.soft(file).toContainText(FILE_P_GQL_SMALL.testMeta!.gqlString!)
@@ -288,14 +334,16 @@ test.describe('7.1 Documents actions (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { documentsTab } = versionPage
+      const { documentsTab, exportSettingsDialog } = versionPage
 
       await portalPage.gotoVersion(testVersion, VERSION_DOCUMENTS_TAB)
 
-      await documentsTab.sidebar.getFileButton(FILE_P_GQL_SMALL.slug).click()
-      await documentsTab.toolbar.moreMenu.click()
+      const fileButton = documentsTab.sidebar.getFileButton(FILE_P_GQL_SMALL.slug)
 
-      const file = await documentsTab.toolbar.moreMenu.performDownload()
+      await fileButton.openActionMenu()
+      await fileButton.actionMenu.exportItm.click()
+
+      const file = await exportSettingsDialog.performExport()
 
       await expectFile.soft(file).toHaveName(FILE_P_GQL_SMALL.name)
       await expectFile.soft(file).toContainText(FILE_P_GQL_SMALL.testMeta!.gqlString!)

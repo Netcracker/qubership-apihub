@@ -1437,6 +1437,7 @@ test.describe('5.2.1.0 Package details', () => {
 
       await portalPage.gotoVersion(testVersion)
       await versionPage.toolbar.exportBtn.click()
+      await exportSettingsDialog.allDocumentsBtn.click()
 
       const file = await exportSettingsDialog.performExport()
 
