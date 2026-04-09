@@ -8,8 +8,7 @@ export const SPEC_TYPE_OPEN_API_TYPE_FAMILY = 'openapi'
 export const SPEC_TYPE_OPEN_API_30 = 'openapi-3.0'
 export const SPEC_TYPE_OPEN_API_31 = 'openapi-3.1'
 export const SPEC_TYPE_ASYNCAPI_TYPE_FAMILY = 'asyncapi'
-//TODO: delete when AsyncAPI v3 support is added
-export const SPEC_TYPE_ASYNCAPI_2 = 'asyncapi-2'
+export const SPEC_TYPE_ASYNCAPI_3 = 'asyncapi-3'
 export const SPEC_TYPE_GRAPH_API_TYPE_FAMILY = 'graphapi'
 export const SPEC_TYPE_GRAPH_API = 'graphapi'
 
@@ -34,8 +33,7 @@ export type SpecType =
   JsonSchemaSpecVersion
   | OpenApiSpecVersion
   | typeof SPEC_TYPE_GRAPH_API
-  //TODO: delete when AsyncAPI v3 support is added
-  | typeof SPEC_TYPE_ASYNCAPI_2
+  | typeof SPEC_TYPE_ASYNCAPI_3
 
 export type SpecTypeFamily =
   typeof SPEC_TYPE_OPEN_API_TYPE_FAMILY
@@ -76,8 +74,8 @@ export function resolveSpec(data: unknown): Spec {
   }
 
   if (isAsyncApi(data)) {
-    if (data.asyncapi.startsWith('2.')) {
-      return { type: SPEC_TYPE_ASYNCAPI_2, version: data.asyncapi }
+    if (data.asyncapi.startsWith('3.')) {
+      return { type: SPEC_TYPE_ASYNCAPI_3, version: data.asyncapi }
     }
     throw new Error(`AsyncApi version ${data.asyncapi} is not supported.`)
   }

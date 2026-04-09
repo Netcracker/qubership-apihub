@@ -9,7 +9,7 @@ import {
 import 'jest-extended'
 import { defineOriginsAndResolveRef } from '../../src/define-origins-and-resolve-ref'
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
-import { TEST_ORIGINS_FLAG } from '../helpers'
+import { getValueByPath, setValueAtPath, TEST_INLINE_REFS_FLAG, TEST_ORIGINS_FLAG, TEST_LAST_REFERENCE_KEY_PROPERTY, TEST_SYNTHETIC_TITLE_FLAG } from '../helpers'
 import defineResponseViaReferenceObjectChain
   from '../resources/reference-object/define-response-via-reference-object-chain.json'
 import secondLevelObjectSameWhenOverridingDescriptionForResponse
@@ -379,25 +379,6 @@ describe('OAS Reference Object', () => {
     exampleObjectTestData,
   ]
 
-  function setValueAtPath(obj: any, path: JsonPath, value: any): void {
-    if (path.length === 0) { return }
-
-    let current = obj
-    for (let i = 0; i < path.length - 1; i++) {
-      const key = path[i]
-      const nextKey = path[i + 1]
-      if (!(key in current)) {
-        current[key] = typeof nextKey === 'number' ? [] : {}
-      }
-      current = current[key]
-    }
-    if (value !== undefined) {
-      current[path[path.length - 1]] = value
-    }
-  }
-
-  const getValueByPath = (value: any, path: JsonPath) => path.reduce((data, key) => data?.[key], value)
-
   const createRef = (path: JsonPath) => `#/${path.join('/')}`
 
   const createBase = (version: string, refPath: JsonPath, componentsPath: JsonPath, componentObject: any) => {
@@ -625,6 +606,262 @@ describe('OAS Reference Object', () => {
 
       const result = defineOriginsAndResolveRef(source, { originsFlag: TEST_ORIGINS_FLAG, source: components })
       expect(result).toEqual(expected)
+    })
+  })
+
+  describe('Reference Name Property', () => {
+    it('should capture reference name for simple reference resolution', () => {
+      const source = {
+        openapi: '3.1.0',
+        paths: {
+          '/test': {
+            get: {
+              responses: {
+                '200': {
+                  $ref: '#/components/responses/SuccessResponse',
+                },
+              },
+            },
+          },
+        },
+        components: {
+          responses: {
+            SuccessResponse: {
+              description: 'Success response',
+            },
+          },
+        },
+      }
+
+      const result = defineOriginsAndResolveRef(source, { lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY }) as any
+      expect(result.paths['/test'].get.responses['200']).toBe(result.components.responses.SuccessResponse)
+      expect(result.paths['/test'].get.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('SuccessResponse')
+    })
+
+    it('should capture reference name when various normalize options are used', () => {
+      const source = {
+        openapi: '3.1.0',
+        paths: {
+          '/test': {
+            get: {
+              responses: {
+                '200': {
+                  $ref: '#/components/responses/SuccessResponse',
+                },
+              },
+            },
+          },
+        },
+        components: {
+          responses: {
+            SuccessResponse: {
+              description: 'Success response',
+            },
+          },
+        },
+      }
+
+      const result = normalize(source,
+        {
+          lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY,
+          mergeAllOf: true,
+          syntheticTitleFlag: TEST_SYNTHETIC_TITLE_FLAG,
+          inlineRefsFlag: TEST_INLINE_REFS_FLAG,
+          unify: true,
+          validate: true,
+          liftCombiners: true,
+        }
+      ) as any
+      expect(result.paths['/test'].get.responses['200']).toBe(result.components.responses.SuccessResponse)
+      expect(result.paths['/test'].get.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('SuccessResponse')
+    })
+
+    it('should capture last reference name in a reference chain', () => {
+      const source = {
+        openapi: '3.1.0',
+        paths: {
+          '/test': {
+            get: {
+              responses: {
+                '200': {
+                  $ref: '#/components/responses/SuccessResponse',
+                },
+              },
+            },
+          },
+        },
+        components: {
+          responses: {
+            SuccessResponse: {
+              $ref: '#/components/responses/SuccessResponse2',
+            },
+            SuccessResponse2: {
+              $ref: '#/components/responses/SuccessResponse3',
+            },
+            SuccessResponse3: {
+              description: 'Final response',
+            },
+          },
+        },
+      }
+
+      const result = defineOriginsAndResolveRef(source, { lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY }) as any
+      // All should point to the same object
+      expect(result.paths['/test'].get.responses['200']).toBe(result.components.responses.SuccessResponse3)
+      expect(result.components.responses.SuccessResponse).toBe(result.components.responses.SuccessResponse3)
+      expect(result.components.responses.SuccessResponse2).toBe(result.components.responses.SuccessResponse3)
+      // Should have the last reference name in the chain
+      expect(result.paths['/test'].get.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('SuccessResponse3')
+    })
+
+    it('should capture reference name for multiple references to same target', () => {
+      const source = {
+        openapi: '3.1.0',
+        paths: {
+          '/endpoint1': {
+            get: {
+              responses: {
+                '200': {
+                  $ref: '#/components/responses/SharedResponse',
+                },
+              },
+            },
+          },
+          '/endpoint2': {
+            get: {
+              responses: {
+                '200': {
+                  $ref: '#/components/responses/SharedResponse',
+                },
+              },
+            },
+          },
+        },
+        components: {
+          responses: {
+            SharedResponse: {
+              description: 'Shared response',
+            },
+          },
+        },
+      }
+
+      const result = defineOriginsAndResolveRef(source, { lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY }) as any
+      // Both should point to the same object
+      expect(result.paths['/endpoint1'].get.responses['200']).toBe(result.paths['/endpoint2'].get.responses['200'])
+      expect(result.paths['/endpoint1'].get.responses['200']).toBe(result.components.responses.SharedResponse)
+      // Both should have the same reference name
+      expect(result.paths['/endpoint1'].get.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('SharedResponse')
+      expect(result.paths['/endpoint2'].get.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('SharedResponse')
+    })
+
+    it('should not add reference name property when option is not provided', () => {
+      const source = {
+        openapi: '3.1.0',
+        paths: {
+          '/test': {
+            get: {
+              responses: {
+                '200': {
+                  $ref: '#/components/responses/SuccessResponse',
+                },
+              },
+            },
+          },
+        },
+        components: {
+          responses: {
+            SuccessResponse: {
+              description: 'Success response',
+            },
+          },
+        },
+      }
+
+      const result = defineOriginsAndResolveRef(source) as any
+      expect(result.paths['/test'].get.responses['200']).toBe(result.components.responses.SuccessResponse)
+      expect(result.paths['/test'].get.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBeUndefined()
+    })
+
+    it('should work with reference object override fields', () => {
+      const source = {
+        openapi: '3.1.0',
+        paths: {
+          '/test': {
+            get: {
+              responses: {
+                '200': {
+                  $ref: '#/components/responses/SuccessResponse',
+                  description: 'Custom description override',
+                },
+              },
+            },
+            post: {
+              responses: {
+                '200': {
+                  $ref: '#/components/responses/SuccessResponse',
+                },
+              },
+            },
+          },
+        },
+        components: {
+          responses: {
+            SuccessResponse: {
+              description: 'Base description',
+              content: {
+                'application/json': {
+                  schema: { type: 'object' },
+                },
+              },
+            },
+          },
+        },
+      }
+
+      const result = normalize(source, { lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY }) as any
+      // With override fields, it creates a shallow copy, so they won't be the same reference
+      expect(result.paths['/test'].get.responses['200']).not.toBe(result.components.responses.SuccessResponse)
+      // But both should have the reference name property
+      expect(result.paths['/test'].get.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('SuccessResponse')
+      expect(result.paths['/test'].post.responses['200'][TEST_LAST_REFERENCE_KEY_PROPERTY]).toBe('SuccessResponse')
+      // Override field should be present
+      expect(result.paths['/test'].get.responses['200'].description).toBe('Custom description override')
+      // Content should be shared from the base
+      expect(result.paths['/test'].get.responses['200'].content).toBe(result.components.responses.SuccessResponse.content)
+    })
+
+    it('should not add reference name property for broken reference chains', () => {
+      const source = {
+        openapi: '3.1.0',
+        paths: {
+          '/test': {
+            get: {
+              responses: {
+                '200': {
+                  $ref: '#/components/responses/SuccessResponse',
+                },
+              },
+            },
+          },
+        },
+        components: {
+          responses: {
+            SuccessResponse: {
+              $ref: '#/components/responses/NonExistent',
+            },
+          },
+        },
+      }
+
+      const result = defineOriginsAndResolveRef(source, {
+        lastReferenceKeyProperty: TEST_LAST_REFERENCE_KEY_PROPERTY,
+      }) as any
+
+      // The broken reference should remain as a $ref
+      expect(result.components.responses.SuccessResponse.$ref).toBe('#/components/responses/NonExistent')
+      // Should not have reference name property on broken ref
+      expect(result.components.responses.SuccessResponse[TEST_LAST_REFERENCE_KEY_PROPERTY]).toBeUndefined()
     })
   })
 })

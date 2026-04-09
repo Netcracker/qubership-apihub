@@ -87,6 +87,7 @@ export function notAllowedReferenceHandler({
   return { done: true }
 }
 
+
 export function referenceObjectResolver(overrides?: ReferenceObjectResolverOverrideField[]): ReferenceHandler {
   return ({ resolveDefaultReference }): ReferenceHandlerResponse => {
     const overrideFieldsWithSiblings = ({
@@ -96,14 +97,15 @@ export function referenceObjectResolver(overrides?: ReferenceObjectResolverOverr
       originForObj,
       sibling,
     }: ResolvedReferenceContext): ResolvedRefWithSiblings => {
-      const { refValue, origin } = resolvedRef
+      const { refValue, origin, lastReferenceKey, firstReferenceKey } = resolvedRef
       const referenceValue = refValue as Record<PropertyKey, unknown>
+      const { originsFlag, lastReferenceKeyProperty } = options
 
-      options.originsFlag && getOrReuseOrigin(referenceValue, originForObj, state.originCache)
+      originsFlag && getOrReuseOrigin(referenceValue, originForObj, state.originCache)
 
       const childrenOrigins: OriginsMetaRecord = {}
       if (!overrides?.length || !isObject(sibling) || Reflect.ownKeys(sibling).length === 0) {
-        return { refValue: referenceValue, origin, childrenOrigins }
+        return { refValue: referenceValue, origin, childrenOrigins, lastReferenceKey, firstReferenceKey }
       }
 
       const referenceValueWithSibling = { ...referenceValue }
@@ -116,8 +118,8 @@ export function referenceObjectResolver(overrides?: ReferenceObjectResolverOverr
           }]
         }
       })
-      options.originsFlag && getOrReuseOrigin(sibling, originForObj, state.originCache)
-      return { refValue: referenceValueWithSibling, origin, childrenOrigins }
+      originsFlag && getOrReuseOrigin(sibling, originForObj, state.originCache)
+      return { refValue: referenceValueWithSibling, origin, childrenOrigins, lastReferenceKey, firstReferenceKey }
     }
     return resolveDefaultReference(overrideFieldsWithSiblings)
   }
@@ -151,12 +153,12 @@ export function jsonSchemaReferenceResolver({ richRefAllowed }: JsonSchemaRefere
       let titleIndex = -1
       let refIndex = 0
       let siblingIndex = -1
-      if (options.syntheticTitleFlag && rules?.resolvedReferenceNamePropertyKey) {
+      if (options.syntheticTitleFlag && rules?.resolvedLastReferenceKeyPropertyKey) {
         let syntheticTitle = syntheticTitleCache?.get(reference.normalized)
         if (syntheticTitle === undefined) {
-          syntheticTitle = evaluateSyntheticTitle(reference.jsonPath, options.syntheticTitleFlag, rules.resolvedReferenceNamePropertyKey)
+          syntheticTitle = evaluateSyntheticTitle(reference.jsonPath, options.syntheticTitleFlag, rules.resolvedLastReferenceKeyPropertyKey)
           syntheticTitleCache.set(reference.normalized, syntheticTitle)
-          state.lazySourceOriginCollector.set(syntheticTitle, { [rules.resolvedReferenceNamePropertyKey]: origin ? [origin] : [] })
+          state.lazySourceOriginCollector.set(syntheticTitle, { [rules.resolvedLastReferenceKeyPropertyKey]: origin ? [origin] : [] })
         }
         wrap.allOf.push(syntheticTitle)
         titleIndex = 0

@@ -2,7 +2,7 @@ import { CrawlRulesContext } from '@netcracker/qubership-apihub-json-crawl'
 import { type NormalizationRules } from '../types'
 import { valueDefaults } from '../unifies/defaults'
 import { directiveMetaUnification } from '../unifies/directives'
-import { deepEqualsMatcher, ReplaceMapping, valueReplaces } from '../unifies/replaces'
+import { EMPTY_MARKER, ReplaceMapping, TO_EMPTY_ARRAY_MAPPING, TO_EMPTY_OBJECT_MAPPING, valueReplaces } from '../unifies/replaces'
 import {
   checkContains,
   checkType,
@@ -55,8 +55,6 @@ import {
 import { GRAPH_API_DEPRECATION_PREDICATE } from './graphapi.deprecated'
 import { notAllowedReferenceHandler, referenceObjectResolver } from '../references/ref-resolver'
 import { calculateGraphApiDeprecatedDescription } from './graphapi.deprecated-item-descriptions'
-
-const EMPTY_MARKER = Symbol('empty-items')
 
 const GRAPH_API_DEFAULTS = {
   [GRAPH_API_PROPERTY_COMPONENTS]: EMPTY_MARKER,
@@ -112,20 +110,6 @@ const LIST_DEFINITION_DEFAULTS = {
 }
 const DIRECTIVE_HOLDER_DEFAULTS = {
   [GRAPH_API_PROPERTY_DIRECTIVES]: EMPTY_MARKER,
-}
-
-const TO_EMPTY_ARRAY_MAPPING = {
-  mapping: new Map([[EMPTY_MARKER, {
-    value: () => [],
-    reverseMatcher: deepEqualsMatcher([]),
-  }]])
-}
-
-const TO_EMPTY_OBJECT_MAPPING = {
-  mapping: new Map([[EMPTY_MARKER, {
-    value: () => ({}),
-    reverseMatcher: deepEqualsMatcher({}),
-  }]])
 }
 
 const GRAPH_API_REPLACES: Record<string, ReplaceMapping> = {

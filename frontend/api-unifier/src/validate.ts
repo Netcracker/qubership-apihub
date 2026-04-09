@@ -92,6 +92,8 @@ export const validate = (value: unknown, options?: ValidateOptions & ResolveOpti
       ...(options?.inlineRefsFlag ? [options?.inlineRefsFlag] : []),
       ...(options?.syntheticTitleFlag ? [options?.syntheticTitleFlag] : []),
       ...(options?.syntheticAllOfFlag ? [options?.syntheticAllOfFlag] : []),
+      ...(options?.firstReferenceKeyProperty ? [options.firstReferenceKeyProperty] : []),
+      ...(options?.lastReferenceKeyProperty ? [options.lastReferenceKeyProperty] : []),
     ]),
   } satisfies InternalValidationOptions
   const cycledJsoHandlerHook = createCycledJsoHandlerHook<ValidateState, NormalizationRule>()

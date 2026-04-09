@@ -13,7 +13,7 @@ import {
   JSON_SCHEMA_PROPERTY_TYPE,
 } from '../rules/jsonschema.const'
 import {
-  SPEC_TYPE_ASYNCAPI_2,
+  SPEC_TYPE_ASYNCAPI_3,
   SPEC_TYPE_GRAPH_API,
   SPEC_TYPE_JSON_SCHEMA_04,
   SPEC_TYPE_JSON_SCHEMA_06,
@@ -71,7 +71,7 @@ const SOME_NATIVE_ANY: Record<SpecType, NativeAny> = {
   [SPEC_TYPE_JSON_SCHEMA_07]: createNativeAnySchema(SPEC_TYPE_JSON_SCHEMA_07, undefined, undefined),
   [SPEC_TYPE_OPEN_API_30]: createNativeAnySchema(SPEC_TYPE_OPEN_API_30, undefined, undefined),
   [SPEC_TYPE_OPEN_API_31]: createNativeAnySchema(SPEC_TYPE_OPEN_API_31, undefined, undefined),
-  [SPEC_TYPE_ASYNCAPI_2]: createNativeAnySchema(SPEC_TYPE_ASYNCAPI_2, undefined, undefined),
+  [SPEC_TYPE_ASYNCAPI_3]: createNativeAnySchema(SPEC_TYPE_ASYNCAPI_3, undefined, undefined),
   [SPEC_TYPE_GRAPH_API]: createNativeAnySchema(SPEC_TYPE_GRAPH_API, undefined, undefined),
 }
 

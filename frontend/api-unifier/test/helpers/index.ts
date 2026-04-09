@@ -1,5 +1,5 @@
 import { anyArrayKeys, isArray, isObject, JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
-import {ChainItem, Hash, JsonSchema, loadYaml, OriginLeafs, OriginsMetaRecord} from '../../src'
+import { ChainItem, Hash, JsonSchema, loadYaml, OriginLeafs, OriginsMetaRecord } from '../../src'
 import { OpenAPIV3 } from 'openapi-types'
 import 'jest-extended'
 import { deepEqual } from 'fast-equals'
@@ -41,7 +41,7 @@ export const TEST_HEADER_NAME = 'header1'
 export const TEST_RESPONSE_NAME = 'response1'
 export const TEST_REQUEST_NAME = 'request1'
 
-export const createOas: (schema: JsonSchema, version?: string) => Record<PropertyKey,unknown> = (schema, version = '3.0.0') => {
+export const createOas: (schema: JsonSchema, version?: string) => Record<PropertyKey, unknown> = (schema, version = '3.0.0') => {
   return {
     openapi: version,
     components: {
@@ -52,7 +52,7 @@ export const createOas: (schema: JsonSchema, version?: string) => Record<Propert
   }
 }
 
-export const createOasWithParameters: (parameter: OpenAPIV3.ParameterObject) => Record<PropertyKey,unknown> = (parameter) => {
+export const createOasWithParameters: (parameter: OpenAPIV3.ParameterObject) => Record<PropertyKey, unknown> = (parameter) => {
   return {
     openapi: '3.0.0',
     components: {
@@ -116,6 +116,21 @@ export interface OriginsCheckOptions {
 interface OriginTreeItem {
   value: ChainItem
   children: Record<PropertyKey, OriginTreeItem>
+}
+
+/**
+ * Helper function to check that origin references between two objects are the same.
+ * This verifies that both origins point to the same object reference (not just equal values).
+ *
+ * @param object1 - First object
+ * @param object2 - Second object
+ * @param propertyName - Name of the property whose origin to compare
+ * @param originsFlag - The origins flag to use
+ */
+export function checkOriginsAreTheSame(object1: any, object2: any, propertyName: string, originsFlag: symbol) {
+  const origin1Value = object1[originsFlag][propertyName];
+  const origin2Value = object2[originsFlag][propertyName];
+  expect(origin2Value).toBe(origin1Value);
 }
 
 export const commonOriginsCheck: (schema: unknown, options?: OriginsCheckOptions) => void = (schema, options = {}) => {
@@ -197,6 +212,8 @@ export const TEST_ORIGINS_FLAG = Symbol('test-origin')
 export const TEST_ORIGINS_FOR_DEFAULTS: OriginLeafs = [{ parent: undefined, value: 'test-origins-defaults' }]
 export const TEST_DEFAULTS_FLAG = Symbol('test-defaults')
 export const TEST_HASH_FLAG = Symbol('test-hash')
+export const TEST_LAST_REFERENCE_KEY_PROPERTY = Symbol('test-reference-name')
+export const TEST_FIRST_REFERENCE_KEY_PROPERTY = Symbol('test-first-reference-key')
 
 export const isSymbol = (value: unknown): value is symbol => {
   return typeof value === 'symbol'
@@ -269,3 +286,23 @@ export function countUniqueHashes(spec: unknown): number {
 
   return hashesSet.size
 }
+
+export function setValueAtPath(obj: any, path: JsonPath, value: any): void {
+  if (path.length === 0) { return }
+
+  let current = obj
+  for (let i = 0; i < path.length - 1; i++) {
+    const key = path[i]
+    const nextKey = path[i + 1]
+    if (!(key in current)) {
+      current[key] = typeof nextKey === 'number' ? [] : {}
+    }
+    current = current[key]
+  }
+  if (value !== undefined) {
+    current[path[path.length - 1]] = value
+  }
+}
+
+export const getValueByPath = (value: any, path: JsonPath) => path.reduce((data, key) => data?.[key], value)
+

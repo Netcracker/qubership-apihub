@@ -21,8 +21,25 @@ export interface ReplaceMapping {
 }
 
 const PLACE_HOLDER_JSO: Record<PropertyKey, unknown> = {}
+
 export const deepEqualsMatcher: (one: unknown) => ReverseMatcherFunction = (one) => (another) => {
   return deepEqual(one, another)
+}
+
+export const EMPTY_MARKER = Symbol('empty-items')
+
+export const TO_EMPTY_OBJECT_MAPPING: ReplaceMapping = {
+  mapping: new Map([[EMPTY_MARKER, {
+    value: () => ({}),
+    reverseMatcher: deepEqualsMatcher({}),
+  }]]),
+}
+
+export const TO_EMPTY_ARRAY_MAPPING: ReplaceMapping = {
+  mapping: new Map([[EMPTY_MARKER, {
+    value: () => ([]),
+    reverseMatcher: deepEqualsMatcher([]),
+  }]]),
 }
 
 export const valueReplaces: (map: Record<string, ReplaceMapping>) => UnifyFunction = (map) => {

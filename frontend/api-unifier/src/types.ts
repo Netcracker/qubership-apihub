@@ -27,6 +27,8 @@ export interface ResolveOptions {
   inlineRefsFlag?: symbol         // flag on JSO with array of JsonPath for resolve that object. Array for all of case
   originsFlag?: symbol            // used in JSO as anchor to chained declaration path (contains link to parent in declarationPath)
   originsAlreadyDefined?: boolean // are there already origins in the spec
+  lastReferenceKeyProperty?: symbol  // capture last reference name in chain for reference object resolver
+  firstReferenceKeyProperty?: symbol // capture first reference key in chain when rule has captureFirstReferenceKey
   ignoreSymbols?: symbol[],       // symbols to ignore scan
   onRefResolveError?: (message: string, path: JsonPath, ref: string, errorType: RefErrorType) => void
 }
@@ -34,6 +36,10 @@ export interface ResolveOptions {
 export interface MergeOptions {
   mergeAllOf?: boolean   // execute merge allOf into final view
   onMergeError?: (message: string, path: JsonPath, values: any[]) => void
+}
+
+export interface MergeTraitsOptions {
+  mergeTraits?: boolean  // execute merge traits for AsyncAPI Operation and Message objects
 }
 
 export interface LiftCombinersOptions {
@@ -75,11 +81,15 @@ export interface InternalMergeOptions extends Omit<MergeOptions, never>, Omit<In
   mergeAllOf: boolean
 }
 
+export interface InternalMergeTraitsOptions extends Omit<MergeTraitsOptions, 'mergeTraits'>, Pick<ResolveOptions, 'originsFlag'>, HasInternalIgnoreSymbols {
+  mergeTraits: boolean
+}
+
 export interface HashOptions {
   hashFlag?: symbol
 }
 
-export interface InternalHashOptions extends HashOptions {}
+export interface InternalHashOptions extends HashOptions { }
 
 const OPEN_API_EXTENSION_PREFIX = 'x-'
 
@@ -90,7 +100,7 @@ export interface RemoveOasExtensionsOptions {
   shouldRemoveOasExtension?: (extensionKey: OpenApiExtensionKey) => boolean
 }
 
-export interface InternalRemoveOasExtensionsOptions extends RemoveOasExtensionsOptions {}
+export interface InternalRemoveOasExtensionsOptions extends RemoveOasExtensionsOptions { }
 
 export interface InternalLiftCombinersOptions extends Omit<LiftCombinersOptions, never>, InternalMergeOptions, HasInternalIgnoreSymbols {
   liftCombiners: boolean
@@ -102,6 +112,7 @@ export interface InternalValidationOptions extends Omit<ValidateOptions, 'valida
 export type PropertySkipFunction = (value: unknown, path: JsonPath) => boolean
 
 export interface InternalUnifyOptions extends Omit<UnifyOptions, 'unify' | 'allowNotValidSyntheticChanges' | 'createOriginsForDefaults'>, InternalLiftCombinersOptions, HasInternalIgnoreSymbols {
+  source: unknown
   syntheticMetaDefinitions: MetaDefinitions
   nativeMetaDefinitions: MetaDefinitions
   allowNotValidSyntheticChanges: boolean
@@ -109,6 +120,7 @@ export interface InternalUnifyOptions extends Omit<UnifyOptions, 'unify' | 'allo
 }
 
 export interface InternalDeUnifyOptions extends Omit<DeUnifyOptions, 'unify' | 'allowNotValidSyntheticChanges' | 'createOriginsForDefaults'>, InternalLiftCombinersOptions, HasInternalIgnoreSymbols {
+  source: unknown
   syntheticMetaDefinitions: MetaDefinitions
   nativeMetaDefinitions: MetaDefinitions
   allowNotValidSyntheticChanges: boolean
@@ -125,6 +137,7 @@ export interface MetaDefinitions {
 export type NormalizeOptions =
   ResolveOptions
   & MergeOptions
+  & MergeTraitsOptions
   & ValidateOptions
   & UnifyOptions
   & LiftCombinersOptions
@@ -134,6 +147,7 @@ export type NormalizeOptions =
 export type DenormalizeOptions =
   ResolveOptions
   & MergeOptions
+  & MergeTraitsOptions
   & ValidateOptions
   & DeUnifyOptions
   & LiftCombinersOptions
@@ -195,6 +209,9 @@ export type OriginsFactory = (ownerOrigins: OriginLeafs | undefined) => OriginLe
 export interface MergeAndLiftCombinersState extends HasIgnoreTreeUnderSymbols, HasSelfOriginsResolver {
 }
 
+export interface MergeTraitsState extends HasIgnoreTreeUnderSymbols, HasSelfOriginsResolver {
+}
+
 export type SelfOriginResolver = (key: PropertyKey) => OriginLeafs | undefined
 
 export type SelfOriginResolverFactory = (jso: unknown) => SelfOriginResolver
@@ -207,6 +224,10 @@ export interface DefineOriginsAndResolveRefState extends HasIgnoreTreeUnderSymbo
   lazySourceOriginCollector: Map<unknown, OriginsMetaRecord>
   originCache: OriginCache
   syntheticsJumps: Map<unknown, () => unknown>
+  /** When set, nested ref resolution reuses this as first reference key (for captureFirstReferenceKey). */
+  firstReferenceKeyForCapture?: string
+  /** Accumulates refs during a refChainStart chain; undefined outside such chains. */
+  inlineRefsChainCapture?: string[]
 }
 
 export interface ValidateState extends HasIgnoreTreeUnderSymbols {
@@ -225,20 +246,24 @@ export type InclusionStrategy =
 
 export interface NormalizationRule {
   readonly merge?: MergeResolver<any>
+  readonly mergeTraits?: boolean  // flag to indicate this path triggers traits merging
   readonly validate?: ValidateFunction[] | ValidateFunction
   readonly canLiftCombiners?: boolean //rename to transform?
   readonly unify?: UnifyFunction[] | UnifyFunction
   readonly mandatoryUnify?: UnifyFunction[] | UnifyFunction
-  readonly resolvedReferenceNamePropertyKey?: PropertyKey
+  readonly resolvedLastReferenceKeyPropertyKey?: PropertyKey
   readonly hashStrategy?: InclusionStrategy
   readonly hashOwner?: boolean
   readonly newDataLayer?: boolean
   readonly deprecation?: DeprecationPolicy
   readonly isExtension?: boolean
   readonly referenceHandler?: ReferenceHandler
+  readonly captureFirstReferenceKey?: boolean
+  readonly refChainStart?: boolean
 }
 
 export type MergeAndLiftCombinersSyncCloneHook = SyncCloneHook<MergeAndLiftCombinersState, NormalizationRule>
+export type MergeTraitsSyncCloneHook = SyncCloneHook<MergeTraitsState, NormalizationRule>
 export type DefineOriginsAndResolveRefSyncCloneHook = SyncCloneHook<DefineOriginsAndResolveRefState, NormalizationRule>
 export type ValidateSyncCloneHook = SyncCloneHook<ValidateState, NormalizationRule>
 export type UnifySyncCloneHook = SyncCloneHook<UnifyState, NormalizationRule>
@@ -280,6 +305,7 @@ export const DEFAULT_OPTION_ORIGINS_ALREADY_DEFINED = false
 export const DEFAULT_OPTION_LIFT_COMBINERS = false
 export const DEFAULT_OPTION_RESOLVE_REF = true
 export const DEFAULT_OPTION_MERGE_ALL_OF = true
+export const DEFAULT_OPTION_MERGE_TRAITS = true
 export const DEFAULT_OPTION_UNIFY = false
 export const DEFAULT_OPTION_VALIDATE = false
 export const DEFAULT_OPTION_ORIGINS_FOR_DEFAULTS: OriginLeafs = [{ parent: undefined, value: '#defaults' }]

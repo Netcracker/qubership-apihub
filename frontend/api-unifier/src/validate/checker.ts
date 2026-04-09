@@ -1,7 +1,7 @@
 import { ValidateFunction } from '../types'
 
 const TYPE_UNDEFINED = 'undefined'
-const TYPE_NULL = 'null'
+export const TYPE_NULL = 'null'
 export const TYPE_OBJECT = 'object'
 export const TYPE_ARRAY = 'array'
 export const TYPE_BOOLEAN = 'boolean'

@@ -3,7 +3,7 @@ import { isArray } from '@netcracker/qubership-apihub-json-crawl'
 import { deepEqual } from 'fast-equals'
 import { removeDuplicatesWithMergeOrigins } from '../utils'
 
-export const unifyJsonSchemaEnums: UnifyFunction = (jso, ctx) => {
+export const unifyEnum: UnifyFunction = (jso, ctx) => {
   if (!isArray(jso)) {
     return jso
   }

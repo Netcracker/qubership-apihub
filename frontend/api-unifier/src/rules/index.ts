@@ -1,5 +1,5 @@
 import {
-  SPEC_TYPE_ASYNCAPI_2,
+  SPEC_TYPE_ASYNCAPI_3,
   SPEC_TYPE_GRAPH_API,
   SPEC_TYPE_JSON_SCHEMA_04,
   SPEC_TYPE_JSON_SCHEMA_06,
@@ -12,6 +12,7 @@ import { NormalizationRules } from '../types'
 import { jsonSchemaRules } from './jsonschema'
 import { openApiRules } from './openapi'
 import { graphApiRules } from './graphapi'
+import { asyncApiRules } from './asyncapi'
 
 export const RULES: Record<SpecType, NormalizationRules> = {
   [SPEC_TYPE_JSON_SCHEMA_04]: jsonSchemaRules(SPEC_TYPE_JSON_SCHEMA_04),
@@ -20,6 +21,5 @@ export const RULES: Record<SpecType, NormalizationRules> = {
   [SPEC_TYPE_OPEN_API_30]: openApiRules(SPEC_TYPE_OPEN_API_30),
   [SPEC_TYPE_OPEN_API_31]: openApiRules(SPEC_TYPE_OPEN_API_31),
   [SPEC_TYPE_GRAPH_API]: graphApiRules(),
-
-  [SPEC_TYPE_ASYNCAPI_2]: {},
+  [SPEC_TYPE_ASYNCAPI_3]: asyncApiRules(),
 }
