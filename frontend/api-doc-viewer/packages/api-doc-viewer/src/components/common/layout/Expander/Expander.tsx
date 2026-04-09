@@ -16,7 +16,7 @@
 
 import type { FC } from 'react'
 import { ExpandingCaret } from './ExpandingCaret'
-import { NestingHorizontalIndicator } from '../../NestingIndicator'
+import { NestingHorizontalIndicator } from "../../NestingHorizontalIndicator"
 // import { defaultOnContextMenu } from '../../../../utils/common/event-handlers'
 // import { ToggleContextMenuHandler } from '../../../kit/ux/UxContextMenu/types/ToggleContextMenuHandler'
 
@@ -34,20 +34,14 @@ export const Expander: FC<ExpanderProps> = (props) => {
 
   let expanderElement = null
   if (isExpandable) {
-    expanderElement = isRoot
-      ? (
-        <div data-name="Expander" className="flex flex-row items-center w-full justify-center ">
-          <ExpandingCaret onToggle={onToggleExpander} expanded={expanded}/>
-        </div>
-      )
-      : (
-        <div data-name="Expander" className="flex flex-row items-center w-full" style={{ gap: 3 }}>
-          <NestingHorizontalIndicator short/>
-          <ExpandingCaret onToggle={onToggleExpander} expanded={expanded}/>
-        </div>
-      )
+    expanderElement = (
+      <div data-name="Expander" className="flex flex-row items-center gap-0.5 w-full">
+        {!isRoot && <NestingHorizontalIndicator short />}
+        <ExpandingCaret onToggle={onToggleExpander} expanded={expanded} />
+      </div>
+    )
   } else if (!isRoot && !isOperation) {
-    expanderElement = <NestingHorizontalIndicator/>
+    expanderElement = <NestingHorizontalIndicator />
   }
 
   return (
@@ -55,7 +49,7 @@ export const Expander: FC<ExpanderProps> = (props) => {
       {expanderElement && (
         <div
           data-name="ExpanderContainer"
-          className={`${isExpandable || !isRoot ? 'w-5' : ''} flex flex-row items-center pt-1`}
+          className='flex flex-row items-center pt-1.5'
           // onContextMenu={defaultOnContextMenu(isExpandable, onToggleContextMenu)}
         >
           {expanderElement}

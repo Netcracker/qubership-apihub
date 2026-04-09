@@ -16,32 +16,36 @@
 
 import '../../index.css'
 
-import { FC, useMemo } from 'react'
+import { CustomizationOptionsContext, CustomizationOptions } from '@apihub/contexts/CustomizationOptionsContext'
 import { createJsonSchemaTree, JsonSchemaTreeNode } from '@netcracker/qubership-apihub-api-data-model'
 import { JsonSchemaState } from '@netcracker/qubership-apihub-api-state-model'
+import { FC, useMemo } from 'react'
 import { DEFAULT_DISPLAY_MODE, DEFAULT_EXPANDED_DEPTH } from '../../consts/configuration'
-import { PropsWithOverriddenKind } from '../../types/internal/PropsWithState'
-import { isCombinerNodeState, isPropNodeState } from './types/nodes.guards'
-import { JsonPropNodeViewer } from './JsonPropNodeViewer/JsonPropNodeViewer'
-import { JsonCombinerNodeViewer } from './JsonCombinerNodeViewer/JsonCombinerNodeViewer'
 import { DisplayModeContext } from '../../contexts/DisplayModeContext'
 import { LevelContext } from '../../contexts/LevelContext'
-import { DisplayMode } from '../../types/DisplayMode'
 import { TopLevelPropsMediaTypesContext } from '../../contexts/TopLevelPropsMediaTypesContext'
+import { DisplayMode } from '../../types/DisplayMode'
+import { PropsWithOverriddenKind } from '../../types/internal/PropsWithState'
 import { PropsWithTopLevelPropsMediaTypesMap } from '../../types/internal/PropsWithTopLevelPropsMediaTypesMap'
 import { ErrorBoundary } from '../services/ErrorBoundary'
 import { ErrorBoundaryFallback } from '../services/ErrorBoundaryFallback'
+import { JsonCombinerNodeViewer } from './JsonCombinerNodeViewer/JsonCombinerNodeViewer'
+import { JsonPropNodeViewer } from './JsonPropNodeViewer/JsonPropNodeViewer'
+import { isCombinerNodeState, isPropNodeState } from './types/nodes.guards'
 
 export type JsonSchemaViewerProps = {
   schema: unknown,
   expandedDepth?: number
   displayMode?: DisplayMode
-} & PropsWithOverriddenKind & PropsWithTopLevelPropsMediaTypesMap
+} & PropsWithOverriddenKind & PropsWithTopLevelPropsMediaTypesMap & {
+  customizationOptions?: CustomizationOptions
+  initialLevel?: number
+}
 
 export const JsonSchemaViewer: FC<JsonSchemaViewerProps> = (props) => {
   return (
-    <ErrorBoundary fallback={<ErrorBoundaryFallback componentName="JSON Schema Viewer"/>}>
-      <JsonSchemaViewerInner {...props}/>
+    <ErrorBoundary fallback={<ErrorBoundaryFallback componentName="JSON Schema Viewer" />}>
+      <JsonSchemaViewerInner {...props} />
     </ErrorBoundary>
   )
 }
@@ -53,7 +57,10 @@ const JsonSchemaViewerInner: FC<JsonSchemaViewerProps> = (props) => {
     displayMode = DEFAULT_DISPLAY_MODE,
     overriddenKind,
     // FIXME 18.06.24 // Get rid of it when future wonderful AMT+ADV are ready!
-    topLevelPropsMediaTypes
+    topLevelPropsMediaTypes,
+    // Integration with AsyncAPI (and OpenAPI in future)
+    customizationOptions = {},
+    initialLevel = 0,
   } = props
 
   const tree = useMemo(
@@ -94,12 +101,14 @@ const JsonSchemaViewerInner: FC<JsonSchemaViewerProps> = (props) => {
   }
 
   return (
-    <TopLevelPropsMediaTypesContext.Provider value={topLevelPropsMediaTypes}>
-      <DisplayModeContext.Provider value={displayMode}>
-        <LevelContext.Provider value={0}>
-          {content}
-        </LevelContext.Provider>
-      </DisplayModeContext.Provider>
-    </TopLevelPropsMediaTypesContext.Provider>
+    <CustomizationOptionsContext.Provider value={customizationOptions}>
+      <TopLevelPropsMediaTypesContext.Provider value={topLevelPropsMediaTypes}>
+        <DisplayModeContext.Provider value={displayMode}>
+          <LevelContext.Provider value={initialLevel}>
+            {content}
+          </LevelContext.Provider>
+        </DisplayModeContext.Provider>
+      </TopLevelPropsMediaTypesContext.Provider>
+    </CustomizationOptionsContext.Provider>
   )
 }

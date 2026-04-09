@@ -22,7 +22,7 @@ import { graphapi } from './utils/helpers';
 // It's necessary because storybook doesn't render nested stories without this empty story
 // eslint-disable-next-line storybook/story-exports
 const meta = {
-  title: 'Graph Api Viewer',
+  title: 'GraphQL Operation Viewer/Test Stories',
   component: GraphQLOperationViewer,
   parameters: {},
   argTypes: {

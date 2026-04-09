@@ -1,9 +1,9 @@
 import { CrawlRules, isObject, JsonPath, syncCrawl, SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
 import { modelTreeNodeType } from "../constants";
-import { ModelTreeComplexNode } from './model-tree-complex-node.impl';
-import { FilterChildrenByCondition, IModelTree, IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from './types';
 import { ExpandingCallback, SchemaCrawlRule } from "../types";
+import { ModelTreeComplexNode } from './model-tree-complex-node.impl';
 import { ModelTree } from './model-tree.impl';
+import { FilterChildrenByCondition, IModelTree, IModelTreeNode, ModelTreeNodeParams, ModelTreeNodeType } from './types';
 
 /* Feature "Lazy Tree Building" */
 type CrawlValue = unknown

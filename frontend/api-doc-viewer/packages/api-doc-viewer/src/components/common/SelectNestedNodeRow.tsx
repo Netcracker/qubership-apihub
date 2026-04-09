@@ -40,12 +40,13 @@ import {
   maxDiffType,
   maxDiffTypeFromNodeSummary
 } from '../../utils/common/changes'
+import { LevelIndicator } from '../AsyncApiOperationViewer/LevelIndicator'
 import { UxDiffFloatingBadge } from '../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
+import { UxDiffMarker } from '../kit/ux/UxMarker/UxDiffMarker'
 import { EmptyContent } from './diffs/EmptyContent'
 import { UnsupportedContent } from './diffs/UnsupportedContent'
-import { NestingIndicator, NestingIndicatorTitle } from './NestingIndicator'
+import { NestingIndicatorTitle } from "./NestingIndicatorTitle"
 import { NodeType } from './NodeType'
-import { UxDiffMarker } from '../kit/ux/UxMarker/UxDiffMarker'
 
 export type SelectNestedNodeRowProps = PropsWithoutChangesSummary<
   {
@@ -118,11 +119,11 @@ export const SelectNestedNodeRow: FC<SelectNestedNodeRowProps> = (props) => {
     return (
       <div className={`flex flex-col ${DEFAULT_ROW_PADDING_LEFT} ${width}`}>
         <div className="flex flex-row">
-          <NestingIndicator level={level} lastInvisible={true} />
+          <LevelIndicator level={level} lastInvisible={true} />
           <NestingIndicatorTitle>{combiner}</NestingIndicatorTitle>
         </div>
         <div className="flex flex-row gap-5">
-          <NestingIndicator level={level} />
+          <LevelIndicator level={level} />
           <div className="flex flex-row flex-wrap gap-2 my-2">
             {Object.entries(nodesTypeData).map(([id, data]) => {
               const nestedNodeChangesSummary = $nestedChangesSummary?.[id]

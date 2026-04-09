@@ -46,6 +46,8 @@ export default defineConfig({
       // Cross-package aliases (external dependencies)
       '@netcracker/qubership-apihub-api-state-model': path.resolve(__dirname, '../api-state-model/src'),
       '@netcracker/qubership-apihub-api-data-model': path.resolve(__dirname, '../api-data-model/src'),
+      '@netcracker/qubership-apihub-next-data-model': path.resolve(__dirname, '../next-data-model/src'),
+      '@apihub/next-data-model': path.resolve(__dirname, '../next-data-model/src'),
 
       // Internal aliases (within this package)
       '@apihub/builders': path.resolve(__dirname, 'src/builders'),

@@ -16,9 +16,9 @@
 
 import { DiffRecord, GraphApiDiffTreeNode, isDiff, isDiffMetaRecord } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff, DiffAction, DiffType, isDiffAdd, isDiffRemove } from '@netcracker/qubership-apihub-api-diff'
-import type { FC } from 'react'
-import { useCallback/*, useState */ } from 'react'
 import { IModelStatePropNode } from '@netcracker/qubership-apihub-api-state-model'
+import type { FC } from 'react'
+import { useCallback /*, useState */ } from 'react'
 import { NODE_DIFF_COLOR_MAP } from '../../../../../consts/changes'
 import {
   DEFAULT_LAYOUT_MODE,
@@ -59,7 +59,6 @@ import {
 } from '../../../../../utils/common/changes'
 import { isDefined } from '../../../../../utils/common/checkers'
 // import { defaultOnContextMenu } from '../../../../../utils/common/event-handlers'
-import { NestingIndicator } from '../../../../common/NestingIndicator'
 import { NodeTitle } from '../../../../common/NodeTitle'
 import { NodeType } from '../../../../common/NodeType'
 import { NullableAsterisk } from '../../../../common/NullableAsterisk'
@@ -71,6 +70,7 @@ import { CircularRefIcon } from '../../../../kit/icons/CircularRefIcon'
 import { UxBadge } from '../../../../kit/ux/UxBadge'
 // import { UxContextMenu } from '../../../../kit/ux/UxContextMenu/UxContextMenu'
 // import { ToggleContextMenuHandlerOptions } from '../../../../kit/ux/UxContextMenu/types/ToggleContextMenuHandler'
+import { LevelIndicator } from '@apihub/components/AsyncApiOperationViewer/LevelIndicator'
 import { UxDiffFloatingBadge } from '../../../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 import { UxMarkerPanel } from '../../../../kit/ux/UxMarkerPanel/UxMarkerPanel'
 import { UxTooltip } from '../../../../kit/ux/UxTooltip/UxTooltip'
@@ -310,45 +310,47 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
     </>
 
     return (
-      <div className={`flex flex-col ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
-        <div className="flex flex-row relative">
-          <NestingIndicator level={level} />
-          <Expander
-            isRoot={isRoot}
-            isOperation={isOperation}
-            isExpandable={isExpandable}
-            expanded={expanded}
-            onToggleExpander={onToggleExpander}
-            // onToggleContextMenu={onToggleContextMenu}
-          />
-          <div className="flex flex-row items-center gap-2 pt-2 pb-1">
-            <div
-              className={`flex flex-row gap-2 text-xs text-black font-Inter-Medium ${isExpandable ? 'hover:cursor-pointer' : ''}`}
-              onClick={isExpandable ? onToggleExpander : undefined}
-              // onContextMenu={defaultOnContextMenu(isExpandable, onToggleContextMenu)}
-            >
-              {method && (
-                <UxBadge
-                  text={method.toUpperCase()}
-                  colorSchema={OPERATION_METHOD_COLOR_SCHEMAS_MAP[method]}
-                />
-              )}
-              <NodeTitle
-                {...nodeTitleData}
-                showNullable={nullabilityPosition === NULLABILITY_POSITION_NODE}
-                // diffs
-                layoutMode={layoutMode}
-                layoutSide={layoutSide}
-                nullableChange={changeForNullable}
+      <div className={`flex flex-row gap-2 ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
+        {!isOperation && (
+          <div className="flex flex-row relative">
+            <LevelIndicator level={level} />
+            <Expander
+              isRoot={isRoot}
+              isOperation={isOperation}
+              isExpandable={isExpandable}
+              expanded={expanded}
+              onToggleExpander={onToggleExpander}
+              // onToggleContextMenu={onToggleContextMenu}
+            />
+          </div>
+        )}
+        <div className="flex flex-row items-center gap-2 pt-2 pb-1">
+          <div
+            className={`flex flex-row gap-2 text-xs text-black font-Inter-Medium ${isExpandable ? 'hover:cursor-pointer' : ''}`}
+            onClick={isExpandable ? onToggleExpander : undefined}
+          // onContextMenu={defaultOnContextMenu(isExpandable, onToggleContextMenu)}
+          >
+            {method && (
+              <UxBadge
+                text={method.toUpperCase()}
+                colorSchema={OPERATION_METHOD_COLOR_SCHEMAS_MAP[method]}
               />
-            </div>
-            {!noSubHeader && <SubHeader />}
-            {/* <UxContextMenu
+            )}
+            <NodeTitle
+              {...nodeTitleData}
+              showNullable={nullabilityPosition === NULLABILITY_POSITION_NODE}
+              // diffs
+              layoutMode={layoutMode}
+              layoutSide={layoutSide}
+              nullableChange={changeForNullable}
+            />
+          </div>
+          {!noSubHeader && <SubHeader />}
+          {/* <UxContextMenu
               visible={contextMenuOpen}
               onClickAway={() => onToggleContextMenu({ open: false })}
               menuItems={contextMenuItems}
             /> */}
-          </div>
         </div>
       </div>
     )

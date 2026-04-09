@@ -22,6 +22,12 @@
     src: local('Fire Code'), url(../public/fonts/FiraCode-Regular.ttf) format('truetype');
 }
 
+@font-face {
+    font-family: 'Inter Variable';
+    src: local('Inter Variable'), url(../public/fonts/InterVariableFont.ttf) format('truetype');
+    font-weight: 100 900;
+}
+
 :root {
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
@@ -107,10 +113,8 @@ button:focus-visible {
 
 .font-Inter-Medium {
     font-family: "Inter Medium", sans-serif;
-    font-weight: normal;
 }
 
 .font-Inter-Bolder {
     font-family: "Inter Semi Bold", sans-serif;
-    font-weight: normal;
 }

@@ -224,6 +224,8 @@ export function hasNoValidationsAndAnnotations(node?: AnyTreeNode | null): boole
     && ArrayUtils.isEmpty(nodeValue?.examples)
     // FIXME 05.11.24 // This is WRONG condition for REST API!
     && !(nodeMeta as GraphApiNodeMeta)?.deprecationReason
+    // AsyncAPI Channel Parameters only
+    && !((nodeValue as Record<string, unknown> | undefined)?.location)
 
   // No validations
   let noValidations = true
@@ -247,7 +249,10 @@ export function hasNoValidationsAndAnnotations(node?: AnyTreeNode | null): boole
   const arePatternsProvidedIfNecessary = !isPatternProperty || !!node?.key
   const areAllowedPropertyNamesProvidedIfNecessary = !isAdditionalProperty || !!(node?.parent?.value() as IJsonSchemaObjectType)?.propertyNames
 
-  let result = noAnnotations && noValidations
+  // No extensions
+  const noExtensions = !nodeValue?.extensions
+
+  let result = noAnnotations && noValidations && noExtensions
 
   if (isAdditionalProperty) {
     result &&= !areAllowedPropertyNamesProvidedIfNecessary

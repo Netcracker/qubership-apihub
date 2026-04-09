@@ -26,6 +26,7 @@ export const GREATER_THAN_OR_EQUAL_SIGN = `${GREATER_THAN_SIGN}=`
 export const DEFAULT_VALUE_LABEL = 'Default'
 export const PROVIDED_VALUE_LABEL = 'Value'
 export const EXAMPLES_LABEL = 'Examples'
+export const LOCATION_LABEL = 'Location' // AsyncAPI Channel Parameters only
 
 /* Validations names */
 

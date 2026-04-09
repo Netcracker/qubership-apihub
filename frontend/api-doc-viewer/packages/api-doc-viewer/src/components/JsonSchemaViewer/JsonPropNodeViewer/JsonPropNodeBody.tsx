@@ -39,6 +39,8 @@ import { Annotations } from '../../common/annotations/Annotations'
 import { HeaderRow } from '../internal/layout/HeaderRow'
 import { Validations } from '../internal/validations/Validations'
 import { isPropNodeState } from '../types/nodes.guards'
+import { useCustomizationOptions } from '@apihub/contexts/CustomizationOptionsContext'
+import { Extensions } from '../internal/extensions/Extensions'
 
 export type JsonPropNodeBodyProps = PropsWithoutChangesSummary<
   JsonPropNodePropsWithState &
@@ -91,12 +93,17 @@ export const JsonPropNodeBody: FC<JsonPropNodeBodyProps> = (props) => {
   // Common data
   const isRoot = isRootNode(node)
 
+  const customizationOptions = useCustomizationOptions()
+
+  // Extensions (OpenAPI only)
+  const extensions = nodeValue?.extensions
+
   return (
     <div className="flex flex-col">
       {!disableNestingHeader && (
         <HeaderRow
-          nodeTitleData={buildNodeTitleData({ node, nodeValue, nodeMeta })}
-          nodeTypeData={buildNodeTypeData({ node, nodeValue })}
+          nodeTitleData={buildNodeTitleData({ node, nodeValue, nodeMeta, customizationOptions })}
+          nodeTypeData={buildNodeTypeData({ node, nodeValue, customizationOptions })}
           isCircularRef={node.isCycle}
           readOnly={nodeMeta?.readOnly}
           writeOnly={nodeMeta?.writeOnly}
@@ -123,15 +130,21 @@ export const JsonPropNodeBody: FC<JsonPropNodeBodyProps> = (props) => {
             <div data-name="Content" className="flex flex-col">
               {/* TODO 01.11.23 // "shift" is a WA, find way better */}
               <Annotations
-                shift={isExpandable && isRoot}
+                shift={isRoot}
                 state={state}
                 $nodeChange={$nodeChange}
               />
               <Validations
-                shift={isExpandable && isRoot}
+                shift={isRoot}
                 state={state}
                 $nodeChange={$nodeChange}
               />
+              {extensions && (
+                <Extensions
+                  shift={isRoot}
+                  extensions={extensions}
+                />
+              )}
             </div>
           )}
         </div>

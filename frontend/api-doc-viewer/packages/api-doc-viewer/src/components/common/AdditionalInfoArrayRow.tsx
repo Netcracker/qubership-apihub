@@ -51,13 +51,13 @@ import {
 } from '../../utils/common/changes'
 import { isDefined } from '../../utils/common/checkers'
 import { isSeriesItemEmpty, stringifyItem } from '../../utils/common/rows'
+import { LevelIndicator } from '../AsyncApiOperationViewer/LevelIndicator'
 import { COLOR_SCHEMAS } from '../kit/ux/consts'
 import { BADGE_KIND_DEFAULT } from '../kit/ux/types'
 import { UxBadge } from '../kit/ux/UxBadge'
 import { UxDiffFloatingBadge } from '../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 import { EmptyContent } from './diffs/EmptyContent'
 import { UnsupportedContent } from './diffs/UnsupportedContent'
-import { NestingIndicator } from './NestingIndicator'
 
 export type AdditionalInfoArrayRowProps = PropsWithoutChangesSummary<
   PropsWithShift &
@@ -133,14 +133,14 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
       // FIXME 29.05.24
       // @ts-expect-error Temporarily incompatible types
       ? NODE_DIFF_COLOR_MAP[
-        isNodeChanged
-          ? $nodeChange.action
-          : isWholeRowChangedNaturally
-            ? $rowChanges.action
-            : isWholeRowChangedSynthetically
-              ? $inferredRowChange.action
-              : 'test'
-        ]
+      isNodeChanged
+        ? $nodeChange.action
+        : isWholeRowChangedNaturally
+          ? $rowChanges.action
+          : isWholeRowChangedSynthetically
+            ? $inferredRowChange.action
+            : 'test'
+      ]
       : isRowContentChanged
         ? NODE_DIFF_COLOR_MAP[DiffAction.replace]
         : ''
@@ -151,8 +151,8 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
     const { originSide, changedSide } = getLayoutSideFlags(layoutSide)
 
     return (
-      <div className={`flex flex-row gap-5 ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
-        <NestingIndicator level={level}/>
+      <div className={`flex flex-row gap-6 ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
+        <LevelIndicator level={level} />
         <div className="flex flex-row flex-wrap items-start gap-2 py-1">
           <div className="inline text-xs font-normal text-slate-500">
             {title}:
@@ -261,7 +261,7 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
   if (isDocumentLayoutMode) {
     return (
       <div className="flex flex-row">
-        <Content layoutSide={CHANGED_LAYOUT_SIDE}/>
+        <Content layoutSide={CHANGED_LAYOUT_SIDE} />
       </div>
     )
   }
@@ -270,15 +270,15 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
     if (!isNodeChanged && !isWholeRowChangedNaturally && !isWholeRowChangedSynthetically && !isRowContentChanged) {
       return (
         <div className="flex flex-row">
-          <Content layoutSide={ORIGIN_LAYOUT_SIDE}/>
+          <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
         </div>
       )
     }
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause}/>}
-        <Content layoutSide={ORIGIN_LAYOUT_SIDE}/>
+        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
+        <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
     )
   }
@@ -287,24 +287,24 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
     if (!isNodeChanged && !isWholeRowChangedNaturally && !isWholeRowChangedSynthetically && !isRowContentChanged) {
       return (
         <div className="flex flex-row">
-          <Content layoutSide={ORIGIN_LAYOUT_SIDE}/>
-          <Content layoutSide={CHANGED_LAYOUT_SIDE}/>
+          <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
+          <Content layoutSide={CHANGED_LAYOUT_SIDE} />
         </div>
       )
     }
 
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
-        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause}/>}
+        {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         {isRowContentChanged || (isNodeChanged || isWholeRowChangedNaturally || isWholeRowChangedSynthetically) && (rowRemoved || rowReplaced)
-          ? <Content layoutSide={ORIGIN_LAYOUT_SIDE}/>
-          : <EmptyContent level={$nodeChange?.depth ?? level}/>}
+          ? <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
+          : <EmptyContent level={$nodeChange?.depth ?? level} />}
         {isRowContentChanged || (isNodeChanged || isWholeRowChangedNaturally || isWholeRowChangedSynthetically) && (rowAdded || rowReplaced)
-          ? <Content layoutSide={CHANGED_LAYOUT_SIDE}/>
-          : <EmptyContent level={$nodeChange?.depth ?? level}/>}
+          ? <Content layoutSide={CHANGED_LAYOUT_SIDE} />
+          : <EmptyContent level={$nodeChange?.depth ?? level} />}
       </div>
     )
   }
 
-  return <UnsupportedContent layoutMode={layoutMode}/>
+  return <UnsupportedContent layoutMode={layoutMode} />
 }

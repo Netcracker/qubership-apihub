@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+import { LevelIndicator } from '@apihub/components/AsyncApiOperationViewer/LevelIndicator'
 import type { FC } from 'react'
-import { NestingIndicator } from '../NestingIndicator'
 import { DEFAULT_ROW_PADDING_LEFT } from '../../../consts/configuration'
 
 export type EmptyContentProps = {
@@ -28,7 +28,7 @@ export const EmptyContent: FC<EmptyContentProps> = (props) => {
   return (
     <div className={`flex flex-row w-1/2 ${DEFAULT_ROW_PADDING_LEFT} bg-gray-100`}>
       {/* FIXME 04.07.24 Problem with empty DOM elements */}
-      <NestingIndicator level={level}/>
+      <LevelIndicator level={level}/>
     </div>
   )
 }
